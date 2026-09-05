@@ -1,0 +1,60 @@
+{
+  "rates": { "N": 0.6, "R": 0.3, "SR": 0.08, "SSR": 0.02 },
+  "pity": 50,
+  "tenPullGuarantee": "R",
+  "pullCost": 1,
+  "levelCap": 5,
+  "statPerLevel": 0.08,
+  "banners": [
+    {
+      "id": "mainline",
+      "name": "Mainline Banner",
+      "tier": 0,
+      "pool": [
+        "puffer",
+        "tramway",
+        "switcher",
+        "plank_box",
+        "wood_hopper",
+        "flatbed",
+        "iron_duke",
+        "mogul",
+        "atlantic",
+        "steel_box",
+        "steel_hopper",
+        "bolster_flat",
+        "riveted_tank",
+        "consolidation",
+        "mallet",
+        "reefer",
+        "dump_hopper",
+        "welded_tank",
+        "streamliner",
+        "titan",
+        "heavy_flat",
+        "grand_van"
+      ]
+    },
+    {
+      "id": "heavy_haul",
+      "name": "Heavy Haul Banner",
+      "tier": 2,
+      "pool": [
+        "switcher",
+        "wood_hopper",
+        "flatbed",
+        "mogul",
+        "steel_hopper",
+        "bolster_flat",
+        "riveted_tank",
+        "consolidation",
+        "mallet",
+        "boxcab",
+        "dump_hopper",
+        "welded_tank",
+        "titan",
+        "heavy_flat"
+      ]
+    }
+  ]
+}
