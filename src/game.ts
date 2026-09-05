@@ -25,6 +25,13 @@ import { Toolbar, type Tool } from './ui/toolbar';
 import { StationPanel } from './ui/stationPanel';
 import { BuildController } from './ui/buildController';
 import { Toasts } from './ui/toast';
+import { Inventory } from './gacha/inventory';
+import { Fleet } from './sim/fleet';
+import { TrainRenderer } from './render/trainRenderer';
+import { ScreenManager } from './ui/modal';
+import { DepotScreen } from './ui/depot';
+import { btn } from './ui/dom';
+import type { Train } from './sim/trains';
 
 const SIM_HZ = 20;
 const EDGE_MARGIN = 14;
@@ -55,6 +62,11 @@ export class Game {
   stationPanel!: StationPanel;
   build!: BuildController;
   toasts = new Toasts();
+  inventory = new Inventory();
+  fleet!: Fleet;
+  trainRenderer!: TrainRenderer;
+  screens = new ScreenManager();
+  depot!: DepotScreen;
   private panelRefresh = 0;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
@@ -74,7 +86,16 @@ export class Game {
         name: s.name,
         level: s.level,
       })),
-    trains: () => [],
+    trains: () =>
+      this.fleet.trains
+        .filter((t) => t.poses.length)
+        .map((t) => ({
+          id: t.id,
+          x: t.poses[0].x,
+          y: t.poses[0].y,
+          name: t.name,
+          heading: t.poses[0].heading + (t.reversed ? Math.PI : 0),
+        })),
     contracts: () => [],
   };
 
@@ -114,6 +135,8 @@ export class Game {
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onTierUp = (t) => this.onTierUp(t);
+    this.inventory.seedStarter(0);
+    this.fleet = new Fleet(this.track, this.builder, this.map, this.inventory, this.economy);
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
@@ -123,6 +146,7 @@ export class Game {
     this.cursor.anchor.set(cur.anchorX, cur.anchorY);
     this.world.overlay.addChild(this.cursor);
     this.app.stage.addChild(this.world.root, this.overview.root);
+    this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
 
     this.build = new BuildController(this.input, this.builder, this.world, () =>
       this.tileUnderMouse(),
@@ -185,6 +209,14 @@ export class Game {
 
   private buildUi() {
     this.hud = new Hud(this.clock);
+    this.depot = new DepotScreen(this.inventory, this.fleet, this.builder, (m, k) =>
+      this.toasts.push(m, k),
+    );
+    this.depot.onFocusTrain = (t) => this.focusTrain(t);
+    this.hud.actions.append(btn(STR.topbar.depot, () => this.screens.toggle(this.depot), 'small'));
+    this.screens.onChange = (sc) => {
+      if (sc) this.build.setTool({ kind: 'none' });
+    };
     this.minimap = new Minimap(this.map, this.regions, this.camera, (wx, wy) =>
       this.camera.centerOn(wx, wy),
     );
@@ -220,6 +252,7 @@ export class Game {
       () => this.build.selected && this.build.select(null),
     );
     this.uiRoot.append(
+      this.screens.root,
       el('div', { class: 'vignette' }),
       this.hud.root,
       this.minimap.root,
@@ -241,11 +274,21 @@ export class Game {
   // ---------------------------------------------------------------- sim
   private update(dt: number) {
     const gdt = this.clock.advance(dt);
-    if (gdt > 0) for (const s of this.builder.stations) s.tick(gdt);
+    if (gdt > 0) {
+      for (const s of this.builder.stations) s.tick(gdt);
+      this.fleet.tick(gdt);
+    }
+  }
+
+  focusTrain(t: Train) {
+    const p = t.poses[0];
+    if (!p) return;
+    this.screens.close();
+    this.returnToRts(p.x, p.y);
   }
 
   // ---------------------------------------------------------------- frame
-  private render(_alpha: number, dt: number) {
+  private render(alpha: number, dt: number) {
     this.camera.viewW = this.app.screen.width;
     this.camera.viewH = this.app.screen.height;
     this.handleInput(dt);
@@ -255,13 +298,17 @@ export class Game {
     this.world.applyCamera(this.camera);
     this.layoutViews();
     this.updateCursor();
-    this.build.update(this.viewTarget === 0 && this.viewBlend === 0 && !this.input.overUi);
+    this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha);
+    this.build.update(
+      this.viewTarget === 0 && this.viewBlend === 0 && !this.input.overUi && !this.screens.current,
+    );
     this.updateRtsTooltip();
     this.hud.update(this.economy);
     this.panelRefresh += dt;
     if (this.panelRefresh > 0.5) {
       this.panelRefresh = 0;
       if (this.stationPanel.station) this.stationPanel.render();
+      this.screens.refresh();
     }
     this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
@@ -274,7 +321,9 @@ export class Game {
     return {
       track,
       stations: this.builder.stations.map((s) => ({ x: s.x, y: s.y })),
-      trains: [] as { x: number; y: number }[],
+      trains: this.fleet.trains
+        .filter((t) => t.poses.length)
+        .map((t) => ({ x: t.poses[0].x, y: t.poses[0].y })),
     };
   }
 
@@ -292,6 +341,11 @@ export class Game {
   private handleInput(dt: number) {
     const inp = this.input;
     if (inp.wasPressed('Backquote')) this.debug.toggle();
+    if (inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
+    if (inp.wasPressed('Escape') && this.screens.current) {
+      this.screens.close();
+      return;
+    }
     if (inp.wasPressed('Tab')) this.toggleOverview();
     if (inp.wasPressed('Escape') && this.viewTarget === 1) this.setView(0);
     if (inp.wasPressed('Space')) this.clock.togglePause();
@@ -372,6 +426,19 @@ export class Game {
             `${STR.station.storage}: ${Math.floor(s.totalStored())} / ${s.capacity}`,
           ],
         };
+    }
+    if (p.kind === 'train') {
+      const t = this.fleet.byId(p.id);
+      if (t) {
+        const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
+        return {
+          title: t.name,
+          lines: [
+            `${STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''}`,
+            STR.depot.cargo(Math.round(t.totalCargo())),
+          ],
+        };
+      }
     }
     return { title: `${p.kind} #${p.id}`, lines: [] };
   }

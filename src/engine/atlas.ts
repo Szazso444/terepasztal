@@ -32,6 +32,8 @@ export class AtlasRegistry {
   private frames = new Map<string, FrameInfo>();
   private sources: ImageSource[] = [];
   readonly groupOrigin = new Map<string, 'png' | 'procedural'>();
+  /** Raw atlas images by group, kept for the debug atlas viewer. */
+  readonly images = new Map<string, HTMLCanvasElement | HTMLImageElement>();
 
   async load(groups: { name: string; generate: AtlasGenerator }[]) {
     await Promise.all(groups.map((g) => this.loadGroup(g.name, g.generate)));
@@ -41,10 +43,13 @@ export class AtlasRegistry {
     const fromFile = await this.tryLoadFile(name);
     if (fromFile) {
       this.register(fromFile);
+      this.images.set(name, fromFile.image);
       this.groupOrigin.set(name, 'png');
       return;
     }
-    this.register(generate());
+    const gen = generate();
+    this.register(gen);
+    this.images.set(name, gen.image);
     this.groupOrigin.set(name, 'procedural');
   }
 

@@ -41,3 +41,25 @@
 **Known bugs**
 - Replacing a piece with a different one charges the full price minus the refund without a confirmation.
 - Station adjacency is not re-checked when the last neighbouring track is removed (panel shows a warning only).
+
+## 3. Trains
+
+**Works**
+- Rolling stock defined in `src/data/locomotives.json` / `wagons.json` (rarity, era flavour, stats). Starter inventory: Old Puffer + Plank Boxcar + Wooden Hopper.
+- Procedural rolling-stock atlas: steam and diesel bodies in 8 facings and 4 paints, four wagon bodies, tintable cargo overlays (heap / crates / logs) coloured per cargo type.
+- Depot screen (`F` or the top-bar button): pick a free locomotive, tick wagons (max per loco, weight meter vs pulling power), name the train, build a looped route from stations with platforms, dispatch. Existing trains: locate, edit route, recall (items return to the inventory).
+- Pathfinding: Dijkstra over (tile, entry-edge) states so switches and curves are respected and trains never reverse mid-tile. Diverging switch legs cost extra.
+- Movement: fixed-timestep sim, render interpolation, acceleration/deceleration, stop at the platform tile centre, curve slowdown (0.55x), bridge (0.8x) and hill (0.85x) factors, heavy consists crawl. Running cost per tile deducted.
+- Cars follow a recorded trail behind the head; at dead ends the consist reverses and the locomotive pushes.
+- Stations: trains wait for a free platform, unload accepted cargo (base price paid, delivery event emitted for contracts), load produced cargo only if some later stop accepts it, then depart after a minimum dwell.
+- Track edits invalidate paths: trains re-route or become stranded if their tile was removed; recall from the depot.
+- Overview shows trains as heading arrows with tooltips; minimap marks trains.
+
+**Stubbed**
+- No collision or block signalling: trains pass through each other.
+- Delivery events are emitted but contracts do not exist yet (milestone 4).
+- Save/load of trains is drafted (`toJSON`/`fromJSON`) but not wired.
+
+**Known bugs**
+- A recalled train's cargo is lost.
+- Loco facing after loading `fromJSON` is forward until the next dispatch.
