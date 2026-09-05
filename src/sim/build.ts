@@ -90,7 +90,7 @@ export class Builder {
     if (dec && !decorDef(dec.id).onTrack) return { ok: false, cost: 0, reason: STR.build.occupied };
     let cost = Math.round(pieceCost(kind) * this.terrainMul(x, y));
     const existing = this.track.get(x, y);
-    if (existing) cost -= this.refundFor(existing);
+    if (existing) cost = Math.max(0, cost - this.refundFor(existing));
     if (!this.economy.canAfford(cost)) return { ok: false, cost, reason: STR.build.funds };
     return { ok: true, cost };
   }

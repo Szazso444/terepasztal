@@ -36,7 +36,8 @@ npm run lint
 
 Everything is generated at runtime: sprites by the procedural generators in `src/art`, sound
 effects and the ambient loop by the Web Audio synthesizer in `src/engine/synth.ts`. Nothing is
-taken from other games. Both can be overridden file by file.
+taken from other games. Sprites and individual sound effects can be overridden file by file
+(see below); the ambient loop is always synthesized.
 
 ## Replacing placeholder art
 

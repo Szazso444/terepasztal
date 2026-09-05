@@ -108,3 +108,7 @@
 **Known limitations**
 - Rain and fog particles are purely visual; there is no per-tile weather.
 - The music loop is procedural and simple by design; no composed tracks ship.
+
+## Review pass (adversarial, 7 lenses, 3 verifiers per finding)
+
+26 confirmed findings fixed after the fix pass, among them: a reroute that could leave a moving train with no path and crash the simulation; trains snapping backwards when a consist reversed (paths now re-anchor on the new head); hold counters carried across states; seasonal production not applied to stations built mid-season; orphan markers and hill cuts left behind by demolished stations and towers; the season tint not refreshing when the weather toggle changes; top-bar overflow at 1280 px and an empty cell with weather off; fog drifting over the page background (now clipped to the world); a water animation that snapped every fourth frame (now periodic); a station panel that did not scroll; a replacement status that advertised a negative price; sounds dropped between the first click and the audio context resuming; the featured rate-up that was really 65-77 % (now exactly 50 %) and stale featured panels across rotations; a Collect button that vanished within half a second; duplicate text on max-level items; the settings importer refusing v1 saves; and stale audio copy in Settings and the README.

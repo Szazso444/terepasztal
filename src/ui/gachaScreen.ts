@@ -10,7 +10,7 @@ import {
   type PullResult,
   type Gacha,
 } from '../gacha/gacha';
-import { RARITIES, itemDef, dupesNeeded } from '../gacha/items';
+import { RARITIES, itemDef, dupesNeeded, LEVEL_CAP } from '../gacha/items';
 import type { Economy } from '../sim/economy';
 import { sfx } from '../engine/audio';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -32,6 +32,9 @@ export class GachaScreen implements Screen {
   private foot = el('div', { class: 'col-foot' });
   private banner: Banner = BANNERS[0];
   private revealing = false;
+  /** rotation and day the idle panel was rendered for */
+  private shownRot = -1;
+  private shownDay = 0;
 
   constructor(
     private readonly gacha: Gacha,
@@ -57,11 +60,14 @@ export class GachaScreen implements Screen {
     this.root.append(el('div', { class: 'cols' }, left, right));
   }
   onOpen() {
+    this.revealing = false;
     this.render();
     this.renderIdle();
   }
   refresh() {
-    if (!this.revealing) this.renderFoot();
+    if (this.revealing) return;
+    this.renderFoot();
+    if (this.day() !== this.shownDay && this.stage.querySelector('.gacha-idle')) this.renderIdle();
   }
 
   private render() {
@@ -138,6 +144,8 @@ export class GachaScreen implements Screen {
     );
     // featured rotation
     const rot = rotationIndex(this.day());
+    this.shownRot = rot;
+    this.shownDay = this.day();
     const featured = GachaClass.featured(this.banner, rot);
     if (featured.length) {
       const box = el('div', { class: 'gacha-featured' });
@@ -186,7 +194,8 @@ export class GachaScreen implements Screen {
     }
     this.economy.tickets -= cost;
     sfx('gacha.pull');
-    const results = this.gacha.pull(this.banner, n, this.now(), rotationIndex(this.day()));
+    const rot = this.shownRot >= 0 ? this.shownRot : rotationIndex(this.day());
+    const results = this.gacha.pull(this.banner, n, this.now(), rot);
     this.reveal(results);
   }
 
@@ -223,7 +232,9 @@ export class GachaScreen implements Screen {
             text: r.duplicate
               ? r.leveled
                 ? STR.gacha.levelUp(r.item.level)
-                : STR.gacha.dupe(r.item.dupes, dupesNeeded(r.item.level))
+                : r.item.level >= LEVEL_CAP
+                  ? STR.roster.maxLevel
+                  : STR.gacha.dupe(r.item.dupes, dupesNeeded(r.item.level))
               : STR.gacha.newItem,
           }),
           r.forced ? el('div', { class: 'gcard-forced', text: STR.gacha.guaranteed }) : null,
@@ -243,12 +254,12 @@ export class GachaScreen implements Screen {
     });
     const total = 350 + results.length * 260 + 500;
     setTimeout(() => {
-      this.revealing = false;
       this.foot.innerHTML = '';
       this.foot.append(
         btn(
           STR.gacha.collect,
           () => {
+            this.revealing = false;
             this.renderIdle();
             this.renderFoot();
           },

@@ -311,7 +311,14 @@ export class Train {
       const alt = findPath(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
       if (alt) {
         this.reverseConsist();
-        path = alt;
+        // the head is now the old rear car: re-anchor the path on its actual tile
+        const nh = this.trail[this.trail.length - 1].seg;
+        if (isTarget(nh.x, nh.y)) {
+          this.path = null;
+          this.trackVersion = track.version;
+          return true;
+        }
+        path = findPath(track, { x: nh.x, y: nh.y, in: nh.in }, isTarget, 100000, avoid) ?? alt;
       }
     }
     if (!path) return false;
@@ -433,12 +440,13 @@ export class Train {
       this.trackVersion = ctx.track.version;
       const head = this.headTile;
       if (!head || !ctx.track.has(head.x, head.y)) {
-        this.state = 'stranded';
+        this.setState('stranded');
         this.speed = 0;
         return;
       }
       if (!this.pathStillValid(ctx.track)) {
-        if (!this.dispatch(ctx.track, ctx.builder, ctx.map)) this.setState('noRoute');
+        if (this.dispatch(ctx.track, ctx.builder, ctx.map)) this.onPathReady(ctx);
+        else this.setState('noRoute');
       }
     }
     switch (this.state) {
@@ -470,7 +478,15 @@ export class Train {
     }
   }
 
+  /** Forget any hold-behind-train bookkeeping. */
+  private clearHold() {
+    this.blocked = false;
+    this.blockedBy = null;
+    this.blockedTime = 0;
+    this.rerouted = false;
+  }
   private setState(s: TrainState) {
+    if (s !== 'moving') this.clearHold();
     this.state = s;
     this.stateTime = 0;
   }
@@ -523,7 +539,12 @@ export class Train {
         const wasReversed = this.reversed;
         if (this.dispatch(ctx.track, ctx.builder, ctx.map, avoid)) {
           this.lastMessage = 'rerouted around traffic';
-          if (wasReversed !== this.reversed) this.updatePoses();
+          if (!this.path) {
+            // the head already stands on the target's platform: arrive instead of walking a stale path
+            this.pathPts = [];
+            this.pathCum = [];
+            this.onPathReady(ctx);
+          } else if (wasReversed !== this.reversed) this.updatePoses();
           return;
         }
       }
@@ -560,7 +581,12 @@ export class Train {
     this.pushTrail(p);
     this.updatePoses();
     if (this.pathTotal - this.pathPos < 1e-3) {
-      const seg = this.path![this.path!.length - 1];
+      if (!this.path) {
+        this.speed = 0;
+        this.setState('noRoute');
+        return;
+      }
+      const seg = this.path[this.path.length - 1];
       const st = ctx.builder.stationForTrackTile(seg.x, seg.y);
       const want = ctx.builder.stationById(this.route[this.routeIndex % this.route.length]);
       this.path = null;
@@ -589,9 +615,7 @@ export class Train {
 
   private arrive(st: Station) {
     this.atStation = st;
-    this.blocked = false;
-    this.blockedTime = 0;
-    this.rerouted = false;
+    this.clearHold();
     sfx('train.arrive');
     if (st.hasFreePlatform()) {
       st.occupants.add(this.id);
@@ -690,10 +714,7 @@ export class Train {
   /** Deadlock breaker: ignore other trains for a short while (used for head-on meetings). */
   squeeze(now: number, message = 'squeezed past an oncoming train') {
     this.ghostUntil = now + 15;
-    this.blockedTime = 0;
-    this.rerouted = false;
-    this.blocked = false;
-    this.blockedBy = null;
+    this.clearHold();
     this.lastMessage = message;
   }
 

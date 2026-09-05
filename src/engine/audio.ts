@@ -48,6 +48,7 @@ class AudioBus {
   unlock() {
     const ctx = this.synth.ensure();
     if (!ctx) return;
+    this.synth.markGesture();
     if (!this.unlocked) {
       this.unlocked = true;
       this.applyMusic();

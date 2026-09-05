@@ -13,6 +13,12 @@ export class Synth {
   private melodyIdx = 3;
   private beat = 0;
   private drone: OscillatorNode[] = [];
+  private gestureSeen = false;
+
+  /** A real user gesture happened: sounds may be scheduled even while resume() is pending. */
+  markGesture() {
+    this.gestureSeen = true;
+  }
 
   /** Must be called from a user gesture at least once; safe to call repeatedly. */
   ensure(): AudioContext | null {
@@ -125,7 +131,7 @@ export class Synth {
   // ------------------------------------------------------------------ effects
   play(name: SoundEvent, vol: number) {
     const ctx = this.ensure();
-    if (!ctx || ctx.state !== 'running' || vol <= 0) return;
+    if (!ctx || vol <= 0 || (ctx.state !== 'running' && !this.gestureSeen)) return;
     const t = ctx.currentTime + 0.01;
     const v = Math.min(1, vol) * 0.5;
     switch (name) {

@@ -44,6 +44,7 @@ import { audio, sfx } from './engine/audio';
 import { SettingsScreen } from './ui/settingsScreen';
 import {
   SAVE_VERSION,
+  SAVE_MIN_VERSION,
   readSave,
   writeSave,
   clearSave,
@@ -233,6 +234,7 @@ export class Game {
     this.fog = new Fog(this.atlas);
     this.world.root.addChild(this.dayNight.overlay);
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.world.overlay.addChild(this.fog.patches);
     this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
     this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
@@ -274,6 +276,7 @@ export class Game {
     writeSettings(this.settings);
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
+    if (this.world) this.applySeason();
   }
 
   snapshot(): SaveGame {
@@ -383,6 +386,13 @@ export class Game {
     if (removed) {
       this.world.removeStructure(id);
       this.signalAspect.delete(d.y * this.map.w + d.x);
+      if (
+        d.id !== 'signal' &&
+        terrainAt(this.map, d.x, d.y) === Terrain.Hill &&
+        !this.track.has(d.x, d.y) &&
+        !this.builder.stationAt(d.x, d.y)
+      )
+        this.world.setFlattened(d.x, d.y, false);
       return;
     }
     const off = decorOffset(d);
@@ -443,9 +453,11 @@ export class Game {
     const id = `station:${s.id}`;
     const t = terrainAt(this.map, s.x, s.y);
     if (removed) {
+      this.onStationOrphaned(s, false);
       this.world.removeStructure(id);
       if (t === Terrain.Hill && !this.track.has(s.x, s.y)) this.world.setFlattened(s.x, s.y, false);
     } else {
+      s.productionMul = productionMul(s.def.id, this.season ?? 'spring');
       if (t === Terrain.Hill) this.world.setFlattened(s.x, s.y, true);
       this.world.removeProps(s.x, s.y);
       this.world.setStructure(id, s.x, s.y, `structures/station_${s.spriteLevel}`);
@@ -499,7 +511,13 @@ export class Game {
         importSave: (json) => {
           try {
             const j = JSON.parse(json) as SaveGame;
-            if (j.version !== SAVE_VERSION || typeof j.seed !== 'number') throw new Error('bad');
+            if (
+              typeof j.version !== 'number' ||
+              j.version < SAVE_MIN_VERSION ||
+              j.version > SAVE_VERSION ||
+              typeof j.seed !== 'number'
+            )
+              throw new Error('bad');
             writeSave(j);
             location.hash = `seed=${j.seed}`;
             location.reload();

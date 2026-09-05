@@ -905,3 +905,15 @@ input.text {
 .bar.market .bar-fill {
   background: var(--cyan-dark);
 }
+
+#topbar .stat.weather {
+  min-width: 0;
+}
+#topbar .stat.weather .value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#station-panel .panel-body {
+  min-height: 0;
+}

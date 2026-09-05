@@ -249,9 +249,7 @@ export class WorldRenderer {
           chunks.set(key, ch);
           this.border.addChild(ch.c);
         }
-        const f = this.atlas.get(
-          `terrain/void_${(x * 7 + y * 13) % 3 < 0 ? 0 : (x * 7 + y * 13) % 3}`,
-        );
+        const f = this.atlas.get(`terrain/void_${(((x * 7 + y * 13) % 3) + 3) % 3}`);
         const sp = new Sprite(f.texture);
         sp.anchor.set(f.anchorX, f.anchorY);
         const pt = tileToWorld(x, y);

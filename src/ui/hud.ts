@@ -41,14 +41,17 @@ export class Hud {
       this.actions,
       el('div', { class: 'spacer' }),
       el('div', { class: 'stat' }, this.fps),
-      el('div', { class: 'stat' }, this.weather),
+      el('div', { class: 'stat weather' }, this.weather),
       el('div', { class: 'stat' }, this.day, this.clockEl),
       time,
     );
   }
 
   setWeather(text: string) {
-    if (this.weather.textContent !== text) this.weather.textContent = text;
+    if (this.weather.textContent !== text) {
+      this.weather.textContent = text;
+      (this.weather.parentElement as HTMLElement).style.display = text ? '' : 'none';
+    }
   }
 
   setFps(v: number | null) {

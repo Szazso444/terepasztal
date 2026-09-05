@@ -36,7 +36,7 @@ export class StationPanel {
 
   open(s: Station) {
     this.station = s;
-    this.root.style.display = 'block';
+    this.root.style.display = '';
     this.render();
   }
   close() {

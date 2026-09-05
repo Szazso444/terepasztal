@@ -184,7 +184,8 @@ export const STR = {
     master: 'Master volume',
     sfx: 'Effects',
     music: 'Music',
-    audioNote: 'Sound hooks are wired; drop .ogg files into /assets/audio to hear them.',
+    audioNote:
+      'Sounds and music are synthesized at runtime; an .ogg at /assets/audio/<event>.ogg overrides a synthesized effect.',
     gameplay: 'Gameplay',
     edgeScroll: 'Edge scrolling',
     autosave: 'Autosave (every minute)',

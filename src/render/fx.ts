@@ -230,7 +230,25 @@ export class Fog {
   readonly haze = new Graphics();
   private items: { s: Sprite; ox: number; oy: number; vx: number; vy: number; phase: number }[] =
     [];
-  constructor(private readonly atlas: AtlasRegistry) {}
+  private readonly clip = new Graphics();
+  constructor(private readonly atlas: AtlasRegistry) {
+    this.patches.addChild(this.clip);
+    this.patches.mask = this.clip;
+  }
+  /** Clip fog to the map plus its void ring so patches never float over the page background. */
+  setWorld(w: number, h: number, border: number) {
+    const b = border + 0.5;
+    const pts = [
+      tileToWorld(-b, -b),
+      tileToWorld(w - 1 + b, -b),
+      tileToWorld(w - 1 + b, h - 1 + b),
+      tileToWorld(-b, h - 1 + b),
+    ];
+    this.clip
+      .clear()
+      .poly(pts.flatMap((p) => [p.x, p.y]))
+      .fill(0xffffff);
+  }
   update(
     dt: number,
     intensity: number,

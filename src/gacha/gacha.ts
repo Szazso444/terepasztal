@@ -78,17 +78,15 @@ export class Gacha {
       const pool = banner.pool.filter((id) => itemDef(id).rarity === r);
       if (pool.length) {
         const feat = featured.filter((id) => itemDef(id).rarity === r);
-        if (feat.length && this.rng.next() < FEATURED_SHARE)
-          return { defId: this.rng.pick(feat), rarity: r, featured: true };
-        return { defId: this.rng.pick(pool), rarity: r, featured: false };
+        const rest = pool.filter((id) => !feat.includes(id));
+        const useFeat = feat.length > 0 && (rest.length === 0 || this.rng.next() < FEATURED_SHARE);
+        const defId = this.rng.pick(useFeat ? feat : rest);
+        return { defId, rarity: r, featured: feat.includes(defId) };
       }
       idx--;
     }
-    return {
-      defId: this.rng.pick(banner.pool),
-      rarity: itemDef(banner.pool[0]).rarity,
-      featured: false,
-    };
+    const defId = this.rng.pick(banner.pool);
+    return { defId, rarity: itemDef(defId).rarity, featured: featured.includes(defId) };
   }
 
   /** Featured items for a banner in a given rotation: up to one SSR and two SR, seeded. */

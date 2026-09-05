@@ -32,11 +32,11 @@ function waterTile(seed: number, phase: number): PixelBuf {
       let c = pickShade(x, y, PAL.water, seed);
       // ripple crests drift one pixel per frame; the crest set is fixed per tile so frames tile
       // seamlessly with their neighbours
-      const cx = x - phase;
-      const cy = y - (phase >> 1);
-      const r = hash2(cx >> 2, cy >> 1, seed + 7);
-      if (r > 0.9 && ((cy % 4) + 4) % 4 === 0) c = shade(c, 1.25);
-      else if (r < 0.06 && ((cy % 5) + 5) % 5 === 0) c = shade(c, 0.85);
+      // each 4x4 cell owns one crest row; the lit row is the frame index, so frame 3 -> 0 is one
+      // more step down and the cycle is seamless
+      const r = hash2(x >> 2, y >> 2, seed + 7);
+      if (r > 0.9 && (y & 3) === phase) c = shade(c, 1.25);
+      else if (r < 0.06 && ((y + 2) & 3) === phase) c = shade(c, 0.85);
       b.set(x, y, c);
     }
   return b;
