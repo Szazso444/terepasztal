@@ -20,7 +20,6 @@ import { STR } from './strings';
 import { TrackGraph } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
-import type { Station } from './sim/stations';
 import { Toolbar, type Tool } from './ui/toolbar';
 import { StationPanel } from './ui/stationPanel';
 import { BuildController } from './ui/buildController';
@@ -36,6 +35,22 @@ import { ContractBoard } from './sim/contracts';
 import { ContractsScreen } from './ui/contractsScreen';
 import { ContractsSide } from './ui/contractsSide';
 import { Rng } from './engine/rng';
+import { DayNight, Glows, Smoke, nightness } from './render/fx';
+import { audio, sfx } from './engine/audio';
+import { SettingsScreen } from './ui/settingsScreen';
+import {
+  SAVE_VERSION,
+  readSave,
+  writeSave,
+  clearSave,
+  readSettings,
+  writeSettings,
+  type SaveGame,
+  type Settings,
+} from './sim/save';
+import { Station, resetStationIds } from './sim/stations';
+import { Train as TrainClass, resetTrainIds } from './sim/trains';
+import { makePiece } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
@@ -83,6 +98,13 @@ export class Game {
   gachaScreen!: GachaScreen;
   rosterScreen!: RosterScreen;
   private lastDay = 1;
+  settings: Settings = readSettings();
+  settingsScreen!: SettingsScreen;
+  dayNight = new DayNight();
+  glows!: Glows;
+  smoke!: Smoke;
+  private autosaveTimer = 0;
+  private savedAt: number | null = null;
   private panelRefresh = 0;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
@@ -168,16 +190,19 @@ export class Game {
     this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
     this.contracts.onEvent = (e) => {
-      if (e.kind === 'completed')
+      if (e.kind === 'completed') {
         this.toasts.push(
           STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
           'good',
         );
-      else if (e.kind === 'failed')
+        sfx('contract.done');
+      } else if (e.kind === 'failed') {
         this.toasts.push(
           STR.contracts.failedMsg(e.contract.name, Math.round(e.contract.reputation * 0.6)),
           'warn',
         );
+        sfx('contract.fail');
+      } else if (e.kind === 'accepted') sfx('contract.accept');
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
@@ -187,7 +212,10 @@ export class Game {
     this.cursor = new Sprite(cur.texture);
     this.cursor.anchor.set(cur.anchorX, cur.anchorY);
     this.world.overlay.addChild(this.cursor);
-    this.app.stage.addChild(this.world.root, this.overview.root);
+    this.app.stage.addChild(this.world.root, this.dayNight.overlay, this.overview.root);
+    this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.applySettings();
     this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
 
     this.build = new BuildController(this.input, this.builder, this.world, () =>
@@ -204,6 +232,95 @@ export class Game {
       (a, dt) => this.render(a, dt),
     );
     this.loop.start();
+    window.addEventListener('beforeunload', () => {
+      if (this.settings.autosave) this.save(true);
+    });
+  }
+
+  // ---------------------------------------------------------------- settings / save
+  applySettings() {
+    audio.master = this.settings.master;
+    audio.sfx = this.settings.sfx;
+    audio.music = this.settings.music;
+    writeSettings(this.settings);
+  }
+
+  snapshot(): SaveGame {
+    const track: SaveGame['track'] = [];
+    for (const t of this.track.tiles()) track.push([t.x, t.y, t.piece.kind, t.piece.rot]);
+    return {
+      version: SAVE_VERSION,
+      savedAt: Date.now(),
+      seed: this.seed,
+      clock: { time: this.clock.time, speedIndex: this.clock.speedIndex },
+      economy: this.economy.toJSON(),
+      track,
+      stations: this.builder.stations.map((st) => st.toJSON()),
+      trains: this.fleet.trains.map((t) => t.toJSON()),
+      contracts: this.contracts.toJSON(),
+      inventory: this.inventory.toJSON(),
+      gacha: this.gacha.toJSON(),
+      camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
+      lastDay: this.lastDay,
+    };
+  }
+
+  save(silent = false) {
+    const snap = this.snapshot();
+    const ok = writeSave(snap);
+    if (ok) this.savedAt = snap.savedAt;
+    if (!silent)
+      this.toasts.push(ok ? STR.settings.saved : STR.settings.saveFailed, ok ? 'good' : 'warn');
+    return ok;
+  }
+
+  /** Populate a freshly initialised game from a save with the same seed. */
+  applySave(j: SaveGame) {
+    this.clock.time = j.clock.time;
+    this.clock.setSpeed(j.clock.speedIndex);
+    this.economy.load(j.economy);
+    this.lastDay = j.lastDay;
+    this.savedAt = j.savedAt;
+    this.regions.applyTier(this.economy.tier);
+    this.world.rebuildFog();
+    this.overview.rebuildRegions();
+    this.minimap.rebuildBase();
+    this.toolbar.refresh();
+    for (const [x, y, kind, rot] of j.track) {
+      this.track.set(x, y, makePiece(kind, rot));
+      this.onTrackChanged(x, y);
+    }
+    resetStationIds(1);
+    for (const sj of j.stations) {
+      const st = Station.fromJSON(sj);
+      this.builder.stations.push(st);
+      this.onStationChanged(st, false);
+    }
+    this.inventory.load(j.inventory as ReturnType<typeof this.inventory.toJSON>);
+    this.gacha.load(j.gacha as ReturnType<typeof this.gacha.toJSON>);
+    this.contracts.load(j.contracts as ReturnType<typeof this.contracts.toJSON>);
+    resetTrainIds(1);
+    for (const tj of j.trains as ReturnType<TrainClass['toJSON']>[]) {
+      const t = TrainClass.fromJSON(tj, this.track);
+      this.fleet.trains.push(t);
+    }
+    // items assigned to trains that no longer exist are freed
+    for (const it of this.inventory.items)
+      if (it.assigned !== null && !this.fleet.byId(it.assigned)) it.assigned = null;
+    this.camera.zoomIndex = j.camera.zoomIndex;
+    this.camera.zoom = ZOOM_STEPS[j.camera.zoomIndex];
+    this.camera.centerOn(j.camera.x, j.camera.y);
+  }
+
+  newGame(seedText: string) {
+    clearSave();
+    const seed = seedText
+      ? /^\d+$/.test(seedText)
+        ? Number(seedText)
+        : hashSeed(seedText)
+      : Math.floor(Math.random() * 2 ** 31);
+    location.hash = `seed=${seed}&new`;
+    location.reload();
   }
 
   // ---------------------------------------------------------------- world edits
@@ -241,6 +358,7 @@ export class Game {
     }
     this.toolbar.refresh();
     this.toasts.push(STR.hud.tierUp(tier), 'good');
+    sfx('tier.up');
   }
   private trackTilesForOverview() {
     const out: { x: number; y: number; links: [number, number][] }[] = [];
@@ -255,6 +373,38 @@ export class Game {
       this.toasts.push(m, k),
     );
     this.depot.onFocusTrain = (t) => this.focusTrain(t);
+    this.settingsScreen = new SettingsScreen(
+      this.settings,
+      () => this.applySettings(),
+      {
+        save: () => this.save(),
+        load: () => {
+          const j = readSave();
+          if (!j) {
+            this.toasts.push(STR.settings.noSave, 'warn');
+            return;
+          }
+          location.hash = `seed=${j.seed}`;
+          location.reload();
+        },
+        newGame: (seed) => this.newGame(seed),
+        exportSave: () => JSON.stringify(this.snapshot()),
+        importSave: (json) => {
+          try {
+            const j = JSON.parse(json) as SaveGame;
+            if (j.version !== SAVE_VERSION || typeof j.seed !== 'number') throw new Error('bad');
+            writeSave(j);
+            location.hash = `seed=${j.seed}`;
+            location.reload();
+            return true;
+          } catch {
+            this.toasts.push(STR.settings.badSave, 'warn');
+            return false;
+          }
+        },
+      },
+      () => ({ seed: this.seed, savedAt: this.savedAt, version: `v${SAVE_VERSION}` }),
+    );
     this.gachaScreen = new GachaScreen(
       this.gacha,
       this.economy,
@@ -272,9 +422,11 @@ export class Game {
       btn(STR.topbar.contracts, () => this.screens.toggle(this.contractsScreen), 'small'),
       btn(STR.topbar.gacha, () => this.screens.toggle(this.gachaScreen), 'small'),
       btn(STR.topbar.roster, () => this.screens.toggle(this.rosterScreen), 'small'),
+      btn(STR.topbar.settings, () => this.screens.toggle(this.settingsScreen), 'small'),
     );
     this.screens.onChange = (sc) => {
       if (sc) this.build.setTool({ kind: 'none' });
+      sfx(sc ? 'ui.open' : 'ui.close');
     };
     this.minimap = new Minimap(this.map, this.regions, this.camera, (wx, wy) =>
       this.camera.centerOn(wx, wy),
@@ -336,6 +488,13 @@ export class Game {
 
   // ---------------------------------------------------------------- sim
   private update(dt: number) {
+    if (this.settings.autosave) {
+      this.autosaveTimer += dt;
+      if (this.autosaveTimer >= 60) {
+        this.autosaveTimer = 0;
+        this.save(true);
+      }
+    }
     const gdt = this.clock.advance(dt);
     if (gdt > 0) {
       for (const s of this.builder.stations) s.tick(gdt);
@@ -371,11 +530,21 @@ export class Game {
     this.layoutViews();
     this.updateCursor();
     this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha);
+    const night = this.settings.dayNight ? nightness(this.clock.dayFraction) : 0;
+    this.dayNight.update(
+      this.clock.dayFraction,
+      this.camera.viewW,
+      this.camera.viewH,
+      this.settings.dayNight,
+    );
+    this.glows.update(this.builder.stations, this.fleet.trains, night);
+    this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.build.update(
       this.viewTarget === 0 && this.viewBlend === 0 && !this.input.overUi && !this.screens.current,
     );
     this.updateRtsTooltip();
     this.hud.update(this.economy);
+    this.hud.setFps(this.settings.showFps ? this.loop.fps : null);
     this.panelRefresh += dt;
     if (this.panelRefresh > 0.5) {
       this.panelRefresh = 0;
@@ -450,7 +619,13 @@ export class Game {
       if (inp.isDown('KeyA') || inp.isDown('ArrowLeft')) dx -= 1;
       if (inp.isDown('KeyD') || inp.isDown('ArrowRight')) dx += 1;
       // edge scroll
-      if (inp.mouseInside && document.hasFocus() && !inp.buttons.size) {
+      if (
+        this.settings.edgeScroll &&
+        inp.mouseInside &&
+        document.hasFocus() &&
+        !inp.buttons.size &&
+        !this.screens.current
+      ) {
         if (inp.mouseX < EDGE_MARGIN) dx -= 1;
         if (inp.mouseX > this.camera.viewW - EDGE_MARGIN) dx += 1;
         if (inp.mouseY < EDGE_MARGIN) dy -= 1;

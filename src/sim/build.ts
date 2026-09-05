@@ -6,6 +6,7 @@ import trackData from '../data/track.json';
 import { Station, stationDef, maxLevelForTier } from './stations';
 import type { Economy } from './economy';
 import { STR } from '../strings';
+import { sfx } from '../engine/audio';
 
 export interface PlacementCheck {
   ok: boolean;
@@ -67,6 +68,7 @@ export class Builder {
     if (!this.economy.spend(Math.max(0, c.cost))) return false;
     this.track.set(x, y, makePiece(kind, rot));
     this.onTrackChanged?.(x, y);
+    sfx('build.place');
     return true;
   }
 
@@ -76,6 +78,7 @@ export class Builder {
     this.track.remove(x, y);
     this.economy.earn(this.refundFor(p));
     this.onTrackChanged?.(x, y);
+    sfx('build.remove');
     return true;
   }
 
@@ -112,6 +115,7 @@ export class Builder {
     );
     this.stations.push(s);
     this.onStationChanged?.(s, false);
+    sfx('build.place');
     return s;
   }
 
@@ -137,6 +141,7 @@ export class Builder {
     if (!c.ok || !this.economy.spend(c.cost)) return false;
     s.level++;
     this.onStationChanged?.(s, false);
+    sfx('station.upgrade');
     return true;
   }
 

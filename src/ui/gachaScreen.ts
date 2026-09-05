@@ -12,6 +12,7 @@ import {
 } from '../gacha/gacha';
 import { RARITIES, itemDef, dupesNeeded } from '../gacha/items';
 import type { Economy } from '../sim/economy';
+import { sfx } from '../engine/audio';
 
 /** Banner selection, rates, pity counter, 1x / 10x pulls and a card reveal sequence. */
 export class GachaScreen implements Screen {
@@ -147,6 +148,7 @@ export class GachaScreen implements Screen {
       return;
     }
     this.economy.tickets -= cost;
+    sfx('gacha.pull');
     const results = this.gacha.pull(this.banner, n, this.now());
     this.reveal(results);
   }
@@ -191,6 +193,7 @@ export class GachaScreen implements Screen {
       setTimeout(
         () => {
           card.classList.replace('pending', 'flipped');
+          sfx(r.rarity === 'SSR' ? 'gacha.ssr' : 'gacha.reveal');
         },
         350 + i * 260,
       );

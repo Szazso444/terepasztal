@@ -1,3 +1,5 @@
+import { sfx } from '../engine/audio';
+
 /** Tiny DOM helpers for the overlay UI. */
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -20,6 +22,7 @@ export function btn(label: string, onClick: () => void, cls = ''): HTMLButtonEle
   const b = el('button', { class: `btn ${cls}`.trim(), text: label });
   b.addEventListener('click', (e) => {
     e.stopPropagation();
+    sfx('ui.click');
     onClick();
   });
   return b;

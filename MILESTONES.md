@@ -98,3 +98,22 @@
 
 **Known bugs**
 - If the pool has no item of a rolled rarity the picker falls back to any pool item.
+
+## 6. Polish
+
+**Works**
+- Day/night: multiply-blended tint follows the clock (warm dusk/dawn, blue night); toggle in settings.
+- Station lanterns and locomotive headlamps glow additively at night (procedural dithered glow sprites in the `fx` atlas).
+- Steam locomotives emit rising, fading smoke puffs while moving (toggle in settings).
+- Sound hooks (`src/engine/audio.ts`): named events (`ui.click`, `build.place`, `train.whistle`, `contract.done`, `gacha.ssr`, ...) fire throughout; a file at `/public/assets/audio/<event>.ogg` plays automatically, otherwise the call is a no-op. Volume sliders in settings.
+- Save/load: versioned `SaveGame` (v1) in localStorage with track, stations, trains (position + consist + cargo), contracts, inventory, gacha state (incl. RNG), economy, clock and camera. Autosave every real minute and on unload; manual save, load, new game with optional seed, export/import as text. Booting resumes the save automatically (`#seed=...&new` forces a fresh map).
+- Settings screen: audio, edge scrolling, autosave, day/night, smoke, FPS counter, control reference.
+- Vignette overlay, hidden toolbar in the overview, FPS readout in the top bar.
+
+**Stubbed**
+- No audio assets and no music player; only the hook layer.
+- Weather, seasons and per-tile lighting are out of scope.
+
+**Known bugs**
+- Trains restored from a save lose their reversed flag until the next dispatch, so a pushed consist may briefly render the locomotive facing the wrong way.
+- The multiply tint also darkens the DOM canvas background but not the HTML UI, which stays fully lit by design.

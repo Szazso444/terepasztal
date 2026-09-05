@@ -8,6 +8,7 @@ import type { Builder } from './build';
 import type { Station } from './stations';
 import { cargoDef } from './cargo';
 import trackData from '../data/track.json';
+import { sfx } from '../engine/audio';
 
 export type TrainState = 'moving' | 'loading' | 'waiting' | 'noRoute' | 'stranded';
 
@@ -485,6 +486,7 @@ export class Train {
 
   private arrive(st: Station) {
     this.atStation = st;
+    sfx('train.arrive');
     if (st.hasFreePlatform()) {
       st.occupants.add(this.id);
       this.setState('loading');
@@ -577,6 +579,7 @@ export class Train {
       return;
     }
     this.routeIndex = (this.routeIndex + 1) % this.route.length;
+    sfx('train.whistle');
     if (this.dispatch(ctx.track, ctx.builder, ctx.map)) this.onPathReady(ctx);
     else this.setState('noRoute');
   }

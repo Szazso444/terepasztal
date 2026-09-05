@@ -6,6 +6,7 @@ import type { Inventory } from '../gacha/inventory';
 import { wagonDef, levelMul } from '../gacha/items';
 import { opposite, DIR_DX, DIR_DY, DIRS } from '../engine/iso';
 import type { Economy } from './economy';
+import { sfx } from '../engine/audio';
 
 /** Owns all trains: creation from inventory items, recall, per-tick simulation. */
 export class Fleet {
@@ -60,6 +61,7 @@ export class Fleet {
     loco.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
     this.trains.push(t);
+    sfx('train.dispatch');
     // first stop is the spawn station itself: load, then continue
     if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady({ builder: this.builder });
     else t.state = 'noRoute';

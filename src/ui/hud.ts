@@ -18,7 +18,8 @@ export class Hud {
   private day = el('span', { class: 'value' });
   private clockEl = el('span', { class: 'value' });
   private speedBtns: HTMLButtonElement[] = [];
-  readonly actions = el('div', { class: 'stat', style: 'gap:4px' });
+  readonly actions = el('div', { class: 'stat actions', style: 'gap:4px' });
+  private fps = el('span', { class: 'value dim' });
 
   constructor(private readonly clock: GameClock) {
     const stat = (label: string, v: HTMLElement) =>
@@ -38,9 +39,15 @@ export class Hud {
       stat(STR.hud.reputation, this.rep),
       this.actions,
       el('div', { class: 'spacer' }),
+      el('div', { class: 'stat' }, this.fps),
       el('div', { class: 'stat' }, this.day, this.clockEl),
       time,
     );
+  }
+
+  setFps(v: number | null) {
+    this.fps.textContent = v === null ? '' : `${v} fps`;
+    (this.fps.parentElement as HTMLElement).style.display = v === null ? 'none' : '';
   }
 
   update(m: HudModel) {
