@@ -1,0 +1,14 @@
+{
+  "pieces": {
+    "straight": { "name": "Straight", "cost": 200, "rotations": 2 },
+    "curve": { "name": "Curve", "cost": 260, "rotations": 4 },
+    "switch": { "name": "Switch", "cost": 420, "rotations": 8 },
+    "crossing": { "name": "Crossing", "cost": 420, "rotations": 1 },
+    "bridge": { "name": "Bridge", "cost": 900, "rotations": 2 }
+  },
+  "terrainCost": { "grass": 1, "sand": 1.1, "forest": 1.4, "hill": 1.8, "water": 1, "rock": 0 },
+  "refund": 0.5,
+  "curveSpeed": 0.55,
+  "switchSpeed": 0.7,
+  "bridgeSpeed": 0.8
+}

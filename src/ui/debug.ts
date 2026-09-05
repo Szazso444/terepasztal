@@ -4,6 +4,7 @@ import { STR } from '../strings';
 export interface DebugActions {
   giveMoney(): void;
   giveTickets(): void;
+  giveReputation(): void;
   spawnContract(): void;
   toggleDepth(): boolean;
   regenerate(): void;

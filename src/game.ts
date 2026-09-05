@@ -1,13 +1,12 @@
-import { Application, Container, Graphics, Sprite, extensions, CullerPlugin } from 'pixi.js';
+import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop } from './engine/loop';
 import { worldToTileInt, tileToWorld } from './engine/iso';
-import { Rng } from './engine/rng';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
-import { type GameMap, inBounds, TERRAIN_NAMES, Terrain } from './world/tiles';
+import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -18,17 +17,19 @@ import { DebugPanel } from './ui/debug';
 import { Tooltip } from './ui/tooltip';
 import { el } from './ui/dom';
 import { STR } from './strings';
+import { TrackGraph } from './world/track';
+import { Builder } from './sim/build';
+import { Economy } from './sim/economy';
+import type { Station } from './sim/stations';
+import { Toolbar, type Tool } from './ui/toolbar';
+import { StationPanel } from './ui/stationPanel';
+import { BuildController } from './ui/buildController';
+import { Toasts } from './ui/toast';
 
 const SIM_HZ = 20;
 const EDGE_MARGIN = 14;
 const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
-
-export interface Economy {
-  money: number;
-  tickets: number;
-  reputation: number;
-}
 
 /** Top-level orchestrator: owns renderer, camera, sim clock, UI and the RTS/overview state machine. */
 export class Game {
@@ -47,7 +48,14 @@ export class Game {
   tooltip = new Tooltip();
   loop!: GameLoop;
   seed: number;
-  economy: Economy = { money: 25000, tickets: 3, reputation: 0 };
+  economy = new Economy();
+  track!: TrackGraph;
+  builder!: Builder;
+  toolbar!: Toolbar;
+  stationPanel!: StationPanel;
+  build!: BuildController;
+  toasts = new Toasts();
+  private panelRefresh = 0;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
   viewTarget: 0 | 1 = 0;
@@ -57,8 +65,15 @@ export class Game {
   private overviewBanner!: HTMLElement;
   private depthOverlay = false;
   private overviewSource: OverviewSource = {
-    trackTiles: () => [],
-    stations: () => [],
+    trackTiles: () => this.trackTilesForOverview(),
+    stations: () =>
+      this.builder.stations.map((s) => ({
+        id: s.id,
+        x: s.x,
+        y: s.y,
+        name: s.name,
+        level: s.level,
+      })),
     trains: () => [],
     contracts: () => [],
   };
@@ -93,6 +108,13 @@ export class Game {
     const c = tileToWorld(this.map.w / 2, this.map.h / 2);
     this.camera.centerOn(c.x, c.y);
 
+    this.track = new TrackGraph(this.map.w, this.map.h);
+    this.builder = new Builder(this.map, this.regions, this.track, this.economy);
+    this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
+    this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
+    this.economy.onMessage = (m, k) => this.toasts.push(m, k);
+    this.economy.onTierUp = (t) => this.onTierUp(t);
+
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.root.visible = false;
@@ -100,18 +122,65 @@ export class Game {
     this.cursor = new Sprite(cur.texture);
     this.cursor.anchor.set(cur.anchorX, cur.anchorY);
     this.world.overlay.addChild(this.cursor);
-    const backdrop = new Graphics();
-    backdrop.label = 'backdrop';
     this.app.stage.addChild(this.world.root, this.overview.root);
 
+    this.build = new BuildController(this.input, this.builder, this.world, () =>
+      this.tileUnderMouse(),
+    );
     this.buildUi();
+    this.build.onSelect = (s) =>
+      s ? this.stationPanel.open(s) : this.stationPanel.station && this.stationPanel.close();
+    this.build.onStatus = (t) => this.toolbar.setStatus(t);
+    this.build.onToolChanged = (t) => this.toolbar.setActive(t);
     this.loop = new GameLoop(
       SIM_HZ,
       (dt) => this.update(dt),
       (a, dt) => this.render(a, dt),
     );
     this.loop.start();
-    void backdrop;
+  }
+
+  // ---------------------------------------------------------------- world edits
+  private onTrackChanged(x: number, y: number) {
+    const p = this.track.get(x, y);
+    const t = terrainAt(this.map, x, y);
+    if (p) {
+      if (t === Terrain.Hill) this.world.setFlattened(x, y, true);
+      if (t === Terrain.Forest || t === Terrain.Grass) this.world.removeProps(x, y);
+      this.world.setTrack(x, y, `track/${p.kind}_${p.rot}`);
+    } else {
+      this.world.setTrack(x, y, null);
+      if (t === Terrain.Hill && !this.builder.stationAt(x, y)) this.world.setFlattened(x, y, false);
+    }
+  }
+  private onStationChanged(s: Station, removed: boolean) {
+    const id = `station:${s.id}`;
+    const t = terrainAt(this.map, s.x, s.y);
+    if (removed) {
+      this.world.removeStructure(id);
+      if (t === Terrain.Hill && !this.track.has(s.x, s.y)) this.world.setFlattened(s.x, s.y, false);
+    } else {
+      if (t === Terrain.Hill) this.world.setFlattened(s.x, s.y, true);
+      this.world.removeProps(s.x, s.y);
+      this.world.setStructure(id, s.x, s.y, `structures/station_${s.spriteLevel}`);
+      if (this.stationPanel.station === s) this.stationPanel.render();
+    }
+  }
+  private onTierUp(tier: number) {
+    const newly = this.regions.applyTier(tier);
+    if (newly.length) {
+      this.world.rebuildFog();
+      this.overview.rebuildRegions();
+      this.minimap.rebuildBase();
+    }
+    this.toolbar.refresh();
+    this.toasts.push(STR.hud.tierUp(tier), 'good');
+  }
+  private trackTilesForOverview() {
+    const out: { x: number; y: number; links: [number, number][] }[] = [];
+    for (const t of this.track.tiles())
+      out.push({ x: t.x, y: t.y, links: t.piece.links as [number, number][] });
+    return out;
   }
 
   private buildUi() {
@@ -122,6 +191,7 @@ export class Game {
     this.debug = new DebugPanel(this.seed, {
       giveMoney: () => (this.economy.money += 10000),
       giveTickets: () => (this.economy.tickets += 10),
+      giveReputation: () => this.economy.addReputation(100),
       spawnContract: () => {},
       toggleDepth: () => {
         this.depthOverlay = !this.depthOverlay;
@@ -140,6 +210,15 @@ export class Game {
       class: 'panel',
       text: STR.overview.hint,
     });
+    this.toolbar = new Toolbar(
+      (t: Tool) => this.build.setTool(t),
+      () => this.economy.tier,
+    );
+    this.toolbar.refresh();
+    this.stationPanel = new StationPanel(
+      this.builder,
+      () => this.build.selected && this.build.select(null),
+    );
     this.uiRoot.append(
       el('div', { class: 'vignette' }),
       this.hud.root,
@@ -147,6 +226,9 @@ export class Game {
       this.debug.root,
       this.overviewBanner,
       el('div', { id: 'hint', text: STR.hints.camera }),
+      this.toolbar.root,
+      this.stationPanel.root,
+      this.toasts.root,
       this.tooltip.root,
     );
   }
@@ -158,7 +240,8 @@ export class Game {
 
   // ---------------------------------------------------------------- sim
   private update(dt: number) {
-    this.clock.advance(dt);
+    const gdt = this.clock.advance(dt);
+    if (gdt > 0) for (const s of this.builder.stations) s.tick(gdt);
   }
 
   // ---------------------------------------------------------------- frame
@@ -172,10 +255,38 @@ export class Game {
     this.world.applyCamera(this.camera);
     this.layoutViews();
     this.updateCursor();
-    this.hud.update({ ...this.economy, tier: 0 });
-    this.minimap.draw({ track: [], stations: [], trains: [] });
+    this.build.update(this.viewTarget === 0 && this.viewBlend === 0 && !this.input.overUi);
+    this.updateRtsTooltip();
+    this.hud.update(this.economy);
+    this.panelRefresh += dt;
+    if (this.panelRefresh > 0.5) {
+      this.panelRefresh = 0;
+      if (this.stationPanel.station) this.stationPanel.render();
+    }
+    this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
     this.input.endFrame();
+  }
+
+  private minimapMarks() {
+    const track: { x: number; y: number }[] = [];
+    for (const t of this.track.tiles()) track.push({ x: t.x, y: t.y });
+    return {
+      track,
+      stations: this.builder.stations.map((s) => ({ x: s.x, y: s.y })),
+      trains: [] as { x: number; y: number }[],
+    };
+  }
+
+  private updateRtsTooltip() {
+    if (this.viewTarget !== 0 || this.input.overUi) return;
+    const st = this.build.hoverStation;
+    if (st && this.build.tool.kind === 'none') {
+      this.tooltip.show(this.input.mouseX, this.input.mouseY, st.name, [
+        STR.station.level(st.level),
+        `${STR.station.storage}: ${Math.floor(st.totalStored())} / ${st.capacity}`,
+      ]);
+    } else this.tooltip.hide();
   }
 
   private handleInput(dt: number) {
@@ -251,6 +362,17 @@ export class Game {
 
   /** Overridable hooks for later milestones. */
   describePick(p: { kind: 'station' | 'train'; id: number }): { title: string; lines: string[] } {
+    if (p.kind === 'station') {
+      const s = this.builder.stationById(p.id);
+      if (s)
+        return {
+          title: s.name,
+          lines: [
+            STR.station.level(s.level),
+            `${STR.station.storage}: ${Math.floor(s.totalStored())} / ${s.capacity}`,
+          ],
+        };
+    }
     return { title: `${p.kind} #${p.id}`, lines: [] };
   }
   pickPosition(p: { kind: 'station' | 'train'; id: number }): { x: number; y: number } | null {
@@ -403,4 +525,3 @@ export function hashSeed(s: string): number {
   }
   return h >>> 0;
 }
-export { Rng, Container };

@@ -16,6 +16,10 @@ export class Input {
   /** Pointer currently over a DOM overlay element (panels swallow world interaction). */
   overUi = false;
   readonly buttons = new Set<number>();
+  /** buttons that went down this frame (on the canvas) */
+  readonly buttonPressed = new Set<number>();
+  /** buttons released this frame (anywhere) */
+  readonly buttonReleased = new Set<number>();
   wheelDelta = 0;
   clicks: ClickEvent[] = [];
   /** Set true if a DOM element (UI) should swallow the pointer. */
@@ -54,6 +58,7 @@ export class Input {
 
     el.addEventListener('mousedown', (e) => {
       this.buttons.add(e.button);
+      this.buttonPressed.add(e.button);
       this.lastX = this.mouseX;
       this.lastY = this.mouseY;
       if (e.button === 1) e.preventDefault();
@@ -70,6 +75,7 @@ export class Input {
         });
       }
       this.buttons.delete(e.button);
+      this.buttonReleased.add(e.button);
     });
     el.addEventListener('contextmenu', (e) => e.preventDefault());
     el.addEventListener(
@@ -91,6 +97,8 @@ export class Input {
   /** Call at end of frame. */
   endFrame() {
     this.pressed.clear();
+    this.buttonPressed.clear();
+    this.buttonReleased.clear();
     this.wheelDelta = 0;
     this.clicks.length = 0;
     this.dragDX = 0;

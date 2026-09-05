@@ -1,0 +1,82 @@
+{
+  "levels": {
+    "capacity": [60, 120, 200, 320, 500],
+    "loadRate": [4, 6, 9, 13, 18],
+    "platforms": [1, 1, 2, 2, 3],
+    "production": [30, 50, 80, 120, 170],
+    "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6],
+    "spriteByLevel": [1, 1, 2, 2, 3],
+    "maxLevelByTier": [2, 3, 4, 5, 5]
+  },
+  "defs": [
+    {
+      "id": "farm",
+      "name": "Farm Halt",
+      "flavor": "Grain silos and a weighbridge. Smells of dust and diesel.",
+      "cost": 3500,
+      "tier": 0,
+      "produces": [
+        { "cargo": "grain", "level": 1 },
+        { "cargo": "food", "level": 4 }
+      ],
+      "accepts": ["goods"]
+    },
+    {
+      "id": "lumber",
+      "name": "Lumber Yard",
+      "flavor": "Log stacks taller than the shed. Saws run all night.",
+      "cost": 3500,
+      "tier": 0,
+      "produces": [{ "cargo": "wood", "level": 1 }],
+      "accepts": ["goods", "food"]
+    },
+    {
+      "id": "town",
+      "name": "Town Station",
+      "flavor": "Market square, chapel bell, one very impatient stationmaster.",
+      "cost": 5000,
+      "tier": 0,
+      "produces": [{ "cargo": "goods", "level": 1 }],
+      "accepts": ["grain", "wood", "steel", "food", "oil", "stone", "coal"]
+    },
+    {
+      "id": "mine",
+      "name": "Ore Mine",
+      "flavor": "Headframe, tipple, and a tunnel that goes further than anyone admits.",
+      "cost": 5500,
+      "tier": 0,
+      "produces": [
+        { "cargo": "ore", "level": 1 },
+        { "cargo": "coal", "level": 3 }
+      ],
+      "accepts": ["wood", "goods"]
+    },
+    {
+      "id": "quarry",
+      "name": "Quarry",
+      "flavor": "Grey dust on everything. The blasting horn is a local clock.",
+      "cost": 4500,
+      "tier": 1,
+      "produces": [{ "cargo": "stone", "level": 1 }],
+      "accepts": ["goods", "coal"]
+    },
+    {
+      "id": "mill",
+      "name": "Steel Mill",
+      "flavor": "Blast furnaces glow through the smoke. Loud, hot, profitable.",
+      "cost": 9000,
+      "tier": 1,
+      "produces": [{ "cargo": "steel", "level": 1 }],
+      "accepts": ["ore", "coal", "stone"]
+    },
+    {
+      "id": "refinery",
+      "name": "Refinery",
+      "flavor": "Tank farm and flare stacks. Keep the lanterns away from it.",
+      "cost": 12000,
+      "tier": 2,
+      "produces": [{ "cargo": "oil", "level": 1 }],
+      "accepts": ["steel", "goods"]
+    }
+  ]
+}

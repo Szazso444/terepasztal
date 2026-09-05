@@ -1,0 +1,18 @@
+[
+  { "id": "grain", "name": "Grain", "tier": 0, "price": 18, "color": "cargoGrain", "weight": 1.0 },
+  { "id": "wood", "name": "Timber", "tier": 0, "price": 16, "color": "cargoWood", "weight": 1.2 },
+  { "id": "goods", "name": "Goods", "tier": 0, "price": 30, "color": "cargoGoods", "weight": 0.8 },
+  { "id": "ore", "name": "Iron Ore", "tier": 0, "price": 22, "color": "cargoOre", "weight": 1.6 },
+  { "id": "coal", "name": "Coal", "tier": 1, "price": 20, "color": "cargoCoal", "weight": 1.4 },
+  { "id": "stone", "name": "Stone", "tier": 1, "price": 14, "color": "cargoStone", "weight": 1.8 },
+  { "id": "steel", "name": "Steel", "tier": 1, "price": 48, "color": "cargoSteel", "weight": 1.6 },
+  {
+    "id": "food",
+    "name": "Provisions",
+    "tier": 2,
+    "price": 42,
+    "color": "cargoGrain",
+    "weight": 0.9
+  },
+  { "id": "oil", "name": "Oil", "tier": 2, "price": 55, "color": "cargoOil", "weight": 1.3 }
+]

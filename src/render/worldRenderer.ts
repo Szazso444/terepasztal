@@ -14,9 +14,12 @@ const CHUNK = 8;
 export class WorldRenderer {
   readonly root = new Container();
   readonly ground = new Container();
+  readonly track = new Container();
   readonly objects = new Container();
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
+  private trackSprites = new Map<number, Sprite>();
+  private structures = new Map<string, Sprite>();
   private groundSprites: Sprite[] = [];
   private fogSprites = new Map<number, Sprite>();
   private waterSprites: { s: Sprite; a: string; b: string }[] = [];
@@ -34,7 +37,8 @@ export class WorldRenderer {
     this.objects.cullableChildren = true;
     this.ground.cullableChildren = true;
     this.fog.cullableChildren = true;
-    this.root.addChild(this.ground, this.fog, this.objects, this.overlay);
+    this.track.cullableChildren = true;
+    this.root.addChild(this.ground, this.track, this.objects, this.fog, this.overlay);
     this.buildGround();
     this.buildProps();
     this.rebuildFog();
@@ -199,6 +203,70 @@ export class WorldRenderer {
         w.s.texture = this.atlas.get(cur).texture;
       }
     }
+  }
+
+  /** Show a track piece sprite on a tile (or clear it). Flat: lives in the track layer under objects. */
+  setTrack(x: number, y: number, frame: string | null) {
+    const i = idx(this.map, x, y);
+    let s = this.trackSprites.get(i);
+    if (!frame) {
+      if (s) {
+        s.destroy();
+        this.trackSprites.delete(i);
+      }
+      return;
+    }
+    const f = this.atlas.get(frame);
+    if (!s) {
+      s = new Sprite(f.texture);
+      s.cullable = true;
+      this.track.addChild(s);
+      this.trackSprites.set(i, s);
+    } else s.texture = f.texture;
+    s.anchor.set(f.anchorX, f.anchorY);
+    const p = tileToWorld(x, y);
+    s.position.set(p.x, p.y + this.elevationOf(x, y));
+  }
+
+  /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */
+  setStructure(id: string, x: number, y: number, frame: string, layer = 20) {
+    const f = this.atlas.get(frame);
+    let s = this.structures.get(id);
+    if (!s) {
+      s = new Sprite(f.texture);
+      s.cullable = true;
+      this.objects.addChild(s);
+      this.structures.set(id, s);
+    } else s.texture = f.texture;
+    s.anchor.set(f.anchorX, f.anchorY);
+    const p = tileToWorld(x, y);
+    s.position.set(p.x, p.y + this.elevationOf(x, y));
+    s.zIndex = depthKey(x, y, layer);
+    return s;
+  }
+  removeStructure(id: string) {
+    const s = this.structures.get(id);
+    if (s) {
+      s.destroy();
+      this.structures.delete(id);
+    }
+  }
+  getStructure(id: string) {
+    return this.structures.get(id);
+  }
+
+  /** Create a sprite in the overlay layer (ghost previews). */
+  makeOverlaySprite(frame: string): Sprite {
+    const f = this.atlas.get(frame);
+    const s = new Sprite(f.texture);
+    s.anchor.set(f.anchorX, f.anchorY);
+    this.overlay.addChild(s);
+    return s;
+  }
+  setSpriteFrame(s: Sprite, frame: string) {
+    const f = this.atlas.get(frame);
+    s.texture = f.texture;
+    s.anchor.set(f.anchorX, f.anchorY);
   }
 
   /** World pixel position of the top surface of a tile centre (for placing sprites). */
