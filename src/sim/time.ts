@@ -1,4 +1,6 @@
-/** In-game clock. One day = 4 real minutes at 1x. */
+import { daySeconds } from './rules';
+
+/** In-game clock. One day = 4 real minutes at 1x by default (tunable). */
 export const DAY_SECONDS = 240;
 export const SPEEDS = [0, 1, 2, 3] as const;
 
@@ -11,11 +13,11 @@ export class GameClock {
     return SPEEDS[this.speedIndex];
   }
   get day() {
-    return Math.floor(this.time / DAY_SECONDS) + 1;
+    return Math.floor(this.time / daySeconds()) + 1;
   }
   /** 0..1 within the day; 0 = midnight. */
   get dayFraction() {
-    return (this.time % DAY_SECONDS) / DAY_SECONDS;
+    return (this.time % daySeconds()) / daySeconds();
   }
   get hour() {
     return Math.floor(this.dayFraction * 24);
@@ -25,7 +27,7 @@ export class GameClock {
   }
   /** Elapsed days as a float. */
   get days() {
-    return this.time / DAY_SECONDS;
+    return this.time / daySeconds();
   }
   setSpeed(i: number) {
     if (i !== 0) this.prevSpeed = i;

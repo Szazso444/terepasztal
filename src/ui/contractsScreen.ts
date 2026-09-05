@@ -5,10 +5,10 @@ import type { ContractBoard, Contract } from '../sim/contracts';
 import type { Builder } from '../sim/build';
 import type { GameClock } from '../sim/time';
 import { cargoDef } from '../sim/cargo';
-import { DAY_SECONDS } from '../sim/time';
+import { daySeconds } from '../sim/rules';
 
 export function fmtDuration(sec: number) {
-  const days = sec / DAY_SECONDS;
+  const days = sec / daySeconds();
   if (days >= 1) return `${days.toFixed(1)}d`;
   const h = Math.floor(days * 24);
   const m = Math.floor(((days * 24) % 1) * 60);

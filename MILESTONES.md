@@ -112,3 +112,18 @@
 ## Review pass (adversarial, 7 lenses, 3 verifiers per finding)
 
 26 confirmed findings fixed after the fix pass, among them: a reroute that could leave a moving train with no path and crash the simulation; trains snapping backwards when a consist reversed (paths now re-anchor on the new head); hold counters carried across states; seasonal production not applied to stations built mid-season; orphan markers and hill cuts left behind by demolished stations and towers; the season tint not refreshing when the weather toggle changes; top-bar overflow at 1280 px and an empty cell with weather off; fog drifting over the page background (now clipped to the world); a water animation that snapped every fourth frame (now periodic); a station panel that did not scroll; a replacement status that advertised a negative price; sounds dropped between the first click and the audio context resuming; the featured rate-up that was really 65-77 % (now exactly 50 %) and stale featured panels across rotations; a Collect button that vanished within half a second; duplicate text on max-level items; the settings importer refusing v1 saves; and stale audio copy in Settings and the README.
+
+## 7. Menus, tuning, content editor, level editor
+
+**Works**
+- Main menu on boot over the paused world: Continue (when a save exists), New game with an optional seed, Game tuning, Content editor, Settings, and a Levels column (play / edit / delete, new blank or generated level in 32-128 tiles, import from JSON). Pause menu on Esc or the Menu button: resume, save, settings, tuning, content, main menu, and "Back to editor" while play-testing.
+- Boot intents (`src/intent.ts`): menus store what the next load should do in sessionStorage and reload; the world behind the main menu is the last save.
+- Game tuning (`src/sim/rules.ts`, `src/ui/tuningScreen.ts`): 27 live rules with sliders (start funds/tickets/reputation, build cost and refund, running cost, spot price, contract payout/reputation/penalty/deadline/offer count/refresh, train speed, loading, production, capacity, day length, season length, rain and fog chance, map size and terrain levels) plus the tier ladder. Read at use time, persisted in localStorage and stored inside every save; map values apply to the next generated map.
+- Content editor (`src/data/content.ts`, `src/ui/contentScreen.ts`): every data table (locomotives, wagons, cargo, stations and their level table, contract templates and config, decor, gacha config and banners, track config) is editable in-client with generated forms, duplicate/remove/add, validation (ids, cargo references, banner pools, starters, rates), export/import of the whole bundle, "Reset to shipped data", and "Apply and reload". Overrides live in localStorage and are applied once at module load.
+- Level editor (`src/editor/editor.ts`, `src/ui/editorPanel.ts`): free building of any track, station (any level, tier ignored), decor; terrain brush (six terrains, three sizes, drag to paint, props regenerate, buildings on painted tiles are cleared); fill and regenerate; level name, description and player start block (funds, tickets, reputation, tier); save, save as, export/import JSON, play test (starts a new game from the level and offers "Back to editor"), exit. Levels persist in localStorage (`terepasztal.levels`); terrain is stored as packed bytes.
+- Save format v3: stores the world spec (generated parameters or the whole level) and the rules; v1/v2 saves migrate.
+
+**Known limitations**
+- Content changes need a reload (the editor does it); a save that references removed content items may fail to load.
+- Levels do not ship pre-placed trains or contracts.
+- Terrain painting under existing track removes the track rather than re-laying it.

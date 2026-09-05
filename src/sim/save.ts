@@ -1,7 +1,16 @@
 import type { TrackKind } from '../world/track';
 import type { StationJSON } from './stations';
+import type { MapGenParams } from '../world/mapgen';
+import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
+import type { LevelData } from '../world/level';
+import type { Rules } from './rules';
 
-export const SAVE_VERSION = 2;
+/** What the map was built from; a level save carries the whole level. */
+export type WorldSpec =
+  | { kind: 'generated'; seed: number; params: MapGenParams }
+  | { kind: 'level'; seed: number; level: LevelData };
+
+export const SAVE_VERSION = 3;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -25,6 +34,10 @@ export interface SaveGame {
   decor?: [number, number, string, number][];
   /** v2: weather generator state */
   weather?: unknown;
+  /** v3: how the map was built */
+  world?: WorldSpec;
+  /** v3: the rules the game was played with */
+  rules?: Partial<Rules>;
 }
 
 export interface Settings {
@@ -67,6 +80,10 @@ function migrate(j: SaveGame): SaveGame {
   if (j.version < 2) {
     j.decor = j.decor ?? [];
     j.version = 2;
+  }
+  if (j.version < 3) {
+    j.world = j.world ?? { kind: 'generated', seed: j.seed, params: { ...DEFAULT_MAP_PARAMS } };
+    j.version = 3;
   }
   return j;
 }

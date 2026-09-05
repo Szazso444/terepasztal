@@ -1,24 +1,13 @@
-import contractData from '../data/contracts.json';
+import { content, type ContractTemplate } from '../data/content';
+import { rules, daySeconds } from './rules';
 import { Rng } from '../engine/rng';
 import type { Station } from './stations';
 import type { Builder } from './build';
 import type { Economy } from './economy';
 import { cargoDef } from './cargo';
-import { DAY_SECONDS } from './time';
 import type { DeliveryEvent } from './trains';
 
-export interface ContractTemplate {
-  id: string;
-  name: string;
-  minTier: number;
-  weight: number;
-  amount: [number, number];
-  baseDays: number;
-  daysPerTile: number;
-  payoutMul: number;
-  reputation: [number, number];
-  tickets: number;
-}
+export type { ContractTemplate };
 export type ContractStatus = 'offer' | 'active' | 'done' | 'failed' | 'expired';
 
 export interface Contract {
@@ -46,7 +35,8 @@ export interface ContractEvent {
   contract: Contract;
 }
 
-const TEMPLATES: ContractTemplate[] = contractData.templates as ContractTemplate[];
+const contractData = content.contracts;
+const TEMPLATES: ContractTemplate[] = contractData.templates;
 
 /** Generates offers, tracks active contracts and applies deliveries. */
 export class ContractBoard {
@@ -124,9 +114,11 @@ export class ContractBoard {
     const dist = Math.abs(pair.from.x - pair.to.x) + Math.abs(pair.from.y - pair.to.y);
     const durationDays = tpl.baseDays + dist * tpl.daysPerTile + amount / 60;
     const price = cargoDef(pair.cargo).price;
-    const payout = Math.round(amount * price * tpl.payoutMul * (1 + dist / 80) * (1 + tier * 0.15));
+    const payout = Math.round(
+      rules.payoutMul * amount * price * tpl.payoutMul * (1 + dist / 80) * (1 + tier * 0.15),
+    );
     const reputation = Math.round(
-      this.rng.int(tpl.reputation[0], tpl.reputation[1]) * (1 + dist / 120),
+      rules.reputationMul * this.rng.int(tpl.reputation[0], tpl.reputation[1]) * (1 + dist / 120),
     );
     const c: Contract = {
       id: this.nextId++,
@@ -140,8 +132,8 @@ export class ContractBoard {
       payout,
       reputation,
       tickets: tpl.tickets,
-      duration: durationDays * DAY_SECONDS,
-      expires: now + contractData.offerLifetimeDays * DAY_SECONDS,
+      duration: durationDays * rules.deadlineMul * daySeconds(),
+      expires: now + contractData.offerLifetimeDays * daySeconds(),
       acceptedAt: 0,
       status: 'offer',
     };
@@ -172,8 +164,8 @@ export class ContractBoard {
 
   tick(now: number) {
     if (now >= this.nextRefresh) {
-      this.nextRefresh = now + contractData.refreshIntervalDays * DAY_SECONDS;
-      const want = contractData.offerCount;
+      this.nextRefresh = now + rules.contractRefreshDays * daySeconds();
+      const want = rules.contractOfferCount;
       let tries = 0;
       while (this.offers.length < want && tries++ < 6) this.generate(now);
     }
@@ -193,7 +185,9 @@ export class ContractBoard {
   private fail(c: Contract) {
     c.status = 'failed';
     this.stats.failed++;
-    this.economy.addReputation(-Math.round(c.reputation * contractData.failReputationMul));
+    this.economy.addReputation(
+      -Math.round(c.reputation * contractData.failReputationMul * rules.failPenaltyMul),
+    );
     this.onEvent?.({ kind: 'failed', contract: c });
   }
 

@@ -1,7 +1,7 @@
 import { Container, Sprite, Rectangle } from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey, ELEV_PX, HALF_W, HALF_H, TILE_H } from '../engine/iso';
-import { Terrain, type GameMap, idx } from '../world/tiles';
+import { Terrain, type GameMap, type PropInstance, idx } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 
@@ -133,11 +133,38 @@ export class WorldRenderer {
 
   /** Re-texture a ground tile (after flattening a hill, etc). */
   refreshGround(x: number, y: number) {
-    const s = this.groundSprites[idx(this.map, x, y)];
+    const i = idx(this.map, x, y);
+    const s = this.groundSprites[i];
     if (!s) return;
-    const f = this.atlas.get(this.groundFrame(x, y));
+    const frame = this.groundFrame(x, y);
+    const f = this.atlas.get(frame);
     s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
+    const isWater = this.map.terrain[i] === Terrain.Water;
+    const wi = this.waterSprites.findIndex((w) => w.s === s);
+    if (isWater && wi < 0) this.waterSprites.push({ s, base: frame.slice(0, -3) });
+    else if (!isWater && wi >= 0) this.waterSprites.splice(wi, 1);
+    s.tint = isWater ? 0xffffff : this.groundTint;
+  }
+
+  /** Re-create the prop sprites of one tile from the map data (after terrain edits). */
+  rebuildProps(x: number, y: number) {
+    this.removeProps(x, y);
+    const i = idx(this.map, x, y);
+    const list = this.map.props.get(i);
+    if (list) this.buildPropsAt(i, list);
+  }
+
+  /** Re-tile after terrain edits: ground texture, props, and objects standing on the tile. */
+  retile(x: number, y: number) {
+    this.refreshGround(x, y);
+    this.rebuildProps(x, y);
+    const i = idx(this.map, x, y);
+    const p = tileToWorld(x, y);
+    const t = this.trackSprites.get(i);
+    if (t) t.position.set(p.x, p.y + this.elevationOf(x, y));
+    const fog = this.fogSprites.get(i);
+    if (fog) fog.position.set(p.x, p.y + this.elevationOf(x, y));
   }
 
   setFlattened(x: number, y: number, flat: boolean) {
@@ -157,7 +184,10 @@ export class WorldRenderer {
   }
 
   private buildProps() {
-    for (const [i, list] of this.map.props) {
+    for (const [i, list] of this.map.props) this.buildPropsAt(i, list);
+  }
+  private buildPropsAt(i: number, list: PropInstance[]) {
+    {
       const x = i % this.map.w;
       const y = Math.floor(i / this.map.w);
       const sprites: Sprite[] = [];
@@ -171,6 +201,8 @@ export class WorldRenderer {
         s.position.set(Math.round(wp.x), Math.round(wp.y + this.elevationOf(x, y)));
         s.zIndex = depthKey(x + p.ox, y + p.oy, 10);
         s.cullable = true;
+        s.tint = this.propTint;
+        s.visible = !this.flattened.has(i);
         this.objects.addChild(s);
         sprites.push(s);
       }
@@ -271,7 +303,11 @@ export class WorldRenderer {
   }
 
   /** Multiply-tint every ground and prop sprite (seasons). Water and void are left alone. */
+  private groundTint = 0xffffff;
+  private propTint = 0xffffff;
   setSeasonTint(ground: number, props: number) {
+    this.groundTint = ground;
+    this.propTint = props;
     for (let i = 0; i < this.groundSprites.length; i++) {
       const s = this.groundSprites[i];
       if (!s) continue;

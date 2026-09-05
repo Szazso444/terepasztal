@@ -6,6 +6,25 @@ import { GameLoop } from './engine/loop';
 import { worldToTileInt, tileToWorld } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
+import { mapFromLevel, type LevelData } from './world/level';
+import { rules, setRules, daySeconds } from './sim/rules';
+import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
+import { rulesDiffer } from './sim/rules';
+import { contentIsCustom } from './data/content';
+import { MainMenu, PauseMenu } from './ui/menu';
+import { Editor } from './editor/editor';
+import { EditorPanel } from './ui/editorPanel';
+import {
+  listLevels,
+  deleteLevel,
+  saveLevel,
+  isLevel,
+  type LevelData as LevelRecord,
+} from './world/level';
+import { generateMap as generateMapForEditor } from './world/mapgen';
+import { decorateProps } from './world/mapgen';
+import { Terrain as TerrainEnum } from './world/tiles';
+import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
@@ -42,6 +61,8 @@ import { validateBanners } from './gacha/gacha';
 import { DIR_DX, DIR_DY } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import { SettingsScreen } from './ui/settingsScreen';
+import { TuningScreen } from './ui/tuningScreen';
+import { ContentScreen } from './ui/contentScreen';
 import {
   SAVE_VERSION,
   SAVE_MIN_VERSION,
@@ -105,6 +126,8 @@ export class Game {
   private lastDay = 1;
   settings: Settings = readSettings();
   settingsScreen!: SettingsScreen;
+  tuningScreen!: TuningScreen;
+  contentScreen!: ContentScreen;
   dayNight = new DayNight();
   glows!: Glows;
   smoke!: Smoke;
@@ -162,9 +185,257 @@ export class Game {
       }),
   };
 
-  constructor(seed: number) {
-    this.seed = seed;
+  readonly spec: WorldSpec;
+  /** play = normal game; editor = level editor (free building, paused clock) */
+  mode: 'play' | 'editor' = 'play';
+  mainMenu!: MainMenu;
+  pauseMenu!: PauseMenu;
+  editor: Editor | null = null;
+  editorPanel: EditorPanel | null = null;
+  private paused = false;
+  private menuPausedSpeed = 1;
+  get menuOpen() {
+    return this.mainMenu.visible || this.pauseMenu.visible;
+  }
+
+  constructor(spec: WorldSpec) {
+    this.spec = spec;
+    this.seed = spec.seed;
     this.uiRoot = document.getElementById('ui-root')!;
+  }
+
+  /** Starting economy for a brand-new game, from the rules (or a level's start block). */
+  startFresh(start?: LevelData['start']) {
+    this.economy.money = start ? start.money : rules.startMoney;
+    this.economy.tickets = start ? start.tickets : rules.startTickets;
+    const rep = start ? start.reputation : rules.startReputation;
+    if (rep > 0) this.economy.addReputation(rep);
+    if (start && start.tier > this.economy.tier) {
+      this.economy.tier = Math.min(start.tier, this.regions.tiers.length ? 4 : 0);
+      const newly = this.regions.applyTier(start.tier);
+      if (newly.length) {
+        this.world.rebuildFog();
+        this.overview.rebuildRegions();
+        this.minimap.rebuildBase();
+      }
+      this.toolbar.refresh();
+    }
+  }
+
+  /** Place a level's pre-built content into a fresh world (no economy). */
+  placeLevelContent(level: LevelData) {
+    for (const [x, y, kind, rot] of level.track) {
+      if (!inBounds(this.map, x, y)) continue;
+      this.track.set(x, y, makePiece(kind, rot));
+      this.onTrackChanged(x, y);
+    }
+    resetStationIds(1);
+    for (const sj of level.stations) {
+      if (!inBounds(this.map, sj.x, sj.y)) continue;
+      const st = new Station(sj.defId, sj.x, sj.y, sj.name || undefined);
+      st.level = Math.max(1, Math.min(5, sj.level));
+      this.builder.stations.push(st);
+      this.onStationChanged(st, false);
+    }
+    for (const [x, y, id, rot] of level.decor) {
+      if (!inBounds(this.map, x, y)) continue;
+      const d: Decor = { id, x, y, rot };
+      this.builder.decor.set(y * this.map.w + x, d);
+      this.onDecorChanged(d, false);
+    }
+    this.builder.refreshStationBoosts();
+    for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
+  }
+  applyLevelStart(level: LevelData) {
+    this.placeLevelContent(level);
+    this.startFresh(level.start);
+  }
+
+  // ---------------------------------------------------------------- menus
+  private pauseGame() {
+    if (this.paused) return;
+    this.paused = true;
+    this.menuPausedSpeed = this.clock.speedIndex;
+    this.clock.setSpeed(0);
+  }
+  private resumeGame() {
+    if (!this.paused) return;
+    this.paused = false;
+    if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed || 1);
+  }
+  openMainMenu() {
+    this.pauseGame();
+    this.screens.close();
+    this.pauseMenu.hide();
+    this.build.setTool({ kind: 'none' });
+    this.mainMenu.show(!!readSave(), listLevels(), {
+      rules: rulesDiffer().length > 0,
+      content: contentIsCustom(),
+    });
+  }
+  openPauseMenu() {
+    if (this.mainMenu.visible) return;
+    this.pauseGame();
+    this.screens.close();
+    this.pauseMenu.show({ testing: !!testingLevel(), editor: this.mode === 'editor' });
+  }
+  closeMenus() {
+    this.pauseMenu.hide();
+    this.mainMenu.hide();
+    this.resumeGame();
+  }
+  private confirmReplaceSave() {
+    return !readSave() || confirm(STR.menu.confirmReplace);
+  }
+  private parseSeed(text: string) {
+    const t = text.trim();
+    return t ? (/^\d+$/.test(t) ? Number(t) : hashSeed(t)) : Math.floor(Math.random() * 2 ** 31);
+  }
+  private buildMenus() {
+    this.mainMenu = new MainMenu({
+      continue: () => this.closeMenus(),
+      newGame: (seed) => {
+        if (this.confirmReplaceSave()) this.newGame(seed);
+      },
+      playLevel: (id) => {
+        if (!this.confirmReplaceSave()) return;
+        clearSave();
+        setTestingLevel(null);
+        setIntentAndReload({ action: 'play', levelId: id });
+      },
+      editLevel: (id) => setIntentAndReload({ action: 'edit', levelId: id }),
+      newLevel: (size, generated, seedText) =>
+        setIntentAndReload({
+          action: 'edit',
+          levelId: null,
+          blank: !generated,
+          size,
+          seed: this.parseSeed(seedText),
+        }),
+      deleteLevel: (id) => {
+        deleteLevel(id);
+        this.openMainMenu();
+      },
+      importLevel: (json) => {
+        try {
+          const l = JSON.parse(json) as LevelRecord;
+          if (!isLevel(l)) return false;
+          saveLevel(l);
+          this.openMainMenu();
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      exportLevel: (id) => JSON.stringify(listLevels().find((l) => l.id === id) ?? null),
+      tuning: () => this.screens.open(this.tuningScreen),
+      content: () => this.screens.open(this.contentScreen),
+      settings: () => this.screens.open(this.settingsScreen),
+    });
+    this.pauseMenu = new PauseMenu({
+      resume: () => this.closeMenus(),
+      save: () => {
+        this.save();
+        this.closeMenus();
+      },
+      settings: () => this.screens.open(this.settingsScreen),
+      tuning: () => this.screens.open(this.tuningScreen),
+      content: () => this.screens.open(this.contentScreen),
+      backToEditor: () => {
+        const id = testingLevel();
+        setTestingLevel(null);
+        if (id) setIntentAndReload({ action: 'edit', levelId: id });
+      },
+      mainMenu: () => {
+        if (this.mode === 'editor') {
+          if (!this.editor?.dirty || confirm(STR.editor.unsaved))
+            setIntentAndReload({ action: 'menu' });
+        } else this.openMainMenu();
+      },
+    });
+    this.hud.onMenu = () => (this.menuOpen ? this.closeMenus() : this.openPauseMenu());
+  }
+
+  // ---------------------------------------------------------------- editor
+  enterEditor(level: LevelData) {
+    this.mode = 'editor';
+    document.body.classList.add('editor');
+    this.builder.free = true;
+    this.regions.applyTier(99);
+    this.world.rebuildFog();
+    this.overview.rebuildRegions();
+    this.minimap.rebuildBase();
+    this.clock.setSpeed(0);
+    this.clock.time = daySeconds() * 0.5; // edit in daylight
+    this.hud.setEditor(true);
+    this.toolbar.setEditor(true);
+    this.toolbar.refresh();
+    this.placeLevelContent(level);
+    const editor = new Editor(this.map, this.builder, this.world, level);
+    this.editor = editor;
+    this.build.editor = editor;
+    this.editorPanel = new EditorPanel(editor, {
+      save: () => {
+        if (editor.save()) this.toasts.push(STR.editor.saved(editor.level.name), 'good');
+        else this.toasts.push(STR.editor.saveFailed, 'warn');
+      },
+      saveAs: () => {
+        const name = prompt(STR.editor.newName, editor.level.name);
+        if (name && name.trim() && editor.saveAs(name.trim().slice(0, 40))) {
+          this.toasts.push(STR.editor.saved(editor.level.name), 'good');
+          this.editorPanel?.render();
+        }
+      },
+      playTest: () => {
+        if (!this.confirmReplaceSave()) return;
+        if (!editor.save()) {
+          this.toasts.push(STR.editor.saveFailed, 'warn');
+          return;
+        }
+        clearSave();
+        setTestingLevel(editor.level.id);
+        setIntentAndReload({ action: 'play', levelId: editor.level.id, testing: true });
+      },
+      exit: () => {
+        if (!editor.dirty || confirm(STR.editor.unsaved)) setIntentAndReload({ action: 'menu' });
+      },
+      exportJson: () => JSON.stringify(editor.collect()),
+      importJson: (json) => {
+        try {
+          const l = JSON.parse(json) as LevelRecord;
+          if (!isLevel(l)) return false;
+          saveLevel(l);
+          setIntentAndReload({ action: 'edit', levelId: l.id });
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      fill: (t) => editor.fillAll(t),
+      regenerate: () => {
+        const v = prompt(STR.settings.seedPlaceholder, String(this.map.seed));
+        if (v === null) return;
+        const seed = this.parseSeed(v);
+        const fresh = generateMapForEditor(seed, {
+          w: this.map.w,
+          h: this.map.h,
+          waterLevel: rules.waterLevel,
+          hillLevel: rules.hillLevel,
+          rockLevel: rules.rockLevel,
+          forestDensity: rules.forestDensity,
+        });
+        editor.fillAll(TerrainEnum.Grass);
+        this.map.terrain.set(fresh.terrain);
+        this.map.variant.set(fresh.variant);
+        this.map.seed = seed;
+        decorateProps(this.map, seed);
+        for (let y = 0; y < this.map.h; y++)
+          for (let x = 0; x < this.map.w; x++) this.world.retile(x, y);
+        editor.dirty = true;
+      },
+    });
+    this.uiRoot.append(this.editorPanel.root);
+    this.toasts.push(STR.editor.hint, 'info');
   }
 
   async init() {
@@ -184,7 +455,10 @@ export class Game {
     this.input = new Input(canvas);
     await this.atlas.load(ATLAS_GROUPS);
 
-    this.map = generateMap(this.seed);
+    this.map =
+      this.spec.kind === 'level'
+        ? mapFromLevel(this.spec.level)
+        : generateMap(this.spec.seed, this.spec.params);
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -264,7 +538,7 @@ export class Game {
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
-      if (this.settings.autosave) this.save(true);
+      if (this.settings.autosave && this.mode === 'play') this.save(true);
     });
   }
 
@@ -298,6 +572,8 @@ export class Game {
       lastDay: this.lastDay,
       decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
       weather: this.weather.toJSON(),
+      world: this.spec,
+      rules: { ...rules },
     };
   }
 
@@ -312,6 +588,7 @@ export class Game {
 
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    if (j.rules) setRules(j.rules);
     this.clock.time = j.clock.time;
     this.clock.setSpeed(j.clock.speedIndex);
     this.economy.load(j.economy);
@@ -364,8 +641,7 @@ export class Game {
         ? Number(seedText)
         : hashSeed(seedText)
       : Math.floor(Math.random() * 2 ** 31);
-    location.hash = `seed=${seed}&new`;
-    location.reload();
+    setIntentAndReload({ action: 'new', seed });
   }
 
   // ---------------------------------------------------------------- world edits
@@ -492,6 +768,14 @@ export class Game {
       this.atlas,
     );
     this.depot.onFocusTrain = (t) => this.focusTrain(t);
+    this.tuningScreen = new TuningScreen(() => {
+      this.applySeason(true);
+      this.toolbar.refresh();
+    });
+    this.contentScreen = new ContentScreen(() => {
+      if (this.mode === 'play' && !this.menuOpen) this.save(true);
+      setIntentAndReload({ action: 'menu' });
+    });
     this.settingsScreen = new SettingsScreen(
       this.settings,
       () => this.applySettings(),
@@ -585,7 +869,7 @@ export class Game {
     });
     this.toolbar = new Toolbar(
       (t: Tool) => this.build.setTool(t),
-      () => this.economy.tier,
+      () => (this.mode === 'editor' ? 99 : this.economy.tier),
     );
     this.toolbar.refresh();
     this.stationPanel = new StationPanel(
@@ -594,7 +878,10 @@ export class Game {
       this.contracts,
       this.clock,
     );
+    this.buildMenus();
     this.uiRoot.append(
+      this.mainMenu.root,
+      this.pauseMenu.root,
       this.screens.root,
       this.contractsSide.root,
       el('div', { class: 'vignette' }),
@@ -617,7 +904,7 @@ export class Game {
 
   // ---------------------------------------------------------------- sim
   private update(dt: number) {
-    if (this.settings.autosave) {
+    if (this.settings.autosave && this.mode === 'play' && !this.menuOpen) {
       this.autosaveTimer += dt;
       if (this.autosaveTimer >= 60) {
         this.autosaveTimer = 0;
@@ -694,7 +981,11 @@ export class Game {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.build.update(
-      this.viewTarget === 0 && this.viewBlend === 0 && !this.input.overUi && !this.screens.current,
+      this.viewTarget === 0 &&
+        this.viewBlend === 0 &&
+        !this.input.overUi &&
+        !this.screens.current &&
+        !this.menuOpen,
     );
     this.updateRtsTooltip();
     this.hud.update(this.economy);
@@ -737,10 +1028,25 @@ export class Game {
   private handleInput(dt: number) {
     const inp = this.input;
     if (inp.wasPressed('Backquote')) this.debug.toggle();
-    if (inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
-    if (inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
-    if (inp.wasPressed('KeyG')) this.screens.toggle(this.gachaScreen);
-    if (inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
+    if (this.menuOpen) {
+      if (inp.wasPressed('Escape') && this.screens.current) this.screens.close();
+      else if (inp.wasPressed('Escape') && this.pauseMenu.visible) this.closeMenus();
+      return;
+    }
+    if (
+      inp.wasPressed('Escape') &&
+      !this.screens.current &&
+      this.build.tool.kind === 'none' &&
+      !this.build.selected &&
+      this.viewTarget === 0
+    ) {
+      this.openPauseMenu();
+      return;
+    }
+    if (this.mode === 'play' && inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
+    if (this.mode === 'play' && inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
+    if (this.mode === 'play' && inp.wasPressed('KeyG')) this.screens.toggle(this.gachaScreen);
+    if (this.mode === 'play' && inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
     if (inp.wasPressed('Escape') && this.screens.current) {
       this.screens.close();
       return;

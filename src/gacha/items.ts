@@ -1,40 +1,12 @@
-import locoData from '../data/locomotives.json';
-import wagonData from '../data/wagons.json';
-import gachaData from '../data/gacha.json';
+import { content, type Rarity, type LocoDef, type WagonDef } from '../data/content';
 
-export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
+export type { Rarity, LocoDef, WagonDef };
 export const RARITIES: Rarity[] = ['N', 'R', 'SR', 'SSR'];
 
-export interface LocoDef {
-  id: string;
-  name: string;
-  rarity: Rarity;
-  era: string;
-  body: 'steam' | 'diesel';
-  paint: string;
-  speed: number;
-  power: number;
-  maxWagons: number;
-  costPerTile: number;
-  starter?: boolean;
-}
-export interface WagonDef {
-  id: string;
-  name: string;
-  rarity: Rarity;
-  era: string;
-  body: 'box' | 'hopper' | 'flat' | 'tank';
-  paint: string;
-  load: 'crates' | 'heap' | 'logs' | 'none';
-  accepts: string[];
-  capacity: number;
-  weight: number;
-  starter?: boolean;
-}
-export const LOCOS: LocoDef[] = locoData as LocoDef[];
-export const WAGONS: WagonDef[] = wagonData as WagonDef[];
-export const LEVEL_CAP: number = gachaData.levelCap;
-export const STAT_PER_LEVEL: number = gachaData.statPerLevel;
+export const LOCOS: LocoDef[] = content.locomotives;
+export const WAGONS: WagonDef[] = content.wagons;
+export const LEVEL_CAP: number = content.gacha.levelCap;
+export const STAT_PER_LEVEL: number = content.gacha.statPerLevel;
 
 export function locoDef(id: string): LocoDef {
   const d = LOCOS.find((l) => l.id === id);

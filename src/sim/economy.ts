@@ -1,5 +1,10 @@
 /** Money, tickets, reputation and the tier ladder derived from reputation. */
-export const TIER_THRESHOLDS = [0, 120, 350, 750, 1400];
+import { rules } from './rules';
+
+/** Live tier ladder (tunable). */
+export function tierThresholds() {
+  return rules.tierThresholds;
+}
 
 export class Economy {
   money = 25000;
@@ -29,8 +34,8 @@ export class Economy {
   addReputation(v: number) {
     this.reputation = Math.max(0, this.reputation + v);
     let t = 0;
-    for (let i = 0; i < TIER_THRESHOLDS.length; i++)
-      if (this.reputation >= TIER_THRESHOLDS[i]) t = i;
+    const th = tierThresholds();
+    for (let i = 0; i < th.length; i++) if (this.reputation >= th[i]) t = i;
     while (this.tier < t) {
       this.tier++;
       if (!this.tierTicketsGranted.has(this.tier)) {
@@ -41,7 +46,8 @@ export class Economy {
     }
   }
   nextTierAt(): number | null {
-    return this.tier + 1 < TIER_THRESHOLDS.length ? TIER_THRESHOLDS[this.tier + 1] : null;
+    const th = tierThresholds();
+    return this.tier + 1 < th.length ? th[this.tier + 1] : null;
   }
   toJSON() {
     return {

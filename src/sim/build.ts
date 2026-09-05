@@ -2,24 +2,17 @@ import { DIRS, DIR_DX, DIR_DY, tileToWorld } from '../engine/iso';
 import { Terrain, TERRAIN_NAMES, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import { TrackGraph, makePiece, pieceCost, type TrackKind, type TrackPiece } from '../world/track';
-import trackData from '../data/track.json';
-import { Station, stationDef, maxLevelForTier } from './stations';
+import { content, type DecorDef } from '../data/content';
+import { rules } from './rules';
+
+const trackData = content.track;
+import { Station, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
 import type { Economy } from './economy';
 import { STR } from '../strings';
 import { sfx } from '../engine/audio';
-import decorData from '../data/decor.json';
 
-export interface DecorDef {
-  id: string;
-  name: string;
-  flavor: string;
-  cost: number;
-  onTrack: boolean;
-  rotations: number;
-  radius?: number;
-  loadBoost?: number;
-}
-export const DECOR_DEFS: DecorDef[] = decorData as DecorDef[];
+export type { DecorDef };
+export const DECOR_DEFS: DecorDef[] = content.decor;
 export function decorDef(id: string): DecorDef {
   const d = DECOR_DEFS.find((x) => x.id === id);
   if (!d) throw new Error(`unknown decor ${id}`);
@@ -49,6 +42,8 @@ export interface PlacementCheck {
 /** Placement rules, costs and refunds for track and stations. Pure game logic; no rendering. */
 export class Builder {
   readonly stations: Station[] = [];
+  /** editor mode: no costs, no region or tier locks */
+  free = false;
   /** signals and water towers keyed by tile */
   readonly decor = new Map<number, Decor>();
   onTrackChanged: ((x: number, y: number) => void) | null = null;
@@ -78,7 +73,8 @@ export class Builder {
 
   checkTrack(x: number, y: number, kind: TrackKind): PlacementCheck {
     if (!inBounds(this.map, x, y)) return { ok: false, cost: 0, reason: STR.build.offMap };
-    if (!this.regions.isTileUnlocked(x, y)) return { ok: false, cost: 0, reason: STR.build.locked };
+    if (!this.free && !this.regions.isTileUnlocked(x, y))
+      return { ok: false, cost: 0, reason: STR.build.locked };
     const t = terrainAt(this.map, x, y);
     if (t === Terrain.Rock) return { ok: false, cost: 0, reason: STR.build.rock };
     if (t === Terrain.Water && kind !== 'bridge')
@@ -88,15 +84,17 @@ export class Builder {
     if (this.stationAt(x, y)) return { ok: false, cost: 0, reason: STR.build.occupied };
     const dec = this.decorAt(x, y);
     if (dec && !decorDef(dec.id).onTrack) return { ok: false, cost: 0, reason: STR.build.occupied };
-    let cost = Math.round(pieceCost(kind) * this.terrainMul(x, y));
+    let cost = Math.round(pieceCost(kind) * this.terrainMul(x, y) * rules.buildCostMul);
     const existing = this.track.get(x, y);
     if (existing) cost = Math.max(0, cost - this.refundFor(existing));
+    if (this.free) return { ok: true, cost: 0 };
     if (!this.economy.canAfford(cost)) return { ok: false, cost, reason: STR.build.funds };
     return { ok: true, cost };
   }
 
   refundFor(p: TrackPiece) {
-    return Math.round(pieceCost(p.kind) * trackData.refund);
+    if (this.free) return 0;
+    return Math.round(pieceCost(p.kind) * rules.buildCostMul * rules.refundRate);
   }
 
   placeTrack(x: number, y: number, kind: TrackKind, rot: number): boolean {
@@ -144,7 +142,8 @@ export class Builder {
   checkDecor(x: number, y: number, defId: string): PlacementCheck {
     const def = decorDef(defId);
     if (!inBounds(this.map, x, y)) return { ok: false, cost: 0, reason: STR.build.offMap };
-    if (!this.regions.isTileUnlocked(x, y)) return { ok: false, cost: 0, reason: STR.build.locked };
+    if (!this.free && !this.regions.isTileUnlocked(x, y))
+      return { ok: false, cost: 0, reason: STR.build.locked };
     if (this.decorAt(x, y)) return { ok: false, cost: 0, reason: STR.build.occupied };
     if (def.onTrack) {
       if (!this.track.has(x, y)) return { ok: false, cost: 0, reason: STR.build.needTrackHere };
@@ -155,9 +154,10 @@ export class Builder {
       if (this.track.has(x, y) || this.stationAt(x, y))
         return { ok: false, cost: 0, reason: STR.build.occupied };
     }
-    if (!this.economy.canAfford(def.cost))
-      return { ok: false, cost: def.cost, reason: STR.build.funds };
-    return { ok: true, cost: def.cost };
+    const cost = Math.round(def.cost * rules.buildCostMul);
+    if (this.free) return { ok: true, cost: 0 };
+    if (!this.economy.canAfford(cost)) return { ok: false, cost, reason: STR.build.funds };
+    return { ok: true, cost };
   }
   placeDecor(x: number, y: number, defId: string, rot: number): Decor | null {
     const c = this.checkDecor(x, y, defId);
@@ -170,7 +170,8 @@ export class Builder {
     return d;
   }
   decorRefund(d: Decor) {
-    return Math.round(decorDef(d.id).cost * trackData.refund);
+    if (this.free) return 0;
+    return Math.round(decorDef(d.id).cost * rules.buildCostMul * rules.refundRate);
   }
   removeDecor(x: number, y: number): boolean {
     const d = this.decorAt(x, y);
@@ -206,8 +207,9 @@ export class Builder {
   checkStation(x: number, y: number, defId: string): PlacementCheck {
     const def = stationDef(defId);
     if (!inBounds(this.map, x, y)) return { ok: false, cost: 0, reason: STR.build.offMap };
-    if (!this.regions.isTileUnlocked(x, y)) return { ok: false, cost: 0, reason: STR.build.locked };
-    if (def.tier > this.economy.tier)
+    if (!this.free && !this.regions.isTileUnlocked(x, y))
+      return { ok: false, cost: 0, reason: STR.build.locked };
+    if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: 0, reason: STR.build.tierLocked(def.tier) };
     const t = terrainAt(this.map, x, y);
     if (t === Terrain.Rock || t === Terrain.Water)
@@ -215,7 +217,8 @@ export class Builder {
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y))
       return { ok: false, cost: 0, reason: STR.build.occupied };
     if (!this.hasAdjacentTrack(x, y)) return { ok: false, cost: 0, reason: STR.build.needTrack };
-    const cost = Math.round(def.cost * Math.max(1, this.terrainMul(x, y)));
+    const cost = Math.round(def.cost * Math.max(1, this.terrainMul(x, y)) * rules.buildCostMul);
+    if (this.free) return { ok: true, cost: 0 };
     if (!this.economy.canAfford(cost)) return { ok: false, cost, reason: STR.build.funds };
     return { ok: true, cost };
   }
@@ -241,17 +244,28 @@ export class Builder {
     const i = this.stations.indexOf(s);
     if (i < 0) return false;
     this.stations.splice(i, 1);
-    this.economy.earn(Math.round(s.def.cost * trackData.refund));
+    this.economy.earn(Math.round(s.def.cost * rules.buildCostMul * rules.refundRate));
     this.onStationChanged?.(s, true);
     return true;
   }
 
   canUpgrade(s: Station): PlacementCheck {
+    if (s.level >= MAX_LEVEL) return { ok: false, cost: Infinity, reason: STR.station.maxed };
+    if (this.free) return { ok: true, cost: 0 };
     if (s.level >= maxLevelForTier(this.economy.tier))
       return { ok: false, cost: s.upgradeCost(), reason: STR.build.levelCap };
     const cost = s.upgradeCost();
+    if (this.free) return { ok: true, cost: 0 };
     if (!this.economy.canAfford(cost)) return { ok: false, cost, reason: STR.build.funds };
     return { ok: true, cost };
+  }
+
+  /** Editor only: lower a station's level. */
+  downgradeStation(s: Station): boolean {
+    if (!this.free || s.level <= 1) return false;
+    s.level--;
+    this.onStationChanged?.(s, false);
+    return true;
   }
 
   upgradeStation(s: Station): boolean {

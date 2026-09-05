@@ -140,7 +140,24 @@ export class StationPanel {
     }
     const up = this.builder.canUpgrade(s);
     const actions = el('div', { class: 'row' });
-    if (s.level < 5) {
+    if (this.builder.free) {
+      actions.append(
+        btn(
+          STR.editor.levelDown,
+          () => {
+            if (this.builder.downgradeStation(s)) this.render();
+          },
+          'small',
+        ),
+        btn(
+          STR.editor.levelUp,
+          () => {
+            if (this.builder.upgradeStation(s)) this.render();
+          },
+          'small',
+        ),
+      );
+    } else if (s.level < 5) {
       const ub = btn(
         STR.station.upgradeTo(s.level + 1, fmtMoney(s.upgradeCost())),
         () => {

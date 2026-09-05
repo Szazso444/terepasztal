@@ -9,6 +9,8 @@ import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtMoney } from './dom';
 import { decorDef, decorOffset } from '../sim/build';
+import type { Editor } from '../editor/editor';
+import type { Terrain } from '../world/tiles';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
@@ -28,6 +30,9 @@ export class BuildController {
   onStatus: ((text: string) => void) | null = null;
   onToolChanged: ((t: Tool) => void) | null = null;
   hoverStation: Station | null = null;
+  /** set in editor mode */
+  editor: Editor | null = null;
+  private lastPaint = '';
 
   constructor(
     private readonly input: Input,
@@ -111,6 +116,9 @@ export class BuildController {
         break;
       case 'remove':
         this.updateRemoveTool(t, inMap);
+        break;
+      case 'terrain':
+        this.updateTerrainTool(t, inMap);
         break;
       default:
         this.updateSelectTool(t, inMap);
@@ -325,6 +333,40 @@ export class BuildController {
           : 0;
     this.status(refund ? STR.build.refund(fmtMoney(refund)) : '');
     for (const c of this.input.clicks) if (c.button === 0) this.removeAt(t.x, t.y);
+  }
+
+  private updateTerrainTool(t: { x: number; y: number }, inMap: boolean) {
+    const tool = this.tool as { kind: 'terrain'; terrain: Terrain };
+    if (this.ghost) this.ghost.visible = false;
+    this.ghostDiamond.visible = false;
+    if (!inMap || !this.editor) {
+      for (const g of this.lineGhosts) g.visible = false;
+      return;
+    }
+    const tiles = this.editor.footprint(t.x, t.y);
+    while (this.lineGhosts.length < tiles.length) {
+      const g = this.world.makeOverlaySprite('terrain/ghost_ok');
+      g.alpha = 0.8;
+      this.lineGhosts.push(g);
+    }
+    for (let i = 0; i < this.lineGhosts.length; i++) {
+      const g = this.lineGhosts[i];
+      if (i >= tiles.length) {
+        g.visible = false;
+        continue;
+      }
+      this.world.setSpriteFrame(g, 'terrain/ghost_ok');
+      this.placeGhostAt(g, tiles[i].x, tiles[i].y, true);
+      g.tint = 0xffffff;
+    }
+    this.status(STR.editor.brushHint);
+    if (this.input.buttons.has(0)) {
+      const key = `${t.x},${t.y},${tool.terrain},${this.editor.brushSize}`;
+      if (key !== this.lastPaint) {
+        this.lastPaint = key;
+        this.editor.paint(t.x, t.y, tool.terrain);
+      }
+    } else this.lastPaint = '';
   }
 
   private updateSelectTool(t: { x: number; y: number }, inMap: boolean) {

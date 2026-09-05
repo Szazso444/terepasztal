@@ -1,14 +1,9 @@
-import gachaData from '../data/gacha.json';
+import { content, type Banner } from '../data/content';
 import { Rng, hashString } from '../engine/rng';
 import { RARITIES, itemDef, type Rarity, type Item } from './items';
 import type { Inventory } from './inventory';
 
-export interface Banner {
-  id: string;
-  name: string;
-  tier: number;
-  pool: string[];
-}
+export type { Banner };
 export interface PullResult {
   defId: string;
   rarity: Rarity;
@@ -21,10 +16,10 @@ export interface PullResult {
   featured: boolean;
 }
 
-export const BANNERS: Banner[] = gachaData.banners;
-export const RATES = gachaData.rates as Record<Rarity, number>;
-export const PITY = gachaData.pity;
-export const PULL_COST = gachaData.pullCost;
+export const BANNERS: Banner[] = content.gacha.banners;
+export const RATES = content.gacha.rates as Record<Rarity, number>;
+export const PITY = content.gacha.pity;
+export const PULL_COST = content.gacha.pullCost;
 /** in-game days per featured rotation */
 export const ROTATION_DAYS = 3;
 /** share of a rarity slot that goes to featured items of that rarity */

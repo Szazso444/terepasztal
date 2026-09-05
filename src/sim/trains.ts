@@ -7,7 +7,10 @@ import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gac
 import type { Builder } from './build';
 import type { Station } from './stations';
 import { cargoDef } from './cargo';
-import trackData from '../data/track.json';
+import { content } from '../data/content';
+import { rules } from './rules';
+
+const trackData = content.track;
 import { sfx } from '../engine/audio';
 
 export type TrainState = 'moving' | 'loading' | 'waiting' | 'noRoute' | 'stranded';
@@ -123,7 +126,7 @@ export class Train {
 
   // ------------------------------------------------------------ stats
   get maxSpeed() {
-    return this.locoDef.speed * levelMul(this.locoLevel);
+    return this.locoDef.speed * levelMul(this.locoLevel) * rules.trainSpeedMul;
   }
   get power() {
     return this.locoDef.power * levelMul(this.locoLevel);
@@ -571,7 +574,7 @@ export class Train {
     );
     this.pathPos += step;
     this.distance += step;
-    this.fuelAcc += step * this.locoDef.costPerTile;
+    this.fuelAcc += step * this.locoDef.costPerTile * rules.runningCostMul;
     if (this.fuelAcc >= 1) {
       ctx.spend(Math.floor(this.fuelAcc));
       this.fuelAcc -= Math.floor(this.fuelAcc);
@@ -630,7 +633,7 @@ export class Train {
       return;
     }
     let busy = false;
-    let budget = st.loadRate * st.loadBoost * gdt;
+    let budget = st.loadRate * st.loadBoost * rules.loadRateMul * gdt;
     // unload accepted cargo
     for (const w of this.wagons) {
       if (!w.cargo || w.amount <= 0) continue;

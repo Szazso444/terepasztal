@@ -10,6 +10,18 @@ npm run build    # typecheck + production bundle in dist/
 npm run lint
 ```
 
+## Menus, tuning and editing
+
+- **Main menu** on boot: continue, new game (seed), game tuning, content editor, settings, and
+  the level list (play, edit, delete, create blank or generated, import JSON). Esc or the Menu
+  button opens the pause menu in play.
+- **Game tuning**: live sliders for economy, contracts, trains, time, weather and map generation;
+  stored with the save.
+- **Content editor**: edit or add locomotives, wagons, cargo, stations, contracts, decor, gacha
+  banners and track data inside the client; applies on reload, export/import as JSON.
+- **Level editor**: paint terrain, build anything for free, set the player's start, save and
+  play-test levels; export/import as JSON.
+
 ## Controls
 
 | Action | Keys |
