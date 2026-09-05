@@ -669,3 +669,165 @@ input.text {
 #station-panel {
   top: 430px;
 }
+
+/* ---- gacha ---- */
+.gacha {
+  flex-direction: column;
+}
+.gacha-stage {
+  flex: 1;
+  overflow: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gacha-idle {
+  text-align: center;
+  padding: 30px 0 10px;
+}
+.gacha-banner-name {
+  font-family: var(--font-title);
+  font-size: 26px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.gacha-pool {
+  padding: 8px;
+  border-top: 1px solid var(--border-dark);
+  line-height: 1.6;
+}
+.gacha-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.gcard {
+  position: relative;
+  height: 200px;
+  perspective: 600px;
+  cursor: pointer;
+}
+.gcard-back,
+.gcard-front {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border: 1px solid var(--border-dark);
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    inset -1px -1px 0 var(--border-dark);
+  background: var(--stone);
+  transition: transform 0.45s ease;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.gcard-back {
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-title);
+  font-size: 48px;
+  color: var(--text-dim);
+  background: repeating-linear-gradient(45deg, #232326 0 6px, #1c1c1f 6px 12px);
+}
+.gcard-front {
+  transform: rotateY(180deg);
+}
+.gcard.flipped .gcard-back {
+  transform: rotateY(-180deg);
+}
+.gcard.flipped .gcard-front {
+  transform: rotateY(0deg);
+}
+.gcard.flipped.rarity-SR .gcard-front {
+  border-color: #c08ad8;
+}
+.gcard.flipped.rarity-SSR .gcard-front {
+  border-color: var(--amber);
+  animation: ssr-pulse 1.2s ease-in-out 2;
+}
+@keyframes ssr-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 1px 1px 0 var(--border-light),
+      inset -1px -1px 0 var(--border-dark);
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--amber-dark);
+  }
+}
+.gcard-rarity {
+  font-family: var(--font-title);
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+.gcard-name {
+  font-weight: bold;
+  font-size: 13px;
+}
+.gcard-kind {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.gcard-era {
+  font-family: var(--font-title);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--text-dim);
+  flex: 1;
+}
+.gcard-dupe {
+  font-size: 11px;
+  color: var(--cyan);
+}
+.gcard-dupe.new {
+  color: #9ab86e;
+}
+.gcard-forced {
+  font-size: 10px;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ---- roster ---- */
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  align-content: start;
+}
+.rcard {
+  border: 1px solid var(--border-dark);
+  background: var(--stone);
+  box-shadow: inset 1px 1px 0 var(--border-light);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rcard.rarity-SSR {
+  border-color: var(--amber-dark);
+}
+.rcard.rarity-SR {
+  border-color: #6a4a78;
+}
+.rcard-head {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+.rcard-head .name {
+  flex: 1;
+  font-weight: bold;
+  color: var(--text);
+}
+.rcard {
+  color: var(--text);
+}

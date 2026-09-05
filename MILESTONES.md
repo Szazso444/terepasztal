@@ -82,3 +82,19 @@
 
 **Known bugs**
 - Contract labels overlap when stations sit within a couple of tiles of each other in the overview.
+
+## 5. Gacha + roster
+
+**Works**
+- Seeded gacha (`src/gacha/gacha.ts`, rates in `src/data/gacha.json`): N/R/SR/SSR at 60/30/8/2 %, hard SSR pity at 50 (counter shown), 10x pull guarantees at least one R, two banners (the second is tier-gated). Tickets only; no purchases.
+- Pool: 11 locomotives and 12 wagons with name, era flavour, rarity and stats. Duplicates become upgrade points that level the item (+8 % stats per level, cap 5).
+- Rolling Stock Works screen (`G`): banner list with pool preview and rates, 1x / 10x pulls, card-flip reveal sequence (click to skip a card), SSR pulse, new/duplicate/level-up badges, collect.
+- Roster screen (`V`): filter by kind and rarity, unassigned only, sort by rarity/name/level/newest; cards show stats at current level, duplicate progress and which train uses the item.
+- Pulled items appear in the depot immediately for assembly.
+
+**Stubbed**
+- No item art on the cards (text only); sprites are shown once the item is on a train.
+- Banner rotation is static.
+
+**Known bugs**
+- If the pool has no item of a rolled rarity the picker falls back to any pool item.

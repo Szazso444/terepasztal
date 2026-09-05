@@ -38,6 +38,9 @@ import { ContractsSide } from './ui/contractsSide';
 import { Rng } from './engine/rng';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
+import { Gacha } from './gacha/gacha';
+import { GachaScreen } from './ui/gachaScreen';
+import { RosterScreen } from './ui/rosterScreen';
 
 const SIM_HZ = 20;
 const EDGE_MARGIN = 14;
@@ -76,6 +79,9 @@ export class Game {
   contracts!: ContractBoard;
   contractsScreen!: ContractsScreen;
   contractsSide!: ContractsSide;
+  gacha!: Gacha;
+  gachaScreen!: GachaScreen;
+  rosterScreen!: RosterScreen;
   private lastDay = 1;
   private panelRefresh = 0;
   /** 0 = RTS view, 1 = overview. Animated. */
@@ -159,6 +165,7 @@ export class Game {
     this.inventory.seedStarter(0);
     this.fleet = new Fleet(this.track, this.builder, this.map, this.inventory, this.economy);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
+    this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
     this.contracts.onEvent = (e) => {
       if (e.kind === 'completed')
@@ -248,6 +255,13 @@ export class Game {
       this.toasts.push(m, k),
     );
     this.depot.onFocusTrain = (t) => this.focusTrain(t);
+    this.gachaScreen = new GachaScreen(
+      this.gacha,
+      this.economy,
+      () => this.clock.time,
+      (m, k) => this.toasts.push(m, k),
+    );
+    this.rosterScreen = new RosterScreen(this.inventory, this.fleet);
     this.contractsScreen = new ContractsScreen(this.contracts, this.builder, this.clock, (m, k) =>
       this.toasts.push(m, k),
     );
@@ -256,6 +270,8 @@ export class Game {
     this.hud.actions.append(
       btn(STR.topbar.depot, () => this.screens.toggle(this.depot), 'small'),
       btn(STR.topbar.contracts, () => this.screens.toggle(this.contractsScreen), 'small'),
+      btn(STR.topbar.gacha, () => this.screens.toggle(this.gachaScreen), 'small'),
+      btn(STR.topbar.roster, () => this.screens.toggle(this.rosterScreen), 'small'),
     );
     this.screens.onChange = (sc) => {
       if (sc) this.build.setTool({ kind: 'none' });
@@ -400,6 +416,8 @@ export class Game {
     if (inp.wasPressed('Backquote')) this.debug.toggle();
     if (inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
     if (inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
+    if (inp.wasPressed('KeyG')) this.screens.toggle(this.gachaScreen);
+    if (inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
     if (inp.wasPressed('Escape') && this.screens.current) {
       this.screens.close();
       return;
