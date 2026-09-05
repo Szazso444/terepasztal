@@ -7,6 +7,8 @@ import type { Builder } from '../sim/build';
 import { locoDef, wagonDef, levelMul, type Item } from '../gacha/items';
 import type { Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
+import type { AtlasRegistry } from '../engine/atlas';
+import { spriteImg, frameForItem } from './spritePreview';
 
 /** Depot: assemble trains from owned rolling stock and assign looped routes. */
 export class DepotScreen implements Screen {
@@ -35,6 +37,7 @@ export class DepotScreen implements Screen {
     private readonly fleet: Fleet,
     private readonly builder: Builder,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+    private readonly atlas: AtlasRegistry,
   ) {
     const c1 = el(
       'div',
@@ -109,7 +112,7 @@ export class DepotScreen implements Screen {
           }),
           el('div', {
             class: `sub state-${t.state}`,
-            text: `${STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''} · ${STR.depot.cargo(Math.round(t.totalCargo()))}${t.lastMessage ? ` · ${t.lastMessage}` : ''}`,
+            text: `${t.blocked && t.state === 'moving' ? STR.depot.state.held : STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''} · ${STR.depot.cargo(Math.round(t.totalCargo()))}${t.lastMessage ? ` · ${t.lastMessage}` : ''}`,
           }),
         ),
         el(
@@ -120,7 +123,8 @@ export class DepotScreen implements Screen {
           btn(
             STR.depot.recall,
             () => {
-              this.fleet.recall(t);
+              const salvage = this.fleet.recall(t);
+              if (salvage > 0) this.toast(STR.depot.salvaged(fmtMoney(salvage)), 'info');
               if (this.editing === t) this.startNew();
               this.render();
             },
@@ -145,6 +149,7 @@ export class DepotScreen implements Screen {
           `${STR.depot.speed} ${t.maxSpeed.toFixed(1)} · ${STR.depot.power} ${Math.round(t.power)}`,
           false,
           () => {},
+          t.locoDef.id,
         ),
       );
       for (const w of t.wagons)
@@ -157,6 +162,7 @@ export class DepotScreen implements Screen {
               : `${STR.depot.empty} ${Math.round(w.def.capacity * levelMul(w.level))}`,
             false,
             () => {},
+            w.def.id,
           ),
         );
       this.summary.innerHTML = '';
@@ -178,6 +184,7 @@ export class DepotScreen implements Screen {
             this.locoUid = this.locoUid === it.uid ? null : it.uid;
             this.renderConsist();
           },
+          it.defId,
         ),
       );
     }
@@ -200,6 +207,7 @@ export class DepotScreen implements Screen {
             else this.toast(STR.depot.maxWagons(maxW), 'warn');
             this.renderConsist();
           },
+          it.defId,
         ),
       );
     }
@@ -238,10 +246,12 @@ export class DepotScreen implements Screen {
     sub: string,
     selected: boolean,
     onClick: () => void,
+    defId?: string,
   ) {
     const r = el(
       'div',
       { class: `item ${selected ? 'selected' : ''}` },
+      defId ? spriteImg(this.atlas, frameForItem(defId), 1, 'sprite-preview item-art') : null,
       el(
         'div',
         {},

@@ -37,8 +37,55 @@ function smoke(r: number, seed: number): PixelBuf {
   return b;
 }
 
+/** Diagonal rain streak. */
+function rainDrop(): PixelBuf {
+  const b = new PixelBuf(4, 10);
+  for (let i = 0; i < 9; i++) b.set(3 - Math.floor(i / 3), i, [170, 190, 215], i < 2 ? 120 : 200);
+  return b;
+}
+
+/** Soft fog blob, dithered, used in a drifting layer. */
+function fogPatch(seed: number): PixelBuf {
+  const s = 96;
+  const b = new PixelBuf(s, s / 2);
+  for (let y = 0; y < s / 2; y++)
+    for (let x = 0; x < s; x++) {
+      const nx = (x + 0.5 - s / 2) / (s / 2);
+      const ny = (y + 0.5 - s / 4) / (s / 4);
+      const d = Math.sqrt(nx * nx + ny * ny);
+      if (d >= 1) continue;
+      const n = hash2(x >> 2, y >> 1, seed);
+      const a = Math.round((1 - d) * (1 - d) * 150 * (0.7 + n * 0.6));
+      if (a < 6) continue;
+      b.set(x, y, [150, 158, 170], Math.min(255, a));
+    }
+  return b;
+}
+
+/** Ground light: diamond-shaped additive patch for per-tile lighting near lanterns. */
+function lightDiamond(): PixelBuf {
+  const b = new PixelBuf(64, 32);
+  for (let y = 0; y < 32; y++)
+    for (let x = 0; x < 64; x++) {
+      const e = Math.abs(x + 0.5 - 32) / 32 + Math.abs(y + 0.5 - 16) / 16;
+      if (e > 1) continue;
+      const n = hash2(x >> 1, y >> 1, 77);
+      const a = Math.round((1 - e) * 110 * (0.8 + n * 0.4));
+      if (a < 4) continue;
+      b.set(x, y, PAL.amber, a);
+    }
+  return b;
+}
+
 export function generateFxAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
+  const rd = rainDrop();
+  ab.add('fx/rain', rd.toImageData(), 2, 9);
+  for (let i = 0; i < 3; i++) {
+    const fp = fogPatch(20 + i);
+    ab.add(`fx/fog_${i}`, fp.toImageData(), fp.w / 2, fp.h / 2);
+  }
+  ab.add('fx/light_tile', lightDiamond().toImageData(), 32, 16);
   const g = glow(64, 40, 1);
   ab.add('fx/glow', g.toImageData(), 32, 20);
   const gs = glow(28, 18, 2);

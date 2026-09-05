@@ -1,4 +1,4 @@
-import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
+import { DIRS, DIR_DX, DIR_DY, tileToWorld } from '../engine/iso';
 import { Terrain, TERRAIN_NAMES, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import { TrackGraph, makePiece, pieceCost, type TrackKind, type TrackPiece } from '../world/track';
@@ -7,6 +7,38 @@ import { Station, stationDef, maxLevelForTier } from './stations';
 import type { Economy } from './economy';
 import { STR } from '../strings';
 import { sfx } from '../engine/audio';
+import decorData from '../data/decor.json';
+
+export interface DecorDef {
+  id: string;
+  name: string;
+  flavor: string;
+  cost: number;
+  onTrack: boolean;
+  rotations: number;
+  radius?: number;
+  loadBoost?: number;
+}
+export const DECOR_DEFS: DecorDef[] = decorData as DecorDef[];
+export function decorDef(id: string): DecorDef {
+  const d = DECOR_DEFS.find((x) => x.id === id);
+  if (!d) throw new Error(`unknown decor ${id}`);
+  return d;
+}
+export interface Decor {
+  id: string;
+  x: number;
+  y: number;
+  rot: number;
+}
+/** World-pixel offset from the tile centre where a decor sprite stands (signals sit beside the rails). */
+export function decorOffset(d: { id: string; rot: number }): { dx: number; dy: number } {
+  if (d.id !== 'signal') return { dx: 0, dy: 0 };
+  const fx = DIR_DX[d.rot] * 0.3 + DIR_DY[d.rot] * 0.24;
+  const fy = DIR_DY[d.rot] * 0.3 - DIR_DX[d.rot] * 0.24;
+  const p = tileToWorld(fx, fy);
+  return { dx: Math.round(p.x), dy: Math.round(p.y) };
+}
 
 export interface PlacementCheck {
   ok: boolean;
@@ -17,8 +49,13 @@ export interface PlacementCheck {
 /** Placement rules, costs and refunds for track and stations. Pure game logic; no rendering. */
 export class Builder {
   readonly stations: Station[] = [];
+  /** signals and water towers keyed by tile */
+  readonly decor = new Map<number, Decor>();
   onTrackChanged: ((x: number, y: number) => void) | null = null;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
+  onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
+  /** fired when a station loses (true) or regains (false) its last platform tile */
+  onStationOrphaned: ((s: Station, orphaned: boolean) => void) | null = null;
 
   constructor(
     readonly map: GameMap,
@@ -49,6 +86,8 @@ export class Builder {
     if (t !== Terrain.Water && kind === 'bridge')
       return { ok: false, cost: 0, reason: STR.build.bridgeOnWater };
     if (this.stationAt(x, y)) return { ok: false, cost: 0, reason: STR.build.occupied };
+    const dec = this.decorAt(x, y);
+    if (dec && !decorDef(dec.id).onTrack) return { ok: false, cost: 0, reason: STR.build.occupied };
     let cost = Math.round(pieceCost(kind) * this.terrainMul(x, y));
     const existing = this.track.get(x, y);
     if (existing) cost -= this.refundFor(existing);
@@ -68,6 +107,7 @@ export class Builder {
     if (!this.economy.spend(Math.max(0, c.cost))) return false;
     this.track.set(x, y, makePiece(kind, rot));
     this.onTrackChanged?.(x, y);
+    this.checkOrphans(x, y);
     sfx('build.place');
     return true;
   }
@@ -75,11 +115,88 @@ export class Builder {
   removeTrack(x: number, y: number): boolean {
     const p = this.track.get(x, y);
     if (!p) return false;
+    // a signal standing on the tile goes with it
+    const dec = this.decorAt(x, y);
+    if (dec && decorDef(dec.id).onTrack) this.removeDecor(x, y);
     this.track.remove(x, y);
     this.economy.earn(this.refundFor(p));
     this.onTrackChanged?.(x, y);
+    this.checkOrphans(x, y);
     sfx('build.remove');
     return true;
+  }
+
+  /** Re-evaluate platform access of the stations around a changed track tile. */
+  private checkOrphans(x: number, y: number) {
+    for (const s of this.stations) {
+      if (Math.abs(s.x - x) + Math.abs(s.y - y) !== 1) continue;
+      this.onStationOrphaned?.(s, this.platformTiles(s).length === 0);
+    }
+  }
+  isOrphaned(s: Station) {
+    return this.platformTiles(s).length === 0;
+  }
+
+  // ------------------------------------------------------------------ decor
+  decorAt(x: number, y: number): Decor | undefined {
+    return this.decor.get(y * this.map.w + x);
+  }
+  checkDecor(x: number, y: number, defId: string): PlacementCheck {
+    const def = decorDef(defId);
+    if (!inBounds(this.map, x, y)) return { ok: false, cost: 0, reason: STR.build.offMap };
+    if (!this.regions.isTileUnlocked(x, y)) return { ok: false, cost: 0, reason: STR.build.locked };
+    if (this.decorAt(x, y)) return { ok: false, cost: 0, reason: STR.build.occupied };
+    if (def.onTrack) {
+      if (!this.track.has(x, y)) return { ok: false, cost: 0, reason: STR.build.needTrackHere };
+    } else {
+      const t = terrainAt(this.map, x, y);
+      if (t === Terrain.Rock || t === Terrain.Water)
+        return { ok: false, cost: 0, reason: STR.build.badTerrain };
+      if (this.track.has(x, y) || this.stationAt(x, y))
+        return { ok: false, cost: 0, reason: STR.build.occupied };
+    }
+    if (!this.economy.canAfford(def.cost))
+      return { ok: false, cost: def.cost, reason: STR.build.funds };
+    return { ok: true, cost: def.cost };
+  }
+  placeDecor(x: number, y: number, defId: string, rot: number): Decor | null {
+    const c = this.checkDecor(x, y, defId);
+    if (!c.ok || !this.economy.spend(c.cost)) return null;
+    const d: Decor = { id: defId, x, y, rot: rot % decorDef(defId).rotations };
+    this.decor.set(y * this.map.w + x, d);
+    this.onDecorChanged?.(d, false);
+    this.refreshStationBoosts();
+    sfx('build.place');
+    return d;
+  }
+  decorRefund(d: Decor) {
+    return Math.round(decorDef(d.id).cost * trackData.refund);
+  }
+  removeDecor(x: number, y: number): boolean {
+    const d = this.decorAt(x, y);
+    if (!d) return false;
+    this.decor.delete(y * this.map.w + x);
+    this.economy.earn(this.decorRefund(d));
+    this.onDecorChanged?.(d, true);
+    this.refreshStationBoosts();
+    sfx('build.remove');
+    return true;
+  }
+  /** Water towers within their radius speed up loading; two towers stack, more do not. */
+  refreshStationBoosts() {
+    for (const s of this.stations) {
+      let boost = 0;
+      let count = 0;
+      for (const d of this.decor.values()) {
+        const def = decorDef(d.id);
+        if (!def.loadBoost || !def.radius) continue;
+        if (Math.max(Math.abs(d.x - s.x), Math.abs(d.y - s.y)) <= def.radius && count < 2) {
+          boost += def.loadBoost;
+          count++;
+        }
+      }
+      s.loadBoost = 1 + boost;
+    }
   }
 
   hasAdjacentTrack(x: number, y: number) {
@@ -95,7 +212,7 @@ export class Builder {
     const t = terrainAt(this.map, x, y);
     if (t === Terrain.Rock || t === Terrain.Water)
       return { ok: false, cost: 0, reason: STR.build.badTerrain };
-    if (this.track.has(x, y) || this.stationAt(x, y))
+    if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y))
       return { ok: false, cost: 0, reason: STR.build.occupied };
     if (!this.hasAdjacentTrack(x, y)) return { ok: false, cost: 0, reason: STR.build.needTrack };
     const cost = Math.round(def.cost * Math.max(1, this.terrainMul(x, y)));
@@ -114,6 +231,7 @@ export class Builder {
       count ? `${stationDef(defId).name} ${count + 1}` : undefined,
     );
     this.stations.push(s);
+    this.refreshStationBoosts();
     this.onStationChanged?.(s, false);
     sfx('build.place');
     return s;

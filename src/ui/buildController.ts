@@ -8,9 +8,11 @@ import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtMoney } from './dom';
+import { decorDef, decorOffset } from '../sim/build';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
+const REPLACE_TINT = 0xffc860;
 
 /** Interactive placement: ghost previews, rotation, drag-laying, removal, selection. */
 export class BuildController {
@@ -78,8 +80,10 @@ export class BuildController {
       if (this.tool.kind !== 'none') this.setTool({ kind: 'none' });
       else this.select(null);
     }
-    if (inp.wasPressed('KeyR') && this.tool.kind === 'track') {
-      this.rot = (this.rot + 1) % rotationCount(this.tool.piece);
+    if (inp.wasPressed('KeyR')) {
+      if (this.tool.kind === 'track') this.rot = (this.rot + 1) % rotationCount(this.tool.piece);
+      else if (this.tool.kind === 'decor')
+        this.rot = (this.rot + 1) % decorDef(this.tool.defId).rotations;
     }
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
     if (!active) {
@@ -101,6 +105,9 @@ export class BuildController {
         break;
       case 'station':
         this.updateStationTool(t, inMap);
+        break;
+      case 'decor':
+        this.updateDecorTool(t, inMap);
         break;
       case 'remove':
         this.updateRemoveTool(t, inMap);
@@ -171,6 +178,9 @@ export class BuildController {
     const check = this.builder.checkTrack(t.x, t.y, tool.piece);
     const g = this.ensureGhost(`track/${tool.piece}_${this.rot}`);
     this.placeGhostAt(g, t.x, t.y, check.ok);
+    const existing = this.builder.track.get(t.x, t.y);
+    if (check.ok && existing && (existing.kind !== tool.piece || existing.rot !== this.rot))
+      g.tint = REPLACE_TINT;
     this.world.setSpriteFrame(
       this.ghostDiamond,
       check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
@@ -182,8 +192,14 @@ export class BuildController {
 
   private pieceStatus(t: { x: number; y: number }, piece: TrackKind) {
     const check = this.builder.checkTrack(t.x, t.y, piece);
+    const existing = this.builder.track.get(t.x, t.y);
+    const replacing = !!existing && (existing.kind !== piece || existing.rot !== this.rot);
     const parts = [
-      check.ok ? STR.build.cost(fmtMoney(check.cost)) : (check.reason ?? ''),
+      check.ok
+        ? replacing
+          ? STR.build.replace(existing!.kind, fmtMoney(check.cost))
+          : STR.build.cost(fmtMoney(check.cost))
+        : (check.reason ?? ''),
       STR.build.rotate,
     ];
     if (piece === 'straight' || piece === 'bridge') parts.push(STR.build.dragHint);
@@ -262,6 +278,32 @@ export class BuildController {
     }
   }
 
+  private updateDecorTool(t: { x: number; y: number }, inMap: boolean) {
+    const tool = this.tool as { kind: 'decor'; defId: string };
+    if (!inMap) {
+      if (this.ghost) this.ghost.visible = false;
+      this.ghostDiamond.visible = false;
+      return;
+    }
+    const def = decorDef(tool.defId);
+    const check = this.builder.checkDecor(t.x, t.y, tool.defId);
+    const g = this.ensureGhost(def.id === 'signal' ? 'structures/signal' : `structures/${def.id}`);
+    this.placeGhostAt(g, t.x, t.y, check.ok);
+    const off = decorOffset({ id: def.id, rot: this.rot });
+    g.position.set(g.position.x + off.dx, g.position.y + off.dy);
+    this.world.setSpriteFrame(
+      this.ghostDiamond,
+      check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
+    );
+    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
+    this.ghostDiamond.tint = 0xffffff;
+    const parts = [check.ok ? STR.build.cost(fmtMoney(check.cost)) : (check.reason ?? '')];
+    if (def.rotations > 1) parts.push(STR.build.rotate);
+    this.status(parts.join('   '));
+    for (const c of this.input.clicks)
+      if (c.button === 0) this.builder.placeDecor(t.x, t.y, tool.defId, this.rot);
+  }
+
   private updateRemoveTool(t: { x: number; y: number }, inMap: boolean) {
     if (this.ghost) this.ghost.visible = false;
     if (!inMap) {
@@ -273,7 +315,14 @@ export class BuildController {
     this.world.setSpriteFrame(this.ghostDiamond, 'terrain/ghost_bad');
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    const refund = piece ? this.builder.refundFor(piece) : st ? Math.round(st.def.cost * 0.5) : 0;
+    const dec = this.builder.decorAt(t.x, t.y);
+    const refund = st
+      ? Math.round(st.def.cost * 0.5)
+      : dec
+        ? this.builder.decorRefund(dec)
+        : piece
+          ? this.builder.refundFor(piece)
+          : 0;
     this.status(refund ? STR.build.refund(fmtMoney(refund)) : '');
     for (const c of this.input.clicks) if (c.button === 0) this.removeAt(t.x, t.y);
   }
@@ -296,6 +345,7 @@ export class BuildController {
       if (this.selected === st) this.select(null);
       return this.builder.removeStation(st);
     }
+    if (this.builder.decorAt(x, y)) return this.builder.removeDecor(x, y);
     return this.builder.removeTrack(x, y);
   }
 

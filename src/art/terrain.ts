@@ -23,16 +23,37 @@ function groundTile(shades: RGB[], seed: number, rimDark = 0.82): PixelBuf {
   return b;
 }
 
+/** Water with a slow travelling ripple; `phase` in 0..3 selects the animation frame. */
 function waterTile(seed: number, phase: number): PixelBuf {
   const b = new PixelBuf(TILE_W, TILE_H);
   for (let y = 0; y < TILE_H; y++)
     for (let x = 0; x < TILE_W; x++) {
       if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
       let c = pickShade(x, y, PAL.water, seed);
-      // faint horizontal ripples
-      const r = hash2(x >> 2, (y + phase) >> 1, seed + 7);
-      if (r > 0.9 && (y + phase) % 4 === 0) c = shade(c, 1.25);
+      // ripple crests drift one pixel per frame; the crest set is fixed per tile so frames tile
+      // seamlessly with their neighbours
+      const cx = x - phase;
+      const cy = y - (phase >> 1);
+      const r = hash2(cx >> 2, cy >> 1, seed + 7);
+      if (r > 0.9 && ((cy % 4) + 4) % 4 === 0) c = shade(c, 1.25);
+      else if (r < 0.06 && ((cy % 5) + 5) % 5 === 0) c = shade(c, 0.85);
       b.set(x, y, c);
+    }
+  return b;
+}
+
+/** Out-of-map "abyss": near-black sea used for the border ring beyond the playable area. */
+function voidTile(seed: number): PixelBuf {
+  const b = new PixelBuf(TILE_W, TILE_H);
+  const shades: RGB[] = [
+    [14, 18, 26],
+    [18, 24, 32],
+    [10, 14, 20],
+  ];
+  for (let y = 0; y < TILE_H; y++)
+    for (let x = 0; x < TILE_W; x++) {
+      if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
+      b.set(x, y, pickShade(x, y, shades, seed));
     }
   return b;
 }
@@ -122,19 +143,15 @@ export function generateTerrainAtlas(): AtlasImage {
     );
   }
   for (let v = 0; v < 3; v++) {
-    ab.add(
-      `terrain/water_${v}`,
-      waterTile(600 + v, 0).toImageData(),
-      groundAnchor.ax,
-      groundAnchor.ay,
-    );
-    ab.add(
-      `terrain/water_${v}_b`,
-      waterTile(600 + v, 2).toImageData(),
-      groundAnchor.ax,
-      groundAnchor.ay,
-    );
+    for (let f = 0; f < 4; f++)
+      ab.add(
+        `terrain/water_${v}_f${f}`,
+        waterTile(600 + v, f).toImageData(),
+        groundAnchor.ax,
+        groundAnchor.ay,
+      );
     ab.add(`terrain/hill_${v}`, hillTile(700 + v).toImageData(), HALF_W, HALF_H + ELEV_PX);
+    ab.add(`terrain/void_${v}`, voidTile(800 + v).toImageData(), groundAnchor.ax, groundAnchor.ay);
   }
   ab.add('terrain/cursor', cursorTile(PAL.white).toImageData(), HALF_W, HALF_H);
   ab.add('terrain/ghost_ok', cursorTile(PAL.cyan, PAL.cyan).toImageData(), HALF_W, HALF_H);

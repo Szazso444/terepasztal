@@ -1,5 +1,5 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
-import { PAL, shade } from './palette';
+import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder, proj, fillPoly } from './iso3d';
 import { hash2 } from '../engine/rng';
@@ -229,13 +229,63 @@ function depot(): PixelBuf {
   return b;
 }
 
-function signal(): PixelBuf {
-  const b = new PixelBuf(12, 26);
-  b.rect(5, 6, 2, 20, PAL.iron[2]);
-  b.rect(2, 2, 8, 6, PAL.iron[0]);
-  b.set(4, 4, PAL.red);
-  b.set(7, 4, PAL.cyan);
+/** Semaphore post; `aspect` picks which lamp is lit. */
+function signal(aspect: 'red' | 'green' | 'off'): PixelBuf {
+  const b = new PixelBuf(12, 28);
+  b.rect(5, 8, 2, 20, PAL.iron[2]);
+  b.rect(4, 26, 4, 2, PAL.iron[0]);
+  b.rect(2, 2, 8, 7, PAL.iron[0]);
+  b.rect(3, 3, 6, 5, PAL.iron[1]);
+  const dim: RGB = [60, 40, 40];
+  const dimG: RGB = [36, 60, 60];
+  b.rect(3, 4, 2, 3, aspect === 'red' ? PAL.red : dim);
+  b.rect(7, 4, 2, 3, aspect === 'green' ? PAL.cyan : dimG);
+  if (aspect === 'red') b.set(3, 4, [230, 120, 100]);
+  if (aspect === 'green') b.set(7, 4, [190, 240, 250]);
   b.outline(PAL.outline, 170);
+  return b;
+}
+
+/** Wooden water tower on a trestle with an iron band. */
+function waterTower(): PixelBuf {
+  const b = new PixelBuf(W, H);
+  for (const [lx, ly] of [
+    [-0.16, -0.16],
+    [0.16, -0.16],
+    [0.16, 0.16],
+    [-0.16, 0.16],
+  ]) {
+    const p = proj(OX, OY, lx, ly);
+    b.rect(Math.round(p.x) - 1, Math.round(p.y) - 22, 2, 22, PAL.timber[2]);
+  }
+  drawCylinder(b, OX, OY, 0, 0, 0.19, 22, 18, PAL.timber, PAL.timber[2], 33);
+  const band = proj(OX, OY, 0, 0);
+  for (let x = -12; x <= 12; x++) {
+    const y = Math.round(band.y) - 30 + Math.round(Math.sqrt(Math.max(0, 1 - (x / 12) ** 2)) * 6);
+    b.set(Math.round(band.x) + x, y, PAL.iron[1]);
+  }
+  const top = proj(OX, OY, 0, 0, 40);
+  for (let r = 12; r >= 0; r--) {
+    const y = Math.round(top.y) - (12 - r);
+    for (let x = -r; x <= r; x++) b.set(Math.round(top.x) + x, y, PAL.roofSlate[(x + r) % 3]);
+  }
+  const sp = proj(OX, OY, 0.22, 0.05);
+  b.rect(Math.round(sp.x) - 2, Math.round(sp.y) - 26, 5, 2, PAL.iron[2]);
+  b.rect(Math.round(sp.x) + 2, Math.round(sp.y) - 26, 2, 6, PAL.iron[2]);
+  b.outline(PAL.outline, 170);
+  return b;
+}
+
+/** Amber "!" marker shown over stations that lost their platform track. */
+function warnMarker(): PixelBuf {
+  const b = new PixelBuf(14, 16);
+  for (let y = 0; y < 14; y++) {
+    const hw = Math.round((y / 13) * 6);
+    for (let x = 7 - hw; x <= 7 + hw - 1; x++) b.set(x, y + 1, PAL.amber);
+  }
+  b.rect(6, 4, 2, 6, PAL.outline);
+  b.rect(6, 11, 2, 2, PAL.outline);
+  b.outline(PAL.outline, 220);
   return b;
 }
 
@@ -245,6 +295,10 @@ export function generateStructuresAtlas(): AtlasImage {
   ab.add('structures/station_2', stationL2().toImageData(), OX, OY);
   ab.add('structures/station_3', stationL3().toImageData(), OX, OY);
   ab.add('structures/depot', depot().toImageData(), OX, OY);
-  ab.add('structures/signal', signal().toImageData(), 6, 25);
+  ab.add('structures/signal', signal('off').toImageData(), 6, 27);
+  ab.add('structures/signal_red', signal('red').toImageData(), 6, 27);
+  ab.add('structures/signal_green', signal('green').toImageData(), 6, 27);
+  ab.add('structures/water_tower', waterTower().toImageData(), OX, OY);
+  ab.add('structures/warn', warnMarker().toImageData(), 7, 15);
   return ab.build(512);
 }

@@ -37,7 +37,32 @@ const GAP = 0.05;
 const ACCEL = 0.7;
 const DECEL = 1.1;
 const MIN_DWELL = 2;
+/** tiles of path scanned ahead for other trains */
+const LOOKAHEAD = 2.5;
+/** distance kept before an occupied tile */
+const HOLD_GAP = 0.45;
+/** seconds blocked before trying another path / squeezing past */
+const REROUTE_AFTER = 25;
+const SQUEEZE_AFTER = 60;
 const MAX_DWELL = 40;
+
+/** Per-tick services the simulation hands to every train. */
+export interface TickCtx {
+  track: TrackGraph;
+  builder: Builder;
+  map: GameMap;
+  /** apply a delivery to contracts; returns units credited to a contract */
+  onDelivery: (e: DeliveryEvent) => number;
+  spend: (v: number) => void;
+  earn: (v: number) => void;
+  /** is a tile occupied by any train other than `self`? */
+  occupied: (x: number, y: number, self: number) => boolean;
+  /** ids of the trains standing on a tile */
+  occupants: (x: number, y: number) => number[];
+  now: number;
+  /** weather / season speed multiplier */
+  speedFactor: number;
+}
 
 export interface DeliveryEvent {
   cargo: string;
@@ -79,6 +104,13 @@ export class Train {
   prevPoses: CarPose[] = [];
   atStation: Station | null = null;
   lastMessage = '';
+  /** held behind another train */
+  blocked = false;
+  /** id of the train currently blocking this one */
+  blockedBy: number | null = null;
+  blockedTime = 0;
+  private ghostUntil = 0;
+  private rerouted = false;
 
   constructor(locoUid: number, locoDefId: string, locoLevel: number, name?: string, id?: number) {
     this.id = id ?? nextTrainId++;
@@ -164,6 +196,31 @@ export class Train {
     return true;
   }
 
+  /** Rebuild the trail (car positions and travel direction) from a save. */
+  restoreTrail(points: number[][], reversed: boolean) {
+    this.trail = [];
+    this.trailCum = [];
+    const segs = new Map<string, PathSegment>();
+    for (const [x, y, sx, sy, sin, sout] of points) {
+      const key = `${sx},${sy},${sin},${sout}`;
+      let seg = segs.get(key);
+      if (!seg) {
+        seg = { x: sx, y: sy, in: sin as Dir, out: sout as Dir };
+        segs.set(key, seg);
+      }
+      const last = this.trail[this.trail.length - 1];
+      this.trailCum.push(
+        last ? this.trailCum[this.trailCum.length - 1] + Math.hypot(x - last.x, y - last.y) : 0,
+      );
+      this.trail.push({ x, y, seg });
+    }
+    this.reversed = reversed;
+    this.speed = 0;
+    this.path = null;
+    this.updatePoses();
+    this.prevPoses = this.poses.map((p) => ({ ...p }));
+  }
+
   private pushTrail(p: TrailPoint) {
     const last = this.trail[this.trail.length - 1];
     if (last) {
@@ -225,7 +282,12 @@ export class Train {
 
   // ------------------------------------------------------------ routing
   /** Try to path to the next station. Returns false when nothing is reachable. */
-  dispatch(track: TrackGraph, builder: Builder, map: GameMap): boolean {
+  dispatch(
+    track: TrackGraph,
+    builder: Builder,
+    map: GameMap,
+    avoid?: (x: number, y: number) => boolean,
+  ): boolean {
     if (this.route.length === 0 || !this.trail.length) return false;
     const target = builder.stationById(this.route[this.routeIndex % this.route.length]);
     if (!target) return false;
@@ -243,10 +305,10 @@ export class Train {
       this.path = null;
       return true;
     }
-    let path = findPath(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget);
+    let path = findPath(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000, avoid);
     if (!path) {
       // reverse the consist and try the other way
-      const alt = findPath(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget);
+      const alt = findPath(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
       if (alt) {
         this.reverseConsist();
         path = alt;
@@ -364,17 +426,7 @@ export class Train {
 
   // ------------------------------------------------------------ tick
   /** Advance by in-game seconds. */
-  tick(
-    gdt: number,
-    ctx: {
-      track: TrackGraph;
-      builder: Builder;
-      map: GameMap;
-      onDelivery: (e: DeliveryEvent) => void;
-      spend: (v: number) => void;
-      earn: (v: number) => void;
-    },
-  ) {
+  tick(gdt: number, ctx: TickCtx) {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
     this.stateTime += gdt;
     if (ctx.track.version !== this.trackVersion && this.state === 'moving') {
@@ -434,17 +486,68 @@ export class Train {
     this.setState('moving');
   }
 
-  private tickMove(
-    gdt: number,
-    ctx: { track: TrackGraph; builder: Builder; map: GameMap; spend: (v: number) => void },
-  ) {
+  private tickMove(gdt: number, ctx: TickCtx) {
     const remaining = this.pathTotal - this.pathPos;
-    const vmax = this.maxSpeed * this.loadFactor * this.factorAt(this.pathPos + 0.3);
-    const vStop = Math.sqrt(2 * DECEL * Math.max(0, remaining));
+    // look ahead for other trains; hold a little before the first occupied tile
+    let blockDist = Infinity;
+    let blocker: number | null = null;
+    if (ctx.now >= this.ghostUntil) {
+      const from = this.pathPos + 0.3;
+      const to = this.pathPos + LOOKAHEAD;
+      // tiles under this train's own cars never block it (two trains that already overlap
+      // must be allowed to separate)
+      const own = new Set<number>();
+      for (const p of this.poses)
+        own.add(Math.floor(p.y + 0.5) * ctx.track.w + Math.floor(p.x + 0.5));
+      for (let i = 0; i < this.pathPts.length; i++) {
+        const arc = this.pathCum[i];
+        if (arc < from) continue;
+        if (arc > to) break;
+        const p = this.pathPts[i];
+        if (own.has(p.seg.y * ctx.track.w + p.seg.x)) continue;
+        if (ctx.occupied(p.seg.x, p.seg.y, this.id)) {
+          blockDist = Math.max(0, arc - this.pathPos - HOLD_GAP);
+          blocker = ctx.occupants(p.seg.x, p.seg.y).find((id) => id !== this.id) ?? null;
+          break;
+        }
+      }
+    }
+    this.blocked = blockDist < 0.3;
+    this.blockedBy = this.blocked ? blocker : null;
+    if (this.blocked) {
+      this.blockedTime += gdt;
+      if (this.blockedTime > REROUTE_AFTER && !this.rerouted) {
+        this.rerouted = true;
+        // try a path that avoids the tiles other trains are sitting on
+        const avoid = (x: number, y: number) => ctx.occupied(x, y, this.id);
+        const wasReversed = this.reversed;
+        if (this.dispatch(ctx.track, ctx.builder, ctx.map, avoid)) {
+          this.lastMessage = 'rerouted around traffic';
+          if (wasReversed !== this.reversed) this.updatePoses();
+          return;
+        }
+      }
+      if (this.blockedTime > SQUEEZE_AFTER) {
+        // deadlock breaker: ignore the other train for a while
+        this.ghostUntil = ctx.now + 15;
+        this.blockedTime = 0;
+        this.rerouted = false;
+        this.lastMessage = 'squeezed past a blocked train';
+      }
+    } else {
+      this.blockedTime = 0;
+    }
+    const vmax =
+      this.maxSpeed * this.loadFactor * this.factorAt(this.pathPos + 0.3) * ctx.speedFactor;
+    const vStop = Math.sqrt(2 * DECEL * Math.max(0, Math.min(remaining, blockDist)));
     const target = Math.min(vmax, vStop);
     if (target > this.speed) this.speed = Math.min(target, this.speed + ACCEL * gdt);
     else this.speed = Math.max(target, this.speed - DECEL * gdt * 1.5);
-    const step = Math.min(remaining, Math.max(0.02 * gdt, this.speed * gdt));
+    const step = Math.min(
+      remaining,
+      Math.max(0, blockDist),
+      Math.max(0.02 * gdt, this.speed * gdt),
+    );
     this.pathPos += step;
     this.distance += step;
     this.fuelAcc += step * this.locoDef.costPerTile;
@@ -486,6 +589,9 @@ export class Train {
 
   private arrive(st: Station) {
     this.atStation = st;
+    this.blocked = false;
+    this.blockedTime = 0;
+    this.rerouted = false;
     sfx('train.arrive');
     if (st.hasFreePlatform()) {
       st.occupants.add(this.id);
@@ -493,23 +599,14 @@ export class Train {
     } else this.setState('waiting');
   }
 
-  private tickLoad(
-    gdt: number,
-    ctx: {
-      track: TrackGraph;
-      builder: Builder;
-      map: GameMap;
-      onDelivery: (e: DeliveryEvent) => void;
-      earn: (v: number) => void;
-    },
-  ) {
+  private tickLoad(gdt: number, ctx: TickCtx) {
     const st = this.atStation;
     if (!st) {
       this.setState('noRoute');
       return;
     }
     let busy = false;
-    let budget = st.loadRate * gdt;
+    let budget = st.loadRate * st.loadBoost * gdt;
     // unload accepted cargo
     for (const w of this.wagons) {
       if (!w.cargo || w.amount <= 0) continue;
@@ -519,14 +616,20 @@ export class Train {
       w.amount -= n;
       budget -= n;
       busy = true;
-      ctx.earn(n * cargoDef(w.cargo).price * 0.5);
-      ctx.onDelivery({
+      const credited = ctx.onDelivery({
         cargo: w.cargo,
         amount: n,
         origin: w.origin ?? -1,
         station: st,
         train: this,
       });
+      const spot = n - credited;
+      if (spot > 1e-6) {
+        const origin = w.origin !== null ? ctx.builder.stationById(w.origin) : undefined;
+        const dist = origin ? Math.abs(origin.x - st.x) + Math.abs(origin.y - st.y) : 0;
+        ctx.earn(spot * st.marketPrice(w.cargo, dist));
+        st.absorb(w.cargo, spot);
+      }
       if (w.amount < 1e-3) {
         w.amount = 0;
         w.cargo = null;
@@ -584,6 +687,16 @@ export class Train {
     else this.setState('noRoute');
   }
 
+  /** Deadlock breaker: ignore other trains for a short while (used for head-on meetings). */
+  squeeze(now: number, message = 'squeezed past an oncoming train') {
+    this.ghostUntil = now + 15;
+    this.blockedTime = 0;
+    this.rerouted = false;
+    this.blocked = false;
+    this.blockedBy = null;
+    this.lastMessage = message;
+  }
+
   /** Remove from the world: clear platform occupancy. */
   recall() {
     if (this.atStation) this.atStation.occupants.delete(this.id);
@@ -612,6 +725,15 @@ export class Train {
       head: head
         ? { x: head.seg.x, y: head.seg.y, in: head.seg.in, reversed: this.reversed }
         : null,
+      reversed: this.reversed,
+      trail: this.trail.map((p) => [
+        Math.round(p.x * 1000) / 1000,
+        Math.round(p.y * 1000) / 1000,
+        p.seg.x,
+        p.seg.y,
+        p.seg.in,
+        p.seg.out,
+      ]),
     };
   }
 
@@ -628,9 +750,10 @@ export class Train {
     t.route = j.route;
     t.routeIndex = j.routeIndex;
     t.distance = j.distance;
-    if (j.head) {
+    if (j.trail && j.trail.length >= 2 && j.trail.every(([, , sx, sy]) => track.has(sx, sy))) {
+      t.restoreTrail(j.trail, !!j.reversed);
+    } else if (j.head) {
       t.spawnAt(track, j.head.x, j.head.y, j.head.in as Dir);
-      // spawnAt resets reversed; the loco orientation relative to travel is restored on next dispatch
     }
     t.state = 'noRoute';
     t.stateTime = 10;

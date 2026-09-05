@@ -13,14 +13,10 @@
 - Debug panel (backtick): FPS, seed, entity counts, zoom, camera, hovered tile, money/ticket cheats, depth-sort tint overlay, regenerate with a new seed.
 - HUD top bar with clock (1 day = 4 real minutes) and speed controls (Space pauses, 1/2/3 keys).
 
-**Stubbed**
-- Overview stations/trains/contracts sources are empty until milestones 2-4.
-- Reputation tiers never unlock regions yet.
-- Spawn-contract debug button is a no-op.
-
-**Known bugs**
-- Water animation is a simple two-frame flip.
-- Very large zoom-out on small windows can show the map edge beyond the clamp margin.
+**Fixed in the post-merge pass**
+- Overview sources, region unlocks and the spawn-contract button were completed by milestones 2-4.
+- Water now cycles through four ripple frames (`terrain/water_<v>_f0..3`).
+- An 8-tile ring of "void" sea tiles surrounds the map (`WorldRenderer.BORDER`), fading into the background, so zooming out never shows a hard map edge.
 
 ## 2. Track + stations
 
@@ -34,13 +30,10 @@
 - Overview now draws track as lines and stations as labelled nodes; minimap marks track and stations.
 - Economy class with tier ladder; tier-ups reveal regions (fog, overview, minimap all rebuild) and grant tickets.
 
-**Stubbed**
-- Stations produce cargo into storage but nothing collects it yet (milestone 3).
-- No signal/water-tower decor placement, although sprites exist.
-
-**Known bugs**
-- Replacing a piece with a different one charges the full price minus the refund without a confirmation.
-- Station adjacency is not re-checked when the last neighbouring track is removed (panel shows a warning only).
+**Fixed in the post-merge pass**
+- Decor tools (`src/data/decor.json`): signals stand on track tiles, rotate with `R` to pick the tile they guard and show red while a train sits on it; water towers speed up loading at stations within two tiles (+25 %, two towers stack). Removing track removes its signal; decor refunds 50 %.
+- Replacing a piece shows an amber ghost and a "Replace <kind>: net $x" status line before the click.
+- Removing a station's last platform tile raises a bobbing warning marker over it and a toast; restoring track clears it. Orphaned stations are excluded from contract generation and route building.
 
 ## 3. Trains
 
@@ -55,14 +48,12 @@
 - Track edits invalidate paths: trains re-route or become stranded if their tile was removed; recall from the depot.
 - Overview shows trains as heading arrows with tooltips; minimap marks trains.
 
-**Stubbed**
-- No collision or block signalling: trains pass through each other.
-- Delivery events are emitted but contracts do not exist yet (milestone 4).
-- Save/load of trains is drafted (`toJSON`/`fromJSON`) but not wired.
-
-**Known bugs**
-- A recalled train's cargo is lost.
-- Loco facing after loading `fromJSON` is forward until the next dispatch.
+**Fixed in the post-merge pass**
+- Train separation: each tick the fleet rebuilds a tile occupancy map; a train scans 2.5 tiles of its path ahead and brakes to hold 0.45 tiles short of any tile under another train (tiles under its own cars are ignored so overlapping trains can separate). Trains stuck 25 s try a path around occupied tiles; head-on meetings resolve after 4 s by letting the lower-numbered train squeeze through; anything still stuck after 60 s squeezes past. Depot and overview show "Held behind a train".
+- New trains spawn on a free platform tile when one exists.
+- Recalling a train salvages its cargo at 40 % of base price (toast shows the amount).
+- Saves store the car trail and the reversed flag, so restored trains keep their exact car positions and pushing direction.
+- Contracts and save/load were completed by milestones 4 and 6.
 
 ## 4. Contracts + economy + time
 
@@ -76,12 +67,10 @@
 - Time: pause / 1x / 2x / 3x (buttons, Space, 1-2-3). One day = 4 real minutes at 1x. A daily +1 ticket is granted when at least one contract was delivered the previous day. Tier-ups grant tickets and chart new regions.
 - Debug: spawn contract now forces an offer.
 
-**Stubbed**
-- Cargo delivered without a contract still pays half the base price (simple spot market).
-- Station panel does not list contracts touching that station.
-
-**Known bugs**
-- Contract labels overlap when stations sit within a couple of tiles of each other in the overview.
+**Fixed in the post-merge pass**
+- Spot market: cargo unloaded without a matching contract is paid at the destination's current price, which falls with recent deliveries of that cargo (satiety) and recovers over about a day, and rises with haul distance. The station panel lists prices and demand bars per accepted cargo. Contract-credited units are paid by the contract only.
+- Station panel lists active contracts that start or end at the station with progress and time left.
+- Overview labels (stations and contracts) are pushed apart so they never overlap.
 
 ## 5. Gacha + roster
 
@@ -92,12 +81,10 @@
 - Roster screen (`V`): filter by kind and rarity, unassigned only, sort by rarity/name/level/newest; cards show stats at current level, duplicate progress and which train uses the item.
 - Pulled items appear in the depot immediately for assembly.
 
-**Stubbed**
-- No item art on the cards (text only); sprites are shown once the item is on a train.
-- Banner rotation is static.
-
-**Known bugs**
-- If the pool has no item of a rolled rarity the picker falls back to any pool item.
+**Fixed in the post-merge pass**
+- Item art everywhere: reveal cards, roster cards and depot rows show the locomotive or wagon sprite cropped from the atlas (`src/ui/spritePreview.ts`).
+- Featured rotation: every 3 in-game days each banner features one SSR and two SR items (seeded by banner and rotation index); featured items take 50 % of their rarity's rolls. The banner screen shows the featured set and the days until it rotates; revealed cards carry a "featured" badge.
+- A rolled rarity the pool cannot supply now downgrades to the nearest rarity the pool has, and the reveal reports the real rarity. `validateBanners()` warns at startup about any pool missing a rarity.
 
 ## 6. Polish
 
@@ -110,10 +97,14 @@
 - Settings screen: audio, edge scrolling, autosave, day/night, smoke, FPS counter, control reference.
 - Vignette overlay, hidden toolbar in the overview, FPS readout in the top bar.
 
-**Stubbed**
-- No audio assets and no music player; only the hook layer.
-- Weather, seasons and per-tile lighting are out of scope.
+**Fixed in the post-merge pass**
+- Audio is generated at runtime (`src/engine/synth.ts`): every sound event has a Web Audio design (clicks, thuds, whistles, bells, chimes, fanfare) and a generative ambient loop (drone plus wandering pentatonic melody) plays at the music volume. An `.ogg` in `/public/assets/audio/` still overrides any event. The context unlocks on the first click or key.
+- Weather (`src/sim/weather.ts`): seeded clear / rain / fog spells; rain draws screen-space streaks and darkens the tint, fog drifts patches over the world with a haze, both slow trains slightly. Seasons of 6 days each tint the ground and props (spring, summer, autumn, winter) and scale production (farms +35 % in autumn, half in winter). The top bar shows season and weather; a settings toggle disables all of it.
+- Per-tile lighting: additive light diamonds on the tiles around stations and in front of locomotives at night, on top of the lantern glows.
+- The night tint is now a world-space polygon covering the map and its void ring, so nothing outside the world is tinted; the HTML UI stays lit on purpose.
+- Restored trains keep their reversed flag (see milestone 3).
+- Save format v2 (`decor`, `weather`); v1 saves migrate on load.
 
-**Known bugs**
-- Trains restored from a save lose their reversed flag until the next dispatch, so a pushed consist may briefly render the locomotive facing the wrong way.
-- The multiply tint also darkens the DOM canvas background but not the HTML UI, which stays fully lit by design.
+**Known limitations**
+- Rain and fog particles are purely visual; there is no per-tile weather.
+- The music loop is procedural and simple by design; no composed tracks ship.

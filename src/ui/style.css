@@ -162,10 +162,11 @@ body {
 }
 #topbar .title {
   font-family: var(--font-title);
-  font-size: 16px;
+  font-size: 15px;
   letter-spacing: 2px;
   color: var(--amber);
-  padding: 0 14px;
+  padding: 0 10px;
+  white-space: nowrap;
   display: flex;
   align-items: center;
   border-right: 1px solid var(--border-dark);
@@ -175,7 +176,8 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 12px;
+  padding: 0 9px;
+  white-space: nowrap;
   border-right: 1px solid var(--border-dark);
   box-shadow: 1px 0 0 var(--border-light);
 }
@@ -187,7 +189,7 @@ body {
 }
 #topbar .stat .value {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
 }
 #topbar .spacer {
   flex: 1;
@@ -236,7 +238,7 @@ body {
 #debug {
   position: absolute;
   top: 40px;
-  left: 8px;
+  right: 256px;
   width: 260px;
   display: none;
 }
@@ -368,9 +370,15 @@ body {
 /* ---- station panel ---- */
 #station-panel {
   position: absolute;
-  right: 8px;
+  left: 8px;
   top: 40px;
   width: 300px;
+  max-height: calc(100vh - 170px);
+  display: flex;
+  flex-direction: column;
+}
+#station-panel .panel-body {
+  overflow-y: auto;
 }
 .kv {
   display: flex;
@@ -666,9 +674,6 @@ input.text {
 .meter.time > div {
   background: var(--amber-dark);
 }
-#station-panel {
-  top: 430px;
-}
 
 /* ---- gacha ---- */
 .gacha {
@@ -830,4 +835,73 @@ input.text {
 }
 .rcard {
   color: var(--text);
+}
+
+/* ---- sprite previews ---- */
+.sprite-preview {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+.item-art {
+  width: 36px;
+  height: 32px;
+  object-fit: contain;
+  flex: 0 0 36px;
+  margin-right: 4px;
+  background: #141418;
+  border: 1px solid var(--border-dark);
+}
+.gcard-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.gcard-art {
+  width: 72px;
+  height: 64px;
+  object-fit: contain;
+  background: #141418;
+  border: 1px solid var(--border-dark);
+}
+.rcard-body {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.rcard-art {
+  width: 72px;
+  height: 64px;
+  flex: 0 0 72px;
+  object-fit: contain;
+  background: #141418;
+  border: 1px solid var(--border-dark);
+}
+.gacha-featured {
+  padding: 6px 8px;
+  border: 1px solid var(--border-dark);
+  background: var(--stone-dark);
+}
+.gacha-featured-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+.gfeat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-dark);
+  background: var(--stone);
+  color: var(--text);
+}
+.gfeat .sprite-preview {
+  width: 72px;
+  height: 64px;
+  object-fit: contain;
+}
+.bar.market .bar-fill {
+  background: var(--cyan-dark);
 }

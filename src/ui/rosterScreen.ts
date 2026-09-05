@@ -14,6 +14,8 @@ import {
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
 import type { Fleet } from '../sim/fleet';
+import type { AtlasRegistry } from '../engine/atlas';
+import { spriteImg, frameForItem } from './spritePreview';
 
 type KindFilter = 'all' | 'loco' | 'wagon';
 type SortKey = 'rarity' | 'name' | 'level' | 'newest';
@@ -33,6 +35,7 @@ export class RosterScreen implements Screen {
   constructor(
     private readonly inventory: Inventory,
     private readonly fleet: Fleet,
+    private readonly atlas: AtlasRegistry,
   ) {
     this.root.append(this.bar, el('div', { class: 'col' }, this.list));
   }
@@ -164,7 +167,12 @@ export class RosterScreen implements Screen {
         el('span', { class: 'name', text: d.name }),
         el('span', { class: 'num', text: `Lv ${it.level}` }),
       ),
-      el('div', { class: 'gcard-era', text: d.era }),
+      el(
+        'div',
+        { class: 'rcard-body' },
+        spriteImg(this.atlas, frameForItem(it.defId), 2, 'sprite-preview rcard-art'),
+        el('div', { class: 'gcard-era', text: d.era }),
+      ),
       el('div', { class: 'sub' }, ...stats.map((s) => el('div', { text: s }))),
       el('div', { class: 'sub dim', text: lvl }),
       el('div', {

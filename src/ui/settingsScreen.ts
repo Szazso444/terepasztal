@@ -64,7 +64,10 @@ export class SettingsScreen implements Screen {
       el('span', {}, input, ' ', val),
     );
   }
-  private toggle(label: string, key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'showFps') {
+  private toggle(
+    label: string,
+    key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'showFps' | 'weather',
+  ) {
     const b = btn(
       this.settings[key] ? STR.settings.on : STR.settings.off,
       () => {
@@ -92,6 +95,7 @@ export class SettingsScreen implements Screen {
       this.toggle(STR.settings.autosave, 'autosave'),
       this.toggle(STR.settings.dayNight, 'dayNight'),
       this.toggle(STR.settings.smoke, 'smoke'),
+      this.toggle(STR.settings.weather, 'weather'),
       this.toggle(STR.settings.showFps, 'showFps'),
       el('div', { class: 'col-title', style: 'margin-top:10px', text: STR.settings.controls }),
       el('div', { class: 'sub', text: STR.settings.controlsText }),

@@ -20,6 +20,7 @@ export class Hud {
   private speedBtns: HTMLButtonElement[] = [];
   readonly actions = el('div', { class: 'stat actions', style: 'gap:4px' });
   private fps = el('span', { class: 'value dim' });
+  private weather = el('span', { class: 'value' });
 
   constructor(private readonly clock: GameClock) {
     const stat = (label: string, v: HTMLElement) =>
@@ -40,9 +41,14 @@ export class Hud {
       this.actions,
       el('div', { class: 'spacer' }),
       el('div', { class: 'stat' }, this.fps),
+      el('div', { class: 'stat' }, this.weather),
       el('div', { class: 'stat' }, this.day, this.clockEl),
       time,
     );
+  }
+
+  setWeather(text: string) {
+    if (this.weather.textContent !== text) this.weather.textContent = text;
   }
 
   setFps(v: number | null) {

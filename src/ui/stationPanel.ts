@@ -3,6 +3,9 @@ import { STR } from '../strings';
 import type { Station } from '../sim/stations';
 import type { Builder } from '../sim/build';
 import { cargoDef } from '../sim/cargo';
+import type { ContractBoard } from '../sim/contracts';
+import type { GameClock } from '../sim/time';
+import { fmtDuration } from './contractsScreen';
 
 /** Side panel for a selected station. */
 export class StationPanel {
@@ -14,6 +17,8 @@ export class StationPanel {
   constructor(
     private readonly builder: Builder,
     private readonly onClose: () => void,
+    private readonly board: ContractBoard,
+    private readonly clock: GameClock,
   ) {
     this.root = el(
       'div',
@@ -81,6 +86,58 @@ export class StationPanel {
     b.append(bars);
     if (this.builder.platformTiles(s).length === 0)
       b.append(el('div', { class: 'red', text: STR.station.noPlatform }));
+    if (s.loadBoost > 1)
+      b.append(
+        el('div', { class: 'cyan', text: STR.station.boost(Math.round((s.loadBoost - 1) * 100)) }),
+      );
+    // spot market for cargo delivered without a contract
+    if (s.def.accepts.length) {
+      b.append(
+        el('div', { class: 'col-title', style: 'margin-top:6px', text: STR.station.market }),
+      );
+      for (const c of s.def.accepts) {
+        const sat = s.satiety(c);
+        b.append(
+          el(
+            'div',
+            { class: 'bar market' },
+            el('div', { class: 'bar-fill', style: `width:${Math.round((1 - sat) * 100)}%` }),
+            el('span', {
+              class: 'bar-label',
+              text: `${cargoDef(c).name} ${fmtMoney(s.marketPrice(c, 0))}/u`,
+            }),
+          ),
+        );
+      }
+      b.append(el('div', { class: 'sub dim', text: STR.station.marketHint }));
+    }
+    // contracts touching this station
+    const mine = this.board.active
+      .filter((c) => c.originId === s.id || c.destId === s.id)
+      .sort((p, q) => p.expires - q.expires);
+    if (mine.length) {
+      b.append(
+        el('div', { class: 'col-title', style: 'margin-top:6px', text: STR.station.contracts }),
+      );
+      for (const c of mine) {
+        const other = this.builder.stationById(c.originId === s.id ? c.destId : c.originId);
+        const rem = this.board.remaining(c, this.clock.time);
+        b.append(
+          el(
+            'div',
+            { class: 'kv' },
+            el('span', {
+              class: 'k',
+              text: `${c.originId === s.id ? '→' : '←'} ${other?.name ?? '?'}: ${Math.round(c.amount)} ${cargoDef(c.cargo).name}`,
+            }),
+            el('span', {
+              class: `v ${rem < 0.25 ? 'red' : ''}`,
+              text: `${Math.floor(c.delivered)}/${c.amount} · ${fmtDuration(Math.max(0, c.expires - this.clock.time))}`,
+            }),
+          ),
+        );
+      }
+    }
     const up = this.builder.canUpgrade(s);
     const actions = el('div', { class: 'row' });
     if (s.level < 5) {

@@ -18,12 +18,19 @@ export class WorldRenderer {
   readonly objects = new Container();
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
+  /** additive ground lights (per-tile lighting), drawn over track and under objects */
+  readonly lights = new Container();
+  /** out-of-map void ring */
+  readonly border = new Container();
   private trackSprites = new Map<number, Sprite>();
   private structures = new Map<string, Sprite>();
   private groundSprites: Sprite[] = [];
   private fogSprites = new Map<number, Sprite>();
-  private waterSprites: { s: Sprite; a: string; b: string }[] = [];
+  private waterSprites: { s: Sprite; base: string }[] = [];
   private waterPhase = 0;
+  private waterFrame = 0;
+  /** number of void tiles drawn around the playable map */
+  static readonly BORDER = 8;
   private propSprites = new Map<number, Sprite[]>();
   /** Tiles that must render flat (track / station on hill). */
   private flattened = new Set<number>();
@@ -38,7 +45,18 @@ export class WorldRenderer {
     this.ground.cullableChildren = true;
     this.fog.cullableChildren = true;
     this.track.cullableChildren = true;
-    this.root.addChild(this.ground, this.track, this.objects, this.fog, this.overlay);
+    this.border.cullableChildren = true;
+    this.lights.cullableChildren = true;
+    this.root.addChild(
+      this.border,
+      this.ground,
+      this.track,
+      this.lights,
+      this.objects,
+      this.fog,
+      this.overlay,
+    );
+    this.buildBorder();
     this.buildGround();
     this.buildProps();
     this.rebuildFog();
@@ -56,7 +74,7 @@ export class WorldRenderer {
       case Terrain.Hill:
         return this.flattened.has(i) ? `terrain/hillcut_${v}` : `terrain/hill_${v % 3}`;
       case Terrain.Water:
-        return `terrain/water_${v % 3}`;
+        return `terrain/water_${v % 3}_f0`;
       case Terrain.Rock:
         return `terrain/rock_${v}`;
       case Terrain.Sand:
@@ -108,8 +126,7 @@ export class WorldRenderer {
     const p = tileToWorld(x, y);
     s.position.set(p.x, p.y);
     if (this.map.terrain[idx(this.map, x, y)] === Terrain.Water) {
-      const alt = frame + '_b';
-      if (this.atlas.has(alt)) this.waterSprites.push({ s, a: frame, b: alt });
+      this.waterSprites.push({ s, base: frame.slice(0, -3) });
     }
     return s;
   }
@@ -196,13 +213,74 @@ export class WorldRenderer {
 
   animate(dt: number) {
     this.waterPhase += dt;
-    if (this.waterPhase > 0.9) {
+    if (this.waterPhase > 0.28) {
       this.waterPhase = 0;
+      this.waterFrame = (this.waterFrame + 1) % 4;
       for (const w of this.waterSprites) {
-        const cur = w.s.texture === this.atlas.get(w.a).texture ? w.b : w.a;
-        w.s.texture = this.atlas.get(cur).texture;
+        w.s.texture = this.atlas.get(`${w.base}_f${this.waterFrame}`).texture;
       }
     }
+  }
+
+  /** Void ring outside the playable area so zooming out never shows raw background. */
+  private buildBorder() {
+    const B = WorldRenderer.BORDER;
+    const { w, h } = this.map;
+    const CH = 16;
+    const chunks = new Map<
+      string,
+      { c: Container; minX: number; minY: number; maxX: number; maxY: number }
+    >();
+    for (let y = -B; y < h + B; y++)
+      for (let x = -B; x < w + B; x++) {
+        if (x >= 0 && y >= 0 && x < w && y < h) continue;
+        const key = `${Math.floor(x / CH)},${Math.floor(y / CH)}`;
+        let ch = chunks.get(key);
+        if (!ch) {
+          ch = {
+            c: new Container(),
+            minX: Infinity,
+            minY: Infinity,
+            maxX: -Infinity,
+            maxY: -Infinity,
+          };
+          ch.c.cullable = true;
+          ch.c.cullableChildren = false;
+          chunks.set(key, ch);
+          this.border.addChild(ch.c);
+        }
+        const f = this.atlas.get(
+          `terrain/void_${(x * 7 + y * 13) % 3 < 0 ? 0 : (x * 7 + y * 13) % 3}`,
+        );
+        const sp = new Sprite(f.texture);
+        sp.anchor.set(f.anchorX, f.anchorY);
+        const pt = tileToWorld(x, y);
+        sp.position.set(pt.x, pt.y);
+        // fade towards the outside so the edge reads as deep water
+        const d = Math.max(-x, -y, x - (w - 1), y - (h - 1));
+        sp.alpha = 1;
+        const k = Math.max(0.22, 1 - d * 0.11);
+        const v = Math.round(255 * k);
+        sp.tint = (v << 16) | (v << 8) | Math.min(255, Math.round(v * 1.1));
+        ch.c.addChild(sp);
+        ch.minX = Math.min(ch.minX, pt.x - HALF_W);
+        ch.maxX = Math.max(ch.maxX, pt.x + HALF_W);
+        ch.minY = Math.min(ch.minY, pt.y - HALF_H);
+        ch.maxY = Math.max(ch.maxY, pt.y + HALF_H);
+      }
+    for (const ch of chunks.values())
+      ch.c.cullArea = new Rectangle(ch.minX, ch.minY, ch.maxX - ch.minX, ch.maxY - ch.minY);
+  }
+
+  /** Multiply-tint every ground and prop sprite (seasons). Water and void are left alone. */
+  setSeasonTint(ground: number, props: number) {
+    for (let i = 0; i < this.groundSprites.length; i++) {
+      const s = this.groundSprites[i];
+      if (!s) continue;
+      if (this.map.terrain[i] === Terrain.Water) continue;
+      s.tint = ground;
+    }
+    for (const list of this.propSprites.values()) for (const s of list) s.tint = props;
   }
 
   /** Show a track piece sprite on a tile (or clear it). Flat: lives in the track layer under objects. */
@@ -229,7 +307,7 @@ export class WorldRenderer {
   }
 
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */
-  setStructure(id: string, x: number, y: number, frame: string, layer = 20) {
+  setStructure(id: string, x: number, y: number, frame: string, layer = 20, dy = 0, dx = 0) {
     const f = this.atlas.get(frame);
     let s = this.structures.get(id);
     if (!s) {
@@ -240,7 +318,7 @@ export class WorldRenderer {
     } else s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
     const p = tileToWorld(x, y);
-    s.position.set(p.x, p.y + this.elevationOf(x, y));
+    s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
     s.zIndex = depthKey(x, y, layer);
     return s;
   }

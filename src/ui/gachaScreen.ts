@@ -13,6 +13,14 @@ import {
 import { RARITIES, itemDef, dupesNeeded } from '../gacha/items';
 import type { Economy } from '../sim/economy';
 import { sfx } from '../engine/audio';
+import type { AtlasRegistry } from '../engine/atlas';
+import { spriteImg, frameForItem } from './spritePreview';
+import {
+  Gacha as GachaClass,
+  rotationIndex,
+  daysUntilRotation,
+  FEATURED_SHARE,
+} from '../gacha/gacha';
 
 /** Banner selection, rates, pity counter, 1x / 10x pulls and a card reveal sequence. */
 export class GachaScreen implements Screen {
@@ -30,6 +38,8 @@ export class GachaScreen implements Screen {
     private readonly economy: Economy,
     private readonly now: () => number,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+    private readonly atlas: AtlasRegistry,
+    private readonly day: () => number,
   ) {
     const left = el(
       'div',
@@ -126,6 +136,33 @@ export class GachaScreen implements Screen {
         el('div', { class: 'dim', text: STR.gacha.idleHint }),
       ),
     );
+    // featured rotation
+    const rot = rotationIndex(this.day());
+    const featured = GachaClass.featured(this.banner, rot);
+    if (featured.length) {
+      const box = el('div', { class: 'gacha-featured' });
+      box.append(
+        el('div', {
+          class: 'col-title',
+          text: STR.gacha.featured(daysUntilRotation(this.day()), Math.round(FEATURED_SHARE * 100)),
+        }),
+      );
+      const row = el('div', { class: 'gacha-featured-row' });
+      for (const id of featured) {
+        const d = itemDef(id);
+        row.append(
+          el(
+            'div',
+            { class: `gfeat rarity-${d.rarity}` },
+            spriteImg(this.atlas, frameForItem(id), 2),
+            el('div', { class: `name rarity-${d.rarity}`, text: d.name }),
+            el('div', { class: 'sub dim', text: d.rarity }),
+          ),
+        );
+      }
+      box.append(row);
+      this.stage.append(box);
+    }
     // preview of the pool grouped by rarity
     const pool = el('div', { class: 'gacha-pool' });
     for (const r of [...RARITIES].reverse()) {
@@ -149,7 +186,7 @@ export class GachaScreen implements Screen {
     }
     this.economy.tickets -= cost;
     sfx('gacha.pull');
-    const results = this.gacha.pull(this.banner, n, this.now());
+    const results = this.gacha.pull(this.banner, n, this.now(), rotationIndex(this.day()));
     this.reveal(results);
   }
 
@@ -169,7 +206,12 @@ export class GachaScreen implements Screen {
         el(
           'div',
           { class: 'gcard-front' },
-          el('div', { class: `gcard-rarity rarity-${r.rarity}`, text: r.rarity }),
+          el(
+            'div',
+            { class: 'gcard-top' },
+            el('div', { class: `gcard-rarity rarity-${r.rarity}`, text: r.rarity }),
+            spriteImg(this.atlas, frameForItem(r.defId), 2, 'sprite-preview gcard-art'),
+          ),
           el('div', { class: 'gcard-name', text: d.name }),
           el('div', {
             class: 'gcard-kind',
@@ -185,6 +227,7 @@ export class GachaScreen implements Screen {
               : STR.gacha.newItem,
           }),
           r.forced ? el('div', { class: 'gcard-forced', text: STR.gacha.guaranteed }) : null,
+          r.featured ? el('div', { class: 'gcard-forced', text: STR.gacha.featuredBadge }) : null,
         ),
       );
       card.addEventListener('click', () => card.classList.replace('pending', 'flipped'));

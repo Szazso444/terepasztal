@@ -35,7 +35,11 @@ import { ContractBoard } from './sim/contracts';
 import { ContractsScreen } from './ui/contractsScreen';
 import { ContractsSide } from './ui/contractsSide';
 import { Rng } from './engine/rng';
-import { DayNight, Glows, Smoke, nightness } from './render/fx';
+import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
+import { Weather, SEASON_FX, seasonOf, productionMul, type Season } from './sim/weather';
+import { decorOffset, type Decor } from './sim/build';
+import { validateBanners } from './gacha/gacha';
+import { DIR_DX, DIR_DY } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import { SettingsScreen } from './ui/settingsScreen';
 import {
@@ -105,6 +109,15 @@ export class Game {
   smoke!: Smoke;
   private autosaveTimer = 0;
   private savedAt: number | null = null;
+  weather!: Weather;
+  groundLights!: GroundLights;
+  rain!: Rain;
+  fog!: Fog;
+  private season: Season | null = null;
+  private orphaned = new Set<number>();
+  private signalAspect = new Map<number, string>();
+  private aspectTimer = 0;
+  private bobTime = 0;
   private panelRefresh = 0;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
@@ -182,6 +195,10 @@ export class Game {
     this.builder = new Builder(this.map, this.regions, this.track, this.economy);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
+    this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
+    this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
+    this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
+    validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onTierUp = (t) => this.onTierUp(t);
     this.inventory.seedStarter(0);
@@ -212,9 +229,21 @@ export class Game {
     this.cursor = new Sprite(cur.texture);
     this.cursor.anchor.set(cur.anchorX, cur.anchorY);
     this.world.overlay.addChild(this.cursor);
-    this.app.stage.addChild(this.world.root, this.dayNight.overlay, this.overview.root);
+    this.rain = new Rain(this.atlas);
+    this.fog = new Fog(this.atlas);
+    this.world.root.addChild(this.dayNight.overlay);
+    this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    this.world.overlay.addChild(this.fog.patches);
+    this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
     this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.groundLights = new GroundLights(
+      this.atlas,
+      this.world.lights,
+      (x, y) => this.world.surfacePoint(x, y),
+      (x, y) => inBounds(this.map, x, y),
+    );
     this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.applySeason(true);
     this.applySettings();
     this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
 
@@ -243,6 +272,8 @@ export class Game {
     audio.sfx = this.settings.sfx;
     audio.music = this.settings.music;
     writeSettings(this.settings);
+    audio.applyMusic();
+    if (!this.settings.weather && this.weather) this.weather.visible = 0;
   }
 
   snapshot(): SaveGame {
@@ -262,6 +293,8 @@ export class Game {
       gacha: this.gacha.toJSON(),
       camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
       lastDay: this.lastDay,
+      decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
+      weather: this.weather.toJSON(),
     };
   }
 
@@ -304,6 +337,15 @@ export class Game {
       const t = TrainClass.fromJSON(tj, this.track);
       this.fleet.trains.push(t);
     }
+    for (const [x, y, id, rot] of j.decor ?? []) {
+      const d: Decor = { id, x, y, rot };
+      this.builder.decor.set(y * this.map.w + x, d);
+      this.onDecorChanged(d, false);
+    }
+    this.builder.refreshStationBoosts();
+    if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);
+    for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
+    this.applySeason(true);
     // items assigned to trains that no longer exist are freed
     for (const it of this.inventory.items)
       if (it.assigned !== null && !this.fleet.byId(it.assigned)) it.assigned = null;
@@ -335,6 +377,67 @@ export class Game {
       this.world.setTrack(x, y, null);
       if (t === Terrain.Hill && !this.builder.stationAt(x, y)) this.world.setFlattened(x, y, false);
     }
+  }
+  private onDecorChanged(d: Decor, removed: boolean) {
+    const id = `decor:${d.x},${d.y}`;
+    if (removed) {
+      this.world.removeStructure(id);
+      this.signalAspect.delete(d.y * this.map.w + d.x);
+      return;
+    }
+    const off = decorOffset(d);
+    if (d.id === 'signal') {
+      this.world.setStructure(id, d.x, d.y, 'structures/signal_green', 12, off.dy, off.dx);
+      this.signalAspect.set(d.y * this.map.w + d.x, 'green');
+    } else {
+      const t = terrainAt(this.map, d.x, d.y);
+      if (t === Terrain.Hill) this.world.setFlattened(d.x, d.y, true);
+      this.world.removeProps(d.x, d.y);
+      this.world.setStructure(id, d.x, d.y, `structures/${d.id}`, 20);
+    }
+  }
+  private onStationOrphaned(s: Station, orphaned: boolean) {
+    const id = `warn:${s.id}`;
+    if (orphaned && !this.orphaned.has(s.id)) {
+      this.orphaned.add(s.id);
+      this.world.setStructure(id, s.x, s.y, 'structures/warn', 45, -54);
+      this.toasts.push(STR.station.orphaned(s.name), 'warn');
+    } else if (!orphaned && this.orphaned.has(s.id)) {
+      this.orphaned.delete(s.id);
+      this.world.removeStructure(id);
+    }
+  }
+  /** Signals show red when a train sits on the tile they guard or on their own tile. */
+  private updateSignals() {
+    for (const d of this.builder.decor.values()) {
+      if (d.id !== 'signal') continue;
+      const key = d.y * this.map.w + d.x;
+      const ax = d.x + DIR_DX[d.rot];
+      const ay = d.y + DIR_DY[d.rot];
+      const red = this.fleet.occupied(ax, ay, -1) || this.fleet.occupied(d.x, d.y, -1);
+      const aspect = red ? 'red' : 'green';
+      if (this.signalAspect.get(key) === aspect) continue;
+      this.signalAspect.set(key, aspect);
+      const off = decorOffset(d);
+      this.world.setStructure(
+        `decor:${d.x},${d.y}`,
+        d.x,
+        d.y,
+        `structures/signal_${aspect}`,
+        12,
+        off.dy,
+        off.dx,
+      );
+    }
+  }
+  /** Re-tint the world and adjust production when the season changes. */
+  private applySeason(force = false) {
+    const s = this.settings.weather ? seasonOf(this.clock.day) : 'spring';
+    if (s === this.season && !force) return;
+    this.season = s;
+    const fx = SEASON_FX[s];
+    this.world.setSeasonTint(fx.ground, fx.props);
+    for (const st of this.builder.stations) st.productionMul = productionMul(st.def.id, s);
   }
   private onStationChanged(s: Station, removed: boolean) {
     const id = `station:${s.id}`;
@@ -369,8 +472,12 @@ export class Game {
 
   private buildUi() {
     this.hud = new Hud(this.clock);
-    this.depot = new DepotScreen(this.inventory, this.fleet, this.builder, (m, k) =>
-      this.toasts.push(m, k),
+    this.depot = new DepotScreen(
+      this.inventory,
+      this.fleet,
+      this.builder,
+      (m, k) => this.toasts.push(m, k),
+      this.atlas,
     );
     this.depot.onFocusTrain = (t) => this.focusTrain(t);
     this.settingsScreen = new SettingsScreen(
@@ -410,8 +517,10 @@ export class Game {
       this.economy,
       () => this.clock.time,
       (m, k) => this.toasts.push(m, k),
+      this.atlas,
+      () => this.clock.day,
     );
-    this.rosterScreen = new RosterScreen(this.inventory, this.fleet);
+    this.rosterScreen = new RosterScreen(this.inventory, this.fleet, this.atlas);
     this.contractsScreen = new ContractsScreen(this.contracts, this.builder, this.clock, (m, k) =>
       this.toasts.push(m, k),
     );
@@ -464,6 +573,8 @@ export class Game {
     this.stationPanel = new StationPanel(
       this.builder,
       () => this.build.selected && this.build.select(null),
+      this.contracts,
+      this.clock,
     );
     this.uiRoot.append(
       this.screens.root,
@@ -498,7 +609,10 @@ export class Game {
     const gdt = this.clock.advance(dt);
     if (gdt > 0) {
       for (const s of this.builder.stations) s.tick(gdt);
-      this.fleet.tick(gdt);
+      if (this.settings.weather) this.weather.tick(this.clock.time, this.clock.day, dt);
+      this.applySeason();
+      const wf = this.settings.weather ? this.weather.speedFactor() : 1;
+      this.fleet.tick(gdt, this.clock.time, wf);
       this.contracts.tick(this.clock.time);
       if (this.clock.day !== this.lastDay) {
         this.lastDay = this.clock.day;
@@ -531,11 +645,33 @@ export class Game {
     this.updateCursor();
     this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha);
     const night = this.settings.dayNight ? nightness(this.clock.dayFraction) : 0;
-    this.dayNight.update(
-      this.clock.dayFraction,
+    const rainI = this.settings.weather && this.weather.kind === 'rain' ? this.weather.visible : 0;
+    const fogI = this.settings.weather && this.weather.kind === 'fog' ? this.weather.visible : 0;
+    this.dayNight.update(this.clock.dayFraction, this.settings.dayNight, rainI);
+    this.rain.update(dt, this.viewTarget === 0 ? rainI : 0, this.camera.viewW, this.camera.viewH);
+    this.fog.update(
+      dt,
+      this.viewTarget === 0 ? fogI : 0,
+      this.camera.viewRect(),
       this.camera.viewW,
       this.camera.viewH,
-      this.settings.dayNight,
+    );
+    this.groundLights.update(this.builder.stations, this.fleet.trains, night);
+    this.aspectTimer += dt;
+    if (this.aspectTimer > 0.1) {
+      this.aspectTimer = 0;
+      this.updateSignals();
+    }
+    this.bobTime += dt;
+    for (const id of this.orphaned) {
+      const s = this.builder.stationById(id);
+      const m = this.world.getStructure(`warn:${id}`);
+      if (s && m) m.y = this.world.surfacePoint(s.x, s.y).y - 54 + Math.sin(this.bobTime * 4) * 3;
+    }
+    this.hud.setWeather(
+      this.settings.weather
+        ? STR.hud.weather(SEASON_FX[this.season ?? 'spring'].label, this.weather.label())
+        : '',
     );
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
@@ -685,7 +821,7 @@ export class Game {
         return {
           title: t.name,
           lines: [
-            `${STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''}`,
+            `${t.blocked && t.state === 'moving' ? STR.depot.state.held : STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''}`,
             STR.depot.cargo(Math.round(t.totalCargo())),
           ],
         };

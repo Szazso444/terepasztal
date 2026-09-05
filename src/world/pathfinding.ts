@@ -19,6 +19,7 @@ export function findPath(
   start: { x: number; y: number; in: Dir },
   isTarget: (x: number, y: number) => boolean,
   maxCost = 100000,
+  avoid?: (x: number, y: number) => boolean,
 ): PathSegment[] | null {
   const key = (x: number, y: number, d: Dir) => (y * track.w + x) * 4 + d;
   const dist = new Map<number, number>();
@@ -46,6 +47,7 @@ export function findPath(
       const ny = y + DIR_DY[out];
       const nin = opposite(out);
       if (!track.opensTo(nx, ny, nin)) continue;
+      if (avoid && avoid(nx, ny)) continue;
       const piece = track.get(x, y)!;
       let cost = linkLength(dir, out);
       if (piece.kind === 'switch' && isCurveLink(dir, out)) cost += 0.2;
