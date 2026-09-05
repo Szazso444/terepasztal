@@ -32,6 +32,12 @@ import { ScreenManager } from './ui/modal';
 import { DepotScreen } from './ui/depot';
 import { btn } from './ui/dom';
 import type { Train } from './sim/trains';
+import { ContractBoard } from './sim/contracts';
+import { ContractsScreen } from './ui/contractsScreen';
+import { ContractsSide } from './ui/contractsSide';
+import { Rng } from './engine/rng';
+import { cargoDef } from './sim/cargo';
+import { fmtMoney } from './ui/dom';
 
 const SIM_HZ = 20;
 const EDGE_MARGIN = 14;
@@ -67,6 +73,10 @@ export class Game {
   trainRenderer!: TrainRenderer;
   screens = new ScreenManager();
   depot!: DepotScreen;
+  contracts!: ContractBoard;
+  contractsScreen!: ContractsScreen;
+  contractsSide!: ContractsSide;
+  private lastDay = 1;
   private panelRefresh = 0;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
@@ -96,7 +106,18 @@ export class Game {
           name: t.name,
           heading: t.poses[0].heading + (t.reversed ? Math.PI : 0),
         })),
-    contracts: () => [],
+    contracts: () =>
+      this.contracts.active.map((c) => {
+        const a = this.builder.stationById(c.originId);
+        const b = this.builder.stationById(c.destId);
+        return {
+          id: c.id,
+          from: { x: a?.x ?? 0, y: a?.y ?? 0 },
+          to: { x: b?.x ?? 0, y: b?.y ?? 0 },
+          remaining: this.contracts.remaining(c, this.clock.time),
+          label: `${Math.round(c.amount)} ${cargoDef(c.cargo).name}`,
+        };
+      }),
   };
 
   constructor(seed: number) {
@@ -137,6 +158,20 @@ export class Game {
     this.economy.onTierUp = (t) => this.onTierUp(t);
     this.inventory.seedStarter(0);
     this.fleet = new Fleet(this.track, this.builder, this.map, this.inventory, this.economy);
+    this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
+    this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
+    this.contracts.onEvent = (e) => {
+      if (e.kind === 'completed')
+        this.toasts.push(
+          STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
+          'good',
+        );
+      else if (e.kind === 'failed')
+        this.toasts.push(
+          STR.contracts.failedMsg(e.contract.name, Math.round(e.contract.reputation * 0.6)),
+          'warn',
+        );
+    };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
@@ -213,7 +248,15 @@ export class Game {
       this.toasts.push(m, k),
     );
     this.depot.onFocusTrain = (t) => this.focusTrain(t);
-    this.hud.actions.append(btn(STR.topbar.depot, () => this.screens.toggle(this.depot), 'small'));
+    this.contractsScreen = new ContractsScreen(this.contracts, this.builder, this.clock, (m, k) =>
+      this.toasts.push(m, k),
+    );
+    this.contractsSide = new ContractsSide(this.contracts, this.builder, this.clock);
+    this.contractsSide.onOpenBoard = () => this.screens.toggle(this.contractsScreen);
+    this.hud.actions.append(
+      btn(STR.topbar.depot, () => this.screens.toggle(this.depot), 'small'),
+      btn(STR.topbar.contracts, () => this.screens.toggle(this.contractsScreen), 'small'),
+    );
     this.screens.onChange = (sc) => {
       if (sc) this.build.setTool({ kind: 'none' });
     };
@@ -224,7 +267,10 @@ export class Game {
       giveMoney: () => (this.economy.money += 10000),
       giveTickets: () => (this.economy.tickets += 10),
       giveReputation: () => this.economy.addReputation(100),
-      spawnContract: () => {},
+      spawnContract: () => {
+        const c = this.contracts.generate(this.clock.time, true);
+        this.toasts.push(c ? `Offer: ${c.name}` : STR.contracts.needStations, c ? 'info' : 'warn');
+      },
       toggleDepth: () => {
         this.depthOverlay = !this.depthOverlay;
         this.applyDepthOverlay();
@@ -253,6 +299,7 @@ export class Game {
     );
     this.uiRoot.append(
       this.screens.root,
+      this.contractsSide.root,
       el('div', { class: 'vignette' }),
       this.hud.root,
       this.minimap.root,
@@ -277,6 +324,15 @@ export class Game {
     if (gdt > 0) {
       for (const s of this.builder.stations) s.tick(gdt);
       this.fleet.tick(gdt);
+      this.contracts.tick(this.clock.time);
+      if (this.clock.day !== this.lastDay) {
+        this.lastDay = this.clock.day;
+        if (this.contracts.completedToday > 0) {
+          this.economy.tickets += 1;
+          this.toasts.push(STR.contracts.dailyTicket, 'good');
+        }
+        this.contracts.completedToday = 0;
+      }
     }
   }
 
@@ -308,6 +364,7 @@ export class Game {
     if (this.panelRefresh > 0.5) {
       this.panelRefresh = 0;
       if (this.stationPanel.station) this.stationPanel.render();
+      this.contractsSide.update();
       this.screens.refresh();
     }
     this.minimap.draw(this.minimapMarks());
@@ -342,6 +399,7 @@ export class Game {
     const inp = this.input;
     if (inp.wasPressed('Backquote')) this.debug.toggle();
     if (inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
+    if (inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
     if (inp.wasPressed('Escape') && this.screens.current) {
       this.screens.close();
       return;
@@ -457,6 +515,8 @@ export class Game {
     if (this.viewTarget === v) return;
     this.viewTarget = v;
     this.overviewBanner.classList.toggle('show', v === 1);
+    this.toolbar.root.style.display = v === 1 ? 'none' : '';
+    if (v === 1) this.build.setTool({ kind: 'none' });
     if (v === 0) {
       this.tooltip.hide();
       this.overview.hover = null;

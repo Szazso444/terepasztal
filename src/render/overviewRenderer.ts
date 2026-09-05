@@ -244,6 +244,7 @@ export class OverviewRenderer {
       this.contractG.circle(mx, my, 9).stroke({ color: 0x3a3a40, width: 2 });
       const start = -Math.PI / 2;
       this.contractG
+        .moveTo(mx + 9 * Math.cos(start), my + 9 * Math.sin(start))
         .arc(mx, my, 9, start, start + Math.PI * 2 * Math.max(0.02, c.remaining))
         .stroke({ color: col, width: 2 });
       let label = this.contractLabels.get(c.id);

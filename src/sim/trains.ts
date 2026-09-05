@@ -36,6 +36,7 @@ const GAP = 0.05;
 const ACCEL = 0.7;
 const DECEL = 1.1;
 const MIN_DWELL = 2;
+const MAX_DWELL = 40;
 
 export interface DeliveryEvent {
   cargo: string;
@@ -550,7 +551,10 @@ export class Train {
       const c = options[0];
       const cap = w.def.capacity * levelMul(w.level);
       const room = cap - (w.cargo === c ? w.amount : 0);
-      const n = st.take(c, Math.min(room, budget));
+      const want = Math.min(room, budget);
+      // only keep the train if the station can feed it at a useful rate
+      if (st.stored(c) < Math.min(want, 1)) continue;
+      const n = st.take(c, want);
       if (n <= 0) continue;
       if (!w.cargo) {
         w.cargo = c;
@@ -559,9 +563,9 @@ export class Train {
       }
       w.amount += n;
       budget -= n;
-      busy = true;
+      if (n >= want * 0.5) busy = true;
     }
-    if (!busy && this.stateTime >= MIN_DWELL) this.depart(ctx);
+    if ((!busy && this.stateTime >= MIN_DWELL) || this.stateTime >= MAX_DWELL) this.depart(ctx);
   }
 
   private depart(ctx: { track: TrackGraph; builder: Builder; map: GameMap }) {

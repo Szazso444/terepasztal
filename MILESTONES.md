@@ -63,3 +63,22 @@
 **Known bugs**
 - A recalled train's cargo is lost.
 - Loco facing after loading `fromJSON` is forward until the next dispatch.
+
+## 4. Contracts + economy + time
+
+**Works**
+- Contract templates in `src/data/contracts.json` (local haul, bulk, rush, grand charter, standing supply) gated by reputation tier; amounts, payouts and reputation scale with tier and distance.
+- Board keeps ~5 offers refreshed every 0.2 in-game days from valid (producer, acceptor, cargo) station pairs; offers expire. Accepting starts the deadline clock (base + per-tile + per-unit time).
+- Delivery matching: a train unloading cargo at the destination that was loaded at the contract's origin credits the earliest-deadline matching contract. Completion pays money, reputation and tickets; a missed deadline costs 60 % of the reputation reward and nothing else (no game over).
+- Contract Board screen (`C` / top-bar button): offers with accept/decline, active with progress and time left, recent history and totals.
+- Always-visible side list with countdowns, progress bars and a red urgent state below 25 % time; click the title to open the board.
+- Overview draws active contracts as arrows with a deadline ring and label; trains as arrows.
+- Time: pause / 1x / 2x / 3x (buttons, Space, 1-2-3). One day = 4 real minutes at 1x. A daily +1 ticket is granted when at least one contract was delivered the previous day. Tier-ups grant tickets and chart new regions.
+- Debug: spawn contract now forces an offer.
+
+**Stubbed**
+- Cargo delivered without a contract still pays half the base price (simple spot market).
+- Station panel does not list contracts touching that station.
+
+**Known bugs**
+- Contract labels overlap when stations sit within a couple of tiles of each other in the overview.

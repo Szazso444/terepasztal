@@ -626,3 +626,46 @@ input.text {
 #topbar .actions .btn {
   padding: 1px 8px;
 }
+
+/* ---- contracts side list ---- */
+#contracts-side {
+  position: absolute;
+  right: 8px;
+  top: 40px;
+  width: 240px;
+  max-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+#contracts-side .panel-body {
+  overflow-y: auto;
+}
+.side-contract {
+  padding: 3px 0;
+  border-bottom: 1px dotted #3a3a3e;
+}
+.side-contract.urgent .num {
+  color: #d05a50;
+}
+.side-contract.urgent .meter.time > div {
+  background: var(--red);
+}
+.sc-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+.sc-line.sub {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+.meter.time {
+  height: 3px;
+  margin-top: 1px;
+}
+.meter.time > div {
+  background: var(--amber-dark);
+}
+#station-panel {
+  top: 430px;
+}

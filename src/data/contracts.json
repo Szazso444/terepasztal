@@ -1,0 +1,68 @@
+{
+  "offerCount": 5,
+  "offerLifetimeDays": 2.5,
+  "refreshIntervalDays": 0.2,
+  "templates": [
+    {
+      "id": "local",
+      "name": "Local haul",
+      "minTier": 0,
+      "weight": 5,
+      "amount": [16, 36],
+      "baseDays": 0.9,
+      "daysPerTile": 0.035,
+      "payoutMul": 2.2,
+      "reputation": [6, 10],
+      "tickets": 1
+    },
+    {
+      "id": "bulk",
+      "name": "Bulk order",
+      "minTier": 0,
+      "weight": 3,
+      "amount": [40, 80],
+      "baseDays": 1.6,
+      "daysPerTile": 0.045,
+      "payoutMul": 2.6,
+      "reputation": [12, 20],
+      "tickets": 1
+    },
+    {
+      "id": "rush",
+      "name": "Rush order",
+      "minTier": 1,
+      "weight": 2,
+      "amount": [20, 40],
+      "baseDays": 0.45,
+      "daysPerTile": 0.022,
+      "payoutMul": 3.8,
+      "reputation": [14, 22],
+      "tickets": 2
+    },
+    {
+      "id": "charter",
+      "name": "Grand charter",
+      "minTier": 2,
+      "weight": 2,
+      "amount": [120, 240],
+      "baseDays": 3.0,
+      "daysPerTile": 0.05,
+      "payoutMul": 3.0,
+      "reputation": [30, 50],
+      "tickets": 3
+    },
+    {
+      "id": "standing",
+      "name": "Standing supply",
+      "minTier": 1,
+      "weight": 2,
+      "amount": [80, 140],
+      "baseDays": 2.4,
+      "daysPerTile": 0.04,
+      "payoutMul": 2.4,
+      "reputation": [18, 28],
+      "tickets": 2
+    }
+  ],
+  "failReputationMul": 0.6
+}
