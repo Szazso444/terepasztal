@@ -58,6 +58,7 @@ export class OverviewRenderer {
   private stationNodes = new Map<number, Container>();
   private trainNodes = new Map<number, Container>();
   private contractLabels = new Map<number, Text>();
+  private powerG = new Graphics();
   /** Set by the game: the tile currently hovered in overview space. */
   hover: { kind: 'station' | 'train'; id: number } | null = null;
 
@@ -71,6 +72,7 @@ export class OverviewRenderer {
     this.root.addChild(
       this.terrain,
       this.regionLayer,
+      this.powerG,
       this.trackG,
       this.contractG,
       this.stationLayer,
@@ -113,6 +115,15 @@ export class OverviewRenderer {
       }
       this.regionLayer.rect(x, y, rs, rs).stroke({ color: 0x2a2a2e, width: 2, alpha: 0.8 });
     }
+  }
+
+  /** Tint every electrified tile; called when poles or plants change. */
+  rebuildPower(grid: { poweredTiles(): Iterable<{ x: number; y: number }> }) {
+    this.powerG.clear();
+    for (const t of grid.poweredTiles())
+      this.powerG
+        .rect(t.x * OV_UNIT, t.y * OV_UNIT, OV_UNIT, OV_UNIT)
+        .fill({ color: 0x5ad0ff, alpha: 0.22 });
   }
 
   /** Redraw dynamic content. Cheap enough to run each frame while the overview is visible. */

@@ -1,22 +1,35 @@
-import { Train, type DeliveryEvent, type TickCtx } from './trains';
-import { cargoDef } from './cargo';
+import {
+  Train,
+  defaultStop,
+  newTrip,
+  type DeliveryEvent,
+  type TickCtx,
+  type StopPlan,
+  type LocoSlot,
+} from './trains';
 import type { TrackGraph } from '../world/track';
 import type { Builder } from './build';
 import type { GameMap } from '../world/tiles';
 import type { Inventory } from '../gacha/inventory';
-import { wagonDef, levelMul } from '../gacha/items';
+import { wagonDef, locoDef, levelMul } from '../gacha/items';
 import { opposite, DIR_DX, DIR_DY, DIRS } from '../engine/iso';
 import type { Economy } from './economy';
+import type { Stockpile } from './stockpile';
+import { cargoDef } from './cargo';
 import { sfx } from '../engine/audio';
+import { STR } from '../strings';
 
-/** seconds two trains may face each other before one is let through */
-const MUTUAL_GRACE = 4;
+export const MAX_WAGONS = 16;
+export const MAX_LOCOS = 4;
 
 /** Owns all trains: creation from inventory items, recall, per-tick simulation. */
 export class Fleet {
   trains: Train[] = [];
   onDelivery: ((e: DeliveryEvent) => number) | null = null;
   private occ = new Map<number, number[]>();
+  /** set by the game each tick: is a tile inside a live power network? */
+  powered: (x: number, y: number) => boolean = () => false;
+  stockCap: (id: string) => number = () => Infinity;
 
   constructor(
     readonly track: TrackGraph,
@@ -24,21 +37,39 @@ export class Fleet {
     readonly map: GameMap,
     readonly inventory: Inventory,
     readonly economy: Economy,
+    readonly stock: Stockpile,
   ) {}
 
   byId(id: number) {
     return this.trains.find((t) => t.id === id);
   }
+  /** Crew aboard every train in service. */
+  crewTotal() {
+    return this.trains.reduce((a, t) => a + t.crew, 0);
+  }
 
-  /** Assemble and spawn a train at the first route station. Returns an error string on failure. */
-  create(locoUid: number, wagonUids: number[], route: number[], name?: string): Train | string {
-    const loco = this.inventory.byUid(locoUid);
-    if (!loco || loco.kind !== 'loco' || loco.assigned !== null) return 'Locomotive unavailable';
+  /** Assemble and spawn a train at the first stop. Returns an error string on failure. */
+  create(
+    locoUids: number[],
+    wagonUids: number[],
+    schedule: (StopPlan | number)[],
+    name?: string,
+  ): Train | string {
+    if (!locoUids.length) return STR.fleet.needLoco;
+    if (locoUids.length > MAX_LOCOS) return STR.fleet.tooManyLocos(MAX_LOCOS);
+    if (wagonUids.length > MAX_WAGONS) return STR.fleet.tooManyWagons(MAX_WAGONS);
+    const locoItems = locoUids.map((u) => this.inventory.byUid(u));
+    if (locoItems.some((l) => !l || l.kind !== 'loco' || l.assigned !== null))
+      return STR.fleet.locoUnavailable;
     const wagons = wagonUids.map((u) => this.inventory.byUid(u));
     if (wagons.some((w) => !w || w.kind !== 'wagon' || w.assigned !== null))
-      return 'Wagon unavailable';
-    const t = new Train(loco.uid, loco.defId, loco.level, name);
-    if (wagons.length > t.locoDef.maxWagons) return `Too many wagons (max ${t.locoDef.maxWagons})`;
+      return STR.fleet.wagonUnavailable;
+    const locos: LocoSlot[] = locoItems.map((l) => ({
+      uid: l!.uid,
+      def: locoDef(l!.defId),
+      level: l!.level,
+    }));
+    const t = new Train(locos, name);
     t.wagons = wagons.map((w) => ({
       uid: w!.uid,
       def: wagonDef(w!.defId),
@@ -47,39 +78,43 @@ export class Fleet {
       amount: 0,
       origin: null,
     }));
-    if (t.weight > t.power * 1.5) return 'Too heavy for this locomotive';
-    if (route.length < 2) return 'Route needs at least two stations';
-    const first = this.builder.stationById(route[0]);
-    if (!first) return 'Missing station';
+    if (t.emptyWeight > t.power)
+      return STR.fleet.tooHeavy(Math.round(t.emptyWeight), Math.round(t.power));
+    const stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
+    if (stops.length < 2) return STR.fleet.needTwoStops;
+    const first = this.builder.stationById(stops[0].stationId);
+    if (!first) return STR.fleet.missingStation;
     const plat = this.builder.platformTiles(first);
-    if (!plat.length) return `${first.name} has no platform track`;
-    this.rebuildOccupancy();
+    if (!plat.length) return STR.fleet.noPlatform(first.name);
+    // prefer a platform tile with no train on it
     const p = plat.find((pt) => !this.occupied(pt.x, pt.y, -1)) ?? plat[0];
-    // face away from the station: entry = the edge facing the station tile, if that link exists
     const toStation = DIRS.find((d) => p.x + DIR_DX[d] === first.x && p.y + DIR_DY[d] === first.y);
     const piece = this.track.get(p.x, p.y)!;
     let entry = piece.links[0][0];
     if (toStation !== undefined && piece.links.some((l) => l.includes(opposite(toStation))))
       entry = opposite(toStation);
-    if (!t.spawnAt(this.track, p.x, p.y, entry)) return 'Could not place train';
-    t.route = route;
+    if (!t.spawnAt(this.track, p.x, p.y, entry)) return STR.fleet.cannotPlace;
+    t.schedule = stops;
     t.routeIndex = 0;
-    loco.assigned = t.id;
+    t.trip = newTrip(0);
+    for (const l of locoItems) l!.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
     this.trains.push(t);
+    // tanks start with whatever the stockpile can spare
+    t.refuel(this.stock, { fuel: true, water: true });
     sfx('train.dispatch');
-    // first stop is the spawn station itself: load, then continue
-    if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady({ builder: this.builder });
+    this.rebuildOccupancy();
+    if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady(this.ctx(0, 1));
     else t.state = 'noRoute';
     return t;
   }
 
-  setRoute(t: Train, route: number[]) {
-    t.route = route;
-    t.routeIndex = Math.min(t.routeIndex, Math.max(0, route.length - 1));
+  setSchedule(t: Train, schedule: StopPlan[]) {
+    t.schedule = schedule;
+    t.routeIndex = Math.min(t.routeIndex, Math.max(0, schedule.length - 1));
   }
 
-  /** Remove a train; cargo aboard is salvaged at 40 % of base price. Returns the salvage value. */
+  /** Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents return to the stockpile. */
   recall(t: Train): number {
     t.recall();
     let salvage = 0;
@@ -87,6 +122,7 @@ export class Fleet {
       if (w.cargo && w.amount > 0) salvage += w.amount * cargoDef(w.cargo).price * 0.4;
     salvage = Math.round(salvage);
     if (salvage > 0) this.economy.earn(salvage);
+    t.drainTo(this.stock);
     const i = this.trains.indexOf(t);
     if (i >= 0) this.trains.splice(i, 1);
     for (const it of this.inventory.items) if (it.assigned === t.id) it.assigned = null;
@@ -112,9 +148,8 @@ export class Fleet {
       }
     }
   }
-  tick(gdt: number, now: number, speedFactor = 1) {
-    this.rebuildOccupancy();
-    const ctx: TickCtx = {
+  private ctx(now: number, speedFactor: number): TickCtx {
+    return {
       track: this.track,
       builder: this.builder,
       map: this.map,
@@ -125,21 +160,29 @@ export class Fleet {
       occupants: (x, y) => this.occ.get(y * this.map.w + x) ?? [],
       now,
       speedFactor,
+      stockpile: this.stock,
+      stockCap: (id) => this.stockCap(id),
+      powered: (x, y) => this.powered(x, y),
     };
+  }
+  tick(gdt: number, now: number, speedFactor = 1) {
+    this.rebuildOccupancy();
+    const ctx = this.ctx(now, speedFactor);
     for (const t of this.trains) t.tick(gdt, ctx);
-    // head-on meetings: two trains blocking each other resolve after a short grace period
+    // head-on meetings: two trains blocked by each other resolve quickly
     for (const a of this.trains) {
-      if (a.blockedBy === null || a.blockedTime < MUTUAL_GRACE) continue;
+      if (!a.blocked || a.blockedBy === null || a.blockedTime < MUTUAL_GRACE) continue;
       const b = this.byId(a.blockedBy);
       if (!b || b.blockedBy !== a.id || b.blockedTime < MUTUAL_GRACE) continue;
-      (a.id < b.id ? a : b).squeeze(now);
+      const first = a.id < b.id ? a : b;
+      first.squeeze(now);
     }
   }
-
   /** Total capacity of a train for a cargo type. */
   static capacityFor(t: Train, cargo: string) {
     return t.wagons
-      .filter((w) => w.def.accepts.includes(cargo))
+      .filter((w) => (w.def.accepts ?? []).includes(cargo))
       .reduce((a, w) => a + w.def.capacity * levelMul(w.level), 0);
   }
 }
+const MUTUAL_GRACE = 4;

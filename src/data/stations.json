@@ -6,77 +6,74 @@
     "production": [30, 50, 80, 120, 170],
     "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6],
     "spriteByLevel": [1, 1, 2, 2, 3],
-    "maxLevelByTier": [2, 3, 4, 5, 5]
+    "maxLevelByTier": [2, 3, 4, 5, 5],
+    "crew": [2, 3, 5, 8, 12]
   },
   "defs": [
     {
       "id": "farm",
       "name": "Farm Halt",
-      "flavor": "Grain silos and a weighbridge. Smells of dust and diesel.",
-      "cost": 3500,
+      "flavor": "Wheat fields and a weighbridge. Feeds the crews.",
+      "cost": { "wood": 30, "stone": 10 },
       "tier": 0,
-      "produces": [
-        { "cargo": "grain", "level": 1 },
-        { "cargo": "food", "level": 4 }
-      ],
-      "accepts": ["goods"]
+      "produces": [{ "cargo": "wheat", "level": 1 }],
+      "accepts": [],
+      "art": "farm"
     },
     {
       "id": "lumber",
       "name": "Lumber Yard",
       "flavor": "Log stacks taller than the shed. Saws run all night.",
-      "cost": 3500,
+      "cost": { "wood": 20, "stone": 15 },
       "tier": 0,
       "produces": [{ "cargo": "wood", "level": 1 }],
-      "accepts": ["goods", "food"]
-    },
-    {
-      "id": "town",
-      "name": "Town Station",
-      "flavor": "Market square, chapel bell, one very impatient stationmaster.",
-      "cost": 5000,
-      "tier": 0,
-      "produces": [{ "cargo": "goods", "level": 1 }],
-      "accepts": ["grain", "wood", "steel", "food", "oil", "stone", "coal"]
-    },
-    {
-      "id": "mine",
-      "name": "Ore Mine",
-      "flavor": "Headframe, tipple, and a tunnel that goes further than anyone admits.",
-      "cost": 5500,
-      "tier": 0,
-      "produces": [
-        { "cargo": "ore", "level": 1 },
-        { "cargo": "coal", "level": 3 }
-      ],
-      "accepts": ["wood", "goods"]
+      "accepts": [],
+      "art": "lumber"
     },
     {
       "id": "quarry",
       "name": "Quarry",
       "flavor": "Grey dust on everything. The blasting horn is a local clock.",
-      "cost": 4500,
-      "tier": 1,
+      "cost": { "wood": 40, "stone": 5 },
+      "tier": 0,
       "produces": [{ "cargo": "stone", "level": 1 }],
-      "accepts": ["goods", "coal"]
+      "accepts": [],
+      "art": "quarry"
     },
     {
-      "id": "mill",
-      "name": "Steel Mill",
-      "flavor": "Blast furnaces glow through the smoke. Loud, hot, profitable.",
-      "cost": 9000,
-      "tier": 1,
-      "produces": [{ "cargo": "steel", "level": 1 }],
-      "accepts": ["ore", "coal", "stone"]
+      "id": "pump",
+      "name": "Water Pump",
+      "flavor": "A well house and a tank. Steam engines drink here.",
+      "cost": { "wood": 25, "stone": 20 },
+      "tier": 0,
+      "produces": [{ "cargo": "water", "level": 1 }],
+      "accepts": [],
+      "art": "pump",
+      "water": true
     },
     {
-      "id": "refinery",
-      "name": "Refinery",
-      "flavor": "Tank farm and flare stacks. Keep the lanterns away from it.",
-      "cost": 12000,
-      "tier": 2,
-      "produces": [{ "cargo": "oil", "level": 1 }],
-      "accepts": ["steel", "goods"]
+      "id": "town",
+      "name": "Town Station",
+      "flavor": "Market square, chapel bell, one very impatient stationmaster. Buys anything.",
+      "cost": { "wood": 50, "stone": 40 },
+      "tier": 0,
+      "produces": [],
+      "accepts": ["water", "wheat", "stone", "wood", "coal", "oil", "iron"],
+      "art": "town"
+    },
+    {
+      "id": "warehouse",
+      "name": "Warehouse",
+      "flavor": "Your yard. Everything unloaded here goes to the stockpile; engines refuel here.",
+      "cost": { "wood": 60, "stone": 30 },
+      "tier": 0,
+      "produces": [],
+      "accepts": ["water", "wheat", "stone", "wood", "coal", "oil", "iron"],
+      "art": "warehouse",
+      "stockpile": true,
+      "fuel": true,
+      "water": true,
+      "contracts": false
     }
   ]
 }

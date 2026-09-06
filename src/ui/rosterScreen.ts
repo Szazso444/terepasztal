@@ -140,16 +140,16 @@ export class RosterScreen implements Screen {
       const ld = d as LocoDef;
       stats.push(
         `${STR.depot.speed} ${(ld.speed * m).toFixed(2)}`,
-        `${STR.depot.power} ${Math.round(ld.power * m)}`,
-        `${STR.depot.wagons} ${ld.maxWagons}`,
-        STR.roster.costPerTile(ld.costPerTile),
+        `${STR.depot.power} ${Math.round(ld.power * m)} t`,
+        `${STR.depot.weight} ${ld.weight} t · ${STR.roster.crew} ${ld.crew}`,
+        STR.roster.fuelLine(ld),
       );
     } else {
       const wd = d as WagonDef;
       stats.push(
         `${STR.roster.capacity} ${Math.round(wd.capacity * m)}`,
         `${STR.depot.weight} ${wd.weight}t`,
-        wd.accepts.map((c) => cargoDef(c).name).join(', '),
+        (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
       );
     }
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;

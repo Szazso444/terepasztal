@@ -1,4 +1,5 @@
-import { content, type StationDef } from '../data/content';
+import { content, type StationDef, type Cost } from '../data/content';
+import { scaleCost } from './stockpile';
 import { daySeconds } from './rules';
 import { rules } from './rules';
 import { cargoDef } from './cargo';
@@ -48,6 +49,19 @@ export class Station {
   loadBoost = 1;
   /** production multiplier from the season */
   productionMul = 1;
+  /** a water tower stands within reach (steam engines refill water) */
+  waterSupply = false;
+  /** a coaling stage stands within reach (engines refuel from the stockpile) */
+  fuelSupply = false;
+  get crew() {
+    return LEVELS.crew[this.level - 1];
+  }
+  get refuelsFuel() {
+    return !!this.def.fuel || this.fuelSupply;
+  }
+  get refuelsWater() {
+    return !!this.def.water || this.waterSupply || this.producedCargo().includes('water');
+  }
   constructor(
     defId: string,
     public x: number,
@@ -85,9 +99,9 @@ export class Station {
   accepts(cargo: string) {
     return this.def.accepts.includes(cargo);
   }
-  upgradeCost(): number {
-    if (this.level >= MAX_LEVEL) return Infinity;
-    return Math.round(this.def.cost * LEVELS.upgradeCostMul[this.level] * rules.buildCostMul);
+  upgradeCost(): Cost {
+    if (this.level >= MAX_LEVEL) return {};
+    return scaleCost(this.def.cost, LEVELS.upgradeCostMul[this.level] * rules.buildCostMul);
   }
   stored(cargo: string) {
     return this.storage.get(cargo) ?? 0;

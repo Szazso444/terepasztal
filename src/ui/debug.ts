@@ -5,6 +5,7 @@ export interface DebugActions {
   giveMoney(): void;
   giveTickets(): void;
   giveReputation(): void;
+  giveResources(): void;
   spawnContract(): void;
   toggleDepth(): boolean;
   regenerate(): void;
@@ -59,6 +60,7 @@ export class DebugPanel {
           'div',
           { class: 'row' },
           btn(STR.debug.spawnContract, actions.spawnContract, 'small'),
+          btn(STR.debug.giveResources, actions.giveResources, 'small'),
           depthBtn,
         ),
         el(

@@ -1112,3 +1112,84 @@ textarea.bad {
 input[type='range'] {
   accent-color: var(--amber);
 }
+
+/* ---- resource bar ---- */
+#resbar {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-top: none;
+  cursor: pointer;
+}
+#resbar .res {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-right: 1px solid var(--border-dark);
+  box-shadow: 1px 0 0 var(--border-light);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+#resbar .res .label {
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.res-icon {
+  width: 14px;
+  height: 14px;
+}
+#contracts-side,
+#station-panel,
+#editor-panel,
+#debug {
+  top: 62px;
+}
+#overview-banner {
+  top: 60px;
+}
+.route-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.route-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+}
+select.text.small {
+  font-size: 10px;
+  padding: 1px 2px;
+}
+.kv-bar {
+  margin: 2px 0;
+}
+table.market {
+  width: 100%;
+  border-collapse: collapse;
+}
+table.market th {
+  text-align: left;
+  color: var(--text-dim);
+  font-weight: normal;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  border-bottom: 1px solid var(--border-dark);
+}
+table.market td {
+  padding: 3px 6px;
+  border-bottom: 1px dotted #3a3a3e;
+}
