@@ -19,7 +19,11 @@ export class Hud {
   private clockEl = el('span', { class: 'value' });
   private speedBtns: HTMLButtonElement[] = [];
   readonly actions = el('div', { class: 'stat actions', style: 'gap:4px' });
+  readonly menuBtn = btn(STR.menu.menuButton, () => this.onMenu?.(), 'small');
+  onMenu: (() => void) | null = null;
+  private locked = false;
   private fps = el('span', { class: 'value dim' });
+  private weather = el('span', { class: 'value' });
 
   constructor(private readonly clock: GameClock) {
     const stat = (label: string, v: HTMLElement) =>
@@ -34,15 +38,31 @@ export class Hud {
       'div',
       { id: 'topbar', class: 'panel' },
       el('div', { class: 'title', text: STR.title }),
+      el('div', { class: 'stat' }, this.menuBtn),
       stat(STR.hud.money, this.money),
       stat(STR.hud.tickets, this.tickets),
       stat(STR.hud.reputation, this.rep),
       this.actions,
       el('div', { class: 'spacer' }),
       el('div', { class: 'stat' }, this.fps),
+      el('div', { class: 'stat weather' }, this.weather),
       el('div', { class: 'stat' }, this.day, this.clockEl),
       time,
     );
+  }
+
+  /** Editor: hide the game screens and freeze the clock controls. */
+  setEditor(on: boolean) {
+    this.actions.style.display = on ? 'none' : '';
+    this.locked = on;
+    for (const b of this.speedBtns) b.disabled = on;
+  }
+
+  setWeather(text: string) {
+    if (this.weather.textContent !== text) {
+      this.weather.textContent = text;
+      (this.weather.parentElement as HTMLElement).style.display = text ? '' : 'none';
+    }
   }
 
   setFps(v: number | null) {
@@ -56,6 +76,8 @@ export class Hud {
     this.rep.textContent = `${fmtInt(m.reputation)} (${STR.hud.tier(m.tier)})`;
     this.day.textContent = STR.hud.day(this.clock.day);
     this.clockEl.textContent = this.clock.formatClock();
-    this.speedBtns.forEach((b, i) => b.classList.toggle('active', i === this.clock.speedIndex));
+    this.speedBtns.forEach((b, i) =>
+      b.classList.toggle('active', !this.locked && i === this.clock.speedIndex),
+    );
   }
 }

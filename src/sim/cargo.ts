@@ -1,14 +1,7 @@
-import cargoData from '../data/cargo.json';
+import { content, type CargoDef } from '../data/content';
 
-export interface CargoDef {
-  id: string;
-  name: string;
-  tier: number;
-  price: number;
-  color: string;
-  weight: number;
-}
-export const CARGO: CargoDef[] = cargoData as CargoDef[];
+export type { CargoDef };
+export const CARGO: CargoDef[] = content.cargo;
 const byId = new Map(CARGO.map((c) => [c.id, c]));
 export function cargoDef(id: string): CargoDef {
   const c = byId.get(id);

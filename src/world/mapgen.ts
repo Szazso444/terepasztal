@@ -29,21 +29,55 @@ function fbm(x: number, y: number, seed: number, octaves = 4): number {
   return v / norm;
 }
 
-export function generateMap(seed: number, w = 96, h = 96): GameMap {
-  const rng = new Rng(seed);
-  const terrain = new Uint8Array(w * h);
+export interface MapGenParams {
+  w: number;
+  h: number;
+  waterLevel: number;
+  hillLevel: number;
+  rockLevel: number;
+  forestDensity: number;
+}
+export const DEFAULT_MAP_PARAMS: MapGenParams = {
+  w: 96,
+  h: 96,
+  waterLevel: 0.36,
+  hillLevel: 0.64,
+  rockLevel: 0.76,
+  forestDensity: 0.56,
+};
+
+/** A flat map of one terrain type with no props (the editor's blank canvas). */
+export function emptyMap(
+  seed: number,
+  w: number,
+  h: number,
+  fill: Terrain = Terrain.Grass,
+): GameMap {
+  const terrain = new Uint8Array(w * h).fill(fill);
   const variant = new Uint8Array(w * h);
-  const map: GameMap = {
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) variant[y * w + x] = Math.floor(hash2(x, y, seed) * 4);
+  const rs = 32;
+  return {
     w,
     h,
     seed,
     terrain,
     variant,
     props: new Map(),
-    regionSize: 32,
-    regionsX: w / 32,
-    regionsY: h / 32,
+    regionSize: rs,
+    regionsX: Math.max(1, Math.ceil(w / rs)),
+    regionsY: Math.max(1, Math.ceil(h / rs)),
   };
+}
+
+export function generateMap(seed: number, p: Partial<MapGenParams> = {}): GameMap {
+  const params = { ...DEFAULT_MAP_PARAMS, ...p };
+  const w = params.w;
+  const h = params.h;
+  const rng = new Rng(seed);
+  const map = emptyMap(seed, w, h);
+  const { terrain } = map;
   const elevSeed = rng.int(1, 1e6);
   const moistSeed = rng.int(1, 1e6);
   const elev = new Float32Array(w * h);
@@ -69,14 +103,13 @@ export function generateMap(seed: number, w = 96, h = 96): GameMap {
       const e = elev[i];
       const m = fbm(x / 14 + 100, y / 14 + 100, moistSeed, 4);
       let t: Terrain;
-      if (e < 0.36) t = Terrain.Water;
-      else if (e < 0.385) t = Terrain.Sand;
-      else if (e > 0.76) t = Terrain.Rock;
-      else if (e > 0.64) t = Terrain.Hill;
-      else if (m > 0.56) t = Terrain.Forest;
+      if (e < params.waterLevel) t = Terrain.Water;
+      else if (e < params.waterLevel + 0.025) t = Terrain.Sand;
+      else if (e > params.rockLevel) t = Terrain.Rock;
+      else if (e > params.hillLevel) t = Terrain.Hill;
+      else if (m > params.forestDensity) t = Terrain.Forest;
       else t = Terrain.Grass;
       terrain[i] = t;
-      variant[i] = Math.floor(hash2(x, y, seed) * 4);
     }
   // clean up lone tiles: majority filter for water/rock singletons
   const copy = new Uint8Array(terrain);
@@ -92,10 +125,30 @@ export function generateMap(seed: number, w = 96, h = 96): GameMap {
         }
       if (same <= 1) terrain[i] = copy[(y + 1) * w + x];
     }
-  // props
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
+  decorateProps(map, seed);
+  return map;
+}
+
+/**
+ * (Re)generate decorative props from the terrain. With a rectangle only those tiles are redone,
+ * which is what the editor needs after painting. Deterministic per tile and seed.
+ */
+export function decorateProps(
+  map: GameMap,
+  seed: number,
+  rect?: { x0: number; y0: number; x1: number; y1: number },
+) {
+  const w = map.w;
+  const h = map.h;
+  const terrain = map.terrain;
+  const x0 = rect ? Math.max(0, rect.x0) : 0;
+  const y0 = rect ? Math.max(0, rect.y0) : 0;
+  const x1 = rect ? Math.min(w - 1, rect.x1) : w - 1;
+  const y1 = rect ? Math.min(h - 1, rect.y1) : h - 1;
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
       const i = y * w + x;
+      map.props.delete(i);
       const t = terrain[i] as Terrain;
       const list: PropInstance[] = [];
       const r = hash2(x, y, seed + 5);
@@ -135,5 +188,4 @@ export function generateMap(seed: number, w = 96, h = 96): GameMap {
       }
       if (list.length) map.props.set(i, list);
     }
-  return map;
 }

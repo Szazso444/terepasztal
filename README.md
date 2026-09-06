@@ -10,6 +10,18 @@ npm run build    # typecheck + production bundle in dist/
 npm run lint
 ```
 
+## Menus, tuning and editing
+
+- **Main menu** on boot: continue, new game (seed), game tuning, content editor, settings, and
+  the level list (play, edit, delete, create blank or generated, import JSON). Esc or the Menu
+  button opens the pause menu in play.
+- **Game tuning**: live sliders for economy, contracts, trains, time, weather and map generation;
+  stored with the save.
+- **Content editor**: edit or add locomotives, wagons, cargo, stations, contracts, decor, gacha
+  banners and track data inside the client; applies on reload, export/import as JSON.
+- **Level editor**: paint terrain, build anything for free, set the player's start, save and
+  play-test levels; export/import as JSON.
+
 ## Controls
 
 | Action | Keys |
@@ -17,7 +29,7 @@ npm run lint
 | Pan | WASD / arrows / middle-drag / edge scroll |
 | Zoom | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview |
 | Overview | Tab (Esc, scroll in or click a station/train to return) |
-| Build | toolbar buttons, `R` rotate, drag to lay straights, right-click / Delete remove, Esc cancel |
+| Build | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
 | Time | Space pause, `1` `2` `3` speed |
 | Screens | `F` depot, `C` contracts, `G` gacha, `V` roster, `` ` `` debug |
 
@@ -32,6 +44,13 @@ npm run lint
 - `src/art` procedural placeholder generators (one file per atlas group)
 - `src/data` all content as JSON
 
+## Assets
+
+Everything is generated at runtime: sprites by the procedural generators in `src/art`, sound
+effects and the ambient loop by the Web Audio synthesizer in `src/engine/synth.ts`. Nothing is
+taken from other games. Sprites and individual sound effects can be overridden file by file
+(see below); the ambient loop is always synthesized.
+
 ## Replacing placeholder art
 
 Each atlas group (`terrain`, `props`, `track`, `structures`, `rolling`, `fx`) is loaded from
@@ -40,4 +59,7 @@ otherwise. The JSON is `{ "frames": { "<name>": { "x", "y", "w", "h", "ax", "ay"
 `ax`/`ay` is the anchor in pixels from the frame's top-left. Frame names are listed by the
 generators in `src/art`.
 
-See `MILESTONES.md` for progress notes, stubs and known bugs.
+Drop `public/assets/audio/<event>.ogg` (event names in `src/engine/audio.ts`) to replace a
+synthesized sound.
+
+See `MILESTONES.md` for progress notes and the post-merge fix pass.

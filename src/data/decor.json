@@ -1,0 +1,20 @@
+[
+  {
+    "id": "signal",
+    "name": "Signal",
+    "flavor": "Semaphore post. Shows red while a train sits on the tile it guards.",
+    "cost": 150,
+    "onTrack": true,
+    "rotations": 4
+  },
+  {
+    "id": "water_tower",
+    "name": "Water Tower",
+    "flavor": "Stations within two tiles load and unload 25% faster (two towers stack).",
+    "cost": 1400,
+    "onTrack": false,
+    "rotations": 1,
+    "radius": 2,
+    "loadBoost": 0.25
+  }
+]

@@ -1,4 +1,5 @@
-import { Train, type DeliveryEvent } from './trains';
+import { Train, type DeliveryEvent, type TickCtx } from './trains';
+import { cargoDef } from './cargo';
 import type { TrackGraph } from '../world/track';
 import type { Builder } from './build';
 import type { GameMap } from '../world/tiles';
@@ -8,10 +9,14 @@ import { opposite, DIR_DX, DIR_DY, DIRS } from '../engine/iso';
 import type { Economy } from './economy';
 import { sfx } from '../engine/audio';
 
+/** seconds two trains may face each other before one is let through */
+const MUTUAL_GRACE = 4;
+
 /** Owns all trains: creation from inventory items, recall, per-tick simulation. */
 export class Fleet {
   trains: Train[] = [];
-  onDelivery: ((e: DeliveryEvent) => void) | null = null;
+  onDelivery: ((e: DeliveryEvent) => number) | null = null;
+  private occ = new Map<number, number[]>();
 
   constructor(
     readonly track: TrackGraph,
@@ -48,7 +53,8 @@ export class Fleet {
     if (!first) return 'Missing station';
     const plat = this.builder.platformTiles(first);
     if (!plat.length) return `${first.name} has no platform track`;
-    const p = plat[0];
+    this.rebuildOccupancy();
+    const p = plat.find((pt) => !this.occupied(pt.x, pt.y, -1)) ?? plat[0];
     // face away from the station: entry = the edge facing the station tile, if that link exists
     const toStation = DIRS.find((d) => p.x + DIR_DX[d] === first.x && p.y + DIR_DY[d] === first.y);
     const piece = this.track.get(p.x, p.y)!;
@@ -73,23 +79,61 @@ export class Fleet {
     t.routeIndex = Math.min(t.routeIndex, Math.max(0, route.length - 1));
   }
 
-  recall(t: Train) {
+  /** Remove a train; cargo aboard is salvaged at 40 % of base price. Returns the salvage value. */
+  recall(t: Train): number {
     t.recall();
+    let salvage = 0;
+    for (const w of t.wagons)
+      if (w.cargo && w.amount > 0) salvage += w.amount * cargoDef(w.cargo).price * 0.4;
+    salvage = Math.round(salvage);
+    if (salvage > 0) this.economy.earn(salvage);
     const i = this.trains.indexOf(t);
     if (i >= 0) this.trains.splice(i, 1);
     for (const it of this.inventory.items) if (it.assigned === t.id) it.assigned = null;
+    return salvage;
   }
 
-  tick(gdt: number) {
-    const ctx = {
+  /** Is `tile` under any train other than `self`? Rebuilt each tick from car poses. */
+  occupied(x: number, y: number, self: number) {
+    const list = this.occ.get(y * this.map.w + x);
+    if (!list) return false;
+    for (const id of list) if (id !== self) return true;
+    return false;
+  }
+  private rebuildOccupancy() {
+    this.occ.clear();
+    for (const t of this.trains) {
+      for (const p of t.poses) {
+        const k = Math.floor(p.y + 0.5) * this.map.w + Math.floor(p.x + 0.5);
+        const l = this.occ.get(k);
+        if (l) {
+          if (!l.includes(t.id)) l.push(t.id);
+        } else this.occ.set(k, [t.id]);
+      }
+    }
+  }
+  tick(gdt: number, now: number, speedFactor = 1) {
+    this.rebuildOccupancy();
+    const ctx: TickCtx = {
       track: this.track,
       builder: this.builder,
       map: this.map,
-      onDelivery: (e: DeliveryEvent) => this.onDelivery?.(e),
+      onDelivery: (e: DeliveryEvent) => this.onDelivery?.(e) ?? 0,
       spend: (v: number) => (this.economy.money -= v),
       earn: (v: number) => this.economy.earn(v),
+      occupied: (x, y, self) => this.occupied(x, y, self),
+      occupants: (x, y) => this.occ.get(y * this.map.w + x) ?? [],
+      now,
+      speedFactor,
     };
     for (const t of this.trains) t.tick(gdt, ctx);
+    // head-on meetings: two trains blocking each other resolve after a short grace period
+    for (const a of this.trains) {
+      if (a.blockedBy === null || a.blockedTime < MUTUAL_GRACE) continue;
+      const b = this.byId(a.blockedBy);
+      if (!b || b.blockedBy !== a.id || b.blockedTime < MUTUAL_GRACE) continue;
+      (a.id < b.id ? a : b).squeeze(now);
+    }
   }
 
   /** Total capacity of a train for a cargo type. */

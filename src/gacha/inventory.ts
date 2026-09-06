@@ -22,7 +22,7 @@ export class Inventory {
           existing.level++;
           leveled = true;
         }
-      } else existing.dupes++;
+      }
       return { item: existing, duplicate: true, leveled };
     }
     const item: Item = {

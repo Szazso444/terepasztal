@@ -270,6 +270,37 @@ export class OverviewRenderer {
         l.destroy();
         this.contractLabels.delete(id);
       }
+    this.resolveLabelOverlaps();
+  }
+
+  /**
+   * Push overlapping labels down so close stations and contracts stay readable. Runs on the
+   * label set as laid out this frame; base positions are re-applied before each pass.
+   */
+  private resolveLabelOverlaps() {
+    const entries: { t: Text; baseX: number; baseY: number; parentY: number }[] = [];
+    for (const node of this.stationNodes.values()) {
+      const t = node.getChildByLabel('label') as Text;
+      entries.push({ t, baseX: node.x, baseY: node.y + 8, parentY: node.y });
+    }
+    for (const t of this.contractLabels.values())
+      entries.push({ t, baseX: t.x, baseY: t.y, parentY: 0 });
+    entries.sort((a, b) => a.baseY - b.baseY || a.baseX - b.baseX);
+    const placed: { x: number; y: number; w: number; h: number }[] = [];
+    for (const e of entries) {
+      const w = e.t.width + 4;
+      const h = e.t.height + 1;
+      let y = e.baseY;
+      for (let tries = 0; tries < 8; tries++) {
+        const hit = placed.find(
+          (p) => Math.abs(p.x - e.baseX) * 2 < p.w + w && y < p.y + p.h && y + h > p.y,
+        );
+        if (!hit) break;
+        y = hit.y + hit.h;
+      }
+      placed.push({ x: e.baseX, y, w, h });
+      e.t.y = y - e.parentY;
+    }
   }
 
   /** Overview-local point -> tile coords (fractional). */

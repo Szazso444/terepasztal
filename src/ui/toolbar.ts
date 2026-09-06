@@ -2,11 +2,15 @@ import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import { TRACK_KINDS, pieceCost, type TrackKind } from '../world/track';
 import { STATION_DEFS } from '../sim/stations';
+import { DECOR_DEFS } from '../sim/build';
+import { Terrain, TERRAIN_NAMES } from '../world/tiles';
 
 export type Tool =
   | { kind: 'none' }
   | { kind: 'track'; piece: TrackKind }
   | { kind: 'station'; defId: string }
+  | { kind: 'decor'; defId: string }
+  | { kind: 'terrain'; terrain: number }
   | { kind: 'remove' };
 
 /** Bottom build bar. */
@@ -15,6 +19,11 @@ export class Toolbar {
   private buttons = new Map<string, HTMLButtonElement>();
   private status = el('span', { class: 'tb-status dim' });
   readonly extra = el('div', { class: 'tb-group' });
+  private terrainGroup!: HTMLElement;
+
+  setEditor(on: boolean) {
+    this.terrainGroup.style.display = on ? '' : 'none';
+  }
 
   constructor(
     private readonly onSelect: (t: Tool) => void,
@@ -45,6 +54,37 @@ export class Toolbar {
       this.buttons.set(`station:${d.id}`, b);
       stationGroup.append(b);
     }
+    const decorGroup = el(
+      'div',
+      { class: 'tb-group' },
+      el('span', { class: 'tb-label', text: STR.toolbar.decor }),
+    );
+    for (const d of DECOR_DEFS) {
+      const b = btn(`${d.name} ${fmtMoney(d.cost)}`, () =>
+        this.select({ kind: 'decor', defId: d.id }),
+      );
+      b.title = d.flavor;
+      this.buttons.set(`decor:${d.id}`, b);
+      decorGroup.append(b);
+    }
+    this.terrainGroup = el(
+      'div',
+      { class: 'tb-group' },
+      el('span', { class: 'tb-label', text: STR.editor.terrain }),
+    );
+    for (const t of [
+      Terrain.Grass,
+      Terrain.Forest,
+      Terrain.Hill,
+      Terrain.Water,
+      Terrain.Rock,
+      Terrain.Sand,
+    ]) {
+      const b = btn(TERRAIN_NAMES[t], () => this.select({ kind: 'terrain', terrain: t }));
+      this.buttons.set(`terrain:${t}`, b);
+      this.terrainGroup.append(b);
+    }
+    this.terrainGroup.style.display = 'none';
     const removeBtn = btn(STR.toolbar.remove, () => this.select({ kind: 'remove' }));
     removeBtn.title = STR.toolbar.removeHint;
     this.buttons.set('remove', removeBtn);
@@ -56,7 +96,9 @@ export class Toolbar {
         { class: 'tb-row' },
         trackGroup,
         stationGroup,
+        decorGroup,
         el('div', { class: 'tb-group' }, removeBtn),
+        this.terrainGroup,
         this.extra,
       ),
       el('div', { class: 'tb-row tb-statusrow' }, this.status),
@@ -74,9 +116,13 @@ export class Toolbar {
         ? `track:${t.piece}`
         : t.kind === 'station'
           ? `station:${t.defId}`
-          : t.kind === 'remove'
-            ? 'remove'
-            : '';
+          : t.kind === 'decor'
+            ? `decor:${t.defId}`
+            : t.kind === 'terrain'
+              ? `terrain:${t.terrain}`
+              : t.kind === 'remove'
+                ? 'remove'
+                : '';
     for (const [k, b] of this.buttons) b.classList.toggle('active', k === key);
   }
 

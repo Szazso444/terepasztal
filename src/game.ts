@@ -6,6 +6,25 @@ import { GameLoop } from './engine/loop';
 import { worldToTileInt, tileToWorld } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
+import { mapFromLevel, type LevelData } from './world/level';
+import { rules, setRules, daySeconds } from './sim/rules';
+import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
+import { rulesDiffer } from './sim/rules';
+import { contentIsCustom } from './data/content';
+import { MainMenu, PauseMenu } from './ui/menu';
+import { Editor } from './editor/editor';
+import { EditorPanel } from './ui/editorPanel';
+import {
+  listLevels,
+  deleteLevel,
+  saveLevel,
+  isLevel,
+  type LevelData as LevelRecord,
+} from './world/level';
+import { generateMap as generateMapForEditor } from './world/mapgen';
+import { decorateProps } from './world/mapgen';
+import { Terrain as TerrainEnum } from './world/tiles';
+import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
@@ -35,11 +54,18 @@ import { ContractBoard } from './sim/contracts';
 import { ContractsScreen } from './ui/contractsScreen';
 import { ContractsSide } from './ui/contractsSide';
 import { Rng } from './engine/rng';
-import { DayNight, Glows, Smoke, nightness } from './render/fx';
+import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
+import { Weather, SEASON_FX, seasonOf, productionMul, type Season } from './sim/weather';
+import { decorOffset, type Decor } from './sim/build';
+import { validateBanners } from './gacha/gacha';
+import { DIR_DX, DIR_DY } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import { SettingsScreen } from './ui/settingsScreen';
+import { TuningScreen } from './ui/tuningScreen';
+import { ContentScreen } from './ui/contentScreen';
 import {
   SAVE_VERSION,
+  SAVE_MIN_VERSION,
   readSave,
   writeSave,
   clearSave,
@@ -100,11 +126,22 @@ export class Game {
   private lastDay = 1;
   settings: Settings = readSettings();
   settingsScreen!: SettingsScreen;
+  tuningScreen!: TuningScreen;
+  contentScreen!: ContentScreen;
   dayNight = new DayNight();
   glows!: Glows;
   smoke!: Smoke;
   private autosaveTimer = 0;
   private savedAt: number | null = null;
+  weather!: Weather;
+  groundLights!: GroundLights;
+  rain!: Rain;
+  fog!: Fog;
+  private season: Season | null = null;
+  private orphaned = new Set<number>();
+  private signalAspect = new Map<number, string>();
+  private aspectTimer = 0;
+  private bobTime = 0;
   private panelRefresh = 0;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
@@ -148,9 +185,257 @@ export class Game {
       }),
   };
 
-  constructor(seed: number) {
-    this.seed = seed;
+  readonly spec: WorldSpec;
+  /** play = normal game; editor = level editor (free building, paused clock) */
+  mode: 'play' | 'editor' = 'play';
+  mainMenu!: MainMenu;
+  pauseMenu!: PauseMenu;
+  editor: Editor | null = null;
+  editorPanel: EditorPanel | null = null;
+  private paused = false;
+  private menuPausedSpeed = 1;
+  get menuOpen() {
+    return this.mainMenu.visible || this.pauseMenu.visible;
+  }
+
+  constructor(spec: WorldSpec) {
+    this.spec = spec;
+    this.seed = spec.seed;
     this.uiRoot = document.getElementById('ui-root')!;
+  }
+
+  /** Starting economy for a brand-new game, from the rules (or a level's start block). */
+  startFresh(start?: LevelData['start']) {
+    this.economy.money = start ? start.money : rules.startMoney;
+    this.economy.tickets = start ? start.tickets : rules.startTickets;
+    const rep = start ? start.reputation : rules.startReputation;
+    if (rep > 0) this.economy.addReputation(rep);
+    if (start && start.tier > this.economy.tier) {
+      this.economy.tier = Math.min(start.tier, this.regions.tiers.length ? 4 : 0);
+      const newly = this.regions.applyTier(start.tier);
+      if (newly.length) {
+        this.world.rebuildFog();
+        this.overview.rebuildRegions();
+        this.minimap.rebuildBase();
+      }
+      this.toolbar.refresh();
+    }
+  }
+
+  /** Place a level's pre-built content into a fresh world (no economy). */
+  placeLevelContent(level: LevelData) {
+    for (const [x, y, kind, rot] of level.track) {
+      if (!inBounds(this.map, x, y)) continue;
+      this.track.set(x, y, makePiece(kind, rot));
+      this.onTrackChanged(x, y);
+    }
+    resetStationIds(1);
+    for (const sj of level.stations) {
+      if (!inBounds(this.map, sj.x, sj.y)) continue;
+      const st = new Station(sj.defId, sj.x, sj.y, sj.name || undefined);
+      st.level = Math.max(1, Math.min(5, sj.level));
+      this.builder.stations.push(st);
+      this.onStationChanged(st, false);
+    }
+    for (const [x, y, id, rot] of level.decor) {
+      if (!inBounds(this.map, x, y)) continue;
+      const d: Decor = { id, x, y, rot };
+      this.builder.decor.set(y * this.map.w + x, d);
+      this.onDecorChanged(d, false);
+    }
+    this.builder.refreshStationBoosts();
+    for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
+  }
+  applyLevelStart(level: LevelData) {
+    this.placeLevelContent(level);
+    this.startFresh(level.start);
+  }
+
+  // ---------------------------------------------------------------- menus
+  private pauseGame() {
+    if (this.paused) return;
+    this.paused = true;
+    this.menuPausedSpeed = this.clock.speedIndex;
+    this.clock.setSpeed(0);
+  }
+  private resumeGame() {
+    if (!this.paused) return;
+    this.paused = false;
+    if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed || 1);
+  }
+  openMainMenu() {
+    this.pauseGame();
+    this.screens.close();
+    this.pauseMenu.hide();
+    this.build.setTool({ kind: 'none' });
+    this.mainMenu.show(!!readSave(), listLevels(), {
+      rules: rulesDiffer().length > 0,
+      content: contentIsCustom(),
+    });
+  }
+  openPauseMenu() {
+    if (this.mainMenu.visible) return;
+    this.pauseGame();
+    this.screens.close();
+    this.pauseMenu.show({ testing: !!testingLevel(), editor: this.mode === 'editor' });
+  }
+  closeMenus() {
+    this.pauseMenu.hide();
+    this.mainMenu.hide();
+    this.resumeGame();
+  }
+  private confirmReplaceSave() {
+    return !readSave() || confirm(STR.menu.confirmReplace);
+  }
+  private parseSeed(text: string) {
+    const t = text.trim();
+    return t ? (/^\d+$/.test(t) ? Number(t) : hashSeed(t)) : Math.floor(Math.random() * 2 ** 31);
+  }
+  private buildMenus() {
+    this.mainMenu = new MainMenu({
+      continue: () => this.closeMenus(),
+      newGame: (seed) => {
+        if (this.confirmReplaceSave()) this.newGame(seed);
+      },
+      playLevel: (id) => {
+        if (!this.confirmReplaceSave()) return;
+        clearSave();
+        setTestingLevel(null);
+        setIntentAndReload({ action: 'play', levelId: id });
+      },
+      editLevel: (id) => setIntentAndReload({ action: 'edit', levelId: id }),
+      newLevel: (size, generated, seedText) =>
+        setIntentAndReload({
+          action: 'edit',
+          levelId: null,
+          blank: !generated,
+          size,
+          seed: this.parseSeed(seedText),
+        }),
+      deleteLevel: (id) => {
+        deleteLevel(id);
+        this.openMainMenu();
+      },
+      importLevel: (json) => {
+        try {
+          const l = JSON.parse(json) as LevelRecord;
+          if (!isLevel(l)) return false;
+          saveLevel(l);
+          this.openMainMenu();
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      exportLevel: (id) => JSON.stringify(listLevels().find((l) => l.id === id) ?? null),
+      tuning: () => this.screens.open(this.tuningScreen),
+      content: () => this.screens.open(this.contentScreen),
+      settings: () => this.screens.open(this.settingsScreen),
+    });
+    this.pauseMenu = new PauseMenu({
+      resume: () => this.closeMenus(),
+      save: () => {
+        this.save();
+        this.closeMenus();
+      },
+      settings: () => this.screens.open(this.settingsScreen),
+      tuning: () => this.screens.open(this.tuningScreen),
+      content: () => this.screens.open(this.contentScreen),
+      backToEditor: () => {
+        const id = testingLevel();
+        setTestingLevel(null);
+        if (id) setIntentAndReload({ action: 'edit', levelId: id });
+      },
+      mainMenu: () => {
+        if (this.mode === 'editor') {
+          if (!this.editor?.dirty || confirm(STR.editor.unsaved))
+            setIntentAndReload({ action: 'menu' });
+        } else this.openMainMenu();
+      },
+    });
+    this.hud.onMenu = () => (this.menuOpen ? this.closeMenus() : this.openPauseMenu());
+  }
+
+  // ---------------------------------------------------------------- editor
+  enterEditor(level: LevelData) {
+    this.mode = 'editor';
+    document.body.classList.add('editor');
+    this.builder.free = true;
+    this.regions.applyTier(99);
+    this.world.rebuildFog();
+    this.overview.rebuildRegions();
+    this.minimap.rebuildBase();
+    this.clock.setSpeed(0);
+    this.clock.time = daySeconds() * 0.5; // edit in daylight
+    this.hud.setEditor(true);
+    this.toolbar.setEditor(true);
+    this.toolbar.refresh();
+    this.placeLevelContent(level);
+    const editor = new Editor(this.map, this.builder, this.world, level);
+    this.editor = editor;
+    this.build.editor = editor;
+    this.editorPanel = new EditorPanel(editor, {
+      save: () => {
+        if (editor.save()) this.toasts.push(STR.editor.saved(editor.level.name), 'good');
+        else this.toasts.push(STR.editor.saveFailed, 'warn');
+      },
+      saveAs: () => {
+        const name = prompt(STR.editor.newName, editor.level.name);
+        if (name && name.trim() && editor.saveAs(name.trim().slice(0, 40))) {
+          this.toasts.push(STR.editor.saved(editor.level.name), 'good');
+          this.editorPanel?.render();
+        }
+      },
+      playTest: () => {
+        if (!this.confirmReplaceSave()) return;
+        if (!editor.save()) {
+          this.toasts.push(STR.editor.saveFailed, 'warn');
+          return;
+        }
+        clearSave();
+        setTestingLevel(editor.level.id);
+        setIntentAndReload({ action: 'play', levelId: editor.level.id, testing: true });
+      },
+      exit: () => {
+        if (!editor.dirty || confirm(STR.editor.unsaved)) setIntentAndReload({ action: 'menu' });
+      },
+      exportJson: () => JSON.stringify(editor.collect()),
+      importJson: (json) => {
+        try {
+          const l = JSON.parse(json) as LevelRecord;
+          if (!isLevel(l)) return false;
+          saveLevel(l);
+          setIntentAndReload({ action: 'edit', levelId: l.id });
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      fill: (t) => editor.fillAll(t),
+      regenerate: () => {
+        const v = prompt(STR.settings.seedPlaceholder, String(this.map.seed));
+        if (v === null) return;
+        const seed = this.parseSeed(v);
+        const fresh = generateMapForEditor(seed, {
+          w: this.map.w,
+          h: this.map.h,
+          waterLevel: rules.waterLevel,
+          hillLevel: rules.hillLevel,
+          rockLevel: rules.rockLevel,
+          forestDensity: rules.forestDensity,
+        });
+        editor.fillAll(TerrainEnum.Grass);
+        this.map.terrain.set(fresh.terrain);
+        this.map.variant.set(fresh.variant);
+        this.map.seed = seed;
+        decorateProps(this.map, seed);
+        for (let y = 0; y < this.map.h; y++)
+          for (let x = 0; x < this.map.w; x++) this.world.retile(x, y);
+        editor.dirty = true;
+      },
+    });
+    this.uiRoot.append(this.editorPanel.root);
+    this.toasts.push(STR.editor.hint, 'info');
   }
 
   async init() {
@@ -170,7 +455,10 @@ export class Game {
     this.input = new Input(canvas);
     await this.atlas.load(ATLAS_GROUPS);
 
-    this.map = generateMap(this.seed);
+    this.map =
+      this.spec.kind === 'level'
+        ? mapFromLevel(this.spec.level)
+        : generateMap(this.spec.seed, this.spec.params);
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -182,6 +470,10 @@ export class Game {
     this.builder = new Builder(this.map, this.regions, this.track, this.economy);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
+    this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
+    this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
+    this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
+    validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onTierUp = (t) => this.onTierUp(t);
     this.inventory.seedStarter(0);
@@ -212,9 +504,22 @@ export class Game {
     this.cursor = new Sprite(cur.texture);
     this.cursor.anchor.set(cur.anchorX, cur.anchorY);
     this.world.overlay.addChild(this.cursor);
-    this.app.stage.addChild(this.world.root, this.dayNight.overlay, this.overview.root);
+    this.rain = new Rain(this.atlas);
+    this.fog = new Fog(this.atlas);
+    this.world.root.addChild(this.dayNight.overlay);
+    this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    this.world.overlay.addChild(this.fog.patches);
+    this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
     this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.groundLights = new GroundLights(
+      this.atlas,
+      this.world.lights,
+      (x, y) => this.world.surfacePoint(x, y),
+      (x, y) => inBounds(this.map, x, y),
+    );
     this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.applySeason(true);
     this.applySettings();
     this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
 
@@ -233,7 +538,7 @@ export class Game {
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
-      if (this.settings.autosave) this.save(true);
+      if (this.settings.autosave && this.mode === 'play') this.save(true);
     });
   }
 
@@ -243,6 +548,9 @@ export class Game {
     audio.sfx = this.settings.sfx;
     audio.music = this.settings.music;
     writeSettings(this.settings);
+    audio.applyMusic();
+    if (!this.settings.weather && this.weather) this.weather.visible = 0;
+    if (this.world) this.applySeason();
   }
 
   snapshot(): SaveGame {
@@ -262,6 +570,10 @@ export class Game {
       gacha: this.gacha.toJSON(),
       camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
       lastDay: this.lastDay,
+      decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
+      weather: this.weather.toJSON(),
+      world: this.spec,
+      rules: { ...rules },
     };
   }
 
@@ -276,6 +588,7 @@ export class Game {
 
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    if (j.rules) setRules(j.rules);
     this.clock.time = j.clock.time;
     this.clock.setSpeed(j.clock.speedIndex);
     this.economy.load(j.economy);
@@ -304,6 +617,15 @@ export class Game {
       const t = TrainClass.fromJSON(tj, this.track);
       this.fleet.trains.push(t);
     }
+    for (const [x, y, id, rot] of j.decor ?? []) {
+      const d: Decor = { id, x, y, rot };
+      this.builder.decor.set(y * this.map.w + x, d);
+      this.onDecorChanged(d, false);
+    }
+    this.builder.refreshStationBoosts();
+    if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);
+    for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
+    this.applySeason(true);
     // items assigned to trains that no longer exist are freed
     for (const it of this.inventory.items)
       if (it.assigned !== null && !this.fleet.byId(it.assigned)) it.assigned = null;
@@ -319,8 +641,7 @@ export class Game {
         ? Number(seedText)
         : hashSeed(seedText)
       : Math.floor(Math.random() * 2 ** 31);
-    location.hash = `seed=${seed}&new`;
-    location.reload();
+    setIntentAndReload({ action: 'new', seed });
   }
 
   // ---------------------------------------------------------------- world edits
@@ -336,13 +657,83 @@ export class Game {
       if (t === Terrain.Hill && !this.builder.stationAt(x, y)) this.world.setFlattened(x, y, false);
     }
   }
+  private onDecorChanged(d: Decor, removed: boolean) {
+    const id = `decor:${d.x},${d.y}`;
+    if (removed) {
+      this.world.removeStructure(id);
+      this.signalAspect.delete(d.y * this.map.w + d.x);
+      if (
+        d.id !== 'signal' &&
+        terrainAt(this.map, d.x, d.y) === Terrain.Hill &&
+        !this.track.has(d.x, d.y) &&
+        !this.builder.stationAt(d.x, d.y)
+      )
+        this.world.setFlattened(d.x, d.y, false);
+      return;
+    }
+    const off = decorOffset(d);
+    if (d.id === 'signal') {
+      this.world.setStructure(id, d.x, d.y, 'structures/signal_green', 12, off.dy, off.dx);
+      this.signalAspect.set(d.y * this.map.w + d.x, 'green');
+    } else {
+      const t = terrainAt(this.map, d.x, d.y);
+      if (t === Terrain.Hill) this.world.setFlattened(d.x, d.y, true);
+      this.world.removeProps(d.x, d.y);
+      this.world.setStructure(id, d.x, d.y, `structures/${d.id}`, 20);
+    }
+  }
+  private onStationOrphaned(s: Station, orphaned: boolean) {
+    const id = `warn:${s.id}`;
+    if (orphaned && !this.orphaned.has(s.id)) {
+      this.orphaned.add(s.id);
+      this.world.setStructure(id, s.x, s.y, 'structures/warn', 45, -54);
+      this.toasts.push(STR.station.orphaned(s.name), 'warn');
+    } else if (!orphaned && this.orphaned.has(s.id)) {
+      this.orphaned.delete(s.id);
+      this.world.removeStructure(id);
+    }
+  }
+  /** Signals show red when a train sits on the tile they guard or on their own tile. */
+  private updateSignals() {
+    for (const d of this.builder.decor.values()) {
+      if (d.id !== 'signal') continue;
+      const key = d.y * this.map.w + d.x;
+      const ax = d.x + DIR_DX[d.rot];
+      const ay = d.y + DIR_DY[d.rot];
+      const red = this.fleet.occupied(ax, ay, -1) || this.fleet.occupied(d.x, d.y, -1);
+      const aspect = red ? 'red' : 'green';
+      if (this.signalAspect.get(key) === aspect) continue;
+      this.signalAspect.set(key, aspect);
+      const off = decorOffset(d);
+      this.world.setStructure(
+        `decor:${d.x},${d.y}`,
+        d.x,
+        d.y,
+        `structures/signal_${aspect}`,
+        12,
+        off.dy,
+        off.dx,
+      );
+    }
+  }
+  /** Re-tint the world and adjust production when the season changes. */
+  private applySeason(force = false) {
+    const s = this.settings.weather ? seasonOf(this.clock.day) : 'spring';
+    if (s === this.season && !force) return;
+    this.season = s;
+    const fx = SEASON_FX[s];
+    this.world.setSeasonTint(fx.ground, fx.props);
+    for (const st of this.builder.stations) st.productionMul = productionMul(st.def.id, s);
+  }
   private onStationChanged(s: Station, removed: boolean) {
     const id = `station:${s.id}`;
     const t = terrainAt(this.map, s.x, s.y);
     if (removed) {
+      this.onStationOrphaned(s, false);
       this.world.removeStructure(id);
       if (t === Terrain.Hill && !this.track.has(s.x, s.y)) this.world.setFlattened(s.x, s.y, false);
     } else {
+      s.productionMul = productionMul(s.def.id, this.season ?? 'spring');
       if (t === Terrain.Hill) this.world.setFlattened(s.x, s.y, true);
       this.world.removeProps(s.x, s.y);
       this.world.setStructure(id, s.x, s.y, `structures/station_${s.spriteLevel}`);
@@ -369,10 +760,22 @@ export class Game {
 
   private buildUi() {
     this.hud = new Hud(this.clock);
-    this.depot = new DepotScreen(this.inventory, this.fleet, this.builder, (m, k) =>
-      this.toasts.push(m, k),
+    this.depot = new DepotScreen(
+      this.inventory,
+      this.fleet,
+      this.builder,
+      (m, k) => this.toasts.push(m, k),
+      this.atlas,
     );
     this.depot.onFocusTrain = (t) => this.focusTrain(t);
+    this.tuningScreen = new TuningScreen(() => {
+      this.applySeason(true);
+      this.toolbar.refresh();
+    });
+    this.contentScreen = new ContentScreen(() => {
+      if (this.mode === 'play' && !this.menuOpen) this.save(true);
+      setIntentAndReload({ action: 'menu' });
+    });
     this.settingsScreen = new SettingsScreen(
       this.settings,
       () => this.applySettings(),
@@ -392,7 +795,13 @@ export class Game {
         importSave: (json) => {
           try {
             const j = JSON.parse(json) as SaveGame;
-            if (j.version !== SAVE_VERSION || typeof j.seed !== 'number') throw new Error('bad');
+            if (
+              typeof j.version !== 'number' ||
+              j.version < SAVE_MIN_VERSION ||
+              j.version > SAVE_VERSION ||
+              typeof j.seed !== 'number'
+            )
+              throw new Error('bad');
             writeSave(j);
             location.hash = `seed=${j.seed}`;
             location.reload();
@@ -410,8 +819,10 @@ export class Game {
       this.economy,
       () => this.clock.time,
       (m, k) => this.toasts.push(m, k),
+      this.atlas,
+      () => this.clock.day,
     );
-    this.rosterScreen = new RosterScreen(this.inventory, this.fleet);
+    this.rosterScreen = new RosterScreen(this.inventory, this.fleet, this.atlas);
     this.contractsScreen = new ContractsScreen(this.contracts, this.builder, this.clock, (m, k) =>
       this.toasts.push(m, k),
     );
@@ -458,14 +869,19 @@ export class Game {
     });
     this.toolbar = new Toolbar(
       (t: Tool) => this.build.setTool(t),
-      () => this.economy.tier,
+      () => (this.mode === 'editor' ? 99 : this.economy.tier),
     );
     this.toolbar.refresh();
     this.stationPanel = new StationPanel(
       this.builder,
       () => this.build.selected && this.build.select(null),
+      this.contracts,
+      this.clock,
     );
+    this.buildMenus();
     this.uiRoot.append(
+      this.mainMenu.root,
+      this.pauseMenu.root,
       this.screens.root,
       this.contractsSide.root,
       el('div', { class: 'vignette' }),
@@ -488,7 +904,7 @@ export class Game {
 
   // ---------------------------------------------------------------- sim
   private update(dt: number) {
-    if (this.settings.autosave) {
+    if (this.settings.autosave && this.mode === 'play' && !this.menuOpen) {
       this.autosaveTimer += dt;
       if (this.autosaveTimer >= 60) {
         this.autosaveTimer = 0;
@@ -498,7 +914,10 @@ export class Game {
     const gdt = this.clock.advance(dt);
     if (gdt > 0) {
       for (const s of this.builder.stations) s.tick(gdt);
-      this.fleet.tick(gdt);
+      if (this.settings.weather) this.weather.tick(this.clock.time, this.clock.day, dt);
+      this.applySeason();
+      const wf = this.settings.weather ? this.weather.speedFactor() : 1;
+      this.fleet.tick(gdt, this.clock.time, wf);
       this.contracts.tick(this.clock.time);
       if (this.clock.day !== this.lastDay) {
         this.lastDay = this.clock.day;
@@ -531,16 +950,42 @@ export class Game {
     this.updateCursor();
     this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha);
     const night = this.settings.dayNight ? nightness(this.clock.dayFraction) : 0;
-    this.dayNight.update(
-      this.clock.dayFraction,
+    const rainI = this.settings.weather && this.weather.kind === 'rain' ? this.weather.visible : 0;
+    const fogI = this.settings.weather && this.weather.kind === 'fog' ? this.weather.visible : 0;
+    this.dayNight.update(this.clock.dayFraction, this.settings.dayNight, rainI);
+    this.rain.update(dt, this.viewTarget === 0 ? rainI : 0, this.camera.viewW, this.camera.viewH);
+    this.fog.update(
+      dt,
+      this.viewTarget === 0 ? fogI : 0,
+      this.camera.viewRect(),
       this.camera.viewW,
       this.camera.viewH,
-      this.settings.dayNight,
+    );
+    this.groundLights.update(this.builder.stations, this.fleet.trains, night);
+    this.aspectTimer += dt;
+    if (this.aspectTimer > 0.1) {
+      this.aspectTimer = 0;
+      this.updateSignals();
+    }
+    this.bobTime += dt;
+    for (const id of this.orphaned) {
+      const s = this.builder.stationById(id);
+      const m = this.world.getStructure(`warn:${id}`);
+      if (s && m) m.y = this.world.surfacePoint(s.x, s.y).y - 54 + Math.sin(this.bobTime * 4) * 3;
+    }
+    this.hud.setWeather(
+      this.settings.weather
+        ? STR.hud.weather(SEASON_FX[this.season ?? 'spring'].label, this.weather.label())
+        : '',
     );
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.build.update(
-      this.viewTarget === 0 && this.viewBlend === 0 && !this.input.overUi && !this.screens.current,
+      this.viewTarget === 0 &&
+        this.viewBlend === 0 &&
+        !this.input.overUi &&
+        !this.screens.current &&
+        !this.menuOpen,
     );
     this.updateRtsTooltip();
     this.hud.update(this.economy);
@@ -583,10 +1028,25 @@ export class Game {
   private handleInput(dt: number) {
     const inp = this.input;
     if (inp.wasPressed('Backquote')) this.debug.toggle();
-    if (inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
-    if (inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
-    if (inp.wasPressed('KeyG')) this.screens.toggle(this.gachaScreen);
-    if (inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
+    if (this.menuOpen) {
+      if (inp.wasPressed('Escape') && this.screens.current) this.screens.close();
+      else if (inp.wasPressed('Escape') && this.pauseMenu.visible) this.closeMenus();
+      return;
+    }
+    if (
+      inp.wasPressed('Escape') &&
+      !this.screens.current &&
+      this.build.tool.kind === 'none' &&
+      !this.build.selected &&
+      this.viewTarget === 0
+    ) {
+      this.openPauseMenu();
+      return;
+    }
+    if (this.mode === 'play' && inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
+    if (this.mode === 'play' && inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
+    if (this.mode === 'play' && inp.wasPressed('KeyG')) this.screens.toggle(this.gachaScreen);
+    if (this.mode === 'play' && inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
     if (inp.wasPressed('Escape') && this.screens.current) {
       this.screens.close();
       return;
@@ -685,7 +1145,7 @@ export class Game {
         return {
           title: t.name,
           lines: [
-            `${STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''}`,
+            `${t.blocked && t.state === 'moving' ? STR.depot.state.held : STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''}`,
             STR.depot.cargo(Math.round(t.totalCargo())),
           ],
         };

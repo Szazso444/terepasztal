@@ -1,5 +1,7 @@
 import { Dir, rotateDir, opposite, DIR_DX, DIR_DY } from '../engine/iso';
-import trackData from '../data/track.json';
+import { content } from '../data/content';
+
+const trackData = content.track;
 
 export type TrackKind = 'straight' | 'curve' | 'switch' | 'crossing' | 'bridge';
 export const TRACK_KINDS: TrackKind[] = ['straight', 'curve', 'switch', 'crossing', 'bridge'];
