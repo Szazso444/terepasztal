@@ -21,6 +21,15 @@ export interface Building {
   active: boolean;
   /** batches completed in the last in-game day (rolling estimate) */
   rate: number;
+  /** total output produced over the building's life, per resource */
+  made?: Record<string, number>;
+  /** why the last tick did not run (empty when running) */
+  reason?: 'inputs' | 'full' | '';
+}
+/** Which primary input is short, if any. */
+export function missingInput(def: BuildingDef, stock: Stockpile): string | null {
+  for (const [k, v] of Object.entries(def.recipe.in)) if (stock.get(k) < v) return k;
+  return null;
 }
 
 /**
@@ -49,6 +58,7 @@ export function tickBuildings(
         ? def.altIn
         : null;
     const running = outOk && !!inputs;
+    b.reason = running ? '' : !outOk ? 'full' : 'inputs';
     if (running) b.acc += batches;
     while (b.acc >= 1) {
       const pick: Cost | null = stock.canAfford(def.recipe.in)
@@ -58,8 +68,11 @@ export function tickBuildings(
           : null;
       if (!pick) break;
       stock.spend(pick);
-      for (const [k, v] of Object.entries(def.recipe.out))
+      for (const [k, v] of Object.entries(def.recipe.out)) {
         stock.add(k, v, stock.cap(k, warehouseLevels, plants));
+        b.made = b.made ?? {};
+        b.made[k] = (b.made[k] ?? 0) + v;
+      }
       b.acc -= 1;
     }
     if (b.acc > 1) b.acc = 1;

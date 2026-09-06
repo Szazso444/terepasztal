@@ -84,6 +84,7 @@ export class Minimap {
         const p = tileToWorld(x, y);
         const px = this.ox + p.x * this.sx;
         const py = this.oy + p.y * this.sy;
+        if (!this.regions.isTileRevealed(x, y)) continue;
         c.fillStyle = COLORS[this.map.terrain[y * this.map.w + x]];
         c.fillRect(px - tw / 2, py - th / 2, Math.max(1, tw), Math.max(1, th));
         if (!this.regions.isTileUnlocked(x, y)) {

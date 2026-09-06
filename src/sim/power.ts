@@ -9,8 +9,24 @@ import { buildingDef } from './buildings';
  * each other connect. A component with at least one plant is live, and every tile within one tile of
  * a live node is powered. Rebuilt whenever decor or buildings change.
  */
+export interface PowerNode {
+  x: number;
+  y: number;
+  plant: boolean;
+}
+export interface PowerEdge {
+  a: PowerNode;
+  b: PowerNode;
+  live: boolean;
+}
+
 export class PowerGrid {
   private powered: Uint8Array;
+  private edgeList: PowerEdge[] = [];
+  /** connections between nodes (for drawing wires) */
+  edges() {
+    return this.edgeList;
+  }
   /** number of plants connected to a live component (all plants, by definition) */
   plants = 0;
   poles = 0;
@@ -29,15 +45,19 @@ export class PowerGrid {
     // union-find over nodes within Chebyshev distance 2
     const parent = nodes.map((_, i) => i);
     const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+    const pairs: [number, number][] = [];
     for (let i = 0; i < nodes.length; i++)
       for (let j = i + 1; j < nodes.length; j++) {
-        if (Math.max(Math.abs(nodes[i].x - nodes[j].x), Math.abs(nodes[i].y - nodes[j].y)) <= 2)
+        if (Math.max(Math.abs(nodes[i].x - nodes[j].x), Math.abs(nodes[i].y - nodes[j].y)) <= 2) {
           parent[find(i)] = find(j);
+          pairs.push([i, j]);
+        }
       }
     const live = new Set<number>();
     nodes.forEach((n, i) => {
       if (n.plant) live.add(find(i));
     });
+    this.edgeList = pairs.map(([i, j]) => ({ a: nodes[i], b: nodes[j], live: live.has(find(i)) }));
     nodes.forEach((n, i) => {
       if (!live.has(find(i))) return;
       for (let dy = -1; dy <= 1; dy++)

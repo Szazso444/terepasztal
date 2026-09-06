@@ -59,6 +59,9 @@ export class OverviewRenderer {
   private trainNodes = new Map<number, Container>();
   private contractLabels = new Map<number, Text>();
   private powerG = new Graphics();
+  private pathG = new Graphics();
+  /** tiles to highlight (a hovered train's predicted path), outermost leg first */
+  highlight: { x: number; y: number }[][] = [];
   /** Set by the game: the tile currently hovered in overview space. */
   hover: { kind: 'station' | 'train'; id: number } | null = null;
 
@@ -74,6 +77,7 @@ export class OverviewRenderer {
       this.regionLayer,
       this.powerG,
       this.trackG,
+      this.pathG,
       this.contractG,
       this.stationLayer,
       this.trainLayer,
@@ -95,6 +99,12 @@ export class OverviewRenderer {
     return new Texture({ source: new ImageSource({ resource: c, scaleMode: 'nearest' }) });
   }
 
+  /** Local-space rectangle of every revealed chunk (what the view should fit). */
+  bounds() {
+    const b = this.regions.revealedBounds();
+    return { x: b.x * OV_UNIT, y: b.y * OV_UNIT, w: b.w * OV_UNIT, h: b.h * OV_UNIT };
+  }
+
   rebuildRegions() {
     this.regionLayer.clear();
     this.regionLabels.removeChildren().forEach((c) => c.destroy());
@@ -103,10 +113,14 @@ export class OverviewRenderer {
       const r = this.regions.regionRect(i);
       const x = r.x * OV_UNIT;
       const y = r.y * OV_UNIT;
+      if (!this.regions.isRevealed(i)) {
+        this.regionLayer.rect(x, y, rs, rs).fill({ color: 0x0a0a0c });
+        continue;
+      }
       if (!this.regions.unlocked[i]) {
         this.regionLayer.rect(x, y, rs, rs).fill({ color: 0x06060a, alpha: 0.72 });
         const t = new Text({
-          text: `${STR.overview.locked}\n${STR.overview.tierReq(this.regions.tiers[i])}`,
+          text: `${STR.overview.locked}\n${STR.overview.price(this.regions.price(i))}\n${STR.overview.buyHint}`,
           style: { fontFamily: 'Georgia, serif', fontSize: 22, fill: 0x8a8578, align: 'center' },
         });
         t.anchor.set(0.5);
@@ -129,6 +143,13 @@ export class OverviewRenderer {
   /** Redraw dynamic content. Cheap enough to run each frame while the overview is visible. */
   refresh() {
     const U = OV_UNIT;
+    // highlighted path of the hovered train
+    this.pathG.clear();
+    this.highlight.forEach((leg, li) => {
+      const col = li === 0 ? hex(PAL.cyan) : li === 1 ? hex(PAL.amber) : hex(PAL.white);
+      for (const t of leg)
+        this.pathG.rect(t.x * U + 1, t.y * U + 1, U - 2, U - 2).fill({ color: col, alpha: 0.55 });
+    });
     // track
     this.trackG.clear();
     for (const t of this.source.trackTiles()) {

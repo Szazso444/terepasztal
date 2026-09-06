@@ -29,6 +29,9 @@ export class Fleet {
   private occ = new Map<number, number[]>();
   /** set by the game each tick: is a tile inside a live power network? */
   powered: (x: number, y: number) => boolean = () => false;
+  onFlow: (x: number, y: number, resource: string, delta: number) => void = () => {};
+  /** last clock time seen by `tick`; used to stamp trips created between ticks */
+  clockTime = 0;
   stockCap: (id: string) => number = () => Infinity;
 
   constructor(
@@ -46,6 +49,32 @@ export class Fleet {
   /** Crew aboard every train in service. */
   crewTotal() {
     return this.trains.reduce((a, t) => a + t.crew, 0);
+  }
+
+  /**
+   * Default schedule: every station with platform track, visited in nearest-neighbour order
+   * starting from the first producing station. Trains created without stops get this.
+   */
+  autoSchedule(): StopPlan[] {
+    const list = this.builder.stations.filter((s) => this.builder.platformTiles(s).length > 0);
+    if (list.length < 2) return list.map((s) => defaultStop(s.id));
+    const start = list.find((s) => s.producedCargo().length > 0) ?? list[0];
+    const order = [start];
+    const left = list.filter((s) => s !== start);
+    while (left.length) {
+      const cur = order[order.length - 1];
+      let bi = 0;
+      let bd = Infinity;
+      left.forEach((s, i) => {
+        const d = Math.abs(s.x - cur.x) + Math.abs(s.y - cur.y);
+        if (d < bd) {
+          bd = d;
+          bi = i;
+        }
+      });
+      order.push(left.splice(bi, 1)[0]);
+    }
+    return order.map((s) => defaultStop(s.id));
   }
 
   /** Assemble and spawn a train at the first stop. Returns an error string on failure. */
@@ -80,7 +109,8 @@ export class Fleet {
     }));
     if (t.emptyWeight > t.power)
       return STR.fleet.tooHeavy(Math.round(t.emptyWeight), Math.round(t.power));
-    const stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
+    let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
+    if (stops.length < 2) stops = this.autoSchedule();
     if (stops.length < 2) return STR.fleet.needTwoStops;
     const first = this.builder.stationById(stops[0].stationId);
     if (!first) return STR.fleet.missingStation;
@@ -96,7 +126,7 @@ export class Fleet {
     if (!t.spawnAt(this.track, p.x, p.y, entry)) return STR.fleet.cannotPlace;
     t.schedule = stops;
     t.routeIndex = 0;
-    t.trip = newTrip(0);
+    t.trip = newTrip(this.clockTime);
     for (const l of locoItems) l!.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
     this.trains.push(t);
@@ -163,9 +193,11 @@ export class Fleet {
       stockpile: this.stock,
       stockCap: (id) => this.stockCap(id),
       powered: (x, y) => this.powered(x, y),
+      onFlow: (x, y, r, d) => this.onFlow(x, y, r, d),
     };
   }
   tick(gdt: number, now: number, speedFactor = 1) {
+    this.clockTime = now;
     this.rebuildOccupancy();
     const ctx = this.ctx(now, speedFactor);
     for (const t of this.trains) t.tick(gdt, ctx);

@@ -8,7 +8,7 @@ import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
-import { buildingDef } from '../sim/buildings';
+import { buildingDef, type Building } from '../sim/buildings';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
@@ -31,6 +31,9 @@ export class BuildController {
   onStatus: ((text: string) => void) | null = null;
   onToolChanged: ((t: Tool) => void) | null = null;
   hoverStation: Station | null = null;
+  hoverBuilding: Building | null = null;
+  selectedBuilding: Building | null = null;
+  onSelectBuilding: ((b: Building | null) => void) | null = null;
   /** set in editor mode */
   editor: Editor | null = null;
   private lastPaint = '';
@@ -57,6 +60,7 @@ export class BuildController {
   }
 
   select(s: Station | null) {
+    if (s) this.selectBuilding(null);
     this.selected = s;
     this.selectSprite.visible = !!s;
     if (s) {
@@ -82,6 +86,7 @@ export class BuildController {
     const t = this.tileUnderMouse();
     const inMap = inBounds(this.builder.map, t.x, t.y);
     this.hoverStation = inMap ? (this.builder.stationAt(t.x, t.y) ?? null) : null;
+    this.hoverBuilding = inMap ? (this.builder.buildingAt(t.x, t.y) ?? null) : null;
     if (inp.wasPressed('Escape')) {
       if (this.tool.kind !== 'none') this.setTool({ kind: 'none' });
       else this.select(null);
@@ -405,9 +410,16 @@ export class BuildController {
     for (const c of this.input.clicks) {
       if (c.button === 0 && inMap) {
         const st = this.builder.stationAt(t.x, t.y);
+        const bld = st ? null : (this.builder.buildingAt(t.x, t.y) ?? null);
         this.select(st ?? null);
+        this.selectBuilding(bld);
       }
     }
+  }
+  selectBuilding(b: Building | null) {
+    if (this.selectedBuilding === b) return;
+    this.selectedBuilding = b;
+    this.onSelectBuilding?.(b);
   }
 
   removeAt(x: number, y: number): boolean {
@@ -416,7 +428,11 @@ export class BuildController {
       if (this.selected === st) this.select(null);
       return this.builder.removeStation(st);
     }
-    if (this.builder.buildingAt(x, y)) return this.builder.removeBuilding(x, y);
+    const bld = this.builder.buildingAt(x, y);
+    if (bld) {
+      if (this.selectedBuilding === bld) this.selectBuilding(null);
+      return this.builder.removeBuilding(x, y);
+    }
     if (this.builder.decorAt(x, y)) return this.builder.removeDecor(x, y);
     return this.builder.removeTrack(x, y);
   }

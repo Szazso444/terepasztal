@@ -223,10 +223,12 @@ export class WorldRenderer {
     for (let y = 0; y < this.map.h; y++)
       for (let x = 0; x < this.map.w; x++) {
         if (this.regions.isTileUnlocked(x, y)) continue;
-        const s = new Sprite(f.texture);
-        s.anchor.set(f.anchorX, f.anchorY);
+        const hidden = !this.regions.isTileRevealed(x, y);
+        const fr = hidden ? this.atlas.get(`terrain/void_${(((x * 7 + y * 13) % 3) + 3) % 3}`) : f;
+        const s = new Sprite(fr.texture);
+        s.anchor.set(fr.anchorX, fr.anchorY);
         const p = tileToWorld(x, y);
-        s.position.set(p.x, p.y + this.elevationOf(x, y));
+        s.position.set(p.x, hidden ? p.y : p.y + this.elevationOf(x, y));
         s.cullable = true;
         this.fog.addChild(s);
         this.fogSprites.set(idx(this.map, x, y), s);
@@ -318,6 +320,11 @@ export class WorldRenderer {
   }
 
   /** Show a track piece sprite on a tile (or clear it). Flat: lives in the track layer under objects. */
+  /** Tint a track sprite (path highlighting); 0xffffff clears. */
+  setTrackTint(x: number, y: number, color: number) {
+    const s = this.trackSprites.get(idx(this.map, x, y));
+    if (s) s.tint = color;
+  }
   setTrack(x: number, y: number, frame: string | null) {
     const i = idx(this.map, x, y);
     let s = this.trackSprites.get(i);

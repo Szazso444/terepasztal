@@ -125,8 +125,51 @@ export function generateMap(seed: number, p: Partial<MapGenParams> = {}): GameMa
         }
       if (same <= 1) terrain[i] = copy[(y + 1) * w + x];
     }
+  ensureStartResources(map, rng);
   decorateProps(map, seed);
   return map;
+}
+
+/**
+ * The starting chunk must offer every basic resource: water (pumps), forest (lumber), hill or
+ * rock (quarries) and grass (farms). Missing ones are painted as small patches near the chunk's
+ * corners, away from the central basin.
+ */
+export function ensureStartResources(map: GameMap, rng: Rng) {
+  const rs = map.regionSize;
+  const rx = Math.floor((map.regionsX - 1) / 2);
+  const ry = Math.floor((map.regionsY - 1) / 2);
+  const x0 = rx * rs;
+  const y0 = ry * rs;
+  const x1 = Math.min(map.w, x0 + rs);
+  const y1 = Math.min(map.h, y0 + rs);
+  const count = (pred: (t: Terrain) => boolean) => {
+    let n = 0;
+    for (let y = y0; y < y1; y++)
+      for (let x = x0; x < x1; x++) if (pred(map.terrain[y * map.w + x] as Terrain)) n++;
+    return n;
+  };
+  const corners = [
+    [x0 + 4, y0 + 4],
+    [x1 - 5, y0 + 4],
+    [x0 + 4, y1 - 5],
+    [x1 - 5, y1 - 5],
+  ];
+  let ci = rng.int(0, 3);
+  const paint = (t: Terrain, r: number) => {
+    const [cx, cy] = corners[ci % 4];
+    ci++;
+    for (let y = cy - r; y <= cy + r; y++)
+      for (let x = cx - r; x <= cx + r; x++) {
+        if (x < x0 || y < y0 || x >= x1 || y >= y1) continue;
+        if (Math.abs(x - cx) + Math.abs(y - cy) > r + 1) continue;
+        map.terrain[y * map.w + x] = t;
+      }
+  };
+  if (count((t) => t === Terrain.Water) < 4) paint(Terrain.Water, 1);
+  if (count((t) => t === Terrain.Forest) < 6) paint(Terrain.Forest, 2);
+  if (count((t) => t === Terrain.Hill || t === Terrain.Rock) < 4) paint(Terrain.Hill, 1);
+  if (count((t) => t === Terrain.Grass) < 20) paint(Terrain.Grass, 3);
 }
 
 /**

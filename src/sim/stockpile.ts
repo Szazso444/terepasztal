@@ -24,7 +24,7 @@ export class Stockpile {
   /** Storage cap per resource; warehouses raise it, power has its own battery cap. */
   cap(id: string, warehouseLevels: number, plants: number) {
     if (id === 'power') return rules.powerCap + plants * 100;
-    return rules.stockpileCap + warehouseLevels * 150;
+    return rules.stockpileCap + warehouseLevels * rules.warehouseCap;
   }
   /** Add up to the cap; returns the amount actually stored. */
   add(id: string, amount: number, cap = Infinity) {
