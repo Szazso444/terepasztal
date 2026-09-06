@@ -5,7 +5,8 @@ import type { Inventory } from '../gacha/inventory';
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from '../sim/fleet';
 import type { Builder } from '../sim/build';
 import { locoDef, wagonDef, levelMul } from '../gacha/items';
-import { defaultStop, type Train, type StopPlan } from '../sim/trains';
+import type { Train, StopPlan } from '../sim/trains';
+import { ScheduleEditor } from './scheduleEditor';
 import { cargoDef } from '../sim/cargo';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
@@ -32,6 +33,8 @@ export class DepotScreen implements Screen {
   });
   onFocusTrain: ((t: Train) => void) | null = null;
   onDetails: ((t: Train) => void) | null = null;
+  private scheduleEditor: ScheduleEditor;
+  private customRoute = false;
 
   constructor(
     private readonly inventory: Inventory,
@@ -61,6 +64,7 @@ export class DepotScreen implements Screen {
       this.foot,
     );
     this.root.append(c1, c2, c3);
+    this.scheduleEditor = new ScheduleEditor(builder, () => {});
   }
 
   onOpen() {
@@ -75,13 +79,8 @@ export class DepotScreen implements Screen {
     this.locoUids = [];
     this.wagonUids = [];
     this.schedule = [];
+    this.customRoute = false;
     this.nameInput.value = '';
-    this.render();
-  }
-
-  private edit(t: Train) {
-    this.editing = t;
-    this.schedule = t.schedule.map((s) => ({ ...s }));
     this.render();
   }
 
@@ -126,7 +125,6 @@ export class DepotScreen implements Screen {
           { class: 'row', style: 'margin:0' },
           btn(STR.depot.details, () => this.onDetails?.(t), 'small'),
           btn(STR.depot.locate, () => this.onFocusTrain?.(t), 'small'),
-          btn(STR.depot.editRoute, () => this.edit(t), 'small'),
           btn(
             STR.depot.recall,
             () => {
@@ -281,163 +279,68 @@ export class DepotScreen implements Screen {
     return r;
   }
 
-  private stopRow(stop: StopPlan, i: number) {
-    const st = this.builder.stationById(stop.stationId);
-    const select = (value: string, opts: [string, string][], on: (v: string) => void) => {
-      const s = el('select', { class: 'text small' }) as HTMLSelectElement;
-      for (const [v, t] of opts) s.append(el('option', { value: v, text: t }));
-      s.value = value;
-      s.addEventListener('change', () => on(s.value));
-      return s;
-    };
-    const toggle = (label: string, on: boolean, set: (v: boolean) => void) => {
-      const b = btn(
-        label,
-        () => {
-          set(!on);
-          this.renderRoute();
-        },
-        `small ${on ? 'active' : ''}`,
-      );
-      return b;
-    };
-    return el(
-      'div',
-      { class: 'route-step' },
-      el(
-        'div',
-        { class: 'route-head' },
-        el('span', { class: 'idx', text: String(i + 1) }),
-        el('span', { class: 'grow', text: st?.name ?? '?' }),
-        btn(
-          '^',
-          () => {
-            if (i > 0)
-              [this.schedule[i - 1], this.schedule[i]] = [this.schedule[i], this.schedule[i - 1]];
-            this.renderRoute();
-          },
-          'small',
-        ),
-        btn(
-          'x',
-          () => {
-            this.schedule.splice(i, 1);
-            this.renderRoute();
-          },
-          'small',
-        ),
-      ),
-      el(
-        'div',
-        { class: 'route-opts' },
-        select(
-          stop.load,
-          [
-            ['auto', STR.depot.opt.loadAuto],
-            ['none', STR.depot.opt.loadNone],
-          ],
-          (v) => (stop.load = v as StopPlan['load']),
-        ),
-        select(
-          stop.unload,
-          [
-            ['all', STR.depot.opt.unloadAll],
-            ['none', STR.depot.opt.unloadNone],
-          ],
-          (v) => (stop.unload = v as StopPlan['unload']),
-        ),
-        select(
-          stop.depart,
-          [
-            ['auto', STR.depot.opt.departAuto],
-            ['forward', STR.depot.opt.departForward],
-            ['reverse', STR.depot.opt.departReverse],
-          ],
-          (v) => (stop.depart = v as StopPlan['depart']),
-        ),
-        toggle(STR.depot.opt.waitFull, stop.waitFull, (v) => (stop.waitFull = v)),
-        toggle(STR.depot.opt.refuel, stop.refuel, (v) => (stop.refuel = v)),
-        toggle(STR.depot.opt.pass, stop.pass, (v) => (stop.pass = v)),
-      ),
-    );
-  }
-
   private renderRoute() {
     const c = this.routeCol;
     c.innerHTML = '';
-    c.append(el('div', { class: 'col-title', text: STR.depot.stops }));
-    if (!this.schedule.length) c.append(el('div', { class: 'dim', text: STR.depot.noStops }));
-    this.schedule.forEach((stop, i) => c.append(this.stopRow(stop, i)));
-    c.append(el('div', { class: 'col-title', text: STR.depot.addStop }));
-    if (!this.builder.stations.length)
-      c.append(el('div', { class: 'dim', text: STR.depot.noStations }));
-    for (const st of this.builder.stations) {
-      const hasPlat = this.builder.platformTiles(st).length > 0;
-      const tags = [
-        st
-          .producedCargo()
-          .map((x) => cargoDef(x).name)
-          .join(', ') || '-',
-        '→',
-        st.def.stockpile
-          ? STR.depot.stockpileTag
-          : st.def.accepts.map((x) => cargoDef(x).name).join(', ') || '-',
-        st.refuelsFuel ? STR.depot.fuelTag : '',
-        st.refuelsWater ? STR.depot.waterTag : '',
-        hasPlat ? '' : STR.station.noPlatform,
-      ].filter(Boolean);
-      const row = this.itemRow(st.name, 'N', tags.join(' '), false, () => {
-        if (!hasPlat) return;
-        this.schedule.push(defaultStop(st.id));
-        this.renderRoute();
-      });
-      if (!hasPlat) row.classList.add('disabled');
-      c.append(row);
+    const auto = this.fleet.autoSchedule();
+    const names = auto.map((s) => this.builder.stationById(s.stationId)?.name ?? '?');
+    c.append(
+      el(
+        'div',
+        { class: 'row', style: 'margin:0 0 6px 0' },
+        btn(
+          STR.depot.routeAuto,
+          () => {
+            this.customRoute = false;
+            this.renderRoute();
+          },
+          `small ${this.customRoute ? '' : 'active'}`,
+        ),
+        btn(
+          STR.depot.routeCustom,
+          () => {
+            this.customRoute = true;
+            this.renderRoute();
+          },
+          `small ${this.customRoute ? 'active' : ''}`,
+        ),
+      ),
+    );
+    if (!this.customRoute) {
+      c.append(
+        el('div', { class: 'dim', text: STR.depot.routeAutoHint }),
+        el('div', {
+          class: 'sub',
+          style: 'margin-top:6px',
+          text: names.length ? names.join(' > ') : STR.depot.noStations,
+        }),
+      );
+    } else {
+      this.scheduleEditor.render(this.schedule);
+      c.append(this.scheduleEditor.root);
     }
     const f = this.foot;
     f.innerHTML = '';
-    if (this.editing) {
-      const t = this.editing;
-      f.append(
-        btn(
-          STR.depot.applyRoute,
-          () => {
-            if (this.schedule.length < 2) {
-              this.toast(STR.depot.needTwoStops, 'warn');
-              return;
-            }
-            this.fleet.setSchedule(
-              t,
-              this.schedule.map((s) => ({ ...s })),
-            );
-            this.toast(STR.depot.routeApplied(t.name), 'good');
-            this.render();
-          },
-          'accent',
-        ),
-      );
-    } else {
-      f.append(
-        this.nameInput,
-        btn(
-          STR.depot.dispatch,
-          () => {
-            const res = this.fleet.create(
-              this.locoUids,
-              this.wagonUids,
-              this.schedule,
-              this.nameInput.value.trim() || undefined,
-            );
-            if (typeof res === 'string') this.toast(res, 'warn');
-            else {
-              this.toast(STR.depot.dispatched(res.name), 'good');
-              this.startNew();
-            }
-          },
-          'accent',
-        ),
-      );
-    }
+    f.append(
+      this.nameInput,
+      btn(
+        STR.depot.dispatch,
+        () => {
+          const res = this.fleet.create(
+            this.locoUids,
+            this.wagonUids,
+            this.customRoute ? this.schedule : [],
+            this.nameInput.value.trim() || undefined,
+          );
+          if (typeof res === 'string') this.toast(res, 'warn');
+          else {
+            this.toast(STR.depot.dispatched(res.name), 'good');
+            this.startNew();
+          }
+        },
+        'accent',
+      ),
+    );
     f.append(el('span', { class: 'dim', text: STR.depot.scheduleHint }));
   }
 }

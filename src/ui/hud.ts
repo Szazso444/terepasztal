@@ -30,7 +30,10 @@ export class Hud {
       el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), v);
     const time = el('div', { class: 'time' });
     STR.hud.speed.forEach((s, i) => {
-      const b = btn(s, () => this.clock.setSpeed(i), 'small');
+      const b =
+        i === 0
+          ? btn(s, () => this.clock.togglePause(), 'pause')
+          : btn(s, () => this.clock.setSpeed(i), 'small');
       this.speedBtns.push(b);
       time.append(b);
     });
@@ -79,5 +82,11 @@ export class Hud {
     this.speedBtns.forEach((b, i) =>
       b.classList.toggle('active', !this.locked && i === this.clock.speedIndex),
     );
+    const paused = this.clock.speedIndex === 0;
+    const pb = this.speedBtns[0];
+    const glyph = paused ? '▶' : '❚❚';
+    if (pb.textContent !== glyph) pb.textContent = glyph;
+    pb.classList.toggle('paused', paused);
+    pb.title = paused ? STR.hud.resume : STR.hud.pause;
   }
 }

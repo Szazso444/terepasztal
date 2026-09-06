@@ -48,6 +48,8 @@ export function defaultStop(stationId: number): StopPlan {
 /** Bookkeeping for one loop of the schedule. */
 export interface TripStats {
   startedAt: number;
+  /** clock time the loop closed (0 while running) */
+  endedAt: number;
   distance: number;
   fuel: Record<string, number>;
   loaded: Record<string, number>;
@@ -55,7 +57,15 @@ export interface TripStats {
   income: number;
 }
 export function newTrip(now: number): TripStats {
-  return { startedAt: now, distance: 0, fuel: {}, loaded: {}, delivered: {}, income: 0 };
+  return {
+    startedAt: now,
+    endedAt: 0,
+    distance: 0,
+    fuel: {},
+    loaded: {},
+    delivered: {},
+    income: 0,
+  };
 }
 function bump(rec: Record<string, number>, k: string, v: number) {
   rec[k] = (rec[k] ?? 0) + v;
@@ -109,6 +119,8 @@ export interface TickCtx {
   stockCap: (id: string) => number;
   /** is the tile inside a live electric network? */
   powered: (x: number, y: number) => boolean;
+  /** a resource entered (+) or left (-) the stockpile at a tile: drives the floating indicators */
+  onFlow: (x: number, y: number, resource: string, delta: number) => void;
   spend: (v: number) => void;
   earn: (v: number) => void;
   /** is a tile occupied by any train other than `self`? */
@@ -178,6 +190,46 @@ export class Train {
   private pathCum: number[] = [];
   private pathPos = 0;
   private trackVersion = -1;
+  /** stockpile deliveries at the current stop, flushed to `onFlow` every second or so */
+  private flowAcc: Record<string, number> = {};
+  private flowTimer = 0;
+
+  /** Tiles of the current leg plus the next `legs` legs of the schedule, for map highlighting. */
+  predictPath(track: TrackGraph, builder: Builder, legs = 2): { x: number; y: number }[][] {
+    const out: { x: number; y: number }[][] = [];
+    let cursor: PathSegment | null = null;
+    if (this.path && this.path.length) {
+      // from the head's tile onward
+      const head = this.trail[this.trail.length - 1]?.seg;
+      const from = head ? this.path.findIndex((s) => s.x === head.x && s.y === head.y) : 0;
+      const seg = this.path.slice(Math.max(0, from));
+      out.push(seg.map((s) => ({ x: s.x, y: s.y })));
+      cursor = seg[seg.length - 1] ?? null;
+    } else if (this.trail.length) cursor = this.trail[this.trail.length - 1].seg;
+    if (!cursor || !this.route.length) return out;
+    for (let k = 1; k <= legs; k++) {
+      const id = this.route[(this.routeIndex + k) % this.route.length];
+      const st = builder.stationById(id);
+      if (!st) break;
+      const plat = new Set(builder.platformTiles(st).map((p) => p.y * track.w + p.x));
+      if (!plat.size) break;
+      const p = findPath(
+        track,
+        { x: cursor.x, y: cursor.y, in: cursor.in },
+        (x, y) => plat.has(y * track.w + x),
+        4000,
+      );
+      if (!p) break;
+      out.push(p.map((s) => ({ x: s.x, y: s.y })));
+      cursor = p[p.length - 1];
+    }
+    return out;
+  }
+  private flushFlow(ctx: TickCtx, st: Station) {
+    for (const [k, v] of Object.entries(this.flowAcc)) if (v > 0.05) ctx.onFlow(st.x, st.y, k, v);
+    this.flowAcc = {};
+    this.flowTimer = 0;
+  }
   poses: CarPose[] = [];
   prevPoses: CarPose[] = [];
   atStation: Station | null = null;
@@ -866,56 +918,49 @@ export class Train {
     if (stop.refuel && this.stateTime < gdt * 1.5) {
       // top up once on arrival
       const taken = this.refuel(ctx.stockpile, { fuel: st.refuelsFuel, water: st.refuelsWater });
-      for (const [k, v] of Object.entries(taken)) bump(this.trip.fuel, `refuel_${k}`, v);
+      for (const [k, v] of Object.entries(taken)) {
+        bump(this.trip.fuel, `refuel_${k}`, v);
+        if (v > 0.05) ctx.onFlow(st.x, st.y, k, -v);
+      }
     }
     let busy = false;
     let budget = st.loadRate * st.loadBoost * rules.loadRateMul * gdt;
-    // unload accepted cargo
+    // unload: contract cargo is credited first, everything else enters the stockpile
+    this.flowTimer += gdt;
     for (const w of this.wagons) {
       if (stop.unload === 'none') break;
       if (!w.cargo || w.amount <= 0) continue;
-      if (!st.accepts(w.cargo)) continue;
-      let n = Math.min(w.amount, budget);
-      if (st.def.stockpile) {
-        const room = ctx.stockCap(w.cargo) - ctx.stockpile.get(w.cargo);
-        n = Math.min(n, Math.max(0, room));
-      }
+      const room = Math.max(0, ctx.stockCap(w.cargo) - ctx.stockpile.get(w.cargo));
+      const contractable = st.accepts(w.cargo);
+      let n = Math.min(w.amount, budget, contractable ? w.amount : room);
       if (n <= 1e-6) continue;
+      let credited = 0;
+      if (contractable)
+        credited = ctx.onDelivery({
+          cargo: w.cargo,
+          amount: n,
+          origin: w.origin ?? -1,
+          station: st,
+          train: this,
+        });
+      const toPool = Math.min(n - credited, room);
+      n = credited + toPool;
+      if (n <= 1e-6) continue;
+      if (toPool > 0) {
+        ctx.stockpile.add(w.cargo, toPool, Infinity);
+        this.flowAcc[w.cargo] = (this.flowAcc[w.cargo] ?? 0) + toPool;
+      }
       w.amount -= n;
       budget -= n;
       busy = true;
       bump(this.trip.delivered, w.cargo, n);
-      if (st.def.stockpile) {
-        ctx.stockpile.add(w.cargo, n, Infinity);
-        if (w.amount < 1e-3) {
-          w.amount = 0;
-          w.cargo = null;
-          w.origin = null;
-        }
-        continue;
-      }
-      const credited = ctx.onDelivery({
-        cargo: w.cargo,
-        amount: n,
-        origin: w.origin ?? -1,
-        station: st,
-        train: this,
-      });
-      const spot = n - credited;
-      if (spot > 1e-6) {
-        const origin = w.origin !== null ? ctx.builder.stationById(w.origin) : undefined;
-        const dist = origin ? Math.abs(origin.x - st.x) + Math.abs(origin.y - st.y) : 0;
-        const pay = spot * st.marketPrice(w.cargo, dist);
-        ctx.earn(pay);
-        this.trip.income += pay;
-        st.absorb(w.cargo, spot);
-      }
       if (w.amount < 1e-3) {
         w.amount = 0;
         w.cargo = null;
         w.origin = null;
       }
     }
+    if (this.flowTimer >= 1.5) this.flushFlow(ctx, st);
     // load produced cargo that some later station on the route accepts
     const produced = st.producedCargo();
     const routeStations = this.route
@@ -927,11 +972,9 @@ export class Train {
       if (budget <= 0) break;
       if (w.cargo && w.amount >= w.def.capacity * levelMul(w.level) - 1e-3) continue;
       const options = produced.filter(
-        (c) =>
-          (w.def.accepts ?? []).includes(c) &&
-          (!w.cargo || w.cargo === c) &&
-          routeStations.some((s) => s.accepts(c)),
+        (c) => (w.def.accepts ?? []).includes(c) && (!w.cargo || w.cargo === c),
       );
+      if (!routeStations.length) break;
       if (!options.length) continue;
       // prefer the cargo with the most in storage
       options.sort((a, b) => st.stored(b) - st.stored(a));
@@ -968,7 +1011,10 @@ export class Train {
 
   private depart(ctx: TickCtx) {
     const st = this.atStation;
-    if (st) st.occupants.delete(this.id);
+    if (st) {
+      st.occupants.delete(this.id);
+      this.flushFlow(ctx, st);
+    }
     this.atStation = null;
     if (this.route.length < 1) {
       this.setState('noRoute');
@@ -977,8 +1023,9 @@ export class Train {
     const leaving = this.currentStop;
     this.routeIndex = (this.routeIndex + 1) % this.route.length;
     if (this.routeIndex === 0) {
+      this.trip.endedAt = ctx.now;
       this.lastTrip = this.trip;
-      this.trip = newTrip(this.trip.startedAt + 1);
+      this.trip = newTrip(ctx.now);
     }
     if (this.weight > this.power + 1e-6) {
       this.setState('overweight');
@@ -1066,8 +1113,8 @@ export class Train {
     t.water = j.tanks.water;
     t.fuelKind = j.tanks.kind;
     t.fuelPreference = j.tanks.pref;
-    t.trip = j.trip;
-    t.lastTrip = j.lastTrip;
+    t.trip = { ...newTrip(0), ...j.trip };
+    t.lastTrip = j.lastTrip ? { ...newTrip(0), ...j.lastTrip } : null;
     t.distance = j.distance;
     if (j.trail && j.trail.length >= 2 && j.trail.every(([, , sx, sy]) => track.has(sx, sy))) {
       t.restoreTrail(j.trail, !!j.reversed);

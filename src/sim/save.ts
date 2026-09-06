@@ -10,7 +10,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -42,6 +42,8 @@ export interface SaveGame {
   stockpile?: unknown;
   /** v4: processing buildings [x, y, id, acc] */
   buildings?: [number, number, string, number][];
+  /** v5: owned chunks */
+  regions?: boolean[];
 }
 
 export interface Settings {
@@ -93,6 +95,7 @@ function migrate(j: SaveGame): SaveGame {
     j.buildings = j.buildings ?? [];
     j.version = 4;
   }
+  if (j.version < 5) j.version = 5;
   return j;
 }
 

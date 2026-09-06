@@ -9,6 +9,7 @@ import { cargoDef } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
+import { ScheduleEditor } from './scheduleEditor';
 
 /** One train in detail: engines, tanks, weight, wagons, schedule and the last loop's statistics. */
 export class TrainScreen implements Screen {
@@ -20,6 +21,7 @@ export class TrainScreen implements Screen {
   private foot = el('div', { class: 'col-foot' });
   train: Train | null = null;
   onLocate: ((t: Train) => void) | null = null;
+  private scheduleEditor: ScheduleEditor;
 
   constructor(
     private readonly fleet: Fleet,
@@ -28,6 +30,9 @@ export class TrainScreen implements Screen {
     private readonly atlas: AtlasRegistry,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
   ) {
+    this.scheduleEditor = new ScheduleEditor(builder, () => {
+      if (this.train) this.fleet.setSchedule(this.train, this.train.schedule);
+    });
     this.root.append(
       el(
         'div',
@@ -247,24 +252,11 @@ export class TrainScreen implements Screen {
     };
     r.append(tripBlock(STR.train.lastLoop, t.lastTrip), tripBlock(STR.train.currentLoop, t.trip));
     r.append(el('div', { class: 'col-title', text: STR.depot.stops }));
-    t.schedule.forEach((s, i) => {
-      const st = this.builder.stationById(s.stationId);
-      r.append(
-        row(
-          `${i + 1}. ${st?.name ?? '?'}${i === t.routeIndex % Math.max(1, t.schedule.length) ? ' ◂' : ''}`,
-          [
-            s.pass ? STR.depot.opt.pass : '',
-            s.load === 'none' ? STR.depot.opt.loadNone : '',
-            s.unload === 'none' ? STR.depot.opt.unloadNone : '',
-            s.waitFull ? STR.depot.opt.waitFull : '',
-            s.refuel ? STR.depot.opt.refuel : '',
-            s.depart !== 'auto' ? s.depart : '',
-          ]
-            .filter(Boolean)
-            .join(' · ') || STR.depot.opt.plain,
-        ),
-      );
-    });
+    this.scheduleEditor.render(t.schedule, t.routeIndex % Math.max(1, t.schedule.length));
+    r.append(
+      this.scheduleEditor.root,
+      el('div', { class: 'dim', text: STR.depot.scheduleLiveHint }),
+    );
     // footer actions
     const needsFuel =
       (t.hasSteam && (t.coal < t.coalCap * 0.999 || t.water < t.waterCap * 0.999)) ||

@@ -33,7 +33,12 @@ export interface Rules {
   forestDensity: number;
   wheatPerCrew: number;
   stockpileCap: number;
+  /** stockpile cap added per warehouse level */
+  warehouseCap: number;
   powerCap: number;
+  /** price of the first ring of chunks around the start; each ring further multiplies it */
+  chunkCost: number;
+  chunkCostMul: number;
   startStock: number;
 }
 
@@ -79,7 +84,10 @@ export const DEFAULT_RULES: Rules = {
   forestDensity: 0.56,
   wheatPerCrew: 0.5,
   stockpileCap: 400,
+  warehouseCap: 1000,
   powerCap: 100,
+  chunkCost: 12000,
+  chunkCostMul: 1.6,
   startStock: 1,
 };
 
@@ -131,6 +139,30 @@ export const RULE_META: RuleMeta[] = [
     step: 0.1,
   },
   { key: 'stockpileCap', label: 'Stockpile cap', group: 'Economy', min: 50, max: 5000, step: 50 },
+  {
+    key: 'warehouseCap',
+    label: 'Cap per warehouse level',
+    group: 'Economy',
+    min: 0,
+    max: 5000,
+    step: 100,
+  },
+  {
+    key: 'chunkCost',
+    label: 'Chunk price (first ring)',
+    group: 'Economy',
+    min: 0,
+    max: 200000,
+    step: 1000,
+  },
+  {
+    key: 'chunkCostMul',
+    label: 'Chunk price growth per ring',
+    group: 'Economy',
+    min: 1,
+    max: 4,
+    step: 0.1,
+  },
   { key: 'powerCap', label: 'Power battery', group: 'Economy', min: 0, max: 2000, step: 50 },
   {
     key: 'startStock',

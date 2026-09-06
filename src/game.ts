@@ -88,6 +88,12 @@ import { PowerGrid } from './sim/power';
 import { TrainScreen } from './ui/trainScreen';
 import { MarketScreen } from './ui/marketScreen';
 import { ResourceBar } from './ui/resourceBar';
+import { BuildingPanel } from './ui/buildingPanel';
+import { TrainSide } from './ui/trainSide';
+import { BuildInfo } from './ui/buildInfo';
+import { Floaters } from './render/floaters';
+import { PowerLines } from './render/powerLines';
+import { buildingDef as buildingDefOf } from './sim/buildings';
 
 /** Starting stockpile for a brand-new game, before `rules.startStock` scaling. */
 const START_STOCK: Record<string, number> = {
@@ -144,6 +150,14 @@ export class Game {
   trainScreen!: TrainScreen;
   marketScreen!: MarketScreen;
   resourceBar!: ResourceBar;
+  buildingPanel!: BuildingPanel;
+  trainSide!: TrainSide;
+  buildInfo!: BuildInfo;
+  floaters!: Floaters;
+  powerLines!: PowerLines;
+  private hoverTrain: Train | null = null;
+  private pathHighlight: { x: number; y: number }[][] = [];
+  private pathTimer = 0;
   private lastDay = 1;
   settings: Settings = readSettings();
   settingsScreen!: SettingsScreen;
@@ -214,7 +228,7 @@ export class Game {
   editor: Editor | null = null;
   editorPanel: EditorPanel | null = null;
   private paused = false;
-  private menuPausedSpeed = 1;
+  private menuPausedSpeed = 0;
   get menuOpen() {
     return this.mainMenu.visible || this.pauseMenu.visible;
   }
@@ -291,7 +305,7 @@ export class Game {
   private resumeGame() {
     if (!this.paused) return;
     this.paused = false;
-    if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed || 1);
+    if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed);
   }
   openMainMenu() {
     this.pauseGame();
@@ -520,6 +534,7 @@ export class Game {
     );
     this.fleet.powered = (x, y) => this.power.isPowered(x, y);
     this.fleet.stockCap = (id) => this.stockCap(id);
+    this.fleet.onFlow = (x, y, r, d) => this.floaters.spawn(x, y, r, d);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
     this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
@@ -561,6 +576,16 @@ export class Game {
       (x, y) => inBounds(this.map, x, y),
     );
     this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.floaters = new Floaters(this.atlas, this.world.overlay, (x, y) =>
+      this.world.surfacePoint(x, y),
+    );
+    this.powerLines = new PowerLines((n) => {
+      const p = this.world.surfacePoint(n.x, n.y);
+      if (n.plant) return { x: p.x - 12, y: p.y - 42 };
+      const off = decorOffset({ id: 'power_line', rot: 0 });
+      return { x: p.x + off.dx, y: p.y + off.dy - 33 };
+    });
+    this.world.overlay.addChild(this.powerLines.root);
     this.applySeason(true);
     this.applySettings();
     this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
@@ -571,8 +596,13 @@ export class Game {
     this.buildUi();
     this.build.onSelect = (s) =>
       s ? this.stationPanel.open(s) : this.stationPanel.station && this.stationPanel.close();
+    this.build.onSelectBuilding = (b) =>
+      b ? this.buildingPanel.open(b) : this.buildingPanel.building && this.buildingPanel.close();
     this.build.onStatus = (t) => this.toolbar.setStatus(t);
-    this.build.onToolChanged = (t) => this.toolbar.setActive(t);
+    this.build.onToolChanged = (t) => {
+      this.toolbar.setActive(t);
+      this.buildInfo.show(this.toolbar.item(t));
+    };
     this.loop = new GameLoop(
       SIM_HZ,
       (dt) => this.update(dt),
@@ -617,6 +647,7 @@ export class Game {
       world: this.spec,
       rules: { ...rules },
       stockpile: this.stock.toJSON(),
+      regions: this.regions.toJSON(),
       buildings: [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id, b.acc]),
     };
   }
@@ -638,7 +669,8 @@ export class Game {
     this.economy.load(j.economy);
     this.lastDay = j.lastDay;
     this.savedAt = j.savedAt;
-    this.regions.applyTier(this.economy.tier);
+    if (j.regions) this.regions.load(j.regions);
+    else this.regions.applyTier(this.economy.tier);
     this.world.rebuildFog();
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
@@ -765,6 +797,7 @@ export class Game {
   private rebuildPower() {
     this.power.rebuild(this.builder.decor.values(), this.builder.buildings.values());
     this.overview.rebuildPower(this.power);
+    this.powerLines.rebuild(this.power);
   }
   /** Storage cap for one resource at the current warehouse and plant count. */
   stockCap(id: string) {
@@ -824,15 +857,27 @@ export class Game {
     }
   }
   private onTierUp(tier: number) {
-    const newly = this.regions.applyTier(tier);
-    if (newly.length) {
-      this.world.rebuildFog();
-      this.overview.rebuildRegions();
-      this.minimap.rebuildBase();
-    }
     this.toolbar.refresh();
     this.toasts.push(STR.hud.tierUp(tier), 'good');
     sfx('tier.up');
+  }
+  /** Buy a revealed, unowned chunk. Returns true when the purchase went through. */
+  buyChunk(i: number) {
+    if (this.regions.unlocked[i] || !this.regions.isRevealed(i)) return false;
+    const price = this.regions.price(i);
+    if (!this.economy.canAfford(price)) {
+      this.toasts.push(STR.overview.cannotAfford(fmtMoney(price)), 'warn');
+      return false;
+    }
+    if (!confirm(STR.overview.buyConfirm(fmtMoney(price)))) return false;
+    this.economy.money -= price;
+    this.regions.own(i);
+    this.world.rebuildFog();
+    this.overview.rebuildRegions();
+    this.minimap.rebuildBase();
+    this.toasts.push(STR.overview.bought, 'good');
+    sfx('tier.up');
+    return true;
   }
   private trackTilesForOverview() {
     const out: { x: number; y: number; links: [number, number][] }[] = [];
@@ -934,6 +979,7 @@ export class Game {
       btn(STR.topbar.gacha, () => this.screens.toggle(this.gachaScreen), 'small'),
       btn(STR.topbar.roster, () => this.screens.toggle(this.rosterScreen), 'small'),
       btn(STR.topbar.market, () => this.screens.toggle(this.marketScreen), 'small'),
+      btn(STR.topbar.cheat, () => this.cheat(), 'small cheat'),
       btn(STR.topbar.settings, () => this.screens.toggle(this.settingsScreen), 'small'),
     );
     this.screens.onChange = (sc) => {
@@ -974,8 +1020,24 @@ export class Game {
     this.toolbar = new Toolbar(
       (t: Tool) => this.build.setTool(t),
       () => (this.mode === 'editor' ? 99 : this.economy.tier),
+      this.atlas,
     );
+    this.toolbar.onHover = (it) =>
+      this.buildInfo.show(it ?? this.toolbar.item(this.toolbar.active));
     this.toolbar.refresh();
+    this.buildingPanel = new BuildingPanel(
+      this.builder,
+      this.stock,
+      () => this.build.selectedBuilding && this.build.selectBuilding(null),
+    );
+    this.trainSide = new TrainSide(this.builder);
+    this.trainSide.onDetails = (t) => {
+      this.trainScreen.open(t);
+      this.screens.open(this.trainScreen);
+    };
+    this.trainSide.onLocate = (t) => this.focusTrain(t);
+    this.trainSide.onHover = (t) => this.setHoverTrain(t);
+    this.buildInfo = new BuildInfo(this.atlas, this.stock);
     this.stationPanel = new StationPanel(
       this.builder,
       () => this.build.selected && this.build.select(null),
@@ -987,7 +1049,13 @@ export class Game {
       this.mainMenu.root,
       this.pauseMenu.root,
       this.screens.root,
-      this.contractsSide.root,
+      el(
+        'div',
+        { id: 'right-col' },
+        this.contractsSide.root,
+        this.trainSide.root,
+        this.buildInfo.root,
+      ),
       el('div', { class: 'vignette' }),
       this.hud.root,
       this.resourceBar.root,
@@ -997,6 +1065,7 @@ export class Game {
       el('div', { id: 'hint', text: STR.hints.camera }),
       this.toolbar.root,
       this.stationPanel.root,
+      this.buildingPanel.root,
       this.toasts.root,
       this.tooltip.root,
     );
@@ -1045,6 +1114,53 @@ export class Game {
         this.contracts.completedToday = 0;
       }
     }
+  }
+
+  /** Debug aid requested for testing: money plus a full stockpile. */
+  cheat() {
+    this.economy.money += 10000;
+    for (const id of RESOURCE_IDS) this.stock.add(id, 1e9, this.stockCap(id));
+    this.toasts.push(STR.topbar.cheated, 'info');
+  }
+
+  /** Trains whose head is inside the camera view (field) or all of them (overview). */
+  private updateTrainSide(dt: number) {
+    const all = this.viewTarget === 1;
+    let list: Train[];
+    if (all) list = this.fleet.trains;
+    else {
+      const r = this.camera.viewRect();
+      list = this.fleet.trains.filter((t) => {
+        const p = t.poses[0];
+        if (!p) return false;
+        const w = tileToWorld(p.x, p.y);
+        return w.x >= r.x - 40 && w.x <= r.x + r.w + 40 && w.y >= r.y - 40 && w.y <= r.y + r.h + 40;
+      });
+    }
+    this.trainSide.update(list, all);
+    if (this.hoverTrain && !this.fleet.byId(this.hoverTrain.id)) this.setHoverTrain(null);
+    if (this.hoverTrain) {
+      this.pathTimer += dt;
+      if (this.pathTimer > 0.5) {
+        this.pathTimer = 0;
+        this.applyPathHighlight(this.hoverTrain.predictPath(this.track, this.builder, 2));
+      }
+    }
+  }
+  private setHoverTrain(t: Train | null) {
+    this.hoverTrain = t;
+    this.pathTimer = 1;
+    if (!t) this.applyPathHighlight([]);
+  }
+  private applyPathHighlight(legs: { x: number; y: number }[][]) {
+    for (const leg of this.pathHighlight)
+      for (const p of leg) this.world.setTrackTint(p.x, p.y, 0xffffff);
+    this.pathHighlight = legs;
+    this.overview.highlight = legs;
+    legs.forEach((leg, i) => {
+      const col = i === 0 ? 0x8ae0f0 : i === 1 ? 0xe0b060 : 0xd8d0c0;
+      for (const p of leg) this.world.setTrackTint(p.x, p.y, col);
+    });
   }
 
   focusTrain(t: Train) {
@@ -1112,9 +1228,14 @@ export class Game {
     if (this.panelRefresh > 0.5) {
       this.panelRefresh = 0;
       if (this.stationPanel.station) this.stationPanel.render();
+      if (this.buildingPanel.building) this.buildingPanel.render();
       this.contractsSide.update();
       this.screens.refresh();
+      this.buildInfo.refresh();
     }
+    this.floaters.update(dt);
+    this.powerLines.update(dt);
+    this.updateTrainSide(dt);
     this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
     this.input.endFrame();
@@ -1135,10 +1256,19 @@ export class Game {
   private updateRtsTooltip() {
     if (this.viewTarget !== 0 || this.input.overUi) return;
     const st = this.build.hoverStation;
+    const bld = this.build.hoverBuilding;
     if (st && this.build.tool.kind === 'none') {
       this.tooltip.show(this.input.mouseX, this.input.mouseY, st.name, [
         STR.station.level(st.level),
         `${STR.station.storage}: ${Math.floor(st.totalStored())} / ${st.capacity}`,
+      ]);
+    } else if (bld && this.build.tool.kind === 'none') {
+      const def = buildingDefOf(bld.id);
+      const status = BuildingPanel.status(bld, this.stock);
+      this.tooltip.show(this.input.mouseX, this.input.mouseY, def.name, [
+        BuildingPanel.recipeText(bld.id),
+        status.text,
+        `${STR.building.rate}: ${STR.station.perDay(Math.round(bld.rate * 10) / 10)}`,
       ]);
     } else this.tooltip.hide();
   }
@@ -1173,9 +1303,16 @@ export class Game {
     if (inp.wasPressed('Tab')) this.toggleOverview();
     if (inp.wasPressed('Escape') && this.viewTarget === 1) this.setView(0);
     if (inp.wasPressed('Space')) this.clock.togglePause();
-    if (inp.wasPressed('Digit1')) this.clock.setSpeed(1);
-    if (inp.wasPressed('Digit2')) this.clock.setSpeed(2);
-    if (inp.wasPressed('Digit3')) this.clock.setSpeed(3);
+    const catOpen = this.toolbar.open !== null && this.viewTarget === 0;
+    for (let d = 1; d <= 9; d++)
+      if (inp.wasPressed(`Digit${d}`)) {
+        if (catOpen) this.toolbar.selectIndex(d - 1);
+        else if (d <= 3) this.clock.setSpeed(d);
+      }
+    if (catOpen && inp.wheelDelta !== 0 && !inp.overUi) {
+      this.toolbar.cycle(inp.wheelDelta);
+      inp.wheelDelta = 0;
+    }
 
     // wheel zoom (also crosses the RTS/overview threshold)
     if (inp.wheelDelta !== 0) {
@@ -1227,16 +1364,29 @@ export class Game {
     const lp = this.overviewLocal(inp.mouseX, inp.mouseY);
     const pick = this.overview.pick(lp.x, lp.y);
     this.overview.hover = pick;
+    const hoverTile = this.overviewTileAt(inp.mouseX, inp.mouseY);
+    const hoverChunk = hoverTile ? this.regions.regionIndex(hoverTile.x, hoverTile.y) : -1;
+    const buyable =
+      hoverChunk >= 0 && !this.regions.unlocked[hoverChunk] && this.regions.isRevealed(hoverChunk);
     if (pick) {
       const info = this.describePick(pick);
       this.tooltip.show(inp.mouseX, inp.mouseY, info.title, info.lines);
-    } else this.tooltip.hide();
+    } else if (buyable)
+      this.tooltip.show(
+        inp.mouseX,
+        inp.mouseY,
+        STR.overview.chunkTitle,
+        STR.overview.chunkLines(fmtMoney(this.regions.price(hoverChunk))),
+      );
+    else this.tooltip.hide();
     for (const c of inp.clicks) {
       if (c.button !== 0) continue;
       const p = this.overview.pick(...this.overviewLocalTuple(c.x, c.y));
       if (p) {
         const target = this.pickPosition(p);
         if (target) this.returnToRts(target.x, target.y);
+      } else if (buyable) {
+        this.buyChunk(hoverChunk);
       } else {
         const t = this.overviewTileAt(c.x, c.y);
         if (t) this.returnToRts(t.x, t.y);
@@ -1325,11 +1475,12 @@ export class Game {
     o.alpha = e;
     const vw = this.camera.viewW;
     const vh = this.camera.viewH;
-    const fit = Math.min((vw - 40) / (this.map.w * OV_UNIT), (vh - 90) / (this.map.h * OV_UNIT));
+    const ob = this.overview.bounds();
+    const fit = Math.min((vw - 300) / ob.w, (vh - 90) / ob.h);
     const camTile = worldToTileInt(this.camera.x, this.camera.y);
     const s = fit * (1.6 - 0.6 * e);
-    const centerX = lerp((camTile.x + 0.5) * OV_UNIT, (this.map.w * OV_UNIT) / 2, e);
-    const centerY = lerp((camTile.y + 0.5) * OV_UNIT, (this.map.h * OV_UNIT) / 2, e);
+    const centerX = lerp((camTile.x + 0.5) * OV_UNIT, ob.x + ob.w / 2, e);
+    const centerY = lerp((camTile.y + 0.5) * OV_UNIT, ob.y + ob.h / 2, e);
     o.scale.set(s);
     o.position.set(vw / 2 - centerX * s, vh / 2 + 18 - centerY * s);
     if (o.visible) this.overview.refresh();

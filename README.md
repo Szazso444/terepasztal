@@ -33,8 +33,12 @@ npm run lint
 - **Fuel**: steam burns coal (or wood) and water, diesel burns oil, electrics need power and a
   live Power Line network (poles within two tiles of each other and a Power Plant). Tanks refill at
   Warehouses, Coaling Stages, Water Towers and Water Pumps.
-- **Trains** run their schedule automatically. Each stop sets load/unload, wait for full, refuel
-  and departure direction; Depot → Details shows tanks, range, weight limit and loop statistics.
+- **Trains** run automatically: dispatch a consist and it visits every station with a platform.
+  Stops, load/unload, wait for full, refuel and departure direction are edited in the train
+  details. The right-hand panel lists the trains on screen (all of them in the overview) with
+  tanks, use per tile, fuel type and weekly estimates; hover one to trace its path.
+- **Chunks**: the map is bought chunk by chunk from the overview (Tab). Owning a chunk reveals its
+  neighbours; prices grow with distance from the start.
 - **Roster**: 26 real locomotives across three gacha banners by era, with wagons in three classes
   (tankers, hoppers, flats).
 

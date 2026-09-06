@@ -86,6 +86,8 @@ async function boot() {
   else if (save) game.applySave(save);
   else if (level) game.applyLevelStart(level);
   else game.startFresh();
+  // the game always starts paused; Space or the pause button starts the clock
+  if (start !== 'editor') game.clock.setSpeed(0);
   if (start === 'menu') game.openMainMenu();
   loading.remove();
 }

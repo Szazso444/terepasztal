@@ -164,3 +164,24 @@
 
 - Power is stored as a global battery rather than routed per network; any live network draws from the same pool.
 - Wagons of the wrong class never load at a station that only produces another class; the depot shows what each wagon carries.
+
+## 9. Chunks, automatic routes, side panels, floating indicators
+
+**Works**
+
+- Chunk purchase (`src/world/regions.ts`): the map is a grid of chunks; the player owns the centre one and buys neighbours from the overview (click an Uncharted chunk, confirm). Prices start at `chunkCost` and multiply by `chunkCostMul` per ring from the start. Owning a chunk reveals its neighbours as Uncharted; chunks further out stay hidden (void in the field view, black in the overview). The overview fits the revealed area. Reputation tiers no longer chart land; they gate rolling stock and works.
+- Every basic resource terrain (water, forest, hill, grass) is guaranteed inside the starting chunk (`ensureStartResources`).
+- Automatic routes: dispatching a train needs only a consist; the route defaults to every station with platform track in nearest-neighbour order. A custom route can still be picked in the depot; the live schedule (stops, load/unload, wait for full, refuel, departure direction, pass) is edited in the train details screen and applies at once.
+- Unloading anywhere feeds the stockpile: contract cargo is credited at its destination first, everything else goes to the pool at whichever station the train unloads. Warehouses only raise the stockpile cap (`warehouseCap`, 1000 per level) and refuel.
+- Train side panel (`src/ui/trainSide.ts`): lists the trains on screen in the field view and every train in the overview, with top speed, crew, weight vs power, tanks, use per tile, a coal/wood switch for steam engines, wagon capacities and per-week estimates (consumed, collected, delivered) from the last completed loop. Hovering a card traces the train's current path (cyan), next leg (amber) and the one after (white) on the track and in the overview.
+- Building panel and tooltip (`src/ui/buildingPanel.ts`): recipe, current and full rate, status (running / waiting for input / stockpile full), batch progress, crew, lifetime output and the output's stockpile level. Click a works building to open it.
+- Floating indicators (`src/render/floaters.ts`): green "+n" with the resource icon rises from a station when goods enter the stockpile; red "-n" descends when a train refuels from it.
+- Toolbar (`src/ui/toolbar.ts`): category row (Track, Stations, Decor, Works, Remove; Terrain in the editor) and an item row with icon, name and cost. Number keys 1-9 and the mouse wheel step through the open category; Esc closes it. Hovering or selecting an item fills the info card above the survey map (preview, cost with icons, description).
+- Power lines draw as sagging wires between connected poles and plants (`src/render/powerLines.ts`); live wires carry small cyan sparks.
+- Cheat button in the top bar: +$10,000 and every resource to its cap. The pause control is a large play/pause icon (Space toggles); the game starts paused.
+- Save format v5 stores owned chunks.
+
+**Known limitations**
+
+- Weekly estimates come from the last loop only; a short first loop can over- or under-state them until the next loop completes.
+- Chunk price depends on ring distance only, not on terrain.
