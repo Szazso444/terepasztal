@@ -10,7 +10,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -44,6 +44,10 @@ export interface SaveGame {
   buildings?: [number, number, string, number][];
   /** v5: owned chunks */
   regions?: boolean[];
+  /** v6: season of day 1 (0 spring .. 3 winter) */
+  seasonOffset?: number;
+  /** v6: footpath wear */
+  people?: unknown;
 }
 
 export interface Settings {
@@ -56,6 +60,8 @@ export interface Settings {
   smoke: boolean;
   showFps: boolean;
   weather: boolean;
+  /** v6: helper tips shown */
+  advisor?: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   master: 0.8,
@@ -67,6 +73,7 @@ export const DEFAULT_SETTINGS: Settings = {
   smoke: true,
   showFps: false,
   weather: true,
+  advisor: true,
 };
 
 export function readSave(): SaveGame | null {
@@ -96,6 +103,7 @@ function migrate(j: SaveGame): SaveGame {
     j.version = 4;
   }
   if (j.version < 5) j.version = 5;
+  if (j.version < 6) j.version = 6;
   return j;
 }
 

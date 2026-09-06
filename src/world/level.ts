@@ -16,6 +16,8 @@ export interface LevelData {
   /** base64 of one byte per tile */
   terrain: string;
   variant: string;
+  /** base64 biome ids (missing: plains everywhere) */
+  biome?: string;
   track: [number, number, TrackKind, number][];
   stations: { defId: string; x: number; y: number; level: number; name: string }[];
   decor: [number, number, string, number][];
@@ -60,6 +62,7 @@ export function mapFromLevel(level: LevelData): GameMap {
   const map = emptyMap(level.seed, level.w, level.h);
   map.terrain.set(unpackBytes(level.terrain, level.w * level.h));
   map.variant.set(unpackBytes(level.variant, level.w * level.h));
+  if (level.biome) map.biome.set(unpackBytes(level.biome, level.w * level.h));
   decorateProps(map, level.seed);
   return map;
 }
@@ -123,6 +126,7 @@ export function levelFromMap(map: GameMap, name: string, id = newLevelId()): Lev
     seed: map.seed,
     terrain: packBytes(map.terrain),
     variant: packBytes(map.variant),
+    biome: packBytes(map.biome),
     track: [],
     stations: [],
     decor: [],

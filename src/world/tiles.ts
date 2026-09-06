@@ -8,8 +8,32 @@ export const enum Terrain {
 }
 export const TERRAIN_NAMES = ['grass', 'forest', 'hill', 'water', 'rock', 'sand'] as const;
 
+export const enum Biome {
+  Plains = 0,
+  Forest = 1,
+  Desert = 2,
+  Taiga = 3,
+  Swamp = 4,
+  Ocean = 5,
+}
+export const BIOME_NAMES = ['plains', 'forest', 'desert', 'taiga', 'swamp', 'ocean'] as const;
+
+export type PropKind =
+  | 'tree'
+  | 'pine'
+  | 'rock'
+  | 'bush'
+  | 'birch'
+  | 'spruce'
+  | 'oak'
+  | 'palm'
+  | 'cactus'
+  | 'deadtree'
+  | 'flowers'
+  | 'reeds'
+  | 'boulder';
 export interface PropInstance {
-  kind: 'tree' | 'pine' | 'rock' | 'bush';
+  kind: PropKind;
   variant: number;
   /** offset within the tile in tile units (-0.4..0.4) */
   ox: number;
@@ -22,6 +46,10 @@ export interface GameMap {
   seed: number;
   terrain: Uint8Array;
   variant: Uint8Array;
+  /** per-tile biome id (see Biome) */
+  biome: Uint8Array;
+  /** footsteps per tile; paths and roads grow from it */
+  wear: Uint16Array;
   /** per-tile decoration, sparse */
   props: Map<number, PropInstance[]>;
   /** region size in tiles (regions are square blocks) */

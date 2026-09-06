@@ -2,8 +2,10 @@
   {
     "id": "signal",
     "name": "Signal",
-    "flavor": "Semaphore post. Shows red while a train sits on the tile it guards.",
-    "cost": { "iron": 1 },
+    "flavor": "Holds trains out of an occupied block. Place on track.",
+    "cost": {
+      "iron": 1
+    },
     "crew": 0,
     "onTrack": true,
     "rotations": 4
@@ -11,8 +13,11 @@
   {
     "id": "water_tower",
     "name": "Water Tower",
-    "flavor": "Stations within two tiles load 25% faster and refill steam engines' water.",
-    "cost": { "wood": 30, "stone": 10 },
+    "flavor": "Nearby stations load faster and fill water tanks completely.",
+    "cost": {
+      "wood": 30,
+      "stone": 10
+    },
     "crew": 1,
     "onTrack": false,
     "rotations": 1,
@@ -23,8 +28,11 @@
   {
     "id": "fuel_stop",
     "name": "Coaling Stage",
-    "flavor": "Bunker and chute. Trains at stations within two tiles refuel from your stockpile.",
-    "cost": { "stone": 20, "wood": 10 },
+    "flavor": "Nearby stations fill fuel tanks completely instead of a half top-up.",
+    "cost": {
+      "stone": 20,
+      "wood": 10
+    },
     "crew": 1,
     "onTrack": false,
     "rotations": 1,
@@ -34,8 +42,11 @@
   {
     "id": "power_line",
     "name": "Power Line",
-    "flavor": "Pole and wire. Links to poles and plants within two tiles; powers the rails around it.",
-    "cost": { "wood": 2, "iron": 1 },
+    "flavor": "Carries power along the rails. Chain poles within reach of each other and of a Power Plant.",
+    "cost": {
+      "wood": 2,
+      "iron": 1
+    },
     "crew": 0,
     "onTrack": true,
     "anyTile": true,

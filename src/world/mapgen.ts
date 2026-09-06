@@ -1,5 +1,5 @@
 import { Rng, hash2 } from '../engine/rng';
-import { Terrain, type GameMap, type PropInstance } from './tiles';
+import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from './tiles';
 
 /** Smooth value noise built from the coordinate hash. */
 function valueNoise(x: number, y: number, seed: number): number {
@@ -55,6 +55,8 @@ export function emptyMap(
 ): GameMap {
   const terrain = new Uint8Array(w * h).fill(fill);
   const variant = new Uint8Array(w * h);
+  const biome = new Uint8Array(w * h);
+  const wear = new Uint16Array(w * h);
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) variant[y * w + x] = Math.floor(hash2(x, y, seed) * 4);
   const rs = 32;
@@ -64,6 +66,8 @@ export function emptyMap(
     seed,
     terrain,
     variant,
+    biome,
+    wear,
     props: new Map(),
     regionSize: rs,
     regionsX: Math.max(1, Math.ceil(w / rs)),
@@ -88,29 +92,109 @@ export function generateMap(seed: number, p: Partial<MapGenParams> = {}): GameMa
       const dx = (x / w - 0.5) * 2;
       const dy = (y / h - 0.5) * 2;
       const d = Math.sqrt(dx * dx + dy * dy);
-      e += Math.max(0, d - 0.75) * 0.5;
+      e += Math.max(0, d - 0.88) * 0.4;
       // smooth basin around the start point so the centre is buildable without a hard edge
-      const cd = Math.hypot(x - w / 2, y - h / 2) / 16;
+      const cd = Math.hypot(x - w / 2, y - h / 2) / 26;
       if (cd < 1) {
         const k = 1 - cd * cd * (3 - 2 * cd);
         e = e * (1 - k) + 0.5 * k;
       }
       elev[y * w + x] = e;
     }
+  // biome fields: low-frequency temperature and moisture, blended to mild plains/forest
+  // conditions around the starting chunk
+  const tempSeed = rng.int(1, 1e6);
+  const biomeSeed = rng.int(1, 1e6);
+  const rs = map.regionSize;
+  const scx = (Math.floor((map.regionsX - 1) / 2) + 0.5) * rs;
+  const scy = (Math.floor((map.regionsY - 1) / 2) + 0.5) * rs;
+  const { biome } = map;
+  const temp = new Float32Array(w * h);
+  const moist = new Float32Array(w * h);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      let t = fbm(x / 60 + 300, y / 60 + 300, tempSeed, 3);
+      let m = fbm(x / 14 + 100, y / 14 + 100, moistSeed, 4);
+      const mLow = fbm(x / 44 + 500, y / 44 + 500, biomeSeed, 3);
+      m = m * 0.55 + mLow * 0.45;
+      // start chunk: pull towards temperate, moderately moist
+      const sd = Math.max(Math.abs(x - scx), Math.abs(y - scy)) / (rs * 0.9);
+      const k = sd < 1 ? 1 - sd * sd * (3 - 2 * sd) : 0;
+      t = t * (1 - k) + 0.5 * k;
+      m = m * (1 - k) + 0.52 * k;
+      temp[i] = t;
+      moist[i] = m;
+      const e = elev[i];
+      // seas: a separate broad noise, never inside the start zone
+      const sea = fbm(x / 70 + 1200, y / 70 + 1200, biomeSeed + 11, 3);
+      let b: Biome;
+      if (k < 0.05 && sea < 0.34) b = Biome.Ocean;
+      else if (t > 0.6 && m < 0.5) b = Biome.Desert;
+      else if (t < 0.4) b = Biome.Taiga;
+      else if (m > 0.6 && e < params.waterLevel + 0.2) b = Biome.Swamp;
+      else if (m > 0.56) b = Biome.Forest;
+      else b = Biome.Plains;
+      biome[i] = b;
+    }
+  // smooth biome edges: majority of the 5x5 neighbourhood, twice
+  for (let pass = 0; pass < 2; pass++) {
+    const copy = new Uint8Array(biome);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const counts = [0, 0, 0, 0, 0, 0];
+        for (let dy = -2; dy <= 2; dy++)
+          for (let dx = -2; dx <= 2; dx++) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+            counts[copy[ny * w + nx]]++;
+          }
+        let best = copy[y * w + x];
+        for (let k = 0; k < 6; k++) if (counts[k] > counts[best]) best = k;
+        biome[y * w + x] = best;
+      }
+  }
+  // terrain per biome
+  const islandSeed = rng.int(1, 1e6);
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
       const e = elev[i];
-      const m = fbm(x / 14 + 100, y / 14 + 100, moistSeed, 4);
+      const m = moist[i];
+      const b = biome[i] as Biome;
       let t: Terrain;
-      if (e < params.waterLevel) t = Terrain.Water;
+      if (b === Biome.Ocean) {
+        // islands: bumps of a finer noise poke out of the sea
+        const isl = fbm(x / 9 + 900, y / 9 + 900, islandSeed, 3);
+        if (isl > 0.74) t = isl > 0.8 ? Terrain.Grass : Terrain.Sand;
+        else t = Terrain.Water;
+      } else if (e < params.waterLevel) t = Terrain.Water;
       else if (e < params.waterLevel + 0.025) t = Terrain.Sand;
       else if (e > params.rockLevel) t = Terrain.Rock;
-      else if (e > params.hillLevel) t = Terrain.Hill;
-      else if (m > params.forestDensity) t = Terrain.Forest;
-      else t = Terrain.Grass;
+      else if (e > params.hillLevel) t = b === Biome.Swamp ? Terrain.Grass : Terrain.Hill;
+      else
+        switch (b) {
+          case Biome.Desert:
+            t = Terrain.Sand;
+            break;
+          case Biome.Forest:
+            t = m > 0.42 ? Terrain.Forest : Terrain.Grass;
+            break;
+          case Biome.Taiga:
+            t = m > 0.55 ? Terrain.Forest : Terrain.Grass;
+            break;
+          case Biome.Swamp: {
+            const wet = fbm(x / 5 + 700, y / 5 + 700, biomeSeed + 7, 2);
+            t = wet > 0.66 ? Terrain.Water : Terrain.Grass;
+            break;
+          }
+          default:
+            t = m > params.forestDensity + 0.08 ? Terrain.Forest : Terrain.Grass;
+        }
       terrain[i] = t;
     }
+  carveRivers(map, elev, rng, params.waterLevel, scx, scy);
   // clean up lone tiles: majority filter for water/rock singletons
   const copy = new Uint8Array(terrain);
   for (let y = 1; y < h - 1; y++)
@@ -173,6 +257,90 @@ export function ensureStartResources(map: GameMap, rng: Rng) {
 }
 
 /**
+ * Rivers: start on high ground, walk downhill (with a little wander) until water or the map edge,
+ * carving water; the lower half runs two tiles wide. Deserts dry a river out; the start basin
+ * is left alone so the first chunk stays buildable.
+ */
+function carveRivers(
+  map: GameMap,
+  elev: Float32Array,
+  rng: Rng,
+  waterLevel: number,
+  scx: number,
+  scy: number,
+) {
+  const { w, h, terrain, biome } = map;
+  const count = Math.max(1, Math.round((w * h) / 6000));
+  let made = 0;
+  for (let attempt = 0; attempt < count * 30 && made < count; attempt++) {
+    const x0 = rng.int(4, w - 5);
+    const y0 = rng.int(4, h - 5);
+    const i0 = y0 * w + x0;
+    if (elev[i0] < waterLevel + 0.22 || biome[i0] === Biome.Ocean || biome[i0] === Biome.Desert)
+      continue;
+    if (Math.hypot(x0 - scx, y0 - scy) < 22) continue;
+    let x = x0;
+    let y = y0;
+    const path: number[] = [];
+    let dry = 0;
+    for (let step = 0; step < 220; step++) {
+      path.push(y * w + x);
+      if (terrain[y * w + x] === Terrain.Water && step > 3) break;
+      // lowest neighbour with a little noise so rivers meander
+      let bx = x;
+      let by = y;
+      let be = Infinity;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
+          const ni = ny * w + nx;
+          if (path.includes(ni)) continue;
+          const ev = elev[ni] + (rng.next() - 0.5) * 0.02;
+          if (ev < be) {
+            be = ev;
+            bx = nx;
+            by = ny;
+          }
+        }
+      if (bx === x && by === y) break;
+      x = bx;
+      y = by;
+      if (biome[y * w + x] === Biome.Desert && ++dry > 12) break;
+      if (Math.hypot(x - scx, y - scy) < 14) break;
+    }
+    if (path.length < 12) continue;
+    made++;
+    path.forEach((i, k) => {
+      const px = i % w;
+      const py = Math.floor(i / w);
+      terrain[i] = Terrain.Water;
+      if (k > path.length / 2) {
+        // widen downstream
+        const j = py * w + Math.min(w - 1, px + 1);
+        if (terrain[j] !== Terrain.Water) terrain[j] = Terrain.Water;
+      }
+      // banks
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nx = px + dx;
+        const ny = py + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const ni = ny * w + nx;
+        if (terrain[ni] === Terrain.Hill || terrain[ni] === Terrain.Rock)
+          terrain[ni] = Terrain.Grass;
+      }
+    });
+  }
+}
+
+/**
  * (Re)generate decorative props from the terrain. With a rectangle only those tiles are redone,
  * which is what the editor needs after painting. Deterministic per tile and seed.
  */
@@ -195,39 +363,41 @@ export function decorateProps(
       const t = terrain[i] as Terrain;
       const list: PropInstance[] = [];
       const r = hash2(x, y, seed + 5);
+      const b = map.biome[i] as Biome;
+      const put = (kind: PropKind, variants: number, k = 0) =>
+        list.push({
+          kind,
+          variant: Math.floor(hash2(x + k, y - k, seed + 9) * variants),
+          ox: (hash2(x * 3 + k, y, seed + 7) - 0.5) * 0.7,
+          oy: (hash2(x, y * 3 + k, seed + 8) - 0.5) * 0.7,
+        });
       if (t === Terrain.Forest) {
         const n = 1 + Math.floor(hash2(x, y, seed + 6) * 2.5);
         for (let k = 0; k < n; k++) {
           const a = hash2(x * 3 + k, y, seed + 7);
-          const b = hash2(x, y * 3 + k, seed + 8);
-          list.push({
-            kind: a > 0.45 ? 'pine' : 'tree',
-            variant: Math.floor(hash2(x + k, y - k, seed + 9) * 3),
-            ox: (a - 0.5) * 0.7,
-            oy: (b - 0.5) * 0.7,
-          });
+          let kind: PropKind;
+          if (b === Biome.Taiga) kind = a > 0.35 ? 'spruce' : 'pine';
+          else if (b === Biome.Swamp) kind = a > 0.6 ? 'deadtree' : a > 0.3 ? 'tree' : 'reeds';
+          else if (b === Biome.Plains) kind = a > 0.6 ? 'oak' : a > 0.3 ? 'tree' : 'birch';
+          else kind = a > 0.7 ? 'pine' : a > 0.45 ? 'oak' : a > 0.2 ? 'tree' : 'birch';
+          put(kind, 3, k);
         }
-      } else if (t === Terrain.Grass && r > 0.96) {
-        list.push({
-          kind: r > 0.985 ? 'tree' : 'bush',
-          variant: Math.floor(r * 30) % 3,
-          ox: ((r * 7) % 0.6) - 0.3,
-          oy: ((r * 13) % 0.6) - 0.3,
-        });
-      } else if (t === Terrain.Rock && r > 0.55) {
-        list.push({
-          kind: 'rock',
-          variant: Math.floor(r * 10) % 3,
-          ox: ((r * 5) % 0.5) - 0.25,
-          oy: ((r * 11) % 0.5) - 0.25,
-        });
-      } else if (t === Terrain.Hill && r > 0.9) {
-        list.push({
-          kind: 'rock',
-          variant: 0,
-          ox: ((r * 5) % 0.4) - 0.2,
-          oy: ((r * 11) % 0.4) - 0.2,
-        });
+      } else if (t === Terrain.Grass) {
+        if (b === Biome.Swamp) {
+          if (r > 0.86) put(r > 0.97 ? 'deadtree' : 'reeds', 2);
+        } else if (b === Biome.Taiga) {
+          if (r > 0.95) put(r > 0.985 ? 'spruce' : 'boulder', 3);
+        } else if (b === Biome.Plains) {
+          if (r > 0.9) put(r > 0.985 ? 'oak' : r > 0.955 ? 'bush' : 'flowers', r > 0.955 ? 3 : 4);
+        } else if (b === Biome.Ocean) {
+          if (r > 0.9) put('palm', 2);
+        } else if (r > 0.94) put(r > 0.985 ? 'tree' : r > 0.965 ? 'bush' : 'flowers', 3);
+      } else if (t === Terrain.Sand) {
+        if (b === Biome.Desert) {
+          if (r > 0.93) put(r > 0.985 ? 'boulder' : r > 0.965 ? 'deadtree' : 'cactus', 3);
+        } else if (b === Biome.Ocean && r > 0.9) put('palm', 2);
+      } else if (t === Terrain.Hill && r > 0.93) {
+        put('boulder', 3);
       }
       if (list.length) map.props.set(i, list);
     }

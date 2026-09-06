@@ -20,16 +20,44 @@ const COLORS: Record<number, string> = {
   [Terrain.Sand]: '#8a7c58',
 };
 
+/** Cool taiga, muddy swamp, pale desert: tint the terrain colour by biome (grass/forest only). */
+export function biomeShade(css: string, biome: number, terrain: number): string {
+  if (terrain !== 0 && terrain !== 1) return css;
+  const m = /^#([0-9a-f]{6})$/i.exec(css);
+  if (!m) return css;
+  let r = parseInt(m[1].slice(0, 2), 16);
+  let g = parseInt(m[1].slice(2, 4), 16);
+  let b = parseInt(m[1].slice(4, 6), 16);
+  if (biome === 0) {
+    r += 18;
+    g += 14;
+  } else if (biome === 3) {
+    r -= 10;
+    b += 22;
+  } else if (biome === 4) {
+    r += 10;
+    g -= 14;
+    b -= 10;
+  } else if (biome === 2) {
+    r += 40;
+    g += 24;
+  }
+  const c = (v: number) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0');
+  return `#${c(r)}${c(g)}${c(b)}`;
+}
+
 /** Diamond-shaped minimap drawn in the same iso projection as the world (2 px per tile width). */
 export class Minimap {
   readonly root: HTMLElement;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private base: HTMLCanvasElement;
-  private readonly sx: number;
-  private readonly sy: number;
-  private readonly ox: number;
-  private readonly oy: number;
+  private sx = 1;
+  private sy = 1;
+  private ox = 0;
+  private oy = 0;
+  private readonly W: number;
+  private readonly H: number;
 
   constructor(
     private readonly map: GameMap,
@@ -37,8 +65,10 @@ export class Minimap {
     private readonly cam: Camera,
     onNavigate: (wx: number, wy: number) => void,
   ) {
-    const W = 216;
-    const H = 118;
+    const W = 432;
+    const H = 236;
+    this.W = W;
+    this.H = H;
     this.canvas = el('canvas', { width: String(W), height: String(H) });
     this.ctx = this.canvas.getContext('2d')!;
     this.root = el(
@@ -47,11 +77,6 @@ export class Minimap {
       el('div', { class: 'panel-title', text: STR.minimap.title }),
       this.canvas,
     );
-    // world px -> minimap px
-    this.sx = (W - 8) / ((map.w + map.h) * HALF_W);
-    this.sy = (H - 8) / ((map.w + map.h) * HALF_H);
-    this.ox = W / 2;
-    this.oy = 4 + HALF_H * this.sy;
     this.base = document.createElement('canvas');
     this.base.width = W;
     this.base.height = H;
@@ -74,7 +99,31 @@ export class Minimap {
     });
   }
 
+  /** Fit the revealed chunks into the canvas (world px -> minimap px). */
+  private fit() {
+    const b = this.regions.revealedBounds();
+    const W = this.W;
+    const H = this.H;
+    // corners of the revealed rectangle in world space
+    const pts = [
+      tileToWorld(b.x, b.y),
+      tileToWorld(b.x + b.w, b.y),
+      tileToWorld(b.x, b.y + b.h),
+      tileToWorld(b.x + b.w, b.y + b.h),
+    ];
+    const minX = Math.min(...pts.map((p) => p.x)) - HALF_W;
+    const maxX = Math.max(...pts.map((p) => p.x)) + HALF_W;
+    const minY = Math.min(...pts.map((p) => p.y)) - HALF_H;
+    const maxY = Math.max(...pts.map((p) => p.y)) + HALF_H;
+    const s = Math.min((W - 8) / (maxX - minX), (H - 8) / (maxY - minY));
+    this.sx = s;
+    this.sy = s;
+    this.ox = W / 2 - ((minX + maxX) / 2) * s;
+    this.oy = H / 2 - ((minY + maxY) / 2) * s;
+  }
+
   rebuildBase() {
+    this.fit();
     const c = this.base.getContext('2d')!;
     c.clearRect(0, 0, this.base.width, this.base.height);
     const tw = HALF_W * 2 * this.sx;
@@ -85,7 +134,11 @@ export class Minimap {
         const px = this.ox + p.x * this.sx;
         const py = this.oy + p.y * this.sy;
         if (!this.regions.isTileRevealed(x, y)) continue;
-        c.fillStyle = COLORS[this.map.terrain[y * this.map.w + x]];
+        c.fillStyle = biomeShade(
+          COLORS[this.map.terrain[y * this.map.w + x]],
+          this.map.biome[y * this.map.w + x],
+          this.map.terrain[y * this.map.w + x],
+        );
         c.fillRect(px - tw / 2, py - th / 2, Math.max(1, tw), Math.max(1, th));
         if (!this.regions.isTileUnlocked(x, y)) {
           c.fillStyle = 'rgba(0,0,0,0.6)';

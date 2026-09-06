@@ -1,5 +1,10 @@
 {
-  "rates": { "N": 0.6, "R": 0.3, "SR": 0.08, "SSR": 0.02 },
+  "rates": {
+    "N": 0.6,
+    "R": 0.3,
+    "SR": 0.08,
+    "SSR": 0.02
+  },
   "pity": 50,
   "tenPullGuarantee": "R",
   "pullCost": 1,
@@ -10,19 +15,95 @@
       "id": "steam_age",
       "name": "Age of Steam",
       "tier": 0,
-      "pool": ["rocket", "adler", "john_bull", "mav375", "water_cart", "wood_hopper", "flatbed", "general", "jupiter", "mav424", "k4s", "riveted_tank", "steel_hopper", "bolster_flat", "drg01", "flying_scotsman", "daylight", "welded_tank", "bathtub", "bulkhead_flat", "mallard", "big_boy", "pressure_tank", "dump_hopper", "heavy_flat"]
+      "pool": [
+        "rocket",
+        "adler",
+        "john_bull",
+        "mav375",
+        "water_cart",
+        "wood_hopper",
+        "flatbed",
+        "general",
+        "jupiter",
+        "mav424",
+        "k4s",
+        "riveted_tank",
+        "steel_hopper",
+        "bolster_flat",
+        "drg01",
+        "flying_scotsman",
+        "daylight",
+        "welded_tank",
+        "bathtub",
+        "bulkhead_flat",
+        "mallard",
+        "big_boy",
+        "pressure_tank",
+        "dump_hopper",
+        "heavy_flat",
+        "wooden_coach",
+        "steel_coach",
+        "pullman"
+      ]
     },
     {
       "id": "diesel_era",
       "name": "Diesel Era",
       "tier": 1,
-      "pool": ["sw1", "class08", "water_cart", "wood_hopper", "flatbed", "m62", "f7", "riveted_tank", "steel_hopper", "bolster_flat", "sd40", "deltic", "welded_tank", "bathtub", "bulkhead_flat", "dda40x", "pressure_tank", "dump_hopper", "heavy_flat"]
+      "pool": [
+        "sw1",
+        "class08",
+        "water_cart",
+        "wood_hopper",
+        "flatbed",
+        "m62",
+        "f7",
+        "riveted_tank",
+        "steel_hopper",
+        "bolster_flat",
+        "sd40",
+        "deltic",
+        "welded_tank",
+        "bathtub",
+        "bulkhead_flat",
+        "dda40x",
+        "pressure_tank",
+        "dump_hopper",
+        "heavy_flat",
+        "wooden_coach",
+        "steel_coach",
+        "pullman"
+      ]
     },
     {
       "id": "electric_line",
       "name": "Electric Line",
       "tier": 2,
-      "pool": ["sw1", "mav375", "water_cart", "wood_hopper", "flatbed", "kando_v40", "v63", "riveted_tank", "steel_hopper", "bolster_flat", "crocodile", "taurus", "re460", "welded_tank", "bathtub", "bulkhead_flat", "gg1", "pressure_tank", "dump_hopper", "heavy_flat"]
+      "pool": [
+        "sw1",
+        "mav375",
+        "water_cart",
+        "wood_hopper",
+        "flatbed",
+        "kando_v40",
+        "v63",
+        "riveted_tank",
+        "steel_hopper",
+        "bolster_flat",
+        "crocodile",
+        "taurus",
+        "re460",
+        "welded_tank",
+        "bathtub",
+        "bulkhead_flat",
+        "gg1",
+        "pressure_tank",
+        "dump_hopper",
+        "heavy_flat",
+        "wooden_coach",
+        "steel_coach",
+        "pullman"
+      ]
     }
   ]
 }

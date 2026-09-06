@@ -17,7 +17,7 @@ import buildingJson from './buildings.json';
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 /** Resource amounts, e.g. { wood: 30, stone: 10 }. */
 export type Cost = Record<string, number>;
-export type CargoClass = 'liquid' | 'mineral' | 'bulk';
+export type CargoClass = 'liquid' | 'mineral' | 'bulk' | 'people';
 export type LocoType = 'steam' | 'diesel' | 'electric';
 
 export interface LocoDef {

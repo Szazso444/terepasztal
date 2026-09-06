@@ -1,6 +1,6 @@
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
-import { drawPrism, drawCylinder, proj, fillPoly } from './iso3d';
+import { drawPrism, drawCylinder, proj, fillPoly, type P2 } from './iso3d';
 import { hash2 } from '../engine/rng';
 
 /** Shared sprite frame for one-tile structures (same as `structures.ts`). */
@@ -10,11 +10,23 @@ export const OX = 48;
 export const OY = 68;
 /** Ground origin: structures stand on a 3px slab. */
 const GY = OY - 3;
+/**
+ * Every station / works sprite keeps its ground-level geometry inside |tx|,|ty| <= 0.45 tile
+ * units (the slab itself is 0.94 x 0.94); only chimneys, masts and towers rise above it.
+ */
+const SLAB = 0.94;
+
+// ------------------------------------------------------------------ material palettes
 
 const BRICK: RGB[] = [
   [118, 70, 52],
   [132, 80, 60],
   [98, 58, 44],
+];
+const BARN: RGB[] = [
+  [146, 60, 46],
+  [164, 72, 54],
+  [122, 48, 38],
 ];
 const CONCRETE: RGB[] = [
   [122, 118, 110],
@@ -26,10 +38,30 @@ const STEEL: RGB[] = [
   [140, 144, 152],
   [96, 100, 108],
 ];
+const SILVER: RGB[] = [
+  [168, 172, 180],
+  [192, 196, 204],
+  [140, 144, 152],
+];
+const BLUE_STEEL: RGB[] = [
+  [64, 94, 118],
+  [80, 112, 138],
+  [50, 74, 96],
+];
 const WHITEWASH: RGB[] = [
-  [178, 168, 148],
-  [196, 186, 166],
-  [150, 140, 122],
+  [186, 176, 156],
+  [204, 194, 174],
+  [160, 150, 132],
+];
+const TANK_WHITE: RGB[] = [
+  [200, 194, 182],
+  [220, 214, 202],
+  [172, 166, 154],
+];
+const PALE_TIMBER: RGB[] = [
+  [152, 120, 78],
+  [170, 136, 90],
+  [128, 98, 62],
 ];
 const COAL: RGB[] = [
   [40, 40, 42],
@@ -37,20 +69,52 @@ const COAL: RGB[] = [
   [30, 30, 32],
 ];
 const GRAVEL: RGB[] = [
-  [128, 124, 116],
-  [142, 138, 130],
-  [110, 106, 98],
+  [120, 118, 112],
+  [134, 132, 126],
+  [104, 102, 96],
+];
+const DUST: RGB[] = [
+  [184, 160, 110],
+  [200, 176, 124],
+  [164, 140, 94],
+];
+const COBBLE: RGB[] = [
+  [126, 112, 94],
+  [140, 126, 106],
+  [108, 96, 80],
 ];
 const WHEATC: RGB[] = [
-  [186, 156, 78],
-  [204, 172, 90],
-  [160, 132, 62],
+  [196, 162, 76],
+  [214, 180, 90],
+  [170, 138, 62],
 ];
 const CROP: RGB[] = [
   [86, 116, 58],
   [98, 132, 66],
   [70, 96, 48],
 ];
+const SHINGLE: RGB[] = [
+  [96, 72, 46],
+  [110, 84, 54],
+  [80, 60, 38],
+];
+const FLAT_ROOF: RGB[] = [
+  [70, 72, 76],
+  [80, 82, 88],
+  [58, 60, 64],
+];
+
+function pick(shades: RGB[], n: number): RGB {
+  return shades[Math.min(shades.length - 1, Math.floor(n * shades.length))];
+}
+function rx(p: P2) {
+  return Math.round(p.x);
+}
+function ry(p: P2) {
+  return Math.round(p.y);
+}
+
+// ------------------------------------------------------------------ ground helpers
 
 /** A flat rectangle of ground cover, e.g. a yard slab or a field. */
 export function pad(
@@ -71,9 +135,16 @@ export function pad(
   fillPoly(b, pts, color);
 }
 
-/** Yard: packed earth with pebbles, the ground every industry stands on. */
-export function yard(b: PixelBuf, seed: number, lenX = 0.94, lenY = 0.94) {
-  pad(b, 0, 0, lenX, lenY, (x, y) => shade(PAL.sand[2], 0.7 + 0.1 * hash2(x, y, seed)));
+/** 3px raised ground slab of the given material, with an optional per-pixel detail pass. */
+export function slab(
+  b: PixelBuf,
+  seed: number,
+  shades: RGB[],
+  detail?: (x: number, y: number, c: RGB) => RGB,
+  lenX = SLAB,
+  lenY = SLAB,
+) {
+  pad(b, 0, 0, lenX, lenY, (x, y) => shade(shades[2], 0.7 + 0.1 * hash2(x, y, seed)));
   pad(
     b,
     0,
@@ -81,12 +152,38 @@ export function yard(b: PixelBuf, seed: number, lenX = 0.94, lenY = 0.94) {
     lenX,
     lenY,
     (x, y) => {
-      const n = hash2(x >> 1, y >> 1, seed + 1);
-      return n > 0.92 ? PAL.stone[1] : PAL.sand[Math.min(2, Math.floor(n * 3))];
+      const c = pick(shades, hash2(x >> 1, y >> 1, seed + 1));
+      return detail ? detail(x, y, c) : c;
     },
     3,
   );
 }
+
+/** Yard: packed earth with pebbles, the ground most industries stand on. */
+export function yard(b: PixelBuf, seed: number, lenX = SLAB, lenY = SLAB) {
+  slab(
+    b,
+    seed,
+    PAL.sand,
+    (x, y, c) => (hash2(x >> 1, y >> 1, seed + 2) > 0.92 ? PAL.stone[1] : c),
+    lenX,
+    lenY,
+  );
+}
+
+/** Poured concrete apron with expansion joints. */
+function concrete(b: PixelBuf, seed: number) {
+  slab(b, seed, CONCRETE, (x, y, c) => ((x + 2 * y) % 12 === 0 ? shade(c, 0.85) : c));
+}
+
+/** Warm cobbled paving. */
+function cobbles(b: PixelBuf, seed: number) {
+  slab(b, seed, COBBLE, (x, y, c) =>
+    (x + 2 * y) % 5 === 0 || (x - 2 * y + 400) % 7 === 0 ? shade(c, 0.82) : c,
+  );
+}
+
+// ------------------------------------------------------------------ building helpers
 
 /** Axis-aligned building with an optional pitched roof. */
 export function house(
@@ -120,22 +217,37 @@ export function house(
   });
 }
 
-export function chimney(b: PixelBuf, cx: number, cy: number, z0: number, h: number, r = 0.05) {
-  drawCylinder(
-    b,
-    OX,
-    GY,
-    cx,
-    cy,
-    r,
-    z0,
-    h,
-    [PAL.iron[2], PAL.iron[0], PAL.iron[1]],
-    PAL.iron[0],
-    7,
-  );
+/** Flat-roofed box with a lighter parapet line along the visible roof edges. */
+function flatShed(
+  b: PixelBuf,
+  cx: number,
+  cy: number,
+  len: number,
+  wid: number,
+  h: number,
+  side: RGB[],
+  seed: number,
+) {
+  drawPrism(b, { ox: OX, oy: GY, cx, cy, angle: 0, len, wid, h, top: FLAT_ROOF, side, seed });
+  const a = proj(OX, GY, cx - len / 2, cy + wid / 2, h);
+  const f = proj(OX, GY, cx + len / 2, cy + wid / 2, h);
+  const r = proj(OX, GY, cx + len / 2, cy - wid / 2, h);
+  b.line(rx(a), ry(a), rx(f), ry(f), CONCRETE[1]);
+  b.line(rx(f), ry(f), rx(r), ry(r), CONCRETE[1]);
+}
+
+export function chimney(
+  b: PixelBuf,
+  cx: number,
+  cy: number,
+  z0: number,
+  h: number,
+  r = 0.05,
+  side: RGB[] = [PAL.iron[2], PAL.iron[0], PAL.iron[1]],
+) {
+  drawCylinder(b, OX, GY, cx, cy, r, z0, h, side, PAL.iron[0], 7);
   const t = proj(OX, GY, cx, cy, z0 + h);
-  b.set(Math.round(t.x), Math.round(t.y) - 1, PAL.iron[3]);
+  b.set(rx(t), ry(t) - 1, PAL.iron[3]);
 }
 
 /** Door and a row of windows on the +y face. */
@@ -150,13 +262,56 @@ export function facade(
 ) {
   for (const tx of xs) {
     const w = proj(OX, GY, cx + tx, cy + wid / 2, z);
-    b.rect(Math.round(w.x) - 1, Math.round(w.y) - 12, 3, 4, PAL.amberDark);
-    b.set(Math.round(w.x), Math.round(w.y) - 11, PAL.amber);
+    b.rect(rx(w) - 1, ry(w) - 12, 3, 4, PAL.amberDark);
+    b.set(rx(w), ry(w) - 11, PAL.amber);
   }
   if (doorX !== null) {
     const d = proj(OX, GY, cx + doorX, cy + wid / 2, z);
-    b.rect(Math.round(d.x) - 1, Math.round(d.y) - 9, 3, 8, PAL.trunkDark);
+    b.rect(rx(d) - 1, ry(d) - 9, 3, 8, PAL.trunkDark);
   }
+}
+
+/** Vertical opening (door, bay, dark interior) stretched between two ground points. */
+function opening(
+  b: PixelBuf,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  z0: number,
+  h: number,
+  color: RGB | ((x: number, y: number) => RGB | null),
+) {
+  const pts = [
+    proj(OX, GY, ax, ay, z0),
+    proj(OX, GY, bx, by, z0),
+    proj(OX, GY, bx, by, z0 + h),
+    proj(OX, GY, ax, ay, z0 + h),
+  ];
+  fillPoly(b, pts, typeof color === 'function' ? color : () => color);
+}
+
+/** Vertical post standing on the ground (or at z0). */
+function post(b: PixelBuf, tx: number, ty: number, h: number, c: RGB, z0 = 0, w = 2) {
+  const p = proj(OX, GY, tx, ty, z0);
+  b.rect(rx(p) - Math.floor(w / 2), ry(p) - h, w, h, c);
+}
+
+/** Straight bar between two tile-space points at given heights. */
+function bar(
+  b: PixelBuf,
+  ax: number,
+  ay: number,
+  az: number,
+  bx: number,
+  by: number,
+  bz: number,
+  c: RGB,
+  thick = 1,
+) {
+  const p = proj(OX, GY, ax, ay, az);
+  const q = proj(OX, GY, bx, by, bz);
+  for (let t = 0; t < thick; t++) b.line(rx(p), ry(p) + t, rx(q), ry(q) + t, c);
 }
 
 /** Conical heap of loose material. */
@@ -170,17 +325,17 @@ export function heap(
   seed: number,
 ) {
   const c = proj(OX, GY, cx, cy);
-  const rx = r * 32;
-  const ry = r * 16;
-  for (let y = Math.floor(c.y - ry - h); y <= Math.ceil(c.y + ry); y++)
-    for (let x = Math.floor(c.x - rx); x <= Math.ceil(c.x + rx); x++) {
-      const nx = (x + 0.5 - c.x) / rx;
-      const dy = Math.sqrt(Math.max(0, 1 - nx * nx)) * ry;
+  const hrx = r * 32;
+  const hry = r * 16;
+  for (let y = Math.floor(c.y - hry - h); y <= Math.ceil(c.y + hry); y++)
+    for (let x = Math.floor(c.x - hrx); x <= Math.ceil(c.x + hrx); x++) {
+      const nx = (x + 0.5 - c.x) / hrx;
+      const dy = Math.sqrt(Math.max(0, 1 - nx * nx)) * hry;
       const top = c.y - h * (1 - Math.abs(nx)) - dy;
       if (y < top || y > c.y + dy) continue;
       const n = hash2(x >> 1, y >> 1, seed);
       const light = 0.75 + 0.35 * (1 - (nx + 1) / 2) + (y < top + 2 ? 0.15 : 0);
-      b.set(x, y, shade(shades[Math.min(shades.length - 1, Math.floor(n * shades.length))], light));
+      b.set(x, y, shade(pick(shades, n), light));
     }
 }
 
@@ -212,7 +367,8 @@ export function logStack(
         seed: seed + r * 7 + i,
       });
       const e = proj(OX, GY, cx + len / 2, cy + w, r * 4 + 2);
-      b.set(Math.round(e.x), Math.round(e.y), PAL.sand[1]);
+      b.set(rx(e), ry(e), PAL.sand[1]);
+      b.set(rx(e) - 1, ry(e), PAL.sand[2]);
     }
   }
 }
@@ -251,7 +407,7 @@ export function crates(b: PixelBuf, spots: [number, number][], seed: number) {
   });
 }
 
-/** Round storage tank / silo with a domed cap. */
+/** Round storage tank / silo with a domed cap and an iron band. */
 export function silo(
   b: PixelBuf,
   cx: number,
@@ -261,20 +417,19 @@ export function silo(
   side: RGB[],
   cap: RGB,
   seed: number,
+  z0 = 0,
 ) {
-  drawCylinder(b, OX, GY, cx, cy, r, 0, h, side, cap, seed);
-  const t = proj(OX, GY, cx, cy, h);
-  const rx = r * 32;
+  drawCylinder(b, OX, GY, cx, cy, r, z0, h, side, cap, seed);
+  const t = proj(OX, GY, cx, cy, z0 + h);
+  const prx = r * 32;
   for (let d = 1; d <= 4; d++) {
-    const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (d / 5) ** 2)));
-    for (let x = -w; x <= w; x++)
-      b.set(Math.round(t.x) + x, Math.round(t.y) - d, shade(cap, 0.9 + 0.05 * d));
+    const w = Math.round(prx * Math.sqrt(Math.max(0, 1 - (d / 5) ** 2)));
+    for (let x = -w; x <= w; x++) b.set(rx(t) + x, ry(t) - d, shade(cap, 0.9 + 0.05 * d));
   }
-  // band
-  const m = proj(OX, GY, cx, cy, h * 0.55);
-  for (let x = -Math.round(rx); x <= Math.round(rx); x++) {
-    const yy = Math.round(m.y) + Math.round(Math.sqrt(Math.max(0, 1 - (x / rx) ** 2)) * r * 16);
-    b.set(Math.round(m.x) + x, yy, PAL.iron[1]);
+  const m = proj(OX, GY, cx, cy, z0 + h * 0.55);
+  for (let x = -Math.round(prx); x <= Math.round(prx); x++) {
+    const yy = ry(m) + Math.round(Math.sqrt(Math.max(0, 1 - (x / prx) ** 2)) * r * 16);
+    b.set(rx(m) + x, yy, PAL.iron[1]);
   }
 }
 
@@ -301,7 +456,7 @@ function field(
   ripe: number,
   seed: number,
 ) {
-  pad(b, cx, cy, lenX, lenY, (x, y) => shade(PAL.sand[2], 0.75 + 0.1 * hash2(x, y, seed)), 3);
+  pad(b, cx, cy, lenX, lenY, (x, y) => shade(PAL.sand[2], 0.7 + 0.1 * hash2(x, y, seed)), 3);
   pad(
     b,
     cx,
@@ -310,355 +465,467 @@ function field(
     lenY,
     (x, y): RGB | null => {
       const row = (x + 2 * y) % 6;
-      if (row > 2) return null;
-      const n = hash2(x, y, seed);
+      if (row > 3) return null;
+      const n = hash2(x >> 1, y, seed);
       const c = n < ripe ? WHEATC : CROP;
-      return c[Math.min(2, Math.floor(hash2(x >> 1, y, seed + 3) * 3))];
+      const s = pick(c, hash2(x, y >> 1, seed + 3));
+      return row === 0 ? shade(s, 1.12) : row === 3 ? shade(s, 0.85) : s;
     },
     4,
   );
 }
 
+/** Post-and-rail fence between two ground points. */
+function fence(b: PixelBuf, ax: number, ay: number, bx: number, by: number, seg = 4) {
+  for (let i = 0; i <= seg; i++) {
+    const t = i / seg;
+    post(b, ax + (bx - ax) * t, ay + (by - ay) * t, 5, PAL.timber[2], 0, 1);
+  }
+  bar(b, ax, ay, 4, bx, by, 4, PAL.timber[1]);
+  bar(b, ax, ay, 2, bx, by, 2, PAL.timber[2]);
+}
+
+/** Lattice wind pump: iron mast with a many-vaned wheel and a tail vane. */
+function windmill(b: PixelBuf, tx: number, ty: number, h: number) {
+  const p = proj(OX, GY, tx, ty);
+  const x = rx(p);
+  const y = ry(p);
+  b.line(x - 3, y, x - 1, y - h + 2, PAL.iron[2]);
+  b.line(x + 3, y, x + 1, y - h + 2, PAL.iron[2]);
+  for (let d = 4; d < h - 2; d += 5) b.rect(x - 2, y - d, 5, 1, PAL.iron[1]);
+  const cy = y - h - 2;
+  for (let a = 0; a < 28; a++) {
+    const ang = (a / 28) * Math.PI * 2;
+    b.set(x + Math.round(Math.cos(ang) * 6), cy + Math.round(Math.sin(ang) * 6), PAL.iron[3]);
+  }
+  for (let a = 0; a < 8; a++) {
+    const ang = (a / 8) * Math.PI * 2 + 0.2;
+    b.line(
+      x,
+      cy,
+      x + Math.round(Math.cos(ang) * 5),
+      cy + Math.round(Math.sin(ang) * 5),
+      PAL.iron[1],
+    );
+  }
+  b.set(x, cy, PAL.brass);
+  b.rect(x + 7, cy, 3, 1, PAL.iron[1]);
+  b.rect(x + 10, cy - 2, 2, 5, PAL.red);
+}
+
+/** Open-fronted pole shed: dark interior, corner posts and a pitched roof on top. */
+function openShed(
+  b: PixelBuf,
+  cx: number,
+  cy: number,
+  len: number,
+  wid: number,
+  h: number,
+  seed: number,
+) {
+  const x0 = cx - len / 2;
+  const x1 = cx + len / 2;
+  const y0 = cy - wid / 2;
+  const y1 = cy + wid / 2;
+  pad(b, cx, cy, len, wid, (x, y) => shade(PAL.sand[2], 0.45 + 0.1 * hash2(x, y, seed)), 3);
+  const dark = (x: number, y: number) => shade(pick(PAL.timber, hash2(x >> 1, y, seed)), 0.5);
+  opening(b, x0, y0, x0, y1, 0, h, dark); // inner side of the -x wall
+  opening(b, x0, y0, x1, y0, 0, h, dark); // inner side of the -y wall
+  for (const [px, py] of [
+    [x0, y1],
+    [x1, y1],
+    [x1, y0],
+    [cx, y1],
+    [x1, cy],
+  ])
+    post(b, px, py, h, PAL.timber[2]);
+  drawPrism(b, {
+    ox: OX,
+    oy: GY,
+    cx,
+    cy,
+    angle: 0,
+    len: len + 0.04,
+    wid: wid + 0.04,
+    h: 0,
+    z0: h,
+    top: SHINGLE,
+    side: PAL.timber,
+    ridge: Math.max(4, Math.round(wid * 20)),
+    roof: SHINGLE,
+    seed: seed + 1,
+  });
+}
+
+/** Ingots stacked in a small pyramid. */
+function ingots(b: PixelBuf, tx: number, ty: number) {
+  const p = proj(OX, GY, tx, ty);
+  for (let r = 0; r < 3; r++)
+    for (let i = 0; i < 3 - r; i++)
+      b.rect(rx(p) - 5 + i * 4 + r * 2, ry(p) - 2 - r * 2, 4, 2, STEEL[(i + r) % 3]);
+}
+
 // ------------------------------------------------------------------ station families
 
+/** Farm: red barn, golden wheat rows, fence; silos from level 2, a wind pump at level 3. */
 function farm(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 31, 0.96, 0.96);
-  field(b, 0.22, 0.2, 0.42, 0.46, 0.35 + 0.3 * level, 32 + level);
+  yard(b, 31);
+  // wheat field along the +x half, shrinking a bit when the silos arrive
+  if (level === 1) field(b, 0.24, 0.02, 0.4, 0.82, 0.55, 32);
+  else field(b, 0.24, 0.12, 0.4, 0.62, 0.7 + 0.1 * level, 32 + level);
+  // fence along the front-left edge
+  fence(b, -0.43, 0.42, -0.06, 0.42);
+  // barn
+  const bl = 0.34 + 0.04 * level;
+  const bw = 0.28 + 0.03 * level;
+  const bh = 11 + 3 * level;
+  const bx = -0.23;
+  const by = -0.17;
+  house(b, bx, by, bl, bw, bh, BARN, PAL.roofSlate, 33 + level);
+  // big barn door with cross bracing on the +y face, hayloft hatch above
+  opening(b, bx - 0.07, by + bw / 2, bx + 0.07, by + bw / 2, 0, bh - 4, PAL.trunkDark);
+  const d0 = proj(OX, GY, bx - 0.07, by + bw / 2, 0);
+  const d1 = proj(OX, GY, bx + 0.07, by + bw / 2, 0);
+  b.line(rx(d0), ry(d0) - 1, rx(d1), ry(d1) - (bh - 4), PAL.timber[1]);
+  b.line(rx(d0), ry(d0) - (bh - 4), rx(d1), ry(d1) - 1, PAL.timber[1]);
+  facade(b, bx, by, bw, [bx > 0 ? 0 : bl * 0.32], null, 2);
   if (level === 1) {
-    house(b, -0.2, -0.16, 0.42, 0.34, 12, PAL.timber, PAL.roof, 33);
-    facade(b, -0.2, -0.16, 0.34, [-0.12], 0.08);
-    crates(b, [[0.1, -0.3]], 34);
+    heap(b, -0.26, 0.24, 0.1, 6, WHEATC, 34);
+    crates(b, [[-0.06, 0.3]], 35);
   } else if (level === 2) {
-    house(
-      b,
-      -0.18,
-      -0.12,
-      0.5,
-      0.36,
-      15,
-      PAL.roof.map((c) => shade(c, 1.2)),
-      PAL.roofSlate,
-      35,
-    );
-    facade(b, -0.18, -0.12, 0.36, [-0.16, 0.12], -0.02);
-    silo(b, 0.24, -0.3, 0.09, 26, STEEL, STEEL[1], 36);
-    crates(b, [[-0.36, 0.28]], 37);
+    silo(b, 0.3, -0.33, 0.1, 24, STEEL, STEEL[1], 36);
+    heap(b, -0.26, 0.24, 0.1, 6, WHEATC, 34);
+    crates(b, [[-0.08, 0.3]], 37);
   } else {
-    house(
-      b,
-      -0.2,
-      -0.1,
-      0.52,
-      0.4,
-      18,
-      PAL.roof.map((c) => shade(c, 1.2)),
-      PAL.roofSlate,
-      38,
-    );
-    facade(b, -0.2, -0.1, 0.4, [-0.18, -0.02, 0.14], null);
-    silo(b, 0.2, -0.3, 0.09, 30, STEEL, STEEL[1], 39);
-    silo(b, 0.36, -0.2, 0.09, 30, STEEL, STEEL[1], 40);
-    // windmill mast
-    const m = proj(OX, GY, -0.4, 0.34);
-    b.rect(Math.round(m.x) - 1, Math.round(m.y) - 30, 2, 30, PAL.iron[2]);
-    for (let i = -7; i <= 7; i++) {
-      b.set(Math.round(m.x) + i, Math.round(m.y) - 30, PAL.iron[3]);
-      b.set(Math.round(m.x), Math.round(m.y) - 30 + i, PAL.iron[3]);
-    }
+    silo(b, 0.2, -0.34, 0.085, 28, STEEL, STEEL[1], 38);
+    silo(b, 0.36, -0.34, 0.085, 28, STEEL, STEEL[1], 39);
+    heap(b, -0.1, 0.3, 0.1, 6, WHEATC, 34);
+    windmill(b, -0.3, 0.26, 30);
   }
   b.outline(PAL.outline, 170);
   return b;
 }
 
+/** Lumber: pale timber saw shed with an open front, log stacks and sawdust; chimney at level 3. */
 function lumber(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 41, 0.96, 0.96);
-  heap(b, 0.3, 0.3, 0.14, 4, PAL.sand, 42); // sawdust
+  yard(b, 41);
+  heap(b, 0.3, 0.3, 0.13, 5, DUST, 42); // sawdust
   if (level === 1) {
-    logStack(b, 0.12, 0.22, 0.4, 2, 43);
-    house(b, -0.22, -0.18, 0.4, 0.34, 11, PAL.timber, PAL.roof, 44);
-    facade(b, -0.22, -0.18, 0.34, [], 0.06);
-  } else if (level === 2) {
-    logStack(b, 0.16, 0.24, 0.44, 3, 45);
-    house(b, -0.2, -0.14, 0.52, 0.4, 14, PAL.timber, PAL.roofSlate, 46);
-    facade(b, -0.2, -0.14, 0.4, [-0.18, 0.14], null);
-    // open sawing bay: dark door
-    const d = proj(OX, GY, 0.06, 0.06);
-    b.rect(Math.round(d.x) - 5, Math.round(d.y) - 10, 10, 9, PAL.outline);
-    chimney(b, -0.36, -0.28, 14, 12, 0.04);
-  } else {
-    logStack(b, 0.18, 0.26, 0.46, 4, 47);
-    logStack(b, -0.3, 0.36, 0.3, 2, 48);
-    house(b, -0.16, -0.16, 0.6, 0.42, 18, BRICK, PAL.roofSlate, 49);
-    facade(b, -0.16, -0.16, 0.42, [-0.22, -0.06, 0.1], null);
-    const d = proj(OX, GY, 0.14, 0.05);
-    b.rect(Math.round(d.x) - 5, Math.round(d.y) - 12, 10, 11, PAL.outline);
-    chimney(b, -0.38, -0.3, 18, 20, 0.05);
-  }
-  b.outline(PAL.outline, 170);
-  return b;
-}
-
-function quarry(level: number): PixelBuf {
-  const b = new PixelBuf(W, H);
-  yard(b, 51, 0.96, 0.96);
-  // rock face along the back
-  for (let i = 0; i < 5; i++) {
-    const t = -0.42 + i * 0.2;
+    openShed(b, -0.2, -0.16, 0.4, 0.32, 12, 43);
+    logStack(b, 0.2, -0.2, 0.4, 2, 44);
+    // saw bench inside
     drawPrism(b, {
       ox: OX,
       oy: GY,
-      cx: t,
-      cy: -0.4,
+      cx: -0.2,
+      cy: -0.14,
       angle: 0,
-      len: 0.2,
-      wid: 0.14,
-      h: 6 + Math.floor(hash2(i, level, 52) * 8),
-      top: PAL.rock,
+      len: 0.22,
+      wid: 0.08,
+      h: 5,
+      top: STEEL,
+      side: PAL.timber,
+      seed: 45,
+    });
+    crates(b, [[-0.16, 0.3]], 46);
+  } else {
+    const sx = -0.2;
+    const sy = -0.16;
+    const sl = 0.44;
+    const sw = 0.34;
+    const sh = level === 2 ? 15 : 17;
+    house(b, sx, sy, sl, sw, sh, PALE_TIMBER, SHINGLE, 47 + level);
+    // big open sawing bay on the +y face with the blade glinting inside
+    const fy = sy + sw / 2;
+    opening(b, sx - 0.16, fy, sx + 0.1, fy, 0, sh - 3, (x, y) =>
+      shade(pick(PAL.timber, hash2(x >> 1, y, 48)), 0.35),
+    );
+    const bl = proj(OX, GY, sx - 0.02, fy, 5);
+    for (let a = 0; a < 12; a++) {
+      const ang = (a / 12) * Math.PI * 2;
+      b.set(
+        rx(bl) + Math.round(Math.cos(ang) * 3),
+        ry(bl) + Math.round(Math.sin(ang) * 4),
+        STEEL[1],
+      );
+    }
+    b.set(rx(bl), ry(bl), PAL.iron[2]);
+    facade(b, sx, sy, sw, [sl * 0.36], null);
+    logStack(b, 0.2, -0.22, 0.4, 3, 49);
+    logStack(b, 0.12, 0.08, 0.34, 2, 50);
+    if (level === 3) {
+      chimney(b, -0.39, -0.3, 0, 32, 0.05, BRICK);
+      openShed(b, -0.24, 0.26, 0.34, 0.26, 10, 51);
+      logStack(b, -0.24, 0.26, 0.24, 1, 52);
+    } else crates(b, [[-0.3, 0.3]], 53);
+  }
+  b.outline(PAL.outline, 170);
+  return b;
+}
+
+/** Quarry: grey rock face at the back, gravel heaps; derrick at 2, steel crusher + conveyor at 3. */
+function quarry(level: number): PixelBuf {
+  const b = new PixelBuf(W, H);
+  slab(b, 51, GRAVEL);
+  // jagged rock face along the -y and -x edges
+  const blocks: [number, number, number, number][] = [];
+  for (let i = 0; i < 5; i++) blocks.push([-0.36 + i * 0.18, -0.38, 0.18, 0.14]);
+  for (let i = 0; i < 3; i++) blocks.push([-0.38, -0.2 + i * 0.18, 0.14, 0.18]);
+  blocks.forEach(([cx, cy, len, wid], i) => {
+    const h = 5 + Math.floor(hash2(i, level, 52) * 11) + 2 * level;
+    drawPrism(b, {
+      ox: OX,
+      oy: GY,
+      cx,
+      cy,
+      angle: 0,
+      len,
+      wid,
+      h,
+      top: [PAL.rock[3], PAL.rock[1]],
       side: PAL.rock,
       seed: 53 + i,
     });
+  });
+  // loose boulders at the foot of the face
+  for (const [bx, by] of [
+    [-0.24, -0.2],
+    [0.08, -0.24],
+  ]) {
+    const p = proj(OX, GY, bx, by);
+    b.ellipse(rx(p), ry(p) - 2, 3, 2, PAL.rock, 54);
   }
-  heap(b, 0.22, 0.2, 0.2 + 0.03 * level, 8 + 2 * level, GRAVEL, 54);
+  heap(b, 0.24, 0.16, 0.16 + 0.02 * level, 8 + 2 * level, GRAVEL, 55);
   if (level === 1) {
-    house(b, -0.24, 0.1, 0.3, 0.26, 10, PAL.timber, PAL.roof, 55);
-    crates(b, [[-0.02, 0.36]], 56);
+    house(b, -0.16, 0.24, 0.26, 0.2, 8, PAL.timber, PAL.roofSlate, 56);
+    facade(b, -0.16, 0.24, 0.2, [], 0.04);
+    crates(b, [[0.06, 0.36]], 57);
   } else if (level === 2) {
-    house(b, -0.24, 0.12, 0.34, 0.3, 12, PAL.timber, PAL.roofSlate, 57);
-    facade(b, -0.24, 0.12, 0.3, [-0.1], 0.08);
-    // derrick crane
-    const m = proj(OX, GY, 0.02, -0.06);
-    b.rect(Math.round(m.x) - 1, Math.round(m.y) - 32, 2, 32, PAL.iron[2]);
-    b.line(
-      Math.round(m.x),
-      Math.round(m.y) - 32,
-      Math.round(m.x) + 16,
-      Math.round(m.y) - 14,
-      PAL.iron[1],
-    );
-    b.line(
-      Math.round(m.x) + 16,
-      Math.round(m.y) - 14,
-      Math.round(m.x) + 16,
-      Math.round(m.y) - 4,
-      PAL.iron[3],
-    );
+    house(b, -0.2, 0.26, 0.26, 0.2, 9, PAL.timber, PAL.roofSlate, 58);
+    facade(b, -0.2, 0.26, 0.2, [-0.06], 0.05);
+    // timber derrick: mast, boom, cable and a stone block on the hook
+    const m = proj(OX, GY, -0.02, -0.04);
+    const mx = rx(m);
+    const my = ry(m);
+    b.rect(mx - 1, my - 32, 3, 32, PAL.timber[2]);
+    b.line(mx - 4, my, mx - 1, my - 28, PAL.timber[1]);
+    b.line(mx + 4, my, mx + 1, my - 28, PAL.timber[1]);
+    b.line(mx, my - 31, mx + 15, my - 15, PAL.timber[0]);
+    b.line(mx, my - 30, mx + 15, my - 14, PAL.timber[2]);
+    b.line(mx + 15, my - 15, mx + 15, my - 4, PAL.iron[3]);
+    b.rect(mx + 13, my - 5, 5, 4, PAL.rock[1]);
+    crates(b, [[0.06, 0.38]], 59);
   } else {
-    // stone crusher tower with a hopper on top
-    house(b, -0.22, 0.06, 0.34, 0.32, 24, STEEL, null, 58);
+    // steel crusher tower with hopper, conveyor down to the gravel heap
+    house(b, -0.16, 0.06, 0.3, 0.3, 24, STEEL, null, 60);
     drawPrism(b, {
       ox: OX,
       oy: GY,
-      cx: -0.22,
+      cx: -0.16,
       cy: 0.06,
       angle: 0,
-      len: 0.26,
-      wid: 0.26,
+      len: 0.24,
+      wid: 0.24,
       h: 8,
       z0: 24,
       top: [PAL.iron[2], PAL.iron[0]],
       side: PAL.iron,
-      seed: 59,
+      seed: 61,
     });
-    // conveyor from tower to heap
-    const c0 = proj(OX, GY, -0.06, 0.1, 18);
-    const c1 = proj(OX, GY, 0.2, 0.2, 14);
-    b.line(Math.round(c0.x), Math.round(c0.y), Math.round(c1.x), Math.round(c1.y), PAL.iron[1]);
-    b.line(
-      Math.round(c0.x),
-      Math.round(c0.y) + 1,
-      Math.round(c1.x),
-      Math.round(c1.y) + 1,
-      PAL.iron[2],
-    );
-    heap(b, -0.3, 0.36, 0.14, 6, GRAVEL, 60);
+    opening(b, -0.24, 0.21, -0.1, 0.21, 0, 9, PAL.outline);
+    bar(b, -0.02, 0.1, 18, 0.22, 0.18, 12, PAL.iron[3]);
+    bar(b, -0.02, 0.1, 17, 0.22, 0.18, 11, PAL.iron[2]);
+    post(b, 0.12, 0.14, 12, PAL.iron[2], 0, 1);
+    heap(b, -0.24, 0.34, 0.12, 5, GRAVEL, 62);
+    heap(b, 0.14, -0.14, 0.1, 5, PAL.rock, 63);
   }
   b.outline(PAL.outline, 170);
   return b;
 }
 
+/** Pump: brick pump house beside a blue pond; blue steel tank at 2, elevated tank at 3. */
 function pump(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 61, 0.96, 0.96);
-  // pond corner
+  yard(b, 61);
+  // pond in the front-right corner with a stone rim
+  pad(b, 0.2, 0.2, 0.48, 0.48, (x, y) => pick(PAL.stone, hash2(x >> 1, y, 62)), 3);
   pad(
     b,
-    0.26,
-    0.26,
-    0.4,
-    0.38,
-    (x, y) => PAL.water[Math.min(3, Math.floor(hash2(x >> 2, y >> 1, 62) * 4))],
-    3,
-  );
-  if (level === 1) {
-    house(b, -0.2, -0.16, 0.34, 0.3, 11, BRICK, PAL.roofSlate, 63);
-    facade(b, -0.2, -0.16, 0.3, [-0.08], 0.08);
-    chimney(b, -0.34, -0.26, 11, 8, 0.035);
-  } else if (level === 2) {
-    house(b, -0.2, -0.14, 0.4, 0.32, 13, BRICK, PAL.roofSlate, 64);
-    facade(b, -0.2, -0.14, 0.32, [-0.14, 0.06], null);
-    chimney(b, -0.36, -0.26, 13, 10, 0.04);
-    silo(b, 0.24, -0.26, 0.11, 18, STEEL, STEEL[1], 65);
-  } else {
-    house(b, -0.22, -0.12, 0.44, 0.36, 16, BRICK, PAL.roofSlate, 66);
-    facade(b, -0.22, -0.12, 0.36, [-0.16, 0, 0.14], null);
-    chimney(b, -0.4, -0.28, 16, 14, 0.045);
-    // elevated tank on a steel trestle
-    for (const [lx, ly] of [
-      [0.14, -0.36],
-      [0.34, -0.36],
-      [0.34, -0.16],
-      [0.14, -0.16],
-    ]) {
-      const p = proj(OX, GY, lx, ly);
-      b.rect(Math.round(p.x) - 1, Math.round(p.y) - 22, 2, 22, PAL.iron[2]);
-    }
-    silo(b, 0.24, -0.26, 0.13, 14, STEEL, STEEL[1], 67);
-    drawCylinder(b, OX, GY, 0.24, -0.26, 0.13, 20, 14, STEEL, STEEL[1], 68);
-  }
-  // pipe from the house to the pond
-  const p0 = proj(OX, GY, -0.02, 0.0, 4);
-  const p1 = proj(OX, GY, 0.14, 0.12, 4);
-  b.line(Math.round(p0.x), Math.round(p0.y), Math.round(p1.x), Math.round(p1.y), PAL.iron[3]);
-  b.outline(PAL.outline, 170);
-  return b;
-}
-
-function town(level: number): PixelBuf {
-  const b = new PixelBuf(W, H);
-  // cobbled square
-  pad(b, 0, 0, 0.96, 0.96, (x, y) => shade(PAL.stone[2], 0.75 + 0.1 * hash2(x, y, 71)));
-  pad(
-    b,
-    0,
-    0,
-    0.96,
-    0.96,
+    0.2,
+    0.2,
+    0.42,
+    0.42,
     (x, y) => {
-      const n = hash2(x >> 1, y >> 1, 72);
-      const c = PAL.stone[Math.min(2, Math.floor(n * 3))];
-      return (x + 2 * y) % 6 === 0 ? shade(c, 0.85) : c;
+      const n = hash2(x >> 2, y >> 1, 63);
+      const c = PAL.water[Math.min(3, Math.floor(n * 4))];
+      return (x + 3 * y) % 11 === 0 && n > 0.5 ? PAL.cyanDark : c;
     },
     3,
   );
+  // pump house
+  const hl = 0.32 + 0.04 * level;
+  const hw = 0.28 + 0.03 * level;
+  const hh = 11 + 2 * level;
+  const hx = -0.22;
+  const hy = -0.2;
+  house(b, hx, hy, hl, hw, hh, BRICK, PAL.roofSlate, 64 + level);
+  facade(b, hx, hy, hw, level === 1 ? [-0.06] : [-0.12, 0.02], hl * 0.32);
+  chimney(b, hx - hl / 2 + 0.05, hy - hw / 2 + 0.05, hh, 8 + level, 0.035, BRICK);
+  // pipe from the house to the pond, with a valve wheel
+  bar(b, hx + 0.02, hy + hw / 2 + 0.02, 4, 0.06, 0.06, 4, PAL.iron[3]);
+  bar(b, hx + 0.02, hy + hw / 2 + 0.02, 3, 0.06, 0.06, 3, PAL.iron[2]);
+  const v = proj(OX, GY, -0.04, 0.0, 6);
+  b.rect(rx(v) - 1, ry(v) - 1, 3, 3, PAL.red);
+  if (level === 2) {
+    silo(b, 0.27, -0.28, 0.11, 18, BLUE_STEEL, BLUE_STEEL[1], 66);
+  } else if (level === 3) {
+    for (const [lx, ly] of [
+      [0.16, -0.38],
+      [0.38, -0.38],
+      [0.38, -0.16],
+      [0.16, -0.16],
+    ])
+      post(b, lx, ly, 20, PAL.iron[2]);
+    bar(b, 0.16, -0.16, 8, 0.38, -0.16, 8, PAL.iron[1]);
+    bar(b, 0.38, -0.38, 8, 0.38, -0.16, 8, PAL.iron[1]);
+    silo(b, 0.27, -0.27, 0.13, 14, BLUE_STEEL, BLUE_STEEL[1], 67, 20);
+    post(b, 0.27, -0.27, 20, PAL.iron[3], 0, 1);
+  }
+  if (level === 1) crates(b, [[-0.3, 0.3]], 68);
+  b.outline(PAL.outline, 170);
+  return b;
+}
+
+/** Town: whitewashed and brick houses around a cobbled square; church tower from level 2. */
+function town(level: number): PixelBuf {
+  const b = new PixelBuf(W, H);
+  cobbles(b, 71);
   const homes: [number, number, number, number, RGB[], RGB[]][] =
     level === 1
       ? [
-          [-0.22, -0.2, 0.3, 0.26, WHITEWASH, PAL.roof],
-          [0.2, 0.18, 0.26, 0.24, PAL.timber, PAL.roof],
+          [-0.24, -0.22, 0.3, 0.26, WHITEWASH, PAL.roof],
+          [0.22, 0.2, 0.26, 0.24, BRICK, PAL.roofSlate],
         ]
       : level === 2
         ? [
-            [-0.26, -0.22, 0.28, 0.26, WHITEWASH, PAL.roof],
-            [0.1, -0.28, 0.26, 0.22, BRICK, PAL.roofSlate],
-            [-0.28, 0.16, 0.24, 0.24, PAL.timber, PAL.roof],
-            [0.24, 0.2, 0.28, 0.26, WHITEWASH, PAL.roofSlate],
+            [-0.26, -0.24, 0.3, 0.26, WHITEWASH, PAL.roof],
+            [0.22, -0.28, 0.28, 0.22, BRICK, PAL.roofSlate],
+            [-0.28, 0.22, 0.24, 0.24, BRICK, PAL.roof],
+            [0.26, 0.22, 0.28, 0.24, WHITEWASH, PAL.roofSlate],
           ]
         : [
-            [-0.3, -0.24, 0.26, 0.26, BRICK, PAL.roofSlate],
-            [0.0, -0.3, 0.26, 0.22, WHITEWASH, PAL.roof],
-            [0.3, -0.24, 0.24, 0.26, BRICK, PAL.roofSlate],
-            [-0.3, 0.18, 0.26, 0.26, WHITEWASH, PAL.roofSlate],
-            [0.3, 0.2, 0.26, 0.26, PAL.timber, PAL.roof],
+            [-0.3, -0.26, 0.26, 0.26, BRICK, PAL.roofSlate],
+            [0.04, -0.32, 0.26, 0.2, WHITEWASH, PAL.roof],
+            [0.32, -0.22, 0.22, 0.26, WHITEWASH, PAL.roof],
+            [-0.3, 0.2, 0.26, 0.26, WHITEWASH, PAL.roofSlate],
+            [0.3, 0.22, 0.26, 0.26, BRICK, PAL.roof],
           ];
   homes.forEach(([cx, cy, len, wid, side, roof], i) => {
     house(b, cx, cy, len, wid, 10 + level * 2 + (i % 2) * 2, side, roof, 73 + i);
     facade(b, cx, cy, wid, [-len * 0.25], len * 0.2);
   });
   if (level >= 2) {
-    // church / hall tower in the middle
-    house(b, 0.0, 0.02, 0.18, 0.18, 14 + level * 6, PAL.stone, null, 79);
-    const t = proj(OX, GY, 0, 0.02, 14 + level * 6);
-    for (let r = 5; r >= 0; r--)
-      for (let x = -r; x <= r; x++)
-        b.set(Math.round(t.x) + x, Math.round(t.y) - (5 - r), PAL.roofSlate[(x + r) % 3]);
-    b.rect(Math.round(t.x) - 1, Math.round(t.y) - 4, 3, 3, PAL.white);
+    // church / hall tower with a slate spire in the middle of the square
+    const th = 14 + level * 6;
+    house(b, 0.0, -0.02, 0.18, 0.18, th, PAL.stone, null, 79);
+    const t = proj(OX, GY, 0, -0.02, th);
+    const sp = 6 + level * 2;
+    for (let d = 0; d <= sp; d++) {
+      const r = Math.round(6 * (1 - d / sp));
+      for (let x = -r; x <= r; x++) b.set(rx(t) + x, ry(t) - d, PAL.roofSlate[(x + r + d) % 3]);
+    }
+    b.set(rx(t), ry(t) - sp - 1, PAL.brass);
+    const f = proj(OX, GY, 0.09, -0.02, th - 8);
+    b.rect(rx(f) - 1, ry(f) - 2, 3, 3, PAL.white);
+    b.set(rx(f), ry(f) - 1, PAL.outline);
+    const w = proj(OX, GY, 0.0, 0.07, th - 8);
+    b.rect(rx(w) - 1, ry(w) - 2, 3, 3, PAL.white);
+    b.set(rx(w), ry(w) - 1, PAL.outline);
   }
   // lamp posts
   for (const [lx, ly] of level === 3
     ? [
-        [0.42, 0.0],
-        [-0.42, 0.0],
+        [0.02, 0.4],
+        [-0.02, -0.4],
       ]
-    : [[0.4, -0.1]]) {
+    : level === 2
+      ? [[0.0, 0.38]]
+      : [[0.02, -0.02]]) {
     const p = proj(OX, GY, lx, ly);
-    b.rect(Math.round(p.x), Math.round(p.y) - 12, 1, 12, PAL.iron[2]);
-    b.set(Math.round(p.x), Math.round(p.y) - 13, PAL.amber);
+    b.rect(rx(p), ry(p) - 12, 1, 12, PAL.iron[2]);
+    b.rect(rx(p) - 1, ry(p) - 14, 3, 2, PAL.amber);
+    b.set(rx(p), ry(p) - 15, PAL.iron[1]);
   }
   b.outline(PAL.outline, 170);
   return b;
 }
 
+/** Warehouse: long concrete sheds with big dark doors, crates and barrels; gantry crane at 3. */
 function warehouse(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  // paved loading yard
-  pad(b, 0, 0, 0.96, 0.96, (x, y) => shade(PAL.stone[2], 0.8 + 0.1 * hash2(x, y, 81)));
-  pad(
-    b,
-    0,
-    0,
-    0.96,
-    0.96,
-    (x, y) => CONCRETE[Math.min(2, Math.floor(hash2(x >> 2, y >> 1, 82) * 3))],
-    3,
-  );
+  concrete(b, 81);
   if (level === 1) {
-    house(b, -0.16, -0.14, 0.5, 0.36, 13, PAL.timber, PAL.roofSlate, 83);
-    const d = proj(OX, GY, -0.1, 0.04);
-    b.rect(Math.round(d.x) - 5, Math.round(d.y) - 9, 10, 8, PAL.outline);
+    flatShed(b, -0.14, -0.14, 0.5, 0.34, 13, CONCRETE, 83);
+    opening(b, -0.22, 0.03, -0.08, 0.03, 0, 10, PAL.outline);
+    const l = proj(OX, GY, -0.15, 0.03, 10);
+    b.rect(rx(l) - 4, ry(l), 9, 1, PAL.amberDark);
     crates(
       b,
       [
         [0.3, 0.2],
-        [0.18, 0.34],
+        [0.16, 0.34],
       ],
       84,
     );
   } else if (level === 2) {
-    house(b, -0.12, -0.14, 0.64, 0.4, 17, BRICK, PAL.roofSlate, 85);
-    for (const dx of [-0.26, 0.02]) {
-      const d = proj(OX, GY, dx, 0.06);
-      b.rect(Math.round(d.x) - 5, Math.round(d.y) - 11, 10, 10, PAL.outline);
+    flatShed(b, -0.1, -0.14, 0.66, 0.4, 17, CONCRETE, 85);
+    for (const dx of [-0.32, -0.06]) opening(b, dx, 0.06, dx + 0.14, 0.06, 0, 13, PAL.outline);
+    for (const dx of [-0.32, -0.06]) {
+      const l = proj(OX, GY, dx + 0.07, 0.06, 13);
+      b.rect(rx(l) - 4, ry(l), 9, 1, PAL.amberDark);
     }
-    facade(b, -0.12, -0.14, 0.4, [0.24], null);
+    facade(b, -0.1, -0.14, 0.4, [0.2], null, 4);
     crates(
       b,
       [
-        [0.34, 0.16],
+        [0.34, 0.14],
         [0.22, 0.32],
         [0.38, 0.34],
+        [0.02, 0.36],
       ],
       86,
     );
   } else {
-    house(b, -0.2, -0.22, 0.56, 0.3, 18, BRICK, PAL.roofSlate, 87);
-    house(b, -0.2, 0.14, 0.56, 0.3, 18, BRICK, PAL.roofSlate, 88);
-    for (const dx of [-0.34, -0.06]) {
-      const d = proj(OX, GY, dx, 0.29);
-      b.rect(Math.round(d.x) - 5, Math.round(d.y) - 11, 10, 10, PAL.outline);
+    flatShed(b, -0.18, -0.26, 0.54, 0.28, 18, CONCRETE, 87);
+    flatShed(b, -0.18, 0.1, 0.54, 0.28, 18, CONCRETE, 88);
+    for (const cy of [-0.26, 0.1]) {
+      opening(b, 0.09, cy - 0.08, 0.09, cy + 0.08, 0, 13, PAL.outline);
+      const l = proj(OX, GY, 0.09, cy, 13);
+      b.rect(rx(l) - 4, ry(l), 9, 1, PAL.amberDark);
     }
-    // gantry crane over the yard edge
-    for (const ly of [-0.36, 0.36]) {
-      const p = proj(OX, GY, 0.32, ly);
-      b.rect(Math.round(p.x) - 1, Math.round(p.y) - 30, 2, 30, PAL.iron[2]);
+    opening(b, -0.38, 0.24, -0.26, 0.24, 0, 13, PAL.outline);
+    // gantry crane spanning the loading bay along the +x edge
+    for (const ly of [-0.42, 0.42]) {
+      post(b, 0.32, ly, 30, PAL.iron[2]);
+      post(b, 0.42, ly, 30, PAL.iron[2]);
+      bar(b, 0.32, ly, 30, 0.42, ly, 30, PAL.iron[3]);
     }
-    const g0 = proj(OX, GY, 0.32, -0.36, 30);
-    const g1 = proj(OX, GY, 0.32, 0.36, 30);
-    b.line(Math.round(g0.x), Math.round(g0.y), Math.round(g1.x), Math.round(g1.y), PAL.iron[3]);
-    b.line(
-      Math.round(g0.x),
-      Math.round(g0.y) + 1,
-      Math.round(g1.x),
-      Math.round(g1.y) + 1,
-      PAL.iron[1],
-    );
+    bar(b, 0.32, -0.42, 30, 0.32, 0.42, 30, PAL.iron[3]);
+    bar(b, 0.32, -0.42, 29, 0.32, 0.42, 29, PAL.iron[1]);
+    bar(b, 0.42, -0.42, 30, 0.42, 0.42, 30, PAL.iron[3]);
+    // trolley and hook with a crate
+    const tr = proj(OX, GY, 0.37, 0.0, 30);
+    b.rect(rx(tr) - 2, ry(tr) - 3, 5, 3, PAL.iron[0]);
+    b.rect(rx(tr), ry(tr), 1, 12, PAL.iron[3]);
+    b.rect(rx(tr) - 2, ry(tr) + 12, 5, 4, PAL.cargoGoods);
     crates(
       b,
       [
-        [0.3, 0.08],
-        [0.36, -0.12],
-        [0.2, 0.3],
+        [0.3, 0.22],
+        [0.38, -0.2],
+        [0.14, 0.36],
       ],
       89,
     );
@@ -672,151 +939,161 @@ function warehouse(level: number): PixelBuf {
 /** Beehive brick kiln with a wood pile and a glowing mouth. */
 function kiln(): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 91, 0.94, 0.94);
-  drawCylinder(b, OX, GY, -0.1, -0.06, 0.24, 0, 14, BRICK, BRICK[2], 92);
-  const t = proj(OX, GY, -0.1, -0.06, 14);
-  const rx = 0.24 * 32;
-  for (let d = 1; d <= 10; d++) {
-    const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (d / 11) ** 2)));
+  yard(b, 91);
+  const kx = -0.08;
+  const ky = -0.08;
+  const kr = 0.27;
+  drawCylinder(b, OX, GY, kx, ky, kr, 0, 10, BRICK, BRICK[2], 92);
+  const t = proj(OX, GY, kx, ky, 10);
+  const prx = kr * 32;
+  const dome = 15;
+  for (let d = 1; d <= dome; d++) {
+    const w = Math.round(prx * Math.sqrt(Math.max(0, 1 - (d / (dome + 1)) ** 2)));
     for (let x = -w; x <= w; x++) {
-      const n = hash2(x >> 1, d, 93);
-      b.set(
-        Math.round(t.x) + x,
-        Math.round(t.y) - d,
-        shade(BRICK[Math.floor(n * 3)], 0.8 + 0.03 * d),
-      );
+      const n = hash2(x >> 1, d >> 1, 93);
+      const light = 0.78 + 0.03 * d + 0.18 * (1 - (x / prx + 1) / 2);
+      b.set(rx(t) + x, ry(t) - d, shade(pick(BRICK, n), light));
     }
   }
-  // smoke vent
-  b.rect(Math.round(t.x) - 2, Math.round(t.y) - 12, 4, 2, PAL.outline);
+  // iron hoop and the smoke vent on top
+  for (let x = -Math.round(prx * 0.95); x <= Math.round(prx * 0.95); x++)
+    b.set(rx(t) + x, ry(t) - 4 + Math.round(((x * x) / (prx * prx)) * 3), PAL.iron[1]);
+  b.rect(rx(t) - 2, ry(t) - dome - 2, 5, 3, PAL.iron[0]);
+  b.set(rx(t) - 3, ry(t) - dome - 4, PAL.stone[2]);
+  b.set(rx(t) - 5, ry(t) - dome - 6, PAL.stone[1]);
   // glowing mouth on the front
-  const m = proj(OX, GY, 0.02, 0.16);
-  b.rect(Math.round(m.x) - 3, Math.round(m.y) - 6, 6, 5, PAL.outline);
-  b.rect(Math.round(m.x) - 2, Math.round(m.y) - 5, 4, 3, PAL.amberDark);
-  b.set(Math.round(m.x), Math.round(m.y) - 4, PAL.amber);
+  const c = proj(OX, GY, kx, ky, 0);
+  const mx = rx(c);
+  const my = ry(c) + Math.round(kr * 16) - 1;
+  b.rect(mx - 3, my - 7, 7, 7, PAL.outline);
+  b.rect(mx - 2, my - 6, 5, 5, PAL.amberDark);
+  b.rect(mx - 1, my - 5, 3, 3, PAL.amber);
+  b.set(mx, my - 4, PAL.white);
   logStack(b, 0.26, 0.2, 0.3, 2, 94);
-  heap(b, -0.32, 0.32, 0.12, 5, COAL, 95);
+  heap(b, -0.32, 0.3, 0.1, 5, COAL, 95);
   b.outline(PAL.outline, 170);
   return b;
 }
 
-/** Stone grinder: mill house with a big cog wheel, stone in, gravel and ingots out. */
+/** Stone grinder: tall mill tower with a big cog wheel, stone in, gravel and ingots out. */
 function grinder(): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 101, 0.94, 0.94);
-  house(b, -0.14, -0.12, 0.46, 0.38, 20, PAL.stone, PAL.roofSlate, 102);
-  facade(b, -0.14, -0.12, 0.38, [-0.24, 0.02], null);
-  chimney(b, -0.32, -0.28, 20, 12, 0.045);
-  // cog wheel on the +x face
-  const c = proj(OX, GY, 0.1, -0.12, 11);
-  const cx = Math.round(c.x) + 3;
-  const cy = Math.round(c.y);
-  for (let a = 0; a < 12; a++) {
-    const x = Math.round(Math.cos((a / 12) * Math.PI * 2) * 4);
-    const y = Math.round(Math.sin((a / 12) * Math.PI * 2) * 7);
-    b.set(cx + x, cy + y, PAL.iron[3]);
+  slab(b, 101, GRAVEL);
+  const tx = -0.16;
+  const ty = -0.14;
+  house(b, tx, ty, 0.32, 0.32, 32, PAL.stone, PAL.roofSlate, 102);
+  facade(b, tx, ty, 0.32, [-0.08, 0.06], null, 14);
+  facade(b, tx, ty, 0.32, [-0.08], 0.06);
+  chimney(b, tx - 0.1, ty - 0.1, 38, 8, 0.04);
+  // big cog wheel on the +x face
+  const c = proj(OX, GY, tx + 0.16, ty, 16);
+  const cx = rx(c) + 2;
+  const cy = ry(c);
+  for (let a = 0; a < 24; a++) {
+    const ang = (a / 24) * Math.PI * 2;
+    b.set(cx + Math.round(Math.cos(ang) * 5), cy + Math.round(Math.sin(ang) * 9), PAL.iron[3]);
+    if (a % 3 === 0)
+      b.set(cx + Math.round(Math.cos(ang) * 6), cy + Math.round(Math.sin(ang) * 11), PAL.iron[1]);
   }
-  for (let a = 0; a < 8; a++) {
-    const x = Math.round(Math.cos((a / 8) * Math.PI * 2) * 2.5);
-    const y = Math.round(Math.sin((a / 8) * Math.PI * 2) * 4.5);
-    b.set(cx + x, cy + y, PAL.iron[1]);
+  for (let a = 0; a < 6; a++) {
+    const ang = (a / 6) * Math.PI * 2;
+    b.line(
+      cx,
+      cy,
+      cx + Math.round(Math.cos(ang) * 4),
+      cy + Math.round(Math.sin(ang) * 7),
+      PAL.iron[1],
+    );
   }
-  b.set(cx, cy, PAL.brass);
-  // hopper mouth
+  b.rect(cx - 1, cy - 1, 3, 3, PAL.brass);
+  // hopper mouth on the roof and a feed chute
   drawPrism(b, {
     ox: OX,
     oy: GY,
-    cx: 0.14,
-    cy: -0.1,
+    cx: tx + 0.14,
+    cy: ty - 0.1,
     angle: 0,
-    len: 0.14,
-    wid: 0.14,
+    len: 0.12,
+    wid: 0.12,
     h: 6,
-    z0: 20,
+    z0: 34,
     top: [PAL.iron[2], PAL.iron[0]],
     side: PAL.iron,
     seed: 103,
   });
-  heap(b, 0.28, 0.22, 0.16, 7, PAL.rock, 104);
-  heap(b, -0.3, 0.32, 0.12, 4, GRAVEL, 105);
-  // ingot stack
-  for (let i = 0; i < 3; i++) {
-    const p = proj(OX, GY, 0.02 + i * 0.05, 0.34, 0);
-    b.rect(Math.round(p.x) - 2, Math.round(p.y) - 3 - (i % 2), 5, 3, STEEL[i % 3]);
-  }
+  heap(b, 0.26, 0.2, 0.17, 8, PAL.rock, 104);
+  heap(b, -0.28, 0.32, 0.11, 4, GRAVEL, 105);
+  ingots(b, 0.06, 0.36);
   b.outline(PAL.outline, 170);
   return b;
 }
 
-/** Refinery: distillation column, two storage tanks, a flare stack and pipework. */
+/** Refinery: silver distillation column, two white tanks, a flare stack and pipework. */
 function refinery(): PixelBuf {
   const b = new PixelBuf(W, H);
-  pad(b, 0, 0, 0.94, 0.94, (x, y) => shade(PAL.stone[2], 0.8 + 0.1 * hash2(x, y, 111)));
-  pad(
-    b,
-    0,
-    0,
-    0.94,
-    0.94,
-    (x, y) => CONCRETE[Math.min(2, Math.floor(hash2(x >> 2, y >> 1, 112) * 3))],
-    3,
-  );
-  drawCylinder(b, OX, GY, -0.26, -0.22, 0.08, 0, 38, STEEL, STEEL[1], 113);
-  // column rings
-  for (const z of [10, 20, 30]) {
-    const r = proj(OX, GY, -0.26, -0.22, z);
+  concrete(b, 111);
+  const cx = -0.28;
+  const cy = -0.24;
+  drawCylinder(b, OX, GY, cx, cy, 0.09, 0, 46, SILVER, SILVER[1], 113);
+  // rings, a platform and a ladder on the column
+  for (const z of [12, 24, 36]) {
+    const r = proj(OX, GY, cx, cy, z);
     for (let x = -3; x <= 3; x++)
-      b.set(
-        Math.round(r.x) + x,
-        Math.round(r.y) + Math.round(Math.sqrt(9 - x * x) * 0.5),
-        PAL.iron[2],
-      );
+      b.set(rx(r) + x, ry(r) + Math.round(Math.sqrt(9 - x * x) * 0.5), PAL.iron[2]);
   }
-  silo(b, 0.14, -0.22, 0.14, 14, [WHITEWASH[2], WHITEWASH[0], WHITEWASH[1]], WHITEWASH[1], 114);
-  silo(b, 0.3, 0.1, 0.12, 12, [WHITEWASH[2], WHITEWASH[0], WHITEWASH[1]], WHITEWASH[1], 115);
-  // pipes
-  const p0 = proj(OX, GY, -0.18, -0.16, 22);
-  const p1 = proj(OX, GY, 0.08, -0.16, 14);
-  b.line(Math.round(p0.x), Math.round(p0.y), Math.round(p1.x), Math.round(p1.y), PAL.iron[3]);
-  const p2 = proj(OX, GY, 0.14, -0.06, 4);
-  const p3 = proj(OX, GY, 0.3, 0.0, 4);
-  b.line(Math.round(p2.x), Math.round(p2.y), Math.round(p3.x), Math.round(p3.y), PAL.iron[3]);
+  const pl = proj(OX, GY, cx, cy, 30);
+  b.rect(rx(pl) - 5, ry(pl), 11, 1, PAL.iron[1]);
+  b.rect(rx(pl) - 5, ry(pl) - 3, 1, 3, PAL.iron[3]);
+  b.rect(rx(pl) + 5, ry(pl) - 3, 1, 3, PAL.iron[3]);
+  silo(b, 0.14, -0.24, 0.14, 15, TANK_WHITE, TANK_WHITE[1], 114);
+  silo(b, 0.3, 0.12, 0.12, 12, TANK_WHITE, TANK_WHITE[1], 115);
+  // red band on the big tank
+  const bd = proj(OX, GY, 0.14, -0.24, 11);
+  for (let x = -4; x <= 4; x++)
+    b.set(rx(bd) + x, ry(bd) + 4 + Math.round(Math.abs(x) / 3), PAL.red);
+  // pipes: column -> tank 1 (elevated), tank 1 -> tank 2 (ground)
+  bar(b, cx + 0.08, cy, 24, 0.02, cy, 24, PAL.iron[3]);
+  bar(b, 0.02, cy, 24, 0.02, cy, 15, PAL.iron[3]);
+  bar(b, 0.14, -0.1, 4, 0.14, 0.02, 4, PAL.iron[3]);
+  bar(b, 0.14, 0.02, 4, 0.28, 0.02, 4, PAL.iron[3]);
   // small control house
-  house(b, -0.22, 0.24, 0.3, 0.24, 9, BRICK, PAL.roofSlate, 116);
-  facade(b, -0.22, 0.24, 0.24, [-0.08], 0.06);
-  // flare stack
-  const f = proj(OX, GY, 0.0, 0.36);
-  b.rect(Math.round(f.x), Math.round(f.y) - 28, 1, 28, PAL.iron[2]);
-  b.rect(Math.round(f.x) - 1, Math.round(f.y) - 31, 3, 3, PAL.amber);
-  b.set(Math.round(f.x), Math.round(f.y) - 32, PAL.red);
-  crates(b, [[0.34, 0.34]], 117);
+  house(b, -0.24, 0.24, 0.28, 0.22, 9, BRICK, PAL.roofSlate, 116);
+  facade(b, -0.24, 0.24, 0.22, [-0.08], 0.06);
+  // flare stack with a flame
+  const f = proj(OX, GY, 0.04, 0.36);
+  b.rect(rx(f), ry(f) - 30, 1, 30, PAL.iron[2]);
+  b.rect(rx(f) - 1, ry(f) - 31, 3, 2, PAL.iron[0]);
+  b.rect(rx(f) - 1, ry(f) - 34, 3, 3, PAL.amber);
+  b.set(rx(f), ry(f) - 35, PAL.red);
+  b.set(rx(f), ry(f) - 33, PAL.white);
+  crates(b, [[0.36, 0.36]], 119);
   b.outline(PAL.outline, 170);
   return b;
 }
 
-/** Power plant: turbine hall, tall stack, cooling tank and a switchyard pole. */
+/** Power plant: brick turbine hall, very tall banded chimney, cooling tank and a switchyard pole. */
 function powerPlant(): PixelBuf {
   const b = new PixelBuf(W, H);
-  pad(b, 0, 0, 0.96, 0.96, (x, y) => shade(PAL.stone[2], 0.8 + 0.1 * hash2(x, y, 121)));
-  pad(
-    b,
-    0,
-    0,
-    0.96,
-    0.96,
-    (x, y) => CONCRETE[Math.min(2, Math.floor(hash2(x >> 2, y >> 1, 122) * 3))],
-    3,
-  );
-  house(b, -0.1, -0.12, 0.6, 0.4, 22, BRICK, PAL.roofSlate, 123);
-  facade(b, -0.1, -0.12, 0.4, [-0.3, -0.16, -0.02, 0.12], null);
+  concrete(b, 121);
+  const hx = -0.08;
+  const hy = -0.1;
+  house(b, hx, hy, 0.62, 0.42, 22, BRICK, PAL.roofSlate, 123);
+  // tall arched windows on the +y face
+  for (const tx of [-0.24, -0.12, 0.0, 0.12]) {
+    const w = proj(OX, GY, hx + tx, hy + 0.21, 0);
+    b.rect(rx(w) - 1, ry(w) - 16, 3, 8, PAL.amberDark);
+    b.set(rx(w), ry(w) - 17, PAL.amberDark);
+    b.set(rx(w), ry(w) - 14, PAL.amber);
+  }
+  opening(b, hx + 0.19, hy + 0.21, hx + 0.27, hy + 0.21, 0, 12, PAL.outline);
   // clerestory strip on the roof
   drawPrism(b, {
     ox: OX,
     oy: GY,
-    cx: -0.1,
-    cy: -0.12,
+    cx: hx,
+    cy: hy,
     angle: 0,
-    len: 0.4,
+    len: 0.42,
     wid: 0.1,
     h: 4,
     z0: 28,
@@ -824,17 +1101,23 @@ function powerPlant(): PixelBuf {
     side: [PAL.amberDark, PAL.amber],
     seed: 124,
   });
-  chimney(b, -0.36, -0.3, 22, 30, 0.06);
-  const s = proj(OX, GY, -0.36, -0.3, 52);
-  b.rect(Math.round(s.x) - 2, Math.round(s.y), 5, 1, PAL.red);
+  // chimney with a red band and an iron cap
+  const sx = -0.36;
+  const sy = -0.34;
+  chimney(b, sx, sy, 0, 48, 0.065, BRICK);
+  const s = proj(OX, GY, sx, sy, 40);
+  b.rect(rx(s) - 2, ry(s), 5, 3, PAL.red);
+  const cap = proj(OX, GY, sx, sy, 48);
+  b.rect(rx(cap) - 2, ry(cap) - 1, 5, 2, PAL.iron[0]);
   // cooling tank
-  silo(b, 0.3, 0.14, 0.14, 12, STEEL, STEEL[1], 125);
-  // transformer box and pole
+  silo(b, 0.3, 0.2, 0.14, 14, STEEL, STEEL[1], 125);
+  bar(b, 0.22, 0.12, 6, 0.16, 0.1, 6, PAL.iron[3]);
+  // transformer box with insulators, and a pole
   drawPrism(b, {
     ox: OX,
     oy: GY,
     cx: -0.3,
-    cy: 0.3,
+    cy: 0.32,
     angle: 0,
     len: 0.14,
     wid: 0.12,
@@ -843,11 +1126,14 @@ function powerPlant(): PixelBuf {
     side: [PAL.iron[2], PAL.iron[0]],
     seed: 126,
   });
-  const tp = proj(OX, GY, -0.3, 0.3, 8);
-  for (const x of [-2, 0, 2]) b.set(Math.round(tp.x) + x, Math.round(tp.y) - 2, PAL.cyan);
-  const pl = proj(OX, GY, 0.06, 0.36);
-  pole(b, Math.round(pl.x), Math.round(pl.y), 24);
-  heap(b, 0.34, -0.3, 0.12, 5, COAL, 127);
+  const tp = proj(OX, GY, -0.3, 0.32, 8);
+  for (const x of [-2, 0, 2]) {
+    b.set(rx(tp) + x, ry(tp) - 2, PAL.cyan);
+    b.set(rx(tp) + x, ry(tp) - 1, PAL.cyanDark);
+  }
+  const pl = proj(OX, GY, 0.04, 0.38);
+  pole(b, rx(pl), ry(pl), 24);
+  heap(b, 0.32, -0.3, 0.11, 5, COAL, 127);
   b.outline(PAL.outline, 170);
   return b;
 }
@@ -865,32 +1151,24 @@ function powerLine(): PixelBuf {
 /** Coaling stage: a timber trestle carrying a coal bunker with a chute. */
 function fuelStop(): PixelBuf {
   const b = new PixelBuf(W, H);
-  for (const [lx, ly] of [
+  const legs: [number, number][] = [
     [-0.18, -0.14],
     [0.18, -0.14],
     [0.18, 0.14],
     [-0.18, 0.14],
-  ]) {
+  ];
+  for (const [lx, ly] of legs) {
     const p = proj(OX, OY, lx, ly);
-    b.rect(Math.round(p.x) - 1, Math.round(p.y) - 20, 2, 20, PAL.timber[2]);
+    b.rect(rx(p) - 1, ry(p) - 20, 2, 20, PAL.timber[2]);
   }
-  // cross bracing
+  // cross bracing on the two visible sides
   const b0 = proj(OX, OY, -0.18, 0.14);
   const b1 = proj(OX, OY, 0.18, 0.14);
-  b.line(
-    Math.round(b0.x),
-    Math.round(b0.y) - 18,
-    Math.round(b1.x),
-    Math.round(b1.y) - 4,
-    PAL.timber[1],
-  );
-  b.line(
-    Math.round(b0.x),
-    Math.round(b0.y) - 4,
-    Math.round(b1.x),
-    Math.round(b1.y) - 18,
-    PAL.timber[1],
-  );
+  const b2 = proj(OX, OY, 0.18, -0.14);
+  b.line(rx(b0), ry(b0) - 18, rx(b1), ry(b1) - 4, PAL.timber[1]);
+  b.line(rx(b0), ry(b0) - 4, rx(b1), ry(b1) - 18, PAL.timber[1]);
+  b.line(rx(b1), ry(b1) - 18, rx(b2), ry(b2) - 4, PAL.timber[1]);
+  b.line(rx(b1), ry(b1) - 4, rx(b2), ry(b2) - 18, PAL.timber[1]);
   drawPrism(b, {
     ox: OX,
     oy: OY,
@@ -909,19 +1187,19 @@ function fuelStop(): PixelBuf {
   const t = proj(OX, OY, 0, 0, 32);
   for (let d = 0; d < 4; d++)
     for (let x = -10 + d * 2; x <= 10 - d * 2; x++)
-      b.set(Math.round(t.x) + x, Math.round(t.y) - d, COAL[(((x + d) % 3) + 3) % 3]);
+      b.set(rx(t) + x, ry(t) - d, COAL[(((x + d) % 3) + 3) % 3]);
   // chute towards the track side
   const c0 = proj(OX, OY, 0.22, 0.1, 22);
   const c1 = proj(OX, OY, 0.4, 0.2, 12);
-  b.line(Math.round(c0.x), Math.round(c0.y), Math.round(c1.x), Math.round(c1.y), PAL.iron[1]);
-  b.line(
-    Math.round(c0.x),
-    Math.round(c0.y) + 1,
-    Math.round(c1.x),
-    Math.round(c1.y) + 1,
-    PAL.iron[2],
-  );
-  heap(b, -0.3, 0.3, 0.12, 5, COAL, 132);
+  b.line(rx(c0), ry(c0), rx(c1), ry(c1), PAL.iron[1]);
+  b.line(rx(c0), ry(c0) + 1, rx(c1), ry(c1) + 1, PAL.iron[2]);
+  // ladder on the front leg
+  const ld = proj(OX, OY, -0.18, 0.14);
+  for (let y = 2; y < 20; y += 3) b.rect(rx(ld) - 3, ry(ld) - y, 3, 1, PAL.timber[1]);
+  const gnd = (x: number, y: number) => shade(pick(COAL, hash2(x, y, 133)), 1.1);
+  pad(b, -0.28, 0.28, 0.24, 0.24, gnd, 0);
+  const h0 = proj(OX, OY, -0.28, 0.28);
+  b.ellipse(rx(h0), ry(h0) - 3, 6, 4, COAL, 132, 0.5);
   b.outline(PAL.outline, 170);
   return b;
 }

@@ -185,3 +185,13 @@
 
 - Weekly estimates come from the last loop only; a short first loop can over- or under-state them until the next loop completes.
 - Chunk price depends on ring distance only, not on terrain.
+
+## 10. v0.5.0 — traffic, biomes, people, notices
+
+From this version on the per-version record lives in `CHANGELOG.md` (versions ↔ pull requests ↔ commits). Highlights: trains pull aside for oncoming traffic instead of phasing through, economy mode on low tanks, half top-ups at every stop; 9×9 chunk world with lazily built ground and diagonal reveal; six biomes with effects, rivers, islands and biome vegetation; walkers that wear paths into roads, crossings, passengers and coaches; notices with map markers and an advisor; reworked top bar, resource cards, train panel, toolbar groups and station/works art.
+
+**Known limitations**
+
+- Two trains on a single track with no loop or siding cannot pass; the notice and advisor point at it.
+- Passenger boarding walkers are decorative; the fare is paid on alighting regardless of how many appear.
+- Roads never wear back to grass.

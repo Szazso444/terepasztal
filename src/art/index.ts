@@ -6,6 +6,7 @@ import { generateStructuresAtlas } from './structures';
 import { generateRollingAtlas } from './rolling';
 import { generateFxAtlas } from './fx';
 import { generateIconsAtlas } from './icons';
+import { generatePeopleAtlas } from './people';
 
 /**
  * Atlas groups. A real `/public/assets/<name>.png` + `.json` pair overrides the generator for that
@@ -19,4 +20,5 @@ export const ATLAS_GROUPS: { name: string; generate: AtlasGenerator }[] = [
   { name: 'rolling', generate: generateRollingAtlas },
   { name: 'fx', generate: generateFxAtlas },
   { name: 'icons', generate: generateIconsAtlas },
+  { name: 'people', generate: generatePeopleAtlas },
 ];

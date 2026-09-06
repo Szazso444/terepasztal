@@ -4,7 +4,7 @@ import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
 import { TRACK_KINDS, pieceCost, type TrackKind } from '../world/track';
 import { STATION_DEFS } from '../sim/stations';
-import { DECOR_DEFS } from '../sim/build';
+import { DECOR_DEFS, decorDef } from '../sim/build';
 import { Terrain, TERRAIN_NAMES } from '../world/tiles';
 import type { Cost } from '../data/content';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -30,8 +30,12 @@ export interface ToolItem {
   frame: string;
   desc: string;
   tier: number;
+  /** where it can go and what it needs, shown under the description */
+  place: string;
+  /** Chebyshev reach shown as a highlight while placing (services, power lines) */
+  reach?: number;
 }
-export type CategoryId = 'track' | 'stations' | 'decor' | 'works' | 'terrain';
+export type CategoryId = 'track' | 'stations' | 'decor' | 'utility' | 'works' | 'terrain';
 interface Category {
   id: CategoryId;
   label: string;
@@ -95,6 +99,7 @@ export class Toolbar {
       frame: `track/${k}_0`,
       desc: STR.toolbar.trackDesc[k] ?? '',
       tier: 0,
+      place: k === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
     }));
     const stations: ToolItem[] = STATION_DEFS.map((d) => ({
       key: `station:${d.id}`,
@@ -104,8 +109,9 @@ export class Toolbar {
       frame: atlas.has(`structures/${d.art}_1`) ? `structures/${d.art}_1` : 'structures/station_1',
       desc: d.flavor,
       tier: d.tier,
+      place: STR.toolbar.place.station,
     }));
-    const decor: ToolItem[] = DECOR_DEFS.map((d) => ({
+    const decorItem = (d: (typeof DECOR_DEFS)[number]): ToolItem => ({
       key: `decor:${d.id}`,
       tool: { kind: 'decor', defId: d.id },
       name: d.name,
@@ -113,7 +119,17 @@ export class Toolbar {
       frame: d.id === 'signal' ? 'structures/signal_green' : `structures/${d.id}`,
       desc: d.flavor,
       tier: 0,
-    }));
+      place: d.power
+        ? STR.toolbar.place.powerLine
+        : d.onTrack
+          ? STR.toolbar.place.onTrack
+          : d.radius
+            ? STR.toolbar.place.service(d.radius)
+            : STR.toolbar.place.building,
+      reach: d.power ? 2 : d.radius,
+    });
+    const services = DECOR_DEFS.filter((d) => !d.onTrack).map(decorItem);
+    const utility = DECOR_DEFS.filter((d) => d.onTrack).map(decorItem);
     const works: ToolItem[] = BUILDING_DEFS.map((d) => ({
       key: `building:${d.id}`,
       tool: { kind: 'building', defId: d.id },
@@ -122,6 +138,8 @@ export class Toolbar {
       frame: `structures/${d.id}`,
       desc: d.flavor,
       tier: d.tier,
+      place: d.power ? STR.toolbar.place.plant : STR.toolbar.place.works,
+      reach: d.power ? 2 : undefined,
     }));
     const terrain: ToolItem[] = [
       Terrain.Grass,
@@ -139,12 +157,14 @@ export class Toolbar {
         t === Terrain.Water ? 'terrain/water_0_f0' : `terrain/${TERRAIN_NAMES[t].toLowerCase()}_0`,
       desc: STR.editor.terrainDesc,
       tier: 0,
+      place: '',
     }));
     this.categories = [
       { id: 'track', label: STR.toolbar.track, items: track },
       { id: 'stations', label: STR.toolbar.stations, items: stations },
-      { id: 'decor', label: STR.toolbar.decor, items: decor },
       { id: 'works', label: STR.toolbar.buildings, items: works },
+      { id: 'decor', label: STR.toolbar.services, items: services },
+      { id: 'utility', label: STR.toolbar.utility, items: utility },
       { id: 'terrain', label: STR.editor.terrain, items: terrain, editorOnly: true },
     ];
     const catRow = el('div', { class: 'tb-row tb-cats' });
@@ -164,15 +184,6 @@ export class Toolbar {
       catRow,
       this.itemRow,
       el('div', { class: 'tb-row tb-statusrow' }, this.status, this.hint),
-    );
-    this.root.addEventListener(
-      'wheel',
-      (e) => {
-        if (!this.open) return;
-        e.preventDefault();
-        this.cycle(Math.sign(e.deltaY));
-      },
-      { passive: false },
     );
   }
 
@@ -285,7 +296,9 @@ export class Toolbar {
         : t.kind === 'station'
           ? 'stations'
           : t.kind === 'decor'
-            ? 'decor'
+            ? decorDef(t.defId).onTrack
+              ? 'utility'
+              : 'decor'
             : t.kind === 'building'
               ? 'works'
               : t.kind === 'terrain'

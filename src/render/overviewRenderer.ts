@@ -3,6 +3,7 @@ import { Terrain, type GameMap } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import { PAL, css, hex } from '../art/palette';
 import { STR } from '../strings';
+import { biomeShade } from '../ui/minimap';
 
 /** Overview unit: pixels per tile in the layer's local space. */
 export const OV_UNIT = 8;
@@ -20,6 +21,13 @@ export interface OverviewTrain {
   y: number;
   name: string;
   heading: number;
+  /** atlas frame of the leading locomotive facing its direction of travel */
+  frame?: string;
+}
+export interface OverviewMarker {
+  x: number;
+  y: number;
+  kind: 'info' | 'warn' | 'bad';
 }
 export interface OverviewContract {
   id: number;
@@ -34,11 +42,12 @@ export interface OverviewSource {
   stations(): OverviewStation[];
   trains(): OverviewTrain[];
   contracts(): OverviewContract[];
+  markers(): OverviewMarker[];
 }
 
 const FLAT_COLORS: Record<number, string> = {
-  [Terrain.Grass]: css([58, 72, 44]),
-  [Terrain.Forest]: css([42, 56, 36]),
+  [Terrain.Grass]: '#3a482c',
+  [Terrain.Forest]: '#2a3824',
   [Terrain.Hill]: css([94, 86, 60]),
   [Terrain.Water]: css([30, 46, 62]),
   [Terrain.Rock]: css([78, 76, 70]),
@@ -60,6 +69,9 @@ export class OverviewRenderer {
   private contractLabels = new Map<number, Text>();
   private powerG = new Graphics();
   private pathG = new Graphics();
+  private markerG = new Graphics();
+  /** atlas for locomotive icons (optional; arrows without it) */
+  atlas: { has(k: string): boolean; get(k: string): { texture: Texture } } | null = null;
   /** tiles to highlight (a hovered train's predicted path), outermost leg first */
   highlight: { x: number; y: number }[][] = [];
   /** Set by the game: the tile currently hovered in overview space. */
@@ -81,6 +93,7 @@ export class OverviewRenderer {
       this.contractG,
       this.stationLayer,
       this.trainLayer,
+      this.markerG,
       this.regionLabels,
     );
     this.rebuildRegions();
@@ -93,7 +106,11 @@ export class OverviewRenderer {
     const ctx = c.getContext('2d')!;
     for (let y = 0; y < this.map.h; y++)
       for (let x = 0; x < this.map.w; x++) {
-        ctx.fillStyle = FLAT_COLORS[this.map.terrain[y * this.map.w + x]];
+        ctx.fillStyle = biomeShade(
+          FLAT_COLORS[this.map.terrain[y * this.map.w + x]],
+          this.map.biome[y * this.map.w + x],
+          this.map.terrain[y * this.map.w + x],
+        );
         ctx.fillRect(x, y, 1, 1);
       }
     return new Texture({ source: new ImageSource({ resource: c, scaleMode: 'nearest' }) });
@@ -222,20 +239,50 @@ export class OverviewRenderer {
         this.trainNodes.set(t.id, node);
       }
       node.position.set((t.x + 0.5) * U, (t.y + 0.5) * U);
-      node.rotation = t.heading;
       const hovered = this.hover?.kind === 'train' && this.hover.id === t.id;
       const g = node.getChildByLabel('g') as Graphics;
       g.clear();
-      g.poly([7, 0, -5, -4, -3, 0, -5, 4]).fill({
-        color: hovered ? hex(PAL.white) : hex(PAL.amber),
-      });
-      g.poly([7, 0, -5, -4, -3, 0, -5, 4]).stroke({ color: 0x000000, width: 1 });
+      const frame = t.frame && this.atlas?.has(t.frame) ? t.frame : null;
+      let icon = node.getChildByLabel('icon') as Sprite | null;
+      if (frame) {
+        node.rotation = 0;
+        if (!icon) {
+          icon = new Sprite();
+          icon.label = 'icon';
+          icon.anchor.set(0.5, 0.7);
+          icon.scale.set(0.6);
+          node.addChild(icon);
+        }
+        icon.texture = this.atlas!.get(frame).texture;
+        icon.visible = true;
+        g.circle(0, 2, 12).fill({
+          color: hovered ? hex(PAL.white) : 0x000000,
+          alpha: hovered ? 0.5 : 0.45,
+        });
+      } else {
+        if (icon) icon.visible = false;
+        node.rotation = t.heading;
+        g.poly([7, 0, -5, -4, -3, 0, -5, 4]).fill({
+          color: hovered ? hex(PAL.white) : hex(PAL.amber),
+        });
+        g.poly([7, 0, -5, -4, -3, 0, -5, 4]).stroke({ color: 0x000000, width: 1 });
+      }
     }
     for (const [id, n] of this.trainNodes)
       if (!seenT.has(id)) {
         n.destroy();
         this.trainNodes.delete(id);
       }
+    // notice markers
+    this.markerG.clear();
+    for (const m of this.source.markers()) {
+      const mx = (m.x + 0.5) * U;
+      const my = (m.y + 0.5) * U - 12;
+      const col =
+        m.kind === 'bad' ? hex(PAL.red) : m.kind === 'warn' ? hex(PAL.amber) : hex(PAL.cyan);
+      this.markerG.circle(mx, my, 6).fill({ color: 0x000000, alpha: 0.7 });
+      this.markerG.circle(mx, my, 4).fill({ color: col });
+    }
     // contracts
     this.contractG.clear();
     const contracts = this.source.contracts();

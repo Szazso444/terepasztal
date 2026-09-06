@@ -24,6 +24,9 @@ export class BuildController {
   private ghost: Sprite | null = null;
   private ghostDiamond: Sprite;
   private lineGhosts: Sprite[] = [];
+  private reachGhosts: Sprite[] = [];
+  /** reach (Chebyshev tiles) highlighted around the cursor while placing; 0 = none */
+  reach = 0;
   private dragStart: { x: number; y: number } | null = null;
   private selectSprite: Sprite;
   selected: Station | null = null;
@@ -71,6 +74,7 @@ export class BuildController {
   }
 
   private clearGhost() {
+    for (const g of this.reachGhosts) g.visible = false;
     if (this.ghost) {
       this.ghost.destroy();
       this.ghost = null;
@@ -139,7 +143,33 @@ export class BuildController {
       if (this.ghost) this.ghost.visible = false;
       this.ghostDiamond.visible = false;
       for (const g of this.lineGhosts) g.visible = false;
+      for (const g of this.reachGhosts) g.visible = false;
     }
+  }
+  /** Faint diamonds on every tile within `r` of the cursor (what a service or pole would cover). */
+  private showReach(t: { x: number; y: number }, r: number) {
+    const need = r > 0 ? (2 * r + 1) * (2 * r + 1) - 1 : 0;
+    while (this.reachGhosts.length < need) {
+      const g = this.world.makeOverlaySprite('terrain/select');
+      g.alpha = 0.35;
+      this.reachGhosts.push(g);
+    }
+    let k = 0;
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        if (!dx && !dy) continue;
+        const g = this.reachGhosts[k++];
+        const x = t.x + dx;
+        const y = t.y + dy;
+        if (!inBounds(this.builder.map, x, y)) {
+          g.visible = false;
+          continue;
+        }
+        const p = this.world.surfacePoint(x, y);
+        g.position.set(p.x, p.y);
+        g.visible = true;
+      }
+    for (; k < this.reachGhosts.length; k++) this.reachGhosts[k].visible = false;
   }
 
   private ensureGhost(frame: string): Sprite {
@@ -303,6 +333,7 @@ export class BuildController {
       return;
     }
     const def = decorDef(tool.defId);
+    this.showReach(t, def.power ? 2 : (def.radius ?? 0));
     const check = this.builder.checkDecor(t.x, t.y, tool.defId);
     const g = this.ensureGhost(def.id === 'signal' ? 'structures/signal' : `structures/${def.id}`);
     this.placeGhostAt(g, t.x, t.y, check.ok);
@@ -329,6 +360,7 @@ export class BuildController {
       return;
     }
     const def = buildingDef(tool.defId);
+    this.showReach(t, def.power ? 2 : 0);
     const check = this.builder.checkBuilding(t.x, t.y, tool.defId);
     const g = this.ensureGhost(`structures/${def.id}`);
     this.placeGhostAt(g, t.x, t.y, check.ok);

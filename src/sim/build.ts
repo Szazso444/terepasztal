@@ -8,6 +8,7 @@ import { Station, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
 import type { Economy } from './economy';
 import { Stockpile, scaleCost } from './stockpile';
 import { buildingDef, BUILDING_DEFS, type Building } from './buildings';
+import { biomeDef, biomeAt } from './biomes';
 import { STR } from '../strings';
 import { sfx } from '../engine/audio';
 
@@ -89,7 +90,8 @@ export class Builder {
   }
   terrainMul(x: number, y: number): number {
     const t = terrainAt(this.map, x, y);
-    return (trackData.terrainCost as Record<string, number>)[TERRAIN_NAMES[t]] ?? 0;
+    const base = (trackData.terrainCost as Record<string, number>)[TERRAIN_NAMES[t]] ?? 0;
+    return base * biomeDef(biomeAt(this.map, x, y)).trackCostMul;
   }
   private priced(cost: Cost, mul: number): Cost {
     return this.free ? {} : scaleCost(cost, mul * rules.buildCostMul);
@@ -137,6 +139,14 @@ export class Builder {
     return this.platformTiles(s).length === 0;
   }
   /** Crew of everything built (trains add their own). */
+  decorHas(id: string) {
+    for (const d of this.decor.values()) if (d.id === id) return true;
+    return false;
+  }
+  buildingHas(id: string) {
+    for (const b of this.buildings.values()) if (b.id === id) return true;
+    return false;
+  }
   crewTotal() {
     let n = 0;
     for (const s of this.stations) n += s.crew;

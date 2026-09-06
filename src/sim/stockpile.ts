@@ -3,7 +3,10 @@ import type { Cost } from '../data/content';
 import { rules, daySeconds } from './rules';
 
 /** Resource ids that can sit in the stockpile: every cargo plus stored power. */
-export const RESOURCE_IDS: string[] = [...CARGO.map((c) => c.id), 'power'];
+export const RESOURCE_IDS: string[] = [
+  ...CARGO.filter((c) => c.class !== 'people').map((c) => c.id),
+  'power',
+];
 
 /**
  * The player's global stockpile. Fed by deliveries to warehouses and by processing buildings;

@@ -278,12 +278,14 @@ function waterTower(): PixelBuf {
 }
 
 /** Amber "!" marker shown over stations that lost their platform track. */
-function warnMarker(): PixelBuf {
+function warnMarker(color: RGB = PAL.amber, shape: 'triangle' | 'disc' = 'triangle'): PixelBuf {
   const b = new PixelBuf(14, 16);
-  for (let y = 0; y < 14; y++) {
-    const hw = Math.round((y / 13) * 6);
-    for (let x = 7 - hw; x <= 7 + hw - 1; x++) b.set(x, y + 1, PAL.amber);
-  }
+  if (shape === 'triangle') {
+    for (let y = 0; y < 14; y++) {
+      const hw = Math.round((y / 13) * 6);
+      for (let x = 7 - hw; x <= 7 + hw - 1; x++) b.set(x, y + 1, color);
+    }
+  } else b.ellipse(7, 8, 6, 6, [color, shade(color, 0.85)], 3, 0.3);
   b.rect(6, 4, 2, 6, PAL.outline);
   b.rect(6, 11, 2, 2, PAL.outline);
   b.outline(PAL.outline, 220);
@@ -301,6 +303,8 @@ export function generateStructuresAtlas(): AtlasImage {
   ab.add('structures/signal_green', signal('green').toImageData(), 6, 27);
   ab.add('structures/water_tower', waterTower().toImageData(), OX, OY);
   ab.add('structures/warn', warnMarker().toImageData(), 7, 15);
+  ab.add('structures/alert', warnMarker(PAL.red, 'disc').toImageData(), 7, 15);
+  ab.add('structures/note', warnMarker(PAL.cyanDark, 'disc').toImageData(), 7, 15);
   for (const [fam, gen] of Object.entries(STATION_FAMILIES))
     for (let l = 1; l <= 3; l++) ab.add(`structures/${fam}_${l}`, gen(l).toImageData(), OX, OY);
   for (const [id, gen] of Object.entries(BUILDING_SPRITES))

@@ -16,8 +16,10 @@ import { opposite, DIR_DX, DIR_DY, DIRS } from '../engine/iso';
 import type { Economy } from './economy';
 import type { Stockpile } from './stockpile';
 import { cargoDef } from './cargo';
+import type { Station } from './stations';
 import { sfx } from '../engine/audio';
 import { STR } from '../strings';
+import { biomeDef, biomeAt } from './biomes';
 
 export const MAX_WAGONS = 16;
 export const MAX_LOCOS = 4;
@@ -30,6 +32,7 @@ export class Fleet {
   /** set by the game each tick: is a tile inside a live power network? */
   powered: (x: number, y: number) => boolean = () => false;
   onFlow: (x: number, y: number, resource: string, delta: number) => void = () => {};
+  onPassengers: (station: Station, n: number, boarding: boolean) => void = () => {};
   /** last clock time seen by `tick`; used to stamp trips created between ticks */
   clockTime = 0;
   stockCap: (id: string) => number = () => Infinity;
@@ -194,6 +197,12 @@ export class Fleet {
       stockCap: (id) => this.stockCap(id),
       powered: (x, y) => this.powered(x, y),
       onFlow: (x, y, r, d) => this.onFlow(x, y, r, d),
+      onPassengers: (s, n, b) => this.onPassengers(s, n, b),
+      trainPath: (id) => this.byId(id)?.pathTileKeys(this.map.w) ?? new Set<number>(),
+      biomeAt: (x, y) => {
+        const d = biomeDef(biomeAt(this.map, x, y));
+        return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
+      },
     };
   }
   tick(gdt: number, now: number, speedFactor = 1) {
@@ -201,13 +210,16 @@ export class Fleet {
     this.rebuildOccupancy();
     const ctx = this.ctx(now, speedFactor);
     for (const t of this.trains) t.tick(gdt, ctx);
-    // head-on meetings: two trains blocked by each other resolve quickly
+    // head-on meetings: one of the two backs off to its previous stop; the other waits
     for (const a of this.trains) {
       if (!a.blocked || a.blockedBy === null || a.blockedTime < MUTUAL_GRACE) continue;
       const b = this.byId(a.blockedBy);
       if (!b || b.blockedBy !== a.id || b.blockedTime < MUTUAL_GRACE) continue;
-      const first = a.id < b.id ? a : b;
-      first.squeeze(now);
+      if (a.yieldUntil > now || b.yieldUntil > now) continue;
+      // the lighter train yields; on a tie the younger one
+      const [first, second] =
+        a.weight < b.weight || (a.weight === b.weight && a.id > b.id) ? [a, b] : [b, a];
+      if (!first.retreat(ctx)) second.retreat(ctx);
     }
   }
   /** Total capacity of a train for a cargo type. */

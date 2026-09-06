@@ -1,7 +1,7 @@
-import { Container, Sprite, Rectangle } from 'pixi.js';
+import { Container, Sprite, Rectangle, Graphics } from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey, ELEV_PX, HALF_W, HALF_H, TILE_H } from '../engine/iso';
-import { Terrain, type GameMap, type PropInstance, idx } from '../world/tiles';
+import { Terrain, Biome, type GameMap, type PropInstance, idx } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 
@@ -15,6 +15,10 @@ export class WorldRenderer {
   readonly root = new Container();
   readonly ground = new Container();
   readonly track = new Container();
+  /** trodden paths and stone roads, under the track */
+  readonly roads = new Container();
+  private roadSprites = new Map<number, Sprite>();
+  private crossingSprites = new Map<number, Sprite>();
   readonly objects = new Container();
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
@@ -23,9 +27,12 @@ export class WorldRenderer {
   /** out-of-map void ring */
   readonly border = new Container();
   private trackSprites = new Map<number, Sprite>();
+  private trackFrames = new Map<number, string>();
   private structures = new Map<string, Sprite>();
   private groundSprites: Sprite[] = [];
-  private fogSprites = new Map<number, Sprite>();
+  private fogShapes = new Map<number, Graphics>();
+  /** regions whose ground and props have been built */
+  private builtRegions = new Set<number>();
   private waterSprites: { s: Sprite; base: string }[] = [];
   private waterPhase = 0;
   private waterFrame = 0;
@@ -50,6 +57,7 @@ export class WorldRenderer {
     this.root.addChild(
       this.border,
       this.ground,
+      this.roads,
       this.track,
       this.lights,
       this.objects,
@@ -66,11 +74,20 @@ export class WorldRenderer {
     const i = idx(this.map, x, y);
     const t = this.map.terrain[i] as Terrain;
     const v = this.map.variant[i];
+    const b = this.map.biome[i] as Biome;
     switch (t) {
       case Terrain.Grass:
-        return `terrain/grass_${v}`;
+        return b === Biome.Plains
+          ? `terrain/plains_${v}`
+          : b === Biome.Taiga
+            ? `terrain/taiga_${v}`
+            : b === Biome.Swamp
+              ? `terrain/swamp_${v}`
+              : b === Biome.Desert
+                ? `terrain/desert_${v}`
+                : `terrain/grass_${v}`;
       case Terrain.Forest:
-        return `terrain/forest_${v}`;
+        return b === Biome.Swamp ? `terrain/swamp_${v}` : `terrain/forest_${v}`;
       case Terrain.Hill:
         return this.flattened.has(i) ? `terrain/hillcut_${v}` : `terrain/hill_${v % 3}`;
       case Terrain.Water:
@@ -78,23 +95,34 @@ export class WorldRenderer {
       case Terrain.Rock:
         return `terrain/rock_${v}`;
       case Terrain.Sand:
-        return `terrain/sand_${v}`;
+        return b === Biome.Desert ? `terrain/desert_${v}` : `terrain/sand_${v}`;
     }
   }
 
+  /** Ground for every revealed region; hidden regions are built when they get revealed. */
   private buildGround() {
     const { w, h } = this.map;
     this.groundSprites = new Array(w * h);
-    const cx = Math.ceil(w / CHUNK);
-    const cy = Math.ceil(h / CHUNK);
-    for (let cyi = 0; cyi < cy; cyi++)
-      for (let cxi = 0; cxi < cx; cxi++) {
+    this.ground.sortableChildren = true;
+    for (let i = 0; i < this.regions.unlocked.length; i++)
+      if (this.regions.isRevealed(i)) this.buildRegion(i);
+  }
+  /** Build ground sprites (in culled CHUNK blocks) and props of one region once. */
+  private buildRegion(ri: number) {
+    if (this.builtRegions.has(ri)) return;
+    this.builtRegions.add(ri);
+    const r = this.regions.regionRect(ri);
+    const { w, h } = this.map;
+    const x1 = Math.min(w, r.x + r.w);
+    const y1 = Math.min(h, r.y + r.h);
+    for (let cy0 = r.y; cy0 < y1; cy0 += CHUNK)
+      for (let cx0 = r.x; cx0 < x1; cx0 += CHUNK) {
         const chunk = new Container();
         chunk.cullable = true;
         chunk.cullableChildren = false;
         const tiles: { x: number; y: number }[] = [];
-        for (let y = cyi * CHUNK; y < Math.min(h, (cyi + 1) * CHUNK); y++)
-          for (let x = cxi * CHUNK; x < Math.min(w, (cxi + 1) * CHUNK); x++) tiles.push({ x, y });
+        for (let y = cy0; y < Math.min(y1, cy0 + CHUNK); y++)
+          for (let x = cx0; x < Math.min(x1, cx0 + CHUNK); x++) tiles.push({ x, y });
         tiles.sort((a, b) => a.x + a.y - (b.x + b.y));
         let minX = Infinity,
           minY = Infinity,
@@ -110,12 +138,22 @@ export class WorldRenderer {
           maxY = Math.max(maxY, s.y + HALF_H);
         }
         chunk.cullArea = new Rectangle(minX, minY, maxX - minX, maxY - minY);
-        // chunk draw order: chunks with smaller (cx+cy) first so hill faces layer correctly
-        chunk.zIndex = cxi + cyi;
+        // draw order: blocks with smaller (x+y) first so hill faces layer correctly
+        chunk.zIndex = Math.floor(cx0 / CHUNK) + Math.floor(cy0 / CHUNK);
         this.ground.addChild(chunk);
       }
-    this.ground.sortableChildren = true;
     this.ground.sortChildren();
+    for (let y = r.y; y < y1; y++)
+      for (let x = r.x; x < x1; x++) {
+        const i = idx(this.map, x, y);
+        const list = this.map.props.get(i);
+        if (list && !this.propSprites.has(i)) this.buildPropsAt(i, list);
+      }
+    this.applyTintTo(r.x, r.y, x1, y1);
+  }
+  /** Is this tile's region built (revealed)? */
+  isBuilt(x: number, y: number) {
+    return this.builtRegions.has(this.regions.regionIndex(x, y));
   }
 
   private makeGroundSprite(x: number, y: number): Sprite {
@@ -157,14 +195,13 @@ export class WorldRenderer {
 
   /** Re-tile after terrain edits: ground texture, props, and objects standing on the tile. */
   retile(x: number, y: number) {
+    if (!this.isBuilt(x, y)) return;
     this.refreshGround(x, y);
     this.rebuildProps(x, y);
     const i = idx(this.map, x, y);
     const p = tileToWorld(x, y);
     const t = this.trackSprites.get(i);
     if (t) t.position.set(p.x, p.y + this.elevationOf(x, y));
-    const fog = this.fogSprites.get(i);
-    if (fog) fog.position.set(p.x, p.y + this.elevationOf(x, y));
   }
 
   setFlattened(x: number, y: number, flat: boolean) {
@@ -184,12 +221,14 @@ export class WorldRenderer {
   }
 
   private buildProps() {
-    for (const [i, list] of this.map.props) this.buildPropsAt(i, list);
+    for (const [i, list] of this.map.props)
+      if (this.isBuilt(i % this.map.w, Math.floor(i / this.map.w))) this.buildPropsAt(i, list);
   }
   private buildPropsAt(i: number, list: PropInstance[]) {
     {
       const x = i % this.map.w;
       const y = Math.floor(i / this.map.w);
+      if (!this.isBuilt(x, y)) return;
       const sprites: Sprite[] = [];
       for (const p of list) {
         const key = `props/${p.kind}_${p.variant}`;
@@ -216,23 +255,30 @@ export class WorldRenderer {
     this.propSprites.delete(i);
   }
 
+  /** One translucent diamond per revealed-but-unowned region; hidden regions draw nothing. */
   rebuildFog() {
-    for (const s of this.fogSprites.values()) s.destroy();
-    this.fogSprites.clear();
-    const f = this.atlas.get('terrain/fog');
-    for (let y = 0; y < this.map.h; y++)
-      for (let x = 0; x < this.map.w; x++) {
-        if (this.regions.isTileUnlocked(x, y)) continue;
-        const hidden = !this.regions.isTileRevealed(x, y);
-        const fr = hidden ? this.atlas.get(`terrain/void_${(((x * 7 + y * 13) % 3) + 3) % 3}`) : f;
-        const s = new Sprite(fr.texture);
-        s.anchor.set(fr.anchorX, fr.anchorY);
-        const p = tileToWorld(x, y);
-        s.position.set(p.x, hidden ? p.y : p.y + this.elevationOf(x, y));
-        s.cullable = true;
-        this.fog.addChild(s);
-        this.fogSprites.set(idx(this.map, x, y), s);
-      }
+    for (const g of this.fogShapes.values()) g.destroy();
+    this.fogShapes.clear();
+    for (let i = 0; i < this.regions.unlocked.length; i++) {
+      if (!this.regions.isRevealed(i)) continue;
+      this.buildRegion(i);
+      if (this.regions.unlocked[i]) continue;
+      const r = this.regions.regionRect(i);
+      const x1 = Math.min(this.map.w, r.x + r.w);
+      const y1 = Math.min(this.map.h, r.y + r.h);
+      const a = tileToWorld(r.x, r.y);
+      const b = tileToWorld(x1, r.y);
+      const c = tileToWorld(x1, y1);
+      const d = tileToWorld(r.x, y1);
+      const g = new Graphics();
+      g.poly([a.x, a.y - HALF_H, b.x, b.y - HALF_H, c.x, c.y - HALF_H, d.x, d.y - HALF_H]).fill({
+        color: 0x08080c,
+        alpha: 0.62,
+      });
+      g.cullable = true;
+      this.fog.addChild(g);
+      this.fogShapes.set(i, g);
+    }
   }
 
   /** Apply camera transform. */
@@ -318,8 +364,79 @@ export class WorldRenderer {
     }
     for (const list of this.propSprites.values()) for (const s of list) s.tint = props;
   }
+  /** Apply the current season tint to a freshly built region. */
+  private applyTintTo(x0: number, y0: number, x1: number, y1: number) {
+    for (let y = y0; y < y1; y++)
+      for (let x = x0; x < x1; x++) {
+        const i = idx(this.map, x, y);
+        const s = this.groundSprites[i];
+        if (s && this.map.terrain[i] !== Terrain.Water) s.tint = this.groundTint;
+        for (const p of this.propSprites.get(i) ?? []) p.tint = this.propTint;
+      }
+  }
 
   /** Show a track piece sprite on a tile (or clear it). Flat: lives in the track layer under objects. */
+  /** Path / road overlay on a tile ('none' removes); a straight track on it gets a crossing. */
+  setRoad(x: number, y: number, kind: 'none' | 'dirt' | 'stone') {
+    const i = idx(this.map, x, y);
+    const old = this.roadSprites.get(i);
+    if (kind === 'none') {
+      old?.destroy();
+      this.roadSprites.delete(i);
+      this.crossingSprites.get(i)?.destroy();
+      this.crossingSprites.delete(i);
+      return;
+    }
+    const frame =
+      kind === 'dirt'
+        ? `people/path_dirt_${(x * 3 + y) % 3}`
+        : `people/road_stone_${(x + y * 5) % 3}`;
+    if (!this.atlas.has(frame)) return;
+    const f = this.atlas.get(frame);
+    let s = old;
+    if (!s) {
+      s = new Sprite(f.texture);
+      s.cullable = true;
+      this.roads.addChild(s);
+      this.roadSprites.set(i, s);
+    } else s.texture = f.texture;
+    s.anchor.set(f.anchorX, f.anchorY);
+    const p = tileToWorld(x, y);
+    s.position.set(p.x, p.y + this.elevationOf(x, y));
+    s.tint = this.groundTint;
+    this.refreshCrossing(x, y);
+  }
+  /** Straight track over a road shows planks (dirt) or slabs (stone). */
+  refreshCrossing(x: number, y: number) {
+    const i = idx(this.map, x, y);
+    const road = this.roadSprites.get(i);
+    const track = this.trackFrames.get(i);
+    const m = track ? /^track\/straight_(\d)$/.exec(track) : null;
+    const kind = road
+      ? road.texture === this.atlas.get(`people/path_dirt_${(x * 3 + y) % 3}`).texture
+        ? 'dirt'
+        : 'stone'
+      : null;
+    const old = this.crossingSprites.get(i);
+    if (!road || !m || !kind) {
+      old?.destroy();
+      this.crossingSprites.delete(i);
+      return;
+    }
+    const frame = `people/crossing_${kind}_${m[1]}`;
+    if (!this.atlas.has(frame)) return;
+    const f = this.atlas.get(frame);
+    let s = old;
+    if (!s) {
+      s = new Sprite(f.texture);
+      s.cullable = true;
+      this.track.addChild(s);
+      this.crossingSprites.set(i, s);
+    } else s.texture = f.texture;
+    s.anchor.set(f.anchorX, f.anchorY);
+    const p = tileToWorld(x, y);
+    s.position.set(p.x, p.y + this.elevationOf(x, y));
+  }
   /** Tint a track sprite (path highlighting); 0xffffff clears. */
   setTrackTint(x: number, y: number, color: number) {
     const s = this.trackSprites.get(idx(this.map, x, y));
@@ -333,8 +450,11 @@ export class WorldRenderer {
         s.destroy();
         this.trackSprites.delete(i);
       }
+      this.trackFrames.delete(i);
+      this.refreshCrossing(x, y);
       return;
     }
+    this.trackFrames.set(i, frame);
     const f = this.atlas.get(frame);
     if (!s) {
       s = new Sprite(f.texture);
@@ -345,6 +465,7 @@ export class WorldRenderer {
     s.anchor.set(f.anchorX, f.anchorY);
     const p = tileToWorld(x, y);
     s.position.set(p.x, p.y + this.elevationOf(x, y));
+    this.refreshCrossing(x, y);
   }
 
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */

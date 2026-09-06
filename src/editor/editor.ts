@@ -95,6 +95,7 @@ export class Editor {
     l.seed = this.map.seed;
     l.terrain = packBytes(this.map.terrain);
     l.variant = packBytes(this.map.variant);
+    l.biome = packBytes(this.map.biome);
     l.track = [...this.builder.track.tiles()].map((t) => [t.x, t.y, t.piece.kind, t.piece.rot]);
     l.stations = this.builder.stations.map((s) => ({
       defId: s.def.id,

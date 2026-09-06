@@ -8,7 +8,7 @@ export function regionTierMap(map: GameMap): number[] {
   const cy = (map.regionsY - 1) / 2;
   for (let ry = 0; ry < map.regionsY; ry++)
     for (let rx = 0; rx < map.regionsX; rx++) {
-      const d = Math.abs(rx - cx) + Math.abs(ry - cy);
+      const d = Math.max(Math.abs(rx - cx), Math.abs(ry - cy));
       out.push(Math.round(d));
     }
   return out;
@@ -60,14 +60,19 @@ export class RegionState {
     if (this.unlocked[i]) return true;
     return this.neighbours(i).some((n) => this.unlocked[n]);
   }
+  /** All eight surrounding chunks (diagonals included). */
   neighbours(i: number): number[] {
     const rx = i % this.map.regionsX;
     const ry = Math.floor(i / this.map.regionsX);
     const out: number[] = [];
-    if (rx > 0) out.push(i - 1);
-    if (rx < this.map.regionsX - 1) out.push(i + 1);
-    if (ry > 0) out.push(i - this.map.regionsX);
-    if (ry < this.map.regionsY - 1) out.push(i + this.map.regionsX);
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = rx + dx;
+        const ny = ry + dy;
+        if (nx < 0 || ny < 0 || nx >= this.map.regionsX || ny >= this.map.regionsY) continue;
+        out.push(ny * this.map.regionsX + nx);
+      }
     return out;
   }
   /** Price of a chunk: first ring costs `chunkCost`, each further ring multiplies it. */
