@@ -3,6 +3,7 @@ import { STR } from '../strings';
 import type { Station } from '../sim/stations';
 import type { Builder } from '../sim/build';
 import { cargoDef } from '../sim/cargo';
+import { fmtCost } from '../sim/stockpile';
 import type { ContractBoard } from '../sim/contracts';
 import type { GameClock } from '../sim/time';
 import { fmtDuration } from './contractsScreen';
@@ -159,7 +160,7 @@ export class StationPanel {
       );
     } else if (s.level < 5) {
       const ub = btn(
-        STR.station.upgradeTo(s.level + 1, fmtMoney(s.upgradeCost())),
+        STR.station.upgradeTo(s.level + 1, fmtCost(s.upgradeCost())),
         () => {
           if (this.builder.upgradeStation(s)) this.render();
         },

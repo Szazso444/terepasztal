@@ -12,20 +12,37 @@ import contractJson from './contracts.json';
 import decorJson from './decor.json';
 import gachaJson from './gacha.json';
 import trackJson from './track.json';
+import buildingJson from './buildings.json';
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
+/** Resource amounts, e.g. { wood: 30, stone: 10 }. */
+export type Cost = Record<string, number>;
+export type CargoClass = 'liquid' | 'mineral' | 'bulk';
+export type LocoType = 'steam' | 'diesel' | 'electric';
 
 export interface LocoDef {
   id: string;
   name: string;
   rarity: Rarity;
+  type: LocoType;
   era: string;
-  body: 'steam' | 'diesel';
+  body: string;
   paint: string;
+  /** tiles per second */
   speed: number;
+  /** tonnes the engine can haul (wagons plus payload) */
   power: number;
-  maxWagons: number;
-  costPerTile: number;
+  /** tonnes */
+  weight: number;
+  crew: number;
+  /** steam and diesel: fuel tank in units of coal / oil; wood burns at half value */
+  fuelCap?: number;
+  fuelPerTile?: number;
+  /** steam only */
+  waterCap?: number;
+  waterPerTile?: number;
+  /** electric only: power units per tile */
+  powerPerTile?: number;
   starter?: boolean;
 }
 export interface WagonDef {
@@ -35,8 +52,9 @@ export interface WagonDef {
   era: string;
   body: 'box' | 'hopper' | 'flat' | 'tank';
   paint: string;
-  load: 'crates' | 'heap' | 'logs' | 'none';
-  accepts: string[];
+  /** which cargo class the wagon carries; `accepts` is derived from it at load */
+  carries: CargoClass;
+  accepts?: string[];
   capacity: number;
   weight: number;
   starter?: boolean;
@@ -44,6 +62,8 @@ export interface WagonDef {
 export interface CargoDef {
   id: string;
   name: string;
+  class: CargoClass;
+  basic: boolean;
   tier: number;
   price: number;
   color: string;
@@ -53,10 +73,35 @@ export interface StationDef {
   id: string;
   name: string;
   flavor: string;
-  cost: number;
+  cost: Cost;
   tier: number;
   produces: { cargo: string; level: number }[];
   accepts: string[];
+  /** which station sprite family to draw */
+  art?: string;
+  /** deliveries go to the player's stockpile */
+  stockpile?: boolean;
+  /** trains refuel coal / wood / oil here */
+  fuel?: boolean;
+  /** trains refill water here */
+  water?: boolean;
+  /** false: never a contract endpoint */
+  contracts?: boolean;
+}
+export interface BuildingDef {
+  id: string;
+  name: string;
+  flavor: string;
+  cost: Cost;
+  crew: number;
+  tier: number;
+  recipe: { in: Cost; out: Cost };
+  /** alternative inputs used when the primary ones run short */
+  altIn?: Cost;
+  /** recipe batches per in-game day */
+  perDay: number;
+  /** feeds the power network */
+  power?: boolean;
 }
 export interface StationLevels {
   capacity: number[];
@@ -66,6 +111,7 @@ export interface StationLevels {
   upgradeCostMul: number[];
   spriteByLevel: number[];
   maxLevelByTier: number[];
+  crew: number[];
 }
 export interface ContractTemplate {
   id: string;
@@ -90,11 +136,17 @@ export interface DecorDef {
   id: string;
   name: string;
   flavor: string;
-  cost: number;
+  cost: Cost;
+  crew: number;
   onTrack: boolean;
+  /** may also stand on plain buildable tiles (power lines) */
+  anyTile?: boolean;
   rotations: number;
   radius?: number;
   loadBoost?: number;
+  water?: boolean;
+  fuel?: boolean;
+  power?: boolean;
 }
 export interface Banner {
   id: string;
@@ -112,7 +164,7 @@ export interface GachaConfig {
   banners: Banner[];
 }
 export interface TrackConfig {
-  pieces: Record<string, { name: string; cost: number; rotations: number }>;
+  pieces: Record<string, { name: string; cost: Cost; rotations: number }>;
   terrainCost: Record<string, number>;
   refund: number;
   curveSpeed: number;
@@ -126,6 +178,7 @@ export interface ContentBundle {
   stations: { levels: StationLevels; defs: StationDef[] };
   contracts: ContractConfig;
   decor: DecorDef[];
+  buildings: BuildingDef[];
   gacha: GachaConfig;
   track: TrackConfig;
 }
@@ -137,6 +190,7 @@ export const CONTENT_KEYS: ContentKey[] = [
   'stations',
   'contracts',
   'decor',
+  'buildings',
   'gacha',
   'track',
 ];
@@ -149,14 +203,15 @@ function clone<T>(v: T): T {
 
 /** Pristine copy of the shipped data. */
 export const DEFAULT_CONTENT: ContentBundle = {
-  locomotives: clone(locoJson) as LocoDef[],
-  wagons: clone(wagonJson) as WagonDef[],
-  cargo: clone(cargoJson) as CargoDef[],
-  stations: clone(stationJson) as { levels: StationLevels; defs: StationDef[] },
+  locomotives: clone(locoJson) as unknown as LocoDef[],
+  wagons: clone(wagonJson) as unknown as WagonDef[],
+  cargo: clone(cargoJson) as unknown as CargoDef[],
+  stations: clone(stationJson) as unknown as { levels: StationLevels; defs: StationDef[] },
   contracts: clone(contractJson) as ContractConfig,
-  decor: clone(decorJson) as DecorDef[],
+  decor: clone(decorJson) as unknown as DecorDef[],
+  buildings: clone(buildingJson) as unknown as BuildingDef[],
   gacha: clone(gachaJson) as GachaConfig,
-  track: clone(trackJson) as TrackConfig,
+  track: clone(trackJson) as unknown as TrackConfig,
 };
 
 export function readContentOverrides(): Partial<ContentBundle> | null {
@@ -204,7 +259,36 @@ export function validateContent(b: ContentBundle): string[] {
   ids(b.decor, 'decor');
   ids(b.contracts.templates, 'contract template');
   for (const w of b.wagons)
-    for (const c of w.accepts) if (!cargo.has(c)) out.push(`wagon ${w.id}: unknown cargo "${c}"`);
+    if (!['liquid', 'mineral', 'bulk'].includes(w.carries))
+      out.push(`wagon ${w.id}: bad class "${w.carries}"`);
+  ids(b.buildings, 'building');
+  const isCost = (c: unknown) =>
+    !!c &&
+    typeof c === 'object' &&
+    Object.values(c as Cost).every((v) => typeof v === 'number' && v >= 0);
+  for (const s of b.stations.defs)
+    if (!isCost(s.cost)) out.push(`station ${s.id}: cost must be a resource map`);
+  for (const d of b.decor)
+    if (!isCost(d.cost)) out.push(`decor ${d.id}: cost must be a resource map`);
+  for (const bd of b.buildings) {
+    if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
+    for (const k of Object.keys(bd.recipe.in))
+      if (!cargo.has(k)) out.push(`building ${bd.id}: unknown input "${k}"`);
+    for (const k of Object.keys(bd.recipe.out))
+      if (!cargo.has(k) && k !== 'power') out.push(`building ${bd.id}: unknown output "${k}"`);
+  }
+  for (const [k, p] of Object.entries(b.track.pieces))
+    if (!isCost(p.cost)) out.push(`track ${k}: cost must be a resource map`);
+  for (const l of b.locomotives) {
+    if (!['steam', 'diesel', 'electric'].includes(l.type))
+      out.push(`locomotive ${l.id}: bad type "${l.type}"`);
+    if (l.type !== 'electric' && !(l.fuelCap && l.fuelPerTile))
+      out.push(`locomotive ${l.id}: needs fuelCap and fuelPerTile`);
+    if (l.type === 'steam' && !(l.waterCap && l.waterPerTile))
+      out.push(`locomotive ${l.id}: needs waterCap and waterPerTile`);
+    if (l.type === 'electric' && !l.powerPerTile)
+      out.push(`locomotive ${l.id}: needs powerPerTile`);
+  }
   for (const s of b.stations.defs) {
     for (const c of s.accepts) if (!cargo.has(c)) out.push(`station ${s.id}: unknown cargo "${c}"`);
     for (const p of s.produces)
@@ -251,8 +335,16 @@ function buildContent(): ContentBundle {
   return merged;
 }
 
+/** Fill derived fields (wagon accept lists from cargo classes). */
+function finalize(b: ContentBundle): ContentBundle {
+  for (const w of b.wagons)
+    w.accepts = b.cargo.filter((c) => c.class === w.carries).map((c) => c.id);
+  return b;
+}
+
 /** The live bundle every module reads from. */
-export const content: ContentBundle = buildContent();
+export const content: ContentBundle = finalize(buildContent());
+finalize(DEFAULT_CONTENT);
 export function contentIsCustom() {
   return readContentOverrides() !== null;
 }

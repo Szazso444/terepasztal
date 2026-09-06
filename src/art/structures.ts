@@ -3,6 +3,7 @@ import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder, proj, fillPoly } from './iso3d';
 import { hash2 } from '../engine/rng';
+import { STATION_FAMILIES, BUILDING_SPRITES, DECOR_SPRITES, powerLine } from './industry';
 
 const W = 96;
 const H = 84;
@@ -300,5 +301,12 @@ export function generateStructuresAtlas(): AtlasImage {
   ab.add('structures/signal_green', signal('green').toImageData(), 6, 27);
   ab.add('structures/water_tower', waterTower().toImageData(), OX, OY);
   ab.add('structures/warn', warnMarker().toImageData(), 7, 15);
-  return ab.build(512);
+  for (const [fam, gen] of Object.entries(STATION_FAMILIES))
+    for (let l = 1; l <= 3; l++) ab.add(`structures/${fam}_${l}`, gen(l).toImageData(), OX, OY);
+  for (const [id, gen] of Object.entries(BUILDING_SPRITES))
+    ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
+  for (const [id, gen] of Object.entries(DECOR_SPRITES))
+    ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
+  ab.add('structures/power_line', powerLine().toImageData(), 8, 35);
+  return ab.build(1024);
 }

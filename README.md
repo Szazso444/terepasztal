@@ -22,22 +22,38 @@ npm run lint
 - **Level editor**: paint terrain, build anything for free, set the player's start, save and
   play-test levels; export/import as JSON.
 
+## Gameplay loop
+
+- **Resources** replace money for building: water, wheat, stone, wood, and later coal, oil, iron.
+  Trains collect at producing stations and only deliveries to a Warehouse reach the stockpile
+  (top bar, second row). Crews eat wheat every day; run out and production halves, trains slow.
+- **Works**: Charcoal Kiln (wood → coal), Stone Grinder (stone → iron), Oil Refinery
+  (coal + water → oil), Power Plant (coal or oil + wood + water → power). The Market (`M`) buys
+  and sells any resource for money.
+- **Fuel**: steam burns coal (or wood) and water, diesel burns oil, electrics need power and a
+  live Power Line network (poles within two tiles of each other and a Power Plant). Tanks refill at
+  Warehouses, Coaling Stages, Water Towers and Water Pumps.
+- **Trains** run their schedule automatically. Each stop sets load/unload, wait for full, refuel
+  and departure direction; Depot → Details shows tanks, range, weight limit and loop statistics.
+- **Roster**: 26 real locomotives across three gacha banners by era, with wagons in three classes
+  (tankers, hoppers, flats).
+
 ## Controls
 
-| Action | Keys |
-| --- | --- |
-| Pan | WASD / arrows / middle-drag / edge scroll |
-| Zoom | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview |
-| Overview | Tab (Esc, scroll in or click a station/train to return) |
-| Build | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
-| Time | Space pause, `1` `2` `3` speed |
-| Screens | `F` depot, `C` contracts, `G` gacha, `V` roster, `` ` `` debug |
+| Action   | Keys                                                                                                            |
+| -------- | --------------------------------------------------------------------------------------------------------------- |
+| Pan      | WASD / arrows / middle-drag / edge scroll                                                                       |
+| Zoom     | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview                                                    |
+| Overview | Tab (Esc, scroll in or click a station/train to return)                                                         |
+| Build    | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
+| Time     | Space pause, `1` `2` `3` speed                                                                                  |
+| Screens  | `F` depot, `C` contracts, `G` gacha, `V` roster, `M` market, `` ` `` debug                                      |
 
 ## Layout
 
 - `src/engine` loop, camera, input, iso math, atlas pipeline, audio hooks, RNG
 - `src/world` map generation, tiles, regions, track graph, pathfinding
-- `src/sim` clock, economy, stations, trains, fleet, contracts, build rules, save format
+- `src/sim` clock, economy, stockpile, stations, buildings, power grid, trains, fleet, contracts, build rules, save format
 - `src/gacha` items, inventory, gacha
 - `src/render` world, overview, trains, fx
 - `src/ui` DOM overlay screens and panels
@@ -53,7 +69,7 @@ taken from other games. Sprites and individual sound effects can be overridden f
 
 ## Replacing placeholder art
 
-Each atlas group (`terrain`, `props`, `track`, `structures`, `rolling`, `fx`) is loaded from
+Each atlas group (`terrain`, `props`, `track`, `structures`, `rolling`, `fx`, `icons`) is loaded from
 `public/assets/<group>.png` + `public/assets/<group>.json` when present and generated procedurally
 otherwise. The JSON is `{ "frames": { "<name>": { "x", "y", "w", "h", "ax", "ay" } } }` where
 `ax`/`ay` is the anchor in pixels from the frame's top-left. Frame names are listed by the

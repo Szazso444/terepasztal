@@ -1,10 +1,10 @@
 {
   "pieces": {
-    "straight": { "name": "Straight", "cost": 200, "rotations": 2 },
-    "curve": { "name": "Curve", "cost": 260, "rotations": 4 },
-    "switch": { "name": "Switch", "cost": 420, "rotations": 8 },
-    "crossing": { "name": "Crossing", "cost": 420, "rotations": 1 },
-    "bridge": { "name": "Bridge", "cost": 900, "rotations": 2 }
+    "straight": { "name": "Straight", "cost": { "wood": 1, "stone": 1 }, "rotations": 2 },
+    "curve": { "name": "Curve", "cost": { "wood": 1, "stone": 1 }, "rotations": 4 },
+    "switch": { "name": "Switch", "cost": { "wood": 1, "stone": 1, "iron": 1 }, "rotations": 8 },
+    "crossing": { "name": "Crossing", "cost": { "stone": 2, "iron": 1 }, "rotations": 1 },
+    "bridge": { "name": "Bridge", "cost": { "wood": 4, "stone": 2 }, "rotations": 2 }
   },
   "terrainCost": { "grass": 1, "sand": 1.1, "forest": 1.4, "hill": 1.8, "water": 1, "rock": 0 },
   "refund": 0.5,

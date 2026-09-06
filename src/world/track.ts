@@ -1,5 +1,5 @@
 import { Dir, rotateDir, opposite, DIR_DX, DIR_DY } from '../engine/iso';
-import { content } from '../data/content';
+import { content, type Cost } from '../data/content';
 
 const trackData = content.track;
 
@@ -53,7 +53,7 @@ export function makePiece(kind: TrackKind, rot: number): TrackPiece {
   return { kind, rot, links: pieceLinks(kind, rot) };
 }
 
-export function pieceCost(kind: TrackKind) {
+export function pieceCost(kind: TrackKind): Cost {
   return trackData.pieces[kind].cost;
 }
 

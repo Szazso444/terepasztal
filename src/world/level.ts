@@ -19,7 +19,16 @@ export interface LevelData {
   track: [number, number, TrackKind, number][];
   stations: { defId: string; x: number; y: number; level: number; name: string }[];
   decor: [number, number, string, number][];
-  start: { money: number; tickets: number; reputation: number; tier: number };
+  /** processing buildings [x, y, id] */
+  buildings?: [number, number, string][];
+  start: {
+    money: number;
+    tickets: number;
+    reputation: number;
+    tier: number;
+    /** multiplier on the default starting stockpile (1 = normal) */
+    stockMul?: number;
+  };
 }
 
 export const LEVELS_KEY = 'terepasztal.levels';
@@ -117,6 +126,7 @@ export function levelFromMap(map: GameMap, name: string, id = newLevelId()): Lev
     track: [],
     stations: [],
     decor: [],
-    start: { money: 25000, tickets: 3, reputation: 0, tier: 0 },
+    buildings: [],
+    start: { money: 25000, tickets: 3, reputation: 0, tier: 0, stockMul: 1 },
   };
 }

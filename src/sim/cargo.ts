@@ -1,6 +1,6 @@
-import { content, type CargoDef } from '../data/content';
+import { content, type CargoDef, type CargoClass } from '../data/content';
 
-export type { CargoDef };
+export type { CargoDef, CargoClass };
 export const CARGO: CargoDef[] = content.cargo;
 const byId = new Map(CARGO.map((c) => [c.id, c]));
 export function cargoDef(id: string): CargoDef {
@@ -8,3 +8,8 @@ export function cargoDef(id: string): CargoDef {
   if (!c) throw new Error(`unknown cargo ${id}`);
   return c;
 }
+export function cargoClass(id: string): CargoClass {
+  return byId.get(id)?.class ?? 'bulk';
+}
+export const BASIC_RESOURCES = CARGO.filter((c) => c.basic).map((c) => c.id);
+export const ADVANCED_RESOURCES = CARGO.filter((c) => !c.basic).map((c) => c.id);

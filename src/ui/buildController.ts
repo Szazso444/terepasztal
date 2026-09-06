@@ -7,7 +7,8 @@ import type { WorldRenderer } from '../render/worldRenderer';
 import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
 import { STR } from '../strings';
-import { fmtMoney } from './dom';
+import { fmtCost, scaleCost } from '../sim/stockpile';
+import { buildingDef } from '../sim/buildings';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
@@ -114,6 +115,9 @@ export class BuildController {
       case 'decor':
         this.updateDecorTool(t, inMap);
         break;
+      case 'building':
+        this.updateBuildingTool(t, inMap);
+        break;
       case 'remove':
         this.updateRemoveTool(t, inMap);
         break;
@@ -160,7 +164,7 @@ export class BuildController {
         this.showLineGhosts(line, tool.piece);
         this.status(
           line.length > 1
-            ? `${line.length} x ${tool.piece}: ${fmtMoney(this.lineCost(line, tool.piece))}`
+            ? `${line.length} x ${tool.piece}: ${fmtCost(this.lineCost(line, tool.piece))}`
             : this.pieceStatus(t, tool.piece),
         );
         return;
@@ -205,8 +209,8 @@ export class BuildController {
     const parts = [
       check.ok
         ? replacing
-          ? STR.build.replace(existing!.kind, fmtMoney(check.cost))
-          : STR.build.cost(fmtMoney(check.cost))
+          ? STR.build.replace(existing!.kind, fmtCost(check.cost))
+          : STR.build.cost(fmtCost(check.cost))
         : (check.reason ?? ''),
       STR.build.rotate,
     ];
@@ -229,10 +233,10 @@ export class BuildController {
   }
 
   private lineCost(line: { x: number; y: number }[], piece: TrackKind) {
-    let c = 0;
+    const c: Record<string, number> = {};
     for (const l of line) {
       const ch = this.builder.checkTrack(l.x, l.y, piece);
-      if (ch.ok) c += ch.cost;
+      if (ch.ok) for (const [k, v] of Object.entries(ch.cost)) c[k] = (c[k] ?? 0) + v;
     }
     return c;
   }
@@ -274,7 +278,7 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.status(check.ok ? STR.build.cost(fmtMoney(check.cost)) : (check.reason ?? ''));
+    this.status(check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? ''));
     for (const c of this.input.clicks) {
       if (c.button === 0) {
         const s = this.builder.placeStation(t.x, t.y, tool.defId);
@@ -305,11 +309,33 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    const parts = [check.ok ? STR.build.cost(fmtMoney(check.cost)) : (check.reason ?? '')];
+    const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
     if (def.rotations > 1) parts.push(STR.build.rotate);
     this.status(parts.join('   '));
     for (const c of this.input.clicks)
       if (c.button === 0) this.builder.placeDecor(t.x, t.y, tool.defId, this.rot);
+  }
+
+  private updateBuildingTool(t: { x: number; y: number }, inMap: boolean) {
+    const tool = this.tool as { kind: 'building'; defId: string };
+    if (!inMap) {
+      if (this.ghost) this.ghost.visible = false;
+      this.ghostDiamond.visible = false;
+      return;
+    }
+    const def = buildingDef(tool.defId);
+    const check = this.builder.checkBuilding(t.x, t.y, tool.defId);
+    const g = this.ensureGhost(`structures/${def.id}`);
+    this.placeGhostAt(g, t.x, t.y, check.ok);
+    this.world.setSpriteFrame(
+      this.ghostDiamond,
+      check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
+    );
+    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
+    this.ghostDiamond.tint = 0xffffff;
+    this.status(check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? ''));
+    for (const c of this.input.clicks)
+      if (c.button === 0) this.builder.placeBuilding(t.x, t.y, tool.defId);
   }
 
   private updateRemoveTool(t: { x: number; y: number }, inMap: boolean) {
@@ -324,14 +350,17 @@ export class BuildController {
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
     const dec = this.builder.decorAt(t.x, t.y);
+    const bld = this.builder.buildingAt(t.x, t.y);
     const refund = st
-      ? Math.round(st.def.cost * 0.5)
-      : dec
-        ? this.builder.decorRefund(dec)
-        : piece
-          ? this.builder.refundFor(piece)
-          : 0;
-    this.status(refund ? STR.build.refund(fmtMoney(refund)) : '');
+      ? scaleCost(st.def.cost, 0.5)
+      : bld
+        ? this.builder.buildingRefund(bld)
+        : dec
+          ? this.builder.decorRefund(dec)
+          : piece
+            ? this.builder.refundFor(piece)
+            : {};
+    this.status(Object.keys(refund).length ? STR.build.refund(fmtCost(refund)) : '');
     for (const c of this.input.clicks) if (c.button === 0) this.removeAt(t.x, t.y);
   }
 
@@ -387,6 +416,7 @@ export class BuildController {
       if (this.selected === st) this.select(null);
       return this.builder.removeStation(st);
     }
+    if (this.builder.buildingAt(x, y)) return this.builder.removeBuilding(x, y);
     if (this.builder.decorAt(x, y)) return this.builder.removeDecor(x, y);
     return this.builder.removeTrack(x, y);
   }

@@ -10,7 +10,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -38,6 +38,10 @@ export interface SaveGame {
   world?: WorldSpec;
   /** v3: the rules the game was played with */
   rules?: Partial<Rules>;
+  /** v4: global resources */
+  stockpile?: unknown;
+  /** v4: processing buildings [x, y, id, acc] */
+  buildings?: [number, number, string, number][];
 }
 
 export interface Settings {
@@ -84,6 +88,10 @@ function migrate(j: SaveGame): SaveGame {
   if (j.version < 3) {
     j.world = j.world ?? { kind: 'generated', seed: j.seed, params: { ...DEFAULT_MAP_PARAMS } };
     j.version = 3;
+  }
+  if (j.version < 4) {
+    j.buildings = j.buildings ?? [];
+    j.version = 4;
   }
   return j;
 }

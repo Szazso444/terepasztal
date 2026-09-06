@@ -74,6 +74,7 @@ export class ContentScreen implements Screen {
       case 'wagons':
       case 'cargo':
       case 'decor':
+      case 'buildings':
         b.append(
           this.listEditor(
             this.draft[this.tab] as unknown as Row[],

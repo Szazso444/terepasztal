@@ -82,6 +82,22 @@ import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
 import { GachaScreen } from './ui/gachaScreen';
 import { RosterScreen } from './ui/rosterScreen';
+import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
+import { tickBuildings, buildingDef, type Building } from './sim/buildings';
+import { PowerGrid } from './sim/power';
+import { TrainScreen } from './ui/trainScreen';
+import { MarketScreen } from './ui/marketScreen';
+import { ResourceBar } from './ui/resourceBar';
+
+/** Starting stockpile for a brand-new game, before `rules.startStock` scaling. */
+const START_STOCK: Record<string, number> = {
+  wood: 200,
+  stone: 150,
+  water: 120,
+  wheat: 120,
+  coal: 40,
+  iron: 10,
+};
 
 const SIM_HZ = 20;
 const EDGE_MARGIN = 14;
@@ -123,6 +139,11 @@ export class Game {
   gacha!: Gacha;
   gachaScreen!: GachaScreen;
   rosterScreen!: RosterScreen;
+  stock = new Stockpile();
+  power!: PowerGrid;
+  trainScreen!: TrainScreen;
+  marketScreen!: MarketScreen;
+  resourceBar!: ResourceBar;
   private lastDay = 1;
   settings: Settings = readSettings();
   settingsScreen!: SettingsScreen;
@@ -210,6 +231,9 @@ export class Game {
     this.economy.tickets = start ? start.tickets : rules.startTickets;
     const rep = start ? start.reputation : rules.startReputation;
     if (rep > 0) this.economy.addReputation(rep);
+    const stockMul = start?.stockMul ?? 1;
+    for (const [id, n] of Object.entries(START_STOCK))
+      this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (start && start.tier > this.economy.tier) {
       this.economy.tier = Math.min(start.tier, this.regions.tiers.length ? 4 : 0);
       const newly = this.regions.applyTier(start.tier);
@@ -242,6 +266,12 @@ export class Game {
       const d: Decor = { id, x, y, rot };
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
+    }
+    for (const [x, y, id] of level.buildings ?? []) {
+      if (!inBounds(this.map, x, y)) continue;
+      const b: Building = { id, x, y, acc: 0, active: false, rate: 0 };
+      this.builder.buildings.set(y * this.map.w + x, b);
+      this.onBuildingChanged(b, false);
     }
     this.builder.refreshStationBoosts();
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
@@ -467,7 +497,10 @@ export class Game {
     this.camera.centerOn(c.x, c.y);
 
     this.track = new TrackGraph(this.map.w, this.map.h);
-    this.builder = new Builder(this.map, this.regions, this.track, this.economy);
+    this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stock);
+    this.power = new PowerGrid(this.map);
+    this.stock.onMessage = (m, k) => this.toasts.push(m, k);
+    this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
@@ -477,7 +510,16 @@ export class Game {
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onTierUp = (t) => this.onTierUp(t);
     this.inventory.seedStarter(0);
-    this.fleet = new Fleet(this.track, this.builder, this.map, this.inventory, this.economy);
+    this.fleet = new Fleet(
+      this.track,
+      this.builder,
+      this.map,
+      this.inventory,
+      this.economy,
+      this.stock,
+    );
+    this.fleet.powered = (x, y) => this.power.isPowered(x, y);
+    this.fleet.stockCap = (id) => this.stockCap(id);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
     this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
@@ -574,6 +616,8 @@ export class Game {
       weather: this.weather.toJSON(),
       world: this.spec,
       rules: { ...rules },
+      stockpile: this.stock.toJSON(),
+      buildings: [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id, b.acc]),
     };
   }
 
@@ -622,6 +666,12 @@ export class Game {
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
+    for (const [x, y, id, acc] of j.buildings ?? []) {
+      const b: Building = { id, x, y, acc: acc ?? 0, active: false, rate: 0 };
+      this.builder.buildings.set(y * this.map.w + x, b);
+      this.onBuildingChanged(b, false);
+    }
+    if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
     this.builder.refreshStationBoosts();
     if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
@@ -669,9 +719,15 @@ export class Game {
         !this.builder.stationAt(d.x, d.y)
       )
         this.world.setFlattened(d.x, d.y, false);
+      if (d.id === 'power_line') this.rebuildPower();
       return;
     }
     const off = decorOffset(d);
+    if (d.id === 'power_line') {
+      this.world.setStructure(id, d.x, d.y, 'structures/power_line', 14, off.dy, off.dx);
+      this.rebuildPower();
+      return;
+    }
     if (d.id === 'signal') {
       this.world.setStructure(id, d.x, d.y, 'structures/signal_green', 12, off.dy, off.dx);
       this.signalAspect.set(d.y * this.map.w + d.x, 'green');
@@ -692,6 +748,27 @@ export class Game {
       this.orphaned.delete(s.id);
       this.world.removeStructure(id);
     }
+  }
+  private onBuildingChanged(b: Building, removed: boolean) {
+    const id = `building:${b.x},${b.y}`;
+    const t = terrainAt(this.map, b.x, b.y);
+    if (removed) {
+      this.world.removeStructure(id);
+      if (t === Terrain.Hill && !this.track.has(b.x, b.y)) this.world.setFlattened(b.x, b.y, false);
+    } else {
+      if (t === Terrain.Hill) this.world.setFlattened(b.x, b.y, true);
+      this.world.removeProps(b.x, b.y);
+      this.world.setStructure(id, b.x, b.y, `structures/${b.id}`);
+    }
+    if (buildingDef(b.id).power) this.rebuildPower();
+  }
+  private rebuildPower() {
+    this.power.rebuild(this.builder.decor.values(), this.builder.buildings.values());
+    this.overview.rebuildPower(this.power);
+  }
+  /** Storage cap for one resource at the current warehouse and plant count. */
+  stockCap(id: string) {
+    return this.stock.cap(id, this.builder.warehouseLevels(), this.builder.plantCount());
   }
   /** Signals show red when a train sits on the tile they guard or on their own tile. */
   private updateSignals() {
@@ -736,7 +813,13 @@ export class Game {
       s.productionMul = productionMul(s.def.id, this.season ?? 'spring');
       if (t === Terrain.Hill) this.world.setFlattened(s.x, s.y, true);
       this.world.removeProps(s.x, s.y);
-      this.world.setStructure(id, s.x, s.y, `structures/station_${s.spriteLevel}`);
+      const fam = `structures/${s.def.art}_${s.spriteLevel}`;
+      this.world.setStructure(
+        id,
+        s.x,
+        s.y,
+        this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+      );
       if (this.stationPanel.station === s) this.stationPanel.render();
     }
   }
@@ -768,6 +851,23 @@ export class Game {
       this.atlas,
     );
     this.depot.onFocusTrain = (t) => this.focusTrain(t);
+    this.trainScreen = new TrainScreen(this.fleet, this.builder, this.stock, this.atlas, (m, k) =>
+      this.toasts.push(m, k),
+    );
+    this.trainScreen.onLocate = (t) => this.focusTrain(t);
+    this.depot.onDetails = (t) => {
+      this.trainScreen.open(t);
+      this.screens.open(this.trainScreen);
+    };
+    this.marketScreen = new MarketScreen(
+      this.stock,
+      this.economy,
+      (id) => this.stockCap(id),
+      (m, k) => this.toasts.push(m, k),
+    );
+    this.resourceBar = new ResourceBar(this.atlas, () => {
+      if (this.mode === 'play' && !this.menuOpen) this.screens.toggle(this.marketScreen);
+    });
     this.tuningScreen = new TuningScreen(() => {
       this.applySeason(true);
       this.toolbar.refresh();
@@ -833,6 +933,7 @@ export class Game {
       btn(STR.topbar.contracts, () => this.screens.toggle(this.contractsScreen), 'small'),
       btn(STR.topbar.gacha, () => this.screens.toggle(this.gachaScreen), 'small'),
       btn(STR.topbar.roster, () => this.screens.toggle(this.rosterScreen), 'small'),
+      btn(STR.topbar.market, () => this.screens.toggle(this.marketScreen), 'small'),
       btn(STR.topbar.settings, () => this.screens.toggle(this.settingsScreen), 'small'),
     );
     this.screens.onChange = (sc) => {
@@ -846,6 +947,9 @@ export class Game {
       giveMoney: () => (this.economy.money += 10000),
       giveTickets: () => (this.economy.tickets += 10),
       giveReputation: () => this.economy.addReputation(100),
+      giveResources: () => {
+        for (const id of RESOURCE_IDS) this.stock.add(id, 200, this.stockCap(id));
+      },
       spawnContract: () => {
         const c = this.contracts.generate(this.clock.time, true);
         this.toasts.push(c ? `Offer: ${c.name}` : STR.contracts.needStations, c ? 'info' : 'warn');
@@ -886,6 +990,7 @@ export class Game {
       this.contractsSide.root,
       el('div', { class: 'vignette' }),
       this.hud.root,
+      this.resourceBar.root,
       this.minimap.root,
       this.debug.root,
       this.overviewBanner,
@@ -913,10 +1018,22 @@ export class Game {
     }
     const gdt = this.clock.advance(dt);
     if (gdt > 0) {
-      for (const s of this.builder.stations) s.tick(gdt);
+      this.stock.population = this.builder.crewTotal() + this.fleet.crewTotal();
+      this.stock.tick(gdt);
+      const famineMul = this.stock.famine ? 0.5 : 1;
+      for (const s of this.builder.stations) s.tick(gdt * famineMul);
+      tickBuildings(
+        this.builder.buildings.values(),
+        this.stock,
+        gdt,
+        this.stock.famine,
+        this.builder.plantCount(),
+        this.builder.warehouseLevels(),
+      );
       if (this.settings.weather) this.weather.tick(this.clock.time, this.clock.day, dt);
       this.applySeason();
-      const wf = this.settings.weather ? this.weather.speedFactor() : 1;
+      const wf =
+        (this.settings.weather ? this.weather.speedFactor() : 1) * (this.stock.famine ? 0.7 : 1);
       this.fleet.tick(gdt, this.clock.time, wf);
       this.contracts.tick(this.clock.time);
       if (this.clock.day !== this.lastDay) {
@@ -989,6 +1106,7 @@ export class Game {
     );
     this.updateRtsTooltip();
     this.hud.update(this.economy);
+    this.resourceBar.update(this.stock, (id) => this.stockCap(id));
     this.hud.setFps(this.settings.showFps ? this.loop.fps : null);
     this.panelRefresh += dt;
     if (this.panelRefresh > 0.5) {
@@ -1047,6 +1165,7 @@ export class Game {
     if (this.mode === 'play' && inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
     if (this.mode === 'play' && inp.wasPressed('KeyG')) this.screens.toggle(this.gachaScreen);
     if (this.mode === 'play' && inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
+    if (this.mode === 'play' && inp.wasPressed('KeyM')) this.screens.toggle(this.marketScreen);
     if (inp.wasPressed('Escape') && this.screens.current) {
       this.screens.close();
       return;
@@ -1147,6 +1266,7 @@ export class Game {
           lines: [
             `${t.blocked && t.state === 'moving' ? STR.depot.state.held : STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''}`,
             STR.depot.cargo(Math.round(t.totalCargo())),
+            `${Math.round(t.weight)} / ${Math.round(t.power)} t`,
           ],
         };
       }

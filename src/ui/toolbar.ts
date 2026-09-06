@@ -1,4 +1,6 @@
-import { el, btn, fmtMoney } from './dom';
+import { el, btn } from './dom';
+import { fmtCost } from '../sim/stockpile';
+import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
 import { TRACK_KINDS, pieceCost, type TrackKind } from '../world/track';
 import { STATION_DEFS } from '../sim/stations';
@@ -11,6 +13,7 @@ export type Tool =
   | { kind: 'station'; defId: string }
   | { kind: 'decor'; defId: string }
   | { kind: 'terrain'; terrain: number }
+  | { kind: 'building'; defId: string }
   | { kind: 'remove' };
 
 /** Bottom build bar. */
@@ -20,6 +23,7 @@ export class Toolbar {
   private status = el('span', { class: 'tb-status dim' });
   readonly extra = el('div', { class: 'tb-group' });
   private terrainGroup!: HTMLElement;
+  private buildingGroup!: HTMLElement;
 
   setEditor(on: boolean) {
     this.terrainGroup.style.display = on ? '' : 'none';
@@ -35,7 +39,7 @@ export class Toolbar {
       el('span', { class: 'tb-label', text: STR.toolbar.track }),
     );
     for (const k of TRACK_KINDS) {
-      const name = (trackDataName(k) ?? k) + ` ${fmtMoney(pieceCost(k))}`;
+      const name = (trackDataName(k) ?? k) + ` · ${fmtCost(pieceCost(k))}`;
       const b = btn(name, () => this.select({ kind: 'track', piece: k }));
       b.title = name;
       this.buttons.set(`track:${k}`, b);
@@ -47,7 +51,7 @@ export class Toolbar {
       el('span', { class: 'tb-label', text: STR.toolbar.stations }),
     );
     for (const d of STATION_DEFS) {
-      const b = btn(`${d.name} ${fmtMoney(d.cost)}`, () =>
+      const b = btn(`${d.name} · ${fmtCost(d.cost)}`, () =>
         this.select({ kind: 'station', defId: d.id }),
       );
       b.title = d.flavor;
@@ -60,13 +64,27 @@ export class Toolbar {
       el('span', { class: 'tb-label', text: STR.toolbar.decor }),
     );
     for (const d of DECOR_DEFS) {
-      const b = btn(`${d.name} ${fmtMoney(d.cost)}`, () =>
+      const b = btn(`${d.name} · ${fmtCost(d.cost)}`, () =>
         this.select({ kind: 'decor', defId: d.id }),
       );
       b.title = d.flavor;
       this.buttons.set(`decor:${d.id}`, b);
       decorGroup.append(b);
     }
+    const buildingGroup = el(
+      'div',
+      { class: 'tb-group' },
+      el('span', { class: 'tb-label', text: STR.toolbar.buildings }),
+    );
+    for (const d of BUILDING_DEFS) {
+      const b = btn(`${d.name} · ${fmtCost(d.cost)}`, () =>
+        this.select({ kind: 'building', defId: d.id }),
+      );
+      b.title = d.flavor;
+      this.buttons.set(`building:${d.id}`, b);
+      buildingGroup.append(b);
+    }
+    this.buildingGroup = buildingGroup;
     this.terrainGroup = el(
       'div',
       { class: 'tb-group' },
@@ -97,6 +115,7 @@ export class Toolbar {
         trackGroup,
         stationGroup,
         decorGroup,
+        this.buildingGroup,
         el('div', { class: 'tb-group' }, removeBtn),
         this.terrainGroup,
         this.extra,
@@ -120,9 +139,11 @@ export class Toolbar {
             ? `decor:${t.defId}`
             : t.kind === 'terrain'
               ? `terrain:${t.terrain}`
-              : t.kind === 'remove'
-                ? 'remove'
-                : '';
+              : t.kind === 'building'
+                ? `building:${t.defId}`
+                : t.kind === 'remove'
+                  ? 'remove'
+                  : '';
     for (const [k, b] of this.buttons) b.classList.toggle('active', k === key);
   }
 
@@ -130,6 +151,10 @@ export class Toolbar {
     const tier = this.tierProvider();
     for (const d of STATION_DEFS) {
       const b = this.buttons.get(`station:${d.id}`)!;
+      b.disabled = d.tier > tier;
+    }
+    for (const d of BUILDING_DEFS) {
+      const b = this.buttons.get(`building:${d.id}`)!;
       b.disabled = d.tier > tier;
     }
   }

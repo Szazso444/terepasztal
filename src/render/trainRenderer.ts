@@ -4,6 +4,7 @@ import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
 import { PAL, hex, type RGB } from '../art/palette';
+import { locoFrame, wagonFrame, loadKind } from '../art/frames';
 
 interface CarSprites {
   body: Sprite;
@@ -19,14 +20,15 @@ export class TrainRenderer {
   ) {}
 
   private frameFor(train: Train, car: number, facing: number) {
-    if (car === 0) return `rolling/loco_${train.locoDef.body}_${train.locoDef.paint}_f${facing}`;
-    const w = train.wagons[car - 1];
-    return `rolling/wagon_${w.def.body}_${w.def.paint}_f${facing}`;
+    const nl = train.locos.length;
+    if (car < nl) return locoFrame(this.atlas, train.locos[car].def, facing);
+    const w = train.wagons[car - nl];
+    return wagonFrame(this.atlas, w.def, facing);
   }
 
   private ensure(train: Train): CarSprites[] {
     let list = this.cars.get(train.id);
-    const n = 1 + train.wagons.length;
+    const n = train.locos.length + train.wagons.length;
     if (!list) {
       list = [];
       this.cars.set(train.id, list);
@@ -37,7 +39,10 @@ export class TrainRenderer {
       this.layer.addChild(body);
       const idx = list.length;
       let load: Sprite | null = null;
-      if (idx > 0 && train.wagons[idx - 1].def.load !== 'none') {
+      if (
+        idx >= train.locos.length &&
+        loadKind(train.wagons[idx - train.locos.length].def) !== 'none'
+      ) {
         load = new Sprite();
         load.cullable = true;
         this.layer.addChild(load);
@@ -83,9 +88,9 @@ export class TrainRenderer {
         c.body.zIndex = depthKey(x, y, 15);
         c.body.visible = true;
         if (c.load) {
-          const w = t.wagons[i - 1];
+          const w = t.wagons[i - t.locos.length];
           if (w.cargo && w.amount > 0.5) {
-            const lf = this.atlas.get(`rolling/load_${w.def.load}_f${facing}`);
+            const lf = this.atlas.get(`rolling/load_${loadKind(w.def, w.cargo)}_f${facing}`);
             c.load.texture = lf.texture;
             c.load.anchor.set(lf.anchorX, lf.anchorY);
             c.load.position.set(Math.round(wp.x), Math.round(wp.y));

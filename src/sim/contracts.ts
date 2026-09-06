@@ -67,10 +67,16 @@ export class ContractBoard {
   private pairs(): { from: Station; to: Station; cargo: string }[] {
     const out: { from: Station; to: Station; cargo: string }[] = [];
     for (const from of this.builder.stations) {
-      if (!this.builder.platformTiles(from).length) continue;
+      if (from.def.contracts === false || !this.builder.platformTiles(from).length) continue;
       for (const cargo of from.producedCargo())
         for (const to of this.builder.stations) {
-          if (to === from || !to.accepts(cargo) || !this.builder.platformTiles(to).length) continue;
+          if (
+            to === from ||
+            to.def.contracts === false ||
+            !to.accepts(cargo) ||
+            !this.builder.platformTiles(to).length
+          )
+            continue;
           out.push({ from, to, cargo });
         }
     }

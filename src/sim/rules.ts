@@ -31,6 +31,10 @@ export interface Rules {
   hillLevel: number;
   rockLevel: number;
   forestDensity: number;
+  wheatPerCrew: number;
+  stockpileCap: number;
+  powerCap: number;
+  startStock: number;
 }
 
 export interface RuleMeta {
@@ -73,6 +77,10 @@ export const DEFAULT_RULES: Rules = {
   hillLevel: 0.64,
   rockLevel: 0.76,
   forestDensity: 0.56,
+  wheatPerCrew: 0.5,
+  stockpileCap: 400,
+  powerCap: 100,
+  startStock: 1,
 };
 
 export const RULE_META: RuleMeta[] = [
@@ -113,7 +121,26 @@ export const RULE_META: RuleMeta[] = [
     hint: '0 = free building',
   },
   { key: 'refundRate', label: 'Refund rate', group: 'Economy', min: 0, max: 1, step: 0.05 },
-  { key: 'runningCostMul', label: 'Running cost x', group: 'Economy', min: 0, max: 5, step: 0.1 },
+  { key: 'runningCostMul', label: 'Fuel use x', group: 'Economy', min: 0, max: 5, step: 0.1 },
+  {
+    key: 'wheatPerCrew',
+    label: 'Wheat per crew per day',
+    group: 'Economy',
+    min: 0,
+    max: 5,
+    step: 0.1,
+  },
+  { key: 'stockpileCap', label: 'Stockpile cap', group: 'Economy', min: 50, max: 5000, step: 50 },
+  { key: 'powerCap', label: 'Power battery', group: 'Economy', min: 0, max: 2000, step: 50 },
+  {
+    key: 'startStock',
+    label: 'Starting stockpile x',
+    group: 'Start',
+    min: 0,
+    max: 10,
+    step: 0.5,
+    newGame: true,
+  },
   { key: 'spotPriceMul', label: 'Spot price x', group: 'Economy', min: 0, max: 5, step: 0.1 },
   { key: 'payoutMul', label: 'Contract payout x', group: 'Contracts', min: 0, max: 5, step: 0.1 },
   {
