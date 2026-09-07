@@ -166,6 +166,21 @@ export class TrainScreen implements Screen {
         t.rangeTiles === Infinity ? '∞' : `${Math.floor(t.rangeTiles)} ${STR.train.tiles}`,
       ),
     );
+    l.append(
+      el(
+        'div',
+        { class: 'row' },
+        el('span', { class: 'dim', text: STR.train.dynamic }),
+        btn(
+          t.dynamic ? STR.train.dynamicOn : STR.train.dynamicOff,
+          () => {
+            t.dynamic = !t.dynamic;
+            this.render();
+          },
+          `small ${t.dynamic ? 'active' : ''}`,
+        ),
+      ),
+    );
     if (t.hasSteam) {
       l.append(
         el(

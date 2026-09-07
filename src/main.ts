@@ -1,7 +1,8 @@
 import { Game, hashSeed } from './game';
 import { STR } from './strings';
 import { el } from './ui/dom';
-import { readSave, clearSave, type WorldSpec } from './sim/save';
+import { readSave, clearSave, writeSave, type WorldSpec } from './sim/save';
+import { expandSave, ownsBorderChunk } from './sim/expand';
 import { rules } from './sim/rules';
 import { takeIntent, setTestingLevel, type Intent } from './intent';
 import { getLevel, levelFromMap, saveLevel, type LevelData } from './world/level';
@@ -75,6 +76,24 @@ async function boot() {
       seed: Math.floor(Math.random() * 2 ** 31),
       params: paramsFromRules(),
     };
+    // a generated world grows a ring of chunks whenever an owned chunk touches its edge (old
+    // saves from the fixed-grid days come through here too)
+    if (save && spec.kind === 'generated') {
+      let grown = false;
+      let guard = 0;
+      let gp = spec.params;
+      while (
+        guard++ < 8 &&
+        (gp.w < rules.mapSize || (save.regions && ownsBorderChunk(save.regions, gp.w, gp.h)))
+      ) {
+        expandSave(save, 1);
+        if (save.world?.kind !== 'generated') break;
+        gp = save.world.params;
+        spec = save.world;
+        grown = true;
+      }
+      if (grown) writeSave(save);
+    }
     start = intent?.action === 'continue' && save ? 'play' : 'menu';
     if (save?.world?.kind !== 'level') setTestingLevel(null);
   }

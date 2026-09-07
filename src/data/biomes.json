@@ -1,0 +1,8 @@
+[
+  { "id": "plains", "name": "Plains", "desc": "Open grassland. Farms thrive.", "production": { "farm": 1.25 }, "trackCostMul": 1, "waterUseMul": 1, "speedMul": 1 },
+  { "id": "forest", "name": "Forest", "desc": "Dense woodland. Lumber yards cut more; track costs extra clearing.", "production": { "lumber": 1.3 }, "trackCostMul": 1.2, "waterUseMul": 1, "speedMul": 1 },
+  { "id": "desert", "name": "Desert", "desc": "Hot and dry. Quarries dig more, pumps find little water, steam engines drink more.", "production": { "quarry": 1.3, "pump": 0.5, "farm": 0.5 }, "trackCostMul": 1, "waterUseMul": 1.5, "speedMul": 1 },
+  { "id": "taiga", "name": "Taiga", "desc": "Cold conifer country. Lumber and pumps do well, farms poorly; trains run a little slower.", "production": { "lumber": 1.15, "pump": 1.1, "farm": 0.7 }, "trackCostMul": 1.1, "waterUseMul": 1, "speedMul": 0.9 },
+  { "id": "swamp", "name": "Swamp", "desc": "Wet lowland. Pumps overflow; track needs an embankment and trains crawl.", "production": { "pump": 1.4, "farm": 0.8 }, "trackCostMul": 2, "waterUseMul": 1, "speedMul": 0.8 },
+  { "id": "ocean", "name": "Ocean", "desc": "Open water with the odd island. Pumps do well on the shore.", "production": { "pump": 1.3 }, "trackCostMul": 1, "waterUseMul": 1, "speedMul": 1 }
+]

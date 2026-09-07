@@ -11,6 +11,10 @@ export const STR = {
     speed: ['❚❚', '1x', '2x', '3x'],
     pause: 'Pause (Space)',
     resume: 'Resume (Space)',
+    weatherToggle: 'Weather',
+    weatherToggleHint: 'Toggle rain, fog and seasons',
+    dayToggle: 'Day/night',
+    dayToggleHint: 'Toggle the day and night cycle',
     tier: (t: number) => `Tier ${t}`,
     tierUp: (t: number) => `Reputation tier ${t} reached. New rolling stock and works unlocked.`,
   },
@@ -21,13 +25,44 @@ export const STR = {
     buyHint: 'click to buy',
     buyConfirm: (v: string) => `Buy this chunk for ${v}?`,
     bought: 'Chunk charted. Neighbouring land is now visible.',
+    growing: 'Charting new land beyond the edge of the map…',
     cannotAfford: (v: string) => `Need ${v} to buy this chunk`,
     chunkTitle: 'Uncharted chunk',
     chunkLines: (v: string) => [`Price ${v}`, 'Click to buy'],
-    hint: 'Tab / scroll in: return to field view',
+    recordHint: 'R: record a new route for the selected train',
+    recording: (n: string, stops: string) =>
+      `Recording route for ${n}: ${stops || '(click stations in order)'} · R / Enter: finish · Esc: cancel`,
+    recorded: (n: string, k: number) => `${n}: new route with ${k} stops`,
+    selectHint: (n: string) => `${n} selected · click again to go there · R: record route`,
+    hint: 'M / scroll in: return to field view',
+  },
+  tile: {
+    terrain: {
+      grass: 'Grassland',
+      forest: 'Forest',
+      hill: 'Hill',
+      water: 'Water',
+      rock: 'Stone field',
+      sand: 'Sand',
+      mountain: 'Mountain',
+    } as Record<string, string>,
+    uncharted: 'Uncharted: buy the chunk in the overview (M)',
+    track: (k: string) => `Track: ${k}`,
+    powered: 'Powered rails',
+    noTrack: 'No track can be laid here',
+    trackCost: (m: number) => `Track costs ×${m}`,
+    water: 'Bridges only; pumps draw from it',
+  },
+  decorInfo: {
+    reach: (r: number) => `Reach: ${r} tiles`,
+    serves: (n: string) => `Serves: ${n}`,
+    servesNone: 'No station in reach',
+    live: 'Live: connected to a power plant',
+    dead: 'Dead: no power plant on this network',
+    signal: 'Red while the guarded tile is occupied',
   },
   hints: {
-    camera: 'WASD / arrows / middle-drag: pan   wheel: zoom   Tab: overview   `: debug',
+    camera: 'WASD / arrows / middle-drag: pan   wheel: zoom   M: overview   `: debug',
   },
   debug: {
     title: 'Debug',
@@ -62,6 +97,8 @@ export const STR = {
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelCap: 'Level cap for your reputation tier',
     cost: (v: string) => `Cost ${v}`,
+    harvest: (n: number, cargo: string, f: number) =>
+      `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
     refund: (v: string) => `Refund ${v}`,
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
@@ -72,9 +109,23 @@ export const STR = {
     remove: 'Remove',
     decor: 'Decor',
     buildings: 'Works',
+    services: 'Services',
+    utility: 'Utility',
     removeHint: 'Right-click / Delete removes',
     select: 'Select',
-    cycleHint: '1-9 or mouse wheel: switch item · Esc: close',
+    cycleHint: '1-9 or Tab: switch item · Esc: close',
+    place: {
+      track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
+      bridge: 'Only on a water tile, joining track on both banks.',
+      station: 'On a buildable tile with track touching one side; that track becomes the platform.',
+      onTrack: 'On an existing track tile. R rotates.',
+      service: (r: number) => `On a free tile within ${r} tiles of the stations it should serve.`,
+      powerLine:
+        'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
+      building: 'On a free buildable tile.',
+      works: 'On a free buildable tile. Runs from the stockpile; no track needed.',
+      plant: 'On a free buildable tile. Chain Power Line poles from it to reach the rails.',
+    },
     trackDesc: {
       straight: 'Plain rail. Drag to lay a run of straights.',
       curve: 'Quarter turn. R rotates.',
@@ -97,19 +148,82 @@ export const STR = {
     starved: (n: string) => `Waiting for ${n}`,
     or: 'or',
   },
+  notice: {
+    title: 'Notices',
+    none: 'All quiet.',
+    more: (n: number) => `+${n} more`,
+    outOfFuel: (n: string) => `${n}: out of fuel or water`,
+    noPower: (n: string) => `${n}: no power on this line`,
+    overweight: (n: string) => `${n}: too heavy for its engines`,
+    noRoute: (n: string) => `${n}: no route to its next stop`,
+    ecoMode: (n: string) => `${n}: low on fuel, crawling to save it`,
+    held: (n: string) => `${n}: held by traffic`,
+    orphaned: (n: string) => `${n}: no platform track`,
+    unwired: (n: string) => `${n}: no power line connected`,
+    starved: (n: string, r: string) => `${n}: waiting for ${r}`,
+    full: (n: string) => `${n}: stockpile full, output stopped`,
+    contractFailed: (n: string) => `Contract failed: ${n}`,
+    contractDone: (n: string) => `Contract completed: ${n}`,
+    famine: 'Crews are out of wheat',
+  },
+  advisor: {
+    button: 'Advisor',
+    title: 'Advisor',
+    silence: 'Silence',
+    unsilence: 'Unsilence',
+    silencedHint: 'The advisor is silenced. Unsilence it to see tips again.',
+    allGood: 'Nothing to advise right now. Keep the trains rolling.',
+    tips: {
+      noStations:
+        'Build a producing station (farm, lumber yard, quarry or pump) and a second station, joined by track.',
+      oneStation:
+        'Build a second station and connect the two with track so a train has somewhere to go.',
+      noPlatform: (n: string) =>
+        `${n} has no track next to it. Lay a straight piece touching the station.`,
+      noTrain:
+        'Open the Depot (F), pick the locomotive and wagons and press Dispatch. The route is automatic.',
+      idleStock: (n: number) =>
+        `${n} locomotive(s) sit idle in the depot. Dispatch them to earn more.`,
+      lowWheat:
+        'Wheat is running low for the crews. Build a farm and route a train through it, or buy wheat on the Market (K).',
+      famine:
+        'The crews are starving: production halved. Get wheat in by train or from the Market (K).',
+      outOfFuel: (n: string) =>
+        `${n} is out of fuel. Fill the stockpile (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
+      lowCoal:
+        'Coal is short. Build a Charcoal Kiln (Works) to turn wood into coal, or buy coal on the Market.',
+      noWater:
+        'No water source. Build a Water Pump station or a Water Tower so steam engines can refill.',
+      unwired: (n: string) =>
+        `${n} is not connected. Chain Power Line poles from it to the rails (Utility).`,
+      noPower: (n: string) =>
+        `${n} needs powered rails: build a Power Plant and Power Line poles along its route.`,
+      chunk: (v: string) =>
+        `You can afford a new chunk (${v}). Press M and click an Uncharted chunk to expand.`,
+      offers: (n: number) => `${n} contract offer(s) are waiting on the Contract Board (C).`,
+      failed: (n: string) =>
+        `Contract "${n}" failed. Accept only contracts your trains already pass through, and watch the deadline.`,
+      capFull: (r: string) =>
+        `The stockpile is full of ${r}. Upgrade or build a Warehouse to raise the cap, or sell on the Market.`,
+      blocked: (n: string) =>
+        `${n} is stuck behind another train. Add a passing loop with switches or a second track.`,
+    },
+  },
   trainSide: {
     title: 'Trains in view',
     titleAll: 'All trains',
     none: 'No trains in service.',
     noneVisible: 'No trains on screen.',
     tilesPerSec: 'tiles/s',
-    weight: 'Weight / power',
-    fuelWater: 'Tanks',
-    fuelType: 'Fuel',
-    wagons: (n: number) => `Wagons (${n})`,
-    consumesWeek: 'Consumes / week',
-    collectsWeek: 'Collects / week',
-    deliversWeek: 'Delivers / week',
+    speed: 'Speed',
+    capacity: 'Capacity',
+    tanks: 'Tanks',
+    fuel: 'Fuel',
+    perTile: '/ tile',
+    perWeek: 'Per week',
+    consumes: 'Consumes',
+    collects: 'Collects',
+    delivers: 'Delivers',
     noData: 'after first loop',
     hoverHint: 'Hover a train to trace its path',
   },
@@ -122,6 +236,10 @@ export const STR = {
     noTrains: 'No trains yet. Pick a locomotive and wagons; the route is automatic.',
     routeAuto: 'Automatic route',
     routeCustom: 'Custom route',
+    routeDynamic: 'Dynamic',
+    routeDynamicHint:
+      'The train picks its next stop on the fly: the producing station whose cargo the stockpile lacks most, then the nearest warehouse. It keeps clear of stations other dynamic trains are bound for and detours around oncoming traffic.',
+    dynamicTag: 'dynamic',
     routeAutoHint:
       'The train visits every station with platform track, nearest first. Change stops later in the train details.',
     locate: 'Locate',
@@ -161,6 +279,7 @@ export const STR = {
     opt: {
       loadAuto: 'Load: auto',
       loadNone: 'Load: nothing',
+      unloadAuto: 'Unload: warehouse',
       unloadAll: 'Unload: all',
       unloadNone: 'Unload: nothing',
       departAuto: 'Depart: auto',
@@ -176,6 +295,8 @@ export const STR = {
       moving: 'En route',
       loading: 'At platform',
       waiting: 'Waiting for platform',
+      yielding: 'Pulled aside for traffic',
+      idle: 'Idle: nothing worth hauling yet',
       held: 'Held behind a train',
       noRoute: 'No route',
       stranded: 'Stranded',
@@ -254,6 +375,7 @@ export const STR = {
       liquid: 'Liquids (water, oil)',
       mineral: 'Minerals (coal, stone, iron)',
       bulk: 'Bulk (wood, wheat)',
+      people: 'Passengers',
     } as Record<string, string>,
     fuelLine: (l: {
       type: string;
@@ -294,7 +416,7 @@ export const STR = {
     off: 'Off',
     controls: 'Controls',
     controlsText:
-      'WASD / arrows / middle-drag pan · wheel zoom · Tab overview · R rotate · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G gacha · V roster · ` debug',
+      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G gacha · V roster · K market · ` debug',
     lastSave: 'Last save',
     version: 'Save format',
     save: 'Save now',
@@ -308,6 +430,8 @@ export const STR = {
     importSave: 'Import from text',
     confirmImport: 'Replace the current game with the pasted save?',
     saved: 'Game saved',
+    migrated:
+      'The map grew: your land now sits in the middle of a larger world. Trains returned to the depot.',
     loaded: 'Save loaded',
     saveFailed: 'Could not save (storage full or blocked)',
     noSave: 'No save found',
@@ -425,6 +549,9 @@ export const STR = {
     range: 'Range on current tanks',
     tiles: 'tiles',
     prefer: 'Steam fuel:',
+    dynamic: 'Dynamic routing',
+    dynamicOn: 'On',
+    dynamicOff: 'Off',
     coal: 'Coal',
     wood: 'Wood',
     lastLoop: 'Last loop',
@@ -454,12 +581,29 @@ export const STR = {
   },
   res: {
     power: 'Power (battery)',
-    population: 'Crew',
+    population: 'Population',
     populationHint:
-      'Crew members across stations, works, decor and trains. Each eats wheat every day.',
+      'People working at stations, works, services and on trains. Each eats wheat every day; the ones not inside a building walk about.',
+    people: 'People',
+    eats: 'Eats',
     famine: 'NO WHEAT',
     wheatPerDay: 'wheat/day',
     openMarket: 'Open the market',
+    have: 'Stockpile / cap',
+    producedDay: 'Produced / day',
+    consumedDay: 'Consumed / day',
+    netDay: 'Net / day',
+    info: {
+      water: 'From Water Pumps. Steam engines drink it; the refinery and power plant use it.',
+      wheat: 'From farms. Food for every crew member; run out and everything slows.',
+      stone: 'From quarries. Builds track and buildings; the grinder turns it into iron.',
+      wood: 'From lumber yards. Builds almost everything; the kiln turns it into coal; steam engines can burn it.',
+      coal: 'From charcoal kilns or the Market. Steam engine fuel and power plant feed.',
+      oil: 'From the refinery or the Market. Diesel engine fuel; the power plant can burn it too.',
+      iron: 'From the stone grinder or the Market. Switches, signals, power lines and works.',
+      power:
+        'From power plants, stored in the battery. Electric engines draw it while on powered rails.',
+    } as Record<string, string>,
   },
   fleet: {
     needLoco: 'A train needs at least one locomotive',
@@ -471,6 +615,7 @@ export const STR = {
     needTwoStops: 'Route needs at least two stations',
     missingStation: 'Missing station',
     noPlatform: (n: string) => `${n} has no platform track`,
+    platformBusy: (n: string) => `A train stands on every platform at ${n}`,
     cannotPlace: 'Could not place train',
   },
   topbar: {
@@ -485,6 +630,8 @@ export const STR = {
   },
   station: {
     level: (l: number) => `Level ${l}`,
+    biome: 'Biome',
+    ground: 'Nearby resource',
     produces: 'Produces',
     accepts: 'Accepts',
     storage: 'Storage',

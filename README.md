@@ -10,6 +10,10 @@ npm run build    # typecheck + production bundle in dist/
 npm run lint
 ```
 
+## Versions
+
+See `CHANGELOG.md` for what each version and pull request added; releases are tagged `vX.Y.Z`.
+
 ## Menus, tuning and editing
 
 - **Main menu** on boot: continue, new game (seed), game tuning, content editor, settings, and
@@ -37,8 +41,15 @@ npm run lint
   Stops, load/unload, wait for full, refuel and departure direction are edited in the train
   details. The right-hand panel lists the trains on screen (all of them in the overview) with
   tanks, use per tile, fuel type and weekly estimates; hover one to trace its path.
-- **Chunks**: the map is bought chunk by chunk from the overview (Tab). Owning a chunk reveals its
-  neighbours; prices grow with distance from the start.
+- **Chunks**: the map is bought chunk by chunk from the overview (M). Owning a chunk reveals all
+  eight neighbours; prices grow with distance from the start. Buying at the edge grows the world
+  by a ring of chunks, without end.
+- **Biomes**: plains, forest, desert, taiga, swamp and ocean change production, track cost, water
+  use and speed (see `src/data/biomes.json`); rivers and islands are generated.
+- **People**: the population idles around its buildings by day, gathers nearby and waits at
+  stations for coaches; towns produce passengers who pay a fare when they reach another town.
+- **Notices and Advisor**: blockers show up in the notices panel and as markers on both maps; the
+  Advisor (top right) explains what to do and can be silenced.
 - **Roster**: 26 real locomotives across three gacha banners by era, with wagons in three classes
   (tankers, hoppers, flats).
 
@@ -73,7 +84,7 @@ taken from other games. Sprites and individual sound effects can be overridden f
 
 ## Replacing placeholder art
 
-Each atlas group (`terrain`, `props`, `track`, `structures`, `rolling`, `fx`, `icons`) is loaded from
+Each atlas group (`terrain`, `props`, `track`, `structures`, `rolling`, `fx`, `icons`, `people`) is loaded from
 `public/assets/<group>.png` + `public/assets/<group>.json` when present and generated procedurally
 otherwise. The JSON is `{ "frames": { "<name>": { "x", "y", "w", "h", "ax", "ay" } } }` where
 `ax`/`ay` is the anchor in pixels from the frame's top-left. Frame names are listed by the

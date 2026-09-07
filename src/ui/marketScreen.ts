@@ -48,6 +48,7 @@ export class MarketScreen implements Screen {
       ),
     );
     for (const c of CARGO) {
+      if (c.class === 'people') continue;
       const buy = Math.round(c.price * BUY_MUL * rules.spotPriceMul * 100) / 100;
       const sell = Math.round(c.price * SELL_MUL * rules.spotPriceMul * 100) / 100;
       const actions = el('div', { class: 'row', style: 'margin:0' });

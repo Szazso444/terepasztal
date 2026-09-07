@@ -4,10 +4,11 @@ import type { RegionState } from '../world/regions';
 import { TrackGraph, makePiece, pieceCost, type TrackKind, type TrackPiece } from '../world/track';
 import { content, type DecorDef, type Cost } from '../data/content';
 import { rules } from './rules';
-import { Station, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
+import { Station, terrainFactorAt, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
 import type { Economy } from './economy';
 import { Stockpile, scaleCost } from './stockpile';
 import { buildingDef, BUILDING_DEFS, type Building } from './buildings';
+import { biomeDef, biomeAt } from './biomes';
 import { STR } from '../strings';
 import { sfx } from '../engine/audio';
 
@@ -89,7 +90,8 @@ export class Builder {
   }
   terrainMul(x: number, y: number): number {
     const t = terrainAt(this.map, x, y);
-    return (trackData.terrainCost as Record<string, number>)[TERRAIN_NAMES[t]] ?? 0;
+    const base = (trackData.terrainCost as Record<string, number>)[TERRAIN_NAMES[t]] ?? 0;
+    return base * biomeDef(biomeAt(this.map, x, y)).trackCostMul;
   }
   private priced(cost: Cost, mul: number): Cost {
     return this.free ? {} : scaleCost(cost, mul * rules.buildCostMul);
@@ -137,6 +139,14 @@ export class Builder {
     return this.platformTiles(s).length === 0;
   }
   /** Crew of everything built (trains add their own). */
+  decorHas(id: string) {
+    for (const d of this.decor.values()) if (d.id === id) return true;
+    return false;
+  }
+  buildingHas(id: string) {
+    for (const b of this.buildings.values()) if (b.id === id) return true;
+    return false;
+  }
   crewTotal() {
     let n = 0;
     for (const s of this.stations) n += s.crew;
@@ -158,7 +168,8 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
     if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock) return { ok: false, cost: {}, reason: STR.build.rock };
+    if (t === Terrain.Rock || t === Terrain.Mountain)
+      return { ok: false, cost: {}, reason: STR.build.rock };
     if (t === Terrain.Water && kind !== 'bridge')
       return { ok: false, cost: {}, reason: STR.build.needBridge };
     if (t !== Terrain.Water && kind === 'bridge')
@@ -215,12 +226,20 @@ export class Builder {
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock || t === Terrain.Water)
+    if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
       return { ok: false, cost: {}, reason: STR.build.badTerrain };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };
     if (!this.hasAdjacentTrack(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrack };
     return this.affordable(this.priced(def.cost, Math.max(1, this.terrainMul(x, y))));
+  }
+  /** Output multiplier a harvesting station would get on a tile (1 for others). */
+  harvestFactor(x: number, y: number, defId: string) {
+    return terrainFactorAt(this.map, x, y, defId);
+  }
+  /** Recompute every station's nearby-resource multiplier (after terrain edits). */
+  refreshHarvest() {
+    for (const s of this.stations) s.terrainFactor = terrainFactorAt(this.map, s.x, s.y, s.def.id);
   }
   placeStation(x: number, y: number, defId: string): Station | null {
     const c = this.checkStation(x, y, defId);
@@ -232,6 +251,7 @@ export class Builder {
       y,
       count ? `${stationDef(defId).name} ${count + 1}` : undefined,
     );
+    s.terrainFactor = terrainFactorAt(this.map, x, y, defId);
     this.stations.push(s);
     this.refreshStationBoosts();
     this.onStationChanged?.(s, false);
@@ -280,7 +300,7 @@ export class Builder {
     if (def.onTrack && !def.anyTile) {
       if (!this.track.has(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrackHere };
     } else {
-      if (t === Terrain.Rock || t === Terrain.Water)
+      if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
         return { ok: false, cost: {}, reason: STR.build.badTerrain };
       if (this.stationAt(x, y)) return { ok: false, cost: {}, reason: STR.build.occupied };
       if (!def.anyTile && this.track.has(x, y))
@@ -341,7 +361,7 @@ export class Builder {
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock || t === Terrain.Water)
+    if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
       return { ok: false, cost: {}, reason: STR.build.badTerrain };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };

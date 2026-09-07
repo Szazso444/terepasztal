@@ -2,42 +2,91 @@
   {
     "id": "kiln",
     "name": "Charcoal Kiln",
-    "flavor": "Brick dome, slow fire. Two logs go in, one sack of coal comes out.",
-    "cost": { "stone": 40, "wood": 20 },
+    "flavor": "Turns wood into coal for steam engines and the power plant.",
+    "cost": {
+      "stone": 40,
+      "wood": 20
+    },
     "crew": 3,
     "tier": 0,
-    "recipe": { "in": { "wood": 2 }, "out": { "coal": 1 } },
+    "recipe": {
+      "in": {
+        "wood": 2
+      },
+      "out": {
+        "coal": 1
+      }
+    },
     "perDay": 40
   },
   {
     "id": "grinder",
     "name": "Stone Grinder",
-    "flavor": "Mill wheel and a magnet drum. Ten stone yield one bar of iron.",
-    "cost": { "wood": 40, "stone": 60 },
+    "flavor": "Crushes stone into iron for track, signals and machines.",
+    "cost": {
+      "wood": 40,
+      "stone": 60
+    },
     "crew": 4,
     "tier": 0,
-    "recipe": { "in": { "stone": 10 }, "out": { "iron": 1 } },
+    "recipe": {
+      "in": {
+        "stone": 10
+      },
+      "out": {
+        "iron": 1
+      }
+    },
     "perDay": 20
   },
   {
     "id": "refinery",
     "name": "Oil Refinery",
-    "flavor": "Synthesis plant: coal and steam become oil. Keep the lanterns away from it.",
-    "cost": { "stone": 80, "iron": 10, "wood": 20 },
+    "flavor": "Makes oil from coal and water for diesel engines.",
+    "cost": {
+      "stone": 80,
+      "iron": 10,
+      "wood": 20
+    },
     "crew": 6,
     "tier": 1,
-    "recipe": { "in": { "coal": 3, "water": 2 }, "out": { "oil": 1 } },
+    "recipe": {
+      "in": {
+        "coal": 3,
+        "water": 2
+      },
+      "out": {
+        "oil": 1
+      }
+    },
     "perDay": 15
   },
   {
     "id": "power_plant",
     "name": "Power Plant",
-    "flavor": "Boiler house and dynamo. Burns coal or oil with wood and water; feeds the lines.",
-    "cost": { "stone": 100, "iron": 20, "wood": 40 },
+    "flavor": "Burns fuel with wood and water to make power. Connect power lines to it.",
+    "cost": {
+      "stone": 100,
+      "iron": 20,
+      "wood": 40
+    },
     "crew": 8,
     "tier": 1,
-    "recipe": { "in": { "coal": 1, "wood": 1, "water": 1 }, "out": { "power": 1 } },
-    "altIn": { "oil": 1, "wood": 1, "water": 1 },
+    "recipe": {
+      "in": {
+        "coal": 1,
+        "wood": 1,
+        "water": 1
+      },
+      "out": {
+        "power": 1
+      }
+    },
+    "altIn": {
+      "oil": 1,
+      "wood": 1,
+      "water": 1
+    },
     "perDay": 60,
     "power": true
   }

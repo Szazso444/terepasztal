@@ -1,12 +1,13 @@
 import { content, type StationDef, type Cost } from '../data/content';
 import { scaleCost } from './stockpile';
 import { daySeconds } from './rules';
+import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import { rules } from './rules';
 import { cargoDef } from './cargo';
 
 export type { StationDef };
 export const STATION_DEFS: StationDef[] = content.stations.defs;
-const LEVELS = content.stations.levels;
+export const LEVELS = content.stations.levels;
 export const MAX_LEVEL = 5;
 
 export function stationDef(id: string): StationDef {
@@ -35,6 +36,36 @@ export function resetStationIds(v = 1) {
 }
 
 /** A placed station. Storage is a cargo -> units map (produced goods waiting for pickup). */
+/** Radius within which harvested terrain counts, and the weighted sum that means "plenty". */
+export const HARVEST_RADIUS = 4;
+const HARVEST_FULL = 12;
+/**
+ * How well a harvesting station is placed: matching tiles within the radius count with weight
+ * 1/(1+distance). 1 = plenty; sparse surroundings drop towards 0.15, a dense patch reaches 1.6.
+ */
+export function terrainFactorAt(map: GameMap, x: number, y: number, defId: string): number {
+  const want = stationDef(defId).terrain;
+  if (!want) return 1;
+  const match = (t: Terrain) =>
+    want === 'grass'
+      ? t === Terrain.Grass
+      : want === 'forest'
+        ? t === Terrain.Forest
+        : want === 'rock'
+          ? t === Terrain.Rock || t === Terrain.Hill
+          : t === Terrain.Water;
+  let sum = 0;
+  for (let dy = -HARVEST_RADIUS; dy <= HARVEST_RADIUS; dy++)
+    for (let dx = -HARVEST_RADIUS; dx <= HARVEST_RADIUS; dx++) {
+      if (!dx && !dy) continue;
+      if (!inBounds(map, x + dx, y + dy)) continue;
+      if (!match(terrainAt(map, x + dx, y + dy))) continue;
+      const d = Math.max(Math.abs(dx), Math.abs(dy));
+      sum += 1 / (1 + d);
+    }
+  return Math.max(0.15, Math.min(1.6, sum / HARVEST_FULL));
+}
+
 export class Station {
   readonly id: number;
   readonly def: StationDef;
@@ -83,8 +114,10 @@ export class Station {
   get platforms() {
     return LEVELS.platforms[this.level - 1];
   }
+  /** nearby-resource multiplier, set when placed and after terrain edits */
+  terrainFactor = 1;
   get productionPerDay() {
-    return LEVELS.production[this.level - 1] * rules.productionMul;
+    return LEVELS.production[this.level - 1] * rules.productionMul * this.terrainFactor;
   }
   get spriteLevel() {
     return LEVELS.spriteByLevel[this.level - 1];

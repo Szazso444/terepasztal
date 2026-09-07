@@ -17,7 +17,7 @@ import buildingJson from './buildings.json';
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 /** Resource amounts, e.g. { wood: 30, stone: 10 }. */
 export type Cost = Record<string, number>;
-export type CargoClass = 'liquid' | 'mineral' | 'bulk';
+export type CargoClass = 'liquid' | 'mineral' | 'bulk' | 'people';
 export type LocoType = 'steam' | 'diesel' | 'electric';
 
 export interface LocoDef {
@@ -79,6 +79,8 @@ export interface StationDef {
   accepts: string[];
   /** which station sprite family to draw */
   art?: string;
+  /** terrain the station harvests; output scales with how much of it lies nearby */
+  terrain?: 'grass' | 'forest' | 'rock' | 'water';
   /** deliveries go to the player's stockpile */
   stockpile?: boolean;
   /** trains refuel coal / wood / oil here */

@@ -118,6 +118,7 @@ export class ScheduleEditor {
         select(
           stop.unload,
           [
+            ['auto', STR.depot.opt.unloadAuto],
             ['all', STR.depot.opt.unloadAll],
             ['none', STR.depot.opt.unloadNone],
           ],

@@ -1,9 +1,82 @@
 [
-  { "id": "water", "name": "Water", "class": "liquid", "basic": true, "tier": 0, "price": 4, "color": "cargoWater", "weight": 1.0 },
-  { "id": "wheat", "name": "Wheat", "class": "bulk", "basic": true, "tier": 0, "price": 8, "color": "cargoGrain", "weight": 0.6 },
-  { "id": "stone", "name": "Stone", "class": "mineral", "basic": true, "tier": 0, "price": 6, "color": "cargoStone", "weight": 1.8 },
-  { "id": "wood", "name": "Wood", "class": "bulk", "basic": true, "tier": 0, "price": 7, "color": "cargoWood", "weight": 1.2 },
-  { "id": "coal", "name": "Coal", "class": "mineral", "basic": false, "tier": 0, "price": 20, "color": "cargoCoal", "weight": 1.4 },
-  { "id": "oil", "name": "Oil", "class": "liquid", "basic": false, "tier": 1, "price": 45, "color": "cargoOil", "weight": 1.1 },
-  { "id": "iron", "name": "Iron", "class": "mineral", "basic": false, "tier": 0, "price": 70, "color": "cargoIron", "weight": 2.4 }
+  {
+    "id": "water",
+    "name": "Water",
+    "class": "liquid",
+    "basic": true,
+    "tier": 0,
+    "price": 4,
+    "color": "cargoWater",
+    "weight": 1.0
+  },
+  {
+    "id": "wheat",
+    "name": "Wheat",
+    "class": "bulk",
+    "basic": true,
+    "tier": 0,
+    "price": 8,
+    "color": "cargoGrain",
+    "weight": 0.6
+  },
+  {
+    "id": "stone",
+    "name": "Stone",
+    "class": "mineral",
+    "basic": true,
+    "tier": 0,
+    "price": 6,
+    "color": "cargoStone",
+    "weight": 1.8
+  },
+  {
+    "id": "wood",
+    "name": "Wood",
+    "class": "bulk",
+    "basic": true,
+    "tier": 0,
+    "price": 7,
+    "color": "cargoWood",
+    "weight": 1.2
+  },
+  {
+    "id": "coal",
+    "name": "Coal",
+    "class": "mineral",
+    "basic": false,
+    "tier": 0,
+    "price": 20,
+    "color": "cargoCoal",
+    "weight": 1.4
+  },
+  {
+    "id": "oil",
+    "name": "Oil",
+    "class": "liquid",
+    "basic": false,
+    "tier": 1,
+    "price": 45,
+    "color": "cargoOil",
+    "weight": 1.1
+  },
+  {
+    "id": "iron",
+    "name": "Iron",
+    "class": "mineral",
+    "basic": false,
+    "tier": 0,
+    "price": 70,
+    "color": "cargoIron",
+    "weight": 2.4
+  },
+  {
+    "id": "passengers",
+    "name": "Passengers",
+    "class": "people",
+    "basic": false,
+    "tier": 0,
+    "price": 6,
+    "color": "#d8c8a8",
+    "weight": 0.08
+  }
 ]

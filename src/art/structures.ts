@@ -2,32 +2,22 @@ import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder, proj, fillPoly } from './iso3d';
-import { hash2 } from '../engine/rng';
-import { STATION_FAMILIES, BUILDING_SPRITES, DECOR_SPRITES, powerLine } from './industry';
+import {
+  STATION_FAMILIES,
+  BUILDING_SPRITES,
+  DECOR_SPRITES,
+  powerLine,
+  ground,
+  shadowRect,
+  shadowEllipse,
+  patchRect,
+  paving,
+} from './industry';
 
 const W = 96;
 const H = 84;
 const OX = 48;
 const OY = 68;
-
-/** Flat stone platform slab covering most of the tile. */
-function platform(b: PixelBuf, seed: number, lenX = 0.94, lenY = 0.94) {
-  const pts = [
-    proj(OX, OY, -lenX / 2, -lenY / 2),
-    proj(OX, OY, lenX / 2, -lenY / 2),
-    proj(OX, OY, lenX / 2, lenY / 2),
-    proj(OX, OY, -lenX / 2, lenY / 2),
-  ];
-  // raised edge: draw slab 3px tall
-  const lift = pts.map((p) => ({ x: p.x, y: p.y - 3 }));
-  fillPoly(b, pts, (x, y) => shade(PAL.stone[2], 0.8 + 0.1 * hash2(x, y, seed)));
-  fillPoly(b, lift, (x, y) => {
-    const n = hash2(x >> 1, y >> 1, seed + 1);
-    const c = PAL.stone[Math.min(2, Math.floor(n * 3))];
-    // paving lines
-    return (x + 2 * y) % 8 === 0 ? shade(c, 0.85) : c;
-  });
-}
 
 function lantern(b: PixelBuf, tx: number, ty: number) {
   const p = proj(OX, OY, tx, ty);
@@ -43,11 +33,10 @@ function lantern(b: PixelBuf, tx: number, ty: number) {
 
 function stationL1(): PixelBuf {
   const b = new PixelBuf(W, H);
-  platform(b, 11);
   // timber shed at the back corner
   drawPrism(b, {
     ox: OX,
-    oy: OY - 3,
+    oy: OY,
     cx: -0.12,
     cy: -0.14,
     angle: 0,
@@ -61,27 +50,31 @@ function stationL1(): PixelBuf {
     seed: 3,
   });
   // door & window on the visible +y face
-  const d = proj(OX, OY - 3, 0.05, 0.07);
+  const d = proj(OX, OY, 0.05, 0.07);
   b.rect(Math.round(d.x) - 1, Math.round(d.y) - 9, 3, 8, PAL.trunkDark);
-  const w = proj(OX, OY - 3, -0.25, 0.07);
+  const w = proj(OX, OY, -0.25, 0.07);
   b.rect(Math.round(w.x) - 1, Math.round(w.y) - 10, 3, 3, PAL.amberDark);
   // bench + lantern on the front
   lantern(b, 0.32, 0.3);
-  const bench = proj(OX, OY - 3, 0.05, 0.36);
+  const bench = proj(OX, OY, 0.05, 0.36);
   b.rect(Math.round(bench.x) - 5, Math.round(bench.y) - 4, 10, 2, PAL.timber[1]);
   b.rect(Math.round(bench.x) - 5, Math.round(bench.y) - 2, 1, 2, PAL.timber[2]);
   b.rect(Math.round(bench.x) + 4, Math.round(bench.y) - 2, 1, 2, PAL.timber[2]);
   b.outline(PAL.outline, 170);
+  // a few flagstones in front of the door, shadow under the shed
+  ground(b, [
+    patchRect(0.08, 0.3, 0.46, 0.22, paving(PAL.stone, 11), 11, 255, 0.08),
+    shadowRect(-0.12, -0.14, 0.58, 0.42),
+  ]);
   return b;
 }
 
 function stationL2(): PixelBuf {
   const b = new PixelBuf(W, H);
-  platform(b, 12);
   // stone building with slate roof
   drawPrism(b, {
     ox: OX,
-    oy: OY - 3,
+    oy: OY,
     cx: -0.1,
     cy: -0.14,
     angle: 0,
@@ -95,20 +88,20 @@ function stationL2(): PixelBuf {
     seed: 5,
   });
   // chimney
-  drawCylinder(b, OX, OY - 3, -0.32, -0.28, 0.05, 30, 8, PAL.stone, PAL.stone[2], 6);
+  drawCylinder(b, OX, OY, -0.32, -0.28, 0.05, 30, 8, PAL.stone, PAL.stone[2], 6);
   // windows row on +y face
   for (const tx of [-0.32, -0.1, 0.12]) {
-    const w = proj(OX, OY - 3, tx, 0.09);
+    const w = proj(OX, OY, tx, 0.09);
     b.rect(Math.round(w.x) - 1, Math.round(w.y) - 14, 3, 4, PAL.amberDark);
     b.set(Math.round(w.x), Math.round(w.y) - 13, PAL.amber);
   }
-  const d = proj(OX, OY - 3, 0.2, 0.09);
+  const d = proj(OX, OY, 0.2, 0.09);
   b.rect(Math.round(d.x) - 2, Math.round(d.y) - 10, 4, 9, PAL.trunkDark);
   // canopy along the front edge
-  const c0 = proj(OX, OY - 3, -0.44, 0.22);
-  const c1 = proj(OX, OY - 3, 0.36, 0.22);
-  const c2 = proj(OX, OY - 3, 0.36, 0.42);
-  const c3 = proj(OX, OY - 3, -0.44, 0.42);
+  const c0 = proj(OX, OY, -0.44, 0.22);
+  const c1 = proj(OX, OY, 0.36, 0.22);
+  const c2 = proj(OX, OY, 0.36, 0.42);
+  const c3 = proj(OX, OY, -0.44, 0.42);
   const lift = 13;
   fillPoly(
     b,
@@ -124,16 +117,22 @@ function stationL2(): PixelBuf {
     b.rect(Math.round(p.x), Math.round(p.y) - lift + 2, 1, lift - 2, PAL.iron[2]);
   lantern(b, 0.42, 0.34);
   b.outline(PAL.outline, 170);
+  // paved strip under the canopy only, shadows under the building and the canopy
+  ground(b, [
+    patchRect(-0.04, 0.33, 0.76, 0.18, paving(PAL.stone, 12), 12, 255, 0.06),
+    shadowRect(-0.1, -0.14, 0.7, 0.46),
+    shadowEllipse(-0.32, -0.28, 0.07, 50),
+    shadowRect(-0.04, 0.32, 0.8, 0.2, 40),
+  ]);
   return b;
 }
 
 function stationL3(): PixelBuf {
   const b = new PixelBuf(W, H);
-  platform(b, 13, 1, 1);
   // main hall
   drawPrism(b, {
     ox: OX,
-    oy: OY - 3,
+    oy: OY,
     cx: -0.08,
     cy: -0.16,
     angle: 0,
@@ -149,7 +148,7 @@ function stationL3(): PixelBuf {
   // clock tower at the left end
   drawPrism(b, {
     ox: OX,
-    oy: OY - 3,
+    oy: OY,
     cx: -0.42,
     cy: -0.16,
     angle: 0,
@@ -162,23 +161,23 @@ function stationL3(): PixelBuf {
     roof: PAL.roofSlate,
     seed: 8,
   });
-  const clock = proj(OX, OY - 3, -0.42, 0.0);
+  const clock = proj(OX, OY, -0.42, 0.0);
   b.rect(Math.round(clock.x) - 2, Math.round(clock.y) - 37, 5, 5, PAL.white);
   b.set(Math.round(clock.x), Math.round(clock.y) - 35, PAL.outline);
   b.set(Math.round(clock.x), Math.round(clock.y) - 36, PAL.outline);
   b.set(Math.round(clock.x) + 1, Math.round(clock.y) - 35, PAL.outline);
   // arched windows
   for (const tx of [-0.2, -0.02, 0.16, 0.32]) {
-    const w = proj(OX, OY - 3, tx, 0.09);
+    const w = proj(OX, OY, tx, 0.09);
     b.rect(Math.round(w.x) - 1, Math.round(w.y) - 17, 3, 6, PAL.amberDark);
     b.set(Math.round(w.x), Math.round(w.y) - 18, PAL.amberDark);
     b.set(Math.round(w.x), Math.round(w.y) - 15, PAL.amber);
   }
   // long iron canopy
-  const c0 = proj(OX, OY - 3, -0.5, 0.2);
-  const c1 = proj(OX, OY - 3, 0.5, 0.2);
-  const c2 = proj(OX, OY - 3, 0.5, 0.48);
-  const c3 = proj(OX, OY - 3, -0.5, 0.48);
+  const c0 = proj(OX, OY, -0.5, 0.2);
+  const c1 = proj(OX, OY, 0.5, 0.2);
+  const c2 = proj(OX, OY, 0.5, 0.48);
+  const c3 = proj(OX, OY, -0.5, 0.48);
   const lift = 15;
   fillPoly(
     b,
@@ -198,16 +197,22 @@ function stationL3(): PixelBuf {
   lantern(b, 0.46, 0.42);
   lantern(b, -0.4, 0.46);
   b.outline(PAL.outline, 170);
+  // paved strip under the iron canopy, shadows under the hall, the tower and the canopy
+  ground(b, [
+    patchRect(0.0, 0.34, 0.86, 0.2, paving(PAL.stone, 13), 13, 255, 0.06),
+    shadowRect(-0.08, -0.16, 0.84, 0.5),
+    shadowRect(-0.42, -0.16, 0.2, 0.22, 90),
+    shadowRect(0.0, 0.34, 0.9, 0.24, 40),
+  ]);
   return b;
 }
 
 function depot(): PixelBuf {
   const b = new PixelBuf(W, H);
-  platform(b, 21, 0.96, 0.96);
   // engine shed: long brick prism with a wide arch door on the +x face
   drawPrism(b, {
     ox: OX,
-    oy: OY - 3,
+    oy: OY,
     cx: 0,
     cy: 0,
     angle: 0,
@@ -220,13 +225,14 @@ function depot(): PixelBuf {
     roof: PAL.roofSlate,
     seed: 9,
   });
-  const door = proj(OX, OY - 3, 0.45, 0);
+  const door = proj(OX, OY, 0.45, 0);
   const dx = Math.round(door.x);
   const dy = Math.round(door.y);
   for (let y = -16; y < 0; y++)
     b.line(dx - 4, dy + y - 2, dx + 4, dy + y + 2, y > -3 ? PAL.outline : shade(PAL.iron[0], 0.8));
-  drawCylinder(b, OX, OY - 3, -0.3, -0.2, 0.05, 30, 10, PAL.stone, PAL.stone[2], 10);
+  drawCylinder(b, OX, OY, -0.3, -0.2, 0.05, 30, 10, PAL.stone, PAL.stone[2], 10);
   b.outline(PAL.outline, 170);
+  ground(b, [shadowRect(0, 0, 0.9, 0.62, 80)]);
   return b;
 }
 
@@ -278,12 +284,14 @@ function waterTower(): PixelBuf {
 }
 
 /** Amber "!" marker shown over stations that lost their platform track. */
-function warnMarker(): PixelBuf {
+function warnMarker(color: RGB = PAL.amber, shape: 'triangle' | 'disc' = 'triangle'): PixelBuf {
   const b = new PixelBuf(14, 16);
-  for (let y = 0; y < 14; y++) {
-    const hw = Math.round((y / 13) * 6);
-    for (let x = 7 - hw; x <= 7 + hw - 1; x++) b.set(x, y + 1, PAL.amber);
-  }
+  if (shape === 'triangle') {
+    for (let y = 0; y < 14; y++) {
+      const hw = Math.round((y / 13) * 6);
+      for (let x = 7 - hw; x <= 7 + hw - 1; x++) b.set(x, y + 1, color);
+    }
+  } else b.ellipse(7, 8, 6, 6, [color, shade(color, 0.85)], 3, 0.3);
   b.rect(6, 4, 2, 6, PAL.outline);
   b.rect(6, 11, 2, 2, PAL.outline);
   b.outline(PAL.outline, 220);
@@ -301,6 +309,8 @@ export function generateStructuresAtlas(): AtlasImage {
   ab.add('structures/signal_green', signal('green').toImageData(), 6, 27);
   ab.add('structures/water_tower', waterTower().toImageData(), OX, OY);
   ab.add('structures/warn', warnMarker().toImageData(), 7, 15);
+  ab.add('structures/alert', warnMarker(PAL.red, 'disc').toImageData(), 7, 15);
+  ab.add('structures/note', warnMarker(PAL.cyanDark, 'disc').toImageData(), 7, 15);
   for (const [fam, gen] of Object.entries(STATION_FAMILIES))
     for (let l = 1; l <= 3; l++) ab.add(`structures/${fam}_${l}`, gen(l).toImageData(), OX, OY);
   for (const [id, gen] of Object.entries(BUILDING_SPRITES))

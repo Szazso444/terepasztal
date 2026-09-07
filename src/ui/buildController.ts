@@ -9,6 +9,10 @@ import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
 import { buildingDef, type Building } from '../sim/buildings';
+import { stationDef, LEVELS } from '../sim/stations';
+import type { Decor } from '../sim/build';
+import { rules } from '../sim/rules';
+import { cargoDef } from '../sim/cargo';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
@@ -24,6 +28,9 @@ export class BuildController {
   private ghost: Sprite | null = null;
   private ghostDiamond: Sprite;
   private lineGhosts: Sprite[] = [];
+  private reachGhosts: Sprite[] = [];
+  /** reach (Chebyshev tiles) highlighted around the cursor while placing; 0 = none */
+  reach = 0;
   private dragStart: { x: number; y: number } | null = null;
   private selectSprite: Sprite;
   selected: Station | null = null;
@@ -34,6 +41,8 @@ export class BuildController {
   hoverBuilding: Building | null = null;
   selectedBuilding: Building | null = null;
   onSelectBuilding: ((b: Building | null) => void) | null = null;
+  selectedDecor: Decor | null = null;
+  onSelectDecor: ((d: Decor | null) => void) | null = null;
   /** set in editor mode */
   editor: Editor | null = null;
   private lastPaint = '';
@@ -71,6 +80,7 @@ export class BuildController {
   }
 
   private clearGhost() {
+    for (const g of this.reachGhosts) g.visible = false;
     if (this.ghost) {
       this.ghost.destroy();
       this.ghost = null;
@@ -139,7 +149,33 @@ export class BuildController {
       if (this.ghost) this.ghost.visible = false;
       this.ghostDiamond.visible = false;
       for (const g of this.lineGhosts) g.visible = false;
+      for (const g of this.reachGhosts) g.visible = false;
     }
+  }
+  /** Faint diamonds on every tile within `r` of the cursor (what a service or pole would cover). */
+  private showReach(t: { x: number; y: number }, r: number) {
+    const need = r > 0 ? (2 * r + 1) * (2 * r + 1) - 1 : 0;
+    while (this.reachGhosts.length < need) {
+      const g = this.world.makeOverlaySprite('terrain/select');
+      g.alpha = 0.35;
+      this.reachGhosts.push(g);
+    }
+    let k = 0;
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        if (!dx && !dy) continue;
+        const g = this.reachGhosts[k++];
+        const x = t.x + dx;
+        const y = t.y + dy;
+        if (!inBounds(this.builder.map, x, y)) {
+          g.visible = false;
+          continue;
+        }
+        const p = this.world.surfacePoint(x, y);
+        g.position.set(p.x, p.y);
+        g.visible = true;
+      }
+    for (; k < this.reachGhosts.length; k++) this.reachGhosts[k].visible = false;
   }
 
   private ensureGhost(frame: string): Sprite {
@@ -275,7 +311,9 @@ export class BuildController {
       return;
     }
     const check = this.builder.checkStation(t.x, t.y, tool.defId);
-    const g = this.ensureGhost('structures/station_1');
+    const def = stationDef(tool.defId);
+    const fam = `structures/${def.art}_1`;
+    const g = this.ensureGhost(this.world.atlas.has(fam) ? fam : 'structures/station_1');
     this.placeGhostAt(g, t.x, t.y, check.ok);
     this.world.setSpriteFrame(
       this.ghostDiamond,
@@ -283,7 +321,14 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.status(check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? ''));
+    const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
+    if (def.terrain) {
+      const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
+      const perWeek = LEVELS.production[0] * rules.productionMul * f * 7;
+      const cargo = def.produces[0]?.cargo;
+      parts.push(STR.build.harvest(Math.round(perWeek), cargo ? cargoDef(cargo).name : '', f));
+    }
+    this.status(parts.join('   '));
     for (const c of this.input.clicks) {
       if (c.button === 0) {
         const s = this.builder.placeStation(t.x, t.y, tool.defId);
@@ -303,6 +348,7 @@ export class BuildController {
       return;
     }
     const def = decorDef(tool.defId);
+    this.showReach(t, def.power ? 2 : (def.radius ?? 0));
     const check = this.builder.checkDecor(t.x, t.y, tool.defId);
     const g = this.ensureGhost(def.id === 'signal' ? 'structures/signal' : `structures/${def.id}`);
     this.placeGhostAt(g, t.x, t.y, check.ok);
@@ -329,6 +375,7 @@ export class BuildController {
       return;
     }
     const def = buildingDef(tool.defId);
+    this.showReach(t, def.power ? 2 : 0);
     const check = this.builder.checkBuilding(t.x, t.y, tool.defId);
     const g = this.ensureGhost(`structures/${def.id}`);
     this.placeGhostAt(g, t.x, t.y, check.ok);
@@ -411,8 +458,10 @@ export class BuildController {
       if (c.button === 0 && inMap) {
         const st = this.builder.stationAt(t.x, t.y);
         const bld = st ? null : (this.builder.buildingAt(t.x, t.y) ?? null);
+        const dec = st || bld ? null : (this.builder.decorAt(t.x, t.y) ?? null);
         this.select(st ?? null);
         this.selectBuilding(bld);
+        this.selectDecor(dec);
       }
     }
   }
@@ -420,6 +469,11 @@ export class BuildController {
     if (this.selectedBuilding === b) return;
     this.selectedBuilding = b;
     this.onSelectBuilding?.(b);
+  }
+  selectDecor(d: Decor | null) {
+    if (this.selectedDecor === d) return;
+    this.selectedDecor = d;
+    this.onSelectDecor?.(d);
   }
 
   removeAt(x: number, y: number): boolean {
@@ -433,7 +487,11 @@ export class BuildController {
       if (this.selectedBuilding === bld) this.selectBuilding(null);
       return this.builder.removeBuilding(x, y);
     }
-    if (this.builder.decorAt(x, y)) return this.builder.removeDecor(x, y);
+    const dec = this.builder.decorAt(x, y);
+    if (dec) {
+      if (this.selectedDecor === dec) this.selectDecor(null);
+      return this.builder.removeDecor(x, y);
+    }
     return this.builder.removeTrack(x, y);
   }
 

@@ -7,6 +7,7 @@ import { fmtCost } from '../sim/stockpile';
 import type { ContractBoard } from '../sim/contracts';
 import type { GameClock } from '../sim/time';
 import { fmtDuration } from './contractsScreen';
+import { biomeSummary, biomeAt } from '../sim/biomes';
 
 /** Side panel for a selected station. */
 export class StationPanel {
@@ -61,6 +62,8 @@ export class StationPanel {
       );
     b.append(el('div', { class: 'flavor', text: s.def.flavor }));
     b.append(row(STR.station.level(s.level), `${s.def.name}`));
+    b.append(row(STR.station.biome, biomeSummary(biomeAt(this.builder.map, s.x, s.y))));
+    if (s.def.terrain) b.append(row(STR.station.ground, `×${s.terrainFactor.toFixed(2)}`));
     const produced =
       s
         .producedCargo()

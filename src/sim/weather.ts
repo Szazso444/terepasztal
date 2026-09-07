@@ -7,8 +7,22 @@ export const SEASON_DAYS = 6;
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 export type Season = (typeof SEASONS)[number];
 
+/** Which season day 1 falls in (set from the player's calendar on a new game). */
+let seasonOffset = 0;
+export function setSeasonOffset(i: number) {
+  seasonOffset = ((i % 4) + 4) % 4;
+}
+export function getSeasonOffset() {
+  return seasonOffset;
+}
+/** Season of the real calendar: month-based, northern hemisphere; spring when unknown. */
+export function seasonFromDate(d = new Date()): number {
+  const m = d.getMonth();
+  if (Number.isNaN(m)) return 0;
+  return m >= 2 && m <= 4 ? 0 : m >= 5 && m <= 7 ? 1 : m >= 8 && m <= 10 ? 2 : 3;
+}
 export function seasonOf(day: number): Season {
-  return SEASONS[Math.floor((day - 1) / rules.seasonDays) % 4];
+  return SEASONS[(Math.floor((day - 1) / rules.seasonDays) + seasonOffset) % 4];
 }
 export function daysUntilNextSeason(day: number) {
   return rules.seasonDays - ((day - 1) % rules.seasonDays);

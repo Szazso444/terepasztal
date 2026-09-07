@@ -50,6 +50,7 @@ export class BuildInfo {
         el('div', { class: 'bi-text' }, el('div', { class: 'name', text: item.name }), costs),
       ),
       el('div', { class: 'bi-desc', text: item.desc }),
+      item.place ? el('div', { class: 'bi-place', text: item.place }) : '',
     );
   }
   /** Re-render affordability colours when the stockpile changed. */

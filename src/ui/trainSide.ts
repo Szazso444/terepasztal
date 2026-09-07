@@ -3,13 +3,13 @@ import { STR } from '../strings';
 import type { Train } from '../sim/trains';
 import type { Builder } from '../sim/build';
 import { levelMul } from '../gacha/items';
-import { cargoName } from '../sim/cargo';
 import { daySeconds } from '../sim/rules';
+import type { AtlasRegistry } from '../engine/atlas';
+import { spriteImg } from './spritePreview';
 
 /**
  * Right-hand list of trains: the ones on screen in the field view, all of them in the overview.
- * Each card shows the working numbers (speed, crew, weight, tanks, use per tile), a fuel switch
- * for steam engines, wagon capacities and a per-week estimate from the last completed loop.
+ * Compact cards: state, speed, capacity, tanks, fuel, one row per wagon and the weekly flows.
  */
 export class TrainSide {
   readonly root = el('div', { id: 'train-side', class: 'panel' });
@@ -22,7 +22,10 @@ export class TrainSide {
   private lastKey = '';
   private hovered: Train | null = null;
 
-  constructor(private readonly builder: Builder) {
+  constructor(
+    private readonly builder: Builder,
+    private readonly atlas: AtlasRegistry,
+  ) {
     this.root.append(el('div', { class: 'panel-title' }, this.titleText, this.count), this.body);
     this.root.addEventListener('mouseleave', () => this.setHover(null));
   }
@@ -31,19 +34,31 @@ export class TrainSide {
     this.hovered = t;
     this.onHover?.(t);
   }
+  private icon(res: string) {
+    return spriteImg(this.atlas, `icons/${res}`, 1, 'sprite-preview res-icon');
+  }
+  /** "12 [icon]" pair */
+  private amount(res: string, v: number, cls = '') {
+    return el(
+      'span',
+      { class: `ts-amt ${cls}` },
+      el('span', { text: v >= 10 ? String(Math.round(v)) : String(Math.round(v * 10) / 10) }),
+      this.icon(res),
+    );
+  }
 
-  /** Per-week rate from the last loop: amount per loop / loop length in days × 7. */
+  /** Per-week amounts from the last loop: amount per loop / loop length in days × 7. */
   private weekly(t: Train, rec: Record<string, number>, filter?: (k: string) => boolean) {
     const tr = t.lastTrip;
     if (!tr || tr.endedAt <= tr.startedAt) return null;
     const days = (tr.endedAt - tr.startedAt) / daySeconds();
-    const out: string[] = [];
+    const out: [string, number][] = [];
     for (const [k, v] of Object.entries(rec)) {
       if (filter && !filter(k)) continue;
       const wk = (v / days) * 7;
-      if (wk >= 0.05) out.push(`${Math.round(wk * 10) / 10} ${cargoName(k)}`);
+      if (wk >= 0.05) out.push([k, wk]);
     }
-    return out.length ? out.join(', ') : null;
+    return out.length ? out : null;
   }
 
   update(trains: Train[], all: boolean, force = false) {
@@ -52,7 +67,7 @@ export class TrainSide {
       trains
         .map(
           (t) =>
-            `${t.id}:${t.state}:${Math.round(t.coal)}:${Math.round(t.water)}:${Math.round(t.oil)}:${t.fuelPreference}:${t.lastTrip?.endedAt ?? 0}:${Math.round(t.weight)}`,
+            `${t.id}:${t.state}:${Math.round(t.speed * 20)}:${Math.round(t.coal)}:${Math.round(t.water)}:${Math.round(t.oil)}:${t.fuelPreference}:${t.lastTrip?.endedAt ?? 0}:${Math.round(t.weight)}:${t.wagons.map((w) => `${w.cargo}${Math.round(w.amount)}`).join()}`,
         )
         .join('|');
     if (key === this.lastKey && !force) return;
@@ -71,12 +86,16 @@ export class TrainSide {
   }
 
   private card(t: Train) {
-    const row = (k: string, v: string, cls = '') =>
+    const row = (k: string, ...v: (HTMLElement | string)[]) =>
       el(
         'div',
         { class: 'kv' },
         el('span', { class: 'k', text: k }),
-        el('span', { class: `v ${cls}`, text: v }),
+        el(
+          'span',
+          { class: 'v' },
+          ...v.map((x) => (typeof x === 'string' ? el('span', { text: x }) : x)),
+        ),
       );
     const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
     const state = `${t.blocked && t.state === 'moving' ? STR.depot.state.held : (STR.depot.state[t.state] ?? t.state)}${next ? ` → ${next.name}` : ''}`;
@@ -95,75 +114,112 @@ export class TrainSide {
       ),
       el('div', { class: `sub state-${t.state}`, text: state }),
     );
-    card.append(row(STR.train.speed, `${t.maxSpeed.toFixed(2)} ${STR.trainSide.tilesPerSec}`));
-    card.append(row(STR.train.crew, String(t.crew)));
     card.append(
       row(
-        STR.trainSide.weight,
-        `${Math.round(t.weight)} / ${Math.round(t.power)} t`,
-        t.weight > t.power ? 'red' : '',
+        STR.trainSide.speed,
+        `${t.speed.toFixed(2)} / ${t.maxSpeed.toFixed(2)} ${STR.trainSide.tilesPerSec}`,
       ),
     );
+    const capRow = row(
+      STR.trainSide.capacity,
+      `${Math.round(t.weight)} / ${Math.round(t.power)} t`,
+    );
+    if (t.weight > t.power) capRow.classList.add('red');
+    card.append(capRow);
     const type = t.locoDef.type;
-    const use: string[] = [];
+    const tanks: HTMLElement[] = [];
+    const use: HTMLElement[] = [];
     if (type === 'steam') {
-      card.append(
-        row(
-          STR.trainSide.fuelWater,
-          `${Math.round(t.coal)}/${Math.round(t.coalCap)} ${t.fuelKind} · ${Math.round(t.water)}/${Math.round(t.waterCap)} ${STR.train.water.toLowerCase()}`,
-          t.coal < t.coalRate * 5 || t.water < t.waterRate * 5 ? 'red' : '',
-        ),
+      tanks.push(
+        this.amount(t.fuelKind, t.coal, t.coal < t.coalRate * 8 ? 'red' : ''),
+        el('span', { class: 'dim', text: `/${Math.round(t.coalCap)}` }),
+        this.amount('water', t.water, t.water < t.waterRate * 8 ? 'red' : ''),
+        el('span', { class: 'dim', text: `/${Math.round(t.waterCap)}` }),
       );
-      use.push(`${t.coalRate.toFixed(2)} ${t.fuelKind}`, `${t.waterRate.toFixed(2)} water`);
+      use.push(this.amount(t.fuelKind, t.coalRate), this.amount('water', t.waterRate));
     } else if (type === 'diesel') {
-      card.append(
-        row(
-          STR.trainSide.fuelWater,
-          `${Math.round(t.oil)}/${Math.round(t.oilCap)} oil`,
-          t.oil < t.oilRate * 5 ? 'red' : '',
-        ),
+      tanks.push(
+        this.amount('oil', t.oil, t.oil < t.oilRate * 8 ? 'red' : ''),
+        el('span', { class: 'dim', text: `/${Math.round(t.oilCap)}` }),
       );
-      use.push(`${t.oilRate.toFixed(2)} oil`);
-    } else use.push(`${t.powerRate.toFixed(2)} power`);
-    card.append(row(STR.train.perTile, use.join(', ')));
-    // fuel type
-    const fuelRow = el(
-      'div',
-      { class: 'kv' },
-      el('span', { class: 'k', text: STR.trainSide.fuelType }),
+      use.push(this.amount('oil', t.oilRate));
+    } else use.push(this.amount('power', t.powerRate));
+    if (tanks.length) card.append(row(STR.trainSide.tanks, ...tanks));
+    const fuelRow = row(
+      STR.trainSide.fuel,
+      ...use,
+      el('span', { class: 'dim', text: STR.trainSide.perTile }),
     );
     if (type === 'steam') {
-      const sw = el('span', { class: 'row', style: 'margin:0;gap:2px' });
       for (const k of ['coal', 'wood'] as const)
-        sw.append(
+        fuelRow.lastElementChild!.append(
           btn(
             STR.train[k],
             () => {
               t.fuelPreference = k;
-              this.update([], false, true);
               this.lastKey = '';
             },
-            `small ${t.fuelPreference === k ? 'active' : ''}`,
+            `tiny ${t.fuelPreference === k ? 'active' : ''}`,
           ),
         );
-      fuelRow.append(sw);
-    } else fuelRow.append(el('span', { class: 'v', text: STR.roster.type[type] }));
+    }
+    if (t.eco) fuelRow.classList.add('amber');
     card.append(fuelRow);
-    // wagons
-    const caps = t.wagons.map((w) => {
+    // wagons: one row each
+    const wag = el('div', { class: 'ts-wagons' });
+    for (const w of t.wagons) {
       const cap = Math.round(w.def.capacity * levelMul(w.level));
-      return w.cargo
-        ? `${Math.round(w.amount)}/${cap} ${cargoName(w.cargo)}`
-        : `${cap} ${STR.depot.empty.toLowerCase()}`;
-    });
-    card.append(row(STR.trainSide.wagons(t.wagons.length), caps.join(' · ') || '-'));
-    // weekly estimates
+      wag.append(
+        el(
+          'div',
+          { class: 'ts-wagon' },
+          spriteImg(
+            this.atlas,
+            `rolling/wagon_${w.def.body}_${w.def.paint}_f0`,
+            1,
+            'sprite-preview ts-wagon-art',
+          ),
+          el('span', { class: 'ts-wagon-name', text: w.def.name }),
+          w.cargo
+            ? el(
+                'span',
+                { class: 'ts-amt' },
+                el('span', { text: `${Math.round(w.amount)}/${cap}` }),
+                this.icon(w.cargo),
+              )
+            : el('span', { class: 'dim', text: `0/${cap}` }),
+        ),
+      );
+    }
+    card.append(wag);
+    // weekly flows in one block
     const consumed = this.weekly(t, t.lastTrip?.fuel ?? {}, (k) => !k.startsWith('refuel_'));
     const collected = this.weekly(t, t.lastTrip?.loaded ?? {});
     const delivered = this.weekly(t, t.lastTrip?.delivered ?? {});
-    card.append(row(STR.trainSide.consumesWeek, consumed ?? STR.trainSide.noData));
-    card.append(row(STR.trainSide.collectsWeek, collected ?? STR.trainSide.noData));
-    card.append(row(STR.trainSide.deliversWeek, delivered ?? STR.trainSide.noData));
+    const week = el(
+      'div',
+      { class: 'ts-week' },
+      el('div', { class: 'ts-week-title', text: STR.trainSide.perWeek }),
+    );
+    const line = (label: string, items: [string, number][] | null) =>
+      el(
+        'div',
+        { class: 'kv' },
+        el('span', { class: 'k', text: label }),
+        el(
+          'span',
+          { class: 'v' },
+          ...(items
+            ? items.map(([k, v]) => this.amount(k, v))
+            : [el('span', { class: 'dim', text: STR.trainSide.noData })]),
+        ),
+      );
+    week.append(
+      line(STR.trainSide.consumes, consumed),
+      line(STR.trainSide.collects, collected),
+      line(STR.trainSide.delivers, delivered),
+    );
+    card.append(week);
     card.addEventListener('mouseenter', () => this.setHover(t));
     return card;
   }
