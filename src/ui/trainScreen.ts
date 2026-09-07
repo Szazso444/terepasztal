@@ -170,14 +170,16 @@ export class TrainScreen implements Screen {
       el(
         'div',
         { class: 'row' },
-        el('span', { class: 'dim', text: STR.train.dynamic }),
-        btn(
-          t.dynamic ? STR.train.dynamicOn : STR.train.dynamicOff,
-          () => {
-            t.dynamic = !t.dynamic;
-            this.render();
-          },
-          `small ${t.dynamic ? 'active' : ''}`,
+        el('span', { class: 'dim', text: STR.train.routing }),
+        ...(['fixed', 'dynamic', 'collect'] as const).map((m) =>
+          btn(
+            STR.train.mode[m],
+            () => {
+              t.mode = m;
+              this.render();
+            },
+            `small ${t.mode === m ? 'active' : ''}`,
+          ),
         ),
       ),
     );

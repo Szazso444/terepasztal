@@ -29,15 +29,24 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 ## Gameplay loop
 
 - **Resources** replace money for building: water, wheat, stone, wood, and later coal, oil, iron.
-  Trains collect at producing stations and only deliveries to a Warehouse reach the stockpile
-  (top bar, second row). Crews eat wheat every day; run out and production halves, trains slow.
+  Trains collect at producing stations and only cargo unloaded at a **Depot** reaches the
+  stockpile (top bar, second row); Warehouses hold goods locally (1000 per level) for trains to
+  move on later. Crews eat wheat every day; run out and production halves, trains slow.
+- **Depot**: a two-by-two engine shed with four gates. Every game starts with one; another unlocks
+  per nine owned chunks. New trains roll out of the depot you pick, and each depot raises the
+  stockpile cap.
+- **Towns**: a Town Station (25 tiles from any other) with a Townhouse and a Warehouse within seven
+  tiles founds a town; name it when placing (rename any time). Stations inside carry the town's
+  name, the overview colours its reach and the left-hand panel lists population, output and use.
 - **Works**: Charcoal Kiln (wood → coal), Stone Grinder (stone → iron), Oil Refinery
   (coal + water → oil), Power Plant (coal or oil + wood + water → power). The Market (`M`) buys
   and sells any resource for money.
 - **Fuel**: steam burns coal (or wood) and water, diesel burns oil, electrics need power and a
-  live Power Line network (poles within two tiles of each other and a Power Plant). Tanks refill at
-  Warehouses, Coaling Stages, Water Towers and Water Pumps.
-- **Trains** run automatically: dispatch a consist and it visits every station with a platform.
+  live Power Line network (poles within two tiles of each other and a Power Plant). Tanks fill at
+  Depots, at stations near a Coaling Stage or Water Tower, and from a town Warehouse's own store;
+  a train never starts a leg it could not finish and still reach fuel from.
+- **Trains** run automatically: dispatch a consist and it visits every station with a platform,
+  or pick Dynamic (what the stockpile lacks) or Collect (fullest producer, nearest depot).
   Stops, load/unload, wait for full, refuel and departure direction are edited in the train
   details. The right-hand panel lists the trains on screen (all of them in the overview) with
   tanks, use per tile, fuel type and weekly estimates; hover one to trace its path.

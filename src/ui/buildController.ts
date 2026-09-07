@@ -43,6 +43,8 @@ export class BuildController {
   onSelectBuilding: ((b: Building | null) => void) | null = null;
   selectedDecor: Decor | null = null;
   onSelectDecor: ((d: Decor | null) => void) | null = null;
+  /** a town station was just placed: the game asks for its name */
+  onTownPlaced: ((s: Station) => void) | null = null;
   /** set in editor mode */
   editor: Editor | null = null;
   private lastPaint = '';
@@ -105,6 +107,8 @@ export class BuildController {
       if (this.tool.kind === 'track') this.rot = (this.rot + 1) % rotationCount(this.tool.piece);
       else if (this.tool.kind === 'decor')
         this.rot = (this.rot + 1) % decorDef(this.tool.defId).rotations;
+      else if (this.tool.kind === 'station' && (stationDef(this.tool.defId).size ?? 1) > 1)
+        this.rot = (this.rot + 1) % 2;
     }
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
     if (!active) {
@@ -312,16 +316,20 @@ export class BuildController {
     }
     const check = this.builder.checkStation(t.x, t.y, tool.defId);
     const def = stationDef(tool.defId);
-    const fam = `structures/${def.art}_1`;
+    const size = def.size ?? 1;
+    const fam = size > 1 ? `structures/${def.art}_r${this.rot % 2}` : `structures/${def.art}_1`;
     const g = this.ensureGhost(this.world.atlas.has(fam) ? fam : 'structures/station_1');
-    this.placeGhostAt(g, t.x, t.y, check.ok);
+    // a two-tile sprite is anchored at its footprint centre
+    this.placeGhostAt(g, t.x + (size - 1) / 2, t.y + (size - 1) / 2, check.ok);
     this.world.setSpriteFrame(
       this.ghostDiamond,
       check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
+    this.ghostDiamond.visible = size === 1;
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
+    if (size > 1) parts.push(STR.build.rotate);
     if (def.terrain) {
       const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
       const perWeek = LEVELS.production[0] * rules.productionMul * f * 7;
@@ -331,10 +339,11 @@ export class BuildController {
     this.status(parts.join('   '));
     for (const c of this.input.clicks) {
       if (c.button === 0) {
-        const s = this.builder.placeStation(t.x, t.y, tool.defId);
+        const s = this.builder.placeStation(t.x, t.y, tool.defId, this.rot);
         if (s) {
           this.setTool({ kind: 'none' });
           this.select(s);
+          if (s.def.id === 'town') this.onTownPlaced?.(s);
         }
       }
     }

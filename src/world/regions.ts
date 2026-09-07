@@ -76,9 +76,16 @@ export class RegionState {
     return out;
   }
   /** Price of a chunk: first ring costs `chunkCost`, each further ring multiplies it. */
+  /** Number of chunks the player owns. */
+  ownedCount() {
+    let n = 0;
+    for (const u of this.unlocked) if (u) n++;
+    return n;
+  }
+  /** Price of a chunk: first ring costs `chunkCost`; each ring further adds (mul − 1) of it. */
   price(i: number) {
     const ring = Math.max(1, this.tiers[i]);
-    return Math.round(rules.chunkCost * Math.pow(rules.chunkCostMul, ring - 1));
+    return Math.round(rules.chunkCost * (1 + (ring - 1) * (rules.chunkCostMul - 1)));
   }
   /** Bounding rectangle (tiles) of every revealed chunk. */
   revealedBounds() {

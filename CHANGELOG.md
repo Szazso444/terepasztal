@@ -11,6 +11,36 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 | v0.3.0  | [#3](https://github.com/Szazso444/terepasztal/pull/3) | `e28519e`                       | Resource economy and stockpile, fuel and water, real locomotives by era, wagon classes, works buildings, power grid, market, train details, new art.                  |
 | v0.4.0  | [#4](https://github.com/Szazso444/terepasztal/pull/4) | `56d9a4c`                       | Chunk purchase, automatic routes, train side panel, building panel, floating indicators, toolbar with categories, power wires, cheat button, pause icon.              |
 | v0.5.0  | [#5](https://github.com/Szazso444/terepasztal/pull/5) | `fe886e2` … `80b6905`           | Traffic handling, biomes and endless world, people and passengers, notices and advisor, dynamic routing (section below).                                              |
+| v0.6.0  | (this branch)                                         | see below                       | Depot as the only way into the stockpile, warehouses as local stores, Collect routing with fuel reserve, towns, train picking in the field view.                      |
+
+## v0.6.0
+
+### Depot and stockpile
+
+- New two-by-two **Depot** station: four gates, two on each of two opposite sides (R rotates while placing), two trains at a time. Every game starts with one at the middle of the start chunk (gate track laid); older saves get one on load. Further depots are free but unlock one per nine owned chunks.
+- Cargo enters the stockpile only when unloaded at a depot. Each depot raises the stockpile cap (`depotCap`, 3000; base cap raised to 1000). New trains roll out of the depot chosen in the Depot screen, from a gate that connects to their first stop; a train with no such gate is refused with a message.
+- **Warehouses** are local stores: 1000 units per level of any goods in total. Trains unload into them and load out of them again for a depot or a buyer (never for another warehouse). The station panel shows the stored kinds; the overview draws a fill ring around each warehouse and a square for each depot.
+- Chunk prices grow linearly: each ring adds (`chunkCostMul` − 1) × the first-ring price instead of multiplying.
+
+### Routing and fuel
+
+- Three routing modes per train (Depot screen and train details): **Schedule**, **Dynamic** (producer whose cargo the stockpile lacks most) and **Collect** (producer or warehouse with the biggest load waiting, weighed against the way there and on to the nearest depot). Loaded roaming trains go to a contract destination, else the nearest depot. A stop the tanks could not reach and leave again is never picked; a stop that turns out unreachable is remembered for a while and another is chosen.
+- Fuel reserve: a leg starts only when the tanks cover it plus the run from its end to the nearest fuel point (a depot, or a station with both a coaling stage and a water tower in reach); otherwise the train diverts to the best fuel point it can still reach. Tanks fill completely at every refuelling stop; a warehouse refuels from its own store.
+- Loading keeps the train while goods keep coming; waiting for full wagons only happens when the station's output can fill them within the dwell limit (now 120 s). Cargo taken on at a station is never handed back there.
+
+### Towns
+
+- A Town Station must stand 25 tiles from any other. Placing one asks for a name (generated, editable, rename later from the station or town panel). With a Townhouse (new, under Stations: homes for six) and a Warehouse within seven tiles the town is founded: every station inside is renamed "<town> <kind>" and follows renames.
+- Overview: a tinted circle in the town's colour with its name and population (dashed until founded); a Towns panel on the left lists colour, people, what the town makes and uses per day, what it still needs, with Go and Rename.
+- Residents count as population (they eat wheat) and walk about their houses.
+
+### Interface
+
+- Field view: hovering a train flashes it and shows a tooltip; clicking selects it (steady tint, path lit) and the card above the survey map shows its state, next stop, wagons, tanks and buttons for details and locate. Clicking empty ground or a station clears it.
+
+### Save
+
+- Save format v7: station orientation, train routing mode (old `dynamic` flag maps to Dynamic), towns.
 
 ## v0.5.0
 

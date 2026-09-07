@@ -42,7 +42,7 @@ export function tickBuildings(
   gameDt: number,
   famine: boolean,
   plants: number,
-  warehouseLevels: number,
+  depots: number,
 ) {
   for (const b of buildings) {
     const def = buildingDef(b.id);
@@ -50,7 +50,7 @@ export function tickBuildings(
       ((def.perDay * (famine ? 0.5 : 1) * rules.productionMul) / daySeconds()) * gameDt;
     // can the next batch run at all? (inputs on hand, room for the output)
     const outOk = Object.entries(def.recipe.out).every(
-      ([k, v]) => stock.get(k) + v <= stock.cap(k, warehouseLevels, plants) + 1e-6,
+      ([k, v]) => stock.get(k) + v <= stock.cap(k, depots, plants) + 1e-6,
     );
     const inputs = stock.canAfford(def.recipe.in)
       ? def.recipe.in
@@ -69,7 +69,7 @@ export function tickBuildings(
       if (!pick) break;
       stock.spend(pick);
       for (const [k, v] of Object.entries(def.recipe.out)) {
-        stock.add(k, v, stock.cap(k, warehouseLevels, plants));
+        stock.add(k, v, stock.cap(k, depots, plants));
         b.made = b.made ?? {};
         b.made[k] = (b.made[k] ?? 0) + v;
       }

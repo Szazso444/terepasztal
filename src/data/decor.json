@@ -52,5 +52,18 @@
     "anyTile": true,
     "rotations": 1,
     "power": true
+  },
+  {
+    "id": "townhouse",
+    "name": "Townhouse",
+    "flavor": "Homes for six. With a warehouse near a town station it founds a town; more houses mean more people, more passengers and more mouths to feed.",
+    "cost": {
+      "wood": 35,
+      "stone": 15
+    },
+    "crew": 0,
+    "onTrack": false,
+    "rotations": 2,
+    "residents": 6
   }
 ]

@@ -81,8 +81,14 @@ export interface StationDef {
   art?: string;
   /** terrain the station harvests; output scales with how much of it lies nearby */
   terrain?: 'grass' | 'forest' | 'rock' | 'water';
-  /** deliveries go to the player's stockpile */
+  /** local store: holds anything trains bring, per level */
   stockpile?: boolean;
+  /** deliveries here enter the player's stockpile (depots) */
+  pool?: boolean;
+  /** engine shed: trains are built here; limited by owned chunks; two gates on two sides */
+  depot?: boolean;
+  /** footprint side in tiles (default 1) */
+  size?: number;
   /** trains refuel coal / wood / oil here */
   fuel?: boolean;
   /** trains refill water here */
@@ -149,6 +155,8 @@ export interface DecorDef {
   water?: boolean;
   fuel?: boolean;
   power?: boolean;
+  /** people living here (townhouses) */
+  residents?: number;
 }
 export interface Banner {
   id: string;

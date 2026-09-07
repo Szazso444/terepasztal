@@ -14,6 +14,16 @@ interface CarSprites {
 /** Draws every train's cars as depth-sorted sprites in the world object layer. */
 export class TrainRenderer {
   private cars = new Map<number, CarSprites[]>();
+  /** train under the cursor (bright outline pulse) and the selected one (steady tint) */
+  hoverId: number | null = null;
+  selectedId: number | null = null;
+  private hoverSince = 0;
+  private clock = 0;
+  setHover(id: number | null) {
+    if (id === this.hoverId) return;
+    this.hoverId = id;
+    this.hoverSince = this.clock;
+  }
   constructor(
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
@@ -66,11 +76,19 @@ export class TrainRenderer {
   }
 
   /** Update sprites; alpha interpolates between the last two sim poses. */
-  update(trains: Iterable<Train>, alpha: number) {
+  update(trains: Iterable<Train>, alpha: number, dt = 0) {
+    this.clock += dt;
     const seen = new Set<number>();
     for (const t of trains) {
       seen.add(t.id);
       const list = this.ensure(t);
+      // a hovered train flashes bright for a moment; the selected one stays lit
+      let tint = 0xffffff;
+      if (t.id === this.hoverId) {
+        const age = this.clock - this.hoverSince;
+        const pulse = age < 0.9 ? 0.5 + 0.5 * Math.abs(Math.sin(age * 9)) : 0.25;
+        tint = mix(0xffffff, 0x9be8ff, pulse);
+      } else if (t.id === this.selectedId) tint = 0xc8f0ff;
       for (let i = 0; i < list.length; i++) {
         const cur = t.poses[i];
         const prev = t.prevPoses[i] ?? cur;
@@ -86,6 +104,7 @@ export class TrainRenderer {
         const wp = tileToWorld(x, y);
         c.body.position.set(Math.round(wp.x), Math.round(wp.y));
         c.body.zIndex = depthKey(x, y, 15);
+        c.body.tint = tint;
         c.body.visible = true;
         if (c.load) {
           const w = t.wagons[i - t.locos.length];
@@ -105,4 +124,12 @@ export class TrainRenderer {
     }
     for (const id of [...this.cars.keys()]) if (!seen.has(id)) this.remove(id);
   }
+}
+
+function mix(a: number, b: number, t: number) {
+  const ch = (v: number, sh: number) => (v >> sh) & 0xff;
+  const r = Math.round(ch(a, 16) + (ch(b, 16) - ch(a, 16)) * t);
+  const g = Math.round(ch(a, 8) + (ch(b, 8) - ch(a, 8)) * t);
+  const bl = Math.round(ch(a, 0) + (ch(b, 0) - ch(a, 0)) * t);
+  return (r << 16) | (g << 8) | bl;
 }

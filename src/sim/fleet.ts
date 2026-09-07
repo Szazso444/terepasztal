@@ -6,13 +6,14 @@ import {
   type TickCtx,
   type StopPlan,
   type LocoSlot,
+  type RouteMode,
 } from './trains';
 import type { TrackGraph } from '../world/track';
 import type { Builder } from './build';
 import type { GameMap } from '../world/tiles';
 import type { Inventory } from '../gacha/inventory';
 import { wagonDef, locoDef, levelMul } from '../gacha/items';
-import { opposite, DIR_DX, DIR_DY, DIRS } from '../engine/iso';
+import { DIR_DX, DIR_DY, DIRS } from '../engine/iso';
 import type { Economy } from './economy';
 import type { Stockpile } from './stockpile';
 import { cargoDef } from './cargo';
@@ -80,13 +81,14 @@ export class Fleet {
     return order.map((s) => defaultStop(s.id));
   }
 
-  /** Assemble and spawn a train at the first stop. Returns an error string on failure. */
+  /** Assemble a train and roll it out of a depot gate. Returns an error string on failure. */
   create(
     locoUids: number[],
     wagonUids: number[],
     schedule: (StopPlan | number)[],
     name?: string,
-    dynamic = false,
+    mode: RouteMode = 'fixed',
+    depotId: number | null = null,
   ): Train | string {
     if (!locoUids.length) return STR.fleet.needLoco;
     if (locoUids.length > MAX_LOCOS) return STR.fleet.tooManyLocos(MAX_LOCOS);
@@ -119,28 +121,37 @@ export class Fleet {
     const first0 = this.builder.stationById(stops[0].stationId);
     if (!first0) return STR.fleet.missingStation;
     if (!this.builder.platformTiles(first0).length) return STR.fleet.noPlatform(first0.name);
-    // start on a platform tile with no train on it: the first stop's, else the next stop's
-    let first = first0;
-    let p: { x: number; y: number } | undefined;
-    for (let i = 0; i < stops.length && !p; i++) {
-      const st = this.builder.stationById(stops[i].stationId);
-      if (!st) continue;
-      const free = this.builder.platformTiles(st).find((pt) => !this.occupied(pt.x, pt.y, -1));
-      if (free) {
-        first = st;
-        p = free;
-        t.routeIndex = i;
+    // roll out of a depot gate with no train on it
+    const depot =
+      (depotId !== null ? this.builder.stationById(depotId) : undefined) ??
+      this.builder.depots()[0];
+    if (!depot || !depot.def.depot) return STR.fleet.noDepot;
+    const gates = this.builder.platformTiles(depot);
+    if (!gates.length) return STR.fleet.depotNoGate(depot.name);
+    const free = gates.filter((pt) => !this.occupied(pt.x, pt.y, -1));
+    if (!free.length) return STR.fleet.depotBusy(depot.name);
+    t.schedule = stops;
+    t.routeIndex = 0;
+    t.mode = mode;
+    // the gates on the two sides are separate stubs: roll out of one the first stop can be
+    // reached from (the first free one when none can), facing away from the shed
+    let placed = false;
+    let reached = false;
+    for (const p of free) {
+      const toStation = DIRS.find((d) => depot.covers(p.x + DIR_DX[d], p.y + DIR_DY[d]));
+      const piece = this.track.get(p.x, p.y)!;
+      let entry = piece.links[0][0];
+      if (toStation !== undefined && piece.links.some((l) => l.includes(toStation)))
+        entry = toStation;
+      if (!t.spawnAt(this.track, p.x, p.y, entry)) continue;
+      placed = true;
+      if (t.dispatch(this.track, this.builder, this.map)) {
+        reached = true;
+        break;
       }
     }
-    if (!p) return STR.fleet.platformBusy(first0.name);
-    const toStation = DIRS.find((d) => p.x + DIR_DX[d] === first.x && p.y + DIR_DY[d] === first.y);
-    const piece = this.track.get(p.x, p.y)!;
-    let entry = piece.links[0][0];
-    if (toStation !== undefined && piece.links.some((l) => l.includes(opposite(toStation))))
-      entry = opposite(toStation);
-    if (!t.spawnAt(this.track, p.x, p.y, entry)) return STR.fleet.cannotPlace;
-    t.schedule = stops;
-    t.dynamic = dynamic;
+    if (!placed) return STR.fleet.cannotPlace;
+    if (!reached) return STR.fleet.depotNoRoute(depot.name, first0.name);
     t.trip = newTrip(this.clockTime);
     for (const l of locoItems) l!.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
@@ -240,48 +251,98 @@ export class Fleet {
         out.add(t.route[t.routeIndex % t.route.length]);
     return out;
   }
+  /** Nearest station of a kind, by walking distance estimate. */
+  private nearest(list: Station[], from: { x: number; y: number }) {
+    let best: Station | null = null;
+    let bd = Infinity;
+    for (const s of list) {
+      const d = Math.abs(s.cx - from.x) + Math.abs(s.cy - from.y);
+      if (d < bd) {
+        bd = d;
+        best = s;
+      }
+    }
+    return best;
+  }
   /**
-   * Dynamic routing: with cargo aboard go to the nearest warehouse (or a contract's destination);
-   * empty, pick the producing station whose cargo the stockpile lacks most, discounted by
-   * distance and skipped when another dynamic train is already bound there.
+   * Stops chosen on the fly. With cargo aboard: a contract's destination, else a town for
+   * passengers, else the nearest depot (the only way into the stockpile). Empty, `dynamic` picks
+   * the producer whose cargo the stockpile lacks most; `collect` picks the producer or warehouse
+   * with the biggest load waiting, weighed against the way there and on to the nearest depot.
+   * Stations other free-roaming trains are bound for are skipped, and so are stations the tanks
+   * could not reach and leave again.
    */
   chooseNext(t: Train): number | null {
     const head = t.poses[0] ?? { x: 0, y: 0 };
-    const dist = (s: Station) => Math.abs(s.x - head.x) + Math.abs(s.y - head.y);
+    const dist = (s: Station) => Math.abs(s.cx - head.x) + Math.abs(s.cy - head.y);
     const withPlat = this.builder.stations.filter((s) => this.builder.platformTiles(s).length > 0);
+    const depots = withPlat.filter((s) => s.def.pool);
+    const fuelPoints = withPlat.filter((s) => s.refuelsFuel && s.refuelsWater);
+    const range = t.rangeTiles;
+    // can the train get there and on to fuel afterwards?
+    const reachable = (s: Station) => {
+      if (range === Infinity) return true;
+      const f = this.nearest(fuelPoints, { x: s.cx, y: s.cy });
+      const onward = f ? Math.abs(f.cx - s.cx) + Math.abs(f.cy - s.cy) : 0;
+      return (dist(s) + onward) * 1.3 + 4 <= range;
+    };
+    const now = this.clockTime;
     const loaded = t.wagons.filter((w) => w.cargo && w.amount > 0);
     if (loaded.length) {
       for (const w of loaded) {
         const c = this.contractDest?.(w.cargo!, w.origin ?? -1);
-        if (c !== null && c !== undefined) return c;
+        if (c !== null && c !== undefined && !t.isBadTarget(c, now)) return c;
       }
       const wantsPeople = loaded.some((w) => cargoDef(w.cargo!).class === 'people');
-      const sinks = withPlat.filter((s) =>
-        wantsPeople ? s.accepts('passengers') : s.def.stockpile,
-      );
-      sinks.sort((a, b) => dist(a) - dist(b));
-      return sinks[0]?.id ?? null;
+      const okDepots = depots.filter((s) => !t.isBadTarget(s.id, now));
+      const sinks = (
+        wantsPeople
+          ? withPlat.filter((s) => s.accepts('passengers') && !s.def.pool)
+          : okDepots.length
+            ? okDepots
+            : withPlat.filter((s) => s.def.stockpile && s.room > 1)
+      ).filter((s) => !t.isBadTarget(s.id, now));
+      return this.nearest(sinks, head)?.id ?? null;
     }
     const taken = this.dynamicTargets(t.id);
     let best: { id: number; score: number } | null = null;
     for (const s of withPlat) {
-      if (taken.has(s.id)) continue;
+      if (taken.has(s.id) || s.def.pool || t.isBadTarget(s.id, now)) continue;
+      if (!reachable(s)) continue;
       let score = -Infinity;
-      for (const c of s.producedCargo()) {
-        if (!t.wagons.some((w) => (w.def.accepts ?? []).includes(c))) continue;
-        const cap = this.stockCap(c);
-        const deficit =
-          cargoDef(c).class === 'people'
-            ? 0.4
-            : 1 - Math.min(1, this.stock.get(c) / Math.max(1, cap));
-        const supply = Math.min(1, s.stored(c) / Math.max(1, s.capacity * 0.25)) * 0.6 + 0.4;
-        score = Math.max(score, deficit * supply);
+      if (t.mode === 'collect') {
+        // biggest haul per tile of travel, counting the run on to the nearest depot
+        let haul = 0;
+        for (const c of s.availableCargo()) {
+          if (cargoDef(c).class === 'people') continue;
+          const cap = Fleet.capacityFor(t, c);
+          if (cap <= 0) continue;
+          haul = Math.max(haul, Math.min(cap, s.stored(c)) + 0.25 * s.stored(c));
+        }
+        if (haul <= 0) continue;
+        const d = this.nearest(depots, { x: s.cx, y: s.cy });
+        const onward = d ? Math.abs(d.cx - s.cx) + Math.abs(d.cy - s.cy) : 0;
+        const trainCap = t.wagons.reduce((a, w) => a + w.def.capacity, 0) || 1;
+        score = haul / trainCap / (dist(s) + onward + 12);
+        if (haul < Math.min(trainCap * 0.15, 8)) continue;
+      } else {
+        for (const c of s.availableCargo()) {
+          if (!t.wagons.some((w) => (w.def.accepts ?? []).includes(c))) continue;
+          const cap = this.stockCap(c);
+          const deficit =
+            cargoDef(c).class === 'people'
+              ? 0.4
+              : 1 - Math.min(1, this.stock.get(c) / Math.max(1, cap));
+          const supply = Math.min(1, s.stored(c) / Math.max(1, s.capacity * 0.25)) * 0.6 + 0.4;
+          score = Math.max(score, deficit * supply);
+        }
+        if (score === -Infinity) continue;
+        score -= dist(s) * 0.004;
+        if (score <= 0.05) continue;
       }
-      if (score === -Infinity) continue;
-      score -= dist(s) * 0.004;
       if (!best || score > best.score) best = { id: s.id, score };
     }
-    return best && best.score > 0.05 ? best.id : null;
+    return best ? best.id : null;
   }
   /** set by the game: destination station of an active contract for this cargo/origin, if any */
   contractDest: ((cargo: string, origin: number) => number | null) | null = null;

@@ -109,7 +109,11 @@ export class Toolbar {
       frame: atlas.has(`structures/${d.art}_1`) ? `structures/${d.art}_1` : 'structures/station_1',
       desc: d.flavor,
       tier: d.tier,
-      place: STR.toolbar.place.station,
+      place: d.depot
+        ? STR.toolbar.place.depot
+        : d.id === 'town'
+          ? STR.toolbar.place.town
+          : STR.toolbar.place.station,
     }));
     const decorItem = (d: (typeof DECOR_DEFS)[number]): ToolItem => ({
       key: `decor:${d.id}`,
@@ -128,7 +132,8 @@ export class Toolbar {
             : STR.toolbar.place.building,
       reach: d.power ? 2 : d.radius,
     });
-    const services = DECOR_DEFS.filter((d) => !d.onTrack).map(decorItem);
+    const services = DECOR_DEFS.filter((d) => !d.onTrack && !d.residents).map(decorItem);
+    stations.push(...DECOR_DEFS.filter((d) => d.residents).map(decorItem));
     const utility = DECOR_DEFS.filter((d) => d.onTrack).map(decorItem);
     const works: ToolItem[] = BUILDING_DEFS.map((d) => ({
       key: `building:${d.id}`,

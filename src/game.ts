@@ -3,7 +3,7 @@ import { AtlasRegistry } from './engine/atlas';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop } from './engine/loop';
-import { worldToTileInt, tileToWorld } from './engine/iso';
+import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
@@ -84,7 +84,10 @@ import {
   type SaveGame,
   type Settings,
 } from './sim/save';
-import { Station, resetStationIds } from './sim/stations';
+import { Station, resetStationIds, stationDef as stationDefOf } from './sim/stations';
+import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
+import { NamePrompt } from './ui/namePrompt';
+import { TownPanel } from './ui/townPanel';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
 import { makePiece } from './world/track';
 import { cargoDef } from './sim/cargo';
@@ -189,6 +192,9 @@ export class Game {
   private noticeMarkers = new Set<string>();
   private lastFailedContract = '';
   private hoverTrain: Train | null = null;
+  /** train under the cursor in the field view, and the one picked with a click */
+  private fieldHover: Train | null = null;
+  private fieldSelected: Train | null = null;
   private pathHighlight: { x: number; y: number }[][] = [];
   private pathTimer = 0;
   private lastDay = 1;
@@ -224,11 +230,41 @@ export class Game {
     stations: () =>
       this.builder.stations.map((s) => ({
         id: s.id,
-        x: s.x,
-        y: s.y,
+        x: s.cx,
+        y: s.cy,
         name: s.name,
         level: s.level,
+        kind: s.def.depot
+          ? ('depot' as const)
+          : s.def.stockpile
+            ? ('warehouse' as const)
+            : s.def.id === 'town'
+              ? ('town' as const)
+              : ('other' as const),
+        fill: s.def.stockpile ? s.totalStored() / Math.max(1, s.capacity) : undefined,
+        color:
+          s.def.id === 'town'
+            ? TOWN_COLORS[(this.towns.byStation(s.id)?.color ?? 0) % TOWN_COLORS.length]
+            : undefined,
       })),
+    towns: () =>
+      this.towns.towns
+        .map((t) => {
+          const st = this.towns.station(t);
+          if (!st) return null;
+          const m = this.towns.members(t);
+          return {
+            id: t.id,
+            x: st.x,
+            y: st.y,
+            radius: TOWN_RADIUS,
+            name: t.name,
+            color: TOWN_COLORS[t.color % TOWN_COLORS.length],
+            founded: m.houses > 0 && m.warehouses > 0,
+            population: this.towns.population(t, m),
+          };
+        })
+        .filter((t): t is NonNullable<typeof t> => !!t),
     trains: () =>
       this.fleet.trains
         .filter((t) => t.poses.length)
@@ -268,6 +304,9 @@ export class Game {
   pauseMenu!: PauseMenu;
   editor: Editor | null = null;
   editorPanel: EditorPanel | null = null;
+  towns!: TownRegistry;
+  private townPanel!: TownPanel;
+  private namePrompt = new NamePrompt();
   private paused = false;
   private menuPausedSpeed = 0;
   get menuOpen() {
@@ -293,6 +332,13 @@ export class Game {
     const stockMul = start?.stockMul ?? 1;
     for (const [id, n] of Object.entries(START_STOCK))
       this.stock.add(id, Math.round(n * rules.startStock * stockMul));
+    if (!start) {
+      const d = this.ensureDepot();
+      if (d) {
+        const p = tileToWorld(d.cx + 0.5, d.cy + 0.5);
+        this.camera.centerOn(p.x, p.y);
+      }
+    }
     if (start && start.tier > this.economy.tier) {
       this.economy.tier = Math.min(start.tier, this.regions.tiers.length ? 4 : 0);
       const newly = this.regions.applyTier(start.tier);
@@ -559,6 +605,7 @@ export class Game {
 
     this.track = new TrackGraph(this.map.w, this.map.h);
     this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stock);
+    this.towns = new TownRegistry(this.builder);
     this.power = new PowerGrid(this.map);
     this.stock.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
@@ -659,8 +706,11 @@ export class Game {
       this.tileUnderMouse(),
     );
     this.buildUi();
-    this.build.onSelect = (s) =>
-      s ? this.stationPanel.open(s) : this.stationPanel.station && this.stationPanel.close();
+    this.build.onSelect = (s) => {
+      if (s) this.selectFieldTrain(null);
+      if (s) this.stationPanel.open(s);
+      else if (this.stationPanel.station) this.stationPanel.close();
+    };
     this.build.onSelectBuilding = (b) =>
       b ? this.buildingPanel.open(b) : this.buildingPanel.building && this.buildingPanel.close();
     this.build.onSelectDecor = (d) =>
@@ -722,6 +772,7 @@ export class Game {
       stockpile: this.stock.toJSON(),
       regions: this.regions.toJSON(),
       seasonOffset: getSeasonOffset(),
+      towns: this.towns.toJSON(),
       buildings: [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id, b.acc]),
     };
   }
@@ -754,7 +805,10 @@ export class Game {
       }
     };
     for (const [x, y, kind] of j.track) fix(x, y, kind === 'bridge');
-    for (const s of j.stations) fix(s.x, s.y);
+    for (const s of j.stations) {
+      const size = stationDefOf(s.defId).size ?? 1;
+      for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) fix(s.x + dx, s.y + dy);
+    }
     for (const [x, y] of j.decor ?? []) fix(x, y);
     for (const [x, y] of j.buildings ?? []) fix(x, y);
   }
@@ -803,6 +857,8 @@ export class Game {
       this.onBuildingChanged(b, false);
     }
     if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
+    this.towns.load(j.towns);
+    this.ensureDepot();
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
     if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);
@@ -843,6 +899,7 @@ export class Game {
   }
   private onDecorChanged(d: Decor, removed: boolean) {
     const id = `decor:${d.x},${d.y}`;
+    this.towns?.refresh();
     if (removed) {
       this.world.removeStructure(id);
       this.signalAspect.delete(d.y * this.map.w + d.x);
@@ -885,6 +942,7 @@ export class Game {
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
+    this.towns?.refresh();
     const t = terrainAt(this.map, b.x, b.y);
     if (removed) {
       this.world.removeStructure(id);
@@ -903,7 +961,7 @@ export class Game {
   }
   /** Storage cap for one resource at the current warehouse and plant count. */
   stockCap(id: string) {
-    return this.stock.cap(id, this.builder.warehouseLevels(), this.builder.plantCount());
+    return this.stock.cap(id, this.builder.depotCount(), this.builder.plantCount());
   }
   /** Signals show red when a train sits on the tile they guard or on their own tile. */
   private updateSignals() {
@@ -940,24 +998,112 @@ export class Game {
   }
   private onStationChanged(s: Station, removed: boolean) {
     const id = `station:${s.id}`;
-    const t = terrainAt(this.map, s.x, s.y);
     if (removed) {
       this.onStationOrphaned(s, false);
       this.world.removeStructure(id);
-      if (t === Terrain.Hill && !this.track.has(s.x, s.y)) this.world.setFlattened(s.x, s.y, false);
+      for (const f of s.footprint())
+        if (terrainAt(this.map, f.x, f.y) === Terrain.Hill && !this.track.has(f.x, f.y))
+          this.world.setFlattened(f.x, f.y, false);
     } else {
       s.productionMul = productionMul(s.def.id, this.season ?? 'spring') * this.biomeProduction(s);
-      if (t === Terrain.Hill) this.world.setFlattened(s.x, s.y, true);
-      this.world.removeProps(s.x, s.y);
-      const fam = `structures/${s.def.art}_${s.spriteLevel}`;
-      this.world.setStructure(
-        id,
-        s.x,
-        s.y,
-        this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
-      );
+      for (const f of s.footprint()) {
+        if (terrainAt(this.map, f.x, f.y) === Terrain.Hill) this.world.setFlattened(f.x, f.y, true);
+        this.world.removeProps(f.x, f.y);
+      }
+      if (s.size === 2) {
+        // the sprite is anchored at the footprint centre; sort it with its front tile
+        this.world.setStructure(
+          id,
+          s.x + 1,
+          s.y + 1,
+          `structures/${s.def.art}_r${s.rot % 2}`,
+          20,
+          -HALF_H_PX,
+        );
+      } else {
+        const fam = `structures/${s.def.art}_${s.spriteLevel}`;
+        this.world.setStructure(
+          id,
+          s.x,
+          s.y,
+          this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+        );
+      }
       if (this.stationPanel.station === s) this.stationPanel.render();
     }
+    this.towns?.refresh();
+  }
+  /** Ask for a town's name; `fresh` marks a just-placed station (the default name is offered). */
+  private async renameTown(t: Town, fresh = false) {
+    const n = await this.namePrompt.ask(STR.town.namePrompt, STR.town.nameHint, t.name);
+    if (n && n !== t.name) {
+      this.towns.rename(t, n);
+      this.townPanel.render(true);
+      if (!fresh) this.toasts.push(STR.town.renamed(n), 'info');
+    }
+  }
+  /**
+   * Every game has a depot: the start grants one at the middle of the start chunk, an older save
+   * gets one on load. Gate track is laid where nothing stands yet. Returns the depot, or null when
+   * no room could be found nearby.
+   */
+  ensureDepot(): Station | null {
+    const have = this.builder.depots()[0];
+    if (have) return have;
+    const rs = this.map.regionSize;
+    const cx = Math.floor((Math.floor((this.map.regionsX - 1) / 2) + 0.5) * rs);
+    const cy = Math.floor((Math.floor((this.map.regionsY - 1) / 2) + 0.5) * rs);
+    const clear = (x: number, y: number, allowTrack: boolean) => {
+      if (!inBounds(this.map, x, y) || !this.regions.isTileUnlocked(x, y)) return false;
+      const t = terrainAt(this.map, x, y);
+      if (t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain) return false;
+      if (this.builder.stationAt(x, y) || this.builder.decorAt(x, y)) return false;
+      if (this.builder.buildingAt(x, y)) return false;
+      if (!allowTrack && this.track.has(x, y)) return false;
+      return true;
+    };
+    const fits = (x: number, y: number, rot: number) => {
+      for (let dy = 0; dy < 2; dy++)
+        for (let dx = 0; dx < 2; dx++) if (!clear(x + dx, y + dy, false)) return false;
+      const gates =
+        rot === 0
+          ? [
+              [x - 1, y],
+              [x - 1, y + 1],
+              [x + 2, y],
+              [x + 2, y + 1],
+            ]
+          : [
+              [x, y - 1],
+              [x + 1, y - 1],
+              [x, y + 2],
+              [x + 1, y + 2],
+            ];
+      return gates.every(([gx, gy]) => clear(gx, gy, true));
+    };
+    for (let r = 0; r <= 24; r++)
+      for (let dy = -r; dy <= r; dy++)
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          for (const rot of [0, 1]) {
+            const x = cx + dx - 1;
+            const y = cy + dy - 1;
+            if (!fits(x, y, rot)) continue;
+            const wasFree = this.builder.free;
+            this.builder.free = true;
+            const d = this.builder.placeStation(x, y, 'depot', rot);
+            if (d) {
+              for (const g of d.gateTiles())
+                if (!this.track.has(g.x, g.y))
+                  this.builder.placeTrack(g.x, g.y, 'straight', rot === 0 ? 1 : 0);
+              d.name = STR.station.depotName;
+              this.onStationChanged(d, false);
+            }
+            this.builder.free = wasFree;
+            return d;
+          }
+        }
+    return null;
   }
   private onTierUp(tier: number) {
     this.toolbar.refresh();
@@ -1178,13 +1324,35 @@ export class Game {
     };
     this.trainSide.onLocate = (t) => this.focusTrain(t);
     this.trainSide.onHover = (t) => this.setHoverTrain(t);
-    this.buildInfo = new BuildInfo(this.atlas, this.stock);
+    this.buildInfo = new BuildInfo(this.atlas, this.stock, this.builder);
+    this.buildInfo.onTrainDetails = (t) => {
+      this.trainScreen.open(t);
+      this.screens.open(this.trainScreen);
+    };
+    this.buildInfo.onTrainLocate = (t) => this.focusTrain(t);
+    this.buildInfo.onTrainClose = () => this.selectFieldTrain(null);
     this.stationPanel = new StationPanel(
       this.builder,
       () => this.build.selected && this.build.select(null),
       this.contracts,
       this.clock,
+      this.towns,
+      (t) => this.renameTown(t),
     );
+    this.townPanel = new TownPanel(this.towns);
+    this.townPanel.onGo = (t) => {
+      const st = this.towns.station(t);
+      if (st) this.returnToRts(st.x, st.y);
+    };
+    this.townPanel.onRename = (t) => this.renameTown(t);
+    this.towns.onChanged = () => {
+      if (this.stationPanel.station) this.stationPanel.render();
+      this.depot.refresh();
+    };
+    this.build.onTownPlaced = (st) => {
+      const t = this.towns.found(st);
+      this.renameTown(t, true);
+    };
     this.buildMenus();
     this.uiRoot.append(
       this.mainMenu.root,
@@ -1205,6 +1373,8 @@ export class Game {
       this.minimap.root,
       this.debug.root,
       this.overviewBanner,
+      this.townPanel.root,
+      this.namePrompt.root,
       el('div', { id: 'hint', text: STR.hints.camera }),
       this.toolbar.root,
       this.stationPanel.root,
@@ -1231,10 +1401,15 @@ export class Game {
     }
     const gdt = this.clock.advance(dt);
     if (gdt > 0) {
-      this.stock.population = this.builder.crewTotal() + this.fleet.crewTotal();
+      this.stock.population =
+        this.builder.crewTotal() + this.builder.residentsTotal() + this.fleet.crewTotal();
       this.stock.tick(gdt);
       if (this.mode === 'play')
-        this.people.tick(gdt, this.builder.crewTotal(), this.clock.dayFraction);
+        this.people.tick(
+          gdt,
+          this.builder.crewTotal() + this.builder.residentsTotal(),
+          this.clock.dayFraction,
+        );
       const famineMul = this.stock.famine ? 0.5 : 1;
       for (const s of this.builder.stations) s.tick(gdt * famineMul);
       tickBuildings(
@@ -1243,7 +1418,7 @@ export class Game {
         gdt,
         this.stock.famine,
         this.builder.plantCount(),
-        this.builder.warehouseLevels(),
+        this.builder.depotCount(),
       );
       if (this.settings.weather) this.weather.tick(this.clock.time, this.clock.day, dt);
       this.applySeason();
@@ -1425,6 +1600,7 @@ export class Game {
       });
     }
     this.trainSide.update(list, all);
+    if (all) this.townPanel.render();
     if (this.hoverTrain && !this.fleet.byId(this.hoverTrain.id)) this.setHoverTrain(null);
     if (!this.hoverTrain && this.pathHighlight.length) this.applyPathHighlight([]);
     if (this.hoverTrain) {
@@ -1439,6 +1615,59 @@ export class Game {
     this.hoverTrain = t;
     this.pathTimer = 1;
     if (!t) this.applyPathHighlight([]);
+  }
+  /** The train whose cars lie under the cursor in the field view (nearest car within reach). */
+  private trainUnderMouse(): Train | null {
+    const m = this.camera.screenToWorld(this.input.mouseX, this.input.mouseY);
+    let best: Train | null = null;
+    let bd = Infinity;
+    for (const t of this.fleet.trains)
+      for (const p of t.poses) {
+        const w = tileToWorld(p.x, p.y);
+        const wy = w.y + this.world.elevationOf(Math.floor(p.x + 0.5), Math.floor(p.y + 0.5));
+        const dx = Math.abs(w.x - m.x);
+        const dy = Math.abs(wy - 10 - m.y);
+        const d = Math.hypot(dx, dy * 1.6);
+        if (dx <= 22 && dy <= 16 && d < bd) {
+          bd = d;
+          best = t;
+        }
+      }
+    return best;
+  }
+  /** Pick a train in the field view: its path lights up and the card above the survey map follows it. */
+  selectFieldTrain(t: Train | null) {
+    if (this.fieldSelected === t) return;
+    this.fieldSelected = t;
+    this.trainRenderer.selectedId = t ? t.id : null;
+    this.buildInfo.showTrain(t);
+    if (t) {
+      this.build.select(null);
+      this.build.selectBuilding(null);
+      this.build.selectDecor(null);
+    }
+    this.setHoverTrain(t);
+  }
+  private updateFieldTrains(active: boolean) {
+    if (this.fieldSelected && !this.fleet.byId(this.fieldSelected.id)) this.selectFieldTrain(null);
+    const canPick = active && this.build.tool.kind === 'none';
+    const hover = canPick ? this.trainUnderMouse() : null;
+    if (hover !== this.fieldHover) {
+      this.fieldHover = hover;
+      this.trainRenderer.setHover(hover ? hover.id : null);
+      if (!this.fieldSelected || hover) this.setHoverTrain(hover ?? this.fieldSelected);
+    }
+    if (canPick) {
+      const clicks = this.input.clicks;
+      for (let i = clicks.length - 1; i >= 0; i--) {
+        if (clicks[i].button !== 0) continue;
+        if (hover) {
+          this.selectFieldTrain(hover);
+          clicks.splice(i, 1);
+        } else if (this.fieldSelected) this.selectFieldTrain(null);
+      }
+    }
+    if (this.fieldSelected) this.buildInfo.refreshTrain();
   }
   private applyPathHighlight(legs: { x: number; y: number }[][]) {
     for (const leg of this.pathHighlight)
@@ -1469,7 +1698,7 @@ export class Game {
     this.world.applyCamera(this.camera);
     this.layoutViews();
     this.updateCursor();
-    this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha);
+    this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha, dt);
     const night = this.settings.dayNight ? nightness(this.clock.dayFraction) : 0;
     const rainI = this.settings.weather && this.weather.kind === 'rain' ? this.weather.visible : 0;
     const fogI = this.settings.weather && this.weather.kind === 'fog' ? this.weather.visible : 0;
@@ -1503,13 +1732,14 @@ export class Game {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
-    this.build.update(
+    const fieldActive =
       this.viewTarget === 0 &&
-        this.viewBlend === 0 &&
-        !this.input.overUi &&
-        !this.screens.current &&
-        !this.menuOpen,
-    );
+      this.viewBlend === 0 &&
+      !this.input.overUi &&
+      !this.screens.current &&
+      !this.menuOpen;
+    this.updateFieldTrains(fieldActive);
+    this.build.update(fieldActive);
     this.updateRtsTooltip();
     this.hud.update(this.economy);
     this.resourceBar.update(this.stock, (id) => this.stockCap(id));
@@ -1562,7 +1792,14 @@ export class Game {
     if (this.viewTarget !== 0 || this.input.overUi) return;
     const st = this.build.hoverStation;
     const bld = this.build.hoverBuilding;
-    if (st && this.build.tool.kind === 'none') {
+    const ht = this.fieldHover;
+    if (ht && this.build.tool.kind === 'none') {
+      const d = this.describePick({ kind: 'train', id: ht.id });
+      this.tooltip.show(this.input.mouseX, this.input.mouseY, d.title, [
+        ...d.lines,
+        STR.train.clickHint,
+      ]);
+    } else if (st && this.build.tool.kind === 'none') {
       this.tooltip.show(this.input.mouseX, this.input.mouseY, st.name, [
         STR.station.level(st.level),
         `${STR.station.storage}: ${Math.floor(st.totalStored())} / ${st.capacity}`,
@@ -1752,7 +1989,7 @@ export class Game {
       const stops = rec.stops.map(
         (id) => t.schedule.find((s) => s.stationId === id) ?? defaultStopFor(id),
       );
-      t.dynamic = false;
+      t.mode = 'fixed';
       this.fleet.setSchedule(t, stops);
       this.toasts.push(STR.overview.recorded(t.name, stops.length), 'good');
     } else if (rec) this.toasts.push(STR.depot.needTwoStops, 'warn');
@@ -1818,6 +2055,7 @@ export class Game {
     this.viewTarget = v;
     this.overviewBanner.classList.toggle('show', v === 1);
     this.toolbar.root.style.display = v === 1 ? 'none' : '';
+    this.townPanel.show(v === 1);
     if (v === 1) this.build.setTool({ kind: 'none' });
     if (v === 0) {
       this.tooltip.hide();

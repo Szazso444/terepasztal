@@ -1392,7 +1392,30 @@ export const BUILDING_SPRITES: Record<string, () => PixelBuf> = {
   refinery,
   power_plant: powerPlant,
 };
+/** Townhouse: a two-storey timber house with a pitched roof, a chimney and a small yard. */
+function townhouse(): PixelBuf {
+  const b = new PixelBuf(W, H);
+  const gnd: GroundFn[] = [
+    shadowRect(-0.02, 0.0, 0.5, 0.36),
+    patchRect(0.22, 0.24, 0.3, 0.2, paving(PAL.stone, 61), 61, 200, 0.05),
+  ];
+  house(b, -0.04, -0.02, 0.5, 0.36, 22, PAL.timber, PAL.roof, 44);
+  chimney(b, -0.2, -0.1, 22, 8, 0.04, [PAL.stone[2], PAL.stone[0], PAL.stone[1]]);
+  // door and two windows on the +y face, one lit
+  const d = proj(OX, GY, -0.12, 0.17);
+  b.rect(rx(d) - 1, ry(d) - 8, 3, 8, PAL.trunkDark);
+  const w1 = proj(OX, GY, 0.08, 0.17);
+  b.rect(rx(w1) - 1, ry(w1) - 9, 3, 3, PAL.amberDark);
+  const w2 = proj(OX, GY, 0.08, 0.17, 12);
+  b.rect(rx(w2) - 1, ry(w2) - 9, 3, 3, PAL.amber);
+  fence(b, 0.2, 0.36, 0.42, 0.36, 3);
+  b.outline(PAL.outline, 170);
+  ground(b, gnd);
+  return b;
+}
+
 export const DECOR_SPRITES: Record<string, () => PixelBuf> = {
   fuel_stop: fuelStop,
+  townhouse,
 };
 export { powerLine };

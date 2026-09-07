@@ -77,7 +77,14 @@ export class Builder {
     return y * this.map.w + x;
   }
   stationAt(x: number, y: number): Station | undefined {
-    return this.stations.find((s) => s.x === x && s.y === y);
+    return this.stations.find((s) => s.covers(x, y));
+  }
+  depots() {
+    return this.stations.filter((s) => s.def.depot);
+  }
+  /** Depots the player may own: one, plus one per nine owned chunks. */
+  depotsAllowed() {
+    return 1 + Math.floor(this.regions.ownedCount() / 9);
   }
   stationById(id: number) {
     return this.stations.find((s) => s.id === id);
@@ -125,15 +132,13 @@ export class Builder {
   hasAdjacentTrack(x: number, y: number) {
     return DIRS.some((d) => this.track.has(x + DIR_DX[d], y + DIR_DY[d]));
   }
-  /** Track tiles orthogonally adjacent to a station: its platforms. */
+  /** Track tiles serving a station: its platforms (a depot's gates with track on them). */
   platformTiles(s: Station): { x: number; y: number }[] {
-    return DIRS.map((d) => ({ x: s.x + DIR_DX[d], y: s.y + DIR_DY[d] })).filter((p) =>
-      this.track.has(p.x, p.y),
-    );
+    return s.gateTiles().filter((p) => this.track.has(p.x, p.y));
   }
   /** Station whose platform set contains this track tile (if any). */
   stationForTrackTile(x: number, y: number): Station | undefined {
-    return this.stations.find((s) => Math.abs(s.x - x) + Math.abs(s.y - y) === 1);
+    return this.stations.find((s) => s.gateTiles().some((g) => g.x === x && g.y === y));
   }
   isOrphaned(s: Station) {
     return this.platformTiles(s).length === 0;
@@ -156,6 +161,15 @@ export class Builder {
   }
   warehouseLevels() {
     return this.stations.filter((s) => s.def.stockpile).reduce((a, s) => a + s.level, 0);
+  }
+  depotCount() {
+    return this.depots().length;
+  }
+  /** People living in townhouses. */
+  residentsTotal() {
+    let n = 0;
+    for (const d of this.decor.values()) n += decorDef(d.id).residents ?? 0;
+    return n;
   }
   plantCount() {
     let n = 0;
@@ -213,24 +227,53 @@ export class Builder {
   /** Re-evaluate platform access of the stations around a changed track tile. */
   private checkOrphans(x: number, y: number) {
     for (const s of this.stations) {
-      if (Math.abs(s.x - x) + Math.abs(s.y - y) !== 1) continue;
+      if (!s.gateTiles().some((g) => g.x === x && g.y === y)) continue;
       this.onStationOrphaned?.(s, this.platformTiles(s).length === 0);
     }
   }
 
   // ------------------------------------------------------------------ stations
+  /** Minimum Chebyshev distance between two town stations. */
+  static readonly TOWN_SPACING = 25;
   checkStation(x: number, y: number, defId: string): PlacementCheck {
     const def = stationDef(defId);
-    if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
-    if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
+    const size = def.size ?? 1;
+    for (let dy = 0; dy < size; dy++)
+      for (let dx = 0; dx < size; dx++) {
+        const tx = x + dx;
+        const ty = y + dy;
+        if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
+        if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
+        const t = terrainAt(this.map, tx, ty);
+        if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
+          return { ok: false, cost: {}, reason: STR.build.badTerrain };
+        if (
+          this.track.has(tx, ty) ||
+          this.stationAt(tx, ty) ||
+          this.decorAt(tx, ty) ||
+          this.buildingAt(tx, ty)
+        )
+          return { ok: false, cost: {}, reason: STR.build.occupied };
+      }
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
-    const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
-      return { ok: false, cost: {}, reason: STR.build.badTerrain };
-    if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
-      return { ok: false, cost: {}, reason: STR.build.occupied };
-    if (!this.hasAdjacentTrack(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrack };
+    if (def.depot && !this.free) {
+      const allowed = this.depotsAllowed();
+      const have = this.depots().length;
+      if (have >= allowed)
+        return { ok: false, cost: {}, reason: STR.build.depotLocked(allowed * 9) };
+    }
+    if (defId === 'town') {
+      const near = this.stations.find(
+        (s) =>
+          s.def.id === 'town' &&
+          Math.max(Math.abs(s.x - x), Math.abs(s.y - y)) < Builder.TOWN_SPACING,
+      );
+      if (near)
+        return { ok: false, cost: {}, reason: STR.build.townTooClose(Builder.TOWN_SPACING) };
+    }
+    if (!def.depot && !this.hasAdjacentTrack(x, y))
+      return { ok: false, cost: {}, reason: STR.build.needTrack };
     return this.affordable(this.priced(def.cost, Math.max(1, this.terrainMul(x, y))));
   }
   /** Output multiplier a harvesting station would get on a tile (1 for others). */
@@ -241,7 +284,7 @@ export class Builder {
   refreshHarvest() {
     for (const s of this.stations) s.terrainFactor = terrainFactorAt(this.map, s.x, s.y, s.def.id);
   }
-  placeStation(x: number, y: number, defId: string): Station | null {
+  placeStation(x: number, y: number, defId: string, rot = 0): Station | null {
     const c = this.checkStation(x, y, defId);
     if (!c.ok || !this.pay(c.cost)) return null;
     const count = this.stations.filter((s) => s.def.id === defId).length;
@@ -251,6 +294,7 @@ export class Builder {
       y,
       count ? `${stationDef(defId).name} ${count + 1}` : undefined,
     );
+    s.rot = rot % 2;
     s.terrainFactor = terrainFactorAt(this.map, x, y, defId);
     this.stations.push(s);
     this.refreshStationBoosts();
@@ -341,7 +385,7 @@ export class Builder {
       for (const d of this.decor.values()) {
         const def = decorDef(d.id);
         if (!def.radius) continue;
-        if (Math.max(Math.abs(d.x - s.x), Math.abs(d.y - s.y)) > def.radius) continue;
+        if (s.distTo(d.x, d.y) > def.radius) continue;
         if (def.loadBoost && count < 2) {
           boost += def.loadBoost;
           count++;

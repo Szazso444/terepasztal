@@ -19,6 +19,22 @@ export interface OverviewStation {
   y: number;
   name: string;
   level: number;
+  /** depots draw as squares, warehouses show their fill */
+  kind?: 'depot' | 'warehouse' | 'town' | 'other';
+  /** 0..1 fill of a warehouse's store */
+  fill?: number;
+  /** town colour for a town station */
+  color?: number;
+}
+export interface OverviewTown {
+  id: number;
+  x: number;
+  y: number;
+  radius: number;
+  name: string;
+  color: number;
+  founded: boolean;
+  population: number;
 }
 export interface OverviewTrain {
   id: number;
@@ -48,6 +64,7 @@ export interface OverviewSource {
   trains(): OverviewTrain[];
   contracts(): OverviewContract[];
   markers(): OverviewMarker[];
+  towns(): OverviewTown[];
 }
 
 const FLAT_COLORS: Record<number, string> = {
@@ -76,6 +93,8 @@ export class OverviewRenderer {
   private powerG = new Graphics();
   private pathG = new Graphics();
   private markerG = new Graphics();
+  private townG = new Graphics();
+  private townLabels = new Map<number, Text>();
   /** atlas for locomotive icons (optional; arrows without it) */
   atlas: { has(k: string): boolean; get(k: string): { texture: Texture } } | null = null;
   /** tiles to highlight (a hovered train's predicted path), outermost leg first */
@@ -93,6 +112,7 @@ export class OverviewRenderer {
     this.root.addChild(
       this.terrain,
       this.regionLayer,
+      this.townG,
       this.powerG,
       this.trackG,
       this.pathG,
@@ -224,9 +244,36 @@ export class OverviewRenderer {
       const hovered = this.hover?.kind === 'station' && this.hover.id === s.id;
       g.clear();
       const r = 4 + s.level;
-      g.circle(0, 0, r + 2).fill({ color: 0x000000, alpha: 0.6 });
-      g.circle(0, 0, r).fill({ color: hovered ? hex(PAL.amber) : hex(PAL.cyan) });
-      g.circle(0, 0, r).stroke({ color: hovered ? hex(PAL.white) : hex(PAL.cyanDark), width: 1.5 });
+      const fillCol = hovered
+        ? hex(PAL.amber)
+        : s.kind === 'town' && s.color !== undefined
+          ? s.color
+          : hex(PAL.cyan);
+      if (s.kind === 'depot') {
+        // a depot: square, the size of its two tiles
+        g.rect(-U + 1, -U + 1, 2 * U - 2, 2 * U - 2).fill({ color: 0x000000, alpha: 0.6 });
+        g.rect(-U + 3, -U + 3, 2 * U - 6, 2 * U - 6).fill({ color: fillCol });
+        g.rect(-U + 3, -U + 3, 2 * U - 6, 2 * U - 6).stroke({
+          color: hovered ? hex(PAL.white) : hex(PAL.cyanDark),
+          width: 1.5,
+        });
+      } else {
+        g.circle(0, 0, r + 2).fill({ color: 0x000000, alpha: 0.6 });
+        g.circle(0, 0, r).fill({ color: fillCol });
+        g.circle(0, 0, r).stroke({
+          color: hovered ? hex(PAL.white) : hex(PAL.cyanDark),
+          width: 1.5,
+        });
+        if (s.kind === 'warehouse') {
+          // store fill as a ring
+          const f = Math.max(0, Math.min(1, s.fill ?? 0));
+          const start = -Math.PI / 2;
+          if (f > 0.01)
+            g.moveTo(Math.cos(start) * (r + 3), Math.sin(start) * (r + 3))
+              .arc(0, 0, r + 3, start, start + Math.PI * 2 * f)
+              .stroke({ color: hex(PAL.amber), width: 2 });
+        }
+      }
       (node.getChildByLabel('label') as Text).text = s.name;
     }
     for (const [id, n] of this.stationNodes)
@@ -282,6 +329,50 @@ export class OverviewRenderer {
       if (!seenT.has(id)) {
         n.destroy();
         this.trainNodes.delete(id);
+      }
+    // towns: a tinted reach around each town station, dashed until founded
+    this.townG.clear();
+    const towns = this.source.towns();
+    const seenTown = new Set<number>();
+    for (const t of towns) {
+      seenTown.add(t.id);
+      const cx = (t.x + 0.5) * U;
+      const cy = (t.y + 0.5) * U;
+      const rad = (t.radius + 0.5) * U;
+      if (t.founded) {
+        this.townG.circle(cx, cy, rad).fill({ color: t.color, alpha: 0.13 });
+        this.townG.circle(cx, cy, rad).stroke({ color: t.color, width: 1.5, alpha: 0.7 });
+      } else {
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 12)
+          this.townG
+            .moveTo(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad)
+            .lineTo(cx + Math.cos(a + Math.PI / 24) * rad, cy + Math.sin(a + Math.PI / 24) * rad)
+            .stroke({ color: t.color, width: 1, alpha: 0.6 });
+      }
+      let label = this.townLabels.get(t.id);
+      if (!label) {
+        label = new Text({
+          text: '',
+          style: {
+            fontFamily: TITLE_FONT,
+            fontSize: 14,
+            fill: 0xffffff,
+            stroke: { color: 0x000000, width: 4 },
+            letterSpacing: 1,
+          },
+        });
+        label.anchor.set(0.5, 1);
+        this.regionLabels.addChild(label);
+        this.townLabels.set(t.id, label);
+      }
+      label.text = t.founded ? `${t.name} · ${t.population}` : t.name;
+      label.style.fill = t.color;
+      label.position.set(cx, cy - rad - 2);
+    }
+    for (const [id, l] of this.townLabels)
+      if (!seenTown.has(id)) {
+        l.destroy();
+        this.townLabels.delete(id);
       }
     // notice markers
     this.markerG.clear();

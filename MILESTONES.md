@@ -195,3 +195,12 @@ From this version on the per-version record lives in `CHANGELOG.md` (versions â†
 - Two trains on a single track with no loop or siding cannot pass; the notice and advisor point at it.
 - Passenger boarding walkers are decorative; the fare is paid on alighting regardless of how many appear.
 - Roads never wear back to grass.
+
+## 11. v0.6.0 â€” depots, warehouses as stores, towns, route modes
+
+See `CHANGELOG.md`. Highlights: the Depot (two-by-two, four gates, one per nine owned chunks) is the only way into the stockpile and the place trains roll out of; warehouses hold goods locally; Collect routing sweeps producers and warehouses into the nearest depot with a fuel reserve rule; towns found themselves around a town station with a townhouse and a warehouse, get names, colours and a panel; trains can be picked in the field view.
+
+**Known limitations**
+
+- The two gate rows of a depot are separate stubs; connect both or trains only use one side.
+- A town's reach is a fixed seven-tile square around its station; overlapping reaches go to the nearer station.
