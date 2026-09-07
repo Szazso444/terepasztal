@@ -263,6 +263,41 @@ function hillTile(seed: number): PixelBuf {
   return b;
 }
 
+/** Mountain: a rock top lifted twice as high as a hill, grey cliff faces, snow on the crown. */
+function mountainTile(seed: number): PixelBuf {
+  const lift = ELEV_PX * 2;
+  const h = TILE_H + lift;
+  const b = new PixelBuf(TILE_W, h);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < TILE_W; x++) {
+      const inTop = inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H);
+      if (inTop) continue;
+      const dxn = Math.abs(x + 0.5 - HALF_W) / HALF_W;
+      const topEdgeY = HALF_H + (1 - dxn) * HALF_H;
+      const groundEdgeY = topEdgeY + lift;
+      if (y + 0.5 > topEdgeY && y + 0.5 <= groundEdgeY) {
+        const base = x < HALF_W ? PAL.rock[2] : PAL.rock[0];
+        const n = hash2(x >> 1, y >> 1, seed + 3);
+        const crack = hash2(x, y, seed + 5) > 0.94 ? 0.6 : 1;
+        const strata = (y - Math.floor(topEdgeY)) % 5 === 0 ? 0.8 : 1;
+        b.set(x, y, shade(base, (0.85 + n * 0.3) * strata * crack));
+      }
+    }
+  for (let y = 0; y < TILE_H; y++)
+    for (let x = 0; x < TILE_W; x++) {
+      if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
+      let c = pickShade(x, y, PAL.rock, seed);
+      const edge = Math.abs(x + 0.5 - HALF_W) / HALF_W + Math.abs(y + 0.5 - HALF_H) / HALF_H;
+      if (edge > 0.9 && y > HALF_H) c = shade(c, 0.7);
+      // snow patches on the crown
+      const cd = Math.abs(x + 0.5 - HALF_W) / HALF_W + Math.abs(y + 0.5 - HALF_H) / HALF_H;
+      if (cd < 0.5 && hash2(x >> 1, y >> 1, seed + 11) > 0.45) c = PAL.white;
+      else if (hash2(x, y, seed + 13) > 0.92) c = shade(c, 1.25);
+      b.set(x, y, c);
+    }
+  return b;
+}
+
 /** Cursor / ghost diamond outline. */
 function cursorTile(c: RGB, fill?: RGB): PixelBuf {
   const b = new PixelBuf(TILE_W, TILE_H);
@@ -343,6 +378,12 @@ export function generateTerrainAtlas(): AtlasImage {
         groundAnchor.ay,
       );
     ab.add(`terrain/hill_${v}`, hillTile(700 + v).toImageData(), HALF_W, HALF_H + ELEV_PX);
+    ab.add(
+      `terrain/mountain_${v}`,
+      mountainTile(750 + v).toImageData(),
+      HALF_W,
+      HALF_H + ELEV_PX * 2,
+    );
     ab.add(`terrain/void_${v}`, voidTile(800 + v).toImageData(), groundAnchor.ax, groundAnchor.ay);
   }
   ab.add('terrain/cursor', cursorTile(PAL.white).toImageData(), HALF_W, HALF_H);

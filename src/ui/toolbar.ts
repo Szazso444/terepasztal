@@ -148,6 +148,7 @@ export class Toolbar {
       Terrain.Water,
       Terrain.Rock,
       Terrain.Sand,
+      Terrain.Mountain,
     ].map((t) => ({
       key: `terrain:${t}`,
       tool: { kind: 'terrain', terrain: t },

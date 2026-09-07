@@ -61,3 +61,11 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 - Harvesting stations scale with nearby terrain: forest for lumber yards, grass for farms, rock/hill for quarries, water for pumps, weighted by distance within four tiles. The build status shows the weekly yield before placing; the station panel shows the multiplier.
 - Placement ghost shows the actual station family sprite; hovering a bare tile lists terrain, biome, track, poles, vegetation, power and track-cost effects.
 - Overview text uses the interface fonts; the cheat button also adds 10 tickets.
+- The world grows: a new game starts on a 5×5 chunk grid; buying a chunk that touches the edge adds a ring of chunks around the whole map (the game saves, regrows and reloads). Terrain and rivers are generated in world coordinates, so everything already charted stays exactly as it was.
+- Large stone fields rise into mountains in the middle (two tiles deep): raised twice as high as a hill, snow on the crown; nothing can be built on them and no one walks over them.
+- Track laid through forest or grass pushes the trees and bushes to the sides of the rails on that tile (curves, switches and crossings clear it).
+- Buildings stand on the ground: the raised full-tile platforms are gone, replaced by soft shadows and small local patches (field rows, a pond, a concrete pad only under a shed).
+- Every service and utility (water tower, coaling stage, signal, power line) has a hover tooltip and a click panel: reach, stations served, live or dead network, demolish. Bare tiles list terrain, biome, track, vegetation and power.
+- Dynamic routing (depot: "Dynamic"; train details toggle): the train picks its next stop on the fly, favouring the producing station whose cargo the stockpile lacks most, then the nearest warehouse (or a contract destination); it avoids stations other dynamic trains are bound for, and reads other trains' reserved paths eight tiles ahead to detour around oncoming traffic before stopping.
+- Jams: the fleet follows who blocks whom through any number of trains; when the chain loops or ends in a stuck train, the lightest train in it pulls aside.
+- Route recording in the overview: click a train to select it (its path is traced), press R, click stations in order, press R or Enter to apply; Esc cancels.

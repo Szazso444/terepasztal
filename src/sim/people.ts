@@ -42,7 +42,7 @@ const SLEEP = 0.85;
 export function walkable(map: GameMap, x: number, y: number) {
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
   const t = map.terrain[y * map.w + x];
-  return t !== Terrain.Water && t !== Terrain.Rock;
+  return t !== Terrain.Water && t !== Terrain.Rock && t !== Terrain.Mountain;
 }
 
 /** Breadth-first walk between two tiles over walkable ground (8 directions) inside a small box. */

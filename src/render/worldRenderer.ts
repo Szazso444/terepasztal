@@ -88,6 +88,8 @@ export class WorldRenderer {
         return `terrain/water_${v % 3}_f0`;
       case Terrain.Rock:
         return `terrain/rock_${v}`;
+      case Terrain.Mountain:
+        return `terrain/mountain_${v % 3}`;
       case Terrain.Sand:
         return b === Biome.Desert ? `terrain/desert_${v}` : `terrain/sand_${v}`;
     }
@@ -128,7 +130,7 @@ export class WorldRenderer {
           this.groundSprites[idx(this.map, t.x, t.y)] = s;
           minX = Math.min(minX, s.x - HALF_W);
           maxX = Math.max(maxX, s.x + HALF_W);
-          minY = Math.min(minY, s.y - HALF_H - ELEV_PX);
+          minY = Math.min(minY, s.y - HALF_H - 2 * ELEV_PX);
           maxY = Math.max(maxY, s.y + HALF_H);
         }
         chunk.cullArea = new Rectangle(minX, minY, maxX - minX, maxY - minY);
@@ -179,6 +181,32 @@ export class WorldRenderer {
     s.tint = isWater ? 0xffffff : this.groundTint;
   }
 
+  /**
+   * Track was laid on the tile: push its trees and bushes to the sides of the rails (straight
+   * pieces) or clear them (curves, switches, crossings need the whole tile).
+   */
+  displaceProps(x: number, y: number, links: [number, number][]) {
+    const i = idx(this.map, x, y);
+    const list = this.map.props.get(i);
+    if (!list?.length) return;
+    const ns = links.length === 1 && links[0].includes(0) && links[0].includes(2);
+    const ew = links.length === 1 && links[0].includes(1) && links[0].includes(3);
+    if (!ns && !ew) {
+      this.map.props.delete(i);
+      this.removeProps(x, y);
+      return;
+    }
+    for (const p of list) {
+      if (ns) {
+        p.ox = p.ox >= 0 ? 0.4 : -0.4;
+        p.oy = Math.max(-0.3, Math.min(0.3, p.oy));
+      } else {
+        p.oy = p.oy >= 0 ? 0.4 : -0.4;
+        p.ox = Math.max(-0.3, Math.min(0.3, p.ox));
+      }
+    }
+    this.rebuildProps(x, y);
+  }
   /** Re-create the prop sprites of one tile from the map data (after terrain edits). */
   rebuildProps(x: number, y: number) {
     this.removeProps(x, y);
@@ -211,7 +239,9 @@ export class WorldRenderer {
   /** Ground-level y offset for objects standing on a tile (raised hills lift them). */
   elevationOf(x: number, y: number) {
     const i = idx(this.map, x, y);
-    return this.map.terrain[i] === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
+    const t = this.map.terrain[i];
+    if (t === Terrain.Mountain) return -2 * ELEV_PX;
+    return t === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
   }
 
   private buildProps() {

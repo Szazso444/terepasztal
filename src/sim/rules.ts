@@ -77,7 +77,7 @@ export const DEFAULT_RULES: Rules = {
   seasonDays: 6,
   rainChanceMul: 1,
   fogChanceMul: 1,
-  mapSize: 288,
+  mapSize: 160,
   waterLevel: 0.36,
   hillLevel: 0.64,
   rockLevel: 0.76,

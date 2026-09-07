@@ -18,6 +18,7 @@ const COLORS: Record<number, string> = {
   [Terrain.Water]: '#22364a',
   [Terrain.Rock]: '#5a5852',
   [Terrain.Sand]: '#8a7c58',
+  [Terrain.Mountain]: '#7a7874',
 };
 
 /** Cool taiga, muddy swamp, pale desert: tint the terrain colour by biome (grass/forest only). */

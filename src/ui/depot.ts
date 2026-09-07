@@ -35,6 +35,7 @@ export class DepotScreen implements Screen {
   onDetails: ((t: Train) => void) | null = null;
   private scheduleEditor: ScheduleEditor;
   private customRoute = false;
+  private dynamicRoute = false;
 
   constructor(
     private readonly inventory: Inventory,
@@ -80,6 +81,7 @@ export class DepotScreen implements Screen {
     this.wagonUids = [];
     this.schedule = [];
     this.customRoute = false;
+    this.dynamicRoute = false;
     this.nameInput.value = '';
     this.render();
   }
@@ -113,7 +115,7 @@ export class DepotScreen implements Screen {
           el('div', { class: 'name', text: t.name }),
           el('div', {
             class: 'sub',
-            text: `${t.locos.map((l) => l.def.name).join(' + ')} + ${t.wagons.length} · ${routeNames}`,
+            text: `${t.locos.map((l) => l.def.name).join(' + ')} + ${t.wagons.length} · ${t.dynamic ? STR.depot.dynamicTag : routeNames}`,
           }),
           el('div', {
             class: `sub state-${t.state}`,
@@ -292,21 +294,34 @@ export class DepotScreen implements Screen {
           STR.depot.routeAuto,
           () => {
             this.customRoute = false;
+            this.dynamicRoute = false;
             this.renderRoute();
           },
-          `small ${this.customRoute ? '' : 'active'}`,
+          `small ${this.customRoute || this.dynamicRoute ? '' : 'active'}`,
         ),
         btn(
           STR.depot.routeCustom,
           () => {
             this.customRoute = true;
+            this.dynamicRoute = false;
             this.renderRoute();
           },
-          `small ${this.customRoute ? 'active' : ''}`,
+          `small ${this.customRoute && !this.dynamicRoute ? 'active' : ''}`,
+        ),
+        btn(
+          STR.depot.routeDynamic,
+          () => {
+            this.dynamicRoute = true;
+            this.customRoute = false;
+            this.renderRoute();
+          },
+          `small ${this.dynamicRoute ? 'active' : ''}`,
         ),
       ),
     );
-    if (!this.customRoute) {
+    if (this.dynamicRoute) {
+      c.append(el('div', { class: 'dim', text: STR.depot.routeDynamicHint }));
+    } else if (!this.customRoute) {
       c.append(
         el('div', { class: 'dim', text: STR.depot.routeAutoHint }),
         el('div', {
@@ -331,6 +346,7 @@ export class DepotScreen implements Screen {
             this.wagonUids,
             this.customRoute ? this.schedule : [],
             this.nameInput.value.trim() || undefined,
+            this.dynamicRoute,
           );
           if (typeof res === 'string') this.toast(res, 'warn');
           else {

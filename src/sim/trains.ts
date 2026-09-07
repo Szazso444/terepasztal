@@ -19,6 +19,7 @@ export type TrainState =
   | 'moving'
   | 'loading'
   | 'waiting'
+  | 'idle'
   | 'yielding'
   | 'noRoute'
   | 'stranded'
@@ -139,6 +140,10 @@ export interface TickCtx {
   onPassengers: (station: Station, n: number, boarding: boolean) => void;
   /** tile keys (y*w+x) of another train's remaining path plus the tiles it stands on */
   trainPath: (id: number) => Set<number>;
+  /** which other train has the next few tiles of its path through here (0 = nobody) */
+  reservedBy: (x: number, y: number, self: number) => number;
+  /** dynamic routing: the station a train should head for next, or null to keep its schedule */
+  chooseNext: (t: Train) => number | null;
   spend: (v: number) => void;
   earn: (v: number) => void;
   /** is a tile occupied by any train other than `self`? */
@@ -320,6 +325,9 @@ export class Train {
   private yieldFor: number | null = null;
   /** station id of a refuelling detour taken before the scheduled stop */
   detour: number | null = null;
+  /** the fleet picks each next stop from what the stockpile needs most */
+  dynamic = false;
+  private anticipateAt = 0;
 
   constructor(locos: LocoSlot[], name?: string, id?: number) {
     if (!locos.length) throw new Error('a train needs a locomotive');
@@ -806,6 +814,9 @@ export class Train {
         }
         break;
       }
+      case 'idle':
+        if (this.stateTime > 10) this.depart(ctx);
+        break;
       case 'yielding': {
         // wait on the siding until a path to the target avoids every tile other trains stand on
         if (this.stateTime < 2) break;
@@ -911,6 +922,42 @@ export class Train {
     }
     this.blocked = blockDist < 0.3;
     this.blockedBy = this.blocked ? blocker : null;
+    if (this.dynamic && ctx.now >= this.anticipateAt && this.path) {
+      // look 8 tiles ahead: if another train has reserved that stretch coming our way, try a
+      // path around it now instead of stopping later
+      this.anticipateAt = ctx.now + 4;
+      let oncoming = 0;
+      for (let i = 0; i < this.pathPts.length; i++) {
+        const arc = this.pathCum[i];
+        if (arc < this.pathPos + 0.5) continue;
+        if (arc > this.pathPos + 8) break;
+        const s = this.pathPts[i].seg;
+        const other = ctx.reservedBy(s.x, s.y, this.id);
+        if (other) {
+          const theirs = ctx.trainPath(other);
+          const head = this.headTile;
+          // they are heading into us when our head tile is on their path too
+          if (head && theirs.has(head.y * ctx.track.w + head.x)) oncoming = other;
+          break;
+        }
+      }
+      if (oncoming) {
+        const avoid = (x: number, y: number) =>
+          ctx.occupied(x, y, this.id) || ctx.reservedBy(x, y, this.id) === oncoming;
+        const wasReversed = this.reversed;
+        if (this.dispatch(ctx.track, ctx.builder, ctx.map, avoid, 'forward')) {
+          this.lastMessage = 'detouring around an oncoming train';
+          if (!this.path) {
+            this.pathPts = [];
+            this.pathCum = [];
+            this.onPathReady(ctx);
+            return;
+          }
+          if (wasReversed !== this.reversed) this.updatePoses();
+          return;
+        }
+      }
+    }
     if (this.blocked) {
       this.blockedTime += gdt;
       if (this.blockedTime > REROUTE_AFTER && !this.rerouted) {
@@ -1225,7 +1272,27 @@ export class Train {
     const wasDetour = this.detour !== null && st?.id === this.detour;
     this.detour = null;
     const leaving = wasDetour ? undefined : this.currentStop;
-    if (!wasDetour) this.routeIndex = (this.routeIndex + 1) % this.route.length;
+    if (this.dynamic && !wasDetour) {
+      const next = ctx.chooseNext(this);
+      if (next !== null && next !== st?.id) {
+        this.schedule = [defaultStop(next)];
+        this.routeIndex = 0;
+      } else if (next !== null && st) {
+        // this station is still the best pick: keep loading as its output comes in
+        this.schedule = [defaultStop(st.id)];
+        this.routeIndex = 0;
+        this.atStation = st;
+        st.occupants.add(this.id);
+        this.setState('loading');
+        return;
+      } else {
+        // nothing worth doing right now: stay on the platform and ask again in a while
+        this.atStation = st;
+        if (st) st.occupants.add(this.id);
+        this.setState('idle');
+        return;
+      }
+    } else if (!wasDetour) this.routeIndex = (this.routeIndex + 1) % this.route.length;
     if (this.routeIndex === 0 && !wasDetour) {
       this.trip.endedAt = ctx.now;
       this.lastTrip = this.trip;
@@ -1318,12 +1385,13 @@ export class Train {
     return true;
   }
   /** Tile keys of the remaining path and every tile under the cars. */
-  pathTileKeys(w: number): Set<number> {
+  pathTileKeys(w: number, ahead = Infinity): Set<number> {
     const out = new Set<number>();
     for (const p of this.poses) out.add(Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5));
     if (this.path)
       for (let i = 0; i < this.pathPts.length; i++) {
         if (this.pathCum[i] < this.pathPos - 0.5) continue;
+        if (this.pathCum[i] > this.pathPos + ahead) break;
         const s = this.pathPts[i].seg;
         out.add(s.y * w + s.x);
       }
@@ -1362,6 +1430,7 @@ export class Train {
       })),
       routeIndex: this.routeIndex,
       detour: this.detour,
+      dynamic: this.dynamic,
       distance: this.distance,
       head: head
         ? { x: head.seg.x, y: head.seg.y, in: head.seg.in, reversed: this.reversed }
@@ -1395,6 +1464,7 @@ export class Train {
     t.schedule = j.schedule.map((s) => ({ ...defaultStop(s.stationId), ...s }));
     t.routeIndex = j.routeIndex;
     t.detour = j.detour ?? null;
+    t.dynamic = !!j.dynamic;
     t.coal = j.tanks.coal;
     t.oil = j.tanks.oil;
     t.water = j.tanks.water;

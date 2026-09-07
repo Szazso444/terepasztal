@@ -10,6 +10,7 @@ import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
 import { buildingDef, type Building } from '../sim/buildings';
 import { stationDef, LEVELS } from '../sim/stations';
+import type { Decor } from '../sim/build';
 import { rules } from '../sim/rules';
 import { cargoDef } from '../sim/cargo';
 import { decorDef, decorOffset } from '../sim/build';
@@ -40,6 +41,8 @@ export class BuildController {
   hoverBuilding: Building | null = null;
   selectedBuilding: Building | null = null;
   onSelectBuilding: ((b: Building | null) => void) | null = null;
+  selectedDecor: Decor | null = null;
+  onSelectDecor: ((d: Decor | null) => void) | null = null;
   /** set in editor mode */
   editor: Editor | null = null;
   private lastPaint = '';
@@ -455,8 +458,10 @@ export class BuildController {
       if (c.button === 0 && inMap) {
         const st = this.builder.stationAt(t.x, t.y);
         const bld = st ? null : (this.builder.buildingAt(t.x, t.y) ?? null);
+        const dec = st || bld ? null : (this.builder.decorAt(t.x, t.y) ?? null);
         this.select(st ?? null);
         this.selectBuilding(bld);
+        this.selectDecor(dec);
       }
     }
   }
@@ -464,6 +469,11 @@ export class BuildController {
     if (this.selectedBuilding === b) return;
     this.selectedBuilding = b;
     this.onSelectBuilding?.(b);
+  }
+  selectDecor(d: Decor | null) {
+    if (this.selectedDecor === d) return;
+    this.selectedDecor = d;
+    this.onSelectDecor?.(d);
   }
 
   removeAt(x: number, y: number): boolean {
@@ -477,7 +487,11 @@ export class BuildController {
       if (this.selectedBuilding === bld) this.selectBuilding(null);
       return this.builder.removeBuilding(x, y);
     }
-    if (this.builder.decorAt(x, y)) return this.builder.removeDecor(x, y);
+    const dec = this.builder.decorAt(x, y);
+    if (dec) {
+      if (this.selectedDecor === dec) this.selectDecor(null);
+      return this.builder.removeDecor(x, y);
+    }
     return this.builder.removeTrack(x, y);
   }
 

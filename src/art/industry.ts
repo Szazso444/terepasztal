@@ -2,19 +2,21 @@ import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder, proj, fillPoly, type P2 } from './iso3d';
 import { hash2 } from '../engine/rng';
+import { HALF_W, HALF_H } from '../engine/iso';
 
 /** Shared sprite frame for one-tile structures (same as `structures.ts`). */
 export const W = 96;
 export const H = 84;
 export const OX = 48;
 export const OY = 68;
-/** Ground origin: structures stand on a 3px slab. */
-const GY = OY - 3;
+/** Ground origin: structures stand directly on the terrain tile. */
+const GY = OY;
 /**
  * Every station / works sprite keeps its ground-level geometry inside |tx|,|ty| <= 0.45 tile
- * units (the slab itself is 0.94 x 0.94); only chimneys, masts and towers rise above it.
+ * units; only chimneys, masts and towers rise above it. The ground pass (shadows, small
+ * patches) never paints outside GROUND_LIMIT, so the terrain shows through around everything.
  */
-const SLAB = 0.94;
+const GROUND_LIMIT = 0.47;
 
 // ------------------------------------------------------------------ material palettes
 
@@ -116,7 +118,7 @@ function ry(p: P2) {
 
 // ------------------------------------------------------------------ ground helpers
 
-/** A flat rectangle of ground cover, e.g. a yard slab or a field. */
+/** A flat rectangle of ground cover drawn as part of a structure, e.g. a shed floor. */
 export function pad(
   b: PixelBuf,
   cx: number,
@@ -135,52 +137,133 @@ export function pad(
   fillPoly(b, pts, color);
 }
 
-/** 3px raised ground slab of the given material, with an optional per-pixel detail pass. */
-export function slab(
-  b: PixelBuf,
+/** Inverse of `proj` at ground level: sprite pixel centre -> tile-space point. */
+function unproj(x: number, y: number): [number, number] {
+  const px = (x + 0.5 - OX) / HALF_W;
+  const py = (y + 0.5 - OY) / HALF_H;
+  return [(px + py) / 2, (py - px) / 2];
+}
+
+/** One ground layer: colour + alpha for a tile-space point (and its pixel), or null. */
+export type GroundFn = (tx: number, ty: number, x: number, y: number) => [RGB, number] | null;
+
+const SHADOW: RGB = [16, 18, 16];
+
+/**
+ * Ground pass, run after `outline()`: composites the layers (first = bottom) into pixels that
+ * are still transparent, so the terrain tile shows through and the outline never wraps them.
+ */
+export function ground(b: PixelBuf, layers: GroundFn[]) {
+  for (let y = 0; y < b.h; y++)
+    for (let x = 0; x < b.w; x++) {
+      if (b.alpha(x, y) > 0) continue;
+      const [tx, ty] = unproj(x, y);
+      if (Math.abs(tx) > GROUND_LIMIT || Math.abs(ty) > GROUND_LIMIT) continue;
+      let c: RGB | null = null;
+      let a = 0;
+      for (const layer of layers) {
+        const r = layer(tx, ty, x, y);
+        if (!r) continue;
+        const [rc, ra] = r;
+        const t = ra / 255;
+        c = c
+          ? [c[0] + (rc[0] - c[0]) * t, c[1] + (rc[1] - c[1]) * t, c[2] + (rc[2] - c[2]) * t]
+          : rc;
+        a += ra * (1 - a / 255);
+      }
+      if (c && a > 0) b.set(x, y, c, Math.round(a));
+    }
+}
+
+/** Signed distance (tile units) outside an axis-aligned rectangle; negative inside. */
+function rectDist(tx: number, ty: number, cx: number, cy: number, lenX: number, lenY: number) {
+  return Math.max(Math.abs(tx - cx) - lenX / 2, Math.abs(ty - cy) - lenY / 2);
+}
+
+/** Soft shadow under a rectangular footprint, nudged towards the +x/+y (shaded) side. */
+export function shadowRect(
+  cx: number,
+  cy: number,
+  lenX: number,
+  lenY: number,
+  alpha = 70,
+  feather = 0.1,
+): GroundFn {
+  return (tx, ty) => {
+    const d = rectDist(tx, ty, cx + 0.03, cy + 0.03, lenX, lenY);
+    if (d >= feather) return null;
+    return [SHADOW, Math.round(alpha * (d <= 0 ? 1 : 1 - d / feather))];
+  };
+}
+
+/** Soft round shadow under a heap, tank or tower base. */
+export function shadowEllipse(
+  cx: number,
+  cy: number,
+  r: number,
+  alpha = 70,
+  feather = 0.4,
+): GroundFn {
+  return (tx, ty) => {
+    const d = Math.hypot(tx - cx - 0.02, ty - cy - 0.02) / r;
+    if (d >= 1 + feather) return null;
+    return [SHADOW, Math.round(alpha * (d <= 1 ? 1 : 1 - (d - 1) / feather))];
+  };
+}
+
+/** Ragged-edge threshold: pixels crumble inwards by up to `rough`, a few stray outwards. */
+function ragged(x: number, y: number, seed: number, rough: number) {
+  return rough * (hash2(x >> 1, y >> 1, seed) * 1.5 - 1);
+}
+
+/** Small rectangular patch of ground cover with a ragged edge; never fills the tile. */
+export function patchRect(
+  cx: number,
+  cy: number,
+  lenX: number,
+  lenY: number,
+  color: (x: number, y: number) => RGB,
   seed: number,
-  shades: RGB[],
-  detail?: (x: number, y: number, c: RGB) => RGB,
-  lenX = SLAB,
-  lenY = SLAB,
-) {
-  pad(b, 0, 0, lenX, lenY, (x, y) => shade(shades[2], 0.7 + 0.1 * hash2(x, y, seed)));
-  pad(
-    b,
-    0,
-    0,
-    lenX,
-    lenY,
-    (x, y) => {
-      const c = pick(shades, hash2(x >> 1, y >> 1, seed + 1));
-      return detail ? detail(x, y, c) : c;
-    },
-    3,
-  );
+  alpha = 255,
+  rough = 0.06,
+): GroundFn {
+  return (tx, ty, x, y) =>
+    rectDist(tx, ty, cx, cy, lenX, lenY) > ragged(x, y, seed, rough) ? null : [color(x, y), alpha];
 }
 
-/** Yard: packed earth with pebbles, the ground most industries stand on. */
-export function yard(b: PixelBuf, seed: number, lenX = SLAB, lenY = SLAB) {
-  slab(
-    b,
-    seed,
-    PAL.sand,
-    (x, y, c) => (hash2(x >> 1, y >> 1, seed + 2) > 0.92 ? PAL.stone[1] : c),
-    lenX,
-    lenY,
-  );
+/** Small round patch of ground cover with a ragged edge. */
+export function patchEllipse(
+  cx: number,
+  cy: number,
+  r: number,
+  color: (x: number, y: number) => RGB,
+  seed: number,
+  alpha = 255,
+  rough = 0.06,
+): GroundFn {
+  return (tx, ty, x, y) =>
+    Math.hypot(tx - cx, ty - cy) - r > ragged(x, y, seed, rough) ? null : [color(x, y), alpha];
 }
 
-/** Poured concrete apron with expansion joints. */
-function concrete(b: PixelBuf, seed: number) {
-  slab(b, seed, CONCRETE, (x, y, c) => ((x + 2 * y) % 12 === 0 ? shade(c, 0.85) : c));
+/** Loose material (gravel, dust, coal) dithered from a shade set. */
+export function loose(shades: RGB[], seed: number) {
+  return (x: number, y: number) => pick(shades, hash2(x >> 1, y >> 1, seed));
 }
 
-/** Warm cobbled paving. */
-function cobbles(b: PixelBuf, seed: number) {
-  slab(b, seed, COBBLE, (x, y, c) =>
-    (x + 2 * y) % 5 === 0 || (x - 2 * y + 400) % 7 === 0 ? shade(c, 0.82) : c,
-  );
+/** Cobbles / flagstones: dithered shades with joint lines. */
+export function paving(shades: RGB[], seed: number) {
+  return (x: number, y: number) => {
+    const c = pick(shades, hash2(x >> 1, y >> 1, seed));
+    return (x + 2 * y) % 5 === 0 || (x - 2 * y + 400) % 7 === 0 ? shade(c, 0.82) : c;
+  };
+}
+
+/** Poured concrete with expansion joints. */
+function concrete(seed: number) {
+  return (x: number, y: number) => {
+    const c = pick(CONCRETE, hash2(x >> 1, y >> 1, seed));
+    return (x + 2 * y) % 12 === 0 ? shade(c, 0.85) : c;
+  };
 }
 
 // ------------------------------------------------------------------ building helpers
@@ -446,33 +529,36 @@ export function pole(b: PixelBuf, ox: number, oy: number, h = 26) {
   b.set(ox, oy - h - 1, PAL.iron[1]);
 }
 
-/** Field with crop rows, greener at low levels, golden when mature. */
+/** Field with crop rows, greener at low levels, golden when mature; soft, irregular edge. */
 function field(
-  b: PixelBuf,
   cx: number,
   cy: number,
   lenX: number,
   lenY: number,
   ripe: number,
   seed: number,
-) {
-  pad(b, cx, cy, lenX, lenY, (x, y) => shade(PAL.sand[2], 0.7 + 0.1 * hash2(x, y, seed)), 3);
-  pad(
-    b,
-    cx,
-    cy,
-    lenX,
-    lenY,
-    (x, y): RGB | null => {
-      const row = (x + 2 * y) % 6;
-      if (row > 3) return null;
-      const n = hash2(x >> 1, y, seed);
-      const c = n < ripe ? WHEATC : CROP;
-      const s = pick(c, hash2(x, y >> 1, seed + 3));
-      return row === 0 ? shade(s, 1.12) : row === 3 ? shade(s, 0.85) : s;
-    },
-    4,
-  );
+): GroundFn {
+  return (tx, ty, x, y) => {
+    if (rectDist(tx, ty, cx, cy, lenX, lenY) > ragged(x, y, seed + 5, 0.08)) return null;
+    const row = (x + 2 * y) % 6;
+    if (row > 3) return [shade(PAL.sand[2], 0.7 + 0.1 * hash2(x, y, seed)), 255];
+    const n = hash2(x >> 1, y, seed);
+    const c = n < ripe ? WHEATC : CROP;
+    const s = pick(c, hash2(x, y >> 1, seed + 3));
+    return [row === 0 ? shade(s, 1.12) : row === 3 ? shade(s, 0.85) : s, 255];
+  };
+}
+
+/** Round pond with a stone rim. */
+function pond(cx: number, cy: number, r: number, seed: number): GroundFn {
+  return (tx, ty, x, y) => {
+    const d = Math.hypot(tx - cx, ty - cy) / r;
+    if (d > 1 + 0.12 * (hash2(x >> 1, y >> 1, seed) - 0.5)) return null;
+    if (d > 0.8) return [pick(PAL.stone, hash2(x >> 1, y, seed + 1)), 255];
+    const n = hash2(x >> 2, y >> 1, seed + 2);
+    const c = PAL.water[Math.min(3, Math.floor(n * 4))];
+    return [(x + 3 * y) % 11 === 0 && n > 0.5 ? PAL.cyanDark : c, 255];
+  };
 }
 
 /** Post-and-rail fence between two ground points. */
@@ -527,7 +613,7 @@ function openShed(
   const x1 = cx + len / 2;
   const y0 = cy - wid / 2;
   const y1 = cy + wid / 2;
-  pad(b, cx, cy, len, wid, (x, y) => shade(PAL.sand[2], 0.45 + 0.1 * hash2(x, y, seed)), 3);
+  pad(b, cx, cy, len, wid, (x, y) => shade(PAL.sand[2], 0.45 + 0.1 * hash2(x, y, seed)));
   const dark = (x: number, y: number) => shade(pick(PAL.timber, hash2(x >> 1, y, seed)), 0.5);
   opening(b, x0, y0, x0, y1, 0, h, dark); // inner side of the -x wall
   opening(b, x0, y0, x1, y0, 0, h, dark); // inner side of the -y wall
@@ -570,10 +656,12 @@ function ingots(b: PixelBuf, tx: number, ty: number) {
 /** Farm: red barn, golden wheat rows, fence; silos from level 2, a wind pump at level 3. */
 function farm(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 31);
   // wheat field along the +x half, shrinking a bit when the silos arrive
-  if (level === 1) field(b, 0.24, 0.02, 0.4, 0.82, 0.55, 32);
-  else field(b, 0.24, 0.12, 0.4, 0.62, 0.7 + 0.1 * level, 32 + level);
+  const gnd: GroundFn[] = [
+    level === 1
+      ? field(0.24, 0.02, 0.4, 0.82, 0.55, 32)
+      : field(0.24, 0.12, 0.4, 0.62, 0.7 + 0.1 * level, 32 + level),
+  ];
   // fence along the front-left edge
   fence(b, -0.43, 0.42, -0.06, 0.42);
   // barn
@@ -583,6 +671,7 @@ function farm(level: number): PixelBuf {
   const bx = -0.23;
   const by = -0.17;
   house(b, bx, by, bl, bw, bh, BARN, PAL.roofSlate, 33 + level);
+  gnd.push(shadowRect(bx, by, bl, bw));
   // big barn door with cross bracing on the +y face, hayloft hatch above
   opening(b, bx - 0.07, by + bw / 2, bx + 0.07, by + bw / 2, 0, bh - 4, PAL.trunkDark);
   const d0 = proj(OX, GY, bx - 0.07, by + bw / 2, 0);
@@ -593,28 +682,43 @@ function farm(level: number): PixelBuf {
   if (level === 1) {
     heap(b, -0.26, 0.24, 0.1, 6, WHEATC, 34);
     crates(b, [[-0.06, 0.3]], 35);
+    gnd.push(shadowEllipse(-0.26, 0.24, 0.12));
   } else if (level === 2) {
     silo(b, 0.3, -0.33, 0.1, 24, STEEL, STEEL[1], 36);
     heap(b, -0.26, 0.24, 0.1, 6, WHEATC, 34);
     crates(b, [[-0.08, 0.3]], 37);
+    gnd.push(shadowEllipse(0.3, -0.33, 0.13), shadowEllipse(-0.26, 0.24, 0.12));
   } else {
     silo(b, 0.2, -0.34, 0.085, 28, STEEL, STEEL[1], 38);
     silo(b, 0.36, -0.34, 0.085, 28, STEEL, STEEL[1], 39);
     heap(b, -0.1, 0.3, 0.1, 6, WHEATC, 34);
     windmill(b, -0.3, 0.26, 30);
+    gnd.push(
+      shadowEllipse(0.2, -0.34, 0.11),
+      shadowEllipse(0.36, -0.34, 0.11),
+      shadowEllipse(-0.1, 0.3, 0.12),
+      shadowEllipse(-0.3, 0.26, 0.08, 50),
+    );
   }
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
 /** Lumber: pale timber saw shed with an open front, log stacks and sawdust; chimney at level 3. */
 function lumber(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 41);
   heap(b, 0.3, 0.3, 0.13, 5, DUST, 42); // sawdust
+  // wood chips strewn under the log stacks, sawdust drift around the heap
+  const gnd: GroundFn[] = [
+    patchRect(0.18, -0.1, 0.5, 0.5, loose(DUST, 40), 40, 120, 0.1),
+    patchEllipse(0.3, 0.3, 0.17, loose(DUST, 41), 41, 160, 0.08),
+    shadowEllipse(0.3, 0.3, 0.15),
+  ];
   if (level === 1) {
     openShed(b, -0.2, -0.16, 0.4, 0.32, 12, 43);
     logStack(b, 0.2, -0.2, 0.4, 2, 44);
+    gnd.push(shadowRect(-0.2, -0.16, 0.4, 0.32), shadowRect(0.2, -0.2, 0.4, 0.2));
     // saw bench inside
     drawPrism(b, {
       ox: OX,
@@ -637,6 +741,8 @@ function lumber(level: number): PixelBuf {
     const sw = 0.34;
     const sh = level === 2 ? 15 : 17;
     house(b, sx, sy, sl, sw, sh, PALE_TIMBER, SHINGLE, 47 + level);
+    gnd.push(shadowRect(sx, sy, sl, sw), shadowRect(0.2, -0.22, 0.4, 0.3));
+    gnd.push(shadowRect(0.12, 0.08, 0.34, 0.2));
     // big open sawing bay on the +y face with the blade glinting inside
     const fy = sy + sw / 2;
     opening(b, sx - 0.16, fy, sx + 0.1, fy, 0, sh - 3, (x, y) =>
@@ -659,16 +765,26 @@ function lumber(level: number): PixelBuf {
       chimney(b, -0.39, -0.3, 0, 32, 0.05, BRICK);
       openShed(b, -0.24, 0.26, 0.34, 0.26, 10, 51);
       logStack(b, -0.24, 0.26, 0.24, 1, 52);
+      gnd.push(shadowRect(-0.24, 0.26, 0.34, 0.26));
     } else crates(b, [[-0.3, 0.3]], 53);
   }
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
 /** Quarry: grey rock face at the back, gravel heaps; derrick at 2, steel crusher + conveyor at 3. */
 function quarry(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  slab(b, 51, GRAVEL);
+  // gravel apron under the heaps and along the foot of the rock face; shadows under the face
+  const hr = 0.16 + 0.02 * level;
+  const gnd: GroundFn[] = [
+    patchRect(-0.02, -0.26, 0.82, 0.16, loose(GRAVEL, 50), 50, 220, 0.08),
+    patchEllipse(0.24, 0.16, hr + 0.07, loose(GRAVEL, 51), 51, 255, 0.08),
+    shadowRect(0.0, -0.38, 0.9, 0.14, 60),
+    shadowRect(-0.38, -0.02, 0.14, 0.54, 60),
+    shadowEllipse(0.24, 0.16, hr + 0.02),
+  ];
   // jagged rock face along the -y and -x edges
   const blocks: [number, number, number, number][] = [];
   for (let i = 0; i < 5; i++) blocks.push([-0.36 + i * 0.18, -0.38, 0.18, 0.14]);
@@ -702,9 +818,11 @@ function quarry(level: number): PixelBuf {
     house(b, -0.16, 0.24, 0.26, 0.2, 8, PAL.timber, PAL.roofSlate, 56);
     facade(b, -0.16, 0.24, 0.2, [], 0.04);
     crates(b, [[0.06, 0.36]], 57);
+    gnd.push(shadowRect(-0.16, 0.24, 0.26, 0.2));
   } else if (level === 2) {
     house(b, -0.2, 0.26, 0.26, 0.2, 9, PAL.timber, PAL.roofSlate, 58);
     facade(b, -0.2, 0.26, 0.2, [-0.06], 0.05);
+    gnd.push(shadowRect(-0.2, 0.26, 0.26, 0.2), shadowEllipse(-0.02, -0.04, 0.08, 50));
     // timber derrick: mast, boom, cable and a stone block on the hook
     const m = proj(OX, GY, -0.02, -0.04);
     const mx = rx(m);
@@ -740,30 +858,19 @@ function quarry(level: number): PixelBuf {
     post(b, 0.12, 0.14, 12, PAL.iron[2], 0, 1);
     heap(b, -0.24, 0.34, 0.12, 5, GRAVEL, 62);
     heap(b, 0.14, -0.14, 0.1, 5, PAL.rock, 63);
+    gnd.unshift(patchEllipse(-0.24, 0.34, 0.17, loose(GRAVEL, 52), 52, 255, 0.08));
+    gnd.push(shadowRect(-0.16, 0.06, 0.3, 0.3, 80), shadowEllipse(-0.24, 0.34, 0.14));
   }
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
 /** Pump: brick pump house beside a blue pond; blue steel tank at 2, elevated tank at 3. */
 function pump(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 61);
   // pond in the front-right corner with a stone rim
-  pad(b, 0.2, 0.2, 0.48, 0.48, (x, y) => pick(PAL.stone, hash2(x >> 1, y, 62)), 3);
-  pad(
-    b,
-    0.2,
-    0.2,
-    0.42,
-    0.42,
-    (x, y) => {
-      const n = hash2(x >> 2, y >> 1, 63);
-      const c = PAL.water[Math.min(3, Math.floor(n * 4))];
-      return (x + 3 * y) % 11 === 0 && n > 0.5 ? PAL.cyanDark : c;
-    },
-    3,
-  );
+  const gnd: GroundFn[] = [pond(0.2, 0.2, 0.23, 62)];
   // pump house
   const hl = 0.32 + 0.04 * level;
   const hw = 0.28 + 0.03 * level;
@@ -771,6 +878,7 @@ function pump(level: number): PixelBuf {
   const hx = -0.22;
   const hy = -0.2;
   house(b, hx, hy, hl, hw, hh, BRICK, PAL.roofSlate, 64 + level);
+  gnd.push(shadowRect(hx, hy, hl, hw));
   facade(b, hx, hy, hw, level === 1 ? [-0.06] : [-0.12, 0.02], hl * 0.32);
   chimney(b, hx - hl / 2 + 0.05, hy - hw / 2 + 0.05, hh, 8 + level, 0.035, BRICK);
   // pipe from the house to the pond, with a valve wheel
@@ -780,7 +888,9 @@ function pump(level: number): PixelBuf {
   b.rect(rx(v) - 1, ry(v) - 1, 3, 3, PAL.red);
   if (level === 2) {
     silo(b, 0.27, -0.28, 0.11, 18, BLUE_STEEL, BLUE_STEEL[1], 66);
+    gnd.push(shadowEllipse(0.27, -0.28, 0.13));
   } else if (level === 3) {
+    gnd.push(shadowRect(0.27, -0.27, 0.24, 0.24, 50));
     for (const [lx, ly] of [
       [0.16, -0.38],
       [0.38, -0.38],
@@ -795,13 +905,27 @@ function pump(level: number): PixelBuf {
   }
   if (level === 1) crates(b, [[-0.3, 0.3]], 68);
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
 /** Town: whitewashed and brick houses around a cobbled square; church tower from level 2. */
 function town(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  cobbles(b, 71);
+  // a cobbled square between the houses, ragged where it meets the grass
+  const cob = paving(COBBLE, 71);
+  const gnd: GroundFn[] =
+    level === 1
+      ? [patchRect(-0.14, 0.14, 0.34, 0.3, cob, 71, 235, 0.1)]
+      : level === 2
+        ? [
+            patchRect(0.0, 0.24, 0.24, 0.34, cob, 71, 235, 0.1),
+            patchRect(0.0, 0.0, 0.7, 0.18, cob, 72, 235, 0.1),
+          ]
+        : [
+            patchRect(0.0, 0.26, 0.3, 0.32, cob, 71, 235, 0.1),
+            patchRect(0.0, -0.02, 0.76, 0.16, cob, 72, 235, 0.1),
+          ];
   const homes: [number, number, number, number, RGB[], RGB[]][] =
     level === 1
       ? [
@@ -825,11 +949,13 @@ function town(level: number): PixelBuf {
   homes.forEach(([cx, cy, len, wid, side, roof], i) => {
     house(b, cx, cy, len, wid, 10 + level * 2 + (i % 2) * 2, side, roof, 73 + i);
     facade(b, cx, cy, wid, [-len * 0.25], len * 0.2);
+    gnd.push(shadowRect(cx, cy, len, wid));
   });
   if (level >= 2) {
     // church / hall tower with a slate spire in the middle of the square
     const th = 14 + level * 6;
     house(b, 0.0, -0.02, 0.18, 0.18, th, PAL.stone, null, 79);
+    gnd.push(shadowRect(0.0, -0.02, 0.18, 0.18, 80));
     const t = proj(OX, GY, 0, -0.02, th);
     const sp = 6 + level * 2;
     for (let d = 0; d <= sp; d++) {
@@ -859,14 +985,18 @@ function town(level: number): PixelBuf {
     b.set(rx(p), ry(p) - 15, PAL.iron[1]);
   }
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
 /** Warehouse: long concrete sheds with big dark doors, crates and barrels; gantry crane at 3. */
 function warehouse(level: number): PixelBuf {
   const b = new PixelBuf(W, H);
-  concrete(b, 81);
+  // concrete pad only under the sheds (plus a short apron), shadows under sheds and crates
+  const gnd: GroundFn[] = [];
   if (level === 1) {
+    gnd.push(patchRect(-0.1, -0.1, 0.66, 0.5, concrete(81), 81, 255, 0.05));
+    gnd.push(shadowRect(-0.14, -0.14, 0.5, 0.34), shadowEllipse(0.24, 0.28, 0.14, 50));
     flatShed(b, -0.14, -0.14, 0.5, 0.34, 13, CONCRETE, 83);
     opening(b, -0.22, 0.03, -0.08, 0.03, 0, 10, PAL.outline);
     const l = proj(OX, GY, -0.15, 0.03, 10);
@@ -880,6 +1010,8 @@ function warehouse(level: number): PixelBuf {
       84,
     );
   } else if (level === 2) {
+    gnd.push(patchRect(-0.05, -0.1, 0.8, 0.56, concrete(81), 81, 255, 0.05));
+    gnd.push(shadowRect(-0.1, -0.14, 0.66, 0.4), shadowEllipse(0.26, 0.28, 0.18, 50));
     flatShed(b, -0.1, -0.14, 0.66, 0.4, 17, CONCRETE, 85);
     for (const dx of [-0.32, -0.06]) opening(b, dx, 0.06, dx + 0.14, 0.06, 0, 13, PAL.outline);
     for (const dx of [-0.32, -0.06]) {
@@ -898,6 +1030,9 @@ function warehouse(level: number): PixelBuf {
       86,
     );
   } else {
+    gnd.push(patchRect(-0.14, -0.06, 0.62, 0.78, concrete(81), 81, 255, 0.05));
+    gnd.push(shadowRect(-0.18, -0.26, 0.54, 0.28), shadowRect(-0.18, 0.1, 0.54, 0.28));
+    gnd.push(shadowRect(0.37, 0.0, 0.14, 0.84, 35));
     flatShed(b, -0.18, -0.26, 0.54, 0.28, 18, CONCRETE, 87);
     flatShed(b, -0.18, 0.1, 0.54, 0.28, 18, CONCRETE, 88);
     for (const cy of [-0.26, 0.1]) {
@@ -931,6 +1066,7 @@ function warehouse(level: number): PixelBuf {
     );
   }
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
@@ -939,10 +1075,17 @@ function warehouse(level: number): PixelBuf {
 /** Beehive brick kiln with a wood pile and a glowing mouth. */
 function kiln(): PixelBuf {
   const b = new PixelBuf(W, H);
-  yard(b, 91);
   const kx = -0.08;
   const ky = -0.08;
   const kr = 0.27;
+  // ash and soot in front of the mouth, coal dust under the heap, shadows
+  const gnd: GroundFn[] = [
+    patchEllipse(kx + 0.02, ky + kr + 0.08, 0.12, loose(PAL.stone, 90), 90, 110, 0.08),
+    patchEllipse(-0.32, 0.3, 0.15, loose(COAL, 91), 91, 130, 0.08),
+    shadowEllipse(kx, ky, kr + 0.02, 80, 0.25),
+    shadowRect(0.26, 0.2, 0.3, 0.2),
+    shadowEllipse(-0.32, 0.3, 0.12),
+  ];
   drawCylinder(b, OX, GY, kx, ky, kr, 0, 10, BRICK, BRICK[2], 92);
   const t = proj(OX, GY, kx, ky, 10);
   const prx = kr * 32;
@@ -972,15 +1115,23 @@ function kiln(): PixelBuf {
   logStack(b, 0.26, 0.2, 0.3, 2, 94);
   heap(b, -0.32, 0.3, 0.1, 5, COAL, 95);
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
 /** Stone grinder: tall mill tower with a big cog wheel, stone in, gravel and ingots out. */
 function grinder(): PixelBuf {
   const b = new PixelBuf(W, H);
-  slab(b, 101, GRAVEL);
   const tx = -0.16;
   const ty = -0.14;
+  // gravel aprons under the stone and gravel heaps, shadow under the tower
+  const gnd: GroundFn[] = [
+    patchEllipse(0.26, 0.2, 0.24, loose(GRAVEL, 100), 100, 255, 0.08),
+    patchEllipse(-0.28, 0.32, 0.16, loose(GRAVEL, 101), 101, 255, 0.08),
+    shadowRect(tx, ty, 0.32, 0.32, 80),
+    shadowEllipse(0.26, 0.2, 0.19),
+    shadowEllipse(-0.28, 0.32, 0.13),
+  ];
   house(b, tx, ty, 0.32, 0.32, 32, PAL.stone, PAL.roofSlate, 102);
   facade(b, tx, ty, 0.32, [-0.08, 0.06], null, 14);
   facade(b, tx, ty, 0.32, [-0.08], 0.06);
@@ -1025,15 +1176,25 @@ function grinder(): PixelBuf {
   heap(b, -0.28, 0.32, 0.11, 4, GRAVEL, 105);
   ingots(b, 0.06, 0.36);
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
 /** Refinery: silver distillation column, two white tanks, a flare stack and pipework. */
 function refinery(): PixelBuf {
   const b = new PixelBuf(W, H);
-  concrete(b, 111);
   const cx = -0.28;
   const cy = -0.24;
+  // concrete pads only under the column and the two tanks
+  const gnd: GroundFn[] = [
+    patchEllipse(cx, cy, 0.15, concrete(111), 111, 255, 0.05),
+    patchEllipse(0.14, -0.24, 0.21, concrete(111), 112, 255, 0.05),
+    patchEllipse(0.3, 0.12, 0.19, concrete(111), 113, 255, 0.05),
+    shadowEllipse(cx, cy, 0.11),
+    shadowEllipse(0.14, -0.24, 0.16),
+    shadowEllipse(0.3, 0.12, 0.14),
+    shadowRect(-0.24, 0.24, 0.28, 0.22),
+  ];
   drawCylinder(b, OX, GY, cx, cy, 0.09, 0, 46, SILVER, SILVER[1], 113);
   // rings, a platform and a ladder on the column
   for (const z of [12, 24, 36]) {
@@ -1068,15 +1229,23 @@ function refinery(): PixelBuf {
   b.set(rx(f), ry(f) - 33, PAL.white);
   crates(b, [[0.36, 0.36]], 119);
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
 /** Power plant: brick turbine hall, very tall banded chimney, cooling tank and a switchyard pole. */
 function powerPlant(): PixelBuf {
   const b = new PixelBuf(W, H);
-  concrete(b, 121);
   const hx = -0.08;
   const hy = -0.1;
+  const gnd: GroundFn[] = [
+    patchEllipse(0.32, -0.3, 0.15, loose(COAL, 120), 120, 130, 0.08),
+    shadowRect(hx, hy, 0.62, 0.42, 80),
+    shadowEllipse(-0.36, -0.34, 0.09),
+    shadowEllipse(0.3, 0.2, 0.16),
+    shadowRect(-0.3, 0.32, 0.14, 0.12),
+    shadowEllipse(0.32, -0.3, 0.12),
+  ];
   house(b, hx, hy, 0.62, 0.42, 22, BRICK, PAL.roofSlate, 123);
   // tall arched windows on the +y face
   for (const tx of [-0.24, -0.12, 0.0, 0.12]) {
@@ -1135,6 +1304,7 @@ function powerPlant(): PixelBuf {
   pole(b, rx(pl), ry(pl), 24);
   heap(b, 0.32, -0.3, 0.11, 5, COAL, 127);
   b.outline(PAL.outline, 170);
+  ground(b, gnd);
   return b;
 }
 
@@ -1196,11 +1366,15 @@ function fuelStop(): PixelBuf {
   // ladder on the front leg
   const ld = proj(OX, OY, -0.18, 0.14);
   for (let y = 2; y < 20; y += 3) b.rect(rx(ld) - 3, ry(ld) - y, 3, 1, PAL.timber[1]);
-  const gnd = (x: number, y: number) => shade(pick(COAL, hash2(x, y, 133)), 1.1);
-  pad(b, -0.28, 0.28, 0.24, 0.24, gnd, 0);
   const h0 = proj(OX, OY, -0.28, 0.28);
   b.ellipse(rx(h0), ry(h0) - 3, 6, 4, COAL, 132, 0.5);
   b.outline(PAL.outline, 170);
+  // spilled coal around the heap, shadow under the trestle
+  ground(b, [
+    patchEllipse(-0.28, 0.28, 0.13, (x, y) => shade(pick(COAL, hash2(x, y, 133)), 1.1), 133, 200),
+    shadowRect(0, 0, 0.4, 0.32, 55),
+    shadowEllipse(-0.28, 0.28, 0.1),
+  ]);
   return b;
 }
 

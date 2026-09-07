@@ -168,7 +168,8 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
     if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock) return { ok: false, cost: {}, reason: STR.build.rock };
+    if (t === Terrain.Rock || t === Terrain.Mountain)
+      return { ok: false, cost: {}, reason: STR.build.rock };
     if (t === Terrain.Water && kind !== 'bridge')
       return { ok: false, cost: {}, reason: STR.build.needBridge };
     if (t !== Terrain.Water && kind === 'bridge')
@@ -225,7 +226,7 @@ export class Builder {
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock || t === Terrain.Water)
+    if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
       return { ok: false, cost: {}, reason: STR.build.badTerrain };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };
@@ -299,7 +300,7 @@ export class Builder {
     if (def.onTrack && !def.anyTile) {
       if (!this.track.has(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrackHere };
     } else {
-      if (t === Terrain.Rock || t === Terrain.Water)
+      if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
         return { ok: false, cost: {}, reason: STR.build.badTerrain };
       if (this.stationAt(x, y)) return { ok: false, cost: {}, reason: STR.build.occupied };
       if (!def.anyTile && this.track.has(x, y))
@@ -360,7 +361,7 @@ export class Builder {
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock || t === Terrain.Water)
+    if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
       return { ok: false, cost: {}, reason: STR.build.badTerrain };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };

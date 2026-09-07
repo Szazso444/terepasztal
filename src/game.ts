@@ -25,7 +25,6 @@ import { generateMap as generateMapForEditor } from './world/mapgen';
 import { decorateProps } from './world/mapgen';
 import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
-import type { MapGenParams } from './world/mapgen';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
@@ -51,6 +50,7 @@ import { ScreenManager } from './ui/modal';
 import { DepotScreen } from './ui/depot';
 import { btn } from './ui/dom';
 import type { Train } from './sim/trains';
+import { defaultStop as defaultStopFor } from './sim/trains';
 import { ContractBoard } from './sim/contracts';
 import { ContractsScreen } from './ui/contractsScreen';
 import { ContractsSide } from './ui/contractsSide';
@@ -112,6 +112,8 @@ import { locoFrame } from './art/frames';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
 import { PeopleSim } from './sim/people';
+import { expandSave, ownsBorderChunk } from './sim/expand';
+import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 
 /** Starting stockpile for a brand-new game, before `rules.startStock` scaling. */
@@ -170,6 +172,10 @@ export class Game {
   marketScreen!: MarketScreen;
   resourceBar!: ResourceBar;
   buildingPanel!: BuildingPanel;
+  decorPanel!: DecorPanel;
+  /** overview: train picked with a click, and a route being recorded for it */
+  private ovSelected: number | null = null;
+  private recording: { trainId: number; stops: number[] } | null = null;
   trainSide!: TrainSide;
   buildInfo!: BuildInfo;
   floaters!: Floaters;
@@ -657,6 +663,12 @@ export class Game {
       s ? this.stationPanel.open(s) : this.stationPanel.station && this.stationPanel.close();
     this.build.onSelectBuilding = (b) =>
       b ? this.buildingPanel.open(b) : this.buildingPanel.building && this.buildingPanel.close();
+    this.build.onSelectDecor = (d) =>
+      d ? this.decorPanel.open(d) : this.decorPanel.decor && this.decorPanel.close();
+    this.fleet.contractDest = (cargo, origin) => {
+      const c = this.contracts.active.find((k) => k.cargo === cargo && k.originId === origin);
+      return c ? c.destId : null;
+    };
     this.build.onStatus = (t) => this.toolbar.setStatus(t);
     this.build.onToolChanged = (t) => {
       this.toolbar.setActive(t);
@@ -724,52 +736,30 @@ export class Game {
   }
 
   /**
-   * A save made on a smaller generated map: regenerate that map, drop its terrain into the centre
-   * of the current one and shift every saved coordinate. Trains go back to the depot.
+   * Terrain is regenerated on load; anything the player built must still stand on buildable
+   * ground (a regenerated stone field or lake under a station would strand it).
    */
-  private migrateSmallWorld(j: SaveGame, oldParams: MapGenParams) {
-    const old = generateMap(this.seed, oldParams);
-    const dx = Math.floor((this.map.w - old.w) / 2 / this.map.regionSize) * this.map.regionSize;
-    const dy = Math.floor((this.map.h - old.h) / 2 / this.map.regionSize) * this.map.regionSize;
-    for (let y = 0; y < old.h; y++)
-      for (let x = 0; x < old.w; x++) {
-        const oi = y * old.w + x;
-        const ni = (y + dy) * this.map.w + (x + dx);
-        this.map.terrain[ni] = old.terrain[oi];
-        this.map.variant[ni] = old.variant[oi];
-        this.map.biome[ni] = old.biome[oi];
-        const props = old.props.get(oi);
-        if (props) this.map.props.set(ni, props);
-        else this.map.props.delete(ni);
+  private fixBuiltTiles(j: SaveGame) {
+    const fix = (x: number, y: number, bridge = false) => {
+      if (!inBounds(this.map, x, y)) return;
+      const t = terrainAt(this.map, x, y);
+      if (
+        bridge
+          ? t !== Terrain.Water
+          : t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain
+      ) {
+        this.map.terrain[y * this.map.w + x] = bridge ? Terrain.Water : Terrain.Grass;
+        this.map.props.delete(y * this.map.w + x);
+        this.world.retile(x, y);
       }
-    j.track = j.track.map(([x, y, k, r]) => [x + dx, y + dy, k, r]);
-    for (const s of j.stations) {
-      s.x += dx;
-      s.y += dy;
-    }
-    j.decor = (j.decor ?? []).map(([x, y, id, r]) => [x + dx, y + dy, id, r]);
-    j.buildings = (j.buildings ?? []).map(([x, y, id, a]) => [x + dx, y + dy, id, a]);
-    j.trains = [];
-    if (j.regions && old.regionsX && old.regionsY) {
-      const owned = new Array<boolean>(this.map.regionsX * this.map.regionsY).fill(false);
-      const ox = dx / this.map.regionSize;
-      const oy = dy / this.map.regionSize;
-      j.regions.forEach((v, i) => {
-        if (!v) return;
-        const rx = (i % old.regionsX) + ox;
-        const ry = Math.floor(i / old.regionsX) + oy;
-        owned[ry * this.map.regionsX + rx] = true;
-      });
-      j.regions = owned;
-    }
-    j.camera = { ...j.camera, x: j.camera.x + (dx - dy) * 32, y: j.camera.y + (dx + dy) * 16 };
-    this.overview.rebuildTerrain();
-    this.toasts.push(STR.settings.migrated, 'info');
+    };
+    for (const [x, y, kind] of j.track) fix(x, y, kind === 'bridge');
+    for (const s of j.stations) fix(s.x, s.y);
+    for (const [x, y] of j.decor ?? []) fix(x, y);
+    for (const [x, y] of j.buildings ?? []) fix(x, y);
   }
-
   /** Populate a freshly initialised game from a save with the same seed. */
-  applySave(j: SaveGame, migrateFrom: MapGenParams | null = null) {
-    if (migrateFrom) this.migrateSmallWorld(j, migrateFrom);
+  applySave(j: SaveGame) {
     if (j.rules) setRules(j.rules);
     setSeasonOffset(j.seasonOffset ?? 0);
     this.clock.time = j.clock.time;
@@ -780,13 +770,7 @@ export class Game {
     if (j.regions) this.regions.load(j.regions);
     else this.regions.applyTier(this.economy.tier);
     this.world.rebuildFog();
-    if (migrateFrom) {
-      const rs = this.map.regionSize;
-      const dx = Math.floor((this.map.w - migrateFrom.w) / 2 / rs) * rs;
-      const dy = Math.floor((this.map.h - migrateFrom.h) / 2 / rs) * rs;
-      for (let y = dy; y < dy + migrateFrom.h; y++)
-        for (let x = dx; x < dx + migrateFrom.w; x++) this.world.retile(x, y);
-    }
+    this.fixBuiltTiles(j);
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toolbar.refresh();
@@ -825,7 +809,6 @@ export class Game {
 
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
     this.applySeason(true);
-    if (migrateFrom) this.inventory.items.forEach((it) => (it.assigned = null));
     // items assigned to trains that no longer exist are freed
     for (const it of this.inventory.items)
       if (it.assigned !== null && !this.fleet.byId(it.assigned)) it.assigned = null;
@@ -850,7 +833,8 @@ export class Game {
     const t = terrainAt(this.map, x, y);
     if (p) {
       if (t === Terrain.Hill) this.world.setFlattened(x, y, true);
-      if (t === Terrain.Forest || t === Terrain.Grass) this.world.removeProps(x, y);
+      if (t === Terrain.Forest || t === Terrain.Grass)
+        this.world.displaceProps(x, y, p.links as [number, number][]);
       this.world.setTrack(x, y, `track/${p.kind}_${p.rot}`);
     } else {
       this.world.setTrack(x, y, null);
@@ -995,11 +979,23 @@ export class Game {
     if (!confirm(STR.overview.buyConfirm(fmtMoney(price)))) return false;
     this.economy.money -= price;
     this.regions.own(i);
+    sfx('tier.up');
+    if (
+      this.spec.kind === 'generated' &&
+      ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h)
+    ) {
+      // the grid needs another ring: persist, grow the world and come back into it
+      const snap = expandSave(this.snapshot(), 1);
+      if (writeSave(snap)) {
+        this.toasts.push(STR.overview.growing, 'info');
+        setIntentAndReload({ action: 'continue' });
+        return true;
+      }
+    }
     this.world.rebuildFog();
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toasts.push(STR.overview.bought, 'good');
-    sfx('tier.up');
     return true;
   }
   private trackTilesForOverview() {
@@ -1156,6 +1152,9 @@ export class Game {
       this.stock,
       () => this.build.selectedBuilding && this.build.selectBuilding(null),
     );
+    this.decorPanel = new DecorPanel(this.builder, this.power, () => {
+      if (this.build.selectedDecor) this.build.selectDecor(null);
+    });
     this.trainSide = new TrainSide(this.builder, this.atlas);
     this.noticePanel = new NoticePanel();
     this.noticePanel.onFocus = (n) => this.focusNotice(n);
@@ -1210,6 +1209,7 @@ export class Game {
       this.toolbar.root,
       this.stationPanel.root,
       this.buildingPanel.root,
+      this.decorPanel.root,
       this.toasts.root,
       this.tooltip.root,
     );
@@ -1280,7 +1280,10 @@ export class Game {
     const piece = this.track.get(x, y);
     if (piece) lines.push(T.track(piece.kind));
     const dec = this.builder.decorAt(x, y);
-    if (dec) lines.push(decorDefOf(dec.id).name);
+    if (dec) {
+      lines.push(decorDefOf(dec.id).name);
+      lines.push(...DecorPanel.lines(dec, this.builder, this.power));
+    }
     const props = this.map.props.get(y * this.map.w + x);
     if (props?.length) {
       const kinds = new Map<string, number>();
@@ -1516,6 +1519,7 @@ export class Game {
       this.panelRefresh = 0;
       if (this.stationPanel.station) this.stationPanel.render();
       if (this.buildingPanel.building) this.buildingPanel.render();
+      if (this.decorPanel.decor) this.decorPanel.render();
       this.contractsSide.update();
       this.screens.refresh();
       this.buildInfo.refresh();
@@ -1613,7 +1617,14 @@ export class Game {
     if (inp.wasPressed('KeyM')) this.toggleOverview();
     if (inp.wasPressed('Tab') && this.toolbar.open && this.viewTarget === 0)
       this.toolbar.cycle(inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? -1 : 1);
-    if (inp.wasPressed('Escape') && this.viewTarget === 1) this.setView(0);
+    if (inp.wasPressed('Escape') && this.viewTarget === 1) {
+      if (this.recording) this.cancelRecording();
+      else if (this.ovSelected !== null) {
+        this.ovSelected = null;
+        this.setHoverTrain(null);
+        this.updateOverviewBanner();
+      } else this.setView(0);
+    }
     if (inp.wasPressed('Space')) this.clock.togglePause();
     const catOpen = this.toolbar.open !== null && this.viewTarget === 0;
     for (let d = 1; d <= 9; d++)
@@ -1688,10 +1699,30 @@ export class Game {
         STR.overview.chunkLines(fmtMoney(this.regions.price(hoverChunk))),
       );
     else this.tooltip.hide();
+    if (inp.wasPressed('KeyR')) this.toggleRecording();
+    if (this.recording && inp.wasPressed('Enter')) this.finishRecording();
     for (const c of inp.clicks) {
       if (c.button !== 0) continue;
       const p = this.overview.pick(...this.overviewLocalTuple(c.x, c.y));
-      if (p) {
+      if (this.recording) {
+        if (p?.kind === 'station') {
+          this.recording.stops.push(p.id);
+          this.updateOverviewBanner();
+        }
+        continue;
+      }
+      if (p?.kind === 'train') {
+        // first click selects (and traces the path), a second click on it goes there
+        if (this.ovSelected === p.id) {
+          const target = this.pickPosition(p);
+          if (target) this.returnToRts(target.x, target.y);
+        } else {
+          this.ovSelected = p.id;
+          const t = this.fleet.byId(p.id);
+          this.setHoverTrain(t ?? null);
+          this.updateOverviewBanner();
+        }
+      } else if (p) {
         const target = this.pickPosition(p);
         if (target) this.returnToRts(target.x, target.y);
       } else if (buyable) {
@@ -1701,6 +1732,45 @@ export class Game {
         if (t) this.returnToRts(t.x, t.y);
       }
     }
+  }
+  /** R in the overview: start recording stops for the selected train, or finish. */
+  private toggleRecording() {
+    if (this.recording) {
+      this.finishRecording();
+      return;
+    }
+    const t = this.ovSelected !== null ? this.fleet.byId(this.ovSelected) : null;
+    if (!t) return;
+    this.recording = { trainId: t.id, stops: [] };
+    this.updateOverviewBanner();
+  }
+  private finishRecording() {
+    const rec = this.recording;
+    this.recording = null;
+    const t = rec ? this.fleet.byId(rec.trainId) : null;
+    if (rec && t && rec.stops.length >= 2) {
+      const stops = rec.stops.map(
+        (id) => t.schedule.find((s) => s.stationId === id) ?? defaultStopFor(id),
+      );
+      t.dynamic = false;
+      this.fleet.setSchedule(t, stops);
+      this.toasts.push(STR.overview.recorded(t.name, stops.length), 'good');
+    } else if (rec) this.toasts.push(STR.depot.needTwoStops, 'warn');
+    this.updateOverviewBanner();
+  }
+  private cancelRecording() {
+    this.recording = null;
+    this.updateOverviewBanner();
+  }
+  private updateOverviewBanner() {
+    const t = this.ovSelected !== null ? this.fleet.byId(this.ovSelected) : null;
+    if (this.recording && t) {
+      const names = this.recording.stops
+        .map((id) => this.builder.stationById(id)?.name ?? '?')
+        .join(' > ');
+      this.overviewBanner.textContent = STR.overview.recording(t.name, names);
+    } else if (t) this.overviewBanner.textContent = STR.overview.selectHint(t.name);
+    else this.overviewBanner.textContent = STR.overview.hint;
   }
 
   /** Overridable hooks for later milestones. */
@@ -1752,6 +1822,10 @@ export class Game {
     if (v === 0) {
       this.tooltip.hide();
       this.overview.hover = null;
+      this.ovSelected = null;
+      this.recording = null;
+      this.setHoverTrain(null);
+      this.updateOverviewBanner();
     }
   }
   returnToRts(tx: number, ty: number) {

@@ -86,6 +86,7 @@ export class Fleet {
     wagonUids: number[],
     schedule: (StopPlan | number)[],
     name?: string,
+    dynamic = false,
   ): Train | string {
     if (!locoUids.length) return STR.fleet.needLoco;
     if (locoUids.length > MAX_LOCOS) return STR.fleet.tooManyLocos(MAX_LOCOS);
@@ -129,6 +130,7 @@ export class Fleet {
     if (!t.spawnAt(this.track, p.x, p.y, entry)) return STR.fleet.cannotPlace;
     t.schedule = stops;
     t.routeIndex = 0;
+    t.dynamic = dynamic;
     t.trip = newTrip(this.clockTime);
     for (const l of locoItems) l!.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
@@ -199,27 +201,117 @@ export class Fleet {
       onFlow: (x, y, r, d) => this.onFlow(x, y, r, d),
       onPassengers: (s, n, b) => this.onPassengers(s, n, b),
       trainPath: (id) => this.byId(id)?.pathTileKeys(this.map.w) ?? new Set<number>(),
+      reservedBy: (x, y, self) => {
+        const id = this.reserved.get(y * this.map.w + x) ?? 0;
+        return id === self ? 0 : id;
+      },
+      chooseNext: (t) => this.chooseNext(t),
       biomeAt: (x, y) => {
         const d = biomeDef(biomeAt(this.map, x, y));
         return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
       },
     };
   }
+  /** tile key -> train id for the next stretch of every moving train's path */
+  private reserved = new Map<number, number>();
+  private rebuildReservations() {
+    this.reserved.clear();
+    for (const t of this.trains) {
+      if (t.state !== 'moving') continue;
+      for (const k of t.pathTileKeys(this.map.w, 8))
+        if (!this.reserved.has(k)) this.reserved.set(k, t.id);
+    }
+  }
+  /** Stations dynamic trains are currently heading for. */
+  private dynamicTargets(except: number) {
+    const out = new Set<number>();
+    for (const t of this.trains)
+      if (t.dynamic && t.id !== except && t.route.length)
+        out.add(t.route[t.routeIndex % t.route.length]);
+    return out;
+  }
+  /**
+   * Dynamic routing: with cargo aboard go to the nearest warehouse (or a contract's destination);
+   * empty, pick the producing station whose cargo the stockpile lacks most, discounted by
+   * distance and skipped when another dynamic train is already bound there.
+   */
+  chooseNext(t: Train): number | null {
+    const head = t.poses[0] ?? { x: 0, y: 0 };
+    const dist = (s: Station) => Math.abs(s.x - head.x) + Math.abs(s.y - head.y);
+    const withPlat = this.builder.stations.filter((s) => this.builder.platformTiles(s).length > 0);
+    const loaded = t.wagons.filter((w) => w.cargo && w.amount > 0);
+    if (loaded.length) {
+      for (const w of loaded) {
+        const c = this.contractDest?.(w.cargo!, w.origin ?? -1);
+        if (c !== null && c !== undefined) return c;
+      }
+      const wantsPeople = loaded.some((w) => cargoDef(w.cargo!).class === 'people');
+      const sinks = withPlat.filter((s) =>
+        wantsPeople ? s.accepts('passengers') : s.def.stockpile,
+      );
+      sinks.sort((a, b) => dist(a) - dist(b));
+      return sinks[0]?.id ?? null;
+    }
+    const taken = this.dynamicTargets(t.id);
+    let best: { id: number; score: number } | null = null;
+    for (const s of withPlat) {
+      if (taken.has(s.id)) continue;
+      let score = -Infinity;
+      for (const c of s.producedCargo()) {
+        if (!t.wagons.some((w) => (w.def.accepts ?? []).includes(c))) continue;
+        const cap = this.stockCap(c);
+        const deficit =
+          cargoDef(c).class === 'people'
+            ? 0.4
+            : 1 - Math.min(1, this.stock.get(c) / Math.max(1, cap));
+        const supply = Math.min(1, s.stored(c) / Math.max(1, s.capacity * 0.25)) * 0.6 + 0.4;
+        score = Math.max(score, deficit * supply);
+      }
+      if (score === -Infinity) continue;
+      score -= dist(s) * 0.004;
+      if (!best || score > best.score) best = { id: s.id, score };
+    }
+    return best && best.score > 0.05 ? best.id : null;
+  }
+  /** set by the game: destination station of an active contract for this cargo/origin, if any */
+  contractDest: ((cargo: string, origin: number) => number | null) | null = null;
+
   tick(gdt: number, now: number, speedFactor = 1) {
     this.clockTime = now;
     this.rebuildOccupancy();
+    this.rebuildReservations();
     const ctx = this.ctx(now, speedFactor);
     for (const t of this.trains) t.tick(gdt, ctx);
-    // head-on meetings: one of the two backs off to its previous stop; the other waits
-    for (const a of this.trains) {
-      if (!a.blocked || a.blockedBy === null || a.blockedTime < MUTUAL_GRACE) continue;
-      const b = this.byId(a.blockedBy);
-      if (!b || b.blockedBy !== a.id || b.blockedTime < MUTUAL_GRACE) continue;
-      if (a.yieldUntil > now || b.yieldUntil > now) continue;
-      // the lighter train yields; on a tie the younger one
-      const [first, second] =
-        a.weight < b.weight || (a.weight === b.weight && a.id > b.id) ? [a, b] : [b, a];
-      if (!first.retreat(ctx)) second.retreat(ctx);
+    // jams: follow who blocks whom; when the chain loops or ends in a train that is itself stuck,
+    // the lightest train in it that can pull aside does so (one per chain per tick)
+    const stuck = this.trains.filter(
+      (t) =>
+        t.blocked && t.blockedBy !== null && t.blockedTime >= MUTUAL_GRACE && t.yieldUntil <= now,
+    );
+    const handled = new Set<number>();
+    for (const a of stuck) {
+      if (handled.has(a.id)) continue;
+      const chain: Train[] = [a];
+      let cur: Train | undefined = a;
+      let loops = false;
+      while (cur && cur.blockedBy !== null) {
+        const next = this.byId(cur.blockedBy);
+        if (!next) break;
+        if (chain.includes(next)) {
+          loops = true;
+          break;
+        }
+        chain.push(next);
+        cur = next;
+        if (chain.length > 8) break;
+      }
+      const tail = chain[chain.length - 1];
+      const dead =
+        loops || (tail.blocked && tail.blockedTime >= MUTUAL_GRACE) || tail.state !== 'moving';
+      if (!dead) continue;
+      for (const t of chain) handled.add(t.id);
+      const order = [...chain].sort((p, q) => p.weight - q.weight || q.id - p.id);
+      for (const t of order) if (t.yieldUntil <= now && t.retreat(ctx)) break;
     }
   }
   /** Total capacity of a train for a cargo type. */

@@ -5,8 +5,18 @@ export const enum Terrain {
   Water = 3,
   Rock = 4,
   Sand = 5,
+  /** the raised heart of a large stone field; nothing can be built on it */
+  Mountain = 6,
 }
-export const TERRAIN_NAMES = ['grass', 'forest', 'hill', 'water', 'rock', 'sand'] as const;
+export const TERRAIN_NAMES = [
+  'grass',
+  'forest',
+  'hill',
+  'water',
+  'rock',
+  'sand',
+  'mountain',
+] as const;
 
 export const enum Biome {
   Plains = 0,
@@ -44,6 +54,9 @@ export interface GameMap {
   w: number;
   h: number;
   seed: number;
+  /** world coordinate of tile (0,0); grows negative as the map expands around the start */
+  originX: number;
+  originY: number;
   terrain: Uint8Array;
   variant: Uint8Array;
   /** per-tile biome id (see Biome) */

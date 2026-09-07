@@ -1,7 +1,8 @@
 import { Game, hashSeed } from './game';
 import { STR } from './strings';
 import { el } from './ui/dom';
-import { readSave, clearSave, type WorldSpec } from './sim/save';
+import { readSave, clearSave, writeSave, type WorldSpec } from './sim/save';
+import { expandSave, ownsBorderChunk } from './sim/expand';
 import { rules } from './sim/rules';
 import { takeIntent, setTestingLevel, type Intent } from './intent';
 import { getLevel, levelFromMap, saveLevel, type LevelData } from './world/level';
@@ -53,7 +54,6 @@ async function boot() {
 
   let spec: WorldSpec;
   let save = null as ReturnType<typeof readSave>;
-  let migrateFrom: MapGenParams | null = null;
   let level: LevelData | null = null;
   let start: 'menu' | 'play' | 'editor' = 'menu';
 
@@ -76,10 +76,23 @@ async function boot() {
       seed: Math.floor(Math.random() * 2 ** 31),
       params: paramsFromRules(),
     };
-    // saves from the 3x3-chunk days: keep their terrain in the middle of today's larger grid
-    if (spec.kind === 'generated' && spec.params.w < rules.mapSize) {
-      migrateFrom = spec.params;
-      spec = { kind: 'generated', seed: spec.seed, params: paramsFromRules() };
+    // a generated world grows a ring of chunks whenever an owned chunk touches its edge (old
+    // saves from the fixed-grid days come through here too)
+    if (save && spec.kind === 'generated') {
+      let grown = false;
+      let guard = 0;
+      let gp = spec.params;
+      while (
+        guard++ < 8 &&
+        (gp.w < rules.mapSize || (save.regions && ownsBorderChunk(save.regions, gp.w, gp.h)))
+      ) {
+        expandSave(save, 1);
+        if (save.world?.kind !== 'generated') break;
+        gp = save.world.params;
+        spec = save.world;
+        grown = true;
+      }
+      if (grown) writeSave(save);
     }
     start = intent?.action === 'continue' && save ? 'play' : 'menu';
     if (save?.world?.kind !== 'level') setTestingLevel(null);
@@ -89,7 +102,7 @@ async function boot() {
   (window as unknown as { game: Game }).game = game;
   await game.init();
   if (start === 'editor' && level) game.enterEditor(level);
-  else if (save) game.applySave(save, migrateFrom);
+  else if (save) game.applySave(save);
   else if (level) game.applyLevelStart(level);
   else game.startFresh();
   // the game always starts paused; Space or the pause button starts the clock

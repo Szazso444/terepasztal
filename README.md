@@ -42,7 +42,8 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
   details. The right-hand panel lists the trains on screen (all of them in the overview) with
   tanks, use per tile, fuel type and weekly estimates; hover one to trace its path.
 - **Chunks**: the map is bought chunk by chunk from the overview (M). Owning a chunk reveals all
-  eight neighbours; prices grow with distance from the start.
+  eight neighbours; prices grow with distance from the start. Buying at the edge grows the world
+  by a ring of chunks, without end.
 - **Biomes**: plains, forest, desert, taiga, swamp and ocean change production, track cost, water
   use and speed (see `src/data/biomes.json`); rivers and islands are generated.
 - **People**: the population idles around its buildings by day, gathers nearby and waits at
