@@ -15,13 +15,14 @@ export class PeopleRenderer {
 
   update(sim: PeopleSim, dt: number) {
     this.t += dt;
-    const frame = Math.floor(this.t * 5) % 2;
+    const walkFrame = Math.floor(this.t * 5) % 2;
     const seen = new Set<number>();
     for (const p of sim.persons) {
-      if (!p.walking || (p.transient && p.inside < 0)) continue;
+      if (p.state === 'inside') continue;
       seen.add(p.id);
       let s = this.sprites.get(p.id);
-      const key = `people/walker_${p.outfit}_f${frame}`;
+      const moving = p.state !== 'idle' && p.state !== 'waiting';
+      const key = `people/walker_${p.outfit}_f${moving ? walkFrame : 0}`;
       if (!this.atlas.has(key)) continue;
       const f = this.atlas.get(key);
       if (!s) {

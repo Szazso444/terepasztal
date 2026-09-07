@@ -8,108 +8,103 @@ export interface Place {
   x: number;
   y: number;
   key: string;
+  /** what the crew here goes out to gather */
+  gathers: Terrain | null;
 }
+export type PersonState =
+  'inside' | 'idle' | 'walk' | 'gather' | 'toStation' | 'waiting' | 'return';
 export interface Person {
   id: number;
   x: number;
   y: number;
-  /** current tile path and progress along it */
-  path: { x: number; y: number }[];
-  step: number;
-  /** seconds left inside a building */
-  inside: number;
   home: string;
   outfit: number;
-  walking: boolean;
-  /** boarding/alighting extra that disappears when its path ends */
+  state: PersonState;
+  /** seconds left in the current state */
+  timer: number;
+  path: { x: number; y: number }[];
+  step: number;
+  /** transient walkers (boarding / alighting) vanish at the end of their path */
   transient: boolean;
+  /** station a traveller waits at */
+  stationId: number | null;
 }
 
-export type RoadKind = 'none' | 'dirt' | 'stone';
-/** footsteps needed for a trodden path, and for it to be paved over */
-export const PATH_WEAR = 6;
-export const ROAD_WEAR = 45;
-const WALK_SPEED = 1.3;
-const MAX_TRIP = 48;
+const WALK_SPEED = 1.1;
+/** furthest a person walks from home on foot */
+const ROAM = 6;
+/** furthest station a traveller walks to */
+const STATION_REACH = 14;
+/** day fraction window when people are outside */
+const WAKE = 0.27;
+const SLEEP = 0.85;
 
-export function roadKind(wear: number): RoadKind {
-  return wear >= ROAD_WEAR ? 'stone' : wear >= PATH_WEAR ? 'dirt' : 'none';
-}
 export function walkable(map: GameMap, x: number, y: number) {
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
   const t = map.terrain[y * map.w + x];
   return t !== Terrain.Water && t !== Terrain.Rock;
 }
 
-/**
- * Breadth-first walk between two tiles over walkable ground (8 directions), limited to a
- * box around the pair. Roads count as cheaper so people converge on them.
- */
+/** Breadth-first walk between two tiles over walkable ground (8 directions) inside a small box. */
 export function findWalk(
   map: GameMap,
   from: { x: number; y: number },
   to: { x: number; y: number },
 ): { x: number; y: number }[] | null {
-  const margin = 6;
+  const margin = 4;
   const x0 = Math.max(0, Math.min(from.x, to.x) - margin);
   const y0 = Math.max(0, Math.min(from.y, to.y) - margin);
   const x1 = Math.min(map.w - 1, Math.max(from.x, to.x) + margin);
   const y1 = Math.min(map.h - 1, Math.max(from.y, to.y) + margin);
   const W = x1 - x0 + 1;
   const H = y1 - y0 + 1;
-  const dist = new Float32Array(W * H).fill(Infinity);
-  const prev = new Int32Array(W * H).fill(-1);
+  const prev = new Int32Array(W * H).fill(-2);
   const key = (x: number, y: number) => (y - y0) * W + (x - x0);
-  // Dijkstra with a tiny heap substitute: the box is small, so a sorted insert list is fine
-  const open: { k: number; d: number }[] = [];
   const sk = key(from.x, from.y);
-  dist[sk] = 0;
-  open.push({ k: sk, d: 0 });
   const tk = key(to.x, to.y);
-  let guard = 0;
-  while (open.length && guard++ < 20000) {
-    let bi = 0;
-    for (let i = 1; i < open.length; i++) if (open[i].d < open[bi].d) bi = i;
-    const cur = open.splice(bi, 1)[0];
-    if (cur.d > dist[cur.k]) continue;
-    if (cur.k === tk) break;
-    const cx = (cur.k % W) + x0;
-    const cy = Math.floor(cur.k / W) + y0;
+  prev[sk] = -1;
+  const queue = [sk];
+  let qi = 0;
+  while (qi < queue.length) {
+    const k = queue[qi++];
+    if (k === tk) break;
+    const cx = (k % W) + x0;
+    const cy = Math.floor(k / W) + y0;
     for (let dy = -1; dy <= 1; dy++)
       for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = cx + dx;
         const ny = cy + dy;
         if (nx < x0 || ny < y0 || nx > x1 || ny > y1) continue;
-        if (!walkable(map, nx, ny) && !(nx === to.x && ny === to.y)) continue;
-        const wear = map.wear[ny * map.w + nx];
-        const cost =
-          (dx && dy ? 1.41 : 1) * (wear >= ROAD_WEAR ? 0.55 : wear >= PATH_WEAR ? 0.75 : 1);
         const nk = key(nx, ny);
-        const nd = cur.d + cost;
-        if (nd < dist[nk]) {
-          dist[nk] = nd;
-          prev[nk] = cur.k;
-          open.push({ k: nk, d: nd });
-        }
+        if (prev[nk] !== -2) continue;
+        if (!walkable(map, nx, ny) && !(nx === to.x && ny === to.y)) continue;
+        prev[nk] = k;
+        queue.push(nk);
       }
   }
-  if (dist[tk] === Infinity) return null;
+  if (prev[tk] === -2) return null;
   const out: { x: number; y: number }[] = [];
   for (let k = tk; k >= 0; k = prev[k]) out.push({ x: (k % W) + x0, y: Math.floor(k / W) + y0 });
   return out.reverse();
 }
 
 /**
- * The population as walkers: everyone not on a train belongs to a station, works or service and
- * wanders to another one now and then. Every step wears the ground; worn tiles become paths,
- * busy paths become stone roads. Passengers boarding or alighting appear as short-lived walkers.
+ * The population as a few quiet walkers: everyone belongs to a station, works or service and
+ * spends most of the day inside; now and then someone steps out to idle by the door, walks to a
+ * nearby resource tile to gather, or goes to the closest station to catch a train with a coach.
+ * Nobody is outside at night. Nothing here changes the map.
  */
 export class PeopleSim {
   persons: Person[] = [];
   private nextId = 1;
   private rnd = Math.random;
-  onRoadChanged: ((x: number, y: number, kind: RoadKind) => void) | null = null;
+  private gatherTerrain: Record<string, Terrain | null> = {
+    farm: Terrain.Grass,
+    lumber: Terrain.Forest,
+    quarry: Terrain.Hill,
+    pump: Terrain.Water,
+  };
   constructor(
     readonly map: GameMap,
     private readonly builder: Builder,
@@ -117,76 +112,127 @@ export class PeopleSim {
 
   places(): Place[] {
     const out: Place[] = [];
-    for (const s of this.builder.stations) out.push({ x: s.x, y: s.y, key: `s${s.id}` });
+    for (const s of this.builder.stations)
+      out.push({ x: s.x, y: s.y, key: `s${s.id}`, gathers: this.gatherTerrain[s.def.id] ?? null });
     for (const b of this.builder.buildings.values())
-      if (buildingDef(b.id).crew > 0) out.push({ x: b.x, y: b.y, key: `b${b.x},${b.y}` });
+      if (buildingDef(b.id).crew > 0)
+        out.push({ x: b.x, y: b.y, key: `b${b.x},${b.y}`, gathers: null });
     for (const d of this.builder.decor.values())
-      if (decorDef(d.id).crew > 0) out.push({ x: d.x, y: d.y, key: `d${d.x},${d.y}` });
+      if (decorDef(d.id).crew > 0)
+        out.push({ x: d.x, y: d.y, key: `d${d.x},${d.y}`, gathers: null });
     return out;
   }
 
-  /** People outside a building right now. */
-  get walking() {
-    return this.persons.filter((p) => p.walking).length;
+  /** People outside right now. */
+  get outside() {
+    return this.persons.filter((p) => p.state !== 'inside').length;
+  }
+  /** Travellers waiting on a station's tile. */
+  waitingAt(stationId: number) {
+    return this.persons.filter((p) => p.state === 'waiting' && p.stationId === stationId);
   }
 
-  private wearTile(x: number, y: number) {
-    const i = y * this.map.w + x;
-    const before = roadKind(this.map.wear[i]);
-    if (this.map.wear[i] < 65000) this.map.wear[i]++;
-    const after = roadKind(this.map.wear[i]);
-    if (before !== after) this.onRoadChanged?.(x, y, after);
-  }
-
-  /** Emit road events for every worn tile (after a load). */
-  replayRoads() {
-    for (let i = 0; i < this.map.wear.length; i++) {
-      const k = roadKind(this.map.wear[i]);
-      if (k !== 'none') this.onRoadChanged?.(i % this.map.w, Math.floor(i / this.map.w), k);
+  /** A train with a coach loaded `n` passengers here: waiting travellers board (vanish). */
+  board(st: Station, n: number) {
+    const waiting = this.waitingAt(st.id);
+    const take = Math.min(waiting.length, Math.max(1, Math.round(n)));
+    for (let k = 0; k < take; k++) {
+      const i = this.persons.indexOf(waiting[k]);
+      if (i >= 0) this.persons.splice(i, 1);
     }
+    // the rest of the load is abstract cargo; show a couple of extra figures stepping aboard
+    const plat = this.builder.platformTiles(st)[0];
+    if (plat)
+      for (let k = take; k < Math.min(3, Math.round(n)); k++) this.spawnTransient(st, plat, true);
   }
-
-  /** Boarding: walkers go from the station to the platform tile; alighting: the other way. */
-  spawnTransit(st: Station, n: number, boarding: boolean) {
+  /** Passengers alighted: a few figures walk from the platform to a nearby building and settle. */
+  alight(st: Station, n: number) {
     const plat = this.builder.platformTiles(st)[0];
     if (!plat) return;
-    const count = Math.min(5, Math.max(1, Math.round(n)));
-    for (let k = 0; k < count; k++) {
-      const from = boarding ? st : plat;
-      const to = boarding ? plat : st;
-      const path = findWalk(this.map, from, to) ?? [from, to];
-      this.persons.push({
-        id: this.nextId++,
-        x: from.x + (this.rnd() - 0.5) * 0.4,
-        y: from.y + (this.rnd() - 0.5) * 0.4,
-        path,
-        step: 0,
-        inside: -this.rnd() * 1.5,
-        home: '',
-        outfit: Math.floor(this.rnd() * 4),
-        walking: true,
-        transient: true,
-      });
-    }
+    const count = Math.min(3, Math.max(1, Math.round(n)));
+    for (let k = 0; k < count; k++) this.spawnTransient(st, plat, false);
+  }
+  private spawnTransient(st: Station, plat: { x: number; y: number }, boarding: boolean) {
+    const from = boarding ? st : plat;
+    const to = boarding ? plat : st;
+    const path = findWalk(this.map, from, to) ?? [from, to];
+    this.persons.push({
+      id: this.nextId++,
+      x: from.x + (this.rnd() - 0.5) * 0.4,
+      y: from.y + (this.rnd() - 0.5) * 0.4,
+      home: '',
+      outfit: Math.floor(this.rnd() * 4),
+      state: 'walk',
+      timer: 0,
+      path,
+      step: 0,
+      transient: true,
+      stationId: null,
+    });
   }
 
-  tick(gdt: number, population: number) {
+  private nearestTile(from: Place, t: Terrain): { x: number; y: number } | null {
+    let best: { x: number; y: number; d: number } | null = null;
+    for (let dy = -ROAM; dy <= ROAM; dy++)
+      for (let dx = -ROAM; dx <= ROAM; dx++) {
+        const x = from.x + dx;
+        const y = from.y + dy;
+        if (x < 0 || y < 0 || x >= this.map.w || y >= this.map.h) continue;
+        const tt = this.map.terrain[y * this.map.w + x];
+        if (tt !== t && !(t === Terrain.Hill && tt === Terrain.Rock)) continue;
+        const d = Math.abs(dx) + Math.abs(dy) + this.rnd() * 2;
+        if (!best || d < best.d) best = { x, y, d };
+      }
+    if (!best) return null;
+    // stand next to water / rock rather than on it
+    if (!walkable(this.map, best.x, best.y)) {
+      for (const [ox, oy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        if (walkable(this.map, best.x + ox, best.y + oy)) return { x: best.x + ox, y: best.y + oy };
+      }
+      return null;
+    }
+    return best;
+  }
+
+  private startWalk(
+    p: Person,
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    state: PersonState,
+  ) {
+    const path = findWalk(this.map, from, to);
+    if (!path || path.length < 2) return false;
+    p.path = path;
+    p.step = 0;
+    p.x = from.x;
+    p.y = from.y;
+    p.state = state;
+    return true;
+  }
+
+  tick(gdt: number, population: number, dayFraction: number) {
     const places = this.places();
+    const byKey = new Map(places.map((p) => [p.key, p]));
     const regular = this.persons.filter((p) => !p.transient);
-    // grow or shrink to the population
     while (regular.length < population && places.length) {
       const home = places[Math.floor(this.rnd() * places.length)];
       const p: Person = {
         id: this.nextId++,
         x: home.x,
         y: home.y,
-        path: [],
-        step: 0,
-        inside: 2 + this.rnd() * 12,
         home: home.key,
         outfit: Math.floor(this.rnd() * 4),
-        walking: false,
+        state: 'inside',
+        timer: 5 + this.rnd() * 40,
+        path: [],
+        step: 0,
         transient: false,
+        stationId: null,
       };
       regular.push(p);
       this.persons.push(p);
@@ -196,88 +242,112 @@ export class PeopleSim {
       const i = this.persons.indexOf(p);
       if (i >= 0) this.persons.splice(i, 1);
     }
-    const byKey = new Map(places.map((p) => [p.key, p]));
+    const daytime = dayFraction > WAKE && dayFraction < SLEEP;
     for (let i = this.persons.length - 1; i >= 0; i--) {
       const p = this.persons[i];
-      if (!p.walking) {
-        p.inside -= gdt;
-        if (p.inside > 0) continue;
-        // home vanished (demolished): adopt a new one
-        const home = byKey.get(p.home) ?? places[Math.floor(this.rnd() * places.length)];
-        if (!home) continue;
-        p.home = home.key;
-        const near = places.filter(
-          (q) => q.key !== home.key && Math.abs(q.x - home.x) + Math.abs(q.y - home.y) <= MAX_TRIP,
-        );
-        if (!near.length) {
-          p.inside = 6 + this.rnd() * 10;
-          continue;
-        }
-        // busy places attract: prefer the closest ones a bit
-        near.sort(
-          (a, b) =>
-            Math.abs(a.x - home.x) +
-            Math.abs(a.y - home.y) -
-            (Math.abs(b.x - home.x) + Math.abs(b.y - home.y)),
-        );
-        const dest =
-          near[Math.min(near.length - 1, Math.floor(this.rnd() * this.rnd() * near.length))];
-        const path = findWalk(this.map, home, dest);
-        if (!path || path.length < 2) {
-          p.inside = 6 + this.rnd() * 10;
-          continue;
-        }
-        p.path = path;
-        p.step = 0;
-        p.x = home.x;
-        p.y = home.y;
-        p.walking = true;
-        p.home = dest.key; // the destination becomes the new home
+      if (p.transient) {
+        if (!this.advance(p, gdt)) this.persons.splice(i, 1);
         continue;
       }
-      if (p.transient && p.inside < 0) {
-        p.inside += gdt;
-        continue;
-      }
-      // advance along the path
-      const next = p.path[p.step + 1];
-      if (!next) {
-        if (p.transient) {
-          this.persons.splice(i, 1);
-          continue;
+      const home = byKey.get(p.home) ?? places[Math.floor(this.rnd() * places.length)];
+      if (!home) continue;
+      p.home = home.key;
+      switch (p.state) {
+        case 'inside': {
+          p.timer -= gdt;
+          if (p.timer > 0 || !daytime) break;
+          // step outside: mostly idling, sometimes gathering, rarely a train trip
+          const r = this.rnd();
+          if (r < 0.65) {
+            p.x = home.x + (this.rnd() - 0.5) * 0.8;
+            p.y = home.y + 0.3 + this.rnd() * 0.4;
+            p.state = 'idle';
+            p.timer = 6 + this.rnd() * 14;
+          } else if (r < 0.92 && home.gathers !== null) {
+            const spot = this.nearestTile(home, home.gathers);
+            if (!spot || !this.startWalk(p, home, spot, 'gather')) p.timer = 10;
+          } else {
+            const st = this.builder.stations
+              .filter((s) => Math.abs(s.x - home.x) + Math.abs(s.y - home.y) <= STATION_REACH)
+              .sort(
+                (a, b) =>
+                  Math.abs(a.x - home.x) +
+                  Math.abs(a.y - home.y) -
+                  (Math.abs(b.x - home.x) + Math.abs(b.y - home.y)),
+              )[0];
+            if (st && this.startWalk(p, home, st, 'toStation')) p.stationId = st.id;
+            else p.timer = 10;
+          }
+          break;
         }
-        p.walking = false;
-        p.inside = 8 + this.rnd() * 20;
-        continue;
-      }
-      const onRoad =
-        roadKind(this.map.wear[Math.round(p.y) * this.map.w + Math.round(p.x)]) !== 'none';
-      const speed = WALK_SPEED * (onRoad ? 1.4 : 1) * (p.transient ? 1.6 : 1);
-      const dx = next.x - p.x;
-      const dy = next.y - p.y;
-      const d = Math.hypot(dx, dy);
-      const stepLen = speed * gdt;
-      if (d <= stepLen) {
-        p.x = next.x;
-        p.y = next.y;
-        p.step++;
-        if (!p.transient && p.step < p.path.length - 1) this.wearTile(next.x, next.y);
-      } else {
-        p.x += (dx / d) * stepLen;
-        p.y += (dy / d) * stepLen;
+        case 'idle':
+          p.timer -= gdt;
+          if (p.timer <= 0 || !daytime) {
+            p.state = 'inside';
+            p.timer = 20 + this.rnd() * 60;
+          }
+          break;
+        case 'gather':
+        case 'toStation':
+        case 'return':
+          if (!this.advance(p, gdt)) {
+            if (p.state === 'gather') {
+              p.state = 'idle';
+              p.timer = 8 + this.rnd() * 10;
+              // walk back afterwards
+              const back = findWalk(this.map, { x: Math.round(p.x), y: Math.round(p.y) }, home);
+              if (back && back.length >= 2) {
+                p.path = back;
+                p.step = 0;
+                p.state = 'return';
+                p.timer = 0;
+              }
+            } else if (p.state === 'toStation') {
+              p.state = 'waiting';
+              p.timer = 60 + this.rnd() * 90;
+            } else {
+              p.state = 'inside';
+              p.timer = 20 + this.rnd() * 60;
+            }
+          }
+          break;
+        case 'waiting':
+          p.timer -= gdt;
+          if (p.timer <= 0 || !daytime) {
+            // no train came: walk home
+            const st = this.builder.stationById(p.stationId ?? -1);
+            if (st && this.startWalk(p, st, home, 'return')) break;
+            p.state = 'inside';
+            p.timer = 30;
+          }
+          break;
+        case 'walk':
+          if (!this.advance(p, gdt)) {
+            p.state = 'inside';
+            p.timer = 20 + this.rnd() * 40;
+          }
+          break;
       }
     }
   }
 
-  toJSON() {
-    const wear: [number, number][] = [];
-    for (let i = 0; i < this.map.wear.length; i++)
-      if (this.map.wear[i] > 0) wear.push([i, this.map.wear[i]]);
-    return { wear };
-  }
-  load(j: { wear?: [number, number][] } | undefined) {
-    if (!j?.wear) return;
-    for (const [i, v] of j.wear) if (i >= 0 && i < this.map.wear.length) this.map.wear[i] = v;
-    this.replayRoads();
+  /** Move along the path; returns false once the end is reached. */
+  private advance(p: Person, gdt: number) {
+    const next = p.path[p.step + 1];
+    if (!next) return false;
+    const speed = WALK_SPEED * (p.transient ? 1.5 : 1);
+    const dx = next.x - p.x;
+    const dy = next.y - p.y;
+    const d = Math.hypot(dx, dy);
+    const stepLen = speed * gdt;
+    if (d <= stepLen) {
+      p.x = next.x;
+      p.y = next.y;
+      p.step++;
+    } else {
+      p.x += (dx / d) * stepLen;
+      p.y += (dy / d) * stepLen;
+    }
+    return true;
   }
 }

@@ -74,7 +74,8 @@
         }
       ],
       "accepts": [],
-      "art": "farm"
+      "art": "farm",
+      "terrain": "grass"
     },
     {
       "id": "lumber",
@@ -92,7 +93,8 @@
         }
       ],
       "accepts": [],
-      "art": "lumber"
+      "art": "lumber",
+      "terrain": "forest"
     },
     {
       "id": "quarry",
@@ -110,7 +112,8 @@
         }
       ],
       "accepts": [],
-      "art": "quarry"
+      "art": "quarry",
+      "terrain": "rock"
     },
     {
       "id": "pump",
@@ -129,7 +132,8 @@
       ],
       "accepts": [],
       "art": "pump",
-      "water": true
+      "water": true,
+      "terrain": "water"
     },
     {
       "id": "town",

@@ -56,7 +56,6 @@ export function emptyMap(
   const terrain = new Uint8Array(w * h).fill(fill);
   const variant = new Uint8Array(w * h);
   const biome = new Uint8Array(w * h);
-  const wear = new Uint16Array(w * h);
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) variant[y * w + x] = Math.floor(hash2(x, y, seed) * 4);
   const rs = 32;
@@ -67,7 +66,6 @@ export function emptyMap(
     terrain,
     variant,
     biome,
-    wear,
     props: new Map(),
     regionSize: rs,
     regionsX: Math.max(1, Math.ceil(w / rs)),
@@ -386,7 +384,7 @@ export function decorateProps(
         if (b === Biome.Swamp) {
           if (r > 0.86) put(r > 0.97 ? 'deadtree' : 'reeds', 2);
         } else if (b === Biome.Taiga) {
-          if (r > 0.95) put(r > 0.985 ? 'spruce' : 'boulder', 3);
+          if (r > 0.95) put(r > 0.985 ? 'spruce' : 'bush', 3);
         } else if (b === Biome.Plains) {
           if (r > 0.9) put(r > 0.985 ? 'oak' : r > 0.955 ? 'bush' : 'flowers', r > 0.955 ? 3 : 4);
         } else if (b === Biome.Ocean) {

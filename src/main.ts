@@ -53,6 +53,7 @@ async function boot() {
 
   let spec: WorldSpec;
   let save = null as ReturnType<typeof readSave>;
+  let migrateFrom: MapGenParams | null = null;
   let level: LevelData | null = null;
   let start: 'menu' | 'play' | 'editor' = 'menu';
 
@@ -75,6 +76,11 @@ async function boot() {
       seed: Math.floor(Math.random() * 2 ** 31),
       params: paramsFromRules(),
     };
+    // saves from the 3x3-chunk days: keep their terrain in the middle of today's larger grid
+    if (spec.kind === 'generated' && spec.params.w < rules.mapSize) {
+      migrateFrom = spec.params;
+      spec = { kind: 'generated', seed: spec.seed, params: paramsFromRules() };
+    }
     start = intent?.action === 'continue' && save ? 'play' : 'menu';
     if (save?.world?.kind !== 'level') setTestingLevel(null);
   }
@@ -83,7 +89,7 @@ async function boot() {
   (window as unknown as { game: Game }).game = game;
   await game.init();
   if (start === 'editor' && level) game.enterEditor(level);
-  else if (save) game.applySave(save);
+  else if (save) game.applySave(save, migrateFrom);
   else if (level) game.applyLevelStart(level);
   else game.startFresh();
   // the game always starts paused; Space or the pause button starts the clock

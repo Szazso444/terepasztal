@@ -30,6 +30,22 @@ export const STR = {
     chunkLines: (v: string) => [`Price ${v}`, 'Click to buy'],
     hint: 'M / scroll in: return to field view',
   },
+  tile: {
+    terrain: {
+      grass: 'Grassland',
+      forest: 'Forest',
+      hill: 'Hill',
+      water: 'Water',
+      rock: 'Stone field',
+      sand: 'Sand',
+    } as Record<string, string>,
+    uncharted: 'Uncharted: buy the chunk in the overview (M)',
+    track: (k: string) => `Track: ${k}`,
+    powered: 'Powered rails',
+    noTrack: 'No track can be laid here',
+    trackCost: (m: number) => `Track costs ×${m}`,
+    water: 'Bridges only; pumps draw from it',
+  },
   hints: {
     camera: 'WASD / arrows / middle-drag: pan   wheel: zoom   M: overview   `: debug',
   },
@@ -66,6 +82,8 @@ export const STR = {
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelCap: 'Level cap for your reputation tier',
     cost: (v: string) => `Cost ${v}`,
+    harvest: (n: number, cargo: string, f: number) =>
+      `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
     refund: (v: string) => `Refund ${v}`,
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
@@ -242,6 +260,7 @@ export const STR = {
     opt: {
       loadAuto: 'Load: auto',
       loadNone: 'Load: nothing',
+      unloadAuto: 'Unload: warehouse',
       unloadAll: 'Unload: all',
       unloadNone: 'Unload: nothing',
       departAuto: 'Depart: auto',
@@ -391,6 +410,8 @@ export const STR = {
     importSave: 'Import from text',
     confirmImport: 'Replace the current game with the pasted save?',
     saved: 'Game saved',
+    migrated:
+      'The map grew: your land now sits in the middle of a larger world. Trains returned to the depot.',
     loaded: 'Save loaded',
     saveFailed: 'Could not save (storage full or blocked)',
     noSave: 'No save found',
@@ -586,6 +607,7 @@ export const STR = {
   station: {
     level: (l: number) => `Level ${l}`,
     biome: 'Biome',
+    ground: 'Nearby resource',
     produces: 'Produces',
     accepts: 'Accepts',
     storage: 'Storage',

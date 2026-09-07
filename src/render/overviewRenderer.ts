@@ -5,6 +5,11 @@ import { PAL, css, hex } from '../art/palette';
 import { STR } from '../strings';
 import { biomeShade } from '../ui/minimap';
 
+/** Same families as the CSS variables, so the overview reads like the rest of the UI. */
+const TITLE_FONT =
+  "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif";
+const BODY_FONT = "Verdana, Tahoma, 'DejaVu Sans', sans-serif";
+
 /** Overview unit: pixels per tile in the layer's local space. */
 export const OV_UNIT = 8;
 
@@ -116,6 +121,10 @@ export class OverviewRenderer {
     return new Texture({ source: new ImageSource({ resource: c, scaleMode: 'nearest' }) });
   }
 
+  /** Re-render the flat terrain texture after the map changed under us. */
+  rebuildTerrain() {
+    this.terrain.texture = this.buildTerrainTexture();
+  }
   /** Local-space rectangle of every revealed chunk (what the view should fit). */
   bounds() {
     const b = this.regions.revealedBounds();
@@ -138,7 +147,7 @@ export class OverviewRenderer {
         this.regionLayer.rect(x, y, rs, rs).fill({ color: 0x06060a, alpha: 0.72 });
         const t = new Text({
           text: `${STR.overview.locked}\n${STR.overview.price(this.regions.price(i))}\n${STR.overview.buyHint}`,
-          style: { fontFamily: 'Georgia, serif', fontSize: 22, fill: 0x8a8578, align: 'center' },
+          style: { fontFamily: TITLE_FONT, fontSize: 22, fill: 0x8a8578, align: 'center' },
         });
         t.anchor.set(0.5);
         t.position.set(x + rs / 2, y + rs / 2);
@@ -195,8 +204,8 @@ export class OverviewRenderer {
         const label = new Text({
           text: s.name,
           style: {
-            fontFamily: 'Georgia, serif',
-            fontSize: 13,
+            fontFamily: BODY_FONT,
+            fontSize: 11,
             fill: hex(PAL.white),
             stroke: { color: 0x000000, width: 3 },
           },
@@ -331,7 +340,7 @@ export class OverviewRenderer {
         label = new Text({
           text: c.label,
           style: {
-            fontFamily: 'Verdana, sans-serif',
+            fontFamily: BODY_FONT,
             fontSize: 10,
             fill: 0xd8cfb8,
             stroke: { color: 0x000000, width: 3 },

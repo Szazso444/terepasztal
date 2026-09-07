@@ -45,8 +45,8 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
   eight neighbours; prices grow with distance from the start.
 - **Biomes**: plains, forest, desert, taiga, swamp and ocean change production, track cost, water
   use and speed (see `src/data/biomes.json`); rivers and islands are generated.
-- **People**: the population walks between buildings and wears paths into roads; towns produce
-  passengers who pay a fare when they reach another town by coach.
+- **People**: the population idles around its buildings by day, gathers nearby and waits at
+  stations for coaches; towns produce passengers who pay a fare when they reach another town.
 - **Notices and Advisor**: blockers show up in the notices panel and as markers on both maps; the
   Advisor (top right) explains what to do and can be silenced.
 - **Roster**: 26 real locomotives across three gacha banners by era, with wagons in three classes

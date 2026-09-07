@@ -46,8 +46,6 @@ export interface SaveGame {
   regions?: boolean[];
   /** v6: season of day 1 (0 spring .. 3 winter) */
   seasonOffset?: number;
-  /** v6: footpath wear */
-  people?: unknown;
 }
 
 export interface Settings {

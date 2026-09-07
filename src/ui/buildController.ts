@@ -9,6 +9,9 @@ import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
 import { buildingDef, type Building } from '../sim/buildings';
+import { stationDef, LEVELS } from '../sim/stations';
+import { rules } from '../sim/rules';
+import { cargoDef } from '../sim/cargo';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
@@ -305,7 +308,9 @@ export class BuildController {
       return;
     }
     const check = this.builder.checkStation(t.x, t.y, tool.defId);
-    const g = this.ensureGhost('structures/station_1');
+    const def = stationDef(tool.defId);
+    const fam = `structures/${def.art}_1`;
+    const g = this.ensureGhost(this.world.atlas.has(fam) ? fam : 'structures/station_1');
     this.placeGhostAt(g, t.x, t.y, check.ok);
     this.world.setSpriteFrame(
       this.ghostDiamond,
@@ -313,7 +318,14 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.status(check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? ''));
+    const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
+    if (def.terrain) {
+      const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
+      const perWeek = LEVELS.production[0] * rules.productionMul * f * 7;
+      const cargo = def.produces[0]?.cargo;
+      parts.push(STR.build.harvest(Math.round(perWeek), cargo ? cargoDef(cargo).name : '', f));
+    }
+    this.status(parts.join('   '));
     for (const c of this.input.clicks) {
       if (c.button === 0) {
         const s = this.builder.placeStation(t.x, t.y, tool.defId);

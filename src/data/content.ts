@@ -79,6 +79,8 @@ export interface StationDef {
   accepts: string[];
   /** which station sprite family to draw */
   art?: string;
+  /** terrain the station harvests; output scales with how much of it lies nearby */
+  terrain?: 'grass' | 'forest' | 'rock' | 'water';
   /** deliveries go to the player's stockpile */
   stockpile?: boolean;
   /** trains refuel coal / wood / oil here */

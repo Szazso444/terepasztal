@@ -4,7 +4,7 @@ import type { RegionState } from '../world/regions';
 import { TrackGraph, makePiece, pieceCost, type TrackKind, type TrackPiece } from '../world/track';
 import { content, type DecorDef, type Cost } from '../data/content';
 import { rules } from './rules';
-import { Station, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
+import { Station, terrainFactorAt, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
 import type { Economy } from './economy';
 import { Stockpile, scaleCost } from './stockpile';
 import { buildingDef, BUILDING_DEFS, type Building } from './buildings';
@@ -232,6 +232,14 @@ export class Builder {
     if (!this.hasAdjacentTrack(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrack };
     return this.affordable(this.priced(def.cost, Math.max(1, this.terrainMul(x, y))));
   }
+  /** Output multiplier a harvesting station would get on a tile (1 for others). */
+  harvestFactor(x: number, y: number, defId: string) {
+    return terrainFactorAt(this.map, x, y, defId);
+  }
+  /** Recompute every station's nearby-resource multiplier (after terrain edits). */
+  refreshHarvest() {
+    for (const s of this.stations) s.terrainFactor = terrainFactorAt(this.map, s.x, s.y, s.def.id);
+  }
   placeStation(x: number, y: number, defId: string): Station | null {
     const c = this.checkStation(x, y, defId);
     if (!c.ok || !this.pay(c.cost)) return null;
@@ -242,6 +250,7 @@ export class Builder {
       y,
       count ? `${stationDef(defId).name} ${count + 1}` : undefined,
     );
+    s.terrainFactor = terrainFactorAt(this.map, x, y, defId);
     this.stations.push(s);
     this.refreshStationBoosts();
     this.onStationChanged?.(s, false);

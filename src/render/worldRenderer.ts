@@ -15,10 +15,6 @@ export class WorldRenderer {
   readonly root = new Container();
   readonly ground = new Container();
   readonly track = new Container();
-  /** trodden paths and stone roads, under the track */
-  readonly roads = new Container();
-  private roadSprites = new Map<number, Sprite>();
-  private crossingSprites = new Map<number, Sprite>();
   readonly objects = new Container();
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
@@ -27,7 +23,6 @@ export class WorldRenderer {
   /** out-of-map void ring */
   readonly border = new Container();
   private trackSprites = new Map<number, Sprite>();
-  private trackFrames = new Map<number, string>();
   private structures = new Map<string, Sprite>();
   private groundSprites: Sprite[] = [];
   private fogShapes = new Map<number, Graphics>();
@@ -57,7 +52,6 @@ export class WorldRenderer {
     this.root.addChild(
       this.border,
       this.ground,
-      this.roads,
       this.track,
       this.lights,
       this.objects,
@@ -376,71 +370,31 @@ export class WorldRenderer {
   }
 
   /** Show a track piece sprite on a tile (or clear it). Flat: lives in the track layer under objects. */
-  /** Path / road overlay on a tile ('none' removes); a straight track on it gets a crossing. */
-  setRoad(x: number, y: number, kind: 'none' | 'dirt' | 'stone') {
-    const i = idx(this.map, x, y);
-    const old = this.roadSprites.get(i);
-    if (kind === 'none') {
-      old?.destroy();
-      this.roadSprites.delete(i);
-      this.crossingSprites.get(i)?.destroy();
-      this.crossingSprites.delete(i);
-      return;
-    }
-    const frame =
-      kind === 'dirt'
-        ? `people/path_dirt_${(x * 3 + y) % 3}`
-        : `people/road_stone_${(x + y * 5) % 3}`;
-    if (!this.atlas.has(frame)) return;
-    const f = this.atlas.get(frame);
-    let s = old;
-    if (!s) {
-      s = new Sprite(f.texture);
-      s.cullable = true;
-      this.roads.addChild(s);
-      this.roadSprites.set(i, s);
-    } else s.texture = f.texture;
-    s.anchor.set(f.anchorX, f.anchorY);
-    const p = tileToWorld(x, y);
-    s.position.set(p.x, p.y + this.elevationOf(x, y));
-    s.tint = this.groundTint;
-    this.refreshCrossing(x, y);
-  }
-  /** Straight track over a road shows planks (dirt) or slabs (stone). */
-  refreshCrossing(x: number, y: number) {
-    const i = idx(this.map, x, y);
-    const road = this.roadSprites.get(i);
-    const track = this.trackFrames.get(i);
-    const m = track ? /^track\/straight_(\d)$/.exec(track) : null;
-    const kind = road
-      ? road.texture === this.atlas.get(`people/path_dirt_${(x * 3 + y) % 3}`).texture
-        ? 'dirt'
-        : 'stone'
-      : null;
-    const old = this.crossingSprites.get(i);
-    if (!road || !m || !kind) {
-      old?.destroy();
-      this.crossingSprites.delete(i);
-      return;
-    }
-    const frame = `people/crossing_${kind}_${m[1]}`;
-    if (!this.atlas.has(frame)) return;
-    const f = this.atlas.get(frame);
-    let s = old;
-    if (!s) {
-      s = new Sprite(f.texture);
-      s.cullable = true;
-      this.track.addChild(s);
-      this.crossingSprites.set(i, s);
-    } else s.texture = f.texture;
-    s.anchor.set(f.anchorX, f.anchorY);
-    const p = tileToWorld(x, y);
-    s.position.set(p.x, p.y + this.elevationOf(x, y));
-  }
-  /** Tint a track sprite (path highlighting); 0xffffff clears. */
+  /** Highlight colour per tile (path tracing); 0xffffff clears. Night shading is applied on top. */
+  private trackHighlight = new Map<number, number>();
+  private trackNight = 0;
   setTrackTint(x: number, y: number, color: number) {
-    const s = this.trackSprites.get(idx(this.map, x, y));
-    if (s) s.tint = color;
+    const i = idx(this.map, x, y);
+    if (color === 0xffffff) this.trackHighlight.delete(i);
+    else this.trackHighlight.set(i, color);
+    const s = this.trackSprites.get(i);
+    if (s) s.tint = this.trackColour(i);
+  }
+  private trackColour(i: number) {
+    const hl = this.trackHighlight.get(i);
+    if (hl !== undefined) return hl;
+    // ballast is light; darken it with the night so the line does not glow through the dark
+    const k = 1 - 0.55 * this.trackNight;
+    const r = Math.round(0xc8 * k);
+    const g = Math.round(0xc4 * k);
+    const b = Math.round(0xbe * k + 0x20 * this.trackNight);
+    return (r << 16) | (g << 8) | Math.min(255, b);
+  }
+  /** Darken every track sprite with the night (0 day .. 1 deep night). */
+  setTrackNight(night: number) {
+    if (Math.abs(night - this.trackNight) < 0.04) return;
+    this.trackNight = night;
+    for (const [i, s] of this.trackSprites) s.tint = this.trackColour(i);
   }
   setTrack(x: number, y: number, frame: string | null) {
     const i = idx(this.map, x, y);
@@ -450,11 +404,8 @@ export class WorldRenderer {
         s.destroy();
         this.trackSprites.delete(i);
       }
-      this.trackFrames.delete(i);
-      this.refreshCrossing(x, y);
       return;
     }
-    this.trackFrames.set(i, frame);
     const f = this.atlas.get(frame);
     if (!s) {
       s = new Sprite(f.texture);
@@ -463,9 +414,9 @@ export class WorldRenderer {
       this.trackSprites.set(i, s);
     } else s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
+    s.tint = this.trackColour(i);
     const p = tileToWorld(x, y);
     s.position.set(p.x, p.y + this.elevationOf(x, y));
-    this.refreshCrossing(x, y);
   }
 
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */

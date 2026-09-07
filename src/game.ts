@@ -25,6 +25,7 @@ import { generateMap as generateMapForEditor } from './world/mapgen';
 import { decorateProps } from './world/mapgen';
 import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
+import type { MapGenParams } from './world/mapgen';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
@@ -109,6 +110,7 @@ import { Advisor, type Tip } from './ui/advisor';
 import { resourceStats } from './sim/stats';
 import { locoFrame } from './art/frames';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
+import { decorDef as decorDefOf } from './sim/build';
 import { PeopleSim } from './sim/people';
 import { PeopleRenderer } from './render/peopleRenderer';
 
@@ -325,6 +327,7 @@ export class Game {
       this.onBuildingChanged(b, false);
     }
     this.builder.refreshStationBoosts();
+    this.builder.refreshHarvest();
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
   }
   applyLevelStart(level: LevelData) {
@@ -573,7 +576,8 @@ export class Game {
     this.fleet.powered = (x, y) => this.power.isPowered(x, y);
     this.fleet.stockCap = (id) => this.stockCap(id);
     this.fleet.onFlow = (x, y, r, d) => this.floaters.spawn(x, y, r, d);
-    this.fleet.onPassengers = (st, n, b) => this.people.spawnTransit(st, n, b);
+    this.fleet.onPassengers = (st, n, b) =>
+      b ? this.people.board(st, n) : this.people.alight(st, n);
     this.people = new PeopleSim(this.map, this.builder);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
     this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
@@ -644,7 +648,6 @@ export class Game {
     this.peopleRenderer = new PeopleRenderer(this.atlas, this.world.objects, (x, y) =>
       this.world.elevationOf(x, y),
     );
-    this.people.onRoadChanged = (x, y, k) => this.world.setRoad(x, y, k);
 
     this.build = new BuildController(this.input, this.builder, this.world, () =>
       this.tileUnderMouse(),
@@ -701,7 +704,7 @@ export class Game {
       lastDay: this.lastDay,
       decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
       weather: this.weather.toJSON(),
-      people: this.people.toJSON(),
+
       world: this.spec,
       rules: { ...rules },
       stockpile: this.stock.toJSON(),
@@ -720,8 +723,53 @@ export class Game {
     return ok;
   }
 
+  /**
+   * A save made on a smaller generated map: regenerate that map, drop its terrain into the centre
+   * of the current one and shift every saved coordinate. Trains go back to the depot.
+   */
+  private migrateSmallWorld(j: SaveGame, oldParams: MapGenParams) {
+    const old = generateMap(this.seed, oldParams);
+    const dx = Math.floor((this.map.w - old.w) / 2 / this.map.regionSize) * this.map.regionSize;
+    const dy = Math.floor((this.map.h - old.h) / 2 / this.map.regionSize) * this.map.regionSize;
+    for (let y = 0; y < old.h; y++)
+      for (let x = 0; x < old.w; x++) {
+        const oi = y * old.w + x;
+        const ni = (y + dy) * this.map.w + (x + dx);
+        this.map.terrain[ni] = old.terrain[oi];
+        this.map.variant[ni] = old.variant[oi];
+        this.map.biome[ni] = old.biome[oi];
+        const props = old.props.get(oi);
+        if (props) this.map.props.set(ni, props);
+        else this.map.props.delete(ni);
+      }
+    j.track = j.track.map(([x, y, k, r]) => [x + dx, y + dy, k, r]);
+    for (const s of j.stations) {
+      s.x += dx;
+      s.y += dy;
+    }
+    j.decor = (j.decor ?? []).map(([x, y, id, r]) => [x + dx, y + dy, id, r]);
+    j.buildings = (j.buildings ?? []).map(([x, y, id, a]) => [x + dx, y + dy, id, a]);
+    j.trains = [];
+    if (j.regions && old.regionsX && old.regionsY) {
+      const owned = new Array<boolean>(this.map.regionsX * this.map.regionsY).fill(false);
+      const ox = dx / this.map.regionSize;
+      const oy = dy / this.map.regionSize;
+      j.regions.forEach((v, i) => {
+        if (!v) return;
+        const rx = (i % old.regionsX) + ox;
+        const ry = Math.floor(i / old.regionsX) + oy;
+        owned[ry * this.map.regionsX + rx] = true;
+      });
+      j.regions = owned;
+    }
+    j.camera = { ...j.camera, x: j.camera.x + (dx - dy) * 32, y: j.camera.y + (dx + dy) * 16 };
+    this.overview.rebuildTerrain();
+    this.toasts.push(STR.settings.migrated, 'info');
+  }
+
   /** Populate a freshly initialised game from a save with the same seed. */
-  applySave(j: SaveGame) {
+  applySave(j: SaveGame, migrateFrom: MapGenParams | null = null) {
+    if (migrateFrom) this.migrateSmallWorld(j, migrateFrom);
     if (j.rules) setRules(j.rules);
     setSeasonOffset(j.seasonOffset ?? 0);
     this.clock.time = j.clock.time;
@@ -732,6 +780,13 @@ export class Game {
     if (j.regions) this.regions.load(j.regions);
     else this.regions.applyTier(this.economy.tier);
     this.world.rebuildFog();
+    if (migrateFrom) {
+      const rs = this.map.regionSize;
+      const dx = Math.floor((this.map.w - migrateFrom.w) / 2 / rs) * rs;
+      const dy = Math.floor((this.map.h - migrateFrom.h) / 2 / rs) * rs;
+      for (let y = dy; y < dy + migrateFrom.h; y++)
+        for (let x = dx; x < dx + migrateFrom.w; x++) this.world.retile(x, y);
+    }
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toolbar.refresh();
@@ -765,10 +820,12 @@ export class Game {
     }
     if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
     this.builder.refreshStationBoosts();
+    this.builder.refreshHarvest();
     if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);
-    this.people.load(j.people as ReturnType<PeopleSim['toJSON']>);
+
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
     this.applySeason(true);
+    if (migrateFrom) this.inventory.items.forEach((it) => (it.assigned = null));
     // items assigned to trains that no longer exist are freed
     for (const it of this.inventory.items)
       if (it.assigned !== null && !this.fleet.byId(it.assigned)) it.assigned = null;
@@ -1176,7 +1233,8 @@ export class Game {
     if (gdt > 0) {
       this.stock.population = this.builder.crewTotal() + this.fleet.crewTotal();
       this.stock.tick(gdt);
-      if (this.mode === 'play') this.people.tick(gdt, this.builder.crewTotal());
+      if (this.mode === 'play')
+        this.people.tick(gdt, this.builder.crewTotal(), this.clock.dayFraction);
       const famineMul = this.stock.famine ? 0.5 : 1;
       for (const s of this.builder.stations) s.tick(gdt * famineMul);
       tickBuildings(
@@ -1207,10 +1265,35 @@ export class Game {
   /** Debug aid requested for testing: money plus a full stockpile. */
   cheat() {
     this.economy.money += 10000;
+    this.economy.tickets += 10;
     for (const id of RESOURCE_IDS) this.stock.add(id, 1e9, this.stockCap(id));
     this.toasts.push(STR.topbar.cheated, 'info');
   }
 
+  /** What a bare tile is and what sits on it, for the hover tooltip. */
+  private tileInfo(x: number, y: number): { title: string; lines: string[] } {
+    const t = terrainAt(this.map, x, y);
+    const T = STR.tile;
+    const title = T.terrain[TERRAIN_NAMES[t]] ?? TERRAIN_NAMES[t];
+    const lines: string[] = [biomeSummary(biomeAt(this.map, x, y))];
+    if (!this.regions.isTileUnlocked(x, y)) lines.push(T.uncharted);
+    const piece = this.track.get(x, y);
+    if (piece) lines.push(T.track(piece.kind));
+    const dec = this.builder.decorAt(x, y);
+    if (dec) lines.push(decorDefOf(dec.id).name);
+    const props = this.map.props.get(y * this.map.w + x);
+    if (props?.length) {
+      const kinds = new Map<string, number>();
+      for (const p of props) kinds.set(p.kind, (kinds.get(p.kind) ?? 0) + 1);
+      lines.push([...kinds].map(([k, n]) => (n > 1 ? `${n}× ${k}` : k)).join(', '));
+    }
+    if (this.power.isPowered(x, y)) lines.push(T.powered);
+    const tm = this.builder.terrainMul(x, y);
+    if (tm === 0) lines.push(T.noTrack);
+    else if (tm !== 1) lines.push(T.trackCost(tm));
+    if (t === Terrain.Water) lines.push(T.water);
+    return { title, lines };
+  }
   /** Tile position of a notice's object, or null. */
   private noticePos(n: Notice): { x: number; y: number } | null {
     if (!n.target) return null;
@@ -1340,6 +1423,7 @@ export class Game {
     }
     this.trainSide.update(list, all);
     if (this.hoverTrain && !this.fleet.byId(this.hoverTrain.id)) this.setHoverTrain(null);
+    if (!this.hoverTrain && this.pathHighlight.length) this.applyPathHighlight([]);
     if (this.hoverTrain) {
       this.pathTimer += dt;
       if (this.pathTimer > 0.5) {
@@ -1396,6 +1480,7 @@ export class Game {
       this.camera.viewH,
     );
     this.groundLights.update(this.builder.stations, this.fleet.trains, night);
+    this.world.setTrackNight(night);
     this.aspectTimer += dt;
     if (this.aspectTimer > 0.1) {
       this.aspectTimer = 0;
@@ -1479,6 +1564,14 @@ export class Game {
         `${STR.station.storage}: ${Math.floor(st.totalStored())} / ${st.capacity}`,
         biomeSummary(biomeAt(this.map, st.x, st.y)),
       ]);
+    } else if (
+      this.build.tool.kind === 'none' &&
+      !st &&
+      !bld &&
+      inBounds(this.map, this.hoverTile.x, this.hoverTile.y)
+    ) {
+      const info = this.tileInfo(this.hoverTile.x, this.hoverTile.y);
+      this.tooltip.show(this.input.mouseX, this.input.mouseY, info.title, info.lines);
     } else if (bld && this.build.tool.kind === 'none') {
       const def = buildingDefOf(bld.id);
       const status = BuildingPanel.status(bld, this.stock);

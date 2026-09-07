@@ -32,7 +32,7 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 
 ### People
 
-- Every crew member not on a train is a walker who moves between stations, works and services. Footsteps wear the ground: worn tiles become dirt paths, busy paths become stone roads (kept in the save). Straight track over a path or road shows a plank or slab crossing. Roads have no gameplay effect and track can be laid over them.
+- Every crew member not on a train belongs to a station, works or service. They stay inside most of the day, step out to idle by the door, occasionally walk to a nearby resource tile to gather, or go to the closest station to wait for a coach; nobody is outside at night. Walkers never change the map.
 - Passengers: towns produce them; they board coaches, alight only at another town and pay a fare that grows with distance. Boarding and alighting spawn walkers between station and platform. Wooden Coach is a fourth starter wagon; Steel Coach and Pullman are in the banners.
 
 ### Interface
@@ -49,4 +49,15 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 
 ### Save
 
-- Format v6: owned chunks, season offset, path wear, biome per tile (levels too).
+- Format v6: owned chunks, season offset, biome per tile (levels too). Saves from the 3×3-chunk era are placed in the middle of the larger grid on load (coordinates shifted, trains returned to the depot).
+
+### Pre-merge fixes (same release)
+
+- Path wear, dirt paths, stone roads and crossings (from an earlier build of this branch) removed. Boarding removes waiting travellers, alighting adds a few who settle nearby.
+- No boulder props on grass (they stay on hills); track is shaded with the night so it no longer glows against dark forest.
+- Fuel first: at every stop a train fills up when the next leg would be out of reach on a half tank; if the planned leg still exceeds the range it diverts to the nearest reachable station (supplied ones preferred), refuels, then continues. A train short of fuel never waits for full wagons.
+- Default stops: unload only at a warehouse or where the cargo is wanted, wait for full wagons while the station can still fill them.
+- Floating indicators show one net number per resource per stop.
+- Harvesting stations scale with nearby terrain: forest for lumber yards, grass for farms, rock/hill for quarries, water for pumps, weighted by distance within four tiles. The build status shows the weekly yield before placing; the station panel shows the multiplier.
+- Placement ghost shows the actual station family sprite; hovering a bare tile lists terrain, biome, track, poles, vegetation, power and track-cost effects.
+- Overview text uses the interface fonts; the cheat button also adds 10 tickets.

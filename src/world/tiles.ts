@@ -48,8 +48,6 @@ export interface GameMap {
   variant: Uint8Array;
   /** per-tile biome id (see Biome) */
   biome: Uint8Array;
-  /** footsteps per tile; paths and roads grow from it */
-  wear: Uint16Array;
   /** per-tile decoration, sparse */
   props: Map<number, PropInstance[]>;
   /** region size in tiles (regions are square blocks) */

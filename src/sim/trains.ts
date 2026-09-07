@@ -35,7 +35,8 @@ export interface LocoSlot {
 export interface StopPlan {
   stationId: number;
   load: 'auto' | 'none';
-  unload: 'all' | 'none';
+  /** auto: only at a warehouse (stockpile) or where a contract / passengers want it */
+  unload: 'auto' | 'all' | 'none';
   waitFull: boolean;
   refuel: boolean;
   depart: 'auto' | 'forward' | 'reverse';
@@ -46,8 +47,8 @@ export function defaultStop(stationId: number): StopPlan {
   return {
     stationId,
     load: 'auto',
-    unload: 'all',
-    waitFull: false,
+    unload: 'auto',
+    waitFull: true,
     refuel: true,
     depart: 'auto',
     pass: false,
@@ -245,9 +246,61 @@ export class Train {
     return out;
   }
   private flushFlow(ctx: TickCtx, st: Station) {
-    for (const [k, v] of Object.entries(this.flowAcc)) if (v > 0.05) ctx.onFlow(st.x, st.y, k, v);
+    for (const [k, v] of Object.entries(this.flowAcc))
+      if (Math.abs(v) > 0.05) ctx.onFlow(st.x, st.y, k, v);
     this.flowAcc = {};
     this.flowTimer = 0;
+  }
+  /** Range in tiles if every tank were topped up to at least `frac` of capacity. */
+  rangeAt(frac: number) {
+    const r: number[] = [];
+    if (this.coalRate > 0) r.push(Math.max(this.coal, this.coalCap * frac) / this.coalRate);
+    if (this.waterRate > 0) r.push(Math.max(this.water, this.waterCap * frac) / this.waterRate);
+    if (this.oilRate > 0) r.push(Math.max(this.oil, this.oilCap * frac) / this.oilRate);
+    return r.length ? Math.min(...r) : Infinity;
+  }
+  /**
+   * Fuel first: when the tanks cannot cover the leg just planned, look for a supplied station
+   * (or any station when nothing better is in range) reachable on what is left and go there
+   * before the scheduled stop. Returns true when a detour was set.
+   */
+  private planFuelDetour(ctx: TickCtx): boolean {
+    if (this.detour !== null || !this.path) return false;
+    const need = this.pathTotal * 1.15 + 2;
+    if (this.rangeTiles >= need) return false;
+    const head = this.trail[this.trail.length - 1].seg;
+    const want = this.route[this.routeIndex % this.route.length];
+    let best: { id: number; len: number; supplied: boolean } | null = null;
+    for (const st of ctx.builder.stations) {
+      if (st.id === want) continue;
+      const plat = ctx.builder.platformTiles(st);
+      if (!plat.length) continue;
+      const set = new Set(plat.map((p) => p.y * ctx.track.w + p.x));
+      const isT = (x: number, y: number) => set.has(y * ctx.track.w + x);
+      const p =
+        findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isT, 4000) ??
+        findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isT, 4000);
+      if (!p) continue;
+      const len = p.length;
+      if (len > this.rangeTiles * 0.9) continue;
+      const supplied = st.refuelsFuel && st.refuelsWater;
+      if (!best || (supplied && !best.supplied) || (supplied === best.supplied && len < best.len))
+        best = { id: st.id, len, supplied };
+    }
+    if (!best) return false;
+    this.detour = best.id;
+    const wasReversed = this.reversed;
+    if (this.dispatch(ctx.track, ctx.builder, ctx.map)) {
+      this.lastMessage = 'diverting to refuel';
+      if (!this.path) {
+        this.pathPts = [];
+        this.pathCum = [];
+        this.onPathReady(ctx);
+      } else if (wasReversed !== this.reversed) this.updatePoses();
+      return true;
+    }
+    this.detour = null;
+    return false;
   }
   poses: CarPose[] = [];
   prevPoses: CarPose[] = [];
@@ -265,6 +318,8 @@ export class Train {
   private holding = false;
   /** the train we pulled aside for */
   private yieldFor: number | null = null;
+  /** station id of a refuelling detour taken before the scheduled stop */
+  detour: number | null = null;
 
   constructor(locos: LocoSlot[], name?: string, id?: number) {
     if (!locos.length) throw new Error('a train needs a locomotive');
@@ -572,7 +627,9 @@ export class Train {
     mode: 'auto' | 'forward' | 'reverse' = 'auto',
   ): boolean {
     if (this.route.length === 0 || !this.trail.length) return false;
-    const target = builder.stationById(this.route[this.routeIndex % this.route.length]);
+    const target = builder.stationById(
+      this.detour ?? this.route[this.routeIndex % this.route.length],
+    );
     if (!target) return false;
     const plat = builder.platformTiles(target);
     if (!plat.length) {
@@ -815,7 +872,9 @@ export class Train {
 
   /** After dispatch(): either start moving or handle "already at target". */
   onPathReady(ctx: { builder: Builder } | TickCtx) {
-    const target = ctx.builder.stationById(this.route[this.routeIndex % this.route.length]);
+    const target = ctx.builder.stationById(
+      this.detour ?? this.route[this.routeIndex % this.route.length],
+    );
     if (!this.path) {
       if (target) this.arrive(target, 'track' in ctx ? ctx : undefined);
       else this.setState('noRoute');
@@ -944,7 +1003,9 @@ export class Train {
       }
       const seg = this.path[this.path.length - 1];
       const st = ctx.builder.stationForTrackTile(seg.x, seg.y);
-      const want = ctx.builder.stationById(this.route[this.routeIndex % this.route.length]);
+      const want = ctx.builder.stationById(
+        this.detour ?? this.route[this.routeIndex % this.route.length],
+      );
       this.path = null;
       this.speed = 0;
       if (this.holding) {
@@ -977,6 +1038,15 @@ export class Train {
   private arrive(st: Station, ctx?: TickCtx) {
     this.atStation = st;
     this.clearHold();
+    if (this.detour === st.id) {
+      // fuel stop on the way: fill up, then carry on to the scheduled stop
+      sfx('train.arrive');
+      if (st.hasFreePlatform()) {
+        st.occupants.add(this.id);
+        this.setState('loading');
+      } else this.setState('waiting');
+      return;
+    }
     const stop = this.currentStop;
     if (stop?.pass && ctx) {
       this.atStation = null;
@@ -999,20 +1069,30 @@ export class Train {
       this.setState('noRoute');
       return;
     }
-    const stop = this.currentStop ?? defaultStop(st.id);
+    const atDetour = this.detour === st.id;
+    const stop: StopPlan = atDetour
+      ? { ...defaultStop(st.id), load: 'none', unload: 'none', waitFull: false }
+      : (this.currentStop ?? defaultStop(st.id));
     if (stop.refuel && this.stateTime < gdt * 1.5) {
-      // top up once on arrival
-      // every stop tops the tanks up halfway from carts; supplied stations fill them
+      // top up once on arrival: supplied stations (and a fuel detour) fill the tanks; elsewhere
+      // carts bring half a tank, or a full one when the next leg would otherwise be out of reach
+      const next = ctx.builder.stationById(this.route[(this.routeIndex + 1) % this.route.length]);
+      const legGuess = next ? (Math.abs(next.x - st.x) + Math.abs(next.y - st.y)) * 1.6 + 4 : 0;
+      const needFull = legGuess > this.rangeAt(0.5) * 0.9;
       const taken = this.refuel(ctx.stockpile, {
         fuel: true,
         water: true,
-        fuelFrac: st.refuelsFuel ? 1 : 0.5,
-        waterFrac: st.refuelsWater ? 1 : 0.5,
+        fuelFrac: st.refuelsFuel || atDetour || needFull ? 1 : 0.5,
+        waterFrac: st.refuelsWater || atDetour || needFull ? 1 : 0.5,
       });
       for (const [k, v] of Object.entries(taken)) {
         bump(this.trip.fuel, `refuel_${k}`, v);
-        if (v > 0.05) ctx.onFlow(st.x, st.y, k, -v);
+        this.flowAcc[k] = (this.flowAcc[k] ?? 0) - v;
       }
+    }
+    if (atDetour) {
+      if (this.stateTime >= MIN_DWELL) this.depart(ctx);
+      return;
     }
     let busy = false;
     let budget = st.loadRate * st.loadBoost * rules.loadRateMul * gdt;
@@ -1045,6 +1125,8 @@ export class Train {
       }
       const room = Math.max(0, ctx.stockCap(w.cargo) - ctx.stockpile.get(w.cargo));
       const contractable = st.accepts(w.cargo);
+      // auto: keep the load aboard until a warehouse or a station that wants it
+      if (stop.unload === 'auto' && !st.def.stockpile && !contractable) continue;
       let n = Math.min(w.amount, budget, contractable ? w.amount : room);
       if (n <= 1e-6) continue;
       let credited = 0;
@@ -1073,7 +1155,7 @@ export class Train {
         w.origin = null;
       }
     }
-    if (this.flowTimer >= 1.5) this.flushFlow(ctx, st);
+    if (this.flowTimer >= 90) this.flushFlow(ctx, st);
     // load produced cargo that some later station on the route accepts
     const produced = st.producedCargo();
     const routeStations = this.route
@@ -1120,9 +1202,12 @@ export class Train {
       if (n >= want * 0.5) busy = true;
       if (w.amount < cap - 1e-3) allFull = false;
     }
-    if (stop.load !== 'none' && stop.waitFull && !allFull && this.stateTime < MAX_DWELL_FULL)
-      busy = true;
-    const maxDwell = stop.load !== 'none' && stop.waitFull ? MAX_DWELL_FULL : MAX_DWELL;
+    // wait for full wagons only while the station still has something to give, and never when
+    // the tanks are low (fuel comes first)
+    const canFill = produced.some((c) => st.stored(c) >= 1 || st.productionPerDay > 0);
+    const waitFull = stop.load !== 'none' && stop.waitFull && canFill && !this.eco;
+    if (waitFull && !allFull && this.stateTime < MAX_DWELL_FULL) busy = true;
+    const maxDwell = waitFull ? MAX_DWELL_FULL : MAX_DWELL;
     if ((!busy && this.stateTime >= MIN_DWELL) || this.stateTime >= maxDwell) this.depart(ctx);
   }
 
@@ -1137,9 +1222,11 @@ export class Train {
       this.setState('noRoute');
       return;
     }
-    const leaving = this.currentStop;
-    this.routeIndex = (this.routeIndex + 1) % this.route.length;
-    if (this.routeIndex === 0) {
+    const wasDetour = this.detour !== null && st?.id === this.detour;
+    this.detour = null;
+    const leaving = wasDetour ? undefined : this.currentStop;
+    if (!wasDetour) this.routeIndex = (this.routeIndex + 1) % this.route.length;
+    if (this.routeIndex === 0 && !wasDetour) {
       this.trip.endedAt = ctx.now;
       this.lastTrip = this.trip;
       this.trip = newTrip(ctx.now);
@@ -1157,9 +1244,10 @@ export class Train {
     if (
       this.dispatch(ctx.track, ctx.builder, ctx.map, avoid, mode) ||
       this.dispatch(ctx.track, ctx.builder, ctx.map, undefined, mode)
-    )
-      this.onPathReady(ctx);
-    else this.setState('noRoute');
+    ) {
+      if (!this.planFuelDetour(ctx)) this.onPathReady(ctx);
+      else if (this.path) this.setState('moving');
+    } else this.setState('noRoute');
   }
 
   /**
@@ -1273,6 +1361,7 @@ export class Train {
         origin: w.origin,
       })),
       routeIndex: this.routeIndex,
+      detour: this.detour,
       distance: this.distance,
       head: head
         ? { x: head.seg.x, y: head.seg.y, in: head.seg.in, reversed: this.reversed }
@@ -1305,6 +1394,7 @@ export class Train {
     }));
     t.schedule = j.schedule.map((s) => ({ ...defaultStop(s.stationId), ...s }));
     t.routeIndex = j.routeIndex;
+    t.detour = j.detour ?? null;
     t.coal = j.tanks.coal;
     t.oil = j.tanks.oil;
     t.water = j.tanks.water;

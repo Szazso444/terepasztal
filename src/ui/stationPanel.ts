@@ -63,6 +63,7 @@ export class StationPanel {
     b.append(el('div', { class: 'flavor', text: s.def.flavor }));
     b.append(row(STR.station.level(s.level), `${s.def.name}`));
     b.append(row(STR.station.biome, biomeSummary(biomeAt(this.builder.map, s.x, s.y))));
+    if (s.def.terrain) b.append(row(STR.station.ground, `×${s.terrainFactor.toFixed(2)}`));
     const produced =
       s
         .producedCargo()
