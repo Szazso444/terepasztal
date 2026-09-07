@@ -322,12 +322,15 @@ export class Train {
   /** the current path ends at a holding spot, not a station */
   private holding = false;
   /** the train we pulled aside for */
-  private yieldFor: number | null = null;
+  /** times this train pulled aside since it last reached a station: jams take turns */
+  yieldCount = 0;
   /** station id of a refuelling detour taken before the scheduled stop */
   detour: number | null = null;
   /** the fleet picks each next stop from what the stockpile needs most */
   dynamic = false;
   private anticipateAt = 0;
+  /** tile keys of the plain path a holding train would take once the line clears */
+  private wantKeys: number[] | null = null;
 
   constructor(locos: LocoSlot[], name?: string, id?: number) {
     if (!locos.length) throw new Error('a train needs a locomotive');
@@ -820,8 +823,7 @@ export class Train {
       case 'yielding': {
         // wait on the siding until a path to the target avoids every tile other trains stand on
         if (this.stateTime < 2) break;
-        const other = this.yieldFor !== null ? ctx.occupants : null;
-        void other;
+        const held = this.stateTime;
         this.stateTime = 0;
         const avoid = (x: number, y: number) => ctx.occupied(x, y, this.id);
         const wasReversed = this.reversed;
@@ -829,7 +831,8 @@ export class Train {
           this.dispatch(ctx.track, ctx.builder, ctx.map, avoid) ||
           (ctx.now > this.yieldUntil + 60 && this.dispatch(ctx.track, ctx.builder, ctx.map))
         ) {
-          this.yieldFor = null;
+          this.wantKeys = null;
+          this.clearHold();
           if (!this.path) {
             this.pathPts = [];
             this.pathCum = [];
@@ -838,7 +841,7 @@ export class Train {
             if (wasReversed !== this.reversed) this.updatePoses();
             this.setState('moving');
           }
-        }
+        } else this.noteBlockerOnPlainPath(ctx, held);
         break;
       }
       case 'noFuel':
@@ -868,6 +871,38 @@ export class Train {
     }
   }
 
+  /**
+   * A train already holding on a siding still has to report who stands in its way, otherwise the
+   * fleet's jam resolution never sees a ring of holding trains waiting on each other. Records the
+   * plain path it wants to take and the first train standing on it.
+   */
+  private noteBlockerOnPlainPath(ctx: TickCtx, held: number) {
+    if (!this.trail.length || !this.route.length) return;
+    const target = ctx.builder.stationById(
+      this.detour ?? this.route[this.routeIndex % this.route.length],
+    );
+    const plat = target ? ctx.builder.platformTiles(target) : [];
+    const w = ctx.track.w;
+    const targetSet = new Set(plat.map((p) => p.y * w + p.x));
+    const isTarget = (x: number, y: number) => targetSet.has(y * w + x);
+    const head = this.trail[this.trail.length - 1].seg;
+    const path =
+      findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
+      findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
+    this.wantKeys = path ? path.map((s) => s.y * w + s.x) : null;
+    let by: number | null = null;
+    if (path)
+      for (const s of path) {
+        const o = ctx.occupants(s.x, s.y).filter((id) => id !== this.id);
+        if (o.length) {
+          by = o[0];
+          break;
+        }
+      }
+    this.blocked = by !== null;
+    this.blockedBy = by;
+    this.blockedTime = by !== null ? this.blockedTime + held : 0;
+  }
   /** Forget any hold-behind-train bookkeeping. */
   private clearHold() {
     this.blocked = false;
@@ -1084,6 +1119,7 @@ export class Train {
 
   private arrive(st: Station, ctx?: TickCtx) {
     this.atStation = st;
+    this.yieldCount = 0;
     this.clearHold();
     if (this.detour === st.id) {
       // fuel stop on the way: fill up, then carry on to the scheduled stop
@@ -1205,9 +1241,12 @@ export class Train {
     if (this.flowTimer >= 90) this.flushFlow(ctx, st);
     // load produced cargo that some later station on the route accepts
     const produced = st.producedCargo();
-    const routeStations = this.route
-      .map((id) => ctx.builder.stationById(id))
-      .filter((s): s is Station => !!s && s !== st);
+    // a dynamic train has no fixed route: any other station may take what it loads here
+    const routeStations = (
+      this.dynamic
+        ? ctx.builder.stations.filter((s) => ctx.builder.platformTiles(s).length > 0)
+        : this.route.map((id) => ctx.builder.stationById(id))
+    ).filter((s): s is Station => !!s && s !== st);
     let allFull = true;
     for (const w of this.wagons) {
       if (stop.load === 'none') break;
@@ -1336,6 +1375,9 @@ export class Train {
       if (!p || p.links.length > 1) return false; // not on a switch
       return true;
     };
+    // already standing clear of their line: shuffling further along would not help anyone
+    if (this.poses.every((p) => !theirs.has(Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5))))
+      return false;
     const head = this.trail[this.trail.length - 1].seg;
     let path = findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
     let flip = false;
@@ -1349,18 +1391,25 @@ export class Train {
     if (!path) return false;
     // extend the hold: keep going until the whole consist is clear of their path
     const tail = path[path.length - 1];
-    const deeper = findPath(
-      ctx.track,
-      { x: tail.x, y: tail.y, in: tail.in },
-      (x, y) => {
-        if (!isHold(x, y)) return false;
-        const d = Math.abs(x - tail.x) + Math.abs(y - tail.y);
-        return d >= Math.ceil(ownLen);
-      },
-      400,
-      (x, y) => avoid(x, y) || theirs.has(y * w + x),
-    );
+    // as deep as the free track allows: a dead-end siding shorter than the ideal still helps
+    let deeper: PathSegment[] | null = null;
+    for (let depth = Math.ceil(ownLen); depth >= 1 && !deeper; depth--)
+      deeper = findPath(
+        ctx.track,
+        { x: tail.x, y: tail.y, in: tail.in },
+        (x, y) => {
+          if (!isHold(x, y)) return false;
+          const d = Math.abs(x - tail.x) + Math.abs(y - tail.y);
+          return d >= depth;
+        },
+        400,
+        (x, y) => avoid(x, y) || theirs.has(y * w + x),
+      );
     if (deeper && deeper.length > 1) path = [...path, ...deeper.slice(1)];
+    // no point holding where the rear cars would still stand on their line
+    const need = Math.min(path.length, Math.ceil(ownLen - 0.5));
+    for (let i = path.length - need; i < path.length; i++)
+      if (theirs.has(path[i].y * w + path[i].x)) return false;
     if (flip) {
       this.reverseConsist();
       const nh = this.trail[this.trail.length - 1].seg;
@@ -1377,7 +1426,7 @@ export class Train {
     this.setPath(path, ctx.map);
     this.trackVersion = ctx.track.version;
     this.holding = true;
-    this.yieldFor = other;
+    this.yieldCount++;
     this.yieldUntil = ctx.now + 30;
     this.clearHold();
     this.lastMessage = 'pulling aside for an oncoming train';
@@ -1388,6 +1437,7 @@ export class Train {
   pathTileKeys(w: number, ahead = Infinity): Set<number> {
     const out = new Set<number>();
     for (const p of this.poses) out.add(Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5));
+    if (this.state === 'yielding' && this.wantKeys) for (const k of this.wantKeys) out.add(k);
     if (this.path)
       for (let i = 0; i < this.pathPts.length; i++) {
         if (this.pathCum[i] < this.pathPos - 0.5) continue;

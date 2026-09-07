@@ -116,12 +116,23 @@ export class Fleet {
     let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
     if (stops.length < 2) stops = this.autoSchedule();
     if (stops.length < 2) return STR.fleet.needTwoStops;
-    const first = this.builder.stationById(stops[0].stationId);
-    if (!first) return STR.fleet.missingStation;
-    const plat = this.builder.platformTiles(first);
-    if (!plat.length) return STR.fleet.noPlatform(first.name);
-    // prefer a platform tile with no train on it
-    const p = plat.find((pt) => !this.occupied(pt.x, pt.y, -1)) ?? plat[0];
+    const first0 = this.builder.stationById(stops[0].stationId);
+    if (!first0) return STR.fleet.missingStation;
+    if (!this.builder.platformTiles(first0).length) return STR.fleet.noPlatform(first0.name);
+    // start on a platform tile with no train on it: the first stop's, else the next stop's
+    let first = first0;
+    let p: { x: number; y: number } | undefined;
+    for (let i = 0; i < stops.length && !p; i++) {
+      const st = this.builder.stationById(stops[i].stationId);
+      if (!st) continue;
+      const free = this.builder.platformTiles(st).find((pt) => !this.occupied(pt.x, pt.y, -1));
+      if (free) {
+        first = st;
+        p = free;
+        t.routeIndex = i;
+      }
+    }
+    if (!p) return STR.fleet.platformBusy(first0.name);
     const toStation = DIRS.find((d) => p.x + DIR_DX[d] === first.x && p.y + DIR_DY[d] === first.y);
     const piece = this.track.get(p.x, p.y)!;
     let entry = piece.links[0][0];
@@ -129,7 +140,6 @@ export class Fleet {
       entry = opposite(toStation);
     if (!t.spawnAt(this.track, p.x, p.y, entry)) return STR.fleet.cannotPlace;
     t.schedule = stops;
-    t.routeIndex = 0;
     t.dynamic = dynamic;
     t.trip = newTrip(this.clockTime);
     for (const l of locoItems) l!.assigned = t.id;
@@ -306,12 +316,21 @@ export class Fleet {
         if (chain.length > 8) break;
       }
       const tail = chain[chain.length - 1];
+      // a chain ending in a train that is busy at a platform clears itself; one that loops or
+      // ends in a train that cannot move needs someone to make room
+      const transient =
+        tail.state === 'loading' || tail.state === 'waiting' || tail.state === 'idle';
       const dead =
-        loops || (tail.blocked && tail.blockedTime >= MUTUAL_GRACE) || tail.state !== 'moving';
+        loops ||
+        (tail.blocked && tail.blockedTime >= MUTUAL_GRACE) ||
+        (tail.state !== 'moving' && !transient);
       if (!dead) continue;
       for (const t of chain) handled.add(t.id);
-      const order = [...chain].sort((p, q) => p.weight - q.weight || q.id - p.id);
-      for (const t of order) if (t.yieldUntil <= now && t.retreat(ctx)) break;
+      // take turns: the train that has pulled aside least goes first, then the lightest
+      const order = [...chain].sort(
+        (p, q) => p.yieldCount - q.yieldCount || p.weight - q.weight || q.id - p.id,
+      );
+      for (const t of order) if (t.retreat(ctx)) break;
     }
   }
   /** Total capacity of a train for a cargo type. */

@@ -615,6 +615,7 @@ export const STR = {
     needTwoStops: 'Route needs at least two stations',
     missingStation: 'Missing station',
     noPlatform: (n: string) => `${n} has no platform track`,
+    platformBusy: (n: string) => `A train stands on every platform at ${n}`,
     cannotPlace: 'Could not place train',
   },
   topbar: {
