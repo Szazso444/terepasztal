@@ -11,7 +11,7 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 | v0.3.0  | [#3](https://github.com/Szazso444/terepasztal/pull/3) | `e28519e`                       | Resource economy and stockpile, fuel and water, real locomotives by era, wagon classes, works buildings, power grid, market, train details, new art.                  |
 | v0.4.0  | [#4](https://github.com/Szazso444/terepasztal/pull/4) | `56d9a4c`                       | Chunk purchase, automatic routes, train side panel, building panel, floating indicators, toolbar with categories, power wires, cheat button, pause icon.              |
 | v0.5.0  | [#5](https://github.com/Szazso444/terepasztal/pull/5) | `fe886e2` … `80b6905`           | Traffic handling, biomes and endless world, people and passengers, notices and advisor, dynamic routing (section below).                                              |
-| v0.6.0  | (this branch)                                         | see below                       | Depot as the only way into the stockpile, warehouses as local stores, Collect routing with fuel reserve, towns, train picking in the field view.                      |
+| v0.6.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6) | `3d54b6d`                       | Depot as the only way into the stockpile, warehouses as local stores, Collect routing with fuel reserve, towns, train picking in the field view.                      |
 
 ## v0.6.0
 
