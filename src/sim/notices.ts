@@ -32,7 +32,13 @@ export class Notices {
     this.transient.push({ ...n, expires: performance.now() / 1000 + ttl });
   }
 
-  refresh(src: { trains: Train[]; builder: Builder; stock: Stockpile; power: PowerGrid }) {
+  refresh(src: {
+    trains: Train[];
+    builder: Builder;
+    stock: Stockpile;
+    power: PowerGrid;
+    stuck?: { id: number; since: number }[];
+  }) {
     const now = performance.now() / 1000;
     this.transient = this.transient.filter((t) => (t.expires ?? 0) > now);
     const out: Notice[] = [...this.transient];
@@ -53,6 +59,13 @@ export class Notices {
         out.push({ key: `t${t.id}:route`, kind: 'warn', text: STR.notice.noRoute(t.name), target });
       else if (t.eco)
         out.push({ key: `t${t.id}:eco`, kind: 'warn', text: STR.notice.ecoMode(t.name), target });
+      else if (src.stuck?.some((x) => x.id === t.id))
+        out.push({
+          key: `t${t.id}:stuck`,
+          kind: 'bad',
+          text: STR.notice.stuck(t.name, Math.round(src.stuck.find((x) => x.id === t.id)!.since)),
+          target,
+        });
       else if (t.blocked && t.blockedTime > 8)
         out.push({ key: `t${t.id}:held`, kind: 'info', text: STR.notice.held(t.name), target });
     }

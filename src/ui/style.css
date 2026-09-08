@@ -1644,3 +1644,13 @@ table.market td {
   box-sizing: border-box;
   margin: 6px 0;
 }
+
+.num-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+.num-opt input {
+  width: 52px;
+}

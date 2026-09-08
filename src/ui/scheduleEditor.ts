@@ -70,6 +70,24 @@ export class ScheduleEditor {
       });
       return s;
     };
+    const number = (label: string, value: number, set: (v: number) => void) => {
+      const wrap = el('label', { class: 'num-opt', title: label });
+      const inp = el('input', {
+        type: 'number',
+        min: '0',
+        max: '600',
+        step: '5',
+        class: 'text small',
+      }) as HTMLInputElement;
+      inp.value = String(value);
+      inp.addEventListener('change', () => {
+        set(Math.max(0, Math.min(600, Number(inp.value) || 0)));
+        this.onChange();
+      });
+      inp.addEventListener('keydown', (e) => e.stopPropagation());
+      wrap.append(el('span', { class: 'dim', text: label }), inp);
+      return wrap;
+    };
     const toggle = (label: string, on: boolean, set: (v: boolean) => void) =>
       btn(
         label,
@@ -136,6 +154,8 @@ export class ScheduleEditor {
         toggle(STR.depot.opt.waitFull, stop.waitFull, (v) => (stop.waitFull = v)),
         toggle(STR.depot.opt.refuel, stop.refuel, (v) => (stop.refuel = v)),
         toggle(STR.depot.opt.pass, stop.pass, (v) => (stop.pass = v)),
+        number(STR.depot.opt.minDwell, stop.minDwell ?? 0, (v) => (stop.minDwell = v)),
+        number(STR.depot.opt.maxDwell, stop.maxDwell ?? 0, (v) => (stop.maxDwell = v)),
       ),
     );
   }

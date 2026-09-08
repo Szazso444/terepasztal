@@ -45,8 +45,13 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
   live Power Line network (poles within two tiles of each other and a Power Plant). Tanks fill at
   Depots, at stations near a Coaling Stage or Water Tower, and from a town Warehouse's own store;
   a train never starts a leg it could not finish and still reach fuel from.
-- **Trains** run automatically: dispatch a consist and it visits every station with a platform,
-  or pick Dynamic (what the stockpile lacks) or Collect (fullest producer, nearest depot).
+- **Trains**: Static **Schedule** follows your stop list (load, unload, wait full, dwell times,
+  refuel, direction). Dynamic **Production** sweeps producers into warehouses, **Collection**
+  empties warehouses into depots, **Transport** carries passengers between towns; all three
+  re-plan at every stop and refuel on their own.
+- **Traffic**: single track is handed out in whole sections, so trains never meet head-on inside
+  one; waiting trains pull into sidings and loops, idle trains make room. Stuck trains raise a
+  notice; the debug panel and `game.traffic.report()` give the statistics.
   Stops, load/unload, wait for full, refuel and departure direction are edited in the train
   details. The right-hand panel lists the trains on screen (all of them in the overview) with
   tanks, use per tile, fuel type and weekly estimates; hover one to trace its path.

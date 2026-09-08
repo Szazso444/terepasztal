@@ -715,6 +715,7 @@ export class Game {
       b ? this.buildingPanel.open(b) : this.buildingPanel.building && this.buildingPanel.close();
     this.build.onSelectDecor = (d) =>
       d ? this.decorPanel.open(d) : this.decorPanel.decor && this.decorPanel.close();
+    this.fleet.waitingAt = (id) => this.people.waitingAt(id).length;
     this.fleet.contractDest = (cargo, origin) => {
       const c = this.contracts.active.find((k) => k.cargo === cargo && k.originId === origin);
       return c ? c.destId : null;
@@ -1445,6 +1446,10 @@ export class Game {
     this.toasts.push(STR.topbar.cheated, 'info');
   }
 
+  /** Traffic control and statistics (`game.traffic.report()` in the console; `verbose` logs episodes). */
+  get traffic() {
+    return this.fleet.traffic;
+  }
   /** What a bare tile is and what sits on it, for the hover tooltip. */
   private tileInfo(x: number, y: number): { title: string; lines: string[] } {
     const t = terrainAt(this.map, x, y);
@@ -1762,6 +1767,7 @@ export class Game {
         builder: this.builder,
         stock: this.stock,
         power: this.power,
+        stuck: this.traffic.stuckTrains(this.clock.time),
       });
       this.noticePanel.render(this.notices.list);
       this.advisor.update(this.computeTips(), this.notices.list);
@@ -1989,7 +1995,7 @@ export class Game {
       const stops = rec.stops.map(
         (id) => t.schedule.find((s) => s.stationId === id) ?? defaultStopFor(id),
       );
-      t.mode = 'fixed';
+      t.mode = 'schedule';
       this.fleet.setSchedule(t, stops);
       this.toasts.push(STR.overview.recorded(t.name, stops.length), 'good');
     } else if (rec) this.toasts.push(STR.depot.needTwoStops, 'warn');
@@ -2158,6 +2164,11 @@ export class Game {
     );
     d.set(STR.debug.zoom, `${this.camera.targetZoom}x (${this.viewTarget ? 'overview' : 'rts'})`);
     d.set(STR.debug.camera, `${Math.round(this.camera.x)}, ${Math.round(this.camera.y)}`);
+    const tc = this.traffic.counters;
+    d.set(
+      STR.debug.traffic,
+      `stuck ${tc.stuck} · deadlock ${tc.deadlocks} · overlap ${tc.overlaps} · yields ${tc.yields} · holds ${tc.waits}`,
+    );
     const t = this.hoverTile;
     const name = inBounds(this.map, t.x, t.y)
       ? TERRAIN_NAMES[this.map.terrain[t.y * this.map.w + t.x] as Terrain]

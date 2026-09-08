@@ -12,6 +12,30 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 | v0.4.0  | [#4](https://github.com/Szazso444/terepasztal/pull/4) | `56d9a4c`                       | Chunk purchase, automatic routes, train side panel, building panel, floating indicators, toolbar with categories, power wires, cheat button, pause icon.              |
 | v0.5.0  | [#5](https://github.com/Szazso444/terepasztal/pull/5) | `fe886e2` … `80b6905`           | Traffic handling, biomes and endless world, people and passengers, notices and advisor, dynamic routing (section below).                                              |
 | v0.6.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6) | `3d54b6d`                       | Depot as the only way into the stockpile, warehouses as local stores, Collect routing with fuel reserve, towns, train picking in the field view.                      |
+| v0.7.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6) | see below                       | Section-based traffic control, stuck detection and traffic statistics, Static/Dynamic routing groups (Schedule, Production, Collection, Transport), dwell options.    |
+
+## v0.7.0
+
+### Traffic control
+
+- The track is cut into sections (plain track between switches, crossings, platforms and dead ends). A moving train claims its path ahead, but only whole sections: it never enters single track unless every tile up to the next node is free of other trains' claims, so head-on meetings inside a section no longer happen. First claimant keeps the section; a train following in the same direction may enter behind it. Trains stop short of the first tile they could not claim.
+- A train held before a section whose holder will come out through the tiles it stands on moves aside at once (siding, loop, dead end) instead of waiting nose to nose. Holds never use track another train holds.
+- Trains idling or queueing on the line with someone waiting behind them make room first: they pull aside, or drive to the nearest station with a free platform off the waiting train's path.
+- Jam rings that cannot be resolved are reported as deadlocks (once per minute per ring) instead of silently spinning.
+- A roaming train that picks a stop it cannot reach parks and chooses again; one that took nothing on at its pick looks elsewhere for a minute; one that cannot reach anything with tanks below half heads for the nearest fuel point.
+
+### Stuck detection and statistics
+
+- Every train's blocked time, yields, stuck episodes (no movement for 30 s while trying to move) and tile overlaps are counted. Stuck trains raise a red notice with the wait time. The debug panel (backtick) shows the traffic counters; `game.traffic.report()` in the browser console returns counters, per-train rows and the last 60 episodes; `game.traffic.verbose = true` prints each episode as it happens.
+
+### Routing groups
+
+- **Static — Schedule**: the stop list, in order, exactly as written. Per stop: load, unload, wait for full wagons, refuel, departure direction, and new **minimum** and **maximum dwell** in seconds.
+- **Dynamic — Production**: producers into the nearest warehouse with room (or the depot); biggest loads and fullest piles first, weighed against the way there and on to the dump; never dumps into the store it loaded from; loads only at producers.
+- **Dynamic — Collection**: warehouses into depots; loads only at warehouses.
+- **Dynamic — Transport**: passengers; heads for the town station with the most people waiting and carries them to the nearest other town.
+- All dynamic modes re-plan at every stop, refuel with the reserve rule, and start with the stop they would pick rather than the automatic loop. Reservations by other roaming trains only count while those trains are on the move. Haul estimates respect what the engines can pull.
+- Old saves: `fixed` → Schedule, `dynamic` → Production, `collect` → Collection.
 
 ## v0.6.0
 

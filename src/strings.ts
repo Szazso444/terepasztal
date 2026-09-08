@@ -77,6 +77,7 @@ export const STR = {
     depthOverlay: 'Depth-sort overlay',
     zoom: 'Zoom',
     camera: 'Camera',
+    traffic: 'Traffic',
     tile: 'Tile',
     regenerate: 'New map (seed)',
   },
@@ -161,6 +162,7 @@ export const STR = {
     noPower: (n: string) => `${n}: no power on this line`,
     overweight: (n: string) => `${n}: too heavy for its engines`,
     noRoute: (n: string) => `${n}: no route to its next stop`,
+    stuck: (n: string, sec: number) => `${n}: has not moved for ${sec} s`,
     ecoMode: (n: string) => `${n}: low on fuel, crawling to save it`,
     held: (n: string) => `${n}: held by traffic`,
     orphaned: (n: string) => `${n}: no platform track`,
@@ -243,18 +245,26 @@ export const STR = {
     routeCustom: 'Custom route',
     routeDynamic: 'Dynamic',
     from: 'Roll out of',
+    groupStatic: 'Static',
+    groupDynamic: 'Dynamic',
     routeMode: {
-      auto: 'Automatic',
-      custom: 'Custom',
-      dynamic: 'Dynamic',
-      collect: 'Collect',
-    },
+      auto: 'Schedule (auto)',
+      custom: 'Schedule (custom)',
+      production: 'Production',
+      collection: 'Collection',
+      transport: 'Transport',
+    } as Record<string, string>,
     routeHint: {
-      dynamic:
-        'Picks its next stop on the fly: the producer whose cargo the stockpile lacks most, then the nearest depot. Keeps clear of stations other roaming trains are bound for and detours around oncoming traffic.',
-      collect:
-        'Sweeps goods into the nearest depot: heads for the producer or warehouse with the biggest load waiting, weighed against the distance there and on to the depot. Never picks a stop its tanks could not return from.',
-    },
+      auto: 'Static: visits every station with platform track, nearest first, and empties into the depot. Edit stops, dwell times and conditions later in the train details.',
+      custom:
+        'Static: your stop list, in order. Per stop: what to load and unload, wait for full wagons, minimum and maximum dwell, refuel, departure direction. The train never changes the plan by itself.',
+      production:
+        'Dynamic: maximises what it hauls. Heads for the producer with the biggest load waiting (fuller piles first), dumps into the nearest warehouse with room, or the depot. Re-plans at every stop, refuels on its own and detours around traffic.',
+      collection:
+        'Dynamic: empties warehouses into depots. Picks the warehouse with the most goods, weighed against the way there and on to the depot. Re-plans at every stop and refuels on its own.',
+      transport:
+        'Dynamic: carries passengers. Heads for the town station with the most people waiting and takes them to the nearest other town. Needs coaches. Re-plans at every stop and refuels on its own.',
+    } as Record<string, string>,
     dynamicTag: 'dynamic',
     routeAutoHint:
       'The train visits every station with platform track, nearest first, and empties into the depot. Change stops later in the train details.',
@@ -302,6 +312,8 @@ export const STR = {
       departForward: 'Depart: forward',
       departReverse: 'Depart: reverse',
       waitFull: 'Wait full',
+      minDwell: 'Stay at least (s)',
+      maxDwell: 'Leave after (s)',
       refuel: 'Refuel',
       pass: 'Pass through',
       plain: 'stop, load, unload',
@@ -567,7 +579,18 @@ export const STR = {
     prefer: 'Steam fuel:',
     routing: 'Routing',
     clickHint: 'Click to select',
-    mode: { fixed: 'Schedule', dynamic: 'Dynamic', collect: 'Collect' } as Record<string, string>,
+    mode: {
+      schedule: 'Schedule',
+      production: 'Production',
+      collection: 'Collection',
+      transport: 'Transport',
+    } as Record<string, string>,
+    modeHint: {
+      schedule: 'Static: follows the stop list below exactly.',
+      production: 'Dynamic: producers → nearest warehouse or depot, biggest loads first.',
+      collection: 'Dynamic: warehouses → depots.',
+      transport: 'Dynamic: passengers between town stations.',
+    } as Record<string, string>,
     coal: 'Coal',
     wood: 'Wood',
     lastLoop: 'Last loop',

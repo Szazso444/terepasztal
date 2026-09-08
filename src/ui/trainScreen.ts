@@ -171,7 +171,7 @@ export class TrainScreen implements Screen {
         'div',
         { class: 'row' },
         el('span', { class: 'dim', text: STR.train.routing }),
-        ...(['fixed', 'dynamic', 'collect'] as const).map((m) =>
+        ...(['schedule', 'production', 'collection', 'transport'] as const).map((m) =>
           btn(
             STR.train.mode[m],
             () => {
@@ -183,6 +183,7 @@ export class TrainScreen implements Screen {
         ),
       ),
     );
+    l.append(el('div', { class: 'sub dim', text: STR.train.modeHint[t.mode] }));
     if (t.hasSteam) {
       l.append(
         el(

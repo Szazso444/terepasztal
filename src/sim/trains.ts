@@ -33,7 +33,13 @@ export interface LocoSlot {
   level: number;
 }
 /** What a train does at one stop of its looped schedule. */
-export type RouteMode = 'fixed' | 'dynamic' | 'collect';
+/**
+ * Static: `schedule` follows the player's stop list to the letter. Dynamic: `production` sweeps
+ * producers into the nearest warehouse (or depot), `collection` empties warehouses into depots,
+ * `transport` carries passengers between town stations; all three pick their stops on the fly.
+ */
+export type RouteMode = 'schedule' | 'production' | 'collection' | 'transport';
+export const DYNAMIC_MODES: RouteMode[] = ['production', 'collection', 'transport'];
 export interface StopPlan {
   stationId: number;
   load: 'auto' | 'none';
@@ -44,6 +50,10 @@ export interface StopPlan {
   depart: 'auto' | 'forward' | 'reverse';
   /** pass through without stopping */
   pass: boolean;
+  /** stay at least this long (game seconds; 0 = only as long as loading takes) */
+  minDwell?: number;
+  /** leave after this long at the latest (game seconds; 0 = the default limit) */
+  maxDwell?: number;
 }
 export function defaultStop(stationId: number): StopPlan {
   return {
@@ -54,6 +64,8 @@ export function defaultStop(stationId: number): StopPlan {
     refuel: true,
     depart: 'auto',
     pass: false,
+    minDwell: 0,
+    maxDwell: 0,
   };
 }
 /** Bookkeeping for one loop of the schedule. */
@@ -141,6 +153,8 @@ export interface TickCtx {
   onPassengers: (station: Station, n: number, boarding: boolean) => void;
   /** tile keys (y*w+x) of another train's remaining path plus the tiles it stands on */
   trainPath: (id: number) => Set<number>;
+  /** traffic control: train holding a tile (other than self), or null */
+  claimedBy: (x: number, y: number, self: number) => number | null;
   /** which other train has the next few tiles of its path through here (0 = nobody) */
   reservedBy: (x: number, y: number, self: number) => number;
   /** dynamic routing: the station a train should head for next, or null to keep its schedule */
@@ -341,7 +355,15 @@ export class Train {
   /** while set, the train is backing off for an oncoming one and must not be asked to yield again */
   yieldUntil = 0;
   /** the current path ends at a holding spot, not a station */
-  private holding = false;
+  holding = false;
+  /** distance along the path to the first tile the traffic control did not grant (Infinity: free) */
+  claimLimit = Infinity;
+  /** train holding that tile */
+  claimBlocker: number | null = null;
+  /** seconds spent in the yielding state without a way forward */
+  private yieldWait = 0;
+  /** units taken on since arriving at the current stop */
+  private loadedHere = 0;
   /** the train we pulled aside for */
   /** times this train pulled aside since it last reached a station: jams take turns */
   yieldCount = 0;
@@ -352,10 +374,10 @@ export class Train {
    * station whose cargo the stockpile lacks most, `collect` sweeps the fullest producers and
    * warehouses into the nearest depot.
    */
-  mode: RouteMode = 'fixed';
+  mode: RouteMode = 'schedule';
   /** true for every mode that picks stops on the fly */
   get dynamic() {
-    return this.mode !== 'fixed';
+    return this.mode !== 'schedule';
   }
   /** stations a roaming train could not reach, with the time the memory expires */
   private badTargets = new Map<number, number>();
@@ -825,6 +847,25 @@ export class Train {
     this.speed = 0;
   }
 
+  /** arc position along the current path */
+  get pathProgress() {
+    return this.pathPos;
+  }
+  /** Tiles of the path from the head onwards (one entry per tile, with the arc it starts at). */
+  pathAhead(maxTiles = Infinity): { x: number; y: number; arc: number }[] {
+    const out: { x: number; y: number; arc: number }[] = [];
+    if (!this.path) return out;
+    let last: PathSegment | null = null;
+    for (let i = 0; i < this.pathPts.length; i++) {
+      if (this.pathCum[i] < this.pathPos - 0.5) continue;
+      const seg = this.pathPts[i].seg;
+      if (seg === last) continue;
+      last = seg;
+      out.push({ x: seg.x, y: seg.y, arc: this.pathCum[i] });
+      if (out.length >= maxTiles) break;
+    }
+    return out;
+  }
   get pathTotal() {
     return this.pathCum[this.pathCum.length - 1] ?? 0;
   }
@@ -897,6 +938,7 @@ export class Train {
           (ctx.now > this.yieldUntil + 60 && this.dispatch(ctx.track, ctx.builder, ctx.map))
         ) {
           this.wantKeys = null;
+          this.yieldWait = 0;
           this.clearHold();
           if (!this.path) {
             this.pathPts = [];
@@ -906,7 +948,18 @@ export class Train {
             if (wasReversed !== this.reversed) this.updatePoses();
             this.setState('moving');
           }
-        } else this.noteBlockerOnPlainPath(ctx, held);
+        } else {
+          this.noteBlockerOnPlainPath(ctx, held);
+          this.yieldWait += held;
+          // a roaming train with no way to its pick stays parked here and chooses again later
+          if (this.dynamic && this.yieldWait > 20 && this.blockedBy === null) {
+            this.badTargets.set(this.route[this.routeIndex % this.route.length], ctx.now + 240);
+            this.yieldWait = 0;
+            this.atStation = null;
+            this.lastMessage = 'parked: no way to the chosen stop';
+            this.setState('idle');
+          }
+        }
         break;
       }
       case 'noFuel':
@@ -1019,6 +1072,11 @@ export class Train {
           break;
         }
       }
+    }
+    // traffic control: stop short of track another train holds (not while pulling aside)
+    if (!this.holding && this.claimLimit - HOLD_GAP < blockDist) {
+      blockDist = Math.max(0, this.claimLimit - HOLD_GAP);
+      blocker = this.claimBlocker;
     }
     this.blocked = blockDist < 0.3;
     this.blockedBy = this.blocked ? blocker : null;
@@ -1185,6 +1243,7 @@ export class Train {
   private arrive(st: Station, ctx?: TickCtx) {
     this.atStation = st;
     this.yieldCount = 0;
+    this.loadedHere = 0;
     this.clearHold();
     if (this.detour === st.id) {
       // fuel stop on the way: fill up, then carry on to the scheduled stop
@@ -1311,7 +1370,14 @@ export class Train {
     if (this.flowTimer >= 90) this.flushFlow(ctx, st);
     // load what the station makes (or, at a warehouse, keeps) when a later stop takes it: a
     // depot takes anything, a warehouse anything from a producer, a town what it accepts
-    const produced = st.availableCargo();
+    // what may be taken on here: a production train only takes from producers, a collection
+    // train only from warehouses, a transport train only passengers
+    const produced = st.availableCargo().filter((c) => {
+      if (this.mode === 'production') return !st.def.stockpile || st.producedCargo().includes(c);
+      if (this.mode === 'collection') return st.def.stockpile && cargoClass(c) !== 'people';
+      if (this.mode === 'transport') return cargoClass(c) === 'people';
+      return true;
+    });
     // a dynamic train has no fixed route: any other station may take what it loads here
     const routeStations = (
       this.dynamic
@@ -1327,6 +1393,7 @@ export class Train {
             (!s.def.stockpile && s.accepts(c)),
       );
     let allFull = true;
+    let canLoadAny = false;
     for (const w of this.wagons) {
       if (stop.load === 'none') break;
       if (budget <= 0) break;
@@ -1348,6 +1415,7 @@ export class Train {
         allFull = false;
         continue;
       }
+      canLoadAny = true;
       // only keep the train if the station can feed it at a useful rate
       if (st.stored(c) < Math.min(want, 1)) continue;
       const n = st.take(c, want);
@@ -1359,6 +1427,7 @@ export class Train {
       }
       w.amount += n;
       budget -= n;
+      this.loadedHere += n;
       bump(this.trip.loaded, c, n);
       if (cargoClass(c) === 'people') ctx.onPassengers(st, n, true);
       // still taking goods on: stay while the station keeps handing them over
@@ -1376,10 +1445,17 @@ export class Train {
     }, 0);
     const soon = rate > 0 ? roomLeft / rate <= MAX_DWELL_FULL - this.stateTime : false;
     const waitFull =
-      stop.load !== 'none' && stop.waitFull && canFill && !this.eco && (soon || allFull);
+      stop.load !== 'none' &&
+      stop.waitFull &&
+      canFill &&
+      canLoadAny &&
+      !this.eco &&
+      (soon || allFull);
     if (waitFull && !allFull && this.stateTime < MAX_DWELL_FULL) busy = true;
-    const maxDwell = waitFull ? MAX_DWELL_FULL : MAX_DWELL;
-    if ((!busy && this.stateTime >= MIN_DWELL) || this.stateTime >= maxDwell) this.depart(ctx);
+    const maxDwell =
+      stop.maxDwell && stop.maxDwell > 0 ? stop.maxDwell : waitFull ? MAX_DWELL_FULL : MAX_DWELL;
+    const minDwell = Math.max(MIN_DWELL, stop.minDwell ?? 0);
+    if ((!busy && this.stateTime >= minDwell) || this.stateTime >= maxDwell) this.depart(ctx);
   }
 
   private depart(ctx: TickCtx) {
@@ -1397,7 +1473,12 @@ export class Train {
     this.detour = null;
     const leaving = wasDetour ? undefined : this.currentStop;
     if (this.dynamic && !wasDetour) {
-      const next = ctx.chooseNext(this);
+      let next = ctx.chooseNext(this);
+      if (next !== null && st && next === st.id && this.loadedHere < 1) {
+        // nothing came aboard here: the pick is stale, look elsewhere for a minute
+        this.badTargets.set(st.id, ctx.now + 60);
+        next = ctx.chooseNext(this);
+      }
       if (next !== null && next !== st?.id) {
         this.schedule = [defaultStop(next)];
         this.routeIndex = 0;
@@ -1407,6 +1488,7 @@ export class Train {
         this.routeIndex = 0;
         this.atStation = st;
         st.occupants.add(this.id);
+        this.loadedHere = 0;
         this.setState('loading');
         return;
       } else {
@@ -1455,6 +1537,13 @@ export class Train {
   retreat(ctx: TickCtx): boolean {
     if (!this.trail.length || this.blockedBy === null) return false;
     const other = this.blockedBy;
+    // leaving a platform to make room frees it for the next train
+    const leavePlatform = () => {
+      if (this.atStation) {
+        this.atStation.occupants.delete(this.id);
+        this.atStation = null;
+      }
+    };
     const theirs = ctx.trainPath(other);
     const w = ctx.track.w;
     const avoid = (x: number, y: number) => ctx.occupied(x, y, this.id);
@@ -1463,6 +1552,7 @@ export class Train {
     // platform tile someone else needs
     const isHold = (x: number, y: number) => {
       if (theirs.has(y * w + x) || avoid(x, y)) return false;
+      if (ctx.claimedBy(x, y, this.id) !== null) return false; // track someone else holds
       const p = ctx.track.get(x, y);
       if (!p || p.links.length > 1) return false; // not on a switch
       return true;
@@ -1515,6 +1605,7 @@ export class Train {
       if (p2) path = p2;
       this.updatePoses();
     }
+    leavePlatform();
     this.setPath(path, ctx.map);
     this.trackVersion = ctx.track.version;
     this.holding = true;
@@ -1606,7 +1697,17 @@ export class Train {
     t.schedule = j.schedule.map((s) => ({ ...defaultStop(s.stationId), ...s }));
     t.routeIndex = j.routeIndex;
     t.detour = j.detour ?? null;
-    t.mode = j.mode ?? ((j as { dynamic?: boolean }).dynamic ? 'dynamic' : 'fixed');
+    const legacy: Record<string, RouteMode> = {
+      fixed: 'schedule',
+      dynamic: 'production',
+      collect: 'collection',
+    };
+    const m = j.mode as string | undefined;
+    t.mode = m
+      ? (legacy[m] ?? (DYNAMIC_MODES.includes(m as RouteMode) ? (m as RouteMode) : 'schedule'))
+      : (j as { dynamic?: boolean }).dynamic
+        ? 'production'
+        : 'schedule';
     t.coal = j.tanks.coal;
     t.oil = j.tanks.oil;
     t.water = j.tanks.water;
