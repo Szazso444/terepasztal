@@ -34,6 +34,7 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 - **Dynamic — Production**: producers into the nearest warehouse with room (or the depot); biggest loads and fullest piles first, weighed against the way there and on to the dump; never dumps into the store it loaded from; loads only at producers.
 - **Dynamic — Collection**: warehouses into depots; loads only at warehouses.
 - **Dynamic — Transport**: passengers; heads for the town station with the most people waiting and carries them to the nearest other town.
+- Far stations are not neglected: distance counts at half weight in the pick, a producer near its cap gets double pressure, and every station's priority climbs for up to two days since a train last loaded there (towns likewise for transport).
 - All dynamic modes re-plan at every stop, refuel with the reserve rule, and start with the stop they would pick rather than the automatic loop. Reservations by other roaming trains only count while those trains are on the move. Haul estimates respect what the engines can pull.
 - Old saves: `fixed` → Schedule, `dynamic` → Production, `collect` → Collection.
 

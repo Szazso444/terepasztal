@@ -21,6 +21,7 @@ import type { Station } from './stations';
 import { sfx } from '../engine/audio';
 import { STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
+import { daySeconds } from './rules';
 import { Traffic } from './traffic';
 
 export const MAX_WAGONS = 16;
@@ -374,7 +375,8 @@ export class Fleet {
         const waiting = this.waitingAt(s.id);
         if (waiting < 1 && s.def.id !== 'town') continue;
         // people waiting per tile of travel; a town with nobody waiting is still worth a visit
-        score = (waiting + 0.5) / (dist(s) + 10);
+        // distance counts at half weight and a town left alone climbs in priority
+        score = ((waiting + 0.5) * this.neglect(s.id, now)) / (10 + 0.5 * dist(s));
       } else {
         // production takes from producers, collection from warehouses
         if (t.mode === 'collection' ? !s.def.stockpile : s.def.stockpile) continue;
@@ -394,8 +396,12 @@ export class Fleet {
         const dump = dumpFor({ x: s.cx, y: s.cy }, haul);
         const onward = dump ? between(dump, s) : 0;
         // fuller producers first: their pile stops growing when it hits the cap
-        const pressure = s.def.stockpile ? 1 : 1 + s.totalStored() / Math.max(1, s.capacity);
-        score = (pressure * haul) / trainCap / (dist(s) + onward + 12);
+        // a producer near its cap is throwing output away; distance counts at half weight so a
+        // full pile far away beats a thin one next door; stations left alone climb in priority
+        const fill = s.totalStored() / Math.max(1, s.capacity);
+        const pressure = s.def.stockpile ? 1 : 1 + fill + (fill >= 0.8 ? 1 : 0);
+        score =
+          (pressure * this.neglect(s.id, now) * haul) / trainCap / (12 + 0.5 * (dist(s) + onward));
       }
       if (!best || score > best.score) best = { id: s.id, score };
     }
@@ -444,6 +450,14 @@ export class Fleet {
   }
   /** set by the game: destination station of an active contract for this cargo/origin, if any */
   contractDest: ((cargo: string, origin: number) => number | null) | null = null;
+  /** game time a train last loaded at each station; stations left alone climb in priority */
+  private lastServed = new Map<number, number>();
+  /** 1 for a station served just now, up to 3 for one nobody has visited for two days */
+  private neglect(stationId: number, now: number) {
+    const last = this.lastServed.get(stationId);
+    const days = last === undefined ? 2 : (now - last) / daySeconds();
+    return 1 + Math.min(2, Math.max(0, days));
+  }
   /** set by the game: travellers waiting at a station */
   waitingAt: (stationId: number) => number = () => 0;
 
@@ -453,7 +467,10 @@ export class Fleet {
     this.rebuildReservations();
     this.traffic.assign(this.trains, now);
     const ctx = this.ctx(now, speedFactor);
-    for (const t of this.trains) t.tick(gdt, ctx);
+    for (const t of this.trains) {
+      t.tick(gdt, ctx);
+      if (t.state === 'loading' && t.atStation) this.lastServed.set(t.atStation.id, now);
+    }
     this.traffic.observe(this.trains, now, gdt);
     // park early: a train held before a section whose holder will come out through the tiles it
     // stands on clears out of the way now instead of meeting it head-on later
