@@ -34,8 +34,9 @@ export class DepotScreen implements Screen {
   onFocusTrain: ((t: Train) => void) | null = null;
   onDetails: ((t: Train) => void) | null = null;
   private scheduleEditor: ScheduleEditor;
-  private customRoute = false;
-  private dynamicRoute = false;
+  private routeMode: 'auto' | 'custom' | 'production' | 'collection' | 'transport' = 'auto';
+  /** depot the new train rolls out of (null: the first one) */
+  private depotId: number | null = null;
 
   constructor(
     private readonly inventory: Inventory,
@@ -80,8 +81,7 @@ export class DepotScreen implements Screen {
     this.locoUids = [];
     this.wagonUids = [];
     this.schedule = [];
-    this.customRoute = false;
-    this.dynamicRoute = false;
+    this.routeMode = 'auto';
     this.nameInput.value = '';
     this.render();
   }
@@ -115,7 +115,7 @@ export class DepotScreen implements Screen {
           el('div', { class: 'name', text: t.name }),
           el('div', {
             class: 'sub',
-            text: `${t.locos.map((l) => l.def.name).join(' + ')} + ${t.wagons.length} · ${t.dynamic ? STR.depot.dynamicTag : routeNames}`,
+            text: `${t.locos.map((l) => l.def.name).join(' + ')} + ${t.wagons.length} · ${t.mode !== 'schedule' ? STR.train.mode[t.mode] : routeNames}`,
           }),
           el('div', {
             class: `sub state-${t.state}`,
@@ -286,44 +286,35 @@ export class DepotScreen implements Screen {
     c.innerHTML = '';
     const auto = this.fleet.autoSchedule();
     const names = auto.map((s) => this.builder.stationById(s.stationId)?.name ?? '?');
-    c.append(
-      el(
-        'div',
-        { class: 'row', style: 'margin:0 0 6px 0' },
-        btn(
-          STR.depot.routeAuto,
-          () => {
-            this.customRoute = false;
-            this.dynamicRoute = false;
-            this.renderRoute();
-          },
-          `small ${this.customRoute || this.dynamicRoute ? '' : 'active'}`,
-        ),
-        btn(
-          STR.depot.routeCustom,
-          () => {
-            this.customRoute = true;
-            this.dynamicRoute = false;
-            this.renderRoute();
-          },
-          `small ${this.customRoute && !this.dynamicRoute ? 'active' : ''}`,
-        ),
-        btn(
-          STR.depot.routeDynamic,
-          () => {
-            this.dynamicRoute = true;
-            this.customRoute = false;
-            this.renderRoute();
-          },
-          `small ${this.dynamicRoute ? 'active' : ''}`,
-        ),
-      ),
-    );
-    if (this.dynamicRoute) {
-      c.append(el('div', { class: 'dim', text: STR.depot.routeDynamicHint }));
-    } else if (!this.customRoute) {
+    const groups: [string, (typeof this.routeMode)[]][] = [
+      [STR.depot.groupStatic, ['auto', 'custom']],
+      [STR.depot.groupDynamic, ['production', 'collection', 'transport']],
+    ];
+    for (const [label, modes] of groups) {
+      const row = el('div', { class: 'row', style: 'margin:0 0 4px 0' });
+      row.append(el('span', { class: 'dim', style: 'min-width:60px', text: label }));
+      for (const m of modes)
+        row.append(
+          btn(
+            STR.depot.routeMode[m],
+            () => {
+              this.routeMode = m;
+              this.renderRoute();
+            },
+            `small ${this.routeMode === m ? 'active' : ''}`,
+          ),
+        );
+      c.append(row);
+    }
+    c.append(el('div', { class: 'dim', text: STR.depot.routeHint[this.routeMode] }));
+    if (
+      this.routeMode === 'production' ||
+      this.routeMode === 'collection' ||
+      this.routeMode === 'transport'
+    ) {
+      // nothing more to set up
+    } else if (this.routeMode === 'auto') {
       c.append(
-        el('div', { class: 'dim', text: STR.depot.routeAutoHint }),
         el('div', {
           class: 'sub',
           style: 'margin-top:6px',
@@ -336,6 +327,25 @@ export class DepotScreen implements Screen {
     }
     const f = this.foot;
     f.innerHTML = '';
+    const depots = this.builder.depots();
+    if (depots.length > 1) {
+      if (this.depotId === null || !depots.some((d) => d.id === this.depotId))
+        this.depotId = depots[0].id;
+      const row = el('div', { class: 'row', style: 'margin:0 0 6px 0' });
+      row.append(el('span', { class: 'dim', text: STR.depot.from }));
+      for (const d of depots)
+        row.append(
+          btn(
+            d.name,
+            () => {
+              this.depotId = d.id;
+              this.renderRoute();
+            },
+            `small ${this.depotId === d.id ? 'active' : ''}`,
+          ),
+        );
+      f.append(row);
+    }
     f.append(
       this.nameInput,
       btn(
@@ -344,9 +354,10 @@ export class DepotScreen implements Screen {
           const res = this.fleet.create(
             this.locoUids,
             this.wagonUids,
-            this.customRoute ? this.schedule : [],
+            this.routeMode === 'custom' ? this.schedule : [],
             this.nameInput.value.trim() || undefined,
-            this.dynamicRoute,
+            this.routeMode === 'auto' || this.routeMode === 'custom' ? 'schedule' : this.routeMode,
+            this.depotId,
           );
           if (typeof res === 'string') this.toast(res, 'warn');
           else {

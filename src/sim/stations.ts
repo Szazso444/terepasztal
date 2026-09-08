@@ -28,6 +28,8 @@ export interface StationJSON {
   level: number;
   storage: Record<string, number>;
   market?: Record<string, number>;
+  /** v7: orientation of multi-tile stations (depot gates: 0 = west/east, 1 = north/south) */
+  rot?: number;
 }
 
 let nextId = 1;
@@ -93,6 +95,8 @@ export class Station {
   get refuelsWater() {
     return !!this.def.water || this.waterSupply || this.producedCargo().includes('water');
   }
+  /** orientation of a multi-tile station (depot: 0 = gates west and east, 1 = north and south) */
+  rot = 0;
   constructor(
     defId: string,
     public x: number,
@@ -105,14 +109,97 @@ export class Station {
     if (id !== undefined) nextId = Math.max(nextId, id + 1);
     this.name = name ?? this.def.name;
   }
+  /** footprint side in tiles */
+  get size() {
+    return this.def.size ?? 1;
+  }
+  /** every tile the station stands on (x, y is the top-left corner) */
+  footprint(): { x: number; y: number }[] {
+    const out: { x: number; y: number }[] = [];
+    for (let dy = 0; dy < this.size; dy++)
+      for (let dx = 0; dx < this.size; dx++) out.push({ x: this.x + dx, y: this.y + dy });
+    return out;
+  }
+  covers(x: number, y: number) {
+    return x >= this.x && y >= this.y && x < this.x + this.size && y < this.y + this.size;
+  }
+  /** centre of the footprint in tile units */
+  get cx() {
+    return this.x + (this.size - 1) / 2;
+  }
+  get cy() {
+    return this.y + (this.size - 1) / 2;
+  }
+  /**
+   * Tiles where track may serve the station: every orthogonal neighbour of a one-tile station;
+   * a depot only has its four gates, two on each of the sides its orientation selects.
+   */
+  gateTiles(): { x: number; y: number }[] {
+    if (this.def.depot && this.size === 2) {
+      return this.rot % 2 === 0
+        ? [
+            { x: this.x - 1, y: this.y },
+            { x: this.x - 1, y: this.y + 1 },
+            { x: this.x + 2, y: this.y },
+            { x: this.x + 2, y: this.y + 1 },
+          ]
+        : [
+            { x: this.x, y: this.y - 1 },
+            { x: this.x + 1, y: this.y - 1 },
+            { x: this.x, y: this.y + 2 },
+            { x: this.x + 1, y: this.y + 2 },
+          ];
+    }
+    const out: { x: number; y: number }[] = [];
+    for (const t of this.footprint()) {
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nx = t.x + dx;
+        const ny = t.y + dy;
+        if (!this.covers(nx, ny) && !out.some((o) => o.x === nx && o.y === ny))
+          out.push({ x: nx, y: ny });
+      }
+    }
+    return out;
+  }
+  /** Chebyshev distance from the footprint to a tile. */
+  distTo(x: number, y: number) {
+    const dx = Math.max(this.x - x, 0, x - (this.x + this.size - 1));
+    const dy = Math.max(this.y - y, 0, y - (this.y + this.size - 1));
+    return Math.max(dx, dy);
+  }
+  /** Storage: produced goods for pickup; a warehouse holds whatever trains bring, per level. */
   get capacity() {
+    if (this.def.stockpile) return Math.round(rules.warehouseCap * this.level);
     return Math.round(LEVELS.capacity[this.level - 1] * rules.capacityMul);
   }
   get loadRate() {
     return LEVELS.loadRate[this.level - 1];
   }
   get platforms() {
+    if (this.def.depot) return 2;
     return LEVELS.platforms[this.level - 1];
+  }
+  /** Goods trains may take from here: what it makes, plus a warehouse's stored kinds. */
+  availableCargo(): string[] {
+    const out = this.producedCargo();
+    if (this.def.stockpile)
+      for (const [c, v] of this.storage) if (v >= 1 && !out.includes(c)) out.push(c);
+    return out;
+  }
+  /** Room a warehouse has for more goods. */
+  get room() {
+    return Math.max(0, this.capacity - this.totalStored());
+  }
+  /** Put goods into a warehouse's store; returns what fitted. */
+  store(cargo: string, amount: number): number {
+    const n = Math.max(0, Math.min(amount, this.room));
+    if (n > 0) this.storage.set(cargo, this.stored(cargo) + n);
+    return n;
   }
   /** nearby-resource multiplier, set when placed and after terrain edits */
   terrainFactor = 1;
@@ -147,8 +234,10 @@ export class Station {
   /** Take up to `amount` units of cargo out of storage; returns what was taken. */
   take(cargo: string, amount: number): number {
     const have = this.stored(cargo);
-    const n = Math.min(have, amount);
-    this.storage.set(cargo, have - n);
+    const n = Math.max(0, Math.min(have, amount));
+    if (n <= 0) return 0;
+    if (have - n < 1e-9) this.storage.delete(cargo);
+    else this.storage.set(cargo, have - n);
     return n;
   }
   hasFreePlatform() {
@@ -195,11 +284,13 @@ export class Station {
       level: this.level,
       storage: Object.fromEntries(this.storage),
       market: Object.fromEntries(this.market),
+      rot: this.rot,
     };
   }
   static fromJSON(j: StationJSON): Station {
     const s = new Station(j.defId, j.x, j.y, j.name, j.id);
     s.level = j.level;
+    s.rot = j.rot ?? 0;
     s.storage = new Map(Object.entries(j.storage));
     s.market = new Map(Object.entries(j.market ?? {}));
     return s;

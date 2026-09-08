@@ -207,32 +207,98 @@ function stationL3(): PixelBuf {
   return b;
 }
 
-function depot(): PixelBuf {
-  const b = new PixelBuf(W, H);
-  // engine shed: long brick prism with a wide arch door on the +x face
+/** Two-tile engine shed: gates on the ±x faces (rot 0) or the ±y faces (rot 1). */
+const DW = 176;
+const DH = 132;
+const DOX = 88;
+const DOY = 100;
+function depot2(rot: number): PixelBuf {
+  const b = new PixelBuf(DW, DH);
+  const along = rot % 2 === 0; // shed axis along +x (gates west / east)
+  const P = (tx: number, ty: number, z = 0) => proj(DOX, DOY, tx, ty, z);
+  const px = (p: { x: number; y: number }) => Math.round(p.x);
+  const py = (p: { x: number; y: number }) => Math.round(p.y);
+  // ground: shadow and two rail pairs running through the footprint on the gate axis
+  for (let ty = -1; ty <= 1; ty += 0.02)
+    for (let tx = -1; tx <= 1; tx += 0.02) {
+      const a = along ? tx : ty;
+      const c = along ? ty : tx;
+      const inShed = Math.abs(a) < 0.88 && Math.abs(c) < 0.9;
+      if (inShed) continue;
+      const q = P(tx, ty);
+      const ballast = Math.abs(Math.abs(c) - 0.5) < 0.22;
+      if (ballast) b.set(px(q), py(q), PAL.ballast[(px(q) + py(q)) % PAL.ballast.length]);
+    }
+  for (const lane of [-0.5, 0.5])
+    for (const off of [-0.09, 0.09]) {
+      const c = lane + off;
+      for (const seg of [
+        [-1.0, -0.85],
+        [0.85, 1.0],
+      ]) {
+        const a0 = along ? P(seg[0], c) : P(c, seg[0]);
+        const a1 = along ? P(seg[1], c) : P(c, seg[1]);
+        b.line(px(a0), py(a0), px(a1), py(a1), PAL.railLight);
+        b.line(px(a0), py(a0) + 1, px(a1), py(a1) + 1, PAL.railDark);
+      }
+    }
+  // the shed: long brick prism with a slate roof, ridge along the gate axis
   drawPrism(b, {
-    ox: OX,
-    oy: OY,
+    ox: DOX,
+    oy: DOY,
     cx: 0,
     cy: 0,
-    angle: 0,
-    len: 0.9,
-    wid: 0.62,
-    h: 24,
+    angle: along ? 0 : Math.PI / 2,
+    len: 1.8,
+    wid: 1.7,
+    h: 30,
     top: PAL.roofSlate,
-    side: PAL.rust.map((c) => shade(c, 0.75)),
-    ridge: 8,
+    side: PAL.rust.map((c) => shade(c, 0.78)),
+    ridge: 12,
     roof: PAL.roofSlate,
-    seed: 9,
+    seed: 21,
   });
-  const door = proj(OX, OY, 0.45, 0);
-  const dx = Math.round(door.x);
-  const dy = Math.round(door.y);
-  for (let y = -16; y < 0; y++)
-    b.line(dx - 4, dy + y - 2, dx + 4, dy + y + 2, y > -3 ? PAL.outline : shade(PAL.iron[0], 0.8));
-  drawCylinder(b, OX, OY, -0.3, -0.2, 0.05, 30, 10, PAL.stone, PAL.stone[2], 10);
+  // two arched doors on the visible gate face (+x for rot 0, +y for rot 1)
+  for (const lane of [-0.5, 0.5]) {
+    const d = along ? P(0.9, lane) : P(lane, 0.9);
+    const dx = px(d);
+    const dy = py(d);
+    for (let y = -18; y < 0; y++) {
+      const w = y < -15 ? 3 + (y + 18) : 5;
+      const col = y > -3 ? PAL.outline : shade(PAL.iron[0], 0.65);
+      // door face follows the wall slope: +x face rises to the right, +y face to the left
+      const sl = along ? 0.5 : -0.5;
+      b.line(dx - w, dy + y + Math.round(-w * sl), dx + w, dy + y + Math.round(w * sl), col);
+    }
+    b.set(dx, dy - 17, PAL.amber);
+  }
+  // roof vents and a brick chimney at the back corner
+  for (const t of [-0.35, 0, 0.35]) {
+    const v = along ? P(t, -0.2, 44) : P(-0.2, t, 44);
+    b.rect(px(v) - 2, py(v) - 3, 4, 3, PAL.iron[1]);
+  }
+  const ch = P(-0.6, -0.6, 40);
+  b.rect(px(ch) - 2, py(ch) - 10, 4, 10, PAL.rust[2]);
+  b.rect(px(ch) - 3, py(ch) - 11, 6, 2, PAL.rust[0]);
+  // water crane and coal stage beside the near gates
+  const cr = along ? P(0.95, -0.95) : P(-0.95, 0.95);
+  b.rect(px(cr) - 1, py(cr) - 22, 2, 22, PAL.iron[2]);
+  b.rect(px(cr) - 1, py(cr) - 22, 8, 2, PAL.iron[1]);
+  b.set(px(cr) + 6, py(cr) - 19, PAL.cyan);
+  drawCylinder(
+    b,
+    DOX,
+    DOY,
+    along ? 0.95 : -0.95,
+    along ? 0.95 : -0.95,
+    0.16,
+    8,
+    8,
+    PAL.stone,
+    PAL.stone[2],
+    12,
+  );
   b.outline(PAL.outline, 170);
-  ground(b, [shadowRect(0, 0, 0.9, 0.62, 80)]);
   return b;
 }
 
@@ -303,7 +369,8 @@ export function generateStructuresAtlas(): AtlasImage {
   ab.add('structures/station_1', stationL1().toImageData(), OX, OY);
   ab.add('structures/station_2', stationL2().toImageData(), OX, OY);
   ab.add('structures/station_3', stationL3().toImageData(), OX, OY);
-  ab.add('structures/depot', depot().toImageData(), OX, OY);
+  for (const r of [0, 1]) ab.add(`structures/depot_r${r}`, depot2(r).toImageData(), DOX, DOY);
+  ab.add('structures/depot_1', depot2(0).toImageData(), DOX, DOY);
   ab.add('structures/signal', signal('off').toImageData(), 6, 27);
   ab.add('structures/signal_red', signal('red').toImageData(), 6, 27);
   ab.add('structures/signal_green', signal('green').toImageData(), 6, 27);

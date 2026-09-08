@@ -195,3 +195,21 @@ From this version on the per-version record lives in `CHANGELOG.md` (versions �
 - Two trains on a single track with no loop or siding cannot pass; the notice and advisor point at it.
 - Passenger boarding walkers are decorative; the fare is paid on alighting regardless of how many appear.
 - Roads never wear back to grass.
+
+## 11. v0.6.0 — depots, warehouses as stores, towns, route modes
+
+See `CHANGELOG.md`. Highlights: the Depot (two-by-two, four gates, one per nine owned chunks) is the only way into the stockpile and the place trains roll out of; warehouses hold goods locally; Collect routing sweeps producers and warehouses into the nearest depot with a fuel reserve rule; towns found themselves around a town station with a townhouse and a warehouse, get names, colours and a panel; trains can be picked in the field view.
+
+**Known limitations**
+
+- The two gate rows of a depot are separate stubs; connect both or trains only use one side.
+- A town's reach is a fixed seven-tile square around its station; overlapping reaches go to the nearer station.
+
+## 12. v0.7.0 — traffic control, statistics, routing groups
+
+See `CHANGELOG.md`. Highlights: section claims keep single track to one train at a time, holders keep it, followers may enter behind; waiting trains park off the holder's path, idle trains make room or drive to a free platform; stuck detection, deadlock reports and a traffic report; Static Schedule with dwell options and the Dynamic Production / Collection / Transport modes.
+
+**Known limitations**
+
+- A single line with no siding or loop between two busy platforms still queues trains; the notice and the traffic report point at it.
+- Sections are claimed whole, so a very long stretch between switches admits one train per direction at a time.

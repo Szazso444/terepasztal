@@ -11,6 +11,61 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 | v0.3.0  | [#3](https://github.com/Szazso444/terepasztal/pull/3) | `e28519e`                       | Resource economy and stockpile, fuel and water, real locomotives by era, wagon classes, works buildings, power grid, market, train details, new art.                  |
 | v0.4.0  | [#4](https://github.com/Szazso444/terepasztal/pull/4) | `56d9a4c`                       | Chunk purchase, automatic routes, train side panel, building panel, floating indicators, toolbar with categories, power wires, cheat button, pause icon.              |
 | v0.5.0  | [#5](https://github.com/Szazso444/terepasztal/pull/5) | `fe886e2` … `80b6905`           | Traffic handling, biomes and endless world, people and passengers, notices and advisor, dynamic routing (section below).                                              |
+| v0.6.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6) | `3d54b6d`                       | Depot as the only way into the stockpile, warehouses as local stores, Collect routing with fuel reserve, towns, train picking in the field view.                      |
+| v0.7.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6) | see below                       | Section-based traffic control, stuck detection and traffic statistics, Static/Dynamic routing groups (Schedule, Production, Collection, Transport), dwell options.    |
+
+## v0.7.0
+
+### Traffic control
+
+- The track is cut into sections (plain track between switches, crossings, platforms and dead ends). A moving train claims its path ahead, but only whole sections: it never enters single track unless every tile up to the next node is free of other trains' claims, so head-on meetings inside a section no longer happen. First claimant keeps the section; a train following in the same direction may enter behind it. Trains stop short of the first tile they could not claim.
+- A train held before a section whose holder will come out through the tiles it stands on moves aside at once (siding, loop, dead end) instead of waiting nose to nose. Holds never use track another train holds.
+- Trains idling or queueing on the line with someone waiting behind them make room first: they pull aside, or drive to the nearest station with a free platform off the waiting train's path.
+- Jam rings that cannot be resolved are reported as deadlocks (once per minute per ring) instead of silently spinning.
+- A roaming train that picks a stop it cannot reach parks and chooses again; one that took nothing on at its pick looks elsewhere for a minute; one that cannot reach anything with tanks below half heads for the nearest fuel point.
+
+### Stuck detection and statistics
+
+- Every train's blocked time, yields, stuck episodes (no movement for 30 s while trying to move) and tile overlaps are counted. Stuck trains raise a red notice with the wait time. The debug panel (backtick) shows the traffic counters; `game.traffic.report()` in the browser console returns counters, per-train rows and the last 60 episodes; `game.traffic.verbose = true` prints each episode as it happens.
+
+### Routing groups
+
+- **Static — Schedule**: the stop list, in order, exactly as written. Per stop: load, unload, wait for full wagons, refuel, departure direction, and new **minimum** and **maximum dwell** in seconds.
+- **Dynamic — Production**: producers into the nearest warehouse with room (or the depot); biggest loads and fullest piles first, weighed against the way there and on to the dump; never dumps into the store it loaded from; loads only at producers.
+- **Dynamic — Collection**: warehouses into depots; loads only at warehouses.
+- **Dynamic — Transport**: passengers; heads for the town station with the most people waiting and carries them to the nearest other town.
+- Far stations are not neglected: distance counts at half weight in the pick, a producer near its cap gets double pressure, and every station's priority climbs for up to two days since a train last loaded there (towns likewise for transport).
+- All dynamic modes re-plan at every stop, refuel with the reserve rule, and start with the stop they would pick rather than the automatic loop. Reservations by other roaming trains only count while those trains are on the move. Haul estimates respect what the engines can pull.
+- Old saves: `fixed` → Schedule, `dynamic` → Production, `collect` → Collection.
+
+## v0.6.0
+
+### Depot and stockpile
+
+- New two-by-two **Depot** station: four gates, two on each of two opposite sides (R rotates while placing), two trains at a time. Every game starts with one at the middle of the start chunk (gate track laid); older saves get one on load. Further depots are free but unlock one per nine owned chunks.
+- Cargo enters the stockpile only when unloaded at a depot. Each depot raises the stockpile cap (`depotCap`, 3000; base cap raised to 1000). New trains roll out of the depot chosen in the Depot screen, from a gate that connects to their first stop; a train with no such gate is refused with a message.
+- **Warehouses** are local stores: 1000 units per level of any goods in total. Trains unload into them and load out of them again for a depot or a buyer (never for another warehouse). The station panel shows the stored kinds; the overview draws a fill ring around each warehouse and a square for each depot.
+- Chunk prices grow linearly: each ring adds (`chunkCostMul` − 1) × the first-ring price instead of multiplying.
+
+### Routing and fuel
+
+- Three routing modes per train (Depot screen and train details): **Schedule**, **Dynamic** (producer whose cargo the stockpile lacks most) and **Collect** (producer or warehouse with the biggest load waiting, weighed against the way there and on to the nearest depot). Loaded roaming trains go to a contract destination, else the nearest depot. A stop the tanks could not reach and leave again is never picked; a stop that turns out unreachable is remembered for a while and another is chosen.
+- Fuel reserve: a leg starts only when the tanks cover it plus the run from its end to the nearest fuel point (a depot, or a station with both a coaling stage and a water tower in reach); otherwise the train diverts to the best fuel point it can still reach. Tanks fill completely at every refuelling stop; a warehouse refuels from its own store.
+- Loading keeps the train while goods keep coming; waiting for full wagons only happens when the station's output can fill them within the dwell limit (now 120 s). Cargo taken on at a station is never handed back there.
+
+### Towns
+
+- A Town Station must stand 25 tiles from any other. Placing one asks for a name (generated, editable, rename later from the station or town panel). With a Townhouse (new, under Stations: homes for six) and a Warehouse within seven tiles the town is founded: every station inside is renamed "<town> <kind>" and follows renames.
+- Overview: a tinted circle in the town's colour with its name and population (dashed until founded); a Towns panel on the left lists colour, people, what the town makes and uses per day, what it still needs, with Go and Rename.
+- Residents count as population (they eat wheat) and walk about their houses.
+
+### Interface
+
+- Field view: hovering a train flashes it and shows a tooltip; clicking selects it (steady tint, path lit) and the card above the survey map shows its state, next stop, wagons, tanks and buttons for details and locate. Clicking empty ground or a station clears it.
+
+### Save
+
+- Save format v7: station orientation, train routing mode (old `dynamic` flag maps to Dynamic), towns.
 
 ## v0.5.0
 

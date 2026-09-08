@@ -77,6 +77,7 @@ export const STR = {
     depthOverlay: 'Depth-sort overlay',
     zoom: 'Zoom',
     camera: 'Camera',
+    traffic: 'Traffic',
     tile: 'Tile',
     regenerate: 'New map (seed)',
   },
@@ -92,6 +93,8 @@ export const STR = {
     tierLocked: (t: number) => `Requires reputation tier ${t}`,
     badTerrain: 'Cannot build here',
     needTrack: 'Must touch track',
+    depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
+    townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,
     needTrackHere: 'Signals stand on track',
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
@@ -118,6 +121,9 @@ export const STR = {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
       station: 'On a buildable tile with track touching one side; that track becomes the platform.',
+      depot:
+        'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
+      town: 'On a buildable tile with track touching one side, at least 25 tiles from any other town station.',
       onTrack: 'On an existing track tile. R rotates.',
       service: (r: number) => `On a free tile within ${r} tiles of the stations it should serve.`,
       powerLine:
@@ -156,6 +162,7 @@ export const STR = {
     noPower: (n: string) => `${n}: no power on this line`,
     overweight: (n: string) => `${n}: too heavy for its engines`,
     noRoute: (n: string) => `${n}: no route to its next stop`,
+    stuck: (n: string, sec: number) => `${n}: has not moved for ${sec} s`,
     ecoMode: (n: string) => `${n}: low on fuel, crawling to save it`,
     held: (n: string) => `${n}: held by traffic`,
     orphaned: (n: string) => `${n}: no platform track`,
@@ -204,7 +211,7 @@ export const STR = {
       failed: (n: string) =>
         `Contract "${n}" failed. Accept only contracts your trains already pass through, and watch the deadline.`,
       capFull: (r: string) =>
-        `The stockpile is full of ${r}. Upgrade or build a Warehouse to raise the cap, or sell on the Market.`,
+        `The stockpile is full of ${r}. A second depot raises the cap; warehouses hold goods locally; or sell on the Market.`,
       blocked: (n: string) =>
         `${n} is stuck behind another train. Add a passing loop with switches or a second track.`,
     },
@@ -237,11 +244,30 @@ export const STR = {
     routeAuto: 'Automatic route',
     routeCustom: 'Custom route',
     routeDynamic: 'Dynamic',
-    routeDynamicHint:
-      'The train picks its next stop on the fly: the producing station whose cargo the stockpile lacks most, then the nearest warehouse. It keeps clear of stations other dynamic trains are bound for and detours around oncoming traffic.',
+    from: 'Roll out of',
+    groupStatic: 'Static',
+    groupDynamic: 'Dynamic',
+    routeMode: {
+      auto: 'Schedule (auto)',
+      custom: 'Schedule (custom)',
+      production: 'Production',
+      collection: 'Collection',
+      transport: 'Transport',
+    } as Record<string, string>,
+    routeHint: {
+      auto: 'Static: visits every station with platform track, nearest first, and empties into the depot. Edit stops, dwell times and conditions later in the train details.',
+      custom:
+        'Static: your stop list, in order. Per stop: what to load and unload, wait for full wagons, minimum and maximum dwell, refuel, departure direction. The train never changes the plan by itself.',
+      production:
+        'Dynamic: maximises what it hauls. Heads for the producer with the biggest load waiting (fuller piles first), dumps into the nearest warehouse with room, or the depot. Re-plans at every stop, refuels on its own and detours around traffic.',
+      collection:
+        'Dynamic: empties warehouses into depots. Picks the warehouse with the most goods, weighed against the way there and on to the depot. Re-plans at every stop and refuels on its own.',
+      transport:
+        'Dynamic: carries passengers. Heads for the town station with the most people waiting and takes them to the nearest other town. Needs coaches. Re-plans at every stop and refuels on its own.',
+    } as Record<string, string>,
     dynamicTag: 'dynamic',
     routeAutoHint:
-      'The train visits every station with platform track, nearest first. Change stops later in the train details.',
+      'The train visits every station with platform track, nearest first, and empties into the depot. Change stops later in the train details.',
     locate: 'Locate',
     editRoute: 'Route',
     recall: 'Recall',
@@ -279,13 +305,15 @@ export const STR = {
     opt: {
       loadAuto: 'Load: auto',
       loadNone: 'Load: nothing',
-      unloadAuto: 'Unload: warehouse',
+      unloadAuto: 'Unload: depot / warehouse / buyer',
       unloadAll: 'Unload: all',
       unloadNone: 'Unload: nothing',
       departAuto: 'Depart: auto',
       departForward: 'Depart: forward',
       departReverse: 'Depart: reverse',
       waitFull: 'Wait full',
+      minDwell: 'Stay at least (s)',
+      maxDwell: 'Leave after (s)',
       refuel: 'Refuel',
       pass: 'Pass through',
       plain: 'stop, load, unload',
@@ -549,9 +577,20 @@ export const STR = {
     range: 'Range on current tanks',
     tiles: 'tiles',
     prefer: 'Steam fuel:',
-    dynamic: 'Dynamic routing',
-    dynamicOn: 'On',
-    dynamicOff: 'Off',
+    routing: 'Routing',
+    clickHint: 'Click to select',
+    mode: {
+      schedule: 'Schedule',
+      production: 'Production',
+      collection: 'Collection',
+      transport: 'Transport',
+    } as Record<string, string>,
+    modeHint: {
+      schedule: 'Static: follows the stop list below exactly.',
+      production: 'Dynamic: producers → nearest warehouse or depot, biggest loads first.',
+      collection: 'Dynamic: warehouses → depots.',
+      transport: 'Dynamic: passengers between town stations.',
+    } as Record<string, string>,
     coal: 'Coal',
     wood: 'Wood',
     lastLoop: 'Last loop',
@@ -577,7 +616,7 @@ export const STR = {
     buy: 'Buy',
     sell: 'Sell',
     full: 'Stockpile is full',
-    hint: 'Prices are fixed per unit. Warehouses raise the stockpile cap.',
+    hint: 'Prices are fixed per unit. Each depot raises the stockpile cap.',
   },
   res: {
     power: 'Power (battery)',
@@ -606,6 +645,11 @@ export const STR = {
     } as Record<string, string>,
   },
   fleet: {
+    noDepot: 'Build a depot first: trains roll out of one',
+    depotBusy: (n: string) => `Every gate at ${n} has a train on it`,
+    depotNoGate: (n: string) => `${n} has no track at its gates`,
+    depotNoRoute: (d: string, s: string) =>
+      `No free gate at ${d} connects to ${s}. Lay track from a gate, or wait for a gate to clear.`,
     needLoco: 'A train needs at least one locomotive',
     tooManyLocos: (n: number) => `At most ${n} locomotives`,
     tooManyWagons: (n: number) => `At most ${n} wagons`,
@@ -628,7 +672,28 @@ export const STR = {
     cheat: 'Cheat',
     cheated: '+$10,000 and every resource topped up',
   },
+  town: {
+    title: 'Towns',
+    none: 'No towns yet. Place a town station, then a townhouse and a warehouse within 7 tiles of it.',
+    people: 'people',
+    summary: (st: number, works: number, houses: number) =>
+      `${st} station${st === 1 ? '' : 's'}, ${works} works, ${houses} house${houses === 1 ? '' : 's'}`,
+    needs: (house: boolean, wh: boolean) =>
+      `Not founded yet: needs ${[house ? 'a townhouse' : '', wh ? 'a warehouse' : ''].filter(Boolean).join(' and ')} within 7 tiles`,
+    makes: 'Makes / day',
+    uses: 'Uses / day',
+    go: 'Go',
+    rename: 'Rename',
+    namePrompt: 'Name the town',
+    nameHint:
+      'Every station inside the town carries this name. Change it any time from the town panel.',
+    renamed: (n: string) => `Town renamed to ${n}`,
+    founded: (n: string) => `${n} is a town now`,
+  },
   station: {
+    depotName: 'Depot',
+    renameTown: 'Rename town',
+    town: 'Town',
     level: (l: number) => `Level ${l}`,
     biome: 'Biome',
     ground: 'Nearby resource',

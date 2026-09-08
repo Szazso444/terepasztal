@@ -33,8 +33,10 @@ export interface Rules {
   forestDensity: number;
   wheatPerCrew: number;
   stockpileCap: number;
-  /** stockpile cap added per warehouse level */
+  /** units a warehouse holds per level (any goods, in total) */
   warehouseCap: number;
+  /** stockpile cap added per depot */
+  depotCap: number;
   powerCap: number;
   /** price of the first ring of chunks around the start; each ring further multiplies it */
   chunkCost: number;
@@ -83,8 +85,9 @@ export const DEFAULT_RULES: Rules = {
   rockLevel: 0.76,
   forestDensity: 0.56,
   wheatPerCrew: 0.5,
-  stockpileCap: 400,
+  stockpileCap: 1000,
   warehouseCap: 1000,
+  depotCap: 3000,
   powerCap: 100,
   chunkCost: 12000,
   chunkCostMul: 1.6,
@@ -141,11 +144,19 @@ export const RULE_META: RuleMeta[] = [
   { key: 'stockpileCap', label: 'Stockpile cap', group: 'Economy', min: 50, max: 5000, step: 50 },
   {
     key: 'warehouseCap',
-    label: 'Cap per warehouse level',
+    label: 'Warehouse store per level',
     group: 'Economy',
     min: 0,
     max: 5000,
     step: 100,
+  },
+  {
+    key: 'depotCap',
+    label: 'Stockpile cap per depot',
+    group: 'Economy',
+    min: 0,
+    max: 20000,
+    step: 250,
   },
   {
     key: 'chunkCost',
@@ -157,7 +168,7 @@ export const RULE_META: RuleMeta[] = [
   },
   {
     key: 'chunkCostMul',
-    label: 'Chunk price growth per ring',
+    label: 'Chunk price added per ring (×first)',
     group: 'Economy',
     min: 1,
     max: 4,

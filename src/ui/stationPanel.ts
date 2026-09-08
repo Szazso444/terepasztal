@@ -8,6 +8,7 @@ import type { ContractBoard } from '../sim/contracts';
 import type { GameClock } from '../sim/time';
 import { fmtDuration } from './contractsScreen';
 import { biomeSummary, biomeAt } from '../sim/biomes';
+import type { TownRegistry, Town } from '../sim/towns';
 
 /** Side panel for a selected station. */
 export class StationPanel {
@@ -21,6 +22,8 @@ export class StationPanel {
     private readonly onClose: () => void,
     private readonly board: ContractBoard,
     private readonly clock: GameClock,
+    private readonly towns: TownRegistry,
+    private readonly onRenameTown: (t: Town) => void,
   ) {
     this.root = el(
       'div',
@@ -62,6 +65,8 @@ export class StationPanel {
       );
     b.append(el('div', { class: 'flavor', text: s.def.flavor }));
     b.append(row(STR.station.level(s.level), `${s.def.name}`));
+    const town = this.towns.townOfStation(s);
+    if (town) b.append(row(STR.station.town, town.name));
     b.append(row(STR.station.biome, biomeSummary(biomeAt(this.builder.map, s.x, s.y))));
     if (s.def.terrain) b.append(row(STR.station.ground, `×${s.terrainFactor.toFixed(2)}`));
     const produced =
@@ -75,9 +80,10 @@ export class StationPanel {
     );
     b.append(row(STR.station.platforms, `${s.occupants.size} / ${s.platforms}`));
     b.append(row(STR.station.loadRate, STR.station.perSec(s.loadRate)));
-    b.append(row(STR.station.storage, `${Math.floor(s.totalStored())} / ${s.capacity}`));
+    if (!s.def.depot)
+      b.append(row(STR.station.storage, `${Math.floor(s.totalStored())} / ${s.capacity}`));
     const bars = el('div', { class: 'bars' });
-    for (const c of s.producedCargo()) {
+    for (const c of s.availableCargo()) {
       const v = s.stored(c);
       const bar = el(
         'div',
@@ -186,17 +192,19 @@ export class StationPanel {
       el(
         'div',
         { class: 'row' },
-        btn(
-          STR.station.rename,
-          () => {
-            const n = prompt(STR.station.rename, s.name);
-            if (n && n.trim()) {
-              s.name = n.trim().slice(0, 24);
-              this.render();
-            }
-          },
-          'small',
-        ),
+        s.def.id === 'town' && town
+          ? btn(STR.station.renameTown, () => this.onRenameTown(town), 'small')
+          : btn(
+              STR.station.rename,
+              () => {
+                const n = prompt(STR.station.rename, s.name);
+                if (n && n.trim()) {
+                  s.name = n.trim().slice(0, 24);
+                  this.render();
+                }
+              },
+              'small',
+            ),
         btn(
           STR.station.demolish,
           () => {

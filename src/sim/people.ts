@@ -118,7 +118,7 @@ export class PeopleSim {
       if (buildingDef(b.id).crew > 0)
         out.push({ x: b.x, y: b.y, key: `b${b.x},${b.y}`, gathers: null });
     for (const d of this.builder.decor.values())
-      if (decorDef(d.id).crew > 0)
+      if (decorDef(d.id).crew > 0 || decorDef(d.id).residents)
         out.push({ x: d.x, y: d.y, key: `d${d.x},${d.y}`, gathers: null });
     return out;
   }

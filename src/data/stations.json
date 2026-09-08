@@ -1,61 +1,13 @@
 {
   "levels": {
-    "capacity": [
-      60,
-      120,
-      200,
-      320,
-      500
-    ],
-    "loadRate": [
-      4,
-      6,
-      9,
-      13,
-      18
-    ],
-    "platforms": [
-      1,
-      1,
-      2,
-      2,
-      3
-    ],
-    "production": [
-      30,
-      50,
-      80,
-      120,
-      170
-    ],
-    "upgradeCostMul": [
-      0,
-      0.8,
-      1.2,
-      1.8,
-      2.6
-    ],
-    "spriteByLevel": [
-      1,
-      1,
-      2,
-      2,
-      3
-    ],
-    "maxLevelByTier": [
-      2,
-      3,
-      4,
-      5,
-      5
-    ],
-    "crew": [
-      2,
-      3,
-      5,
-      8,
-      12
-    ]
+    "capacity": [60, 120, 200, 320, 500],
+    "loadRate": [4, 6, 9, 13, 18],
+    "platforms": [1, 1, 2, 2, 3],
+    "production": [30, 50, 80, 120, 170],
+    "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6],
+    "spriteByLevel": [1, 1, 2, 2, 3],
+    "maxLevelByTier": [2, 3, 4, 5, 5],
+    "crew": [2, 3, 5, 8, 12]
   },
   "defs": [
     {
@@ -138,7 +90,7 @@
     {
       "id": "town",
       "name": "Town Station",
-      "flavor": "People live here. Passengers board for other towns and pay on arrival; contract cargo is delivered here.",
+      "flavor": "Passengers board and alight here. Placed at least 25 tiles from any other town station; with a townhouse and a warehouse nearby it founds a town.",
       "cost": {
         "wood": 50,
         "stone": 40
@@ -150,39 +102,38 @@
           "level": 1
         }
       ],
-      "accepts": [
-        "water",
-        "wheat",
-        "stone",
-        "wood",
-        "coal",
-        "oil",
-        "iron",
-        "passengers"
-      ],
+      "accepts": ["water", "wheat", "stone", "wood", "coal", "oil", "iron", "passengers"],
       "art": "town"
     },
     {
       "id": "warehouse",
       "name": "Warehouse",
-      "flavor": "Raises the stockpile cap and fills fuel and water tanks completely.",
+      "flavor": "Local store: holds 1000 units per level of anything trains bring. Trains take goods out again; only a Depot feeds the stockpile.",
       "cost": {
         "wood": 60,
         "stone": 30
       },
       "tier": 0,
       "produces": [],
-      "accepts": [
-        "water",
-        "wheat",
-        "stone",
-        "wood",
-        "coal",
-        "oil",
-        "iron"
-      ],
+      "accepts": ["water", "wheat", "stone", "wood", "coal", "oil", "iron"],
       "art": "warehouse",
       "stockpile": true,
+      "fuel": true,
+      "water": true,
+      "contracts": false
+    },
+    {
+      "id": "depot",
+      "name": "Depot",
+      "flavor": "Two-track engine shed with four gates. Trains built here roll out of it, and cargo unloaded at a gate enters the stockpile. The only way in.",
+      "cost": {},
+      "tier": 0,
+      "produces": [],
+      "accepts": ["water", "wheat", "stone", "wood", "coal", "oil", "iron"],
+      "art": "depot",
+      "size": 2,
+      "pool": true,
+      "depot": true,
       "fuel": true,
       "water": true,
       "contracts": false

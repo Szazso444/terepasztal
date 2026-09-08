@@ -4,13 +4,14 @@ import type { MapGenParams } from '../world/mapgen';
 import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
 import type { LevelData } from '../world/level';
 import type { Rules } from './rules';
+import type { TownJSON } from './towns';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -46,6 +47,8 @@ export interface SaveGame {
   regions?: boolean[];
   /** v6: season of day 1 (0 spring .. 3 winter) */
   seasonOffset?: number;
+  /** v7: towns (names, colours) keyed by their town station */
+  towns?: TownJSON[];
 }
 
 export interface Settings {
@@ -102,6 +105,7 @@ function migrate(j: SaveGame): SaveGame {
   }
   if (j.version < 5) j.version = 5;
   if (j.version < 6) j.version = 6;
+  if (j.version < 7) j.version = 7;
   return j;
 }
 

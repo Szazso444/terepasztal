@@ -9,7 +9,7 @@ export const RESOURCE_IDS: string[] = [
 ];
 
 /**
- * The player's global stockpile. Fed by deliveries to warehouses and by processing buildings;
+ * The player's global stockpile. Fed by trains unloading at a depot and by processing buildings;
  * drained by construction, upkeep (wheat per crew member) and refuelling.
  */
 export class Stockpile {
@@ -24,10 +24,10 @@ export class Stockpile {
   get(id: string) {
     return this.amounts.get(id) ?? 0;
   }
-  /** Storage cap per resource; warehouses raise it, power has its own battery cap. */
-  cap(id: string, warehouseLevels: number, plants: number) {
+  /** Storage cap per resource; each depot raises it, power has its own battery cap. */
+  cap(id: string, depots: number, plants: number) {
     if (id === 'power') return rules.powerCap + plants * 100;
-    return rules.stockpileCap + warehouseLevels * rules.warehouseCap;
+    return rules.stockpileCap + depots * rules.depotCap;
   }
   /** Add up to the cap; returns the amount actually stored. */
   add(id: string, amount: number, cap = Infinity) {
