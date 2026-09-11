@@ -16,6 +16,19 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 
 ## v0.7.0
 
+### Trade and contracts
+
+- **Standing trade deals** (Market): buy or sell a set amount of any resource every trade cycle (`tradeCycleDays`, 2 days), settled automatically at a slightly better rate than the spot market. Buying stops at the stockpile cap or when funds run out; selling takes what is on hand. The table shows money per cycle and the next settlement; deals are saved.
+- Contract offers are accepted automatically (Settings → "Accept contract offers automatically", on by default).
+
+### Named saves
+
+- Settings → Saves: type a name and press Save as; the list shows every named save with day, format version and date, with Load and Delete. The single autosave slot stays as it was.
+
+### Roaming trains
+
+- A production or collection train with room left tops up at another source of the same goods before dumping, unless a dump is nearer or lies on the way to that source. A collection train leaves a warehouse alone until it holds `collectMin` (100) of a resource, then the fuller the pile the sooner it comes.
+
 ### Saves and versioning
 
 - Save format v8. Every save carries its format version; loading never refuses on version. Older saves run through a **migration registry**: a chain of small version-to-version steps, each naming what it fills in with defaults. Newer saves load as they are. Either way the game shows a warning toast, a notice and a line in Settings naming the mismatch and what was defaulted; saving writes the current format.

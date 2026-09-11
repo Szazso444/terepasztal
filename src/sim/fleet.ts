@@ -21,7 +21,7 @@ import type { Station } from './stations';
 import { sfx } from '../engine/audio';
 import { STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
-import { daySeconds } from './rules';
+import { rules, daySeconds } from './rules';
 import { Traffic } from './traffic';
 
 export const MAX_WAGONS = 16;
@@ -408,6 +408,8 @@ export class Fleet {
         )
       );
     };
+    const taken = this.dynamicTargets(t.id);
+    const trainCap = t.wagons.reduce((a, w) => a + w.def.capacity * levelMul(w.level), 0) || 1;
     const loaded = t.wagons.filter((w) => w.cargo && w.amount > 0);
     if (loaded.length) {
       for (const w of loaded) {
@@ -429,10 +431,44 @@ export class Fleet {
         );
       }
       const units = loaded.reduce((a, w) => a + w.amount, 0);
-      return dumpFor(head, units)?.id ?? null;
+      const dump = dumpFor(head, units);
+      // room left for the kinds already aboard (and empty wagons): top up at another source
+      // before dumping, unless a dump is nearer or lies on the way there
+      const kinds = new Set(loaded.map((w) => w.cargo!));
+      const spare = Math.max(0, t.power - t.weight);
+      let room = 0;
+      for (const w of t.wagons) {
+        const cap = w.def.capacity * levelMul(w.level);
+        if (w.cargo) room += Math.max(0, cap - w.amount);
+        else if ([...kinds].some((c) => (w.def.accepts ?? []).includes(c))) room += cap;
+      }
+      const roomFrac = room / Math.max(1, trainCap);
+      if (roomFrac > 0.15 && spare > 1) {
+        let best: { s: Station; score: number } | null = null;
+        for (const s of withPlat) {
+          if (s.def.pool || !ok(s) || taken.has(s.id) || !reachable(s)) continue;
+          if (t.mode === 'collection' ? !s.def.stockpile : s.def.stockpile) continue;
+          let top = 0;
+          for (const c of kinds) {
+            if (!s.availableCargo().includes(c)) continue;
+            top = Math.max(top, Math.min(room, s.stored(c), spare / cargoDef(c).weight));
+          }
+          // worth a detour only for a real share of the room left
+          if (top < Math.max(4, room * 0.25)) continue;
+          if (t.mode === 'collection' && top < rules.collectMin * 0.5) continue;
+          const sc = top / (12 + 0.5 * dist(s));
+          if (!best || sc > best.score) best = { s, score: sc };
+        }
+        if (best) {
+          const dDump = dump ? dist(dump) : Infinity;
+          const dSrc = dist(best.s);
+          const viaDump = dump ? dist(dump) + between(dump, best.s) : Infinity;
+          const dumpFirst = dDump <= dSrc || viaDump <= dSrc * 1.15;
+          if (!dumpFirst) return best.s.id;
+        }
+      }
+      return dump?.id ?? null;
     }
-    const taken = this.dynamicTargets(t.id);
-    const trainCap = t.wagons.reduce((a, w) => a + w.def.capacity, 0) || 1;
     let best: { id: number; score: number } | null = null;
     for (const s of withPlat) {
       if (taken.has(s.id) || s.def.pool || !ok(s)) continue;
@@ -450,12 +486,20 @@ export class Fleet {
         if (t.mode === 'collection' ? !s.def.stockpile : s.def.stockpile) continue;
         let haul = 0;
         const spare = Math.max(0, t.power - t.weight);
+        let ripe = 1;
         for (const c of s.availableCargo()) {
           if (cargoDef(c).class === 'people') continue;
           // what the wagons hold and the engines can pull
           const cap = Math.min(Fleet.capacityFor(t, c), spare / cargoDef(c).weight);
           if (cap < 1) continue;
-          haul = Math.max(haul, Math.min(cap, s.stored(c)) + 0.25 * s.stored(c));
+          const stored = s.stored(c);
+          // a collection train lets a warehouse accumulate: nothing below the threshold, and
+          // an ever stronger pull as the pile grows past it
+          if (t.mode === 'collection') {
+            if (stored < rules.collectMin) continue;
+            ripe = Math.max(ripe, 1 + (stored - rules.collectMin) / rules.collectMin);
+          }
+          haul = Math.max(haul, Math.min(cap, stored) + 0.25 * stored);
         }
         // a producer that is filling up counts even before the pile is big
         if (t.mode === 'production' && haul > 0 && haul < trainCap * 0.15 && s.productionPerDay > 0)
@@ -467,7 +511,7 @@ export class Fleet {
         // a producer near its cap is throwing output away; distance counts at half weight so a
         // full pile far away beats a thin one next door; stations left alone climb in priority
         const fill = s.totalStored() / Math.max(1, s.capacity);
-        const pressure = s.def.stockpile ? 1 : 1 + fill + (fill >= 0.8 ? 1 : 0);
+        const pressure = s.def.stockpile ? ripe : 1 + fill + (fill >= 0.8 ? 1 : 0);
         score =
           (pressure * this.neglect(s.id, now) * haul) / trainCap / (12 + 0.5 * (dist(s) + onward));
       }
