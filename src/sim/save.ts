@@ -11,7 +11,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -49,6 +49,14 @@ export interface SaveGame {
   seasonOffset?: number;
   /** v7: towns (names, colours) keyed by their town station */
   towns?: TownJSON[];
+  /** v8: player settings travel with an exported save */
+  settings?: Settings;
+  /** set on load when the file was written by another format version (not persisted) */
+  loadedFrom?: number;
+  /** what the migration steps filled in (not persisted) */
+  migrationNotes?: string[];
+  /** anything a newer or unknown build wrote is kept and written back */
+  [extra: string]: unknown;
 }
 
 export interface Settings {
@@ -77,35 +85,111 @@ export const DEFAULT_SETTINGS: Settings = {
   advisor: true,
 };
 
+/** One step of the migration chain: brings a save from `from` to `from + 1`. */
+export interface Migration {
+  from: number;
+  /** what the step fills in with defaults, shown to the player */
+  note: string;
+  run(j: SaveGame): void;
+}
+/**
+ * Registry of version-to-version upgrades, run in order. Each step only knows the shape it
+ * upgrades from; adding a format version means adding one entry here.
+ */
+export const MIGRATIONS: Migration[] = [
+  {
+    from: 1,
+    note: 'services and signals list started empty',
+    run: (j) => (j.decor = j.decor ?? []),
+  },
+  {
+    from: 2,
+    note: 'world description rebuilt from the seed with default map parameters',
+    run: (j) =>
+      (j.world = j.world ?? {
+        kind: 'generated',
+        seed: j.seed,
+        params: { ...DEFAULT_MAP_PARAMS },
+      }),
+  },
+  {
+    from: 3,
+    note: 'works buildings list started empty',
+    run: (j) => (j.buildings = j.buildings ?? []),
+  },
+  { from: 4, note: 'owned chunks reduced to the start chunk', run: () => {} },
+  { from: 5, note: 'season of day 1 set to spring', run: () => {} },
+  {
+    from: 6,
+    note: 'towns started empty, station orientation 0, routing modes mapped to the new names, a depot placed at the start',
+    run: () => {},
+  },
+  { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
+];
+/** Fields the current build reads; everything else is carried through untouched. */
+export const KNOWN_SAVE_KEYS = new Set<string>([
+  'version',
+  'savedAt',
+  'seed',
+  'clock',
+  'economy',
+  'track',
+  'stations',
+  'trains',
+  'contracts',
+  'inventory',
+  'gacha',
+  'camera',
+  'lastDay',
+  'decor',
+  'weather',
+  'world',
+  'rules',
+  'stockpile',
+  'buildings',
+  'regions',
+  'seasonOffset',
+  'towns',
+  'settings',
+  'loadedFrom',
+  'migrationNotes',
+]);
+
+/** Parse and migrate a save text. Never refuses on version: older saves are upgraded step by step, newer ones are loaded as they are with a warning. */
+export function parseSave(raw: string): SaveGame | null {
+  const j = JSON.parse(raw) as SaveGame;
+  if (!j || typeof j !== 'object' || typeof j.seed !== 'number') return null;
+  if (typeof j.version !== 'number') j.version = SAVE_MIN_VERSION;
+  return migrate(j);
+}
 export function readSave(): SaveGame | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
-    const j = JSON.parse(raw) as SaveGame;
-    if (typeof j.version !== 'number' || j.version < SAVE_MIN_VERSION || j.version > SAVE_VERSION)
-      return null;
-    return migrate(j);
+    return parseSave(raw);
   } catch {
     return null;
   }
 }
-/** Bring an older save up to the current shape. Each step is additive. */
-function migrate(j: SaveGame): SaveGame {
-  if (j.version < 2) {
-    j.decor = j.decor ?? [];
-    j.version = 2;
+/** Run the migration chain from the save's version to the current one; records where it came from. */
+export function migrate(j: SaveGame): SaveGame {
+  const from = j.version;
+  const notes: string[] = [];
+  while (j.version < SAVE_VERSION) {
+    const step = MIGRATIONS.find((m) => m.from === j.version);
+    if (!step) {
+      notes.push(`no upgrade step from format v${j.version}; defaults apply`);
+      j.version++;
+      continue;
+    }
+    step.run(j);
+    notes.push(`v${step.from}→v${step.from + 1}: ${step.note}`);
+    j.version = step.from + 1;
   }
-  if (j.version < 3) {
-    j.world = j.world ?? { kind: 'generated', seed: j.seed, params: { ...DEFAULT_MAP_PARAMS } };
-    j.version = 3;
+  if (from !== SAVE_VERSION) {
+    j.loadedFrom = from;
+    j.migrationNotes = notes;
   }
-  if (j.version < 4) {
-    j.buildings = j.buildings ?? [];
-    j.version = 4;
-  }
-  if (j.version < 5) j.version = 5;
-  if (j.version < 6) j.version = 6;
-  if (j.version < 7) j.version = 7;
   return j;
 }
 

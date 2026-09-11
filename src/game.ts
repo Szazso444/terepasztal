@@ -75,16 +75,19 @@ import { TuningScreen } from './ui/tuningScreen';
 import { ContentScreen } from './ui/contentScreen';
 import {
   SAVE_VERSION,
-  SAVE_MIN_VERSION,
   readSave,
+  parseSave,
   writeSave,
   clearSave,
+  KNOWN_SAVE_KEYS,
+  DEFAULT_SETTINGS,
   readSettings,
   writeSettings,
   type SaveGame,
   type Settings,
 } from './sim/save';
 import { Station, resetStationIds, stationDef as stationDefOf } from './sim/stations';
+import { scaleCost as scaleCostOf } from './sim/stockpile';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
 import { TownPanel } from './ui/townPanel';
@@ -195,6 +198,7 @@ export class Game {
   /** train under the cursor in the field view, and the one picked with a click */
   private fieldHover: Train | null = null;
   private fieldSelected: Train | null = null;
+  private spawnMarkTimer = 0;
   private pathHighlight: { x: number; y: number }[][] = [];
   private pathTimer = 0;
   private lastDay = 1;
@@ -748,10 +752,13 @@ export class Game {
     if (this.hud) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
   }
 
+  /** fields of the loaded save this build does not understand: written back untouched */
+  private saveExtra: Record<string, unknown> = {};
   snapshot(): SaveGame {
     const track: SaveGame['track'] = [];
     for (const t of this.track.tiles()) track.push([t.x, t.y, t.piece.kind, t.piece.rot]);
     return {
+      ...this.saveExtra,
       version: SAVE_VERSION,
       savedAt: Date.now(),
       seed: this.seed,
@@ -774,6 +781,7 @@ export class Game {
       regions: this.regions.toJSON(),
       seasonOffset: getSeasonOffset(),
       towns: this.towns.toJSON(),
+      settings: { ...this.settings },
       buildings: [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id, b.acc]),
     };
   }
@@ -815,6 +823,9 @@ export class Game {
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    this.saveExtra = {};
+    for (const [k, v] of Object.entries(j)) if (!KNOWN_SAVE_KEYS.has(k)) this.saveExtra[k] = v;
+    if (j.loadedFrom !== undefined) this.warnDeprecated(j);
     if (j.rules) setRules(j.rules);
     setSeasonOffset(j.seasonOffset ?? 0);
     this.clock.time = j.clock.time;
@@ -1034,6 +1045,19 @@ export class Game {
     }
     this.towns?.refresh();
   }
+  /** A save from another format version was loaded: say which and what was defaulted. */
+  private warnDeprecated(j: SaveGame) {
+    const from = j.loadedFrom ?? SAVE_VERSION;
+    const newer = from > SAVE_VERSION;
+    const text = newer
+      ? STR.settings.newerSave(from, SAVE_VERSION)
+      : STR.settings.olderSave(from, SAVE_VERSION, j.migrationNotes ?? []);
+    this.deprecatedSave = text;
+    this.toasts.push(newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from), 'warn');
+    this.notices.push({ key: 'save:deprecated', kind: 'warn', text, target: null }, 180);
+  }
+  /** warning text for the settings screen while a converted save is in play */
+  deprecatedSave: string | null = null;
   /** Ask for a town's name; `fresh` marks a just-placed station (the default name is offered). */
   private async renameTown(t: Town, fresh = false) {
     const n = await this.namePrompt.ask(STR.town.namePrompt, STR.town.nameHint, t.name);
@@ -1116,14 +1140,22 @@ export class Game {
     return biomeDef(biomeAt(this.map, s.x, s.y)).production[s.def.id] ?? 1;
   }
   /** Buy a revealed, unowned chunk. Returns true when the purchase went through. */
-  buyChunk(i: number) {
+  buyChunk(i: number, confirmed = false) {
     if (this.regions.unlocked[i] || !this.regions.isRevealed(i)) return false;
     const price = this.regions.price(i);
     if (!this.economy.canAfford(price)) {
       this.toasts.push(STR.overview.cannotAfford(fmtMoney(price)), 'warn');
       return false;
     }
-    if (!confirm(STR.overview.buyConfirm(fmtMoney(price)))) return false;
+    if (!confirmed) {
+      // an in-game dialog: a browser confirm() stalls the loop and then lurches to catch up
+      void this.namePrompt
+        .confirm(STR.overview.buyTitle, STR.overview.buyConfirm(fmtMoney(price)))
+        .then((ok) => {
+          if (ok) this.buyChunk(i, true);
+        });
+      return false;
+    }
     this.economy.money -= price;
     this.regions.own(i);
     sfx('tier.up');
@@ -1162,6 +1194,28 @@ export class Game {
       this.atlas,
     );
     this.depot.onFocusTrain = (t) => this.focusTrain(t);
+    this.depot.onFocusDepot = (d, gate) => {
+      // peek at the shed behind the dimmed screen and mark the gate the train would take
+      const p = tileToWorld(d.cx + 0.5, d.cy + 0.5);
+      this.camera.zoomIndex = 2;
+      this.camera.zoom = ZOOM_STEPS[2];
+      this.camera.centerOn(p.x, p.y);
+      this.setView(0);
+      this.spawnMarkTimer = gate ? 6 : 0;
+      if (gate) {
+        const sp = this.world.setStructure('spawn-preview', gate.x, gate.y, 'terrain/ghost_ok', 30);
+        sp.alpha = 0.9;
+      } else this.world.removeStructure('spawn-preview');
+      this.screens.root.classList.add('peek');
+    };
+    this.screens.onChange = (sc) => {
+      if (sc) this.build.setTool({ kind: 'none' });
+      if (!sc) {
+        this.screens.root.classList.remove('peek');
+        this.world.removeStructure('spawn-preview');
+      }
+      sfx(sc ? 'ui.open' : 'ui.close');
+    };
     this.trainScreen = new TrainScreen(this.fleet, this.builder, this.stock, this.atlas, (m, k) =>
       this.toasts.push(m, k),
     );
@@ -1208,14 +1262,9 @@ export class Game {
         exportSave: () => JSON.stringify(this.snapshot()),
         importSave: (json) => {
           try {
-            const j = JSON.parse(json) as SaveGame;
-            if (
-              typeof j.version !== 'number' ||
-              j.version < SAVE_MIN_VERSION ||
-              j.version > SAVE_VERSION ||
-              typeof j.seed !== 'number'
-            )
-              throw new Error('bad');
+            const j = parseSave(json);
+            if (!j) throw new Error('bad');
+            if (j.settings) writeSettings({ ...DEFAULT_SETTINGS, ...j.settings });
             writeSave(j);
             location.hash = `seed=${j.seed}`;
             location.reload();
@@ -1226,7 +1275,12 @@ export class Game {
           }
         },
       },
-      () => ({ seed: this.seed, savedAt: this.savedAt, version: `v${SAVE_VERSION}` }),
+      () => ({
+        seed: this.seed,
+        savedAt: this.savedAt,
+        version: `v${SAVE_VERSION}`,
+        warning: this.deprecatedSave,
+      }),
     );
     this.gachaScreen = new GachaScreen(
       this.gacha,
@@ -1251,10 +1305,7 @@ export class Game {
       btn(STR.topbar.cheat, () => this.cheat(), 'small cheat'),
       btn(STR.topbar.settings, () => this.screens.toggle(this.settingsScreen), 'small'),
     );
-    this.screens.onChange = (sc) => {
-      if (sc) this.build.setTool({ kind: 'none' });
-      sfx(sc ? 'ui.open' : 'ui.close');
-    };
+
     this.minimap = new Minimap(this.map, this.regions, this.camera, (wx, wy) =>
       this.camera.centerOn(wx, wy),
     );
@@ -1293,6 +1344,19 @@ export class Game {
     );
     this.toolbar.onHover = (it) =>
       this.buildInfo.show(it ?? this.toolbar.item(this.toolbar.active));
+    // the next one of a kind costs more: show the live price on the cards
+    for (const c of this.toolbar.categories)
+      for (const it of c.items) {
+        const tool = it.tool;
+        if (tool.kind === 'station' || tool.kind === 'decor' || tool.kind === 'building') {
+          const id = tool.defId;
+          it.costNow = () =>
+            scaleCostOf(
+              it.cost,
+              tool.kind === 'station' && id === 'depot' ? 1 : this.builder.kindMul(id),
+            );
+        }
+      }
     this.toolbar.refresh();
     this.buildingPanel = new BuildingPanel(
       this.builder,
@@ -1606,6 +1670,12 @@ export class Game {
     }
     this.trainSide.update(list, all);
     if (all) this.townPanel.render();
+    if (this.spawnMarkTimer > 0) {
+      this.spawnMarkTimer -= dt;
+      const sp = this.world.getStructure('spawn-preview');
+      if (sp) sp.alpha = 0.5 + 0.5 * Math.abs(Math.sin(this.spawnMarkTimer * 6));
+      if (this.spawnMarkTimer <= 0) this.world.removeStructure('spawn-preview');
+    }
     if (this.hoverTrain && !this.fleet.byId(this.hoverTrain.id)) this.setHoverTrain(null);
     if (!this.hoverTrain && this.pathHighlight.length) this.applyPathHighlight([]);
     if (this.hoverTrain) {

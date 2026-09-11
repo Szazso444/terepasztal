@@ -23,7 +23,12 @@ export class SettingsScreen implements Screen {
     private readonly settings: Settings,
     private readonly onChange: () => void,
     private readonly actions: SettingsActions,
-    private readonly info: () => { seed: number; savedAt: number | null; version: string },
+    private readonly info: () => {
+      seed: number;
+      savedAt: number | null;
+      version: string;
+      warning: string | null;
+    },
   ) {
     this.root.append(
       el(
@@ -157,6 +162,8 @@ export class SettingsScreen implements Screen {
         }),
       ),
     );
+    r.append(el('div', { class: 'sub dim', text: STR.settings.formatNote }));
+    if (info.warning) r.append(el('div', { class: 'sub red', text: info.warning }));
     const area = el('textarea', {
       class: 'text',
       style: 'width:100%;height:120px;font-family:var(--font-mono);font-size:10px',

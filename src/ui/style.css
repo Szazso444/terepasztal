@@ -1654,3 +1654,17 @@ table.market td {
 .num-opt input {
   width: 52px;
 }
+
+#modal-root.peek {
+  background: rgba(4, 4, 6, 0.35);
+}
+.rollout {
+  border: 1px solid var(--border-dark);
+  background: var(--stone);
+  padding: 4px 6px;
+  margin: 4px 0;
+  font-size: 11px;
+}
+.rollout .good {
+  color: var(--cyan);
+}

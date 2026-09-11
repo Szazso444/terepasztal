@@ -34,6 +34,8 @@ export interface ToolItem {
   place: string;
   /** Chebyshev reach shown as a highlight while placing (services, power lines) */
   reach?: number;
+  /** cost of the next one, with the repeat surcharge (set by the game) */
+  costNow?: () => Cost;
 }
 export type CategoryId = 'track' | 'stations' | 'decor' | 'utility' | 'works' | 'terrain';
 interface Category {

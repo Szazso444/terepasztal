@@ -6,6 +6,7 @@ import { Fleet, MAX_LOCOS, MAX_WAGONS } from '../sim/fleet';
 import type { Builder } from '../sim/build';
 import { locoDef, wagonDef, levelMul } from '../gacha/items';
 import type { Train, StopPlan } from '../sim/trains';
+import type { Station } from '../sim/stations';
 import { ScheduleEditor } from './scheduleEditor';
 import { cargoDef } from '../sim/cargo';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -32,6 +33,8 @@ export class DepotScreen implements Screen {
     maxlength: '24',
   });
   onFocusTrain: ((t: Train) => void) | null = null;
+  /** the player picked a depot: the game peeks at it and marks the gate */
+  onFocusDepot: ((d: Station, gate: { x: number; y: number } | null) => void) | null = null;
   onDetails: ((t: Train) => void) | null = null;
   private scheduleEditor: ScheduleEditor;
   private routeMode: 'auto' | 'custom' | 'production' | 'collection' | 'transport' = 'auto';
@@ -284,7 +287,10 @@ export class DepotScreen implements Screen {
   private renderRoute() {
     const c = this.routeCol;
     c.innerHTML = '';
-    const auto = this.fleet.autoSchedule();
+    const auto = this.fleet.autoSchedule(
+      (this.depotId !== null ? this.builder.stationById(this.depotId) : undefined) ??
+        this.builder.depots()[0],
+    );
     const names = auto.map((s) => this.builder.stationById(s.stationId)?.name ?? '?');
     const groups: [string, (typeof this.routeMode)[]][] = [
       [STR.depot.groupStatic, ['auto', 'custom']],
@@ -328,24 +334,60 @@ export class DepotScreen implements Screen {
     const f = this.foot;
     f.innerHTML = '';
     const depots = this.builder.depots();
-    if (depots.length > 1) {
-      if (this.depotId === null || !depots.some((d) => d.id === this.depotId))
-        this.depotId = depots[0].id;
-      const row = el('div', { class: 'row', style: 'margin:0 0 6px 0' });
-      row.append(el('span', { class: 'dim', text: STR.depot.from }));
-      for (const d of depots)
-        row.append(
-          btn(
-            d.name,
-            () => {
-              this.depotId = d.id;
-              this.renderRoute();
-            },
-            `small ${this.depotId === d.id ? 'active' : ''}`,
-          ),
-        );
-      f.append(row);
-    }
+    if (this.depotId === null || !depots.some((d) => d.id === this.depotId))
+      this.depotId = depots[0]?.id ?? null;
+    const preview = this.fleet.previewSpawn(
+      this.locoUids,
+      this.routeMode === 'custom' ? this.schedule : [],
+      this.depotId,
+    );
+    const box = el('div', { class: 'rollout' });
+    const row = el('div', { class: 'row', style: 'margin:0 0 4px 0' });
+    row.append(el('span', { class: 'dim', text: STR.depot.from }));
+    for (const d of depots)
+      row.append(
+        btn(
+          d.name,
+          () => {
+            this.depotId = d.id;
+            this.renderRoute();
+            const pv = this.fleet.previewSpawn(
+              this.locoUids,
+              this.routeMode === 'custom' ? this.schedule : [],
+              d.id,
+            );
+            this.onFocusDepot?.(d, pv.gate);
+          },
+          `small ${this.depotId === d.id ? 'active' : ''}`,
+        ),
+      );
+    if (preview.depot)
+      row.append(
+        btn(STR.depot.show, () => this.onFocusDepot?.(preview.depot!, preview.gate), 'small'),
+      );
+    box.append(row);
+    const first = this.builder.stationById(preview.stops[0]?.stationId);
+    box.append(
+      el('div', {
+        class: `sub ${preview.gate ? 'good' : 'red'}`,
+        text: preview.gate
+          ? STR.depot.gateAt(
+              preview.depot!.name,
+              preview.gate.x,
+              preview.gate.y,
+              first?.name ?? '?',
+            )
+          : (preview.reason ?? ''),
+      }),
+    );
+    if (preview.depot)
+      box.append(
+        el('div', {
+          class: 'sub dim',
+          text: STR.depot.servedBy(this.fleet.stationsServedBy(preview.depot).length),
+        }),
+      );
+    f.append(box);
     f.append(
       this.nameInput,
       btn(

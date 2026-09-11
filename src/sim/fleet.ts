@@ -65,8 +65,38 @@ export class Fleet {
    * Default schedule: every station with platform track, visited in nearest-neighbour order
    * starting from the first producing station. Trains created without stops get this.
    */
-  autoSchedule(): StopPlan[] {
-    const list = this.builder.stations.filter((s) => this.builder.platformTiles(s).length > 0);
+  /** Track tiles reachable from a depot's gates (undirected walk over the rails). */
+  reachableFrom(depot: Station | undefined): Set<number> {
+    const out = new Set<number>();
+    if (!depot) return out;
+    const stack = this.builder.platformTiles(depot).map((p) => p.y * this.map.w + p.x);
+    for (const k of stack) out.add(k);
+    while (stack.length) {
+      const k = stack.pop()!;
+      const x = k % this.map.w;
+      const y = Math.floor(k / this.map.w);
+      for (const d of DIRS) {
+        if (!this.track.connected(x, y, d)) continue;
+        const nk = (y + DIR_DY[d]) * this.map.w + (x + DIR_DX[d]);
+        if (!out.has(nk)) {
+          out.add(nk);
+          stack.push(nk);
+        }
+      }
+    }
+    return out;
+  }
+  /** Stations a depot's rails lead to (every station with a platform when no depot is given). */
+  stationsServedBy(depot: Station | undefined): Station[] {
+    const reach = depot ? this.reachableFrom(depot) : null;
+    return this.builder.stations.filter((s) => {
+      const plat = this.builder.platformTiles(s);
+      if (!plat.length) return false;
+      return !reach || plat.some((p) => reach.has(p.y * this.map.w + p.x));
+    });
+  }
+  autoSchedule(depot: Station | undefined = this.builder.depots()[0]): StopPlan[] {
+    const list = this.stationsServedBy(depot);
     if (list.length < 2) return list.map((s) => defaultStop(s.id));
     const start = list.find((s) => s.producedCargo().length > 0) ?? list[0];
     const order = [start];
@@ -87,6 +117,70 @@ export class Fleet {
     return order.map((s) => defaultStop(s.id));
   }
 
+  /**
+   * Put a train on a free gate of the depot from which one of its stops can be reached, facing
+   * away from the shed, with its route index at that stop. Tries every free gate and both ways
+   * of standing on it. Returns the gate, or the reason nothing worked.
+   */
+  private rollOut(t: Train, depot: Station): { x: number; y: number } | string {
+    const gates = this.builder.platformTiles(depot);
+    if (!gates.length) return STR.fleet.depotNoGate(depot.name);
+    const free = gates.filter((pt) => !this.occupied(pt.x, pt.y, -1));
+    if (!free.length) return STR.fleet.depotBusy(depot.name);
+    const stops = t.schedule;
+    for (let si = 0; si < stops.length; si++) {
+      const st = this.builder.stationById(stops[si].stationId);
+      if (!st || st === depot || !this.builder.platformTiles(st).length) continue;
+      for (const p of free) {
+        const piece = this.track.get(p.x, p.y)!;
+        const toStation = DIRS.find((d) => depot.covers(p.x + DIR_DX[d], p.y + DIR_DY[d]));
+        const entries: number[] = [];
+        if (toStation !== undefined && piece.links.some((l) => l.includes(toStation)))
+          entries.push(toStation);
+        for (const l of piece.links) for (const d of l) if (!entries.includes(d)) entries.push(d);
+        for (const entry of entries) {
+          if (!t.spawnAt(this.track, p.x, p.y, entry)) continue;
+          t.routeIndex = si;
+          if (t.dispatch(this.track, this.builder, this.map)) return p;
+        }
+      }
+    }
+    const first = this.builder.stationById(stops[0]?.stationId);
+    return STR.fleet.depotNoRoute(depot.name, first?.name ?? '?');
+  }
+  /** Where a train with this consist and route would appear, or why it cannot (no side effects). */
+  previewSpawn(
+    locoUids: number[],
+    schedule: (StopPlan | number)[],
+    depotId: number | null,
+  ): {
+    gate: { x: number; y: number } | null;
+    depot: Station | null;
+    reason: string | null;
+    stops: StopPlan[];
+  } {
+    const depot =
+      (depotId !== null ? this.builder.stationById(depotId) : undefined) ??
+      this.builder.depots()[0];
+    if (!depot || !depot.def.depot)
+      return { gate: null, depot: null, reason: STR.fleet.noDepot, stops: [] };
+    let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
+    if (stops.length < 2) stops = this.autoSchedule(depot);
+    if (stops.length < 2) return { gate: null, depot, reason: STR.fleet.needTwoStops, stops };
+    const items = locoUids
+      .map((u) => this.inventory.byUid(u))
+      .filter((l) => l && l.kind === 'loco');
+    const anyLoco = this.inventory.items.find((i) => i.kind === 'loco');
+    const locos: LocoSlot[] = items.length
+      ? items.map((l) => ({ uid: l!.uid, def: locoDef(l!.defId), level: l!.level }))
+      : [{ uid: -1, def: locoDef(anyLoco?.defId ?? 'rocket'), level: 1 }];
+    const probe = new Train(locos, 'probe', -1);
+    probe.schedule = stops;
+    const r = this.rollOut(probe, depot);
+    return typeof r === 'string'
+      ? { gate: null, depot, reason: r, stops }
+      : { gate: r, depot, reason: null, stops };
+  }
   /** Assemble a train and roll it out of a depot gate. Returns an error string on failure. */
   create(
     locoUids: number[],
@@ -121,43 +215,17 @@ export class Fleet {
     }));
     if (t.emptyWeight > t.power)
       return STR.fleet.tooHeavy(Math.round(t.emptyWeight), Math.round(t.power));
-    let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
-    if (stops.length < 2) stops = this.autoSchedule();
-    if (stops.length < 2) return STR.fleet.needTwoStops;
-    const first0 = this.builder.stationById(stops[0].stationId);
-    if (!first0) return STR.fleet.missingStation;
-    if (!this.builder.platformTiles(first0).length) return STR.fleet.noPlatform(first0.name);
-    // roll out of a depot gate with no train on it
     const depot =
       (depotId !== null ? this.builder.stationById(depotId) : undefined) ??
       this.builder.depots()[0];
     if (!depot || !depot.def.depot) return STR.fleet.noDepot;
-    const gates = this.builder.platformTiles(depot);
-    if (!gates.length) return STR.fleet.depotNoGate(depot.name);
-    const free = gates.filter((pt) => !this.occupied(pt.x, pt.y, -1));
-    if (!free.length) return STR.fleet.depotBusy(depot.name);
+    let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
+    if (stops.length < 2) stops = this.autoSchedule(depot);
+    if (stops.length < 2) return STR.fleet.needTwoStops;
     t.schedule = stops;
-    t.routeIndex = 0;
     t.mode = mode;
-    // the gates on the two sides are separate stubs: roll out of one the first stop can be
-    // reached from (the first free one when none can), facing away from the shed
-    let placed = false;
-    let reached = false;
-    for (const p of free) {
-      const toStation = DIRS.find((d) => depot.covers(p.x + DIR_DX[d], p.y + DIR_DY[d]));
-      const piece = this.track.get(p.x, p.y)!;
-      let entry = piece.links[0][0];
-      if (toStation !== undefined && piece.links.some((l) => l.includes(toStation)))
-        entry = toStation;
-      if (!t.spawnAt(this.track, p.x, p.y, entry)) continue;
-      placed = true;
-      if (t.dispatch(this.track, this.builder, this.map)) {
-        reached = true;
-        break;
-      }
-    }
-    if (!placed) return STR.fleet.cannotPlace;
-    if (!reached) return STR.fleet.depotNoRoute(depot.name, first0.name);
+    const placed = this.rollOut(t, depot);
+    if (typeof placed === 'string') return placed;
     if (t.mode !== 'schedule') {
       // a roaming train starts with the stop it would pick, not the automatic loop
       const next = this.chooseNext(t);

@@ -8,10 +8,14 @@ export class NamePrompt {
   private hint = el('div', { class: 'dim' });
   private input = el('input', { type: 'text', maxlength: '20' }) as HTMLInputElement;
   private resolve: ((v: string | null) => void) | null = null;
+  private ok = btn('OK', () => {}, 'accent');
+  private cancel = btn('Keep', () => {}, 'small');
 
   constructor() {
-    const ok = btn('OK', () => this.finish(this.input.value), 'accent');
-    const cancel = btn('Keep', () => this.finish(null), 'small');
+    const ok = this.ok;
+    const cancel = this.cancel;
+    ok.addEventListener('click', () => this.finish(this.input.value));
+    cancel.addEventListener('click', () => this.finish(null));
     this.input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.finish(this.input.value);
       else if (e.key === 'Escape') this.finish(null);
@@ -49,7 +53,24 @@ export class NamePrompt {
     }, 0);
     return new Promise((res) => (this.resolve = res));
   }
+  /** Yes / no question in the same dialog (no text field). */
+  confirm(title: string, text: string): Promise<boolean> {
+    this.finish(null);
+    this.title.textContent = title;
+    this.hint.textContent = text;
+    this.input.value = 'yes';
+    this.input.style.display = 'none';
+    this.okLabel(true);
+    this.root.style.display = 'flex';
+    return new Promise((res) => (this.resolve = (v) => res(v !== null)));
+  }
+  private okLabel(yesNo: boolean) {
+    this.ok.textContent = yesNo ? 'Yes' : 'OK';
+    this.cancel.textContent = yesNo ? 'No' : 'Keep';
+  }
   private finish(v: string | null) {
+    this.input.style.display = '';
+    this.okLabel(false);
     const r = this.resolve;
     this.resolve = null;
     this.root.style.display = 'none';

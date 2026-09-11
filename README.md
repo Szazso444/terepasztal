@@ -82,7 +82,7 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 
 - `src/engine` loop, camera, input, iso math, atlas pipeline, audio hooks, RNG
 - `src/world` map generation, tiles, regions, track graph, pathfinding
-- `src/sim` clock, economy, stockpile, stations, buildings, power grid, trains, fleet, contracts, build rules, save format
+- `src/sim` clock, economy, stockpile, stations, buildings, power grid, trains, fleet, traffic control, towns, contracts, build rules, save format (versioned, migration registry, unknown fields preserved)
 - `src/gacha` items, inventory, gacha
 - `src/render` world, overview, trains, fx
 - `src/ui` DOM overlay screens and panels

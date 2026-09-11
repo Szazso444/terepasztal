@@ -37,6 +37,8 @@ export interface Rules {
   warehouseCap: number;
   /** stockpile cap added per depot */
   depotCap: number;
+  /** each further station / service / works of the same kind costs this much more (fraction of base) */
+  repeatCostStep: number;
   powerCap: number;
   /** price of the first ring of chunks around the start; each ring further multiplies it */
   chunkCost: number;
@@ -88,6 +90,7 @@ export const DEFAULT_RULES: Rules = {
   stockpileCap: 1000,
   warehouseCap: 1000,
   depotCap: 3000,
+  repeatCostStep: 0.2,
   powerCap: 100,
   chunkCost: 12000,
   chunkCostMul: 1.6,
@@ -157,6 +160,14 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 20000,
     step: 250,
+  },
+  {
+    key: 'repeatCostStep',
+    label: 'Extra cost per repeat build',
+    group: 'Economy',
+    min: 0,
+    max: 2,
+    step: 0.05,
   },
   {
     key: 'chunkCost',

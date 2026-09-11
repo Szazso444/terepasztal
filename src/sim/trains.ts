@@ -10,7 +10,7 @@ import type { Builder } from './build';
 import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
-import { rules, daySeconds } from './rules';
+import { rules } from './rules';
 
 const trackData = content.track;
 import { sfx } from '../engine/audio';
@@ -133,7 +133,7 @@ const ECO_BELOW = 0.3;
 const ECO_MUL = 0.6;
 const MAX_DWELL = 40;
 /** longest a train waits for full wagons */
-const MAX_DWELL_FULL = 120;
+const MAX_DWELL_FULL = 240;
 
 /** Per-tick services the simulation hands to every train. */
 export interface TickCtx {
@@ -1416,7 +1416,8 @@ export class Train {
         continue;
       }
       canLoadAny = true;
-      // only keep the train if the station can feed it at a useful rate
+      allFull = false;
+      // nothing on hand right now: wait for output (the wait-for-full rule decides how long)
       if (st.stored(c) < Math.min(want, 1)) continue;
       const n = st.take(c, want);
       if (n <= 0) continue;
@@ -1436,21 +1437,12 @@ export class Train {
     }
     // wait for full wagons only while the station still has something to give, and never when
     // the tanks are low (fuel comes first)
-    const canFill = produced.some((c) => st.stored(c) >= 1 || st.productionPerDay > 0);
-    // ... and only while the wait is short: the room left divided by the output rate
-    const rate = (st.productionPerDay * st.productionMul) / daySeconds();
-    const roomLeft = this.wagons.reduce((a, w) => {
-      const cap = w.def.capacity * levelMul(w.level);
-      return a + (w.cargo ? Math.max(0, cap - w.amount) : 0);
-    }, 0);
-    const soon = rate > 0 ? roomLeft / rate <= MAX_DWELL_FULL - this.stateTime : false;
-    const waitFull =
-      stop.load !== 'none' &&
-      stop.waitFull &&
-      canFill &&
-      canLoadAny &&
-      !this.eco &&
-      (soon || allFull);
+    // a scheduled train waits for its wagons to fill while the station keeps producing (up to
+    // the dwell limit); a roaming train only waits while there is still a pile to take from
+    const canFill = this.dynamic
+      ? produced.some((c) => st.stored(c) >= 1)
+      : produced.some((c) => st.stored(c) >= 1 || st.productionPerDay > 0);
+    const waitFull = stop.load !== 'none' && stop.waitFull && canFill && canLoadAny && !this.eco;
     if (waitFull && !allFull && this.stateTime < MAX_DWELL_FULL) busy = true;
     const maxDwell =
       stop.maxDwell && stop.maxDwell > 0 ? stop.maxDwell : waitFull ? MAX_DWELL_FULL : MAX_DWELL;
