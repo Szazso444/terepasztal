@@ -9,6 +9,10 @@ export interface SettingsActions {
   newGame(seed: string): void;
   exportSave(): string | null;
   importSave(json: string): boolean;
+  saveAs(name: string): boolean;
+  loadSlot(name: string): void;
+  deleteSlot(name: string): void;
+  slots(): { name: string; savedAt: number; version: number; day: number }[];
 }
 
 /** Settings and save management. */
@@ -71,7 +75,7 @@ export class SettingsScreen implements Screen {
   }
   private toggle(
     label: string,
-    key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'showFps' | 'weather',
+    key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'showFps' | 'weather' | 'autoContracts',
   ) {
     const b = btn(
       this.settings[key] ? STR.settings.on : STR.settings.off,
@@ -102,6 +106,7 @@ export class SettingsScreen implements Screen {
       this.toggle(STR.settings.smoke, 'smoke'),
       this.toggle(STR.settings.weather, 'weather'),
       this.toggle(STR.settings.showFps, 'showFps'),
+      this.toggle(STR.settings.autoContracts, 'autoContracts'),
       el('div', { class: 'col-title', style: 'margin-top:10px', text: STR.settings.controls }),
       el('div', { class: 'sub', text: STR.settings.controlsText }),
     );
@@ -143,6 +148,65 @@ export class SettingsScreen implements Screen {
         ),
         btn(STR.settings.load, () => this.actions.load()),
       ),
+    );
+    // named slots
+    const nameInput = el('input', {
+      class: 'text',
+      type: 'text',
+      placeholder: STR.settings.slotName,
+      maxlength: '32',
+      style: 'width:160px',
+    }) as HTMLInputElement;
+    nameInput.addEventListener('keydown', (e) => e.stopPropagation());
+    const slotList = el('div', { class: 'slots' });
+    const slots = this.actions.slots();
+    if (!slots.length) slotList.append(el('div', { class: 'dim', text: STR.settings.noSlots }));
+    for (const sl of slots)
+      slotList.append(
+        el(
+          'div',
+          { class: 'kv' },
+          el('span', {
+            class: 'k',
+            text: `${sl.name} · day ${sl.day} · v${sl.version} · ${new Date(sl.savedAt).toLocaleString()}`,
+          }),
+          el(
+            'span',
+            { class: 'row', style: 'margin:0' },
+            btn(STR.settings.loadSlot, () => this.actions.loadSlot(sl.name), 'small'),
+            btn(
+              STR.settings.deleteSlot,
+              () => {
+                if (confirm(STR.settings.confirmDelete(sl.name))) {
+                  this.actions.deleteSlot(sl.name);
+                  this.render();
+                }
+              },
+              'small',
+            ),
+          ),
+        ),
+      );
+    r.append(
+      el('div', { class: 'col-title', style: 'margin-top:12px', text: STR.settings.slots }),
+      el(
+        'div',
+        { class: 'row' },
+        nameInput,
+        btn(
+          STR.settings.saveAs,
+          () => {
+            const n = nameInput.value.trim();
+            if (!n) return;
+            if (this.actions.saveAs(n)) {
+              nameInput.value = '';
+              this.render();
+            }
+          },
+          'accent',
+        ),
+      ),
+      slotList,
     );
     const seedInput = el('input', {
       class: 'text',

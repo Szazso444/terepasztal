@@ -4,10 +4,10 @@ import type { Screen } from './modal';
 import type { Stockpile } from '../sim/stockpile';
 import type { Economy } from '../sim/economy';
 import { CARGO } from '../sim/cargo';
-import { rules } from '../sim/rules';
+import { rules, daySeconds } from '../sim/rules';
 
-export const BUY_MUL = 1.6;
-export const SELL_MUL = 0.6;
+import { TradeDesk, BUY_MUL, SELL_MUL } from '../sim/trade';
+export { BUY_MUL, SELL_MUL };
 
 /** Buy and sell resources for money. Oil is normally bought here until a refinery runs. */
 export class MarketScreen implements Screen {
@@ -21,6 +21,8 @@ export class MarketScreen implements Screen {
     private readonly economy: Economy,
     private readonly cap: (id: string) => number,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+    private readonly trade: TradeDesk,
+    private readonly now: () => number,
   ) {
     this.root.append(el('div', { class: 'col' }, this.body, this.foot));
   }
@@ -100,6 +102,77 @@ export class MarketScreen implements Screen {
       );
     }
     b.append(table);
+    // standing deals: so much per cycle, settled automatically
+    const cycleDays = rules.tradeCycleDays;
+    const left = Math.max(0, this.trade.nextAt - this.now());
+    b.append(
+      el('div', { class: 'col-title', style: 'margin-top:12px', text: STR.market.deals }),
+      el('div', { class: 'sub dim', text: STR.market.dealsHint(cycleDays) }),
+    );
+    const dt = el('table', { class: 'market' });
+    dt.append(
+      el(
+        'tr',
+        {},
+        ...[STR.market.resource, STR.market.dealBuy, STR.market.dealSell, STR.market.perCycle].map(
+          (h) => el('th', { text: h }),
+        ),
+      ),
+    );
+    for (const c of CARGO) {
+      if (c.class === 'people') continue;
+      const cur = this.trade.get(c.id);
+      const input = (kind: 'buy' | 'sell') => {
+        const inp = el('input', {
+          type: 'number',
+          min: '0',
+          max: '5000',
+          step: '10',
+          class: 'text small',
+          style: 'width:64px',
+        }) as HTMLInputElement;
+        inp.value = String(kind === 'buy' ? Math.max(0, cur) : Math.max(0, -cur));
+        inp.addEventListener('keydown', (e) => e.stopPropagation());
+        inp.addEventListener('change', () => {
+          const v = Math.max(0, Math.min(5000, Math.floor(Number(inp.value) || 0)));
+          this.trade.set(c.id, kind === 'buy' ? v : -v);
+          this.render();
+        });
+        return inp;
+      };
+      const money = cur > 0 ? -cur * TradeDesk.buyPrice(c.id) : -cur * TradeDesk.sellPrice(c.id);
+      dt.append(
+        el(
+          'tr',
+          {},
+          el('td', { text: c.name }),
+          el(
+            'td',
+            {},
+            input('buy'),
+            el('span', { class: 'dim', text: ` @ ${fmtMoney(TradeDesk.buyPrice(c.id))}` }),
+          ),
+          el(
+            'td',
+            {},
+            input('sell'),
+            el('span', { class: 'dim', text: ` @ ${fmtMoney(TradeDesk.sellPrice(c.id))}` }),
+          ),
+          el('td', {
+            class: `num ${money < 0 ? 'red' : money > 0 ? 'good' : 'dim'}`,
+            text: cur ? fmtMoney(money) : '-',
+          }),
+        ),
+      );
+    }
+    b.append(dt);
+    const bal = this.trade.balancePerCycle();
+    b.append(
+      el('div', {
+        class: `sub ${bal < 0 ? 'red' : 'good'}`,
+        text: STR.market.dealSummary(fmtMoney(bal), Math.ceil(left / daySeconds())),
+      }),
+    );
     this.foot.innerHTML = '';
     this.foot.append(
       el('span', { class: 'amber num', text: `${STR.hud.money}: ${fmtMoney(this.economy.money)}` }),

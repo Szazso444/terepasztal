@@ -79,6 +79,10 @@ import {
   parseSave,
   writeSave,
   clearSave,
+  listSlots,
+  writeSlot,
+  readSlot,
+  deleteSlot,
   KNOWN_SAVE_KEYS,
   DEFAULT_SETTINGS,
   readSettings,
@@ -88,6 +92,7 @@ import {
 } from './sim/save';
 import { Station, resetStationIds, stationDef as stationDefOf } from './sim/stations';
 import { scaleCost as scaleCostOf } from './sim/stockpile';
+import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
 import { TownPanel } from './ui/townPanel';
@@ -309,6 +314,7 @@ export class Game {
   editor: Editor | null = null;
   editorPanel: EditorPanel | null = null;
   towns!: TownRegistry;
+  readonly trade = new TradeDesk();
   private townPanel!: TownPanel;
   private namePrompt = new NamePrompt();
   private paused = false;
@@ -640,6 +646,8 @@ export class Game {
     this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
     this.contracts.onEvent = (e) => {
+      if (e.kind === 'offered' && this.settings.autoContracts !== false)
+        this.contracts.accept(e.contract, this.clock.time);
       if (e.kind === 'completed') {
         this.toasts.push(
           STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
@@ -768,6 +776,7 @@ export class Game {
       stations: this.builder.stations.map((st) => st.toJSON()),
       trains: this.fleet.trains.map((t) => t.toJSON()),
       contracts: this.contracts.toJSON(),
+      trade: this.trade.toJSON(),
       inventory: this.inventory.toJSON(),
       gacha: this.gacha.toJSON(),
       camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
@@ -853,6 +862,7 @@ export class Game {
     this.inventory.load(j.inventory as ReturnType<typeof this.inventory.toJSON>);
     this.gacha.load(j.gacha as ReturnType<typeof this.gacha.toJSON>);
     this.contracts.load(j.contracts as ReturnType<typeof this.contracts.toJSON>);
+    this.trade.load(j.trade as ReturnType<typeof this.trade.toJSON> | undefined);
     resetTrainIds(1);
     for (const tj of j.trains as ReturnType<TrainClass['toJSON']>[]) {
       const t = TrainClass.fromJSON(tj, this.track);
@@ -1229,7 +1239,21 @@ export class Game {
       this.economy,
       (id) => this.stockCap(id),
       (m, k) => this.toasts.push(m, k),
+      this.trade,
+      () => this.clock.time,
     );
+    this.trade.onSettled = (lines) =>
+      this.toasts.push(
+        STR.market.settled(
+          lines
+            .map(
+              (l) =>
+                `${l.units > 0 ? '+' : ''}${l.units} ${cargoDef(l.resource).name.toLowerCase()} (${fmtMoney(l.money)})`,
+            )
+            .join(', '),
+        ),
+        'info',
+      );
     this.resourceBar = new ResourceBar(this.atlas, () => {
       if (this.mode === 'play' && !this.menuOpen) this.screens.toggle(this.marketScreen);
     });
@@ -1260,6 +1284,29 @@ export class Game {
         },
         newGame: (seed) => this.newGame(seed),
         exportSave: () => JSON.stringify(this.snapshot()),
+        saveAs: (name) => {
+          const ok = writeSlot(name, this.snapshot());
+          this.toasts.push(
+            ok ? STR.settings.slotSaved(name) : STR.settings.saveFailed,
+            ok ? 'good' : 'warn',
+          );
+          return ok;
+        },
+        loadSlot: (name) => {
+          const j = readSlot(name);
+          if (!j) {
+            this.toasts.push(STR.settings.noSave, 'warn');
+            return;
+          }
+          writeSave(j);
+          location.hash = `seed=${j.seed}`;
+          location.reload();
+        },
+        deleteSlot: (name) => {
+          deleteSlot(name);
+          this.toasts.push(STR.settings.slotDeleted(name), 'info');
+        },
+        slots: () => listSlots(),
         importSave: (json) => {
           try {
             const j = parseSave(json);
@@ -1491,6 +1538,7 @@ export class Game {
         (this.settings.weather ? this.weather.speedFactor() : 1) * (this.stock.famine ? 0.7 : 1);
       this.fleet.tick(gdt, this.clock.time, wf);
       this.contracts.tick(this.clock.time);
+      this.trade.tick(this.clock.time, this.stock, this.economy, (id) => this.stockCap(id));
       if (this.clock.day !== this.lastDay) {
         this.lastDay = this.clock.day;
         if (this.contracts.completedToday > 0) {

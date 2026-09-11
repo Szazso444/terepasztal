@@ -265,9 +265,9 @@ export const STR = {
       custom:
         'Static: your stop list, in order. Per stop: what to load and unload, wait for full wagons, minimum and maximum dwell, refuel, departure direction. The train never changes the plan by itself.',
       production:
-        'Dynamic: maximises what it hauls. Heads for the producer with the biggest load waiting (fuller piles first), dumps into the nearest warehouse with room, or the depot. Re-plans at every stop, refuels on its own and detours around traffic.',
+        'Dynamic: maximises what it hauls. Heads for the producer with the biggest load waiting (fuller piles first), tops up at another producer of the same goods while room is left, then dumps into the nearest warehouse with room, or the depot. Re-plans at every stop, refuels on its own and detours around traffic.',
       collection:
-        'Dynamic: empties warehouses into depots. Picks the warehouse with the most goods, weighed against the way there and on to the depot. Re-plans at every stop and refuels on its own.',
+        'Dynamic: empties warehouses into depots. Leaves a warehouse alone until it holds 100 of a resource, then the fuller it is the sooner it comes; tops up at another warehouse while room is left. Re-plans at every stop and refuels on its own.',
       transport:
         'Dynamic: carries passengers. Heads for the town station with the most people waiting and takes them to the nearest other town. Needs coaches. Re-plans at every stop and refuels on its own.',
     } as Record<string, string>,
@@ -452,6 +452,16 @@ export const STR = {
     controlsText:
       'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G gacha · V roster · K market · ` debug',
     lastSave: 'Last save',
+    autoContracts: 'Accept contract offers automatically',
+    slots: 'Named saves',
+    slotName: 'Save name',
+    saveAs: 'Save as',
+    loadSlot: 'Load',
+    deleteSlot: 'Delete',
+    noSlots: 'No named saves yet. Type a name and press Save as.',
+    slotSaved: (n: string) => `Saved as "${n}"`,
+    slotDeleted: (n: string) => `Deleted "${n}"`,
+    confirmDelete: (n: string) => `Delete the save "${n}"?`,
     version: 'Save format',
     save: 'Save now',
     load: 'Load last save',
@@ -631,6 +641,15 @@ export const STR = {
     sell: 'Sell',
     full: 'Stockpile is full',
     hint: 'Prices are fixed per unit. Each depot raises the stockpile cap.',
+    deals: 'Standing deals',
+    dealsHint: (d: number) =>
+      `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the stockpile cap or when funds run out; selling takes what is on hand.`,
+    dealBuy: 'Buy / cycle',
+    dealSell: 'Sell / cycle',
+    perCycle: 'Money / cycle',
+    dealSummary: (v: string, days: number) =>
+      `Net ${v} per cycle · next settlement in ${days} day${days === 1 ? '' : 's'}`,
+    settled: (lines: string) => `Trade deals settled: ${lines}`,
   },
   res: {
     power: 'Power (battery)',

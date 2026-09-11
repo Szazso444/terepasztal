@@ -39,6 +39,10 @@ export interface Rules {
   depotCap: number;
   /** each further station / service / works of the same kind costs this much more (fraction of base) */
   repeatCostStep: number;
+  /** a collection train leaves a warehouse alone until it holds this much of a resource */
+  collectMin: number;
+  /** days between settlements of standing trade deals */
+  tradeCycleDays: number;
   powerCap: number;
   /** price of the first ring of chunks around the start; each ring further multiplies it */
   chunkCost: number;
@@ -91,6 +95,8 @@ export const DEFAULT_RULES: Rules = {
   warehouseCap: 1000,
   depotCap: 3000,
   repeatCostStep: 0.2,
+  collectMin: 100,
+  tradeCycleDays: 2,
   powerCap: 100,
   chunkCost: 12000,
   chunkCostMul: 1.6,
@@ -168,6 +174,22 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 2,
     step: 0.05,
+  },
+  {
+    key: 'collectMin',
+    label: 'Collection: warehouse pile before pickup',
+    group: 'Economy',
+    min: 0,
+    max: 1000,
+    step: 10,
+  },
+  {
+    key: 'tradeCycleDays',
+    label: 'Trade deal cycle (days)',
+    group: 'Economy',
+    min: 1,
+    max: 30,
+    step: 1,
   },
   {
     key: 'chunkCost',

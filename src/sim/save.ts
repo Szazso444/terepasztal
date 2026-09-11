@@ -51,6 +51,8 @@ export interface SaveGame {
   towns?: TownJSON[];
   /** v8: player settings travel with an exported save */
   settings?: Settings;
+  /** v8: standing trade deals */
+  trade?: unknown;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -71,6 +73,8 @@ export interface Settings {
   weather: boolean;
   /** v6: helper tips shown */
   advisor?: boolean;
+  /** v8: accept contract offers as they come */
+  autoContracts?: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   master: 0.8,
@@ -83,6 +87,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showFps: false,
   weather: true,
   advisor: true,
+  autoContracts: true,
 };
 
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
@@ -151,6 +156,7 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'seasonOffset',
   'towns',
   'settings',
+  'trade',
   'loadedFrom',
   'migrationNotes',
 ]);
@@ -224,4 +230,68 @@ export function writeSettings(s: Settings) {
   } catch {
     /* ignore */
   }
+}
+
+// ------------------------------------------------------------------ named slots
+export const SLOTS_KEY = 'terepasztal.slots';
+export interface SlotMeta {
+  name: string;
+  savedAt: number;
+  version: number;
+  seed: number;
+  day: number;
+}
+function readSlots(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(SLOTS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+function writeSlots(slots: Record<string, string>) {
+  try {
+    localStorage.setItem(SLOTS_KEY, JSON.stringify(slots));
+    return true;
+  } catch {
+    return false;
+  }
+}
+/** Named saves, newest first. */
+export function listSlots(): SlotMeta[] {
+  const out: SlotMeta[] = [];
+  for (const [name, raw] of Object.entries(readSlots())) {
+    try {
+      const j = JSON.parse(raw) as SaveGame;
+      out.push({
+        name,
+        savedAt: j.savedAt ?? 0,
+        version: j.version ?? 0,
+        seed: j.seed,
+        day: j.lastDay ?? 0,
+      });
+    } catch {
+      /* skip a broken slot */
+    }
+  }
+  return out.sort((a, b) => b.savedAt - a.savedAt);
+}
+export function writeSlot(name: string, s: SaveGame) {
+  const slots = readSlots();
+  slots[name.trim().slice(0, 32)] = JSON.stringify(s);
+  return writeSlots(slots);
+}
+export function readSlot(name: string): SaveGame | null {
+  const raw = readSlots()[name];
+  if (!raw) return null;
+  try {
+    return parseSave(raw);
+  } catch {
+    return null;
+  }
+}
+export function deleteSlot(name: string) {
+  const slots = readSlots();
+  delete slots[name];
+  return writeSlots(slots);
 }
