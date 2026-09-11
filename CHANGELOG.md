@@ -16,6 +16,27 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 
 ## v0.7.0
 
+### Saves and versioning
+
+- Save format v8. Every save carries its format version; loading never refuses on version. Older saves run through a **migration registry**: a chain of small version-to-version steps, each naming what it fills in with defaults. Newer saves load as they are. Either way the game shows a warning toast, a notice and a line in Settings naming the mismatch and what was defaulted; saving writes the current format.
+- Fields the build does not know are kept on load and written back on save, so a file round-tripped through an older build keeps newer data.
+- The export now carries the player settings; importing applies them. Export and import stay text-based (Settings → Saves).
+
+### Fixes
+
+- Buying a chunk no longer goes through the browser's blocking confirm dialog (which stalled the loop and then lurched to catch up); an in-game dialog asks instead.
+- Scheduled trains waited for full wagons only while something was on hand and left with a unit or two when a producer's pile ran dry mid-load; a wagon with room now counts as not full and the train waits for output up to the dwell limit (240 s).
+- Rolling out of a depot tries every free gate and both ways of standing on it, from the first stop that is reachable at all; the automatic route only lists stations the depot's rails actually lead to, so an unconnected quarry elsewhere no longer hijacks the first stop.
+- A stuck notice cleared as soon as the train reached a station instead of lingering.
+
+### Building costs
+
+- Each further station, service or works of the same kind costs a step more than the base (`repeatCostStep`, 20 % per existing one; track and depots excepted). The build cards show the live price.
+
+### Depot screen
+
+- A roll-out box shows which depot the train leaves from, the gate tile and the first stop, or the reason it cannot leave. Picking a depot (or Show) dims the screen, zooms the field view to the shed and pulses a marker on the gate for a few seconds.
+
 ### Traffic control
 
 - The track is cut into sections (plain track between switches, crossings, platforms and dead ends). A moving train claims its path ahead, but only whole sections: it never enters single track unless every tile up to the next node is free of other trains' claims, so head-on meetings inside a section no longer happen. First claimant keeps the section; a train following in the same direction may enter behind it. Trains stop short of the first tile they could not claim.

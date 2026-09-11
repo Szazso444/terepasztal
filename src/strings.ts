@@ -23,6 +23,7 @@ export const STR = {
     tierReq: (t: number) => `Reputation tier ${t}`,
     price: (v: number) => `$${v.toLocaleString()}`,
     buyHint: 'click to buy',
+    buyTitle: 'Buy chunk',
     buyConfirm: (v: string) => `Buy this chunk for ${v}?`,
     bought: 'Chunk charted. Neighbouring land is now visible.',
     growing: 'Charting new land beyond the edge of the map…',
@@ -245,6 +246,11 @@ export const STR = {
     routeCustom: 'Custom route',
     routeDynamic: 'Dynamic',
     from: 'Roll out of',
+    rollOut: 'Roll-out',
+    gateAt: (d: string, x: number, y: number, first: string) =>
+      `${d}: gate at ${x},${y}, first stop ${first}`,
+    show: 'Show',
+    servedBy: (n: number) => `${n} station${n === 1 ? '' : 's'} on this depot's rails`,
     groupStatic: 'Static',
     groupDynamic: 'Dynamic',
     routeMode: {
@@ -455,6 +461,14 @@ export const STR = {
     confirmNew: 'Start a new game? The current save will be replaced on the next autosave.',
     transfer: 'Transfer',
     exportSave: 'Export to text',
+    formatNote:
+      'Every save carries a format version. Older saves are upgraded step by step on load; newer ones load as they are. Fields this build does not know are kept and written back.',
+    olderToast: (v: number) => `Save converted from format v${v}: check the Notices`,
+    newerToast: (v: number) => `Save from a newer build (format v${v}) loaded with defaults`,
+    olderSave: (from: number, to: number, notes: string[]) =>
+      `Deprecated save: written as format v${from}, loaded as v${to}. ${notes.length ? 'Filled in: ' + notes.join('; ') : 'Nothing needed filling in'}. Saving writes v${to}.`,
+    newerSave: (from: number, to: number) =>
+      `Save from a newer build: format v${from}, this build reads v${to}. Data it does not understand is kept and written back; features it relies on may be missing or defaulted.`,
     importSave: 'Import from text',
     confirmImport: 'Replace the current game with the pasted save?',
     saved: 'Game saved',

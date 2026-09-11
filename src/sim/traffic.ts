@@ -365,6 +365,7 @@ export class Traffic {
         }
       } else if (!wants) {
         s.lastMoveAt = now;
+        s.stuckSince = null;
       } else if (s.stuckSince === null && now - s.lastMoveAt > STUCK_AFTER) {
         s.stuckSince = s.lastMoveAt;
         s.stuck++;

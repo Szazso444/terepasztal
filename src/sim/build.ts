@@ -103,6 +103,18 @@ export class Builder {
   private priced(cost: Cost, mul: number): Cost {
     return this.free ? {} : scaleCost(cost, mul * rules.buildCostMul);
   }
+  /** How many of one kind stand already (stations, services, works). */
+  kindCount(defId: string) {
+    let n = 0;
+    for (const s of this.stations) if (s.def.id === defId) n++;
+    for (const d of this.decor.values()) if (d.id === defId) n++;
+    for (const b of this.buildings.values()) if (b.id === defId) n++;
+    return n;
+  }
+  /** Each further one of a kind costs a step more than the base (track and depots excepted). */
+  kindMul(defId: string) {
+    return 1 + rules.repeatCostStep * this.kindCount(defId);
+  }
   private affordable(cost: Cost): PlacementCheck {
     if (!this.free && !this.stock.canAfford(cost)) {
       const miss = this.stock.missing(cost);
@@ -274,7 +286,12 @@ export class Builder {
     }
     if (!def.depot && !this.hasAdjacentTrack(x, y))
       return { ok: false, cost: {}, reason: STR.build.needTrack };
-    return this.affordable(this.priced(def.cost, Math.max(1, this.terrainMul(x, y))));
+    return this.affordable(
+      this.priced(
+        def.cost,
+        Math.max(1, this.terrainMul(x, y)) * (def.depot ? 1 : this.kindMul(defId)),
+      ),
+    );
   }
   /** Output multiplier a harvesting station would get on a tile (1 for others). */
   harvestFactor(x: number, y: number, defId: string) {
@@ -350,7 +367,7 @@ export class Builder {
       if (!def.anyTile && this.track.has(x, y))
         return { ok: false, cost: {}, reason: STR.build.occupied };
     }
-    return this.affordable(this.priced(def.cost, 1));
+    return this.affordable(this.priced(def.cost, this.kindMul(defId)));
   }
   placeDecor(x: number, y: number, defId: string, rot: number): Decor | null {
     const c = this.checkDecor(x, y, defId);
@@ -409,7 +426,7 @@ export class Builder {
       return { ok: false, cost: {}, reason: STR.build.badTerrain };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };
-    return this.affordable(this.priced(def.cost, 1));
+    return this.affordable(this.priced(def.cost, this.kindMul(defId)));
   }
   placeBuilding(x: number, y: number, defId: string): Building | null {
     const c = this.checkBuilding(x, y, defId);
