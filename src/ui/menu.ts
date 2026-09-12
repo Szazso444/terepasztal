@@ -2,8 +2,54 @@ import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { LevelData } from '../world/level';
 import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
+import type { SlotMeta } from '../sim/save';
 
-export interface MainMenuActions {
+/** Shared by both menus: the named saves with load / delete. */
+export interface SlotActions {
+  slots(): SlotMeta[];
+  loadSlot(name: string): void;
+  deleteSlot(name: string): void;
+}
+
+function slotList(actions: SlotActions, onDeleted: () => void) {
+  const list = el('div', { class: 'menu-levels' });
+  const slots = actions.slots();
+  if (!slots.length) list.append(el('div', { class: 'dim', text: STR.menu.noSaves }));
+  for (const sl of slots)
+    list.append(
+      el(
+        'div',
+        { class: 'item', style: 'cursor:default' },
+        el(
+          'div',
+          {},
+          el('div', { class: 'name', text: sl.name }),
+          el('div', {
+            class: 'sub',
+            text: `${STR.menu.day(sl.day)} · ${new Date(sl.savedAt).toLocaleString()}`,
+          }),
+        ),
+        el(
+          'div',
+          { class: 'row', style: 'margin:0;flex-direction:column' },
+          btn(STR.settings.loadSlot, () => actions.loadSlot(sl.name), 'small accent'),
+          btn(
+            STR.settings.deleteSlot,
+            () => {
+              if (confirm(STR.settings.confirmDelete(sl.name))) {
+                actions.deleteSlot(sl.name);
+                onDeleted();
+              }
+            },
+            'small',
+          ),
+        ),
+      ),
+    );
+  return list;
+}
+
+export interface MainMenuActions extends SlotActions {
   continue(): void;
   newGame(seed: string, supply: SupplyMode): void;
   playLevel(id: string): void;
@@ -101,6 +147,8 @@ export class MainMenu {
         'menu-btn',
       ),
       btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'),
+      el('div', { class: 'col-title', style: 'margin-top:8px', text: STR.menu.savedGames }),
+      slotList(this.actions, () => this.render(hasSave, levels, custom)),
     );
     const r = this.right;
     r.innerHTML = '';
@@ -194,9 +242,10 @@ export class MainMenu {
   }
 }
 
-export interface PauseMenuActions {
+export interface PauseMenuActions extends SlotActions {
   resume(): void;
   save(): void;
+  saveAs(): void;
   settings(): void;
   tuning(): void;
   content(): void;
@@ -229,7 +278,22 @@ export class PauseMenu {
       }),
     );
     b.append(btn(STR.menu.resume, () => this.actions.resume(), 'menu-btn accent'));
-    if (!opts.editor) b.append(btn(STR.settings.save, () => this.actions.save(), 'menu-btn'));
+    if (!opts.editor) {
+      b.append(btn(STR.settings.save, () => this.actions.save(), 'menu-btn'));
+      b.append(btn(STR.menu.saveAs, () => this.actions.saveAs(), 'menu-btn'));
+      // "Load game" unfolds the named saves under the button
+      const list = slotList(this.actions, () => this.show(opts));
+      list.style.display = 'none';
+      list.classList.add('menu-slots');
+      b.append(
+        btn(
+          STR.menu.loadGame,
+          () => (list.style.display = list.style.display === 'none' ? 'flex' : 'none'),
+          'menu-btn',
+        ),
+        list,
+      );
+    }
     b.append(btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'));
     b.append(btn(STR.menu.tuning, () => this.actions.tuning(), 'menu-btn'));
     b.append(btn(STR.menu.content, () => this.actions.content(), 'menu-btn'));

@@ -389,7 +389,7 @@ export class OverviewRenderer {
     }
     // contracts
     this.contractG.clear();
-    const contracts = this.source.contracts();
+    const contracts: ReturnType<OverviewSource['contracts']> = [];
     const seenC = new Set<number>();
     for (const c of contracts) {
       seenC.add(c.id);

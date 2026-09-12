@@ -1,7 +1,7 @@
 import type { GameMap } from './tiles';
 import type { TrackClass, TrackKind } from './track';
 import type { SupplyMode } from '../sim/supply';
-import { decorateProps, emptyMap } from './mapgen';
+import { decorateProps, placeOilFields, emptyMap } from './mapgen';
 
 /** A hand-made map: terrain plus pre-placed track, stations and decor, and the starting economy. */
 export interface LevelData {
@@ -67,6 +67,7 @@ export function mapFromLevel(level: LevelData): GameMap {
   map.variant.set(unpackBytes(level.variant, level.w * level.h));
   if (level.biome) map.biome.set(unpackBytes(level.biome, level.w * level.h));
   decorateProps(map, level.seed);
+  placeOilFields(map, level.seed);
   return map;
 }
 

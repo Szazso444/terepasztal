@@ -32,6 +32,7 @@ export class RosterScreen implements Screen {
   private rarity: string = 'all';
   private sort: SortKey = 'rarity';
   private freeOnly = false;
+  private size: string = 'all';
   /** pay for a fit-out; returns false when short of money (set by the game) */
   spendMoney: ((amount: number) => boolean) | null = null;
 
@@ -102,6 +103,17 @@ export class RosterScreen implements Screen {
         (v) => (this.sort = v as SortKey),
       ),
       group(
+        STR.roster.sizeLabel,
+        [
+          { v: 'all', t: STR.roster.all },
+          { v: 'small', t: STR.roster.sizes.small },
+          { v: 'medium', t: STR.roster.sizes.medium },
+          { v: 'large', t: STR.roster.sizes.large },
+        ],
+        this.size,
+        (v) => (this.size = v),
+      ),
+      group(
         '',
         [{ v: 'free', t: STR.roster.freeOnly }],
         this.freeOnly ? 'free' : '',
@@ -116,6 +128,7 @@ export class RosterScreen implements Screen {
     const items = this.inventory.items
       .filter((i) => this.kind === 'all' || i.kind === this.kind)
       .filter((i) => this.rarity === 'all' || itemDef(i.defId).rarity === this.rarity)
+      .filter((i) => this.size === 'all' || (itemDef(i.defId).size ?? 'small') === this.size)
       .filter((i) => !this.freeOnly || i.assigned === null);
     const rIdx = (i: Item) => RARITIES.indexOf(itemDef(i.defId).rarity);
     items.sort((a, c) => {

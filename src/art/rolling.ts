@@ -1031,6 +1031,7 @@ function wagonVariants(): { body: string; size: string; paint: string; def: Wago
   return [...seen.values()];
 }
 
+/** Locomotive bodies: one atlas group of their own (with 48 facings they no longer fit beside the wagons). */
 export function generateRollingAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
   const facings = [...DRAWN_FACINGS].sort((a, b) => a - b);
@@ -1050,6 +1051,13 @@ export function generateRollingAtlas(): AtlasImage {
         );
       }
   }
+  return ab.build(4096);
+}
+
+/** Wagons, cargo overlays and bogies. */
+export function generateWagonAtlas(): AtlasImage {
+  const ab = new AtlasBuilder();
+  const facings = [...DRAWN_FACINGS].sort((a, b) => a - b);
   for (const v of wagonVariants()) {
     const spec = vehicleSpec(v.def);
     for (const fi of facings) {

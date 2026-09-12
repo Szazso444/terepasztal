@@ -14,7 +14,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -213,6 +213,18 @@ export const MIGRATIONS: Migration[] = [
       const recipes = new Set<string>();
       for (const it of inv?.items ?? []) if (typeof it.defId === 'string') recipes.add(it.defId);
       j.crafting = { recipes: [...recipes], stats: { unlocks: 0, crafts: 0, failures: 0 } };
+    },
+  },
+  {
+    from: 10,
+    note: 'contract offers slowed down (two at a time, every six days) unless tuned by hand; the high-speed quest starts unfinished',
+    run: (j) => {
+      const r = j.rules as
+        { contractRefreshDays?: number; contractOfferCount?: number } | undefined;
+      if (r) {
+        if (r.contractRefreshDays === 1.5) r.contractRefreshDays = 6;
+        if (r.contractOfferCount === 3) r.contractOfferCount = 2;
+      }
     },
   },
 ];

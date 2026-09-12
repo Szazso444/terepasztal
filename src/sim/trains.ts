@@ -142,8 +142,8 @@ export function consistPhysics(
  * producers into the nearest warehouse (or depot), `collection` empties warehouses into depots,
  * `transport` carries passengers between town stations; all three pick their stops on the fly.
  */
-export type RouteMode = 'schedule' | 'production' | 'collection' | 'transport';
-export const DYNAMIC_MODES: RouteMode[] = ['production', 'collection', 'transport'];
+export type RouteMode = 'schedule' | 'production' | 'collection' | 'transport' | 'contract';
+export const DYNAMIC_MODES: RouteMode[] = ['production', 'collection', 'transport', 'contract'];
 export interface StopPlan {
   stationId: number;
   load: 'auto' | 'none';
@@ -504,6 +504,10 @@ export class Train {
   private yieldWait = 0;
   /** units taken on since arriving at the current stop */
   private loadedHere = 0;
+  /** a roaming train sitting at a station with nothing coming aboard: it has nowhere urgent to be */
+  get waitingForCargo() {
+    return this.dynamic && this.loadedHere < 1 && this.stateTime > 6;
+  }
   /** the train we pulled aside for */
   /** times this train pulled aside since it last reached a station: jams take turns */
   yieldCount = 0;
@@ -1184,8 +1188,14 @@ export class Train {
       mode === 'reverse'
         ? null
         : this.pathTo(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000, avoid);
+    if (!path && mode !== 'forward' && avoid) {
+      // a forward route exists but other trains stand on it: keep facing forward and let the
+      // traffic control hold us, rather than turning the consist around
+      const busy = this.pathTo(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000);
+      if (busy) path = busy;
+    }
     if (!path && mode !== 'forward') {
-      // reverse the consist and try the other way
+      // no forward route at all (a dead end): reverse the consist and try the other way
       const alt = this.pathTo(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
       if (alt) {
         this.reverseConsist();

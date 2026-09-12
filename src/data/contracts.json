@@ -1,6 +1,6 @@
 {
   "offerCount": 5,
-  "offerLifetimeDays": 2.5,
+  "offerLifetimeDays": 6,
   "refreshIntervalDays": 0.2,
   "templates": [
     {
@@ -108,6 +108,6 @@
       "maxOpen": 1
     }
   ],
-  "cancelFine": 0.25,
-  "failFine": 0.25
+  "cancelFine": 0.025,
+  "failFine": 0.025
 }

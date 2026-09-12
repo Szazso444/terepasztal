@@ -236,6 +236,12 @@ export class Builder {
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const kind = item.kind;
+    if (
+      !this.free &&
+      (item.cls === 'high_speed' || item.cls2 === 'high_speed') &&
+      !this.economy.hsUnlocked
+    )
+      return { ok: false, cost: {}, reason: STR.build.hsLocked };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
     for (const t of tiles) {
@@ -521,6 +527,8 @@ export class Builder {
       !DIRS.some((d) => terrainAt(this.map, x + DDX[d], y + DDY[d]) === Terrain.Water)
     )
       return { ok: false, cost: {}, reason: STR.build.needWaterside };
+    if (def.terrain && TERRAIN_NAMES[t].toLowerCase() !== def.terrain)
+      return { ok: false, cost: {}, reason: STR.build.needTerrain(def.terrain) };
     if (def.deposit && !this.hasDeposit(x, y, def.deposit))
       return { ok: false, cost: {}, reason: STR.build.needDeposit(def.deposit) };
     return this.affordable(this.priced(def.cost, this.kindMul(defId)));

@@ -1,7 +1,7 @@
 import { el, btn, fmtMoney, fmtInt } from './dom';
 import { STR } from '../strings';
 import type { GameClock } from '../sim/time';
-import type { AgeStatus, GoalKind } from '../sim/ages';
+import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
 
 export interface HudModel {
   money: number;
@@ -102,6 +102,8 @@ export class Hud {
     );
   }
 
+  /** high-speed quest progress (set by the game) */
+  hsQuest: (() => { goals: GoalStatus[]; done: boolean; open: boolean }) | null = null;
   /** The age card: every age with its goals as progress bars. */
   private renderAges() {
     const c = this.ageCard;
@@ -137,6 +139,32 @@ export class Hud {
           ),
         );
       }
+    }
+    const q = this.hsQuest?.();
+    if (q) {
+      body.append(
+        el(
+          'div',
+          { class: `kv ${q.done ? 'dim' : q.open ? 'amber' : ''}` },
+          el('span', { class: 'k', text: STR.ages.hsQuest }),
+          el('span', { class: 'v', text: q.done ? STR.ages.reached : STR.ages.locked }),
+        ),
+      );
+      for (const g of q.goals) {
+        const pct = Math.max(0, Math.min(100, (g.current / g.target) * 100));
+        body.append(
+          el(
+            'div',
+            { class: 'bar' },
+            el('div', { class: `bar-fill ${g.done ? 'good' : ''}`, style: `width:${pct}%` }),
+            el('div', {
+              class: 'bar-label',
+              text: `${STR.ages.goal[g.kind]}: ${fmt(g.kind, g.current)} / ${fmt(g.kind, g.target)}`,
+            }),
+          ),
+        );
+      }
+      body.append(el('div', { class: 'sub dim', text: STR.ages.hsQuestHint }));
     }
     body.append(el('div', { class: 'sub dim', text: STR.ages.hint }));
     c.append(el('div', { class: 'panel-title', text: STR.ages.title }), body);

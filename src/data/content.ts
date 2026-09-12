@@ -160,6 +160,8 @@ export interface BuildingDef {
   power?: boolean;
   /** must stand next to water (hydro plants) */
   needsWater?: boolean;
+  /** terrain the building must stand on (collieries on hills) */
+  terrain?: 'hill' | 'grass' | 'sand' | 'forest';
   /** taps the pole grid and makes electrified track within `radius` live, passing `throughput` units per second */
   substation?: { radius: number; throughput: number };
 }

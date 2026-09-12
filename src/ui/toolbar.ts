@@ -42,6 +42,8 @@ export interface ToolItem {
   reach?: number;
   /** cost of the next one, with the repeat surcharge (set by the game) */
   costNow?: () => Cost;
+  /** not offered at all right now (quests) */
+  hidden?: () => boolean;
 }
 export type CategoryId = 'track' | 'stations' | 'decor' | 'utility' | 'works' | 'terrain';
 interface Category {
@@ -106,6 +108,7 @@ export class Toolbar {
     private readonly onSelect: (t: Tool) => void,
     private readonly tierProvider: () => number,
     private readonly atlas: AtlasRegistry,
+    private readonly hsUnlocked: () => boolean = () => true,
   ) {
     const track: ToolItem[] = TRACK_ITEMS.map((it) => {
       const k = itemKey(it);
@@ -124,7 +127,12 @@ export class Toolbar {
         costNow: () => pieceCost(it.kind, it.cls, it.cls2),
         frame: `track/${k}_0`,
         desc: STR.toolbar.trackDesc[k] ?? '',
-        tier: 0,
+        tier:
+          it.cls === 'high_speed' || it.cls2 === 'high_speed' || it.kind === 'transition' ? 2 : 0,
+        hidden:
+          it.cls === 'high_speed' || it.cls2 === 'high_speed'
+            ? () => !this.hsUnlocked()
+            : undefined,
         place: it.kind === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
       };
     });
@@ -265,7 +273,7 @@ export class Toolbar {
   private enabledItems() {
     if (!this.open) return [];
     const tier = this.tierProvider();
-    return this.modeItems().filter((i) => i.tier <= tier);
+    return this.modeItems().filter((i) => i.tier <= tier && !i.hidden?.());
   }
   /** Step through the open category (wheel / keys). */
   cycle(dir: number) {
@@ -299,7 +307,7 @@ export class Toolbar {
     const items = this.modeItems();
     let n = 0;
     for (const it of items) {
-      const enabled = it.tier <= tier;
+      const enabled = it.tier <= tier && !it.hidden?.();
       if (enabled) n++;
       const b = el(
         'button',
