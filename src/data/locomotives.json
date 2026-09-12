@@ -293,6 +293,7 @@
     "fuelCap": 120,
     "fuelPerTile": 0.16,
     "size": "medium",
+    "bogieAxles": 3,
     "controlClass": "ussr"
   },
   {
@@ -327,6 +328,7 @@
     "fuelCap": 160,
     "fuelPerTile": 0.18,
     "size": "medium",
+    "bogieAxles": 3,
     "controlClass": "emd"
   },
   {
@@ -344,6 +346,7 @@
     "fuelCap": 140,
     "fuelPerTile": 0.2,
     "size": "medium",
+    "bogieAxles": 3,
     "controlClass": "br"
   },
   {
@@ -361,6 +364,7 @@
     "fuelCap": 280,
     "fuelPerTile": 0.3,
     "size": "large",
+    "bogieAxles": 3,
     "plan": "rigid",
     "bogies": 3,
     "controlClass": "emd",
@@ -397,6 +401,7 @@
     "crew": 2,
     "powerPerTile": 0.16,
     "size": "medium",
+    "bogieAxles": 3,
     "controlClass": "kando",
     "collector": "pantograph"
   },
@@ -414,6 +419,7 @@
     "crew": 2,
     "powerPerTile": 0.17,
     "size": "large",
+    "bogieAxles": 3,
     "plan": "garratt",
     "pivotRatio": 0.7,
     "controlClass": "sbb",
@@ -468,6 +474,7 @@
     "crew": 2,
     "powerPerTile": 0.2,
     "size": "large",
+    "bogieAxles": 3,
     "plan": "rigid",
     "bogies": 3,
     "controlClass": "prr",

@@ -9,7 +9,13 @@ import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder } from './iso3d';
-import { DRAWN_FACINGS, facingAngle, vehicleSpec, type SegmentSpec } from '../sim/body';
+import {
+  DRAWN_FACINGS,
+  facingAngle,
+  vehicleSpec,
+  type BogieKind,
+  type SegmentSpec,
+} from '../sim/body';
 import { content, type LocoDef, type WagonDef } from '../data/content';
 
 const PAINTS: Record<string, RGB[]> = {
@@ -964,10 +970,12 @@ function load(kind: string, f: Frame) {
   return f.b;
 }
 
-function bogie(kind: 'bogie' | 'engine_unit', f: Frame) {
-  const len = kind === 'bogie' ? 0.3 : 0.7;
+function bogie(kind: BogieKind, f: Frame) {
+  const len = kind === 'bogie' ? 0.3 : kind === 'bogie3' ? 0.44 : 0.7;
   f.prism({ l: 0, len, wid: 0.2, h: 3, z0: 1, top: WHEELS, side: WHEELS, seed: 61 });
-  const xs = kind === 'bogie' ? [-0.09, 0.09] : [-0.22, 0, 0.22];
+  // axles: two, three, or the engine unit's three coupled wheels
+  const xs =
+    kind === 'bogie' ? [-0.09, 0.09] : kind === 'bogie3' ? [-0.15, 0, 0.15] : [-0.22, 0, 0.22];
   for (const l of xs)
     for (const w of [-0.11, 0.11]) {
       if (!f.visible(l, w)) continue;
@@ -1076,7 +1084,7 @@ export function generateWagonAtlas(): AtlasImage {
       const f = new Frame(1, facingAngle(fi), 500 + fi);
       ab.add(`rolling/load_${k}_f${fi}`, load(k, f).toImageData(), f.ox, f.oy);
     }
-    for (const k of ['bogie', 'engine_unit'] as const) {
+    for (const k of ['bogie', 'bogie3', 'engine_unit'] as const) {
       const f = new Frame(1, facingAngle(fi), 600 + fi);
       ab.add(`rolling/${k}_f${fi}`, bogie(k, f).toImageData(), f.ox, f.oy);
     }

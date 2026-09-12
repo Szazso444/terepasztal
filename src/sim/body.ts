@@ -15,10 +15,18 @@ export const COUPLER_GAP = 0.2;
 /** tolerances in tiles: fore-and-aft slide, sideways float budget, residual gap to rail */
 export const TOL = { foreAft: 0.3, sideways: 0.4, gap: 0.25 };
 export const DEFAULT_PIVOT = 0.7;
+/** a three-tile body keeps its bogies nearer the middle: less overhang swing on a curve */
+export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
+/**
+ * How far a drawn bogie may sit off its socket across the body (tiles). The geometry keeps the
+ * true bogie on the rail; the sprite is held under the body so it never pokes out of the side.
+ */
+export const BOGIE_DRAW_PLAY = 0.05;
 
 export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
-export type BogieKind = 'bogie' | 'engine_unit';
+/** two-axle bogie, three-axle bogie, or the wheeled engine unit of a Meyer frame */
+export type BogieKind = 'bogie' | 'bogie3' | 'engine_unit';
 
 export interface SegmentSpec {
   part: PartKind;
@@ -49,6 +57,8 @@ export interface BodyFields {
   plan?: BodyPlan;
   pivotRatio?: number;
   bogies?: number;
+  /** axles per bogie: 2 (default) or 3 */
+  bogieAxles?: number;
   maxLateralPlay?: number;
   type?: string;
 }
@@ -60,24 +70,25 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
   if (size === 'small') plan = 'rigid';
   if (size === 'medium' && plan !== 'tender') plan = 'rigid';
   if (size === 'large' && plan === 'tender') plan = 'rigid';
-  const pr = def.pivotRatio ?? DEFAULT_PIVOT;
+  const pr = def.pivotRatio ?? (size === 'large' ? LARGE_PIVOT : DEFAULT_PIVOT);
+  const bogie: BogieKind = def.bogieAxles === 3 ? 'bogie3' : 'bogie';
   const segs: SegmentSpec[] = [];
   const nbRigid = def.bogies ?? (size === 'large' ? 3 : 2);
   switch (plan) {
     case 'rigid':
-      segs.push({ part: 'body', L, W: pr * L, nb: nbRigid, bogie: 'bogie', front: 0 });
+      segs.push({ part: 'body', L, W: pr * L, nb: nbRigid, bogie, front: 0 });
       break;
     case 'tender': {
       const le = 1.25;
       const lt = L - le;
-      segs.push({ part: 'engine', L: le, W: pr * le, nb: 2, bogie: 'bogie', front: 0 });
+      segs.push({ part: 'engine', L: le, W: pr * le, nb: 2, bogie, front: 0 });
       segs.push({ part: 'tender', L: lt, W: 0.66 * lt, nb: 2, bogie: 'bogie', front: le });
       break;
     }
     case 'garratt': {
       const le = 0.8;
       const lc = L - 2 * le;
-      segs.push({ part: 'engine', L: le, W: pr * le, nb: 2, bogie: 'bogie', front: 0 });
+      segs.push({ part: 'engine', L: le, W: pr * le, nb: 2, bogie, front: 0 });
       segs.push({
         part: 'cradle',
         L: lc,
@@ -91,7 +102,7 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
         L: le,
         W: pr * le,
         nb: 2,
-        bogie: 'bogie',
+        bogie,
         front: le + lc,
         mirror: true,
       });
@@ -213,6 +224,9 @@ export interface BogiePose {
   /** measured slide from its socket: along the body and across it */
   foreAft: number;
   lateral: number;
+  /** where the sprite goes: on the socket's line along the body, held within BOGIE_DRAW_PLAY of it */
+  drawX: number;
+  drawY: number;
 }
 export interface SegmentPose {
   part: PartKind;
@@ -266,9 +280,12 @@ export function poseSegment(
   const nxy = axx;
   let cx = (A.x + B.x) / 2;
   let cy = (A.y + B.y) / 2;
-  // centre the body on the track, not on its own bogies
+  // centre the body on the track, not on its own bogies: the mean gap over the body's length
+  // pulls a long body out towards the arc (where its middle bogie runs) rather than leaving it
+  // on the chord between the outer bogies
   let eMin = Infinity;
   let eMax = -Infinity;
+  let eSum = 0;
   for (let k = 0; k <= 6; k++) {
     const t = (k / 6 - 0.5) * L;
     const S = { x: cx + axx * t, y: cy + axy * t };
@@ -276,8 +293,10 @@ export function poseSegment(
     const e = (N.x - S.x) * nxx + (N.y - S.y) * nxy;
     if (e < eMin) eMin = e;
     if (e > eMax) eMax = e;
+    eSum += e;
   }
-  const delta = Math.max(-sideways, Math.min(sideways, (eMin + eMax) / 2));
+  const want = nb > 2 ? eSum / 7 : (eMin + eMax) / 2;
+  const delta = Math.max(-sideways, Math.min(sideways, want));
   cx += nxx * delta;
   cy += nxy * delta;
   const residualGap = Math.max(Math.abs(eMax - delta), Math.abs(eMin - delta));
@@ -290,13 +309,18 @@ export function poseSegment(
     const rx = P.x - skx;
     const ry = P.y - sky;
     const tg = pl.tangent(arcs[i]);
+    const along = rx * axx + ry * axy;
+    const across = rx * nxx + ry * nxy;
+    const held = Math.max(-BOGIE_DRAW_PLAY, Math.min(BOGIE_DRAW_PLAY, across));
     bogies.push({
       x: P.x,
       y: P.y,
       angle: Math.atan2(tg.y, tg.x),
       kind: seg.bogie,
-      foreAft: Math.abs(rx * axx + ry * axy),
-      lateral: Math.abs(rx * nxx + ry * nxy),
+      foreAft: Math.abs(along),
+      lateral: Math.abs(across),
+      drawX: skx + axx * along + nxx * held,
+      drawY: sky + axy * along + nxy * held,
     });
   }
   return {

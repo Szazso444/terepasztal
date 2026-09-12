@@ -155,13 +155,14 @@ export class TrainRenderer {
           if (c.spec.drawBogies)
             seg.bogies.forEach((b, k) => {
               const pb = ps?.bogies[k];
-              const bx = pb ? pb.x + (b.x - pb.x) * alpha : b.x;
-              const by = pb ? pb.y + (b.y - pb.y) * alpha : b.y;
+              // drawn where the body holds it, not at the exact rail point: the sprite stays
+              // under the body while the geometry keeps the true bogie on the track
+              const bx = pb ? pb.drawX + (b.drawX - pb.drawX) * alpha : b.drawX;
+              const by = pb ? pb.drawY + (b.drawY - pb.drawY) * alpha : b.drawY;
               const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
               const bs = c.bogies[bi++];
               if (!bs) return;
-              const name = b.kind === 'engine_unit' ? 'engine_unit' : 'bogie';
-              this.pose(bs, (f) => `rolling/${name}_f${f}`, bx, by, ba, 14);
+              this.pose(bs, (f) => `rolling/${b.kind}_f${f}`, bx, by, ba, 14);
               bs.tint = tint;
             });
           if (c.load && si === 0) {

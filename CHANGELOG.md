@@ -131,6 +131,11 @@ recorded in `docs/phase-decisions.md`.
 - Vehicles: 48 facings and only half the remainder applied as rotation, so bodies lean far less
   and the facing steps are 7.5°; the wagon sprites moved to their own atlas. A train no longer
   turns itself around when its forward route is merely busy; it waits instead.
+- Large bodies on curves: bogie sprites are held under the body instead of drawn at the exact
+  rail point (the middle bogie of a three-tile body used to snap out of the side, the end bogies
+  overlapped the ends); large bodies carry their bogies nearer the middle and sit out over the
+  arc. Three-axle bogies (`bogieAxles: 3`) for the Co-Co diesels and electrics: SD40, M62,
+  Deltic, V63, DDA40X, GG1, Crocodile.
 - A roaming train sitting on a platform with nothing to load steps aside for a train behind it.
 - Stuck trains: a roaming train only ever picks stops its own rails lead to (the nearest
   station on a disconnected line used to be chosen, found unreachable, and the train sat on its

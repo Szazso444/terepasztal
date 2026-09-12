@@ -42,11 +42,21 @@ the conflict resolutions.
 - **Posing** (`src/sim/body.ts`) follows §3 exactly: outer bogies define the axis, seven body
   stations measure the signed gap to the nearest track point, the body shifts by the clamped
   midpoint, bogies slide to their path positions. The trail buffer (R27) is the polyline.
-- **Rendering:** 24 facings, 13 drawn (0°–45° and 105°–225°; the rest are horizontal mirrors of
-  those, which in this projection is the reflection `tx ↔ ty` and keeps the light direction within
-  8° of the original), plus a runtime rotation of the residual projected angle (at most ±7.5°
-  in tile space). Bogies are a shared sprite set (`bogie`, `engine_unit`), drawn under medium and
-  large bodies only. Sprite generation takes about 0.9 s at boot (4096² atlas).
+- **Rendering:** 48 facings, 25 drawn (the rest are horizontal mirrors, which in this projection
+  is the reflection `tx ↔ ty` and keeps the light direction within 8° of the original), plus a
+  runtime rotation of half the residual projected angle (`ROTATION_SHARE`), so a flattened
+  sprite never leans more than a couple of degrees. Bogies are a shared sprite set (`bogie` two
+  axles, `bogie3` three axles for Co-Co stock via `bogieAxles`, `engine_unit` for the Meyer
+  frame), drawn under medium and large bodies only. Locomotive art in one atlas, wagons in a
+  second; generation takes about 0.9 s at boot.
+- **Bogies on screen.** The geometry keeps every bogie on the rail; the sprite is drawn on its
+  socket's line along the body, held within `BOGIE_DRAW_PLAY` (0.05 tiles) of the socket across
+  it. A three-tile body on the 1.5-radius curve would otherwise show its middle bogie 0.2 tiles
+  outside the body and its end bogies 0.2 tiles out the other way. Large bodies keep their
+  pivots at 0.58 of the length (`LARGE_PIVOT`; 0.7 for the rest) and centre on the mean gap over
+  the body rather than the min/max midpoint, which sits the body out over the arc where the middle
+  bogie runs. The tolerance verdicts are unchanged: large rigid passes high-speed (centre bogie
+  0.28 off its socket, limit 0.35) and fails regular (0.56).
 - **Sheds:** a consist rolls out of the depot from a virtual straight run inside the shed; cars
   still inside the footprint are hidden.
 
