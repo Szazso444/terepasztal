@@ -1,0 +1,174 @@
+{
+  "step": 0.1,
+  "samples": 52128,
+  "rows": [
+    {
+      "id": "mav424",
+      "samples": 2432,
+      "visibleWheelPixels": 283096,
+      "maxSwivel": 0.864352374324303,
+      "maxSlide": 0.031914814152068295
+    },
+    {
+      "id": "k4s",
+      "samples": 2432,
+      "visibleWheelPixels": 283096,
+      "maxSwivel": 0.864352374324303,
+      "maxSlide": 0.031914814152068295
+    },
+    {
+      "id": "drg01",
+      "samples": 2432,
+      "visibleWheelPixels": 283096,
+      "maxSwivel": 0.864352374324303,
+      "maxSlide": 0.031914814152068295
+    },
+    {
+      "id": "flying_scotsman",
+      "samples": 2432,
+      "visibleWheelPixels": 283096,
+      "maxSwivel": 0.864352374324303,
+      "maxSlide": 0.031914814152068295
+    },
+    {
+      "id": "daylight",
+      "samples": 2432,
+      "visibleWheelPixels": 243975,
+      "maxSwivel": 0.864352374324303,
+      "maxSlide": 0.031914814152068295
+    },
+    {
+      "id": "mallard",
+      "samples": 2432,
+      "visibleWheelPixels": 243975,
+      "maxSwivel": 0.864352374324303,
+      "maxSlide": 0.031914814152068295
+    },
+    {
+      "id": "big_boy",
+      "samples": 1184,
+      "visibleWheelPixels": 238245,
+      "maxSwivel": 0.5998165695743394,
+      "maxSlide": 0.08186889217540966
+    },
+    {
+      "id": "m62",
+      "samples": 2432,
+      "visibleWheelPixels": 184611,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "f7",
+      "samples": 2432,
+      "visibleWheelPixels": 121971,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "sd40",
+      "samples": 2432,
+      "visibleWheelPixels": 184611,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "deltic",
+      "samples": 2432,
+      "visibleWheelPixels": 214185,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "dda40x",
+      "samples": 1184,
+      "visibleWheelPixels": 170580,
+      "maxSwivel": 0.5828418716781427,
+      "maxSlide": 0.284329022525767
+    },
+    {
+      "id": "v63",
+      "samples": 2432,
+      "visibleWheelPixels": 215540,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "crocodile",
+      "samples": 1184,
+      "visibleWheelPixels": 277659,
+      "maxSwivel": 0.4398164802298521,
+      "maxSlide": 0.05870183760803023
+    },
+    {
+      "id": "taurus",
+      "samples": 2432,
+      "visibleWheelPixels": 122906,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "re460",
+      "samples": 2432,
+      "visibleWheelPixels": 122906,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "gg1",
+      "samples": 1184,
+      "visibleWheelPixels": 186581,
+      "maxSwivel": 0.5828418716781427,
+      "maxSlide": 0.284329022525767
+    },
+    {
+      "id": "black_five",
+      "samples": 2432,
+      "visibleWheelPixels": 283096,
+      "maxSwivel": 0.864352374324303,
+      "maxSlide": 0.031914814152068295
+    },
+    {
+      "id": "nine_f",
+      "samples": 2432,
+      "visibleWheelPixels": 280352,
+      "maxSwivel": 0.8365259474853087,
+      "maxSlide": 0.027711572850498082
+    },
+    {
+      "id": "gmam",
+      "samples": 1184,
+      "visibleWheelPixels": 244640,
+      "maxSwivel": 0.4398164802298521,
+      "maxSlide": 0.05870183760803023
+    },
+    {
+      "id": "tgv",
+      "samples": 2432,
+      "visibleWheelPixels": 81477,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "ice1",
+      "samples": 2432,
+      "visibleWheelPixels": 81477,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "steel_coach",
+      "samples": 2432,
+      "visibleWheelPixels": 129985,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    },
+    {
+      "id": "pullman",
+      "samples": 2432,
+      "visibleWheelPixels": 129985,
+      "maxSwivel": 1.1267515395149326,
+      "maxSlide": 0.07419790182683023
+    }
+  ]
+}

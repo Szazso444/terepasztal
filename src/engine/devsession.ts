@@ -14,6 +14,17 @@ import { migrate, SAVE_MIN_VERSION, type SaveGame } from '../sim/save';
 
 const KEY = 'terepasztal.dev-reload';
 
+/** Send bounded diagnostic snapshots over Vite's existing local connection. */
+export function reportDevTraffic(take: () => unknown) {
+  if (!import.meta.env.DEV || !import.meta.hot) return;
+  if (!['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) return;
+  const id = crypto.randomUUID();
+  const timer = window.setInterval(() => {
+    import.meta.hot?.send('traffic:report', { id, report: take() });
+  }, 2000);
+  import.meta.hot.dispose(() => window.clearInterval(timer));
+}
+
 /**
  * Snapshot the game whenever Vite is about to reload the page. `take` returns the save to carry
  * over, or null when there is nothing worth carrying (the menu, the level editor). No-op outside

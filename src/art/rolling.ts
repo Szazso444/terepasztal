@@ -1,8 +1,7 @@
 /**
  * Rolling stock sprites. Bodies use 48 facings, drawing one member of each horizontal mirror pair. Bodies come in three sizes: 1, 2 and
- * 3 tiles long; short articulated segments retain their own sprites; long frames also have two
- * clipped half-body frames, joined visually at the middle pivot. Medium and large undercarriages
- * use tangent-facing bogies clipped to the casing silhouette.
+ * 3 tiles long. Articulated engines retain their rigid segments; separate four- or six-wheel
+ * bogies follow the rail below a raised chassis.
  */
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import { PAL, shade, type RGB } from './palette';
@@ -15,7 +14,6 @@ import {
   type BogieKind,
   type SegmentSpec,
 } from '../sim/body';
-import { hingedBody, type BodySlice } from '../render/vehicleVisual';
 import { content, type LocoDef, type WagonDef } from '../data/content';
 
 const PAINTS: Record<string, RGB[]> = {
@@ -104,9 +102,8 @@ class Frame {
     readonly L: number,
     readonly a: number,
     readonly seed: number,
-    readonly slice?: BodySlice,
   ) {
-    const c = canvasFor(slice ? L / 2 + 0.12 : L);
+    const c = canvasFor(L);
     this.b = new PixelBuf(c.W, c.H);
     this.ox = c.OX;
     this.oy = c.OY;
@@ -114,26 +111,20 @@ class Frame {
   /** tile-space offset of a body point: l along the heading (front = +), w across */
   along(l: number, w: number) {
     w *= 1.3;
-    l -= this.slice === 'front' ? this.L / 4 : this.slice === 'rear' ? -this.L / 4 : 0;
     return {
       x: Math.cos(this.a) * l - Math.sin(this.a) * w,
       y: Math.sin(this.a) * l + Math.cos(this.a) * w,
     };
   }
   px(l: number, w: number, z = 0) {
-    if (!this.contains(l)) return { x: -100, y: -100 };
     const p = this.along(l, w);
     return {
       x: Math.round(this.ox + (p.x - p.y) * 32),
       y: Math.round(this.oy + (p.x + p.y) * 16) - z,
     };
   }
-  private contains(l: number) {
-    return !this.slice || (this.slice === 'front' ? l >= -0.04 : l <= 0.04);
-  }
   /** is the body point on the side facing the viewer? */
   visible(l: number, w: number) {
-    if (!this.contains(l)) return false;
     const p = this.along(l, w);
     const c = this.along(l, 0);
     return p.x + p.y > c.x + c.y;
@@ -151,12 +142,6 @@ class Frame {
     roof?: RGB[];
     seed?: number;
   }) {
-    if (this.slice) {
-      const lo = Math.max(o.l - o.len / 2, this.slice === 'front' ? -0.04 : -Infinity);
-      const hi = Math.min(o.l + o.len / 2, this.slice === 'rear' ? 0.04 : Infinity);
-      if (hi <= lo) return;
-      o = { ...o, l: (lo + hi) / 2, len: hi - lo };
-    }
     const c = this.along(o.l, o.w ?? 0);
     drawPrism(this.b, {
       ox: this.ox,
@@ -176,7 +161,6 @@ class Frame {
     });
   }
   cyl(l: number, w: number, r: number, z0: number, h: number, side: RGB[], top: RGB, seed = 0) {
-    if (!this.contains(l)) return;
     const c = this.along(l, w);
     drawCylinder(this.b, this.ox, this.oy, c.x, c.y, r, z0, h, side, top, this.seed + seed);
   }
@@ -259,7 +243,6 @@ class Frame {
     this.b.rect(p.x - 1, p.y - 1, 2, 2, PAL.amber);
   }
   pantograph(l: number, zRoof: number, wide = false) {
-    if (!this.contains(l)) return;
     const base = this.px(l, 0, zRoof);
     const top = this.px(l, 0, zRoof + 9);
     this.b.line(base.x - 2, base.y, top.x + 1, top.y, PAL.iron[3]);
@@ -271,17 +254,11 @@ class Frame {
   }
   /** underframe bar for bodies whose wheels are separate bogie sprites */
   underframe(len: number, z0 = 3) {
-    this.prism({ l: 0, len, wid: 0.28, h: 4, z0: 0, top: WHEELS, side: WHEELS, seed: 3 });
-    // Continuous sill and inset axle-box detail keep a readable chassis inside the casing.
-    for (const side of [-0.145, 0.145]) {
-      if (!this.visible(0, side)) continue;
-      const a = this.px(-len * 0.45, side, 4);
-      const b = this.px(len * 0.45, side, 4);
-      if (!this.slice) this.b.line(a.x, a.y, b.x, b.y, PAL.iron[3]);
-      for (let l = -len * 0.35; l <= len * 0.36; l += 0.2) this.dot(l, side, 2, PAL.iron[1], 1);
-    }
-    for (const end of [-len / 2, len / 2]) this.dot(end, 0, z0 + 1, PAL.iron[1], 2);
+    this.prism({ l: 0, len, wid: 0.18, h: 2, z0: z0 + 2, top: PAL.iron, side: WHEELS, seed: 3 });
+    // Leave daylight below the sill: all axle boxes belong to the moving bogie sprites.
+    for (const end of [-len / 2, len / 2]) this.dot(end, 0, z0 + 3, PAL.iron[1], 2);
   }
+
   /** chassis with baked wheels for one-tile stock */
   chassis(len: number, big = false) {
     this.prism({ l: 0, len, wid: 0.2, h: 5, z0: 0, top: WHEELS, side: WHEELS, seed: 3 });
@@ -1004,18 +981,28 @@ function load(kind: string, f: Frame) {
 }
 
 function bogie(kind: BogieKind, f: Frame) {
-  const len = kind === 'bogie' ? 0.3 : kind === 'bogie3' ? 0.44 : 0.7;
-  f.prism({ l: 0, len, wid: 0.2, h: 3, z0: 1, top: WHEELS, side: WHEELS, seed: 61 });
-  // axles: two, three, or the engine unit's three coupled wheels
+  const len = kind === 'bogie' ? 0.34 : kind === 'bogie3' ? 0.52 : 0.7;
+  // Each axle carries two wheels. Drawing both sides around the narrow frame keeps the
+  // four- and six-wheel groups legible when the truck swivels out from under its body.
   const xs =
-    kind === 'bogie' ? [-0.09, 0.09] : kind === 'bogie3' ? [-0.15, 0, 0.15] : [-0.22, 0, 0.22];
-  for (const l of xs)
-    for (const w of [-0.11, 0.11]) {
-      if (!f.visible(l, w)) continue;
-      const p = f.px(l, w, 2);
-      f.b.rect(p.x - 1, p.y - 2, 3, 4, WHEELS[2]);
-      f.b.set(p.x, p.y - 1, PAL.iron[3]);
-    }
+    kind === 'bogie' ? [-0.12, 0.12] : kind === 'bogie3' ? [-0.18, 0, 0.18] : [-0.24, 0, 0.24];
+  const wheels = (near: boolean) => {
+    for (const l of xs)
+      for (const w of [-0.105, 0.105]) {
+        if (f.visible(l, w) !== near) continue;
+        const p = f.px(l, w, 1);
+        f.b.rect(p.x - 1, p.y - 3, 2, 4, WHEELS[2]);
+        f.b.rect(p.x, p.y - 2, 1, 2, near ? PAL.iron[3] : PAL.iron[0]);
+      }
+  };
+  wheels(false);
+  for (const l of xs) {
+    const a = f.px(l, -0.105, 2),
+      b = f.px(l, 0.105, 2);
+    f.b.line(a.x, a.y, b.x, b.y, PAL.iron[0]);
+  }
+  f.prism({ l: 0, len, wid: 0.1, h: 1, z0: 3, top: PAL.iron, side: WHEELS, seed: 61 });
+  wheels(true);
   if (kind === 'engine_unit') {
     for (const w of [-0.14, 0.14])
       f.prism({
@@ -1089,31 +1076,7 @@ export function generateRollingAtlas(): AtlasImage {
           f.finish().toImageData(),
           f.ox,
           f.oy,
-          spec.drawBogies,
         );
-        if (hingedBody(spec))
-          for (const slice of ['front', 'rear'] as const) {
-            const half = new Frame(seg.L, facingAngle(fi), 100 + fi, slice);
-            locoDrawer(v.body, part)(half, seg.L, paintOf(v.paint));
-            ab.add(
-              'rolling/loco_' +
-                v.body +
-                '_' +
-                v.size +
-                '_' +
-                v.paint +
-                '_' +
-                part +
-                '_f' +
-                fi +
-                '_' +
-                slice,
-              half.finish().toImageData(),
-              half.ox,
-              half.oy,
-              true,
-            );
-          }
       }
   }
   return ab.build(4096);
@@ -1133,7 +1096,6 @@ export function generateWagonAtlas(): AtlasImage {
         f.finish().toImageData(),
         f.ox,
         f.oy,
-        spec.drawBogies,
       );
     }
   }

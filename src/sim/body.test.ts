@@ -14,12 +14,43 @@ import {
   COUPLER_GAP,
   SIZE_LEN,
   Polyline,
+  poseVehicle,
 } from './body';
+import { referencePath, measure } from './compat';
 
 const ALL = Array.from({ length: FACINGS }, (_, f) => f);
 /** Measured worst-case sprite lean: the 7.5 degree facing step projects to at most 7.469 degrees
  *  of screen angle, and ROTATION_SHARE applies half of it. */
 const WORST_LEAN = (4 * Math.PI) / 180;
+
+describe('independent bogies', () => {
+  it('keeps the full rigid frame and puts each drawn bogie on its own rail point', () => {
+    const spec = vehicleSpec({ size: 'large', bogies: 3, bogieAxles: 3 });
+    const path = referencePath('high_speed');
+    const pose = poseVehicle(path, 6.7, spec);
+    expect(pose.segments).toHaveLength(1);
+    expect(pose.segments[0].L).toBe(3);
+    let swivel = 0;
+    for (const b of pose.segments[0].bogies) {
+      expect(b.drawX).toBe(b.x);
+      expect(b.drawY).toBe(b.y);
+      swivel = Math.max(swivel, Math.abs(b.angle - pose.segments[0].angle));
+    }
+    expect(swivel).toBeGreaterThan(0.2);
+    expect(pose.segments[0].bogies[1].lateral).toBeGreaterThan(0.05);
+  });
+
+  it('changes wheel count without changing pivots or curve compatibility', () => {
+    for (const size of ['medium', 'large'] as const) {
+      const four = vehicleSpec({ size, bogieAxles: 2 });
+      const six = vehicleSpec({ size, bogieAxles: 3 });
+      expect(four.segments[0].bogie).toBe('bogie');
+      expect(six.segments[0].bogie).toBe('bogie3');
+      for (const cls of ['regular', 'high_speed'] as const)
+        expect(measure(four, cls)).toEqual(measure(six, cls));
+    }
+  });
+});
 
 describe('facings', () => {
   it('round-trips a facing through its angle', () => {

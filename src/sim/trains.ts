@@ -14,6 +14,8 @@ import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules } from './rules';
+import { findRefugePath } from './recovery';
+import { STR } from '../strings';
 import {
   Polyline,
   poseVehicle,
@@ -287,6 +289,10 @@ export interface TickCtx {
   trainPath: (id: number) => Set<number>;
   /** traffic control: train holding a tile (other than self), or null */
   claimedBy: (x: number, y: number, self: number) => number | null;
+  /** Atomically reserve a retreat before changing direction or leaving a platform. */
+  reserveRecovery: (t: Train, path: PathSegment[], group: number[]) => boolean;
+  /** Exclusive escape corridor of a different recovery, if any. */
+  recoveryOwner: (x: number, y: number, self: number) => number | null;
   /** which other train has the next few tiles of its path through here (0 = nobody) */
   reservedBy: (x: number, y: number, self: number) => number;
   /** dynamic routing: the station a train should head for next, or null to keep its schedule */
@@ -302,6 +308,13 @@ export interface TickCtx {
   speedFactor: number;
   /** biome under a tile: speed and water-use multipliers */
   biomeAt: (x: number, y: number) => { speedMul: number; waterUseMul: number };
+}
+
+export interface RetreatPlan {
+  path: PathSegment[];
+  flip: boolean;
+  group: number[];
+  distance: number;
 }
 
 export interface DeliveryEvent {
@@ -1215,7 +1228,7 @@ export class Train {
     return true;
   }
 
-  private reverseConsist() {
+  private reversedTrail() {
     const total = this.trailCum[this.trailCum.length - 1];
     const newHeadArc = Math.min(total, this.length); // arc behind head of the rear end
     const pts = [...this.trail].reverse();
@@ -1243,8 +1256,13 @@ export class Train {
         break;
       }
     }
-    this.trail = nt;
-    this.trailCum = nc;
+    return { trail: nt, cum: nc };
+  }
+
+  private reverseConsist() {
+    const next = this.reversedTrail();
+    this.trail = next.trail;
+    this.trailCum = next.cum;
     this.reversed = !this.reversed;
     this.updatePoses();
   }
@@ -1395,7 +1413,8 @@ export class Train {
         if (this.stateTime < 2) break;
         const held = this.stateTime;
         this.stateTime = 0;
-        const avoid = (x: number, y: number) => ctx.occupied(x, y, this.id);
+        const avoid = (x: number, y: number) =>
+          ctx.occupied(x, y, this.id) || ctx.claimedBy(x, y, this.id) !== null;
         const wasReversed = this.reversed;
         if (
           this.dispatch(ctx.track, ctx.builder, ctx.map, avoid) ||
@@ -1482,6 +1501,11 @@ export class Train {
           by = o[0];
           break;
         }
+        const claim = ctx.claimedBy(s.x, s.y, this.id);
+        if (claim !== null) {
+          by = claim;
+          break;
+        }
       }
     this.blocked = by !== null;
     this.blockedBy = by;
@@ -1544,8 +1568,8 @@ export class Train {
         }
       }
     }
-    // traffic control: stop short of track another train holds (not while pulling aside)
-    if (!this.holding && this.claimLimit - HOLD_GAP < blockDist) {
+    // Escape moves use the same interlocking as scheduled trains.
+    if (this.claimLimit - HOLD_GAP < blockDist) {
       blockDist = Math.max(0, this.claimLimit - HOLD_GAP);
       blocker = this.claimBlocker;
     }
@@ -1567,7 +1591,7 @@ export class Train {
     this.blocked = blockDist < 0.3;
     this.blockedBy = this.blocked ? blocker : null;
     this.holdDist = blockDist;
-    if (this.dynamic && ctx.now >= this.anticipateAt && this.path) {
+    if (!this.holding && this.dynamic && ctx.now >= this.anticipateAt && this.path) {
       // look 8 tiles ahead: if another train has reserved that stretch coming our way, try a
       // path around it now instead of stopping later
       this.anticipateAt = ctx.now + 4;
@@ -1605,7 +1629,7 @@ export class Train {
     }
     if (this.blocked) {
       this.blockedTime += gdt;
-      if (this.blockedTime > REROUTE_AFTER && !this.rerouted) {
+      if (!this.holding && this.blockedTime > REROUTE_AFTER && !this.rerouted) {
         this.rerouted = true;
         // try a path that avoids the tiles other trains are sitting on
         const avoid = (x: number, y: number) => ctx.occupied(x, y, this.id);
@@ -2097,92 +2121,82 @@ export class Train {
    * Head-on meeting: back off to the previous stop (or any path that avoids the other train)
    * and let the oncoming train through. Returns false when there is nowhere to go.
    */
-  retreat(ctx: TickCtx): boolean {
-    if (!this.trail.length || this.blockedBy === null) return false;
-    const other = this.blockedBy;
-    // leaving a platform to make room frees it for the next train
-    const leavePlatform = () => {
-      if (this.atStation) {
-        this.atStation.occupants.delete(this.id);
-        this.atStation = null;
-      }
-    };
-    const theirs = ctx.trainPath(other);
+  planRetreat(ctx: TickCtx, group: number[] = []): RetreatPlan | null {
+    if (!this.trail.length || this.blockedBy === null || this.holding) return null;
+    if (['noFuel', 'noPower', 'overweight', 'stranded'].includes(this.state)) return null;
+    const members = [...new Set([this.id, this.blockedBy, ...group])];
+    const theirs = new Set<number>();
+    for (const id of members)
+      if (id !== this.id) for (const key of ctx.trainPath(id)) theirs.add(key);
     const w = ctx.track.w;
-    const avoid = (x: number, y: number) => ctx.occupied(x, y, this.id);
-    const ownLen = this.carLengths.reduce((a, b) => a + b, 0) + 0.5;
-    // a holding spot: a track tile off the other train's path with room behind it; never a
-    // platform tile someone else needs
-    const isHold = (x: number, y: number) => {
-      if (theirs.has(y * w + x) || avoid(x, y)) return false;
-      if (ctx.claimedBy(x, y, this.id) !== null) return false; // track someone else holds
-      const p = ctx.track.get(x, y);
-      if (!p || p.links.length > 1 || p.unit) return false; // not on a switch or a wide curve
-      return true;
+    if (this.occupancyKeys(w).every((key) => !theirs.has(key))) return null;
+    const avoid = (x: number, y: number) => {
+      if (ctx.occupied(x, y, this.id) || ctx.recoveryOwner(x, y, this.id) !== null) return true;
+      const owner = ctx.claimedBy(x, y, this.id);
+      // Waiting group members surrender future claims to the chosen escape move. Physical
+      // occupancy and other groups' reservations are never surrendered.
+      return owner !== null && !members.includes(owner);
     };
-    // already standing clear of their line: shuffling further along would not help anyone
-    if (this.occupancyKeys(w).every((k) => !theirs.has(k))) return false;
-    const head = this.trail[this.trail.length - 1].seg;
-    let path = this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
-    let flip = false;
-    if (!path || path.length < 2) {
-      const alt = this.pathTo(
-        ctx.track,
-        { x: head.x, y: head.y, in: head.out },
-        isHold,
-        600,
-        avoid,
+    const platforms = new Set<number>();
+    for (const station of ctx.builder.stations)
+      for (const tile of ctx.builder.platformTiles(station)) platforms.add(tile.y * w + tile.x);
+    const refuge = (x: number, y: number) => {
+      const key = y * w + x;
+      const piece = ctx.track.get(x, y);
+      return (
+        !!piece &&
+        piece.links.length === 1 &&
+        !piece.unit &&
+        !theirs.has(key) &&
+        !platforms.has(key) &&
+        !avoid(x, y)
       );
-      if (alt && alt.length >= 2) {
-        path = alt;
-        flip = true;
-      } else path = null;
+    };
+    const reversed = this.reversedTrail();
+    const plans: RetreatPlan[] = [];
+    for (const flip of [false, true]) {
+      const points = flip ? reversed.trail : this.trail;
+      const head = points[points.length - 1]?.seg;
+      if (!head) continue;
+      const path = findRefugePath(ctx.track, head, this.length, avoid, refuge, this.canUse);
+      if (path)
+        plans.push({
+          path,
+          flip,
+          group: members,
+          distance: path.reduce((sum, p) => sum + ctx.track.segLength(p.x, p.y, p.in, p.out), 0),
+        });
     }
-    if (!path) return false;
-    // extend the hold: keep going until the whole consist is clear of their path
-    const tail = path[path.length - 1];
-    // as deep as the free track allows: a dead-end siding shorter than the ideal still helps
-    let deeper: PathSegment[] | null = null;
-    for (let depth = Math.ceil(ownLen); depth >= 1 && !deeper; depth--)
-      deeper = this.pathTo(
-        ctx.track,
-        { x: tail.x, y: tail.y, in: tail.in },
-        (x, y) => {
-          if (!isHold(x, y)) return false;
-          const d = Math.abs(x - tail.x) + Math.abs(y - tail.y);
-          return d >= depth;
-        },
-        400,
-        (x, y) => avoid(x, y) || theirs.has(y * w + x),
-      );
-    if (deeper && deeper.length > 1) path = [...path, ...deeper.slice(1)];
-    // no point holding where the rear cars would still stand on their line
-    const need = Math.min(path.length, Math.ceil(ownLen - 0.5));
-    for (let i = path.length - need; i < path.length; i++)
-      if (theirs.has(path[i].y * w + path[i].x)) return false;
-    if (flip) {
-      this.reverseConsist();
-      const nh = this.trail[this.trail.length - 1].seg;
-      const p2 = this.pathTo(
-        ctx.track,
-        { x: nh.x, y: nh.y, in: nh.in },
-        (x, y) => x === path![path!.length - 1].x && y === path![path!.length - 1].y,
-        800,
-        avoid,
-      );
-      if (p2) path = p2;
-      this.updatePoses();
-    }
-    leavePlatform();
-    this.setPath(path, ctx.map, ctx.track);
+    return plans.sort((a, b) => a.distance - b.distance)[0] ?? null;
+  }
+
+  retreat(ctx: TickCtx, group: number[] = [], plan = this.planRetreat(ctx, group)): boolean {
+    if (!plan || !ctx.reserveRecovery(this, plan.path, plan.group)) return false;
+    // The complete plan is reserved before changing direction or leaving the platform.
+    if (plan.flip) this.reverseConsist();
+    if (this.atStation) this.atStation.occupants.delete(this.id);
+    this.atStation = null;
+    this.setPath(plan.path, ctx.map, ctx.track);
     this.trackVersion = ctx.track.version;
     this.holding = true;
     this.yieldCount++;
     this.yieldUntil = ctx.now + 30;
     this.clearHold();
-    this.lastMessage = 'pulling aside for an oncoming train';
+    this.lastMessage = STR.traffic.pullingAside;
     this.setState('moving');
     return true;
+  }
+
+  /** Stop a stale recovery at its current position; physical occupancy remains protected. */
+  cancelRetreat(now: number) {
+    if (!this.holding) return;
+    this.holding = false;
+    this.speed = 0;
+    this.yieldUntil = now + 4;
+    if (this.state === 'moving' || this.state === 'yielding') {
+      this.lastMessage = STR.traffic.replan;
+      this.setState('yielding');
+    }
   }
   /** Tile keys of the remaining path and every tile under the cars. */
   pathTileKeys(w: number, ahead = Infinity): Set<number> {

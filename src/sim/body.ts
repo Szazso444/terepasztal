@@ -18,11 +18,6 @@ export const DEFAULT_PIVOT = 0.7;
 /** a three-tile body keeps its bogies nearer the middle: less overhang swing on a curve */
 export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
-/**
- * How far a drawn bogie may sit off its socket across the body (tiles). The geometry keeps the
- * true bogie on the rail; the renderer also masks the rotated sprite to its body silhouette.
- */
-export const BOGIE_DRAW_PLAY = 0.05;
 
 export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
 /** two-axle bogie, three-axle bogie, or the wheeled engine unit of a Meyer frame */
@@ -224,7 +219,7 @@ export interface BogiePose {
   /** measured slide from its socket: along the body and across it */
   foreAft: number;
   lateral: number;
-  /** where the sprite goes: on the socket's line along the body, held within BOGIE_DRAW_PLAY of it */
+  /** Rail position of the independently moving sprite, also used during interpolation. */
   drawX: number;
   drawY: number;
 }
@@ -311,7 +306,6 @@ export function poseSegment(
     const tg = pl.tangent(arcs[i]);
     const along = rx * axx + ry * axy;
     const across = rx * nxx + ry * nxy;
-    const held = Math.max(-BOGIE_DRAW_PLAY, Math.min(BOGIE_DRAW_PLAY, across));
     bogies.push({
       x: P.x,
       y: P.y,
@@ -319,8 +313,8 @@ export function poseSegment(
       kind: seg.bogie,
       foreAft: Math.abs(along),
       lateral: Math.abs(across),
-      drawX: skx + axx * along + nxx * held,
-      drawY: sky + axy * along + nxy * held,
+      drawX: P.x,
+      drawY: P.y,
     });
   }
   return {

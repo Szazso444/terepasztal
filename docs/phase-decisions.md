@@ -162,6 +162,9 @@ the conflict resolutions.
 
 ## Curve rendering and procedural art after the first playtest
 
+Historical first pass, superseded by the rigid-body correction below. Its evidence remains in
+the scratchpad to explain the rejected appearance; containment is no longer an acceptance rule.
+
 - **Chosen outcome: option 2, a visual hinge.** The single three-tile casings of DDA40X, GG1 and
   Big Boy draw as two fixed 1.5-tile halves. Each half points from the centre pivot towards its
   outer bogie, with a small overlap over the joint. Three-bogie stock uses the actual middle
@@ -230,3 +233,69 @@ the conflict resolutions.
   Use the existing `Co-Authored-By` commit-trailer convention; contributor/session metadata
   belongs in Git metadata, not in source or design prose. Changes are recorded under
   “After the first playtest”; the release remains v0.8.0.
+
+## Rigid bogies and coordinated congestion recovery
+
+The player's follow-up supersedes the earlier visual-hinge and alpha-containment choice, and
+explicitly rejects the subsequently proposed sliced-body drawing. The attached rigid-body
+illustrations guide the result; their historical facing counts and tolerance numbers do not
+replace the calibrated simulation. `docs/bogie-model.md` records the corrected target.
+
+- **Body and wheels.** Render the simulation's actual rigid segments, with independent bogies
+  at their rail coordinates and tangent angles. Remove the artificial hinge, the 0.05-tile
+  drawing clamp, silhouette masks, and baked axle-box strip. Raised chassis beams expose
+  four- and six-wheel groups; existing cosmetic axle assignments are retained. The art refresh,
+  rigid pivot ratios, geometry, tolerance table and large-stock access rule remain unchanged.
+  The DDA40X/GG1 high-speed centre offset is still 0.284381 tiles against the 0.35 limit.
+- **Acceptance.** Full body-alpha containment concealed the requested moving parts. It is
+  replaced by explicit rail-position, independent-facing, rigid-length and visible-wheel checks.
+  The new GPU sweep passes 52,128 poses across all 24 medium/large definitions, every permitted
+  class, both hands, four rotations and both travel orientations. The motion sheet shows F7
+  four-wheel bogies, SD40 six-wheel bogies, and the three-bogie DDA40X. The six-model curve sheet
+  includes Garratt and Meyer stock. Before/after depot screenshots use the identical rigid pose.
+- **Budget.** No slices or mask frames remain. The locomotive atlas has 1,250 frames in
+  4096x1024; the wagon/bogie atlas has 675 in 4096x512. The recorded local generation times are
+  0.461 s and 0.221 s respectively, about 0.75 s across all nine procedural atlas groups. All
+  packed frames and anchors pass bounds checks. No runtime dependency was added.
+- **Why recovery failed.** Independent per-train retreats could select conflicting routes;
+  pulling-aside trains skipped claims; only the immediate blocker's route was considered;
+  queues behind a cycle were omitted until they stopped; chain traversal stopped after eight
+  members; short sidings could leave the rear on the main line. A failed reversal could also
+  leave the consist facing the other way. Incremental movement never closed stuck episodes
+  because each individual step was below the old half-tile threshold.
+- **Coordination.** Build complete connected wait-for groups and distinguish their directed
+  cycles from feeder queues. Prefer a cycle member that can escape; otherwise move a feeder
+  blocking that escape. Compare complete plans, with yielding history and escape distance as
+  tie-breakers. Reserve the chosen route atomically before changing a train or platform, with
+  at most one escape per group and no corridor shared by independent recoveries. Waiting group
+  members may surrender future claims, but physical occupancy is never overridden. Failed
+  searches are retried after four simulated seconds, rather than every frame.
+- **Refuge capacity.** Search directed track with clear arc length as part of the search state.
+  The complete consist length includes coupler gaps, plus a half-tile margin; the final tile
+  only contributes the distance to its centre. Switches, platforms and all other group routes
+  reset the available parking length. The search respects track access and other reservations,
+  rejects repeated tiles, and is bounded to 12,000 explored states. Both directions are previewed
+  from the correct front or rear trail before any mutation.
+- **Prevention and lifecycle.** Stamp every train's occupancy before assigning forward claims.
+  Reserve a junction's exit before entering; compare following direction at the contested tile.
+  Two trains already inside a section cannot advance into the same unclaimed gap. Recovery
+  trains obey claims too; their route releases behind the rear and cancels safely after a track
+  edit, removal, fuel failure or 30 seconds without progress. Scheduled rerouting does not
+  replace an active retreat. Waiting trains include reservation owners in their blocking reports.
+- **Evidence and limits.** In the four-train fixture with both escape directions obstructed by
+  queues, the earlier traffic code remains blocked at 240 simulated seconds (four stuck
+  episodes, eight deadlock reports). The corrected system passes the oncoming train in 37.05 s
+  after three coordinated retreats, with no overlaps, stuck episodes or deadlocks. The broader
+  12-train fixture also clears without overlaps or deadlocks, in 83.95 s; the earlier permissive
+  controller clears that unconstrained fixture in 71.3 s. Exit protection has a throughput cost:
+  this is a fix for conflicting and obstructed recovery, not a claim that every layout runs
+  faster. A layout without a reachable siding long enough for the train still needs more track.
+  Fixtures use one-shot virtual exits and restore yielded trips to isolate traffic from station
+  production; they do not measure a complete economy or guarantee recovery of every network.
+- **Diagnostics.** The debug panel shows blocking-group count and active escape owners. Exported
+  traffic reports include wait-for edges, owner, corridor tiles and progress times, plus recovery
+  completion/replan events. `http://localhost:5173/__traffic` exposes recent local browser reports
+  from Vite's existing connection; reports expire after one minute and are kept only in memory.
+  It contains no saves, adds no remote-command channel, is readable only over loopback, and is
+  absent from production. The pre-existing live browser could not be attached in this task;
+  regression evidence comes from isolated headless worlds on the running dev server.

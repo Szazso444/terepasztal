@@ -109,9 +109,18 @@ export const STR = {
     zoom: 'Zoom',
     camera: 'Camera',
     traffic: 'Traffic',
+    recovery: 'Recovery',
     junctions: 'Junctions',
     tile: 'Tile',
     regenerate: 'New map (seed)',
+  },
+  traffic: {
+    pullingAside: 'Pulling aside on a reserved escape route',
+    replan: 'Escape route unavailable; waiting for a new plan',
+    stalled: (name: string) => `${name}: escape stalled; released for replanning`,
+    released: (name: string) => `${name}: escape route released`,
+    recoverySummary: (groups: number, owners: string) =>
+      `${groups} blocking groups · ${owners || 'no active escape'}`,
   },
   minimap: { title: 'Survey' },
   build: {

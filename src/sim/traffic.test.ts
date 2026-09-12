@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { TrackGraph } from '../world/track';
 import { Traffic } from './traffic';
 import type { Builder } from './build';
+import type { Train } from './trains';
+import { Dir } from '../engine/iso';
 
 /** Traffic only reads `stations` off the builder, to find platform tiles. */
 function trafficOn(
@@ -124,5 +126,130 @@ describe('claims', () => {
     t.claims.set(key(g, 3, 5), 1);
     expect(t.claimedBy(3, 5, 1)).toBeNull();
     expect(t.claimedBy(3, 5, 2)).toBe(1);
+  });
+});
+
+/** Minimal moving train: these tests exercise interlocking independently of propulsion. */
+function moving(id: number, xs: number[], occupied: number[], w: number, y = 5): Train {
+  const east = xs.at(-1)! > xs[0];
+  const path = xs.map((x, i) => ({
+    x,
+    y,
+    in: east ? Dir.W : Dir.E,
+    out: east ? Dir.E : Dir.W,
+    arc: i,
+  }));
+  return {
+    id,
+    name: `Train ${id}`,
+    state: 'moving',
+    poses: [{ x: xs[0], y }],
+    holding: false,
+    pathProgress: 0,
+    length: 2,
+    yieldCount: 0,
+    weight: 10,
+    claimLimit: Infinity,
+    claimBlocker: null,
+    pathAhead: () => path,
+    occupancyKeys: () => occupied.map((x) => y * w + x),
+    cancelRetreat(this: Train) {
+      this.holding = false;
+      this.state = 'yielding';
+    },
+  } as unknown as Train;
+}
+
+describe('interlocking and recovery ownership', () => {
+  it('closes a stuck episode when normal small simulation steps add up to movement', () => {
+    const g = new TrackGraph(24, 24);
+    line(g, 5, 1, 14);
+    const traffic = trafficOn(g);
+    const t = moving(1, [5, 6], [5], g.w);
+    traffic.observe([t], 0, 0);
+    traffic.observe([t], 31, 31);
+    expect(traffic.stuckTrains(31)).toHaveLength(1);
+    for (let i = 1; i <= 7; i++) {
+      t.poses[0].x += 0.1;
+      traffic.observe([t], 31 + i, 1);
+    }
+    expect(traffic.stuckTrains(38)).toHaveLength(0);
+    expect(traffic.episodes.filter((e) => e.kind === 'unstuck')).toHaveLength(1);
+  });
+  it('grants the gap to only one train when both already stand inside the same section', () => {
+    const g = new TrackGraph(24, 24);
+    line(g, 5, 1, 14);
+    const traffic = trafficOn(g);
+    const east = moving(1, [5, 6, 7, 8], [5], g.w);
+    const west = moving(2, [7, 6, 5, 4], [7], g.w);
+    traffic.assign([east, west], 0);
+    expect(traffic.claimedBy(6, 5, 2)).toBe(1);
+    expect(west.claimLimit).toBe(1);
+  });
+  it('sees every physical train before assigning any forward claims', () => {
+    const g = new TrackGraph(24, 24);
+    line(g, 5, 1, 14);
+    const traffic = trafficOn(g);
+    const east = moving(1, [1, 2, 3, 4, 5, 6, 7], [1], g.w);
+    const west = moving(2, [7, 6, 5, 4, 3, 2, 1], [7], g.w);
+    traffic.assign([east, west], 0);
+    expect(east.claimBlocker).toBe(2);
+    expect(east.claimLimit).toBe(1);
+    expect(traffic.claims.get(key(g, 2, 5))).not.toBe(1);
+    expect(traffic.claims.get(key(g, 7, 5))).toBe(2);
+  });
+
+  it('holds before a junction when the exit cannot fit the consist', () => {
+    const g = new TrackGraph(24, 24);
+    line(g, 5, 1, 14);
+    g.place(5, 5, 'switch', 1);
+    const traffic = trafficOn(g);
+    const east = moving(1, [4, 5, 6, 7, 8, 9], [4], g.w);
+    const parked = moving(2, [7, 8], [7], g.w);
+    parked.state = 'waiting';
+    traffic.assign([east, parked], 0);
+    expect(east.claimBlocker).toBe(2);
+    expect(east.claimLimit).toBe(1);
+    expect(traffic.claims.has(key(g, 5, 5))).toBe(false);
+    parked.state = 'moving';
+    traffic.assign([east, parked], 1);
+    expect(east.claimLimit).toBe(1);
+    expect(traffic.claims.has(key(g, 5, 5))).toBe(false);
+  });
+
+  it('reserves an escape atomically, rejects occupied routes, and protects it from a second group', () => {
+    const g = new TrackGraph(24, 24);
+    line(g, 5, 1, 14);
+    const traffic = trafficOn(g);
+    const first = moving(1, [4, 3, 2, 1], [4], g.w);
+    const second = moving(2, [8, 7, 6, 5], [8], g.w);
+    traffic.assign([first, second], 0);
+    const path = first.pathAhead();
+    expect(traffic.reserveRecovery(second, path, [1, 2], [first, second], 0)).toBe(false);
+    expect(traffic.reserveRecovery(first, path, [1, 2], [first, second], 0)).toBe(true);
+    first.holding = true;
+    expect(traffic.reserveRecovery(second, path.slice(1), [2, 3], [first, second], 0)).toBe(false);
+    traffic.assign([first, second], 1);
+    expect(traffic.claimedBy(2, 5, 2)).toBe(1);
+    expect(first.claimLimit).toBe(Infinity);
+    traffic.assign([first, second], 32);
+    expect(first.holding).toBe(false);
+    expect(traffic.recoveries.active.size).toBe(0);
+    expect(traffic.claimedBy(2, 5, 2)).toBeNull();
+    expect(traffic.claimedBy(4, 5, 2)).toBe(1);
+  });
+
+  it('keeps the escape owner subject to a newly occupied route', () => {
+    const g = new TrackGraph(24, 24);
+    line(g, 5, 1, 14);
+    const traffic = trafficOn(g);
+    const first = moving(1, [4, 3, 2, 1], [4], g.w);
+    expect(traffic.reserveRecovery(first, first.pathAhead(), [1, 2], [first], 0)).toBe(true);
+    first.holding = true;
+    const intruder = moving(3, [2, 3], [2], g.w);
+    intruder.state = 'waiting';
+    traffic.assign([first, intruder], 1);
+    expect(first.claimBlocker).toBe(3);
+    expect(first.claimLimit).toBeLessThan(Infinity);
   });
 });

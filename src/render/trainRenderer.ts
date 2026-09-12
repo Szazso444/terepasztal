@@ -1,5 +1,4 @@
 import { Container, Sprite } from 'pixi.js';
-import { hingedBody, visualSegments } from './vehicleVisual';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
@@ -18,8 +17,6 @@ import {
 
 interface VehicleSprites {
   parts: Sprite[];
-  masks: Sprite[];
-  silhouette: Container;
   undercarriage: Container;
   bogies: Sprite[];
   load: Sprite | null;
@@ -27,7 +24,7 @@ interface VehicleSprites {
 }
 
 /**
- * Depth-sorted short segments and hinged long frames, with masked bogies beneath the casings
+ * Depth-sorted rigid segments, with independently swivelling bogies beneath the raised decks
  * and cargo overlays above loaded wagons. Bodies use 48 facings and a small residual rotation.
  */
 export class TrainRenderer {
@@ -67,19 +64,22 @@ export class TrainRenderer {
     // rebuild when the consist changed shape
     if (
       list.length !== n ||
-      list.some((c, i) => c.spec.plan !== specs[i].plan || c.spec.L !== specs[i].L)
+      list.some(
+        (c, i) =>
+          c.spec.plan !== specs[i].plan ||
+          c.spec.L !== specs[i].L ||
+          c.spec.segments.some(
+            (s, k) => s.nb !== specs[i].segments[k]?.nb || s.bogie !== specs[i].segments[k]?.bogie,
+          ),
+      )
     ) {
       for (const c of list) this.destroyCar(c);
       list.length = 0;
       for (let i = 0; i < n; i++) {
         const spec = specs[i];
-        const parts = Array.from({ length: hingedBody(spec) ? 2 : spec.segments.length }, () =>
-          this.make(),
-        );
-        const silhouette = new Container();
-        const masks = spec.drawBogies ? parts.map(() => silhouette.addChild(new Sprite())) : [];
+        const parts = spec.segments.map(() => this.make());
         const undercarriage = new Container({ sortableChildren: true });
-        this.layer.addChild(silhouette, undercarriage);
+        this.layer.addChild(undercarriage);
 
         const bogies: Sprite[] = [];
         if (spec.drawBogies)
@@ -92,16 +92,14 @@ export class TrainRenderer {
           loadKind(train.wagons[i - train.locos.length].def) !== 'none'
         )
           load = this.make();
-        list.push({ parts, masks, silhouette, undercarriage, bogies, load, spec });
+        list.push({ parts, undercarriage, bogies, load, spec });
       }
     }
     return list;
   }
   private destroyCar(c: VehicleSprites) {
     for (const s of c.parts) s.destroy();
-    for (const b of c.bogies) b.mask = null;
     c.undercarriage.destroy({ children: true });
-    c.silhouette.destroy({ children: true });
     c.load?.destroy();
   }
 
@@ -156,8 +154,8 @@ export class TrainRenderer {
         const c = list[i];
         const isLoco = i < t.locos.length;
         let bi = 0;
-        const segments = visualSegments(cur, c.spec);
-        const previous = prev ? visualSegments(prev, c.spec) : undefined;
+        const segments = cur.segments;
+        const previous = prev?.segments;
         c.undercarriage.zIndex = Infinity;
         segments.forEach((seg, si) => {
           const ps = previous?.[si];
@@ -167,36 +165,16 @@ export class TrainRenderer {
           const shown = angle + flip + (seg.mirror ? Math.PI : 0);
           const s = c.parts[si];
           const frameFor = isLoco
-            ? (f: number) => {
-                const base = locoFrame(this.atlas, t.locos[i].def, f, seg.part);
-                const slice =
-                  flip && seg.slice ? (seg.slice === 'front' ? 'rear' : 'front') : seg.slice;
-                const key = slice ? base + '_' + slice : base;
-                return this.atlas.has(key) ? key : base;
-              }
+            ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
             : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
-          const frameKey = this.pose(s, frameFor, x, y, shown, 15);
+          this.pose(s, frameFor, x, y, shown, 15);
           s.tint = tint;
-          // The same transformed body alpha clips the swivelling undercarriage. A lateral
-          // clamp alone cannot contain a long bogie at a different projected heading.
-          const mask = c.masks[si];
-          if (mask) {
-            const mf = this.atlas.get(
-              this.atlas.has(frameKey + '_mask') ? frameKey + '_mask' : frameKey,
-            );
-            mask.texture = mf.texture;
-            mask.anchor.set(mf.anchorX, mf.anchorY);
-            mask.position.copyFrom(s.position);
-            mask.scale.copyFrom(s.scale);
-            mask.rotation = s.rotation;
-            mask.visible = s.visible;
-          }
           c.undercarriage.zIndex = Math.min(c.undercarriage.zIndex, s.zIndex - 1);
           if (c.spec.drawBogies)
             seg.bogies.forEach((b, k) => {
               const pb = ps?.bogies[k];
-              // drawn where the body holds it, not at the exact rail point: the sprite stays
-              // under the body while the geometry keeps the true bogie on the track
+              // Each wheel group follows its own rail point and tangent; the raised body
+              // occludes it naturally, leaving the wheels and sideways slide visible.
               const bx = pb ? pb.drawX + (b.drawX - pb.drawX) * alpha : b.drawX;
               const by = pb ? pb.drawY + (b.drawY - pb.drawY) * alpha : b.drawY;
               const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
@@ -208,7 +186,6 @@ export class TrainRenderer {
               // ahead of the body centre (towards the camera) would otherwise paint over it
               bs.zIndex = s.zIndex - 1;
               bs.tint = tint;
-              if (bs.mask !== mask) bs.setMask({ mask, channel: 'alpha' });
             });
           if (c.load && si === 0) {
             const w = t.wagons[i - t.locos.length];

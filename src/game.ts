@@ -2603,6 +2603,7 @@ export class Game {
     d.set(STR.debug.zoom, `${this.camera.targetZoom}x (${this.viewTarget ? 'overview' : 'rts'})`);
     d.set(STR.debug.camera, `${Math.round(this.camera.x)}, ${Math.round(this.camera.y)}`);
     const tc = this.traffic.counters;
+    d.set(STR.debug.recovery, this.traffic.recoverySummary(this.fleet.trains));
     d.set(
       STR.debug.traffic,
       `stuck ${tc.stuck} · deadlock ${tc.deadlocks} · overlap ${tc.overlaps} · yields ${tc.yields} · holds ${tc.waits}`,
