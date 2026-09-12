@@ -2,7 +2,7 @@ import { el, btn } from './dom';
 import { fmtCost } from '../sim/stockpile';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
-import { TRACK_KINDS, pieceCost, type TrackKind } from '../world/track';
+import { TRACK_ITEMS, itemKey, pieceCost, type TrackItem } from '../world/track';
 import { STATION_DEFS } from '../sim/stations';
 import { DECOR_DEFS, decorDef } from '../sim/build';
 import { Terrain, TERRAIN_NAMES } from '../world/tiles';
@@ -13,7 +13,7 @@ import { content } from '../data/content';
 
 export type Tool =
   | { kind: 'none' }
-  | { kind: 'track'; piece: TrackKind }
+  | { kind: 'track'; item: TrackItem }
   | { kind: 'station'; defId: string }
   | { kind: 'decor'; defId: string }
   | { kind: 'terrain'; terrain: number }
@@ -48,7 +48,7 @@ interface Category {
 function toolKey(t: Tool): string {
   switch (t.kind) {
     case 'track':
-      return `track:${t.piece}`;
+      return `track:${itemKey(t.item)}`;
     case 'station':
       return `station:${t.defId}`;
     case 'decor':
@@ -93,16 +93,27 @@ export class Toolbar {
     private readonly tierProvider: () => number,
     private readonly atlas: AtlasRegistry,
   ) {
-    const track: ToolItem[] = TRACK_KINDS.map((k) => ({
-      key: `track:${k}`,
-      tool: { kind: 'track', piece: k },
-      name: content.track.pieces[k]?.name ?? k,
-      cost: pieceCost(k),
-      frame: `track/${k}_0`,
-      desc: STR.toolbar.trackDesc[k] ?? '',
-      tier: 0,
-      place: k === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
-    }));
+    const track: ToolItem[] = TRACK_ITEMS.map((it) => {
+      const k = itemKey(it);
+      const base = content.track.pieces[it.kind]?.name ?? it.kind;
+      const clsName =
+        it.kind === 'crossing'
+          ? `${STR.toolbar.trackClass[it.cls]} × ${STR.toolbar.trackClass[it.cls2 ?? it.cls]}`
+          : it.cls === 'regular'
+            ? ''
+            : STR.toolbar.trackClass[it.cls];
+      return {
+        key: `track:${k}`,
+        tool: { kind: 'track', item: it },
+        name: clsName ? `${base} (${clsName})` : base,
+        cost: pieceCost(it.kind, it.cls, it.cls2),
+        costNow: () => pieceCost(it.kind, it.cls, it.cls2),
+        frame: `track/${k}_0`,
+        desc: STR.toolbar.trackDesc[k] ?? '',
+        tier: 0,
+        place: it.kind === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
+      };
+    });
     const stations: ToolItem[] = STATION_DEFS.map((d) => ({
       key: `station:${d.id}`,
       tool: { kind: 'station', defId: d.id },

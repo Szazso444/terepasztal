@@ -1,8 +1,8 @@
 [
   {
     "id": "signal",
-    "name": "Signal",
-    "flavor": "Holds trains out of an occupied block. Place on track.",
+    "name": "Semaphore",
+    "flavor": "Home and distant arms on a post. Danger with the arm level, clear with it raised. Place on track.",
     "cost": {
       "iron": 1
     },

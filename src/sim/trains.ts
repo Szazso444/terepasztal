@@ -1,7 +1,8 @@
-import { type Vec2, angleToFacing8, Dir } from '../engine/iso';
-import type { TrackGraph } from '../world/track';
-import { linkPoints, isCurveLink } from '../world/trackGeom';
+import { type Vec2, Dir, DIR_DX, DIR_DY } from '../engine/iso';
+import type { TrackGraph, TrackPiece } from '../world/track';
+import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
+import { consistAccess, pieceClassFor, type ConsistAccess } from './compat';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
 import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
 import type { LocoType } from '../data/content';
@@ -11,6 +12,16 @@ import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules } from './rules';
+import {
+  Polyline,
+  poseVehicle,
+  vehicleSpec,
+  vehicleFronts,
+  consistLength,
+  facingOf,
+  type VehiclePose,
+  type VehicleSpec,
+} from './body';
 
 const trackData = content.track;
 import { sfx } from '../engine/audio';
@@ -113,9 +124,6 @@ export interface CarPose {
   heading: number;
 }
 
-const LOCO_LEN = 0.62;
-const WAGON_LEN = 0.56;
-const GAP = 0.05;
 const ACCEL = 0.7;
 const DECEL = 1.1;
 const MIN_DWELL = 2;
@@ -253,7 +261,7 @@ export class Train {
       if (!st) break;
       const plat = new Set(builder.platformTiles(st).map((p) => p.y * track.w + p.x));
       if (!plat.size) break;
-      const p = findPath(
+      const p = this.pathTo(
         track,
         { x: cursor.x, y: cursor.y, in: cursor.in },
         (x, y) => plat.has(y * track.w + x),
@@ -317,8 +325,8 @@ export class Train {
       const set = new Set(plat.map((p) => p.y * w + p.x));
       const isT = (x: number, y: number) => set.has(y * w + x);
       const p =
-        findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isT, 4000) ??
-        findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isT, 4000);
+        this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isT, 4000) ??
+        this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isT, 4000);
       if (!p) continue;
       const len = p.length;
       if (len > this.rangeTiles * 0.9) continue;
@@ -427,12 +435,66 @@ export class Train {
     return r <= 0.8 ? 1 : Math.max(0.4, 1 - (r - 0.8) * 0.6);
   }
   get length() {
-    return (
-      this.locos.length * (LOCO_LEN + GAP) + this.wagons.reduce((a) => a + WAGON_LEN + GAP, 0) - GAP
-    );
+    return consistLength(this.carLengths);
   }
   get carLengths(): number[] {
-    return [...this.locos.map(() => LOCO_LEN), ...this.wagons.map(() => WAGON_LEN)];
+    return this.vehicleSpecs.map((s) => s.L);
+  }
+  /** Body geometry of every vehicle, loco first. */
+  get vehicleSpecs(): VehicleSpec[] {
+    return [
+      ...this.locos.map((l) => vehicleSpec(l.def)),
+      ...this.wagons.map((w) => vehicleSpec(w.def)),
+    ];
+  }
+  /** Poses of every body segment and bogie, in car order (loco first). */
+  vehiclePoses: VehiclePose[] = [];
+  private accessCache: { key: string; access: ConsistAccess } | null = null;
+  /** Track classes every vehicle of the consist may use, and who bars the rest. */
+  get access(): ConsistAccess {
+    const key = [...this.locos.map((l) => l.def.id), ...this.wagons.map((w) => w.def.id)].join(',');
+    if (!this.accessCache || this.accessCache.key !== key)
+      this.accessCache = {
+        key,
+        access: consistAccess([...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)]),
+      };
+    return this.accessCache.access;
+  }
+  /** Pathfinding predicate: may the consist enter this piece through `entry`? */
+  readonly canUse = (p: TrackPiece, entry: Dir) => this.access.classes.has(pieceClassFor(p, entry));
+  /** findPath with this consist's class access applied. */
+  private pathTo(
+    track: TrackGraph,
+    start: { x: number; y: number; in: Dir },
+    isTarget: (x: number, y: number) => boolean,
+    maxCost = 100000,
+    avoid?: (x: number, y: number) => boolean,
+  ) {
+    return findPath(track, start, isTarget, maxCost, avoid, this.canUse);
+  }
+  prevVehiclePoses: VehiclePose[] = [];
+  /** Points along the consist every half tile from head to tail: what the train stands on. */
+  occupancyPoints(): Vec2[] {
+    const out: Vec2[] = [];
+    const total = this.trailCum[this.trailCum.length - 1] ?? 0;
+    const len = Math.min(total, this.length);
+    if (!this.trail.length) return out;
+    for (let s = 0; s <= len + 1e-6; s += 0.5) {
+      const p = this.sampleTrail(total - Math.min(s, len));
+      out.push({ x: p.x, y: p.y });
+    }
+    const tail = this.sampleTrail(total - len);
+    out.push({ x: tail.x, y: tail.y });
+    return out;
+  }
+  /** Tile keys under the consist. */
+  occupancyKeys(w: number): number[] {
+    const out: number[] = [];
+    for (const p of this.occupancyPoints()) {
+      const k = Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5);
+      if (!out.includes(k)) out.push(k);
+    }
+    return out;
   }
   // ------------------------------------------------------------ fuel
   private sumBy(type: LocoType, f: (l: LocoSlot) => number) {
@@ -580,18 +642,6 @@ export class Train {
     if (this.water > 0) stock.add('water', this.water, Infinity);
     this.coal = this.oil = this.water = 0;
   }
-  /** Centre offsets of each car behind the head. */
-  private carOffsets(): number[] {
-    const lens = this.reversed ? [...this.carLengths].reverse() : this.carLengths;
-    const out: number[] = [];
-    let a = lens[0] / 2;
-    out.push(a);
-    for (let i = 1; i < lens.length; i++) {
-      a += lens[i - 1] / 2 + GAP + lens[i] / 2;
-      out.push(a);
-    }
-    return out;
-  }
   get headTile(): { x: number; y: number } | null {
     const p = this.trail[this.trail.length - 1];
     return p ? { x: p.seg.x, y: p.seg.y } : null;
@@ -616,8 +666,18 @@ export class Train {
     const back = walkBack(track, x, y, entry, Math.ceil(this.length) + 1);
     this.trail = [];
     this.trailCum = [];
+    // the consist stands behind the gate: where the rails end (inside the shed) a straight
+    // virtual run carries the rest of the cars, hidden under the shed until they roll out
+    const first = back[0] ?? seg;
+    const firstPts = track.segGeom(first.x, first.y, first.in, first.out, first.route).pts;
+    const p0 = { x: first.x + firstPts[0].x, y: first.y + firstPts[0].y };
+    const behind = this.length + 1 - back.length;
+    const dx = DIR_DX[first.in];
+    const dy = DIR_DY[first.in];
+    for (let d = Math.ceil(behind / 0.125); d >= 1; d--)
+      this.pushTrail({ x: p0.x + dx * d * 0.125, y: p0.y + dy * d * 0.125, seg: first });
     for (const s of [...back, seg]) {
-      const pts = linkPoints(s.in, s.out, 8);
+      const pts = track.segGeom(s.x, s.y, s.in, s.out, s.route).pts;
       const upto = s === seg ? Math.floor(pts.length / 2) + 1 : pts.length;
       for (let i = 0; i < upto; i++)
         this.pushTrail({ x: s.x + pts[i].x, y: s.y + pts[i].y, seg: s });
@@ -628,6 +688,7 @@ export class Train {
     this.path = null;
     this.updatePoses();
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
     return true;
   }
 
@@ -654,6 +715,7 @@ export class Train {
     this.path = null;
     this.updatePoses();
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
   }
 
   private pushTrail(p: TrailPoint) {
@@ -702,17 +764,21 @@ export class Train {
   }
 
   updatePoses() {
-    const total = this.trailCum[this.trailCum.length - 1] ?? 0;
-    const offs = this.carOffsets();
-    const poses = offs.map((o) => this.sampleTrail(total - o));
-    // keep the array in car order (loco first) regardless of travel direction
-    this.poses = this.reversed ? poses.reverse() : poses;
+    const specs = this.vehicleSpecs;
+    const order = this.reversed ? [...specs].reverse() : specs;
+    const fronts = vehicleFronts(order.map((s) => s.L));
+    const pl = new Polyline(this.trail);
+    const total = pl.length;
+    const vposes = order.map((s, i) => poseVehicle(pl, total - fronts[i], s));
+    // keep the arrays in car order (loco first) regardless of travel direction
+    if (this.reversed) vposes.reverse();
+    this.vehiclePoses = vposes;
+    this.poses = vposes.map((v) => ({ x: v.x, y: v.y, heading: v.heading }));
   }
 
-  /** Facing index for a car (loco faces backwards when pushed). */
-  facingOf(carIndex: number, pose: CarPose) {
-    const flip = this.reversed;
-    return angleToFacing8(pose.heading + (flip ? Math.PI : 0) + (carIndex === 0 ? 0 : 0));
+  /** Facing index (of 24) for a car (loco faces backwards when pushed). */
+  facingOf(_carIndex: number, pose: CarPose) {
+    return facingOf(pose.heading + (this.reversed ? Math.PI : 0));
   }
 
   // ------------------------------------------------------------ routing
@@ -746,10 +812,10 @@ export class Train {
     let path =
       mode === 'reverse'
         ? null
-        : findPath(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000, avoid);
+        : this.pathTo(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000, avoid);
     if (!path && mode !== 'forward') {
       // reverse the consist and try the other way
-      const alt = findPath(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
+      const alt = this.pathTo(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
       if (alt) {
         this.reverseConsist();
         // the head is now the old rear car: re-anchor the path on its actual tile
@@ -759,21 +825,18 @@ export class Train {
           this.trackVersion = track.version;
           return true;
         }
-        path = findPath(track, { x: nh.x, y: nh.y, in: nh.in }, isTarget, 100000, avoid) ?? alt;
+        path = this.pathTo(track, { x: nh.x, y: nh.y, in: nh.in }, isTarget, 100000, avoid) ?? alt;
       }
     }
     if (!path) return false;
-    this.setPath(path, map);
+    this.setPath(path, map, track);
     this.trackVersion = track.version;
     return true;
   }
 
   private reverseConsist() {
     const total = this.trailCum[this.trailCum.length - 1];
-    const offs = this.carOffsets();
-    const lens = this.reversed ? [...this.carLengths].reverse() : this.carLengths;
-    const lastRear = offs[offs.length - 1] + lens[lens.length - 1] / 2; // arc behind head of the rear end
-    const newHeadArc = Math.min(total, lastRear);
+    const newHeadArc = Math.min(total, this.length); // arc behind head of the rear end
     const pts = [...this.trail].reverse();
     const cumR = pts.map((_, i) => total - this.trailCum[this.trail.length - 1 - i]);
     // truncate at newHeadArc
@@ -805,17 +868,18 @@ export class Train {
     this.updatePoses();
   }
 
-  private setPath(path: PathSegment[], map: GameMap) {
+  private setPath(path: PathSegment[], map: GameMap, track: TrackGraph) {
     this.path = path;
     this.pathPts = [];
     this.pathCum = [];
+    track.resolveRoutes(path);
     for (let s = 0; s < path.length; s++) {
       const seg = path[s];
-      const pts = linkPoints(seg.in, seg.out, 8);
+      const geom = track.segGeom(seg.x, seg.y, seg.in, seg.out, seg.route);
+      const pts = geom.pts;
       const last = s === path.length - 1;
       const upto = last ? Math.floor(pts.length / 2) + 1 : pts.length;
-      const curve = isCurveLink(seg.in, seg.out);
-      let factor = curve ? trackData.curveSpeed : 1;
+      let factor = curveFactor(geom.radius, trackData.curveSpeed);
       if (seg.x !== undefined) {
         const t = terrainAt(map, seg.x, seg.y);
         if (t === Terrain.Water) factor = Math.min(factor, trackData.bridgeSpeed);
@@ -895,6 +959,7 @@ export class Train {
   /** Advance by in-game seconds. */
   tick(gdt: number, ctx: TickCtx) {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
     this.stateTime += gdt;
     if (ctx.track.version !== this.trackVersion && this.state === 'moving') {
       this.trackVersion = ctx.track.version;
@@ -1005,8 +1070,8 @@ export class Train {
     const isTarget = (x: number, y: number) => targetSet.has(y * w + x);
     const head = this.trail[this.trail.length - 1].seg;
     const path =
-      findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
-      findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
+      this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
+      this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
     this.wantKeys = path ? path.map((s) => s.y * w + s.x) : null;
     let by: number | null = null;
     if (path)
@@ -1546,17 +1611,22 @@ export class Train {
       if (theirs.has(y * w + x) || avoid(x, y)) return false;
       if (ctx.claimedBy(x, y, this.id) !== null) return false; // track someone else holds
       const p = ctx.track.get(x, y);
-      if (!p || p.links.length > 1) return false; // not on a switch
+      if (!p || p.links.length > 1 || p.unit) return false; // not on a switch or a wide curve
       return true;
     };
     // already standing clear of their line: shuffling further along would not help anyone
-    if (this.poses.every((p) => !theirs.has(Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5))))
-      return false;
+    if (this.occupancyKeys(w).every((k) => !theirs.has(k))) return false;
     const head = this.trail[this.trail.length - 1].seg;
-    let path = findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
+    let path = this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
     let flip = false;
     if (!path || path.length < 2) {
-      const alt = findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isHold, 600, avoid);
+      const alt = this.pathTo(
+        ctx.track,
+        { x: head.x, y: head.y, in: head.out },
+        isHold,
+        600,
+        avoid,
+      );
       if (alt && alt.length >= 2) {
         path = alt;
         flip = true;
@@ -1568,7 +1638,7 @@ export class Train {
     // as deep as the free track allows: a dead-end siding shorter than the ideal still helps
     let deeper: PathSegment[] | null = null;
     for (let depth = Math.ceil(ownLen); depth >= 1 && !deeper; depth--)
-      deeper = findPath(
+      deeper = this.pathTo(
         ctx.track,
         { x: tail.x, y: tail.y, in: tail.in },
         (x, y) => {
@@ -1587,7 +1657,7 @@ export class Train {
     if (flip) {
       this.reverseConsist();
       const nh = this.trail[this.trail.length - 1].seg;
-      const p2 = findPath(
+      const p2 = this.pathTo(
         ctx.track,
         { x: nh.x, y: nh.y, in: nh.in },
         (x, y) => x === path![path!.length - 1].x && y === path![path!.length - 1].y,
@@ -1598,7 +1668,7 @@ export class Train {
       this.updatePoses();
     }
     leavePlatform();
-    this.setPath(path, ctx.map);
+    this.setPath(path, ctx.map, ctx.track);
     this.trackVersion = ctx.track.version;
     this.holding = true;
     this.yieldCount++;

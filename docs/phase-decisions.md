@@ -1,0 +1,90 @@
+# Current phase: decisions taken while building
+
+Record of the choices the spec left open (`FABLE DECIDES`) and of the places where a decided
+item had to bend to fit the code. Section numbers refer to `current-phase-spec.md`, R-numbers to
+the conflict resolutions.
+
+## Track classes (§1, R25, R26)
+
+- **Geometry derives from `n`.** `CLASS_N` in `src/world/track.ts`; radius `n − 0.5`; a curve or
+  switch of class `n > 1` spans `n × n` tiles. The 2×2 high-speed curve and switch are generated
+  in `src/world/trackGeom.ts` (`unitDef`): each route is sampled densely and clipped to the tiles
+  it crosses, so every member tile carries its own polyline and edge pair. The tile graph stays
+  tile-based; pathfinding and traffic did not have to change their state model.
+- **Switch throat.** In a 2×2 switch the entry tile is crossed by both routes with the same edge
+  pair. `TrackGraph.resolveRoutes` picks the route a path actually takes from the neighbouring
+  segments, so the throat draws the arc when the path diverges and the straight otherwise.
+- **Transition (R26):** a 1×1 straight-only piece that joins any class. No transition is needed
+  at a mixed crossing (neither route changes class). The class speed ceiling is a curve effect
+  only (§4 has no per-class straight constant), so the transition tile itself runs at straight
+  speed; the "ceiling along its whole length" clause has nothing to apply to.
+- **Class adjacency** is enforced at placement: an open edge meeting track of the other class is
+  refused unless one side is a transition. Legacy mismatches would simply not connect.
+- **Curve speed (R28):** a factor, `min(1, k·sqrt(R))`, expressed through the existing tuning
+  value: `k = curveSpeed / sqrt(0.5)`, so regular curves keep 0.55 and high-speed curves get 0.95.
+  Switch diverging legs use the same factor as the curve of their radius (the old, never applied
+  `switchSpeed` is gone).
+- **Costs (R39):** the ratio matrix lives in `src/data/track.json`; `pieceCost` multiplies by
+  `classCostMul` (`n × 1.5` above regular) and `rules.trackCostScale`. Both scales default to 1
+  (see Economy below).
+- **High-speed unlock (R22):** until the age system lands the class is buildable from the start.
+
+## Vehicles (§2, §3, R8, R9)
+
+- **Sizes:** 1 / 2 / 3 tiles. Existing stock was re-laid: 4-4-0s, tank engines, shunters and the
+  Kandó V40 are small; express engines (as engine + tender), road diesels and box electrics are
+  medium; Big Boy (Meyer plan), DDA40X and GG1 (rigid, three bogies) and the Crocodile (Garratt
+  plan) are large. New models: J94 shunter, Black Five, 9F, GMAM Garratt, TGV Sud-Est, ICE 1.
+- **Plans:** `rigid`, `tender` (a two-segment medium steam engine: the joint gives the engine a
+  1.25-tile body and a 0.75-tile tender; not in the spec, added because a rigid two-tile steam
+  body looked wrong and the segment model made it free), `garratt`, `meyer`. Nothing at runtime
+  asks which large plan it is holding; the size rule is the only gate.
+- **Posing** (`src/sim/body.ts`) follows §3 exactly: outer bogies define the axis, seven body
+  stations measure the signed gap to the nearest track point, the body shifts by the clamped
+  midpoint, bogies slide to their path positions. The trail buffer (R27) is the polyline.
+- **Rendering:** 24 facings, 13 drawn (0°–45° and 105°–225°; the rest are horizontal mirrors of
+  those, which in this projection is the reflection `tx ↔ ty` and keeps the light direction within
+  8° of the original), plus a runtime rotation of the residual projected angle (at most ±7.5°
+  in tile space). Bogies are a shared sprite set (`bogie`, `engine_unit`), drawn under medium and
+  large bodies only. Sprite generation takes about 0.9 s at boot (4096² atlas).
+- **Sheds:** a consist rolls out of the depot from a virtual straight run inside the shed; cars
+  still inside the footprint are hidden.
+
+## Tolerances and bans (§4, §5)
+
+- The table (`src/sim/compat.ts`) is built at boot from a straight–quarter-arc–straight reference
+  path per class. Verdicts, per model and class, feed `vehicleAccess`.
+- **Calibration.** With the spec's figures a rigid two-tile body on the 0.5-radius curve measures
+  a 0.29 residual gap, over the 0.25 limit, which would have barred nearly every medium model
+  from regular track; and the centre bogie of a three-bogie large body on the 1.5-radius curve
+  keeps a 0.31 residual (the spec's worked example assumed the centring shift absorbs the whole
+  0.37, which the seven-station midpoint rule does not do on a composite path). Two calibrations
+  make the spec's intended verdicts hold: the gap limit scales with body length (0.25 per tile of
+  body), and `maxLateralPlay` defaults to 0.35. Result: small and medium pass both classes; large
+  rigid passes high-speed (0.31 < 0.35) and fails regular (0.58) on geometry, and is barred from
+  regular by rule anyway. Per-model overrides stay available in the data.
+- **Enforcement:** the consist's usable classes (`Train.access`) filter every path search; the
+  depot gate check (`Fleet.gateReport`) requires a usable class at the gate, an onward tile and a
+  run at least as long as the consist before the first blocking feature (no track, unusable
+  class, a standing train, a dead end: R29); the picker greys barred models with the reason; a
+  refused roll-out names the vehicle and the first tile it cannot pass.
+
+## Depot (R10)
+
+- Four interchangeable gates. Plain pieces may be laid through the shed footprint and count as
+  platforms, so trains can traverse, stop inside and unload into the pool there.
+
+## Economy (R19, R39)
+
+- Field boulders (desert sand) are gone from generation; hill boulders and small rocks stay.
+- Starting wood, stone and iron derive from the cost matrix: 50 straights, 6 curves, 1 switch
+  plus a crafting allowance, times `rules.startingResourceScale`. With both scales at 1 the
+  opening holds 155 wood, 131 stone, 96 iron: enough for the first line and the first consist,
+  not for blanketing the map (a straight costs 1 iron; iron income is the grinder's 20 per day or
+  the market at 70 each).
+
+## Signals (R16)
+
+- The `signal` decor keeps its id (saves) and becomes a semaphore: home arm (red, white stripe)
+  and distant arm (yellow fishtail), 4 × 4 arm-position frames animated one step per 70 ms.
+  Danger: home arm level. Caution: home raised, distant level. Clear: both raised.

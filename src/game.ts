@@ -67,6 +67,7 @@ import {
   type Season,
 } from './sim/weather';
 import { decorOffset, type Decor } from './sim/build';
+import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
 import { DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
@@ -97,7 +98,7 @@ import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
 import { TownPanel } from './ui/townPanel';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
-import { makePiece } from './world/track';
+import { footprintOf, pieceFrame, pieceCost, type TrackKind } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
@@ -120,6 +121,8 @@ import { NoticePanel } from './ui/noticePanel';
 import { Advisor, type Tip } from './ui/advisor';
 import { resourceStats } from './sim/stats';
 import { locoFrame } from './art/frames';
+import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
+import { buildCompatTable } from './sim/compat';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
 import { PeopleSim } from './sim/people';
@@ -127,15 +130,31 @@ import { expandSave, ownsBorderChunk } from './sim/expand';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 
-/** Starting stockpile for a brand-new game, before `rules.startStock` scaling. */
-const START_STOCK: Record<string, number> = {
-  wood: 200,
-  stone: 150,
-  water: 120,
-  wheat: 120,
-  coal: 40,
-  iron: 10,
-};
+/**
+ * Starting stockpile for a brand-new game, before `rules.startStock` scaling. Wood, stone and
+ * iron are derived from the track cost matrix (spec §16): about fifty straights, a handful of
+ * curves and a switch, plus the crafting of one locomotive and four wagons, and are multiplied
+ * by `rules.startingResourceScale`.
+ */
+function startStock(): Record<string, number> {
+  const piece = (kind: TrackKind, n: number) => {
+    const c = pieceCost(kind, 'regular');
+    return { wood: (c.wood ?? 0) * n, stone: (c.stone ?? 0) * n, iron: (c.iron ?? 0) * n };
+  };
+  const parts = [piece('straight', 50), piece('curve', 6), piece('switch', 1)];
+  // crafting one locomotive and four wagons (see src/data/crafting.json when present)
+  const craft = { wood: 40, stone: 10, iron: 30 };
+  const sum = (k: 'wood' | 'stone' | 'iron') => parts.reduce((a, p) => a + p[k], 0) + craft[k];
+  const s = rules.startingResourceScale;
+  return {
+    wood: Math.round(sum('wood') * s),
+    stone: Math.round(sum('stone') * s),
+    iron: Math.round(sum('iron') * s),
+    water: 120,
+    wheat: 120,
+    coal: 40,
+  };
+}
 
 const SIM_HZ = 20;
 const EDGE_MARGIN = 14;
@@ -283,7 +302,15 @@ export class Game {
           y: t.poses[0].y,
           name: t.name,
           heading: t.poses[0].heading + (t.reversed ? Math.PI : 0),
-          frame: locoFrame(this.atlas, t.locoDef, t.facingOf(0, t.poses[0])),
+          frame: locoFrame(
+            this.atlas,
+            t.locoDef,
+            DRAWN_FACINGS.has(t.facingOf(0, t.poses[0]))
+              ? t.facingOf(0, t.poses[0])
+              : mirrorFacing(t.facingOf(0, t.poses[0])),
+            vehicleSpec(t.locoDef).segments[0].part,
+          ),
+          flip: !DRAWN_FACINGS.has(t.facingOf(0, t.poses[0])),
         })),
     markers: () =>
       this.notices.list
@@ -340,7 +367,7 @@ export class Game {
     const rep = start ? start.reputation : rules.startReputation;
     if (rep > 0) this.economy.addReputation(rep);
     const stockMul = start?.stockMul ?? 1;
-    for (const [id, n] of Object.entries(START_STOCK))
+    for (const [id, n] of Object.entries(startStock()))
       this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (!start) {
       const d = this.ensureDepot();
@@ -363,10 +390,10 @@ export class Game {
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    for (const [x, y, kind, rot] of level.track) {
+    for (const [x, y, kind, rot, cls, cls2] of level.track) {
       if (!inBounds(this.map, x, y)) continue;
-      this.track.set(x, y, makePiece(kind, rot));
-      this.onTrackChanged(x, y);
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+        this.onTrackChanged(t.x, t.y);
     }
     resetStationIds(1);
     for (const sj of level.stations) {
@@ -601,6 +628,7 @@ export class Game {
     canvas.tabIndex = 0;
     this.input = new Input(canvas);
     await this.atlas.load(ATLAS_GROUPS);
+    buildCompatTable();
 
     this.map =
       this.spec.kind === 'level'
@@ -710,6 +738,8 @@ export class Game {
     this.applySeason(true);
     this.applySettings();
     this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
+    // vehicles still inside an engine shed are hidden until they roll out
+    this.trainRenderer.hideAt = (x, y) => this.builder.stationAt(x, y)?.def.depot === true;
     this.peopleRenderer = new PeopleRenderer(this.atlas, this.world.objects, (x, y) =>
       this.world.elevationOf(x, y),
     );
@@ -764,7 +794,8 @@ export class Game {
   private saveExtra: Record<string, unknown> = {};
   snapshot(): SaveGame {
     const track: SaveGame['track'] = [];
-    for (const t of this.track.tiles()) track.push([t.x, t.y, t.piece.kind, t.piece.rot]);
+    for (const t of this.track.anchors())
+      track.push([t.x, t.y, t.piece.kind, t.piece.rot, t.piece.cls, t.piece.cls2]);
     return {
       ...this.saveExtra,
       version: SAVE_VERSION,
@@ -822,7 +853,9 @@ export class Game {
         this.world.retile(x, y);
       }
     };
-    for (const [x, y, kind] of j.track) fix(x, y, kind === 'bridge');
+    for (const [x, y, kind, rot, cls] of j.track)
+      for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+        fix(f.x, f.y, kind === 'bridge');
     for (const s of j.stations) {
       const size = stationDefOf(s.defId).size ?? 1;
       for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) fix(s.x + dx, s.y + dy);
@@ -849,9 +882,9 @@ export class Game {
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toolbar.refresh();
-    for (const [x, y, kind, rot] of j.track) {
-      this.track.set(x, y, makePiece(kind, rot));
-      this.onTrackChanged(x, y);
+    for (const [x, y, kind, rot, cls, cls2] of j.track) {
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+        this.onTrackChanged(t.x, t.y);
     }
     resetStationIds(1);
     for (const sj of j.stations) {
@@ -907,13 +940,14 @@ export class Game {
 
   // ---------------------------------------------------------------- world edits
   private onTrackChanged(x: number, y: number) {
+    this.depot?.onTrackChanged();
     const p = this.track.get(x, y);
     const t = terrainAt(this.map, x, y);
     if (p) {
       if (t === Terrain.Hill) this.world.setFlattened(x, y, true);
       if (t === Terrain.Forest || t === Terrain.Grass)
-        this.world.displaceProps(x, y, p.links as [number, number][]);
-      this.world.setTrack(x, y, `track/${p.kind}_${p.rot}`);
+        this.world.displaceProps(x, y, p.unit ? [] : (p.links as [number, number][]));
+      this.world.setTrack(x, y, pieceFrame(p));
     } else {
       this.world.setTrack(x, y, null);
       if (t === Terrain.Hill && !this.builder.stationAt(x, y)) this.world.setFlattened(x, y, false);
@@ -942,7 +976,7 @@ export class Game {
       return;
     }
     if (d.id === 'signal') {
-      this.world.setStructure(id, d.x, d.y, 'structures/signal_green', 12, off.dy, off.dx);
+      this.world.setStructure(id, d.x, d.y, semaphoreFrame(3, 3), 12, off.dy, off.dx);
       this.signalAspect.set(d.y * this.map.w + d.x, 'green');
     } else {
       const t = terrainAt(this.map, d.x, d.y);
@@ -985,27 +1019,52 @@ export class Game {
   stockCap(id: string) {
     return this.stock.cap(id, this.builder.depotCount(), this.builder.plantCount());
   }
-  /** Signals show red when a train sits on the tile they guard or on their own tile. */
-  private updateSignals() {
+  /** Arm positions of every semaphore, stepped towards the aspect they should show. */
+  private semaphoreArms = new Map<number, { m: number; d: number; frame: string }>();
+  private semaphoreClock = 0;
+  /**
+   * Aspect a signal should show: red while a train sits on the tile it guards or on its own
+   * tile, yellow when the tile beyond that is taken, else green. (Block signalling refines this.)
+   */
+  protected signalAspectAt(d: { x: number; y: number; rot: number }): 'red' | 'yellow' | 'green' {
+    const ax = d.x + DIR_DX[d.rot];
+    const ay = d.y + DIR_DY[d.rot];
+    if (this.fleet.occupied(ax, ay, -1) || this.fleet.occupied(d.x, d.y, -1)) return 'red';
+    const bx = ax + DIR_DX[d.rot];
+    const by = ay + DIR_DY[d.rot];
+    if (this.fleet.occupied(bx, by, -1)) return 'yellow';
+    return 'green';
+  }
+  /** Semaphore arms sweep one step per 70 ms towards the aspect: home arm up for clear, distant arm down when the next block is clear too. */
+  private updateSignals(dt = 0) {
+    this.semaphoreClock += dt;
+    const step = this.semaphoreClock >= 0.07;
+    if (step) this.semaphoreClock = 0;
+    const top = SEMAPHORE_STEPS - 1;
     for (const d of this.builder.decor.values()) {
       if (d.id !== 'signal') continue;
       const key = d.y * this.map.w + d.x;
-      const ax = d.x + DIR_DX[d.rot];
-      const ay = d.y + DIR_DY[d.rot];
-      const red = this.fleet.occupied(ax, ay, -1) || this.fleet.occupied(d.x, d.y, -1);
-      const aspect = red ? 'red' : 'green';
-      if (this.signalAspect.get(key) === aspect) continue;
+      const aspect = this.signalAspectAt(d);
       this.signalAspect.set(key, aspect);
+      const want =
+        aspect === 'red'
+          ? { m: 0, d: 0 }
+          : aspect === 'yellow'
+            ? { m: top, d: 0 }
+            : { m: top, d: top };
+      let arms = this.semaphoreArms.get(key);
+      if (!arms) {
+        arms = { m: want.m, d: want.d, frame: '' };
+        this.semaphoreArms.set(key, arms);
+      } else if (step) {
+        arms.m += Math.sign(want.m - arms.m);
+        arms.d += Math.sign(want.d - arms.d);
+      }
+      const frame = semaphoreFrame(arms.m, arms.d);
+      if (arms.frame === frame) continue;
+      arms.frame = frame;
       const off = decorOffset(d);
-      this.world.setStructure(
-        `decor:${d.x},${d.y}`,
-        d.x,
-        d.y,
-        `structures/signal_${aspect}`,
-        12,
-        off.dy,
-        off.dx,
-      );
+      this.world.setStructure(`decor:${d.x},${d.y}`, d.x, d.y, frame, 12, off.dy, off.dx);
     }
   }
   /** Re-tint the world and adjust production when the season changes. */
@@ -1130,7 +1189,7 @@ export class Game {
             if (d) {
               for (const g of d.gateTiles())
                 if (!this.track.has(g.x, g.y))
-                  this.builder.placeTrack(g.x, g.y, 'straight', rot === 0 ? 1 : 0);
+                  this.builder.placeTrackKind(g.x, g.y, 'straight', rot === 0 ? 1 : 0);
               d.name = STR.station.depotName;
               this.onStationChanged(d, false);
             }
@@ -1839,7 +1898,7 @@ export class Game {
     this.aspectTimer += dt;
     if (this.aspectTimer > 0.1) {
       this.aspectTimer = 0;
-      this.updateSignals();
+      this.updateSignals(dt);
     }
     this.bobTime += dt;
     for (const id of this.orphaned) {

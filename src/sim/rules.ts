@@ -39,6 +39,10 @@ export interface Rules {
   depotCap: number;
   /** each further station / service / works of the same kind costs this much more (fraction of base) */
   repeatCostStep: number;
+  /** multiplies the whole track cost matrix */
+  trackCostScale: number;
+  /** multiplies the starting wood, stone and iron */
+  startingResourceScale: number;
   /** a collection train leaves a warehouse alone until it holds this much of a resource */
   collectMin: number;
   /** days between settlements of standing trade deals */
@@ -95,6 +99,8 @@ export const DEFAULT_RULES: Rules = {
   warehouseCap: 1000,
   depotCap: 3000,
   repeatCostStep: 0.2,
+  trackCostScale: 1,
+  startingResourceScale: 1,
   collectMin: 100,
   tradeCycleDays: 2,
   powerCap: 100,
@@ -174,6 +180,22 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 2,
     step: 0.05,
+  },
+  {
+    key: 'trackCostScale',
+    label: 'Track cost scale',
+    group: 'Economy',
+    min: 0.25,
+    max: 4,
+    step: 0.25,
+  },
+  {
+    key: 'startingResourceScale',
+    label: 'Starting resource scale',
+    group: 'Economy',
+    min: 0.25,
+    max: 4,
+    step: 0.25,
   },
   {
     key: 'collectMin',

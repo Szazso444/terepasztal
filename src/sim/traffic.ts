@@ -88,7 +88,7 @@ export class Traffic {
     const isNode = (x: number, y: number) => {
       const p = this.track.get(x, y);
       if (!p) return true;
-      if (p.links.length > 1 || platform.has(this.key(x, y))) return true;
+      if (p.links.length > 1 || p.unit || platform.has(this.key(x, y))) return true;
       let open = 0;
       for (const d of DIRS) if (this.track.connected(x, y, d)) open++;
       return open < 2;
@@ -141,12 +141,7 @@ export class Traffic {
   // ------------------------------------------------------------------ claims
   /** Tiles under a train's cars. */
   private carTiles(t: Train): number[] {
-    const out: number[] = [];
-    for (const p of t.poses) {
-      const k = this.key(Math.floor(p.x + 0.5), Math.floor(p.y + 0.5));
-      if (!out.includes(k)) out.push(k);
-    }
-    return out;
+    return t.occupancyKeys(this.track.w);
   }
   /** Direction of travel of a train through a tile of its path, or of its head when standing. */
   private headingOf(t: Train): { x: number; y: number } {

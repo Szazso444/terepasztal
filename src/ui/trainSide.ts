@@ -175,7 +175,7 @@ export class TrainSide {
           { class: 'ts-wagon' },
           spriteImg(
             this.atlas,
-            `rolling/wagon_${w.def.body}_${w.def.paint}_f0`,
+            `rolling/wagon_${w.def.body}_${w.def.size ?? 'small'}_${w.def.paint}_f0`,
             1,
             'sprite-preview ts-wagon-art',
           ),

@@ -8,11 +8,24 @@ import {
   type LocoSlot,
   type RouteMode,
 } from './trains';
-import type { TrackGraph } from '../world/track';
+import type { TrackGraph, TrackClass } from '../world/track';
+import { findPath } from '../world/pathfinding';
+import { pieceClassFor, vehicleAccess } from './compat';
+
+export interface GateInfo {
+  x: number;
+  y: number;
+  cls: TrackClass | null;
+  entry: number | null;
+  /** tiles of usable run in front of the gate */
+  run: number;
+  ok: boolean;
+  reason: string | null;
+}
 import type { Builder } from './build';
 import type { GameMap } from '../world/tiles';
 import type { Inventory } from '../gacha/inventory';
-import { wagonDef, locoDef, levelMul } from '../gacha/items';
+import { wagonDef, locoDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
 import { DIR_DX, DIR_DY, DIRS } from '../engine/iso';
 import type { Economy } from './economy';
 import type { Stockpile } from './stockpile';
@@ -123,30 +136,192 @@ export class Fleet {
    * of standing on it. Returns the gate, or the reason nothing worked.
    */
   private rollOut(t: Train, depot: Station): { x: number; y: number } | string {
-    const gates = this.builder.platformTiles(depot);
-    if (!gates.length) return STR.fleet.depotNoGate(depot.name);
-    const free = gates.filter((pt) => !this.occupied(pt.x, pt.y, -1));
-    if (!free.length) return STR.fleet.depotBusy(depot.name);
+    const report = this.gateReport(t, depot);
+    if (!report.some((g) => g.cls !== null)) return STR.fleet.depotNoGate(depot.name);
+    const usable = report.filter((g) => g.ok);
     const stops = t.schedule;
     for (let si = 0; si < stops.length; si++) {
       const st = this.builder.stationById(stops[si].stationId);
       if (!st || st === depot || !this.builder.platformTiles(st).length) continue;
-      for (const p of free) {
-        const piece = this.track.get(p.x, p.y)!;
-        const toStation = DIRS.find((d) => depot.covers(p.x + DIR_DX[d], p.y + DIR_DY[d]));
+      for (const g of usable) {
+        const piece = this.track.get(g.x, g.y)!;
         const entries: number[] = [];
-        if (toStation !== undefined && piece.links.some((l) => l.includes(toStation)))
-          entries.push(toStation);
+        if (g.entry !== null) entries.push(g.entry);
         for (const l of piece.links) for (const d of l) if (!entries.includes(d)) entries.push(d);
         for (const entry of entries) {
-          if (!t.spawnAt(this.track, p.x, p.y, entry)) continue;
+          if (!t.spawnAt(this.track, g.x, g.y, entry)) continue;
           t.routeIndex = si;
-          if (t.dispatch(this.track, this.builder, this.map)) return p;
+          if (t.dispatch(this.track, this.builder, this.map)) return { x: g.x, y: g.y };
         }
       }
     }
-    const first = this.builder.stationById(stops[0]?.stationId);
-    return STR.fleet.depotNoRoute(depot.name, first?.name ?? '?');
+    // nothing worked: say why, gate by gate; when a route exists but the consist may not use
+    // it, name the vehicle and the first tile that bars it
+    const first = this.builder.stationById(
+      stops.find((s) => s.stationId !== depot.id)?.stationId ?? -1,
+    );
+    const lines: string[] = [];
+    for (const g of report) {
+      if (!g.ok) {
+        lines.push(g.reason ?? '');
+        continue;
+      }
+      const blocked = first ? this.firstBlockedTile(t, g, first) : null;
+      lines.push(
+        blocked
+          ? STR.compat.blockedAt(
+              blocked.name,
+              blocked.x,
+              blocked.y,
+              STR.toolbar.trackClass[blocked.cls],
+            )
+          : STR.compat.gateNoRoute(g.x, g.y, first?.name ?? '?'),
+      );
+    }
+    return (
+      lines.filter(Boolean).join(' · ') || STR.fleet.depotNoRoute(depot.name, first?.name ?? '?')
+    );
+  }
+
+  /** The tile where a route from a gate to a station first uses track the consist may not. */
+  private firstBlockedTile(
+    t: Train,
+    g: GateInfo,
+    st: Station,
+  ): { name: string; x: number; y: number; cls: TrackClass } | null {
+    const plat = new Set(this.builder.platformTiles(st).map((p) => p.y * this.map.w + p.x));
+    if (!plat.size || g.entry === null) return null;
+    const path = findPath(
+      this.track,
+      { x: g.x, y: g.y, in: g.entry },
+      (x, y) => plat.has(y * this.map.w + x),
+      100000,
+    );
+    if (!path) return null;
+    for (const s of path) {
+      const p = this.track.get(s.x, s.y);
+      if (!p) continue;
+      const cls = pieceClassFor(p, s.in);
+      if (!t.access.classes.has(cls)) {
+        const who = t.access.blockedBy[cls];
+        return { name: who?.name ?? t.name, x: s.x, y: s.y, cls };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Deployment check of every gate of a depot for a consist (spec §5): track present and of a
+   * usable class, continuing onward for at least one more usable tile, with room for the whole
+   * consist before the first blocking feature, and nobody standing on the gate.
+   */
+  gateReport(t: Train, depot: Station): GateInfo[] {
+    const out: GateInfo[] = [];
+    const need = t.length;
+    for (const g of depot.gateTiles()) {
+      const piece = this.track.get(g.x, g.y);
+      const info: GateInfo = {
+        x: g.x,
+        y: g.y,
+        cls: null,
+        entry: null,
+        run: 0,
+        ok: false,
+        reason: null,
+      };
+      out.push(info);
+      if (!piece) {
+        info.reason = STR.compat.gateNoTrack(g.x, g.y);
+        continue;
+      }
+      const toStation = DIRS.find((d) => depot.covers(g.x + DIR_DX[d], g.y + DIR_DY[d]));
+      const entry =
+        toStation !== undefined && piece.links.some((l) => l.includes(toStation))
+          ? toStation
+          : piece.links[0]?.[0];
+      if (entry === undefined) {
+        info.reason = STR.compat.gateNoTrack(g.x, g.y);
+        continue;
+      }
+      info.entry = entry;
+      info.cls = pieceClassFor(piece, entry);
+      if (!t.access.classes.has(info.cls)) {
+        const who = t.access.blockedBy[info.cls];
+        info.reason = STR.compat.gateClass(
+          g.x,
+          g.y,
+          STR.toolbar.trackClass[info.cls],
+          who?.name ?? t.name,
+          [...t.access.classes].map((c) => STR.toolbar.trackClass[c]).join(' / ') || '?',
+        );
+        continue;
+      }
+      if (this.occupied(g.x, g.y, t.id)) {
+        info.reason = STR.compat.gateBusy(g.x, g.y);
+        continue;
+      }
+      // walk outward until the first blocking feature
+      let cx = g.x;
+      let cy = g.y;
+      let cin = entry;
+      let run = 0;
+      let tiles = 0;
+      for (;;) {
+        const exits = this.track.exits(cx, cy, cin);
+        const out2 = exits.find((e) => e === (cin + 2) % 4) ?? exits[0];
+        if (out2 === undefined) break;
+        run += this.track.segLength(cx, cy, cin, out2);
+        tiles++;
+        if (run >= need + 0.5) break;
+        const nx = cx + DIR_DX[out2];
+        const ny = cy + DIR_DY[out2];
+        if (!this.track.connected(cx, cy, out2)) break;
+        const np = this.track.get(nx, ny)!;
+        if (!t.access.classes.has(pieceClassFor(np, (out2 + 2) % 4))) break;
+        if (this.occupied(nx, ny, t.id)) break;
+        cx = nx;
+        cy = ny;
+        cin = (out2 + 2) % 4;
+      }
+      info.run = run;
+      if (tiles < 2) {
+        info.reason = STR.compat.gateStub(g.x, g.y);
+        continue;
+      }
+      if (run < need) {
+        info.reason = STR.compat.gateRoom(g.x, g.y, run, need);
+        continue;
+      }
+      info.ok = true;
+    }
+    return out;
+  }
+  /** Classes of the track at a depot's gates (for greying the picker). */
+  depotClasses(depot: Station): Set<TrackClass> {
+    const out = new Set<TrackClass>();
+    for (const g of depot.gateTiles()) {
+      const p = this.track.get(g.x, g.y);
+      if (!p) continue;
+      const toStation = DIRS.find((d) => depot.covers(g.x + DIR_DX[d], g.y + DIR_DY[d]));
+      const entry =
+        toStation !== undefined && p.links.some((l) => l.includes(toStation))
+          ? toStation
+          : p.links[0]?.[0];
+      if (entry !== undefined) out.add(pieceClassFor(p, entry));
+    }
+    return out;
+  }
+  /** Why a model could not roll out of this depot (null when it can). */
+  modelDeployReason(def: LocoDef | WagonDef, depot: Station): string | null {
+    const classes = this.depotClasses(depot);
+    if (!classes.size) return STR.fleet.depotNoGate(depot.name);
+    let why: string | null = null;
+    for (const cls of classes) {
+      const r = vehicleAccess(def, cls);
+      if (!r) return null;
+      why = STR.compat.cannotUse(def.name, STR.toolbar.trackClass[cls], r);
+    }
+    return why;
   }
   /** Where a train with this consist and route would appear, or why it cannot (no side effects). */
   previewSpawn(
@@ -278,8 +453,7 @@ export class Fleet {
   private rebuildOccupancy() {
     this.occ.clear();
     for (const t of this.trains) {
-      for (const p of t.poses) {
-        const k = Math.floor(p.y + 0.5) * this.map.w + Math.floor(p.x + 0.5);
+      for (const k of t.occupancyKeys(this.map.w)) {
         const l = this.occ.get(k);
         if (l) {
           if (!l.includes(t.id)) l.push(t.id);
@@ -592,9 +766,7 @@ export class Fleet {
       const other = this.byId(t.claimBlocker);
       if (!other) continue;
       const theirs = other.pathTileKeys(this.map.w);
-      const onTheirWay = t.poses.some((p) =>
-        theirs.has(Math.floor(p.y + 0.5) * this.map.w + Math.floor(p.x + 0.5)),
-      );
+      const onTheirWay = t.occupancyKeys(this.map.w).some((k) => theirs.has(k));
       if (!onTheirWay) continue;
       t.blockedBy = other.id;
       t.blocked = true;
