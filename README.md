@@ -1,6 +1,6 @@
 # terepasztal
 
-Isometric train logistics with a gacha roster. Vite + TypeScript + PixiJS v8, no other runtime
+Isometric train logistics with a crafted roster. Vite + TypeScript + PixiJS v8, no other runtime
 dependencies. Retro 2:1 isometric look with procedurally generated placeholder art.
 
 ```
@@ -64,8 +64,24 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
   stations for coaches; towns produce passengers who pay a fare when they reach another town.
 - **Notices and Advisor**: blockers show up in the notices panel and as markers on both maps; the
   Advisor (top right) explains what to do and can be silenced.
-- **Roster**: 26 real locomotives across three gacha banners by era, with wagons in three classes
-  (tankers, hoppers, flats).
+- **Track classes**: Regular and High-speed. High-speed curves and switches are 2×2 with a
+  1.5-tile radius (nearly full speed through the turn), joined to regular track through a
+  transition piece; three crossings cross the classes at grade. Everything derives from the class
+  number `n` (footprint, radius, cost).
+- **Rolling stock in three sizes**: one, two and three tiles. Bodies are rigid and never change
+  length; bogies sit at fixed distances along the rails and the body centres itself on the track
+  (`src/sim/body.ts`). Large stock (Garratt, Meyer, Bo-Bo-Bo) runs on high-speed track only; a
+  compatibility table built at boot from reference curves decides the rest, and the depot says
+  which gate a consist can leave by and why not.
+- **Crafting**: unlock a recipe with money (three cards, keep one), craft copies with iron, wood,
+  stone and coal; failure chance grows with quality. Unlimited copies; spares level a model.
+- **Electrification**: third rail, catenary and HV catenary over track, live within reach of a
+  substation on a powered pole grid; substations have a throughput the trains under them share.
+- **Towns grow**: townhouses build in stages, hold 10 / 25 / 50 residents by level, fill slowly
+  while fed and spawn near track and other houses as traffic grows.
+- **Semaphores**: home and distant arms on a post, animated between danger, caution and clear.
+- **Roster**: over thirty real locomotives from the Rocket to the TGV, wagons in four classes plus
+  service carts (coal, fuel, battery) that stretch a matching engine's range.
 
 ## Controls
 
@@ -76,7 +92,7 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 | Overview | Tab (Esc, scroll in or click a station/train to return)                                                         |
 | Build    | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
 | Time     | Space pause, `1` `2` `3` speed                                                                                  |
-| Screens  | `F` depot, `C` contracts, `G` gacha, `V` roster, `M` market, `` ` `` debug                                      |
+| Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `M` market, `` ` `` debug                                      |
 
 ## Layout
 
