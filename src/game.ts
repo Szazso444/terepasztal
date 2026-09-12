@@ -67,6 +67,7 @@ import {
   type Season,
 } from './sim/weather';
 import { decorOffset, type Decor } from './sim/build';
+import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
 import { DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
@@ -975,7 +976,7 @@ export class Game {
       return;
     }
     if (d.id === 'signal') {
-      this.world.setStructure(id, d.x, d.y, 'structures/signal_green', 12, off.dy, off.dx);
+      this.world.setStructure(id, d.x, d.y, semaphoreFrame(3, 3), 12, off.dy, off.dx);
       this.signalAspect.set(d.y * this.map.w + d.x, 'green');
     } else {
       const t = terrainAt(this.map, d.x, d.y);
@@ -1018,27 +1019,52 @@ export class Game {
   stockCap(id: string) {
     return this.stock.cap(id, this.builder.depotCount(), this.builder.plantCount());
   }
-  /** Signals show red when a train sits on the tile they guard or on their own tile. */
-  private updateSignals() {
+  /** Arm positions of every semaphore, stepped towards the aspect they should show. */
+  private semaphoreArms = new Map<number, { m: number; d: number; frame: string }>();
+  private semaphoreClock = 0;
+  /**
+   * Aspect a signal should show: red while a train sits on the tile it guards or on its own
+   * tile, yellow when the tile beyond that is taken, else green. (Block signalling refines this.)
+   */
+  protected signalAspectAt(d: { x: number; y: number; rot: number }): 'red' | 'yellow' | 'green' {
+    const ax = d.x + DIR_DX[d.rot];
+    const ay = d.y + DIR_DY[d.rot];
+    if (this.fleet.occupied(ax, ay, -1) || this.fleet.occupied(d.x, d.y, -1)) return 'red';
+    const bx = ax + DIR_DX[d.rot];
+    const by = ay + DIR_DY[d.rot];
+    if (this.fleet.occupied(bx, by, -1)) return 'yellow';
+    return 'green';
+  }
+  /** Semaphore arms sweep one step per 70 ms towards the aspect: home arm up for clear, distant arm down when the next block is clear too. */
+  private updateSignals(dt = 0) {
+    this.semaphoreClock += dt;
+    const step = this.semaphoreClock >= 0.07;
+    if (step) this.semaphoreClock = 0;
+    const top = SEMAPHORE_STEPS - 1;
     for (const d of this.builder.decor.values()) {
       if (d.id !== 'signal') continue;
       const key = d.y * this.map.w + d.x;
-      const ax = d.x + DIR_DX[d.rot];
-      const ay = d.y + DIR_DY[d.rot];
-      const red = this.fleet.occupied(ax, ay, -1) || this.fleet.occupied(d.x, d.y, -1);
-      const aspect = red ? 'red' : 'green';
-      if (this.signalAspect.get(key) === aspect) continue;
+      const aspect = this.signalAspectAt(d);
       this.signalAspect.set(key, aspect);
+      const want =
+        aspect === 'red'
+          ? { m: 0, d: 0 }
+          : aspect === 'yellow'
+            ? { m: top, d: 0 }
+            : { m: top, d: top };
+      let arms = this.semaphoreArms.get(key);
+      if (!arms) {
+        arms = { m: want.m, d: want.d, frame: '' };
+        this.semaphoreArms.set(key, arms);
+      } else if (step) {
+        arms.m += Math.sign(want.m - arms.m);
+        arms.d += Math.sign(want.d - arms.d);
+      }
+      const frame = semaphoreFrame(arms.m, arms.d);
+      if (arms.frame === frame) continue;
+      arms.frame = frame;
       const off = decorOffset(d);
-      this.world.setStructure(
-        `decor:${d.x},${d.y}`,
-        d.x,
-        d.y,
-        `structures/signal_${aspect}`,
-        12,
-        off.dy,
-        off.dx,
-      );
+      this.world.setStructure(`decor:${d.x},${d.y}`, d.x, d.y, frame, 12, off.dy, off.dx);
     }
   }
   /** Re-tint the world and adjust production when the season changes. */
@@ -1872,7 +1898,7 @@ export class Game {
     this.aspectTimer += dt;
     if (this.aspectTimer > 0.1) {
       this.aspectTimer = 0;
-      this.updateSignals();
+      this.updateSignals(dt);
     }
     this.bobTime += dt;
     for (const id of this.orphaned) {
