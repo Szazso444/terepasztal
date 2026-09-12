@@ -17,6 +17,11 @@ npm run format     # prettier over src and index.html
 CI runs typecheck, lint, tests, build and `prettier --check` on every pull request. Run them before
 pushing; the formatting gate in particular fails on code that was never formatted.
 
+The dev server carries the running game across its own reloads (`src/engine/devsession.ts`), so an
+edit lands where the player was standing rather than costing them the world. It snapshots to
+`sessionStorage` in play mode only, never touches the real save, and is stripped from production
+builds. `docs/live-loop.md` describes the loop it belongs to.
+
 ## Layout
 
 - `src/engine` loop, camera, input, iso math, atlas pipeline, audio, seeded RNG

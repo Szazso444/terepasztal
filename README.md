@@ -155,4 +155,8 @@ changes nothing.
 In a dev build the PixiJS browser extension can inspect the scene graph; the hook-up is stripped
 from production bundles.
 
+`docs/live-loop.md` describes the tight loop: Claude Code running locally with voice dictation
+against the dev server, where an edit reloads the page and the running game carries over instead
+of starting again.
+
 See `MILESTONES.md` for progress notes and the post-merge fix pass.
