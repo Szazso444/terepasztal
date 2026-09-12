@@ -67,7 +67,7 @@ export class TrainSide {
       trains
         .map(
           (t) =>
-            `${t.id}:${t.state}:${Math.round(t.speed * 20)}:${Math.round(t.coal)}:${Math.round(t.water)}:${Math.round(t.oil)}:${t.fuelPreference}:${t.lastTrip?.endedAt ?? 0}:${Math.round(t.weight)}:${t.wagons.map((w) => `${w.cargo}${Math.round(w.amount)}`).join()}:${t.job?.contractId ?? ''}:${t.jobs.length}`,
+            `${t.id}:${t.state}:${Math.round(t.speed * 20)}:${Math.round(t.coal)}:${Math.round(t.water)}:${Math.round(t.oil)}:${Math.round(t.battery)}:${t.fuelPreference}:${t.lastTrip?.endedAt ?? 0}:${Math.round(t.weight)}:${t.locos.map((l) => `${l.mode}${l.engaged ? 1 : 0}`).join()}:${t.wagons.map((w) => `${w.cargo}${Math.round(w.amount)}`).join()}:${t.job?.contractId ?? ''}:${t.jobs.length}`,
         )
         .join('|');
     if (key === this.lastKey && !force) return;
@@ -136,6 +136,18 @@ export class TrainSide {
     );
     if (t.weight > t.power) capRow.classList.add('red');
     card.append(capRow);
+    // one entry per engine: name and how it works in the consist
+    card.append(
+      row(
+        STR.trainSide.engines,
+        ...t.locos.map((l) =>
+          el('span', {
+            class: `ts-amt ${l.engaged ? '' : 'dim'}`,
+            text: `${l.def.name}: ${STR.modes[l.mode]}${l.mode === 'standby' && l.engaged ? ` (${STR.modes.rescuing})` : ''}`,
+          }),
+        ),
+      ),
+    );
     const type = t.locoDef.type;
     const tanks: HTMLElement[] = [];
     const use: HTMLElement[] = [];
@@ -153,7 +165,14 @@ export class TrainSide {
         el('span', { class: 'dim', text: `/${Math.round(t.oilCap)}` }),
       );
       use.push(this.amount(t.oilKind, t.oilRate));
-    } else use.push(this.amount('power', t.powerRate));
+    } else {
+      if (t.batteryCap > 0)
+        tanks.push(
+          this.amount('power', t.battery, t.battery < t.powerRate * 8 ? 'red' : ''),
+          el('span', { class: 'dim', text: `/${Math.round(t.batteryCap)}` }),
+        );
+      use.push(this.amount('power', t.powerRate));
+    }
     if (tanks.length) card.append(row(STR.trainSide.tanks, ...tanks));
     const fuelRow = row(
       STR.trainSide.fuel,

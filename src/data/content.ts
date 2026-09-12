@@ -93,6 +93,8 @@ export interface WagonDef {
   vmax?: number;
   /** refuelling wagons: what they carry for the locomotive */
   service?: 'coal' | 'fuel' | 'battery';
+  /** refuelling wagons: units of that fuel (or power) the cart adds to the consist's tanks */
+  serviceCap?: number;
 }
 export interface CargoDef {
   id: string;
@@ -281,6 +283,22 @@ export interface TrackConfig {
   curveSpeed: number;
   switchSpeed: number;
   bridgeSpeed: number;
+  /** consist physics */
+  physics: {
+    /** tractive effort per tonne of haul rating (effort / mass gives tiles/s²) */
+    effortPerTonne: number;
+    /** acceleration ceiling, tiles/s² */
+    maxAccel: number;
+    /** speed ceiling of a wagon without one of its own, tiles/s */
+    wagonVmax: number;
+    /** share of the summed effort a double-headed consist delivers */
+    doubleHeadEfficiency: number;
+    /** consumption cut per matching refuelling cart, and the most the carts cut together */
+    cartSaving: number;
+    cartSavingCap: number;
+    /** power units a battery cart takes from the stockpile per tile on live track */
+    batteryChargePerTile: number;
+  };
 }
 /** Model quality tiers the crafting tables are keyed by: the shipped rarities plus a reserved 'L'. */
 export type CraftRarity = Rarity | 'L';

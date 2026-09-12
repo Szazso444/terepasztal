@@ -5,7 +5,7 @@ import {
   type DeliveryEvent,
   type TickCtx,
   type StopPlan,
-  type LocoSlot,
+  type LocoSlotInit,
   type RouteMode,
 } from './trains';
 import type { TrackGraph, TrackClass } from '../world/track';
@@ -353,7 +353,7 @@ export class Fleet {
       .map((u) => this.inventory.byUid(u))
       .filter((l) => l && l.kind === 'loco');
     const anyLoco = this.inventory.items.find((i) => i.kind === 'loco');
-    const locos: LocoSlot[] = items.length
+    const locos: LocoSlotInit[] = items.length
       ? items.map((l) => ({ uid: l!.uid, def: locoDef(l!.defId), level: l!.level }))
       : [{ uid: -1, def: locoDef(anyLoco?.defId ?? 'rocket'), level: 1 }];
     const probe = new Train(locos, 'probe', -1);
@@ -381,7 +381,7 @@ export class Fleet {
     const wagons = wagonUids.map((u) => this.inventory.byUid(u));
     if (wagons.some((w) => !w || w.kind !== 'wagon' || w.assigned !== null))
       return STR.fleet.wagonUnavailable;
-    const locos: LocoSlot[] = locoItems.map((l) => ({
+    const locos: LocoSlotInit[] = locoItems.map((l) => ({
       uid: l!.uid,
       def: locoDef(l!.defId),
       level: l!.level,
@@ -449,6 +449,8 @@ export class Fleet {
     if (i >= 0) this.trains.splice(i, 1);
     for (const it of this.inventory.items) if (it.assigned === t.id) it.assigned = null;
     this.onChanged?.();
+    // its tiles are free at once: a train built right after (clock paused) must see the gate clear
+    this.rebuildOccupancy();
     return salvage;
   }
 

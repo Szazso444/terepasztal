@@ -39,10 +39,98 @@ export type TrainState =
   | 'noPower'
   | 'overweight';
 
+/**
+ * How a unit works in the consist. The first unit leads; a unit of the leader's control class
+ * runs in multiple (full effort); anything else, and every steam engine, is double-headed (the
+ * summed effort is derated); a standby unit rides along dead until the pulling units lose their
+ * power, then takes over until they recover.
+ */
+export type LocoMode = 'leading' | 'multiple' | 'doubleHeaded' | 'standby';
 export interface LocoSlot {
   uid: number;
   def: LocoDef;
   level: number;
+  /** as set by the player (or the default rule) */
+  mode: LocoMode;
+  /** runtime: pulling right now. A unit without usable power drops out; a standby unit steps in. */
+  engaged: boolean;
+}
+/** A slot as handed to the constructor: mode and engagement are filled in by the rule. */
+export type LocoSlotInit = Omit<LocoSlot, 'mode' | 'engaged'> &
+  Partial<Pick<LocoSlot, 'mode' | 'engaged'>>;
+/** Default mode of a unit by its position and control class. */
+export function defaultLocoMode(i: number, def: LocoDef, leader: LocoDef): LocoMode {
+  if (i === 0) return 'leading';
+  const cc = def.controlClass;
+  return cc && cc === leader.controlClass ? 'multiple' : 'doubleHeaded';
+}
+/** Which locomotive type a refuelling cart serves. */
+export function serviceLocoType(service: 'coal' | 'fuel' | 'battery'): LocoType {
+  return service === 'coal' ? 'steam' : service === 'fuel' ? 'diesel' : 'electric';
+}
+const PHYS = content.track.physics;
+export interface ConsistPhysics {
+  /** effort of the pulling units, derated when any of them works double-headed */
+  effort: number;
+  /** every vehicle plus cargo, tonnes */
+  mass: number;
+  /** tiles/s² the effort gives the mass, clamped; 0 when nothing pulls */
+  acceleration: number;
+  /** tiles/s: the slowest vehicle of the consist */
+  vMax: number;
+  /** tonnes the units on duty (not standby, or a standby that has stepped in) may haul: a hard cap */
+  haul: number;
+  /** a pulling unit works double-headed */
+  doubleHeaded: boolean;
+  /** units pulling */
+  engaged: number;
+}
+/**
+ * Consist physics from the vehicles alone, so the depot can show a train before it exists.
+ * Effort is the haul rating times a data constant; acceleration is effort over mass; the top
+ * speed is the slowest vehicle's. A slower engine therefore caps the speed and adds effort.
+ */
+export function consistPhysics(
+  locos: readonly { def: LocoDef; level: number; mode: LocoMode; engaged: boolean }[],
+  wagons: readonly { def: WagonDef; level: number; cargo: string | null; amount: number }[],
+): ConsistPhysics {
+  const leader = locos[0]?.def;
+  let effort = 0;
+  let haul = 0;
+  let mass = 0;
+  let vMax = Infinity;
+  let doubleHeaded = false;
+  let engaged = 0;
+  for (let i = 0; i < locos.length; i++) {
+    const l = locos[i];
+    mass += l.def.weight;
+    vMax = Math.min(vMax, l.def.speed * levelMul(l.level));
+    const rating = l.def.power * levelMul(l.level);
+    if (l.mode !== 'standby' || l.engaged) haul += rating;
+    if (!l.engaged) continue;
+    engaged++;
+    effort += rating * PHYS.effortPerTonne;
+    // a unit set to multiple whose class no longer matches the leader's works double-headed
+    const cc = l.def.controlClass;
+    if (i > 0 && (l.mode === 'doubleHeaded' || !(cc && leader && cc === leader.controlClass)))
+      doubleHeaded = true;
+  }
+  if (doubleHeaded) effort *= PHYS.doubleHeadEfficiency;
+  for (const w of wagons) {
+    mass += w.def.weight + (w.cargo ? w.amount * cargoDef(w.cargo).weight : 0);
+    vMax = Math.min(vMax, w.def.vmax ?? PHYS.wagonVmax);
+  }
+  const acceleration =
+    effort > 0 ? Math.min(PHYS.maxAccel, Math.max(0.05, effort / Math.max(1, mass))) : 0;
+  return {
+    effort,
+    mass,
+    acceleration,
+    vMax: (vMax === Infinity ? 0 : vMax) * rules.trainSpeedMul,
+    haul,
+    doubleHeaded,
+    engaged,
+  };
 }
 /** What a train does at one stop of its looped schedule. */
 /**
@@ -145,7 +233,6 @@ export interface CarPose {
   heading: number;
 }
 
-const ACCEL = 0.7;
 const DECEL = 1.1;
 const MIN_DWELL = 2;
 /** tiles of path scanned ahead for other trains */
@@ -230,6 +317,8 @@ export class Train {
   oilKind: 'oil' | 'diesel' = 'oil';
   oil = 0;
   water = 0;
+  /** power units in the battery carts */
+  battery = 0;
   trip: TripStats = newTrip(0);
   lastTrip: TripStats | null = null;
   /** first locomotive: drives art, smoke and glow */
@@ -515,24 +604,68 @@ export class Train {
   /** tile keys of the plain path a holding train would take once the line clears */
   private wantKeys: number[] | null = null;
 
-  constructor(locos: LocoSlot[], name?: string, id?: number) {
+  constructor(locos: LocoSlotInit[], name?: string, id?: number) {
     if (!locos.length) throw new Error('a train needs a locomotive');
     this.id = id ?? nextTrainId++;
     if (id !== undefined) nextTrainId = Math.max(nextTrainId, id + 1);
-    this.locos = locos;
+    this.locos = locos.map((l, i) => {
+      const mode = i === 0 ? 'leading' : (l.mode ?? defaultLocoMode(i, l.def, locos[0].def));
+      return { uid: l.uid, def: l.def, level: l.level, mode, engaged: mode !== 'standby' };
+    });
     this.name = name ?? `${this.locoDef.name} ${this.id}`;
   }
 
   // ------------------------------------------------------------ stats
-  /** Slowest engine sets the pace. */
-  get maxSpeed() {
-    return (
-      Math.min(...this.locos.map((l) => l.def.speed * levelMul(l.level))) * rules.trainSpeedMul
-    );
+  /** Effort, mass, acceleration and top speed of the consist as it stands. */
+  get physics(): ConsistPhysics {
+    return consistPhysics(this.locos, this.wagons);
   }
-  /** Tonnes the engines can haul together. */
+  /** Slowest vehicle sets the pace. */
+  get maxSpeed() {
+    return this.physics.vMax;
+  }
+  /** Tonnes the pulling engines can haul together (haul capacity). */
   get power() {
-    return this.locos.reduce((a, l) => a + l.def.power * levelMul(l.level), 0);
+    return this.physics.haul;
+  }
+  get effort() {
+    return this.physics.effort;
+  }
+  /** Every vehicle plus cargo, tonnes. */
+  get mass() {
+    return this.physics.mass;
+  }
+  /** Tiles/s² the pulling engines give the whole consist. */
+  get acceleration() {
+    return this.physics.acceleration;
+  }
+  /**
+   * Set a non-leading unit to standby (dead weight, no fuel, steps in when the pulling units lose
+   * their power) or back to its default mode.
+   */
+  setStandby(i: number, standby: boolean) {
+    if (i <= 0 || i >= this.locos.length) return;
+    const l = this.locos[i];
+    l.mode = standby ? 'standby' : defaultLocoMode(i, l.def, this.locos[0].def);
+    l.engaged = !standby;
+  }
+  /** Does a refuelling cart have an engine of its type to serve? */
+  cartMatched(w: WagonSlot) {
+    const svc = w.def.service;
+    if (!svc) return true;
+    if (svc === 'coal' && this.fuelKind !== 'coal') return false;
+    return this.locos.some((l) => l.def.type === serviceLocoType(svc));
+  }
+  /** Refuelling carts of a kind with a matching engine aboard. */
+  private cartsFor(kind: 'coal' | 'fuel' | 'battery') {
+    return this.wagons.filter((w) => w.def.service === kind && this.cartMatched(w));
+  }
+  private cartCap(kind: 'coal' | 'fuel' | 'battery') {
+    return this.cartsFor(kind).reduce((a, w) => a + (w.def.serviceCap ?? 0), 0);
+  }
+  /** Consumption multiplier from matching carts: each cuts a share, up to a cap. */
+  private cartSaving(kind: 'coal' | 'fuel' | 'battery') {
+    return 1 - Math.min(PHYS.cartSavingCap, PHYS.cartSaving * this.cartsFor(kind).length);
   }
   /** Tonnes hauled: wagons plus payload. */
   get weight() {
@@ -615,29 +748,54 @@ export class Train {
     return out;
   }
   // ------------------------------------------------------------ fuel
+  /** Tanks are pooled per type over every unit (a standby unit's tank is filled and kept). */
   private sumBy(type: LocoType, f: (l: LocoSlot) => number) {
     return this.locos.filter((l) => l.def.type === type).reduce((a, l) => a + f(l), 0);
   }
+  /** Only the pulling units burn. */
+  private burnBy(type: LocoType, f: (l: LocoSlot) => number) {
+    return this.locos.filter((l) => l.def.type === type && l.engaged).reduce((a, l) => a + f(l), 0);
+  }
   get coalCap() {
-    return this.sumBy('steam', (l) => (l.def.fuelCap ?? 0) * levelMul(l.level));
+    return (
+      this.sumBy('steam', (l) => (l.def.fuelCap ?? 0) * levelMul(l.level)) + this.cartCap('coal')
+    );
   }
   get oilCap() {
-    return this.sumBy('diesel', (l) => (l.def.fuelCap ?? 0) * levelMul(l.level));
+    return (
+      this.sumBy('diesel', (l) => (l.def.fuelCap ?? 0) * levelMul(l.level)) + this.cartCap('fuel')
+    );
   }
   get waterCap() {
     return this.sumBy('steam', (l) => (l.def.waterCap ?? 0) * levelMul(l.level));
   }
+  /** Power the battery carts can hold for an electric. */
+  get batteryCap() {
+    return this.cartCap('battery');
+  }
   get coalRate() {
-    return this.sumBy('steam', (l) => l.def.fuelPerTile ?? 0) * rules.runningCostMul;
+    return (
+      this.burnBy('steam', (l) => l.def.fuelPerTile ?? 0) *
+      rules.runningCostMul *
+      this.cartSaving('coal')
+    );
   }
   get oilRate() {
-    return this.sumBy('diesel', (l) => l.def.fuelPerTile ?? 0) * rules.runningCostMul;
+    return (
+      this.burnBy('diesel', (l) => l.def.fuelPerTile ?? 0) *
+      rules.runningCostMul *
+      this.cartSaving('fuel')
+    );
   }
   get waterRate() {
-    return this.sumBy('steam', (l) => l.def.waterPerTile ?? 0) * rules.runningCostMul;
+    return this.burnBy('steam', (l) => l.def.waterPerTile ?? 0) * rules.runningCostMul;
   }
   get powerRate() {
-    return this.sumBy('electric', (l) => l.def.powerPerTile ?? 0) * rules.runningCostMul;
+    return (
+      this.burnBy('electric', (l) => l.def.powerPerTile ?? 0) *
+      rules.runningCostMul *
+      this.cartSaving('battery')
+    );
   }
   get hasSteam() {
     return this.coalCap > 0;
@@ -646,7 +804,7 @@ export class Train {
     return this.oilCap > 0;
   }
   get hasElectric() {
-    return this.powerRate > 0;
+    return this.locos.some((l) => l.def.type === 'electric');
   }
   /** Lowest tank as a fraction of its capacity (1 for pure electric). */
   get tankFraction() {
@@ -673,16 +831,52 @@ export class Train {
     if (this.oilRate > 0) r.push(this.oil / this.oilRate);
     return r.length ? Math.min(...r) : Infinity;
   }
+  /** Is the head on live track with power to draw? */
+  private onWire(ctx: TickCtx) {
+    const head = this.headTile;
+    return !!head && ctx.powered(head.x, head.y) && ctx.stockpile.get('power') > 0.1;
+  }
+  /**
+   * Which units pull. A unit in a working mode pulls while it has usable power (fuel and water,
+   * oil, or the wire or a charged battery); when none of them has any, the first standby unit
+   * that does steps in, and steps back the moment a working unit recovers.
+   */
+  refreshModes(ctx: TickCtx) {
+    const wired = this.onWire(ctx);
+    const usable = (l: LocoSlot) =>
+      l.def.type === 'steam'
+        ? this.coal > 1e-6 && this.water > 1e-6
+        : l.def.type === 'diesel'
+          ? this.oil > 1e-6
+          : wired || this.battery > 1e-6;
+    let any = false;
+    for (const l of this.locos)
+      if (l.mode !== 'standby') {
+        l.engaged = usable(l);
+        any ||= l.engaged;
+      }
+    let promoted = false;
+    for (const l of this.locos)
+      if (l.mode === 'standby') {
+        l.engaged = !any && !promoted && usable(l);
+        promoted ||= l.engaged;
+      }
+  }
   /** Why the train cannot move right now, or null. */
   fuelProblem(ctx: TickCtx, step: number): 'noFuel' | 'noPower' | null {
+    this.refreshModes(ctx);
     if (this.eco) step *= ECO_MUL;
+    if (!this.locos.some((l) => l.engaged))
+      return this.locoDef.type === 'electric' ? 'noPower' : 'noFuel';
     if (this.coalRate > 0 && this.coal < this.coalRate * step) return 'noFuel';
     if (this.waterRate > 0 && this.water < this.waterRate * step) return 'noFuel';
     if (this.oilRate > 0 && this.oil < this.oilRate * step) return 'noFuel';
     if (this.powerRate > 0) {
+      const need = this.powerRate * step;
       const head = this.headTile;
-      if (!head || !ctx.powered(head.x, head.y)) return 'noPower';
-      if (ctx.stockpile.get('power') < this.powerRate * step) return 'noPower';
+      const wired = !!head && ctx.powered(head.x, head.y);
+      if ((wired ? Math.max(ctx.stockpile.get('power'), this.battery) : this.battery) < need)
+        return 'noPower';
     }
     return null;
   }
@@ -723,6 +917,12 @@ export class Train {
       const got = stock.take('water', (waterTarget - this.water) * mul) / mul;
       this.water = Math.min(this.waterCap, this.water + got);
       if (got > 0) taken.water = got;
+    }
+    const batteryTarget = this.batteryCap * (opts.fuelFrac ?? 1);
+    if (opts.fuel && this.batteryCap > 0 && this.battery < batteryTarget - 1e-6) {
+      const got = stock.take('power', (batteryTarget - this.battery) * mul) / mul;
+      this.battery = Math.min(this.batteryCap, this.battery + got);
+      if (got > 0) taken.power = got;
     }
     return taken;
   }
@@ -766,7 +966,8 @@ export class Train {
       stock.add(this.fuelKind, this.fuelKind === 'coal' ? this.coal : this.coal * 2, Infinity);
     if (this.oil > 0) stock.add(this.oilKind, this.oil, Infinity);
     if (this.water > 0) stock.add('water', this.water, Infinity);
-    this.coal = this.oil = this.water = 0;
+    if (this.battery > 0) stock.add('power', this.battery, Infinity);
+    this.coal = this.oil = this.water = this.battery = 0;
   }
   get headTile(): { x: number; y: number } | null {
     const p = this.trail[this.trail.length - 1];
@@ -1091,6 +1292,7 @@ export class Train {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
     this.prevVehiclePoses = this.vehiclePoses;
     this.stateTime += gdt;
+    this.refreshModes(ctx);
     if (this.resumePending) {
       // the contract closed under way: head for the program's next stop instead
       this.resumePending = false;
@@ -1371,7 +1573,7 @@ export class Train {
     this.freeSpeed = vmax;
     const vStop = Math.sqrt(2 * DECEL * Math.max(0, Math.min(remaining, blockDist)));
     const target = Math.min(vmax, vStop);
-    if (target > this.speed) this.speed = Math.min(target, this.speed + ACCEL * gdt);
+    if (target > this.speed) this.speed = Math.min(target, this.speed + this.acceleration * gdt);
     else this.speed = Math.max(target, this.speed - DECEL * gdt * 1.5);
     const step = Math.min(
       remaining,
@@ -1413,9 +1615,24 @@ export class Train {
         if (got > 0) bump(this.trip.fuel, 'sand', got);
       }
       if (this.powerRate > 0) {
-        ctx.stockpile.take('power', this.powerRate * burn);
-        bump(this.trip.fuel, 'power', this.powerRate * burn);
+        const need = this.powerRate * burn;
+        if (headT && ctx.powered(headT.x, headT.y)) {
+          // on the wire: the stockpile feeds the motors and tops the battery carts up
+          const got = ctx.stockpile.take('power', need);
+          if (got < need) this.battery = Math.max(0, this.battery - (need - got));
+          if (this.batteryCap > 0 && this.battery < this.batteryCap - 1e-6) {
+            const room = this.batteryCap - this.battery;
+            const charge = ctx.stockpile.take(
+              'power',
+              Math.min(room, PHYS.batteryChargePerTile * step),
+            );
+            this.battery += charge;
+            if (charge > 0) bump(this.trip.fuel, 'refuel_power', charge);
+          }
+        } else this.battery = Math.max(0, this.battery - need);
+        bump(this.trip.fuel, 'power', need);
       }
+      if (this.waterRate > 0 && this.water < this.waterCap * 0.5) this.drawTankerWater();
       this.trip.distance += step;
     }
     // append head sample(s)
@@ -1444,6 +1661,23 @@ export class Train {
       else if (want && ctx.builder.platformTiles(want).some((t) => t.x === seg.x && t.y === seg.y))
         this.arrive(want, ctx);
       else this.setState('noRoute');
+    }
+  }
+
+  /** A tank wagon of water tops the boiler tanks up once they fall below half. */
+  private drawTankerWater() {
+    for (const w of this.wagons) {
+      if (w.def.body !== 'tank' || w.cargo !== 'water' || w.amount <= 0) continue;
+      const take = Math.min(w.amount, this.waterCap - this.water);
+      if (take <= 1e-6) break;
+      w.amount -= take;
+      this.water += take;
+      bump(this.trip.fuel, 'refuel_water', take);
+      if (w.amount < 1e-3) {
+        w.amount = 0;
+        w.cargo = null;
+        w.origin = null;
+      }
     }
   }
 
@@ -1883,12 +2117,13 @@ export class Train {
     return {
       id: this.id,
       name: this.name,
-      locos: this.locos.map((l) => ({ uid: l.uid, defId: l.def.id, level: l.level })),
+      locos: this.locos.map((l) => ({ uid: l.uid, defId: l.def.id, level: l.level, mode: l.mode })),
       schedule: this.schedule,
       tanks: {
         coal: this.coal,
         oil: this.oil,
         water: this.water,
+        battery: this.battery,
         kind: this.fuelKind,
         pref: this.fuelPreference,
         oilKind: this.oilKind,
@@ -1928,7 +2163,7 @@ export class Train {
 
   static fromJSON(j: ReturnType<Train['toJSON']>, track: TrackGraph): Train {
     const t = new Train(
-      j.locos.map((l) => ({ uid: l.uid, def: locoDef(l.defId), level: l.level })),
+      j.locos.map((l) => ({ uid: l.uid, def: locoDef(l.defId), level: l.level, mode: l.mode })),
       j.name,
       j.id,
     );
@@ -1966,6 +2201,7 @@ export class Train {
     t.coal = j.tanks.coal;
     t.oil = j.tanks.oil;
     t.water = j.tanks.water;
+    t.battery = Math.min(t.batteryCap, j.tanks.battery ?? 0);
     t.fuelKind = j.tanks.kind;
     t.fuelPreference = j.tanks.pref;
     t.oilKind = j.tanks.oilKind === 'diesel' ? 'diesel' : 'oil';

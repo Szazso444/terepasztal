@@ -66,5 +66,14 @@
   "refund": 0.5,
   "curveSpeed": 0.55,
   "switchSpeed": 0.7,
-  "bridgeSpeed": 0.8
+  "bridgeSpeed": 0.8,
+  "physics": {
+    "effortPerTonne": 0.75,
+    "maxAccel": 0.9,
+    "wagonVmax": 2.6,
+    "doubleHeadEfficiency": 0.82,
+    "cartSaving": 0.1,
+    "cartSavingCap": 0.3,
+    "batteryChargePerTile": 2
+  }
 }

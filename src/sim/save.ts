@@ -203,7 +203,7 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 9,
-    note: 'crafting recipes granted for every model already in the inventory',
+    note: 'crafting recipes granted for every model already in the inventory; locomotive modes set by the default rule (the first unit leads, units of its control class run in multiple, the rest double-headed); battery carts start empty',
     run: (j) => {
       if (j.crafting) return;
       const inv = j.inventory as { items?: { defId?: unknown }[] } | undefined;
