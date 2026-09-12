@@ -241,7 +241,8 @@
     "waterPerTile": 0.8,
     "size": "large",
     "plan": "meyer",
-    "pivotRatio": 0.6
+    "pivotRatio": 0.6,
+    "inCab": true
   },
   {
     "id": "sw1",
@@ -362,7 +363,8 @@
     "size": "large",
     "plan": "rigid",
     "bogies": 3,
-    "controlClass": "emd"
+    "controlClass": "emd",
+    "inCab": true
   },
   {
     "id": "kando_v40",
@@ -415,7 +417,8 @@
     "plan": "garratt",
     "pivotRatio": 0.7,
     "controlClass": "sbb",
-    "collector": "pantograph"
+    "collector": "pantograph",
+    "inCab": true
   },
   {
     "id": "taurus",
@@ -468,7 +471,8 @@
     "plan": "rigid",
     "bogies": 3,
     "controlClass": "prr",
-    "collector": "pantograph"
+    "collector": "pantograph",
+    "inCab": true
   },
   {
     "id": "j94",
@@ -545,7 +549,8 @@
     "waterPerTile": 0.7,
     "size": "large",
     "plan": "garratt",
-    "pivotRatio": 0.7
+    "pivotRatio": 0.7,
+    "inCab": true
   },
   {
     "id": "tgv",

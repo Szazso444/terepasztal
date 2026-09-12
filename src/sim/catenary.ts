@@ -138,7 +138,8 @@ export class Catenary {
   /** Trains report what they draw each tick; the factor is what the substation can deliver of it. */
   beginTick() {
     for (const s of this.substations) {
-      s.load = s.private_acc;
+      // smoothed so a throttled train does not flicker between full and half speed
+      s.load = s.load * 0.7 + s.private_acc * 0.3;
       s.private_acc = 0;
     }
   }

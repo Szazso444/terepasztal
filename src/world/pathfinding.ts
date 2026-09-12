@@ -23,6 +23,7 @@ export function findPath(
   maxCost = 100000,
   avoid?: (x: number, y: number) => boolean,
   access?: (piece: TrackPiece, entry: Dir) => boolean,
+  tollOf?: (piece: TrackPiece) => number,
 ): PathSegment[] | null {
   const key = (x: number, y: number, d: Dir) => (y * track.w + x) * 4 + d;
   const dist = new Map<number, number>();
@@ -54,6 +55,7 @@ export function findPath(
       if (access && !access(track.get(nx, ny)!, nin)) continue;
       const piece = track.get(x, y)!;
       let cost = track.segLength(x, y, dir, out);
+      if (tollOf) cost *= tollOf(piece);
       if (piece.kind === 'switch' && isCurveLink(dir, out)) cost += 0.2;
       const nk = key(nx, ny, nin);
       const nd = d + cost;

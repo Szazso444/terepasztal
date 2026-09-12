@@ -113,3 +113,39 @@ the conflict resolutions.
   cart charges at 2 per tile on live track (and at a refuelling stop) and carries the electric
   past the end of the wire. A tank wagon of water tops the boiler up below half a tank.
 - Save format v10: locomotive modes and the battery charge; older saves get the default modes.
+
+## Signalling (§9, R16, R17)
+
+- **Levels** (Settings → Signalling): Automatic keeps today's claims only; Token; Absolute block;
+  CTC; In-cab. Track with no semaphores under Automatic behaves exactly as before. Semaphores act
+  under every level above Token. Existing saves load at Automatic.
+- **Headway in tiles (R17):** absolute block 10, CTC 6, in-cab 3 (an unequipped train under
+  In-cab keeps the absolute-block 10). The following train holds that many tiles behind the one
+  ahead; the occupancy scan reaches `LOOKAHEAD + headway`. Seconds were dropped: a day is 240 s.
+- **Aspects** (`src/sim/signals.ts`): a post guards the tile in front of it; its block runs to the
+  next post facing the same way (along the train's own path when a path is known, otherwise
+  straight on). Red: a train in the block. Yellow: the block clear, the next one taken; the train
+  approaches at a speed from which it can stop at the next post (`sqrt(2·DECEL·d)`). Green
+  otherwise. Semaphore arms animate between the three.
+- **Token:** under the Token level a plain section (between switches, platforms and dead ends,
+  as `traffic.ts` cuts them) admits one train at a time in either direction; a second waits
+  outside until the first has left. Literal: the deadlocks are the point.
+- **CTC and in-cab** shorten the headway only; colour-light art is left for a later phase.
+- **In-cab equipment (§8):** the one hard block of high-speed track. Large stock and the
+  high-speed sets carry it in their data; any other locomotive can be fitted in the Roster for
+  `rules.inCabCost` ($6 000). Without it a consist may not enter high-speed track at all.
+- **Tolls (§8):** stock that is not a high-speed type pays a ×3 route cost on high-speed tiles
+  (`Train.tollOf`), so it keeps to regular lines when it can; every train pays
+  `rules.hsAccessCharge` ($2) per high-speed tile run. No wear model (R22/R32).
+
+## Electrification (§7, R12, R31)
+
+- Three supplies over track: third rail (ceiling 1.2 tiles/s), catenary (1.9), HV catenary (no
+  ceiling). Collectors: shoe ↔ third rail; pantograph ↔ catenary; HV pantograph ↔ catenary at the
+  catenary ceiling or HV wire at full speed; multi-system ↔ anything. The consist's ceiling is the
+  best any of its electric units can draw from the wire under the head.
+- Substations are pole-grid nodes; wire within Chebyshev 6 of a powered one is live. Draw is
+  `powerPerTile` per tile, ×3 while accelerating; each substation smooths the draw under it and,
+  above its throughput (units per second, 3 by default), scales every train there by
+  `throughput / load`. Braking returns 30 % of the tile draw to the stockpile while on the wire.
+- With no substation anywhere, pole-powered wire counts as live so saves from before keep running.

@@ -132,6 +132,10 @@ export class Traffic {
     const id = this.claims.get(this.key(x, y));
     return id === undefined || id === self ? null : id;
   }
+  /** tile keys of a plain section (empty for nodes) */
+  tilesOfSection(id: number): number[] {
+    return this.sectionTiles.get(id) ?? [];
+  }
   sectionOf(x: number, y: number) {
     return this.sections.get(this.key(x, y)) ?? -(this.key(x, y) + 1);
   }

@@ -7,6 +7,7 @@ import type { Rules } from './rules';
 import type { TownJSON } from './towns';
 import type { HousesJSON } from './houses';
 import type { SupplyMode } from './supply';
+import type { SignalLevel } from './signals';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -97,6 +98,8 @@ export interface Settings {
   autoContracts?: boolean;
   /** v9: what happens to a new offer of each rarity */
   contractPolicy?: Record<ContractRarity, ContractPolicy>;
+  /** v10: signalling level (auto keeps the claims only) */
+  signalling?: SignalLevel;
 }
 /** Contract rarities, commonest first; `contracts.json` carries the numbers for each. */
 export const CONTRACT_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;

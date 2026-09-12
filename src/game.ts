@@ -703,6 +703,11 @@ export class Game {
       this.stock,
     );
     this.fleet.powered = (x, y) => this.catenary.isLive(x, y);
+    this.fleet.supplyAt = (x, y) => this.catenary.supplyAt(x, y);
+    this.fleet.gridFactor = (x, y) => this.catenary.loadFactor(x, y);
+    this.fleet.gridDraw = (x, y, u) => this.catenary.addDraw(x, y, u);
+    this.fleet.gridBegin = () => this.catenary.beginTick();
+    this.fleet.signals.level = this.settings.signalling ?? 'auto';
     this.fleet.onArrive = (_t, s) => this.houses.arrival(s, this.clock.time);
     this.fleet.stockCap = (id) => this.stockCap(id);
     this.fleet.junctions.onAlert = (a) =>
@@ -870,6 +875,7 @@ export class Game {
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
     if (this.world) this.applySeason();
     if (this.hud) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
+    if (this.fleet) this.fleet.signals.level = this.settings.signalling ?? 'auto';
   }
 
   /** fields of the loaded save this build does not understand: written back untouched */
@@ -1052,6 +1058,7 @@ export class Game {
   }
   private onDecorChanged(d: Decor, removed: boolean) {
     const id = `decor:${d.x},${d.y}`;
+    if (d.id === 'signal') this.fleet.signals.rebuild(this.builder.decor.values());
     this.houses?.sync(d, removed);
     this.towns?.refresh();
     if (removed) {
@@ -1154,6 +1161,8 @@ export class Game {
    * tile, yellow when the tile beyond that is taken, else green. (Block signalling refines this.)
    */
   protected signalAspectAt(d: { x: number; y: number; rot: number }): 'red' | 'yellow' | 'green' {
+    const post = this.fleet.signals.postAt(d.x, d.y);
+    if (post) return this.fleet.signals.aspect(post, (x, y) => this.fleet.occupied(x, y, -1));
     const ax = d.x + DIR_DX[d.rot];
     const ay = d.y + DIR_DY[d.rot];
     if (this.fleet.occupied(ax, ay, -1) || this.fleet.occupied(d.x, d.y, -1)) return 'red';
@@ -1542,6 +1551,11 @@ export class Game {
       this.toasts.push(m, k),
     );
     this.contractsScreen.trainName = (id) => this.fleet.byId(id)?.name ?? null;
+    this.rosterScreen.spendMoney = (amount) => {
+      if (this.economy.money < amount) return false;
+      this.economy.money -= amount;
+      return true;
+    };
     this.contractsSide = new ContractsSide(this.contracts, this.builder, this.clock);
     this.contractsSide.onOpenBoard = () => this.screens.toggle(this.contractsScreen);
     this.hud.actions.append(

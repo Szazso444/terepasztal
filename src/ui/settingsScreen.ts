@@ -1,3 +1,4 @@
+import { SIGNAL_LEVELS } from '../sim/signals';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
@@ -145,6 +146,23 @@ export class SettingsScreen implements Screen {
       }),
       ...this.contractPolicyRows(),
       el('div', { class: 'sub dim', text: STR.settings.contractPolicyHint }),
+      el('div', { class: 'col-title', style: 'margin-top:10px', text: STR.settings.signalling }),
+      el(
+        'div',
+        { class: 'row', style: 'gap:3px;flex-wrap:wrap' },
+        ...SIGNAL_LEVELS.map((lv) =>
+          btn(
+            STR.settings.signalLevel[lv],
+            () => {
+              this.settings.signalling = lv;
+              this.onChange();
+              this.render();
+            },
+            `tiny ${(this.settings.signalling ?? 'auto') === lv ? 'active' : ''}`,
+          ),
+        ),
+      ),
+      el('div', { class: 'sub dim', text: STR.settings.signallingHint }),
       el('div', { class: 'col-title', style: 'margin-top:10px', text: STR.settings.controls }),
       el('div', { class: 'sub', text: STR.settings.controlsText }),
     );

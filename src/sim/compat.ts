@@ -108,8 +108,13 @@ export interface ConsistAccess {
   blockedBy: Partial<Record<TrackClass, { name: string; reason: string }>>;
 }
 /** The most restrictive access across a consist. */
-export function consistAccess(defs: (LocoDef | WagonDef)[]): ConsistAccess {
+export function consistAccess(defs: (LocoDef | WagonDef)[], inCab = true): ConsistAccess {
   const out: ConsistAccess = { classes: new Set(TRACK_CLASSES), blockedBy: {} };
+  // high-speed lines have no lineside signals: without in-cab equipment there is no authority
+  if (!inCab) {
+    out.classes.delete('high_speed');
+    out.blockedBy.high_speed = { name: STR.compat.inCabName, reason: STR.compat.needInCab };
+  }
   for (const cls of TRACK_CLASSES)
     for (const d of defs) {
       const why = vehicleAccess(d, cls);

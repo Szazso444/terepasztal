@@ -37,6 +37,8 @@ import { biomeDef, biomeAt } from './biomes';
 import { rules, daySeconds } from './rules';
 import { Traffic } from './traffic';
 import { Junctions } from './junctions';
+import { Signals, HEADWAY } from './signals';
+import type { SupplyKind } from './catenary';
 
 export const MAX_WAGONS = 16;
 export const MAX_LOCOS = 4;
@@ -56,6 +58,12 @@ export class Fleet {
   readonly traffic: Traffic;
   /** junction clustering and congestion notifications (observes only) */
   readonly junctions: Junctions;
+  /** block signals and token working */
+  readonly signals: Signals;
+  supplyAt: (x: number, y: number) => SupplyKind | null = () => null;
+  gridFactor: (x: number, y: number) => number = () => 1;
+  gridDraw: (x: number, y: number, u: number) => void = () => {};
+  gridBegin: () => void = () => {};
   stockCap: (id: string) => number = () => Infinity;
   /** a train entered or left service */
   onChanged: (() => void) | null = null;
@@ -69,6 +77,7 @@ export class Fleet {
     readonly stock: Stockpile,
   ) {
     this.traffic = new Traffic(track, builder);
+    this.signals = new Signals(track);
     this.junctions = new Junctions(track);
     this.traffic.junctionReport = () => this.junctions.report();
   }
@@ -354,7 +363,12 @@ export class Fleet {
       .filter((l) => l && l.kind === 'loco');
     const anyLoco = this.inventory.items.find((i) => i.kind === 'loco');
     const locos: LocoSlotInit[] = items.length
-      ? items.map((l) => ({ uid: l!.uid, def: locoDef(l!.defId), level: l!.level }))
+      ? items.map((l) => ({
+          uid: l!.uid,
+          def: locoDef(l!.defId),
+          level: l!.level,
+          inCab: l!.inCab,
+        }))
       : [{ uid: -1, def: locoDef(anyLoco?.defId ?? 'rocket'), level: 1 }];
     const probe = new Train(locos, 'probe', -1);
     probe.schedule = stops;
@@ -385,6 +399,7 @@ export class Fleet {
       uid: l!.uid,
       def: locoDef(l!.defId),
       level: l!.level,
+      inCab: l!.inCab,
     }));
     const t = new Train(locos, name);
     t.wagons = wagons.map((w) => ({
@@ -454,6 +469,17 @@ export class Fleet {
     return salvage;
   }
 
+  /** Token working: a plain section may hold one train; another must wait outside it. */
+  tokenBlocked(x: number, y: number, self: number) {
+    if (this.signals.level !== 'token') return false;
+    const id = this.traffic.sectionOf(x, y);
+    if (id <= 0) return false;
+    for (const k of this.traffic.tilesOfSection(id)) {
+      const l = this.occ.get(k);
+      if (l && l.some((t) => t !== self)) return true;
+    }
+    return false;
+  }
   /** Is `tile` under any train other than `self`? Rebuilt each tick from car poses. */
   occupied(x: number, y: number, self: number) {
     const list = this.occ.get(y * this.map.w + x);
@@ -487,6 +513,18 @@ export class Fleet {
       stockpile: this.stock,
       stockCap: (id) => this.stockCap(id),
       powered: (x, y) => this.powered(x, y),
+      supplyAt: (x, y) => this.supplyAt(x, y),
+      gridFactor: (x, y) => this.gridFactor(x, y),
+      gridDraw: (x, y, u) => this.gridDraw(x, y, u),
+      signals:
+        this.signals.level === 'auto' || this.signals.level === 'token' ? null : this.signals,
+      tokenBlocked: (x, y, self) => this.tokenBlocked(x, y, self),
+      headway: (t) => {
+        const level = this.signals.level;
+        if (level === 'in_cab' && !t.locos.some((l) => l.inCab || l.def.inCab))
+          return HEADWAY.absolute_block;
+        return HEADWAY[level];
+      },
       onFlow: (x, y, r, d) => this.onFlow(x, y, r, d),
       onPassengers: (s, n, b) => this.onPassengers(s, n, b),
       trainPath: (id) => this.byId(id)?.pathTileKeys(this.map.w) ?? new Set<number>(),
@@ -764,6 +802,7 @@ export class Fleet {
     this.clockTime = now;
     this.rebuildOccupancy();
     this.rebuildReservations();
+    this.gridBegin();
     this.traffic.assign(this.trains, now);
     const ctx = this.ctx(now, speedFactor);
     for (const t of this.trains) {

@@ -532,6 +532,12 @@ export const STR = {
     resources: 'Stockpile',
   },
   roster: {
+    fitInCab: (cost: number) => `Fit in-cab signalling ($${cost.toLocaleString()})`,
+    fitInCabHint:
+      'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
+    fitted: (n: string) => `${n} fitted with in-cab signalling`,
+    hasInCab: 'in-cab signalling fitted',
+    noMoney: 'Not enough money',
     size: { small: 'small', medium: 'medium (2 tiles)', large: 'large (3 tiles)' } as Record<
       string,
       string
@@ -581,6 +587,16 @@ export const STR = {
     inDepot: 'In depot',
   },
   settings: {
+    signalling: 'Signalling',
+    signalLevel: {
+      auto: 'Automatic',
+      token: 'Token',
+      absolute_block: 'Absolute block',
+      ctc: 'CTC',
+      in_cab: 'In-cab',
+    } as Record<string, string>,
+    signallingHint:
+      'Automatic keeps trains apart as before. Token: one train per plain section, whichever way it runs. Absolute block: semaphores hold trains out of an occupied block and trains keep 10 tiles apart; CTC 6; In-cab 3 (equipped stock only). Semaphores work under every level above Token.',
     title: 'Settings',
     options: 'Options',
     saves: 'Saves',
@@ -856,6 +872,8 @@ export const STR = {
   },
   compat: {
     largeBarred: 'Large stock: high-speed track only',
+    needInCab: 'no in-cab signalling equipment on any locomotive',
+    inCabName: 'In-cab signalling',
     foreAft: (v: number, t: number) =>
       `bogies slide ${v.toFixed(2)} tiles along the body, limit ${t.toFixed(2)}`,
     gap: (v: number, t: number) =>

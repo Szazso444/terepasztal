@@ -3,6 +3,8 @@ import type { TrackGraph, TrackPiece } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
 import { consistAccess, pieceClassFor, type ConsistAccess } from './compat';
+import { collectorCeiling, type SupplyKind } from './catenary';
+import type { Signals } from './signals';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
 import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
 import type { LocoType } from '../data/content';
@@ -54,6 +56,8 @@ export interface LocoSlot {
   mode: LocoMode;
   /** runtime: pulling right now. A unit without usable power drops out; a standby unit steps in. */
   engaged: boolean;
+  /** fitted with in-cab signalling equipment (the model may carry it by itself) */
+  inCab?: boolean;
 }
 /** A slot as handed to the constructor: mode and engagement are filled in by the rule. */
 export type LocoSlotInit = Omit<LocoSlot, 'mode' | 'engaged'> &
@@ -263,6 +267,18 @@ export interface TickCtx {
   stockCap: (id: string) => number;
   /** is the tile inside a live electric network? */
   powered: (x: number, y: number) => boolean;
+  /** electrification kind on a tile (null: bare rails) */
+  supplyAt: (x: number, y: number) => SupplyKind | null;
+  /** share of its draw a substation can deliver to trains under it (1 = all) */
+  gridFactor: (x: number, y: number) => number;
+  /** a train reports what it draws, units per second */
+  gridDraw: (x: number, y: number, unitsPerSecond: number) => void;
+  /** block signals (null when the game runs without) */
+  signals: Signals | null;
+  /** token working: is this plain section held by another train? */
+  tokenBlocked: (x: number, y: number, self: number) => boolean;
+  /** tiles a train keeps behind the one ahead under the signalling level */
+  headway: (t: Train) => number;
   /** a resource entered (+) or left (-) the stockpile at a tile: drives the floating indicators */
   onFlow: (x: number, y: number, resource: string, delta: number) => void;
   /** passengers boarded (true) or alighted (false) at a station */
@@ -704,15 +720,23 @@ export class Train {
   /** Track classes every vehicle of the consist may use, and who bars the rest. */
   get access(): ConsistAccess {
     const key = [...this.locos.map((l) => l.def.id), ...this.wagons.map((w) => w.def.id)].join(',');
-    if (!this.accessCache || this.accessCache.key !== key)
+    const inCab = this.locos.some((l) => l.inCab || l.def.inCab);
+    const fullKey = `${key}|${inCab ? 'cab' : ''}`;
+    if (!this.accessCache || this.accessCache.key !== fullKey)
       this.accessCache = {
-        key,
-        access: consistAccess([...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)]),
+        key: fullKey,
+        access: consistAccess(
+          [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)],
+          inCab,
+        ),
       };
     return this.accessCache.access;
   }
   /** Pathfinding predicate: may the consist enter this piece through `entry`? */
   readonly canUse = (p: TrackPiece, entry: Dir) => this.access.classes.has(pieceClassFor(p, entry));
+  /** route cost multiplier: stock that is not built for speed keeps off high-speed lines when it can */
+  readonly tollOf = (p: TrackPiece) =>
+    p.cls === 'high_speed' && !this.locos.some((l) => l.def.highSpeed) ? 3 : 1;
   /** findPath with this consist's class access applied. */
   private pathTo(
     track: TrackGraph,
@@ -721,7 +745,7 @@ export class Train {
     maxCost = 100000,
     avoid?: (x: number, y: number) => boolean,
   ) {
-    return findPath(track, start, isTarget, maxCost, avoid, this.canUse);
+    return findPath(track, start, isTarget, maxCost, avoid, this.canUse, this.tollOf);
   }
   prevVehiclePoses: VehiclePose[] = [];
   /** Points along the consist every half tile from head to tail: what the train stands on. */
@@ -831,10 +855,26 @@ export class Train {
     if (this.oilRate > 0) r.push(this.oil / this.oilRate);
     return r.length ? Math.min(...r) : Infinity;
   }
+  /**
+   * Speed ceiling the wire under the head allows the consist's collectors, or null when no
+   * electric unit can draw from what is there (bare rails, dead wire, wrong collector).
+   */
+  wireCeiling(ctx: TickCtx): number | null {
+    const head = this.headTile;
+    if (!head || !ctx.powered(head.x, head.y)) return null;
+    const kind = ctx.supplyAt(head.x, head.y);
+    if (!kind) return null;
+    let best: number | null = null;
+    for (const l of this.locos) {
+      if (l.def.type !== 'electric') continue;
+      const c = collectorCeiling(l.def.collector, kind);
+      if (c !== null && (best === null || c > best)) best = c;
+    }
+    return best;
+  }
   /** Is the head on live track with power to draw? */
   private onWire(ctx: TickCtx) {
-    const head = this.headTile;
-    return !!head && ctx.powered(head.x, head.y) && ctx.stockpile.get('power') > 0.1;
+    return this.wireCeiling(ctx) !== null && ctx.stockpile.get('power') > 0.1;
   }
   /**
    * Which units pull. A unit in a working mode pulls while it has usable power (fuel and water,
@@ -874,7 +914,7 @@ export class Train {
     if (this.powerRate > 0) {
       const need = this.powerRate * step;
       const head = this.headTile;
-      const wired = !!head && ctx.powered(head.x, head.y);
+      const wired = !!head && this.wireCeiling(ctx) !== null;
       if ((wired ? Math.max(ctx.stockpile.get('power'), this.battery) : this.battery) < need)
         return 'noPower';
     }
@@ -1247,8 +1287,8 @@ export class Train {
     return this.pathPos;
   }
   /** Tiles of the path from the head onwards (one entry per tile, with the arc it starts at). */
-  pathAhead(maxTiles = Infinity): { x: number; y: number; arc: number }[] {
-    const out: { x: number; y: number; arc: number }[] = [];
+  pathAhead(maxTiles = Infinity): { x: number; y: number; in: Dir; out: Dir; arc: number }[] {
+    const out: { x: number; y: number; in: Dir; out: Dir; arc: number }[] = [];
     if (!this.path) return out;
     let last: PathSegment | null = null;
     for (let i = 0; i < this.pathPts.length; i++) {
@@ -1256,7 +1296,7 @@ export class Train {
       const seg = this.pathPts[i].seg;
       if (seg === last) continue;
       last = seg;
-      out.push({ x: seg.x, y: seg.y, arc: this.pathCum[i] });
+      out.push({ x: seg.x, y: seg.y, in: seg.in, out: seg.out, arc: this.pathCum[i] });
       if (out.length >= maxTiles) break;
     }
     return out;
@@ -1469,8 +1509,10 @@ export class Train {
     let blockDist = Infinity;
     let blocker: number | null = null;
     {
+      // under block working a train keeps a whole headway behind the one ahead
+      const gap = Math.max(HOLD_GAP, ctx.headway(this));
       const from = this.pathPos + 0.3;
-      const to = this.pathPos + LOOKAHEAD;
+      const to = this.pathPos + LOOKAHEAD + gap;
       // tiles under this train's own cars never block it (two trains that already overlap
       // must be allowed to separate)
       const own = new Set<number>();
@@ -1482,8 +1524,11 @@ export class Train {
         if (arc > to) break;
         const p = this.pathPts[i];
         if (own.has(p.seg.y * ctx.track.w + p.seg.x)) continue;
-        if (ctx.occupied(p.seg.x, p.seg.y, this.id)) {
-          blockDist = Math.max(0, arc - this.pathPos - HOLD_GAP);
+        if (
+          ctx.occupied(p.seg.x, p.seg.y, this.id) ||
+          ctx.tokenBlocked(p.seg.x, p.seg.y, this.id)
+        ) {
+          blockDist = Math.max(0, arc - this.pathPos - gap);
           blocker = ctx.occupants(p.seg.x, p.seg.y).find((id) => id !== this.id) ?? null;
           break;
         }
@@ -1493,6 +1538,21 @@ export class Train {
     if (!this.holding && this.claimLimit - HOLD_GAP < blockDist) {
       blockDist = Math.max(0, this.claimLimit - HOLD_GAP);
       blocker = this.claimBlocker;
+    }
+    // block signals: stop short of a semaphore at danger; under caution approach the next one
+    // slowly enough to stop there
+    let cautionArc: number | null = null;
+    if (ctx.signals && ctx.signals.count && this.path && !this.holding) {
+      const sig = ctx.signals.ahead(this.pathAhead(), (x, y) => ctx.occupied(x, y, this.id));
+      if (sig.stopArc !== null) {
+        const d = sig.stopArc - HOLD_GAP - this.pathPos;
+        if (d >= -0.1 && d < blockDist) {
+          blockDist = Math.max(0, d);
+          blocker = null;
+        }
+      }
+      if (sig.cautionArc !== null && sig.cautionArc - this.pathPos > 0.2)
+        cautionArc = sig.cautionArc;
     }
     this.blocked = blockDist < 0.3;
     this.blockedBy = this.blocked ? blocker : null;
@@ -1571,10 +1631,26 @@ export class Train {
       ecoMul *
       (this.reversed ? this.reverseFactor : 1);
     this.freeSpeed = vmax;
+    let cap = vmax;
+    // electric traction: the wire's ceiling for the collectors, and the substation's share
+    const electricPulling = this.locos.some((l) => l.engaged && l.def.type === 'electric');
+    if (electricPulling) {
+      const ceil = this.wireCeiling(ctx);
+      if (ceil !== null) cap = Math.min(cap, ceil);
+      if (headT) cap *= ctx.gridFactor(headT.x, headT.y);
+    }
+    if (cautionArc !== null)
+      cap = Math.min(
+        cap,
+        Math.max(0.25, Math.sqrt(2 * DECEL * Math.max(0, cautionArc - HOLD_GAP - this.pathPos))),
+      );
     const vStop = Math.sqrt(2 * DECEL * Math.max(0, Math.min(remaining, blockDist)));
-    const target = Math.min(vmax, vStop);
+    const target = Math.min(cap, vStop);
+    const prevSpeed = this.speed;
+    const accelerating = target > this.speed;
     if (target > this.speed) this.speed = Math.min(target, this.speed + this.acceleration * gdt);
     else this.speed = Math.max(target, this.speed - DECEL * gdt * 1.5);
+    const braking = this.speed < prevSpeed - 1e-6;
     const step = Math.min(
       remaining,
       Math.max(0, blockDist),
@@ -1582,6 +1658,9 @@ export class Train {
     );
     this.pathPos += step;
     this.distance += step;
+    // access charge: high-speed track costs money per tile run
+    if (step > 0 && headT && ctx.track.get(headT.x, headT.y)?.cls === 'high_speed')
+      ctx.spend(rules.hsAccessCharge * step);
     if (step > 0) {
       const problem = this.fuelProblem(ctx, step);
       if (problem) {
@@ -1615,10 +1694,14 @@ export class Train {
         if (got > 0) bump(this.trip.fuel, 'sand', got);
       }
       if (this.powerRate > 0) {
-        const need = this.powerRate * burn;
-        if (headT && ctx.powered(headT.x, headT.y)) {
+        // accelerating draws far more than cruising; braking gives a share back (regeneration)
+        const need = this.powerRate * burn * (accelerating ? 3 : 1);
+        if (headT && this.wireCeiling(ctx) !== null) {
           // on the wire: the stockpile feeds the motors and tops the battery carts up
           const got = ctx.stockpile.take('power', need);
+          ctx.gridDraw(headT.x, headT.y, need / Math.max(1e-6, gdt));
+          if (braking)
+            ctx.stockpile.add('power', 0.3 * this.powerRate * step, ctx.stockCap('power'));
           if (got < need) this.battery = Math.max(0, this.battery - (need - got));
           if (this.batteryCap > 0 && this.battery < this.batteryCap - 1e-6) {
             const room = this.batteryCap - this.battery;
@@ -2117,7 +2200,13 @@ export class Train {
     return {
       id: this.id,
       name: this.name,
-      locos: this.locos.map((l) => ({ uid: l.uid, defId: l.def.id, level: l.level, mode: l.mode })),
+      locos: this.locos.map((l) => ({
+        uid: l.uid,
+        defId: l.def.id,
+        level: l.level,
+        mode: l.mode,
+        inCab: l.inCab,
+      })),
       schedule: this.schedule,
       tanks: {
         coal: this.coal,
@@ -2163,7 +2252,13 @@ export class Train {
 
   static fromJSON(j: ReturnType<Train['toJSON']>, track: TrackGraph): Train {
     const t = new Train(
-      j.locos.map((l) => ({ uid: l.uid, def: locoDef(l.defId), level: l.level, mode: l.mode })),
+      j.locos.map((l) => ({
+        uid: l.uid,
+        def: locoDef(l.defId),
+        level: l.level,
+        mode: l.mode,
+        inCab: l.inCab,
+      })),
       j.name,
       j.id,
     );

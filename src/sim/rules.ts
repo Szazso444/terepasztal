@@ -40,6 +40,10 @@ export interface Rules {
   repeatCostStep: number;
   /** multiplies the whole track cost matrix */
   trackCostScale: number;
+  /** money per tile a train runs on high-speed track */
+  hsAccessCharge: number;
+  /** price of fitting in-cab signalling equipment to one locomotive */
+  inCabCost: number;
   /** multiplies the starting wood, stone and iron */
   startingResourceScale: number;
   /** a collection train leaves a warehouse alone until it holds this much of a resource */
@@ -97,6 +101,8 @@ export const DEFAULT_RULES: Rules = {
   depotCap: 3000,
   repeatCostStep: 0.2,
   trackCostScale: 1,
+  hsAccessCharge: 2,
+  inCabCost: 6000,
   startingResourceScale: 1,
   collectMin: 100,
   tradeCycleDays: 2,
@@ -168,6 +174,22 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 2,
     step: 0.05,
+  },
+  {
+    key: 'inCabCost',
+    label: 'In-cab signalling fit-out',
+    group: 'Economy',
+    min: 0,
+    max: 50000,
+    step: 500,
+  },
+  {
+    key: 'hsAccessCharge',
+    label: 'High-speed access charge per tile',
+    group: 'Economy',
+    min: 0,
+    max: 20,
+    step: 0.5,
   },
   {
     key: 'trackCostScale',
