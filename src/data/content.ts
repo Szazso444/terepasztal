@@ -130,15 +130,36 @@ export interface ContractTemplate {
   baseDays: number;
   daysPerTile: number;
   payoutMul: number;
-  reputation: [number, number];
   tickets: number;
+  /** the rarity's deadline multiplier applies (rush orders get tighter with rarity) */
+  rarityDeadline?: boolean;
+}
+/** Multiplier layer over the templates: any template can roll at any rarity. */
+export interface ContractRarityDef {
+  id: string;
+  name: string;
+  weight: number;
+  /** payout multiplier */
+  rewardMul: number;
+  /** ticket multiplier */
+  ticketMul: number;
+  /** amount multiplier: higher rarities ask for more */
+  amountMul: number;
+  /** deadline multiplier for templates flagged `rarityDeadline` */
+  deadlineMul: number;
+  /** at most this many open offers of the rarity at a time */
+  maxOpen?: number;
 }
 export interface ContractConfig {
   offerCount: number;
   offerLifetimeDays: number;
   refreshIntervalDays: number;
   templates: ContractTemplate[];
-  failReputationMul: number;
+  rarities: ContractRarityDef[];
+  /** fraction of the payout charged for cancelling an active contract */
+  cancelFine: number;
+  /** fraction of the payout charged when the deadline is missed */
+  failFine: number;
 }
 export interface DecorDef {
   id: string;

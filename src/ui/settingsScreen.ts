@@ -1,7 +1,13 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
-import type { Settings } from '../sim/save';
+import {
+  CONTRACT_RARITIES,
+  contractPolicyFor,
+  uniformContractPolicy,
+  type ContractPolicy,
+  type Settings,
+} from '../sim/save';
 
 export interface SettingsActions {
   save(): void;
@@ -73,9 +79,35 @@ export class SettingsScreen implements Screen {
       el('span', {}, input, ' ', val),
     );
   }
+  /** One row per contract rarity: what happens to a new offer of that rarity. */
+  private contractPolicyRows(): HTMLElement[] {
+    const POLICIES: ContractPolicy[] = ['accept', 'prompt', 'deny'];
+    return CONTRACT_RARITIES.map((r) => {
+      const current = contractPolicyFor(this.settings, r);
+      const buttons = POLICIES.map((p) =>
+        btn(
+          STR.settings.policy[p],
+          () => {
+            if (!this.settings.contractPolicy)
+              this.settings.contractPolicy = uniformContractPolicy(current);
+            this.settings.contractPolicy[r] = p;
+            this.onChange();
+            this.render();
+          },
+          `tiny ${current === p ? 'active' : ''}`,
+        ),
+      );
+      return el(
+        'div',
+        { class: 'kv' },
+        el('span', { class: `k crarity-${r}`, text: STR.contracts.rarity[r] ?? r }),
+        el('span', { class: 'row', style: 'margin:0;gap:3px' }, ...buttons),
+      );
+    });
+  }
   private toggle(
     label: string,
-    key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'showFps' | 'weather' | 'autoContracts',
+    key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'showFps' | 'weather',
   ) {
     const b = btn(
       this.settings[key] ? STR.settings.on : STR.settings.off,
@@ -106,7 +138,13 @@ export class SettingsScreen implements Screen {
       this.toggle(STR.settings.smoke, 'smoke'),
       this.toggle(STR.settings.weather, 'weather'),
       this.toggle(STR.settings.showFps, 'showFps'),
-      this.toggle(STR.settings.autoContracts, 'autoContracts'),
+      el('div', {
+        class: 'col-title',
+        style: 'margin-top:10px',
+        text: STR.settings.contractPolicy,
+      }),
+      ...this.contractPolicyRows(),
+      el('div', { class: 'sub dim', text: STR.settings.contractPolicyHint }),
       el('div', { class: 'col-title', style: 'margin-top:10px', text: STR.settings.controls }),
       el('div', { class: 'sub', text: STR.settings.controlsText }),
     );

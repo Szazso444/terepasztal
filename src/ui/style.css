@@ -655,6 +655,23 @@ body {
 .rarity-SSR {
   color: var(--amber);
 }
+/* contract rarities */
+.crarity-common {
+  color: #b0a890;
+}
+.crarity-uncommon {
+  color: #9ab86e;
+}
+.crarity-rare {
+  color: #6fb0d8;
+}
+.crarity-epic {
+  color: #c08ad8;
+}
+.crarity-legendary {
+  color: var(--amber);
+  text-shadow: 0 0 6px rgba(255, 200, 80, 0.5);
+}
 input.text {
   font-family: var(--font-body);
   font-size: 12px;
