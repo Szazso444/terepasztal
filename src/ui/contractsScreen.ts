@@ -24,6 +24,8 @@ export class ContractsScreen implements Screen {
   private activeCol = el('div', { class: 'col-body' });
   private historyCol = el('div', { class: 'col-body' });
   private statsFoot = el('div', { class: 'col-foot' });
+  /** set by the game: name of the train working a contract (null: none in service) */
+  trainName: ((id: number) => string | null) | null = null;
 
   constructor(
     private readonly board: ContractBoard,
@@ -71,6 +73,10 @@ export class ContractsScreen implements Screen {
       el(
         'div',
         { class: 'name' },
+        el('span', {
+          class: `crarity-${c.rarity}`,
+          text: `${STR.contracts.rarity[c.rarity] ?? c.rarity} · `,
+        }),
         el('span', { class: 'amber', text: `${c.name}: ` }),
         `${Math.round(c.amount)} ${cargoDef(c.cargo).name}`,
       ),
@@ -107,6 +113,12 @@ export class ContractsScreen implements Screen {
         ),
       );
       lines.push(el('div', { class: 'sub', text: `${Math.floor(c.delivered)} / ${c.amount}` }));
+      const train = c.trainId === null ? null : this.trainName?.(c.trainId);
+      lines.push(
+        train
+          ? el('div', { class: 'sub', text: `${STR.contracts.train}: ${train}` })
+          : el('div', { class: 'sub amber', text: STR.contracts.noTrain }),
+      );
     }
     if (c.status === 'done')
       lines.push(el('div', { class: 'sub green', text: STR.contracts.done }));
@@ -114,6 +126,8 @@ export class ContractsScreen implements Screen {
       lines.push(el('div', { class: 'sub red', text: STR.contracts.failed }));
     if (c.status === 'expired')
       lines.push(el('div', { class: 'sub dim', text: STR.contracts.expired }));
+    if (c.status === 'cancelled')
+      lines.push(el('div', { class: 'sub dim', text: STR.contracts.cancelled }));
     return el(
       'div',
       { class: 'item', style: 'cursor:default;align-items:flex-start' },
@@ -159,11 +173,27 @@ export class ContractsScreen implements Screen {
     a.innerHTML = '';
     const active = this.board.active.sort((p, q) => p.expires - q.expires);
     if (!active.length) a.append(el('div', { class: 'dim', text: STR.contracts.noActive }));
-    for (const c of active) a.append(this.card(c));
+    for (const c of active) {
+      const fine = fmtMoney(this.board.cancelFine(c));
+      a.append(
+        this.card(c, [
+          btn(
+            STR.contracts.cancelFine(fine),
+            () => {
+              if (!confirm(STR.contracts.confirmCancel(c.name, fine))) return;
+              if (this.board.cancel(c))
+                this.toast(STR.contracts.cancelledMsg(c.name, fine), 'warn');
+              this.render();
+            },
+            'small',
+          ),
+        ]),
+      );
+    }
     const h = this.historyCol;
     h.innerHTML = '';
     const hist = this.board.contracts
-      .filter((c) => c.status === 'done' || c.status === 'failed')
+      .filter((c) => c.status === 'done' || c.status === 'failed' || c.status === 'cancelled')
       .slice(-12)
       .reverse();
     if (!hist.length) h.append(el('div', { class: 'dim', text: STR.contracts.noHistory }));

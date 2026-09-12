@@ -80,6 +80,26 @@ export function defaultStop(stationId: number): StopPlan {
     maxDwell: 0,
   };
 }
+/**
+ * A contract handed to a train: fetch `cargo` at `originId`, bring it to `destId`. Worked as a
+ * plain two-stop job once the current leg is done; the standing program resumes afterwards.
+ */
+export interface TrainJob {
+  contractId: number;
+  /** contract name, for the panels */
+  name: string;
+  originId: number;
+  destId: number;
+  cargo: string;
+}
+/** The two stops of a job: wait for a load at the origin, take nothing on at the destination. */
+export function jobStop(stationId: number, phase: 'origin' | 'dest'): StopPlan {
+  return {
+    ...defaultStop(stationId),
+    load: phase === 'origin' ? 'auto' : 'none',
+    waitFull: phase === 'origin',
+  };
+}
 /** Bookkeeping for one loop of the schedule. */
 export interface TripStats {
   startedAt: number;
@@ -394,6 +414,97 @@ export class Train {
   get dynamic() {
     return this.mode !== 'schedule';
   }
+  /** contracts waiting for this train, in order */
+  jobs: TrainJob[] = [];
+  /** the contract being worked right now */
+  job: TrainJob | null = null;
+  /** heading for the job's origin to load, or for its destination to deliver */
+  jobPhase: 'origin' | 'dest' = 'origin';
+  /** the standing program set aside while a job runs */
+  private suspended: { schedule: StopPlan[]; routeIndex: number } | null = null;
+  /** a job was closed under a moving train: re-route to the resumed program on the next tick */
+  private resumePending = false;
+  /** Queue a contract; it starts once the current leg is done. */
+  addJob(j: TrainJob) {
+    if (
+      this.job?.contractId === j.contractId ||
+      this.jobs.some((q) => q.contractId === j.contractId)
+    )
+      return;
+    this.jobs.push(j);
+  }
+  /**
+   * Drop a contract from the queue, or close the one being worked: the train falls back to its
+   * program at the next stop, or right away when it is under way.
+   */
+  dropJob(contractId: number) {
+    this.jobs = this.jobs.filter((j) => j.contractId !== contractId);
+    if (this.job?.contractId !== contractId) return;
+    this.job = null;
+    if (this.state === 'moving' && !this.holding) this.resumePending = true;
+  }
+  /** Set the program aside and take up the next queued contract as a two-stop schedule. */
+  private startJob() {
+    const j = this.jobs.shift();
+    if (!j) return;
+    if (!this.suspended) this.suspended = { schedule: this.schedule, routeIndex: this.routeIndex };
+    this.job = j;
+    this.jobPhase = 'origin';
+    this.schedule = [jobStop(j.originId, 'origin'), jobStop(j.destId, 'dest')];
+    this.routeIndex = 0;
+    this.detour = null;
+    this.lastMessage = `on contract: ${j.name}`;
+  }
+  /**
+   * Back to the standing program. A schedule train rejoins at the stop after the one it left
+   * for the job (`advance`: the caller does not step the index itself); a roaming train simply
+   * chooses again.
+   */
+  private resumeProgram(advance: boolean) {
+    const s = this.suspended;
+    this.suspended = null;
+    this.job = null;
+    if (!s) return;
+    this.schedule = s.schedule;
+    const n = Math.max(1, s.schedule.length);
+    this.routeIndex = advance ? (s.routeIndex + 1) % n : s.routeIndex % n;
+    this.lastMessage = 'back on the regular run';
+  }
+  /** Any of the job's cargo aboard, taken on at its origin. */
+  private hasJobCargo() {
+    const j = this.job;
+    return (
+      !!j && this.wagons.some((w) => w.cargo === j.cargo && w.amount > 0 && w.origin === j.originId)
+    );
+  }
+  /**
+   * Job bookkeeping when a stop is done, before the program chooses the next stop. Returns what
+   * the job wants: `go` (the job's own schedule and index are in force), `stay` (wait here for
+   * the load), `none` (no job: the program decides, its index stepped by the caller as usual).
+   */
+  private stepJob(st: Station | null): 'go' | 'stay' | 'none' {
+    if (this.job) {
+      if (this.jobPhase === 'origin' && st?.id === this.job.originId) {
+        if (!this.hasJobCargo()) return 'stay';
+        this.jobPhase = 'dest';
+        this.routeIndex = 1;
+        return 'go';
+      }
+      if (this.jobPhase === 'dest' && st?.id === this.job.destId) {
+        // delivered a load: another round until the book closes the contract
+        this.jobPhase = 'origin';
+        this.routeIndex = 0;
+        return 'go';
+      }
+      return 'go';
+    }
+    if (this.suspended) this.resumeProgram(false);
+    if (this.jobs.length) {
+      this.startJob();
+      return 'go';
+    }
+    return 'none';
+  }
   /** stations a roaming train could not reach, with the time the memory expires */
   private badTargets = new Map<number, number>();
   isBadTarget(id: number, now: number) {
@@ -660,6 +771,10 @@ export class Train {
   get headTile(): { x: number; y: number } | null {
     const p = this.trail[this.trail.length - 1];
     return p ? { x: p.seg.x, y: p.seg.y } : null;
+  }
+  /** Track segment under the leading car, the start of any path search from here. */
+  get headSeg(): PathSegment | null {
+    return this.trail[this.trail.length - 1]?.seg ?? null;
   }
   get headPos(): Vec2 | null {
     const p = this.trail[this.trail.length - 1];
@@ -976,6 +1091,23 @@ export class Train {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
     this.prevVehiclePoses = this.vehiclePoses;
     this.stateTime += gdt;
+    if (this.resumePending) {
+      // the contract closed under way: head for the program's next stop instead
+      this.resumePending = false;
+      if (!this.job && this.suspended && this.state === 'moving' && !this.holding) {
+        if (this.jobs.length) this.startJob();
+        else this.resumeProgram(true);
+        const wasReversed = this.reversed;
+        if (this.dispatch(ctx.track, ctx.builder, ctx.map)) {
+          if (!this.path) {
+            this.pathPts = [];
+            this.pathCum = [];
+            this.onPathReady(ctx);
+          } else if (wasReversed !== this.reversed) this.updatePoses();
+        } else this.setState('noRoute');
+        return;
+      }
+    }
     if (ctx.track.version !== this.trackVersion && this.state === 'moving') {
       this.trackVersion = ctx.track.version;
       const head = this.headTile;
@@ -1062,6 +1194,8 @@ export class Train {
             this.stateTime = 0;
             break;
           }
+          // a train with nowhere to go takes up a queued contract right away
+          if (!this.job && this.jobs.length) this.startJob();
           if (this.dispatch(ctx.track, ctx.builder, ctx.map)) this.onPathReady(ctx);
           else this.stateTime = 0;
         }
@@ -1467,15 +1601,19 @@ export class Train {
     // depot takes anything, a warehouse anything from a producer, a town what it accepts
     // what may be taken on here: a production train only takes from producers, a collection
     // train only from warehouses, a transport train only passengers
+    const job = this.job;
     const produced = st.availableCargo().filter((c) => {
+      // at a contract's origin only the contract's cargo comes aboard
+      if (job && st.id === job.originId) return c === job.cargo;
       if (this.mode === 'production') return !st.def.stockpile || st.producedCargo().includes(c);
       if (this.mode === 'collection') return st.def.stockpile && cargoClass(c) !== 'people';
       if (this.mode === 'transport') return cargoClass(c) === 'people';
       return true;
     });
-    // a dynamic train has no fixed route: any other station may take what it loads here
+    // a dynamic train has no fixed route: any other station may take what it loads here; a
+    // train on a contract follows the job's two stops
     const routeStations = (
-      this.dynamic
+      this.dynamic && !job
         ? ctx.builder.stations.filter((s) => ctx.builder.platformTiles(s).length > 0)
         : this.route.map((id) => ctx.builder.stationById(id))
     ).filter((s): s is Station => !!s && s !== st);
@@ -1559,7 +1697,18 @@ export class Train {
     const wasDetour = this.detour !== null && st?.id === this.detour;
     this.detour = null;
     const leaving = wasDetour ? undefined : this.currentStop;
-    if (this.dynamic && !wasDetour) {
+    const jobWants = wasDetour ? 'none' : this.stepJob(st);
+    if (jobWants === 'stay' && st) {
+      // at the contract's origin with nothing aboard yet: keep waiting for the load
+      this.atStation = st;
+      st.occupants.add(this.id);
+      this.loadedHere = 0;
+      this.setState('loading');
+      return;
+    }
+    // otherwise the job's two-stop schedule is in force, its index set by the job bookkeeping
+    const program = jobWants !== 'go' && !wasDetour;
+    if (program && this.dynamic) {
       let next = ctx.chooseNext(this);
       if (next !== null && st && next === st.id && this.loadedHere < 1) {
         // nothing came aboard here: the pick is stale, look elsewhere for a minute
@@ -1585,7 +1734,7 @@ export class Train {
         this.setState('idle');
         return;
       }
-    } else if (!wasDetour) this.routeIndex = (this.routeIndex + 1) % this.route.length;
+    } else if (program) this.routeIndex = (this.routeIndex + 1) % this.route.length;
     if (this.routeIndex === 0 && !wasDetour) {
       this.trip.endedAt = ctx.now;
       this.lastTrip = this.trip;
@@ -1757,6 +1906,10 @@ export class Train {
       routeIndex: this.routeIndex,
       detour: this.detour,
       mode: this.mode,
+      jobs: this.jobs,
+      job: this.job,
+      jobPhase: this.jobPhase,
+      suspended: this.suspended,
       distance: this.distance,
       head: head
         ? { x: head.seg.x, y: head.seg.y, in: head.seg.in, reversed: this.reversed }
@@ -1790,6 +1943,15 @@ export class Train {
     t.schedule = j.schedule.map((s) => ({ ...defaultStop(s.stationId), ...s }));
     t.routeIndex = j.routeIndex;
     t.detour = j.detour ?? null;
+    t.jobs = j.jobs ?? [];
+    t.job = j.job ?? null;
+    t.jobPhase = j.jobPhase === 'dest' ? 'dest' : 'origin';
+    t.suspended = j.suspended
+      ? {
+          schedule: j.suspended.schedule.map((s) => ({ ...defaultStop(s.stationId), ...s })),
+          routeIndex: j.suspended.routeIndex,
+        }
+      : null;
     const legacy: Record<string, RouteMode> = {
       fixed: 'schedule',
       dynamic: 'production',

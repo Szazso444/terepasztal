@@ -67,7 +67,7 @@ export class TrainSide {
       trains
         .map(
           (t) =>
-            `${t.id}:${t.state}:${Math.round(t.speed * 20)}:${Math.round(t.coal)}:${Math.round(t.water)}:${Math.round(t.oil)}:${t.fuelPreference}:${t.lastTrip?.endedAt ?? 0}:${Math.round(t.weight)}:${t.wagons.map((w) => `${w.cargo}${Math.round(w.amount)}`).join()}`,
+            `${t.id}:${t.state}:${Math.round(t.speed * 20)}:${Math.round(t.coal)}:${Math.round(t.water)}:${Math.round(t.oil)}:${t.fuelPreference}:${t.lastTrip?.endedAt ?? 0}:${Math.round(t.weight)}:${t.wagons.map((w) => `${w.cargo}${Math.round(w.amount)}`).join()}:${t.job?.contractId ?? ''}:${t.jobs.length}`,
         )
         .join('|');
     if (key === this.lastKey && !force) return;
@@ -114,6 +114,16 @@ export class TrainSide {
       ),
       el('div', { class: `sub state-${t.state}`, text: state }),
     );
+    const job = t.job ?? t.jobs[0];
+    if (job) {
+      const queued = t.jobs.length - (t.job ? 0 : 1);
+      card.append(
+        el('div', {
+          class: 'sub amber',
+          text: `${STR.trainSide.onContract(job.name, this.builder.stationById(job.destId)?.name ?? '?')}${queued > 0 ? ` · ${STR.trainSide.queuedContracts(queued)}` : ''}`,
+        }),
+      );
+    }
     card.append(
       row(
         STR.trainSide.speed,

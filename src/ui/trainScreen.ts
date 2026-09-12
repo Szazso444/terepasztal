@@ -105,6 +105,17 @@ export class TrainScreen implements Screen {
       ),
     );
     if (t.lastMessage) l.append(row(STR.train.note, t.lastMessage));
+    const job = t.job ?? t.jobs[0];
+    if (job) {
+      const queued = t.jobs.length - (t.job ? 0 : 1);
+      l.append(
+        row(
+          STR.contracts.train,
+          `${STR.trainSide.onContract(job.name, this.builder.stationById(job.destId)?.name ?? '?')}${queued > 0 ? ` · ${STR.trainSide.queuedContracts(queued)}` : ''}`,
+          'amber',
+        ),
+      );
+    }
     l.append(row(STR.train.speed, `${t.maxSpeed.toFixed(2)} tiles/s`));
     l.append(row(STR.train.crew, String(t.crew)));
     l.append(this.bar(STR.train.haul, t.weight, t.power, t.weight > t.power ? 'over' : ''));

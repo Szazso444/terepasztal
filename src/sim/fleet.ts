@@ -57,6 +57,8 @@ export class Fleet {
   /** junction clustering and congestion notifications (observes only) */
   readonly junctions: Junctions;
   stockCap: (id: string) => number = () => Infinity;
+  /** a train entered or left service */
+  onChanged: (() => void) | null = null;
 
   constructor(
     readonly track: TrackGraph,
@@ -425,6 +427,7 @@ export class Fleet {
     this.rebuildOccupancy();
     if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady(this.ctx(0, 1));
     else t.state = 'noRoute';
+    this.onChanged?.();
     return t;
   }
 
@@ -445,6 +448,7 @@ export class Fleet {
     const i = this.trains.indexOf(t);
     if (i >= 0) this.trains.splice(i, 1);
     for (const it of this.inventory.items) if (it.assigned === t.id) it.assigned = null;
+    this.onChanged?.();
     return salvage;
   }
 

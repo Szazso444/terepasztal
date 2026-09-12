@@ -93,8 +93,33 @@ export interface Settings {
   weather: boolean;
   /** v6: helper tips shown */
   advisor?: boolean;
-  /** v8: accept contract offers as they come */
+  /** v8 (retired in v9): accept contract offers as they come; migrated into `contractPolicy` */
   autoContracts?: boolean;
+  /** v9: what happens to a new offer of each rarity */
+  contractPolicy?: Record<ContractRarity, ContractPolicy>;
+}
+/** Contract rarities, commonest first; `contracts.json` carries the numbers for each. */
+export const CONTRACT_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
+export type ContractRarity = (typeof CONTRACT_RARITIES)[number];
+/** accept: taken as it appears; prompt: left on the board; deny: dropped (free before acceptance) */
+export type ContractPolicy = 'accept' | 'prompt' | 'deny';
+export function uniformContractPolicy(p: ContractPolicy): Record<ContractRarity, ContractPolicy> {
+  return { common: p, uncommon: p, rare: p, epic: p, legendary: p };
+}
+/** Policy for a rarity, with the retired boolean and missing entries filled in. */
+export function contractPolicyFor(s: Settings, rarity: ContractRarity): ContractPolicy {
+  const fallback: ContractPolicy = s.autoContracts === false ? 'prompt' : 'accept';
+  return s.contractPolicy?.[rarity] ?? fallback;
+}
+/**
+ * Turn the retired `autoContracts` flag into a per-rarity policy (true → accept, false → prompt).
+ * Runs on the stored object before defaults are merged in, so a missing policy is still visible.
+ */
+export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+  if (!s.contractPolicy && s.autoContracts !== undefined)
+    s.contractPolicy = uniformContractPolicy(s.autoContracts === false ? 'prompt' : 'accept');
+  delete s.autoContracts;
+  return s;
 }
 export const DEFAULT_SETTINGS: Settings = {
   master: 0.8,
@@ -107,7 +132,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showFps: false,
   weather: true,
   advisor: true,
-  autoContracts: true,
+  contractPolicy: uniformContractPolicy('accept'),
 };
 
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
@@ -152,8 +177,15 @@ export const MIGRATIONS: Migration[] = [
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
   {
     from: 8,
-    note: 'every track piece counted as regular class; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple',
+    note: 'every track piece counted as regular class; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple; contracts rated Common with no train assigned; the auto-accept switch became a per-rarity policy',
     run: (j) => {
+      const book = j.contracts as { contracts?: Record<string, unknown>[] } | undefined;
+      for (const c of book?.contracts ?? []) {
+        c.rarity = c.rarity ?? 'common';
+        c.trainId = c.trainId ?? null;
+        delete c.reputation;
+      }
+      if (j.settings) migrateSettings(j.settings);
       j.supply = j.supply ?? 'simple';
       if (j.economy) {
         j.economy.tier = Math.max(0, Math.min(2, j.economy.tier ?? 0));
@@ -272,7 +304,7 @@ export function readSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     return raw
-      ? { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) }
+      ? { ...DEFAULT_SETTINGS, ...migrateSettings(JSON.parse(raw) as Partial<Settings>) }
       : { ...DEFAULT_SETTINGS };
   } catch {
     return { ...DEFAULT_SETTINGS };

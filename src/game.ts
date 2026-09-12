@@ -90,9 +90,11 @@ import {
   DEFAULT_SETTINGS,
   readSettings,
   writeSettings,
+  contractPolicyFor,
   type SaveGame,
   type Settings,
 } from './sim/save';
+import { ContractDispatcher } from './sim/contractDispatch';
 import { Station, resetStationIds, stationDef as stationDefOf } from './sim/stations';
 import { scaleCost as scaleCostOf } from './sim/stockpile';
 import { TradeDesk } from './sim/trade';
@@ -197,6 +199,8 @@ export class Game {
   screens = new ScreenManager();
   depot!: DepotScreen;
   contracts!: ContractBoard;
+  /** hands accepted contracts to trains */
+  contractJobs!: ContractDispatcher;
   contractsScreen!: ContractsScreen;
   contractsSide!: ContractsSide;
   gacha!: Gacha;
@@ -327,6 +331,7 @@ export class Game {
           const p = this.noticePos(n);
           return p ? { x: p.x, y: p.y, kind: n.kind } : null;
         })
+        .concat(this.contractMarkerPos())
         .filter((m): m is { x: number; y: number; kind: Notice['kind'] } => !!m),
     contracts: () =>
       this.contracts.active.map((c) => {
@@ -731,17 +736,39 @@ export class Game {
     );
     this.crafting.grantFromInventory();
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
+    this.contractJobs = new ContractDispatcher(
+      this.fleet,
+      this.contracts,
+      this.builder,
+      this.track,
+      this.notices,
+    );
     this.contracts.onEvent = (e) => {
-      if (e.kind === 'offered' && this.settings.autoContracts !== false)
-        this.contracts.accept(e.contract, this.clock.time);
+      this.contractJobs.onEvent(e);
+      if (e.kind === 'offered') {
+        const policy = contractPolicyFor(this.settings, e.contract.rarity);
+        if (policy === 'accept') this.contracts.accept(e.contract, this.clock.time);
+        else if (policy === 'deny') this.contracts.decline(e.contract);
+      }
       if (e.kind === 'completed') {
         this.toasts.push(
           STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
           'good',
         );
         sfx('contract.done');
+      } else if (e.kind === 'cancelled') {
+        this.toasts.push(
+          STR.contracts.cancelledMsg(
+            e.contract.name,
+            fmtMoney(this.contracts.cancelFine(e.contract)),
+          ),
+          'warn',
+        );
       } else if (e.kind === 'failed') {
-        this.toasts.push(STR.contracts.failedMsg(e.contract.name), 'warn');
+        this.toasts.push(
+          STR.contracts.failedMsg(e.contract.name, fmtMoney(this.contracts.failFine(e.contract))),
+          'warn',
+        );
         const dest = this.builder.stationById(e.contract.destId);
         this.notices.push(
           {
@@ -969,6 +996,7 @@ export class Game {
       const t = TrainClass.fromJSON(tj, this.track);
       this.fleet.trains.push(t);
     }
+    this.contractJobs.reconcile();
     for (const [x, y, id, rot] of j.decor ?? []) {
       const d: Decor = { id, x, y, rot };
       this.builder.decor.set(y * this.map.w + x, d);
@@ -1513,6 +1541,7 @@ export class Game {
     this.contractsScreen = new ContractsScreen(this.contracts, this.builder, this.clock, (m, k) =>
       this.toasts.push(m, k),
     );
+    this.contractsScreen.trainName = (id) => this.fleet.byId(id)?.name ?? null;
     this.contractsSide = new ContractsSide(this.contracts, this.builder, this.clock);
     this.contractsSide.onOpenBoard = () => this.screens.toggle(this.contractsScreen);
     this.hud.actions.append(
@@ -1823,6 +1852,18 @@ export class Game {
     for (const id of this.noticeMarkers) if (!live.has(id)) this.world.removeStructure(id);
     this.noticeMarkers = live;
   }
+  /** Destination of the contract the selected (or hovered) train is on, as a map marker. */
+  private contractMarkerPos(): { x: number; y: number; kind: Notice['kind'] } | null {
+    const t = this.fieldSelected ?? this.hoverTrain;
+    const st = t && this.fleet.byId(t.id) ? this.contractJobs.jobDest(t) : null;
+    return st ? { x: st.x, y: st.y, kind: 'info' } : null;
+  }
+  /** One quiet marker in the field view over the selected train's contract destination. */
+  private syncContractMarker() {
+    const p = this.contractMarkerPos();
+    if (p) this.world.setStructure('contract:dest', p.x, p.y, 'structures/note', 46, -58);
+    else if (this.world.getStructure('contract:dest')) this.world.removeStructure('contract:dest');
+  }
   /** Train markers follow the locomotive every frame; tile markers bob. */
   private positionTrainMarkers() {
     for (const n of this.notices.list) {
@@ -2084,6 +2125,7 @@ export class Game {
       this.noticePanel.render(this.notices.list);
       this.advisor.update(this.computeTips(), this.notices.list);
       this.syncNoticeMarkers();
+      this.syncContractMarker();
     }
     this.positionTrainMarkers();
     if (this.junctionFlash && performance.now() / 1000 > this.junctionFlash.until)
