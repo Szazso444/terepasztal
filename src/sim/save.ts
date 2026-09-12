@@ -11,7 +11,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -132,6 +132,11 @@ export const MIGRATIONS: Migration[] = [
   },
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
   { from: 8, note: 'every track piece counted as regular class', run: () => {} },
+  {
+    from: 9,
+    note: 'locomotive modes set by the default rule (the first unit leads, units of its control class run in multiple, the rest double-headed); battery carts start empty',
+    run: () => {},
+  },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */
 export const KNOWN_SAVE_KEYS = new Set<string>([

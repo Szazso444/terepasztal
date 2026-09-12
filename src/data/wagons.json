@@ -237,7 +237,8 @@
     "weight": 8,
     "tier": 0,
     "size": "small",
-    "service": "coal"
+    "service": "coal",
+    "serviceCap": 120
   },
   {
     "id": "fuel_cart",
@@ -251,7 +252,8 @@
     "weight": 9,
     "tier": 1,
     "size": "small",
-    "service": "fuel"
+    "service": "fuel",
+    "serviceCap": 120
   },
   {
     "id": "battery_cart",
@@ -265,6 +267,7 @@
     "weight": 11,
     "tier": 2,
     "size": "small",
-    "service": "battery"
+    "service": "battery",
+    "serviceCap": 60
   }
 ]

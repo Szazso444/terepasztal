@@ -242,6 +242,7 @@ export const STR = {
     capacity: 'Capacity',
     tanks: 'Tanks',
     fuel: 'Fuel',
+    engines: 'Engines',
     perTile: '/ tile',
     perWeek: 'Per week',
     consumes: 'Consumes',
@@ -317,6 +318,10 @@ export const STR = {
     fuelHint: (v: string) => `Running cost per tile from ${v}`,
     details: 'Details',
     haul: (w: number, p: number) => `Wagons ${w} t of ${p} t the engines can haul (before cargo)`,
+    physics: (effort: number, mass: number, accel: number, vmax: number) =>
+      `Effort ${effort} · mass ${mass} t · ${accel.toFixed(2)} tiles/s² · top ${vmax.toFixed(2)} tiles/s`,
+    deadWeight: (type: string) => `dead weight: no ${type.toLowerCase()} locomotive`,
+    controlClass: (c: string) => `control class ${c}`,
     scheduleHint: 'Stops, loading and departure direction are edited in the train details.',
     scheduleLiveHint:
       'Changes apply at once. Each stop: what to load and unload, wait for full wagons, refuel, and which way to leave.',
@@ -354,6 +359,17 @@ export const STR = {
       overweight: 'Overweight',
     } as Record<string, string>,
   },
+  modes: {
+    leading: 'Leading',
+    multiple: 'Multiple',
+    doubleHeaded: 'Double-headed',
+    standby: 'Standby',
+    /** a standby unit that has stepped in */
+    rescuing: 'standby, pulling',
+    /** a working unit without usable power */
+    dormant: 'no usable power',
+    hint: 'Multiple: same control class as the leader, full effort. Double-headed: 82% of the summed effort. Standby: dead weight until the pulling units lose fuel or the wire.',
+  } as Record<string, string>,
   contracts: {
     title: 'Contract Board',
     sideTitle: 'Contracts',
@@ -443,6 +459,8 @@ export const STR = {
         : l.type === 'diesel'
           ? `Diesel · ${l.fuelCap} oil · ${l.fuelPerTile} per tile`
           : `Electric · ${l.powerPerTile} power per tile`,
+    serviceLine: (service: string, cap: number) =>
+      `Refuelling cart: +${cap} ${service === 'battery' ? 'power' : service === 'fuel' ? 'oil' : 'coal'}, 10% less use per cart (${service === 'coal' ? 'steam' : service === 'fuel' ? 'diesel' : 'electric'} engines only)`,
     maxLevel: 'Max level',
     dupeProgress: (n: number, need: number) => `Duplicates ${n} / ${need} to next level`,
     assignedTo: (n: string) => `In service: ${n}`,
@@ -616,6 +634,13 @@ export const STR = {
     oil: 'Oil',
     power: 'Power',
     stockPower: (n: number) => `${n} in the battery`,
+    battery: 'Battery carts',
+    effort: 'Tractive effort',
+    mass: 'Mass',
+    acceleration: 'Acceleration',
+    pulling: (n: number) => `${n} pulling`,
+    standby: 'Standby',
+    engage: 'Engage',
     perTile: 'Use per tile',
     range: 'Range on current tanks',
     tiles: 'tiles',

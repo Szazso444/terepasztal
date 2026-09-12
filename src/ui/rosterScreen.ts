@@ -144,6 +144,7 @@ export class RosterScreen implements Screen {
         `${STR.depot.weight} ${ld.weight} t · ${STR.roster.crew} ${ld.crew}`,
         STR.roster.fuelLine(ld),
       );
+      if (ld.controlClass) stats.push(STR.depot.controlClass(ld.controlClass));
     } else {
       const wd = d as WagonDef;
       stats.push(
@@ -151,6 +152,7 @@ export class RosterScreen implements Screen {
         `${STR.depot.weight} ${wd.weight}t`,
         (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
       );
+      if (wd.service) stats.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));
     }
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
     const lvl =

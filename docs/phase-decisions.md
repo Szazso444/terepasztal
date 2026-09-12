@@ -88,3 +88,28 @@ the conflict resolutions.
 - The `signal` decor keeps its id (saves) and becomes a semaphore: home arm (red, white stripe)
   and distant arm (yellow fishtail), 4 × 4 arm-position frames animated one step per 70 ms.
   Danger: home arm level. Caution: home raised, distant level. Clear: both raised.
+
+## Consist physics, locomotive modes, refuelling carts
+
+- **Physics** (`consistPhysics` in `src/sim/trains.ts`, constants in `track.json` → `physics`):
+  effort = haul rating × `effortPerTonne` (0.75) summed over the pulling units, × 0.82 when any
+  of them works double-headed; acceleration = effort / mass, clamped to `maxAccel` (0.9 tiles/s²,
+  floor 0.05); top speed = the slowest vehicle (a wagon without `vmax` counts 2.6). Braking keeps
+  the old constant. The haul rating stays a hard cap (creation refuses, `overweight` at
+  departure) and the old load factor stays as the speed penalty.
+- **Modes.** The first unit leads; a unit of the leader's control class runs in multiple; every
+  other unit (and any steam engine) is double-headed; the player may set a non-leading unit to
+  standby. Runtime engagement is recomputed every tick: a working unit pulls while it has usable
+  power (fuel and water, oil, the wire with power in the stockpile, or a charged battery cart);
+  when none has, the first standby unit with usable power steps in, and steps back when a
+  working unit recovers. A dormant unit still adds mass and, as it is on duty, still counts in
+  the haul cap; a standby unit counts in the cap only while it pulls.
+- **Tanks are pooled per fuel type over every unit** (a standby unit's tank is filled at stops
+  and never burns from); only the pulling units burn. Per-unit tanks would have meant a new
+  save shape and per-unit refuelling for a distinction the player never sees.
+- **Carts** extend the pool of the matching engine type (`serviceCap`: coal 120, oil 120,
+  power 60) and cut that fuel's use by 10% each (cap 30%); a coal cart is inert while the tanks
+  hold wood; a cart with no matching engine is dead weight and the pickers say so. A battery
+  cart charges at 2 per tile on live track (and at a refuelling stop) and carries the electric
+  past the end of the wire. A tank wagon of water tops the boiler up below half a tank.
+- Save format v10: locomotive modes and the battery charge; older saves get the default modes.
