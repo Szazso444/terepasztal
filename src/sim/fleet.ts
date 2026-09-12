@@ -746,6 +746,8 @@ export class Fleet {
   }
   /** set by the game: travellers waiting at a station */
   waitingAt: (stationId: number) => number = () => 0;
+  /** fired once each time a train pulls into a station (passing through does not count) */
+  onArrive: ((t: Train, s: Station) => void) | null = null;
 
   tick(gdt: number, now: number, speedFactor = 1) {
     this.clockTime = now;
@@ -754,7 +756,9 @@ export class Fleet {
     this.traffic.assign(this.trains, now);
     const ctx = this.ctx(now, speedFactor);
     for (const t of this.trains) {
+      const before = t.atStation;
       t.tick(gdt, ctx);
+      if (t.atStation && t.atStation !== before) this.onArrive?.(t, t.atStation);
       if (t.state === 'loading' && t.atStation) this.lastServed.set(t.atStation.id, now);
     }
     this.traffic.observe(this.trains, now, gdt);

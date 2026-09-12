@@ -1494,23 +1494,97 @@ export const BUILDING_SPRITES: Record<string, () => PixelBuf> = {
   substation,
   hydro_plant: hydroPlant,
 };
-/** Townhouse: a two-storey timber house with a pitched roof, a chimney and a small yard. */
-function townhouse(): PixelBuf {
+/** Footprint every townhouse stage and level shares (the yard and paving sit to its +x/+y). */
+const HOUSE_CX = -0.04;
+const HOUSE_CY = -0.02;
+const HOUSE_STONE: RGB[] = [PAL.stone[2], PAL.stone[0], PAL.stone[1]];
+
+/**
+ * Townhouse by level: 1 a two-storey timber house with a pitched roof, a chimney and a small
+ * yard; 2 a taller whitewashed house with two chimneys; 3 a brick block with a slate roof, three
+ * rows of windows and an annex.
+ */
+function townhouse(level = 1): PixelBuf {
   const b = new PixelBuf(W, H);
+  const len = [0.5, 0.54, 0.58][level - 1];
+  const wid = [0.36, 0.38, 0.42][level - 1];
+  const h = [22, 32, 42][level - 1];
+  const side = level === 1 ? PAL.timber : level === 2 ? WHITEWASH : BRICK;
+  const roof = level === 3 ? PAL.roofSlate : PAL.roof;
   const gnd: GroundFn[] = [
-    shadowRect(-0.02, 0.0, 0.5, 0.36),
-    patchRect(0.22, 0.24, 0.3, 0.2, paving(PAL.stone, 61), 61, 200, 0.05),
+    shadowRect(HOUSE_CX + 0.02, HOUSE_CY + 0.02, len, wid),
+    patchRect(0.22, 0.26, 0.3, 0.18, paving(PAL.stone, 61), 61, 200, 0.05),
   ];
-  house(b, -0.04, -0.02, 0.5, 0.36, 22, PAL.timber, PAL.roof, 44);
-  chimney(b, -0.2, -0.1, 22, 8, 0.04, [PAL.stone[2], PAL.stone[0], PAL.stone[1]]);
-  // door and two windows on the +y face, one lit
-  const d = proj(OX, GY, -0.12, 0.17);
+  house(b, HOUSE_CX, HOUSE_CY, len, wid, h, side, roof, 44 + level);
+  chimney(b, -0.2, -0.1, h, 8, 0.04, HOUSE_STONE);
+  if (level >= 2) chimney(b, 0.12, -0.12, h, 7, 0.04, HOUSE_STONE);
+  if (level >= 3) {
+    // annex on the +x side
+    const ax = HOUSE_CX + len / 2 + 0.08;
+    house(b, ax, HOUSE_CY + 0.04, 0.16, 0.22, 14, side, roof, 49);
+    gnd.push(shadowRect(ax + 0.02, HOUSE_CY + 0.06, 0.16, 0.22));
+    const aw = proj(OX, GY, ax, HOUSE_CY + 0.16, 2);
+    b.rect(rx(aw) - 1, ry(aw) - 7, 3, 3, PAL.amberDark);
+  }
+  // door and rows of windows on the +y face; some lit
+  const fy = HOUSE_CY + wid / 2 + 0.01;
+  const d = proj(OX, GY, -0.14, fy);
   b.rect(rx(d) - 1, ry(d) - 8, 3, 8, PAL.trunkDark);
-  const w1 = proj(OX, GY, 0.08, 0.17);
-  b.rect(rx(w1) - 1, ry(w1) - 9, 3, 3, PAL.amberDark);
-  const w2 = proj(OX, GY, 0.08, 0.17, 12);
-  b.rect(rx(w2) - 1, ry(w2) - 9, 3, 3, PAL.amber);
-  fence(b, 0.2, 0.36, 0.42, 0.36, 3);
+  const cols = level === 1 ? [0.08] : level === 2 ? [0.0, 0.14] : [-0.26, 0.0, 0.14];
+  for (let z = 0, row = 0; z + 10 <= h; z += 11, row++)
+    for (const wx of cols) {
+      if (row === 0 && wx < -0.2) continue;
+      const w = proj(OX, GY, wx, fy, z);
+      const lit = hash2(row, Math.round(wx * 100), 45 + level) > 0.45;
+      b.rect(rx(w) - 1, ry(w) - 9, 3, 3, lit ? PAL.amber : PAL.amberDark);
+    }
+  fence(b, 0.2, 0.38, 0.42, 0.38, 3);
+  b.outline(PAL.outline, 170);
+  ground(b, gnd);
+  return b;
+}
+
+/**
+ * Townhouse under construction: 0 a stone footing with timber and stone delivered, 1 the timber
+ * frame on the footing, 2 walls and roof up with a ladder still against the front.
+ */
+function townhouseStage(stage: number): PixelBuf {
+  const b = new PixelBuf(W, H);
+  const len = 0.5;
+  const wid = 0.36;
+  const cx = HOUSE_CX;
+  const cy = HOUSE_CY;
+  const gnd: GroundFn[] = [
+    shadowRect(cx + 0.02, cy + 0.02, len, wid),
+    patchRect(cx + 0.02, cy + 0.04, len + 0.16, wid + 0.16, loose(DUST, 63), 63, 150, 0.1),
+  ];
+  const fy = cy + wid / 2;
+  if (stage === 0) {
+    house(b, cx, cy, len, wid, 3, PAL.stone, null, 44);
+    logStack(b, 0.26, 0.24, 0.18, 2, 91);
+    heap(b, -0.3, 0.26, 0.08, 4, PAL.stone, 92);
+  } else if (stage === 1) {
+    house(b, cx, cy, len, wid, 3, PAL.stone, null, 44);
+    const top = 21;
+    for (const x of [cx - len / 2, cx, cx + len / 2])
+      for (const y of [cy - wid / 2, fy]) post(b, x, y, top - 3, PALE_TIMBER[0], 3, 2);
+    bar(b, cx - len / 2, cy - wid / 2, top, cx + len / 2, cy - wid / 2, top, PALE_TIMBER[2]);
+    bar(b, cx - len / 2, cy - wid / 2, top, cx - len / 2, fy, top, PALE_TIMBER[2]);
+    bar(b, cx - len / 2, fy, top, cx + len / 2, fy, top, PALE_TIMBER[1]);
+    bar(b, cx + len / 2, cy - wid / 2, top, cx + len / 2, fy, top, PALE_TIMBER[1]);
+    // diagonal brace on the front
+    bar(b, cx - len / 2, fy, 3, cx, fy, top, PALE_TIMBER[2]);
+    logStack(b, 0.26, 0.24, 0.18, 1, 91);
+  } else {
+    house(b, cx, cy, len, wid, 22, PALE_TIMBER, SHINGLE, 44);
+    // ladder against the front wall
+    const lx = 0.08;
+    const ly = fy + 0.04;
+    post(b, lx - 0.03, ly, 24, PAL.timber[2], 0, 1);
+    post(b, lx + 0.03, ly, 24, PAL.timber[2], 0, 1);
+    for (let z = 3; z < 24; z += 4) bar(b, lx - 0.03, ly, z, lx + 0.03, ly, z, PAL.timber[1]);
+    heap(b, -0.3, 0.26, 0.06, 3, PAL.stone, 92);
+  }
   b.outline(PAL.outline, 170);
   ground(b, gnd);
   return b;
@@ -1518,6 +1592,14 @@ function townhouse(): PixelBuf {
 
 export const DECOR_SPRITES: Record<string, () => PixelBuf> = {
   fuel_stop: fuelStop,
-  townhouse,
+  townhouse: () => townhouse(1),
+};
+/** Townhouse variants beyond the decor frame: levels 2 and 3, and the three construction stages. */
+export const HOUSE_SPRITES: Record<string, () => PixelBuf> = {
+  townhouse_2: () => townhouse(2),
+  townhouse_3: () => townhouse(3),
+  townhouse_s0: () => townhouseStage(0),
+  townhouse_s1: () => townhouseStage(1),
+  townhouse_s2: () => townhouseStage(2),
 };
 export { powerLine };

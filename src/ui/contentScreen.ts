@@ -158,6 +158,14 @@ export class ContentScreen implements Screen {
           ),
         );
         break;
+      case 'houses':
+        b.append(
+          this.objectForm(
+            this.draft.houses as unknown as Row,
+            DEFAULT_CONTENT.houses as unknown as Row,
+          ),
+        );
+        break;
     }
     this.renderFoot();
   }

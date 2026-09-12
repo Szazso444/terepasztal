@@ -5,6 +5,7 @@ import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
 import type { LevelData } from '../world/level';
 import type { Rules } from './rules';
 import type { TownJSON } from './towns';
+import type { HousesJSON } from './houses';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -58,6 +59,8 @@ export interface SaveGame {
   trade?: unknown;
   /** v10: known crafting recipes, craft statistics and an unfinished recipe draw */
   crafting?: unknown;
+  /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
+  houses?: HousesJSON;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -137,8 +140,16 @@ export const MIGRATIONS: Migration[] = [
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
   {
     from: 8,
-    note: 'every track piece counted as regular class; catenary strung over rails the poles powered',
-    run: () => {},
+    note: 'every track piece counted as regular class; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each',
+    run: (j) => {
+      if (j.houses) return;
+      const list = (j.decor ?? []).filter(([, , id]) => id === 'townhouse');
+      j.houses = {
+        list: list.map(([x, y]) => ({ x, y, level: 1, residents: 6, progress: 1 })),
+        arrivals: [],
+        visited: [],
+      };
+    },
   },
   {
     from: 9,
@@ -180,6 +191,7 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'supply',
   'trade',
   'crafting',
+  'houses',
   'loadedFrom',
   'migrationNotes',
 ]);

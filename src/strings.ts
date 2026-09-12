@@ -644,6 +644,7 @@ export const STR = {
       gacha: 'Gacha',
       track: 'Track',
       crafting: 'Crafting',
+      houses: 'Houses',
     } as Record<string, string>,
     customActive: 'Custom content active',
     shipped: 'Shipped content',
@@ -827,6 +828,35 @@ export const STR = {
       'Every station inside the town carries this name. Change it any time from the town panel.',
     renamed: (n: string) => `Town renamed to ${n}`,
     founded: (n: string) => `${n} is a town now`,
+    housing: (res: number, cap: number, building: number) =>
+      `Housing: ${res} / ${cap}${building ? ` (+${building} under construction)` : ''}`,
+    growth: (perDay: number) => `Growth: +${perDay} people / day`,
+    noGrowth: 'Growth: none (no wheat)',
+    nextHouse: (at: number, mul: number) =>
+      `Next house at ${at} residents${mul > 1 ? ` (traffic ×${mul})` : ''}`,
+    fullHousing: 'Housing full; the town will build as soon as there is room',
+    spawned: (town: string, n: number) =>
+      `${town} is building ${n === 1 ? 'a new house' : `${n} new houses`}`,
+    newcomers: (town: string, n: number) => `${n} newcomers moved into ${town}`,
+    firstTrain: (town: string, n: number) =>
+      `The first train reached ${town}: ${n} newcomers moved in`,
+  },
+  house: {
+    level: (l: number) => `Level ${l}`,
+    residents: 'Residents',
+    building: 'Under construction',
+    stages: ['Foundations', 'Framing', 'Roofed'] as readonly string[],
+    stage: (name: string, pct: number) => `${name} (${pct}%)`,
+    finishedIn: (days: number) => `${days} day${days === 1 ? '' : 's'} to go`,
+    growth: 'Next resident',
+    growthIn: (days: number) => `in ${days} day${days === 1 ? '' : 's'}`,
+    growthNoFood: 'no wheat, nobody moves in',
+    full: 'full',
+    autoUpgrade: (days: number) => `Grows a storey after ${days} full days`,
+    upgrade: (l: number, cost: string) => `Enlarge to level ${l} (${cost})`,
+    maxed: 'Largest house',
+    upgraded: (l: number) => `A townhouse grew to level ${l}`,
+    finished: 'A townhouse is finished',
   },
   station: {
     depotName: 'Depot',

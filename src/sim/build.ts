@@ -76,6 +76,8 @@ export class Builder {
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
   /** electrification overlay (set by the game) */
   catenary: Catenary | null = null;
+  /** fired once when a producing station or a works building is newly placed (not on load or upgrade) */
+  onIndustryPlaced: ((x: number, y: number) => void) | null = null;
   /** fired when a station loses (true) or regains (false) its last platform tile */
   onStationOrphaned: ((s: Station, orphaned: boolean) => void) | null = null;
 
@@ -196,10 +198,10 @@ export class Builder {
   depotCount() {
     return this.depots().length;
   }
-  /** People living in townhouses. */
-  residentsTotal() {
+  /** Townhouses standing (the house registry knows who lives in them). */
+  houseCount() {
     let n = 0;
-    for (const d of this.decor.values()) n += decorDef(d.id).residents ?? 0;
+    for (const d of this.decor.values()) if (decorDef(d.id).residents) n++;
     return n;
   }
   plantCount() {
@@ -386,6 +388,7 @@ export class Builder {
     this.stations.push(s);
     this.refreshStationBoosts();
     this.onStationChanged?.(s, false);
+    if (s.def.produces.length) this.onIndustryPlaced?.(x, y);
     sfx('build.place');
     return s;
   }
@@ -421,27 +424,39 @@ export class Builder {
   }
 
   // ------------------------------------------------------------------ decor
-  checkDecor(x: number, y: number, defId: string): PlacementCheck {
+  /** Placement rules for decor without the price check (the reason when it cannot stand here). */
+  canPlaceDecor(x: number, y: number, defId: string): string | null {
     const def = decorDef(defId);
-    if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
-    if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
-    if (this.decorAt(x, y) || this.buildingAt(x, y))
-      return { ok: false, cost: {}, reason: STR.build.occupied };
+    if (!inBounds(this.map, x, y)) return STR.build.offMap;
+    if (!this.unlocked(x, y)) return STR.build.locked;
+    if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
     const t = terrainAt(this.map, x, y);
     if (def.onTrack && !def.anyTile) {
-      if (!this.track.has(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrackHere };
+      if (!this.track.has(x, y)) return STR.build.needTrackHere;
     } else {
       if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
-        return { ok: false, cost: {}, reason: STR.build.badTerrain };
-      if (this.stationAt(x, y)) return { ok: false, cost: {}, reason: STR.build.occupied };
-      if (!def.anyTile && this.track.has(x, y))
-        return { ok: false, cost: {}, reason: STR.build.occupied };
+        return STR.build.badTerrain;
+      if (this.stationAt(x, y)) return STR.build.occupied;
+      if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
     }
-    return this.affordable(this.priced(def.cost, this.kindMul(defId)));
+    return null;
+  }
+  checkDecor(x: number, y: number, defId: string): PlacementCheck {
+    const reason = this.canPlaceDecor(x, y, defId);
+    if (reason) return { ok: false, cost: {}, reason };
+    return this.affordable(this.priced(decorDef(defId).cost, this.kindMul(defId)));
   }
   placeDecor(x: number, y: number, defId: string, rot: number): Decor | null {
     const c = this.checkDecor(x, y, defId);
     if (!c.ok || !this.pay(c.cost)) return null;
+    return this.addDecor(x, y, defId, rot);
+  }
+  /** Decor the world builds itself (a town raising a house): no price, still needs a free tile. */
+  spawnDecor(x: number, y: number, defId: string, rot: number): Decor | null {
+    if (this.canPlaceDecor(x, y, defId)) return null;
+    return this.addDecor(x, y, defId, rot);
+  }
+  private addDecor(x: number, y: number, defId: string, rot: number): Decor {
     const d: Decor = { id: defId, x, y, rot: rot % decorDef(defId).rotations };
     this.decor.set(this.key(x, y), d);
     this.onDecorChanged?.(d, false);
@@ -541,6 +556,7 @@ export class Builder {
     const b: Building = { id: defId, x, y, acc: 0, active: false, rate: 0 };
     this.buildings.set(this.key(x, y), b);
     this.onBuildingChanged?.(b, false);
+    this.onIndustryPlaced?.(x, y);
     sfx('build.place');
     return b;
   }
