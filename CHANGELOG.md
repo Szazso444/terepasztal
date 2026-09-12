@@ -119,6 +119,20 @@ recorded in `docs/phase-decisions.md`.
 
 ### After the first playtest
 
+- Long locomotive casings now follow curves as two visual half-bodies joined at the middle
+  pivot. The rigid vehicle specs and compatibility verdicts are unchanged. Tangent-facing bogies
+  are clipped to an inset of their own body silhouette, including medium stock on regular curves
+  and Garratt engine units. The GPU alpha-mask regression script and before/after screenshots are
+  in [scratchpad](scratchpad/README.md).
+- Procedural art now uses a consistent railway-diorama palette, quieter terrain and material
+  textures, coloured contours, projected bevels, warmer timber and brass, and cooler steel.
+  Locomotives and wagons have wider casings and clearer chassis details; diesels gain vent banks
+  and waist stripes. Roof gables are closed, pixel drawing rounds fractional coordinates, and
+  sleepers use arc-distance spacing. Buildings, vegetation, cargo icons, crew and effects share
+  the refreshed materials and edges.
+- Atlas packing trims transparent margins while preserving ground anchors. Locomotive art,
+  including the new half-bodies and inset masks, fits in 4096×2048 instead of 4096×4096; wagon art
+  fits in 4096×512 instead of 4096×2048. Measured procedural generation remains about one second.
 - Contract offers come two at a time every six days and stay open for six; fines for failing or
   cancelling are 2.5 % of the payout. A contract whose station was demolished lapses for free.
   An **Auto-accept on/off** switch sits on the Contracts screen; a new **Contract** route mode

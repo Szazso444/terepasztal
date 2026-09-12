@@ -20,7 +20,7 @@ export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
 /**
  * How far a drawn bogie may sit off its socket across the body (tiles). The geometry keeps the
- * true bogie on the rail; the sprite is held under the body so it never pokes out of the side.
+ * true bogie on the rail; the renderer also masks the rotated sprite to its body silhouette.
  */
 export const BOGIE_DRAW_PLAY = 0.05;
 
@@ -362,7 +362,7 @@ export function consistLength(lengths: number[]) {
 
 export const FACINGS = 48;
 const STEP = (Math.PI * 2) / FACINGS;
-/** Nearest of the 24 facings (15° apart) for a tile-space heading. */
+/** Nearest of the 48 facings (7.5° apart) for a tile-space heading. */
 export function facingOf(angle: number): number {
   const a = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
   return Math.round(a / STEP) % FACINGS;

@@ -159,3 +159,74 @@ the conflict resolutions.
   above its throughput (units per second, 3 by default), scales every train there by
   `throughput / load`. Braking returns 30 % of the tile draw to the stockpile while on the wire.
 - With no substation anywhere, pole-powered wire counts as live so saves from before keep running.
+
+## Curve rendering and procedural art after the first playtest
+
+- **Chosen outcome: option 2, a visual hinge.** The single three-tile casings of DDA40X, GG1 and
+  Big Boy draw as two fixed 1.5-tile halves. Each half points from the centre pivot towards its
+  outer bogie, with a small overlap over the joint. Three-bogie stock uses the actual middle
+  bogie; the Meyer frame uses the sampled vehicle centre as its virtual hinge. Garratt units
+  keep their existing articulation. Reversal swaps the front/rear artwork as well as the facing.
+  The half frames clip the procedural primitives in body coordinates before projection, so the
+  cab, chimney and boiler remain in their original places. This is a deliberate miniature-art
+  convention: the simulation still treats the original long frame as rigid.
+- `src/render/vehicleVisual.ts` derives these drawing poses from `VehiclePose`. Neither
+  `vehicleSpec`, `poseSegment`, track access nor the tolerance table uses the visual halves.
+  Keeping the old chord (option 1) would preserve the visual complaint even if the bogies were
+  hidden. Curvature-bucket atlases (option 3) add unnecessary frame combinations when two halves
+  already follow the arc.
+- **Containment is a rendering invariant.** A clamped bogie centre does not constrain the
+  corners of a rotated two- or three-axle sprite. Each bogie therefore uses its own body's
+  transformed alpha silhouette as a Pixi sprite mask, and the undercarriage sorts beneath all
+  of its vehicle's body parts. Masks use the alpha channel, not the paint's red channel. A
+  one-source-pixel inset prevents filter-bound rounding from exposing single edge pixels.
+  The mask follows interpolation, reversal, facing mirrors and depot visibility. This applies
+  to medium stock, Garratt engine units and the long hinged frames. Exposed pixels in an
+  **unmasked** bogie are intentionally clipped; the passing test compares the body alpha with
+  the bogie alpha actually produced by the production GPU mask, rather than assuming a clamp
+  proves containment. The casing includes a continuous sill and axle-box detail so the
+  miniature still has a legible chassis.
+- **Unchanged compatibility measurements**, in tiles:
+
+  | Model     | High-speed verdict | High-speed centre offset | Regular geometry verdict     | Regular access |
+  | --------- | ------------------ | ------------------------ | ---------------------------- | -------------- |
+  | DDA40X    | pass               | 0.284381                 | fail, 0.562396 centre offset | barred         |
+  | GG1       | pass               | 0.284381                 | fail, 0.562396 centre offset | barred         |
+  | Big Boy   | pass               | 0                        | pass                         | barred by size |
+  | Crocodile | pass               | 0                        | pass                         | barred by size |
+  | GMAM      | pass               | 0                        | pass                         | barred by size |
+
+  The centre-bogie limit remains 0.35, large rigid pivot ratio 0.58 and medium pivot ratio 0.7.
+  The full before/after verdict records in the scratchpad are identical, including all residual
+  gaps, fore/aft slide and lateral shifts. A geometric pass for an articulated model on regular
+  curves does not override the large-stock access rule.
+
+- **Evidence.** `scratchpad/gpu-check.mjs` renders body-only and bogie-only passes through the
+  real `TrainRenderer` and Pixi/WebGL extractor. The sweep visits all 24 medium/large models,
+  every permitted class, the entire `compat.referencePath` at 0.05-tile steps, both turn hands,
+  four rotations, both travel orientations, and an interpolated pose. It checks every alpha
+  pixel, with no allowed spill threshold: 104,256 samples, zero outside pixels and non-empty
+  bogie passes throughout. Additional zoom checks and a control with masks disabled are saved
+  beside the main report. `rollout.mjs` also builds the real high-speed gate, straight and 2×2
+  curve from depot 1 to a quarry in seed 4242; both screenshots pause at the same ~40° rigid
+  pose with zoom fixed at 4. The six-model contact sheet uses the production renderer too.
+- **Art direction.** A small, inhabited railway diorama: moss and teal landscapes, terracotta
+  and timber buildings, cool steel, warm lamps and brass, restrained enamel liveries. Material
+  noise is reduced so silhouettes and working parts read first. Shared polygon faces gain
+  projected bevels and closed triangular gables; shared contours inherit some material colour.
+  Ground rims soften, vegetation keeps distinct silhouettes, cargo icons share the material
+  palette, crew gain lit shoulders/buttons, and smoke/fog use warm/cool atmosphere colours.
+  Rolling stock is 30% wider across its local frame, without changing its length or simulation
+  pivots. This brings casings above the rail gauge and leaves room for readable underframes.
+  Sleeper spacing derives from arc distance rather than the number of polyline samples.
+- **Budget.** Transparent margins are trimmed before packing, with matching anchor offsets;
+  inset masks are generated only for bodies with separate bogies. The locomotive atlas is
+  4096×2048 and the wagon atlas 4096×512, including masks, compared with 4096×4096 and
+  4096×2048 before. A local headless Chromium measurement took 0.950 s for locomotive art,
+  0.197 s for wagons and 1.215 s for all nine atlas groups. These are local generation timings,
+  not a cross-device guarantee. Every generated frame was checked against its atlas bounds.
+  All art stays procedural and the runtime dependency list is unchanged.
+- **Delivery.** Continue PR #9 by pushing `HEAD` to `claude/isometric-train-game-k6rk1a`.
+  Use the existing `Co-Authored-By` commit-trailer convention; contributor/session metadata
+  belongs in Git metadata, not in source or design prose. Changes are recorded under
+  “After the first playtest”; the release remains v0.8.0.

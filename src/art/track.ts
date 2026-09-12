@@ -1,7 +1,7 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import { Dir } from '../engine/iso';
 import { hash2 } from '../engine/rng';
-import { PAL, shade, type RGB } from './palette';
+import { PAL, mix, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { proj } from './iso3d';
 import { linkPoints, unitDef } from '../world/trackGeom';
@@ -54,14 +54,23 @@ function drawRails(b: PixelBuf, pts: Vec2[], opts: RailStyle) {
         const px = Math.floor(sp.x);
         const py = Math.floor(sp.y);
         const n = hash2(px >> 1, py >> 1, opts.seed);
-        const c = PAL.ballast[Math.min(2, Math.floor(n * 3))];
+        const c = mix(PAL.ballast[0], PAL.ballast[Math.min(2, Math.floor(n * 3))], 0.25);
         b.set(px, py, Math.abs(s) > shoulder - 0.06 ? shade(c, 0.85) : c);
       }
     }
   }
-  // sleepers
-  for (let i = 1; i < pts.length - 1; i += 3) {
-    const p = pts[i];
+  // Constant arc spacing also holds across the densely sampled high-speed geometry.
+  let distance = 0;
+  let nextSleeper = 0.07;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a0 = pts[i - 1];
+    const b0 = pts[i];
+    const step = Math.hypot(b0.x - a0.x, b0.y - a0.y);
+    distance += step;
+    if (distance < nextSleeper || step < 1e-8) continue;
+    const t = 1 - (distance - nextSleeper) / step;
+    const p = { x: a0.x + (b0.x - a0.x) * t, y: a0.y + (b0.y - a0.y) * t };
+    nextSleeper += 0.14;
     const q = pts[i + 1];
     const r = pts[i - 1];
     const dx = q.x - r.x;

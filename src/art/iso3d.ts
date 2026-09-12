@@ -1,6 +1,6 @@
 import { HALF_W, HALF_H } from '../engine/iso';
 import { hash2 } from '../engine/rng';
-import { shade, type RGB } from './palette';
+import { mix, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 
 export interface P2 {
@@ -117,10 +117,11 @@ export function drawPrism(b: PixelBuf, o: PrismOpts) {
   }
   faces.sort((a, c) => a.depth - c.depth);
   for (const f of faces) {
+    const colours = o.side.map((c) => shade(mix(o.side[0], c, 0.22), f.light));
     fillPoly(b, f.pts, (x, y) => {
       const n = hash2(x >> 1, y >> 1, seed);
       const idx = Math.min(o.side.length - 1, Math.floor(n * o.side.length));
-      return shade(o.side[idx], f.light);
+      return colours[idx];
     });
   }
   // top
@@ -130,6 +131,23 @@ export function drawPrism(b: PixelBuf, o: PrismOpts) {
     const ridgeA = { x: o.cx + ca * hl, y: o.cy + sa * hl };
     const ridgeB = { x: o.cx - ca * hl, y: o.cy - sa * hl };
     const zTop = z0 + o.h;
+    // Close the triangular end walls before laying the roof. Leaving these empty made
+    // terrain and bogies show through pitched cabs and building gables.
+    for (const [ia, ib, ridge, sign] of [
+      [0, 1, ridgeA, 1],
+      [2, 3, ridgeB, -1],
+    ] as const) {
+      if ((ca + sa) * sign <= 0.01) continue;
+      fillPoly(
+        b,
+        [
+          proj(o.ox, o.oy, corners[ia].x, corners[ia].y, zTop),
+          proj(o.ox, o.oy, corners[ib].x, corners[ib].y, zTop),
+          proj(o.ox, o.oy, ridge.x, ridge.y, zTop + o.ridge),
+        ],
+        () => shade(o.side[0], 0.8),
+      );
+    }
     const slopes = [
       [corners[0], corners[3]], // +wid side (index 0 and 3 are +sa/+ca side)
       [corners[1], corners[2]],
@@ -145,21 +163,30 @@ export function drawPrism(b: PixelBuf, o: PrismOpts) {
       const nx = si === 0 ? -sa : sa;
       const ny = si === 0 ? ca : -ca;
       const light = 0.7 + 0.3 * Math.max(0, (nx * LIGHT.x + ny * LIGHT.y + 1) / 2);
+      const colours = r.map((c) => shade(mix(r[0], c, 0.22), light));
+      const seams = r.map((c) => shade(mix(r[0], c, 0.22), light * 0.94));
       fillPoly(b, pts, (x, y) => {
         const n = hash2(x >> 1, y >> 2, seed + 7);
         const idx = Math.min(r.length - 1, Math.floor(n * r.length));
         // slate rows
-        const row = (y + x) % 3 === 0 ? 0.9 : 1;
-        return shade(r[idx], light * row);
+        return (y + Math.floor(x / 2)) % 5 === 0 ? seams[idx] : colours[idx];
       });
     });
   } else {
     const pts = corners.map((c) => proj(o.ox, o.oy, c.x, c.y, z0 + o.h));
+    const colours = o.top.map((c) => mix(o.top[0], c, 0.22));
     fillPoly(b, pts, (x, y) => {
       const n = hash2(x >> 1, y >> 1, seed + 3);
       const idx = Math.min(o.top.length - 1, Math.floor(n * o.top.length));
-      return o.top[idx];
+      return colours[idx];
     });
+    // A restrained bevel follows the actual projected edges, never a screen-space box.
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i];
+      const c = pts[(i + 1) % pts.length];
+      const lit = corners[i].x + corners[(i + 1) % 4].x < o.cx * 2;
+      b.line(a.x, a.y, c.x, c.y, shade(o.top[0], lit ? 1.14 : 0.84));
+    }
   }
 }
 
