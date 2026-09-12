@@ -90,7 +90,7 @@ export const DEFAULT_RULES: Rules = {
   hillLevel: 0.64,
   rockLevel: 0.76,
   forestDensity: 0.56,
-  wheatPerCrew: 0.5,
+  wheatPerCrew: 1,
   stockpileCap: 1000,
   warehouseCap: 1000,
   depotCap: 3000,
@@ -144,7 +144,7 @@ export const RULE_META: RuleMeta[] = [
   { key: 'runningCostMul', label: 'Fuel use x', group: 'Economy', min: 0, max: 5, step: 0.1 },
   {
     key: 'wheatPerCrew',
-    label: 'Wheat per crew per day',
+    label: 'Wheat per person per day',
     group: 'Economy',
     min: 0,
     max: 5,

@@ -6,6 +6,7 @@ import {
   STATION_FAMILIES,
   BUILDING_SPRITES,
   DECOR_SPRITES,
+  HOUSE_SPRITES,
   powerLine,
   ground,
   shadowRect,
@@ -383,6 +384,8 @@ export function generateStructuresAtlas(): AtlasImage {
   for (const [id, gen] of Object.entries(BUILDING_SPRITES))
     ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
   for (const [id, gen] of Object.entries(DECOR_SPRITES))
+    ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
+  for (const [id, gen] of Object.entries(HOUSE_SPRITES))
     ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
   ab.add('structures/power_line', powerLine().toImageData(), 8, 35);
   return ab.build(1024);

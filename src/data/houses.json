@@ -1,0 +1,17 @@
+{
+  "capacity": [10, 25, 50],
+  "startResidents": 4,
+  "constructionDays": 2,
+  "growthDays": 2,
+  "autoUpgradeDays": 3,
+  "upgradeCost": [
+    { "wood": 60, "stone": 30 },
+    { "wood": 120, "stone": 80, "iron": 10 }
+  ],
+  "spawnAt": 0.8,
+  "spawnMulCap": 3,
+  "trafficPerMul": 10,
+  "trafficWindowDays": 3,
+  "bonusIndustry": 5,
+  "bonusFirstTrain": 3
+}

@@ -13,6 +13,7 @@ import decorJson from './decor.json';
 import gachaJson from './gacha.json';
 import trackJson from './track.json';
 import buildingJson from './buildings.json';
+import houseJson from './houses.json';
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 /** Resource amounts, e.g. { wood: 30, stone: 10 }. */
@@ -155,8 +156,38 @@ export interface DecorDef {
   water?: boolean;
   fuel?: boolean;
   power?: boolean;
-  /** people living here (townhouses) */
+  /**
+   * Marks a townhouse: people live here and the house registry tracks how many. The number is
+   * what a house from an old save starts with.
+   */
   residents?: number;
+}
+/** Townhouse growth rules: capacity per level, how fast people arrive, when towns build more. */
+export interface HouseConfig {
+  /** residents a house holds at level 1, 2, 3 */
+  capacity: number[];
+  /** people who move in the day a house is finished */
+  startResidents: number;
+  /** in-game days from foundations to a finished house */
+  constructionDays: number;
+  /** days per new resident per house (while wheat is on hand and there is room) */
+  growthDays: number;
+  /** days a full house waits before it grows a storey on its own */
+  autoUpgradeDays: number;
+  /** what the player pays to lift a house to level 2, 3 */
+  upgradeCost: Cost[];
+  /** a town builds a new house once residents reach this share of its housing */
+  spawnAt: number;
+  /** the spawn multiplier never exceeds this */
+  spawnMulCap: number;
+  /** train arrivals in the traffic window per +1 on the spawn multiplier */
+  trafficPerMul: number;
+  /** arrivals older than this many days no longer count as traffic */
+  trafficWindowDays: number;
+  /** newcomers when a producing station or works is built in the town */
+  bonusIndustry: number;
+  /** newcomers when the first train reaches the town */
+  bonusFirstTrain: number;
 }
 export interface Banner {
   id: string;
@@ -191,6 +222,7 @@ export interface ContentBundle {
   buildings: BuildingDef[];
   gacha: GachaConfig;
   track: TrackConfig;
+  houses: HouseConfig;
 }
 export type ContentKey = keyof ContentBundle;
 export const CONTENT_KEYS: ContentKey[] = [
@@ -203,6 +235,7 @@ export const CONTENT_KEYS: ContentKey[] = [
   'buildings',
   'gacha',
   'track',
+  'houses',
 ];
 
 export const CONTENT_KEY = 'terepasztal.content';
@@ -222,6 +255,7 @@ export const DEFAULT_CONTENT: ContentBundle = {
   buildings: clone(buildingJson) as unknown as BuildingDef[],
   gacha: clone(gachaJson) as GachaConfig,
   track: clone(trackJson) as unknown as TrackConfig,
+  houses: clone(houseJson) as unknown as HouseConfig,
 };
 
 export function readContentOverrides(): Partial<ContentBundle> | null {
@@ -327,6 +361,22 @@ export function validateContent(b: ContentBundle): string[] {
     out.push(`gacha rates sum to ${rateSum.toFixed(2)}, expected 1`);
   for (const k of Object.keys(DEFAULT_CONTENT.track.pieces))
     if (!b.track.pieces[k]) out.push(`track: missing piece "${k}"`);
+  const hc = b.houses;
+  if (
+    !hc ||
+    !Array.isArray(hc.capacity) ||
+    !hc.capacity.length ||
+    hc.capacity.some((v) => !(v > 0))
+  )
+    out.push('houses: capacity needs one positive value per level');
+  else if (!Array.isArray(hc.upgradeCost) || hc.upgradeCost.length < hc.capacity.length - 1)
+    out.push('houses: upgradeCost needs one entry per level above the first');
+  else {
+    for (const c of hc.upgradeCost)
+      if (!isCost(c)) out.push('houses: upgradeCost must be resource maps');
+    for (const k of ['constructionDays', 'growthDays', 'autoUpgradeDays'] as const)
+      if (!(hc[k] > 0)) out.push(`houses: ${k} must be positive`);
+  }
   return out;
 }
 

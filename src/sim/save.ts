@@ -5,13 +5,14 @@ import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
 import type { LevelData } from '../world/level';
 import type { Rules } from './rules';
 import type { TownJSON } from './towns';
+import type { HousesJSON } from './houses';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -53,6 +54,8 @@ export interface SaveGame {
   settings?: Settings;
   /** v8: standing trade deals */
   trade?: unknown;
+  /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
+  houses?: HousesJSON;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -130,6 +133,19 @@ export const MIGRATIONS: Migration[] = [
     run: () => {},
   },
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
+  {
+    from: 8,
+    note: 'townhouses became level 1 houses with six residents each',
+    run: (j) => {
+      if (j.houses) return;
+      const list = (j.decor ?? []).filter(([, , id]) => id === 'townhouse');
+      j.houses = {
+        list: list.map(([x, y]) => ({ x, y, level: 1, residents: 6, progress: 1 })),
+        arrivals: [],
+        visited: [],
+      };
+    },
+  },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */
 export const KNOWN_SAVE_KEYS = new Set<string>([
@@ -157,6 +173,7 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'towns',
   'settings',
   'trade',
+  'houses',
   'loadedFrom',
   'migrationNotes',
 ]);

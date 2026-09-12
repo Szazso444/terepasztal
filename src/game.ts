@@ -122,6 +122,7 @@ import { resourceStats } from './sim/stats';
 import { locoFrame } from './art/frames';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
+import { HouseRegistry } from './sim/houses';
 import { PeopleSim } from './sim/people';
 import { expandSave, ownsBorderChunk } from './sim/expand';
 import { DecorPanel } from './ui/decorPanel';
@@ -184,6 +185,7 @@ export class Game {
   resourceBar!: ResourceBar;
   buildingPanel!: BuildingPanel;
   decorPanel!: DecorPanel;
+  houses!: HouseRegistry;
   /** overview: train picked with a click, and a route being recorded for it */
   private ovSelected: number | null = null;
   private recording: { trainId: number; stops: number[] } | null = null;
@@ -382,6 +384,7 @@ export class Game {
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
+    this.houses.finishAll();
     for (const [x, y, id] of level.buildings ?? []) {
       if (!inBounds(this.map, x, y)) continue;
       const b: Building = { id, x, y, acc: 0, active: false, rate: 0 };
@@ -616,6 +619,12 @@ export class Game {
     this.track = new TrackGraph(this.map.w, this.map.h);
     this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stock);
     this.towns = new TownRegistry(this.builder);
+    this.houses = new HouseRegistry(this.builder, this.towns, this.stock);
+    this.towns.residentsAt = (x, y) => this.houses.residentsAt(x, y);
+    this.houses.onMessage = (m, k) => this.toasts.push(m, k);
+    this.houses.onChanged = (h) =>
+      this.world.setStructure(`decor:${h.x},${h.y}`, h.x, h.y, this.houses.frame(h), 20);
+    this.builder.onIndustryPlaced = (x, y) => this.houses.industryPlaced(x, y);
     this.power = new PowerGrid(this.map);
     this.stock.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
@@ -637,6 +646,7 @@ export class Game {
       this.stock,
     );
     this.fleet.powered = (x, y) => this.power.isPowered(x, y);
+    this.fleet.onArrive = (_t, s) => this.houses.arrival(s, this.clock.time);
     this.fleet.stockCap = (id) => this.stockCap(id);
     this.fleet.onFlow = (x, y, r, d) => this.floaters.spawn(x, y, r, d);
     this.fleet.onPassengers = (st, n, b) =>
@@ -792,6 +802,7 @@ export class Game {
       towns: this.towns.toJSON(),
       settings: { ...this.settings },
       buildings: [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id, b.acc]),
+      houses: this.houses.toJSON(),
     };
   }
 
@@ -873,6 +884,7 @@ export class Game {
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
+    this.houses.load(j.houses);
     for (const [x, y, id, acc] of j.buildings ?? []) {
       const b: Building = { id, x, y, acc: acc ?? 0, active: false, rate: 0 };
       this.builder.buildings.set(y * this.map.w + x, b);
@@ -921,6 +933,7 @@ export class Game {
   }
   private onDecorChanged(d: Decor, removed: boolean) {
     const id = `decor:${d.x},${d.y}`;
+    this.houses?.sync(d, removed);
     this.towns?.refresh();
     if (removed) {
       this.world.removeStructure(id);
@@ -948,7 +961,7 @@ export class Game {
       const t = terrainAt(this.map, d.x, d.y);
       if (t === Terrain.Hill) this.world.setFlattened(d.x, d.y, true);
       this.world.removeProps(d.x, d.y);
-      this.world.setStructure(id, d.x, d.y, `structures/${d.id}`, 20);
+      this.world.setStructure(id, d.x, d.y, this.houses?.frameFor(d) ?? `structures/${d.id}`, 20);
     }
   }
   private onStationOrphaned(s: Station, orphaned: boolean) {
@@ -1413,6 +1426,7 @@ export class Game {
     this.decorPanel = new DecorPanel(this.builder, this.power, () => {
       if (this.build.selectedDecor) this.build.selectDecor(null);
     });
+    this.decorPanel.houses = this.houses;
     this.trainSide = new TrainSide(this.builder, this.atlas);
     this.noticePanel = new NoticePanel();
     this.noticePanel.onFocus = (n) => this.focusNotice(n);
@@ -1451,7 +1465,7 @@ export class Game {
       this.towns,
       (t) => this.renameTown(t),
     );
-    this.townPanel = new TownPanel(this.towns);
+    this.townPanel = new TownPanel(this.towns, this.houses);
     this.townPanel.onGo = (t) => {
       const st = this.towns.station(t);
       if (st) this.returnToRts(st.x, st.y);
@@ -1514,12 +1528,13 @@ export class Game {
     const gdt = this.clock.advance(dt);
     if (gdt > 0) {
       this.stock.population =
-        this.builder.crewTotal() + this.builder.residentsTotal() + this.fleet.crewTotal();
+        this.builder.crewTotal() + this.houses.residentsTotal() + this.fleet.crewTotal();
       this.stock.tick(gdt);
+      this.houses.tick(gdt, this.clock.time, this.mode === 'play');
       if (this.mode === 'play')
         this.people.tick(
           gdt,
-          this.builder.crewTotal() + this.builder.residentsTotal(),
+          this.builder.crewTotal() + this.houses.residentsTotal(),
           this.clock.dayFraction,
         );
       const famineMul = this.stock.famine ? 0.5 : 1;
@@ -1574,7 +1589,7 @@ export class Game {
     const dec = this.builder.decorAt(x, y);
     if (dec) {
       lines.push(decorDefOf(dec.id).name);
-      lines.push(...DecorPanel.lines(dec, this.builder, this.power));
+      lines.push(...DecorPanel.lines(dec, this.builder, this.power, this.houses));
     }
     const props = this.map.props.get(y * this.map.w + x);
     if (props?.length) {

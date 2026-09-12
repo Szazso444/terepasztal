@@ -7,7 +7,7 @@ import { hash2 } from '../engine/rng';
 
 /** Chebyshev reach of a town around its town station. */
 export const TOWN_RADIUS = 7;
-/** People living in one townhouse. */
+/** People a townhouse from a save older than the house registry starts with. */
 export const HOUSE_RESIDENTS = 6;
 
 export interface Town {
@@ -91,6 +91,8 @@ export class TownRegistry {
   private assigned = new Map<number, string>();
   private nextId = 1;
   onChanged: (() => void) | null = null;
+  /** set by the game: people living in the townhouse on a tile (the house registry keeps count) */
+  residentsAt: ((x: number, y: number) => number) | null = null;
 
   constructor(private readonly builder: Builder) {}
 
@@ -158,7 +160,8 @@ export class TownRegistry {
     for (const b of m.buildings) n += buildingDef(b.id).crew;
     for (const d of m.decor) {
       const def = decorDef(d.id);
-      n += def.crew + (def.residents ?? 0);
+      n += def.crew;
+      if (def.residents) n += this.residentsAt?.(d.x, d.y) ?? def.residents;
     }
     return n;
   }

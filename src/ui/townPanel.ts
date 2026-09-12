@@ -1,11 +1,12 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import { TOWN_COLORS, type Town, type TownRegistry } from '../sim/towns';
+import type { HouseRegistry } from '../sim/houses';
 import { cargoDef } from '../sim/cargo';
 
 /**
- * Left-hand list of towns, shown with the survey overview: colour, name, population, what the
- * town makes and uses per day, and what it still needs to be founded.
+ * Left-hand list of towns, shown with the survey overview: colour, name, population, housing and
+ * growth, what the town makes and uses per day, and what it still needs to be founded.
  */
 export class TownPanel {
   readonly root = el('div', { id: 'town-panel', class: 'panel' });
@@ -14,7 +15,10 @@ export class TownPanel {
   onGo: ((t: Town) => void) | null = null;
   onRename: ((t: Town) => void) | null = null;
 
-  constructor(private readonly towns: TownRegistry) {
+  constructor(
+    private readonly towns: TownRegistry,
+    private readonly houses: HouseRegistry | null = null,
+  ) {
     this.root.append(el('div', { class: 'panel-title', text: STR.town.title }), this.body);
     this.root.style.display = 'none';
   }
@@ -29,13 +33,40 @@ export class TownPanel {
       .map(([k, v]) => `${Math.round(v)} ${cargoDef(k).name.toLowerCase()}`);
     return parts.length ? parts.join(', ') : '-';
   }
+  /** Housing, growth and when the town builds next. */
+  private housingLines(t: Town, founded: boolean): HTMLElement[] {
+    const hs = this.houses?.townHousing(t);
+    if (!hs || hs.capacity <= 0) return [];
+    const T = STR.town;
+    const out = [
+      el('div', { class: 'sub', text: T.housing(hs.residents, hs.capacity, hs.building) }),
+    ];
+    out.push(
+      el('div', {
+        class: 'sub',
+        text: hs.growthPerDay > 0 ? T.growth(Math.round(hs.growthPerDay * 10) / 10) : T.noGrowth,
+      }),
+    );
+    if (founded)
+      out.push(
+        el('div', {
+          class: 'sub',
+          text: hs.cramped ? T.fullHousing : T.nextHouse(hs.spawnAt, Math.round(hs.mul * 10) / 10),
+        }),
+      );
+    return out;
+  }
   render(force = false) {
     if (this.root.style.display === 'none') return;
     const list = this.towns.towns;
     const key = list
       .map((t) => {
         const m = this.towns.members(t);
-        return `${t.id}:${t.name}:${t.color}:${this.towns.population(t, m)}:${m.houses}:${m.warehouses}:${m.stations.length}:${m.buildings.length}`;
+        const hs = this.houses?.townHousing(t);
+        const hk = hs
+          ? `${hs.houses}:${hs.building}:${hs.capacity}:${hs.residents}:${hs.growthPerDay.toFixed(2)}:${hs.mul.toFixed(1)}:${hs.cramped}`
+          : '';
+        return `${t.id}:${t.name}:${t.color}:${this.towns.population(t, m)}:${m.houses}:${m.warehouses}:${m.stations.length}:${m.buildings.length}:${hk}`;
       })
       .join('|');
     if (!force && key === this.lastKey) return;
@@ -66,6 +97,7 @@ export class TownPanel {
             ? STR.town.summary(m.stations.length, m.buildings.length, m.houses)
             : STR.town.needs(m.houses === 0, m.warehouses === 0),
         }),
+        ...this.housingLines(t, founded),
         el('div', {
           class: 'sub',
           text: `${STR.town.makes}: ${this.fmt(this.towns.production(t, m))}`,
