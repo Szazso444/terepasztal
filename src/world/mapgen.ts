@@ -436,7 +436,7 @@ export function decorateProps(
         } else if (r > 0.94) put(r > 0.985 ? 'tree' : r > 0.965 ? 'bush' : 'flowers', 3);
       } else if (t === Terrain.Sand) {
         if (b === Biome.Desert) {
-          if (r > 0.93) put(r > 0.985 ? 'boulder' : r > 0.965 ? 'deadtree' : 'cactus', 3);
+          if (r > 0.93) put(r > 0.965 ? 'deadtree' : 'cactus', 3);
         } else if (b === Biome.Ocean && r > 0.9) put('palm', 2);
       } else if (t === Terrain.Hill && r > 0.93) {
         put('boulder', 3);

@@ -157,7 +157,11 @@ export class Builder {
   }
   /** Track tiles serving a station: its platforms (a depot's gates with track on them). */
   platformTiles(s: Station): { x: number; y: number }[] {
-    return s.gateTiles().filter((p) => this.track.has(p.x, p.y));
+    const gates = s.gateTiles().filter((p) => this.track.has(p.x, p.y));
+    if (!s.def.depot) return gates;
+    // rails through the shed serve it too
+    for (const t of s.footprint()) if (this.track.has(t.x, t.y)) gates.push(t);
+    return gates;
   }
   /** Station whose platform set contains this track tile (if any). */
   stationForTrackTile(x: number, y: number): Station | undefined {
@@ -208,7 +212,9 @@ export class Builder {
     if (t === Terrain.Rock || t === Terrain.Mountain) return STR.build.rock;
     if (t === Terrain.Water && kind !== 'bridge') return STR.build.needBridge;
     if (t !== Terrain.Water && kind === 'bridge') return STR.build.bridgeOnWater;
-    if (this.stationAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
+    const st = this.stationAt(x, y);
+    // a depot is a through-station: plain pieces may run through the shed
+    if ((st && !(st.def.depot && anchor)) || this.buildingAt(x, y)) return STR.build.occupied;
     const dec = this.decorAt(x, y);
     if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);

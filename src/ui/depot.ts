@@ -187,15 +187,19 @@ export class DepotScreen implements Screen {
     );
     const locos = this.inventory.free('loco');
     if (!locos.length) c.append(el('div', { class: 'dim', text: STR.depot.noFreeLoco }));
+    const depot =
+      (this.depotId !== null ? this.builder.stationById(this.depotId) : undefined) ??
+      this.builder.depots()[0];
     for (const it of locos) {
       const d = locoDef(it.defId);
       const m = levelMul(it.level);
       const sel = this.locoUids.includes(it.uid);
+      const why = depot ? this.fleet.modelDeployReason(d, depot) : null;
       c.append(
         this.itemRow(
           `${d.name} Lv${it.level}`,
           d.rarity,
-          `${STR.roster.type[d.type]} · ${STR.depot.speed} ${(d.speed * m).toFixed(1)} · ${STR.depot.power} ${Math.round(d.power * m)} t · ${STR.roster.crew} ${d.crew}`,
+          `${STR.roster.type[d.type]} · ${STR.roster.size[d.size ?? 'small']} · ${STR.depot.speed} ${(d.speed * m).toFixed(1)} · ${STR.depot.power} ${Math.round(d.power * m)} t · ${STR.roster.crew} ${d.crew}`,
           sel,
           () => {
             if (sel) this.locoUids = this.locoUids.filter((u) => u !== it.uid);
@@ -204,6 +208,7 @@ export class DepotScreen implements Screen {
             this.renderConsist();
           },
           it.defId,
+          why,
         ),
       );
     }
@@ -218,11 +223,12 @@ export class DepotScreen implements Screen {
     for (const it of wagons) {
       const d = wagonDef(it.defId);
       const sel = this.wagonUids.includes(it.uid);
+      const why = depot ? this.fleet.modelDeployReason(d, depot) : null;
       c.append(
         this.itemRow(
           `${d.name} Lv${it.level}`,
           d.rarity,
-          `${STR.roster.carries[d.carries]} · ${Math.round(d.capacity * levelMul(it.level))}u · ${d.weight}t`,
+          `${STR.roster.carries[d.carries]} · ${STR.roster.size[d.size ?? 'small']} · ${Math.round(d.capacity * levelMul(it.level))}u · ${d.weight}t`,
           sel,
           () => {
             if (sel) this.wagonUids = this.wagonUids.filter((u) => u !== it.uid);
@@ -231,6 +237,7 @@ export class DepotScreen implements Screen {
             this.renderConsist();
           },
           it.defId,
+          why,
         ),
       );
     }
@@ -268,20 +275,27 @@ export class DepotScreen implements Screen {
     selected: boolean,
     onClick: () => void,
     defId?: string,
+    blocked: string | null = null,
   ) {
     const r = el(
       'div',
-      { class: `item ${selected ? 'selected' : ''}` },
+      { class: `item ${selected ? 'selected' : ''} ${blocked ? 'disabled' : ''}` },
       defId ? spriteImg(this.atlas, frameForItem(defId), 1, 'sprite-preview item-art') : null,
       el(
         'div',
         {},
         el('div', { class: `name rarity-${rarity}`, text: name }),
         el('div', { class: 'sub', text: sub }),
+        blocked ? el('div', { class: 'sub red', text: blocked }) : null,
       ),
     );
+    // a barred model still shows why; picking it is allowed so the roll-out box can explain
     r.addEventListener('click', onClick);
     return r;
+  }
+  /** Track around the depots changed: re-check what can roll out. */
+  onTrackChanged() {
+    if (this.root.isConnected) this.render();
   }
 
   private renderRoute() {

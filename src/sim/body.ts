@@ -15,7 +15,7 @@ export const COUPLER_GAP = 0.2;
 /** tolerances in tiles: fore-and-aft slide, sideways float budget, residual gap to rail */
 export const TOL = { foreAft: 0.3, sideways: 0.4, gap: 0.25 };
 export const DEFAULT_PIVOT = 0.7;
-export const DEFAULT_LATERAL_PLAY = 0.2;
+export const DEFAULT_LATERAL_PLAY = 0.35;
 
 export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
 export type BogieKind = 'bogie' | 'engine_unit';

@@ -1,7 +1,8 @@
 import { type Vec2, Dir, DIR_DX, DIR_DY } from '../engine/iso';
-import type { TrackGraph } from '../world/track';
+import type { TrackGraph, TrackPiece } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
+import { consistAccess, pieceClassFor, type ConsistAccess } from './compat';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
 import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
 import type { LocoType } from '../data/content';
@@ -260,7 +261,7 @@ export class Train {
       if (!st) break;
       const plat = new Set(builder.platformTiles(st).map((p) => p.y * track.w + p.x));
       if (!plat.size) break;
-      const p = findPath(
+      const p = this.pathTo(
         track,
         { x: cursor.x, y: cursor.y, in: cursor.in },
         (x, y) => plat.has(y * track.w + x),
@@ -324,8 +325,8 @@ export class Train {
       const set = new Set(plat.map((p) => p.y * w + p.x));
       const isT = (x: number, y: number) => set.has(y * w + x);
       const p =
-        findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isT, 4000) ??
-        findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isT, 4000);
+        this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isT, 4000) ??
+        this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isT, 4000);
       if (!p) continue;
       const len = p.length;
       if (len > this.rangeTiles * 0.9) continue;
@@ -448,6 +449,29 @@ export class Train {
   }
   /** Poses of every body segment and bogie, in car order (loco first). */
   vehiclePoses: VehiclePose[] = [];
+  private accessCache: { key: string; access: ConsistAccess } | null = null;
+  /** Track classes every vehicle of the consist may use, and who bars the rest. */
+  get access(): ConsistAccess {
+    const key = [...this.locos.map((l) => l.def.id), ...this.wagons.map((w) => w.def.id)].join(',');
+    if (!this.accessCache || this.accessCache.key !== key)
+      this.accessCache = {
+        key,
+        access: consistAccess([...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)]),
+      };
+    return this.accessCache.access;
+  }
+  /** Pathfinding predicate: may the consist enter this piece through `entry`? */
+  readonly canUse = (p: TrackPiece, entry: Dir) => this.access.classes.has(pieceClassFor(p, entry));
+  /** findPath with this consist's class access applied. */
+  private pathTo(
+    track: TrackGraph,
+    start: { x: number; y: number; in: Dir },
+    isTarget: (x: number, y: number) => boolean,
+    maxCost = 100000,
+    avoid?: (x: number, y: number) => boolean,
+  ) {
+    return findPath(track, start, isTarget, maxCost, avoid, this.canUse);
+  }
   prevVehiclePoses: VehiclePose[] = [];
   /** Points along the consist every half tile from head to tail: what the train stands on. */
   occupancyPoints(): Vec2[] {
@@ -788,10 +812,10 @@ export class Train {
     let path =
       mode === 'reverse'
         ? null
-        : findPath(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000, avoid);
+        : this.pathTo(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000, avoid);
     if (!path && mode !== 'forward') {
       // reverse the consist and try the other way
-      const alt = findPath(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
+      const alt = this.pathTo(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
       if (alt) {
         this.reverseConsist();
         // the head is now the old rear car: re-anchor the path on its actual tile
@@ -801,7 +825,7 @@ export class Train {
           this.trackVersion = track.version;
           return true;
         }
-        path = findPath(track, { x: nh.x, y: nh.y, in: nh.in }, isTarget, 100000, avoid) ?? alt;
+        path = this.pathTo(track, { x: nh.x, y: nh.y, in: nh.in }, isTarget, 100000, avoid) ?? alt;
       }
     }
     if (!path) return false;
@@ -1046,8 +1070,8 @@ export class Train {
     const isTarget = (x: number, y: number) => targetSet.has(y * w + x);
     const head = this.trail[this.trail.length - 1].seg;
     const path =
-      findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
-      findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
+      this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
+      this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
     this.wantKeys = path ? path.map((s) => s.y * w + s.x) : null;
     let by: number | null = null;
     if (path)
@@ -1593,10 +1617,16 @@ export class Train {
     // already standing clear of their line: shuffling further along would not help anyone
     if (this.occupancyKeys(w).every((k) => !theirs.has(k))) return false;
     const head = this.trail[this.trail.length - 1].seg;
-    let path = findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
+    let path = this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
     let flip = false;
     if (!path || path.length < 2) {
-      const alt = findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isHold, 600, avoid);
+      const alt = this.pathTo(
+        ctx.track,
+        { x: head.x, y: head.y, in: head.out },
+        isHold,
+        600,
+        avoid,
+      );
       if (alt && alt.length >= 2) {
         path = alt;
         flip = true;
@@ -1608,7 +1638,7 @@ export class Train {
     // as deep as the free track allows: a dead-end siding shorter than the ideal still helps
     let deeper: PathSegment[] | null = null;
     for (let depth = Math.ceil(ownLen); depth >= 1 && !deeper; depth--)
-      deeper = findPath(
+      deeper = this.pathTo(
         ctx.track,
         { x: tail.x, y: tail.y, in: tail.in },
         (x, y) => {
@@ -1627,7 +1657,7 @@ export class Train {
     if (flip) {
       this.reverseConsist();
       const nh = this.trail[this.trail.length - 1].seg;
-      const p2 = findPath(
+      const p2 = this.pathTo(
         ctx.track,
         { x: nh.x, y: nh.y, in: nh.in },
         (x, y) => x === path![path!.length - 1].x && y === path![path!.length - 1].y,

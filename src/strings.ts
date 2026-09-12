@@ -406,6 +406,10 @@ export const STR = {
     featuredBadge: 'featured',
   },
   roster: {
+    size: { small: 'small', medium: 'medium (2 tiles)', large: 'large (3 tiles)' } as Record<
+      string,
+      string
+    >,
     title: 'Roster',
     kind: 'Kind',
     rarity: 'Rarity',
@@ -691,6 +695,29 @@ export const STR = {
       power:
         'From power plants, stored in the battery. Electric engines draw it while on powered rails.',
     } as Record<string, string>,
+  },
+  compat: {
+    largeBarred: 'Large stock: high-speed track only',
+    foreAft: (v: number, t: number) =>
+      `bogies slide ${v.toFixed(2)} tiles along the body, limit ${t.toFixed(2)}`,
+    gap: (v: number, t: number) =>
+      `body sits ${v.toFixed(2)} tiles off the rail, limit ${t.toFixed(2)}`,
+    lateral: (v: number, t: number) =>
+      `centre bogie sits ${v.toFixed(2)} tiles off its socket, limit ${t.toFixed(2)}`,
+    cannotUse: (name: string, cls: string, why: string) =>
+      `${name} cannot use ${cls} track: ${why}`,
+    gateClass: (x: number, y: number, present: string, name: string, needs: string) =>
+      `Gate ${x},${y}: ${present} track; ${name} needs ${needs}`,
+    gateNoTrack: (x: number, y: number) => `Gate ${x},${y}: no track`,
+    gateStub: (x: number, y: number) => `Gate ${x},${y}: the track ends right after the gate`,
+    gateRoom: (x: number, y: number, run: number, need: number) =>
+      `Gate ${x},${y}: ${run.toFixed(1)} tiles of run, the consist is ${need.toFixed(1)} long`,
+    gateBusy: (x: number, y: number) => `Gate ${x},${y}: a train stands on it`,
+    gateNoRoute: (x: number, y: number, s: string) =>
+      `Gate ${x},${y}: no route to ${s} the consist may use`,
+    blockedAt: (name: string, x: number, y: number, cls: string) =>
+      `${name} cannot pass ${cls} track at ${x},${y}`,
+    deployable: 'Can roll out here',
   },
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',

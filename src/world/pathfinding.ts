@@ -1,5 +1,5 @@
 import { Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
-import type { TrackGraph } from './track';
+import type { TrackGraph, TrackPiece } from './track';
 import { isCurveLink } from './trackGeom';
 
 export interface PathSegment {
@@ -22,6 +22,7 @@ export function findPath(
   isTarget: (x: number, y: number) => boolean,
   maxCost = 100000,
   avoid?: (x: number, y: number) => boolean,
+  access?: (piece: TrackPiece, entry: Dir) => boolean,
 ): PathSegment[] | null {
   const key = (x: number, y: number, d: Dir) => (y * track.w + x) * 4 + d;
   const dist = new Map<number, number>();
@@ -50,6 +51,7 @@ export function findPath(
       const nin = opposite(out);
       if (!track.opensTo(nx, ny, nin)) continue;
       if (avoid && avoid(nx, ny)) continue;
+      if (access && !access(track.get(nx, ny)!, nin)) continue;
       const piece = track.get(x, y)!;
       let cost = track.segLength(x, y, dir, out);
       if (piece.kind === 'switch' && isCurveLink(dir, out)) cost += 0.2;

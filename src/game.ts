@@ -97,7 +97,7 @@ import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
 import { TownPanel } from './ui/townPanel';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
-import { footprintOf, pieceFrame } from './world/track';
+import { footprintOf, pieceFrame, pieceCost, type TrackKind } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
@@ -121,6 +121,7 @@ import { Advisor, type Tip } from './ui/advisor';
 import { resourceStats } from './sim/stats';
 import { locoFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
+import { buildCompatTable } from './sim/compat';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
 import { PeopleSim } from './sim/people';
@@ -128,15 +129,31 @@ import { expandSave, ownsBorderChunk } from './sim/expand';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 
-/** Starting stockpile for a brand-new game, before `rules.startStock` scaling. */
-const START_STOCK: Record<string, number> = {
-  wood: 200,
-  stone: 150,
-  water: 120,
-  wheat: 120,
-  coal: 40,
-  iron: 10,
-};
+/**
+ * Starting stockpile for a brand-new game, before `rules.startStock` scaling. Wood, stone and
+ * iron are derived from the track cost matrix (spec §16): about fifty straights, a handful of
+ * curves and a switch, plus the crafting of one locomotive and four wagons, and are multiplied
+ * by `rules.startingResourceScale`.
+ */
+function startStock(): Record<string, number> {
+  const piece = (kind: TrackKind, n: number) => {
+    const c = pieceCost(kind, 'regular');
+    return { wood: (c.wood ?? 0) * n, stone: (c.stone ?? 0) * n, iron: (c.iron ?? 0) * n };
+  };
+  const parts = [piece('straight', 50), piece('curve', 6), piece('switch', 1)];
+  // crafting one locomotive and four wagons (see src/data/crafting.json when present)
+  const craft = { wood: 40, stone: 10, iron: 30 };
+  const sum = (k: 'wood' | 'stone' | 'iron') => parts.reduce((a, p) => a + p[k], 0) + craft[k];
+  const s = rules.startingResourceScale;
+  return {
+    wood: Math.round(sum('wood') * s),
+    stone: Math.round(sum('stone') * s),
+    iron: Math.round(sum('iron') * s),
+    water: 120,
+    wheat: 120,
+    coal: 40,
+  };
+}
 
 const SIM_HZ = 20;
 const EDGE_MARGIN = 14;
@@ -349,7 +366,7 @@ export class Game {
     const rep = start ? start.reputation : rules.startReputation;
     if (rep > 0) this.economy.addReputation(rep);
     const stockMul = start?.stockMul ?? 1;
-    for (const [id, n] of Object.entries(START_STOCK))
+    for (const [id, n] of Object.entries(startStock()))
       this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (!start) {
       const d = this.ensureDepot();
@@ -610,6 +627,7 @@ export class Game {
     canvas.tabIndex = 0;
     this.input = new Input(canvas);
     await this.atlas.load(ATLAS_GROUPS);
+    buildCompatTable();
 
     this.map =
       this.spec.kind === 'level'
@@ -921,6 +939,7 @@ export class Game {
 
   // ---------------------------------------------------------------- world edits
   private onTrackChanged(x: number, y: number) {
+    this.depot?.onTrackChanged();
     const p = this.track.get(x, y);
     const t = terrainAt(this.map, x, y);
     if (p) {
