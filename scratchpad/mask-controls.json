@@ -1,0 +1,213 @@
+{
+  "negative": {
+    "step": 0.2,
+    "resolution": 1,
+    "samples": 2400,
+    "outside": 195763,
+    "nonempty": 2400,
+    "rows": [
+      {
+        "id": "sd40",
+        "samples": 1216,
+        "outside": 32546
+      },
+      {
+        "id": "gmam",
+        "samples": 592,
+        "outside": 49005
+      },
+      {
+        "id": "big_boy",
+        "samples": 592,
+        "outside": 114212
+      }
+    ],
+    "failures": [
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 2,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 2.2,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 2.4000000000000004,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 2.6000000000000005,
+        "outside": 34
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 2.8000000000000007,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 3.000000000000001,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 3.200000000000001,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 3.4000000000000012,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 3.6000000000000014,
+        "outside": 34
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 3.8000000000000016,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 4.000000000000002,
+        "outside": 19
+      },
+      {
+        "id": "sd40",
+        "cls": "regular",
+        "rot": 0,
+        "hand": -1,
+        "reversed": false,
+        "front": 4.200000000000002,
+        "outside": 19
+      }
+    ]
+  },
+  "zooms": [
+    {
+      "step": 0.2,
+      "resolution": 0.5,
+      "samples": 2400,
+      "outside": 0,
+      "nonempty": 2400,
+      "rows": [
+        {
+          "id": "dda40x",
+          "samples": 592,
+          "outside": 0
+        },
+        {
+          "id": "sd40",
+          "samples": 1216,
+          "outside": 0
+        },
+        {
+          "id": "gmam",
+          "samples": 592,
+          "outside": 0
+        }
+      ],
+      "failures": []
+    },
+    {
+      "step": 0.2,
+      "resolution": 2,
+      "samples": 2400,
+      "outside": 0,
+      "nonempty": 2400,
+      "rows": [
+        {
+          "id": "dda40x",
+          "samples": 592,
+          "outside": 0
+        },
+        {
+          "id": "sd40",
+          "samples": 1216,
+          "outside": 0
+        },
+        {
+          "id": "gmam",
+          "samples": 592,
+          "outside": 0
+        }
+      ],
+      "failures": []
+    },
+    {
+      "step": 0.2,
+      "resolution": 4,
+      "samples": 2400,
+      "outside": 0,
+      "nonempty": 2400,
+      "rows": [
+        {
+          "id": "dda40x",
+          "samples": 592,
+          "outside": 0
+        },
+        {
+          "id": "sd40",
+          "samples": 1216,
+          "outside": 0
+        },
+        {
+          "id": "gmam",
+          "samples": 592,
+          "outside": 0
+        }
+      ],
+      "failures": []
+    }
+  ]
+}

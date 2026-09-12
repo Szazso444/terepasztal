@@ -119,6 +119,20 @@ recorded in `docs/phase-decisions.md`.
 
 ### After the first playtest
 
+- Long locomotive casings now follow curves as two visual half-bodies joined at the middle
+  pivot. The rigid vehicle specs and compatibility verdicts are unchanged. Tangent-facing bogies
+  are clipped to an inset of their own body silhouette, including medium stock on regular curves
+  and Garratt engine units. The GPU alpha-mask regression script and before/after screenshots are
+  in [scratchpad](scratchpad/README.md).
+- Procedural art now uses a consistent railway-diorama palette, quieter terrain and material
+  textures, coloured contours, projected bevels, warmer timber and brass, and cooler steel.
+  Locomotives and wagons have wider casings and clearer chassis details; diesels gain vent banks
+  and waist stripes. Roof gables are closed, pixel drawing rounds fractional coordinates, and
+  sleepers use arc-distance spacing. Buildings, vegetation, cargo icons, crew and effects share
+  the refreshed materials and edges.
+- Atlas packing trims transparent margins while preserving ground anchors. Locomotive art,
+  including the new half-bodies and inset masks, fits in 4096×2048 instead of 4096×4096; wagon art
+  fits in 4096×512 instead of 4096×2048. Measured procedural generation remains about one second.
 - Contract offers come two at a time every six days and stay open for six; fines for failing or
   cancelling are 2.5 % of the payout. A contract whose station was demolished lapses for free.
   An **Auto-accept on/off** switch sits on the Contracts screen; a new **Contract** route mode
@@ -131,6 +145,12 @@ recorded in `docs/phase-decisions.md`.
 - Vehicles: 48 facings and only half the remainder applied as rotation, so bodies lean far less
   and the facing steps are 7.5°; the wagon sprites moved to their own atlas. A train no longer
   turns itself around when its forward route is merely busy; it waits instead.
+- Large bodies on curves: bogie sprites are held under the body instead of drawn at the exact
+  rail point (the middle bogie of a three-tile body used to snap out of the side, the end bogies
+  overlapped the ends) and always paint just under their own body (a bogie nearer the camera
+  than the body centre used to paint over it); large bodies carry their bogies nearer the middle
+  and sit out over the arc. Three-axle bogies (`bogieAxles: 3`) for the Co-Co diesels and electrics: SD40, M62,
+  Deltic, V63, DDA40X, GG1, Crocodile.
 - A roaming train sitting on a platform with nothing to load steps aside for a train behind it.
 - Stuck trains: a roaming train only ever picks stops its own rails lead to (the nearest
   station on a disconnected line used to be chosen, found unreachable, and the train sat on its

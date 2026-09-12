@@ -1,0 +1,74 @@
+[
+  {
+    "name": "terrain",
+    "ms": 7.3,
+    "width": 1024,
+    "height": 256,
+    "frames": 62,
+    "invalid": 0
+  },
+  {
+    "name": "props",
+    "ms": 1.6,
+    "width": 512,
+    "height": 128,
+    "frames": 43,
+    "invalid": 0
+  },
+  {
+    "name": "track",
+    "ms": 9.3,
+    "width": 1024,
+    "height": 256,
+    "frames": 85,
+    "invalid": 0
+  },
+  {
+    "name": "structures",
+    "ms": 22.6,
+    "width": 1024,
+    "height": 1024,
+    "frames": 75,
+    "invalid": 0
+  },
+  {
+    "name": "rolling",
+    "ms": 256.9,
+    "width": 4096,
+    "height": 4096,
+    "frames": 1250,
+    "invalid": 0
+  },
+  {
+    "name": "wagons",
+    "ms": 90.2,
+    "width": 4096,
+    "height": 2048,
+    "frames": 675,
+    "invalid": 0
+  },
+  {
+    "name": "fx",
+    "ms": 1.9,
+    "width": 256,
+    "height": 128,
+    "frames": 10,
+    "invalid": 0
+  },
+  {
+    "name": "icons",
+    "ms": 0.5,
+    "width": 128,
+    "height": 64,
+    "frames": 17,
+    "invalid": 0
+  },
+  {
+    "name": "people",
+    "ms": 0.8,
+    "width": 256,
+    "height": 256,
+    "frames": 18,
+    "invalid": 0
+  }
+]

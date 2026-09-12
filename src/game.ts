@@ -715,6 +715,10 @@ export class Game {
       resolution: 1,
       preference: 'webgl',
     });
+    // Scene-graph inspector for the PixiJS browser extension. The dynamic import sits inside a
+    // dev-only branch, so the production bundle never pulls it in.
+    if (import.meta.env.DEV)
+      void import('@pixi/devtools').then((d) => d.initDevtools({ app: this.app }));
     canvas.tabIndex = 0;
     this.input = new Input(canvas);
     await this.atlas.load(ATLAS_GROUPS);

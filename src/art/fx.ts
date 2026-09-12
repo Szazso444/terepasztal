@@ -32,7 +32,7 @@ function smoke(r: number, seed: number): PixelBuf {
       const d = Math.sqrt(nx * nx + ny * ny) + (hash2(x, y, seed) - 0.5) * 0.35;
       if (d >= 1) continue;
       const shade = 150 + Math.floor(hash2(x >> 1, y >> 1, seed + 3) * 50) - (ny > 0 ? 30 : 0);
-      b.set(x, y, [shade, shade, shade + 6], d > 0.8 ? 120 : 200);
+      b.set(x, y, [shade + 8, shade + 4, shade - 4], d > 0.8 ? 120 : 200);
     }
   return b;
 }
@@ -40,7 +40,7 @@ function smoke(r: number, seed: number): PixelBuf {
 /** Diagonal rain streak. */
 function rainDrop(): PixelBuf {
   const b = new PixelBuf(4, 10);
-  for (let i = 0; i < 9; i++) b.set(3 - Math.floor(i / 3), i, [170, 190, 215], i < 2 ? 120 : 200);
+  for (let i = 0; i < 9; i++) b.set(3 - Math.floor(i / 3), i, [166, 202, 210], i < 2 ? 120 : 200);
   return b;
 }
 
@@ -57,7 +57,7 @@ function fogPatch(seed: number): PixelBuf {
       const n = hash2(x >> 2, y >> 1, seed);
       const a = Math.round((1 - d) * (1 - d) * 150 * (0.7 + n * 0.6));
       if (a < 6) continue;
-      b.set(x, y, [150, 158, 170], Math.min(255, a));
+      b.set(x, y, [164, 181, 182], Math.min(255, a));
     }
   return b;
 }

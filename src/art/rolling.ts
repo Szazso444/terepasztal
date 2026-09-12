@@ -1,31 +1,37 @@
 /**
- * Rolling stock sprites. Every body is drawn as isometric prisms at 13 of the 24 facings (the
- * other 11 are horizontal mirrors, applied at draw time). Bodies come in three sizes: 1, 2 and
- * 3 tiles long; multi-segment plans (engine + tender, Garratt, Meyer) draw one sprite per rigid
- * segment. Medium and large bodies carry no wheels of their own: shared bogie sprites ride under
- * them, placed by the body model.
+ * Rolling stock sprites. Bodies use 48 facings, drawing one member of each horizontal mirror pair. Bodies come in three sizes: 1, 2 and
+ * 3 tiles long; short articulated segments retain their own sprites; long frames also have two
+ * clipped half-body frames, joined visually at the middle pivot. Medium and large undercarriages
+ * use tangent-facing bogies clipped to the casing silhouette.
  */
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder } from './iso3d';
-import { DRAWN_FACINGS, facingAngle, vehicleSpec, type SegmentSpec } from '../sim/body';
+import {
+  DRAWN_FACINGS,
+  facingAngle,
+  vehicleSpec,
+  type BogieKind,
+  type SegmentSpec,
+} from '../sim/body';
+import { hingedBody, type BodySlice } from '../render/vehicleVisual';
 import { content, type LocoDef, type WagonDef } from '../data/content';
 
 const PAINTS: Record<string, RGB[]> = {
   iron: PAL.iron,
   rust: PAL.rust,
   black: [
-    [34, 34, 38],
-    [46, 46, 50],
-    [26, 26, 30],
-    [58, 58, 62],
+    [43, 57, 64],
+    [57, 72, 79],
+    [32, 43, 51],
+    [76, 88, 94],
   ],
   green: [
-    [44, 70, 50],
-    [56, 86, 60],
-    [34, 54, 40],
-    [70, 100, 74],
+    [48, 89, 71],
+    [64, 110, 85],
+    [36, 67, 57],
+    [86, 130, 101],
   ],
   wood: PAL.timber,
   blue: [
@@ -98,28 +104,36 @@ class Frame {
     readonly L: number,
     readonly a: number,
     readonly seed: number,
+    readonly slice?: BodySlice,
   ) {
-    const c = canvasFor(L);
+    const c = canvasFor(slice ? L / 2 + 0.12 : L);
     this.b = new PixelBuf(c.W, c.H);
     this.ox = c.OX;
     this.oy = c.OY;
   }
   /** tile-space offset of a body point: l along the heading (front = +), w across */
   along(l: number, w: number) {
+    w *= 1.3;
+    l -= this.slice === 'front' ? this.L / 4 : this.slice === 'rear' ? -this.L / 4 : 0;
     return {
       x: Math.cos(this.a) * l - Math.sin(this.a) * w,
       y: Math.sin(this.a) * l + Math.cos(this.a) * w,
     };
   }
   px(l: number, w: number, z = 0) {
+    if (!this.contains(l)) return { x: -100, y: -100 };
     const p = this.along(l, w);
     return {
       x: Math.round(this.ox + (p.x - p.y) * 32),
       y: Math.round(this.oy + (p.x + p.y) * 16) - z,
     };
   }
+  private contains(l: number) {
+    return !this.slice || (this.slice === 'front' ? l >= -0.04 : l <= 0.04);
+  }
   /** is the body point on the side facing the viewer? */
   visible(l: number, w: number) {
+    if (!this.contains(l)) return false;
     const p = this.along(l, w);
     const c = this.along(l, 0);
     return p.x + p.y > c.x + c.y;
@@ -137,6 +151,12 @@ class Frame {
     roof?: RGB[];
     seed?: number;
   }) {
+    if (this.slice) {
+      const lo = Math.max(o.l - o.len / 2, this.slice === 'front' ? -0.04 : -Infinity);
+      const hi = Math.min(o.l + o.len / 2, this.slice === 'rear' ? 0.04 : Infinity);
+      if (hi <= lo) return;
+      o = { ...o, l: (lo + hi) / 2, len: hi - lo };
+    }
     const c = this.along(o.l, o.w ?? 0);
     drawPrism(this.b, {
       ox: this.ox,
@@ -145,7 +165,7 @@ class Frame {
       cy: c.y,
       angle: this.a,
       len: o.len,
-      wid: o.wid,
+      wid: o.wid * 1.3,
       h: o.h,
       z0: o.z0 ?? 0,
       top: o.top,
@@ -156,6 +176,7 @@ class Frame {
     });
   }
   cyl(l: number, w: number, r: number, z0: number, h: number, side: RGB[], top: RGB, seed = 0) {
+    if (!this.contains(l)) return;
     const c = this.along(l, w);
     drawCylinder(this.b, this.ox, this.oy, c.x, c.y, r, z0, h, side, top, this.seed + seed);
   }
@@ -238,6 +259,7 @@ class Frame {
     this.b.rect(p.x - 1, p.y - 1, 2, 2, PAL.amber);
   }
   pantograph(l: number, zRoof: number, wide = false) {
+    if (!this.contains(l)) return;
     const base = this.px(l, 0, zRoof);
     const top = this.px(l, 0, zRoof + 9);
     this.b.line(base.x - 2, base.y, top.x + 1, top.y, PAL.iron[3]);
@@ -249,7 +271,15 @@ class Frame {
   }
   /** underframe bar for bodies whose wheels are separate bogie sprites */
   underframe(len: number, z0 = 3) {
-    this.prism({ l: 0, len, wid: 0.18, h: 2, z0, top: WHEELS, side: WHEELS, seed: 3 });
+    this.prism({ l: 0, len, wid: 0.28, h: 4, z0: 0, top: WHEELS, side: WHEELS, seed: 3 });
+    // Continuous sill and inset axle-box detail keep a readable chassis inside the casing.
+    for (const side of [-0.145, 0.145]) {
+      if (!this.visible(0, side)) continue;
+      const a = this.px(-len * 0.45, side, 4);
+      const b = this.px(len * 0.45, side, 4);
+      if (!this.slice) this.b.line(a.x, a.y, b.x, b.y, PAL.iron[3]);
+      for (let l = -len * 0.35; l <= len * 0.36; l += 0.2) this.dot(l, side, 2, PAL.iron[1], 1);
+    }
     for (const end of [-len / 2, len / 2]) this.dot(end, 0, z0 + 1, PAL.iron[1], 2);
   }
   /** chassis with baked wheels for one-tile stock */
@@ -591,6 +621,15 @@ const dieselHood: PartDrawer = (f, L, paint) => {
   });
   for (const l of [L * 0.2, L * 0.02, -L * 0.14])
     f.cyl(l, 0, 0.035, 20, 1, PAL.iron, PAL.iron[3], 5);
+  // Vent banks and a continuous cream waist stripe on the long hood.
+  for (const w of [-0.112, 0.112]) {
+    if (!f.visible(0, w)) continue;
+    for (let l = -L * 0.18; l <= L * 0.31; l += 0.09) {
+      const p = f.px(l, w, 18);
+      f.b.rect(p.x, p.y, 1, 5, PAL.iron[2]);
+      f.dot(l, w, 10, PAL.white, 1);
+    }
+  }
   // exhaust stack
   f.cyl(L * 0.3, 0, 0.03, 20, 3, PAL.iron, PAL.iron[0], 6);
   for (const w of [-0.16, 0.16])
@@ -964,10 +1003,12 @@ function load(kind: string, f: Frame) {
   return f.b;
 }
 
-function bogie(kind: 'bogie' | 'engine_unit', f: Frame) {
-  const len = kind === 'bogie' ? 0.3 : 0.7;
+function bogie(kind: BogieKind, f: Frame) {
+  const len = kind === 'bogie' ? 0.3 : kind === 'bogie3' ? 0.44 : 0.7;
   f.prism({ l: 0, len, wid: 0.2, h: 3, z0: 1, top: WHEELS, side: WHEELS, seed: 61 });
-  const xs = kind === 'bogie' ? [-0.09, 0.09] : [-0.22, 0, 0.22];
+  // axles: two, three, or the engine unit's three coupled wheels
+  const xs =
+    kind === 'bogie' ? [-0.09, 0.09] : kind === 'bogie3' ? [-0.15, 0, 0.15] : [-0.22, 0, 0.22];
   for (const l of xs)
     for (const w of [-0.11, 0.11]) {
       if (!f.visible(l, w)) continue;
@@ -1048,7 +1089,31 @@ export function generateRollingAtlas(): AtlasImage {
           f.finish().toImageData(),
           f.ox,
           f.oy,
+          spec.drawBogies,
         );
+        if (hingedBody(spec))
+          for (const slice of ['front', 'rear'] as const) {
+            const half = new Frame(seg.L, facingAngle(fi), 100 + fi, slice);
+            locoDrawer(v.body, part)(half, seg.L, paintOf(v.paint));
+            ab.add(
+              'rolling/loco_' +
+                v.body +
+                '_' +
+                v.size +
+                '_' +
+                v.paint +
+                '_' +
+                part +
+                '_f' +
+                fi +
+                '_' +
+                slice,
+              half.finish().toImageData(),
+              half.ox,
+              half.oy,
+              true,
+            );
+          }
       }
   }
   return ab.build(4096);
@@ -1068,6 +1133,7 @@ export function generateWagonAtlas(): AtlasImage {
         f.finish().toImageData(),
         f.ox,
         f.oy,
+        spec.drawBogies,
       );
     }
   }
@@ -1076,7 +1142,7 @@ export function generateWagonAtlas(): AtlasImage {
       const f = new Frame(1, facingAngle(fi), 500 + fi);
       ab.add(`rolling/load_${k}_f${fi}`, load(k, f).toImageData(), f.ox, f.oy);
     }
-    for (const k of ['bogie', 'engine_unit'] as const) {
+    for (const k of ['bogie', 'bogie3', 'engine_unit'] as const) {
       const f = new Frame(1, facingAngle(fi), 600 + fi);
       ab.add(`rolling/${k}_f${fi}`, bogie(k, f).toImageData(), f.ox, f.oy);
     }

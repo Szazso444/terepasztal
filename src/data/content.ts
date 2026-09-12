@@ -62,6 +62,8 @@ export interface LocoDef {
   pivotRatio?: number;
   /** bogies under a rigid body (3 for the Bo-Bo-Bo large body) */
   bogies?: number;
+  /** axles per bogie: 2 (default) or 3 (Co-Co and the like) */
+  bogieAxles?: number;
   /** how far the centre bogie may sit off its socket before the model fails a curve */
   maxLateralPlay?: number;
   /** diesel and electric: units of the same control class work in multiple */

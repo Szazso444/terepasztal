@@ -1,4 +1,5 @@
 import { Container, Sprite } from 'pixi.js';
+import { hingedBody, visualSegments } from './vehicleVisual';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
@@ -17,15 +18,17 @@ import {
 
 interface VehicleSprites {
   parts: Sprite[];
+  masks: Sprite[];
+  silhouette: Container;
+  undercarriage: Container;
   bogies: Sprite[];
   load: Sprite | null;
   spec: VehicleSpec;
 }
 
 /**
- * Draws every train as depth-sorted sprites: one body sprite per rigid segment, bogie sprites
- * under medium and large bodies, a cargo overlay on loaded wagons. Bodies use 24 facings; the
- * remainder of the true angle is applied as a small runtime rotation so motion stays continuous.
+ * Depth-sorted short segments and hinged long frames, with masked bogies beneath the casings
+ * and cargo overlays above loaded wagons. Bodies use 48 facings and a small residual rotation.
  */
 export class TrainRenderer {
   private cars = new Map<number, VehicleSprites[]>();
@@ -70,24 +73,35 @@ export class TrainRenderer {
       list.length = 0;
       for (let i = 0; i < n; i++) {
         const spec = specs[i];
-        const parts = spec.segments.map(() => this.make());
+        const parts = Array.from({ length: hingedBody(spec) ? 2 : spec.segments.length }, () =>
+          this.make(),
+        );
+        const silhouette = new Container();
+        const masks = spec.drawBogies ? parts.map(() => silhouette.addChild(new Sprite())) : [];
+        const undercarriage = new Container({ sortableChildren: true });
+        this.layer.addChild(silhouette, undercarriage);
+
         const bogies: Sprite[] = [];
         if (spec.drawBogies)
-          for (const s of spec.segments) for (let b = 0; b < s.nb; b++) bogies.push(this.make());
+          for (const s of spec.segments)
+            for (let b = 0; b < s.nb; b++)
+              bogies.push(undercarriage.addChild(new Sprite({ cullable: true })));
         let load: Sprite | null = null;
         if (
           i >= train.locos.length &&
           loadKind(train.wagons[i - train.locos.length].def) !== 'none'
         )
           load = this.make();
-        list.push({ parts, bogies, load, spec });
+        list.push({ parts, masks, silhouette, undercarriage, bogies, load, spec });
       }
     }
     return list;
   }
   private destroyCar(c: VehicleSprites) {
     for (const s of c.parts) s.destroy();
-    for (const s of c.bogies) s.destroy();
+    for (const b of c.bogies) b.mask = null;
+    c.undercarriage.destroy({ children: true });
+    c.silhouette.destroy({ children: true });
     c.load?.destroy();
   }
 
@@ -107,7 +121,8 @@ export class TrainRenderer {
   ) {
     const f = facingOf(angle);
     const drawn = DRAWN_FACINGS.has(f);
-    const fr = this.atlas.get(frameFor(drawn ? f : mirrorFacing(f)));
+    const key = frameFor(drawn ? f : mirrorFacing(f));
+    const fr = this.atlas.get(key);
     s.texture = fr.texture;
     s.anchor.set(fr.anchorX, fr.anchorY);
     s.scale.set(drawn ? 1 : -1, 1);
@@ -116,6 +131,7 @@ export class TrainRenderer {
     s.position.set(Math.round(wp.x), Math.round(wp.y));
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
+    return key;
   }
 
   /** Update sprites; alpha interpolates between the last two sim poses. */
@@ -140,29 +156,59 @@ export class TrainRenderer {
         const c = list[i];
         const isLoco = i < t.locos.length;
         let bi = 0;
-        cur.segments.forEach((seg, si) => {
-          const ps = prev?.segments[si];
+        const segments = visualSegments(cur, c.spec);
+        const previous = prev ? visualSegments(prev, c.spec) : undefined;
+        c.undercarriage.zIndex = Infinity;
+        segments.forEach((seg, si) => {
+          const ps = previous?.[si];
           const x = ps ? ps.x + (seg.x - ps.x) * alpha : seg.x;
           const y = ps ? ps.y + (seg.y - ps.y) * alpha : seg.y;
           const angle = ps ? lerpAngle(ps.angle, seg.angle, alpha) : seg.angle;
           const shown = angle + flip + (seg.mirror ? Math.PI : 0);
           const s = c.parts[si];
           const frameFor = isLoco
-            ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
+            ? (f: number) => {
+                const base = locoFrame(this.atlas, t.locos[i].def, f, seg.part);
+                const slice =
+                  flip && seg.slice ? (seg.slice === 'front' ? 'rear' : 'front') : seg.slice;
+                const key = slice ? base + '_' + slice : base;
+                return this.atlas.has(key) ? key : base;
+              }
             : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
-          this.pose(s, frameFor, x, y, shown, 15);
+          const frameKey = this.pose(s, frameFor, x, y, shown, 15);
           s.tint = tint;
+          // The same transformed body alpha clips the swivelling undercarriage. A lateral
+          // clamp alone cannot contain a long bogie at a different projected heading.
+          const mask = c.masks[si];
+          if (mask) {
+            const mf = this.atlas.get(
+              this.atlas.has(frameKey + '_mask') ? frameKey + '_mask' : frameKey,
+            );
+            mask.texture = mf.texture;
+            mask.anchor.set(mf.anchorX, mf.anchorY);
+            mask.position.copyFrom(s.position);
+            mask.scale.copyFrom(s.scale);
+            mask.rotation = s.rotation;
+            mask.visible = s.visible;
+          }
+          c.undercarriage.zIndex = Math.min(c.undercarriage.zIndex, s.zIndex - 1);
           if (c.spec.drawBogies)
             seg.bogies.forEach((b, k) => {
               const pb = ps?.bogies[k];
-              const bx = pb ? pb.x + (b.x - pb.x) * alpha : b.x;
-              const by = pb ? pb.y + (b.y - pb.y) * alpha : b.y;
+              // drawn where the body holds it, not at the exact rail point: the sprite stays
+              // under the body while the geometry keeps the true bogie on the track
+              const bx = pb ? pb.drawX + (b.drawX - pb.drawX) * alpha : b.drawX;
+              const by = pb ? pb.drawY + (b.drawY - pb.drawY) * alpha : b.drawY;
               const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
               const bs = c.bogies[bi++];
               if (!bs) return;
-              const name = b.kind === 'engine_unit' ? 'engine_unit' : 'bogie';
-              this.pose(bs, (f) => `rolling/${name}_f${f}`, bx, by, ba, 14);
+              this.pose(bs, (f) => `rolling/${b.kind}_f${f}`, bx, by, ba, 14);
+              bs.visible &&= s.visible;
+              // always just under its own body: the depth key is by position, and a bogie
+              // ahead of the body centre (towards the camera) would otherwise paint over it
+              bs.zIndex = s.zIndex - 1;
               bs.tint = tint;
+              if (bs.mask !== mask) bs.setMask({ mask, channel: 'alpha' });
             });
           if (c.load && si === 0) {
             const w = t.wagons[i - t.locos.length];
