@@ -34,6 +34,7 @@
     "fuelPerTile": 0.25,
     "waterCap": 68,
     "waterPerTile": 0.3,
+    "starter": true,
     "size": "small"
   },
   {

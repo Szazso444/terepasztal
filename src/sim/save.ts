@@ -11,7 +11,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -56,6 +56,8 @@ export interface SaveGame {
   settings?: Settings;
   /** v8: standing trade deals */
   trade?: unknown;
+  /** v10: known crafting recipes, craft statistics and an unfinished recipe draw */
+  crafting?: unknown;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -138,6 +140,17 @@ export const MIGRATIONS: Migration[] = [
     note: 'every track piece counted as regular class; catenary strung over rails the poles powered',
     run: () => {},
   },
+  {
+    from: 9,
+    note: 'crafting recipes granted for every model already in the inventory',
+    run: (j) => {
+      if (j.crafting) return;
+      const inv = j.inventory as { items?: { defId?: unknown }[] } | undefined;
+      const recipes = new Set<string>();
+      for (const it of inv?.items ?? []) if (typeof it.defId === 'string') recipes.add(it.defId);
+      j.crafting = { recipes: [...recipes], stats: { unlocks: 0, crafts: 0, failures: 0 } };
+    },
+  },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */
 export const KNOWN_SAVE_KEYS = new Set<string>([
@@ -166,6 +179,7 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'settings',
   'supply',
   'trade',
+  'crafting',
   'loadedFrom',
   'migrationNotes',
 ]);

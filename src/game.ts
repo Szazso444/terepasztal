@@ -104,6 +104,8 @@ import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
 import { GachaScreen } from './ui/gachaScreen';
 import { RosterScreen } from './ui/rosterScreen';
+import { Crafting } from './gacha/crafting';
+import { CraftingScreen } from './ui/craftingScreen';
 import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
 import { tickBuildings, buildingDef, type Building } from './sim/buildings';
 import { PowerGrid } from './sim/power';
@@ -197,6 +199,8 @@ export class Game {
   gacha!: Gacha;
   gachaScreen!: GachaScreen;
   rosterScreen!: RosterScreen;
+  crafting!: Crafting;
+  craftingScreen!: CraftingScreen;
   stock = new Stockpile();
   power!: PowerGrid;
   trainScreen!: TrainScreen;
@@ -676,6 +680,13 @@ export class Game {
     this.people = new PeopleSim(this.map, this.builder);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
     this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
+    this.crafting = new Crafting(
+      new Rng(this.seed ^ 0xc4af7),
+      this.inventory,
+      this.economy,
+      this.stock,
+    );
+    this.crafting.grantFromInventory();
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
     this.contracts.onEvent = (e) => {
       if (e.kind === 'offered' && this.settings.autoContracts !== false)
@@ -814,6 +825,7 @@ export class Game {
       trade: this.trade.toJSON(),
       inventory: this.inventory.toJSON(),
       gacha: this.gacha.toJSON(),
+      crafting: this.crafting.toJSON(),
       camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
       lastDay: this.lastDay,
       decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
@@ -906,6 +918,7 @@ export class Game {
     }
     this.inventory.load(j.inventory as ReturnType<typeof this.inventory.toJSON>);
     this.gacha.load(j.gacha as ReturnType<typeof this.gacha.toJSON>);
+    this.crafting.load(j.crafting as ReturnType<typeof this.crafting.toJSON> | undefined);
     this.contracts.load(j.contracts as ReturnType<typeof this.contracts.toJSON>);
     this.trade.load(j.trade as ReturnType<typeof this.trade.toJSON> | undefined);
     resetTrainIds(1);
@@ -1437,7 +1450,18 @@ export class Game {
       this.atlas,
       () => this.clock.day,
     );
-    this.rosterScreen = new RosterScreen(this.inventory, this.fleet, this.atlas);
+    this.craftingScreen = new CraftingScreen(
+      this.crafting,
+      this.economy,
+      this.stock,
+      this.inventory,
+      () => this.clock.time,
+      (m, k) => this.toasts.push(m, k),
+      this.atlas,
+    );
+    this.rosterScreen = new RosterScreen(this.inventory, this.fleet, this.atlas, (m, k) =>
+      this.toasts.push(m, k),
+    );
     this.contractsScreen = new ContractsScreen(this.contracts, this.builder, this.clock, (m, k) =>
       this.toasts.push(m, k),
     );
@@ -1446,7 +1470,7 @@ export class Game {
     this.hud.actions.append(
       btn(STR.topbar.depot, () => this.screens.toggle(this.depot), 'small'),
       btn(STR.topbar.contracts, () => this.screens.toggle(this.contractsScreen), 'small'),
-      btn(STR.topbar.gacha, () => this.screens.toggle(this.gachaScreen), 'small'),
+      btn(STR.topbar.craft, () => this.screens.toggle(this.craftingScreen), 'small'),
       btn(STR.topbar.roster, () => this.screens.toggle(this.rosterScreen), 'small'),
       btn(STR.topbar.market, () => this.screens.toggle(this.marketScreen), 'small'),
       btn(STR.topbar.cheat, () => this.cheat(), 'small cheat'),
@@ -2069,7 +2093,7 @@ export class Game {
     }
     if (this.mode === 'play' && inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
     if (this.mode === 'play' && inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
-    if (this.mode === 'play' && inp.wasPressed('KeyG')) this.screens.toggle(this.gachaScreen);
+    if (this.mode === 'play' && inp.wasPressed('KeyG')) this.screens.toggle(this.craftingScreen);
     if (this.mode === 'play' && inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
     if (this.mode === 'play' && inp.wasPressed('KeyK')) this.screens.toggle(this.marketScreen);
     if (inp.wasPressed('Escape') && this.screens.current) {

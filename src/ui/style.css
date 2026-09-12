@@ -992,6 +992,103 @@ input.text {
   letter-spacing: 1px;
 }
 
+/* ---- crafting ---- */
+.craft {
+  position: relative;
+}
+.craft-choice {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 4px 0;
+}
+.craft-choice .tb-label {
+  min-width: 36px;
+}
+.craft-pool {
+  margin-top: 6px;
+  line-height: 1.6;
+}
+.craft-pool .known {
+  color: var(--text);
+}
+.craft-price {
+  font-family: var(--font-mono);
+  color: var(--amber);
+  margin-top: 8px;
+}
+.craft-recipe {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 6px;
+  margin: 3px 0;
+  border: 1px solid var(--border-dark);
+  background: var(--stone);
+}
+.craft-recipe.rarity-SSR {
+  border-color: var(--amber-dark);
+}
+.craft-recipe.rarity-SR {
+  border-color: #6a4a78;
+}
+.craft-recipe .body {
+  flex: 1;
+  min-width: 0;
+}
+.craft-recipe .name {
+  font-weight: bold;
+}
+.craft-recipe .sub {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.craft-recipe .sub.short {
+  color: #d88;
+}
+.craft-pick {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: rgba(10, 10, 12, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+}
+.craft-pick-title {
+  font-family: var(--font-title);
+  font-size: 22px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.craft-cards {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.craft-cards .gcard {
+  width: 200px;
+  height: 240px;
+}
+.craft-cards .gcard:hover .gcard-front {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 2px var(--amber-dark);
+}
+.craft-cards .gcard-stats {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex: 1;
+}
+.craft-cards .gcard-dupe.owned {
+  color: var(--amber);
+}
+
 /* ---- roster ---- */
 .roster-grid {
   display: grid;
