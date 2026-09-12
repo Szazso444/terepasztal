@@ -128,13 +128,19 @@ taken from other games. Sprites and individual sound effects can be overridden f
 
 ## Replacing placeholder art
 
-Each atlas group (`terrain`, `props`, `track`, `structures`, `rolling`, `fx`, `icons`, `people`) is loaded from
-`public/assets/<group>.png` + `public/assets/<group>.json` when present and generated procedurally
-otherwise. The JSON is `{ "frames": { "<name>": { "x", "y", "w", "h", "ax", "ay" } } }` where
-`ax`/`ay` is the anchor in pixels from the frame's top-left. Frame names are listed by the
-generators in `src/art`.
+Each atlas group (`terrain`, `props`, `track`, `structures`, `rolling`, `wagons`, `fx`, `icons`,
+`people`) is loaded from `public/assets/<group>.png` + `public/assets/<group>.json` when present
+and generated procedurally otherwise. The JSON is
+`{ "frames": { "<name>": { "x", "y", "w", "h", "ax", "ay" } } }` where `ax`/`ay` is the anchor in
+pixels from the frame's top-left. Frame names are listed by the generators in `src/art`.
 
 Drop `public/assets/audio/<event>.ogg` (event names in `src/engine/audio.ts`) to replace a
 synthesized sound.
+
+## Modelling tools
+
+`.mcp.json` wires Claude Code up to MCP for Blender and MCP for Unity; `docs/mcp-setup.md`
+covers the same for Codex, the Blender addon and the Unity package, and the camera, facing and
+anchor rules that make a Blender render drop straight into `public/assets`.
 
 See `MILESTONES.md` for progress notes and the post-merge fix pass.
