@@ -71,41 +71,6 @@ export class TuningScreen implements Screen {
       );
       g.append(row);
     }
-    // tier thresholds
-    const tiers = el('input', {
-      class: 'text',
-      type: 'text',
-      value: rules.tierThresholds.join(', '),
-      style: 'width:220px',
-    }) as HTMLInputElement;
-    tiers.addEventListener('change', () => {
-      const list = tiers.value
-        .split(/[,\s]+/)
-        .map(Number)
-        .filter((v) => Number.isFinite(v));
-      if (list.length >= 2) setRules({ tierThresholds: list });
-      tiers.value = rules.tierThresholds.join(', ');
-      this.onChange();
-    });
-    const g = el(
-      'div',
-      { class: 'tuning-group' },
-      el('div', { class: 'col-title', text: STR.tuning.progression }),
-    );
-    g.append(
-      el(
-        'div',
-        { class: 'tuning-row' },
-        el(
-          'div',
-          { class: 'tuning-label' },
-          el('span', { text: STR.tuning.tiers }),
-          el('div', { class: 'sub dim', text: STR.tuning.tiersHint }),
-        ),
-        tiers,
-      ),
-    );
-    b.append(g);
     const f = this.foot;
     f.innerHTML = '';
     f.append(

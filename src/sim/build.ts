@@ -9,6 +9,7 @@ import type { Economy } from './economy';
 import { Stockpile, scaleCost } from './stockpile';
 import { buildingDef, BUILDING_DEFS, type Building } from './buildings';
 import { biomeDef, biomeAt } from './biomes';
+import { inSupplyMode } from './supply';
 import { STR } from '../strings';
 import { sfx } from '../engine/audio';
 
@@ -269,6 +270,8 @@ export class Builder {
       }
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
+    if (!this.free && !inSupplyMode(def))
+      return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     if (def.depot && !this.free) {
       const allowed = this.depotsAllowed();
       const have = this.depots().length;
@@ -421,12 +424,20 @@ export class Builder {
     if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
+    if (!this.free && !inSupplyMode(def))
+      return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     const t = terrainAt(this.map, x, y);
     if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
       return { ok: false, cost: {}, reason: STR.build.badTerrain };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };
+    if (def.deposit && !this.hasDeposit(x, y, def.deposit))
+      return { ok: false, cost: {}, reason: STR.build.needDeposit(def.deposit) };
     return this.affordable(this.priced(def.cost, this.kindMul(defId)));
+  }
+  /** A deposit prop (coal seam, oil seep) lies on the tile. */
+  hasDeposit(x: number, y: number, kind: string) {
+    return !!this.map.props.get(this.key(x, y))?.some((p) => p.kind === kind);
   }
   placeBuilding(x: number, y: number, defId: string): Building | null {
     const c = this.checkBuilding(x, y, defId);

@@ -1360,6 +1360,26 @@ input[type='range'] {
 #res-card .kv {
   font-size: 11px;
 }
+#age-card {
+  position: fixed;
+  width: 280px;
+  z-index: 80;
+  pointer-events: none;
+  font-size: 11px;
+}
+#age-card .kv {
+  font-size: 11px;
+}
+#age-card .kv.amber .v {
+  color: var(--amber);
+}
+#age-card .bar-fill.good {
+  background: var(--cyan-dark);
+}
+#topbar .stat.age,
+.funds .stat.age {
+  cursor: help;
+}
 #topbar .stat.toggles .btn.active {
   color: var(--cyan);
   border-color: var(--cyan-dark);

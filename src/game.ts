@@ -8,6 +8,8 @@ import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, setRules, daySeconds } from './sim/rules';
+import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
+import { ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
 import { rulesDiffer } from './sim/rules';
 import { contentIsCustom } from './data/content';
@@ -323,11 +325,27 @@ export class Game {
     return this.mainMenu.visible || this.pauseMenu.visible;
   }
 
-  constructor(spec: WorldSpec) {
+  constructor(spec: WorldSpec, supply?: SupplyMode) {
     this.spec = spec;
     this.seed = spec.seed;
+    setSupplyMode(supply);
+    this.trade.seed = this.seed;
     this.uiRoot = document.getElementById('ui-root')!;
   }
+  /** Production chain the game runs (chosen at new game, stored in the save). */
+  get supply() {
+    return supplyMode();
+  }
+  /** The live numbers the age goals are measured against. */
+  ageSnapshot(): AgeSnapshot {
+    return {
+      depots: this.builder.depots().length,
+      population: this.stock.population,
+      earned: this.economy.earned,
+    };
+  }
+  /** game time of the next age-goal check (once per in-game hour) */
+  private nextAgeCheck = 0;
 
   /** Starting economy for a brand-new game, from the rules (or a level's start block). */
   startFresh(start?: LevelData['start']) {
@@ -337,8 +355,6 @@ export class Game {
     this.applySeason(true);
     this.economy.money = start ? start.money : rules.startMoney;
     this.economy.tickets = start ? start.tickets : rules.startTickets;
-    const rep = start ? start.reputation : rules.startReputation;
-    if (rep > 0) this.economy.addReputation(rep);
     const stockMul = start?.stockMul ?? 1;
     for (const [id, n] of Object.entries(START_STOCK))
       this.stock.add(id, Math.round(n * rules.startStock * stockMul));
@@ -350,7 +366,7 @@ export class Game {
       }
     }
     if (start && start.tier > this.economy.tier) {
-      this.economy.tier = Math.min(start.tier, this.regions.tiers.length ? 4 : 0);
+      this.economy.tier = Math.min(start.tier, LAST_AGE);
       const newly = this.regions.applyTier(start.tier);
       if (newly.length) {
         this.world.rebuildFog();
@@ -440,8 +456,8 @@ export class Game {
   private buildMenus() {
     this.mainMenu = new MainMenu({
       continue: () => this.closeMenus(),
-      newGame: (seed) => {
-        if (this.confirmReplaceSave()) this.newGame(seed);
+      newGame: (seed, supply) => {
+        if (this.confirmReplaceSave()) this.newGame(seed, supply);
       },
       playLevel: (id) => {
         if (!this.confirmReplaceSave()) return;
@@ -626,7 +642,7 @@ export class Game {
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
     validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
-    this.economy.onTierUp = (t) => this.onTierUp(t);
+    this.economy.onAgeUp = (t) => this.onAgeUp(t);
     this.inventory.seedStarter(0);
     this.fleet = new Fleet(
       this.track,
@@ -655,10 +671,7 @@ export class Game {
         );
         sfx('contract.done');
       } else if (e.kind === 'failed') {
-        this.toasts.push(
-          STR.contracts.failedMsg(e.contract.name, Math.round(e.contract.reputation * 0.6)),
-          'warn',
-        );
+        this.toasts.push(STR.contracts.failedMsg(e.contract.name), 'warn');
         const dest = this.builder.stationById(e.contract.destId);
         this.notices.push(
           {
@@ -785,6 +798,7 @@ export class Game {
       weather: this.weather.toJSON(),
 
       world: this.spec,
+      supply: supplyMode(),
       rules: { ...rules },
       stockpile: this.stock.toJSON(),
       regions: this.regions.toJSON(),
@@ -836,6 +850,7 @@ export class Game {
     for (const [k, v] of Object.entries(j)) if (!KNOWN_SAVE_KEYS.has(k)) this.saveExtra[k] = v;
     if (j.loadedFrom !== undefined) this.warnDeprecated(j);
     if (j.rules) setRules(j.rules);
+    setSupplyMode(j.supply);
     setSeasonOffset(j.seasonOffset ?? 0);
     this.clock.time = j.clock.time;
     this.clock.setSpeed(j.clock.speedIndex);
@@ -895,14 +910,14 @@ export class Game {
     this.camera.centerOn(j.camera.x, j.camera.y);
   }
 
-  newGame(seedText: string) {
+  newGame(seedText: string, supply: SupplyMode = 'simple') {
     clearSave();
     const seed = seedText
       ? /^\d+$/.test(seedText)
         ? Number(seedText)
         : hashSeed(seedText)
       : Math.floor(Math.random() * 2 ** 31);
-    setIntentAndReload({ action: 'new', seed });
+    setIntentAndReload({ action: 'new', seed, supply });
   }
 
   // ---------------------------------------------------------------- world edits
@@ -1140,9 +1155,12 @@ export class Game {
         }
     return null;
   }
-  private onTierUp(tier: number) {
+  /** A new age begins: its works, stations and rolling stock unlock. */
+  private onAgeUp(tier: number) {
     this.toolbar.refresh();
-    this.toasts.push(STR.hud.tierUp(tier), 'good');
+    const text = STR.hud.ageUp(tier);
+    this.toasts.push(text, 'good');
+    this.notices?.push({ key: `age:${tier}`, kind: 'info', text, target: null }, 120);
     sfx('tier.up');
   }
   /** Biome multiplier on a station's output. */
@@ -1195,7 +1213,7 @@ export class Game {
   }
 
   private buildUi() {
-    this.hud = new Hud(this.clock);
+    this.hud = new Hud(this.clock, () => ageStatus(this.economy.tier, this.ageSnapshot()));
     this.depot = new DepotScreen(
       this.inventory,
       this.fleet,
@@ -1282,7 +1300,7 @@ export class Game {
           location.hash = `seed=${j.seed}`;
           location.reload();
         },
-        newGame: (seed) => this.newGame(seed),
+        newGame: (seed) => this.newGame(seed, supplyMode()),
         exportSave: () => JSON.stringify(this.snapshot()),
         saveAs: (name) => {
           const ok = writeSlot(name, this.snapshot());
@@ -1359,7 +1377,7 @@ export class Game {
     this.debug = new DebugPanel(this.seed, {
       giveMoney: () => (this.economy.money += 10000),
       giveTickets: () => (this.economy.tickets += 10),
-      giveReputation: () => this.economy.addReputation(100),
+      nextAge: () => this.economy.setAge(this.economy.tier + 1),
       giveResources: () => {
         for (const id of RESOURCE_IDS) this.stock.add(id, 200, this.stockCap(id));
       },
@@ -1539,6 +1557,10 @@ export class Game {
       this.fleet.tick(gdt, this.clock.time, wf);
       this.contracts.tick(this.clock.time);
       this.trade.tick(this.clock.time, this.stock, this.economy, (id) => this.stockCap(id));
+      if (this.mode === 'play' && this.clock.time >= this.nextAgeCheck) {
+        this.nextAgeCheck = this.clock.time + daySeconds() / 24;
+        this.economy.advanceAge(this.ageSnapshot());
+      }
       if (this.clock.day !== this.lastDay) {
         this.lastDay = this.clock.day;
         if (this.contracts.completedToday > 0) {

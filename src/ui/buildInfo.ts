@@ -55,7 +55,7 @@ export class BuildInfo {
     const tanks = [
       t.coalCap > 0 ? `${STR.train.fuel} ${Math.round(t.coal)}/${Math.round(t.coalCap)}` : '',
       t.waterCap > 0 ? `${STR.train.water} ${Math.round(t.water)}/${Math.round(t.waterCap)}` : '',
-      t.oilCap > 0 ? `${STR.train.oil} ${Math.round(t.oil)}/${Math.round(t.oilCap)}` : '',
+      t.oilCap > 0 ? `${cargoName(t.oilKind)} ${Math.round(t.oil)}/${Math.round(t.oilCap)}` : '',
     ]
       .filter(Boolean)
       .join(' · ');

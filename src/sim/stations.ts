@@ -15,6 +15,7 @@ export function stationDef(id: string): StationDef {
   if (!d) throw new Error(`unknown station ${id}`);
   return d;
 }
+/** Station level cap in an age (`maxLevelByTier` is indexed by age: steam, diesel, electric). */
 export function maxLevelForTier(tier: number) {
   return LEVELS.maxLevelByTier[Math.min(tier, LEVELS.maxLevelByTier.length - 1)];
 }
@@ -55,7 +56,9 @@ export function terrainFactorAt(map: GameMap, x: number, y: number, defId: strin
         ? t === Terrain.Forest
         : want === 'rock'
           ? t === Terrain.Rock || t === Terrain.Hill
-          : t === Terrain.Water;
+          : want === 'sand'
+            ? t === Terrain.Sand
+            : t === Terrain.Water;
   let sum = 0;
   for (let dy = -HARVEST_RADIUS; dy <= HARVEST_RADIUS; dy++)
     for (let dx = -HARVEST_RADIUS; dx <= HARVEST_RADIUS; dx++) {

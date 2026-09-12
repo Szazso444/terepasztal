@@ -472,6 +472,46 @@ function bigBoulder(seed: number, v: number): PixelBuf {
   return b;
 }
 
+/** Coal seam cropping out of a hillside: a low black ledge with glints. 18x9. */
+function coalSeam(seed: number, v: number): PixelBuf {
+  const w = 18;
+  const h = 9;
+  const b = new PixelBuf(w, h);
+  const c: RGB[] = [
+    [40, 40, 44],
+    [56, 56, 62],
+    [26, 26, 30],
+  ];
+  b.ellipse(w / 2, 4.5, w / 2 - 1 - (v % 2), 3.5, c, seed, 0.55);
+  if (v === 2) b.ellipse(w / 2 + 4, 4, 4, 3, c, seed + 1, 0.55);
+  // flat, slightly lighter top ledge and a few glints
+  for (let x = 3; x < w - 3; x++) if (b.alpha(x, 2)) b.set(x, 2, c[1]);
+  b.set(5, 3, [96, 96, 106]);
+  b.set(11, 4, [96, 96, 106]);
+  b.set(8 + v, 6, [80, 80, 90]);
+  for (let x = 0; x < w; x++) if (b.alpha(x, 7)) b.set(x, 8, shade(c[2], 0.8));
+  b.outline(PAL.outline, 200);
+  return b;
+}
+/** Oil seep: a dark puddle with a dull sheen and a bubble. 22x9. */
+function oilSeep(seed: number, v: number): PixelBuf {
+  const w = 22;
+  const h = 9;
+  const b = new PixelBuf(w, h);
+  const c: RGB[] = [
+    [34, 28, 30],
+    [48, 40, 40],
+    [22, 18, 20],
+  ];
+  b.ellipse(w / 2, 5, w / 2 - 1, 3, c, seed, 0.4);
+  if (v > 0) b.ellipse(w / 2 - 6 + v * 4, 3 + v, 3, 1.5, c, seed + 2, 0.4);
+  b.rect(6, 4, 3, 1, [92, 80, 96]);
+  b.set(12 + v, 5, [92, 80, 96]);
+  b.set(15, 3, shade(c[1], 1.3));
+  b.outline(PAL.outline, 180);
+  return b;
+}
+
 export function generatePropsAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
   const add = (name: string, p: PixelBuf) =>
@@ -489,6 +529,8 @@ export function generatePropsAtlas(): AtlasImage {
     add(`props/cactus_${v}`, cactus(90 + v, v));
     add(`props/bush_${v}`, bush(40 + v, v));
     add(`props/boulder_${v}`, bigBoulder(130 + v, v));
+    add(`props/coal_${v}`, coalSeam(140 + v, v));
+    add(`props/oil_${v}`, oilSeep(150 + v, v));
   }
   for (let v = 0; v < 2; v++) {
     add(`props/palm_${v}`, palmTree(80 + v, v));

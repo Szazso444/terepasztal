@@ -50,6 +50,7 @@
     },
     "crew": 6,
     "tier": 1,
+    "supply": "simple",
     "recipe": {
       "in": {
         "coal": 3,

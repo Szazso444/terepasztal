@@ -199,6 +199,98 @@ function population(): PixelBuf {
   return b;
 }
 
+/** Ore lump: base shades with a few glints of the metal. */
+function oreLump(base: RGB[], glint: RGB, seed: number): PixelBuf {
+  const b = new PixelBuf(S, S);
+  b.ellipse(8, 9, 6, 5, base, seed, 0.5);
+  b.rect(5, 5, 3, 2, base[1]);
+  b.set(10, 7, glint);
+  b.set(7, 10, glint);
+  b.set(11, 11, shade(glint, 0.8));
+  b.set(6, 12, base[2]);
+  b.outline(PAL.outline, 220);
+  return b;
+}
+/** Iron ore: rusty brown lump with silver flecks. */
+function ironOre(): PixelBuf {
+  return oreLump(
+    [
+      [124, 84, 60],
+      [148, 104, 72],
+      [92, 62, 44],
+    ],
+    [176, 180, 188],
+    11,
+  );
+}
+/** Copper ore: dull brown lump with verdigris and copper glints. */
+function copperOre(): PixelBuf {
+  const b = oreLump(
+    [
+      [110, 88, 62],
+      [128, 104, 72],
+      [84, 66, 46],
+    ],
+    [206, 130, 70],
+    13,
+  );
+  b.set(9, 10, [78, 142, 110]);
+  b.set(5, 8, [78, 142, 110]);
+  return b;
+}
+/** Crude oil: brown-black drop with a dull olive gloss. */
+function crude(): PixelBuf {
+  return droplet(
+    [
+      [76, 64, 42],
+      [50, 42, 28],
+      [30, 26, 18],
+    ],
+    [128, 116, 74],
+  );
+}
+/** Diesel: amber drop with a pale highlight. */
+function diesel(): PixelBuf {
+  return droplet(
+    [
+      [214, 172, 72],
+      [172, 130, 46],
+      [122, 90, 32],
+    ],
+    [244, 226, 168],
+  );
+}
+/** Sand: a low heap with a few grains around it. */
+function sand(): PixelBuf {
+  const b = new PixelBuf(S, S);
+  for (let y = 0; y < 7; y++) {
+    const hw = 1 + y;
+    for (let x = 8 - hw; x <= 8 + hw; x++)
+      b.set(x, 6 + y, x < 7 ? PAL.sand[1] : x > 9 ? PAL.sand[2] : PAL.sand[0]);
+  }
+  b.set(3, 13, PAL.sand[2]);
+  b.set(13, 12, PAL.sand[2]);
+  b.set(12, 14, PAL.sand[1]);
+  b.set(7, 7, shade(PAL.sand[1], 1.15));
+  b.outline(PAL.outline, 220);
+  return b;
+}
+/** Wire: a coil of copper, seen from the side. */
+function wire(): PixelBuf {
+  const b = new PixelBuf(S, S);
+  const cu: RGB[] = [
+    [196, 122, 66],
+    [222, 150, 88],
+    [150, 90, 48],
+  ];
+  for (let i = 0; i < 4; i++)
+    b.ellipse(8, 5 + i * 2, 5.5, 2.2, [cu[1], cu[0], cu[2]], 20 + i, 0.15);
+  b.ellipse(8, 4, 5.5, 2.2, [cu[2], cu[0]], 25, 0.1);
+  b.rect(7, 3, 3, 1, PAL.iron[1]);
+  b.outline(PAL.outline, 220);
+  return b;
+}
+
 export function generateIconsAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
   const gens: Record<string, () => PixelBuf> = {
@@ -213,6 +305,12 @@ export function generateIconsAtlas(): AtlasImage {
     money,
     passengers,
     population,
+    iron_ore: ironOre,
+    copper_ore: copperOre,
+    crude,
+    diesel,
+    sand,
+    wire,
   };
   for (const [id, g] of Object.entries(gens)) ab.add(`icons/${id}`, g().toImageData(), 8, 8);
   return ab.build(128);

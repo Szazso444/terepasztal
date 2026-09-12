@@ -1,3 +1,14 @@
+/** Age names by index (0 steam, 1 diesel, 2 electric); ids match `src/data/ages.json`. */
+const AGE_NAMES: Record<string, string> = {
+  steam: 'Steam Age',
+  diesel: 'Diesel Age',
+  electric: 'Electric Age',
+};
+const AGE_ORDER = ['steam', 'diesel', 'electric'];
+function ageLabel(t: number) {
+  return AGE_NAMES[AGE_ORDER[t]] ?? `age ${t}`;
+}
+
 /** All user-facing strings. Keep flat so a Hungarian table can mirror this file later. */
 export const STR = {
   title: 'Terepasztal',
@@ -6,7 +17,7 @@ export const STR = {
     money: 'Funds',
     weather: (season: string, weather: string) => `${season} · ${weather}`,
     tickets: 'Tickets',
-    reputation: 'Reputation',
+    age: 'Age',
     day: (d: number) => `Day ${d}`,
     speed: ['❚❚', '1x', '2x', '3x'],
     pause: 'Pause (Space)',
@@ -15,12 +26,25 @@ export const STR = {
     weatherToggleHint: 'Toggle rain, fog and seasons',
     dayToggle: 'Day/night',
     dayToggleHint: 'Toggle the day and night cycle',
-    tier: (t: number) => `Tier ${t}`,
-    tierUp: (t: number) => `Reputation tier ${t} reached. New rolling stock and works unlocked.`,
+    ageUp: (t: number) =>
+      `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
+  },
+  ages: {
+    title: 'Ages',
+    name: AGE_NAMES,
+    current: 'current',
+    reached: 'reached',
+    locked: 'not yet',
+    start: 'Where every railway begins.',
+    goal: {
+      depots: 'Depots',
+      population: 'Population',
+      earned: 'Earned in total',
+    } as Record<string, string>,
+    hint: 'An age begins once every goal listed for it is met (checked every hour).',
   },
   overview: {
     locked: 'UNCHARTED',
-    tierReq: (t: number) => `Reputation tier ${t}`,
     price: (v: number) => `$${v.toLocaleString()}`,
     buyHint: 'click to buy',
     buyTitle: 'Buy chunk',
@@ -72,7 +96,7 @@ export const STR = {
     entities: 'Entities',
     giveMoney: '+10,000 funds',
     giveTickets: '+10 tickets',
-    giveRep: '+100 rep',
+    nextAge: 'Next age',
     giveResources: '+200 resources',
     spawnContract: 'Spawn contract',
     depthOverlay: 'Depth-sort overlay',
@@ -91,7 +115,9 @@ export const STR = {
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
-    tierLocked: (t: number) => `Requires reputation tier ${t}`,
+    tierLocked: (t: number) => `Requires the ${ageLabel(t)}`,
+    supplyLocked: "Not part of this game's production chain",
+    needDeposit: (k: string) => `Needs a ${k} deposit on the tile`,
     badTerrain: 'Cannot build here',
     needTrack: 'Must touch track',
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
@@ -99,7 +125,7 @@ export const STR = {
     needTrackHere: 'Signals stand on track',
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
-    levelCap: 'Level cap for your reputation tier',
+    levelCap: 'Level cap for the current age',
     cost: (v: string) => `Cost ${v}`,
     harvest: (n: number, cargo: string, f: number) =>
       `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
@@ -131,6 +157,8 @@ export const STR = {
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
       building: 'On a free buildable tile.',
       works: 'On a free buildable tile. Runs from the stockpile; no track needed.',
+      deposit: (k: string) =>
+        `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
       plant: 'On a free buildable tile. Chain Power Line poles from it to reach the rails.',
     },
     trackDesc: {
@@ -359,7 +387,7 @@ export const STR = {
     expired: 'Expired',
     accepted: (n: string) => `${n} accepted`,
     completed: (n: string, pay: string) => `${n} delivered: ${pay}`,
-    failedMsg: (n: string, rep: number) => `${n} failed: -${rep} reputation`,
+    failedMsg: (n: string) => `${n} failed: deadline missed`,
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
     offersBadge: (n: number) => `${n} new`,
     sideEmpty: 'No active contracts.',
@@ -406,9 +434,9 @@ export const STR = {
     crew: 'crew',
     type: { steam: 'Steam', diesel: 'Diesel', electric: 'Electric' } as Record<string, string>,
     carries: {
-      liquid: 'Liquids (water, oil)',
-      mineral: 'Minerals (coal, stone, iron)',
-      bulk: 'Bulk (wood, wheat)',
+      liquid: 'Liquids (water, oil, diesel)',
+      mineral: 'Minerals (coal, stone, iron, ores, sand)',
+      bulk: 'Bulk (wood, wheat, wire)',
       people: 'Passengers',
     } as Record<string, string>,
     fuelLine: (l: {
@@ -469,6 +497,7 @@ export const STR = {
     newGameNote: 'Generates a fresh map. Leave the seed empty for a random one.',
     seedPlaceholder: 'seed (optional)',
     confirmNew: 'Start a new game? The current save will be replaced on the next autosave.',
+    supply: 'Production chain',
     transfer: 'Transfer',
     exportSave: 'Export to text',
     formatNote:
@@ -513,6 +542,13 @@ export const STR = {
     mainMenu: 'Main menu',
     confirmReplace: 'This replaces the current saved game. Continue?',
     menuButton: 'Menu',
+    supply: 'Production chain',
+    supplyModes: { simple: 'Simple', full: 'Full' } as Record<string, string>,
+    supplyHint: {
+      simple:
+        'Kiln, grinder and refinery make coal, iron and oil from the stockpile; diesels burn oil; warehouses top up fuel from the stockpile.',
+      full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
+    } as Record<string, string>,
   },
   editor: {
     terrainDesc: 'Paint this terrain. Anything built on the tile is cleared.',
@@ -521,7 +557,7 @@ export const STR = {
     size: 'Size',
     description: 'Description shown in the level list',
     start: 'Player start',
-    startTier: 'Start tier',
+    startTier: 'Start age (0 steam, 1 diesel, 2 electric)',
     brush: 'Terrain brush',
     brushHint:
       'Pick a terrain in the toolbar, drag to paint. Painting clears anything built on the tile.',
@@ -545,9 +581,6 @@ export const STR = {
   tuning: {
     title: 'Game tuning',
     newGameOnly: 'new map',
-    progression: 'Progression',
-    tiers: 'Reputation tier thresholds',
-    tiersHint: 'Comma-separated, first is 0. Tiers unlock regions, station levels and banners.',
     note: 'Changes apply immediately and are stored with the save. Map values apply to the next generated map.',
     reset: 'Reset to defaults',
   },
@@ -640,7 +673,10 @@ export const STR = {
     buy: 'Buy',
     sell: 'Sell',
     full: 'Stockpile is full',
-    hint: 'Prices are fixed per unit. Each depot raises the stockpile cap.',
+    trend: 'Trend',
+    driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
+    driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow daily walk.',
+    hint: 'Prices are per unit. Each depot raises the stockpile cap.',
     deals: 'Standing deals',
     dealsHint: (d: number) =>
       `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the stockpile cap or when funds run out; selling takes what is on hand.`,
@@ -675,6 +711,12 @@ export const STR = {
       iron: 'From the stone grinder or the Market. Switches, signals, power lines and works.',
       power:
         'From power plants, stored in the battery. Electric engines draw it while on powered rails.',
+      iron_ore: 'From iron mines on stony ground. The ironworks smelts it with coal into iron.',
+      crude: 'From oil derricks on oil seeps. The refinery distils it into diesel.',
+      diesel: 'From the refinery or the Market. What diesel engines burn.',
+      sand: 'From sand pits. Every train spreads a little on the rails for grip.',
+      copper_ore: 'From copper mines on stony ground. The wire mill draws it into wire.',
+      wire: 'From the wire mill. Electrification is strung from it.',
     } as Record<string, string>,
   },
   fleet: {

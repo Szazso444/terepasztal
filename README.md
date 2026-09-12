@@ -16,9 +16,9 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 
 ## Menus, tuning and editing
 
-- **Main menu** on boot: continue, new game (seed), game tuning, content editor, settings, and
-  the level list (play, edit, delete, create blank or generated, import JSON). Esc or the Menu
-  button opens the pause menu in play.
+- **Main menu** on boot: continue, new game (seed and production chain: Simple or Full), game
+  tuning, content editor, settings, and the level list (play, edit, delete, create blank or
+  generated, import JSON). Esc or the Menu button opens the pause menu in play.
 - **Game tuning**: live sliders for economy, contracts, trains, time, weather and map generation;
   stored with the save.
 - **Content editor**: edit or add locomotives, wagons, cargo, stations, contracts, decor, gacha
@@ -38,13 +38,27 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 - **Towns**: a Town Station (25 tiles from any other) with a Townhouse and a Warehouse within seven
   tiles founds a town; name it when placing (rename any time). Stations inside carry the town's
   name, the overview colours its reach and the left-hand panel lists population, output and use.
+- **Ages**: every game starts in the **Steam Age**. The **Diesel Age** begins once you own three
+  depots and the population reaches 1000; the **Electric Age** once $250,000 has been earned in
+  total (goals in `src/data/ages.json`, checked every in-game hour). Each age unlocks its works,
+  stations, station levels, contract templates and gacha banners; the top bar shows the current
+  age and hovering it lists the goals with progress bars.
 - **Works**: Charcoal Kiln (wood → coal), Stone Grinder (stone → iron), Oil Refinery
   (coal + water → oil), Power Plant (coal or oil + wood + water → power). The Market (`M`) buys
-  and sells any resource for money.
+  and sells any resource for money; fuel prices (oil, diesel, crude) wander up to ±40 % on a slow
+  daily walk.
+- **Production chain** (picked when a new game starts, stored in the save): **Simple** is the
+  above. **Full** adds a second data set (`src/data/*_full.json`, entries marked
+  `supply: "full"`): Colliery on coal seams (marked on hills), Iron Mine and Ironworks (iron ore +
+  coal → iron), Oil Derrick on oil seeps → Refinery (crude → diesel), Sand Pit (every train
+  spreads a little sand for grip), Copper Mine → Wire Mill (wire for electrification). Diesel
+  engines burn diesel instead of oil, and warehouses only refuel trains from what other trains
+  brought them.
 - **Fuel**: steam burns coal (or wood) and water, diesel burns oil, electrics need power and a
   live Power Line network (poles within two tiles of each other and a Power Plant). Tanks fill at
-  Depots, at stations near a Coaling Stage or Water Tower, and from a town Warehouse's own store;
-  a train never starts a leg it could not finish and still reach fuel from.
+  Depots, at stations near a Coaling Stage or Water Tower, and from a town Warehouse's own store
+  (topped up from the stockpile in the Simple production chain); a train never starts a leg it
+  could not finish and still reach fuel from.
 - **Trains**: Static **Schedule** follows your stop list (load, unload, wait full, dwell times,
   refuel, direction). Dynamic **Production** sweeps producers into warehouses, **Collection**
   empties warehouses into depots, **Transport** carries passengers between towns; all three

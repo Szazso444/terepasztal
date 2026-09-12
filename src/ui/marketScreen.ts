@@ -5,6 +5,7 @@ import type { Stockpile } from '../sim/stockpile';
 import type { Economy } from '../sim/economy';
 import { CARGO } from '../sim/cargo';
 import { rules, daySeconds } from '../sim/rules';
+import { inSupplyMode } from '../sim/supply';
 
 import { TradeDesk, BUY_MUL, SELL_MUL } from '../sim/trade';
 export { BUY_MUL, SELL_MUL };
@@ -45,14 +46,16 @@ export class MarketScreen implements Screen {
           STR.market.have,
           STR.market.buyPrice,
           STR.market.sellPrice,
+          STR.market.trend,
           '',
         ].map((h) => el('th', { text: h })),
       ),
     );
     for (const c of CARGO) {
-      if (c.class === 'people') continue;
-      const buy = Math.round(c.price * BUY_MUL * rules.spotPriceMul * 100) / 100;
-      const sell = Math.round(c.price * SELL_MUL * rules.spotPriceMul * 100) / 100;
+      if (c.class === 'people' || !inSupplyMode(c)) continue;
+      const drift = this.trade.priceMul(c.id);
+      const buy = Math.round(c.price * BUY_MUL * rules.spotPriceMul * drift * 100) / 100;
+      const sell = Math.round(c.price * SELL_MUL * rules.spotPriceMul * drift * 100) / 100;
       const actions = el('div', { class: 'row', style: 'margin:0' });
       for (const n of [10, 100]) {
         const bb = btn(
@@ -97,11 +100,18 @@ export class MarketScreen implements Screen {
           }),
           el('td', { class: 'num', text: fmtMoney(buy) }),
           el('td', { class: 'num', text: fmtMoney(sell) }),
+          el('td', {
+            class: `num ${drift > 1.02 ? 'red' : drift < 0.98 ? 'good' : 'dim'}`,
+            text: this.trade.drifts(c.id)
+              ? STR.market.driftPct(Math.round((drift - 1) * 100))
+              : '-',
+          }),
           el('td', {}, actions),
         ),
       );
     }
     b.append(table);
+    b.append(el('div', { class: 'sub dim', text: STR.market.driftHint }));
     // standing deals: so much per cycle, settled automatically
     const cycleDays = rules.tradeCycleDays;
     const left = Math.max(0, this.trade.nextAt - this.now());
@@ -120,7 +130,7 @@ export class MarketScreen implements Screen {
       ),
     );
     for (const c of CARGO) {
-      if (c.class === 'people') continue;
+      if (c.class === 'people' || !inSupplyMode(c)) continue;
       const cur = this.trade.get(c.id);
       const input = (kind: 'buy' | 'sell') => {
         const inp = el('input', {
@@ -140,7 +150,7 @@ export class MarketScreen implements Screen {
         });
         return inp;
       };
-      const money = cur > 0 ? -cur * TradeDesk.buyPrice(c.id) : -cur * TradeDesk.sellPrice(c.id);
+      const money = cur > 0 ? -cur * this.trade.buyPrice(c.id) : -cur * this.trade.sellPrice(c.id);
       dt.append(
         el(
           'tr',
@@ -150,13 +160,13 @@ export class MarketScreen implements Screen {
             'td',
             {},
             input('buy'),
-            el('span', { class: 'dim', text: ` @ ${fmtMoney(TradeDesk.buyPrice(c.id))}` }),
+            el('span', { class: 'dim', text: ` @ ${fmtMoney(this.trade.buyPrice(c.id))}` }),
           ),
           el(
             'td',
             {},
             input('sell'),
-            el('span', { class: 'dim', text: ` @ ${fmtMoney(TradeDesk.sellPrice(c.id))}` }),
+            el('span', { class: 'dim', text: ` @ ${fmtMoney(this.trade.sellPrice(c.id))}` }),
           ),
           el('td', {
             class: `num ${money < 0 ? 'red' : money > 0 ? 'good' : 'dim'}`,

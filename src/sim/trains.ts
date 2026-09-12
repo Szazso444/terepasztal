@@ -11,6 +11,7 @@ import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules } from './rules';
+import { dieselFuelId, sandPerTile, supplyMode } from './supply';
 
 const trackData = content.track;
 import { sfx } from '../engine/audio';
@@ -197,6 +198,8 @@ export class Train {
   /** which solid fuel is in the tanks, for display */
   fuelKind: 'coal' | 'wood' = 'coal';
   fuelPreference: 'coal' | 'wood' = 'coal';
+  /** what the diesel tanks hold: oil in the simple production chain, diesel in the full one */
+  oilKind: 'oil' | 'diesel' = 'oil';
   oil = 0;
   water = 0;
   trip: TripStats = newTrip(0);
@@ -530,9 +533,13 @@ export class Train {
     }
     const oilTarget = this.oilCap * (opts.fuelFrac ?? 1);
     if (opts.fuel && this.oilCap > 0 && this.oil < oilTarget - 1e-6) {
-      const got = stock.take('oil', (oilTarget - this.oil) * mul) / mul;
+      const liquid = dieselFuelId();
+      const got = stock.take(liquid, (oilTarget - this.oil) * mul) / mul;
       this.oil = Math.min(this.oilCap, this.oil + got);
-      if (got > 0) taken.oil = got;
+      if (got > 0) {
+        this.oilKind = liquid;
+        taken[liquid] = got;
+      }
     }
     const waterTarget = this.waterCap * (opts.waterFrac ?? 1);
     if (opts.water && this.waterCap > 0 && this.water < waterTarget - 1e-6) {
@@ -542,7 +549,7 @@ export class Train {
     }
     return taken;
   }
-  /** Fill the tanks from a warehouse's own store (coal, wood, oil, water it holds). */
+  /** Fill the tanks from a warehouse's own store (coal, wood, oil or diesel, water it holds). */
   refuelFromStation(st: Station) {
     const taken: Record<string, number> = {};
     const takeInto = (kind: string, need: number) => {
@@ -563,8 +570,12 @@ export class Train {
         }
       }
     }
-    if (this.oilCap > 0 && this.oil < this.oilCap - 1e-6)
-      this.oil = Math.min(this.oilCap, this.oil + takeInto('oil', this.oilCap - this.oil));
+    if (this.oilCap > 0 && this.oil < this.oilCap - 1e-6) {
+      const liquid = dieselFuelId();
+      const got = takeInto(liquid, this.oilCap - this.oil);
+      if (got > 0) this.oilKind = liquid;
+      this.oil = Math.min(this.oilCap, this.oil + got);
+    }
     if (this.waterCap > 0 && this.water < this.waterCap - 1e-6)
       this.water = Math.min(
         this.waterCap,
@@ -576,7 +587,7 @@ export class Train {
   drainTo(stock: Stockpile) {
     if (this.coal > 0)
       stock.add(this.fuelKind, this.fuelKind === 'coal' ? this.coal : this.coal * 2, Infinity);
-    if (this.oil > 0) stock.add('oil', this.oil, Infinity);
+    if (this.oil > 0) stock.add(this.oilKind, this.oil, Infinity);
     if (this.water > 0) stock.add('water', this.water, Infinity);
     this.coal = this.oil = this.water = 0;
   }
@@ -1188,7 +1199,13 @@ export class Train {
       }
       if (this.oilRate > 0) {
         this.oil -= this.oilRate * burn;
-        bump(this.trip.fuel, 'oil', this.oilRate * burn);
+        bump(this.trip.fuel, this.oilKind, this.oilRate * burn);
+      }
+      // traction sand (full production chain): spread on the rails, never a reason to stop
+      const sand = sandPerTile();
+      if (sand > 0) {
+        const got = ctx.stockpile.take('sand', sand * step);
+        if (got > 0) bump(this.trip.fuel, 'sand', got);
       }
       if (this.powerRate > 0) {
         ctx.stockpile.take('power', this.powerRate * burn);
@@ -1285,10 +1302,17 @@ export class Train {
       // carts bring half a tank, or a full one when the next leg would otherwise be out of reach
       // fill the tanks: from the stockpile at a depot or a supplied station, from a warehouse's
       // own store elsewhere in a town, and from the stockpile by cart anywhere else
+      // (in the simple production chain a warehouse also tops up from the stockpile; in the
+      // full one it only has what trains brought it)
       const local = st.def.stockpile && !st.def.pool ? st : null;
       const taken = local
         ? this.refuelFromStation(local)
         : this.refuel(ctx.stockpile, { fuel: true, water: true, fuelFrac: 1, waterFrac: 1 });
+      if (local && supplyMode() === 'simple')
+        for (const [k, v] of Object.entries(
+          this.refuel(ctx.stockpile, { fuel: true, water: true, fuelFrac: 1, waterFrac: 1 }),
+        ))
+          taken[k] = (taken[k] ?? 0) + v;
       for (const [k, v] of Object.entries(taken)) {
         bump(this.trip.fuel, `refuel_${k}`, v);
         this.flowAcc[k] = (this.flowAcc[k] ?? 0) - v;
@@ -1642,6 +1666,7 @@ export class Train {
         water: this.water,
         kind: this.fuelKind,
         pref: this.fuelPreference,
+        oilKind: this.oilKind,
       },
       trip: this.trip,
       lastTrip: this.lastTrip,
@@ -1705,6 +1730,7 @@ export class Train {
     t.water = j.tanks.water;
     t.fuelKind = j.tanks.kind;
     t.fuelPreference = j.tanks.pref;
+    t.oilKind = j.tanks.oilKind === 'diesel' ? 'diesel' : 'oil';
     t.trip = { ...newTrip(0), ...j.trip };
     t.lastTrip = j.lastTrip ? { ...newTrip(0), ...j.lastTrip } : null;
     t.distance = j.distance;

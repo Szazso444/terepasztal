@@ -5,7 +5,7 @@ import type { Train } from '../sim/trains';
 import type { Fleet } from '../sim/fleet';
 import type { Builder } from '../sim/build';
 import type { Stockpile } from '../sim/stockpile';
-import { cargoDef } from '../sim/cargo';
+import { cargoDef, cargoName } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
@@ -145,7 +145,9 @@ export class TrainScreen implements Screen {
       );
     }
     if (t.hasDiesel)
-      l.append(this.bar(STR.train.oil, t.oil, t.oilCap, t.oil < t.oilRate * 5 ? 'over' : ''));
+      l.append(
+        this.bar(cargoName(t.oilKind), t.oil, t.oilCap, t.oil < t.oilRate * 5 ? 'over' : ''),
+      );
     if (t.hasElectric)
       l.append(
         row(
@@ -156,7 +158,7 @@ export class TrainScreen implements Screen {
     const rate = [
       t.coalRate > 0 ? `${t.coalRate.toFixed(2)} ${t.fuelKind}` : '',
       t.waterRate > 0 ? `${t.waterRate.toFixed(2)} water` : '',
-      t.oilRate > 0 ? `${t.oilRate.toFixed(2)} oil` : '',
+      t.oilRate > 0 ? `${t.oilRate.toFixed(2)} ${t.oilKind}` : '',
       t.powerRate > 0 ? `${t.powerRate.toFixed(2)} power` : '',
     ].filter(Boolean);
     l.append(row(STR.train.perTile, rate.join(', ') || '-'));

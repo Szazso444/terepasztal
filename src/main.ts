@@ -8,6 +8,7 @@ import { takeIntent, setTestingLevel, type Intent } from './intent';
 import { getLevel, levelFromMap, saveLevel, type LevelData } from './world/level';
 import { generateMap, emptyMap, type MapGenParams } from './world/mapgen';
 import { Terrain } from './world/tiles';
+import type { SupplyMode } from './sim/supply';
 
 function paramsFromRules(size = rules.mapSize): MapGenParams {
   return {
@@ -39,7 +40,6 @@ function levelForEdit(i: Extract<Intent, { action: 'edit' }>): LevelData | null 
   level.start = {
     money: rules.startMoney,
     tickets: rules.startTickets,
-    reputation: rules.startReputation,
     tier: 0,
   };
   saveLevel(level);
@@ -56,15 +56,19 @@ async function boot() {
   let save = null as ReturnType<typeof readSave>;
   let level: LevelData | null = null;
   let start: 'menu' | 'play' | 'editor' = 'menu';
+  /** production chain of the game about to run (new game choice, level start block or save) */
+  let supply: SupplyMode | undefined;
 
   if (intent?.action === 'new') {
     clearSave();
     setTestingLevel(null);
     spec = { kind: 'generated', seed: intent.seed, params: paramsFromRules() };
+    supply = intent.supply;
     start = 'play';
   } else if (intent?.action === 'play' && (level = getLevel(intent.levelId))) {
     clearSave();
     spec = { kind: 'level', seed: level.seed, level };
+    supply = level.start.supply;
     start = 'play';
   } else if (intent?.action === 'edit' && (level = levelForEdit(intent))) {
     spec = { kind: 'level', seed: level.seed, level };
@@ -96,9 +100,10 @@ async function boot() {
     }
     start = intent?.action === 'continue' && save ? 'play' : 'menu';
     if (save?.world?.kind !== 'level') setTestingLevel(null);
+    supply = save?.supply;
   }
 
-  const game = new Game(spec);
+  const game = new Game(spec, supply);
   (window as unknown as { game: Game }).game = game;
   await game.init();
   if (start === 'editor' && level) game.enterEditor(level);

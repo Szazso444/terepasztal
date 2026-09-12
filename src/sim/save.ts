@@ -5,13 +5,14 @@ import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
 import type { LevelData } from '../world/level';
 import type { Rules } from './rules';
 import type { TownJSON } from './towns';
+import type { SupplyMode } from './supply';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -22,7 +23,16 @@ export interface SaveGame {
   savedAt: number;
   seed: number;
   clock: { time: number; speedIndex: number };
-  economy: { money: number; tickets: number; reputation: number; tier: number; granted: number[] };
+  /** v9: `tier` is the age index; `earned` the lifetime income (reputation dropped) */
+  economy: {
+    money: number;
+    tickets: number;
+    tier: number;
+    granted: number[];
+    earned?: number;
+    /** pre-v9 field, ignored */
+    reputation?: number;
+  };
   track: [number, number, TrackKind, number][];
   stations: StationJSON[];
   trains: unknown[];
@@ -53,6 +63,8 @@ export interface SaveGame {
   settings?: Settings;
   /** v8: standing trade deals */
   trade?: unknown;
+  /** v9: production-chain mode the game was started with */
+  supply?: SupplyMode;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -130,6 +142,18 @@ export const MIGRATIONS: Migration[] = [
     run: () => {},
   },
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
+  {
+    from: 8,
+    note: 'reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple',
+    run: (j) => {
+      j.supply = j.supply ?? 'simple';
+      if (j.economy) {
+        j.economy.tier = Math.max(0, Math.min(2, j.economy.tier ?? 0));
+        j.economy.earned = j.economy.earned ?? 0;
+        delete j.economy.reputation;
+      }
+    },
+  },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */
 export const KNOWN_SAVE_KEYS = new Set<string>([
@@ -157,6 +181,7 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'towns',
   'settings',
   'trade',
+  'supply',
   'loadedFrom',
   'migrationNotes',
 ]);

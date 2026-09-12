@@ -9,7 +9,8 @@ import { Terrain, TERRAIN_NAMES } from '../world/tiles';
 import type { Cost } from '../data/content';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
-import { content } from '../data/content';
+import { content, type SupplyMode } from '../data/content';
+import { inSupplyMode } from '../sim/supply';
 
 export type Tool =
   | { kind: 'none' }
@@ -29,7 +30,10 @@ export interface ToolItem {
   /** atlas frame for the preview */
   frame: string;
   desc: string;
+  /** age required (0 steam, 1 diesel, 2 electric) */
   tier: number;
+  /** only offered in this production-chain mode */
+  supply?: SupplyMode;
   /** where it can go and what it needs, shown under the description */
   place: string;
   /** Chebyshev reach shown as a highlight while placing (services, power lines) */
@@ -83,6 +87,12 @@ export class Toolbar {
   active: Tool = { kind: 'none' };
   onHover: ((item: ToolItem | null) => void) | null = null;
 
+  /** Items of the open category that belong to the running production-chain mode. */
+  private modeItems() {
+    if (!this.open) return [];
+    return this.category(this.open).items.filter((i) => inSupplyMode(i));
+  }
+
   setEditor(on: boolean) {
     for (const c of this.categories)
       if (c.editorOnly) this.catButtons.get(c.id)!.style.display = on ? '' : 'none';
@@ -111,6 +121,7 @@ export class Toolbar {
       frame: atlas.has(`structures/${d.art}_1`) ? `structures/${d.art}_1` : 'structures/station_1',
       desc: d.flavor,
       tier: d.tier,
+      supply: d.supply,
       place: d.depot
         ? STR.toolbar.place.depot
         : d.id === 'town'
@@ -145,7 +156,12 @@ export class Toolbar {
       frame: `structures/${d.id}`,
       desc: d.flavor,
       tier: d.tier,
-      place: d.power ? STR.toolbar.place.plant : STR.toolbar.place.works,
+      supply: d.supply,
+      place: d.power
+        ? STR.toolbar.place.plant
+        : d.deposit
+          ? STR.toolbar.place.deposit(d.deposit)
+          : STR.toolbar.place.works,
       reach: d.power ? 2 : undefined,
     }));
     const terrain: ToolItem[] = [
@@ -223,7 +239,7 @@ export class Toolbar {
   private enabledItems() {
     if (!this.open) return [];
     const tier = this.tierProvider();
-    return this.category(this.open).items.filter((i) => i.tier <= tier);
+    return this.modeItems().filter((i) => i.tier <= tier);
   }
   /** Step through the open category (wheel / keys). */
   cycle(dir: number) {
@@ -254,7 +270,7 @@ export class Toolbar {
     if (!this.open) return;
     row.style.display = '';
     const tier = this.tierProvider();
-    const items = this.category(this.open).items;
+    const items = this.modeItems();
     let n = 0;
     for (const it of items) {
       const enabled = it.tier <= tier;

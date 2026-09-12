@@ -1,0 +1,63 @@
+[
+  {
+    "id": "mine",
+    "name": "Iron Mine",
+    "flavor": "Digs iron ore out of stony ground for the ironworks.",
+    "cost": {
+      "wood": 50,
+      "stone": 20
+    },
+    "tier": 0,
+    "supply": "full",
+    "produces": [
+      {
+        "cargo": "iron_ore",
+        "level": 1
+      }
+    ],
+    "accepts": [],
+    "art": "quarry",
+    "terrain": "rock"
+  },
+  {
+    "id": "sand_pit",
+    "name": "Sand Pit",
+    "flavor": "Scoops sand from dunes and shores. Engines spread it on the rails for grip.",
+    "cost": {
+      "wood": 30,
+      "stone": 10
+    },
+    "tier": 0,
+    "supply": "full",
+    "produces": [
+      {
+        "cargo": "sand",
+        "level": 1
+      }
+    ],
+    "accepts": [],
+    "art": "quarry",
+    "terrain": "sand"
+  },
+  {
+    "id": "copper_mine",
+    "name": "Copper Mine",
+    "flavor": "Digs copper ore out of stony ground for the wire mill.",
+    "cost": {
+      "wood": 60,
+      "stone": 30,
+      "iron": 10
+    },
+    "tier": 2,
+    "supply": "full",
+    "produces": [
+      {
+        "cargo": "copper_ore",
+        "level": 1
+      }
+    ],
+    "accepts": [],
+    "art": "quarry",
+    "terrain": "rock"
+  }
+]
