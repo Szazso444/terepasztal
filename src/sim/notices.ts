@@ -8,7 +8,11 @@ import { STR } from '../strings';
 
 export type NoticeKind = 'info' | 'warn' | 'bad';
 export type NoticeTarget =
-  { kind: 'train'; id: number } | { kind: 'tile'; x: number; y: number } | null;
+  | { kind: 'train'; id: number }
+  | { kind: 'tile'; x: number; y: number }
+  /** a junction: centre tile to pan to, contributing tiles to highlight */
+  | { kind: 'junction'; id: number; x: number; y: number; tiles: { x: number; y: number }[] }
+  | null;
 export interface Notice {
   key: string;
   kind: NoticeKind;
@@ -30,6 +34,10 @@ export class Notices {
   push(n: Omit<Notice, 'expires'>, ttl = 30) {
     this.transient = this.transient.filter((t) => t.key !== n.key);
     this.transient.push({ ...n, expires: performance.now() / 1000 + ttl });
+  }
+  /** Withdraw a transient notice before its lifetime ends. */
+  drop(key: string) {
+    this.transient = this.transient.filter((t) => t.key !== key);
   }
 
   refresh(src: {

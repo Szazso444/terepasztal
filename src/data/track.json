@@ -3,41 +3,53 @@
     "straight": {
       "name": "Straight",
       "cost": {
-        "wood": 1,
-        "stone": 1
+        "wood": 2,
+        "stone": 2,
+        "iron": 1
       },
       "rotations": 2
     },
     "curve": {
       "name": "Curve",
       "cost": {
-        "wood": 1,
-        "stone": 1
+        "wood": 2,
+        "stone": 3,
+        "iron": 2
       },
       "rotations": 4
     },
     "switch": {
       "name": "Switch",
       "cost": {
-        "wood": 1,
-        "stone": 1,
-        "iron": 1
+        "wood": 3,
+        "stone": 3,
+        "iron": 4
       },
       "rotations": 8
     },
     "crossing": {
       "name": "Crossing",
       "cost": {
-        "stone": 2,
-        "iron": 1
+        "stone": 4,
+        "iron": 4
       },
       "rotations": 1
     },
     "bridge": {
       "name": "Bridge",
       "cost": {
-        "wood": 4,
-        "stone": 2
+        "wood": 6,
+        "stone": 4,
+        "iron": 2
+      },
+      "rotations": 2
+    },
+    "transition": {
+      "name": "Transition",
+      "cost": {
+        "wood": 2,
+        "stone": 2,
+        "iron": 2
       },
       "rotations": 2
     }
@@ -54,5 +66,14 @@
   "refund": 0.5,
   "curveSpeed": 0.55,
   "switchSpeed": 0.7,
-  "bridgeSpeed": 0.8
+  "bridgeSpeed": 0.8,
+  "physics": {
+    "effortPerTonne": 0.75,
+    "maxAccel": 0.9,
+    "wagonVmax": 2.6,
+    "doubleHeadEfficiency": 0.82,
+    "cartSaving": 0.1,
+    "cartSavingCap": 0.3,
+    "batteryChargePerTile": 2
+  }
 }

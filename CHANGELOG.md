@@ -4,15 +4,122 @@ Terepasztal uses semantic versions from v0.6.0 on. Earlier work is mapped to ver
 fact; the git history keeps its original commit messages (rewriting merged history would break
 every clone), the pull requests were retitled to carry the version. Tags: `git tag -l`.
 
-| Version | Pull request                                          | Commits                         | Summary                                                                                                                                                               |
-| ------- | ----------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| v0.1.0  | [#1](https://github.com/Szazso444/terepasztal/pull/1) | `9d03aaf` … `dde51b7`           | Milestones 1–6: iso map and camera, track and stations, trains, contracts and economy, gacha and roster, polish (day/night, smoke, sound hooks, save/load, settings). |
-| v0.2.0  | [#2](https://github.com/Szazso444/terepasztal/pull/2) | `6daf3fa`, `cb9a819`, `34f11e1` | Post-merge fix pass (synth audio, weather, seasons, lighting), adversarial review fixes, main and pause menus, game tuning, in-client content editor, level editor.   |
-| v0.3.0  | [#3](https://github.com/Szazso444/terepasztal/pull/3) | `e28519e`                       | Resource economy and stockpile, fuel and water, real locomotives by era, wagon classes, works buildings, power grid, market, train details, new art.                  |
-| v0.4.0  | [#4](https://github.com/Szazso444/terepasztal/pull/4) | `56d9a4c`                       | Chunk purchase, automatic routes, train side panel, building panel, floating indicators, toolbar with categories, power wires, cheat button, pause icon.              |
-| v0.5.0  | [#5](https://github.com/Szazso444/terepasztal/pull/5) | `fe886e2` … `80b6905`           | Traffic handling, biomes and endless world, people and passengers, notices and advisor, dynamic routing (section below).                                              |
-| v0.6.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6) | `3d54b6d`                       | Depot as the only way into the stockpile, warehouses as local stores, Collect routing with fuel reserve, towns, train picking in the field view.                      |
-| v0.7.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6) | see below                       | Section-based traffic control, stuck detection and traffic statistics, Static/Dynamic routing groups (Schedule, Production, Collection, Transport), dwell options.    |
+| Version | Pull request                                                                                                                                                        | Commits                         | Summary                                                                                                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v0.1.0  | [#1](https://github.com/Szazso444/terepasztal/pull/1)                                                                                                               | `9d03aaf` … `dde51b7`           | Milestones 1–6: iso map and camera, track and stations, trains, contracts and economy, gacha and roster, polish (day/night, smoke, sound hooks, save/load, settings).                                                  |
+| v0.2.0  | [#2](https://github.com/Szazso444/terepasztal/pull/2)                                                                                                               | `6daf3fa`, `cb9a819`, `34f11e1` | Post-merge fix pass (synth audio, weather, seasons, lighting), adversarial review fixes, main and pause menus, game tuning, in-client content editor, level editor.                                                    |
+| v0.3.0  | [#3](https://github.com/Szazso444/terepasztal/pull/3)                                                                                                               | `e28519e`                       | Resource economy and stockpile, fuel and water, real locomotives by era, wagon classes, works buildings, power grid, market, train details, new art.                                                                   |
+| v0.4.0  | [#4](https://github.com/Szazso444/terepasztal/pull/4)                                                                                                               | `56d9a4c`                       | Chunk purchase, automatic routes, train side panel, building panel, floating indicators, toolbar with categories, power wires, cheat button, pause icon.                                                               |
+| v0.5.0  | [#5](https://github.com/Szazso444/terepasztal/pull/5)                                                                                                               | `fe886e2` … `80b6905`           | Traffic handling, biomes and endless world, people and passengers, notices and advisor, dynamic routing (section below).                                                                                               |
+| v0.6.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6)                                                                                                               | `3d54b6d`                       | Depot as the only way into the stockpile, warehouses as local stores, Collect routing with fuel reserve, towns, train picking in the field view.                                                                       |
+| v0.7.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6), [#7](https://github.com/Szazso444/terepasztal/pull/7), [#8](https://github.com/Szazso444/terepasztal/pull/8) | see below                       | Section-based traffic control, stuck detection and traffic statistics, Static/Dynamic routing groups (Schedule, Production, Collection, Transport), dwell options.                                                     |
+| v0.8.0  | [#9](https://github.com/Szazso444/terepasztal/pull/9)                                                                                                               | see below                       | Track classes and high-speed geometry, rigid-body vehicles in three sizes, crafting instead of gacha, ages instead of reputation, electrification, growing towns, contract rarity, junction notices, block signalling. |
+
+## v0.8.0
+
+Implements `docs/phase-spec-review.md` and the conflict resolutions; the choices left open are
+recorded in `docs/phase-decisions.md`.
+
+### Track classes
+
+- Two classes, **Regular** (`n = 1`) and **High-speed** (`n = 2`); everything derives from `n`:
+  curve radius `n − 0.5`, curve and switch footprint `n × n`, cost `n × 1.5` above regular. The 2×2
+  high-speed curve and switch keep the tile graph: each member tile carries its own piece of the arc
+  (`src/world/trackGeom.ts`).
+- Three crossings (Regular × Regular, Regular × High-speed, High-speed × High-speed) and a
+  **Transition** piece; different classes only join through a transition, placement refuses
+  otherwise. Curve speed is `min(1, k·√R)`: 0.55 on regular curves, 0.95 on high-speed ones.
+- Track costs follow the ratio matrix (straight 2 wood / 2 stone / 1 iron; curve 2/3/2; switch
+  3/3/4; crossing 0/4/4), scaled by `trackCostScale`; starting wood, stone and iron derive from
+  it, scaled by `startingResourceScale` (both in Game tuning).
+
+### Vehicles
+
+- Rigid-body model (`src/sim/body.ts`): bogies at fixed arc offsets, bodies never change length,
+  each body centres itself on the track; sizes **small** (1 tile), **medium** (2), **large** (3);
+  plans rigid, engine + tender, Garratt and Meyer. Every model got a size; new models: Saddle Tank
+  J94, LMS Black Five, BR 9F, GMAM Garratt, TGV Sud-Est, ICE 1; service carts (coal, fuel,
+  battery), brake van, boxcar.
+- Sprites redrawn for the new sizes at 24 facings (13 drawn, the rest mirrored) with a runtime
+  rotation of the remainder; bogies are shared sprites under medium and large bodies.
+- Compatibility table (`src/sim/compat.ts`) built at boot from a reference curve per class; **large
+  stock is barred from regular track**. Routes, the depot picker and roll-out obey it; a refused
+  roll-out names the vehicle and the first tile it cannot pass. Depot gates are checked for track
+  class, an onward tile and room for the whole consist; rails may run through the shed.
+
+### Crafting (replaces the gacha)
+
+- Unlock a recipe with money: three cards of the chosen kind and age, keep one (known cards refund
+  materials). Craft an instance with iron, wood, stone and coal; failure chance by quality, partial
+  refund. Unlimited copies; a spare copy can level a model in the Roster. Starting inventory: two
+  locomotives and two of each starter wagon. Gacha code parked, unreachable.
+
+### Electrification
+
+- Third rail, catenary and HV catenary laid over track (Utility tab, drag along a line). Live within
+  six tiles of a **Substation** on a powered pole grid; substations have a throughput that trains
+  under them share. **Hydro Plant** beside water. Electric traction now needs live wire under the
+  head tile; saves from before get catenary strung over the rails the poles powered.
+
+### Towns
+
+- Townhouses build over two days in three visible stages, hold 10 / 25 / 50 residents by level, grow
+  slowly while fed, spawn where the town needs them (near track and other houses, faster with train
+  traffic), upgrade when full. Wheat use is 1 per head per day.
+
+### Ages and production chains
+
+- Reputation is gone. Three ages: Steam, Diesel (three depots and 1000 population), Electric
+  ($250,000 earned). The age gates works, stations, decor, station levels and contract templates;
+  the top bar shows it with progress towards each goal.
+- Production chain chosen at new game: **Simple** (kiln, grinder, refinery from the stockpile) or
+  **Full** (colliery on coal seams, iron mine and ironworks, oil derrick and refinery making diesel
+  that diesel engines burn, sand pit, copper mine and wire mill; warehouses refuel only from their
+  own store). Fuel prices drift day by day.
+
+### Consists
+
+- Physics: effort from the pulling units (×0.82 when double-headed), acceleration = effort /
+  mass, top speed = the slowest vehicle; the haul rating stays a hard cap. Locomotive modes
+  Leading, Multiple (same control class), Double-headed, Standby (a standby unit with usable power
+  steps in when the leader loses the wire or runs dry, and steps back after).
+- Service carts: coal, fuel and battery carts raise a matching engine's range and cut its burn;
+  dead weight behind anything else. A water tanker in a steam consist tops the boiler up.
+
+### Contracts
+
+- Rarity layer over every template (Common 55 %, Uncommon 25 %, Rare 13 %, Epic 6 %, Legendary 1 %;
+  reward ×1/2/5/15/50, requirement and deadline scale up; never more than one Legendary offer).
+  Per-rarity accept policy in Settings (accept / prompt / deny). An accepted contract is assigned
+  to the eligible train with the best exclusivity-weighted time; the train finishes its current
+  leg, works the contract as an ordinary two-stop job under every normal rule, then rejoins its
+  program at the next stop. Failure and cancelling an active contract cost a money fine; declining
+  an offer is free. The selected train's contract destination is marked on both maps.
+
+### Junctions
+
+- Switches and crossings within six rail tiles of each other form a junction; a 60 s window of
+  trains inside, seconds lost and the longest wait sets Info / Minor / Major / Critical notices
+  with cooldowns. Clicking one pans to the junction and tints the contested tiles.
+
+### Signals
+
+- The signal is a **semaphore**: red home arm and yellow distant arm on a post, animated between
+  danger, caution and clear. Semaphores now hold trains: red stops a train before the block, yellow
+  makes it approach at a speed it can stop from.
+- Signalling levels (Settings): Automatic (as before), Token (one train per plain section),
+  Absolute block (10-tile headway), CTC (6), In-cab (3, equipped stock only).
+- High-speed track needs in-cab signalling equipment on a locomotive (large stock and high-speed
+  sets carry it; others can be fitted in the Roster). Stock that is not built for speed pays a
+  route toll on high-speed lines, and every train pays an access charge per high-speed tile.
+- Electric traction: collectors decide what a unit can draw (shoe: third rail; pantograph:
+  catenary; high-speed pantograph: catenary at the standard ceiling or HV wire; multi-system:
+  anything); accelerating draws three times as much; braking returns 30 %; a substation over its
+  throughput slows every train under it.
+
+### Saves
+
+- Format v10: track class per piece, electrification, houses, crafting, ages and supply mode, contract rarity and jobs, locomotive modes; migrations from v8 and v9. Settings gain per-rarity contract policy and the signalling level.
 
 ## v0.7.0
 

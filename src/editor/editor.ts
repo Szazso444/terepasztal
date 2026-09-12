@@ -96,7 +96,14 @@ export class Editor {
     l.terrain = packBytes(this.map.terrain);
     l.variant = packBytes(this.map.variant);
     l.biome = packBytes(this.map.biome);
-    l.track = [...this.builder.track.tiles()].map((t) => [t.x, t.y, t.piece.kind, t.piece.rot]);
+    l.track = [...this.builder.track.anchors()].map((t) => [
+      t.x,
+      t.y,
+      t.piece.kind,
+      t.piece.rot,
+      t.piece.cls,
+      t.piece.cls2,
+    ]);
     l.stations = this.builder.stations.map((s) => ({
       defId: s.def.id,
       x: s.x,
@@ -139,7 +146,6 @@ export class Editor {
     return {
       money: rules.startMoney,
       tickets: rules.startTickets,
-      reputation: rules.startReputation,
       tier: 0,
     };
   }

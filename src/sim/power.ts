@@ -38,8 +38,11 @@ export class PowerGrid {
     this.powered.fill(0);
     const nodes: { x: number; y: number; plant: boolean }[] = [];
     for (const d of decor) if (decorDef(d.id).power) nodes.push({ x: d.x, y: d.y, plant: false });
-    for (const b of buildings)
-      if (buildingDef(b.id).power) nodes.push({ x: b.x, y: b.y, plant: true });
+    for (const b of buildings) {
+      const def = buildingDef(b.id);
+      if (def.power) nodes.push({ x: b.x, y: b.y, plant: true });
+      else if (def.substation) nodes.push({ x: b.x, y: b.y, plant: false });
+    }
     this.poles = nodes.filter((n) => !n.plant).length;
     this.plants = nodes.filter((n) => n.plant).length;
     // union-find over nodes within Chebyshev distance 2

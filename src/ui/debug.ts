@@ -4,7 +4,7 @@ import { STR } from '../strings';
 export interface DebugActions {
   giveMoney(): void;
   giveTickets(): void;
-  giveReputation(): void;
+  nextAge(): void;
   giveResources(): void;
   spawnContract(): void;
   toggleDepth(): boolean;
@@ -25,6 +25,8 @@ export class DebugPanel {
       STR.debug.entities,
       STR.debug.zoom,
       STR.debug.camera,
+      STR.debug.traffic,
+      STR.debug.junctions,
       STR.debug.tile,
     ]) {
       const v = el('td', { text: '-' });
@@ -55,6 +57,7 @@ export class DebugPanel {
           { class: 'row' },
           btn(STR.debug.giveMoney, actions.giveMoney, 'small'),
           btn(STR.debug.giveTickets, actions.giveTickets, 'small'),
+          btn(STR.debug.nextAge, actions.nextAge, 'small'),
         ),
         el(
           'div',

@@ -2,18 +2,21 @@ import { el, btn } from './dom';
 import { fmtCost } from '../sim/stockpile';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
-import { TRACK_KINDS, pieceCost, type TrackKind } from '../world/track';
+import { TRACK_ITEMS, itemKey, pieceCost, type TrackItem } from '../world/track';
+import { SUPPLY_KINDS, SUPPLY_DEFS, type SupplyKind } from '../sim/catenary';
 import { STATION_DEFS } from '../sim/stations';
 import { DECOR_DEFS, decorDef } from '../sim/build';
 import { Terrain, TERRAIN_NAMES } from '../world/tiles';
 import type { Cost } from '../data/content';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
-import { content } from '../data/content';
+import { content, type SupplyMode } from '../data/content';
+import { inSupplyMode } from '../sim/supply';
 
 export type Tool =
   | { kind: 'none' }
-  | { kind: 'track'; piece: TrackKind }
+  | { kind: 'track'; item: TrackItem }
+  | { kind: 'supply'; supply: SupplyKind }
   | { kind: 'station'; defId: string }
   | { kind: 'decor'; defId: string }
   | { kind: 'terrain'; terrain: number }
@@ -29,7 +32,10 @@ export interface ToolItem {
   /** atlas frame for the preview */
   frame: string;
   desc: string;
+  /** age required (0 steam, 1 diesel, 2 electric) */
   tier: number;
+  /** only offered in this production-chain mode */
+  supply?: SupplyMode;
   /** where it can go and what it needs, shown under the description */
   place: string;
   /** Chebyshev reach shown as a highlight while placing (services, power lines) */
@@ -48,7 +54,9 @@ interface Category {
 function toolKey(t: Tool): string {
   switch (t.kind) {
     case 'track':
-      return `track:${t.piece}`;
+      return `track:${itemKey(t.item)}`;
+    case 'supply':
+      return `supply:${t.supply}`;
     case 'station':
       return `station:${t.defId}`;
     case 'decor':
@@ -83,6 +91,12 @@ export class Toolbar {
   active: Tool = { kind: 'none' };
   onHover: ((item: ToolItem | null) => void) | null = null;
 
+  /** Items of the open category that belong to the running production-chain mode. */
+  private modeItems() {
+    if (!this.open) return [];
+    return this.category(this.open).items.filter((i) => inSupplyMode(i));
+  }
+
   setEditor(on: boolean) {
     for (const c of this.categories)
       if (c.editorOnly) this.catButtons.get(c.id)!.style.display = on ? '' : 'none';
@@ -93,16 +107,27 @@ export class Toolbar {
     private readonly tierProvider: () => number,
     private readonly atlas: AtlasRegistry,
   ) {
-    const track: ToolItem[] = TRACK_KINDS.map((k) => ({
-      key: `track:${k}`,
-      tool: { kind: 'track', piece: k },
-      name: content.track.pieces[k]?.name ?? k,
-      cost: pieceCost(k),
-      frame: `track/${k}_0`,
-      desc: STR.toolbar.trackDesc[k] ?? '',
-      tier: 0,
-      place: k === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
-    }));
+    const track: ToolItem[] = TRACK_ITEMS.map((it) => {
+      const k = itemKey(it);
+      const base = content.track.pieces[it.kind]?.name ?? it.kind;
+      const clsName =
+        it.kind === 'crossing'
+          ? `${STR.toolbar.trackClass[it.cls]} × ${STR.toolbar.trackClass[it.cls2 ?? it.cls]}`
+          : it.cls === 'regular'
+            ? ''
+            : STR.toolbar.trackClass[it.cls];
+      return {
+        key: `track:${k}`,
+        tool: { kind: 'track', item: it },
+        name: clsName ? `${base} (${clsName})` : base,
+        cost: pieceCost(it.kind, it.cls, it.cls2),
+        costNow: () => pieceCost(it.kind, it.cls, it.cls2),
+        frame: `track/${k}_0`,
+        desc: STR.toolbar.trackDesc[k] ?? '',
+        tier: 0,
+        place: it.kind === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
+      };
+    });
     const stations: ToolItem[] = STATION_DEFS.map((d) => ({
       key: `station:${d.id}`,
       tool: { kind: 'station', defId: d.id },
@@ -111,6 +136,7 @@ export class Toolbar {
       frame: atlas.has(`structures/${d.art}_1`) ? `structures/${d.art}_1` : 'structures/station_1',
       desc: d.flavor,
       tier: d.tier,
+      supply: d.supply,
       place: d.depot
         ? STR.toolbar.place.depot
         : d.id === 'town'
@@ -137,6 +163,17 @@ export class Toolbar {
     const services = DECOR_DEFS.filter((d) => !d.onTrack && !d.residents).map(decorItem);
     stations.push(...DECOR_DEFS.filter((d) => d.residents).map(decorItem));
     const utility = DECOR_DEFS.filter((d) => d.onTrack).map(decorItem);
+    for (const k of SUPPLY_KINDS)
+      utility.push({
+        key: `supply:${k}`,
+        tool: { kind: 'supply', supply: k },
+        name: STR.toolbar.supply[k],
+        cost: SUPPLY_DEFS[k].cost,
+        frame: `structures/supply_${k}_ew`,
+        desc: STR.toolbar.supplyDesc[k],
+        tier: SUPPLY_DEFS[k].tier,
+        place: STR.toolbar.placeSupply,
+      });
     const works: ToolItem[] = BUILDING_DEFS.map((d) => ({
       key: `building:${d.id}`,
       tool: { kind: 'building', defId: d.id },
@@ -145,7 +182,12 @@ export class Toolbar {
       frame: `structures/${d.id}`,
       desc: d.flavor,
       tier: d.tier,
-      place: d.power ? STR.toolbar.place.plant : STR.toolbar.place.works,
+      supply: d.supply,
+      place: d.power
+        ? STR.toolbar.place.plant
+        : d.deposit
+          ? STR.toolbar.place.deposit(d.deposit)
+          : STR.toolbar.place.works,
       reach: d.power ? 2 : undefined,
     }));
     const terrain: ToolItem[] = [
@@ -223,7 +265,7 @@ export class Toolbar {
   private enabledItems() {
     if (!this.open) return [];
     const tier = this.tierProvider();
-    return this.category(this.open).items.filter((i) => i.tier <= tier);
+    return this.modeItems().filter((i) => i.tier <= tier);
   }
   /** Step through the open category (wheel / keys). */
   cycle(dir: number) {
@@ -254,7 +296,7 @@ export class Toolbar {
     if (!this.open) return;
     row.style.display = '';
     const tier = this.tierProvider();
-    const items = this.category(this.open).items;
+    const items = this.modeItems();
     let n = 0;
     for (const it of items) {
       const enabled = it.tier <= tier;

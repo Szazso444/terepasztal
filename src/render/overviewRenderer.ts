@@ -44,6 +44,8 @@ export interface OverviewTrain {
   heading: number;
   /** atlas frame of the leading locomotive facing its direction of travel */
   frame?: string;
+  /** the frame shows the mirrored heading: draw it flipped */
+  flip?: boolean;
 }
 export interface OverviewMarker {
   x: number;
@@ -311,6 +313,7 @@ export class OverviewRenderer {
           node.addChild(icon);
         }
         icon.texture = this.atlas!.get(frame).texture;
+        icon.scale.set(t.flip ? -0.6 : 0.6, 0.6);
         icon.visible = true;
         g.circle(0, 2, 12).fill({
           color: hovered ? hex(PAL.white) : 0x000000,

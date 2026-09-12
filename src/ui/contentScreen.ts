@@ -99,10 +99,12 @@ export class ContentScreen implements Screen {
         );
         break;
       case 'contracts': {
-        const { templates: _t, ...cfg } = this.draft.contracts;
-        const { templates: _d, ...dcfg } = DEFAULT_CONTENT.contracts;
+        const { templates: _t, rarities: _r, ...cfg } = this.draft.contracts;
+        const { templates: _d, rarities: _dr, ...dcfg } = DEFAULT_CONTENT.contracts;
         void _t;
         void _d;
+        void _r;
+        void _dr;
         b.append(
           el('div', { class: 'col-title', text: STR.content.config }),
           this.objectForm(
@@ -116,6 +118,13 @@ export class ContentScreen implements Screen {
           this.listEditor(
             this.draft.contracts.templates as unknown as Row[],
             DEFAULT_CONTENT.contracts.templates[0] as unknown as Row,
+          ),
+        );
+        b.append(
+          el('div', { class: 'col-title', text: STR.settings.contractPolicy }),
+          this.listEditor(
+            this.draft.contracts.rarities as unknown as Row[],
+            DEFAULT_CONTENT.contracts.rarities[0] as unknown as Row,
           ),
         );
         break;
@@ -147,6 +156,22 @@ export class ContentScreen implements Screen {
           this.objectForm(
             this.draft.track as unknown as Row,
             DEFAULT_CONTENT.track as unknown as Row,
+          ),
+        );
+        break;
+      case 'crafting':
+        b.append(
+          this.objectForm(
+            this.draft.crafting as unknown as Row,
+            DEFAULT_CONTENT.crafting as unknown as Row,
+          ),
+        );
+        break;
+      case 'houses':
+        b.append(
+          this.objectForm(
+            this.draft.houses as unknown as Row,
+            DEFAULT_CONTENT.houses as unknown as Row,
           ),
         );
         break;

@@ -1,5 +1,6 @@
 import type { AtlasRegistry } from '../engine/atlas';
 import { itemKind, locoDef, wagonDef } from '../gacha/items';
+import { vehicleSpec } from '../sim/body';
 import { el } from './dom';
 
 const cache = new Map<string, string>();
@@ -30,10 +31,11 @@ export function spriteDataUrl(atlas: AtlasRegistry, frame: string, scale = 2): s
 export function frameForItem(defId: string, facing = 0): string {
   if (itemKind(defId) === 'loco') {
     const d = locoDef(defId);
-    return `rolling/loco_${d.body}_${d.paint}_f${facing}`;
+    const part = vehicleSpec(d).segments[0].part;
+    return `rolling/loco_${d.body}_${d.size ?? 'small'}_${d.paint}_${part}_f${facing}`;
   }
   const d = wagonDef(defId);
-  return `rolling/wagon_${d.body}_${d.paint}_f${facing}`;
+  return `rolling/wagon_${d.body}_${d.size ?? 'small'}_${d.paint}_f${facing}`;
 }
 
 /** <img> element for a frame; empty span when the frame is unavailable. */

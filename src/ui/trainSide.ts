@@ -67,7 +67,7 @@ export class TrainSide {
       trains
         .map(
           (t) =>
-            `${t.id}:${t.state}:${Math.round(t.speed * 20)}:${Math.round(t.coal)}:${Math.round(t.water)}:${Math.round(t.oil)}:${t.fuelPreference}:${t.lastTrip?.endedAt ?? 0}:${Math.round(t.weight)}:${t.wagons.map((w) => `${w.cargo}${Math.round(w.amount)}`).join()}`,
+            `${t.id}:${t.state}:${Math.round(t.speed * 20)}:${Math.round(t.coal)}:${Math.round(t.water)}:${Math.round(t.oil)}:${Math.round(t.battery)}:${t.fuelPreference}:${t.lastTrip?.endedAt ?? 0}:${Math.round(t.weight)}:${t.locos.map((l) => `${l.mode}${l.engaged ? 1 : 0}`).join()}:${t.wagons.map((w) => `${w.cargo}${Math.round(w.amount)}`).join()}:${t.job?.contractId ?? ''}:${t.jobs.length}`,
         )
         .join('|');
     if (key === this.lastKey && !force) return;
@@ -114,6 +114,16 @@ export class TrainSide {
       ),
       el('div', { class: `sub state-${t.state}`, text: state }),
     );
+    const job = t.job ?? t.jobs[0];
+    if (job) {
+      const queued = t.jobs.length - (t.job ? 0 : 1);
+      card.append(
+        el('div', {
+          class: 'sub amber',
+          text: `${STR.trainSide.onContract(job.name, this.builder.stationById(job.destId)?.name ?? '?')}${queued > 0 ? ` · ${STR.trainSide.queuedContracts(queued)}` : ''}`,
+        }),
+      );
+    }
     card.append(
       row(
         STR.trainSide.speed,
@@ -126,6 +136,18 @@ export class TrainSide {
     );
     if (t.weight > t.power) capRow.classList.add('red');
     card.append(capRow);
+    // one entry per engine: name and how it works in the consist
+    card.append(
+      row(
+        STR.trainSide.engines,
+        ...t.locos.map((l) =>
+          el('span', {
+            class: `ts-amt ${l.engaged ? '' : 'dim'}`,
+            text: `${l.def.name}: ${STR.modes[l.mode]}${l.mode === 'standby' && l.engaged ? ` (${STR.modes.rescuing})` : ''}`,
+          }),
+        ),
+      ),
+    );
     const type = t.locoDef.type;
     const tanks: HTMLElement[] = [];
     const use: HTMLElement[] = [];
@@ -139,11 +161,18 @@ export class TrainSide {
       use.push(this.amount(t.fuelKind, t.coalRate), this.amount('water', t.waterRate));
     } else if (type === 'diesel') {
       tanks.push(
-        this.amount('oil', t.oil, t.oil < t.oilRate * 8 ? 'red' : ''),
+        this.amount(t.oilKind, t.oil, t.oil < t.oilRate * 8 ? 'red' : ''),
         el('span', { class: 'dim', text: `/${Math.round(t.oilCap)}` }),
       );
-      use.push(this.amount('oil', t.oilRate));
-    } else use.push(this.amount('power', t.powerRate));
+      use.push(this.amount(t.oilKind, t.oilRate));
+    } else {
+      if (t.batteryCap > 0)
+        tanks.push(
+          this.amount('power', t.battery, t.battery < t.powerRate * 8 ? 'red' : ''),
+          el('span', { class: 'dim', text: `/${Math.round(t.batteryCap)}` }),
+        );
+      use.push(this.amount('power', t.powerRate));
+    }
     if (tanks.length) card.append(row(STR.trainSide.tanks, ...tanks));
     const fuelRow = row(
       STR.trainSide.fuel,
@@ -175,7 +204,7 @@ export class TrainSide {
           { class: 'ts-wagon' },
           spriteImg(
             this.atlas,
-            `rolling/wagon_${w.def.body}_${w.def.paint}_f0`,
+            `rolling/wagon_${w.def.body}_${w.def.size ?? 'small'}_${w.def.paint}_f0`,
             1,
             'sprite-preview ts-wagon-art',
           ),

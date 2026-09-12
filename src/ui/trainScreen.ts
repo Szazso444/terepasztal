@@ -1,11 +1,11 @@
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
-import type { Train } from '../sim/trains';
+import { serviceLocoType, type Train } from '../sim/trains';
 import type { Fleet } from '../sim/fleet';
 import type { Builder } from '../sim/build';
 import type { Stockpile } from '../sim/stockpile';
-import { cargoDef } from '../sim/cargo';
+import { cargoDef, cargoName } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
@@ -105,32 +105,75 @@ export class TrainScreen implements Screen {
       ),
     );
     if (t.lastMessage) l.append(row(STR.train.note, t.lastMessage));
-    l.append(row(STR.train.speed, `${t.maxSpeed.toFixed(2)} tiles/s`));
+    const job = t.job ?? t.jobs[0];
+    if (job) {
+      const queued = t.jobs.length - (t.job ? 0 : 1);
+      l.append(
+        row(
+          STR.contracts.train,
+          `${STR.trainSide.onContract(job.name, this.builder.stationById(job.destId)?.name ?? '?')}${queued > 0 ? ` · ${STR.trainSide.queuedContracts(queued)}` : ''}`,
+          'amber',
+        ),
+      );
+    }
+    const ph = t.physics;
+    l.append(row(STR.train.speed, `${ph.vMax.toFixed(2)} tiles/s`));
+    l.append(
+      row(
+        STR.train.effort,
+        `${Math.round(ph.effort)} · ${STR.train.pulling(ph.engaged)}${ph.doubleHeaded ? ` · ${STR.modes.doubleHeaded}` : ''}`,
+      ),
+    );
+    l.append(row(STR.train.mass, `${Math.round(ph.mass)} t`));
+    l.append(row(STR.train.acceleration, `${ph.acceleration.toFixed(2)} tiles/s²`));
     l.append(row(STR.train.crew, String(t.crew)));
     l.append(this.bar(STR.train.haul, t.weight, t.power, t.weight > t.power ? 'over' : ''));
     // engines and tanks
     l.append(el('div', { class: 'col-title', text: STR.train.engines }));
-    for (const lo of t.locos) {
-      l.append(
+    t.locos.forEach((lo, i) => {
+      const modeText =
+        STR.modes[lo.mode] +
+        (lo.mode === 'standby' && lo.engaged
+          ? ` (${STR.modes.rescuing})`
+          : lo.mode !== 'standby' && !lo.engaged
+            ? ` (${STR.modes.dormant})`
+            : '');
+      const item = el(
+        'div',
+        { class: 'item', style: 'cursor:default' },
+        spriteImg(this.atlas, frameForItem(lo.def.id), 1, 'sprite-preview item-art'),
         el(
           'div',
-          { class: 'item', style: 'cursor:default' },
-          spriteImg(this.atlas, frameForItem(lo.def.id), 1, 'sprite-preview item-art'),
-          el(
-            'div',
-            {},
-            el('div', {
-              class: `name rarity-${lo.def.rarity}`,
-              text: `${lo.def.name} Lv${lo.level}`,
-            }),
-            el('div', {
-              class: 'sub',
-              text: `${STR.roster.type[lo.def.type]} · ${Math.round(lo.def.power * levelMul(lo.level))} t · ${STR.roster.fuelLine(lo.def)}`,
-            }),
-          ),
+          { style: 'flex:1' },
+          el('div', {
+            class: `name rarity-${lo.def.rarity}`,
+            text: `${lo.def.name} Lv${lo.level}`,
+          }),
+          el('div', {
+            class: 'sub',
+            text: `${STR.roster.type[lo.def.type]} · ${Math.round(lo.def.power * levelMul(lo.level))} t · ${STR.roster.fuelLine(lo.def)}`,
+          }),
+          el('div', {
+            class: `sub ${lo.engaged ? '' : 'dim'}`,
+            text: `${modeText}${lo.def.controlClass ? ` · ${STR.depot.controlClass(lo.def.controlClass)}` : ''}`,
+          }),
         ),
       );
-    }
+      if (i > 0) {
+        const standby = lo.mode === 'standby';
+        const b = btn(
+          standby ? STR.train.engage : STR.train.standby,
+          () => {
+            t.setStandby(i, !standby);
+            this.render();
+          },
+          'small',
+        );
+        b.title = STR.modes.hint;
+        item.append(b);
+      }
+      l.append(item);
+    });
     if (t.hasSteam) {
       l.append(
         this.bar(
@@ -145,7 +188,9 @@ export class TrainScreen implements Screen {
       );
     }
     if (t.hasDiesel)
-      l.append(this.bar(STR.train.oil, t.oil, t.oilCap, t.oil < t.oilRate * 5 ? 'over' : ''));
+      l.append(
+        this.bar(cargoName(t.oilKind), t.oil, t.oilCap, t.oil < t.oilRate * 5 ? 'over' : ''),
+      );
     if (t.hasElectric)
       l.append(
         row(
@@ -153,10 +198,19 @@ export class TrainScreen implements Screen {
           `${t.powerRate.toFixed(2)} / tile · ${STR.train.stockPower(Math.floor(this.stock.get('power')))}`,
         ),
       );
+    if (t.batteryCap > 0)
+      l.append(
+        this.bar(
+          STR.train.battery,
+          t.battery,
+          t.batteryCap,
+          t.battery < t.powerRate * 5 ? 'over' : '',
+        ),
+      );
     const rate = [
       t.coalRate > 0 ? `${t.coalRate.toFixed(2)} ${t.fuelKind}` : '',
       t.waterRate > 0 ? `${t.waterRate.toFixed(2)} water` : '',
-      t.oilRate > 0 ? `${t.oilRate.toFixed(2)} oil` : '',
+      t.oilRate > 0 ? `${t.oilRate.toFixed(2)} ${t.oilKind}` : '',
       t.powerRate > 0 ? `${t.powerRate.toFixed(2)} power` : '',
     ].filter(Boolean);
     l.append(row(STR.train.perTile, rate.join(', ') || '-'));
@@ -228,6 +282,12 @@ export class TrainScreen implements Screen {
                 ? `${cargoDef(w.cargo).name} ${Math.round(w.amount)}/${Math.round(cap)} · ${(w.def.weight + w.amount * cargoDef(w.cargo).weight).toFixed(1)} t`
                 : `${STR.depot.empty} · ${cap} u · ${w.def.weight} t`,
             }),
+            w.def.service && !t.cartMatched(w)
+              ? el('div', {
+                  class: 'sub red',
+                  text: STR.depot.deadWeight(STR.roster.type[serviceLocoType(w.def.service)]),
+                })
+              : null,
           ),
         ),
       );

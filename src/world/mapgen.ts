@@ -221,7 +221,47 @@ export function generateMap(seed: number, p: Partial<MapGenParams> = {}): GameMa
   raiseMountains(map);
   ensureStartResources(map);
   decorateProps(map, seed);
+  ensureStartDeposits(map);
   return map;
+}
+
+/**
+ * The starting chunk gets at least two coal seams and two oil seeps (full production chain): the
+ * hill tiles nearest the chunk centre and low tiles a little way out, in a fixed order so an
+ * expanded map picks the same tiles again. Skipped when the chunk already has them.
+ */
+export function ensureStartDeposits(map: GameMap) {
+  const rs = map.regionSize;
+  const rx = Math.floor((map.regionsX - 1) / 2);
+  const ry = Math.floor((map.regionsY - 1) / 2);
+  const x0 = rx * rs;
+  const y0 = ry * rs;
+  const x1 = Math.min(map.w, x0 + rs);
+  const y1 = Math.min(map.h, y0 + rs);
+  const cx = x0 + rs / 2;
+  const cy = y0 + rs / 2;
+  const has = (i: number, kind: PropKind) => map.props.get(i)?.some((p) => p.kind === kind);
+  const place = (kind: PropKind, want: number, ok: (t: Terrain, d: number) => boolean) => {
+    const cands: { i: number; d: number }[] = [];
+    let have = 0;
+    for (let y = y0; y < y1; y++)
+      for (let x = x0; x < x1; x++) {
+        const i = y * map.w + x;
+        if (has(i, kind)) {
+          have++;
+          continue;
+        }
+        const d = Math.hypot(x - cx, y - cy);
+        if (ok(map.terrain[i] as Terrain, d)) cands.push({ i, d });
+      }
+    cands.sort((a, b) => a.d - b.d || a.i - b.i);
+    for (let k = 0; have < want && k < cands.length; k += 3, have++) {
+      const i = cands[k].i;
+      map.props.set(i, [{ kind, variant: k % 3, ox: (hash2(i, 1, map.seed) - 0.5) * 0.3, oy: 0 }]);
+    }
+  };
+  place('coal', 2, (t) => t === Terrain.Hill);
+  place('oil', 2, (t, d) => (t === Terrain.Grass || t === Terrain.Sand) && d > 6 && d < 13);
 }
 
 /**
@@ -436,10 +476,24 @@ export function decorateProps(
         } else if (r > 0.94) put(r > 0.985 ? 'tree' : r > 0.965 ? 'bush' : 'flowers', 3);
       } else if (t === Terrain.Sand) {
         if (b === Biome.Desert) {
-          if (r > 0.93) put(r > 0.985 ? 'boulder' : r > 0.965 ? 'deadtree' : 'cactus', 3);
+          if (r > 0.93) put(r > 0.965 ? 'deadtree' : 'cactus', 3);
         } else if (b === Biome.Ocean && r > 0.9) put('palm', 2);
       } else if (t === Terrain.Hill && r > 0.93) {
         put('boulder', 3);
+      }
+      // deposits for the full production chain: coal seams crop out on some hills, oil seeps
+      // through low ground (swamps, sand and now and then plain grass). Their own hash keeps
+      // them independent of the vegetation above.
+      const d = hash2(wx, wy, seed + 12);
+      if (t === Terrain.Hill && d > 0.95) {
+        list.length = 0;
+        put('coal', 3);
+      } else if (
+        (t === Terrain.Sand && b !== Biome.Ocean && d > 0.975) ||
+        (t === Terrain.Grass && (b === Biome.Swamp ? d > 0.975 : d > 0.994))
+      ) {
+        list.length = 0;
+        put('oil', 3);
       }
       if (list.length) map.props.set(i, list);
     }

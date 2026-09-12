@@ -6,7 +6,6 @@
 export interface Rules {
   startMoney: number;
   startTickets: number;
-  startReputation: number;
   buildCostMul: number;
   refundRate: number;
   runningCostMul: number;
@@ -19,9 +18,9 @@ export interface Rules {
   contractRefreshDays: number;
   deadlineMul: number;
   payoutMul: number;
+  /** @deprecated reputation is gone; kept so older callers compile, no effect */
   reputationMul: number;
   failPenaltyMul: number;
-  tierThresholds: number[];
   daySeconds: number;
   seasonDays: number;
   rainChanceMul: number;
@@ -39,6 +38,14 @@ export interface Rules {
   depotCap: number;
   /** each further station / service / works of the same kind costs this much more (fraction of base) */
   repeatCostStep: number;
+  /** multiplies the whole track cost matrix */
+  trackCostScale: number;
+  /** money per tile a train runs on high-speed track */
+  hsAccessCharge: number;
+  /** price of fitting in-cab signalling equipment to one locomotive */
+  inCabCost: number;
+  /** multiplies the starting wood, stone and iron */
+  startingResourceScale: number;
   /** a collection train leaves a warehouse alone until it holds this much of a resource */
   collectMin: number;
   /** days between settlements of standing trade deals */
@@ -65,7 +72,6 @@ export interface RuleMeta {
 export const DEFAULT_RULES: Rules = {
   startMoney: 25000,
   startTickets: 3,
-  startReputation: 0,
   buildCostMul: 1,
   refundRate: 0.5,
   runningCostMul: 1,
@@ -80,7 +86,6 @@ export const DEFAULT_RULES: Rules = {
   payoutMul: 1,
   reputationMul: 1,
   failPenaltyMul: 1,
-  tierThresholds: [0, 120, 350, 750, 1400],
   daySeconds: 240,
   seasonDays: 6,
   rainChanceMul: 1,
@@ -90,11 +95,15 @@ export const DEFAULT_RULES: Rules = {
   hillLevel: 0.64,
   rockLevel: 0.76,
   forestDensity: 0.56,
-  wheatPerCrew: 0.5,
+  wheatPerCrew: 1,
   stockpileCap: 1000,
   warehouseCap: 1000,
   depotCap: 3000,
   repeatCostStep: 0.2,
+  trackCostScale: 1,
+  hsAccessCharge: 2,
+  inCabCost: 6000,
+  startingResourceScale: 1,
   collectMin: 100,
   tradeCycleDays: 2,
   powerCap: 100,
@@ -123,15 +132,6 @@ export const RULE_META: RuleMeta[] = [
     newGame: true,
   },
   {
-    key: 'startReputation',
-    label: 'Starting reputation',
-    group: 'Start',
-    min: 0,
-    max: 2000,
-    step: 10,
-    newGame: true,
-  },
-  {
     key: 'buildCostMul',
     label: 'Build cost x',
     group: 'Economy',
@@ -144,7 +144,7 @@ export const RULE_META: RuleMeta[] = [
   { key: 'runningCostMul', label: 'Fuel use x', group: 'Economy', min: 0, max: 5, step: 0.1 },
   {
     key: 'wheatPerCrew',
-    label: 'Wheat per crew per day',
+    label: 'Wheat per person per day',
     group: 'Economy',
     min: 0,
     max: 5,
@@ -174,6 +174,38 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 2,
     step: 0.05,
+  },
+  {
+    key: 'inCabCost',
+    label: 'In-cab signalling fit-out',
+    group: 'Economy',
+    min: 0,
+    max: 50000,
+    step: 500,
+  },
+  {
+    key: 'hsAccessCharge',
+    label: 'High-speed access charge per tile',
+    group: 'Economy',
+    min: 0,
+    max: 20,
+    step: 0.5,
+  },
+  {
+    key: 'trackCostScale',
+    label: 'Track cost scale',
+    group: 'Economy',
+    min: 0.25,
+    max: 4,
+    step: 0.25,
+  },
+  {
+    key: 'startingResourceScale',
+    label: 'Starting resource scale',
+    group: 'Economy',
+    min: 0.25,
+    max: 4,
+    step: 0.25,
   },
   {
     key: 'collectMin',
@@ -219,14 +251,6 @@ export const RULE_META: RuleMeta[] = [
   },
   { key: 'spotPriceMul', label: 'Spot price x', group: 'Economy', min: 0, max: 5, step: 0.1 },
   { key: 'payoutMul', label: 'Contract payout x', group: 'Contracts', min: 0, max: 5, step: 0.1 },
-  {
-    key: 'reputationMul',
-    label: 'Reputation reward x',
-    group: 'Contracts',
-    min: 0,
-    max: 5,
-    step: 0.1,
-  },
   { key: 'failPenaltyMul', label: 'Miss penalty x', group: 'Contracts', min: 0, max: 5, step: 0.1 },
   {
     key: 'deadlineMul',
@@ -366,13 +390,6 @@ function sanitize(r: Partial<Rules>): Rules {
     if (typeof v === 'number' && Number.isFinite(v))
       (out as unknown as Record<string, number>)[m.key] = Math.min(m.max, Math.max(m.min, v));
   }
-  if (
-    Array.isArray(r.tierThresholds) &&
-    r.tierThresholds.length >= 2 &&
-    r.tierThresholds.every((x) => typeof x === 'number')
-  )
-    out.tierThresholds = [...r.tierThresholds].map((x) => Math.max(0, Math.round(x)));
-  out.tierThresholds[0] = 0;
   out.mapSize = Math.max(32, Math.round(out.mapSize / 32) * 32);
   return out;
 }

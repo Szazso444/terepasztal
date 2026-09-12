@@ -1,3 +1,14 @@
+/** Age names by index (0 steam, 1 diesel, 2 electric); ids match `src/data/ages.json`. */
+const AGE_NAMES: Record<string, string> = {
+  steam: 'Steam Age',
+  diesel: 'Diesel Age',
+  electric: 'Electric Age',
+};
+const AGE_ORDER = ['steam', 'diesel', 'electric'];
+function ageLabel(t: number) {
+  return AGE_NAMES[AGE_ORDER[t]] ?? `age ${t}`;
+}
+
 /** All user-facing strings. Keep flat so a Hungarian table can mirror this file later. */
 export const STR = {
   title: 'Terepasztal',
@@ -6,7 +17,7 @@ export const STR = {
     money: 'Funds',
     weather: (season: string, weather: string) => `${season} · ${weather}`,
     tickets: 'Tickets',
-    reputation: 'Reputation',
+    age: 'Age',
     day: (d: number) => `Day ${d}`,
     speed: ['❚❚', '1x', '2x', '3x'],
     pause: 'Pause (Space)',
@@ -15,12 +26,25 @@ export const STR = {
     weatherToggleHint: 'Toggle rain, fog and seasons',
     dayToggle: 'Day/night',
     dayToggleHint: 'Toggle the day and night cycle',
-    tier: (t: number) => `Tier ${t}`,
-    tierUp: (t: number) => `Reputation tier ${t} reached. New rolling stock and works unlocked.`,
+    ageUp: (t: number) =>
+      `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
+  },
+  ages: {
+    title: 'Ages',
+    name: AGE_NAMES,
+    current: 'current',
+    reached: 'reached',
+    locked: 'not yet',
+    start: 'Where every railway begins.',
+    goal: {
+      depots: 'Depots',
+      population: 'Population',
+      earned: 'Earned in total',
+    } as Record<string, string>,
+    hint: 'An age begins once every goal listed for it is met (checked every hour).',
   },
   overview: {
     locked: 'UNCHARTED',
-    tierReq: (t: number) => `Reputation tier ${t}`,
     price: (v: number) => `$${v.toLocaleString()}`,
     buyHint: 'click to buy',
     buyTitle: 'Buy chunk',
@@ -72,13 +96,14 @@ export const STR = {
     entities: 'Entities',
     giveMoney: '+10,000 funds',
     giveTickets: '+10 tickets',
-    giveRep: '+100 rep',
+    nextAge: 'Next age',
     giveResources: '+200 resources',
     spawnContract: 'Spawn contract',
     depthOverlay: 'Depth-sort overlay',
     zoom: 'Zoom',
     camera: 'Camera',
     traffic: 'Traffic',
+    junctions: 'Junctions',
     tile: 'Tile',
     regenerate: 'New map (seed)',
   },
@@ -88,10 +113,16 @@ export const STR = {
     locked: 'Uncharted region',
     rock: 'Cannot lay track on rock',
     needBridge: 'Water needs a bridge',
+    trackInWay: 'Track in the way: remove it first',
+    needWaterside: 'Must stand next to water',
+    sameSupply: 'Already electrified this way',
+    needTransition: 'Different track classes join through a transition piece',
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
-    tierLocked: (t: number) => `Requires reputation tier ${t}`,
+    tierLocked: (t: number) => `Requires the ${ageLabel(t)}`,
+    supplyLocked: "Not part of this game's production chain",
+    needDeposit: (k: string) => `Needs a ${k} deposit on the tile`,
     badTerrain: 'Cannot build here',
     needTrack: 'Must touch track',
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
@@ -99,7 +130,7 @@ export const STR = {
     needTrackHere: 'Signals stand on track',
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
-    levelCap: 'Level cap for your reputation tier',
+    levelCap: 'Level cap for the current age',
     cost: (v: string) => `Cost ${v}`,
     harvest: (n: number, cargo: string, f: number) =>
       `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
@@ -131,15 +162,45 @@ export const STR = {
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
       building: 'On a free buildable tile.',
       works: 'On a free buildable tile. Runs from the stockpile; no track needed.',
+      deposit: (k: string) =>
+        `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
       plant: 'On a free buildable tile. Chain Power Line poles from it to reach the rails.',
     },
     trackDesc: {
-      straight: 'Plain rail. Drag to lay a run of straights.',
-      curve: 'Quarter turn. R rotates.',
-      switch: 'Junction: one line splits into two. Trains take whichever branch their route needs.',
-      crossing: 'Two lines cross without connecting.',
-      bridge: 'Spans one tile of water. Only on water.',
+      straight_regular: 'Plain rail. Drag to lay a run of straights.',
+      curve_regular: 'Quarter turn of radius half a tile. R rotates.',
+      switch_regular:
+        'Junction: one line splits into two. Trains take whichever branch their route needs.',
+      crossing_regular_regular: 'Two regular lines cross without connecting.',
+      bridge_regular: 'Spans one tile of water. Only on water.',
+      transition_regular:
+        'Joins regular and high-speed track. Regular speed applies on the piece itself.',
+      straight_high_speed: 'High-speed straight. Drag to lay a run.',
+      curve_high_speed:
+        'Two by two tiles, radius one and a half: nearly full speed through the turn. The inner corner tile is blocked. R rotates.',
+      switch_high_speed:
+        'Two by two tiles: a high-speed straight with a wide diverging arc. R rotates through both handings.',
+      crossing_regular_high_speed:
+        'A regular line crosses a high-speed line at grade. The slow line holds the fast one up.',
+      crossing_high_speed_high_speed: 'Two high-speed lines cross at grade.',
+      bridge_high_speed: 'High-speed span over one tile of water.',
     } as Record<string, string>,
+    trackClass: { regular: 'Regular', high_speed: 'High-speed' } as Record<string, string>,
+    supply: {
+      third_rail: 'Third rail',
+      catenary: 'Catenary',
+      hv_catenary: 'HV catenary',
+    } as Record<string, string>,
+    supplyDesc: {
+      third_rail:
+        'A live rail beside the track. Cheap, no masts, slow: contact-shoe stock only. Drag along track.',
+      catenary:
+        'Mast and wire per tile. The standard pantograph supply; high-speed sets run under it at the standard ceiling. Drag along track.',
+      hv_catenary:
+        'Heavier masts and wire for high-speed pantographs. Standard electrics cannot draw from it unless multi-system. Drag along track.',
+    } as Record<string, string>,
+    placeSupply:
+      'On track within six tiles of a powered substation to be live. R does nothing here.',
   },
   building: {
     recipe: 'Recipe',
@@ -166,12 +227,21 @@ export const STR = {
     stuck: (n: string, sec: number) => `${n}: has not moved for ${sec} s`,
     ecoMode: (n: string) => `${n}: low on fuel, crawling to save it`,
     held: (n: string) => `${n}: held by traffic`,
+    junction: (level: string, x: number, y: number, trains: number, wait: number) =>
+      `${level} junction at ${x},${y}: ${trains} trains, ${wait} s lost`,
+    junctionLevel: {
+      info: 'Busy',
+      minor: 'Congested',
+      major: 'Jammed',
+      critical: 'Gridlocked',
+    } as Record<string, string>,
     orphaned: (n: string) => `${n}: no platform track`,
     unwired: (n: string) => `${n}: no power line connected`,
     starved: (n: string, r: string) => `${n}: waiting for ${r}`,
     full: (n: string) => `${n}: stockpile full, output stopped`,
     contractFailed: (n: string) => `Contract failed: ${n}`,
     contractDone: (n: string) => `Contract completed: ${n}`,
+    contractNoTrain: (n: string) => `No train can work "${n}": wrong wagons, no rails or no range`,
     famine: 'Crews are out of wheat',
   },
   advisor: {
@@ -227,6 +297,7 @@ export const STR = {
     capacity: 'Capacity',
     tanks: 'Tanks',
     fuel: 'Fuel',
+    engines: 'Engines',
     perTile: '/ tile',
     perWeek: 'Per week',
     consumes: 'Consumes',
@@ -234,6 +305,8 @@ export const STR = {
     delivers: 'Delivers',
     noData: 'after first loop',
     hoverHint: 'Hover a train to trace its path',
+    onContract: (n: string, dest: string) => `on contract: ${n} → ${dest}`,
+    queuedContracts: (n: number) => `+${n} queued`,
   },
   depot: {
     title: 'Depot',
@@ -279,7 +352,7 @@ export const STR = {
     recall: 'Recall',
     locomotive: 'Locomotive',
     wagons: 'Wagons',
-    noFreeLoco: 'No free locomotives. Recall a train or pull from the gacha.',
+    noFreeLoco: 'No free locomotives. Recall a train or craft one in the works.',
     noFreeWagons: 'No free wagons.',
     speed: 'Speed',
     power: 'Power',
@@ -302,6 +375,10 @@ export const STR = {
     fuelHint: (v: string) => `Running cost per tile from ${v}`,
     details: 'Details',
     haul: (w: number, p: number) => `Wagons ${w} t of ${p} t the engines can haul (before cargo)`,
+    physics: (effort: number, mass: number, accel: number, vmax: number) =>
+      `Effort ${effort} · mass ${mass} t · ${accel.toFixed(2)} tiles/s² · top ${vmax.toFixed(2)} tiles/s`,
+    deadWeight: (type: string) => `dead weight: no ${type.toLowerCase()} locomotive`,
+    controlClass: (c: string) => `control class ${c}`,
     scheduleHint: 'Stops, loading and departure direction are edited in the train details.',
     scheduleLiveHint:
       'Changes apply at once. Each stop: what to load and unload, wait for full wagons, refuel, and which way to leave.',
@@ -339,6 +416,17 @@ export const STR = {
       overweight: 'Overweight',
     } as Record<string, string>,
   },
+  modes: {
+    leading: 'Leading',
+    multiple: 'Multiple',
+    doubleHeaded: 'Double-headed',
+    standby: 'Standby',
+    /** a standby unit that has stepped in */
+    rescuing: 'standby, pulling',
+    /** a working unit without usable power */
+    dormant: 'no usable power',
+    hint: 'Multiple: same control class as the leader, full effort. Double-headed: 82% of the summed effort. Standby: dead weight until the pulling units lose fuel or the wire.',
+  } as Record<string, string>,
   contracts: {
     title: 'Contract Board',
     sideTitle: 'Contracts',
@@ -359,12 +447,25 @@ export const STR = {
     expired: 'Expired',
     accepted: (n: string) => `${n} accepted`,
     completed: (n: string, pay: string) => `${n} delivered: ${pay}`,
-    failedMsg: (n: string, rep: number) => `${n} failed: -${rep} reputation`,
+    failedMsg: (n: string, fine: string) => `${n} failed: fined ${fine}`,
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
     offersBadge: (n: number) => `${n} new`,
     sideEmpty: 'No active contracts.',
     sideEmptyOffers: 'Offers waiting on the board.',
     dailyTicket: "Daily bonus: +1 ticket for yesterday's deliveries",
+    cancelFine: (fine: string) => `Cancel (fine ${fine})`,
+    cancelled: 'Cancelled',
+    cancelledMsg: (n: string, fine: string) => `${n} cancelled: fined ${fine}`,
+    confirmCancel: (n: string, fine: string) => `Cancel "${n}"? The fine is ${fine}.`,
+    train: 'Train',
+    noTrain: 'No train can work this',
+    rarity: {
+      common: 'Common',
+      uncommon: 'Uncommon',
+      rare: 'Rare',
+      epic: 'Epic',
+      legendary: 'Legendary',
+    } as Record<string, string>,
   },
   gacha: {
     title: 'Rolling Stock Works',
@@ -390,7 +491,57 @@ export const STR = {
       `Featured (rate-up ${pct}% of their rarity) · rotates in ${days}d`,
     featuredBadge: 'featured',
   },
+  craft: {
+    title: 'Rolling Stock Works',
+    recipes: 'Recipes',
+    unlock: 'Unlock a recipe',
+    kind: 'Kind',
+    age: 'Age',
+    ages: ['Age of Steam', 'Diesel Era', 'Electric Line'] as string[],
+    quality: {
+      N: 'Common',
+      R: 'Uncommon',
+      SR: 'Rare',
+      SSR: 'Epic',
+      L: 'Legendary',
+    } as Record<string, string>,
+    known: (have: number, total: number) => `${have} / ${total} recipes known`,
+    noPool: 'No models of this kind in this age.',
+    unlockHint: (n: number) =>
+      `Pay once, choose one of ${n} recipe cards. A card you already know pays back in materials instead.`,
+    unlockBtn: (price: string) => `Unlock recipe (${price})`,
+    drawPending: 'Choose a card first',
+    pickTitle: 'Choose one recipe to keep',
+    pickHint: 'The other cards are gone once you choose.',
+    ownedBadge: (refund: string) => `Known: refunds ${refund}`,
+    newBadge: 'New recipe',
+    keep: 'Keep',
+    recipeLearned: (name: string) => `Recipe learned: ${name}`,
+    recipeRefund: (name: string, refund: string) => `${name} was already known: ${refund} refunded`,
+    cost: 'Cost',
+    failChance: (pct: number) => `${pct}% chance to fail`,
+    copies: (n: number) => `${n} in the roster`,
+    craftBtn: 'Craft',
+    missing: (what: string) => `Missing: ${what}`,
+    noRecipes: 'No recipes yet. Unlock one on the left.',
+    crafted: (name: string) => `${name} built and added to the roster`,
+    failed: (name: string, refund: string) => `${name} failed on the bench: ${refund} recovered`,
+    failedNothing: (name: string) => `${name} failed on the bench; the materials are lost`,
+    stats: (recipes: number, crafts: number, failures: number) =>
+      `${recipes} recipes · ${crafts} built · ${failures} failed`,
+    resources: 'Stockpile',
+  },
   roster: {
+    fitInCab: (cost: number) => `Fit in-cab signalling ($${cost.toLocaleString()})`,
+    fitInCabHint:
+      'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
+    fitted: (n: string) => `${n} fitted with in-cab signalling`,
+    hasInCab: 'in-cab signalling fitted',
+    noMoney: 'Not enough money',
+    size: { small: 'small', medium: 'medium (2 tiles)', large: 'large (3 tiles)' } as Record<
+      string,
+      string
+    >,
     title: 'Roster',
     kind: 'Kind',
     rarity: 'Rarity',
@@ -402,13 +553,17 @@ export const STR = {
     freeOnly: 'Unassigned only',
     count: (n: number) => `${n} items`,
     empty: 'Nothing matches.',
+    copies: (n: number) => `${n} copies`,
+    levelUp: 'Level up',
+    levelUpHint: 'Consumes one spare unassigned copy of this model',
+    leveled: (name: string, level: number) => `${name} is now Lv ${level}`,
     capacity: 'Capacity',
     crew: 'crew',
     type: { steam: 'Steam', diesel: 'Diesel', electric: 'Electric' } as Record<string, string>,
     carries: {
-      liquid: 'Liquids (water, oil)',
-      mineral: 'Minerals (coal, stone, iron)',
-      bulk: 'Bulk (wood, wheat)',
+      liquid: 'Liquids (water, oil, diesel)',
+      mineral: 'Minerals (coal, stone, iron, ores, sand)',
+      bulk: 'Bulk (wood, wheat, wire)',
       people: 'Passengers',
     } as Record<string, string>,
     fuelLine: (l: {
@@ -424,12 +579,24 @@ export const STR = {
         : l.type === 'diesel'
           ? `Diesel · ${l.fuelCap} oil · ${l.fuelPerTile} per tile`
           : `Electric · ${l.powerPerTile} power per tile`,
+    serviceLine: (service: string, cap: number) =>
+      `Refuelling cart: +${cap} ${service === 'battery' ? 'power' : service === 'fuel' ? 'oil' : 'coal'}, 10% less use per cart (${service === 'coal' ? 'steam' : service === 'fuel' ? 'diesel' : 'electric'} engines only)`,
     maxLevel: 'Max level',
     dupeProgress: (n: number, need: number) => `Duplicates ${n} / ${need} to next level`,
     assignedTo: (n: string) => `In service: ${n}`,
     inDepot: 'In depot',
   },
   settings: {
+    signalling: 'Signalling',
+    signalLevel: {
+      auto: 'Automatic',
+      token: 'Token',
+      absolute_block: 'Absolute block',
+      ctc: 'CTC',
+      in_cab: 'In-cab',
+    } as Record<string, string>,
+    signallingHint:
+      'Automatic keeps trains apart as before. Token: one train per plain section, whichever way it runs. Absolute block: semaphores hold trains out of an occupied block and trains keep 10 tiles apart; CTC 6; In-cab 3 (equipped stock only). Semaphores work under every level above Token.',
     title: 'Settings',
     options: 'Options',
     saves: 'Saves',
@@ -450,9 +617,12 @@ export const STR = {
     off: 'Off',
     controls: 'Controls',
     controlsText:
-      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G gacha · V roster · K market · ` debug',
+      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
     lastSave: 'Last save',
-    autoContracts: 'Accept contract offers automatically',
+    contractPolicy: 'Contract offers by rarity',
+    contractPolicyHint:
+      'Auto-accept takes the offer at once; Ask leaves it on the board; Auto-deny drops it (free).',
+    policy: { accept: 'Auto-accept', prompt: 'Ask', deny: 'Auto-deny' } as Record<string, string>,
     slots: 'Named saves',
     slotName: 'Save name',
     saveAs: 'Save as',
@@ -469,6 +639,7 @@ export const STR = {
     newGameNote: 'Generates a fresh map. Leave the seed empty for a random one.',
     seedPlaceholder: 'seed (optional)',
     confirmNew: 'Start a new game? The current save will be replaced on the next autosave.',
+    supply: 'Production chain',
     transfer: 'Transfer',
     exportSave: 'Export to text',
     formatNote:
@@ -513,6 +684,13 @@ export const STR = {
     mainMenu: 'Main menu',
     confirmReplace: 'This replaces the current saved game. Continue?',
     menuButton: 'Menu',
+    supply: 'Production chain',
+    supplyModes: { simple: 'Simple', full: 'Full' } as Record<string, string>,
+    supplyHint: {
+      simple:
+        'Kiln, grinder and refinery make coal, iron and oil from the stockpile; diesels burn oil; warehouses top up fuel from the stockpile.',
+      full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
+    } as Record<string, string>,
   },
   editor: {
     terrainDesc: 'Paint this terrain. Anything built on the tile is cleared.',
@@ -521,7 +699,7 @@ export const STR = {
     size: 'Size',
     description: 'Description shown in the level list',
     start: 'Player start',
-    startTier: 'Start tier',
+    startTier: 'Start age (0 steam, 1 diesel, 2 electric)',
     brush: 'Terrain brush',
     brushHint:
       'Pick a terrain in the toolbar, drag to paint. Painting clears anything built on the tile.',
@@ -545,9 +723,6 @@ export const STR = {
   tuning: {
     title: 'Game tuning',
     newGameOnly: 'new map',
-    progression: 'Progression',
-    tiers: 'Reputation tier thresholds',
-    tiersHint: 'Comma-separated, first is 0. Tiers unlock regions, station levels and banners.',
     note: 'Changes apply immediately and are stored with the save. Map values apply to the next generated map.',
     reset: 'Reset to defaults',
   },
@@ -563,6 +738,8 @@ export const STR = {
       buildings: 'Buildings',
       gacha: 'Gacha',
       track: 'Track',
+      crafting: 'Crafting',
+      houses: 'Houses',
     } as Record<string, string>,
     customActive: 'Custom content active',
     shipped: 'Shipped content',
@@ -597,6 +774,13 @@ export const STR = {
     oil: 'Oil',
     power: 'Power',
     stockPower: (n: number) => `${n} in the battery`,
+    battery: 'Battery carts',
+    effort: 'Tractive effort',
+    mass: 'Mass',
+    acceleration: 'Acceleration',
+    pulling: (n: number) => `${n} pulling`,
+    standby: 'Standby',
+    engage: 'Engage',
     perTile: 'Use per tile',
     range: 'Range on current tanks',
     tiles: 'tiles',
@@ -640,7 +824,10 @@ export const STR = {
     buy: 'Buy',
     sell: 'Sell',
     full: 'Stockpile is full',
-    hint: 'Prices are fixed per unit. Each depot raises the stockpile cap.',
+    trend: 'Trend',
+    driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
+    driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow daily walk.',
+    hint: 'Prices are per unit. Each depot raises the stockpile cap.',
     deals: 'Standing deals',
     dealsHint: (d: number) =>
       `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the stockpile cap or when funds run out; selling takes what is on hand.`,
@@ -675,7 +862,38 @@ export const STR = {
       iron: 'From the stone grinder or the Market. Switches, signals, power lines and works.',
       power:
         'From power plants, stored in the battery. Electric engines draw it while on powered rails.',
+      iron_ore: 'From iron mines on stony ground. The ironworks smelts it with coal into iron.',
+      crude: 'From oil derricks on oil seeps. The refinery distils it into diesel.',
+      diesel: 'From the refinery or the Market. What diesel engines burn.',
+      sand: 'From sand pits. Every train spreads a little on the rails for grip.',
+      copper_ore: 'From copper mines on stony ground. The wire mill draws it into wire.',
+      wire: 'From the wire mill. Electrification is strung from it.',
     } as Record<string, string>,
+  },
+  compat: {
+    largeBarred: 'Large stock: high-speed track only',
+    needInCab: 'no in-cab signalling equipment on any locomotive',
+    inCabName: 'In-cab signalling',
+    foreAft: (v: number, t: number) =>
+      `bogies slide ${v.toFixed(2)} tiles along the body, limit ${t.toFixed(2)}`,
+    gap: (v: number, t: number) =>
+      `body sits ${v.toFixed(2)} tiles off the rail, limit ${t.toFixed(2)}`,
+    lateral: (v: number, t: number) =>
+      `centre bogie sits ${v.toFixed(2)} tiles off its socket, limit ${t.toFixed(2)}`,
+    cannotUse: (name: string, cls: string, why: string) =>
+      `${name} cannot use ${cls} track: ${why}`,
+    gateClass: (x: number, y: number, present: string, name: string, needs: string) =>
+      `Gate ${x},${y}: ${present} track; ${name} needs ${needs}`,
+    gateNoTrack: (x: number, y: number) => `Gate ${x},${y}: no track`,
+    gateStub: (x: number, y: number) => `Gate ${x},${y}: the track ends right after the gate`,
+    gateRoom: (x: number, y: number, run: number, need: number) =>
+      `Gate ${x},${y}: ${run.toFixed(1)} tiles of run, the consist is ${need.toFixed(1)} long`,
+    gateBusy: (x: number, y: number) => `Gate ${x},${y}: a train stands on it`,
+    gateNoRoute: (x: number, y: number, s: string) =>
+      `Gate ${x},${y}: no route to ${s} the consist may use`,
+    blockedAt: (name: string, x: number, y: number, cls: string) =>
+      `${name} cannot pass ${cls} track at ${x},${y}`,
+    deployable: 'Can roll out here',
   },
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',
@@ -699,6 +917,7 @@ export const STR = {
     depot: 'Depot',
     contracts: 'Contracts',
     gacha: 'Gacha',
+    craft: 'Craft',
     roster: 'Roster',
     market: 'Market',
     settings: 'Settings',
@@ -722,6 +941,35 @@ export const STR = {
       'Every station inside the town carries this name. Change it any time from the town panel.',
     renamed: (n: string) => `Town renamed to ${n}`,
     founded: (n: string) => `${n} is a town now`,
+    housing: (res: number, cap: number, building: number) =>
+      `Housing: ${res} / ${cap}${building ? ` (+${building} under construction)` : ''}`,
+    growth: (perDay: number) => `Growth: +${perDay} people / day`,
+    noGrowth: 'Growth: none (no wheat)',
+    nextHouse: (at: number, mul: number) =>
+      `Next house at ${at} residents${mul > 1 ? ` (traffic ×${mul})` : ''}`,
+    fullHousing: 'Housing full; the town will build as soon as there is room',
+    spawned: (town: string, n: number) =>
+      `${town} is building ${n === 1 ? 'a new house' : `${n} new houses`}`,
+    newcomers: (town: string, n: number) => `${n} newcomers moved into ${town}`,
+    firstTrain: (town: string, n: number) =>
+      `The first train reached ${town}: ${n} newcomers moved in`,
+  },
+  house: {
+    level: (l: number) => `Level ${l}`,
+    residents: 'Residents',
+    building: 'Under construction',
+    stages: ['Foundations', 'Framing', 'Roofed'] as readonly string[],
+    stage: (name: string, pct: number) => `${name} (${pct}%)`,
+    finishedIn: (days: number) => `${days} day${days === 1 ? '' : 's'} to go`,
+    growth: 'Next resident',
+    growthIn: (days: number) => `in ${days} day${days === 1 ? '' : 's'}`,
+    growthNoFood: 'no wheat, nobody moves in',
+    full: 'full',
+    autoUpgrade: (days: number) => `Grows a storey after ${days} full days`,
+    upgrade: (l: number, cost: string) => `Enlarge to level ${l} (${cost})`,
+    maxed: 'Largest house',
+    upgraded: (l: number) => `A townhouse grew to level ${l}`,
+    finished: 'A townhouse is finished',
   },
   station: {
     depotName: 'Depot',

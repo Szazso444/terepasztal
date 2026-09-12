@@ -2,6 +2,7 @@ import { el } from './dom';
 import { STR } from '../strings';
 import type { Stockpile } from '../sim/stockpile';
 import { CARGO, cargoName } from '../sim/cargo';
+import { inSupplyMode } from '../sim/supply';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
 import type { ResourceStat } from '../sim/stats';
@@ -12,6 +13,7 @@ export class ResourceBar {
   readonly right = el('div', { class: 'res-right' });
   private cells = new Map<string, HTMLElement>();
   private cellRoots = new Map<string, HTMLElement>();
+  private cellDefs = new Map<string, (typeof CARGO)[number]>();
   private pop = el('span', { class: 'value' });
   private famine = el('span', { class: 'value red', text: STR.res.famine });
   private card = el('div', { id: 'res-card', class: 'panel' });
@@ -30,6 +32,10 @@ export class ResourceBar {
         spriteImg(atlas, `icons/${c}`, 1, 'sprite-preview res-icon'),
         v,
       );
+      // cargo of the other production-chain mode stays off the bar
+      const def = CARGO.find((x) => x.id === c);
+      if (def && !inSupplyMode(def)) cell.style.display = 'none';
+      if (def) this.cellDefs.set(c, def);
       cell.addEventListener('mouseenter', () => this.showCard(c, cell));
       cell.addEventListener('mouseleave', () => this.hideCard());
       cell.addEventListener('click', onClick);
@@ -107,6 +113,11 @@ export class ResourceBar {
     this.stock = stock;
     this.cap = cap;
     for (const [id, v] of this.cells) {
+      const def = this.cellDefs.get(id);
+      const shown = !def || inSupplyMode(def);
+      const root = this.cellRoots.get(id)!;
+      if ((root.style.display === 'none') === shown) root.style.display = shown ? '' : 'none';
+      if (!shown) continue;
       const have = Math.floor(stock.get(id));
       const c = cap(id);
       const text = `${have}`;

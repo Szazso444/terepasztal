@@ -52,7 +52,10 @@ export class ContractsSide {
         el(
           'div',
           { class: 'sc-line' },
-          el('span', { text: `${Math.round(c.amount)} ${cargoDef(c.cargo).name}` }),
+          el('span', {
+            class: `crarity-${c.rarity}`,
+            text: `${Math.round(c.amount)} ${cargoDef(c.cargo).name}`,
+          }),
           el('span', { class: 'num', text: fmtDuration(Math.max(0, c.expires - now)) }),
         ),
         el(

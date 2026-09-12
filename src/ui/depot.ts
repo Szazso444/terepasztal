@@ -5,7 +5,13 @@ import type { Inventory } from '../gacha/inventory';
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from '../sim/fleet';
 import type { Builder } from '../sim/build';
 import { locoDef, wagonDef, levelMul } from '../gacha/items';
-import type { Train, StopPlan } from '../sim/trains';
+import {
+  consistPhysics,
+  defaultLocoMode,
+  serviceLocoType,
+  type Train,
+  type StopPlan,
+} from '../sim/trains';
 import type { Station } from '../sim/stations';
 import { ScheduleEditor } from './scheduleEditor';
 import { cargoDef } from '../sim/cargo';
@@ -187,15 +193,19 @@ export class DepotScreen implements Screen {
     );
     const locos = this.inventory.free('loco');
     if (!locos.length) c.append(el('div', { class: 'dim', text: STR.depot.noFreeLoco }));
+    const depot =
+      (this.depotId !== null ? this.builder.stationById(this.depotId) : undefined) ??
+      this.builder.depots()[0];
     for (const it of locos) {
       const d = locoDef(it.defId);
       const m = levelMul(it.level);
       const sel = this.locoUids.includes(it.uid);
+      const why = depot ? this.fleet.modelDeployReason(d, depot) : null;
       c.append(
         this.itemRow(
           `${d.name} Lv${it.level}`,
           d.rarity,
-          `${STR.roster.type[d.type]} · ${STR.depot.speed} ${(d.speed * m).toFixed(1)} · ${STR.depot.power} ${Math.round(d.power * m)} t · ${STR.roster.crew} ${d.crew}`,
+          `${STR.roster.type[d.type]} · ${STR.roster.size[d.size ?? 'small']} · ${STR.depot.speed} ${(d.speed * m).toFixed(1)} · ${STR.depot.power} ${Math.round(d.power * m)} t · ${STR.roster.crew} ${d.crew}`,
           sel,
           () => {
             if (sel) this.locoUids = this.locoUids.filter((u) => u !== it.uid);
@@ -204,6 +214,7 @@ export class DepotScreen implements Screen {
             this.renderConsist();
           },
           it.defId,
+          why,
         ),
       );
     }
@@ -215,14 +226,23 @@ export class DepotScreen implements Screen {
     );
     const wagons = this.inventory.free('wagon');
     if (!wagons.length) c.append(el('div', { class: 'dim', text: STR.depot.noFreeWagons }));
+    const pickedTypes = new Set(
+      this.locoUids.map((u) => locoDef(this.inventory.byUid(u)!.defId).type),
+    );
     for (const it of wagons) {
       const d = wagonDef(it.defId);
       const sel = this.wagonUids.includes(it.uid);
+      const why = depot ? this.fleet.modelDeployReason(d, depot) : null;
+      // a refuelling cart without an engine of its type aboard only adds mass
+      const dead =
+        d.service && !pickedTypes.has(serviceLocoType(d.service))
+          ? STR.depot.deadWeight(STR.roster.type[serviceLocoType(d.service)])
+          : null;
       c.append(
         this.itemRow(
           `${d.name} Lv${it.level}`,
           d.rarity,
-          `${STR.roster.carries[d.carries]} · ${Math.round(d.capacity * levelMul(it.level))}u · ${d.weight}t`,
+          `${STR.roster.carries[d.carries]} · ${STR.roster.size[d.size ?? 'small']} · ${Math.round(d.capacity * levelMul(it.level))}u · ${d.weight}t`,
           sel,
           () => {
             if (sel) this.wagonUids = this.wagonUids.filter((u) => u !== it.uid);
@@ -231,17 +251,31 @@ export class DepotScreen implements Screen {
             this.renderConsist();
           },
           it.defId,
+          why,
+          dead,
         ),
       );
     }
-    // summary: haul weight vs power
+    // summary: haul weight vs power, and the physics of the consist as picked
     const s = this.summary;
     s.innerHTML = '';
     if (this.locoUids.length) {
-      const power = this.locoUids.reduce((a, u) => {
+      const locoSlots = this.locoUids.map((u) => {
         const it = this.inventory.byUid(u)!;
-        return a + locoDef(it.defId).power * levelMul(it.level);
-      }, 0);
+        return { def: locoDef(it.defId), level: it.level };
+      });
+      const ph = consistPhysics(
+        locoSlots.map((l, i) => ({
+          ...l,
+          mode: defaultLocoMode(i, l.def, locoSlots[0].def),
+          engaged: true,
+        })),
+        this.wagonUids.map((u) => {
+          const it = this.inventory.byUid(u)!;
+          return { def: wagonDef(it.defId), level: it.level, cargo: null, amount: 0 };
+        }),
+      );
+      const power = ph.haul;
       const weight = this.wagonUids.reduce(
         (a, u) => a + wagonDef(this.inventory.byUid(u)!.defId).weight,
         0,
@@ -249,6 +283,17 @@ export class DepotScreen implements Screen {
       const wrap = el('div', { style: 'flex:1' });
       wrap.append(
         el('div', { class: 'sub', text: STR.depot.haul(Math.round(weight), Math.round(power)) }),
+      );
+      wrap.append(
+        el('div', {
+          class: 'sub dim',
+          text: STR.depot.physics(
+            Math.round(ph.effort),
+            Math.round(ph.mass),
+            ph.acceleration,
+            ph.vMax,
+          ),
+        }),
       );
       wrap.append(
         el(
@@ -268,20 +313,29 @@ export class DepotScreen implements Screen {
     selected: boolean,
     onClick: () => void,
     defId?: string,
+    blocked: string | null = null,
+    warn: string | null = null,
   ) {
     const r = el(
       'div',
-      { class: `item ${selected ? 'selected' : ''}` },
+      { class: `item ${selected ? 'selected' : ''} ${blocked ? 'disabled' : ''}` },
       defId ? spriteImg(this.atlas, frameForItem(defId), 1, 'sprite-preview item-art') : null,
       el(
         'div',
         {},
         el('div', { class: `name rarity-${rarity}`, text: name }),
         el('div', { class: 'sub', text: sub }),
+        blocked ? el('div', { class: 'sub red', text: blocked }) : null,
+        warn ? el('div', { class: 'sub red', text: warn }) : null,
       ),
     );
+    // a barred model still shows why; picking it is allowed so the roll-out box can explain
     r.addEventListener('click', onClick);
     return r;
+  }
+  /** Track around the depots changed: re-check what can roll out. */
+  onTrackChanged() {
+    if (this.root.isConnected) this.render();
   }
 
   private renderRoute() {

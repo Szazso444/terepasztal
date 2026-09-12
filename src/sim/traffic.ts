@@ -2,6 +2,7 @@ import type { TrackGraph } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Builder } from './build';
 import type { Train } from './trains';
+import type { JunctionStats } from './junctions';
 
 /** How far ahead (tiles) a moving train claims track beyond the section it is entering. */
 const HORIZON = 6;
@@ -66,6 +67,8 @@ export class Traffic {
   readonly counters = { stuck: 0, deadlocks: 0, overlaps: 0, yields: 0, headOn: 0, waits: 0 };
   private overlapSeen = new Map<string, number>();
   onEpisode: ((e: TrafficEpisode) => void) | null = null;
+  /** set by the fleet: junction statistics for `report()` */
+  junctionReport: (() => JunctionStats[]) | null = null;
 
   constructor(
     private readonly track: TrackGraph,
@@ -88,7 +91,7 @@ export class Traffic {
     const isNode = (x: number, y: number) => {
       const p = this.track.get(x, y);
       if (!p) return true;
-      if (p.links.length > 1 || platform.has(this.key(x, y))) return true;
+      if (p.links.length > 1 || p.unit || platform.has(this.key(x, y))) return true;
       let open = 0;
       for (const d of DIRS) if (this.track.connected(x, y, d)) open++;
       return open < 2;
@@ -129,6 +132,10 @@ export class Traffic {
     const id = this.claims.get(this.key(x, y));
     return id === undefined || id === self ? null : id;
   }
+  /** tile keys of a plain section (empty for nodes) */
+  tilesOfSection(id: number): number[] {
+    return this.sectionTiles.get(id) ?? [];
+  }
   sectionOf(x: number, y: number) {
     return this.sections.get(this.key(x, y)) ?? -(this.key(x, y) + 1);
   }
@@ -141,12 +148,7 @@ export class Traffic {
   // ------------------------------------------------------------------ claims
   /** Tiles under a train's cars. */
   private carTiles(t: Train): number[] {
-    const out: number[] = [];
-    for (const p of t.poses) {
-      const k = this.key(Math.floor(p.x + 0.5), Math.floor(p.y + 0.5));
-      if (!out.includes(k)) out.push(k);
-    }
-    return out;
+    return t.occupancyKeys(this.track.w);
   }
   /** Direction of travel of a train through a tile of its path, or of its head when standing. */
   private headingOf(t: Train): { x: number; y: number } {
@@ -412,6 +414,7 @@ export class Traffic {
         };
       }),
       episodes: this.episodes.slice(-60),
+      junctions: this.junctionReport?.() ?? [],
     };
   }
 }

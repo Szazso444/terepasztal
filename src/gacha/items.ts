@@ -39,6 +39,8 @@ export interface Item {
   /** duplicate points collected towards the next level */
   dupes: number;
   obtainedAt: number;
+  /** in-cab signalling equipment fitted to this locomotive */
+  inCab?: boolean;
 }
 
 export function dupesNeeded(level: number) {

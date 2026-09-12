@@ -1,0 +1,50 @@
+{
+  "unlockPrice": {
+    "loco": [4000, 12000, 24000],
+    "wagon": [1500, 4500, 9000]
+  },
+  "cardsPerDraw": 3,
+  "rarityWeight": {
+    "N": 0.55,
+    "R": 0.3,
+    "SR": 0.11,
+    "SSR": 0.04,
+    "L": 0.01
+  },
+  "ownedWeight": 0.35,
+  "ownedRefund": {
+    "iron": 30,
+    "wood": 30
+  },
+  "instanceCost": {
+    "loco": {
+      "small": { "iron": 40, "wood": 25, "stone": 10, "coal": 15 },
+      "medium": { "iron": 80, "wood": 40, "stone": 20, "coal": 30 },
+      "large": { "iron": 140, "wood": 60, "stone": 35, "coal": 50 }
+    },
+    "wagon": {
+      "small": { "iron": 15, "wood": 20, "stone": 5 },
+      "medium": { "iron": 30, "wood": 35, "stone": 10 },
+      "large": { "iron": 50, "wood": 55, "stone": 20 }
+    }
+  },
+  "rarityCostMul": {
+    "N": 1,
+    "R": 1.4,
+    "SR": 2,
+    "SSR": 3,
+    "L": 4
+  },
+  "failChance": {
+    "N": 0,
+    "R": 0.05,
+    "SR": 0.12,
+    "SSR": 0.22,
+    "L": 0.35
+  },
+  "failRefund": 0.5,
+  "starterCopies": {
+    "loco": 1,
+    "wagon": 2
+  }
+}

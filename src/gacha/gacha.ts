@@ -113,14 +113,16 @@ export class Gacha {
       const picked = this.pickFromPool(banner, rarity, featured);
       const defId = picked.defId;
       rarity = picked.rarity;
-      const added = this.inventory.add(defId, now);
+      // copies no longer merge into levels; a repeat is only reported
+      const duplicate = this.inventory.count(defId) > 0;
+      const item = this.inventory.add(defId, now);
       out.push({
         defId,
         rarity,
         featured: picked.featured,
-        item: added.item,
-        duplicate: added.duplicate,
-        leveled: added.leveled,
+        item,
+        duplicate,
+        leveled: false,
         forced,
       });
     }

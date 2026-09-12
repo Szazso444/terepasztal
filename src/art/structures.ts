@@ -6,6 +6,7 @@ import {
   STATION_FAMILIES,
   BUILDING_SPRITES,
   DECOR_SPRITES,
+  HOUSE_SPRITES,
   powerLine,
   ground,
   shadowRect,
@@ -302,21 +303,136 @@ function depot2(rot: number): PixelBuf {
   return b;
 }
 
-/** Semaphore post; `aspect` picks which lamp is lit. */
-function signal(aspect: 'red' | 'green' | 'off'): PixelBuf {
-  const b = new PixelBuf(12, 28);
-  b.rect(5, 8, 2, 20, PAL.iron[2]);
-  b.rect(4, 26, 4, 2, PAL.iron[0]);
-  b.rect(2, 2, 8, 7, PAL.iron[0]);
-  b.rect(3, 3, 6, 5, PAL.iron[1]);
-  const dim: RGB = [60, 40, 40];
-  const dimG: RGB = [36, 60, 60];
-  b.rect(3, 4, 2, 3, aspect === 'red' ? PAL.red : dim);
-  b.rect(7, 4, 2, 3, aspect === 'green' ? PAL.cyan : dimG);
-  if (aspect === 'red') b.set(3, 4, [230, 120, 100]);
-  if (aspect === 'green') b.set(7, 4, [190, 240, 250]);
+/**
+ * Semaphore signal: a post with a ladder, a red home arm with a white stripe pivoting at the
+ * top and a yellow fishtailed distant arm below. `m` and `d` are the arm positions from 0
+ * (horizontal: danger / caution) to 3 (raised 45°: clear); the in-between frames animate the
+ * sweep. Lamps beside the pivots show the colour the arm means.
+ */
+export const SEMAPHORE_STEPS = 4;
+function semaphore(m: number, d: number): PixelBuf {
+  const W = 26;
+  const H = 46;
+  const b = new PixelBuf(W, H);
+  const postX = 14;
+  // post, base and ladder
+  b.rect(postX, 6, 2, 38, PAL.iron[2]);
+  b.rect(postX - 1, 6, 4, 2, PAL.iron[1]);
+  b.rect(postX - 2, 42, 6, 3, PAL.iron[0]);
+  for (let y = 12; y < 42; y += 3) b.rect(postX + 3, y, 3, 1, PAL.iron[3]);
+  b.rect(postX + 3, 10, 1, 32, PAL.iron[1]);
+  b.rect(postX + 5, 10, 1, 32, PAL.iron[1]);
+  const arm = (
+    px: number,
+    py: number,
+    angle: number,
+    len: number,
+    col: RGB,
+    dark: RGB,
+    fishtail: boolean,
+  ) => {
+    const ca = Math.cos(angle);
+    const sa = Math.sin(angle);
+    for (let i = 0; i <= len; i++) {
+      const x = Math.round(px - ca * i);
+      const y = Math.round(py - sa * i);
+      // white stripe near the tip
+      const stripe = i >= len - 4 && i <= len - 2;
+      const c: RGB = stripe ? PAL.white : col;
+      b.set(x, y, c);
+      b.set(x, y + 1, stripe ? [190, 190, 184] : dark);
+      if (fishtail && i === len) {
+        b.set(x, y, PAL.outline);
+      }
+    }
+    // pivot bolt
+    b.set(px, py, PAL.iron[3]);
+  };
+  const up = (i: number) => (Math.PI / 4) * (i / (SEMAPHORE_STEPS - 1));
+  // home arm: red, raises 45° for clear
+  arm(postX, 8, up(m), 12, PAL.red, [110, 36, 30], false);
+  // distant arm: yellow fishtail, drops 45° for clear
+  arm(postX, 24, -up(d), 11, PAL.amber, [140, 96, 30], true);
+  // lamps: colour they currently show
+  const homeClear = m >= SEMAPHORE_STEPS - 1;
+  const distClear = d >= SEMAPHORE_STEPS - 1;
+  b.rect(postX + 2, 7, 3, 3, homeClear ? PAL.cyan : PAL.red);
+  b.set(postX + 3, 8, homeClear ? [190, 240, 250] : [230, 120, 100]);
+  b.rect(postX + 2, 23, 3, 3, distClear ? PAL.cyan : PAL.amber);
+  b.set(postX + 3, 24, distClear ? [190, 240, 250] : [240, 200, 120]);
   b.outline(PAL.outline, 170);
   return b;
+}
+/**
+ * Electrification overlay for one track tile: a live rail beside the track, or a mast at the
+ * tile edge with a wire across the tile. `axis` is the track direction on the tile.
+ */
+function supplyOverlay(
+  kind: 'third_rail' | 'catenary' | 'hv_catenary',
+  axis: 'ns' | 'ew' | 'x',
+): PixelBuf {
+  const b = new PixelBuf(W, H);
+  const dir = axis === 'ns' ? { x: 0, y: 1 } : { x: 1, y: 0 };
+  const side = axis === 'ns' ? { x: 1, y: 0 } : { x: 0, y: 1 };
+  if (kind === 'third_rail') {
+    const a = proj(OX, OY, -0.5 * dir.x + 0.25 * side.x, -0.5 * dir.y + 0.25 * side.y);
+    const c = proj(OX, OY, 0.5 * dir.x + 0.25 * side.x, 0.5 * dir.y + 0.25 * side.y);
+    b.line(Math.round(a.x), Math.round(a.y), Math.round(c.x), Math.round(c.y), [200, 190, 120]);
+    b.line(
+      Math.round(a.x),
+      Math.round(a.y) + 1,
+      Math.round(c.x),
+      Math.round(c.y) + 1,
+      [120, 110, 60],
+    );
+    if (axis === 'x') {
+      const a2 = proj(OX, OY, 0.25, -0.5);
+      const c2 = proj(OX, OY, 0.25, 0.5);
+      b.line(
+        Math.round(a2.x),
+        Math.round(a2.y),
+        Math.round(c2.x),
+        Math.round(c2.y),
+        [200, 190, 120],
+      );
+    }
+    return b;
+  }
+  const hv = kind === 'hv_catenary';
+  const mastH = hv ? 34 : 26;
+  // mast at the +side edge, bracket over the track, wire along the tile at wire height
+  const m = proj(OX, OY, 0.42 * side.x, 0.42 * side.y);
+  const mx = Math.round(m.x);
+  const my = Math.round(m.y);
+  b.rect(mx - 1, my - mastH, hv ? 3 : 2, mastH, PAL.iron[1]);
+  b.rect(mx - 2, my - 1, hv ? 5 : 4, 2, PAL.iron[0]);
+  const over = proj(OX, OY, 0, 0, mastH - 4);
+  b.line(mx, my - mastH + 3, Math.round(over.x), Math.round(over.y), PAL.iron[2]);
+  const wireZ = mastH - 6;
+  const a = proj(OX, OY, -0.5 * dir.x, -0.5 * dir.y, wireZ);
+  const c = proj(OX, OY, 0.5 * dir.x, 0.5 * dir.y, wireZ);
+  b.line(Math.round(a.x), Math.round(a.y), Math.round(c.x), Math.round(c.y), [190, 170, 120]);
+  if (hv)
+    b.line(
+      Math.round(a.x),
+      Math.round(a.y) - 2,
+      Math.round(c.x),
+      Math.round(c.y) - 2,
+      [190, 170, 120],
+    );
+  if (axis === 'x') {
+    const a2 = proj(OX, OY, 0, -0.5, wireZ);
+    const c2 = proj(OX, OY, 0, 0.5, wireZ);
+    b.line(Math.round(a2.x), Math.round(a2.y), Math.round(c2.x), Math.round(c2.y), [190, 170, 120]);
+  }
+  // insulator
+  b.set(Math.round(over.x), Math.round(over.y) + 1, PAL.white);
+  b.outline(PAL.outline, 150);
+  return b;
+}
+/** Frame name for a pair of arm positions. */
+export function semaphoreFrame(m: number, d: number) {
+  return `structures/semaphore_m${m}_d${d}`;
 }
 
 /** Wooden water tower on a trestle with an iron band. */
@@ -371,9 +487,16 @@ export function generateStructuresAtlas(): AtlasImage {
   ab.add('structures/station_3', stationL3().toImageData(), OX, OY);
   for (const r of [0, 1]) ab.add(`structures/depot_r${r}`, depot2(r).toImageData(), DOX, DOY);
   ab.add('structures/depot_1', depot2(0).toImageData(), DOX, DOY);
-  ab.add('structures/signal', signal('off').toImageData(), 6, 27);
-  ab.add('structures/signal_red', signal('red').toImageData(), 6, 27);
-  ab.add('structures/signal_green', signal('green').toImageData(), 6, 27);
+  for (const k of ['third_rail', 'catenary', 'hv_catenary'] as const)
+    for (const ax of ['ns', 'ew', 'x'] as const)
+      ab.add(`structures/supply_${k}_${ax}`, supplyOverlay(k, ax).toImageData(), OX, OY);
+  for (let m = 0; m < SEMAPHORE_STEPS; m++)
+    for (let d = 0; d < SEMAPHORE_STEPS; d++)
+      ab.add(semaphoreFrame(m, d), semaphore(m, d).toImageData(), 15, 44);
+  // the old names stay valid for the toolbar preview and old callers
+  ab.add('structures/signal', semaphore(0, 0).toImageData(), 15, 44);
+  ab.add('structures/signal_red', semaphore(0, 0).toImageData(), 15, 44);
+  ab.add('structures/signal_green', semaphore(3, 3).toImageData(), 15, 44);
   ab.add('structures/water_tower', waterTower().toImageData(), OX, OY);
   ab.add('structures/warn', warnMarker().toImageData(), 7, 15);
   ab.add('structures/alert', warnMarker(PAL.red, 'disc').toImageData(), 7, 15);
@@ -383,6 +506,8 @@ export function generateStructuresAtlas(): AtlasImage {
   for (const [id, gen] of Object.entries(BUILDING_SPRITES))
     ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
   for (const [id, gen] of Object.entries(DECOR_SPRITES))
+    ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
+  for (const [id, gen] of Object.entries(HOUSE_SPRITES))
     ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
   ab.add('structures/power_line', powerLine().toImageData(), 8, 35);
   return ab.build(1024);

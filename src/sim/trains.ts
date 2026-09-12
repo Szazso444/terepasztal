@@ -1,7 +1,10 @@
-import { type Vec2, angleToFacing8, Dir } from '../engine/iso';
-import type { TrackGraph } from '../world/track';
-import { linkPoints, isCurveLink } from '../world/trackGeom';
+import { type Vec2, Dir, DIR_DX, DIR_DY } from '../engine/iso';
+import type { TrackGraph, TrackPiece } from '../world/track';
+import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
+import { consistAccess, pieceClassFor, type ConsistAccess } from './compat';
+import { collectorCeiling, type SupplyKind } from './catenary';
+import type { Signals } from './signals';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
 import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
 import type { LocoType } from '../data/content';
@@ -11,6 +14,17 @@ import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules } from './rules';
+import {
+  Polyline,
+  poseVehicle,
+  vehicleSpec,
+  vehicleFronts,
+  consistLength,
+  facingOf,
+  type VehiclePose,
+  type VehicleSpec,
+} from './body';
+import { dieselFuelId, sandPerTile, supplyMode } from './supply';
 
 const trackData = content.track;
 import { sfx } from '../engine/audio';
@@ -27,10 +41,100 @@ export type TrainState =
   | 'noPower'
   | 'overweight';
 
+/**
+ * How a unit works in the consist. The first unit leads; a unit of the leader's control class
+ * runs in multiple (full effort); anything else, and every steam engine, is double-headed (the
+ * summed effort is derated); a standby unit rides along dead until the pulling units lose their
+ * power, then takes over until they recover.
+ */
+export type LocoMode = 'leading' | 'multiple' | 'doubleHeaded' | 'standby';
 export interface LocoSlot {
   uid: number;
   def: LocoDef;
   level: number;
+  /** as set by the player (or the default rule) */
+  mode: LocoMode;
+  /** runtime: pulling right now. A unit without usable power drops out; a standby unit steps in. */
+  engaged: boolean;
+  /** fitted with in-cab signalling equipment (the model may carry it by itself) */
+  inCab?: boolean;
+}
+/** A slot as handed to the constructor: mode and engagement are filled in by the rule. */
+export type LocoSlotInit = Omit<LocoSlot, 'mode' | 'engaged'> &
+  Partial<Pick<LocoSlot, 'mode' | 'engaged'>>;
+/** Default mode of a unit by its position and control class. */
+export function defaultLocoMode(i: number, def: LocoDef, leader: LocoDef): LocoMode {
+  if (i === 0) return 'leading';
+  const cc = def.controlClass;
+  return cc && cc === leader.controlClass ? 'multiple' : 'doubleHeaded';
+}
+/** Which locomotive type a refuelling cart serves. */
+export function serviceLocoType(service: 'coal' | 'fuel' | 'battery'): LocoType {
+  return service === 'coal' ? 'steam' : service === 'fuel' ? 'diesel' : 'electric';
+}
+const PHYS = content.track.physics;
+export interface ConsistPhysics {
+  /** effort of the pulling units, derated when any of them works double-headed */
+  effort: number;
+  /** every vehicle plus cargo, tonnes */
+  mass: number;
+  /** tiles/s² the effort gives the mass, clamped; 0 when nothing pulls */
+  acceleration: number;
+  /** tiles/s: the slowest vehicle of the consist */
+  vMax: number;
+  /** tonnes the units on duty (not standby, or a standby that has stepped in) may haul: a hard cap */
+  haul: number;
+  /** a pulling unit works double-headed */
+  doubleHeaded: boolean;
+  /** units pulling */
+  engaged: number;
+}
+/**
+ * Consist physics from the vehicles alone, so the depot can show a train before it exists.
+ * Effort is the haul rating times a data constant; acceleration is effort over mass; the top
+ * speed is the slowest vehicle's. A slower engine therefore caps the speed and adds effort.
+ */
+export function consistPhysics(
+  locos: readonly { def: LocoDef; level: number; mode: LocoMode; engaged: boolean }[],
+  wagons: readonly { def: WagonDef; level: number; cargo: string | null; amount: number }[],
+): ConsistPhysics {
+  const leader = locos[0]?.def;
+  let effort = 0;
+  let haul = 0;
+  let mass = 0;
+  let vMax = Infinity;
+  let doubleHeaded = false;
+  let engaged = 0;
+  for (let i = 0; i < locos.length; i++) {
+    const l = locos[i];
+    mass += l.def.weight;
+    vMax = Math.min(vMax, l.def.speed * levelMul(l.level));
+    const rating = l.def.power * levelMul(l.level);
+    if (l.mode !== 'standby' || l.engaged) haul += rating;
+    if (!l.engaged) continue;
+    engaged++;
+    effort += rating * PHYS.effortPerTonne;
+    // a unit set to multiple whose class no longer matches the leader's works double-headed
+    const cc = l.def.controlClass;
+    if (i > 0 && (l.mode === 'doubleHeaded' || !(cc && leader && cc === leader.controlClass)))
+      doubleHeaded = true;
+  }
+  if (doubleHeaded) effort *= PHYS.doubleHeadEfficiency;
+  for (const w of wagons) {
+    mass += w.def.weight + (w.cargo ? w.amount * cargoDef(w.cargo).weight : 0);
+    vMax = Math.min(vMax, w.def.vmax ?? PHYS.wagonVmax);
+  }
+  const acceleration =
+    effort > 0 ? Math.min(PHYS.maxAccel, Math.max(0.05, effort / Math.max(1, mass))) : 0;
+  return {
+    effort,
+    mass,
+    acceleration,
+    vMax: (vMax === Infinity ? 0 : vMax) * rules.trainSpeedMul,
+    haul,
+    doubleHeaded,
+    engaged,
+  };
 }
 /** What a train does at one stop of its looped schedule. */
 /**
@@ -66,6 +170,26 @@ export function defaultStop(stationId: number): StopPlan {
     pass: false,
     minDwell: 0,
     maxDwell: 0,
+  };
+}
+/**
+ * A contract handed to a train: fetch `cargo` at `originId`, bring it to `destId`. Worked as a
+ * plain two-stop job once the current leg is done; the standing program resumes afterwards.
+ */
+export interface TrainJob {
+  contractId: number;
+  /** contract name, for the panels */
+  name: string;
+  originId: number;
+  destId: number;
+  cargo: string;
+}
+/** The two stops of a job: wait for a load at the origin, take nothing on at the destination. */
+export function jobStop(stationId: number, phase: 'origin' | 'dest'): StopPlan {
+  return {
+    ...defaultStop(stationId),
+    load: phase === 'origin' ? 'auto' : 'none',
+    waitFull: phase === 'origin',
   };
 }
 /** Bookkeeping for one loop of the schedule. */
@@ -113,10 +237,6 @@ export interface CarPose {
   heading: number;
 }
 
-const LOCO_LEN = 0.62;
-const WAGON_LEN = 0.56;
-const GAP = 0.05;
-const ACCEL = 0.7;
 const DECEL = 1.1;
 const MIN_DWELL = 2;
 /** tiles of path scanned ahead for other trains */
@@ -147,6 +267,18 @@ export interface TickCtx {
   stockCap: (id: string) => number;
   /** is the tile inside a live electric network? */
   powered: (x: number, y: number) => boolean;
+  /** electrification kind on a tile (null: bare rails) */
+  supplyAt: (x: number, y: number) => SupplyKind | null;
+  /** share of its draw a substation can deliver to trains under it (1 = all) */
+  gridFactor: (x: number, y: number) => number;
+  /** a train reports what it draws, units per second */
+  gridDraw: (x: number, y: number, unitsPerSecond: number) => void;
+  /** block signals (null when the game runs without) */
+  signals: Signals | null;
+  /** token working: is this plain section held by another train? */
+  tokenBlocked: (x: number, y: number, self: number) => boolean;
+  /** tiles a train keeps behind the one ahead under the signalling level */
+  headway: (t: Train) => number;
   /** a resource entered (+) or left (-) the stockpile at a tile: drives the floating indicators */
   onFlow: (x: number, y: number, resource: string, delta: number) => void;
   /** passengers boarded (true) or alighted (false) at a station */
@@ -197,8 +329,12 @@ export class Train {
   /** which solid fuel is in the tanks, for display */
   fuelKind: 'coal' | 'wood' = 'coal';
   fuelPreference: 'coal' | 'wood' = 'coal';
+  /** what the diesel tanks hold: oil in the simple production chain, diesel in the full one */
+  oilKind: 'oil' | 'diesel' = 'oil';
   oil = 0;
   water = 0;
+  /** power units in the battery carts */
+  battery = 0;
   trip: TripStats = newTrip(0);
   lastTrip: TripStats | null = null;
   /** first locomotive: drives art, smoke and glow */
@@ -253,7 +389,7 @@ export class Train {
       if (!st) break;
       const plat = new Set(builder.platformTiles(st).map((p) => p.y * track.w + p.x));
       if (!plat.size) break;
-      const p = findPath(
+      const p = this.pathTo(
         track,
         { x: cursor.x, y: cursor.y, in: cursor.in },
         (x, y) => plat.has(y * track.w + x),
@@ -317,8 +453,8 @@ export class Train {
       const set = new Set(plat.map((p) => p.y * w + p.x));
       const isT = (x: number, y: number) => set.has(y * w + x);
       const p =
-        findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isT, 4000) ??
-        findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isT, 4000);
+        this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isT, 4000) ??
+        this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isT, 4000);
       if (!p) continue;
       const len = p.length;
       if (len > this.rangeTiles * 0.9) continue;
@@ -347,6 +483,10 @@ export class Train {
   atStation: Station | null = null;
   lastMessage = '';
   /** held behind another train */
+  /** free-running speed target of the last move tick (before braking for holds or the stop) */
+  freeSpeed = 0;
+  /** distance to the hold point ahead of the last move tick (occupancy or claim limit); Infinity when clear */
+  holdDist = Infinity;
   blocked = false;
   /** id of the train currently blocking this one */
   blockedBy: number | null = null;
@@ -379,6 +519,97 @@ export class Train {
   get dynamic() {
     return this.mode !== 'schedule';
   }
+  /** contracts waiting for this train, in order */
+  jobs: TrainJob[] = [];
+  /** the contract being worked right now */
+  job: TrainJob | null = null;
+  /** heading for the job's origin to load, or for its destination to deliver */
+  jobPhase: 'origin' | 'dest' = 'origin';
+  /** the standing program set aside while a job runs */
+  private suspended: { schedule: StopPlan[]; routeIndex: number } | null = null;
+  /** a job was closed under a moving train: re-route to the resumed program on the next tick */
+  private resumePending = false;
+  /** Queue a contract; it starts once the current leg is done. */
+  addJob(j: TrainJob) {
+    if (
+      this.job?.contractId === j.contractId ||
+      this.jobs.some((q) => q.contractId === j.contractId)
+    )
+      return;
+    this.jobs.push(j);
+  }
+  /**
+   * Drop a contract from the queue, or close the one being worked: the train falls back to its
+   * program at the next stop, or right away when it is under way.
+   */
+  dropJob(contractId: number) {
+    this.jobs = this.jobs.filter((j) => j.contractId !== contractId);
+    if (this.job?.contractId !== contractId) return;
+    this.job = null;
+    if (this.state === 'moving' && !this.holding) this.resumePending = true;
+  }
+  /** Set the program aside and take up the next queued contract as a two-stop schedule. */
+  private startJob() {
+    const j = this.jobs.shift();
+    if (!j) return;
+    if (!this.suspended) this.suspended = { schedule: this.schedule, routeIndex: this.routeIndex };
+    this.job = j;
+    this.jobPhase = 'origin';
+    this.schedule = [jobStop(j.originId, 'origin'), jobStop(j.destId, 'dest')];
+    this.routeIndex = 0;
+    this.detour = null;
+    this.lastMessage = `on contract: ${j.name}`;
+  }
+  /**
+   * Back to the standing program. A schedule train rejoins at the stop after the one it left
+   * for the job (`advance`: the caller does not step the index itself); a roaming train simply
+   * chooses again.
+   */
+  private resumeProgram(advance: boolean) {
+    const s = this.suspended;
+    this.suspended = null;
+    this.job = null;
+    if (!s) return;
+    this.schedule = s.schedule;
+    const n = Math.max(1, s.schedule.length);
+    this.routeIndex = advance ? (s.routeIndex + 1) % n : s.routeIndex % n;
+    this.lastMessage = 'back on the regular run';
+  }
+  /** Any of the job's cargo aboard, taken on at its origin. */
+  private hasJobCargo() {
+    const j = this.job;
+    return (
+      !!j && this.wagons.some((w) => w.cargo === j.cargo && w.amount > 0 && w.origin === j.originId)
+    );
+  }
+  /**
+   * Job bookkeeping when a stop is done, before the program chooses the next stop. Returns what
+   * the job wants: `go` (the job's own schedule and index are in force), `stay` (wait here for
+   * the load), `none` (no job: the program decides, its index stepped by the caller as usual).
+   */
+  private stepJob(st: Station | null): 'go' | 'stay' | 'none' {
+    if (this.job) {
+      if (this.jobPhase === 'origin' && st?.id === this.job.originId) {
+        if (!this.hasJobCargo()) return 'stay';
+        this.jobPhase = 'dest';
+        this.routeIndex = 1;
+        return 'go';
+      }
+      if (this.jobPhase === 'dest' && st?.id === this.job.destId) {
+        // delivered a load: another round until the book closes the contract
+        this.jobPhase = 'origin';
+        this.routeIndex = 0;
+        return 'go';
+      }
+      return 'go';
+    }
+    if (this.suspended) this.resumeProgram(false);
+    if (this.jobs.length) {
+      this.startJob();
+      return 'go';
+    }
+    return 'none';
+  }
   /** stations a roaming train could not reach, with the time the memory expires */
   private badTargets = new Map<number, number>();
   isBadTarget(id: number, now: number) {
@@ -389,24 +620,68 @@ export class Train {
   /** tile keys of the plain path a holding train would take once the line clears */
   private wantKeys: number[] | null = null;
 
-  constructor(locos: LocoSlot[], name?: string, id?: number) {
+  constructor(locos: LocoSlotInit[], name?: string, id?: number) {
     if (!locos.length) throw new Error('a train needs a locomotive');
     this.id = id ?? nextTrainId++;
     if (id !== undefined) nextTrainId = Math.max(nextTrainId, id + 1);
-    this.locos = locos;
+    this.locos = locos.map((l, i) => {
+      const mode = i === 0 ? 'leading' : (l.mode ?? defaultLocoMode(i, l.def, locos[0].def));
+      return { uid: l.uid, def: l.def, level: l.level, mode, engaged: mode !== 'standby' };
+    });
     this.name = name ?? `${this.locoDef.name} ${this.id}`;
   }
 
   // ------------------------------------------------------------ stats
-  /** Slowest engine sets the pace. */
-  get maxSpeed() {
-    return (
-      Math.min(...this.locos.map((l) => l.def.speed * levelMul(l.level))) * rules.trainSpeedMul
-    );
+  /** Effort, mass, acceleration and top speed of the consist as it stands. */
+  get physics(): ConsistPhysics {
+    return consistPhysics(this.locos, this.wagons);
   }
-  /** Tonnes the engines can haul together. */
+  /** Slowest vehicle sets the pace. */
+  get maxSpeed() {
+    return this.physics.vMax;
+  }
+  /** Tonnes the pulling engines can haul together (haul capacity). */
   get power() {
-    return this.locos.reduce((a, l) => a + l.def.power * levelMul(l.level), 0);
+    return this.physics.haul;
+  }
+  get effort() {
+    return this.physics.effort;
+  }
+  /** Every vehicle plus cargo, tonnes. */
+  get mass() {
+    return this.physics.mass;
+  }
+  /** Tiles/s² the pulling engines give the whole consist. */
+  get acceleration() {
+    return this.physics.acceleration;
+  }
+  /**
+   * Set a non-leading unit to standby (dead weight, no fuel, steps in when the pulling units lose
+   * their power) or back to its default mode.
+   */
+  setStandby(i: number, standby: boolean) {
+    if (i <= 0 || i >= this.locos.length) return;
+    const l = this.locos[i];
+    l.mode = standby ? 'standby' : defaultLocoMode(i, l.def, this.locos[0].def);
+    l.engaged = !standby;
+  }
+  /** Does a refuelling cart have an engine of its type to serve? */
+  cartMatched(w: WagonSlot) {
+    const svc = w.def.service;
+    if (!svc) return true;
+    if (svc === 'coal' && this.fuelKind !== 'coal') return false;
+    return this.locos.some((l) => l.def.type === serviceLocoType(svc));
+  }
+  /** Refuelling carts of a kind with a matching engine aboard. */
+  private cartsFor(kind: 'coal' | 'fuel' | 'battery') {
+    return this.wagons.filter((w) => w.def.service === kind && this.cartMatched(w));
+  }
+  private cartCap(kind: 'coal' | 'fuel' | 'battery') {
+    return this.cartsFor(kind).reduce((a, w) => a + (w.def.serviceCap ?? 0), 0);
+  }
+  /** Consumption multiplier from matching carts: each cuts a share, up to a cap. */
+  private cartSaving(kind: 'coal' | 'fuel' | 'battery') {
+    return 1 - Math.min(PHYS.cartSavingCap, PHYS.cartSaving * this.cartsFor(kind).length);
   }
   /** Tonnes hauled: wagons plus payload. */
   get weight() {
@@ -427,37 +702,124 @@ export class Train {
     return r <= 0.8 ? 1 : Math.max(0.4, 1 - (r - 0.8) * 0.6);
   }
   get length() {
-    return (
-      this.locos.length * (LOCO_LEN + GAP) + this.wagons.reduce((a) => a + WAGON_LEN + GAP, 0) - GAP
-    );
+    return consistLength(this.carLengths);
   }
   get carLengths(): number[] {
-    return [...this.locos.map(() => LOCO_LEN), ...this.wagons.map(() => WAGON_LEN)];
+    return this.vehicleSpecs.map((s) => s.L);
+  }
+  /** Body geometry of every vehicle, loco first. */
+  get vehicleSpecs(): VehicleSpec[] {
+    return [
+      ...this.locos.map((l) => vehicleSpec(l.def)),
+      ...this.wagons.map((w) => vehicleSpec(w.def)),
+    ];
+  }
+  /** Poses of every body segment and bogie, in car order (loco first). */
+  vehiclePoses: VehiclePose[] = [];
+  private accessCache: { key: string; access: ConsistAccess } | null = null;
+  /** Track classes every vehicle of the consist may use, and who bars the rest. */
+  get access(): ConsistAccess {
+    const key = [...this.locos.map((l) => l.def.id), ...this.wagons.map((w) => w.def.id)].join(',');
+    const inCab = this.locos.some((l) => l.inCab || l.def.inCab);
+    const fullKey = `${key}|${inCab ? 'cab' : ''}`;
+    if (!this.accessCache || this.accessCache.key !== fullKey)
+      this.accessCache = {
+        key: fullKey,
+        access: consistAccess(
+          [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)],
+          inCab,
+        ),
+      };
+    return this.accessCache.access;
+  }
+  /** Pathfinding predicate: may the consist enter this piece through `entry`? */
+  readonly canUse = (p: TrackPiece, entry: Dir) => this.access.classes.has(pieceClassFor(p, entry));
+  /** route cost multiplier: stock that is not built for speed keeps off high-speed lines when it can */
+  readonly tollOf = (p: TrackPiece) =>
+    p.cls === 'high_speed' && !this.locos.some((l) => l.def.highSpeed) ? 3 : 1;
+  /** findPath with this consist's class access applied. */
+  private pathTo(
+    track: TrackGraph,
+    start: { x: number; y: number; in: Dir },
+    isTarget: (x: number, y: number) => boolean,
+    maxCost = 100000,
+    avoid?: (x: number, y: number) => boolean,
+  ) {
+    return findPath(track, start, isTarget, maxCost, avoid, this.canUse, this.tollOf);
+  }
+  prevVehiclePoses: VehiclePose[] = [];
+  /** Points along the consist every half tile from head to tail: what the train stands on. */
+  occupancyPoints(): Vec2[] {
+    const out: Vec2[] = [];
+    const total = this.trailCum[this.trailCum.length - 1] ?? 0;
+    const len = Math.min(total, this.length);
+    if (!this.trail.length) return out;
+    for (let s = 0; s <= len + 1e-6; s += 0.5) {
+      const p = this.sampleTrail(total - Math.min(s, len));
+      out.push({ x: p.x, y: p.y });
+    }
+    const tail = this.sampleTrail(total - len);
+    out.push({ x: tail.x, y: tail.y });
+    return out;
+  }
+  /** Tile keys under the consist. */
+  occupancyKeys(w: number): number[] {
+    const out: number[] = [];
+    for (const p of this.occupancyPoints()) {
+      const k = Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5);
+      if (!out.includes(k)) out.push(k);
+    }
+    return out;
   }
   // ------------------------------------------------------------ fuel
+  /** Tanks are pooled per type over every unit (a standby unit's tank is filled and kept). */
   private sumBy(type: LocoType, f: (l: LocoSlot) => number) {
     return this.locos.filter((l) => l.def.type === type).reduce((a, l) => a + f(l), 0);
   }
+  /** Only the pulling units burn. */
+  private burnBy(type: LocoType, f: (l: LocoSlot) => number) {
+    return this.locos.filter((l) => l.def.type === type && l.engaged).reduce((a, l) => a + f(l), 0);
+  }
   get coalCap() {
-    return this.sumBy('steam', (l) => (l.def.fuelCap ?? 0) * levelMul(l.level));
+    return (
+      this.sumBy('steam', (l) => (l.def.fuelCap ?? 0) * levelMul(l.level)) + this.cartCap('coal')
+    );
   }
   get oilCap() {
-    return this.sumBy('diesel', (l) => (l.def.fuelCap ?? 0) * levelMul(l.level));
+    return (
+      this.sumBy('diesel', (l) => (l.def.fuelCap ?? 0) * levelMul(l.level)) + this.cartCap('fuel')
+    );
   }
   get waterCap() {
     return this.sumBy('steam', (l) => (l.def.waterCap ?? 0) * levelMul(l.level));
   }
+  /** Power the battery carts can hold for an electric. */
+  get batteryCap() {
+    return this.cartCap('battery');
+  }
   get coalRate() {
-    return this.sumBy('steam', (l) => l.def.fuelPerTile ?? 0) * rules.runningCostMul;
+    return (
+      this.burnBy('steam', (l) => l.def.fuelPerTile ?? 0) *
+      rules.runningCostMul *
+      this.cartSaving('coal')
+    );
   }
   get oilRate() {
-    return this.sumBy('diesel', (l) => l.def.fuelPerTile ?? 0) * rules.runningCostMul;
+    return (
+      this.burnBy('diesel', (l) => l.def.fuelPerTile ?? 0) *
+      rules.runningCostMul *
+      this.cartSaving('fuel')
+    );
   }
   get waterRate() {
-    return this.sumBy('steam', (l) => l.def.waterPerTile ?? 0) * rules.runningCostMul;
+    return this.burnBy('steam', (l) => l.def.waterPerTile ?? 0) * rules.runningCostMul;
   }
   get powerRate() {
-    return this.sumBy('electric', (l) => l.def.powerPerTile ?? 0) * rules.runningCostMul;
+    return (
+      this.burnBy('electric', (l) => l.def.powerPerTile ?? 0) *
+      rules.runningCostMul *
+      this.cartSaving('battery')
+    );
   }
   get hasSteam() {
     return this.coalCap > 0;
@@ -466,7 +828,7 @@ export class Train {
     return this.oilCap > 0;
   }
   get hasElectric() {
-    return this.powerRate > 0;
+    return this.locos.some((l) => l.def.type === 'electric');
   }
   /** Lowest tank as a fraction of its capacity (1 for pure electric). */
   get tankFraction() {
@@ -493,16 +855,68 @@ export class Train {
     if (this.oilRate > 0) r.push(this.oil / this.oilRate);
     return r.length ? Math.min(...r) : Infinity;
   }
+  /**
+   * Speed ceiling the wire under the head allows the consist's collectors, or null when no
+   * electric unit can draw from what is there (bare rails, dead wire, wrong collector).
+   */
+  wireCeiling(ctx: TickCtx): number | null {
+    const head = this.headTile;
+    if (!head || !ctx.powered(head.x, head.y)) return null;
+    const kind = ctx.supplyAt(head.x, head.y);
+    if (!kind) return null;
+    let best: number | null = null;
+    for (const l of this.locos) {
+      if (l.def.type !== 'electric') continue;
+      const c = collectorCeiling(l.def.collector, kind);
+      if (c !== null && (best === null || c > best)) best = c;
+    }
+    return best;
+  }
+  /** Is the head on live track with power to draw? */
+  private onWire(ctx: TickCtx) {
+    return this.wireCeiling(ctx) !== null && ctx.stockpile.get('power') > 0.1;
+  }
+  /**
+   * Which units pull. A unit in a working mode pulls while it has usable power (fuel and water,
+   * oil, or the wire or a charged battery); when none of them has any, the first standby unit
+   * that does steps in, and steps back the moment a working unit recovers.
+   */
+  refreshModes(ctx: TickCtx) {
+    const wired = this.onWire(ctx);
+    const usable = (l: LocoSlot) =>
+      l.def.type === 'steam'
+        ? this.coal > 1e-6 && this.water > 1e-6
+        : l.def.type === 'diesel'
+          ? this.oil > 1e-6
+          : wired || this.battery > 1e-6;
+    let any = false;
+    for (const l of this.locos)
+      if (l.mode !== 'standby') {
+        l.engaged = usable(l);
+        any ||= l.engaged;
+      }
+    let promoted = false;
+    for (const l of this.locos)
+      if (l.mode === 'standby') {
+        l.engaged = !any && !promoted && usable(l);
+        promoted ||= l.engaged;
+      }
+  }
   /** Why the train cannot move right now, or null. */
   fuelProblem(ctx: TickCtx, step: number): 'noFuel' | 'noPower' | null {
+    this.refreshModes(ctx);
     if (this.eco) step *= ECO_MUL;
+    if (!this.locos.some((l) => l.engaged))
+      return this.locoDef.type === 'electric' ? 'noPower' : 'noFuel';
     if (this.coalRate > 0 && this.coal < this.coalRate * step) return 'noFuel';
     if (this.waterRate > 0 && this.water < this.waterRate * step) return 'noFuel';
     if (this.oilRate > 0 && this.oil < this.oilRate * step) return 'noFuel';
     if (this.powerRate > 0) {
+      const need = this.powerRate * step;
       const head = this.headTile;
-      if (!head || !ctx.powered(head.x, head.y)) return 'noPower';
-      if (ctx.stockpile.get('power') < this.powerRate * step) return 'noPower';
+      const wired = !!head && this.wireCeiling(ctx) !== null;
+      if ((wired ? Math.max(ctx.stockpile.get('power'), this.battery) : this.battery) < need)
+        return 'noPower';
     }
     return null;
   }
@@ -530,9 +944,13 @@ export class Train {
     }
     const oilTarget = this.oilCap * (opts.fuelFrac ?? 1);
     if (opts.fuel && this.oilCap > 0 && this.oil < oilTarget - 1e-6) {
-      const got = stock.take('oil', (oilTarget - this.oil) * mul) / mul;
+      const liquid = dieselFuelId();
+      const got = stock.take(liquid, (oilTarget - this.oil) * mul) / mul;
       this.oil = Math.min(this.oilCap, this.oil + got);
-      if (got > 0) taken.oil = got;
+      if (got > 0) {
+        this.oilKind = liquid;
+        taken[liquid] = got;
+      }
     }
     const waterTarget = this.waterCap * (opts.waterFrac ?? 1);
     if (opts.water && this.waterCap > 0 && this.water < waterTarget - 1e-6) {
@@ -540,9 +958,15 @@ export class Train {
       this.water = Math.min(this.waterCap, this.water + got);
       if (got > 0) taken.water = got;
     }
+    const batteryTarget = this.batteryCap * (opts.fuelFrac ?? 1);
+    if (opts.fuel && this.batteryCap > 0 && this.battery < batteryTarget - 1e-6) {
+      const got = stock.take('power', (batteryTarget - this.battery) * mul) / mul;
+      this.battery = Math.min(this.batteryCap, this.battery + got);
+      if (got > 0) taken.power = got;
+    }
     return taken;
   }
-  /** Fill the tanks from a warehouse's own store (coal, wood, oil, water it holds). */
+  /** Fill the tanks from a warehouse's own store (coal, wood, oil or diesel, water it holds). */
   refuelFromStation(st: Station) {
     const taken: Record<string, number> = {};
     const takeInto = (kind: string, need: number) => {
@@ -563,8 +987,12 @@ export class Train {
         }
       }
     }
-    if (this.oilCap > 0 && this.oil < this.oilCap - 1e-6)
-      this.oil = Math.min(this.oilCap, this.oil + takeInto('oil', this.oilCap - this.oil));
+    if (this.oilCap > 0 && this.oil < this.oilCap - 1e-6) {
+      const liquid = dieselFuelId();
+      const got = takeInto(liquid, this.oilCap - this.oil);
+      if (got > 0) this.oilKind = liquid;
+      this.oil = Math.min(this.oilCap, this.oil + got);
+    }
     if (this.waterCap > 0 && this.water < this.waterCap - 1e-6)
       this.water = Math.min(
         this.waterCap,
@@ -576,25 +1004,18 @@ export class Train {
   drainTo(stock: Stockpile) {
     if (this.coal > 0)
       stock.add(this.fuelKind, this.fuelKind === 'coal' ? this.coal : this.coal * 2, Infinity);
-    if (this.oil > 0) stock.add('oil', this.oil, Infinity);
+    if (this.oil > 0) stock.add(this.oilKind, this.oil, Infinity);
     if (this.water > 0) stock.add('water', this.water, Infinity);
-    this.coal = this.oil = this.water = 0;
-  }
-  /** Centre offsets of each car behind the head. */
-  private carOffsets(): number[] {
-    const lens = this.reversed ? [...this.carLengths].reverse() : this.carLengths;
-    const out: number[] = [];
-    let a = lens[0] / 2;
-    out.push(a);
-    for (let i = 1; i < lens.length; i++) {
-      a += lens[i - 1] / 2 + GAP + lens[i] / 2;
-      out.push(a);
-    }
-    return out;
+    if (this.battery > 0) stock.add('power', this.battery, Infinity);
+    this.coal = this.oil = this.water = this.battery = 0;
   }
   get headTile(): { x: number; y: number } | null {
     const p = this.trail[this.trail.length - 1];
     return p ? { x: p.seg.x, y: p.seg.y } : null;
+  }
+  /** Track segment under the leading car, the start of any path search from here. */
+  get headSeg(): PathSegment | null {
+    return this.trail[this.trail.length - 1]?.seg ?? null;
   }
   get headPos(): Vec2 | null {
     const p = this.trail[this.trail.length - 1];
@@ -616,8 +1037,18 @@ export class Train {
     const back = walkBack(track, x, y, entry, Math.ceil(this.length) + 1);
     this.trail = [];
     this.trailCum = [];
+    // the consist stands behind the gate: where the rails end (inside the shed) a straight
+    // virtual run carries the rest of the cars, hidden under the shed until they roll out
+    const first = back[0] ?? seg;
+    const firstPts = track.segGeom(first.x, first.y, first.in, first.out, first.route).pts;
+    const p0 = { x: first.x + firstPts[0].x, y: first.y + firstPts[0].y };
+    const behind = this.length + 1 - back.length;
+    const dx = DIR_DX[first.in];
+    const dy = DIR_DY[first.in];
+    for (let d = Math.ceil(behind / 0.125); d >= 1; d--)
+      this.pushTrail({ x: p0.x + dx * d * 0.125, y: p0.y + dy * d * 0.125, seg: first });
     for (const s of [...back, seg]) {
-      const pts = linkPoints(s.in, s.out, 8);
+      const pts = track.segGeom(s.x, s.y, s.in, s.out, s.route).pts;
       const upto = s === seg ? Math.floor(pts.length / 2) + 1 : pts.length;
       for (let i = 0; i < upto; i++)
         this.pushTrail({ x: s.x + pts[i].x, y: s.y + pts[i].y, seg: s });
@@ -628,6 +1059,7 @@ export class Train {
     this.path = null;
     this.updatePoses();
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
     return true;
   }
 
@@ -654,6 +1086,7 @@ export class Train {
     this.path = null;
     this.updatePoses();
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
   }
 
   private pushTrail(p: TrailPoint) {
@@ -702,17 +1135,21 @@ export class Train {
   }
 
   updatePoses() {
-    const total = this.trailCum[this.trailCum.length - 1] ?? 0;
-    const offs = this.carOffsets();
-    const poses = offs.map((o) => this.sampleTrail(total - o));
-    // keep the array in car order (loco first) regardless of travel direction
-    this.poses = this.reversed ? poses.reverse() : poses;
+    const specs = this.vehicleSpecs;
+    const order = this.reversed ? [...specs].reverse() : specs;
+    const fronts = vehicleFronts(order.map((s) => s.L));
+    const pl = new Polyline(this.trail);
+    const total = pl.length;
+    const vposes = order.map((s, i) => poseVehicle(pl, total - fronts[i], s));
+    // keep the arrays in car order (loco first) regardless of travel direction
+    if (this.reversed) vposes.reverse();
+    this.vehiclePoses = vposes;
+    this.poses = vposes.map((v) => ({ x: v.x, y: v.y, heading: v.heading }));
   }
 
-  /** Facing index for a car (loco faces backwards when pushed). */
-  facingOf(carIndex: number, pose: CarPose) {
-    const flip = this.reversed;
-    return angleToFacing8(pose.heading + (flip ? Math.PI : 0) + (carIndex === 0 ? 0 : 0));
+  /** Facing index (of 24) for a car (loco faces backwards when pushed). */
+  facingOf(_carIndex: number, pose: CarPose) {
+    return facingOf(pose.heading + (this.reversed ? Math.PI : 0));
   }
 
   // ------------------------------------------------------------ routing
@@ -746,10 +1183,10 @@ export class Train {
     let path =
       mode === 'reverse'
         ? null
-        : findPath(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000, avoid);
+        : this.pathTo(track, { x: seg.x, y: seg.y, in: seg.in }, isTarget, 100000, avoid);
     if (!path && mode !== 'forward') {
       // reverse the consist and try the other way
-      const alt = findPath(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
+      const alt = this.pathTo(track, { x: seg.x, y: seg.y, in: seg.out }, isTarget, 100000, avoid);
       if (alt) {
         this.reverseConsist();
         // the head is now the old rear car: re-anchor the path on its actual tile
@@ -759,21 +1196,18 @@ export class Train {
           this.trackVersion = track.version;
           return true;
         }
-        path = findPath(track, { x: nh.x, y: nh.y, in: nh.in }, isTarget, 100000, avoid) ?? alt;
+        path = this.pathTo(track, { x: nh.x, y: nh.y, in: nh.in }, isTarget, 100000, avoid) ?? alt;
       }
     }
     if (!path) return false;
-    this.setPath(path, map);
+    this.setPath(path, map, track);
     this.trackVersion = track.version;
     return true;
   }
 
   private reverseConsist() {
     const total = this.trailCum[this.trailCum.length - 1];
-    const offs = this.carOffsets();
-    const lens = this.reversed ? [...this.carLengths].reverse() : this.carLengths;
-    const lastRear = offs[offs.length - 1] + lens[lens.length - 1] / 2; // arc behind head of the rear end
-    const newHeadArc = Math.min(total, lastRear);
+    const newHeadArc = Math.min(total, this.length); // arc behind head of the rear end
     const pts = [...this.trail].reverse();
     const cumR = pts.map((_, i) => total - this.trailCum[this.trail.length - 1 - i]);
     // truncate at newHeadArc
@@ -805,17 +1239,18 @@ export class Train {
     this.updatePoses();
   }
 
-  private setPath(path: PathSegment[], map: GameMap) {
+  private setPath(path: PathSegment[], map: GameMap, track: TrackGraph) {
     this.path = path;
     this.pathPts = [];
     this.pathCum = [];
+    track.resolveRoutes(path);
     for (let s = 0; s < path.length; s++) {
       const seg = path[s];
-      const pts = linkPoints(seg.in, seg.out, 8);
+      const geom = track.segGeom(seg.x, seg.y, seg.in, seg.out, seg.route);
+      const pts = geom.pts;
       const last = s === path.length - 1;
       const upto = last ? Math.floor(pts.length / 2) + 1 : pts.length;
-      const curve = isCurveLink(seg.in, seg.out);
-      let factor = curve ? trackData.curveSpeed : 1;
+      let factor = curveFactor(geom.radius, trackData.curveSpeed);
       if (seg.x !== undefined) {
         const t = terrainAt(map, seg.x, seg.y);
         if (t === Terrain.Water) factor = Math.min(factor, trackData.bridgeSpeed);
@@ -852,8 +1287,8 @@ export class Train {
     return this.pathPos;
   }
   /** Tiles of the path from the head onwards (one entry per tile, with the arc it starts at). */
-  pathAhead(maxTiles = Infinity): { x: number; y: number; arc: number }[] {
-    const out: { x: number; y: number; arc: number }[] = [];
+  pathAhead(maxTiles = Infinity): { x: number; y: number; in: Dir; out: Dir; arc: number }[] {
+    const out: { x: number; y: number; in: Dir; out: Dir; arc: number }[] = [];
     if (!this.path) return out;
     let last: PathSegment | null = null;
     for (let i = 0; i < this.pathPts.length; i++) {
@@ -861,7 +1296,7 @@ export class Train {
       const seg = this.pathPts[i].seg;
       if (seg === last) continue;
       last = seg;
-      out.push({ x: seg.x, y: seg.y, arc: this.pathCum[i] });
+      out.push({ x: seg.x, y: seg.y, in: seg.in, out: seg.out, arc: this.pathCum[i] });
       if (out.length >= maxTiles) break;
     }
     return out;
@@ -895,7 +1330,26 @@ export class Train {
   /** Advance by in-game seconds. */
   tick(gdt: number, ctx: TickCtx) {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
     this.stateTime += gdt;
+    this.refreshModes(ctx);
+    if (this.resumePending) {
+      // the contract closed under way: head for the program's next stop instead
+      this.resumePending = false;
+      if (!this.job && this.suspended && this.state === 'moving' && !this.holding) {
+        if (this.jobs.length) this.startJob();
+        else this.resumeProgram(true);
+        const wasReversed = this.reversed;
+        if (this.dispatch(ctx.track, ctx.builder, ctx.map)) {
+          if (!this.path) {
+            this.pathPts = [];
+            this.pathCum = [];
+            this.onPathReady(ctx);
+          } else if (wasReversed !== this.reversed) this.updatePoses();
+        } else this.setState('noRoute');
+        return;
+      }
+    }
     if (ctx.track.version !== this.trackVersion && this.state === 'moving') {
       this.trackVersion = ctx.track.version;
       const head = this.headTile;
@@ -982,6 +1436,8 @@ export class Train {
             this.stateTime = 0;
             break;
           }
+          // a train with nowhere to go takes up a queued contract right away
+          if (!this.job && this.jobs.length) this.startJob();
           if (this.dispatch(ctx.track, ctx.builder, ctx.map)) this.onPathReady(ctx);
           else this.stateTime = 0;
         }
@@ -1005,8 +1461,8 @@ export class Train {
     const isTarget = (x: number, y: number) => targetSet.has(y * w + x);
     const head = this.trail[this.trail.length - 1].seg;
     const path =
-      findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
-      findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
+      this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
+      this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
     this.wantKeys = path ? path.map((s) => s.y * w + s.x) : null;
     let by: number | null = null;
     if (path)
@@ -1053,8 +1509,10 @@ export class Train {
     let blockDist = Infinity;
     let blocker: number | null = null;
     {
+      // under block working a train keeps a whole headway behind the one ahead
+      const gap = Math.max(HOLD_GAP, ctx.headway(this));
       const from = this.pathPos + 0.3;
-      const to = this.pathPos + LOOKAHEAD;
+      const to = this.pathPos + LOOKAHEAD + gap;
       // tiles under this train's own cars never block it (two trains that already overlap
       // must be allowed to separate)
       const own = new Set<number>();
@@ -1066,8 +1524,11 @@ export class Train {
         if (arc > to) break;
         const p = this.pathPts[i];
         if (own.has(p.seg.y * ctx.track.w + p.seg.x)) continue;
-        if (ctx.occupied(p.seg.x, p.seg.y, this.id)) {
-          blockDist = Math.max(0, arc - this.pathPos - HOLD_GAP);
+        if (
+          ctx.occupied(p.seg.x, p.seg.y, this.id) ||
+          ctx.tokenBlocked(p.seg.x, p.seg.y, this.id)
+        ) {
+          blockDist = Math.max(0, arc - this.pathPos - gap);
           blocker = ctx.occupants(p.seg.x, p.seg.y).find((id) => id !== this.id) ?? null;
           break;
         }
@@ -1078,8 +1539,24 @@ export class Train {
       blockDist = Math.max(0, this.claimLimit - HOLD_GAP);
       blocker = this.claimBlocker;
     }
+    // block signals: stop short of a semaphore at danger; under caution approach the next one
+    // slowly enough to stop there
+    let cautionArc: number | null = null;
+    if (ctx.signals && ctx.signals.count && this.path && !this.holding) {
+      const sig = ctx.signals.ahead(this.pathAhead(), (x, y) => ctx.occupied(x, y, this.id));
+      if (sig.stopArc !== null) {
+        const d = sig.stopArc - HOLD_GAP - this.pathPos;
+        if (d >= -0.1 && d < blockDist) {
+          blockDist = Math.max(0, d);
+          blocker = null;
+        }
+      }
+      if (sig.cautionArc !== null && sig.cautionArc - this.pathPos > 0.2)
+        cautionArc = sig.cautionArc;
+    }
     this.blocked = blockDist < 0.3;
     this.blockedBy = this.blocked ? blocker : null;
+    this.holdDist = blockDist;
     if (this.dynamic && ctx.now >= this.anticipateAt && this.path) {
       // look 8 tiles ahead: if another train has reserved that stretch coming our way, try a
       // path around it now instead of stopping later
@@ -1153,10 +1630,27 @@ export class Train {
       bio.speedMul *
       ecoMul *
       (this.reversed ? this.reverseFactor : 1);
+    this.freeSpeed = vmax;
+    let cap = vmax;
+    // electric traction: the wire's ceiling for the collectors, and the substation's share
+    const electricPulling = this.locos.some((l) => l.engaged && l.def.type === 'electric');
+    if (electricPulling) {
+      const ceil = this.wireCeiling(ctx);
+      if (ceil !== null) cap = Math.min(cap, ceil);
+      if (headT) cap *= ctx.gridFactor(headT.x, headT.y);
+    }
+    if (cautionArc !== null)
+      cap = Math.min(
+        cap,
+        Math.max(0.25, Math.sqrt(2 * DECEL * Math.max(0, cautionArc - HOLD_GAP - this.pathPos))),
+      );
     const vStop = Math.sqrt(2 * DECEL * Math.max(0, Math.min(remaining, blockDist)));
-    const target = Math.min(vmax, vStop);
-    if (target > this.speed) this.speed = Math.min(target, this.speed + ACCEL * gdt);
+    const target = Math.min(cap, vStop);
+    const prevSpeed = this.speed;
+    const accelerating = target > this.speed;
+    if (target > this.speed) this.speed = Math.min(target, this.speed + this.acceleration * gdt);
     else this.speed = Math.max(target, this.speed - DECEL * gdt * 1.5);
+    const braking = this.speed < prevSpeed - 1e-6;
     const step = Math.min(
       remaining,
       Math.max(0, blockDist),
@@ -1164,6 +1658,9 @@ export class Train {
     );
     this.pathPos += step;
     this.distance += step;
+    // access charge: high-speed track costs money per tile run
+    if (step > 0 && headT && ctx.track.get(headT.x, headT.y)?.cls === 'high_speed')
+      ctx.spend(rules.hsAccessCharge * step);
     if (step > 0) {
       const problem = this.fuelProblem(ctx, step);
       if (problem) {
@@ -1188,12 +1685,37 @@ export class Train {
       }
       if (this.oilRate > 0) {
         this.oil -= this.oilRate * burn;
-        bump(this.trip.fuel, 'oil', this.oilRate * burn);
+        bump(this.trip.fuel, this.oilKind, this.oilRate * burn);
+      }
+      // traction sand (full production chain): spread on the rails, never a reason to stop
+      const sand = sandPerTile();
+      if (sand > 0) {
+        const got = ctx.stockpile.take('sand', sand * step);
+        if (got > 0) bump(this.trip.fuel, 'sand', got);
       }
       if (this.powerRate > 0) {
-        ctx.stockpile.take('power', this.powerRate * burn);
-        bump(this.trip.fuel, 'power', this.powerRate * burn);
+        // accelerating draws far more than cruising; braking gives a share back (regeneration)
+        const need = this.powerRate * burn * (accelerating ? 3 : 1);
+        if (headT && this.wireCeiling(ctx) !== null) {
+          // on the wire: the stockpile feeds the motors and tops the battery carts up
+          const got = ctx.stockpile.take('power', need);
+          ctx.gridDraw(headT.x, headT.y, need / Math.max(1e-6, gdt));
+          if (braking)
+            ctx.stockpile.add('power', 0.3 * this.powerRate * step, ctx.stockCap('power'));
+          if (got < need) this.battery = Math.max(0, this.battery - (need - got));
+          if (this.batteryCap > 0 && this.battery < this.batteryCap - 1e-6) {
+            const room = this.batteryCap - this.battery;
+            const charge = ctx.stockpile.take(
+              'power',
+              Math.min(room, PHYS.batteryChargePerTile * step),
+            );
+            this.battery += charge;
+            if (charge > 0) bump(this.trip.fuel, 'refuel_power', charge);
+          }
+        } else this.battery = Math.max(0, this.battery - need);
+        bump(this.trip.fuel, 'power', need);
       }
+      if (this.waterRate > 0 && this.water < this.waterCap * 0.5) this.drawTankerWater();
       this.trip.distance += step;
     }
     // append head sample(s)
@@ -1222,6 +1744,23 @@ export class Train {
       else if (want && ctx.builder.platformTiles(want).some((t) => t.x === seg.x && t.y === seg.y))
         this.arrive(want, ctx);
       else this.setState('noRoute');
+    }
+  }
+
+  /** A tank wagon of water tops the boiler tanks up once they fall below half. */
+  private drawTankerWater() {
+    for (const w of this.wagons) {
+      if (w.def.body !== 'tank' || w.cargo !== 'water' || w.amount <= 0) continue;
+      const take = Math.min(w.amount, this.waterCap - this.water);
+      if (take <= 1e-6) break;
+      w.amount -= take;
+      this.water += take;
+      bump(this.trip.fuel, 'refuel_water', take);
+      if (w.amount < 1e-3) {
+        w.amount = 0;
+        w.cargo = null;
+        w.origin = null;
+      }
     }
   }
 
@@ -1285,10 +1824,17 @@ export class Train {
       // carts bring half a tank, or a full one when the next leg would otherwise be out of reach
       // fill the tanks: from the stockpile at a depot or a supplied station, from a warehouse's
       // own store elsewhere in a town, and from the stockpile by cart anywhere else
+      // (in the simple production chain a warehouse also tops up from the stockpile; in the
+      // full one it only has what trains brought it)
       const local = st.def.stockpile && !st.def.pool ? st : null;
       const taken = local
         ? this.refuelFromStation(local)
         : this.refuel(ctx.stockpile, { fuel: true, water: true, fuelFrac: 1, waterFrac: 1 });
+      if (local && supplyMode() === 'simple')
+        for (const [k, v] of Object.entries(
+          this.refuel(ctx.stockpile, { fuel: true, water: true, fuelFrac: 1, waterFrac: 1 }),
+        ))
+          taken[k] = (taken[k] ?? 0) + v;
       for (const [k, v] of Object.entries(taken)) {
         bump(this.trip.fuel, `refuel_${k}`, v);
         this.flowAcc[k] = (this.flowAcc[k] ?? 0) - v;
@@ -1372,15 +1918,19 @@ export class Train {
     // depot takes anything, a warehouse anything from a producer, a town what it accepts
     // what may be taken on here: a production train only takes from producers, a collection
     // train only from warehouses, a transport train only passengers
+    const job = this.job;
     const produced = st.availableCargo().filter((c) => {
+      // at a contract's origin only the contract's cargo comes aboard
+      if (job && st.id === job.originId) return c === job.cargo;
       if (this.mode === 'production') return !st.def.stockpile || st.producedCargo().includes(c);
       if (this.mode === 'collection') return st.def.stockpile && cargoClass(c) !== 'people';
       if (this.mode === 'transport') return cargoClass(c) === 'people';
       return true;
     });
-    // a dynamic train has no fixed route: any other station may take what it loads here
+    // a dynamic train has no fixed route: any other station may take what it loads here; a
+    // train on a contract follows the job's two stops
     const routeStations = (
-      this.dynamic
+      this.dynamic && !job
         ? ctx.builder.stations.filter((s) => ctx.builder.platformTiles(s).length > 0)
         : this.route.map((id) => ctx.builder.stationById(id))
     ).filter((s): s is Station => !!s && s !== st);
@@ -1464,7 +2014,18 @@ export class Train {
     const wasDetour = this.detour !== null && st?.id === this.detour;
     this.detour = null;
     const leaving = wasDetour ? undefined : this.currentStop;
-    if (this.dynamic && !wasDetour) {
+    const jobWants = wasDetour ? 'none' : this.stepJob(st);
+    if (jobWants === 'stay' && st) {
+      // at the contract's origin with nothing aboard yet: keep waiting for the load
+      this.atStation = st;
+      st.occupants.add(this.id);
+      this.loadedHere = 0;
+      this.setState('loading');
+      return;
+    }
+    // otherwise the job's two-stop schedule is in force, its index set by the job bookkeeping
+    const program = jobWants !== 'go' && !wasDetour;
+    if (program && this.dynamic) {
       let next = ctx.chooseNext(this);
       if (next !== null && st && next === st.id && this.loadedHere < 1) {
         // nothing came aboard here: the pick is stale, look elsewhere for a minute
@@ -1490,7 +2051,7 @@ export class Train {
         this.setState('idle');
         return;
       }
-    } else if (!wasDetour) this.routeIndex = (this.routeIndex + 1) % this.route.length;
+    } else if (program) this.routeIndex = (this.routeIndex + 1) % this.route.length;
     if (this.routeIndex === 0 && !wasDetour) {
       this.trip.endedAt = ctx.now;
       this.lastTrip = this.trip;
@@ -1546,17 +2107,22 @@ export class Train {
       if (theirs.has(y * w + x) || avoid(x, y)) return false;
       if (ctx.claimedBy(x, y, this.id) !== null) return false; // track someone else holds
       const p = ctx.track.get(x, y);
-      if (!p || p.links.length > 1) return false; // not on a switch
+      if (!p || p.links.length > 1 || p.unit) return false; // not on a switch or a wide curve
       return true;
     };
     // already standing clear of their line: shuffling further along would not help anyone
-    if (this.poses.every((p) => !theirs.has(Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5))))
-      return false;
+    if (this.occupancyKeys(w).every((k) => !theirs.has(k))) return false;
     const head = this.trail[this.trail.length - 1].seg;
-    let path = findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
+    let path = this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
     let flip = false;
     if (!path || path.length < 2) {
-      const alt = findPath(ctx.track, { x: head.x, y: head.y, in: head.out }, isHold, 600, avoid);
+      const alt = this.pathTo(
+        ctx.track,
+        { x: head.x, y: head.y, in: head.out },
+        isHold,
+        600,
+        avoid,
+      );
       if (alt && alt.length >= 2) {
         path = alt;
         flip = true;
@@ -1568,7 +2134,7 @@ export class Train {
     // as deep as the free track allows: a dead-end siding shorter than the ideal still helps
     let deeper: PathSegment[] | null = null;
     for (let depth = Math.ceil(ownLen); depth >= 1 && !deeper; depth--)
-      deeper = findPath(
+      deeper = this.pathTo(
         ctx.track,
         { x: tail.x, y: tail.y, in: tail.in },
         (x, y) => {
@@ -1587,7 +2153,7 @@ export class Train {
     if (flip) {
       this.reverseConsist();
       const nh = this.trail[this.trail.length - 1].seg;
-      const p2 = findPath(
+      const p2 = this.pathTo(
         ctx.track,
         { x: nh.x, y: nh.y, in: nh.in },
         (x, y) => x === path![path!.length - 1].x && y === path![path!.length - 1].y,
@@ -1598,7 +2164,7 @@ export class Train {
       this.updatePoses();
     }
     leavePlatform();
-    this.setPath(path, ctx.map);
+    this.setPath(path, ctx.map, ctx.track);
     this.trackVersion = ctx.track.version;
     this.holding = true;
     this.yieldCount++;
@@ -1634,14 +2200,22 @@ export class Train {
     return {
       id: this.id,
       name: this.name,
-      locos: this.locos.map((l) => ({ uid: l.uid, defId: l.def.id, level: l.level })),
+      locos: this.locos.map((l) => ({
+        uid: l.uid,
+        defId: l.def.id,
+        level: l.level,
+        mode: l.mode,
+        inCab: l.inCab,
+      })),
       schedule: this.schedule,
       tanks: {
         coal: this.coal,
         oil: this.oil,
         water: this.water,
+        battery: this.battery,
         kind: this.fuelKind,
         pref: this.fuelPreference,
+        oilKind: this.oilKind,
       },
       trip: this.trip,
       lastTrip: this.lastTrip,
@@ -1656,6 +2230,10 @@ export class Train {
       routeIndex: this.routeIndex,
       detour: this.detour,
       mode: this.mode,
+      jobs: this.jobs,
+      job: this.job,
+      jobPhase: this.jobPhase,
+      suspended: this.suspended,
       distance: this.distance,
       head: head
         ? { x: head.seg.x, y: head.seg.y, in: head.seg.in, reversed: this.reversed }
@@ -1674,7 +2252,13 @@ export class Train {
 
   static fromJSON(j: ReturnType<Train['toJSON']>, track: TrackGraph): Train {
     const t = new Train(
-      j.locos.map((l) => ({ uid: l.uid, def: locoDef(l.defId), level: l.level })),
+      j.locos.map((l) => ({
+        uid: l.uid,
+        def: locoDef(l.defId),
+        level: l.level,
+        mode: l.mode,
+        inCab: l.inCab,
+      })),
       j.name,
       j.id,
     );
@@ -1689,6 +2273,15 @@ export class Train {
     t.schedule = j.schedule.map((s) => ({ ...defaultStop(s.stationId), ...s }));
     t.routeIndex = j.routeIndex;
     t.detour = j.detour ?? null;
+    t.jobs = j.jobs ?? [];
+    t.job = j.job ?? null;
+    t.jobPhase = j.jobPhase === 'dest' ? 'dest' : 'origin';
+    t.suspended = j.suspended
+      ? {
+          schedule: j.suspended.schedule.map((s) => ({ ...defaultStop(s.stationId), ...s })),
+          routeIndex: j.suspended.routeIndex,
+        }
+      : null;
     const legacy: Record<string, RouteMode> = {
       fixed: 'schedule',
       dynamic: 'production',
@@ -1703,8 +2296,10 @@ export class Train {
     t.coal = j.tanks.coal;
     t.oil = j.tanks.oil;
     t.water = j.tanks.water;
+    t.battery = Math.min(t.batteryCap, j.tanks.battery ?? 0);
     t.fuelKind = j.tanks.kind;
     t.fuelPreference = j.tanks.pref;
+    t.oilKind = j.tanks.oilKind === 'diesel' ? 'diesel' : 'oil';
     t.trip = { ...newTrip(0), ...j.trip };
     t.lastTrip = j.lastTrip ? { ...newTrip(0), ...j.lastTrip } : null;
     t.distance = j.distance;

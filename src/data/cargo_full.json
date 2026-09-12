@@ -1,0 +1,68 @@
+[
+  {
+    "id": "iron_ore",
+    "name": "Iron Ore",
+    "class": "mineral",
+    "basic": false,
+    "tier": 0,
+    "price": 14,
+    "color": "cargoOre",
+    "weight": 2.2,
+    "supply": "full"
+  },
+  {
+    "id": "crude",
+    "name": "Crude Oil",
+    "class": "liquid",
+    "basic": false,
+    "tier": 1,
+    "price": 18,
+    "color": "cargoOil",
+    "weight": 1.0,
+    "supply": "full"
+  },
+  {
+    "id": "diesel",
+    "name": "Diesel",
+    "class": "liquid",
+    "basic": false,
+    "tier": 1,
+    "price": 50,
+    "color": "cargoOil",
+    "weight": 0.9,
+    "supply": "full"
+  },
+  {
+    "id": "sand",
+    "name": "Sand",
+    "class": "mineral",
+    "basic": false,
+    "tier": 0,
+    "price": 3,
+    "color": "cargoStone",
+    "weight": 1.6,
+    "supply": "full"
+  },
+  {
+    "id": "copper_ore",
+    "name": "Copper Ore",
+    "class": "mineral",
+    "basic": false,
+    "tier": 2,
+    "price": 24,
+    "color": "cargoOre",
+    "weight": 2.2,
+    "supply": "full"
+  },
+  {
+    "id": "wire",
+    "name": "Wire",
+    "class": "bulk",
+    "basic": false,
+    "tier": 2,
+    "price": 90,
+    "color": "cargoSteel",
+    "weight": 1.2,
+    "supply": "full"
+  }
+]

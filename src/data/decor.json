@@ -1,8 +1,8 @@
 [
   {
     "id": "signal",
-    "name": "Signal",
-    "flavor": "Holds trains out of an occupied block. Place on track.",
+    "name": "Semaphore",
+    "flavor": "Home and distant arms on a post. Danger with the arm level, clear with it raised. Place on track.",
     "cost": {
       "iron": 1
     },
@@ -56,7 +56,7 @@
   {
     "id": "townhouse",
     "name": "Townhouse",
-    "flavor": "Homes for six. With a warehouse near a town station it founds a town; more houses mean more people, more passengers and more mouths to feed.",
+    "flavor": "Homes for ten to begin with. People move in while there is wheat, a full house grows a storey, and a crowded town builds more on its own. With a warehouse near a town station it founds a town; more people mean more passengers and more mouths to feed.",
     "cost": {
       "wood": 35,
       "stone": 15

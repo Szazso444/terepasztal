@@ -13,12 +13,22 @@ import decorJson from './decor.json';
 import gachaJson from './gacha.json';
 import trackJson from './track.json';
 import buildingJson from './buildings.json';
+import craftingJson from './crafting.json';
+import houseJson from './houses.json';
+import cargoFullJson from './cargo_full.json';
+import stationFullJson from './stations_full.json';
+import buildingFullJson from './buildings_full.json';
+import type { SupplyMode } from '../sim/supply';
+export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 /** Resource amounts, e.g. { wood: 30, stone: 10 }. */
 export type Cost = Record<string, number>;
 export type CargoClass = 'liquid' | 'mineral' | 'bulk' | 'people';
 export type LocoType = 'steam' | 'diesel' | 'electric';
+export type VehicleSize = 'small' | 'medium' | 'large';
+export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
+export type Collector = 'shoe' | 'pantograph' | 'hv' | 'multi';
 
 export interface LocoDef {
   id: string;
@@ -44,13 +54,31 @@ export interface LocoDef {
   /** electric only: power units per tile */
   powerPerTile?: number;
   starter?: boolean;
+  /** body length class: 1, 2 or 3 tiles (default small) */
+  size?: VehicleSize;
+  /** rigid body, engine + tender, Garratt (engine, cradle, engine) or Meyer (frame on two engine units) */
+  plan?: BodyPlan;
+  /** pivot spacing as a fraction of body length (default 0.7) */
+  pivotRatio?: number;
+  /** bogies under a rigid body (3 for the Bo-Bo-Bo large body) */
+  bogies?: number;
+  /** how far the centre bogie may sit off its socket before the model fails a curve */
+  maxLateralPlay?: number;
+  /** diesel and electric: units of the same control class work in multiple */
+  controlClass?: string;
+  /** a high-speed type: needs HV catenary for its top speed */
+  highSpeed?: boolean;
+  /** electric: which supply it can draw from */
+  collector?: Collector;
+  /** fitted with in-cab signalling equipment (required on high-speed track) */
+  inCab?: boolean;
 }
 export interface WagonDef {
   id: string;
   name: string;
   rarity: Rarity;
   era: string;
-  body: 'box' | 'hopper' | 'flat' | 'tank';
+  body: 'box' | 'hopper' | 'flat' | 'tank' | 'coach' | 'van' | 'cart';
   paint: string;
   /** which cargo class the wagon carries; `accepts` is derived from it at load */
   carries: CargoClass;
@@ -58,29 +86,44 @@ export interface WagonDef {
   capacity: number;
   weight: number;
   starter?: boolean;
+  size?: VehicleSize;
+  /** age the wagon belongs to: 0 steam, 1 diesel, 2 electric */
+  tier?: number;
+  /** speed ceiling, tiles per second (default above every locomotive) */
+  vmax?: number;
+  /** refuelling wagons: what they carry for the locomotive */
+  service?: 'coal' | 'fuel' | 'battery';
+  /** refuelling wagons: units of that fuel (or power) the cart adds to the consist's tanks */
+  serviceCap?: number;
 }
 export interface CargoDef {
   id: string;
   name: string;
   class: CargoClass;
   basic: boolean;
+  /** age the cargo belongs to (display only) */
   tier: number;
   price: number;
   color: string;
   weight: number;
+  /** only exists in this production-chain mode (missing: both) */
+  supply?: SupplyMode;
 }
 export interface StationDef {
   id: string;
   name: string;
   flavor: string;
   cost: Cost;
+  /** age required to build it (0 steam, 1 diesel, 2 electric) */
   tier: number;
+  /** only placeable in this production-chain mode (missing: both) */
+  supply?: SupplyMode;
   produces: { cargo: string; level: number }[];
   accepts: string[];
   /** which station sprite family to draw */
   art?: string;
   /** terrain the station harvests; output scales with how much of it lies nearby */
-  terrain?: 'grass' | 'forest' | 'rock' | 'water';
+  terrain?: 'grass' | 'forest' | 'rock' | 'water' | 'sand';
   /** local store: holds anything trains bring, per level */
   stockpile?: boolean;
   /** deliveries here enter the player's stockpile (depots) */
@@ -102,7 +145,12 @@ export interface BuildingDef {
   flavor: string;
   cost: Cost;
   crew: number;
+  /** age required to build it (0 steam, 1 diesel, 2 electric) */
   tier: number;
+  /** only placeable in this production-chain mode (missing: both) */
+  supply?: SupplyMode;
+  /** needs a deposit of this kind (a map prop, e.g. `coal` or `oil`) on the tile */
+  deposit?: string;
   recipe: { in: Cost; out: Cost };
   /** alternative inputs used when the primary ones run short */
   altIn?: Cost;
@@ -110,6 +158,10 @@ export interface BuildingDef {
   perDay: number;
   /** feeds the power network */
   power?: boolean;
+  /** must stand next to water (hydro plants) */
+  needsWater?: boolean;
+  /** taps the pole grid and makes electrified track within `radius` live, passing `throughput` units per second */
+  substation?: { radius: number; throughput: number };
 }
 export interface StationLevels {
   capacity: number[];
@@ -130,15 +182,36 @@ export interface ContractTemplate {
   baseDays: number;
   daysPerTile: number;
   payoutMul: number;
-  reputation: [number, number];
   tickets: number;
+  /** the rarity's deadline multiplier applies (rush orders get tighter with rarity) */
+  rarityDeadline?: boolean;
+}
+/** Multiplier layer over the templates: any template can roll at any rarity. */
+export interface ContractRarityDef {
+  id: string;
+  name: string;
+  weight: number;
+  /** payout multiplier */
+  rewardMul: number;
+  /** ticket multiplier */
+  ticketMul: number;
+  /** amount multiplier: higher rarities ask for more */
+  amountMul: number;
+  /** deadline multiplier for templates flagged `rarityDeadline` */
+  deadlineMul: number;
+  /** at most this many open offers of the rarity at a time */
+  maxOpen?: number;
 }
 export interface ContractConfig {
   offerCount: number;
   offerLifetimeDays: number;
   refreshIntervalDays: number;
   templates: ContractTemplate[];
-  failReputationMul: number;
+  rarities: ContractRarityDef[];
+  /** fraction of the payout charged for cancelling an active contract */
+  cancelFine: number;
+  /** fraction of the payout charged when the deadline is missed */
+  failFine: number;
 }
 export interface DecorDef {
   id: string;
@@ -155,8 +228,38 @@ export interface DecorDef {
   water?: boolean;
   fuel?: boolean;
   power?: boolean;
-  /** people living here (townhouses) */
+  /**
+   * Marks a townhouse: people live here and the house registry tracks how many. The number is
+   * what a house from an old save starts with.
+   */
   residents?: number;
+}
+/** Townhouse growth rules: capacity per level, how fast people arrive, when towns build more. */
+export interface HouseConfig {
+  /** residents a house holds at level 1, 2, 3 */
+  capacity: number[];
+  /** people who move in the day a house is finished */
+  startResidents: number;
+  /** in-game days from foundations to a finished house */
+  constructionDays: number;
+  /** days per new resident per house (while wheat is on hand and there is room) */
+  growthDays: number;
+  /** days a full house waits before it grows a storey on its own */
+  autoUpgradeDays: number;
+  /** what the player pays to lift a house to level 2, 3 */
+  upgradeCost: Cost[];
+  /** a town builds a new house once residents reach this share of its housing */
+  spawnAt: number;
+  /** the spawn multiplier never exceeds this */
+  spawnMulCap: number;
+  /** train arrivals in the traffic window per +1 on the spawn multiplier */
+  trafficPerMul: number;
+  /** arrivals older than this many days no longer count as traffic */
+  trafficWindowDays: number;
+  /** newcomers when a producing station or works is built in the town */
+  bonusIndustry: number;
+  /** newcomers when the first train reaches the town */
+  bonusFirstTrain: number;
 }
 export interface Banner {
   id: string;
@@ -180,6 +283,51 @@ export interface TrackConfig {
   curveSpeed: number;
   switchSpeed: number;
   bridgeSpeed: number;
+  /** consist physics */
+  physics: {
+    /** tractive effort per tonne of haul rating (effort / mass gives tiles/s²) */
+    effortPerTonne: number;
+    /** acceleration ceiling, tiles/s² */
+    maxAccel: number;
+    /** speed ceiling of a wagon without one of its own, tiles/s */
+    wagonVmax: number;
+    /** share of the summed effort a double-headed consist delivers */
+    doubleHeadEfficiency: number;
+    /** consumption cut per matching refuelling cart, and the most the carts cut together */
+    cartSaving: number;
+    cartSavingCap: number;
+    /** power units a battery cart takes from the stockpile per tile on live track */
+    batteryChargePerTile: number;
+  };
+}
+/** Model quality tiers the crafting tables are keyed by: the shipped rarities plus a reserved 'L'. */
+export type CraftRarity = Rarity | 'L';
+export type CraftKind = 'loco' | 'wagon';
+/**
+ * Crafting: recipes are unlocked with money (three cards per draw, keep one), instances are built
+ * from stockpile resources with a rarity-dependent failure chance.
+ */
+export interface CraftingConfig {
+  /** money per age (0 steam, 1 diesel, 2 electric), per vehicle kind */
+  unlockPrice: Record<CraftKind, number[]>;
+  /** cards offered per paid draw */
+  cardsPerDraw: number;
+  /** draw weight per rarity */
+  rarityWeight: Record<CraftRarity, number>;
+  /** weight multiplier for recipes the player already owns */
+  ownedWeight: number;
+  /** resources returned when the chosen card is a recipe already owned */
+  ownedRefund: Cost;
+  /** base resource cost per kind and body size */
+  instanceCost: Record<CraftKind, Record<VehicleSize, Cost>>;
+  /** instance cost multiplier per rarity */
+  rarityCostMul: Record<CraftRarity, number>;
+  /** chance a craft fails, per rarity */
+  failChance: Record<CraftRarity, number>;
+  /** share of the materials returned after a failed craft */
+  failRefund: number;
+  /** copies of each starter model a new game begins with */
+  starterCopies: Record<CraftKind, number>;
 }
 export interface ContentBundle {
   locomotives: LocoDef[];
@@ -191,6 +339,8 @@ export interface ContentBundle {
   buildings: BuildingDef[];
   gacha: GachaConfig;
   track: TrackConfig;
+  crafting: CraftingConfig;
+  houses: HouseConfig;
 }
 export type ContentKey = keyof ContentBundle;
 export const CONTENT_KEYS: ContentKey[] = [
@@ -203,6 +353,8 @@ export const CONTENT_KEYS: ContentKey[] = [
   'buildings',
   'gacha',
   'track',
+  'crafting',
+  'houses',
 ];
 
 export const CONTENT_KEY = 'terepasztal.content';
@@ -211,17 +363,25 @@ function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
 }
 
-/** Pristine copy of the shipped data. */
+/**
+ * Pristine copy of the shipped data. The full production-chain mode ships as a second data set
+ * (`*_full.json`, every entry marked `supply: "full"`) appended to the plain tables.
+ */
 export const DEFAULT_CONTENT: ContentBundle = {
   locomotives: clone(locoJson) as unknown as LocoDef[],
   wagons: clone(wagonJson) as unknown as WagonDef[],
-  cargo: clone(cargoJson) as unknown as CargoDef[],
-  stations: clone(stationJson) as unknown as { levels: StationLevels; defs: StationDef[] },
+  cargo: clone([...cargoJson, ...cargoFullJson]) as unknown as CargoDef[],
+  stations: {
+    levels: clone(stationJson.levels) as unknown as StationLevels,
+    defs: clone([...stationJson.defs, ...stationFullJson]) as unknown as StationDef[],
+  },
   contracts: clone(contractJson) as ContractConfig,
   decor: clone(decorJson) as unknown as DecorDef[],
-  buildings: clone(buildingJson) as unknown as BuildingDef[],
+  buildings: clone([...buildingJson, ...buildingFullJson]) as unknown as BuildingDef[],
   gacha: clone(gachaJson) as GachaConfig,
   track: clone(trackJson) as unknown as TrackConfig,
+  crafting: clone(craftingJson) as unknown as CraftingConfig,
+  houses: clone(houseJson) as unknown as HouseConfig,
 };
 
 export function readContentOverrides(): Partial<ContentBundle> | null {
@@ -327,6 +487,51 @@ export function validateContent(b: ContentBundle): string[] {
     out.push(`gacha rates sum to ${rateSum.toFixed(2)}, expected 1`);
   for (const k of Object.keys(DEFAULT_CONTENT.track.pieces))
     if (!b.track.pieces[k]) out.push(`track: missing piece "${k}"`);
+  const cr = b.crafting;
+  const kinds: CraftKind[] = ['loco', 'wagon'];
+  const sizes: VehicleSize[] = ['small', 'medium', 'large'];
+  const craftRarities: CraftRarity[] = ['N', 'R', 'SR', 'SSR', 'L'];
+  if (!cr || typeof cr !== 'object') out.push('crafting: missing configuration');
+  else {
+    for (const k of kinds) {
+      const prices = cr.unlockPrice?.[k];
+      if (!Array.isArray(prices) || prices.length < 3 || prices.some((p) => !(p >= 0)))
+        out.push(`crafting: unlockPrice.${k} needs three non-negative prices`);
+      for (const s of sizes)
+        if (!isCost(cr.instanceCost?.[k]?.[s]))
+          out.push(`crafting: instanceCost.${k}.${s} must be a resource map`);
+      if (!(cr.starterCopies?.[k] >= 0)) out.push(`crafting: starterCopies.${k} must be >= 0`);
+    }
+    for (const r of craftRarities) {
+      if (!(cr.rarityWeight?.[r] >= 0)) out.push(`crafting: rarityWeight.${r} must be >= 0`);
+      if (!(cr.rarityCostMul?.[r] >= 0)) out.push(`crafting: rarityCostMul.${r} must be >= 0`);
+      const f = cr.failChance?.[r];
+      if (!(f >= 0 && f <= 1)) out.push(`crafting: failChance.${r} must be between 0 and 1`);
+    }
+    if (!(cr.cardsPerDraw >= 1)) out.push('crafting: cardsPerDraw must be at least 1');
+    if (!(cr.ownedWeight >= 0)) out.push('crafting: ownedWeight must be >= 0');
+    if (!(cr.failRefund >= 0 && cr.failRefund <= 1))
+      out.push('crafting: failRefund must be between 0 and 1');
+    if (!isCost(cr.ownedRefund)) out.push('crafting: ownedRefund must be a resource map');
+    for (const k of Object.keys(cr.ownedRefund ?? {}))
+      if (!cargo.has(k)) out.push(`crafting: unknown refund resource "${k}"`);
+  }
+  const hc = b.houses;
+  if (
+    !hc ||
+    !Array.isArray(hc.capacity) ||
+    !hc.capacity.length ||
+    hc.capacity.some((v) => !(v > 0))
+  )
+    out.push('houses: capacity needs one positive value per level');
+  else if (!Array.isArray(hc.upgradeCost) || hc.upgradeCost.length < hc.capacity.length - 1)
+    out.push('houses: upgradeCost needs one entry per level above the first');
+  else {
+    for (const c of hc.upgradeCost)
+      if (!isCost(c)) out.push('houses: upgradeCost must be resource maps');
+    for (const k of ['constructionDays', 'growthDays', 'autoUpgradeDays'] as const)
+      if (!(hc[k] > 0)) out.push(`houses: ${k} must be positive`);
+  }
   return out;
 }
 

@@ -1,17 +1,20 @@
-import type { TrackKind } from '../world/track';
+import type { TrackClass, TrackKind } from '../world/track';
 import type { StationJSON } from './stations';
 import type { MapGenParams } from '../world/mapgen';
 import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
 import type { LevelData } from '../world/level';
 import type { Rules } from './rules';
 import type { TownJSON } from './towns';
+import type { HousesJSON } from './houses';
+import type { SupplyMode } from './supply';
+import type { SignalLevel } from './signals';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 10;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -22,8 +25,18 @@ export interface SaveGame {
   savedAt: number;
   seed: number;
   clock: { time: number; speedIndex: number };
-  economy: { money: number; tickets: number; reputation: number; tier: number; granted: number[] };
-  track: [number, number, TrackKind, number][];
+  /** v9: `tier` is the age index; `earned` the lifetime income (reputation dropped) */
+  economy: {
+    money: number;
+    tickets: number;
+    tier: number;
+    granted: number[];
+    earned?: number;
+    /** pre-v9 field, ignored */
+    reputation?: number;
+  };
+  /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
+  track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
   stations: StationJSON[];
   trains: unknown[];
   contracts: unknown;
@@ -33,6 +46,8 @@ export interface SaveGame {
   lastDay: number;
   /** v2: signals and water towers [x, y, id, rot] */
   decor?: [number, number, string, number][];
+  /** v9: electrified track [x, y, kind] */
+  wires?: [number, number, string][];
   /** v2: weather generator state */
   weather?: unknown;
   /** v3: how the map was built */
@@ -53,6 +68,12 @@ export interface SaveGame {
   settings?: Settings;
   /** v8: standing trade deals */
   trade?: unknown;
+  /** v10: known crafting recipes, craft statistics and an unfinished recipe draw */
+  crafting?: unknown;
+  /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
+  houses?: HousesJSON;
+  /** v9: production-chain mode the game was started with */
+  supply?: SupplyMode;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -73,8 +94,35 @@ export interface Settings {
   weather: boolean;
   /** v6: helper tips shown */
   advisor?: boolean;
-  /** v8: accept contract offers as they come */
+  /** v8 (retired in v9): accept contract offers as they come; migrated into `contractPolicy` */
   autoContracts?: boolean;
+  /** v9: what happens to a new offer of each rarity */
+  contractPolicy?: Record<ContractRarity, ContractPolicy>;
+  /** v10: signalling level (auto keeps the claims only) */
+  signalling?: SignalLevel;
+}
+/** Contract rarities, commonest first; `contracts.json` carries the numbers for each. */
+export const CONTRACT_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
+export type ContractRarity = (typeof CONTRACT_RARITIES)[number];
+/** accept: taken as it appears; prompt: left on the board; deny: dropped (free before acceptance) */
+export type ContractPolicy = 'accept' | 'prompt' | 'deny';
+export function uniformContractPolicy(p: ContractPolicy): Record<ContractRarity, ContractPolicy> {
+  return { common: p, uncommon: p, rare: p, epic: p, legendary: p };
+}
+/** Policy for a rarity, with the retired boolean and missing entries filled in. */
+export function contractPolicyFor(s: Settings, rarity: ContractRarity): ContractPolicy {
+  const fallback: ContractPolicy = s.autoContracts === false ? 'prompt' : 'accept';
+  return s.contractPolicy?.[rarity] ?? fallback;
+}
+/**
+ * Turn the retired `autoContracts` flag into a per-rarity policy (true → accept, false → prompt).
+ * Runs on the stored object before defaults are merged in, so a missing policy is still visible.
+ */
+export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+  if (!s.contractPolicy && s.autoContracts !== undefined)
+    s.contractPolicy = uniformContractPolicy(s.autoContracts === false ? 'prompt' : 'accept');
+  delete s.autoContracts;
+  return s;
 }
 export const DEFAULT_SETTINGS: Settings = {
   master: 0.8,
@@ -87,7 +135,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showFps: false,
   weather: true,
   advisor: true,
-  autoContracts: true,
+  contractPolicy: uniformContractPolicy('accept'),
 };
 
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
@@ -130,6 +178,43 @@ export const MIGRATIONS: Migration[] = [
     run: () => {},
   },
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
+  {
+    from: 8,
+    note: 'every track piece counted as regular class; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple; contracts rated Common with no train assigned; the auto-accept switch became a per-rarity policy',
+    run: (j) => {
+      const book = j.contracts as { contracts?: Record<string, unknown>[] } | undefined;
+      for (const c of book?.contracts ?? []) {
+        c.rarity = c.rarity ?? 'common';
+        c.trainId = c.trainId ?? null;
+        delete c.reputation;
+      }
+      if (j.settings) migrateSettings(j.settings);
+      j.supply = j.supply ?? 'simple';
+      if (j.economy) {
+        j.economy.tier = Math.max(0, Math.min(2, j.economy.tier ?? 0));
+        j.economy.earned = j.economy.earned ?? 0;
+        delete j.economy.reputation;
+      }
+      if (j.houses) return;
+      const list = (j.decor ?? []).filter(([, , id]) => id === 'townhouse');
+      j.houses = {
+        list: list.map(([x, y]) => ({ x, y, level: 1, residents: 6, progress: 1 })),
+        arrivals: [],
+        visited: [],
+      };
+    },
+  },
+  {
+    from: 9,
+    note: 'crafting recipes granted for every model already in the inventory; locomotive modes set by the default rule (the first unit leads, units of its control class run in multiple, the rest double-headed); battery carts start empty',
+    run: (j) => {
+      if (j.crafting) return;
+      const inv = j.inventory as { items?: { defId?: unknown }[] } | undefined;
+      const recipes = new Set<string>();
+      for (const it of inv?.items ?? []) if (typeof it.defId === 'string') recipes.add(it.defId);
+      j.crafting = { recipes: [...recipes], stats: { unlocks: 0, crafts: 0, failures: 0 } };
+    },
+  },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */
 export const KNOWN_SAVE_KEYS = new Set<string>([
@@ -156,7 +241,11 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'seasonOffset',
   'towns',
   'settings',
+  'wires',
   'trade',
+  'crafting',
+  'houses',
+  'supply',
   'loadedFrom',
   'migrationNotes',
 ]);
@@ -218,7 +307,7 @@ export function readSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     return raw
-      ? { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) }
+      ? { ...DEFAULT_SETTINGS, ...migrateSettings(JSON.parse(raw) as Partial<Settings>) }
       : { ...DEFAULT_SETTINGS };
   } catch {
     return { ...DEFAULT_SETTINGS };

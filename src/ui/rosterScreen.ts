@@ -1,16 +1,17 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
+import { rules } from '../sim/rules';
 import type { Screen } from './modal';
 import type { Inventory } from '../gacha/inventory';
 import {
   RARITIES,
   itemDef,
   levelMul,
-  dupesNeeded,
   LEVEL_CAP,
   type Item,
   type LocoDef,
   type WagonDef,
+  locoDef,
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
 import type { Fleet } from '../sim/fleet';
@@ -31,11 +32,14 @@ export class RosterScreen implements Screen {
   private rarity: string = 'all';
   private sort: SortKey = 'rarity';
   private freeOnly = false;
+  /** pay for a fit-out; returns false when short of money (set by the game) */
+  spendMoney: ((amount: number) => boolean) | null = null;
 
   constructor(
     private readonly inventory: Inventory,
     private readonly fleet: Fleet,
     private readonly atlas: AtlasRegistry,
+    private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void = () => {},
   ) {
     this.root.append(this.bar, el('div', { class: 'col' }, this.list));
   }
@@ -144,6 +148,7 @@ export class RosterScreen implements Screen {
         `${STR.depot.weight} ${ld.weight} t · ${STR.roster.crew} ${ld.crew}`,
         STR.roster.fuelLine(ld),
       );
+      if (ld.controlClass) stats.push(STR.depot.controlClass(ld.controlClass));
     } else {
       const wd = d as WagonDef;
       stats.push(
@@ -151,12 +156,52 @@ export class RosterScreen implements Screen {
         `${STR.depot.weight} ${wd.weight}t`,
         (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
       );
+      if (wd.service) stats.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));
     }
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
-    const lvl =
-      it.level >= LEVEL_CAP
-        ? STR.roster.maxLevel
-        : STR.roster.dupeProgress(it.dupes, dupesNeeded(it.level));
+    const spares = this.inventory.spares(it).length;
+    const lvl = el(
+      'div',
+      { class: 'sub dim', style: 'display:flex;gap:6px;align-items:center' },
+      el('span', {
+        style: 'flex:1',
+        text:
+          it.level >= LEVEL_CAP
+            ? STR.roster.maxLevel
+            : STR.roster.copies(this.inventory.count(it.defId)),
+      }),
+    );
+    if (it.level < LEVEL_CAP && spares > 0) {
+      const up = btn(
+        STR.roster.levelUp,
+        () => {
+          if (this.inventory.consumeForLevel(it)) {
+            this.toast(STR.roster.leveled(d.name, it.level), 'good');
+            this.render();
+          }
+        },
+        'tiny',
+      );
+      up.title = STR.roster.levelUpHint;
+      lvl.append(up);
+    }
+    // in-cab signalling: the one hard requirement of high-speed track, fitted for money
+    if (it.kind === 'loco' && !it.inCab && !locoDef(it.defId).inCab && this.spendMoney) {
+      const fit = btn(
+        STR.roster.fitInCab(rules.inCabCost),
+        () => {
+          if (this.spendMoney!(rules.inCabCost)) {
+            it.inCab = true;
+            this.toast(STR.roster.fitted(d.name), 'good');
+            this.render();
+          } else this.toast(STR.roster.noMoney, 'warn');
+        },
+        'tiny',
+      );
+      fit.title = STR.roster.fitInCabHint;
+      lvl.append(fit);
+    } else if (it.kind === 'loco' && (it.inCab || locoDef(it.defId).inCab))
+      lvl.append(el('span', { class: 'dim', text: STR.roster.hasInCab }));
     return el(
       'div',
       { class: `rcard rarity-${d.rarity}` },
@@ -174,7 +219,7 @@ export class RosterScreen implements Screen {
         el('div', { class: 'gcard-era', text: d.era }),
       ),
       el('div', { class: 'sub' }, ...stats.map((s) => el('div', { text: s }))),
-      el('div', { class: 'sub dim', text: lvl }),
+      lvl,
       el('div', {
         class: `sub ${train ? 'cyan' : 'dim'}`,
         text: train ? STR.roster.assignedTo(train.name) : STR.roster.inDepot,
