@@ -133,8 +133,9 @@ recorded in `docs/phase-decisions.md`.
   turns itself around when its forward route is merely busy; it waits instead.
 - Large bodies on curves: bogie sprites are held under the body instead of drawn at the exact
   rail point (the middle bogie of a three-tile body used to snap out of the side, the end bogies
-  overlapped the ends); large bodies carry their bogies nearer the middle and sit out over the
-  arc. Three-axle bogies (`bogieAxles: 3`) for the Co-Co diesels and electrics: SD40, M62,
+  overlapped the ends) and always paint just under their own body (a bogie nearer the camera
+  than the body centre used to paint over it); large bodies carry their bogies nearer the middle
+  and sit out over the arc. Three-axle bogies (`bogieAxles: 3`) for the Co-Co diesels and electrics: SD40, M62,
   Deltic, V63, DDA40X, GG1, Crocodile.
 - A roaming train sitting on a platform with nothing to load steps aside for a train behind it.
 - Stuck trains: a roaming train only ever picks stops its own rails lead to (the nearest

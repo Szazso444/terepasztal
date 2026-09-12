@@ -163,6 +163,9 @@ export class TrainRenderer {
               const bs = c.bogies[bi++];
               if (!bs) return;
               this.pose(bs, (f) => `rolling/${b.kind}_f${f}`, bx, by, ba, 14);
+              // always just under its own body: the depth key is by position, and a bogie
+              // ahead of the body centre (towards the camera) would otherwise paint over it
+              bs.zIndex = s.zIndex - 1;
               bs.tint = tint;
             });
           if (c.load && si === 0) {
