@@ -103,6 +103,7 @@ export const STR = {
     zoom: 'Zoom',
     camera: 'Camera',
     traffic: 'Traffic',
+    junctions: 'Junctions',
     tile: 'Tile',
     regenerate: 'New map (seed)',
   },
@@ -226,6 +227,14 @@ export const STR = {
     stuck: (n: string, sec: number) => `${n}: has not moved for ${sec} s`,
     ecoMode: (n: string) => `${n}: low on fuel, crawling to save it`,
     held: (n: string) => `${n}: held by traffic`,
+    junction: (level: string, x: number, y: number, trains: number, wait: number) =>
+      `${level} junction at ${x},${y}: ${trains} trains, ${wait} s lost`,
+    junctionLevel: {
+      info: 'Busy',
+      minor: 'Congested',
+      major: 'Jammed',
+      critical: 'Gridlocked',
+    } as Record<string, string>,
     orphaned: (n: string) => `${n}: no platform track`,
     unwired: (n: string) => `${n}: no power line connected`,
     starved: (n: string, r: string) => `${n}: waiting for ${r}`,

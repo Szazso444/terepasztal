@@ -700,6 +700,23 @@ export class Game {
     this.fleet.powered = (x, y) => this.catenary.isLive(x, y);
     this.fleet.onArrive = (_t, s) => this.houses.arrival(s, this.clock.time);
     this.fleet.stockCap = (id) => this.stockCap(id);
+    this.fleet.junctions.onAlert = (a) =>
+      this.notices.push(
+        {
+          key: `j${a.id}`,
+          kind: a.kind,
+          text: STR.notice.junction(
+            STR.notice.junctionLevel[a.level] ?? a.level,
+            a.x,
+            a.y,
+            a.stats.trainCount,
+            Math.round(a.stats.totalWait),
+          ),
+          target: { kind: 'junction', id: a.id, x: a.x, y: a.y, tiles: a.tiles },
+        },
+        120,
+      );
+    this.fleet.junctions.onClear = (id) => this.notices.drop(`j${id}`);
     this.fleet.onFlow = (x, y, r, d) => this.floaters.spawn(x, y, r, d);
     this.fleet.onPassengers = (st, n, b) =>
       b ? this.people.board(st, n) : this.people.alight(st, n);
@@ -1753,7 +1770,8 @@ export class Game {
   /** Tile position of a notice's object, or null. */
   private noticePos(n: Notice): { x: number; y: number } | null {
     if (!n.target) return null;
-    if (n.target.kind === 'tile') return { x: n.target.x, y: n.target.y };
+    if (n.target.kind === 'tile' || n.target.kind === 'junction')
+      return { x: n.target.x, y: n.target.y };
     const t = this.fleet.byId(n.target.id);
     const p = t?.poses[0];
     return p ? { x: p.x, y: p.y } : null;
@@ -1767,8 +1785,22 @@ export class Game {
         this.trainScreen.open(t);
         this.screens.open(this.trainScreen);
       }
-    }
+    } else if (n.target?.kind === 'junction')
+      this.flashJunction(this.fleet.junctions.contributingTiles(n.target.id) ?? n.target.tiles);
     this.returnToRts(p.x, p.y);
+  }
+  /** Tint the tiles of a contended junction for a few seconds. */
+  private junctionFlash: { tiles: { x: number; y: number }[]; until: number } | null = null;
+  private flashJunction(tiles: { x: number; y: number }[]) {
+    this.clearJunctionFlash();
+    for (const p of tiles) this.world.setTrackTint(p.x, p.y, 0xff6a5a);
+    this.junctionFlash = { tiles, until: performance.now() / 1000 + 4 };
+  }
+  private clearJunctionFlash() {
+    if (!this.junctionFlash) return;
+    for (const p of this.junctionFlash.tiles) this.world.setTrackTint(p.x, p.y, 0xffffff);
+    this.junctionFlash = null;
+    this.applyPathHighlight(this.pathHighlight);
   }
   private static markerFrame(kind: Notice['kind']) {
     return kind === 'bad'
@@ -2054,6 +2086,8 @@ export class Game {
       this.syncNoticeMarkers();
     }
     this.positionTrainMarkers();
+    if (this.junctionFlash && performance.now() / 1000 > this.junctionFlash.until)
+      this.clearJunctionFlash();
     this.floaters.update(dt);
     this.powerLines.update(dt);
     this.updateTrainSide(dt);
@@ -2448,6 +2482,13 @@ export class Game {
     d.set(
       STR.debug.traffic,
       `stuck ${tc.stuck} · deadlock ${tc.deadlocks} · overlap ${tc.overlaps} · yields ${tc.yields} · holds ${tc.waits}`,
+    );
+    const jw = this.fleet.junctions.worst();
+    d.set(
+      STR.debug.junctions,
+      jw
+        ? `${this.fleet.junctions.count} · worst ${jw.x},${jw.y} ${jw.level} · ${jw.trainCount} trains · wait ${Math.round(jw.totalWait)} s · longest ${Math.round(jw.longestWait)} s · stop ${Math.round(jw.longestStop)} s`
+        : String(this.fleet.junctions.count),
     );
     const t = this.hoverTile;
     const name = inBounds(this.map, t.x, t.y)

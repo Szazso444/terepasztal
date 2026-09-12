@@ -25,6 +25,8 @@ export class DebugPanel {
       STR.debug.entities,
       STR.debug.zoom,
       STR.debug.camera,
+      STR.debug.traffic,
+      STR.debug.junctions,
       STR.debug.tile,
     ]) {
       const v = el('td', { text: '-' });

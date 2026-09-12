@@ -36,6 +36,7 @@ import { STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
 import { rules, daySeconds } from './rules';
 import { Traffic } from './traffic';
+import { Junctions } from './junctions';
 
 export const MAX_WAGONS = 16;
 export const MAX_LOCOS = 4;
@@ -53,6 +54,8 @@ export class Fleet {
   clockTime = 0;
   /** section claims, stuck detection and statistics */
   readonly traffic: Traffic;
+  /** junction clustering and congestion notifications (observes only) */
+  readonly junctions: Junctions;
   stockCap: (id: string) => number = () => Infinity;
 
   constructor(
@@ -64,6 +67,8 @@ export class Fleet {
     readonly stock: Stockpile,
   ) {
     this.traffic = new Traffic(track, builder);
+    this.junctions = new Junctions(track);
+    this.traffic.junctionReport = () => this.junctions.report();
   }
 
   byId(id: number) {
@@ -762,6 +767,7 @@ export class Fleet {
       if (t.state === 'loading' && t.atStation) this.lastServed.set(t.atStation.id, now);
     }
     this.traffic.observe(this.trains, now, gdt);
+    this.junctions.tick(this.trains, now, gdt);
     // park early: a train held before a section whose holder will come out through the tiles it
     // stands on clears out of the way now instead of meeting it head-on later
     for (const t of this.trains) {
