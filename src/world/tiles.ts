@@ -41,7 +41,10 @@ export type PropKind =
   | 'deadtree'
   | 'flowers'
   | 'reeds'
-  | 'boulder';
+  | 'boulder'
+  /** deposits: a coal seam on a hill, an oil seep on low ground (full production chain) */
+  | 'coal'
+  | 'oil';
 export interface PropInstance {
   kind: PropKind;
   variant: number;

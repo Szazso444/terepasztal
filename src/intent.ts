@@ -1,3 +1,5 @@
+import type { SupplyMode } from './sim/supply';
+
 /**
  * Boot intents. Menus store what the next page load should do (start a new map, play or edit a
  * level, continue) and reload; `main.ts` consumes the intent once.
@@ -5,7 +7,7 @@
 export type Intent =
   | { action: 'continue' }
   | { action: 'menu' }
-  | { action: 'new'; seed: number }
+  | { action: 'new'; seed: number; supply?: SupplyMode }
   | { action: 'play'; levelId: string; testing?: boolean }
   | { action: 'edit'; levelId: string | null; seed?: number; blank?: boolean; size?: number };
 

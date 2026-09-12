@@ -82,7 +82,7 @@ export class ContractsScreen implements Screen {
         'div',
         { class: 'sub' },
         el('span', { class: 'green', text: fmtMoney(c.payout) }),
-        `  +${c.reputation} rep  +${c.tickets} ${STR.hud.tickets.toLowerCase()}`,
+        `  +${c.tickets} ${STR.hud.tickets.toLowerCase()}`,
       ),
     ];
     if (c.status === 'offer')

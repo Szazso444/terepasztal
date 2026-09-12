@@ -15,6 +15,11 @@ import trackJson from './track.json';
 import buildingJson from './buildings.json';
 import craftingJson from './crafting.json';
 import houseJson from './houses.json';
+import cargoFullJson from './cargo_full.json';
+import stationFullJson from './stations_full.json';
+import buildingFullJson from './buildings_full.json';
+import type { SupplyMode } from '../sim/supply';
+export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 /** Resource amounts, e.g. { wood: 30, stone: 10 }. */
@@ -94,23 +99,29 @@ export interface CargoDef {
   name: string;
   class: CargoClass;
   basic: boolean;
+  /** age the cargo belongs to (display only) */
   tier: number;
   price: number;
   color: string;
   weight: number;
+  /** only exists in this production-chain mode (missing: both) */
+  supply?: SupplyMode;
 }
 export interface StationDef {
   id: string;
   name: string;
   flavor: string;
   cost: Cost;
+  /** age required to build it (0 steam, 1 diesel, 2 electric) */
   tier: number;
+  /** only placeable in this production-chain mode (missing: both) */
+  supply?: SupplyMode;
   produces: { cargo: string; level: number }[];
   accepts: string[];
   /** which station sprite family to draw */
   art?: string;
   /** terrain the station harvests; output scales with how much of it lies nearby */
-  terrain?: 'grass' | 'forest' | 'rock' | 'water';
+  terrain?: 'grass' | 'forest' | 'rock' | 'water' | 'sand';
   /** local store: holds anything trains bring, per level */
   stockpile?: boolean;
   /** deliveries here enter the player's stockpile (depots) */
@@ -132,7 +143,12 @@ export interface BuildingDef {
   flavor: string;
   cost: Cost;
   crew: number;
+  /** age required to build it (0 steam, 1 diesel, 2 electric) */
   tier: number;
+  /** only placeable in this production-chain mode (missing: both) */
+  supply?: SupplyMode;
+  /** needs a deposit of this kind (a map prop, e.g. `coal` or `oil`) on the tile */
+  deposit?: string;
   recipe: { in: Cost; out: Cost };
   /** alternative inputs used when the primary ones run short */
   altIn?: Cost;
@@ -308,15 +324,21 @@ function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
 }
 
-/** Pristine copy of the shipped data. */
+/**
+ * Pristine copy of the shipped data. The full production-chain mode ships as a second data set
+ * (`*_full.json`, every entry marked `supply: "full"`) appended to the plain tables.
+ */
 export const DEFAULT_CONTENT: ContentBundle = {
   locomotives: clone(locoJson) as unknown as LocoDef[],
   wagons: clone(wagonJson) as unknown as WagonDef[],
-  cargo: clone(cargoJson) as unknown as CargoDef[],
-  stations: clone(stationJson) as unknown as { levels: StationLevels; defs: StationDef[] },
+  cargo: clone([...cargoJson, ...cargoFullJson]) as unknown as CargoDef[],
+  stations: {
+    levels: clone(stationJson.levels) as unknown as StationLevels,
+    defs: clone([...stationJson.defs, ...stationFullJson]) as unknown as StationDef[],
+  },
   contracts: clone(contractJson) as ContractConfig,
   decor: clone(decorJson) as unknown as DecorDef[],
-  buildings: clone(buildingJson) as unknown as BuildingDef[],
+  buildings: clone([...buildingJson, ...buildingFullJson]) as unknown as BuildingDef[],
   gacha: clone(gachaJson) as GachaConfig,
   track: clone(trackJson) as unknown as TrackConfig,
   crafting: clone(craftingJson) as unknown as CraftingConfig,

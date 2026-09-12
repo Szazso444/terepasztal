@@ -3,6 +3,7 @@ import { STR } from '../strings';
 import type { Station } from '../sim/stations';
 import type { Builder } from '../sim/build';
 import { cargoDef } from '../sim/cargo';
+import { inSupplyMode } from '../sim/supply';
 import { fmtCost } from '../sim/stockpile';
 import type { ContractBoard } from '../sim/contracts';
 import type { GameClock } from '../sim/time';
@@ -76,7 +77,13 @@ export class StationPanel {
         .join(', ') || '-';
     b.append(row(STR.station.produces, `${produced} (${STR.station.perDay(s.productionPerDay)})`));
     b.append(
-      row(STR.station.accepts, s.def.accepts.map((c) => cargoDef(c).name).join(', ') || '-'),
+      row(
+        STR.station.accepts,
+        s.def.accepts
+          .filter((c) => inSupplyMode(cargoDef(c)))
+          .map((c) => cargoDef(c).name)
+          .join(', ') || '-',
+      ),
     );
     b.append(row(STR.station.platforms, `${s.occupants.size} / ${s.platforms}`));
     b.append(row(STR.station.loadRate, STR.station.perSec(s.loadRate)));

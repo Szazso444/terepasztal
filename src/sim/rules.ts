@@ -6,7 +6,6 @@
 export interface Rules {
   startMoney: number;
   startTickets: number;
-  startReputation: number;
   buildCostMul: number;
   refundRate: number;
   runningCostMul: number;
@@ -19,9 +18,9 @@ export interface Rules {
   contractRefreshDays: number;
   deadlineMul: number;
   payoutMul: number;
+  /** @deprecated reputation is gone; kept so older callers compile, no effect */
   reputationMul: number;
   failPenaltyMul: number;
-  tierThresholds: number[];
   daySeconds: number;
   seasonDays: number;
   rainChanceMul: number;
@@ -69,7 +68,6 @@ export interface RuleMeta {
 export const DEFAULT_RULES: Rules = {
   startMoney: 25000,
   startTickets: 3,
-  startReputation: 0,
   buildCostMul: 1,
   refundRate: 0.5,
   runningCostMul: 1,
@@ -84,7 +82,6 @@ export const DEFAULT_RULES: Rules = {
   payoutMul: 1,
   reputationMul: 1,
   failPenaltyMul: 1,
-  tierThresholds: [0, 120, 350, 750, 1400],
   daySeconds: 240,
   seasonDays: 6,
   rainChanceMul: 1,
@@ -126,15 +123,6 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 200,
     step: 1,
-    newGame: true,
-  },
-  {
-    key: 'startReputation',
-    label: 'Starting reputation',
-    group: 'Start',
-    min: 0,
-    max: 2000,
-    step: 10,
     newGame: true,
   },
   {
@@ -241,14 +229,6 @@ export const RULE_META: RuleMeta[] = [
   },
   { key: 'spotPriceMul', label: 'Spot price x', group: 'Economy', min: 0, max: 5, step: 0.1 },
   { key: 'payoutMul', label: 'Contract payout x', group: 'Contracts', min: 0, max: 5, step: 0.1 },
-  {
-    key: 'reputationMul',
-    label: 'Reputation reward x',
-    group: 'Contracts',
-    min: 0,
-    max: 5,
-    step: 0.1,
-  },
   { key: 'failPenaltyMul', label: 'Miss penalty x', group: 'Contracts', min: 0, max: 5, step: 0.1 },
   {
     key: 'deadlineMul',
@@ -388,13 +368,6 @@ function sanitize(r: Partial<Rules>): Rules {
     if (typeof v === 'number' && Number.isFinite(v))
       (out as unknown as Record<string, number>)[m.key] = Math.min(m.max, Math.max(m.min, v));
   }
-  if (
-    Array.isArray(r.tierThresholds) &&
-    r.tierThresholds.length >= 2 &&
-    r.tierThresholds.every((x) => typeof x === 'number')
-  )
-    out.tierThresholds = [...r.tierThresholds].map((x) => Math.max(0, Math.round(x)));
-  out.tierThresholds[0] = 0;
   out.mapSize = Math.max(32, Math.round(out.mapSize / 32) * 32);
   return out;
 }

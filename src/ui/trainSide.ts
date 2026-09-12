@@ -139,10 +139,10 @@ export class TrainSide {
       use.push(this.amount(t.fuelKind, t.coalRate), this.amount('water', t.waterRate));
     } else if (type === 'diesel') {
       tanks.push(
-        this.amount('oil', t.oil, t.oil < t.oilRate * 8 ? 'red' : ''),
+        this.amount(t.oilKind, t.oil, t.oil < t.oilRate * 8 ? 'red' : ''),
         el('span', { class: 'dim', text: `/${Math.round(t.oilCap)}` }),
       );
-      use.push(this.amount('oil', t.oilRate));
+      use.push(this.amount(t.oilKind, t.oilRate));
     } else use.push(this.amount('power', t.powerRate));
     if (tanks.length) card.append(row(STR.trainSide.tanks, ...tanks));
     const fuelRow = row(

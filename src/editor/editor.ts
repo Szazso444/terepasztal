@@ -146,7 +146,6 @@ export class Editor {
     return {
       money: rules.startMoney,
       tickets: rules.startTickets,
-      reputation: rules.startReputation,
       tier: 0,
     };
   }

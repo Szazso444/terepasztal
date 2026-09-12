@@ -1,0 +1,113 @@
+[
+  {
+    "id": "colliery",
+    "name": "Colliery",
+    "flavor": "Pit-head over a coal seam: three coal for every pit prop of wood. Only on a coal deposit.",
+    "cost": {
+      "stone": 60,
+      "wood": 40,
+      "iron": 5
+    },
+    "crew": 6,
+    "tier": 0,
+    "supply": "full",
+    "deposit": "coal",
+    "recipe": {
+      "in": {
+        "wood": 1
+      },
+      "out": {
+        "coal": 3
+      }
+    },
+    "perDay": 40
+  },
+  {
+    "id": "ironworks",
+    "name": "Ironworks",
+    "flavor": "Smelts iron ore with coal into iron. Far better yield than the stone grinder.",
+    "cost": {
+      "stone": 80,
+      "wood": 30,
+      "iron": 10
+    },
+    "crew": 8,
+    "tier": 0,
+    "supply": "full",
+    "recipe": {
+      "in": {
+        "iron_ore": 2,
+        "coal": 1
+      },
+      "out": {
+        "iron": 2
+      }
+    },
+    "perDay": 30
+  },
+  {
+    "id": "oil_derrick",
+    "name": "Oil Derrick",
+    "flavor": "Pumps crude oil out of the ground. Only on an oil seep.",
+    "cost": {
+      "wood": 60,
+      "iron": 15
+    },
+    "crew": 4,
+    "tier": 1,
+    "supply": "full",
+    "deposit": "oil",
+    "recipe": {
+      "in": {},
+      "out": {
+        "crude": 1
+      }
+    },
+    "perDay": 30
+  },
+  {
+    "id": "diesel_refinery",
+    "name": "Refinery",
+    "flavor": "Distils crude oil into diesel for the engines.",
+    "cost": {
+      "stone": 80,
+      "iron": 20,
+      "wood": 20
+    },
+    "crew": 6,
+    "tier": 1,
+    "supply": "full",
+    "recipe": {
+      "in": {
+        "crude": 2
+      },
+      "out": {
+        "diesel": 1
+      }
+    },
+    "perDay": 30
+  },
+  {
+    "id": "wire_mill",
+    "name": "Wire Mill",
+    "flavor": "Draws copper ore into wire, the stuff electrification is made of.",
+    "cost": {
+      "stone": 60,
+      "iron": 30,
+      "wood": 20
+    },
+    "crew": 6,
+    "tier": 2,
+    "supply": "full",
+    "recipe": {
+      "in": {
+        "copper_ore": 2,
+        "coal": 1
+      },
+      "out": {
+        "wire": 1
+      }
+    },
+    "perDay": 25
+  }
+]

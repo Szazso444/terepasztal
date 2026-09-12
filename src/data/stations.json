@@ -6,7 +6,7 @@
     "production": [30, 50, 80, 120, 170],
     "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6],
     "spriteByLevel": [1, 1, 2, 2, 3],
-    "maxLevelByTier": [2, 3, 4, 5, 5],
+    "maxLevelByTier": [3, 4, 5],
     "crew": [2, 3, 5, 8, 12]
   },
   "defs": [
@@ -102,7 +102,22 @@
           "level": 1
         }
       ],
-      "accepts": ["water", "wheat", "stone", "wood", "coal", "oil", "iron", "passengers"],
+      "accepts": [
+        "water",
+        "wheat",
+        "stone",
+        "wood",
+        "coal",
+        "oil",
+        "iron",
+        "passengers",
+        "iron_ore",
+        "crude",
+        "diesel",
+        "sand",
+        "copper_ore",
+        "wire"
+      ],
       "art": "town"
     },
     {
@@ -115,7 +130,21 @@
       },
       "tier": 0,
       "produces": [],
-      "accepts": ["water", "wheat", "stone", "wood", "coal", "oil", "iron"],
+      "accepts": [
+        "water",
+        "wheat",
+        "stone",
+        "wood",
+        "coal",
+        "oil",
+        "iron",
+        "iron_ore",
+        "crude",
+        "diesel",
+        "sand",
+        "copper_ore",
+        "wire"
+      ],
       "art": "warehouse",
       "stockpile": true,
       "fuel": true,
@@ -129,7 +158,21 @@
       "cost": {},
       "tier": 0,
       "produces": [],
-      "accepts": ["water", "wheat", "stone", "wood", "coal", "oil", "iron"],
+      "accepts": [
+        "water",
+        "wheat",
+        "stone",
+        "wood",
+        "coal",
+        "oil",
+        "iron",
+        "iron_ore",
+        "crude",
+        "diesel",
+        "sand",
+        "copper_ore",
+        "wire"
+      ],
       "art": "depot",
       "size": 2,
       "pool": true,

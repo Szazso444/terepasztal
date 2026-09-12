@@ -1378,6 +1378,201 @@ function fuelStop(): PixelBuf {
   return b;
 }
 
+// ------------------------------------------------------------------ full production chain
+
+const RUST_ORE: RGB[] = [
+  [124, 84, 60],
+  [148, 104, 72],
+  [92, 62, 44],
+];
+const COPPER: RGB[] = [
+  [196, 122, 66],
+  [222, 150, 88],
+  [150, 90, 48],
+];
+const OIL_POOL: RGB[] = [
+  [34, 28, 30],
+  [48, 40, 40],
+  [22, 18, 20],
+];
+
+/** Colliery: brick winding house, timber headframe with a sheave wheel, coal and spoil heaps. */
+function colliery(): PixelBuf {
+  const b = new PixelBuf(W, H);
+  const hx = -0.2;
+  const hy = 0.16;
+  const fx = 0.16;
+  const fy = -0.16;
+  const gnd: GroundFn[] = [
+    patchEllipse(0.3, 0.26, 0.16, loose(COAL, 140), 140, 130, 0.08),
+    patchEllipse(fx, fy, 0.2, loose(GRAVEL, 141), 141, 200, 0.08),
+    shadowRect(hx, hy, 0.32, 0.24),
+    shadowEllipse(0.3, 0.26, 0.12),
+    shadowRect(fx, fy, 0.24, 0.24, 50),
+  ];
+  house(b, hx, hy, 0.32, 0.24, 12, BRICK, PAL.roofSlate, 142);
+  facade(b, hx, hy, 0.24, [-0.08], 0.06);
+  chimney(b, hx - 0.1, hy - 0.06, 12, 14, 0.04, [PAL.stone[2], PAL.stone[0], PAL.stone[1]]);
+  // headframe: two leaning legs meeting a crossbeam, the sheave wheel above the shaft mouth
+  const legH = 36;
+  bar(b, fx - 0.14, fy + 0.12, 0, fx - 0.03, fy, legH, PAL.timber[2], 2);
+  bar(b, fx + 0.14, fy + 0.12, 0, fx + 0.03, fy, legH, PAL.timber[2], 2);
+  bar(b, fx - 0.12, fy - 0.12, 0, fx - 0.03, fy, legH, PAL.timber[1], 2);
+  bar(b, fx + 0.12, fy - 0.12, 0, fx + 0.03, fy, legH, PAL.timber[1], 2);
+  for (const z of [12, 24]) bar(b, fx - 0.1, fy + 0.06, z, fx + 0.1, fy + 0.06, z, PAL.timber[0]);
+  const top = proj(OX, GY, fx, fy, legH);
+  b.rect(rx(top) - 6, ry(top), 13, 2, PAL.timber[0]);
+  b.ellipse(rx(top), ry(top) - 4, 5, 5, [PAL.iron[1], PAL.iron[0]], 143, 0.2);
+  b.ellipse(rx(top), ry(top) - 4, 2.5, 2.5, [PAL.iron[2]], 144, 0);
+  // cable down to the cage, dark shaft mouth
+  b.line(rx(top) + 4, ry(top) - 2, rx(top) + 4, ry(top) + legH - 8, PAL.iron[2]);
+  const m = proj(OX, GY, fx, fy);
+  b.ellipse(rx(m), ry(m), 5, 2.5, [PAL.outline], 145, 0);
+  heap(b, 0.3, 0.26, 0.12, 6, COAL, 146);
+  logStack(b, -0.3, -0.26, 0.22, 2, 147);
+  crates(b, [[0.04, 0.36]], 148);
+  b.outline(PAL.outline, 170);
+  ground(b, gnd);
+  return b;
+}
+
+/** Ironworks: brick casting hall beside a tall blast furnace, ore and slag heaps, ingots. */
+function ironworks(): PixelBuf {
+  const b = new PixelBuf(W, H);
+  const hx = -0.1;
+  const hy = 0.16;
+  const fx = 0.2;
+  const fy = -0.18;
+  const gnd: GroundFn[] = [
+    patchEllipse(-0.3, -0.26, 0.15, loose(RUST_ORE, 150), 150, 140, 0.08),
+    patchEllipse(0.34, 0.2, 0.12, loose(GRAVEL, 151), 151, 180, 0.08),
+    shadowRect(hx, hy, 0.44, 0.26),
+    shadowEllipse(fx, fy, 0.16),
+    shadowEllipse(-0.3, -0.26, 0.12),
+  ];
+  house(b, hx, hy, 0.44, 0.26, 14, BRICK, PAL.roofSlate, 152);
+  facade(b, hx, hy, 0.26, [-0.14, 0.06], -0.04);
+  // the furnace: a wide brick stack with an iron band and a bright throat
+  drawCylinder(b, OX, GY, fx, fy, 0.13, 0, 30, BRICK, BRICK[2], 153);
+  const bd = proj(OX, GY, fx, fy, 16);
+  for (let x = -4; x <= 4; x++)
+    b.set(rx(bd) + x, ry(bd) + 2 + Math.round(Math.abs(x) / 3), PAL.iron[1]);
+  chimney(b, fx, fy, 30, 14, 0.05);
+  const t = proj(OX, GY, fx, fy, 44);
+  b.set(rx(t), ry(t) - 2, PAL.amber);
+  b.set(rx(t) - 1, ry(t) - 3, PAL.red);
+  // tapping hole glowing at the foot, a chute into the hall
+  const th = proj(OX, GY, fx, fy + 0.13);
+  b.rect(rx(th) - 2, ry(th) - 5, 5, 4, PAL.outline);
+  b.rect(rx(th) - 1, ry(th) - 4, 3, 2, PAL.amber);
+  bar(b, fx - 0.06, fy + 0.1, 8, hx + 0.16, hy - 0.1, 12, PAL.iron[2], 2);
+  heap(b, -0.3, -0.26, 0.11, 5, RUST_ORE, 154);
+  heap(b, 0.34, 0.2, 0.08, 4, GRAVEL, 155);
+  ingots(b, -0.34, 0.3);
+  ingots(b, -0.22, 0.36);
+  b.outline(PAL.outline, 170);
+  ground(b, gnd);
+  return b;
+}
+
+/** Oil derrick: timber lattice tower over a seep, a small tank and a pump house. */
+function oilDerrick(): PixelBuf {
+  const b = new PixelBuf(W, H);
+  const dx = 0.02;
+  const dy = -0.08;
+  const gnd: GroundFn[] = [
+    patchEllipse(dx + 0.02, dy + 0.06, 0.16, loose(OIL_POOL, 160), 160, 200, 0.1),
+    patchEllipse(-0.3, 0.26, 0.1, loose(OIL_POOL, 161), 161, 120, 0.1),
+    shadowRect(dx, dy, 0.28, 0.28, 50),
+    shadowRect(0.28, 0.24, 0.2, 0.16),
+    shadowEllipse(-0.3, 0.24, 0.09),
+  ];
+  const h = 48;
+  const s = 0.14;
+  // four legs converging on the crown, three rings of bracing
+  for (const [lx, ly] of [
+    [-s, -s],
+    [s, -s],
+    [s, s],
+    [-s, s],
+  ])
+    bar(b, dx + lx, dy + ly, 0, dx + lx * 0.25, dy + ly * 0.25, h, PAL.timber[2], 2);
+  for (const z of [12, 26, 40]) {
+    const k = 1 - (z / h) * 0.75;
+    bar(b, dx - s * k, dy + s * k, z, dx + s * k, dy + s * k, z, PAL.timber[1]);
+    bar(b, dx + s * k, dy + s * k, z, dx + s * k, dy - s * k, z, PAL.timber[1]);
+    bar(b, dx - s * k, dy - s * k, z, dx - s * k, dy + s * k, z, PAL.timber[0]);
+  }
+  const top = proj(OX, GY, dx, dy, h);
+  b.rect(rx(top) - 3, ry(top) - 1, 7, 2, PAL.timber[0]);
+  b.rect(rx(top) - 1, ry(top) - 5, 3, 4, PAL.iron[1]);
+  // walking beam and the rod down into the well
+  bar(b, dx - 0.12, dy - 0.02, 20, dx + 0.1, dy - 0.02, 26, PAL.iron[2], 2);
+  bar(b, dx + 0.1, dy - 0.02, 26, dx + 0.1, dy - 0.02, 2, PAL.iron[3]);
+  silo(b, 0.3, 0.24, 0.1, 10, TANK_WHITE, TANK_WHITE[1], 162);
+  bar(b, dx + 0.1, dy + 0.1, 4, 0.22, 0.2, 6, PAL.iron[3]);
+  house(b, -0.26, -0.28, 0.2, 0.16, 8, PALE_TIMBER, PAL.roofSlate, 163);
+  crates(b, [[-0.36, 0.1]], 164);
+  b.outline(PAL.outline, 170);
+  ground(b, gnd);
+  return b;
+}
+
+/** Wire mill: long steel drawing shed with a saw-tooth roof, copper coils and an ore heap. */
+function wireMill(): PixelBuf {
+  const b = new PixelBuf(W, H);
+  const hx = -0.06;
+  const hy = -0.06;
+  const gnd: GroundFn[] = [
+    patchRect(0.24, 0.3, 0.3, 0.18, concrete(170), 170, 255, 0.05),
+    patchEllipse(-0.32, 0.28, 0.12, loose(RUST_ORE, 171), 171, 140, 0.08),
+    shadowRect(hx, hy, 0.56, 0.34, 80),
+    shadowEllipse(-0.32, 0.28, 0.09),
+  ];
+  flatShed(b, hx, hy, 0.56, 0.34, 16, STEEL, 172);
+  // saw-tooth skylights along the roof
+  for (const tx of [-0.2, -0.04, 0.12]) {
+    drawPrism(b, {
+      ox: OX,
+      oy: GY,
+      cx: hx + tx,
+      cy: hy,
+      angle: 0,
+      len: 0.1,
+      wid: 0.3,
+      h: 5,
+      z0: 16,
+      top: [PAL.cyanDark, PAL.cyan],
+      side: STEEL,
+      seed: 173,
+    });
+  }
+  opening(b, hx + 0.1, hy + 0.17, hx + 0.22, hy + 0.17, 0, 11, PAL.outline);
+  chimney(b, hx - 0.22, hy - 0.1, 16, 10, 0.04);
+  // coils of drawn wire on the loading pad
+  for (const [cx, cy] of [
+    [0.18, 0.28],
+    [0.3, 0.34],
+    [0.3, 0.22],
+  ]) {
+    drawCylinder(b, OX, GY, cx, cy, 0.05, 0, 5, COPPER, COPPER[1], 174);
+    const c = proj(OX, GY, cx, cy, 5);
+    b.set(rx(c), ry(c), COPPER[2]);
+  }
+  heap(
+    b,
+    -0.32,
+    0.28,
+    0.09,
+    5,
+    COPPER.map((c) => shade(c, 0.6)),
+    175,
+  );
+  b.outline(PAL.outline, 170);
+  ground(b, gnd);
+  return b;
+}
+
 export const STATION_FAMILIES: Record<string, (level: number) => PixelBuf> = {
   farm,
   lumber,
@@ -1493,6 +1688,12 @@ export const BUILDING_SPRITES: Record<string, () => PixelBuf> = {
   power_plant: powerPlant,
   substation,
   hydro_plant: hydroPlant,
+  // full production chain
+  colliery,
+  ironworks,
+  oil_derrick: oilDerrick,
+  diesel_refinery: refinery,
+  wire_mill: wireMill,
 };
 /** Footprint every townhouse stage and level shares (the yard and paving sit to its +x/+y). */
 const HOUSE_CX = -0.04;

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "steam",
+    "goals": []
+  },
+  {
+    "id": "diesel",
+    "goals": [
+      {
+        "kind": "depots",
+        "target": 3
+      },
+      {
+        "kind": "population",
+        "target": 1000
+      }
+    ]
+  },
+  {
+    "id": "electric",
+    "goals": [
+      {
+        "kind": "earned",
+        "target": 250000
+      }
+    ]
+  }
+]

@@ -6,6 +6,7 @@ import type { LevelData } from '../world/level';
 import type { Rules } from './rules';
 import type { TownJSON } from './towns';
 import type { HousesJSON } from './houses';
+import type { SupplyMode } from './supply';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -23,7 +24,16 @@ export interface SaveGame {
   savedAt: number;
   seed: number;
   clock: { time: number; speedIndex: number };
-  economy: { money: number; tickets: number; reputation: number; tier: number; granted: number[] };
+  /** v9: `tier` is the age index; `earned` the lifetime income (reputation dropped) */
+  economy: {
+    money: number;
+    tickets: number;
+    tier: number;
+    granted: number[];
+    earned?: number;
+    /** pre-v9 field, ignored */
+    reputation?: number;
+  };
   /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
   track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
   stations: StationJSON[];
@@ -36,7 +46,7 @@ export interface SaveGame {
   /** v2: signals and water towers [x, y, id, rot] */
   decor?: [number, number, string, number][];
   /** v9: electrified track [x, y, kind] */
-  supply?: [number, number, string][];
+  wires?: [number, number, string][];
   /** v2: weather generator state */
   weather?: unknown;
   /** v3: how the map was built */
@@ -61,6 +71,8 @@ export interface SaveGame {
   crafting?: unknown;
   /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
   houses?: HousesJSON;
+  /** v9: production-chain mode the game was started with */
+  supply?: SupplyMode;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -140,8 +152,14 @@ export const MIGRATIONS: Migration[] = [
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
   {
     from: 8,
-    note: 'every track piece counted as regular class; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each',
+    note: 'every track piece counted as regular class; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple',
     run: (j) => {
+      j.supply = j.supply ?? 'simple';
+      if (j.economy) {
+        j.economy.tier = Math.max(0, Math.min(2, j.economy.tier ?? 0));
+        j.economy.earned = j.economy.earned ?? 0;
+        delete j.economy.reputation;
+      }
       if (j.houses) return;
       const list = (j.decor ?? []).filter(([, , id]) => id === 'townhouse');
       j.houses = {
@@ -188,10 +206,11 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'seasonOffset',
   'towns',
   'settings',
-  'supply',
+  'wires',
   'trade',
   'crafting',
   'houses',
+  'supply',
   'loadedFrom',
   'migrationNotes',
 ]);

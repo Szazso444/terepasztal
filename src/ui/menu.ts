@@ -1,10 +1,11 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { LevelData } from '../world/level';
+import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 
 export interface MainMenuActions {
   continue(): void;
-  newGame(seed: string): void;
+  newGame(seed: string, supply: SupplyMode): void;
   playLevel(id: string): void;
   editLevel(id: string): void;
   newLevel(size: number, generated: boolean, seed: string): void;
@@ -66,14 +67,29 @@ export class MainMenu {
     }) as HTMLInputElement;
     const cont = btn(STR.menu.continue, () => this.actions.continue(), 'menu-btn accent');
     cont.disabled = !hasSave;
+    // production chain of the new game: simple (default) or the full supply set
+    const supply = el('select', { class: 'text', title: STR.menu.supply }) as HTMLSelectElement;
+    for (const m of SUPPLY_MODES)
+      supply.append(el('option', { value: m, text: STR.menu.supplyModes[m] ?? m }));
+    supply.value = DEFAULT_SUPPLY;
+    const supplyHint = el('div', { class: 'sub dim', style: 'max-width:300px' });
+    const hint = () => (supplyHint.textContent = STR.menu.supplyHint[supply.value] ?? '');
+    supply.addEventListener('change', hint);
+    hint();
     l.append(
       cont,
       el(
         'div',
         { class: 'menu-row' },
-        btn(STR.menu.newGame, () => this.actions.newGame(seedInput.value.trim()), 'menu-btn'),
+        btn(
+          STR.menu.newGame,
+          () => this.actions.newGame(seedInput.value.trim(), supply.value as SupplyMode),
+          'menu-btn',
+        ),
         seedInput,
       ),
+      el('div', { class: 'menu-row' }, el('span', { class: 'dim', text: STR.menu.supply }), supply),
+      supplyHint,
       btn(
         STR.menu.tuning + (custom.rules ? ` ${STR.menu.modified}` : ''),
         () => this.actions.tuning(),

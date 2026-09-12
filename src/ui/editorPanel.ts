@@ -2,6 +2,8 @@ import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Editor } from '../editor/editor';
 import { Terrain, TERRAIN_NAMES } from '../world/tiles';
+import { LAST_AGE } from '../sim/ages';
+import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 
 export interface EditorActions {
   save(): void;
@@ -76,6 +78,12 @@ export class EditorPanel {
     desc.addEventListener('change', () => (l.description = desc.value));
     b.append(desc);
     b.append(el('div', { class: 'col-title', text: STR.editor.start }));
+    // production chain the level is played in
+    const supply = el('select', { class: 'text', style: 'width:90px' }) as HTMLSelectElement;
+    for (const m of SUPPLY_MODES)
+      supply.append(el('option', { value: m, text: STR.menu.supplyModes[m] ?? m }));
+    supply.value = l.start.supply ?? DEFAULT_SUPPLY;
+    supply.addEventListener('change', () => (l.start.supply = supply.value as SupplyMode));
     b.append(
       field(
         STR.hud.money,
@@ -86,13 +94,10 @@ export class EditorPanel {
         num(l.start.tickets, (v) => (l.start.tickets = v), 0, 9999),
       ),
       field(
-        STR.hud.reputation,
-        num(l.start.reputation, (v) => (l.start.reputation = v), 0, 99999),
-      ),
-      field(
         STR.editor.startTier,
-        num(l.start.tier, (v) => (l.start.tier = v), 0, 4),
+        num(l.start.tier, (v) => (l.start.tier = v), 0, LAST_AGE),
       ),
+      field(STR.menu.supply, supply),
     );
     b.append(el('div', { class: 'col-title', text: STR.editor.brush }));
     const brushRow = el('div', { class: 'row', style: 'margin-top:2px' });

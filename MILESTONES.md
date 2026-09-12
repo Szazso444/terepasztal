@@ -28,10 +28,10 @@
 - Drag-laying straights and bridges along the dominant axis with per-tile ghosts and a running cost.
 - Right-click / Delete removes track or a station; right-click with nothing under the cursor cancels the tool; Esc cancels / deselects.
 - Track graph (`src/world/track.ts`): per-tile link lists, `exits(x, y, entry)` for pathfinding, `connected()` for edge checks. Track on a hill flattens it ("cut"); trees are cleared.
-- Stations from `src/data/stations.json` (7 types, tier-gated), placed on a tile touching track. Levels 1-5 scale capacity, loading rate, platforms and production; level thresholds unlock extra produced cargo; sprite changes at levels 3 and 5. Level cap follows the reputation tier.
+- Stations from `src/data/stations.json` (7 types, tier-gated), placed on a tile touching track. Levels 1-5 scale capacity, loading rate, platforms and production; level thresholds unlock extra produced cargo; sprite changes at levels 3 and 5. Level cap follows the age (since v0.8.0; the reputation tier before).
 - Station panel: stats, storage bars, upgrade with cost, rename, demolish. Hover tooltip in the field view and in the overview.
 - Overview now draws track as lines and stations as labelled nodes; minimap marks track and stations.
-- Economy class with tier ladder; tier-ups reveal regions (fog, overview, minimap all rebuild) and grant tickets.
+- Economy class with tier ladder; tier-ups reveal regions (fog, overview, minimap all rebuild) and grant tickets. (Replaced by ages in v0.8.0, see milestone 13.)
 
 **Fixed in the post-merge pass**
 
@@ -213,3 +213,14 @@ See `CHANGELOG.md`. Highlights: section claims keep single track to one train at
 
 - A single line with no siding or loop between two busy platforms still queues trains; the notice and the traffic report point at it.
 - Sections are claimed whole, so a very long stretch between switches admits one train per direction at a time.
+
+## 13. v0.8.0 — ages, production chains
+
+Reputation is gone. The game moves through three **ages** (`src/data/ages.json`, `src/sim/ages.ts`): Steam from the start, Diesel once three depots stand and the population reaches 1000, Electric once $250,000 has been earned in total (`economy.earned`, fed by `earn`). Goals are checked once per in-game hour; an age-up toasts, posts a notice, refreshes the toolbar and grants five tickets. `economy.tier` stays as the age index and still gates works, stations, decor, station levels (`maxLevelByTier` is now three entries), contract templates (`minTier`) and gacha banners. The top bar shows the age; hovering it lists every age's goals with progress bars. Tuning lost the reputation and tier-ladder entries; the level start block carries the start age and the production chain.
+
+**Production chains** (`src/sim/supply.ts`, chosen on New game, `SaveGame.supply`, format v9): _Simple_ keeps the kiln / grinder / refinery chain from the stockpile, diesels burn oil and warehouses top up fuel from the stockpile. _Full_ appends a second data set (`cargo_full.json`, `stations_full.json`, `buildings_full.json`, every entry `supply: "full"`, hidden from the toolbar, resource bar and market otherwise): coal seams and oil seeps are map props placed at generation (`coal` on hills, `oil` on sand and wet grass) and gate the Colliery (wood → 3 coal) and Oil Derrick (→ crude); Iron Mine (rock → iron ore) and Ironworks (ore + coal → 2 iron); Refinery (crude → diesel), which diesel engines burn (`Train.oilKind`); Sand Pit on sand and one sand per 200 tiles run by any train; Copper Mine and Wire Mill (copper ore + coal → wire). Warehouses refuel only from their own store. Fuel prices (oil, diesel, crude) drift ±40 % on a seeded daily random walk (`TradeDesk.fuelMul`), shown as a trend column in the market.
+
+**Known limitations**
+
+- Deposits are placed by hash, so a start chunk can have few or no seeps; the market sells crude and diesel meanwhile.
+- The full-chain stations reuse the quarry art; the power plant still burns oil as its alternative fuel in both chains.
