@@ -43,7 +43,8 @@ export class DepotScreen implements Screen {
   onFocusDepot: ((d: Station, gate: { x: number; y: number } | null) => void) | null = null;
   onDetails: ((t: Train) => void) | null = null;
   private scheduleEditor: ScheduleEditor;
-  private routeMode: 'auto' | 'custom' | 'production' | 'collection' | 'transport' = 'auto';
+  private routeMode: 'auto' | 'custom' | 'production' | 'collection' | 'transport' | 'contract' =
+    'auto';
   /** depot the new train rolls out of (null: the first one) */
   private depotId: number | null = null;
 
@@ -348,7 +349,7 @@ export class DepotScreen implements Screen {
     const names = auto.map((s) => this.builder.stationById(s.stationId)?.name ?? '?');
     const groups: [string, (typeof this.routeMode)[]][] = [
       [STR.depot.groupStatic, ['auto', 'custom']],
-      [STR.depot.groupDynamic, ['production', 'collection', 'transport']],
+      [STR.depot.groupDynamic, ['production', 'collection', 'transport', 'contract']],
     ];
     for (const [label, modes] of groups) {
       const row = el('div', { class: 'row', style: 'margin:0 0 4px 0' });

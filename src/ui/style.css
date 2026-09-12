@@ -1802,3 +1802,10 @@ table.market td {
 .rollout .good {
   color: var(--cyan);
 }
+
+/* named saves unfolded under "Load game" in the pause menu */
+.menu-slots {
+  max-height: 40vh;
+  overflow-y: auto;
+  margin: 2px 0 6px;
+}

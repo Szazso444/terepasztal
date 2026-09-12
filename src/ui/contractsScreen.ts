@@ -17,6 +17,24 @@ export function fmtDuration(sec: number) {
 
 /** Contract board: open offers to accept, active contracts with progress, recent history. */
 export class ContractsScreen implements Screen {
+  /** read and set the auto-accept switch (all rarities accepted, or all prompted); set by the game */
+  autoAccept: { get: () => boolean; set: (v: boolean) => void } | null = null;
+  private autoBtn = btn(
+    '',
+    () => {
+      if (!this.autoAccept) return;
+      this.autoAccept.set(!this.autoAccept.get());
+      this.syncAutoBtn();
+    },
+    'tiny',
+  );
+  private syncAutoBtn() {
+    const on = this.autoAccept?.get() ?? false;
+    this.autoBtn.textContent = on ? STR.contracts.autoOn : STR.contracts.autoOff;
+    this.autoBtn.className = `tiny ${on ? 'active' : ''}`;
+    this.autoBtn.style.marginLeft = '8px';
+    this.autoBtn.title = STR.contracts.autoHint;
+  }
   readonly id = 'contracts';
   readonly title = STR.contracts.title;
   readonly root = el('div', { class: 'cols' });
@@ -37,7 +55,7 @@ export class ContractsScreen implements Screen {
       el(
         'div',
         { class: 'col' },
-        el('div', { class: 'col-title', text: STR.contracts.offers }),
+        el('div', { class: 'col-title' }, el('span', { text: STR.contracts.offers }), this.autoBtn),
         this.offersCol,
       ),
       el(
@@ -137,6 +155,7 @@ export class ContractsScreen implements Screen {
   }
 
   render() {
+    this.syncAutoBtn();
     const o = this.offersCol;
     o.innerHTML = '';
     const offers = this.board.offers;

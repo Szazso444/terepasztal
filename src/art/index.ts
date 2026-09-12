@@ -3,7 +3,7 @@ import { generateTerrainAtlas } from './terrain';
 import { generatePropsAtlas } from './props';
 import { generateTrackAtlas } from './track';
 import { generateStructuresAtlas } from './structures';
-import { generateRollingAtlas } from './rolling';
+import { generateRollingAtlas, generateWagonAtlas } from './rolling';
 import { generateFxAtlas } from './fx';
 import { generateIconsAtlas } from './icons';
 import { generatePeopleAtlas } from './people';
@@ -18,6 +18,7 @@ export const ATLAS_GROUPS: { name: string; generate: AtlasGenerator }[] = [
   { name: 'track', generate: generateTrackAtlas },
   { name: 'structures', generate: generateStructuresAtlas },
   { name: 'rolling', generate: generateRollingAtlas },
+  { name: 'wagons', generate: generateWagonAtlas },
   { name: 'fx', generate: generateFxAtlas },
   { name: 'icons', generate: generateIconsAtlas },
   { name: 'people', generate: generatePeopleAtlas },

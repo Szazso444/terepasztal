@@ -89,7 +89,11 @@ export class ContractDispatcher {
     let best: Candidate | null = null;
     let bestScore = Infinity;
     for (const k of cands) {
-      const score = k.time * Math.pow(Math.max(1, k.options) / fewest, VERSATILITY_POWER);
+      // a train kept for contracts is chosen ahead of one that would drop its own work
+      const score =
+        k.time *
+        Math.pow(Math.max(1, k.options) / fewest, VERSATILITY_POWER) *
+        (k.train.mode === 'contract' ? 0.4 : 1);
       if (score < bestScore) {
         bestScore = score;
         best = k;

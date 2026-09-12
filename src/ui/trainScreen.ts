@@ -225,7 +225,7 @@ export class TrainScreen implements Screen {
         'div',
         { class: 'row' },
         el('span', { class: 'dim', text: STR.train.routing }),
-        ...(['schedule', 'production', 'collection', 'transport'] as const).map((m) =>
+        ...(['schedule', 'production', 'collection', 'transport', 'contract'] as const).map((m) =>
           btn(
             STR.train.mode[m],
             () => {

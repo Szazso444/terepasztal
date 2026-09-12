@@ -8,6 +8,8 @@ export class Economy {
   earned = 0;
   /** index of the current age: 0 steam, 1 diesel, 2 electric. Never drops. */
   tier = 0;
+  /** the high-speed rail quest is done: the fast track may be built */
+  hsUnlocked = false;
   /** Milestone tickets already granted per age. */
   private ageTicketsGranted = new Set<number>();
   onAgeUp: ((tier: number) => void) | null = null;
@@ -59,6 +61,7 @@ export class Economy {
       earned: this.earned,
       tier: this.tier,
       granted: [...this.ageTicketsGranted],
+      hsUnlocked: this.hsUnlocked,
     };
   }
   load(j: Partial<ReturnType<Economy['toJSON']>>) {
@@ -67,5 +70,6 @@ export class Economy {
     this.earned = j.earned ?? 0;
     this.tier = Math.max(0, Math.min(LAST_AGE, j.tier ?? 0));
     this.ageTicketsGranted = new Set(j.granted ?? []);
+    this.hsUnlocked = j.hsUnlocked ?? false;
   }
 }

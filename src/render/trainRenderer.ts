@@ -10,6 +10,7 @@ import {
   DRAWN_FACINGS,
   mirrorFacing,
   residualRotation,
+  ROTATION_SHARE,
   type VehicleSpec,
   type VehiclePose,
 } from '../sim/body';
@@ -110,7 +111,7 @@ export class TrainRenderer {
     s.texture = fr.texture;
     s.anchor.set(fr.anchorX, fr.anchorY);
     s.scale.set(drawn ? 1 : -1, 1);
-    s.rotation = residualRotation(angle, f);
+    s.rotation = residualRotation(angle, f) * ROTATION_SHARE;
     const wp = tileToWorld(x, y);
     s.position.set(Math.round(wp.x), Math.round(wp.y));
     s.zIndex = depthKey(x, y, layer);

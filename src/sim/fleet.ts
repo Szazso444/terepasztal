@@ -96,9 +96,15 @@ export class Fleet {
    */
   /** Track tiles reachable from a depot's gates (undirected walk over the rails). */
   reachableFrom(depot: Station | undefined): Set<number> {
+    if (!depot) return new Set();
+    return this.reachableTiles(
+      this.builder.platformTiles(depot).map((p) => p.y * this.map.w + p.x),
+    );
+  }
+  /** Track tiles reachable from the given tile keys (undirected walk over the rails). */
+  reachableTiles(seeds: number[]): Set<number> {
     const out = new Set<number>();
-    if (!depot) return out;
-    const stack = this.builder.platformTiles(depot).map((p) => p.y * this.map.w + p.x);
+    const stack = seeds.slice();
     for (const k of stack) out.add(k);
     while (stack.length) {
       const k = stack.pop()!;
@@ -588,7 +594,15 @@ export class Fleet {
     const head = t.poses[0] ?? { x: 0, y: 0 };
     const dist = (s: Station) => Math.abs(s.cx - head.x) + Math.abs(s.cy - head.y);
     const between = (a: Station, b: Station) => Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy);
-    const withPlat = this.builder.stations.filter((s) => this.builder.platformTiles(s).length > 0);
+    // only stations the rails under the train actually lead to: a nearer station on a
+    // disconnected line would be picked, found unreachable and leave the train parked in the way
+    const ht = t.headTile;
+    const reach = ht ? this.reachableTiles([ht.y * this.map.w + ht.x]) : null;
+    const withPlat = this.builder.stations.filter((s) => {
+      const plat = this.builder.platformTiles(s);
+      if (!plat.length) return false;
+      return !reach || plat.some((p) => reach.has(p.y * this.map.w + p.x));
+    });
     const depots = withPlat.filter((s) => s.def.pool);
     const warehouses = withPlat.filter((s) => s.def.stockpile);
     const fuelPoints = withPlat.filter((s) => s.refuelsFuel && s.refuelsWater);
@@ -697,6 +711,7 @@ export class Fleet {
       if (taken.has(s.id) || s.def.pool || !ok(s)) continue;
       if (!reachable(s)) continue;
       let score = -Infinity;
+      if (t.mode === 'contract') return null;
       if (t.mode === 'transport') {
         if (!s.accepts('passengers')) continue;
         const waiting = this.waitingAt(s.id);
@@ -755,33 +770,50 @@ export class Fleet {
    * Somewhere out of the way for a train that idles in others' path: the nearest station with a
    * free platform whose platform tiles are not on the waiting train's path. Sends it there.
    */
-  parkElsewhere(t: Train, behind: Train, ctx: TickCtx): boolean {
+  parkElsewhere(t: Train, behind: Train, ctx: TickCtx, force = false): boolean {
     const theirs = behind.pathTileKeys(this.map.w);
     const head = t.poses[0] ?? { x: 0, y: 0 };
+    // only spots the rails under the train lead to: a nearer station on another line would be
+    // chosen, found unreachable and leave the train parked where it stands with a dead route
+    const ht = t.headTile;
+    const reach = ht ? this.reachableTiles([ht.y * this.map.w + ht.x]) : null;
     const spots = this.builder.stations.filter((s) => {
       if (s === t.atStation) return false;
       const plat = this.builder.platformTiles(s);
       if (!plat.length || !s.hasFreePlatform()) return false;
       return plat.some(
-        (p) => !theirs.has(p.y * this.map.w + p.x) && !this.occupied(p.x, p.y, t.id),
+        (p) =>
+          !theirs.has(p.y * this.map.w + p.x) &&
+          !this.occupied(p.x, p.y, t.id) &&
+          (!reach || reach.has(p.y * this.map.w + p.x)),
       );
     });
-    const target = this.nearest(spots, head);
-    if (!target) return false;
-    if (t.atStation) {
-      t.atStation.occupants.delete(t.id);
-      t.atStation = null;
-    }
-    t.schedule = [defaultStop(target.id)];
-    t.routeIndex = 0;
+    const dist = (s: Station) => Math.abs(s.cx - head.x) + Math.abs(s.cy - head.y);
+    spots.sort((a, b) => dist(a) - dist(b));
+    const was = { schedule: t.schedule, routeIndex: t.routeIndex, atStation: t.atStation };
     const wasReversed = t.reversed;
-    if (!t.dispatch(this.track, this.builder, this.map, (x, y) => this.occupied(x, y, t.id))) {
-      return false;
-    }
-    if (wasReversed !== t.reversed) t.updatePoses();
-    t.lastMessage = 'moving out of the way';
-    t.onPathReady(ctx);
-    return true;
+    // nearest first; the first spot with a path clear of standing trains wins. When forced
+    // (the queue behind has waited long enough) a path through the queue will do: the train
+    // then meets the others head-on and the usual give-way rules move the queue back for it
+    const tries = spots.slice(0, 4);
+    for (const plain of force ? [false, true] : [false])
+      for (const target of tries) {
+        t.atStation = null;
+        t.schedule = [defaultStop(target.id)];
+        t.routeIndex = 0;
+        const avoid = plain ? undefined : (x: number, y: number) => this.occupied(x, y, t.id);
+        if (!t.dispatch(this.track, this.builder, this.map, avoid)) continue;
+        if (was.atStation) was.atStation.occupants.delete(t.id);
+        if (wasReversed !== t.reversed) t.updatePoses();
+        t.lastMessage = 'moving out of the way';
+        t.onPathReady(ctx);
+        return true;
+      }
+    // nowhere to go: keep the route and the platform it had
+    t.schedule = was.schedule;
+    t.routeIndex = was.routeIndex;
+    t.atStation = was.atStation;
+    return false;
   }
   /** set by the game: destination station of an active contract for this cargo/origin, if any */
   contractDest: ((cargo: string, origin: number) => number | null) | null = null;
@@ -853,18 +885,27 @@ export class Fleet {
       const tail = chain[chain.length - 1];
       // a train idling or queueing on the line with someone behind it moves aside first: it has
       // nowhere urgent to be
-      if ((tail.state === 'idle' || tail.state === 'waiting') && chain.length >= 2) {
+      const parked =
+        tail.state === 'idle' ||
+        tail.state === 'waiting' ||
+        (tail.state === 'loading' && tail.waitingForCargo);
+      // a parked tail with nowhere to go (a dead-end platform, say) leaves the queue behind it
+      // to sort itself out: someone further back has to give way
+      let tailPinned = false;
+      if (parked && chain.length >= 2) {
         const behind = chain[chain.length - 2];
         if (tail.yieldUntil <= now && behind.blockedTime >= MUTUAL_GRACE) {
           tail.blockedBy = behind.id;
           tail.blocked = true;
-          if (tail.retreat(ctx) || this.parkElsewhere(tail, behind, ctx)) {
+          const force = behind.blockedTime >= MUTUAL_GRACE * 3;
+          if (tail.retreat(ctx) || this.parkElsewhere(tail, behind, ctx, force)) {
             this.traffic.yielded(tail, behind.id, now);
             for (const t of chain) handled.add(t.id);
             continue;
           }
           tail.blocked = false;
           tail.blockedBy = null;
+          tailPinned = behind.blockedTime >= MUTUAL_GRACE * 2;
         }
       }
       // a chain ending in a train that is busy at a platform clears itself; one that loops or
@@ -873,6 +914,7 @@ export class Fleet {
         tail.state === 'loading' || tail.state === 'waiting' || tail.state === 'idle';
       const dead =
         loops ||
+        tailPinned ||
         (tail.blocked && tail.blockedTime >= MUTUAL_GRACE) ||
         (tail.state !== 'moving' && !transient);
       if (!dead) continue;

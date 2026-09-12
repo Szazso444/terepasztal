@@ -1,4 +1,5 @@
 import { Rng, hash2 } from '../engine/rng';
+import { supplyMode } from '../sim/supply';
 import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from './tiles';
 
 /** Smooth value noise built from the coordinate hash. */
@@ -221,8 +222,42 @@ export function generateMap(seed: number, p: Partial<MapGenParams> = {}): GameMa
   raiseMountains(map);
   ensureStartResources(map);
   decorateProps(map, seed);
+  placeOilFields(map, seed);
   ensureStartDeposits(map);
   return map;
+}
+
+/**
+ * Oil fields (full production chain only): rare clusters of puddles on low ground. A field centre
+ * is picked by hash on plain grass, sand or swamp, then a blob of 4–9 tiles around it is covered.
+ * Fields never touch the starting chunk's centre.
+ */
+export function placeOilFields(map: GameMap, seed: number) {
+  if (supplyMode() !== 'full') return;
+  const { w, h, terrain, biome, originX, originY } = map;
+  const ok = (i: number) => {
+    const t = terrain[i];
+    const b = biome[i];
+    return b !== Biome.Ocean && (t === Terrain.Grass || t === Terrain.Sand);
+  };
+  for (let y = 2; y < h - 2; y++)
+    for (let x = 2; x < w - 2; x++) {
+      const i = y * w + x;
+      if (!ok(i)) continue;
+      if (hash2(x + originX, y + originY, seed + 12) < 0.9975) continue;
+      const rad = 1 + Math.floor(hash2(x + originX, y + originY, seed + 13) * 2);
+      for (let dy = -rad; dy <= rad; dy++)
+        for (let dx = -rad; dx <= rad; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
+          const ni = ny * w + nx;
+          if (!ok(ni)) continue;
+          if (dx * dx + dy * dy > rad * rad + 0.5) continue;
+          if (hash2(nx + originX, ny + originY, seed + 14) < 0.25) continue;
+          map.props.set(ni, [{ kind: 'oil', variant: (dx + dy + 6) % 3, ox: 0, oy: 0 }]);
+        }
+    }
 }
 
 /**
@@ -260,8 +295,8 @@ export function ensureStartDeposits(map: GameMap) {
       map.props.set(i, [{ kind, variant: k % 3, ox: (hash2(i, 1, map.seed) - 0.5) * 0.3, oy: 0 }]);
     }
   };
-  place('coal', 2, (t) => t === Terrain.Hill);
-  place('oil', 2, (t, d) => (t === Terrain.Grass || t === Terrain.Sand) && d > 6 && d < 13);
+  if (supplyMode() !== 'full') return;
+  place('oil', 3, (t, d) => (t === Terrain.Grass || t === Terrain.Sand) && d > 6 && d < 13);
 }
 
 /**
@@ -321,76 +356,83 @@ function carveRivers(
 ) {
   const { w, h, terrain, biome, originX, originY } = map;
   const rs = map.regionSize;
+  /** Walk downhill from a source and carve the water; true when a river of some length resulted. */
+  const attempt = (x0: number, y0: number, minLen: number, keepOut: number): boolean => {
+    if (x0 < 1 || y0 < 1 || x0 >= w - 1 || y0 >= h - 1) return false;
+    const i0 = y0 * w + x0;
+    if (biome[i0] === Biome.Ocean || biome[i0] === Biome.Desert) return false;
+    if (terrain[i0] === Terrain.Water) return false;
+    if (Math.hypot(x0 - scx, y0 - scy) < keepOut) return false;
+    let x = x0;
+    let y = y0;
+    const path: number[] = [];
+    let dry = 0;
+    for (let step = 0; step < 260; step++) {
+      path.push(y * w + x);
+      if (terrain[y * w + x] === Terrain.Water && step > 3) break;
+      let bx = x;
+      let by = y;
+      let be = Infinity;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
+          const ni = ny * w + nx;
+          if (path.includes(ni)) continue;
+          // a little position-fixed noise so rivers meander the same way every time
+          const ev = elev[ni] + (hash2(nx + originX, ny + originY, seed + 80) - 0.5) * 0.02;
+          if (ev < be) {
+            be = ev;
+            bx = nx;
+            by = ny;
+          }
+        }
+      if (bx === x && by === y) break;
+      x = bx;
+      y = by;
+      if (biome[y * w + x] === Biome.Desert && ++dry > 12) break;
+      if (Math.hypot(x - scx, y - scy) < 12) break;
+    }
+    if (path.length < minLen) return false;
+    path.forEach((i, k) => {
+      const px = i % w;
+      const py = Math.floor(i / w);
+      terrain[i] = Terrain.Water;
+      if (k > path.length / 2) {
+        const j = py * w + Math.min(w - 1, px + 1);
+        if (terrain[j] !== Terrain.Water) terrain[j] = Terrain.Water;
+      }
+    });
+    return true;
+  };
+  let carved = 0;
   // one candidate source per world chunk, fixed by the chunk's world coordinates, so the same
   // rivers reappear wherever the map's edges happen to be
   for (let ry = 0; ry < map.regionsY; ry++)
     for (let rx = 0; rx < map.regionsX; rx++) {
       const cx = rx + Math.floor(originX / rs);
       const cy = ry + Math.floor(originY / rs);
-      if (hash2(cx, cy, seed + 77) > 0.5) continue;
+      if (hash2(cx, cy, seed + 77) > 0.75) continue;
       const x0 = rx * rs + 4 + Math.floor(hash2(cx, cy, seed + 78) * (rs - 8));
       const y0 = ry * rs + 4 + Math.floor(hash2(cx, cy, seed + 79) * (rs - 8));
-      if (x0 < 1 || y0 < 1 || x0 >= w - 1 || y0 >= h - 1) continue;
       const i0 = y0 * w + x0;
-      if (elev[i0] < waterLevel + 0.22 || biome[i0] === Biome.Ocean || biome[i0] === Biome.Desert)
-        continue;
-      if (Math.hypot(x0 - scx, y0 - scy) < 22) continue;
-      let x = x0;
-      let y = y0;
-      const path: number[] = [];
-      let dry = 0;
-      for (let step = 0; step < 220; step++) {
-        path.push(y * w + x);
-        if (terrain[y * w + x] === Terrain.Water && step > 3) break;
-        let bx = x;
-        let by = y;
-        let be = Infinity;
-        for (let dy = -1; dy <= 1; dy++)
-          for (let dx = -1; dx <= 1; dx++) {
-            if (!dx && !dy) continue;
-            const nx = x + dx;
-            const ny = y + dy;
-            if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
-            const ni = ny * w + nx;
-            if (path.includes(ni)) continue;
-            // a little position-fixed noise so rivers meander the same way every time
-            const ev = elev[ni] + (hash2(nx + originX, ny + originY, seed + 80) - 0.5) * 0.02;
-            if (ev < be) {
-              be = ev;
-              bx = nx;
-              by = ny;
-            }
-          }
-        if (bx === x && by === y) break;
-        x = bx;
-        y = by;
-        if (biome[y * w + x] === Biome.Desert && ++dry > 12) break;
-        if (Math.hypot(x - scx, y - scy) < 14) break;
-      }
-      if (path.length < 12) continue;
-      path.forEach((i, k) => {
-        const px = i % w;
-        const py = Math.floor(i / w);
-        terrain[i] = Terrain.Water;
-        if (k > path.length / 2) {
-          const j = py * w + Math.min(w - 1, px + 1);
-          if (terrain[j] !== Terrain.Water) terrain[j] = Terrain.Water;
-        }
-        for (const [dx, dy] of [
-          [1, 0],
-          [-1, 0],
-          [0, 1],
-          [0, -1],
-        ]) {
-          const nx = px + dx;
-          const ny = py + dy;
-          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-          const ni = ny * w + nx;
-          if (terrain[ni] === Terrain.Hill || terrain[ni] === Terrain.Rock)
-            terrain[ni] = Terrain.Grass;
-        }
-      });
+      if (i0 < 0 || i0 >= elev.length || elev[i0] < waterLevel + 0.12) continue;
+      if (attempt(x0, y0, 12, 20)) carved++;
     }
+  // a map without any river: start one from the highest ground away from the start
+  if (carved === 0) {
+    const cands: { i: number; e: number }[] = [];
+    for (let y = 4; y < h - 4; y += 3)
+      for (let x = 4; x < w - 4; x += 3) {
+        const i = y * w + x;
+        if (Math.hypot(x - scx, y - scy) < 20) continue;
+        cands.push({ i, e: elev[i] });
+      }
+    cands.sort((a, b) => b.e - a.e);
+    for (const c of cands.slice(0, 40)) if (attempt(c.i % w, Math.floor(c.i / w), 8, 16)) break;
+  }
 }
 
 /** Large stone fields rise in the middle: rock tiles two deep inside a field become mountains. */
@@ -478,23 +520,10 @@ export function decorateProps(
         if (b === Biome.Desert) {
           if (r > 0.93) put(r > 0.965 ? 'deadtree' : 'cactus', 3);
         } else if (b === Biome.Ocean && r > 0.9) put('palm', 2);
-      } else if (t === Terrain.Hill && r > 0.93) {
-        put('boulder', 3);
       }
       // deposits for the full production chain: coal seams crop out on some hills, oil seeps
       // through low ground (swamps, sand and now and then plain grass). Their own hash keeps
       // them independent of the vegetation above.
-      const d = hash2(wx, wy, seed + 12);
-      if (t === Terrain.Hill && d > 0.95) {
-        list.length = 0;
-        put('coal', 3);
-      } else if (
-        (t === Terrain.Sand && b !== Biome.Ocean && d > 0.975) ||
-        (t === Terrain.Grass && (b === Biome.Swamp ? d > 0.975 : d > 0.994))
-      ) {
-        list.length = 0;
-        put('oil', 3);
-      }
       if (list.length) map.props.set(i, list);
     }
 }

@@ -336,7 +336,7 @@ export function consistLength(lengths: number[]) {
 
 // ------------------------------------------------------------------ facings
 
-export const FACINGS = 24;
+export const FACINGS = 48;
 const STEP = (Math.PI * 2) / FACINGS;
 /** Nearest of the 24 facings (15° apart) for a tile-space heading. */
 export function facingOf(angle: number): number {
@@ -346,12 +346,20 @@ export function facingOf(angle: number): number {
 export function facingAngle(f: number) {
   return f * STEP;
 }
-/** Facings drawn by the generators; the rest are horizontal mirrors (tx ↔ ty) of these. */
-export const DRAWN_FACINGS = new Set([0, 1, 2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
-/** The drawn facing whose horizontal mirror shows facing f. */
+/** The drawn facing whose horizontal mirror shows facing f (the reflection tx ↔ ty maps heading θ to 90° − θ). */
 export function mirrorFacing(f: number) {
-  return (((6 - f) % FACINGS) + FACINGS) % FACINGS;
+  return (((FACINGS / 4 - f) % FACINGS) + FACINGS) % FACINGS;
 }
+/** Facings drawn by the generators: the smaller member of each mirror pair; the rest are mirrored at draw time. */
+export const DRAWN_FACINGS = new Set(
+  Array.from({ length: FACINGS }, (_, f) => f).filter((f) => f <= mirrorFacing(f)),
+);
+/**
+ * Share of the residual angle applied as a runtime rotation. A flattened isometric sprite cannot
+ * be turned without its verticals leaning, so only part of the remainder is applied; with 48
+ * facings the step is 7.5° and the lean stays under a few degrees.
+ */
+export const ROTATION_SHARE = 0.5;
 /** Angle a tile-space heading makes on screen (2:1 projection, y down). */
 export function screenAngle(angle: number) {
   const c = Math.cos(angle);

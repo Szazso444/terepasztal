@@ -9,7 +9,7 @@ import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, setRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
-import { ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
+import { ageStatus, hsQuestMet, hsQuestStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
 import { rulesDiffer } from './sim/rules';
 import { contentIsCustom } from './data/content';
@@ -24,7 +24,7 @@ import {
   type LevelData as LevelRecord,
 } from './world/level';
 import { generateMap as generateMapForEditor } from './world/mapgen';
-import { decorateProps } from './world/mapgen';
+import { decorateProps, placeOilFields } from './world/mapgen';
 import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
@@ -91,6 +91,8 @@ import {
   readSettings,
   writeSettings,
   contractPolicyFor,
+  uniformContractPolicy,
+  CONTRACT_RARITIES,
   type SaveGame,
   type Settings,
 } from './sim/save';
@@ -377,10 +379,14 @@ export class Game {
   }
   /** The live numbers the age goals are measured against. */
   ageSnapshot(): AgeSnapshot {
+    let wires = 0;
+    for (const e of this.catenary.entries()) if (this.catenary.isLive(e.x, e.y)) wires++;
     return {
       depots: this.builder.depots().length,
       population: this.stock.population,
       earned: this.economy.earned,
+      substations: this.catenary.substations.filter((s) => s.powered).length,
+      wires,
     };
   }
   /** game time of the next age-goal check (once per in-game hour) */
@@ -489,12 +495,64 @@ export class Game {
   private confirmReplaceSave() {
     return !readSave() || confirm(STR.menu.confirmReplace);
   }
+  /** Named-save actions shared by the menus and the settings screen. */
+  private slotActions() {
+    return {
+      slots: () => listSlots(),
+      loadSlot: (name: string) => {
+        const j = readSlot(name);
+        if (!j) {
+          this.toasts.push(STR.settings.noSave, 'warn');
+          return;
+        }
+        if (this.mode === 'play' && !this.mainMenu.visible && !confirm(STR.menu.confirmLoad(name)))
+          return;
+        writeSave(j);
+        location.hash = `seed=${j.seed}`;
+        location.reload();
+      },
+      deleteSlot: (name: string) => {
+        deleteSlot(name);
+        this.toasts.push(STR.settings.slotDeleted(name), 'info');
+      },
+    };
+  }
+  saveSlot(name: string) {
+    const ok = writeSlot(name, this.snapshot());
+    this.toasts.push(
+      ok ? STR.settings.slotSaved(name) : STR.settings.saveFailed,
+      ok ? 'good' : 'warn',
+    );
+    return ok;
+  }
+  /** "Save as..." from the pause menu: asks for a name in the in-game dialog. */
+  private async promptSaveAs() {
+    const fallback = `${STR.menu.day(this.lastDay)} · ${this.seed}`;
+    const name = await this.namePrompt.ask(
+      STR.settings.saveAsTitle,
+      STR.settings.saveAsHint,
+      fallback,
+    );
+    if (!name) return;
+    if (this.saveSlot(name.slice(0, 32))) this.closeMenus();
+  }
+  /** Save plus traffic log for bug reports. */
+  diagnostics() {
+    return JSON.stringify({
+      diagnostics: 1,
+      saveVersion: SAVE_VERSION,
+      at: new Date().toISOString(),
+      traffic: this.fleet.traffic.report(this.fleet.trains),
+      save: this.snapshot(),
+    });
+  }
   private parseSeed(text: string) {
     const t = text.trim();
     return t ? (/^\d+$/.test(t) ? Number(t) : hashSeed(t)) : Math.floor(Math.random() * 2 ** 31);
   }
   private buildMenus() {
     this.mainMenu = new MainMenu({
+      ...this.slotActions(),
       continue: () => this.closeMenus(),
       newGame: (seed, supply) => {
         if (this.confirmReplaceSave()) this.newGame(seed, supply);
@@ -535,11 +593,13 @@ export class Game {
       settings: () => this.screens.open(this.settingsScreen),
     });
     this.pauseMenu = new PauseMenu({
+      ...this.slotActions(),
       resume: () => this.closeMenus(),
       save: () => {
         this.save();
         this.closeMenus();
       },
+      saveAs: () => void this.promptSaveAs(),
       settings: () => this.screens.open(this.settingsScreen),
       tuning: () => this.screens.open(this.tuningScreen),
       content: () => this.screens.open(this.contentScreen),
@@ -632,6 +692,7 @@ export class Game {
         this.map.biome.set(fresh.biome);
         this.map.seed = seed;
         decorateProps(this.map, seed);
+        placeOilFields(this.map, seed);
         for (let y = 0; y < this.map.h; y++)
           for (let x = 0; x < this.map.w; x++) this.world.retile(x, y);
         editor.dirty = true;
@@ -1394,6 +1455,11 @@ export class Game {
 
   private buildUi() {
     this.hud = new Hud(this.clock, () => ageStatus(this.economy.tier, this.ageSnapshot()));
+    this.hud.hsQuest = () => ({
+      goals: hsQuestStatus(this.ageSnapshot()),
+      done: this.economy.hsUnlocked,
+      open: this.economy.tier >= 2,
+    });
     this.depot = new DepotScreen(
       this.inventory,
       this.fleet,
@@ -1482,29 +1548,9 @@ export class Game {
         },
         newGame: (seed) => this.newGame(seed, supplyMode()),
         exportSave: () => JSON.stringify(this.snapshot()),
-        saveAs: (name) => {
-          const ok = writeSlot(name, this.snapshot());
-          this.toasts.push(
-            ok ? STR.settings.slotSaved(name) : STR.settings.saveFailed,
-            ok ? 'good' : 'warn',
-          );
-          return ok;
-        },
-        loadSlot: (name) => {
-          const j = readSlot(name);
-          if (!j) {
-            this.toasts.push(STR.settings.noSave, 'warn');
-            return;
-          }
-          writeSave(j);
-          location.hash = `seed=${j.seed}`;
-          location.reload();
-        },
-        deleteSlot: (name) => {
-          deleteSlot(name);
-          this.toasts.push(STR.settings.slotDeleted(name), 'info');
-        },
-        slots: () => listSlots(),
+        exportDiagnostics: () => this.diagnostics(),
+        saveAs: (name) => this.saveSlot(name),
+        ...this.slotActions(),
         importSave: (json) => {
           try {
             const j = parseSave(json);
@@ -1551,6 +1597,13 @@ export class Game {
       this.toasts.push(m, k),
     );
     this.contractsScreen.trainName = (id) => this.fleet.byId(id)?.name ?? null;
+    this.contractsScreen.autoAccept = {
+      get: () => CONTRACT_RARITIES.every((r) => contractPolicyFor(this.settings, r) === 'accept'),
+      set: (v) => {
+        this.settings.contractPolicy = uniformContractPolicy(v ? 'accept' : 'prompt');
+        this.applySettings();
+      },
+    };
     this.rosterScreen.spendMoney = (amount) => {
       if (this.economy.money < amount) return false;
       this.economy.money -= amount;
@@ -1603,6 +1656,7 @@ export class Game {
       (t: Tool) => this.build.setTool(t),
       () => (this.mode === 'editor' ? 99 : this.economy.tier),
       this.atlas,
+      () => this.mode === 'editor' || this.economy.hsUnlocked,
     );
     this.toolbar.onHover = (it) =>
       this.buildInfo.show(it ?? this.toolbar.item(this.toolbar.active));
@@ -1758,7 +1812,17 @@ export class Game {
       this.trade.tick(this.clock.time, this.stock, this.economy, (id) => this.stockCap(id));
       if (this.mode === 'play' && this.clock.time >= this.nextAgeCheck) {
         this.nextAgeCheck = this.clock.time + daySeconds() / 24;
-        this.economy.advanceAge(this.ageSnapshot());
+        const snap = this.ageSnapshot();
+        this.economy.advanceAge(snap);
+        if (!this.economy.hsUnlocked && hsQuestMet(this.economy.tier, snap)) {
+          this.economy.hsUnlocked = true;
+          this.toasts.push(STR.ages.hsUnlocked, 'good');
+          this.notices.push(
+            { key: 'hs-unlock', kind: 'info', text: STR.ages.hsUnlocked, target: null },
+            120,
+          );
+          this.toolbar.refresh();
+        }
       }
       if (this.clock.day !== this.lastDay) {
         this.lastDay = this.clock.day;

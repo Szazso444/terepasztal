@@ -15,6 +15,7 @@ export interface SettingsActions {
   load(): void;
   newGame(seed: string): void;
   exportSave(): string | null;
+  exportDiagnostics(): string;
   importSave(json: string): boolean;
   saveAs(name: string): boolean;
   loadSlot(name: string): void;
@@ -311,7 +312,17 @@ export class SettingsScreen implements Screen {
           },
           'small',
         ),
+        btn(
+          STR.settings.diagnostics,
+          () => {
+            area.value = this.actions.exportDiagnostics();
+            area.select();
+            void navigator.clipboard?.writeText(area.value).catch(() => undefined);
+          },
+          'small',
+        ),
       ),
+      el('div', { class: 'sub dim', text: STR.settings.diagnosticsHint }),
     );
   }
 }

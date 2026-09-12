@@ -36,7 +36,7 @@ export interface Contract {
 }
 
 export interface ContractEvent {
-  kind: 'completed' | 'failed' | 'accepted' | 'offered' | 'cancelled';
+  kind: 'completed' | 'failed' | 'accepted' | 'offered' | 'cancelled' | 'expired';
   contract: Contract;
 }
 
@@ -243,6 +243,14 @@ export class ContractBoard {
     for (const c of this.contracts) {
       if (c.status === 'offer' && now >= c.expires) c.status = 'expired';
       else if (c.status === 'active' && now >= c.expires) this.fail(c);
+      else if (
+        (c.status === 'offer' || c.status === 'active') &&
+        (!this.builder.stationById(c.originId) || !this.builder.stationById(c.destId))
+      ) {
+        // an endpoint was demolished: the contract lapses without a fine
+        c.status = 'expired';
+        this.onEvent?.({ kind: 'expired', contract: c });
+      }
     }
     // prune old history
     if (this.contracts.length > 80)

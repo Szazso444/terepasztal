@@ -40,7 +40,13 @@ export const STR = {
       depots: 'Depots',
       population: 'Population',
       earned: 'Earned in total',
+      substations: 'Powered substations',
+      wires: 'Live electrified tiles',
     } as Record<string, string>,
+    hsQuest: 'High-speed rail',
+    hsQuestHint:
+      'Opens in the Electric Age once the grid is proven: powered substations and live wire.',
+    hsUnlocked: 'High-speed rail unlocked: the fast track is on the Track tab',
     hint: 'An age begins once every goal listed for it is met (checked every hour).',
   },
   overview: {
@@ -115,6 +121,8 @@ export const STR = {
     needBridge: 'Water needs a bridge',
     trackInWay: 'Track in the way: remove it first',
     needWaterside: 'Must stand next to water',
+    needTerrain: (t: string) => `Must stand on ${t}`,
+    hsLocked: 'High-speed rail is not unlocked yet (see the Age card in the top bar)',
     sameSupply: 'Already electrified this way',
     needTransition: 'Different track classes join through a transition piece',
     bridgeOnWater: 'Bridges only span water',
@@ -332,6 +340,7 @@ export const STR = {
       production: 'Production',
       collection: 'Collection',
       transport: 'Transport',
+      contract: 'Contract',
     } as Record<string, string>,
     routeHint: {
       auto: 'Static: visits every station with platform track, nearest first, and empties into the depot. Edit stops, dwell times and conditions later in the train details.',
@@ -343,6 +352,8 @@ export const STR = {
         'Dynamic: empties warehouses into depots. Leaves a warehouse alone until it holds 100 of a resource, then the fuller it is the sooner it comes; tops up at another warehouse while room is left. Re-plans at every stop and refuels on its own.',
       transport:
         'Dynamic: carries passengers. Heads for the town station with the most people waiting and takes them to the nearest other town. Needs coaches. Re-plans at every stop and refuels on its own.',
+      contract:
+        'Dynamic: works contracts. Waits on its platform until a contract it can carry is accepted, is chosen for it ahead of busier trains, runs it origin to destination and returns to waiting. Refuels on its own.',
     } as Record<string, string>,
     dynamicTag: 'dynamic',
     routeAutoHint:
@@ -448,6 +459,10 @@ export const STR = {
     accepted: (n: string) => `${n} accepted`,
     completed: (n: string, pay: string) => `${n} delivered: ${pay}`,
     failedMsg: (n: string, fine: string) => `${n} failed: fined ${fine}`,
+    autoOn: 'Auto-accept: on',
+    autoOff: 'Auto-accept: off',
+    autoHint:
+      'On: every offer is accepted as it comes. Off: offers wait here for you. Finer control per rarity is in Settings.',
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
     offersBadge: (n: number) => `${n} new`,
     sideEmpty: 'No active contracts.',
@@ -532,6 +547,9 @@ export const STR = {
     resources: 'Stockpile',
   },
   roster: {
+    help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, which high-speed track requires. Trains are put together in the Depot.',
+    sizeLabel: 'Size',
+    sizes: { small: 'Small', medium: 'Medium', large: 'Large' } as Record<string, string>,
     fitInCab: (cost: number) => `Fit in-cab signalling ($${cost.toLocaleString()})`,
     fitInCabHint:
       'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
@@ -630,6 +648,12 @@ export const STR = {
     deleteSlot: 'Delete',
     noSlots: 'No named saves yet. Type a name and press Save as.',
     slotSaved: (n: string) => `Saved as "${n}"`,
+    saveAsTitle: 'Save game as',
+    saveAsHint: 'Name for this save. An existing save with the same name is replaced.',
+    diagnostics: 'Copy diagnostics',
+    diagnosticsHint:
+      'Diagnostics = this save plus the traffic log (stuck episodes, blocked time, junctions). Paste it into a bug report.',
+    copied: 'Copied to the clipboard',
     slotDeleted: (n: string) => `Deleted "${n}"`,
     confirmDelete: (n: string) => `Delete the save "${n}"?`,
     version: 'Save format',
@@ -680,6 +704,12 @@ export const STR = {
     importHint: 'Paste a level JSON here',
     paused: 'Paused',
     resume: 'Resume',
+    saveAs: 'Save as...',
+    loadGame: 'Load game',
+    savedGames: 'Saved games',
+    noSaves: 'No named saves yet. Use "Save as..." in the pause menu.',
+    day: (d: number) => `Day ${d}`,
+    confirmLoad: (n: string) => `Load "${n}"? Unsaved progress in the current game is lost.`,
     backToEditor: 'Back to editor',
     mainMenu: 'Main menu',
     confirmReplace: 'This replaces the current saved game. Continue?',
@@ -792,6 +822,7 @@ export const STR = {
       production: 'Production',
       collection: 'Collection',
       transport: 'Transport',
+      contract: 'Contract',
     } as Record<string, string>,
     modeHint: {
       schedule: 'Static: follows the stop list below exactly.',

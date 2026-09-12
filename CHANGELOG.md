@@ -117,9 +117,36 @@ recorded in `docs/phase-decisions.md`.
   anything); accelerating draws three times as much; braking returns 30 %; a substation over its
   throughput slows every train under it.
 
+### After the first playtest
+
+- Contract offers come two at a time every six days and stay open for six; fines for failing or
+  cancelling are 2.5 % of the payout. A contract whose station was demolished lapses for free.
+  An **Auto-accept on/off** switch sits on the Contracts screen; a new **Contract** route mode
+  keeps a train on its platform for contract work and gets it chosen ahead of busier trains.
+- Track opens with its age: transitions and every high-speed piece are Electric Age items, and
+  high-speed rail itself is a quest inside that age (two powered substations and sixty live
+  electrified tiles, shown on the Age card).
+- Boulders are gone everywhere; coal seam props are gone (the colliery stands on any hill); oil
+  now lies in rare puddle fields (full production chain only). Every map carves at least one river.
+- Vehicles: 48 facings and only half the remainder applied as rotation, so bodies lean far less
+  and the facing steps are 7.5°; the wagon sprites moved to their own atlas. A train no longer
+  turns itself around when its forward route is merely busy; it waits instead.
+- A roaming train sitting on a platform with nothing to load steps aside for a train behind it.
+- Stuck trains: a roaming train only ever picks stops its own rails lead to (the nearest
+  station on a disconnected line used to be chosen, found unreachable, and the train sat on its
+  platform with a dead route). Moving out of someone's way likewise only considers reachable
+  spots, keeps the old route when none has a clear path, and, once the queue behind has waited
+  long enough, sets off through it so the usual give-way rules back the queue off.
+- The overview no longer draws contract lines. The town panel lost its make/use lines. The Roster
+  explains itself and filters by size.
+- Named saves reachable where a player looks for them: the pause menu has **Save as...** (an
+  in-game name dialog) and **Load game** (the list with Load and Delete); the main menu lists the
+  saved games under its buttons. Settings → Transfer gains **Copy diagnostics**: the save plus the
+  traffic log (stuck episodes, blocked time, junction statistics) for bug reports.
+
 ### Saves
 
-- Format v10: track class per piece, electrification, houses, crafting, ages and supply mode, contract rarity and jobs, locomotive modes; migrations from v8 and v9. Settings gain per-rarity contract policy and the signalling level.
+- Format v11 (v10 in between): track class per piece, electrification, houses, crafting, ages and supply mode, contract rarity and jobs, locomotive modes; migrations from v8 and v9. Settings gain per-rarity contract policy and the signalling level.
 
 ## v0.7.0
 
