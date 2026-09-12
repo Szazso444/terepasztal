@@ -7,8 +7,12 @@ dependencies. Retro 2:1 isometric look with procedurally generated placeholder a
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # typecheck + production bundle in dist/
+npm test         # vitest, once
 npm run lint
 ```
+
+Every pull request runs typecheck, lint, tests, build and a formatting check
+(`.github/workflows/ci.yml`).
 
 ## Versions
 
@@ -139,8 +143,16 @@ synthesized sound.
 
 ## Modelling tools
 
-`.mcp.json` wires Claude Code up to MCP for Blender and MCP for Unity; `docs/mcp-setup.md`
-covers the same for Codex, the Blender addon and the Unity package, and the camera, facing and
-anchor rules that make a Blender render drop straight into `public/assets`.
+`.mcp.json` wires Claude Code up to MCP for Blender, MCP for Unity and Chrome DevTools MCP;
+`docs/mcp-setup.md` covers the same for Codex, the Blender addon and the Unity package, and the
+camera, facing and anchor rules that make a Blender render drop straight into `public/assets`.
+
+`npm run pack-atlas -- <group>` packs a folder of rendered frames (`art-src/<group>/*.png`, with
+one `atlas.json` carrying the group's anchor) into `public/assets/<group>.png` + `.json`. It trims
+each frame, corrects the anchor for the trim, and is deterministic, so re-packing unchanged art
+changes nothing.
+
+In a dev build the PixiJS browser extension can inspect the scene graph; the hook-up is stripped
+from production bundles.
 
 See `MILESTONES.md` for progress notes and the post-merge fix pass.

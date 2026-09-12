@@ -1,6 +1,6 @@
-# Blender MCP and Unity MCP
+# Blender MCP, Unity MCP and Chrome DevTools MCP
 
-Two local MCP servers, wired into both Claude Code and Codex.
+Three local MCP servers, wired into both Claude Code and Codex.
 
 - **MCP for Blender** (`ahujasid/blender-mcp`, PyPI `blender-mcp`) — a Blender addon opens a socket
   server inside Blender on `localhost:9876`; the MCP server `uvx blender-mcp` talks to it over that
@@ -8,6 +8,9 @@ Two local MCP servers, wired into both Claude Code and Codex.
 - **MCP for Unity** (`CoplayDev/unity-mcp`) — a Unity Editor package plus a Python server
   (`mcpforunityserver`, entry point `mcp-for-unity`). Default transport is HTTP on
   `http://127.0.0.1:8080/mcp`; stdio is available for clients that need it.
+- **Chrome DevTools MCP** (`chrome-devtools-mcp`) — drives a real Chrome against the dev server:
+  console errors, network, performance traces and screenshots. The renderer is a canvas, so this
+  is the only one of the three that can see what the game actually draws.
 
 Both servers run on your machine, next to Blender and Unity. Nothing in this repository runs them;
 `.mcp.json` at the repo root only tells Claude Code where to find them, and the Codex config lives
@@ -156,19 +159,42 @@ full path (see below).
 
 ---
 
-## 3. Verify
+## 3. Chrome DevTools MCP
+
+No install step beyond a Chrome on the machine; `npx` fetches the server.
+
+**Claude Code** — already in this repository's `.mcp.json`. Machine-wide instead:
+
+```bash
+claude mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest
+```
+
+**Codex**:
+
+```bash
+codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest
+```
+
+Start the game first (`npm run dev`, http://localhost:5173), then ask for a screenshot or the
+console log. Unit tests cover the simulation; this covers the half of the game that only shows up
+on screen — a sprite anchored wrong, a train drawn behind the terrain, a frame-rate collapse.
+
+---
+
+## 4. Verify
 
 1. `uv --version` answers in a plain terminal.
 2. Blender: addon enabled, **Start MCP Server** clicked.
 3. Unity: **Window → MCP for Unity** status panel reads `Connected`.
-4. Claude Code: `/mcp` lists `blender` and `unityMCP` as connected.
-5. Codex: `codex mcp list` shows both enabled; restart Codex to pick up the tools.
+4. Claude Code: `/mcp` lists `blender`, `unityMCP` and `chrome-devtools` as connected.
+5. Codex: `codex mcp list` shows them enabled; restart Codex to pick up the tools.
 6. Smoke tests — Blender: *"list the objects in the current scene"*. Unity: *"create a cube at the
-   origin and add a Rigidbody"*.
+   origin and add a Rigidbody"*. Chrome DevTools: `npm run dev`, then *"screenshot
+   http://localhost:5173 and show me the console"*.
 
 ---
 
-## 4. Troubleshooting
+## 5. Troubleshooting
 
 **Client cannot find `uvx`.** Use the absolute path instead of the bare name — typically
 `C:\Users\<you>\.local\bin\uvx.exe`, or
@@ -193,12 +219,12 @@ Editor inherited. Install the package from disk instead.
 
 ---
 
-## 5. Feeding Blender output into this game
+## 6. Feeding Blender output into this game
 
 The renderer is 2D. Blender is useful here as a *sprite source*: build in 3D, render to flat
 frames, pack them into an atlas the game already knows how to load.
 
-### 5.1 Where the files go
+### 6.1 Where the files go
 
 `src/engine/atlas.ts` loads `/assets/<group>.json` + `/assets/<group>.png` for each group and falls
 back to the procedural generator in `src/art` when either is missing. Vite serves `public/` at the
@@ -208,7 +234,7 @@ Overriding is per group — one real atlas does not disable the others.
 Groups (`src/art/index.ts`): `terrain`, `props`, `track`, `structures`, `rolling`, `wagons`, `fx`,
 `icons`, `people`.
 
-### 5.2 Atlas contract
+### 6.2 Atlas contract
 
 ```json
 { "frames": { "<name>": { "x": 0, "y": 0, "w": 64, "h": 48, "ax": 32, "ay": 40 } } }
@@ -223,7 +249,7 @@ Frame keys are global and carry their own prefix, which is **not** always the gr
 `` ` `` opens the debug panel with an atlas viewer that lists them, and `src/art/*.ts` is the
 source of truth.
 
-### 5.3 Camera setup
+### 6.3 Camera setup
 
 The projection is 2:1 isometric, base tile 64×32 px (`src/engine/iso.ts`).
 
@@ -244,7 +270,7 @@ The projection is 2:1 isometric, base tile 64×32 px (`src/engine/iso.ts`).
 Axis mapping: Blender `+X` is tile `+tx` (screen down-right), Blender `+Y` is tile `−ty` (screen
 up-right), Blender `+Z` is up.
 
-### 5.4 Facings
+### 6.4 Facings
 
 `src/sim/body.ts`: `FACINGS = 48`, one every 7.5°. `DRAWN_FACINGS` is the mirror-halved subset —
 the generators draw only the facing whose horizontal mirror covers its partner, and the renderer
@@ -254,33 +280,57 @@ Because `+Y` is `−ty`, a heading of facing `f` is a Blender object yaw of **`�
 seen from above). Sanity check: facing `0` must point down-right on screen, matching the procedural
 sprite in the atlas viewer.
 
-### 5.5 Anchors
+### 6.5 Anchors
 
 Put the model's ground contact point at the Blender world origin and keep the camera fixed. The
-anchor is then where `(0, 0, 0)` projects in the render. With a fixed frame size that pixel is the
-same for every frame; if you crop tight, subtract the crop offset from it per frame.
+anchor is then where `(0, 0, 0)` projects in the render — one pixel, the same for every frame of
+the group. `tools/pack-atlas.mjs` takes it as a group-wide `anchor` and corrects it for whatever
+trimming cuts away, so you measure it once.
 
-### 5.6 Workflow
+### 6.6 Workflow
 
 1. Ask Blender (through the MCP server) to build or import the model, set materials, and place it
    at the origin.
-2. Set the camera as in 5.3 and render the `DRAWN_FACINGS` yaws to individual PNGs.
-3. Pack them into `public/assets/<group>.png` + `.json` with anchors as in 5.5.
-4. Reload the game. The debug panel reports each group as `png` or `procedural`, so you can see
+2. Set the camera as in 6.3 and render the `DRAWN_FACINGS` yaws to `art-src/<group>/<name>.png`,
+   one file per frame. The file's basename becomes the frame name.
+3. Write the group's anchor once, in `art-src/<group>/atlas.json`:
+
+   ```json
+   { "anchor": { "ax": 256, "ay": 336 }, "frames": { "rolling/loco_x_f6": { "ax": 250, "ay": 336 } } }
+   ```
+
+   `anchor` applies to every frame; `frames` overrides it by name for the odd one out.
+
+4. Pack:
+
+   ```bash
+   npm run pack-atlas -- rolling
+   npm run pack-atlas -- wagons --prefix rolling/
+   ```
+
+   It trims each frame to its drawn pixels, shifts the anchor to match, shelf-packs the sheet and
+   writes `public/assets/<group>.png` + `.json`. The `--prefix` flag exists because frame keys are
+   global: the `wagons` group supplies keys named `rolling/wagon_*`. `--no-trim`, `--max`, `--pad`,
+   `--src` and `--out` are there too; `--help` is the usage line you get from a bad invocation.
+
+5. Reload the game. The debug panel reports each group as `png` or `procedural`, so you can see
    which override took.
+
+The packer is deterministic: re-packing unchanged art produces byte-identical files, so it is safe
+to run on every build. `tools/pack-atlas.test.mjs` holds it to the atlas contract.
 
 Audio overrides work the same way: drop `public/assets/audio/<event>.ogg`, event names in
 `src/engine/audio.ts`. The ambient loop is always synthesized.
 
 ---
 
-## 6. Unity
+## 7. Unity
 
 Unity is a separate engine from this codebase — nothing here builds to it. MCP for Unity is set up
 for experimenting in a Unity project of its own (47 tool entry points: scenes, GameObjects, C#
 scripts, assets, tests, profiling, builds). If you prototype rolling stock or track geometry there,
 the export path back into this game is the same one as Blender's: render to sprites and pack an
-atlas per 5.2–5.5.
+atlas per 6.2-6.5.
 
 ---
 
