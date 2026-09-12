@@ -354,6 +354,10 @@ export class Train {
   atStation: Station | null = null;
   lastMessage = '';
   /** held behind another train */
+  /** free-running speed target of the last move tick (before braking for holds or the stop) */
+  freeSpeed = 0;
+  /** distance to the hold point ahead of the last move tick (occupancy or claim limit); Infinity when clear */
+  holdDist = Infinity;
   blocked = false;
   /** id of the train currently blocking this one */
   blockedBy: number | null = null;
@@ -1121,6 +1125,7 @@ export class Train {
     }
     this.blocked = blockDist < 0.3;
     this.blockedBy = this.blocked ? blocker : null;
+    this.holdDist = blockDist;
     if (this.dynamic && ctx.now >= this.anticipateAt && this.path) {
       // look 8 tiles ahead: if another train has reserved that stretch coming our way, try a
       // path around it now instead of stopping later
@@ -1194,6 +1199,7 @@ export class Train {
       bio.speedMul *
       ecoMul *
       (this.reversed ? this.reverseFactor : 1);
+    this.freeSpeed = vmax;
     const vStop = Math.sqrt(2 * DECEL * Math.max(0, Math.min(remaining, blockDist)));
     const target = Math.min(vmax, vStop);
     if (target > this.speed) this.speed = Math.min(target, this.speed + ACCEL * gdt);

@@ -2,6 +2,7 @@ import type { TrackGraph } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Builder } from './build';
 import type { Train } from './trains';
+import type { JunctionStats } from './junctions';
 
 /** How far ahead (tiles) a moving train claims track beyond the section it is entering. */
 const HORIZON = 6;
@@ -66,6 +67,8 @@ export class Traffic {
   readonly counters = { stuck: 0, deadlocks: 0, overlaps: 0, yields: 0, headOn: 0, waits: 0 };
   private overlapSeen = new Map<string, number>();
   onEpisode: ((e: TrafficEpisode) => void) | null = null;
+  /** set by the fleet: junction statistics for `report()` */
+  junctionReport: (() => JunctionStats[]) | null = null;
 
   constructor(
     private readonly track: TrackGraph,
@@ -407,6 +410,7 @@ export class Traffic {
         };
       }),
       episodes: this.episodes.slice(-60),
+      junctions: this.junctionReport?.() ?? [],
     };
   }
 }
