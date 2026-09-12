@@ -1,30 +1,21 @@
-import { LOCOS, WAGONS, itemKind, dupesNeeded, LEVEL_CAP, type Item } from './items';
+import { content } from '../data/content';
+import { LOCOS, WAGONS, itemKind, LEVEL_CAP, type Item } from './items';
 
-/** Everything the player owns. Duplicates convert to upgrade points. */
+/** Everything the player owns. Any number of copies of a model may sit side by side. */
 export class Inventory {
   items: Item[] = [];
   private nextUid = 1;
 
+  /** A fresh game starts with the starter models, as many copies as the crafting table says. */
   seedStarter(now: number) {
-    for (const l of LOCOS) if (l.starter) this.add(l.id, now);
-    for (const w of WAGONS) if (w.starter) this.add(w.id, now);
+    const copies = content.crafting.starterCopies;
+    for (const l of LOCOS) if (l.starter) for (let i = 0; i < copies.loco; i++) this.add(l.id, now);
+    for (const w of WAGONS)
+      if (w.starter) for (let i = 0; i < copies.wagon; i++) this.add(w.id, now);
   }
 
-  /** Add an item; if one with the same def already exists, it becomes a duplicate point instead. */
-  add(defId: string, now: number): { item: Item; duplicate: boolean; leveled: boolean } {
-    const existing = this.items.find((i) => i.defId === defId);
-    if (existing) {
-      let leveled = false;
-      if (existing.level < LEVEL_CAP) {
-        existing.dupes++;
-        if (existing.dupes >= dupesNeeded(existing.level)) {
-          existing.dupes -= dupesNeeded(existing.level);
-          existing.level++;
-          leveled = true;
-        }
-      }
-      return { item: existing, duplicate: true, leveled };
-    }
+  /** Add a new copy of a model; copies never merge. */
+  add(defId: string, now: number): Item {
     const item: Item = {
       uid: this.nextUid++,
       defId,
@@ -35,13 +26,39 @@ export class Inventory {
       obtainedAt: now,
     };
     this.items.push(item);
-    return { item, duplicate: false, leveled: false };
+    return item;
   }
   byUid(uid: number) {
     return this.items.find((i) => i.uid === uid);
   }
   free(kind: 'loco' | 'wagon') {
     return this.items.filter((i) => i.kind === kind && i.assigned === null);
+  }
+  /** copies of a model the player holds */
+  count(defId: string) {
+    return this.items.filter((i) => i.defId === defId).length;
+  }
+  /** every model the player holds at least one copy of */
+  ownedDefs(): string[] {
+    return [...new Set(this.items.map((i) => i.defId))];
+  }
+  /** Unassigned copies of the same model that could be fed into `it`. */
+  spares(it: Item): Item[] {
+    return this.items.filter(
+      (i) => i.uid !== it.uid && i.defId === it.defId && i.assigned === null,
+    );
+  }
+  /**
+   * Consume one spare copy of the same model to raise `it` one level. Returns false when there
+   * is no spare or the item sits at the cap.
+   */
+  consumeForLevel(it: Item): boolean {
+    if (it.level >= LEVEL_CAP) return false;
+    const spare = this.spares(it)[0];
+    if (!spare) return false;
+    this.items.splice(this.items.indexOf(spare), 1);
+    it.level++;
+    return true;
   }
   toJSON() {
     return { items: this.items, nextUid: this.nextUid };

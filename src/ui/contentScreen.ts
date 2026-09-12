@@ -150,6 +150,14 @@ export class ContentScreen implements Screen {
           ),
         );
         break;
+      case 'crafting':
+        b.append(
+          this.objectForm(
+            this.draft.crafting as unknown as Row,
+            DEFAULT_CONTENT.crafting as unknown as Row,
+          ),
+        );
+        break;
     }
     this.renderFoot();
   }

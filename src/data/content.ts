@@ -13,6 +13,7 @@ import decorJson from './decor.json';
 import gachaJson from './gacha.json';
 import trackJson from './track.json';
 import buildingJson from './buildings.json';
+import craftingJson from './crafting.json';
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 /** Resource amounts, e.g. { wood: 30, stone: 10 }. */
@@ -209,6 +210,35 @@ export interface TrackConfig {
   switchSpeed: number;
   bridgeSpeed: number;
 }
+/** Model quality tiers the crafting tables are keyed by: the shipped rarities plus a reserved 'L'. */
+export type CraftRarity = Rarity | 'L';
+export type CraftKind = 'loco' | 'wagon';
+/**
+ * Crafting: recipes are unlocked with money (three cards per draw, keep one), instances are built
+ * from stockpile resources with a rarity-dependent failure chance.
+ */
+export interface CraftingConfig {
+  /** money per age (0 steam, 1 diesel, 2 electric), per vehicle kind */
+  unlockPrice: Record<CraftKind, number[]>;
+  /** cards offered per paid draw */
+  cardsPerDraw: number;
+  /** draw weight per rarity */
+  rarityWeight: Record<CraftRarity, number>;
+  /** weight multiplier for recipes the player already owns */
+  ownedWeight: number;
+  /** resources returned when the chosen card is a recipe already owned */
+  ownedRefund: Cost;
+  /** base resource cost per kind and body size */
+  instanceCost: Record<CraftKind, Record<VehicleSize, Cost>>;
+  /** instance cost multiplier per rarity */
+  rarityCostMul: Record<CraftRarity, number>;
+  /** chance a craft fails, per rarity */
+  failChance: Record<CraftRarity, number>;
+  /** share of the materials returned after a failed craft */
+  failRefund: number;
+  /** copies of each starter model a new game begins with */
+  starterCopies: Record<CraftKind, number>;
+}
 export interface ContentBundle {
   locomotives: LocoDef[];
   wagons: WagonDef[];
@@ -219,6 +249,7 @@ export interface ContentBundle {
   buildings: BuildingDef[];
   gacha: GachaConfig;
   track: TrackConfig;
+  crafting: CraftingConfig;
 }
 export type ContentKey = keyof ContentBundle;
 export const CONTENT_KEYS: ContentKey[] = [
@@ -231,6 +262,7 @@ export const CONTENT_KEYS: ContentKey[] = [
   'buildings',
   'gacha',
   'track',
+  'crafting',
 ];
 
 export const CONTENT_KEY = 'terepasztal.content';
@@ -250,6 +282,7 @@ export const DEFAULT_CONTENT: ContentBundle = {
   buildings: clone(buildingJson) as unknown as BuildingDef[],
   gacha: clone(gachaJson) as GachaConfig,
   track: clone(trackJson) as unknown as TrackConfig,
+  crafting: clone(craftingJson) as unknown as CraftingConfig,
 };
 
 export function readContentOverrides(): Partial<ContentBundle> | null {
@@ -355,6 +388,35 @@ export function validateContent(b: ContentBundle): string[] {
     out.push(`gacha rates sum to ${rateSum.toFixed(2)}, expected 1`);
   for (const k of Object.keys(DEFAULT_CONTENT.track.pieces))
     if (!b.track.pieces[k]) out.push(`track: missing piece "${k}"`);
+  const cr = b.crafting;
+  const kinds: CraftKind[] = ['loco', 'wagon'];
+  const sizes: VehicleSize[] = ['small', 'medium', 'large'];
+  const craftRarities: CraftRarity[] = ['N', 'R', 'SR', 'SSR', 'L'];
+  if (!cr || typeof cr !== 'object') out.push('crafting: missing configuration');
+  else {
+    for (const k of kinds) {
+      const prices = cr.unlockPrice?.[k];
+      if (!Array.isArray(prices) || prices.length < 3 || prices.some((p) => !(p >= 0)))
+        out.push(`crafting: unlockPrice.${k} needs three non-negative prices`);
+      for (const s of sizes)
+        if (!isCost(cr.instanceCost?.[k]?.[s]))
+          out.push(`crafting: instanceCost.${k}.${s} must be a resource map`);
+      if (!(cr.starterCopies?.[k] >= 0)) out.push(`crafting: starterCopies.${k} must be >= 0`);
+    }
+    for (const r of craftRarities) {
+      if (!(cr.rarityWeight?.[r] >= 0)) out.push(`crafting: rarityWeight.${r} must be >= 0`);
+      if (!(cr.rarityCostMul?.[r] >= 0)) out.push(`crafting: rarityCostMul.${r} must be >= 0`);
+      const f = cr.failChance?.[r];
+      if (!(f >= 0 && f <= 1)) out.push(`crafting: failChance.${r} must be between 0 and 1`);
+    }
+    if (!(cr.cardsPerDraw >= 1)) out.push('crafting: cardsPerDraw must be at least 1');
+    if (!(cr.ownedWeight >= 0)) out.push('crafting: ownedWeight must be >= 0');
+    if (!(cr.failRefund >= 0 && cr.failRefund <= 1))
+      out.push('crafting: failRefund must be between 0 and 1');
+    if (!isCost(cr.ownedRefund)) out.push('crafting: ownedRefund must be a resource map');
+    for (const k of Object.keys(cr.ownedRefund ?? {}))
+      if (!cargo.has(k)) out.push(`crafting: unknown refund resource "${k}"`);
+  }
   return out;
 }
 

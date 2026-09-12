@@ -6,7 +6,6 @@ import {
   RARITIES,
   itemDef,
   levelMul,
-  dupesNeeded,
   LEVEL_CAP,
   type Item,
   type LocoDef,
@@ -36,6 +35,7 @@ export class RosterScreen implements Screen {
     private readonly inventory: Inventory,
     private readonly fleet: Fleet,
     private readonly atlas: AtlasRegistry,
+    private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void = () => {},
   ) {
     this.root.append(this.bar, el('div', { class: 'col' }, this.list));
   }
@@ -153,10 +153,32 @@ export class RosterScreen implements Screen {
       );
     }
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
-    const lvl =
-      it.level >= LEVEL_CAP
-        ? STR.roster.maxLevel
-        : STR.roster.dupeProgress(it.dupes, dupesNeeded(it.level));
+    const spares = this.inventory.spares(it).length;
+    const lvl = el(
+      'div',
+      { class: 'sub dim', style: 'display:flex;gap:6px;align-items:center' },
+      el('span', {
+        style: 'flex:1',
+        text:
+          it.level >= LEVEL_CAP
+            ? STR.roster.maxLevel
+            : STR.roster.copies(this.inventory.count(it.defId)),
+      }),
+    );
+    if (it.level < LEVEL_CAP && spares > 0) {
+      const up = btn(
+        STR.roster.levelUp,
+        () => {
+          if (this.inventory.consumeForLevel(it)) {
+            this.toast(STR.roster.leveled(d.name, it.level), 'good');
+            this.render();
+          }
+        },
+        'tiny',
+      );
+      up.title = STR.roster.levelUpHint;
+      lvl.append(up);
+    }
     return el(
       'div',
       { class: `rcard rarity-${d.rarity}` },
@@ -174,7 +196,7 @@ export class RosterScreen implements Screen {
         el('div', { class: 'gcard-era', text: d.era }),
       ),
       el('div', { class: 'sub' }, ...stats.map((s) => el('div', { text: s }))),
-      el('div', { class: 'sub dim', text: lvl }),
+      lvl,
       el('div', {
         class: `sub ${train ? 'cyan' : 'dim'}`,
         text: train ? STR.roster.assignedTo(train.name) : STR.roster.inDepot,
