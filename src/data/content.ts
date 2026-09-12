@@ -19,6 +19,9 @@ export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 export type Cost = Record<string, number>;
 export type CargoClass = 'liquid' | 'mineral' | 'bulk' | 'people';
 export type LocoType = 'steam' | 'diesel' | 'electric';
+export type VehicleSize = 'small' | 'medium' | 'large';
+export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
+export type Collector = 'shoe' | 'pantograph' | 'hv' | 'multi';
 
 export interface LocoDef {
   id: string;
@@ -44,13 +47,31 @@ export interface LocoDef {
   /** electric only: power units per tile */
   powerPerTile?: number;
   starter?: boolean;
+  /** body length class: 1, 2 or 3 tiles (default small) */
+  size?: VehicleSize;
+  /** rigid body, engine + tender, Garratt (engine, cradle, engine) or Meyer (frame on two engine units) */
+  plan?: BodyPlan;
+  /** pivot spacing as a fraction of body length (default 0.7) */
+  pivotRatio?: number;
+  /** bogies under a rigid body (3 for the Bo-Bo-Bo large body) */
+  bogies?: number;
+  /** how far the centre bogie may sit off its socket before the model fails a curve */
+  maxLateralPlay?: number;
+  /** diesel and electric: units of the same control class work in multiple */
+  controlClass?: string;
+  /** a high-speed type: needs HV catenary for its top speed */
+  highSpeed?: boolean;
+  /** electric: which supply it can draw from */
+  collector?: Collector;
+  /** fitted with in-cab signalling equipment (required on high-speed track) */
+  inCab?: boolean;
 }
 export interface WagonDef {
   id: string;
   name: string;
   rarity: Rarity;
   era: string;
-  body: 'box' | 'hopper' | 'flat' | 'tank';
+  body: 'box' | 'hopper' | 'flat' | 'tank' | 'coach' | 'van' | 'cart';
   paint: string;
   /** which cargo class the wagon carries; `accepts` is derived from it at load */
   carries: CargoClass;
@@ -58,6 +79,13 @@ export interface WagonDef {
   capacity: number;
   weight: number;
   starter?: boolean;
+  size?: VehicleSize;
+  /** age the wagon belongs to: 0 steam, 1 diesel, 2 electric */
+  tier?: number;
+  /** speed ceiling, tiles per second (default above every locomotive) */
+  vmax?: number;
+  /** refuelling wagons: what they carry for the locomotive */
+  service?: 'coal' | 'fuel' | 'battery';
 }
 export interface CargoDef {
   id: string;

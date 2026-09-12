@@ -9,7 +9,9 @@
     "carries": "liquid",
     "capacity": 16,
     "weight": 4,
-    "starter": true
+    "starter": true,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "wood_hopper",
@@ -21,7 +23,9 @@
     "carries": "mineral",
     "capacity": 20,
     "weight": 6,
-    "starter": true
+    "starter": true,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "flatbed",
@@ -33,7 +37,9 @@
     "carries": "bulk",
     "capacity": 18,
     "weight": 4,
-    "starter": true
+    "starter": true,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "riveted_tank",
@@ -44,7 +50,9 @@
     "paint": "black",
     "carries": "liquid",
     "capacity": 28,
-    "weight": 7
+    "weight": 7,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "steel_hopper",
@@ -55,7 +63,9 @@
     "paint": "iron",
     "carries": "mineral",
     "capacity": 32,
-    "weight": 8
+    "weight": 8,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "bolster_flat",
@@ -66,7 +76,9 @@
     "paint": "iron",
     "carries": "bulk",
     "capacity": 30,
-    "weight": 7
+    "weight": 7,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "welded_tank",
@@ -77,7 +89,9 @@
     "paint": "iron",
     "carries": "liquid",
     "capacity": 40,
-    "weight": 9
+    "weight": 9,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "bathtub",
@@ -88,7 +102,9 @@
     "paint": "black",
     "carries": "mineral",
     "capacity": 44,
-    "weight": 10
+    "weight": 10,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "bulkhead_flat",
@@ -99,7 +115,9 @@
     "paint": "iron",
     "carries": "bulk",
     "capacity": 42,
-    "weight": 9
+    "weight": 9,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "pressure_tank",
@@ -110,7 +128,9 @@
     "paint": "iron",
     "carries": "liquid",
     "capacity": 56,
-    "weight": 11
+    "weight": 11,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "dump_hopper",
@@ -121,7 +141,9 @@
     "paint": "iron",
     "carries": "mineral",
     "capacity": 60,
-    "weight": 12
+    "weight": 12,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "heavy_flat",
@@ -132,40 +154,117 @@
     "paint": "iron",
     "carries": "bulk",
     "capacity": 56,
-    "weight": 12
+    "weight": 12,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "wooden_coach",
     "name": "Wooden Coach",
     "rarity": "N",
     "era": "Bench seats and a stove. Draughty, but it gets people to town.",
-    "body": "box",
+    "body": "coach",
     "paint": "wood",
     "carries": "people",
     "capacity": 20,
     "weight": 6,
-    "starter": true
+    "starter": true,
+    "tier": 0,
+    "size": "small"
   },
   {
     "id": "steel_coach",
     "name": "Steel Coach",
     "rarity": "R",
     "era": "Riveted steel body with proper windows.",
-    "body": "box",
+    "body": "coach",
     "paint": "iron",
     "carries": "people",
     "capacity": 36,
-    "weight": 9
+    "weight": 9,
+    "tier": 0,
+    "size": "medium"
   },
   {
     "id": "pullman",
     "name": "Pullman Car",
     "rarity": "SR",
     "era": "Velvet, brass and a dining saloon.",
-    "body": "box",
+    "body": "coach",
     "paint": "black",
     "carries": "people",
     "capacity": 52,
-    "weight": 12
+    "weight": 12,
+    "tier": 0,
+    "size": "medium",
+    "vmax": 3.0
+  },
+  {
+    "id": "brake_van",
+    "name": "Brake Van",
+    "rarity": "N",
+    "era": "Guard's van at the tail. A veranda, a stove, a handbrake.",
+    "body": "van",
+    "paint": "brown",
+    "carries": "bulk",
+    "capacity": 6,
+    "weight": 6,
+    "tier": 0,
+    "size": "small"
+  },
+  {
+    "id": "boxcar",
+    "name": "Plank Boxcar",
+    "rarity": "R",
+    "era": "Covered goods wagon. Keeps the grain dry and the timber straight.",
+    "body": "box",
+    "paint": "wood",
+    "carries": "bulk",
+    "capacity": 26,
+    "weight": 7,
+    "tier": 0,
+    "size": "small"
+  },
+  {
+    "id": "coal_cart",
+    "name": "Coal Cart",
+    "rarity": "N",
+    "era": "Extra bunker for a steam engine. Dead weight behind anything else.",
+    "body": "cart",
+    "paint": "black",
+    "carries": "mineral",
+    "capacity": 0,
+    "weight": 8,
+    "tier": 0,
+    "size": "small",
+    "service": "coal"
+  },
+  {
+    "id": "fuel_cart",
+    "name": "Fuel Cart",
+    "rarity": "R",
+    "era": "Tank of fuel plumbed to a diesel. Dead weight behind anything else.",
+    "body": "cart",
+    "paint": "red",
+    "carries": "liquid",
+    "capacity": 0,
+    "weight": 9,
+    "tier": 1,
+    "size": "small",
+    "service": "fuel"
+  },
+  {
+    "id": "battery_cart",
+    "name": "Battery Cart",
+    "rarity": "SR",
+    "era": "Cells that let an electric run past the end of the wire. Dead weight behind anything else.",
+    "body": "cart",
+    "paint": "blue",
+    "carries": "bulk",
+    "capacity": 0,
+    "weight": 11,
+    "tier": 2,
+    "size": "small",
+    "service": "battery"
   }
 ]

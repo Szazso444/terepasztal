@@ -1,4 +1,4 @@
-import { type Vec2, angleToFacing8, Dir } from '../engine/iso';
+import { type Vec2, Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import type { TrackGraph } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
@@ -11,6 +11,16 @@ import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules } from './rules';
+import {
+  Polyline,
+  poseVehicle,
+  vehicleSpec,
+  vehicleFronts,
+  consistLength,
+  facingOf,
+  type VehiclePose,
+  type VehicleSpec,
+} from './body';
 
 const trackData = content.track;
 import { sfx } from '../engine/audio';
@@ -113,9 +123,6 @@ export interface CarPose {
   heading: number;
 }
 
-const LOCO_LEN = 0.62;
-const WAGON_LEN = 0.56;
-const GAP = 0.05;
 const ACCEL = 0.7;
 const DECEL = 1.1;
 const MIN_DWELL = 2;
@@ -427,12 +434,43 @@ export class Train {
     return r <= 0.8 ? 1 : Math.max(0.4, 1 - (r - 0.8) * 0.6);
   }
   get length() {
-    return (
-      this.locos.length * (LOCO_LEN + GAP) + this.wagons.reduce((a) => a + WAGON_LEN + GAP, 0) - GAP
-    );
+    return consistLength(this.carLengths);
   }
   get carLengths(): number[] {
-    return [...this.locos.map(() => LOCO_LEN), ...this.wagons.map(() => WAGON_LEN)];
+    return this.vehicleSpecs.map((s) => s.L);
+  }
+  /** Body geometry of every vehicle, loco first. */
+  get vehicleSpecs(): VehicleSpec[] {
+    return [
+      ...this.locos.map((l) => vehicleSpec(l.def)),
+      ...this.wagons.map((w) => vehicleSpec(w.def)),
+    ];
+  }
+  /** Poses of every body segment and bogie, in car order (loco first). */
+  vehiclePoses: VehiclePose[] = [];
+  prevVehiclePoses: VehiclePose[] = [];
+  /** Points along the consist every half tile from head to tail: what the train stands on. */
+  occupancyPoints(): Vec2[] {
+    const out: Vec2[] = [];
+    const total = this.trailCum[this.trailCum.length - 1] ?? 0;
+    const len = Math.min(total, this.length);
+    if (!this.trail.length) return out;
+    for (let s = 0; s <= len + 1e-6; s += 0.5) {
+      const p = this.sampleTrail(total - Math.min(s, len));
+      out.push({ x: p.x, y: p.y });
+    }
+    const tail = this.sampleTrail(total - len);
+    out.push({ x: tail.x, y: tail.y });
+    return out;
+  }
+  /** Tile keys under the consist. */
+  occupancyKeys(w: number): number[] {
+    const out: number[] = [];
+    for (const p of this.occupancyPoints()) {
+      const k = Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5);
+      if (!out.includes(k)) out.push(k);
+    }
+    return out;
   }
   // ------------------------------------------------------------ fuel
   private sumBy(type: LocoType, f: (l: LocoSlot) => number) {
@@ -580,18 +618,6 @@ export class Train {
     if (this.water > 0) stock.add('water', this.water, Infinity);
     this.coal = this.oil = this.water = 0;
   }
-  /** Centre offsets of each car behind the head. */
-  private carOffsets(): number[] {
-    const lens = this.reversed ? [...this.carLengths].reverse() : this.carLengths;
-    const out: number[] = [];
-    let a = lens[0] / 2;
-    out.push(a);
-    for (let i = 1; i < lens.length; i++) {
-      a += lens[i - 1] / 2 + GAP + lens[i] / 2;
-      out.push(a);
-    }
-    return out;
-  }
   get headTile(): { x: number; y: number } | null {
     const p = this.trail[this.trail.length - 1];
     return p ? { x: p.seg.x, y: p.seg.y } : null;
@@ -616,6 +642,16 @@ export class Train {
     const back = walkBack(track, x, y, entry, Math.ceil(this.length) + 1);
     this.trail = [];
     this.trailCum = [];
+    // the consist stands behind the gate: where the rails end (inside the shed) a straight
+    // virtual run carries the rest of the cars, hidden under the shed until they roll out
+    const first = back[0] ?? seg;
+    const firstPts = track.segGeom(first.x, first.y, first.in, first.out, first.route).pts;
+    const p0 = { x: first.x + firstPts[0].x, y: first.y + firstPts[0].y };
+    const behind = this.length + 1 - back.length;
+    const dx = DIR_DX[first.in];
+    const dy = DIR_DY[first.in];
+    for (let d = Math.ceil(behind / 0.125); d >= 1; d--)
+      this.pushTrail({ x: p0.x + dx * d * 0.125, y: p0.y + dy * d * 0.125, seg: first });
     for (const s of [...back, seg]) {
       const pts = track.segGeom(s.x, s.y, s.in, s.out, s.route).pts;
       const upto = s === seg ? Math.floor(pts.length / 2) + 1 : pts.length;
@@ -628,6 +664,7 @@ export class Train {
     this.path = null;
     this.updatePoses();
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
     return true;
   }
 
@@ -654,6 +691,7 @@ export class Train {
     this.path = null;
     this.updatePoses();
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
   }
 
   private pushTrail(p: TrailPoint) {
@@ -702,17 +740,21 @@ export class Train {
   }
 
   updatePoses() {
-    const total = this.trailCum[this.trailCum.length - 1] ?? 0;
-    const offs = this.carOffsets();
-    const poses = offs.map((o) => this.sampleTrail(total - o));
-    // keep the array in car order (loco first) regardless of travel direction
-    this.poses = this.reversed ? poses.reverse() : poses;
+    const specs = this.vehicleSpecs;
+    const order = this.reversed ? [...specs].reverse() : specs;
+    const fronts = vehicleFronts(order.map((s) => s.L));
+    const pl = new Polyline(this.trail);
+    const total = pl.length;
+    const vposes = order.map((s, i) => poseVehicle(pl, total - fronts[i], s));
+    // keep the arrays in car order (loco first) regardless of travel direction
+    if (this.reversed) vposes.reverse();
+    this.vehiclePoses = vposes;
+    this.poses = vposes.map((v) => ({ x: v.x, y: v.y, heading: v.heading }));
   }
 
-  /** Facing index for a car (loco faces backwards when pushed). */
-  facingOf(carIndex: number, pose: CarPose) {
-    const flip = this.reversed;
-    return angleToFacing8(pose.heading + (flip ? Math.PI : 0) + (carIndex === 0 ? 0 : 0));
+  /** Facing index (of 24) for a car (loco faces backwards when pushed). */
+  facingOf(_carIndex: number, pose: CarPose) {
+    return facingOf(pose.heading + (this.reversed ? Math.PI : 0));
   }
 
   // ------------------------------------------------------------ routing
@@ -770,10 +812,7 @@ export class Train {
 
   private reverseConsist() {
     const total = this.trailCum[this.trailCum.length - 1];
-    const offs = this.carOffsets();
-    const lens = this.reversed ? [...this.carLengths].reverse() : this.carLengths;
-    const lastRear = offs[offs.length - 1] + lens[lens.length - 1] / 2; // arc behind head of the rear end
-    const newHeadArc = Math.min(total, lastRear);
+    const newHeadArc = Math.min(total, this.length); // arc behind head of the rear end
     const pts = [...this.trail].reverse();
     const cumR = pts.map((_, i) => total - this.trailCum[this.trail.length - 1 - i]);
     // truncate at newHeadArc
@@ -896,6 +935,7 @@ export class Train {
   /** Advance by in-game seconds. */
   tick(gdt: number, ctx: TickCtx) {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.prevVehiclePoses = this.vehiclePoses;
     this.stateTime += gdt;
     if (ctx.track.version !== this.trackVersion && this.state === 'moving') {
       this.trackVersion = ctx.track.version;
@@ -1551,8 +1591,7 @@ export class Train {
       return true;
     };
     // already standing clear of their line: shuffling further along would not help anyone
-    if (this.poses.every((p) => !theirs.has(Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5))))
-      return false;
+    if (this.occupancyKeys(w).every((k) => !theirs.has(k))) return false;
     const head = this.trail[this.trail.length - 1].seg;
     let path = findPath(ctx.track, { x: head.x, y: head.y, in: head.in }, isHold, 600, avoid);
     let flip = false;

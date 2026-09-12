@@ -120,6 +120,7 @@ import { NoticePanel } from './ui/noticePanel';
 import { Advisor, type Tip } from './ui/advisor';
 import { resourceStats } from './sim/stats';
 import { locoFrame } from './art/frames';
+import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
 import { PeopleSim } from './sim/people';
@@ -283,7 +284,15 @@ export class Game {
           y: t.poses[0].y,
           name: t.name,
           heading: t.poses[0].heading + (t.reversed ? Math.PI : 0),
-          frame: locoFrame(this.atlas, t.locoDef, t.facingOf(0, t.poses[0])),
+          frame: locoFrame(
+            this.atlas,
+            t.locoDef,
+            DRAWN_FACINGS.has(t.facingOf(0, t.poses[0]))
+              ? t.facingOf(0, t.poses[0])
+              : mirrorFacing(t.facingOf(0, t.poses[0])),
+            vehicleSpec(t.locoDef).segments[0].part,
+          ),
+          flip: !DRAWN_FACINGS.has(t.facingOf(0, t.poses[0])),
         })),
     markers: () =>
       this.notices.list
@@ -710,6 +719,8 @@ export class Game {
     this.applySeason(true);
     this.applySettings();
     this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
+    // vehicles still inside an engine shed are hidden until they roll out
+    this.trainRenderer.hideAt = (x, y) => this.builder.stationAt(x, y)?.def.depot === true;
     this.peopleRenderer = new PeopleRenderer(this.atlas, this.world.objects, (x, y) =>
       this.world.elevationOf(x, y),
     );

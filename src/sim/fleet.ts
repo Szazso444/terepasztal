@@ -278,8 +278,7 @@ export class Fleet {
   private rebuildOccupancy() {
     this.occ.clear();
     for (const t of this.trains) {
-      for (const p of t.poses) {
-        const k = Math.floor(p.y + 0.5) * this.map.w + Math.floor(p.x + 0.5);
+      for (const k of t.occupancyKeys(this.map.w)) {
         const l = this.occ.get(k);
         if (l) {
           if (!l.includes(t.id)) l.push(t.id);
@@ -592,9 +591,7 @@ export class Fleet {
       const other = this.byId(t.claimBlocker);
       if (!other) continue;
       const theirs = other.pathTileKeys(this.map.w);
-      const onTheirWay = t.poses.some((p) =>
-        theirs.has(Math.floor(p.y + 0.5) * this.map.w + Math.floor(p.x + 0.5)),
-      );
+      const onTheirWay = t.occupancyKeys(this.map.w).some((k) => theirs.has(k));
       if (!onTheirWay) continue;
       t.blockedBy = other.id;
       t.blocked = true;

@@ -15,14 +15,15 @@
     "fuelPerTile": 0.25,
     "waterCap": 60,
     "waterPerTile": 0.3,
-    "starter": true
+    "starter": true,
+    "size": "small"
   },
   {
     "id": "adler",
     "name": "Adler",
     "rarity": "N",
     "type": "steam",
-    "era": "1835, Nuremberg to Fürth. Germany's first railway engine.",
+    "era": "1835, Nuremberg to F\u00fcrth. Germany's first railway engine.",
     "body": "steam_early",
     "paint": "green",
     "speed": 0.9,
@@ -32,7 +33,8 @@
     "fuelCap": 48,
     "fuelPerTile": 0.25,
     "waterCap": 68,
-    "waterPerTile": 0.3
+    "waterPerTile": 0.3,
+    "size": "small"
   },
   {
     "id": "john_bull",
@@ -49,11 +51,12 @@
     "fuelCap": 48,
     "fuelPerTile": 0.25,
     "waterCap": 68,
-    "waterPerTile": 0.3
+    "waterPerTile": 0.3,
+    "size": "small"
   },
   {
     "id": "mav375",
-    "name": "MÁV 375",
+    "name": "M\u00c1V 375",
     "rarity": "N",
     "type": "steam",
     "era": "1907 Hungarian branch-line tank engine. Hundreds built, dozens survive.",
@@ -66,7 +69,8 @@
     "fuelCap": 80,
     "fuelPerTile": 0.3,
     "waterCap": 120,
-    "waterPerTile": 0.35
+    "waterPerTile": 0.35,
+    "size": "small"
   },
   {
     "id": "general",
@@ -83,7 +87,8 @@
     "fuelCap": 72,
     "fuelPerTile": 0.28,
     "waterCap": 100,
-    "waterPerTile": 0.32
+    "waterPerTile": 0.32,
+    "size": "small"
   },
   {
     "id": "jupiter",
@@ -100,11 +105,12 @@
     "fuelCap": 80,
     "fuelPerTile": 0.28,
     "waterCap": 110,
-    "waterPerTile": 0.32
+    "waterPerTile": 0.32,
+    "size": "small"
   },
   {
     "id": "mav424",
-    "name": "MÁV 424 Bivaly",
+    "name": "M\u00c1V 424 Bivaly",
     "rarity": "R",
     "type": "steam",
     "era": "1924 Hungarian mixed-traffic 4-8-0, the Buffalo. Built until 1958.",
@@ -117,7 +123,9 @@
     "fuelCap": 120,
     "fuelPerTile": 0.35,
     "waterCap": 180,
-    "waterPerTile": 0.4
+    "waterPerTile": 0.4,
+    "size": "medium",
+    "plan": "tender"
   },
   {
     "id": "k4s",
@@ -134,7 +142,9 @@
     "fuelCap": 120,
     "fuelPerTile": 0.35,
     "waterCap": 180,
-    "waterPerTile": 0.4
+    "waterPerTile": 0.4,
+    "size": "medium",
+    "plan": "tender"
   },
   {
     "id": "drg01",
@@ -151,7 +161,9 @@
     "fuelCap": 140,
     "fuelPerTile": 0.35,
     "waterCap": 200,
-    "waterPerTile": 0.4
+    "waterPerTile": 0.4,
+    "size": "medium",
+    "plan": "tender"
   },
   {
     "id": "flying_scotsman",
@@ -168,7 +180,9 @@
     "fuelCap": 140,
     "fuelPerTile": 0.33,
     "waterCap": 200,
-    "waterPerTile": 0.38
+    "waterPerTile": 0.38,
+    "size": "medium",
+    "plan": "tender"
   },
   {
     "id": "daylight",
@@ -185,7 +199,9 @@
     "fuelCap": 160,
     "fuelPerTile": 0.4,
     "waterCap": 240,
-    "waterPerTile": 0.45
+    "waterPerTile": 0.45,
+    "size": "medium",
+    "plan": "tender"
   },
   {
     "id": "mallard",
@@ -202,7 +218,9 @@
     "fuelCap": 160,
     "fuelPerTile": 0.38,
     "waterCap": 240,
-    "waterPerTile": 0.42
+    "waterPerTile": 0.42,
+    "size": "medium",
+    "plan": "tender"
   },
   {
     "id": "big_boy",
@@ -219,7 +237,10 @@
     "fuelCap": 320,
     "fuelPerTile": 0.7,
     "waterCap": 480,
-    "waterPerTile": 0.8
+    "waterPerTile": 0.8,
+    "size": "large",
+    "plan": "meyer",
+    "pivotRatio": 0.6
   },
   {
     "id": "sw1",
@@ -234,7 +255,9 @@
     "weight": 90,
     "crew": 1,
     "fuelCap": 60,
-    "fuelPerTile": 0.12
+    "fuelPerTile": 0.12,
+    "size": "small",
+    "controlClass": "emd"
   },
   {
     "id": "class08",
@@ -249,7 +272,9 @@
     "weight": 50,
     "crew": 1,
     "fuelCap": 56,
-    "fuelPerTile": 0.11
+    "fuelPerTile": 0.11,
+    "size": "small",
+    "controlClass": "br"
   },
   {
     "id": "m62",
@@ -264,7 +289,9 @@
     "weight": 116,
     "crew": 2,
     "fuelCap": 120,
-    "fuelPerTile": 0.16
+    "fuelPerTile": 0.16,
+    "size": "medium",
+    "controlClass": "ussr"
   },
   {
     "id": "f7",
@@ -279,7 +306,9 @@
     "weight": 110,
     "crew": 2,
     "fuelCap": 110,
-    "fuelPerTile": 0.15
+    "fuelPerTile": 0.15,
+    "size": "medium",
+    "controlClass": "emd"
   },
   {
     "id": "sd40",
@@ -294,7 +323,9 @@
     "weight": 165,
     "crew": 2,
     "fuelCap": 160,
-    "fuelPerTile": 0.18
+    "fuelPerTile": 0.18,
+    "size": "medium",
+    "controlClass": "emd"
   },
   {
     "id": "deltic",
@@ -309,7 +340,9 @@
     "weight": 100,
     "crew": 2,
     "fuelCap": 140,
-    "fuelPerTile": 0.2
+    "fuelPerTile": 0.2,
+    "size": "medium",
+    "controlClass": "br"
   },
   {
     "id": "dda40x",
@@ -324,35 +357,45 @@
     "weight": 245,
     "crew": 2,
     "fuelCap": 280,
-    "fuelPerTile": 0.3
+    "fuelPerTile": 0.3,
+    "size": "large",
+    "plan": "rigid",
+    "bogies": 3,
+    "controlClass": "emd"
   },
   {
     "id": "kando_v40",
-    "name": "Kandó V40",
+    "name": "Kand\u00f3 V40",
     "rarity": "R",
     "type": "electric",
-    "era": "1932 Hungarian phase-converter electric by Kálmán Kandó, pioneer of 50 Hz traction.",
+    "era": "1932 Hungarian phase-converter electric by K\u00e1lm\u00e1n Kand\u00f3, pioneer of 50 Hz traction.",
     "body": "electric_box",
     "paint": "green",
     "speed": 1.4,
     "power": 140,
     "weight": 94,
     "crew": 2,
-    "powerPerTile": 0.12
+    "powerPerTile": 0.12,
+    "size": "small",
+    "controlClass": "kando",
+    "collector": "pantograph"
   },
   {
     "id": "v63",
     "name": "V63 Gigant",
     "rarity": "R",
     "type": "electric",
-    "era": "1975 Hungarian six-axle Giant, the heavy freight electric of MÁV.",
+    "era": "1975 Hungarian six-axle Giant, the heavy freight electric of M\u00c1V.",
     "body": "electric_box",
     "paint": "red",
     "speed": 1.6,
     "power": 200,
     "weight": 116,
     "crew": 2,
-    "powerPerTile": 0.16
+    "powerPerTile": 0.16,
+    "size": "medium",
+    "controlClass": "kando",
+    "collector": "pantograph"
   },
   {
     "id": "crocodile",
@@ -366,11 +409,16 @@
     "power": 230,
     "weight": 128,
     "crew": 2,
-    "powerPerTile": 0.17
+    "powerPerTile": 0.17,
+    "size": "large",
+    "plan": "garratt",
+    "pivotRatio": 0.7,
+    "controlClass": "sbb",
+    "collector": "pantograph"
   },
   {
     "id": "taurus",
-    "name": "ÖBB 1116 Taurus",
+    "name": "\u00d6BB 1116 Taurus",
     "rarity": "SR",
     "type": "electric",
     "era": "2000 Siemens universal electric that sings a scale as it pulls away.",
@@ -380,7 +428,10 @@
     "power": 190,
     "weight": 86,
     "crew": 1,
-    "powerPerTile": 0.14
+    "powerPerTile": 0.14,
+    "size": "medium",
+    "controlClass": "oebb",
+    "collector": "multi"
   },
   {
     "id": "re460",
@@ -394,7 +445,10 @@
     "power": 180,
     "weight": 84,
     "crew": 1,
-    "powerPerTile": 0.14
+    "powerPerTile": 0.14,
+    "size": "medium",
+    "controlClass": "sbb",
+    "collector": "multi"
   },
   {
     "id": "gg1",
@@ -408,6 +462,126 @@
     "power": 260,
     "weight": 216,
     "crew": 2,
-    "powerPerTile": 0.2
+    "powerPerTile": 0.2,
+    "size": "large",
+    "plan": "rigid",
+    "bogies": 3,
+    "controlClass": "prr",
+    "collector": "pantograph"
+  },
+  {
+    "id": "j94",
+    "name": "Saddle Tank J94",
+    "rarity": "N",
+    "type": "steam",
+    "era": "1943, Hunslet Austerity shunter. Yard work, short trips, no tender.",
+    "body": "steam_std",
+    "paint": "black",
+    "speed": 0.75,
+    "power": 60,
+    "weight": 48,
+    "crew": 2,
+    "fuelCap": 50,
+    "fuelPerTile": 0.26,
+    "waterCap": 70,
+    "waterPerTile": 0.3,
+    "size": "small"
+  },
+  {
+    "id": "black_five",
+    "name": "LMS Black Five",
+    "rarity": "R",
+    "type": "steam",
+    "era": "1934, Stanier mixed-traffic 4-6-0. Went anywhere, pulled anything.",
+    "body": "steam_std",
+    "paint": "black",
+    "speed": 1.5,
+    "power": 125,
+    "weight": 105,
+    "crew": 3,
+    "fuelCap": 130,
+    "fuelPerTile": 0.34,
+    "waterCap": 190,
+    "waterPerTile": 0.38,
+    "size": "medium",
+    "plan": "tender"
+  },
+  {
+    "id": "nine_f",
+    "name": "BR 9F",
+    "rarity": "SR",
+    "type": "steam",
+    "era": "1954, ten-coupled heavy freight engine. The last steam class built in Britain.",
+    "body": "steam_std",
+    "paint": "black",
+    "speed": 1.3,
+    "power": 230,
+    "weight": 140,
+    "crew": 3,
+    "fuelCap": 150,
+    "fuelPerTile": 0.38,
+    "waterCap": 220,
+    "waterPerTile": 0.42,
+    "size": "medium",
+    "plan": "tender",
+    "pivotRatio": 0.68
+  },
+  {
+    "id": "gmam",
+    "name": "GMAM Garratt",
+    "rarity": "SR",
+    "type": "steam",
+    "era": "1953, Beyer-Garratt articulated. Two engine units, a boiler slung between: big power on light rails.",
+    "body": "steam_garratt",
+    "paint": "green",
+    "speed": 1.2,
+    "power": 320,
+    "weight": 190,
+    "crew": 4,
+    "fuelCap": 260,
+    "fuelPerTile": 0.6,
+    "waterCap": 400,
+    "waterPerTile": 0.7,
+    "size": "large",
+    "plan": "garratt",
+    "pivotRatio": 0.7
+  },
+  {
+    "id": "tgv",
+    "name": "TGV Sud-Est",
+    "rarity": "SSR",
+    "type": "electric",
+    "era": "1981, the first high-speed trainset in service. Needs high-speed track and HV wires to stretch its legs.",
+    "body": "electric_hs",
+    "paint": "orange",
+    "speed": 3.0,
+    "power": 150,
+    "weight": 90,
+    "crew": 2,
+    "powerPerTile": 0.2,
+    "size": "medium",
+    "controlClass": "sncf",
+    "highSpeed": true,
+    "collector": "hv",
+    "inCab": true
+  },
+  {
+    "id": "ice1",
+    "name": "ICE 1",
+    "rarity": "SR",
+    "type": "electric",
+    "era": "1991, Germany's first high-speed set. Multi-system power car.",
+    "body": "electric_hs",
+    "paint": "white",
+    "speed": 2.7,
+    "power": 160,
+    "weight": 92,
+    "crew": 2,
+    "powerPerTile": 0.19,
+    "size": "medium",
+    "controlClass": "db",
+    "highSpeed": true,
+    "collector": "multi",
+    "inCab": true
   }
 ]
