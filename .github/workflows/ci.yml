@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Each step runs even if an earlier one failed, so one push shows every problem at once
+      # instead of one per round trip.
+      - name: Typecheck
+        id: typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        id: lint
+        if: ${{ !cancelled() }}
+        run: npm run lint
+
+      - name: Test
+        id: test
+        if: ${{ !cancelled() }}
+        run: npm test
+
+      - name: Build
+        id: build
+        if: ${{ !cancelled() }}
+        run: npx vite build
+
+      - name: Formatting
+        id: format
+        if: ${{ !cancelled() }}
+        run: npx prettier --check "src/**/*.{ts,json,css}" index.html

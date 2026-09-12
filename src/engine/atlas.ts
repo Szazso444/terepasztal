@@ -101,8 +101,47 @@ export class AtlasRegistry {
 /** Simple shelf packer producing a canvas + frame table from a list of pixel buffers. */
 export class AtlasBuilder {
   private items: { key: string; img: ImageData; ax: number; ay: number }[] = [];
-  add(key: string, img: ImageData, ax: number, ay: number) {
-    this.items.push({ key, img, ax, ay });
+  add(key: string, img: ImageData, ax: number, ay: number, insetMask = false) {
+    // Pack actual ink, retaining the ground anchor. Blank sprite margins otherwise dominate
+    // the 48-facing rolling atlases, especially when adding articulated halves and masks.
+    let left = img.width;
+    let top = img.height;
+    let right = 0;
+    let bottom = 0;
+    for (let y = 0; y < img.height; y++)
+      for (let x = 0; x < img.width; x++)
+        if (img.data[(y * img.width + x) * 4 + 3]) {
+          left = Math.min(left, x);
+          top = Math.min(top, y);
+          right = Math.max(right, x + 1);
+          bottom = Math.max(bottom, y + 1);
+        }
+    if (left === img.width) {
+      left = top = 0;
+      right = bottom = 1;
+    }
+    const trimmed = new ImageData(right - left, bottom - top);
+    for (let y = top; y < bottom; y++)
+      trimmed.data.set(
+        img.data.subarray((y * img.width + left) * 4, (y * img.width + right) * 4),
+        (y - top) * trimmed.width * 4,
+      );
+    if (insetMask) {
+      // One source pixel of inset keeps nearest-sampled sprite masks inside the visible
+      // contour even when a filter pass rounds its bounds differently from the body pass.
+      const mask = new ImageData(trimmed.width, trimmed.height);
+      for (let y = 1; y < trimmed.height - 1; y++)
+        for (let x = 1; x < trimmed.width - 1; x++) {
+          let inside = true;
+          for (let dy = -1; dy <= 1 && inside; dy++)
+            for (let dx = -1; dx <= 1; dx++)
+              if (!trimmed.data[((y + dy) * trimmed.width + x + dx) * 4 + 3]) inside = false;
+          if (inside)
+            mask.data.fill(255, (y * trimmed.width + x) * 4, (y * trimmed.width + x) * 4 + 4);
+        }
+      this.add(`${key}_mask`, mask, ax - left, ay - top);
+    }
+    this.items.push({ key, img: trimmed, ax: ax - left, ay: ay - top });
   }
   build(maxW = 1024): AtlasImage {
     const pad = 1;

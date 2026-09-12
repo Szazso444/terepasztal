@@ -1,0 +1,130 @@
+{
+  "step": 0.05,
+  "resolution": 1,
+  "samples": 104256,
+  "outside": 0,
+  "nonempty": 104256,
+  "rows": [
+    {
+      "id": "mav424",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "k4s",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "drg01",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "flying_scotsman",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "daylight",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "mallard",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "big_boy",
+      "samples": 2368,
+      "outside": 0
+    },
+    {
+      "id": "m62",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "f7",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "sd40",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "deltic",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "dda40x",
+      "samples": 2368,
+      "outside": 0
+    },
+    {
+      "id": "v63",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "crocodile",
+      "samples": 2368,
+      "outside": 0
+    },
+    {
+      "id": "taurus",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "re460",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "gg1",
+      "samples": 2368,
+      "outside": 0
+    },
+    {
+      "id": "black_five",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "nine_f",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "gmam",
+      "samples": 2368,
+      "outside": 0
+    },
+    {
+      "id": "tgv",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "ice1",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "steel_coach",
+      "samples": 4864,
+      "outside": 0
+    },
+    {
+      "id": "pullman",
+      "samples": 4864,
+      "outside": 0
+    }
+  ],
+  "failures": []
+}

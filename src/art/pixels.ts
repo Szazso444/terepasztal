@@ -1,5 +1,5 @@
 import { hash2 } from '../engine/rng';
-import type { RGB } from './palette';
+import { mix, shade, type RGB } from './palette';
 
 /** Small software pixel buffer used by the procedural sprite generators. */
 export class PixelBuf {
@@ -11,6 +11,8 @@ export class PixelBuf {
     this.data = new Uint8ClampedArray(new ArrayBuffer(w * h * 4));
   }
   set(x: number, y: number, c: RGB, a = 255) {
+    x = Math.round(x);
+    y = Math.round(y);
     if (x < 0 || y < 0 || x >= this.w || y >= this.h) return;
     const i = (y * this.w + x) * 4;
     this.data[i] = c[0];
@@ -37,6 +39,10 @@ export class PixelBuf {
       for (let x = x0; x < x0 + w; x++) this.set(x, y, pickShade(x, y, shades, seed, block));
   }
   line(x0: number, y0: number, x1: number, y1: number, c: RGB) {
+    x0 = Math.round(x0);
+    y0 = Math.round(y0);
+    x1 = Math.round(x1);
+    y1 = Math.round(y1);
     const dx = Math.abs(x1 - x0);
     const dy = -Math.abs(y1 - y0);
     const sx = x0 < x1 ? 1 : -1;
@@ -78,7 +84,7 @@ export class PixelBuf {
           0,
           Math.min(shades.length - 1, Math.floor((n * 0.6 + 0.5 - l) * shades.length)),
         );
-        this.set(x, y, shades[idx]);
+        this.set(x, y, mix(shades[0], shades[idx], 0.45));
       }
   }
   /** Add a 1px dark outline around all opaque pixels. */
@@ -94,8 +100,17 @@ export class PixelBuf {
           (x < this.w - 1 && mask[y * this.w + x + 1]) ||
           (y > 0 && mask[(y - 1) * this.w + x]) ||
           (y < this.h - 1 && mask[(y + 1) * this.w + x])
-        )
-          this.set(x, y, c, a);
+        ) {
+          // Coloured contour: upper rims catch light; lower rims ground the miniature.
+          const neighbour =
+            this.get(x, y + 1) ??
+            this.get(x + 1, y) ??
+            this.get(x - 1, y) ??
+            this.get(x, y - 1) ??
+            c;
+          const upper = y + 1 < this.h && mask[(y + 1) * this.w + x];
+          this.set(x, y, mix(c, shade(neighbour, upper ? 0.7 : 0.4), 0.65), a);
+        }
       }
   }
   /** Blit another buffer with alpha test. */
@@ -118,7 +133,7 @@ export function pickShade(x: number, y: number, shades: RGB[], seed: number, blo
   const n = hash2(x >> (block === 2 ? 1 : 0), y >> (block === 2 ? 1 : 0), seed);
   const low = hash2(x >> 3, y >> 3, seed + 99) * 0.5;
   const v = (n * 0.7 + low) / 1.2;
-  return shades[Math.min(shades.length - 1, Math.floor(v * shades.length))];
+  return mix(shades[0], shades[Math.min(shades.length - 1, Math.floor(v * shades.length))], 0.35);
 }
 
 /** Point inside a 64x32 (or scaled) iso diamond centred at (cx, cy). */

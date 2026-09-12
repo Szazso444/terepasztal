@@ -16,12 +16,12 @@ function groundTile(shades: RGB[], seed: number, rimDark = 0.82, deco?: Deco): P
       let c = pickShade(x, y, shades, seed);
       // sparse tufts / pebbles for a hand-painted feel
       const t = hash2(x, y, seed + 41);
-      if (t > 0.975) c = shade(shades[shades.length - 1], 1.12);
-      else if (t < 0.02) c = shade(shades[0], 0.8);
+      if (t > 0.996) c = shade(shades[shades.length - 1], 1.12);
+      else if (t < 0.004) c = shade(shades[0], 0.8);
       if (deco) c = deco(x, y, c) ?? c;
       // near (bottom) edges a touch darker to separate tiles like a painted floor
       const edge = Math.abs(x + 0.5 - HALF_W) / HALF_W + Math.abs(y + 0.5 - HALF_H) / HALF_H;
-      if (edge > 0.93 && y > HALF_H) c = shade(c, rimDark);
+      if (edge > 0.93 && y > HALF_H) c = shade(c, 0.9 + rimDark * 0.1);
       b.set(x, y, c);
     }
   return b;
@@ -63,7 +63,7 @@ const FLOWER_DOTS: RGB[] = [
 function plainsTile(seed: number): PixelBuf {
   return groundTile(PLAINS, seed, 0.84, (x, y) => {
     const f = hash2(x, y, seed + 71);
-    if (f > 0.988) return FLOWER_DOTS[Math.floor(hash2(x, y, seed + 72) * FLOWER_DOTS.length)];
+    if (f > 0.996) return FLOWER_DOTS[Math.floor(hash2(x, y, seed + 72) * FLOWER_DOTS.length)];
     return null;
   });
 }

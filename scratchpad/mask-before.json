@@ -1,0 +1,149 @@
+{
+  "step": 0.05,
+  "resolution": 1,
+  "samples": 16704,
+  "outside": 3001685,
+  "nonempty": 16704,
+  "rows": [
+    {
+      "id": "dda40x",
+      "samples": 2368,
+      "outside": 400448
+    },
+    {
+      "id": "gg1",
+      "samples": 2368,
+      "outside": 404188
+    },
+    {
+      "id": "big_boy",
+      "samples": 2368,
+      "outside": 599159
+    },
+    {
+      "id": "crocodile",
+      "samples": 2368,
+      "outside": 607288
+    },
+    {
+      "id": "gmam",
+      "samples": 2368,
+      "outside": 502789
+    },
+    {
+      "id": "sd40",
+      "samples": 4864,
+      "outside": 487813
+    }
+  ],
+  "failures": [
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3,
+      "outside": 167
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.05,
+      "outside": 167
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.0999999999999996,
+      "outside": 185
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.1499999999999995,
+      "outside": 159
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.1999999999999993,
+      "outside": 167
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.249999999999999,
+      "outside": 167
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.299999999999999,
+      "outside": 167
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.3499999999999988,
+      "outside": 185
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.3999999999999986,
+      "outside": 159
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.4499999999999984,
+      "outside": 167
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.4999999999999982,
+      "outside": 167
+    },
+    {
+      "id": "dda40x",
+      "cls": "high_speed",
+      "rot": 0,
+      "hand": -1,
+      "reversed": false,
+      "front": 3.549999999999998,
+      "outside": 167
+    }
+  ]
+}

@@ -43,6 +43,9 @@ function walker(o: Outfit, f: number): PixelBuf {
   // torso y=3..7, 4 wide; slight shade on the right for volume
   b.rect(1, 3, 4, 5, o.body);
   b.rect(4, 3, 1, 5, shade(o.body, 0.8));
+  // Waistcoat, brass button and lit shoulder read at miniature scale.
+  b.set(2, 3, shade(o.body, 1.3));
+  b.set(3, 5, PAL.brass);
   // hands
   b.set(1, 6, SKIN);
   b.set(4, 6, SKIN);
