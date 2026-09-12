@@ -89,6 +89,8 @@ export const STR = {
     rock: 'Cannot lay track on rock',
     needBridge: 'Water needs a bridge',
     trackInWay: 'Track in the way: remove it first',
+    needWaterside: 'Must stand next to water',
+    sameSupply: 'Already electrified this way',
     needTransition: 'Different track classes join through a transition piece',
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
@@ -155,6 +157,21 @@ export const STR = {
       bridge_high_speed: 'High-speed span over one tile of water.',
     } as Record<string, string>,
     trackClass: { regular: 'Regular', high_speed: 'High-speed' } as Record<string, string>,
+    supply: {
+      third_rail: 'Third rail',
+      catenary: 'Catenary',
+      hv_catenary: 'HV catenary',
+    } as Record<string, string>,
+    supplyDesc: {
+      third_rail:
+        'A live rail beside the track. Cheap, no masts, slow: contact-shoe stock only. Drag along track.',
+      catenary:
+        'Mast and wire per tile. The standard pantograph supply; high-speed sets run under it at the standard ceiling. Drag along track.',
+      hv_catenary:
+        'Heavier masts and wire for high-speed pantographs. Standard electrics cannot draw from it unless multi-system. Drag along track.',
+    } as Record<string, string>,
+    placeSupply:
+      'On track within six tiles of a powered substation to be live. R does nothing here.',
   },
   building: {
     recipe: 'Recipe',

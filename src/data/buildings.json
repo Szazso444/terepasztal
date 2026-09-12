@@ -89,5 +89,47 @@
     },
     "perDay": 60,
     "power": true
+  },
+  {
+    "id": "substation",
+    "name": "Substation",
+    "flavor": "Taps the pole grid and feeds the wires within six tiles. Too many trains under one and they all slow together.",
+    "cost": {
+      "iron": 24,
+      "stone": 20,
+      "wood": 8
+    },
+    "crew": 1,
+    "tier": 2,
+    "recipe": {
+      "in": {},
+      "out": {}
+    },
+    "perDay": 0,
+    "substation": {
+      "radius": 6,
+      "throughput": 3
+    }
+  },
+  {
+    "id": "hydro_plant",
+    "name": "Hydro Plant",
+    "flavor": "Turbines in the river. No fuel, twice a coal plant's output, but only where the water is.",
+    "cost": {
+      "iron": 40,
+      "stone": 60,
+      "wood": 20
+    },
+    "crew": 4,
+    "tier": 2,
+    "recipe": {
+      "in": {},
+      "out": {
+        "power": 1
+      }
+    },
+    "perDay": 120,
+    "power": true,
+    "needsWater": true
   }
 ]

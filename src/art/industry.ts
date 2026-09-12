@@ -1386,11 +1386,113 @@ export const STATION_FAMILIES: Record<string, (level: number) => PixelBuf> = {
   town,
   warehouse,
 };
+/** Fenced yard with a transformer block and a short pylon. */
+function substation(): PixelBuf {
+  const b = new PixelBuf(W, H);
+  drawPrism(b, {
+    ox: OX,
+    oy: OY,
+    cx: 0,
+    cy: 0,
+    angle: 0,
+    len: 0.7,
+    wid: 0.7,
+    h: 1,
+    top: PAL.stone,
+    side: PAL.stone,
+    seed: 71,
+  });
+  drawPrism(b, {
+    ox: OX,
+    oy: OY,
+    cx: -0.1,
+    cy: 0.05,
+    angle: 0,
+    len: 0.3,
+    wid: 0.24,
+    h: 12,
+    z0: 1,
+    top: PAL.iron,
+    side: PAL.iron,
+    seed: 72,
+  });
+  for (const f of [-0.08, 0, 0.08])
+    drawCylinder(
+      b,
+      OX,
+      OY,
+      -0.1 + f,
+      0.05,
+      0.03,
+      13,
+      5,
+      [PAL.white, [180, 180, 176]],
+      PAL.white,
+      73 + f * 10,
+    );
+  const p = proj(OX, OY, 0.2, -0.18);
+  b.rect(Math.round(p.x) - 1, Math.round(p.y) - 30, 2, 30, PAL.iron[2]);
+  b.rect(Math.round(p.x) - 6, Math.round(p.y) - 28, 12, 1, PAL.iron[1]);
+  b.rect(Math.round(p.x) - 4, Math.round(p.y) - 22, 8, 1, PAL.iron[1]);
+  for (const [lx, ly] of [
+    [-0.34, -0.34],
+    [0.34, -0.34],
+    [0.34, 0.34],
+    [-0.34, 0.34],
+  ]) {
+    const q = proj(OX, OY, lx, ly);
+    b.rect(Math.round(q.x), Math.round(q.y) - 6, 1, 6, PAL.timber[2]);
+  }
+  b.outline(PAL.outline, 170);
+  return b;
+}
+/** Turbine house on a weir with a spillway. */
+function hydroPlant(): PixelBuf {
+  const b = new PixelBuf(W, H);
+  drawPrism(b, {
+    ox: OX,
+    oy: OY,
+    cx: 0,
+    cy: 0.1,
+    angle: 0,
+    len: 0.8,
+    wid: 0.5,
+    h: 4,
+    top: PAL.stone,
+    side: PAL.stone,
+    seed: 81,
+  });
+  drawPrism(b, {
+    ox: OX,
+    oy: OY,
+    cx: -0.1,
+    cy: 0.05,
+    angle: 0,
+    len: 0.42,
+    wid: 0.34,
+    h: 16,
+    z0: 4,
+    top: PAL.roofSlate,
+    side: PAL.stone,
+    seed: 82,
+    ridge: 4,
+    roof: PAL.roofSlate,
+  });
+  drawCylinder(b, OX, OY, 0.22, -0.1, 0.07, 4, 10, [PAL.iron[1], PAL.iron[2]], PAL.iron[0], 83);
+  for (let i = 0; i < 6; i++) {
+    const q = proj(OX, OY, 0.28, 0.18 + i * 0.04);
+    b.rect(Math.round(q.x) - 3, Math.round(q.y) - 2, 6, 1, [160, 200, 220]);
+  }
+  b.outline(PAL.outline, 170);
+  return b;
+}
 export const BUILDING_SPRITES: Record<string, () => PixelBuf> = {
   kiln,
   grinder,
   refinery,
   power_plant: powerPlant,
+  substation,
+  hydro_plant: hydroPlant,
 };
 /** Townhouse: a two-storey timber house with a pitched roof, a chimney and a small yard. */
 function townhouse(): PixelBuf {

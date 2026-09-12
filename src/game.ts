@@ -69,7 +69,7 @@ import {
 import { decorOffset, type Decor } from './sim/build';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
-import { DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
+import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import { SettingsScreen } from './ui/settingsScreen';
 import { TuningScreen } from './ui/tuningScreen';
@@ -123,6 +123,7 @@ import { resourceStats } from './sim/stats';
 import { locoFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
 import { buildCompatTable } from './sim/compat';
+import { Catenary, type SupplyKind } from './sim/catenary';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
 import { PeopleSim } from './sim/people';
@@ -645,6 +646,9 @@ export class Game {
     this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stock);
     this.towns = new TownRegistry(this.builder);
     this.power = new PowerGrid(this.map);
+    this.catenary = new Catenary(this.map);
+    this.builder.catenary = this.catenary;
+    this.builder.onSupplyChanged = (x, y) => this.onSupplyChanged(x, y);
     this.stock.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
@@ -664,7 +668,7 @@ export class Game {
       this.economy,
       this.stock,
     );
-    this.fleet.powered = (x, y) => this.power.isPowered(x, y);
+    this.fleet.powered = (x, y) => this.catenary.isLive(x, y);
     this.fleet.stockCap = (id) => this.stockCap(id);
     this.fleet.onFlow = (x, y, r, d) => this.floaters.spawn(x, y, r, d);
     this.fleet.onPassengers = (st, n, b) =>
@@ -823,6 +827,7 @@ export class Game {
       towns: this.towns.toJSON(),
       settings: { ...this.settings },
       buildings: [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id, b.acc]),
+      supply: this.catenary.toJSON(),
     };
   }
 
@@ -886,6 +891,13 @@ export class Game {
       for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
         this.onTrackChanged(t.x, t.y);
     }
+    if (j.supply) {
+      for (const [x, y, kind] of j.supply) {
+        if (!this.track.has(x, y)) continue;
+        this.catenary.set(x, y, kind as SupplyKind);
+        this.onSupplyChanged(x, y);
+      }
+    } else this.legacySupplyPending = true;
     resetStationIds(1);
     for (const sj of j.stations) {
       const st = Station.fromJSON(sj);
@@ -1008,10 +1020,39 @@ export class Game {
       this.world.removeProps(b.x, b.y);
       this.world.setStructure(id, b.x, b.y, `structures/${b.id}`);
     }
-    if (buildingDef(b.id).power) this.rebuildPower();
+    if (buildingDef(b.id).power || buildingDef(b.id).substation) this.rebuildPower();
+  }
+  /** electrified track, substations and what is live */
+  catenary!: Catenary;
+  /** a save from before electrification: string wire over the rails the poles powered */
+  private legacySupplyPending = false;
+  private onSupplyChanged(x: number, y: number) {
+    const id = `supply:${x},${y}`;
+    const kind = this.catenary.supplyAt(x, y);
+    if (!kind) {
+      this.world.removeStructure(id);
+    } else {
+      const p = this.track.get(x, y);
+      const links = p?.links ?? [];
+      const ns = links.some((l) => l.includes(Dir.N) && l.includes(Dir.S));
+      const ew = links.some((l) => l.includes(Dir.E) && l.includes(Dir.W));
+      const axis = ns && !ew ? 'ns' : ew && !ns ? 'ew' : 'x';
+      this.world.setStructure(id, x, y, `structures/supply_${kind}_${axis}`, 13);
+    }
+    this.catenary.rebuild(this.builder.buildings.values(), this.power);
+  }
+  private fillLegacySupply() {
+    this.legacySupplyPending = false;
+    this.rebuildPower();
+    for (const t of this.track.tiles())
+      if (this.power.isPowered(t.x, t.y) && !this.catenary.supplyAt(t.x, t.y)) {
+        this.catenary.set(t.x, t.y, 'catenary');
+        this.onSupplyChanged(t.x, t.y);
+      }
   }
   private rebuildPower() {
     this.power.rebuild(this.builder.decor.values(), this.builder.buildings.values());
+    this.catenary.rebuild(this.builder.buildings.values(), this.power);
     this.overview.rebuildPower(this.power);
     this.powerLines.rebuild(this.power);
   }
@@ -1899,6 +1940,7 @@ export class Game {
     if (this.aspectTimer > 0.1) {
       this.aspectTimer = 0;
       this.updateSignals(dt);
+      if (this.legacySupplyPending) this.fillLegacySupply();
     }
     this.bobTime += dt;
     for (const id of this.orphaned) {

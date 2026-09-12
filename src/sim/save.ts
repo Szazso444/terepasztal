@@ -34,6 +34,8 @@ export interface SaveGame {
   lastDay: number;
   /** v2: signals and water towers [x, y, id, rot] */
   decor?: [number, number, string, number][];
+  /** v9: electrified track [x, y, kind] */
+  supply?: [number, number, string][];
   /** v2: weather generator state */
   weather?: unknown;
   /** v3: how the map was built */
@@ -131,7 +133,11 @@ export const MIGRATIONS: Migration[] = [
     run: () => {},
   },
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
-  { from: 8, note: 'every track piece counted as regular class', run: () => {} },
+  {
+    from: 8,
+    note: 'every track piece counted as regular class; catenary strung over rails the poles powered',
+    run: () => {},
+  },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */
 export const KNOWN_SAVE_KEYS = new Set<string>([
@@ -158,6 +164,7 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'seasonOffset',
   'towns',
   'settings',
+  'supply',
   'trade',
   'loadedFrom',
   'migrationNotes',

@@ -3,6 +3,7 @@ import { fmtCost } from '../sim/stockpile';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
 import { TRACK_ITEMS, itemKey, pieceCost, type TrackItem } from '../world/track';
+import { SUPPLY_KINDS, SUPPLY_DEFS, type SupplyKind } from '../sim/catenary';
 import { STATION_DEFS } from '../sim/stations';
 import { DECOR_DEFS, decorDef } from '../sim/build';
 import { Terrain, TERRAIN_NAMES } from '../world/tiles';
@@ -14,6 +15,7 @@ import { content } from '../data/content';
 export type Tool =
   | { kind: 'none' }
   | { kind: 'track'; item: TrackItem }
+  | { kind: 'supply'; supply: SupplyKind }
   | { kind: 'station'; defId: string }
   | { kind: 'decor'; defId: string }
   | { kind: 'terrain'; terrain: number }
@@ -49,6 +51,8 @@ function toolKey(t: Tool): string {
   switch (t.kind) {
     case 'track':
       return `track:${itemKey(t.item)}`;
+    case 'supply':
+      return `supply:${t.supply}`;
     case 'station':
       return `station:${t.defId}`;
     case 'decor':
@@ -148,6 +152,17 @@ export class Toolbar {
     const services = DECOR_DEFS.filter((d) => !d.onTrack && !d.residents).map(decorItem);
     stations.push(...DECOR_DEFS.filter((d) => d.residents).map(decorItem));
     const utility = DECOR_DEFS.filter((d) => d.onTrack).map(decorItem);
+    for (const k of SUPPLY_KINDS)
+      utility.push({
+        key: `supply:${k}`,
+        tool: { kind: 'supply', supply: k },
+        name: STR.toolbar.supply[k],
+        cost: SUPPLY_DEFS[k].cost,
+        frame: `structures/supply_${k}_ew`,
+        desc: STR.toolbar.supplyDesc[k],
+        tier: SUPPLY_DEFS[k].tier,
+        place: STR.toolbar.placeSupply,
+      });
     const works: ToolItem[] = BUILDING_DEFS.map((d) => ({
       key: `building:${d.id}`,
       tool: { kind: 'building', defId: d.id },

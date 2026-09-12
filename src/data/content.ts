@@ -138,6 +138,10 @@ export interface BuildingDef {
   perDay: number;
   /** feeds the power network */
   power?: boolean;
+  /** must stand next to water (hydro plants) */
+  needsWater?: boolean;
+  /** taps the pole grid and makes electrified track within `radius` live, passing `throughput` units per second */
+  substation?: { radius: number; throughput: number };
 }
 export interface StationLevels {
   capacity: number[];

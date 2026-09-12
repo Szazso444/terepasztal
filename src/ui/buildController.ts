@@ -1,6 +1,7 @@
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
 import { rotationCount, itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
+import type { SupplyKind } from '../sim/catenary';
 import { inBounds } from '../world/tiles';
 import type { Builder } from '../sim/build';
 import type { WorldRenderer } from '../render/worldRenderer';
@@ -131,6 +132,9 @@ export class BuildController {
         break;
       case 'station':
         this.updateStationTool(t, inMap);
+        break;
+      case 'supply':
+        this.updateSupplyTool(t, inMap);
         break;
       case 'decor':
         this.updateDecorTool(t, inMap);
@@ -374,6 +378,69 @@ export class BuildController {
         }
       }
     }
+  }
+
+  /** Electrification: drag along a line of track; tiles without track are skipped. */
+  private updateSupplyTool(t: { x: number; y: number }, inMap: boolean) {
+    const tool = this.tool as { kind: 'supply'; supply: SupplyKind };
+    const inp = this.input;
+    const frameOf = (x: number, y: number) => {
+      const p = this.builder.track.get(x, y);
+      const links = p?.links ?? [];
+      const ns = links.some((l) => l.includes(0) && l.includes(2));
+      const ew = links.some((l) => l.includes(1) && l.includes(3));
+      return `structures/supply_${tool.supply}_${ns && !ew ? 'ns' : ew && !ns ? 'ew' : 'x'}`;
+    };
+    if (inp.buttonPressed.has(0) && inMap) this.dragStart = { x: t.x, y: t.y };
+    if (this.dragStart && inp.buttons.has(0)) {
+      const line = this.lineTiles(this.dragStart, t).filter((l) =>
+        this.builder.track.has(l.x, l.y),
+      );
+      this.showGhosts(
+        line.map((l) => ({
+          x: l.x,
+          y: l.y,
+          frame: frameOf(l.x, l.y),
+          ok: this.builder.checkSupply(l.x, l.y, tool.supply).ok,
+        })),
+        true,
+      );
+      const cost: Record<string, number> = {};
+      for (const l of line) {
+        const ch = this.builder.checkSupply(l.x, l.y, tool.supply);
+        if (ch.ok) for (const [k, v] of Object.entries(ch.cost)) cost[k] = (cost[k] ?? 0) + v;
+      }
+      this.status(`${line.length} x ${STR.toolbar.supply[tool.supply]}: ${fmtCost(cost)}`);
+      return;
+    }
+    if (this.dragStart && inp.buttonReleased.has(0)) {
+      const line = this.lineTiles(this.dragStart, t);
+      this.dragStart = null;
+      for (const g of this.lineGhosts) g.destroy();
+      this.lineGhosts = [];
+      for (const l of line) this.builder.placeSupply(l.x, l.y, tool.supply);
+      return;
+    }
+    if (!inMap) {
+      if (this.ghost) this.ghost.visible = false;
+      this.ghostDiamond.visible = false;
+      return;
+    }
+    const check = this.builder.checkSupply(t.x, t.y, tool.supply);
+    const g = this.ensureGhost(frameOf(t.x, t.y));
+    this.placeGhostAt(g, t.x, t.y, check.ok);
+    this.world.setSpriteFrame(
+      this.ghostDiamond,
+      check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
+    );
+    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
+    this.ghostDiamond.tint = 0xffffff;
+    this.status(
+      [
+        check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? ''),
+        STR.build.dragHint,
+      ].join('   '),
+    );
   }
 
   private updateDecorTool(t: { x: number; y: number }, inMap: boolean) {

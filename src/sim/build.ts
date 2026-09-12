@@ -13,6 +13,7 @@ import {
   type TrackPiece,
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
+import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
 import { content, type DecorDef, type Cost } from '../data/content';
 import { rules } from './rules';
 import { Station, terrainFactorAt, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
@@ -72,6 +73,9 @@ export class Builder {
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
+  onSupplyChanged: ((x: number, y: number) => void) | null = null;
+  /** electrification overlay (set by the game) */
+  catenary: Catenary | null = null;
   /** fired when a station loses (true) or regains (false) its last platform tile */
   onStationOrphaned: ((s: Station, orphaned: boolean) => void) | null = null;
 
@@ -294,6 +298,7 @@ export class Builder {
       const dec = this.decorAt(t.x, t.y);
       if (dec && decorDef(dec.id).onTrack && !decorDef(dec.id).anyTile) this.removeDecor(t.x, t.y);
     }
+    for (const t of tiles) if (this.catenary?.supplyAt(t.x, t.y)) this.removeSupply(t.x, t.y);
     this.track.removeAt(x, y);
     this.refund(pieceCost(p.kind, p.cls, p.cls2));
     for (const t of tiles) this.onTrackChanged?.(t.x, t.y);
@@ -491,7 +496,44 @@ export class Builder {
       return { ok: false, cost: {}, reason: STR.build.badTerrain };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };
+    if (
+      def.needsWater &&
+      !DIRS.some((d) => terrainAt(this.map, x + DDX[d], y + DDY[d]) === Terrain.Water)
+    )
+      return { ok: false, cost: {}, reason: STR.build.needWaterside };
     return this.affordable(this.priced(def.cost, this.kindMul(defId)));
+  }
+
+  // ------------------------------------------------------------------ electrification
+  checkSupply(x: number, y: number, kind: SupplyKind): PlacementCheck {
+    if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
+    if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
+    if (!this.free && SUPPLY_DEFS[kind].tier > this.economy.tier)
+      return { ok: false, cost: {}, reason: STR.build.tierLocked(SUPPLY_DEFS[kind].tier) };
+    if (!this.track.has(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrackHere };
+    if (this.catenary?.supplyAt(x, y) === kind)
+      return { ok: false, cost: {}, reason: STR.build.sameSupply };
+    return this.affordable(this.priced(SUPPLY_DEFS[kind].cost, 1));
+  }
+  placeSupply(x: number, y: number, kind: SupplyKind): boolean {
+    if (!this.catenary) return false;
+    const c = this.checkSupply(x, y, kind);
+    if (!c.ok || !this.pay(c.cost)) return false;
+    const old = this.catenary.supplyAt(x, y);
+    if (old) this.refund(SUPPLY_DEFS[old].cost);
+    this.catenary.set(x, y, kind);
+    this.onSupplyChanged?.(x, y);
+    sfx('build.place');
+    return true;
+  }
+  removeSupply(x: number, y: number): boolean {
+    const old = this.catenary?.supplyAt(x, y);
+    if (!old || !this.catenary) return false;
+    this.catenary.remove(x, y);
+    this.refund(SUPPLY_DEFS[old].cost);
+    this.onSupplyChanged?.(x, y);
+    sfx('build.remove');
+    return true;
   }
   placeBuilding(x: number, y: number, defId: string): Building | null {
     const c = this.checkBuilding(x, y, defId);
