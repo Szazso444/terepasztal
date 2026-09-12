@@ -1,4 +1,4 @@
-import type { TrackKind } from '../world/track';
+import type { TrackClass, TrackKind } from '../world/track';
 import type { StationJSON } from './stations';
 import type { MapGenParams } from '../world/mapgen';
 import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
@@ -11,7 +11,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -23,7 +23,8 @@ export interface SaveGame {
   seed: number;
   clock: { time: number; speedIndex: number };
   economy: { money: number; tickets: number; reputation: number; tier: number; granted: number[] };
-  track: [number, number, TrackKind, number][];
+  /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
+  track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
   stations: StationJSON[];
   trains: unknown[];
   contracts: unknown;
@@ -130,6 +131,7 @@ export const MIGRATIONS: Migration[] = [
     run: () => {},
   },
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
+  { from: 8, note: 'every track piece counted as regular class', run: () => {} },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */
 export const KNOWN_SAVE_KEYS = new Set<string>([

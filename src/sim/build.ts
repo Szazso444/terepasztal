@@ -1,7 +1,18 @@
 import { DIRS, DIR_DX, DIR_DY, tileToWorld } from '../engine/iso';
 import { Terrain, TERRAIN_NAMES, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import type { RegionState } from '../world/regions';
-import { TrackGraph, makePiece, pieceCost, type TrackKind, type TrackPiece } from '../world/track';
+import {
+  TrackGraph,
+  pieceCost,
+  footprintOf,
+  isUnitKind,
+  portClass,
+  classesJoin,
+  type TrackItem,
+  type TrackKind,
+  type TrackPiece,
+} from '../world/track';
+import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { content, type DecorDef, type Cost } from '../data/content';
 import { rules } from './rules';
 import { Station, terrainFactorAt, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
@@ -190,49 +201,97 @@ export class Builder {
   }
 
   // ------------------------------------------------------------------ track
-  checkTrack(x: number, y: number, kind: TrackKind): PlacementCheck {
-    if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
-    if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
+  private checkTrackTile(x: number, y: number, kind: TrackKind, anchor: boolean): string | null {
+    if (!inBounds(this.map, x, y)) return STR.build.offMap;
+    if (!this.unlocked(x, y)) return STR.build.locked;
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock || t === Terrain.Mountain)
-      return { ok: false, cost: {}, reason: STR.build.rock };
-    if (t === Terrain.Water && kind !== 'bridge')
-      return { ok: false, cost: {}, reason: STR.build.needBridge };
-    if (t !== Terrain.Water && kind === 'bridge')
-      return { ok: false, cost: {}, reason: STR.build.bridgeOnWater };
-    if (this.stationAt(x, y) || this.buildingAt(x, y))
-      return { ok: false, cost: {}, reason: STR.build.occupied };
+    if (t === Terrain.Rock || t === Terrain.Mountain) return STR.build.rock;
+    if (t === Terrain.Water && kind !== 'bridge') return STR.build.needBridge;
+    if (t !== Terrain.Water && kind === 'bridge') return STR.build.bridgeOnWater;
+    if (this.stationAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
     const dec = this.decorAt(x, y);
-    if (dec && !decorDef(dec.id).onTrack)
-      return { ok: false, cost: {}, reason: STR.build.occupied };
-    return this.affordable(this.priced(pieceCost(kind), this.terrainMul(x, y)));
+    if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
+    const existing = this.track.get(x, y);
+    // a wide piece needs its whole footprint free of track; a one-tile piece may replace another
+    // one-tile piece but never a member of a wide one
+    if (existing && (!anchor || existing.unit)) return STR.build.trackInWay;
+    return null;
+  }
+  /**
+   * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, then that each
+   * open edge meeting existing track joins a compatible class (a transition piece joins any).
+   */
+  checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
+    const kind = item.kind;
+    const wide = isUnitKind(kind, item.cls);
+    const tiles = footprintOf(x, y, kind, rot, item.cls);
+    for (const t of tiles) {
+      const why = this.checkTrackTile(t.x, t.y, kind, !wide);
+      if (why) return { ok: false, cost: {}, reason: why };
+    }
+    // class compatibility with the neighbours the new piece would open onto
+    const probe = new TrackGraph(this.map.w, this.map.h);
+    probe.place(x, y, kind, rot, item.cls, item.cls2);
+    for (const t of tiles) {
+      const p = probe.get(t.x, t.y);
+      if (!p) continue;
+      for (const [a, b] of p.links)
+        for (const d of [a, b]) {
+          const nx = t.x + DDX[d];
+          const ny = t.y + DDY[d];
+          if (tiles.some((q) => q.x === nx && q.y === ny)) continue;
+          const q = this.track.get(nx, ny);
+          if (!q || !this.track.opensTo(nx, ny, opposite(d))) continue;
+          if (!classesJoin(portClass(p, d), portClass(q, opposite(d))))
+            return { ok: false, cost: {}, reason: STR.build.needTransition };
+        }
+    }
+    let mul = 0;
+    for (const t of tiles) mul = Math.max(mul, this.terrainMul(t.x, t.y));
+    return this.affordable(this.priced(pieceCost(kind, item.cls, item.cls2), mul));
   }
   refundFor(p: TrackPiece): Cost {
-    return this.free ? {} : scaleCost(pieceCost(p.kind), rules.buildCostMul * rules.refundRate);
+    return this.free
+      ? {}
+      : scaleCost(pieceCost(p.kind, p.cls, p.cls2), rules.buildCostMul * rules.refundRate);
   }
-  placeTrack(x: number, y: number, kind: TrackKind, rot: number): boolean {
-    const c = this.checkTrack(x, y, kind);
+  placeTrack(x: number, y: number, item: TrackItem, rot: number): boolean {
+    const c = this.checkTrack(x, y, item, rot);
     if (!c.ok) return false;
     const existing = this.track.get(x, y);
-    if (existing && existing.kind === kind && existing.rot === rot) return false;
+    if (
+      existing &&
+      existing.kind === item.kind &&
+      existing.rot === rot &&
+      existing.cls === item.cls &&
+      (existing.cls2 ?? existing.cls) === (item.cls2 ?? item.cls)
+    )
+      return false;
     if (!this.pay(c.cost)) return false;
-    if (existing) this.refund(pieceCost(existing.kind));
-    this.track.set(x, y, makePiece(kind, rot));
-    this.onTrackChanged?.(x, y);
-    this.checkOrphans(x, y);
+    if (existing) this.refund(pieceCost(existing.kind, existing.cls, existing.cls2));
+    const tiles = this.track.place(x, y, item.kind, rot, item.cls, item.cls2);
+    for (const t of tiles) this.onTrackChanged?.(t.x, t.y);
+    for (const t of tiles) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     return true;
+  }
+  /** Compatibility: lay a regular piece by kind. */
+  placeTrackKind(x: number, y: number, kind: TrackKind, rot: number) {
+    return this.placeTrack(x, y, { kind, cls: 'regular', cls2: 'regular' }, rot);
   }
   removeTrack(x: number, y: number): boolean {
     const p = this.track.get(x, y);
     if (!p) return false;
+    const tiles = this.track.unitTiles(x, y);
     // a signal or pole standing on the tile goes with it
-    const dec = this.decorAt(x, y);
-    if (dec && decorDef(dec.id).onTrack && !decorDef(dec.id).anyTile) this.removeDecor(x, y);
-    this.track.remove(x, y);
-    this.refund(pieceCost(p.kind));
-    this.onTrackChanged?.(x, y);
-    this.checkOrphans(x, y);
+    for (const t of tiles) {
+      const dec = this.decorAt(t.x, t.y);
+      if (dec && decorDef(dec.id).onTrack && !decorDef(dec.id).anyTile) this.removeDecor(t.x, t.y);
+    }
+    this.track.removeAt(x, y);
+    this.refund(pieceCost(p.kind, p.cls, p.cls2));
+    for (const t of tiles) this.onTrackChanged?.(t.x, t.y);
+    for (const t of tiles) this.checkOrphans(t.x, t.y);
     sfx('build.remove');
     return true;
   }

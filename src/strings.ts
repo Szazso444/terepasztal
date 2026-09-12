@@ -88,6 +88,8 @@ export const STR = {
     locked: 'Uncharted region',
     rock: 'Cannot lay track on rock',
     needBridge: 'Water needs a bridge',
+    trackInWay: 'Track in the way: remove it first',
+    needTransition: 'Different track classes join through a transition piece',
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
@@ -134,12 +136,25 @@ export const STR = {
       plant: 'On a free buildable tile. Chain Power Line poles from it to reach the rails.',
     },
     trackDesc: {
-      straight: 'Plain rail. Drag to lay a run of straights.',
-      curve: 'Quarter turn. R rotates.',
-      switch: 'Junction: one line splits into two. Trains take whichever branch their route needs.',
-      crossing: 'Two lines cross without connecting.',
-      bridge: 'Spans one tile of water. Only on water.',
+      straight_regular: 'Plain rail. Drag to lay a run of straights.',
+      curve_regular: 'Quarter turn of radius half a tile. R rotates.',
+      switch_regular:
+        'Junction: one line splits into two. Trains take whichever branch their route needs.',
+      crossing_regular_regular: 'Two regular lines cross without connecting.',
+      bridge_regular: 'Spans one tile of water. Only on water.',
+      transition_regular:
+        'Joins regular and high-speed track. Regular speed applies on the piece itself.',
+      straight_high_speed: 'High-speed straight. Drag to lay a run.',
+      curve_high_speed:
+        'Two by two tiles, radius one and a half: nearly full speed through the turn. The inner corner tile is blocked. R rotates.',
+      switch_high_speed:
+        'Two by two tiles: a high-speed straight with a wide diverging arc. R rotates through both handings.',
+      crossing_regular_high_speed:
+        'A regular line crosses a high-speed line at grade. The slow line holds the fast one up.',
+      crossing_high_speed_high_speed: 'Two high-speed lines cross at grade.',
+      bridge_high_speed: 'High-speed span over one tile of water.',
     } as Record<string, string>,
+    trackClass: { regular: 'Regular', high_speed: 'High-speed' } as Record<string, string>,
   },
   building: {
     recipe: 'Recipe',

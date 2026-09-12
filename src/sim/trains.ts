@@ -1,6 +1,6 @@
 import { type Vec2, angleToFacing8, Dir } from '../engine/iso';
 import type { TrackGraph } from '../world/track';
-import { linkPoints, isCurveLink } from '../world/trackGeom';
+import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
 import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
@@ -617,7 +617,7 @@ export class Train {
     this.trail = [];
     this.trailCum = [];
     for (const s of [...back, seg]) {
-      const pts = linkPoints(s.in, s.out, 8);
+      const pts = track.segGeom(s.x, s.y, s.in, s.out, s.route).pts;
       const upto = s === seg ? Math.floor(pts.length / 2) + 1 : pts.length;
       for (let i = 0; i < upto; i++)
         this.pushTrail({ x: s.x + pts[i].x, y: s.y + pts[i].y, seg: s });
@@ -763,7 +763,7 @@ export class Train {
       }
     }
     if (!path) return false;
-    this.setPath(path, map);
+    this.setPath(path, map, track);
     this.trackVersion = track.version;
     return true;
   }
@@ -805,17 +805,18 @@ export class Train {
     this.updatePoses();
   }
 
-  private setPath(path: PathSegment[], map: GameMap) {
+  private setPath(path: PathSegment[], map: GameMap, track: TrackGraph) {
     this.path = path;
     this.pathPts = [];
     this.pathCum = [];
+    track.resolveRoutes(path);
     for (let s = 0; s < path.length; s++) {
       const seg = path[s];
-      const pts = linkPoints(seg.in, seg.out, 8);
+      const geom = track.segGeom(seg.x, seg.y, seg.in, seg.out, seg.route);
+      const pts = geom.pts;
       const last = s === path.length - 1;
       const upto = last ? Math.floor(pts.length / 2) + 1 : pts.length;
-      const curve = isCurveLink(seg.in, seg.out);
-      let factor = curve ? trackData.curveSpeed : 1;
+      let factor = curveFactor(geom.radius, trackData.curveSpeed);
       if (seg.x !== undefined) {
         const t = terrainAt(map, seg.x, seg.y);
         if (t === Terrain.Water) factor = Math.min(factor, trackData.bridgeSpeed);
@@ -1546,7 +1547,7 @@ export class Train {
       if (theirs.has(y * w + x) || avoid(x, y)) return false;
       if (ctx.claimedBy(x, y, this.id) !== null) return false; // track someone else holds
       const p = ctx.track.get(x, y);
-      if (!p || p.links.length > 1) return false; // not on a switch
+      if (!p || p.links.length > 1 || p.unit) return false; // not on a switch or a wide curve
       return true;
     };
     // already standing clear of their line: shuffling further along would not help anyone
@@ -1598,7 +1599,7 @@ export class Train {
       this.updatePoses();
     }
     leavePlatform();
-    this.setPath(path, ctx.map);
+    this.setPath(path, ctx.map, ctx.track);
     this.trackVersion = ctx.track.version;
     this.holding = true;
     this.yieldCount++;

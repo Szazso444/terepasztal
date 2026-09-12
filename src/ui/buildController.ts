@@ -1,6 +1,6 @@
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
-import { rotationCount, type TrackKind } from '../world/track';
+import { rotationCount, itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
 import { inBounds } from '../world/tiles';
 import type { Builder } from '../sim/build';
 import type { WorldRenderer } from '../render/worldRenderer';
@@ -104,7 +104,8 @@ export class BuildController {
       else this.select(null);
     }
     if (inp.wasPressed('KeyR')) {
-      if (this.tool.kind === 'track') this.rot = (this.rot + 1) % rotationCount(this.tool.piece);
+      if (this.tool.kind === 'track')
+        this.rot = (this.rot + 1) % rotationCount(this.tool.item.kind);
       else if (this.tool.kind === 'decor')
         this.rot = (this.rot + 1) % decorDef(this.tool.defId).rotations;
       else if (this.tool.kind === 'station' && (stationDef(this.tool.defId).size ?? 1) > 1)
@@ -199,18 +200,19 @@ export class BuildController {
   }
 
   private updateTrackTool(t: { x: number; y: number }, inMap: boolean) {
-    const tool = this.tool as { kind: 'track'; piece: TrackKind };
+    const tool = this.tool as { kind: 'track'; item: TrackItem };
+    const item = tool.item;
     const inp = this.input;
     // drag-laying straights
-    if (tool.piece === 'straight' || tool.piece === 'bridge') {
+    if (item.kind === 'straight' || item.kind === 'bridge') {
       if (inp.buttonPressed.has(0) && inMap) this.dragStart = { x: t.x, y: t.y };
       if (this.dragStart && inp.buttons.has(0)) {
         const line = this.lineTiles(this.dragStart, t);
-        this.showLineGhosts(line, tool.piece);
+        this.showLineGhosts(line, item);
         this.status(
           line.length > 1
-            ? `${line.length} x ${tool.piece}: ${fmtCost(this.lineCost(line, tool.piece))}`
-            : this.pieceStatus(t, tool.piece),
+            ? `${line.length} x ${item.kind}: ${fmtCost(this.lineCost(line, item))}`
+            : this.pieceStatus(t, item),
         );
         return;
       }
@@ -219,38 +221,50 @@ export class BuildController {
         this.dragStart = null;
         for (const g of this.lineGhosts) g.destroy();
         this.lineGhosts = [];
-        if (line.length === 1) this.builder.placeTrack(t.x, t.y, tool.piece, this.rot);
-        else for (const l of line) this.builder.placeTrack(l.x, l.y, tool.piece, l.rot);
+        if (line.length === 1) this.builder.placeTrack(t.x, t.y, item, this.rot);
+        else for (const l of line) this.builder.placeTrack(l.x, l.y, item, l.rot);
         return;
       }
     } else {
       for (const c of inp.clicks)
-        if (c.button === 0 && inMap) this.builder.placeTrack(t.x, t.y, tool.piece, this.rot);
+        if (c.button === 0 && inMap) this.builder.placeTrack(t.x, t.y, item, this.rot);
     }
     if (!inMap) {
       if (this.ghost) this.ghost.visible = false;
       this.ghostDiamond.visible = false;
+      for (const g of this.lineGhosts) g.visible = false;
       return;
     }
-    const check = this.builder.checkTrack(t.x, t.y, tool.piece);
-    const g = this.ensureGhost(`track/${tool.piece}_${this.rot}`);
-    this.placeGhostAt(g, t.x, t.y, check.ok);
-    const existing = this.builder.track.get(t.x, t.y);
-    if (check.ok && existing && (existing.kind !== tool.piece || existing.rot !== this.rot))
-      g.tint = REPLACE_TINT;
+    const check = this.builder.checkTrack(t.x, t.y, item, this.rot);
+    const key = itemKey(item);
+    if (isUnitKind(item.kind, item.cls)) {
+      // one ghost per footprint tile
+      if (this.ghost) this.ghost.visible = false;
+      const tiles = footprintOf(t.x, t.y, item.kind, this.rot, item.cls);
+      this.showGhosts(
+        tiles.map((f, i) => ({ x: f.x, y: f.y, frame: `track/${key}_${this.rot}_m${i}` })),
+        check.ok,
+      );
+    } else {
+      for (const g of this.lineGhosts) g.visible = false;
+      const g = this.ensureGhost(`track/${key}_${this.rot}`);
+      this.placeGhostAt(g, t.x, t.y, check.ok);
+      const existing = this.builder.track.get(t.x, t.y);
+      if (check.ok && existing) g.tint = REPLACE_TINT;
+    }
     this.world.setSpriteFrame(
       this.ghostDiamond,
       check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.status(this.pieceStatus(t, tool.piece));
+    this.status(this.pieceStatus(t, item));
   }
 
-  private pieceStatus(t: { x: number; y: number }, piece: TrackKind) {
-    const check = this.builder.checkTrack(t.x, t.y, piece);
+  private pieceStatus(t: { x: number; y: number }, item: TrackItem) {
+    const check = this.builder.checkTrack(t.x, t.y, item, this.rot);
     const existing = this.builder.track.get(t.x, t.y);
-    const replacing = !!existing && (existing.kind !== piece || existing.rot !== this.rot);
+    const replacing = !!existing && check.ok;
     const parts = [
       check.ok
         ? replacing
@@ -259,8 +273,28 @@ export class BuildController {
         : (check.reason ?? ''),
       STR.build.rotate,
     ];
-    if (piece === 'straight' || piece === 'bridge') parts.push(STR.build.dragHint);
+    if (item.kind === 'straight' || item.kind === 'bridge') parts.push(STR.build.dragHint);
     return parts.filter(Boolean).join('   ');
+  }
+
+  /** Ghost sprites for several tiles at once (wide pieces, drag lines). */
+  private showGhosts(list: { x: number; y: number; frame: string; ok?: boolean }[], ok: boolean) {
+    this.ghostDiamond.visible = false;
+    while (this.lineGhosts.length < list.length) {
+      const g = this.world.makeOverlaySprite(list[0].frame);
+      g.alpha = 0.75;
+      this.lineGhosts.push(g);
+    }
+    for (let i = 0; i < this.lineGhosts.length; i++) {
+      const g = this.lineGhosts[i];
+      if (i >= list.length) {
+        g.visible = false;
+        continue;
+      }
+      const l = list[i];
+      this.world.setSpriteFrame(g, l.frame);
+      this.placeGhostAt(g, l.x, l.y, l.ok ?? ok);
+    }
   }
 
   private lineTiles(a: { x: number; y: number }, b: { x: number; y: number }) {
@@ -277,34 +311,27 @@ export class BuildController {
     return out;
   }
 
-  private lineCost(line: { x: number; y: number }[], piece: TrackKind) {
+  private lineCost(line: { x: number; y: number; rot: number }[], item: TrackItem) {
     const c: Record<string, number> = {};
     for (const l of line) {
-      const ch = this.builder.checkTrack(l.x, l.y, piece);
+      const ch = this.builder.checkTrack(l.x, l.y, item, l.rot);
       if (ch.ok) for (const [k, v] of Object.entries(ch.cost)) c[k] = (c[k] ?? 0) + v;
     }
     return c;
   }
 
-  private showLineGhosts(line: { x: number; y: number; rot: number }[], piece: TrackKind) {
+  private showLineGhosts(line: { x: number; y: number; rot: number }[], item: TrackItem) {
     if (this.ghost) this.ghost.visible = false;
-    this.ghostDiamond.visible = false;
-    while (this.lineGhosts.length < line.length) {
-      const g = this.world.makeOverlaySprite(`track/${piece}_0`);
-      g.alpha = 0.75;
-      this.lineGhosts.push(g);
-    }
-    for (let i = 0; i < this.lineGhosts.length; i++) {
-      const g = this.lineGhosts[i];
-      if (i >= line.length) {
-        g.visible = false;
-        continue;
-      }
-      const l = line[i];
-      this.world.setSpriteFrame(g, `track/${piece}_${l.rot}`);
-      const ok = this.builder.checkTrack(l.x, l.y, piece).ok;
-      this.placeGhostAt(g, l.x, l.y, ok);
-    }
+    const key = itemKey(item);
+    this.showGhosts(
+      line.map((l) => ({
+        x: l.x,
+        y: l.y,
+        frame: `track/${key}_${l.rot}`,
+        ok: this.builder.checkTrack(l.x, l.y, item, l.rot).ok,
+      })),
+      true,
+    );
   }
 
   private updateStationTool(t: { x: number; y: number }, inMap: boolean) {

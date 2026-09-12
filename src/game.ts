@@ -97,7 +97,7 @@ import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
 import { TownPanel } from './ui/townPanel';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
-import { makePiece } from './world/track';
+import { footprintOf, pieceFrame } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
@@ -363,10 +363,10 @@ export class Game {
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    for (const [x, y, kind, rot] of level.track) {
+    for (const [x, y, kind, rot, cls, cls2] of level.track) {
       if (!inBounds(this.map, x, y)) continue;
-      this.track.set(x, y, makePiece(kind, rot));
-      this.onTrackChanged(x, y);
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+        this.onTrackChanged(t.x, t.y);
     }
     resetStationIds(1);
     for (const sj of level.stations) {
@@ -764,7 +764,8 @@ export class Game {
   private saveExtra: Record<string, unknown> = {};
   snapshot(): SaveGame {
     const track: SaveGame['track'] = [];
-    for (const t of this.track.tiles()) track.push([t.x, t.y, t.piece.kind, t.piece.rot]);
+    for (const t of this.track.anchors())
+      track.push([t.x, t.y, t.piece.kind, t.piece.rot, t.piece.cls, t.piece.cls2]);
     return {
       ...this.saveExtra,
       version: SAVE_VERSION,
@@ -822,7 +823,9 @@ export class Game {
         this.world.retile(x, y);
       }
     };
-    for (const [x, y, kind] of j.track) fix(x, y, kind === 'bridge');
+    for (const [x, y, kind, rot, cls] of j.track)
+      for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+        fix(f.x, f.y, kind === 'bridge');
     for (const s of j.stations) {
       const size = stationDefOf(s.defId).size ?? 1;
       for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) fix(s.x + dx, s.y + dy);
@@ -849,9 +852,9 @@ export class Game {
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toolbar.refresh();
-    for (const [x, y, kind, rot] of j.track) {
-      this.track.set(x, y, makePiece(kind, rot));
-      this.onTrackChanged(x, y);
+    for (const [x, y, kind, rot, cls, cls2] of j.track) {
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+        this.onTrackChanged(t.x, t.y);
     }
     resetStationIds(1);
     for (const sj of j.stations) {
@@ -912,8 +915,8 @@ export class Game {
     if (p) {
       if (t === Terrain.Hill) this.world.setFlattened(x, y, true);
       if (t === Terrain.Forest || t === Terrain.Grass)
-        this.world.displaceProps(x, y, p.links as [number, number][]);
-      this.world.setTrack(x, y, `track/${p.kind}_${p.rot}`);
+        this.world.displaceProps(x, y, p.unit ? [] : (p.links as [number, number][]));
+      this.world.setTrack(x, y, pieceFrame(p));
     } else {
       this.world.setTrack(x, y, null);
       if (t === Terrain.Hill && !this.builder.stationAt(x, y)) this.world.setFlattened(x, y, false);
@@ -1130,7 +1133,7 @@ export class Game {
             if (d) {
               for (const g of d.gateTiles())
                 if (!this.track.has(g.x, g.y))
-                  this.builder.placeTrack(g.x, g.y, 'straight', rot === 0 ? 1 : 0);
+                  this.builder.placeTrackKind(g.x, g.y, 'straight', rot === 0 ? 1 : 0);
               d.name = STR.station.depotName;
               this.onStationChanged(d, false);
             }

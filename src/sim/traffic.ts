@@ -88,7 +88,7 @@ export class Traffic {
     const isNode = (x: number, y: number) => {
       const p = this.track.get(x, y);
       if (!p) return true;
-      if (p.links.length > 1 || platform.has(this.key(x, y))) return true;
+      if (p.links.length > 1 || p.unit || platform.has(this.key(x, y))) return true;
       let open = 0;
       for (const d of DIRS) if (this.track.connected(x, y, d)) open++;
       return open < 2;

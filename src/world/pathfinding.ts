@@ -1,12 +1,14 @@
 import { Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import type { TrackGraph } from './track';
-import { linkLength, isCurveLink } from './trackGeom';
+import { isCurveLink } from './trackGeom';
 
 export interface PathSegment {
   x: number;
   y: number;
   in: Dir;
   out: Dir;
+  /** which route of a multi-tile piece this crossing follows (set by TrackGraph.resolveRoutes) */
+  route?: number;
 }
 
 /**
@@ -49,7 +51,7 @@ export function findPath(
       if (!track.opensTo(nx, ny, nin)) continue;
       if (avoid && avoid(nx, ny)) continue;
       const piece = track.get(x, y)!;
-      let cost = linkLength(dir, out);
+      let cost = track.segLength(x, y, dir, out);
       if (piece.kind === 'switch' && isCurveLink(dir, out)) cost += 0.2;
       const nk = key(nx, ny, nin);
       const nd = d + cost;
