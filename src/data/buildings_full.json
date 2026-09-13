@@ -19,8 +19,8 @@
         "coal": 3
       }
     },
-    "perDay": 40,
-    "terrain": "hill"
+    "terrain": "hill",
+    "perWeek": 40
   },
   {
     "id": "ironworks",
@@ -43,7 +43,7 @@
         "iron": 2
       }
     },
-    "perDay": 30
+    "perWeek": 30
   },
   {
     "id": "oil_derrick",
@@ -63,7 +63,7 @@
         "crude": 1
       }
     },
-    "perDay": 30
+    "perWeek": 30
   },
   {
     "id": "diesel_refinery",
@@ -79,13 +79,14 @@
     "supply": "full",
     "recipe": {
       "in": {
-        "crude": 2
+        "crude": 2,
+        "stone": 2
       },
       "out": {
         "diesel": 1
       }
     },
-    "perDay": 30
+    "perWeek": 30
   },
   {
     "id": "wire_mill",
@@ -108,6 +109,6 @@
         "wire": 1
       }
     },
-    "perDay": 25
+    "perWeek": 25
   }
 ]

@@ -182,7 +182,7 @@ export class Toolbar {
         tier: SUPPLY_DEFS[k].tier,
         place: STR.toolbar.placeSupply,
       });
-    const works: ToolItem[] = BUILDING_DEFS.map((d) => ({
+    const works: ToolItem[] = BUILDING_DEFS.filter((d) => !d.bridge).map((d) => ({
       key: `building:${d.id}`,
       tool: { kind: 'building', defId: d.id },
       name: d.name,
@@ -198,6 +198,18 @@ export class Toolbar {
           : STR.toolbar.place.works,
       reach: d.power ? 2 : undefined,
     }));
+    track.push(
+      ...BUILDING_DEFS.filter((d) => d.bridge).map((d) => ({
+        key: 'building:' + d.id,
+        tool: { kind: 'building' as const, defId: d.id },
+        name: d.name,
+        cost: d.cost,
+        frame: 'structures/' + d.id,
+        desc: `${d.bridge!.capacity} t capacity. ${d.flavor}`,
+        tier: d.tier,
+        place: 'On water. Lay track on the platform after building it.',
+      })),
+    );
     const terrain: ToolItem[] = [
       Terrain.Grass,
       Terrain.Forest,
@@ -358,7 +370,9 @@ export class Toolbar {
               ? 'utility'
               : 'decor'
             : t.kind === 'building'
-              ? 'works'
+              ? BUILDING_DEFS.find((d) => d.id === t.defId)?.bridge
+                ? 'track'
+                : 'works'
               : t.kind === 'terrain'
                 ? 'terrain'
                 : null;

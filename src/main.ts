@@ -9,7 +9,7 @@ import { getLevel, levelFromMap, saveLevel, type LevelData } from './world/level
 import { generateMap, emptyMap, type MapGenParams } from './world/mapgen';
 import { Terrain } from './world/tiles';
 import type { SupplyMode } from './sim/supply';
-import { armDevReload, takeDevSession } from './engine/devsession';
+import { armDevReload, takeDevSession, reportDevTraffic } from './engine/devsession';
 
 function paramsFromRules(size = rules.mapSize): MapGenParams {
   return {
@@ -121,9 +121,15 @@ async function boot() {
   else game.startFresh();
   // the game always starts paused; Space or the pause button starts the clock. A dev reload
   // keeps the speed the snapshot was taken at instead, so a running game stays running.
-  if (start !== 'editor' && !resumed) game.clock.setSpeed(0);
+  if (start !== 'editor' && !resumed && !(intent?.action === 'continue' && intent.keepSpeed))
+    game.clock.setSpeed(0);
   if (start === 'menu') game.openMainMenu();
   armDevReload(() => (game.mode === 'play' && !game.menuOpen ? game.snapshot() : null));
+  if (import.meta.env.DEV)
+    reportDevTraffic(() => ({
+      time: game.clock.time,
+      traffic: game.traffic.report(game.fleet.trains),
+    }));
   loading.remove();
 }
 

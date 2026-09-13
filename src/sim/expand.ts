@@ -21,13 +21,24 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
   p.h += 2 * d;
   const newRX = Math.ceil(p.w / CHUNK_TILES);
   save.world = { kind: 'generated', seed: save.world.seed, params: p };
-  save.track = save.track.map(([x, y, k, r]) => [x + d, y + d, k, r]);
+  save.track = save.track.map(([x, y, k, r, ...rest]) => [x + d, y + d, k, r, ...rest]);
   for (const s of save.stations) {
     s.x += d;
     s.y += d;
   }
   save.decor = (save.decor ?? []).map(([x, y, id, r]) => [x + d, y + d, id, r]);
-  save.buildings = (save.buildings ?? []).map(([x, y, id, a]) => [x + d, y + d, id, a]);
+  save.buildings = (save.buildings ?? []).map(([x, y, id, a, ...rest]) => [
+    x + d,
+    y + d,
+    id,
+    a,
+    ...rest,
+  ]);
+  save.wires = (save.wires ?? []).map(([x, y, k]) => [x + d, y + d, k]);
+  for (const h of save.houses?.list ?? []) {
+    h.x += d;
+    h.y += d;
+  }
   for (const t of save.trains as {
     head?: { x: number; y: number } | null;
     trail?: number[][];

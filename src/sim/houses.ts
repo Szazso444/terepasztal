@@ -1,14 +1,11 @@
 import type { Builder, Decor, PlacementCheck } from './build';
 import { decorDef } from './build';
 import type { Town, TownRegistry } from './towns';
-import { TOWN_RADIUS } from './towns';
 import type { Stockpile } from './stockpile';
 import { scaleCost } from './stockpile';
 import type { Station } from './stations';
 import { content, type Cost } from '../data/content';
 import { rules, daySeconds } from './rules';
-import { inBounds } from '../world/tiles';
-import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import { STR } from '../strings';
 import { sfx } from '../engine/audio';
 
@@ -65,10 +62,9 @@ export interface TownHousing {
 }
 
 /**
- * Townhouses: each holds residents up to its level's capacity, fills slowly while there is wheat,
- * and grows a storey once it has been full for a while. Founded towns raise new houses on their
- * own when housing gets tight, faster where trains call often. The decor entry stays the tile
- * owner (placement, cost, town founding); this registry keeps the simulated state.
+ * Houses grow residents while fed, up to their completed housing capacity. Construction and
+ * upgrades are paid player actions. Townhouses remain the separate civic anchors. The decor
+ * entry owns placement; this registry keeps construction and residential state.
  */
 export class HouseRegistry {
   readonly houses = new Map<number, House>();
@@ -152,9 +148,9 @@ export class HouseRegistry {
     for (const h of this.houses.values()) n += h.residents;
     return n;
   }
-  /** Wheat on hand and nobody starving: people only move in while there is food. */
+  /** People only move in while there is food. */
   foodOk() {
-    return this.stock.get('wheat') > 0 && !this.stock.famine;
+    return this.stock.get('food') > 0 && !this.stock.famine;
   }
   /** Days until the next resident arrives in a house (null when nobody is coming). */
   growthDaysLeft(h: House): number | null {
@@ -283,55 +279,8 @@ export class HouseRegistry {
     this.onMessage?.(STR.town.firstTrain(t.name, n), 'good');
   }
 
-  /** A free tile in the town's reach, preferring spots beside track and other houses. */
-  private pickTile(t: Town): { x: number; y: number } | null {
-    const s0 = this.towns.station(t);
-    if (!s0) return null;
-    const map = this.builder.map;
-    const picks: { x: number; y: number; w: number }[] = [];
-    for (let dy = -TOWN_RADIUS; dy <= TOWN_RADIUS; dy++)
-      for (let dx = -TOWN_RADIUS; dx <= TOWN_RADIUS; dx++) {
-        const x = s0.x + dx;
-        const y = s0.y + dy;
-        if (!inBounds(map, x, y) || !this.builder.regions.isTileUnlocked(x, y)) continue;
-        if (this.towns.townAt(x, y)?.id !== t.id) continue;
-        if (this.builder.canPlaceDecor(x, y, HOUSE_ID)) continue;
-        let track = 0;
-        let homes = 0;
-        for (const d of DIRS) {
-          const nx = x + DIR_DX[d];
-          const ny = y + DIR_DY[d];
-          if (this.builder.track.has(nx, ny)) track++;
-          const dec = this.builder.decorAt(nx, ny);
-          if (dec && HouseRegistry.isHouse(dec)) homes++;
-        }
-        const dist = Math.max(Math.abs(dx), Math.abs(dy));
-        const w = (1 + (track ? 2 : 0) + 1.5 * homes) / (1 + dist / 5);
-        picks.push({ x, y, w });
-      }
-    if (!picks.length) return null;
-    let r = Math.random() * picks.reduce((a, p) => a + p.w, 0);
-    for (const p of picks) {
-      r -= p.w;
-      if (r <= 0) return p;
-    }
-    return picks[picks.length - 1];
-  }
-  /** The town builds `n` houses at its own expense; returns how many it could site. */
-  private spawn(t: Town, n: number) {
-    let done = 0;
-    for (let i = 0; i < n; i++) {
-      const p = this.pickTile(t);
-      if (!p) break;
-      const d = this.builder.spawnDecor(p.x, p.y, HOUSE_ID, Math.floor(Math.random() * 2));
-      if (!d) break;
-      done++;
-    }
-    return done;
-  }
-
   // ------------------------------------------------------------------ sim
-  /** Construction, growth and upgrades every tick; towns build new houses only while `spawn`. */
+  /** Advance construction and residents; the legacy spawn argument no longer creates houses. */
   tick(gdt: number, now: number, spawn = true) {
     const cfg = this.cfg;
     const days = gdt / daySeconds();
@@ -361,26 +310,14 @@ export class HouseRegistry {
         h.grow = 0;
         if (!food) continue;
         h.full += days;
-        if (h.full >= cfg.autoUpgradeDays && h.level < this.maxLevel) this.levelUp(h);
+        // Housing capacity grows only when the player builds or pays for an upgrade.
       }
     }
-    // traffic window, then let tight towns build
+    // Keep the recent arrival count for town statistics.
     const oldest = now - cfg.trafficWindowDays * daySeconds();
     if (this.arrivals.length && this.arrivals[0].at < oldest)
       this.arrivals = this.arrivals.filter((a) => a.at >= oldest);
-    if (!spawn) return;
-    for (const t of this.towns.towns) {
-      if ((this.retryAt.get(t.id) ?? 0) > now) continue;
-      if (!this.towns.founded(t)) continue;
-      const hs = this.townHousing(t);
-      if (hs.capacity <= 0 || hs.residents < cfg.spawnAt * hs.capacity) continue;
-      const want = Math.max(1, Math.round(hs.mul));
-      const built = this.spawn(t, want);
-      if (built > 0) {
-        this.retryAt.delete(t.id);
-        this.onMessage?.(STR.town.spawned(t.name, built), 'info');
-      } else this.retryAt.set(t.id, now + daySeconds() / 2);
-    }
+    void spawn;
   }
 
   toJSON(): HousesJSON {

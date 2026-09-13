@@ -113,7 +113,10 @@ import { RosterScreen } from './ui/rosterScreen';
 import { Crafting } from './gacha/crafting';
 import { CraftingScreen } from './ui/craftingScreen';
 import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
-import { tickBuildings, buildingDef, type Building } from './sim/buildings';
+import { showSignalGuide } from './ui/signalGuide';
+import { cityTiles } from './sim/city';
+import { bridgeSpan } from './sim/bridges';
+import { tickBuildings, buildingDef, buildingFrame, type Building } from './sim/buildings';
 import { PowerGrid } from './sim/power';
 import { TrainScreen } from './ui/trainScreen';
 import { MarketScreen } from './ui/marketScreen';
@@ -160,9 +163,10 @@ function startStock(): Record<string, number> {
     wood: Math.round(sum('wood') * s),
     stone: Math.round(sum('stone') * s),
     iron: Math.round(sum('iron') * s),
-    water: 120,
-    wheat: 120,
-    coal: 40,
+    water: 600,
+    wheat: 300,
+    food: 600,
+    coal: 240,
   };
 }
 
@@ -420,6 +424,7 @@ export class Game {
       }
       this.toolbar.refresh();
     }
+    this.stock.beginFlowHistory();
   }
 
   /** Place a level's pre-built content into a fresh world (no economy). */
@@ -977,7 +982,13 @@ export class Game {
       seasonOffset: getSeasonOffset(),
       towns: this.towns.toJSON(),
       settings: { ...this.settings },
-      buildings: [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id, b.acc]),
+      buildings: [...this.builder.buildings.values()].map((b) => [
+        b.x,
+        b.y,
+        b.id,
+        b.acc,
+        b.level ?? 1,
+      ]),
       wires: this.catenary.toJSON(),
       houses: this.houses.toJSON(),
     };
@@ -997,6 +1008,11 @@ export class Game {
    * ground (a regenerated stone field or lake under a station would strand it).
    */
   private fixBuiltTiles(j: SaveGame) {
+    const bridges = new Set(
+      (j.buildings ?? [])
+        .filter((b) => buildingDef(b[2]).bridge)
+        .map((b) => b[1] * this.map.w + b[0]),
+    );
     const fix = (x: number, y: number, bridge = false) => {
       if (!inBounds(this.map, x, y)) return;
       const t = terrainAt(this.map, x, y);
@@ -1012,16 +1028,17 @@ export class Game {
     };
     for (const [x, y, kind, rot, cls] of j.track)
       for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
-        fix(f.x, f.y, kind === 'bridge');
+        fix(f.x, f.y, kind === 'bridge' || bridges.has(f.y * this.map.w + f.x));
     for (const s of j.stations) {
       const size = stationDefOf(s.defId).size ?? 1;
       for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) fix(s.x + dx, s.y + dy);
     }
     for (const [x, y] of j.decor ?? []) fix(x, y);
-    for (const [x, y] of j.buildings ?? []) fix(x, y);
+    for (const [x, y, id] of j.buildings ?? []) fix(x, y, !!buildingDef(id).bridge);
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    this.restoringWorld = true;
     this.saveExtra = {};
     for (const [k, v] of Object.entries(j)) if (!KNOWN_SAVE_KEYS.has(k)) this.saveExtra[k] = v;
     if (j.loadedFrom !== undefined) this.warnDeprecated(j);
@@ -1074,13 +1091,14 @@ export class Game {
       this.onDecorChanged(d, false);
     }
     this.houses.load(j.houses);
-    for (const [x, y, id, acc] of j.buildings ?? []) {
-      const b: Building = { id, x, y, acc: acc ?? 0, active: false, rate: 0 };
+    for (const [x, y, id, acc, level] of j.buildings ?? []) {
+      const b: Building = { id, x, y, acc: acc ?? 0, level: level ?? 1, active: false, rate: 0 };
       this.builder.buildings.set(y * this.map.w + x, b);
       this.onBuildingChanged(b, false);
     }
     if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
     this.towns.load(j.towns);
+    this.refreshCity();
     this.ensureDepot();
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
@@ -1094,6 +1112,9 @@ export class Game {
     this.camera.zoomIndex = j.camera.zoomIndex;
     this.camera.zoom = ZOOM_STEPS[j.camera.zoomIndex];
     this.camera.centerOn(j.camera.x, j.camera.y);
+    this.stock.beginFlowHistory();
+    this.restoringWorld = false;
+    this.refreshBridges();
   }
 
   newGame(seedText: string, supply: SupplyMode = 'simple') {
@@ -1108,6 +1129,8 @@ export class Game {
 
   // ---------------------------------------------------------------- world edits
   private onTrackChanged(x: number, y: number) {
+    this.builder.refreshBridgeCapacity(x, y);
+    this.refreshBridges();
     this.depot?.onTrackChanged();
     const p = this.track.get(x, y);
     const t = terrainAt(this.map, x, y);
@@ -1166,8 +1189,39 @@ export class Game {
       this.world.removeStructure(id);
     }
   }
+  private restoringWorld = false;
+  private refreshBridges() {
+    if (this.restoringWorld) return;
+    for (const b of this.builder.buildings.values())
+      if (buildingDef(b.id).bridge) {
+        const s = bridgeSpan(this.builder, b);
+        const n = Math.min(4, s.length - Math.floor(s.index / 4) * 4);
+        const phase = s.index % 4;
+        const edge = (s.index === 0 ? 1 : 0) + (s.index === s.length - 1 ? 2 : 0);
+        const key = `structures/span_${s.material}_${s.axis}_${n}_${phase}_${edge}`;
+        this.world.setPlatform(b.x, b.y, key + '_deck');
+        this.world.setStructure('bridge:' + b.x + ',' + b.y, b.x, b.y, key + '_rail', 35);
+        const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
+        this.world.setPlatform(b.x, b.y, (b.level ?? 1) > 1 ? detail + '_deck' : null, 1);
+        const detailId = 'bridge-detail:' + b.x + ',' + b.y;
+        if ((b.level ?? 1) > 1) this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36);
+        else this.world.removeStructure(detailId);
+      }
+  }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
+    if (buildingDef(b.id).bridge) {
+      this.builder.refreshBridgeCapacity(b.x, b.y);
+      this.track.version++;
+      if (removed) {
+        this.world.setPlatform(b.x, b.y, null);
+        this.world.setPlatform(b.x, b.y, null, 1);
+        this.world.removeStructure('bridge:' + b.x + ',' + b.y);
+        this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
+      }
+      this.refreshBridges();
+      return;
+    }
     this.towns?.refresh();
     const t = terrainAt(this.map, b.x, b.y);
     if (removed) {
@@ -1176,7 +1230,7 @@ export class Game {
     } else {
       if (t === Terrain.Hill) this.world.setFlattened(b.x, b.y, true);
       this.world.removeProps(b.x, b.y);
-      this.world.setStructure(id, b.x, b.y, `structures/${b.id}`);
+      this.world.setStructure(id, b.x, b.y, buildingFrame(b));
     }
     if (buildingDef(b.id).power || buildingDef(b.id).substation) this.rebuildPower();
   }
@@ -1298,7 +1352,7 @@ export class Game {
           id,
           s.x + 1,
           s.y + 1,
-          `structures/${s.def.art}_r${s.rot % 2}`,
+          `structures/${s.def.art}_r${s.rot % 2}${s.level > 1 ? '_lv' + s.level : ''}`,
           20,
           -HALF_H_PX,
         );
@@ -1440,7 +1494,7 @@ export class Game {
       const snap = expandSave(this.snapshot(), 1);
       if (writeSave(snap)) {
         this.toasts.push(STR.overview.growing, 'info');
-        setIntentAndReload({ action: 'continue' });
+        setIntentAndReload({ action: 'continue', keepSpeed: true });
         return true;
       }
     }
@@ -1526,8 +1580,7 @@ export class Game {
       if (this.mode === 'play' && !this.menuOpen) this.screens.toggle(this.marketScreen);
     });
     this.resourceBar.right.append(this.hud.funds);
-    this.resourceBar.stats = () =>
-      resourceStats(this.builder, this.fleet.trains, this.stock, RESOURCE_IDS);
+    this.resourceBar.stats = () => resourceStats(this.stock, RESOURCE_IDS);
     this.tuningScreen = new TuningScreen(() => {
       this.applySeason(true);
       this.toolbar.refresh();
@@ -1687,6 +1740,16 @@ export class Game {
       if (this.build.selectedDecor) this.build.selectDecor(null);
     });
     this.decorPanel.houses = this.houses;
+    this.decorPanel.onSignalGuide = showSignalGuide;
+    this.decorPanel.onSignalBlock = (d) => {
+      for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0xffffff);
+      this.signalHighlight = [];
+      if (d) {
+        const post = this.fleet.signals.postAt(d.x, d.y);
+        if (post) this.signalHighlight = this.fleet.signals.blockBeyond(post).tiles;
+      }
+      for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0x7cd7e8);
+    };
     this.trainSide = new TrainSide(this.builder, this.atlas);
     this.noticePanel = new NoticePanel();
     this.noticePanel.onFocus = (n) => this.focusNotice(n);
@@ -1695,7 +1758,7 @@ export class Game {
       this.settings.advisor = !v;
       writeSettings(this.settings);
     };
-    this.hud.rightActions.append(this.advisor.button);
+    this.hud.rightActions.append(this.advisor.button, btn('Signals?', showSignalGuide, 'small'));
     this.hud.onToggleWeather = () => {
       this.settings.weather = !this.settings.weather;
       this.applySettings();
@@ -1703,6 +1766,16 @@ export class Game {
     this.hud.onToggleDay = () => {
       this.settings.dayNight = !this.settings.dayNight;
       this.applySettings();
+    };
+    this.trainSide.onRefuel = (trains) => {
+      const ok = this.fleet.refuelAll(trains);
+      this.toasts.push(
+        ok
+          ? 'Trains refuelled to full at twice the resource cost'
+          : 'Not enough fuel and water to fill this group; no resources spent',
+        ok ? 'good' : 'warn',
+      );
+      this.trainSide.update(trains, this.viewTarget === 1, true);
     };
     this.trainSide.onDetails = (t) => {
       this.trainScreen.open(t);
@@ -1776,6 +1849,13 @@ export class Game {
     (this.overview as unknown as { source: OverviewSource }).source = src;
   }
 
+  private signalHighlight: { x: number; y: number }[] = [];
+  private nextCityCheck = 0;
+  private refreshCity() {
+    this.world.setCity(
+      cityTiles(this.map, this.houses.houses.values(), (x, y) => !!this.towns.townAt(x, y)),
+    );
+  }
   // ---------------------------------------------------------------- sim
   private update(dt: number) {
     if (this.settings.autosave && this.mode === 'play' && !this.menuOpen) {
@@ -1787,10 +1867,14 @@ export class Game {
     }
     const gdt = this.clock.advance(dt);
     if (gdt > 0) {
-      this.stock.population =
-        this.builder.crewTotal() + this.houses.residentsTotal() + this.fleet.crewTotal();
+      this.stock.population = this.houses.residentsTotal();
+      this.stock.workforce = this.builder.crewTotal() + this.fleet.crewTotal();
       this.stock.tick(gdt);
       this.houses.tick(gdt, this.clock.time, this.mode === 'play');
+      if (this.clock.time >= this.nextCityCheck) {
+        this.nextCityCheck = this.clock.time + 10;
+        this.refreshCity();
+      }
       if (this.mode === 'play')
         this.people.tick(
           gdt,
@@ -1798,7 +1882,15 @@ export class Game {
           this.clock.dayFraction,
         );
       const famineMul = this.stock.famine ? 0.5 : 1;
-      for (const s of this.builder.stations) s.tick(gdt * famineMul);
+      for (const s of this.builder.stations) {
+        if (s.def.id === 'station')
+          s.passengerPopulation = [...this.houses.houses.values()]
+            .filter(
+              (h) => h.progress >= 1 && Math.max(Math.abs(h.x - s.x), Math.abs(h.y - s.y)) <= 7,
+            )
+            .reduce((n, h) => n + h.residents, 0);
+        s.tick(gdt * famineMul);
+      }
       tickBuildings(
         this.builder.buildings.values(),
         this.stock,
@@ -1981,7 +2073,7 @@ export class Game {
     if (this.lastFailedContract)
       tips.push({ key: 'failed', kind: 'warn', text: T.failed(this.lastFailedContract) });
     if (this.stock.famine) tips.push({ key: 'famine', kind: 'bad', text: T.famine });
-    else if (this.stock.wheatPerDay() > 0 && this.stock.get('wheat') < this.stock.wheatPerDay() * 2)
+    else if (this.stock.foodPerWeek() > 0 && this.stock.get('food') < this.stock.foodPerWeek() * 2)
       tips.push({ key: 'wheat', kind: 'warn', text: T.lowWheat });
     if (b.stations.length === 0) tips.push({ key: 'nostations', kind: 'info', text: T.noStations });
     else if (b.stations.length === 1)
@@ -2263,7 +2355,7 @@ export class Game {
       this.tooltip.show(this.input.mouseX, this.input.mouseY, def.name, [
         BuildingPanel.recipeText(bld.id),
         status.text,
-        `${STR.building.rate}: ${STR.station.perDay(Math.round(bld.rate * 10) / 10)}`,
+        `${STR.building.rate}: ${STR.station.perWeek(Math.round(bld.rate * 10) / 10)}`,
       ]);
     } else this.tooltip.hide();
   }
@@ -2603,6 +2695,7 @@ export class Game {
     d.set(STR.debug.zoom, `${this.camera.targetZoom}x (${this.viewTarget ? 'overview' : 'rts'})`);
     d.set(STR.debug.camera, `${Math.round(this.camera.x)}, ${Math.round(this.camera.y)}`);
     const tc = this.traffic.counters;
+    d.set(STR.debug.recovery, this.traffic.recoverySummary(this.fleet.trains));
     d.set(
       STR.debug.traffic,
       `stuck ${tc.stuck} · deadlock ${tc.deadlocks} · overlap ${tc.overlaps} · yields ${tc.yields} · holds ${tc.waits}`,

@@ -1,0 +1,2607 @@
+{
+  "seconds": 240,
+  "before": [
+    {
+      "id": 101,
+      "x": 103,
+      "y": 110
+    },
+    {
+      "id": 102,
+      "x": 109,
+      "y": 110
+    },
+    {
+      "id": 103,
+      "x": 97,
+      "y": 110
+    },
+    {
+      "id": 104,
+      "x": 115,
+      "y": 110
+    }
+  ],
+  "passed": false,
+  "yielded": [
+    {
+      "id": 101,
+      "yields": 0
+    },
+    {
+      "id": 102,
+      "yields": 0
+    },
+    {
+      "id": 103,
+      "yields": 0
+    },
+    {
+      "id": 104,
+      "yields": 1
+    }
+  ],
+  "maxActive": 0,
+  "maxTickMs": 10.299999997019768,
+  "count": 4,
+  "pinned": true,
+  "traffic": {
+    "counters": {
+      "stuck": 4,
+      "deadlocks": 8,
+      "overlaps": 0,
+      "yields": 1,
+      "headOn": 0,
+      "waits": 9600
+    },
+    "trains": [
+      {
+        "id": 101,
+        "name": "Traffic test 1",
+        "mode": "schedule",
+        "state": "moving",
+        "blockedSeconds": 236,
+        "yields": 0,
+        "stuck": 1,
+        "stuckNow": true,
+        "overlaps": 0,
+        "message": ""
+      },
+      {
+        "id": 102,
+        "name": "Traffic test 2",
+        "mode": "schedule",
+        "state": "moving",
+        "blockedSeconds": 240,
+        "yields": 0,
+        "stuck": 1,
+        "stuckNow": true,
+        "overlaps": 0,
+        "message": ""
+      },
+      {
+        "id": 103,
+        "name": "Traffic test 3",
+        "mode": "schedule",
+        "state": "moving",
+        "blockedSeconds": 234,
+        "yields": 0,
+        "stuck": 1,
+        "stuckNow": true,
+        "overlaps": 0,
+        "message": ""
+      },
+      {
+        "id": 104,
+        "name": "Traffic test 4",
+        "mode": "schedule",
+        "state": "yielding",
+        "blockedSeconds": 0,
+        "yields": 1,
+        "stuck": 1,
+        "stuckNow": true,
+        "overlaps": 0,
+        "message": "pulling aside for an oncoming train"
+      }
+    ],
+    "episodes": [
+      {
+        "t": 0,
+        "kind": "yield",
+        "train": 104,
+        "name": "Traffic test 4",
+        "other": 101,
+        "x": 116,
+        "y": 110,
+        "text": "Traffic test 4 pulls aside for #101"
+      },
+      {
+        "t": 20.2,
+        "kind": "deadlock",
+        "train": 101,
+        "name": "Traffic test 1",
+        "other": 102,
+        "x": 107,
+        "y": 110,
+        "text": "no room to pass: Traffic test 1 ⇄ Traffic test 2"
+      },
+      {
+        "t": 22.3,
+        "kind": "deadlock",
+        "train": 103,
+        "name": "Traffic test 3",
+        "other": 101,
+        "x": 104,
+        "y": 110,
+        "text": "no room to pass: Traffic test 3 ⇄ Traffic test 1 ⇄ Traffic test 2"
+      },
+      {
+        "t": 30.7,
+        "kind": "stuck",
+        "train": 102,
+        "name": "Traffic test 2",
+        "other": 101,
+        "x": 110,
+        "y": 110,
+        "text": "Traffic test 2 has not moved for 30 s at 110,110 (moving, behind Traffic test 1)"
+      },
+      {
+        "t": 34.85,
+        "kind": "stuck",
+        "train": 101,
+        "name": "Traffic test 1",
+        "other": 102,
+        "x": 107,
+        "y": 110,
+        "text": "Traffic test 1 has not moved for 30 s at 107,110 (moving, behind Traffic test 2)"
+      },
+      {
+        "t": 36.7,
+        "kind": "stuck",
+        "train": 103,
+        "name": "Traffic test 3",
+        "other": 101,
+        "x": 104,
+        "y": 110,
+        "text": "Traffic test 3 has not moved for 30 s at 104,110 (moving, behind Traffic test 1)"
+      },
+      {
+        "t": 38.2,
+        "kind": "stuck",
+        "train": 104,
+        "name": "Traffic test 4",
+        "other": null,
+        "x": 123,
+        "y": 110,
+        "text": "Traffic test 4 has not moved for 30 s at 123,110 (yielding, pulling aside for an oncoming train)"
+      },
+      {
+        "t": 89.2,
+        "kind": "deadlock",
+        "train": 101,
+        "name": "Traffic test 1",
+        "other": 102,
+        "x": 107,
+        "y": 110,
+        "text": "no room to pass: Traffic test 1 ⇄ Traffic test 2"
+      },
+      {
+        "t": 91.3,
+        "kind": "deadlock",
+        "train": 103,
+        "name": "Traffic test 3",
+        "other": 101,
+        "x": 104,
+        "y": 110,
+        "text": "no room to pass: Traffic test 3 ⇄ Traffic test 1 ⇄ Traffic test 2"
+      },
+      {
+        "t": 158.2,
+        "kind": "deadlock",
+        "train": 101,
+        "name": "Traffic test 1",
+        "other": 102,
+        "x": 107,
+        "y": 110,
+        "text": "no room to pass: Traffic test 1 ⇄ Traffic test 2"
+      },
+      {
+        "t": 160.3,
+        "kind": "deadlock",
+        "train": 103,
+        "name": "Traffic test 3",
+        "other": 101,
+        "x": 104,
+        "y": 110,
+        "text": "no room to pass: Traffic test 3 ⇄ Traffic test 1 ⇄ Traffic test 2"
+      },
+      {
+        "t": 227.2,
+        "kind": "deadlock",
+        "train": 101,
+        "name": "Traffic test 1",
+        "other": 102,
+        "x": 107,
+        "y": 110,
+        "text": "no room to pass: Traffic test 1 ⇄ Traffic test 2"
+      },
+      {
+        "t": 229.3,
+        "kind": "deadlock",
+        "train": 103,
+        "name": "Traffic test 3",
+        "other": 101,
+        "x": 104,
+        "y": 110,
+        "text": "no room to pass: Traffic test 3 ⇄ Traffic test 1 ⇄ Traffic test 2"
+      }
+    ],
+    "junctions": [
+      {
+        "id": 0,
+        "x": 100,
+        "y": 110,
+        "members": 1,
+        "trainCount": 1,
+        "totalWait": 59.050000000000004,
+        "longestWait": 59.050000000000004,
+        "longestStop": 232.70000000001866,
+        "level": "critical"
+      }
+    ]
+  },
+  "frames": [
+    {
+      "time": 0,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 103,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 97,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "moving",
+          "head": {
+            "x": 117,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": true,
+          "blocker": 101
+        }
+      ]
+    },
+    {
+      "time": 5,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 103,
+            "y": 110
+          },
+          "distance": 6.186686363636358,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "moving",
+          "head": {
+            "x": 121,
+            "y": 110
+          },
+          "distance": 4.172417454545462,
+          "holding": true,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 15,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 20,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 25,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 30,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 35,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 40,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 45,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 50,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 55,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 60,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 65,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 70,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 75,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 80,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 85,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 90,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 95,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 100,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 105,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 110,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 115,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 120,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 125,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 130,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 135,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 140,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 145,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 150,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 155,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 160,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 165,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 170,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 175,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 180,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 185,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 190,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 195,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 200,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 205,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 210,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 215,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 220,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 225,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 230,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 235,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.17500000000000002,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 105,
+            "y": 110
+          },
+          "distance": 8.175000000000004,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "yielding",
+          "head": {
+            "x": 124,
+            "y": 110
+          },
+          "distance": 7.002195454545452,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    }
+  ]
+}

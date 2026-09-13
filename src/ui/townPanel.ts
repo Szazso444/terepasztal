@@ -6,7 +6,7 @@ import { cargoDef } from '../sim/cargo';
 
 /**
  * Left-hand list of towns, shown with the survey overview: colour, name, population, housing and
- * growth, what the town makes and uses per day, and what it still needs to be founded.
+ * growth, what the town makes and uses per week, and what it still needs to be founded.
  */
 export class TownPanel {
   readonly root = el('div', { id: 'town-panel', class: 'panel' });
@@ -34,7 +34,7 @@ export class TownPanel {
     return parts.length ? parts.join(', ') : '-';
   }
   /** Housing, growth and when the town builds next. */
-  private housingLines(t: Town, founded: boolean): HTMLElement[] {
+  private housingLines(t: Town): HTMLElement[] {
     const hs = this.houses?.townHousing(t);
     if (!hs || hs.capacity <= 0) return [];
     const T = STR.town;
@@ -44,16 +44,13 @@ export class TownPanel {
     out.push(
       el('div', {
         class: 'sub',
-        text: hs.growthPerDay > 0 ? T.growth(Math.round(hs.growthPerDay * 10) / 10) : T.noGrowth,
+        text:
+          hs.growthPerDay > 0
+            ? T.growth(Math.round(hs.growthPerDay * 70) / 10)
+            : 'Growth stops at available housing capacity; food is required',
       }),
     );
-    if (founded)
-      out.push(
-        el('div', {
-          class: 'sub',
-          text: hs.cramped ? T.fullHousing : T.nextHouse(hs.spawnAt, Math.round(hs.mul * 10) / 10),
-        }),
-      );
+    out.push(el('div', { class: 'sub', text: 'Build or upgrade Houses to increase capacity' }));
     return out;
   }
   render(force = false) {
@@ -97,7 +94,7 @@ export class TownPanel {
             ? STR.town.summary(m.stations.length, m.buildings.length, m.houses)
             : STR.town.needs(m.houses === 0, m.warehouses === 0),
         }),
-        ...this.housingLines(t, founded),
+        ...this.housingLines(t),
         el('div', {
           class: 'sub',
           text: `${STR.town.makes}: ${this.fmt(this.towns.production(t, m))}`,

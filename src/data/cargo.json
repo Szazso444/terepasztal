@@ -7,7 +7,7 @@
     "tier": 0,
     "price": 4,
     "color": "cargoWater",
-    "weight": 1.0
+    "weight": 1
   },
   {
     "id": "wheat",
@@ -78,5 +78,15 @@
     "price": 6,
     "color": "#d8c8a8",
     "weight": 0.08
+  },
+  {
+    "id": "food",
+    "name": "Food",
+    "class": "bulk",
+    "basic": false,
+    "tier": 0,
+    "price": 3,
+    "color": "cargoGrain",
+    "weight": 0.1
   }
 ]

@@ -18,7 +18,7 @@ export class ResourceBar {
   private famine = el('span', { class: 'value red', text: STR.res.famine });
   private card = el('div', { id: 'res-card', class: 'panel' });
   private hovered: string | null = null;
-  /** supplied by the game: per-day flows and the cap */
+  /** Supplied by the game: actual rolling weekly flows and the cap. */
   stats: (() => Record<string, ResourceStat>) | null = null;
   cap: (id: string) => number = () => Infinity;
   private stock: Stockpile | null = null;
@@ -90,7 +90,7 @@ export class ResourceBar {
           { class: 'panel-body' },
           el('div', { class: 'bi-desc', text: STR.res.populationHint }),
           row(STR.res.people, String(st.population)),
-          row(STR.res.eats, `${st.wheatPerDay().toFixed(1)} ${STR.res.wheatPerDay}`),
+          row(STR.res.eats, `${st.foodPerWeek().toFixed(1)} ${STR.res.foodPerWeek}`),
         ),
       );
       return;
@@ -101,6 +101,9 @@ export class ResourceBar {
     if (info) body.append(el('div', { class: 'bi-desc', text: info }));
     body.append(row(STR.res.have, `${Math.floor(st.get(id))} / ${this.cap(id)}`));
     if (stats) {
+      body.append(
+        el('div', { class: 'dim', text: 'Last 7 days; history starts when this game is loaded.' }),
+      );
       body.append(row(STR.res.producedDay, stats.produced.toFixed(1)));
       body.append(row(STR.res.consumedDay, stats.consumed.toFixed(1)));
       const net = stats.produced - stats.consumed;
@@ -112,6 +115,7 @@ export class ResourceBar {
   update(stock: Stockpile, cap: (id: string) => number) {
     this.stock = stock;
     this.cap = cap;
+    const stats = this.stats?.();
     for (const [id, v] of this.cells) {
       const def = this.cellDefs.get(id);
       const shown = !def || inSupplyMode(def);
@@ -122,8 +126,11 @@ export class ResourceBar {
       const c = cap(id);
       const text = `${have}`;
       if (v.textContent !== text) v.textContent = text;
-      v.classList.toggle('red', have === 0);
-      v.classList.toggle('amber', have >= c);
+      const net = (stats?.[id]?.produced ?? 0) - (stats?.[id]?.consumed ?? 0);
+      v.classList.toggle('red', net < -0.01);
+      v.classList.toggle('good', net > 0.01);
+      v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= c);
+      root.title = `${net >= 0 ? '+' : ''}${net.toFixed(1)} net in the last 7 days`;
     }
     const p = `${stock.population}`;
     if (this.pop.textContent !== p) this.pop.textContent = p;

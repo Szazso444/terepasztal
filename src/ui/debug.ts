@@ -26,6 +26,7 @@ export class DebugPanel {
       STR.debug.zoom,
       STR.debug.camera,
       STR.debug.traffic,
+      STR.debug.recovery,
       STR.debug.junctions,
       STR.debug.tile,
     ]) {

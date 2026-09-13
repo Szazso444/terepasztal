@@ -113,7 +113,7 @@ export class MarketScreen implements Screen {
     b.append(table);
     b.append(el('div', { class: 'sub dim', text: STR.market.driftHint }));
     // standing deals: so much per cycle, settled automatically
-    const cycleDays = rules.tradeCycleDays;
+    const cycleDays = 7;
     const left = Math.max(0, this.trade.nextAt - this.now());
     b.append(
       el('div', { class: 'col-title', style: 'margin-top:12px', text: STR.market.deals }),

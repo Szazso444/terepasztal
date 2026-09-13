@@ -1,0 +1,2589 @@
+{
+  "seconds": 83.95,
+  "before": [
+    {
+      "id": 101,
+      "x": 103,
+      "y": 110
+    },
+    {
+      "id": 102,
+      "x": 109,
+      "y": 110
+    },
+    {
+      "id": 103,
+      "x": 97,
+      "y": 110
+    },
+    {
+      "id": 104,
+      "x": 92,
+      "y": 110
+    },
+    {
+      "id": 105,
+      "x": 87,
+      "y": 110
+    },
+    {
+      "id": 106,
+      "x": 82,
+      "y": 110
+    },
+    {
+      "id": 107,
+      "x": 77,
+      "y": 110
+    },
+    {
+      "id": 108,
+      "x": 72,
+      "y": 110
+    },
+    {
+      "id": 109,
+      "x": 67,
+      "y": 110
+    },
+    {
+      "id": 110,
+      "x": 62,
+      "y": 110
+    },
+    {
+      "id": 111,
+      "x": 57,
+      "y": 110
+    },
+    {
+      "id": 112,
+      "x": 52,
+      "y": 110
+    }
+  ],
+  "passed": true,
+  "yielded": [
+    {
+      "id": 101,
+      "yields": 0
+    },
+    {
+      "id": 102,
+      "yields": 1
+    },
+    {
+      "id": 103,
+      "yields": 0
+    },
+    {
+      "id": 104,
+      "yields": 0
+    },
+    {
+      "id": 105,
+      "yields": 0
+    },
+    {
+      "id": 106,
+      "yields": 0
+    },
+    {
+      "id": 107,
+      "yields": 0
+    },
+    {
+      "id": 108,
+      "yields": 0
+    },
+    {
+      "id": 109,
+      "yields": 0
+    },
+    {
+      "id": 110,
+      "yields": 0
+    },
+    {
+      "id": 111,
+      "yields": 0
+    },
+    {
+      "id": 112,
+      "yields": 0
+    }
+  ],
+  "maxActive": 1,
+  "maxTickMs": 66.8999999910593,
+  "count": 12,
+  "pinned": false,
+  "traffic": {
+    "counters": {
+      "stuck": 1,
+      "deadlocks": 0,
+      "overlaps": 0,
+      "yields": 1,
+      "headOn": 0,
+      "waits": 7996
+    },
+    "blockingGroups": [],
+    "recoveries": [],
+    "trains": [
+      {
+        "id": 102,
+        "name": "Traffic test 2",
+        "mode": "schedule",
+        "state": "moving",
+        "blockedBy": null,
+        "recovering": false,
+        "blockedSeconds": 4,
+        "yields": 1,
+        "stuck": 1,
+        "stuckNow": false,
+        "overlaps": 0,
+        "message": "Pulling aside on a reserved escape route"
+      }
+    ],
+    "episodes": [
+      {
+        "t": 4,
+        "kind": "yield",
+        "train": 102,
+        "name": "Traffic test 2",
+        "other": 101,
+        "x": 110,
+        "y": 110,
+        "text": "Traffic test 2 pulls aside for #101"
+      },
+      {
+        "t": 18.4,
+        "kind": "recovery",
+        "train": 102,
+        "name": "Traffic test 2",
+        "other": null,
+        "x": 122,
+        "y": 110,
+        "text": "Traffic test 2: escape route released"
+      },
+      {
+        "t": 48.2,
+        "kind": "stuck",
+        "train": 102,
+        "name": "Traffic test 2",
+        "other": null,
+        "x": 122,
+        "y": 110,
+        "text": "Traffic test 2 has not moved for 30 s at 122,110 (yielding, Pulling aside on a reserved escape route)"
+      },
+      {
+        "t": 67.4,
+        "kind": "unstuck",
+        "train": 102,
+        "name": "Traffic test 2",
+        "other": null,
+        "x": 121,
+        "y": 110,
+        "text": "Traffic test 2 moves again after 49 s"
+      }
+    ],
+    "junctions": [
+      {
+        "id": 0,
+        "x": 50,
+        "y": 110,
+        "members": 1,
+        "trainCount": 0,
+        "totalWait": 0,
+        "longestWait": 0,
+        "longestStop": 0,
+        "level": "none"
+      },
+      {
+        "id": 1,
+        "x": 60,
+        "y": 110,
+        "members": 1,
+        "trainCount": 0,
+        "totalWait": 0,
+        "longestWait": 0,
+        "longestStop": 0,
+        "level": "none"
+      },
+      {
+        "id": 2,
+        "x": 70,
+        "y": 110,
+        "members": 1,
+        "trainCount": 0,
+        "totalWait": 0,
+        "longestWait": 0,
+        "longestStop": 0,
+        "level": "none"
+      },
+      {
+        "id": 3,
+        "x": 80,
+        "y": 110,
+        "members": 1,
+        "trainCount": 0,
+        "totalWait": 4.792897727272727,
+        "longestWait": 2.4964488636363638,
+        "longestStop": 0,
+        "level": "none"
+      },
+      {
+        "id": 4,
+        "x": 90,
+        "y": 110,
+        "members": 1,
+        "trainCount": 0,
+        "totalWait": 10.111386376761425,
+        "longestWait": 2.708035923276564,
+        "longestStop": 0,
+        "level": "none"
+      },
+      {
+        "id": 5,
+        "x": 100,
+        "y": 110,
+        "members": 1,
+        "trainCount": 1,
+        "totalWait": 0,
+        "longestWait": 0,
+        "longestStop": 0,
+        "level": "none"
+      }
+    ]
+  },
+  "frames": [
+    {
+      "time": 0,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 103,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 97,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "moving",
+          "head": {
+            "x": 92,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 103
+        },
+        {
+          "id": 105,
+          "state": "moving",
+          "head": {
+            "x": 87,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 104
+        },
+        {
+          "id": 106,
+          "state": "moving",
+          "head": {
+            "x": 82,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 105
+        },
+        {
+          "id": 107,
+          "state": "moving",
+          "head": {
+            "x": 77,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 106
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 72,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 107
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 67,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 62,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 57,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 52,
+            "y": 110
+          },
+          "distance": 0.002195454545454546,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 5,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 5.175,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 111,
+            "y": 110
+          },
+          "distance": 0.6328547272727273,
+          "holding": true,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 102,
+            "y": 110
+          },
+          "distance": 5.257151580292655,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "moving",
+          "head": {
+            "x": 98,
+            "y": 110
+          },
+          "distance": 5.600231363636364,
+          "holding": false,
+          "blocker": 103
+        },
+        {
+          "id": 105,
+          "state": "moving",
+          "head": {
+            "x": 90,
+            "y": 110
+          },
+          "distance": 3.2639454842138305,
+          "holding": false,
+          "blocker": 104
+        },
+        {
+          "id": 106,
+          "state": "moving",
+          "head": {
+            "x": 86,
+            "y": 110
+          },
+          "distance": 4.405522740671351,
+          "holding": false,
+          "blocker": 105
+        },
+        {
+          "id": 107,
+          "state": "moving",
+          "head": {
+            "x": 80,
+            "y": 110
+          },
+          "distance": 3.181124570337698,
+          "holding": false,
+          "blocker": 106
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 77,
+            "y": 110
+          },
+          "distance": 4.918323265529034,
+          "holding": false,
+          "blocker": 107
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 70,
+            "y": 110
+          },
+          "distance": 3.0663545722517878,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 66,
+            "y": 110
+          },
+          "distance": 4.3199000105274905,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 60,
+            "y": 110
+          },
+          "distance": 3.1531900200979313,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 57,
+            "y": 110
+          },
+          "distance": 4.60942492077155,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 112,
+            "y": 110
+          },
+          "distance": 9.04850741374157,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 115,
+            "y": 110
+          },
+          "distance": 4.858929090909089,
+          "holding": true,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 11.567354573391874,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "moving",
+          "head": {
+            "x": 102,
+            "y": 110
+          },
+          "distance": 10.025850031582479,
+          "holding": false,
+          "blocker": 103
+        },
+        {
+          "id": 105,
+          "state": "moving",
+          "head": {
+            "x": 97,
+            "y": 110
+          },
+          "distance": 9.90032684976429,
+          "holding": false,
+          "blocker": 104
+        },
+        {
+          "id": 106,
+          "state": "moving",
+          "head": {
+            "x": 90,
+            "y": 110
+          },
+          "distance": 7.682150020097935,
+          "holding": false,
+          "blocker": 105
+        },
+        {
+          "id": 107,
+          "state": "moving",
+          "head": {
+            "x": 86,
+            "y": 110
+          },
+          "distance": 9.021845070764682,
+          "holding": false,
+          "blocker": 106
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 79,
+            "y": 110
+          },
+          "distance": 7.273795463158857,
+          "holding": false,
+          "blocker": 107
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 76,
+            "y": 110
+          },
+          "distance": 8.977727208436452,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 69,
+            "y": 110
+          },
+          "distance": 7.273795463158856,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 66,
+            "y": 110
+          },
+          "distance": 8.844126490669217,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 59,
+            "y": 110
+          },
+          "distance": 7.221104551196813,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 15,
+      "trains": [
+        {
+          "id": 101,
+          "state": "moving",
+          "head": {
+            "x": 117,
+            "y": 110
+          },
+          "distance": 13.741021414516595,
+          "holding": false,
+          "blocker": 102
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 9.495729090909078,
+          "holding": true,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 113,
+            "y": 110
+          },
+          "distance": 16.151414953869235,
+          "holding": false,
+          "blocker": 101
+        },
+        {
+          "id": 104,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 17.237883522102063,
+          "holding": false,
+          "blocker": 103
+        },
+        {
+          "id": 105,
+          "state": "moving",
+          "head": {
+            "x": 102,
+            "y": 110
+          },
+          "distance": 14.805050000000021,
+          "holding": false,
+          "blocker": 104
+        },
+        {
+          "id": 106,
+          "state": "moving",
+          "head": {
+            "x": 96,
+            "y": 110
+          },
+          "distance": 14.197635031582458,
+          "holding": false,
+          "blocker": 105
+        },
+        {
+          "id": 107,
+          "state": "moving",
+          "head": {
+            "x": 89,
+            "y": 110
+          },
+          "distance": 12.31989999999999,
+          "holding": false,
+          "blocker": 106
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 85,
+            "y": 110
+          },
+          "distance": 13.27932276622084,
+          "holding": false,
+          "blocker": 107
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 79,
+            "y": 110
+          },
+          "distance": 12.174999999999997,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 75,
+            "y": 110
+          },
+          "distance": 12.903625026797242,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 69,
+            "y": 110
+          },
+          "distance": 12.17500000000001,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 65,
+            "y": 110
+          },
+          "distance": 13.297515383734323,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 20,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "moving",
+          "head": {
+            "x": 118,
+            "y": 110
+          },
+          "distance": 21.210029304933354,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "moving",
+          "head": {
+            "x": 114,
+            "y": 110
+          },
+          "distance": 22.41904276293737,
+          "holding": false,
+          "blocker": 103
+        },
+        {
+          "id": 105,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 22.06669999999995,
+          "holding": false,
+          "blocker": 104
+        },
+        {
+          "id": 106,
+          "state": "moving",
+          "head": {
+            "x": 102,
+            "y": 110
+          },
+          "distance": 20.022946965309686,
+          "holding": false,
+          "blocker": 105
+        },
+        {
+          "id": 107,
+          "state": "moving",
+          "head": {
+            "x": 96,
+            "y": 110
+          },
+          "distance": 18.57203500000006,
+          "holding": false,
+          "blocker": 106
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 89,
+            "y": 110
+          },
+          "distance": 17.17719545454546,
+          "holding": false,
+          "blocker": 107
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 84,
+            "y": 110
+          },
+          "distance": 17.32313181818181,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 79,
+            "y": 110
+          },
+          "distance": 17.175000000000004,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 74,
+            "y": 110
+          },
+          "distance": 16.786834545454518,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 69,
+            "y": 110
+          },
+          "distance": 17.174999999999994,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 25,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "moving",
+          "head": {
+            "x": 115,
+            "y": 110
+          },
+          "distance": 27.98995272727254,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 27.240436965309584,
+          "holding": false,
+          "blocker": 105
+        },
+        {
+          "id": 107,
+          "state": "moving",
+          "head": {
+            "x": 102,
+            "y": 110
+          },
+          "distance": 25.454457568174924,
+          "holding": false,
+          "blocker": 106
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 95,
+            "y": 110
+          },
+          "distance": 22.94643500000003,
+          "holding": false,
+          "blocker": 107
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 89,
+            "y": 110
+          },
+          "distance": 22.174999999999983,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 83,
+            "y": 110
+          },
+          "distance": 21.373106363636328,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 79,
+            "y": 110
+          },
+          "distance": 22.15704479199162,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 73,
+            "y": 110
+          },
+          "distance": 20.668114545454568,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 30,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "moving",
+          "head": {
+            "x": 115,
+            "y": 110
+          },
+          "distance": 33.18576969258221,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "moving",
+          "head": {
+            "x": 110,
+            "y": 110
+          },
+          "distance": 32.583627568174855,
+          "holding": false,
+          "blocker": 106
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 102,
+            "y": 110
+          },
+          "distance": 29.874163636363654,
+          "holding": false,
+          "blocker": 107
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 94,
+            "y": 110
+          },
+          "distance": 27.320834999999995,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 89,
+            "y": 110
+          },
+          "distance": 27.175,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 83,
+            "y": 110
+          },
+          "distance": 25.615799999999968,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 79,
+            "y": 110
+          },
+          "distance": 26.61304262705949,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 35,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "moving",
+          "head": {
+            "x": 116,
+            "y": 110
+          },
+          "distance": 38.57312029544776,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 109,
+            "y": 110
+          },
+          "distance": 37.121093636363575,
+          "holding": false,
+          "blocker": 107
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 101,
+            "y": 110
+          },
+          "distance": 34.13816363636364,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 94,
+            "y": 110
+          },
+          "distance": 31.695235,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 89,
+            "y": 110
+          },
+          "distance": 32.155449459133045,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 82,
+            "y": 110
+          },
+          "distance": 29.888644545454486,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 40,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "moving",
+          "head": {
+            "x": 115,
+            "y": 110
+          },
+          "distance": 43.05170636363649,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 41.49816363636354,
+          "holding": false,
+          "blocker": 108
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 100,
+            "y": 110
+          },
+          "distance": 38.4021636363635,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 93,
+            "y": 110
+          },
+          "distance": 36.069635130217804,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 89,
+            "y": 110
+          },
+          "distance": 36.81952885690685,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 45,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 48,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "moving",
+          "head": {
+            "x": 114,
+            "y": 110
+          },
+          "distance": 47.42029363636374,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 108,
+            "y": 110
+          },
+          "distance": 45.7621636363634,
+          "holding": false,
+          "blocker": 109
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 100,
+            "y": 110
+          },
+          "distance": 42.66616376658127,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 92,
+            "y": 110
+          },
+          "distance": 40.444035130217806,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 50,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 48,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 52.99999999999998,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 114,
+            "y": 110
+          },
+          "distance": 51.83149363636356,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 107,
+            "y": 110
+          },
+          "distance": 50.02616376658117,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 99,
+            "y": 110
+          },
+          "distance": 46.93016376658126,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 55,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 48,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 52.99999999999998,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 110,
+          "state": "moving",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 57.949478224260794,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 113,
+            "y": 110
+          },
+          "distance": 56.242693766581304,
+          "holding": false,
+          "blocker": 110
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 106,
+            "y": 110
+          },
+          "distance": 54.29016376658116,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 60,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 48,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 52.99999999999998,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 110,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 58.00000000000003,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 111,
+          "state": "moving",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 62.62276150669311,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 113,
+            "y": 110
+          },
+          "distance": 60.65389376658126,
+          "holding": false,
+          "blocker": 111
+        }
+      ]
+    },
+    {
+      "time": 65,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "yielding",
+          "head": {
+            "x": 123,
+            "y": 110
+          },
+          "distance": 12.300000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 48,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 52.99999999999998,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 110,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 58.00000000000003,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 111,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 63.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 112,
+          "state": "moving",
+          "head": {
+            "x": 119,
+            "y": 110
+          },
+          "distance": 67.02610649385376,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 70,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 117,
+            "y": 110
+          },
+          "distance": 16.235446363636385,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 48,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 52.99999999999998,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 110,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 58.00000000000003,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 111,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 63.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 112,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 68.00000000000006,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 75,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 111,
+            "y": 110
+          },
+          "distance": 22.421081363636315,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 48,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 52.99999999999998,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 110,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 58.00000000000003,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 111,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 63.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 112,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 68.00000000000006,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    },
+    {
+      "time": 80,
+      "trains": [
+        {
+          "id": 101,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 17,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 102,
+          "state": "moving",
+          "head": {
+            "x": 104,
+            "y": 110
+          },
+          "distance": 29.120625909090748,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 103,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 22.999999999999993,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 104,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 28.000000000000007,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 105,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 33.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 106,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 37.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 107,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 42.999999999999964,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 108,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 48,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 109,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 52.99999999999998,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 110,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 58.00000000000003,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 111,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 63.00000000000002,
+          "holding": false,
+          "blocker": null
+        },
+        {
+          "id": 112,
+          "state": "noRoute",
+          "head": {
+            "x": 120,
+            "y": 110
+          },
+          "distance": 68.00000000000006,
+          "holding": false,
+          "blocker": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import { content, type BuildingDef, type Cost } from '../data/content';
 import type { Stockpile } from './stockpile';
-import { rules, daySeconds } from './rules';
+import { rules, weekSeconds } from './rules';
 
 export type { BuildingDef };
 export const BUILDING_DEFS: BuildingDef[] = content.buildings;
@@ -17,9 +17,11 @@ export interface Building {
   y: number;
   /** fraction of a batch accumulated */
   acc: number;
+  /** Player-paid upgrade, 1..4. Older saves default to 1. */
+  level?: number;
   /** running in the last tick */
   active: boolean;
-  /** batches completed in the last in-game day (rolling estimate) */
+  /** batches completed in the last in-game week (rolling estimate) */
   rate: number;
   /** total output produced over the building's life, per resource */
   made?: Record<string, number>;
@@ -46,14 +48,15 @@ export function tickBuildings(
 ) {
   for (const b of buildings) {
     const def = buildingDef(b.id);
-    const batches =
-      ((def.perDay * (famine ? 0.5 : 1) * rules.productionMul) / daySeconds()) * gameDt;
+    const recipe = buildingRecipe(b);
+    const rate = buildingRate(b);
+    const batches = ((rate * (famine ? 0.5 : 1) * rules.productionMul) / weekSeconds()) * gameDt;
     // can the next batch run at all? (inputs on hand, room for the output)
-    const outOk = Object.entries(def.recipe.out).every(
+    const outOk = Object.entries(recipe.out).every(
       ([k, v]) => stock.get(k) + v <= stock.cap(k, depots, plants) + 1e-6,
     );
-    const inputs = stock.canAfford(def.recipe.in)
-      ? def.recipe.in
+    const inputs = stock.canAfford(recipe.in)
+      ? recipe.in
       : def.altIn && stock.canAfford(def.altIn)
         ? def.altIn
         : null;
@@ -61,14 +64,20 @@ export function tickBuildings(
     b.reason = running ? '' : !outOk ? 'full' : 'inputs';
     if (running) b.acc += batches;
     while (b.acc >= 1) {
-      const pick: Cost | null = stock.canAfford(def.recipe.in)
-        ? def.recipe.in
+      const pick: Cost | null = stock.canAfford(recipe.in)
+        ? recipe.in
         : def.altIn && stock.canAfford(def.altIn)
           ? def.altIn
           : null;
-      if (!pick) break;
+      if (
+        !pick ||
+        !Object.entries(recipe.out).every(
+          ([k, v]) => stock.get(k) + v <= stock.cap(k, depots, plants) + 1e-6,
+        )
+      )
+        break;
       stock.spend(pick);
-      for (const [k, v] of Object.entries(def.recipe.out)) {
+      for (const [k, v] of Object.entries(recipe.out)) {
         stock.add(k, v, stock.cap(k, depots, plants));
         b.made = b.made ?? {};
         b.made[k] = (b.made[k] ?? 0) + v;
@@ -77,8 +86,31 @@ export function tickBuildings(
     }
     if (b.acc > 1) b.acc = 1;
     b.active = running;
-    // smoothed batches/day estimate for the UI
-    b.rate =
-      b.rate * 0.95 + (running ? def.perDay * (famine ? 0.5 : 1) * rules.productionMul : 0) * 0.05;
+    // smoothed batches/week estimate for the UI
+    b.rate = b.rate * 0.95 + (running ? rate * (famine ? 0.5 : 1) * rules.productionMul : 0) * 0.05;
   }
+}
+
+export const WORKS_MAX_LEVEL = 4;
+export function buildingLevel(b: Building) {
+  return Math.min(WORKS_MAX_LEVEL, Math.max(1, b.level ?? 1));
+}
+export function buildingRate(b: Building) {
+  return buildingDef(b.id).perWeek * (1 + (buildingLevel(b) - 1) * 0.5);
+}
+export function buildingRecipe(b: Building) {
+  const r = buildingDef(b.id).recipe;
+  return b.id === 'windmill' ? { in: r.in, out: { food: 5 + 2 * (buildingLevel(b) - 1) } } : r;
+}
+export function buildingUpgradeCost(b: Building): Cost | null {
+  if (buildingLevel(b) >= WORKS_MAX_LEVEL) return null;
+  return Object.fromEntries(
+    Object.entries(buildingDef(b.id).cost).map(([k, v]) => [
+      k,
+      Math.ceil(v * buildingLevel(b) * 1.5 * rules.buildCostMul),
+    ]),
+  );
+}
+export function buildingFrame(b: Building) {
+  return 'structures/' + b.id + (buildingLevel(b) > 1 ? '_lv' + buildingLevel(b) : '');
 }

@@ -1,3 +1,4 @@
+import { blockingGroups, blockingCycles } from './recovery';
 import {
   Train,
   defaultStop,
@@ -82,6 +83,28 @@ export class Fleet {
     this.traffic.junctionReport = () => this.junctions.report();
   }
 
+  refuelAll(trains: Train[]) {
+    const valid = [...new Set(trains)].filter((t) => this.trains.includes(t));
+    const preview = new (this.stock.constructor as typeof Stockpile)();
+    preview.amounts = new Map(this.stock.amounts);
+    const clones = valid.map((t) => {
+      const c = Object.create(Object.getPrototypeOf(t)) as Train;
+      Object.assign(c, t);
+      return c;
+    });
+    for (const t of clones) {
+      t.refuel(preview, { fuel: true, water: true }, 2);
+      if (
+        t.coal < t.coalCap - 1e-6 ||
+        t.oil < t.oilCap - 1e-6 ||
+        t.water < t.waterCap - 1e-6 ||
+        t.battery < t.batteryCap - 1e-6
+      )
+        return false;
+    }
+    for (const t of valid) t.refuel(this.stock, { fuel: true, water: true }, 2);
+    return true;
+  }
   byId(id: number) {
     return this.trains.find((t) => t.id === id);
   }
@@ -522,8 +545,7 @@ export class Fleet {
       supplyAt: (x, y) => this.supplyAt(x, y),
       gridFactor: (x, y) => this.gridFactor(x, y),
       gridDraw: (x, y, u) => this.gridDraw(x, y, u),
-      signals:
-        this.signals.level === 'auto' || this.signals.level === 'token' ? null : this.signals,
+      signals: this.signals.count === 0 || this.signals.level === 'token' ? null : this.signals,
       tokenBlocked: (x, y, self) => this.tokenBlocked(x, y, self),
       headway: (t) => {
         const level = this.signals.level;
@@ -535,6 +557,9 @@ export class Fleet {
       onPassengers: (s, n, b) => this.onPassengers(s, n, b),
       trainPath: (id) => this.byId(id)?.pathTileKeys(this.map.w) ?? new Set<number>(),
       claimedBy: (x, y, self) => this.traffic.claimedBy(x, y, self),
+      recoveryOwner: (x, y, self) => this.traffic.recoveries.ownerAt(y * this.map.w + x, self),
+      reserveRecovery: (t, path, group) =>
+        this.traffic.reserveRecovery(t, path, group, this.trains, now),
       reservedBy: (x, y, self) => {
         const id = this.reserved.get(y * this.map.w + x) ?? 0;
         return id === self ? 0 : id;
@@ -655,7 +680,7 @@ export class Fleet {
       }
       const wantsPeople = loaded.some((w) => cargoDef(w.cargo!).class === 'people');
       if (wantsPeople) {
-        // passengers: the nearest other town station
+        // Passengers travel to the nearest other passenger Station.
         const origin = loaded.find((w) => w.origin !== null)?.origin ?? -1;
         const towns = withPlat.filter(
           (s) => s.accepts('passengers') && !s.def.pool && s.id !== origin && ok(s),
@@ -715,8 +740,8 @@ export class Fleet {
       if (t.mode === 'transport') {
         if (!s.accepts('passengers')) continue;
         const waiting = this.waitingAt(s.id);
-        if (waiting < 1 && s.def.id !== 'town') continue;
-        // people waiting per tile of travel; a town with nobody waiting is still worth a visit
+        if (waiting < 1 && s.passengerPopulation <= 0) continue;
+        // People waiting per tile of travel; a populated catchment can supply the next coach.
         // distance counts at half weight and a town left alone climbs in priority
         score = ((waiting + 0.5) * this.neglect(s.id, now)) / (10 + 0.5 * dist(s));
       } else {
@@ -740,7 +765,12 @@ export class Fleet {
           haul = Math.max(haul, Math.min(cap, stored) + 0.25 * stored);
         }
         // a producer that is filling up counts even before the pile is big
-        if (t.mode === 'production' && haul > 0 && haul < trainCap * 0.15 && s.productionPerDay > 0)
+        if (
+          t.mode === 'production' &&
+          haul > 0 &&
+          haul < trainCap * 0.15 &&
+          s.productionPerWeek > 0
+        )
           haul = Math.max(haul, Math.min(trainCap, s.totalStored()) + 0.25 * s.totalStored());
         if (haul < Math.min(trainCap * 0.15, 8)) continue;
         const dump = dumpFor({ x: s.cx, y: s.cy }, haul);
@@ -845,99 +875,67 @@ export class Fleet {
     }
     this.traffic.observe(this.trains, now, gdt);
     this.junctions.tick(this.trains, now, gdt);
-    // park early: a train held before a section whose holder will come out through the tiles it
-    // stands on clears out of the way now instead of meeting it head-on later
-    for (const t of this.trains) {
-      if (t.claimBlocker === null || t.claimLimit > 1.5 || t.yieldUntil > now) continue;
-      if (t.state !== 'moving' || t.holding) continue;
-      const other = this.byId(t.claimBlocker);
-      if (!other) continue;
-      const theirs = other.pathTileKeys(this.map.w);
-      const onTheirWay = t.occupancyKeys(this.map.w).some((k) => theirs.has(k));
-      if (!onTheirWay) continue;
-      t.blockedBy = other.id;
-      t.blocked = true;
-      if (t.retreat(ctx)) this.traffic.yielded(t, other.id, now);
-    }
-    // jams: follow who blocks whom; when the chain loops or ends in a train that is itself stuck,
-    // the lightest train in it that can pull aside does so (one per chain per tick)
-    const stuck = this.trains.filter(
-      (t) =>
-        t.blocked && t.blockedBy !== null && t.blockedTime >= MUTUAL_GRACE && t.yieldUntil <= now,
+    // Build the complete wait-for graph once, including queues feeding other queues. A
+    // group's chosen train owns its escape corridor before any other group can plan a move.
+    this.rebuildOccupancy();
+    const groups = blockingGroups(this.trains).sort(
+      (a, b) => Math.max(...b.map((t) => t.blockedTime)) - Math.max(...a.map((t) => t.blockedTime)),
     );
-    const handled = new Set<number>();
-    for (const a of stuck) {
-      if (handled.has(a.id)) continue;
-      const chain: Train[] = [a];
-      let cur: Train | undefined = a;
-      let loops = false;
-      while (cur && cur.blockedBy !== null) {
-        const next = this.byId(cur.blockedBy);
-        if (!next) break;
-        if (chain.includes(next)) {
-          loops = true;
-          break;
-        }
-        chain.push(next);
-        cur = next;
-        if (chain.length > 8) break;
-      }
-      const tail = chain[chain.length - 1];
-      // a train idling or queueing on the line with someone behind it moves aside first: it has
-      // nowhere urgent to be
-      const parked =
-        tail.state === 'idle' ||
-        tail.state === 'waiting' ||
-        (tail.state === 'loading' && tail.waitingForCargo);
-      // a parked tail with nowhere to go (a dead-end platform, say) leaves the queue behind it
-      // to sort itself out: someone further back has to give way
-      let tailPinned = false;
-      if (parked && chain.length >= 2) {
-        const behind = chain[chain.length - 2];
-        if (tail.yieldUntil <= now && behind.blockedTime >= MUTUAL_GRACE) {
-          tail.blockedBy = behind.id;
-          tail.blocked = true;
-          const force = behind.blockedTime >= MUTUAL_GRACE * 3;
-          if (tail.retreat(ctx) || this.parkElsewhere(tail, behind, ctx, force)) {
-            this.traffic.yielded(tail, behind.id, now);
-            for (const t of chain) handled.add(t.id);
-            continue;
-          }
-          tail.blocked = false;
-          tail.blockedBy = null;
-          tailPinned = behind.blockedTime >= MUTUAL_GRACE * 2;
-        }
-      }
-      // a chain ending in a train that is busy at a platform clears itself; one that loops or
-      // ends in a train that cannot move needs someone to make room
-      const transient =
-        tail.state === 'loading' || tail.state === 'waiting' || tail.state === 'idle';
-      const dead =
-        loops ||
-        tailPinned ||
-        (tail.blocked && tail.blockedTime >= MUTUAL_GRACE) ||
-        (tail.state !== 'moving' && !transient);
-      if (!dead) continue;
-      for (const t of chain) handled.add(t.id);
-      // take turns: the train that has pulled aside least goes first, then the lightest
-      const order = [...chain].sort(
-        (p, q) => p.yieldCount - q.yieldCount || p.weight - q.weight || q.id - p.id,
+    for (const group of groups) {
+      if (!group.some((t) => t.blockedTime >= MUTUAL_GRACE)) continue;
+      if (!this.traffic.canRecover(group, now)) continue;
+      const ids = group.map((t) => t.id);
+      const parked = (t: Train) =>
+        t.state === 'idle' || t.state === 'waiting' || (t.state === 'loading' && t.waitingForCargo);
+      // Don't interrupt useful platform work or a train making progress at the front of a queue.
+      const blockedIds = new Set(group.filter((t) => t.blocked).map((t) => t.id));
+      const tail = group.find((t) => !blockedIds.has(t.id) && t.claimBlocker === null);
+      if (tail && !parked(tail) && (tail.state === 'moving' || tail.state === 'loading')) continue;
+      const order = [...group].sort(
+        (a, b) =>
+          Number(parked(b)) - Number(parked(a)) ||
+          a.yieldCount - b.yieldCount ||
+          a.length - b.length ||
+          a.weight - b.weight ||
+          a.id - b.id,
       );
-      let moved: Train | null = null;
-      for (const t of order)
-        if (t.retreat(ctx)) {
-          moved = t;
+      const candidates = [];
+      for (const t of order) {
+        if (t.holding || t.yieldUntil > now) continue;
+        const previous = t.blockedBy;
+        const other =
+          previous ??
+          t.claimBlocker ??
+          group.find((o) => o.blockedBy === t.id || o.claimBlocker === t.id)?.id;
+        if (other === undefined || other === null) continue;
+        t.blockedBy = other;
+        const plan = t.planRetreat(ctx, ids);
+        t.blockedBy = previous;
+        if (plan) candidates.push({ train: t, other, plan });
+      }
+      const cycle = blockingCycles(group);
+      candidates.sort(
+        (a, b) =>
+          Number(cycle.has(b.train.id)) - Number(cycle.has(a.train.id)) ||
+          a.train.yieldCount - b.train.yieldCount ||
+          a.plan.distance - b.plan.distance ||
+          a.train.id - b.train.id,
+      );
+      let moved = false;
+      for (const { train: t, other, plan } of candidates) {
+        if (t.retreat(ctx, ids, plan)) {
+          this.traffic.yielded(t, other, now);
+          this.rebuildOccupancy();
+          this.rebuildReservations();
+          moved = true;
           break;
         }
-      if (moved) this.traffic.yielded(moved, moved.blockedBy, now);
-      else if (
-        loops &&
-        a.blockedTime >= MUTUAL_GRACE * 4 &&
-        a.blockedTime < MUTUAL_GRACE * 4 + gdt * 1.5
-      )
-        this.traffic.deadlock(chain, now);
+      }
+      if (!moved && group.some((t) => t.blockedTime >= MUTUAL_GRACE * 4))
+        this.traffic.deadlock(group, now);
     }
   }
+
   /** Total capacity of a train for a cargo type. */
   static capacityFor(t: Train, cargo: string) {
     return t.wagons

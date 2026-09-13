@@ -5,7 +5,7 @@
     "platforms": [1, 1, 2, 2, 3],
     "production": [30, 50, 80, 120, 170],
     "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6],
-    "spriteByLevel": [1, 1, 2, 2, 3],
+    "spriteByLevel": [1, 2, 3, 4, 5],
     "maxLevelByTier": [3, 4, 5],
     "crew": [2, 3, 5, 8, 12]
   },
@@ -13,7 +13,7 @@
     {
       "id": "farm",
       "name": "Farm Halt",
-      "flavor": "Grows wheat, the food your crews eat.",
+      "flavor": "Grows wheat. Haul it to the depot and a Windmill turns it into food for residents and crews.",
       "cost": {
         "wood": 30,
         "stone": 10
@@ -89,19 +89,14 @@
     },
     {
       "id": "town",
-      "name": "Town Station",
-      "flavor": "Passengers board and alight here. Placed at least 25 tiles from any other town station; with a townhouse and a warehouse nearby it founds a town.",
+      "name": "Townhouse",
+      "flavor": "Civic anchor of a town. Build Houses and a Warehouse nearby to found it; passengers use a separate Station.",
       "cost": {
         "wood": 50,
         "stone": 40
       },
       "tier": 0,
-      "produces": [
-        {
-          "cargo": "passengers",
-          "level": 1
-        }
-      ],
+      "produces": [],
       "accepts": [
         "water",
         "wheat",
@@ -110,13 +105,13 @@
         "coal",
         "oil",
         "iron",
-        "passengers",
         "iron_ore",
         "crude",
         "diesel",
         "sand",
         "copper_ore",
-        "wire"
+        "wire",
+        "food"
       ],
       "art": "town"
     },
@@ -143,7 +138,8 @@
         "diesel",
         "sand",
         "copper_ore",
-        "wire"
+        "wire",
+        "food"
       ],
       "art": "warehouse",
       "stockpile": true,
@@ -171,7 +167,8 @@
         "diesel",
         "sand",
         "copper_ore",
-        "wire"
+        "wire",
+        "food"
       ],
       "art": "depot",
       "size": 2,
@@ -180,6 +177,25 @@
       "fuel": true,
       "water": true,
       "contracts": false
+    },
+    {
+      "id": "station",
+      "name": "Station",
+      "flavor": "Passenger platforms serving nearby homes. Connect two stations with coaches to carry people between towns.",
+      "cost": {
+        "wood": 35,
+        "stone": 25,
+        "iron": 5
+      },
+      "tier": 0,
+      "produces": [
+        {
+          "cargo": "passengers",
+          "level": 1
+        }
+      ],
+      "accepts": ["passengers"],
+      "art": "station"
     }
   ]
 }

@@ -70,7 +70,7 @@ export interface RuleMeta {
 }
 
 export const DEFAULT_RULES: Rules = {
-  startMoney: 25000,
+  startMoney: 40000,
   startTickets: 3,
   buildCostMul: 1,
   refundRate: 0.5,
@@ -80,8 +80,8 @@ export const DEFAULT_RULES: Rules = {
   loadRateMul: 1,
   productionMul: 1,
   capacityMul: 1,
-  contractOfferCount: 2,
-  contractRefreshDays: 6,
+  contractOfferCount: 1,
+  contractRefreshDays: 21,
   deadlineMul: 1,
   payoutMul: 1,
   reputationMul: 1,
@@ -103,9 +103,9 @@ export const DEFAULT_RULES: Rules = {
   trackCostScale: 1,
   hsAccessCharge: 2,
   inCabCost: 6000,
-  startingResourceScale: 1,
+  startingResourceScale: 3,
   collectMin: 100,
-  tradeCycleDays: 2,
+  tradeCycleDays: 7,
   powerCap: 100,
   chunkCost: 12000,
   chunkCostMul: 1.6,
@@ -144,7 +144,7 @@ export const RULE_META: RuleMeta[] = [
   { key: 'runningCostMul', label: 'Fuel use x', group: 'Economy', min: 0, max: 5, step: 0.1 },
   {
     key: 'wheatPerCrew',
-    label: 'Wheat per person per day',
+    label: 'Food per person per week',
     group: 'Economy',
     min: 0,
     max: 5,
@@ -216,14 +216,6 @@ export const RULE_META: RuleMeta[] = [
     step: 10,
   },
   {
-    key: 'tradeCycleDays',
-    label: 'Trade deal cycle (days)',
-    group: 'Economy',
-    min: 1,
-    max: 30,
-    step: 1,
-  },
-  {
     key: 'chunkCost',
     label: 'Chunk price (first ring)',
     group: 'Economy',
@@ -265,9 +257,9 @@ export const RULE_META: RuleMeta[] = [
     key: 'contractRefreshDays',
     label: 'Offer refresh (days)',
     group: 'Contracts',
-    min: 0.05,
-    max: 2,
-    step: 0.05,
+    min: 1,
+    max: 90,
+    step: 1,
   },
   {
     key: 'trainSpeedMul',
@@ -397,7 +389,13 @@ function sanitize(r: Partial<Rules>): Rules {
 export function readRules(): Rules {
   try {
     const raw = localStorage.getItem(RULES_KEY);
-    return raw ? sanitize(JSON.parse(raw) as Partial<Rules>) : { ...DEFAULT_RULES };
+    if (!raw) return { ...DEFAULT_RULES };
+    const saved = JSON.parse(raw) as Partial<Rules>;
+    if ([2, 6].includes(saved.contractRefreshDays ?? 0)) saved.contractRefreshDays = 21;
+    if (saved.contractOfferCount === 2) saved.contractOfferCount = 1;
+    if (saved.startMoney === 25000) saved.startMoney = 40000;
+    if (saved.startingResourceScale === 1) saved.startingResourceScale = 3;
+    return sanitize(saved);
   } catch {
     return { ...DEFAULT_RULES };
   }
@@ -425,4 +423,9 @@ export function rulesDiffer(): (keyof Rules)[] {
 }
 export function daySeconds() {
   return rules.daySeconds;
+}
+
+/** Economic rates use seven in-game days; seasons and daylight retain their calendar. */
+export function weekSeconds() {
+  return daySeconds() * 7;
 }

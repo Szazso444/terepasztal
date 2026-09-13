@@ -19,10 +19,17 @@ import { rules } from './rules';
 import { Station, terrainFactorAt, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
 import type { Economy } from './economy';
 import { Stockpile, scaleCost } from './stockpile';
-import { buildingDef, BUILDING_DEFS, type Building } from './buildings';
+import {
+  buildingDef,
+  buildingLevel,
+  buildingUpgradeCost,
+  BUILDING_DEFS,
+  type Building,
+} from './buildings';
 import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
 import { STR } from '../strings';
+import { bridgeCapacity } from './bridges';
 import { sfx } from '../engine/audio';
 
 const trackData = content.track;
@@ -109,6 +116,17 @@ export class Builder {
   }
   decorAt(x: number, y: number): Decor | undefined {
     return this.decor.get(this.key(x, y));
+  }
+  bridgeAt(x: number, y: number) {
+    const b = this.buildingAt(x, y);
+    return b && buildingDef(b.id).bridge ? b : undefined;
+  }
+  refreshBridgeCapacity(x: number, y: number) {
+    const p = this.track.get(x, y);
+    if (p)
+      p.bridgeCapacity = this.bridgeAt(x, y)
+        ? (bridgeCapacity(this.bridgeAt(x, y)!) ?? undefined)
+        : undefined;
   }
   buildingAt(x: number, y: number): Building | undefined {
     return this.buildings.get(this.key(x, y));
@@ -205,23 +223,72 @@ export class Builder {
     for (const d of this.decor.values()) if (decorDef(d.id).residents) n++;
     return n;
   }
+  upgradeBuilding(b: Building) {
+    if (this.buildingAt(b.x, b.y) !== b) return false;
+    const cost = buildingUpgradeCost(b);
+    if (!cost || !this.pay(this.free ? {} : cost)) return false;
+    b.level = buildingLevel(b) + 1;
+    if (buildingDef(b.id).bridge) {
+      this.refreshBridgeCapacity(b.x, b.y);
+      this.track.version++;
+    }
+    this.onBuildingChanged?.(b, false);
+    return true;
+  }
   plantCount() {
     let n = 0;
     for (const b of this.buildings.values()) if (buildingDef(b.id).power) n++;
     return n;
   }
 
+  /** Services can serve a platform or the rail directly within their advertised radius. */
+  serviceAt(x: number, y: number) {
+    let fuel = false,
+      water = false;
+    for (const d of this.decor.values()) {
+      const def = decorDef(d.id);
+      if (Math.max(Math.abs(x - d.x), Math.abs(y - d.y)) > (def.radius ?? 0)) continue;
+      fuel ||= !!def.fuel;
+      water ||= !!def.water;
+    }
+    for (const st of this.stations)
+      if (!st.def.stockpile && this.platformTiles(st).some((p) => p.x === x && p.y === y)) {
+        fuel ||= st.refuelsFuel;
+        water ||= st.refuelsWater;
+      }
+    return { fuel, water };
+  }
+  serviceTiles() {
+    const keys = new Set<number>();
+    for (const d of this.decor.values()) {
+      const def = decorDef(d.id);
+      if (!def.fuel && !def.water) continue;
+      const r = def.radius ?? 0;
+      for (let y = d.y - r; y <= d.y + r; y++)
+        for (let x = d.x - r; x <= d.x + r; x++) if (this.track.has(x, y)) keys.add(this.key(x, y));
+    }
+    for (const s of this.stations)
+      if (!s.def.stockpile && (s.refuelsFuel || s.refuelsWater))
+        for (const p of this.platformTiles(s)) keys.add(this.key(p.x, p.y));
+    return [...keys].map((k) => {
+      const x = k % this.map.w,
+        y = Math.floor(k / this.map.w);
+      return { x, y, ...this.serviceAt(x, y) };
+    });
+  }
   // ------------------------------------------------------------------ track
   private checkTrackTile(x: number, y: number, kind: TrackKind, anchor: boolean): string | null {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     const t = terrainAt(this.map, x, y);
     if (t === Terrain.Rock || t === Terrain.Mountain) return STR.build.rock;
-    if (t === Terrain.Water && kind !== 'bridge') return STR.build.needBridge;
+    if (t === Terrain.Water && kind !== 'bridge' && !this.bridgeAt(x, y))
+      return STR.build.needBridge;
     if (t !== Terrain.Water && kind === 'bridge') return STR.build.bridgeOnWater;
     const st = this.stationAt(x, y);
     // a depot is a through-station: plain pieces may run through the shed
-    if ((st && !(st.def.depot && anchor)) || this.buildingAt(x, y)) return STR.build.occupied;
+    if ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
+      return STR.build.occupied;
     const dec = this.decorAt(x, y);
     if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);
@@ -289,7 +356,10 @@ export class Builder {
     if (!this.pay(c.cost)) return false;
     if (existing) this.refund(pieceCost(existing.kind, existing.cls, existing.cls2));
     const tiles = this.track.place(x, y, item.kind, rot, item.cls, item.cls2);
-    for (const t of tiles) this.onTrackChanged?.(t.x, t.y);
+    for (const t of tiles) {
+      this.refreshBridgeCapacity(t.x, t.y);
+      this.onTrackChanged?.(t.x, t.y);
+    }
     for (const t of tiles) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     return true;
@@ -518,8 +588,16 @@ export class Builder {
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
-      return { ok: false, cost: {}, reason: STR.build.badTerrain };
+    if (
+      def.bridge
+        ? t !== Terrain.Water
+        : t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain
+    )
+      return {
+        ok: false,
+        cost: {},
+        reason: def.bridge ? 'Bridge platforms must stand on water' : STR.build.badTerrain,
+      };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };
     if (
@@ -531,7 +609,7 @@ export class Builder {
       return { ok: false, cost: {}, reason: STR.build.needTerrain(def.terrain) };
     if (def.deposit && !this.hasDeposit(x, y, def.deposit))
       return { ok: false, cost: {}, reason: STR.build.needDeposit(def.deposit) };
-    return this.affordable(this.priced(def.cost, this.kindMul(defId)));
+    return this.affordable(this.priced(def.cost, def.bridge ? 1 : this.kindMul(defId)));
   }
   /** A deposit prop (coal seam, oil seep) lies on the tile. */
   hasDeposit(x: number, y: number, kind: string) {
@@ -586,7 +664,7 @@ export class Builder {
   }
   removeBuilding(x: number, y: number): boolean {
     const b = this.buildingAt(x, y);
-    if (!b) return false;
+    if (!b || (buildingDef(b.id).bridge && this.track.has(x, y))) return false;
     this.buildings.delete(this.key(x, y));
     this.refund(buildingDef(b.id).cost);
     this.onBuildingChanged?.(b, true);

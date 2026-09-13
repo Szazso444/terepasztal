@@ -1,11 +1,11 @@
 import type { Builder, Decor } from './build';
 import { decorDef } from './build';
 import type { Station } from './stations';
-import { buildingDef, type Building } from './buildings';
+import { buildingRecipe, buildingRate, type Building } from './buildings';
 import { rules } from './rules';
 import { hash2 } from '../engine/rng';
 
-/** Chebyshev reach of a town around its town station. */
+/** Chebyshev reach of a town around its civic Townhouse. */
 export const TOWN_RADIUS = 7;
 /** People a townhouse from a save older than the house registry starts with. */
 export const HOUSE_RESIDENTS = 6;
@@ -81,7 +81,7 @@ export const TOWN_COLORS = [
 ];
 
 /**
- * Towns: one per town station. A town is "founded" once a townhouse and a warehouse stand within
+ * Towns: one per civic Townhouse. A town is "founded" once a House and a Warehouse stand within
  * reach; then every station inside carries the town's name. Names are generated and can be
  * changed by the player; renaming updates every prefixed station at once.
  */
@@ -148,46 +148,45 @@ export class TownRegistry {
       }
     return out;
   }
-  /** A town is founded once it has a townhouse and a warehouse. */
+  /** A town is founded once its anchor has a House and a Warehouse in reach. */
   founded(t: Town) {
     const m = this.members(t);
     return m.houses > 0 && m.warehouses > 0;
   }
-  /** Residents plus everyone working at the town's stations, works and services. */
+  /** Housed residents; crews consume food separately and are not extra residents. */
   population(t: Town, m = this.members(t)) {
     let n = 0;
-    for (const s of m.stations) n += s.crew;
-    for (const b of m.buildings) n += buildingDef(b.id).crew;
+
     for (const d of m.decor) {
       const def = decorDef(d.id);
-      n += def.crew;
+
       if (def.residents) n += this.residentsAt?.(d.x, d.y) ?? def.residents;
     }
     return n;
   }
-  /** Goods made per day by the town's stations and works, per cargo. */
+  /** Goods made per week by the town's stations and works, per cargo. */
   production(t: Town, m = this.members(t)): Record<string, number> {
     const out: Record<string, number> = {};
     for (const s of m.stations) {
       const list = s.producedCargo().filter((c) => c !== 'passengers');
       for (const c of list)
-        out[c] = (out[c] ?? 0) + (s.productionPerDay * s.productionMul) / list.length;
+        out[c] = (out[c] ?? 0) + (s.productionPerWeek * s.productionMul) / list.length;
     }
     for (const b of m.buildings) {
-      const def = buildingDef(b.id);
-      for (const [k, v] of Object.entries(def.recipe.out)) out[k] = (out[k] ?? 0) + v * def.perDay;
+      for (const [k, v] of Object.entries(buildingRecipe(b).out))
+        out[k] = (out[k] ?? 0) + v * buildingRate(b);
     }
     return out;
   }
-  /** Goods used per day: works inputs plus the wheat its people eat. */
+  /** Goods used per week: works inputs plus residents' food. */
   consumption(t: Town, m = this.members(t)): Record<string, number> {
     const out: Record<string, number> = {};
     for (const b of m.buildings) {
-      const def = buildingDef(b.id);
-      for (const [k, v] of Object.entries(def.recipe.in)) out[k] = (out[k] ?? 0) + v * def.perDay;
+      for (const [k, v] of Object.entries(buildingRecipe(b).in))
+        out[k] = (out[k] ?? 0) + v * buildingRate(b);
     }
-    const wheat = this.population(t, m) * rules.wheatPerCrew;
-    if (wheat > 0) out.wheat = (out.wheat ?? 0) + wheat;
+    const food = this.population(t, m) * rules.wheatPerCrew;
+    if (food > 0) out.food = (out.food ?? 0) + food;
     return out;
   }
 

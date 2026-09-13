@@ -3,6 +3,9 @@ import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Builder } from './build';
 import type { Train } from './trains';
 import type { JunctionStats } from './junctions';
+import type { PathSegment } from '../world/pathfinding';
+import { blockingGroups, RecoveryReservations } from './recovery';
+import { STR } from '../strings';
 
 /** How far ahead (tiles) a moving train claims track beyond the section it is entering. */
 const HORIZON = 6;
@@ -11,7 +14,8 @@ const STUCK_AFTER = 30;
 /** Minimum head movement (tiles) that counts as progress. */
 const PROGRESS_EPS = 0.05;
 
-export type EpisodeKind = 'stuck' | 'unstuck' | 'deadlock' | 'overlap' | 'yield' | 'headOn';
+export type EpisodeKind =
+  'stuck' | 'unstuck' | 'deadlock' | 'overlap' | 'yield' | 'headOn' | 'recovery';
 export interface TrafficEpisode {
   /** game time */
   t: number;
@@ -38,6 +42,7 @@ export interface TrainTraffic {
   lastY: number;
   /** set while a stuck episode is open */
   stuckSince: number | null;
+  movedSinceStuck: number;
 }
 
 /**
@@ -59,6 +64,8 @@ export class Traffic {
   verbose = false;
   /** tile key -> train id */
   readonly claims = new Map<number, number>();
+  readonly recoveries = new RecoveryReservations();
+  private recoveryRetry = new Map<number, number>();
   private sections = new Map<number, number>();
   private sectionTiles = new Map<number, number[]>();
   private trackVersion = -1;
@@ -129,6 +136,8 @@ export class Traffic {
   }
   /** Train holding a tile other than `self`, or null. */
   claimedBy(x: number, y: number, self: number): number | null {
+    const recovery = this.recoveries.ownerAt(this.key(x, y), self);
+    if (recovery !== null) return recovery;
     const id = this.claims.get(this.key(x, y));
     return id === undefined || id === self ? null : id;
   }
@@ -150,107 +159,184 @@ export class Traffic {
   private carTiles(t: Train): number[] {
     return t.occupancyKeys(this.track.w);
   }
-  /** Direction of travel of a train through a tile of its path, or of its head when standing. */
-  private headingOf(t: Train): { x: number; y: number } {
-    const a = t.pathAhead(2);
-    if (a.length >= 2) return { x: a[1].x - a[0].x, y: a[1].y - a[0].y };
-    const p0 = t.poses[0];
-    const p1 = t.poses[1];
-    if (p0 && p1) return { x: p0.x - p1.x, y: p0.y - p1.y };
-    return { x: 0, y: 0 };
+  reserveRecovery(t: Train, path: PathSegment[], group: number[], trains: Train[], now: number) {
+    const tiles = new Set(path.map((p) => this.key(p.x, p.y)));
+    for (const other of trains)
+      if (other.id !== t.id && this.carTiles(other).some((key) => tiles.has(key))) return false;
+    for (const key of tiles) {
+      const owner = this.claims.get(key);
+      if (owner !== undefined && owner !== t.id && !group.includes(owner)) return false;
+    }
+    if (!this.recoveries.reserve(t.id, group, tiles, now, this.track.version)) return false;
+    for (const key of tiles) this.claims.set(key, t.id);
+    return true;
   }
 
-  /**
-   * Recompute every train's claims and claim limit for this tick. Trains that already hold
-   * tiles keep them; the rest is handed out in order of need (moving trains first, then the
-   * ones that yielded least, then the heavier ones).
-   */
+  /** Rate-limit failed searches; an active group keeps its plan until it clears or stalls. */
+  canRecover(group: Train[], now: number) {
+    const ids = group.map((t) => t.id);
+    if (this.recoveries.hasGroup(ids)) return false;
+    if (ids.some((id) => (this.recoveryRetry.get(id) ?? 0) > now)) return false;
+    for (const id of ids) this.recoveryRetry.set(id, now + 4);
+    return true;
+  }
+
+  private maintainRecoveries(trains: Train[], now: number) {
+    const live = new Map(trains.map((t) => [t.id, t]));
+    for (const [id, plan] of this.recoveries.active) {
+      const t = live.get(id);
+      if (t?.holding && t.state === 'moving') {
+        const needed = new Set([
+          ...this.carTiles(t),
+          ...t.pathAhead().map((p) => this.key(p.x, p.y)),
+        ]);
+        for (const key of plan.tiles) if (!needed.has(key)) plan.tiles.delete(key);
+      }
+      if (t && t.pathProgress > plan.progress + PROGRESS_EPS) {
+        plan.progress = t.pathProgress;
+        plan.progressed = now;
+      }
+      const stale = plan.version !== this.track.version || now - plan.progressed > STUCK_AFTER;
+      if (!t || !t.holding || t.state !== 'moving' || stale) {
+        this.recoveries.active.delete(id);
+        // Release future reservations immediately, keeping the train's actual footprint.
+        const occupied = new Set(t ? this.carTiles(t) : []);
+        for (const key of plan.tiles)
+          if (this.claims.get(key) === id && !occupied.has(key)) this.claims.delete(key);
+        if (t) {
+          if (t.holding) t.cancelRetreat(now);
+          const p = t.poses[0] ?? { x: 0, y: 0 };
+          this.log({
+            t: now,
+            kind: 'recovery',
+            train: id,
+            name: t.name,
+            other: null,
+            x: p.x,
+            y: p.y,
+            text: stale ? STR.traffic.stalled(t.name) : STR.traffic.released(t.name),
+          });
+        }
+      }
+    }
+    // A restored save carries physical train state, but never stale reservation ownership.
+    for (const t of trains)
+      if (t.holding && !this.recoveries.active.has(t.id)) t.cancelRetreat(now);
+    for (const id of this.recoveryRetry.keys()) if (!live.has(id)) this.recoveryRetry.delete(id);
+  }
+  /** Recompute claims before any train moves; occupied track always wins over future claims. */
   assign(trains: Train[], now: number) {
+    this.maintainRecoveries(trains, now);
     if (this.track.version !== this.trackVersion) {
       this.rebuildSections();
       this.claims.clear();
     }
-    const byId = new Map<number, Train>();
-    for (const t of trains) byId.set(t.id, t);
-    // release: anything held by a train that is gone, or not under its cars nor on its path ahead
+    const byId = new Map(trains.map((t) => [t.id, t]));
+    const occupied = new Map<number, number>();
+    const paths = new Map(trains.map((t) => [t.id, t.pathAhead()]));
     const keep = new Map<number, Set<number>>();
     for (const t of trains) {
-      const set = new Set<number>(this.carTiles(t));
-      if (t.state === 'moving') for (const p of t.pathAhead()) set.add(this.key(p.x, p.y));
-      keep.set(t.id, set);
+      const cars = this.carTiles(t);
+      const retained = new Set(cars);
+      if (t.state === 'moving') for (const p of paths.get(t.id)!) retained.add(this.key(p.x, p.y));
+      keep.set(t.id, retained);
+      for (const key of cars) {
+        const owner = occupied.get(key);
+        if (owner !== undefined && owner !== t.id) this.overlap(t, byId.get(owner)!, key, now);
+        occupied.set(key, t.id);
+      }
     }
-    for (const [k, id] of [...this.claims]) {
-      const set = keep.get(id);
-      if (!set || !set.has(k)) this.claims.delete(k);
-    }
+    for (const [key, owner] of this.claims) if (!keep.get(owner)?.has(key)) this.claims.delete(key);
+    for (const plan of this.recoveries.active.values())
+      for (const key of plan.tiles) this.claims.set(key, plan.owner);
+    for (const [key, owner] of occupied) this.claims.set(key, owner);
     const order = [...trains].sort(
       (a, b) =>
-        Number(b.state === 'moving') - Number(a.state === 'moving') ||
-        a.yieldCount - b.yieldCount ||
+        Number(this.recoveries.active.has(b.id)) - Number(this.recoveries.active.has(a.id)) ||
+        (this.stats.get(a.id)?.lastMoveAt ?? now) - (this.stats.get(b.id)?.lastMoveAt ?? now) ||
+        b.yieldCount - a.yieldCount ||
         b.weight - a.weight ||
         a.id - b.id,
     );
     for (const t of order) {
-      // the ground under the cars is always ours; sharing it is a collision to record
-      for (const k of this.carTiles(t)) {
-        const holder = this.claims.get(k);
-        if (holder !== undefined && holder !== t.id && byId.has(holder)) {
-          const other = byId.get(holder)!;
-          if (this.carTiles(other).includes(k)) this.overlap(t, other, k, now);
-        }
-        this.claims.set(k, t.id);
-      }
       t.claimLimit = Infinity;
       t.claimBlocker = null;
-      if (t.state !== 'moving' || t.holding) continue;
-      const ahead = t.pathAhead();
+      if (t.state !== 'moving') continue;
+      const ahead = paths.get(t.id)!;
       const pos = t.pathProgress;
-      const added: number[] = [];
-      let sectionStart = -1; // index in `added` where the current plain section began
-      let curSection = 0;
-      const mine = this.headingOf(t);
-      for (let i = 0; i < ahead.length; i++) {
-        const p = ahead[i];
-        const k = this.key(p.x, p.y);
-        const sec = this.sectionOf(p.x, p.y);
-        if (sec !== curSection) {
-          // a new section begins: beyond the horizon only start it if it is a node
-          if (p.arc - pos > HORIZON && sectionStart < 0 && i > 0) break;
-          curSection = sec;
-          sectionStart = sec > 0 ? added.length : -1;
-        }
-        const holder = this.claims.get(k);
-        if (holder !== undefined && holder !== t.id) {
-          const other = byId.get(holder);
-          let same = false;
-          if (other && other.state === 'moving') {
-            const h = this.headingOf(other);
-            same = h.x * mine.x + h.y * mine.y > 0.1;
+      for (let i = 0; i < ahead.length;) {
+        const first = ahead[i];
+        if (i > 0 && first.arc - pos > HORIZON) break;
+        const section = this.sectionOf(first.x, first.y);
+        let end = i + 1;
+        if (section > 0) {
+          while (end < ahead.length && this.sectionOf(ahead[end].x, ahead[end].y) === section)
+            end++;
+        } else {
+          // Reserve a junction's exit far enough for the rear to clear it before entering.
+          // Adjacent junctions extend the required exit; a queue cannot occupy the crossing.
+          const junction = (p: { x: number; y: number }) => {
+            const piece = this.track.get(p.x, p.y);
+            return !!piece && (piece.links.length > 1 || !!piece.unit);
+          };
+          if (junction(first)) {
+            let exitArc = first.arc;
+            while (end < ahead.length) {
+              const next = ahead[end++];
+              if (junction(next)) exitArc = next.arc;
+              else if (next.arc - exitArc >= t.length + 1) break;
+            }
           }
-          if (same) {
-            // following: may enter behind it, spacing is kept by the occupancy rule
-            t.claimLimit = Math.max(0, p.arc - pos);
-            t.claimBlocker = holder;
+        }
+        let conflict = -1;
+        let holder: number | null = null;
+        for (let j = i; j < end; j++) {
+          const p = ahead[j];
+          holder = this.claimedBy(p.x, p.y, t.id);
+          if (holder !== null) {
+            conflict = j;
             break;
           }
-          // an oncoming (or standing) train holds it: never enter a section we cannot own
-          const hx = Math.floor(t.poses[0].x + 0.5);
-          const hy = Math.floor(t.poses[0].y + 0.5);
-          const headIn = sec > 0 && this.sectionOf(hx, hy) === sec;
-          if (sec > 0 && sectionStart >= 0 && !headIn) {
-            const cars = this.carTiles(t);
-            for (let j = sectionStart; j < added.length; j++)
-              if (!cars.includes(added[j])) this.claims.delete(added[j]);
-            const entryArc = ahead[i - (added.length - sectionStart)]?.arc ?? p.arc;
-            added.length = sectionStart;
-            t.claimLimit = Math.max(0, entryArc - pos);
-          } else t.claimLimit = Math.max(0, p.arc - pos);
+        }
+        if (conflict >= 0 && holder !== null) {
+          const p = ahead[conflict];
+          const otherPath = paths.get(holder) ?? [];
+          const other = otherPath.find((q) => q.x === p.x && q.y === p.y);
+          // Compare direction at the contested tile, not headings on unrelated curves.
+          const following =
+            section > 0 &&
+            byId.get(holder)?.state === 'moving' &&
+            other?.in === p.in &&
+            other?.out === p.out &&
+            this.recoveries.ownerAt(this.key(p.x, p.y), t.id) === null;
+          const head = ahead[0];
+          const inside = section > 0 && head && this.sectionOf(head.x, head.y) === section;
+          const stop = following || inside ? p.arc : first.arc;
+          t.claimLimit = Math.max(0, stop - pos);
           t.claimBlocker = holder;
+          // No partial section/exit claim may remain after a failed acquisition.
+          for (let j = i; j < end; j++) {
+            const key = this.key(ahead[j].x, ahead[j].y);
+            if (
+              this.claims.get(key) === t.id &&
+              occupied.get(key) !== t.id &&
+              !this.recoveries.active.get(t.id)?.tiles.has(key)
+            )
+              this.claims.delete(key);
+          }
+          // Trains already inside a contested section still acquire the free prefix. Without
+          // this, both ends can advance into the same unclaimed tile before either occupies it.
+          if (inside || following)
+            for (let j = i; j < conflict; j++) {
+              const p = ahead[j];
+              if (this.claimedBy(p.x, p.y, t.id) === null)
+                this.claims.set(this.key(p.x, p.y), t.id);
+            }
           this.counters.waits++;
           break;
         }
-        this.claims.set(k, t.id);
-        added.push(k);
+        for (let j = i; j < end; j++) this.claims.set(this.key(ahead[j].x, ahead[j].y), t.id);
+        i = end;
       }
     }
   }
@@ -269,6 +355,7 @@ export class Traffic {
         lastX: p.x,
         lastY: p.y,
         stuckSince: null,
+        movedSinceStuck: 0,
       };
       this.stats.set(t.id, s);
     }
@@ -352,7 +439,8 @@ export class Traffic {
         s.lastX = p.x;
         s.lastY = p.y;
         s.lastMoveAt = now;
-        if (s.stuckSince !== null && moved > 0.5) {
+        if (s.stuckSince !== null) s.movedSinceStuck += moved;
+        if (s.stuckSince !== null && s.movedSinceStuck > 0.5) {
           this.log({
             t: now,
             kind: 'unstuck',
@@ -370,6 +458,7 @@ export class Traffic {
         s.stuckSince = null;
       } else if (s.stuckSince === null && now - s.lastMoveAt > STUCK_AFTER) {
         s.stuckSince = s.lastMoveAt;
+        s.movedSinceStuck = 0;
         s.stuck++;
         this.counters.stuck++;
         const by = t.blockedBy !== null ? trains.find((o) => o.id === t.blockedBy) : undefined;
@@ -395,9 +484,33 @@ export class Traffic {
     return out;
   }
   /** Summary for the debug panel and `game.traffic.report()`. */
+  recoverySummary(trains: Train[]) {
+    return STR.traffic.recoverySummary(
+      blockingGroups(trains).length,
+      [...this.recoveries.active.keys()]
+        .map((id) => trains.find((t) => t.id === id)?.name ?? `#${id}`)
+        .join(', '),
+    );
+  }
+
   report(trains: Train[]) {
     return {
       counters: { ...this.counters },
+      blockingGroups: blockingGroups(trains).map((group) => ({
+        trains: group.map((t) => t.id),
+        waits: group.map((t) => ({ train: t.id, for: t.blockedBy ?? t.claimBlocker })),
+        recovery:
+          [...this.recoveries.active.values()].find((p) =>
+            p.group.some((id) => group.some((t) => t.id === id)),
+          )?.owner ?? null,
+      })),
+      recoveries: [...this.recoveries.active.values()].map((p) => ({
+        owner: p.owner,
+        group: p.group,
+        started: p.started,
+        progressed: p.progressed,
+        tiles: [...p.tiles].map((k) => ({ x: k % this.track.w, y: Math.floor(k / this.track.w) })),
+      })),
       trains: trains.map((t) => {
         const s = this.stats.get(t.id);
         return {
@@ -405,6 +518,8 @@ export class Traffic {
           name: t.name,
           mode: t.mode,
           state: t.state,
+          blockedBy: t.blockedBy ?? t.claimBlocker,
+          recovering: this.recoveries.active.has(t.id),
           blockedSeconds: Math.round(s?.blocked ?? 0),
           yields: s?.yields ?? 0,
           stuck: s?.stuck ?? 0,

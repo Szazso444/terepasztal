@@ -119,22 +119,66 @@ recorded in `docs/phase-decisions.md`.
 
 ### After the first playtest
 
-- Long locomotive casings now follow curves as two visual half-bodies joined at the middle
-  pivot. The rigid vehicle specs and compatibility verdicts are unchanged. Tangent-facing bogies
-  are clipped to an inset of their own body silhouette, including medium stock on regular curves
-  and Garratt engine units. The GPU alpha-mask regression script and before/after screenshots are
-  in [scratchpad](scratchpad/README.md).
+- Small vehicles with fixed running gear now have two axles (four wheels), using the same
+  wheel materials as bogies. Reversing preserves every car and tender segment's position and
+  heading; a failed reverse plan cannot fall back to a forward move or interpolate a half-turn.
+  Rerouting projects onto the current rail segment instead of snapping the head backwards.
+- Fuel and water tanks are doubled and consumption per tile reduced by 35%. Trains seek nearby
+  reachable coaling stages and water towers before reserves run low, including on dynamic routes;
+  separate services are visited in order of the limiting reserve. **Refuel all · 2×** fills the
+  trains in view, or the whole fleet in overview, at twice the resource cost, with no partial
+  charge if the complete refill is unaffordable.
+- **Townhouse** remains the civic town anchor and no longer handles passengers. The separate
+  **Station** serves passengers from nearby homes. **House** upgrades through apartments,
+  high-rise and skyscraper, with capacities 20 / 60 / 140 / 300. Population stops at housing
+  capacity; extra Houses and upgrades are paid player actions. Dense 6×6 neighbourhoods with
+  200 residents gain cosmetic city roads and paving.
+- Residents and crews eat **food**, shown with a bread icon. The new **Windmill** turns one
+  wheat into 5 / 7 / 9 / 11 food across its four levels. Production and upkeep use weekly rates;
+  market deals and fuel-price changes settle weekly. Resource colors show actual net receipts
+  and spending over the last seven days. Refineries also consume stone. Works, stations, depots
+  and Houses show their upgrade level in their procedural art.
+- Independent **Wooden Bridge** and **Stone Bridge** platforms go on water before ordinary
+  track is laid. Connected straight rails form continuous timber trusses or masonry arches
+  with piers. Base limits are 180 t and 650 t, increased by upgrades; total consist mass above
+  80% crosses at half speed until the tail clears, and over-capacity paths are refused.
+- Semaphores now work in Automatic mode when placed, protect the full block without the old
+  forty-tile cutoff, and remain aware of occupancy beyond a train's destination. Select a post
+  to inspect its direction, rotate it and highlight the block. **Signals?** opens an illustrated
+  guide; the longer [railway guide](docs/railway-guide.md) explains passing loops and junctions.
+- Electric Age requires $100,000 total earnings. New games start with $40,000, triple the earlier
+  construction stock and larger fuel, water and food reserves. Crafting adds type filters,
+  model search, properties and a draggable rotating preview. Icons now compose the complete
+  locomotive or wagon from the correct atlas, including all articulated parts and bogies.
+- Buying an edge chunk preserves running speed through world expansion, and shifts Houses,
+  wires, bridge levels, track classes and vehicle trails together. Repeated bridge redraws are
+  batched during save loading. Cleared tiles no longer retain duplicate tree sprites. Save
+  format 12 preserves town identities, converts legacy bridge tracks, adds starter food, and
+  retires obsolete passenger contracts without fines. Verification and screenshots are in
+  [scratchpad](scratchpad/README.md).
+- Locomotives retain rigid casings while their bogies swivel and slide independently on the
+  rails. The visual hinge and silhouette masks from the first art pass are removed; raised sills
+  expose distinct four- and six-wheel bogies instead of a continuous strip of baked axle boxes.
+  Cosmetic axle counts leave curve mechanics and compatibility unchanged. The renderer sweep,
+  motion sequence and before/after screenshots are in [scratchpad](scratchpad/README.md).
+- Congestion recovery follows complete blocking groups, including queues obstructing another
+  train's retreat. It reserves one escape per group, tries the blocking cycle first, and moves
+  obstructing queues when necessary. Refuges must fit the entire consist; failed reverse plans
+  leave trains untouched. Escape reservations clear behind the rear and expire if progress stops.
+  Junctions check exit room, and trains already inside a contested section cannot both enter the
+  same unclaimed gap. The debug panel and exported traffic log show groups and active escapes;
+  stuck episodes now close when ordinary movement steps accumulate.
 - Procedural art now uses a consistent railway-diorama palette, quieter terrain and material
   textures, coloured contours, projected bevels, warmer timber and brass, and cooler steel.
   Locomotives and wagons have wider casings and clearer chassis details; diesels gain vent banks
   and waist stripes. Roof gables are closed, pixel drawing rounds fractional coordinates, and
   sleepers use arc-distance spacing. Buildings, vegetation, cargo icons, crew and effects share
   the refreshed materials and edges.
-- Atlas packing trims transparent margins while preserving ground anchors. Locomotive art,
-  including the new half-bodies and inset masks, fits in 4096×2048 instead of 4096×4096; wagon art
-  fits in 4096×512 instead of 4096×2048. Measured procedural generation remains about one second.
-- Contract offers come two at a time every six days and stay open for six; fines for failing or
-  cancelling are 2.5 % of the payout. A contract whose station was demolished lapses for free.
+- Atlas packing trims transparent margins while preserving ground anchors. Locomotive art fits
+  in 4096×1024 and wagon art in 4096×512. Removing half-bodies and masks reduces locomotive
+  generation to about 0.46 seconds in the recorded local run; the art refresh is retained.
+- Contract offers come one at a time every 21 days and stay open for 28; fines for failing are
+  0.5% of the payout, and cancelling costs 0.25%. A contract whose station was demolished lapses for free.
   An **Auto-accept on/off** switch sits on the Contracts screen; a new **Contract** route mode
   keeps a train on its platform for contract work and gets it chosen ahead of busier trains.
 - Track opens with its age: transitions and every high-speed piece are Electric Age items, and

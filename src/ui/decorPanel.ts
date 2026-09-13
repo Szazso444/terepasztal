@@ -14,6 +14,8 @@ export class DecorPanel {
   decor: Decor | null = null;
   /** set by the game: townhouse state for house entries */
   houses: HouseRegistry | null = null;
+  onSignalGuide: (() => void) | null = null;
+  onSignalBlock: ((d: Decor | null) => void) | null = null;
 
   constructor(
     private readonly builder: Builder,
@@ -37,8 +39,10 @@ export class DecorPanel {
     this.decor = d;
     this.root.style.display = '';
     this.render();
+    this.onSignalBlock?.(d.id === 'signal' ? d : null);
   }
   close() {
+    this.onSignalBlock?.(null);
     this.decor = null;
     this.root.style.display = 'none';
     this.onClose();
@@ -61,7 +65,7 @@ export class DecorPanel {
     if (days !== null) out.push(`${H.growth}: ${H.growthIn(Math.max(1, Math.ceil(days)))}`);
     else if (h.residents >= cap) {
       out.push(`${H.growth}: ${H.full}`);
-      if (h.level < houses.maxLevel) out.push(H.autoUpgrade(houses.cfg.autoUpgradeDays));
+      if (h.level < houses.maxLevel) out.push('Upgrade this House to make room for more residents');
     } else out.push(`${H.growth}: ${H.growthNoFood}`);
     return out;
   }
@@ -87,7 +91,11 @@ export class DecorPanel {
       );
     }
     if (def.power) out.push(power.isPowered(d.x, d.y) ? STR.decorInfo.live : STR.decorInfo.dead);
-    if (d.id === 'signal') out.push(STR.decorInfo.signal);
+    if (d.id === 'signal')
+      out.push(
+        'Guards the track ahead until the next same-direction signal. Select to highlight the block.',
+        `Governs trains travelling ${['north', 'east', 'south', 'west'][d.rot]}`,
+      );
     if (def.crew) out.push(`${STR.building.crew}: ${def.crew}`);
     const h = def.residents && houses ? houses.at(d.x, d.y) : undefined;
     if (h && houses) out.push(...DecorPanel.houseLines(h, houses));
@@ -107,6 +115,20 @@ export class DecorPanel {
     b.append(el('div', { class: 'flavor', text: def.flavor }));
     for (const line of DecorPanel.lines(d, this.builder, this.power, this.houses))
       b.append(el('div', { class: 'kv' }, el('span', { class: 'k', text: line })));
+    if (d.id === 'signal')
+      b.append(
+        btn(
+          'Rotate direction',
+          () => {
+            d.rot = (d.rot + 1) % 4;
+            this.builder.onDecorChanged?.(d, false);
+            this.onSignalBlock?.(d);
+            this.render();
+          },
+          'small',
+        ),
+        btn('Semaphore guide', () => this.onSignalGuide?.(), 'small'),
+      );
     const houses = this.houses;
     const h = def.residents && houses ? houses.at(d.x, d.y) : undefined;
     if (h && houses) {

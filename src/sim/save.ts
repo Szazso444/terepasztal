@@ -14,7 +14,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -57,7 +57,7 @@ export interface SaveGame {
   /** v4: global resources */
   stockpile?: unknown;
   /** v4: processing buildings [x, y, id, acc] */
-  buildings?: [number, number, string, number][];
+  buildings?: [number, number, string, number, number?][];
   /** v5: owned chunks */
   regions?: boolean[];
   /** v6: season of day 1 (0 spring .. 3 winter) */
@@ -225,6 +225,44 @@ export const MIGRATIONS: Migration[] = [
         if (r.contractRefreshDays === 1.5) r.contractRefreshDays = 6;
         if (r.contractOfferCount === 3) r.contractOfferCount = 2;
       }
+    },
+  },
+  {
+    from: 11,
+    note: 'weekly food economy, works upgrades, independent bridge platforms and passenger Stations; existing Townhouses retain their town identity',
+    run: (j) => {
+      if (j.rules) {
+        if ([2, 6].includes(j.rules.contractRefreshDays ?? 0)) j.rules.contractRefreshDays = 21;
+        if (j.rules.contractOfferCount === 2) j.rules.contractOfferCount = 1;
+        j.rules.tradeCycleDays = 7;
+      }
+      const trade = j.trade as { nextAt?: number; driftDay?: number } | undefined;
+      if (trade) {
+        trade.nextAt = 0;
+        trade.driftDay = Math.floor((trade.driftDay ?? 0) / 7);
+      }
+      const stock = j.stockpile as { amounts?: Record<string, number> } | undefined;
+      if (stock?.amounts && stock.amounts.food === undefined)
+        stock.amounts.food = Math.max(600, (stock.amounts.wheat ?? 0) * 5);
+      for (const s of j.stations)
+        if (s.defId === 'town') {
+          delete s.storage.passengers;
+          if (s.name.startsWith('Town Station'))
+            s.name = s.name.replace('Town Station', 'Townhouse');
+        }
+      const board = j.contracts as { contracts?: { cargo: string; status: string }[] } | undefined;
+      for (const c of board?.contracts ?? [])
+        if (c.cargo === 'passengers' && ['active', 'offer'].includes(c.status))
+          c.status = 'expired';
+      j.buildings = j.buildings ?? [];
+      j.track = j.track.map(([x, y, kind, rot, cls, cls2]) => {
+        if (kind === 'bridge') {
+          if (!j.buildings!.some((b) => b[0] === x && b[1] === y))
+            j.buildings!.push([x, y, 'bridge_wood', 0, 1]);
+          return [x, y, 'straight', rot, cls, cls2];
+        }
+        return [x, y, kind, rot, cls, cls2];
+      });
     },
   },
 ];
