@@ -1,6 +1,6 @@
 import { CARGO } from './cargo';
 import type { Cost } from '../data/content';
-import { rules, daySeconds } from './rules';
+import { rules, weekSeconds } from './rules';
 
 /** Resource ids that can sit in the stockpile: every cargo plus stored power. */
 export const RESOURCE_IDS: string[] = [
@@ -10,13 +10,51 @@ export const RESOURCE_IDS: string[] = [
 
 /**
  * The player's global stockpile. Fed by trains unloading at a depot and by processing buildings;
- * drained by construction, upkeep (wheat per crew member) and refuelling.
+ * drained by construction, upkeep (food per crew member) and refuelling.
  */
 export class Stockpile {
   amounts = new Map<string, number>();
-  /** crew members fed by wheat */
+  /** Residents and working crews are counted separately. */
   population = 0;
-  /** true while wheat is out; production and speed suffer */
+  workforce = 0;
+  private flowTime = 0;
+  private tracking = false;
+  private flows = new Map<string, { at: number; produced: number; consumed: number }[]>();
+
+  /** Begin after initial resources or a save have been restored, including paused construction. */
+  beginFlowHistory() {
+    this.flows.clear();
+    this.flowTime = 0;
+    this.tracking = true;
+  }
+
+  private record(id: string, amount: number, kind: 'produced' | 'consumed') {
+    if (!this.tracking || amount <= 0) return;
+    const buckets = this.flows.get(id) ?? [];
+    // Quarter-day buckets keep the rolling history bounded even for continuous upkeep.
+    const at = Math.floor(this.flowTime / (weekSeconds() / 28));
+    let bucket = buckets[buckets.length - 1];
+    if (!bucket || bucket.at !== at) {
+      bucket = { at, produced: 0, consumed: 0 };
+      buckets.push(bucket);
+    }
+    bucket[kind] += amount;
+    while (buckets.length && buckets[0].at <= at - 28) buckets.shift();
+    this.flows.set(id, buckets);
+  }
+
+  /** Actual stock movements in the last seven days; starting stock is excluded. */
+  weeklyFlow(id: string) {
+    const now = Math.floor(this.flowTime / (weekSeconds() / 28));
+    const total = { produced: 0, consumed: 0 };
+    for (const b of this.flows.get(id) ?? [])
+      if (b.at > now - 28) {
+        total.produced += b.produced;
+        total.consumed += b.consumed;
+      }
+    return total;
+  }
+  /** true while food is out; production and speed suffer */
   famine = false;
   private famineTime = 0;
   onMessage: ((msg: string, kind: 'info' | 'warn' | 'good') => void) | null = null;
@@ -34,12 +72,14 @@ export class Stockpile {
     const cur = this.get(id);
     const n = Math.max(0, Math.min(amount, cap - cur));
     this.amounts.set(id, cur + n);
+    this.record(id, n, 'produced');
     return n;
   }
   take(id: string, amount: number) {
     const cur = this.get(id);
     const n = Math.max(0, Math.min(cur, amount));
     this.amounts.set(id, cur - n);
+    this.record(id, n, 'consumed');
     return n;
   }
   canAfford(cost: Cost, mul = 1) {
@@ -61,28 +101,30 @@ export class Stockpile {
     for (const [k, v] of Object.entries(cost)) this.add(k, Math.floor(v * mul));
   }
 
-  /** Crew upkeep: wheat per crew member per day. */
+  /** Crew upkeep: food per crew member per week. */
   tick(gameDt: number) {
-    const need = (this.population * rules.wheatPerCrew * gameDt) / daySeconds();
-    const got = this.take('wheat', need);
+    this.flowTime += gameDt;
+    this.tracking ||= gameDt > 0;
+    const need = ((this.population + this.workforce) * rules.wheatPerCrew * gameDt) / weekSeconds();
+    const got = this.take('food', need);
     const starving = need > 0 && got < need * 0.999;
     if (starving) {
       this.famineTime += gameDt;
       if (!this.famine && this.famineTime > 10) {
         this.famine = true;
-        this.onMessage?.('The crews are out of wheat: production halved, trains slowed', 'warn');
+        this.onMessage?.('The crews are out of food: production halved, trains slowed', 'warn');
       }
     } else {
       this.famineTime = 0;
       if (this.famine) {
         this.famine = false;
-        this.onMessage?.('Wheat is back; crews are fed again', 'good');
+        this.onMessage?.('Food is back; crews are fed again', 'good');
       }
     }
   }
-  /** Wheat consumed per in-game day at the current population. */
-  wheatPerDay() {
-    return this.population * rules.wheatPerCrew;
+  /** Food consumed per in-game week at the current population. */
+  foodPerWeek() {
+    return (this.population + this.workforce) * rules.wheatPerCrew;
   }
   toJSON() {
     return { amounts: Object.fromEntries(this.amounts), famine: this.famine };
@@ -90,6 +132,9 @@ export class Stockpile {
   load(j: ReturnType<Stockpile['toJSON']>) {
     this.amounts = new Map(Object.entries(j.amounts));
     this.famine = j.famine;
+    this.flows.clear();
+    this.flowTime = 0;
+    this.tracking = false;
   }
 }
 

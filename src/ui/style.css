@@ -1809,3 +1809,77 @@ table.market td {
   overflow-y: auto;
   margin: 2px 0 6px;
 }
+
+.vehicle-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #090e12b8;
+}
+.vehicle-preview-panel {
+  width: min(720px, 95vw);
+  max-height: 90vh;
+  overflow: auto;
+}
+.vehicle-preview-panel .panel-title {
+  display: flex;
+  justify-content: space-between;
+}
+.vehicle-turntable {
+  height: 270px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 65%, #526165, #18262e 65%);
+  border-bottom: 1px solid #5d6b68;
+}
+.vehicle-turntable img {
+  max-width: 94%;
+  max-height: 235px;
+  image-rendering: pixelated;
+  cursor: grab;
+  touch-action: none;
+}
+.vehicle-preview-panel input[type='range'] {
+  width: 75%;
+}
+.craft-filters {
+  position: sticky;
+  top: 0;
+  background: #202321;
+  padding: 6px 0;
+  z-index: 1;
+}
+.craft-recipe .item-art {
+  width: 100px;
+  height: 60px;
+  flex: 0 0 100px;
+  max-height: 75px;
+  object-fit: contain;
+}
+.gcard-art {
+  object-fit: contain;
+  max-width: 100%;
+}
+.signal-diagram {
+  white-space: pre-wrap;
+  color: #8cd1c9;
+  padding: 12px;
+  background: #152126;
+}
+.res .value.good {
+  color: #91cb75;
+}
+
+#train-side .panel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+#train-side .panel-title .num {
+  margin-left: auto;
+}

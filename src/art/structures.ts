@@ -1,4 +1,6 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
+import { addBridgeFrames } from './bridges';
+import { residence, windmill, upgradedWorks, CIVIC_OX, CIVIC_OY } from './civic';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder, proj, fillPoly } from './iso3d';
@@ -482,10 +484,30 @@ function warnMarker(color: RGB = PAL.amber, shape: 'triangle' | 'disc' = 'triang
 
 export function generateStructuresAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
+  addBridgeFrames(ab);
   ab.add('structures/station_1', stationL1().toImageData(), OX, OY);
   ab.add('structures/station_2', stationL2().toImageData(), OX, OY);
   ab.add('structures/station_3', stationL3().toImageData(), OX, OY);
-  for (const r of [0, 1]) ab.add(`structures/depot_r${r}`, depot2(r).toImageData(), DOX, DOY);
+  for (let l = 4; l <= 5; l++)
+    ab.add(
+      `structures/station_${l}`,
+      upgradedWorks(stationL3(), l - 1).toImageData(),
+      CIVIC_OX,
+      CIVIC_OY,
+    );
+  for (const r of [0, 1]) {
+    ab.add(`structures/depot_r${r}`, depot2(r).toImageData(), DOX, DOY);
+    for (let l = 2; l <= 5; l++) {
+      const b = depot2(r);
+      for (let i = 0; i < l - 1; i++) {
+        const x = DOX - 18 + i * 10,
+          y = DOY - 32 - i * 2;
+        b.rect(x, y, 5, 8, PAL.iron[1]);
+        b.rect(x - 1, y - 2, 7, 3, PAL.iron[0]);
+      }
+      ab.add(`structures/depot_r${r}_lv${l}`, b.toImageData(), DOX, DOY);
+    }
+  }
   ab.add('structures/depot_1', depot2(0).toImageData(), DOX, DOY);
   for (const k of ['third_rail', 'catenary', 'hv_catenary'] as const)
     for (const ax of ['ns', 'ew', 'x'] as const)
@@ -502,13 +524,39 @@ export function generateStructuresAtlas(): AtlasImage {
   ab.add('structures/alert', warnMarker(PAL.red, 'disc').toImageData(), 7, 15);
   ab.add('structures/note', warnMarker(PAL.cyanDark, 'disc').toImageData(), 7, 15);
   for (const [fam, gen] of Object.entries(STATION_FAMILIES))
-    for (let l = 1; l <= 3; l++) ab.add(`structures/${fam}_${l}`, gen(l).toImageData(), OX, OY);
-  for (const [id, gen] of Object.entries(BUILDING_SPRITES))
+    for (let l = 1; l <= 5; l++) {
+      if (l <= 3) ab.add(`structures/${fam}_${l}`, gen(l).toImageData(), OX, OY);
+      else
+        ab.add(
+          `structures/${fam}_${l}`,
+          upgradedWorks(gen(3), l - 1).toImageData(),
+          CIVIC_OX,
+          CIVIC_OY,
+        );
+    }
+  for (const [id, gen] of Object.entries(BUILDING_SPRITES)) {
     ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
+    for (let l = 2; l <= 4; l++)
+      ab.add(`structures/${id}_lv${l}`, upgradedWorks(gen(), l).toImageData(), CIVIC_OX, CIVIC_OY);
+  }
+  for (let l = 1; l <= 4; l++)
+    ab.add(
+      `structures/windmill${l > 1 ? '_lv' + l : ''}`,
+      windmill(l).toImageData(),
+      CIVIC_OX,
+      CIVIC_OY,
+    );
   for (const [id, gen] of Object.entries(DECOR_SPRITES))
-    ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
+    if (id !== 'townhouse') ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
   for (const [id, gen] of Object.entries(HOUSE_SPRITES))
-    ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
+    if (id.includes('_s')) ab.add(`structures/${id}`, gen().toImageData(), OX, OY);
+  for (let l = 1; l <= 4; l++)
+    ab.add(
+      `structures/townhouse${l > 1 ? '_' + l : ''}`,
+      residence(l).toImageData(),
+      CIVIC_OX,
+      CIVIC_OY,
+    );
   ab.add('structures/power_line', powerLine().toImageData(), 8, 35);
-  return ab.build(1024);
+  return ab.build(2048);
 }

@@ -1,12 +1,23 @@
 {
-  "capacity": [10, 25, 50],
-  "startResidents": 4,
+  "capacity": [20, 60, 140, 300],
+  "startResidents": 8,
   "constructionDays": 2,
-  "growthDays": 2,
+  "growthDays": 0.5,
   "autoUpgradeDays": 3,
   "upgradeCost": [
-    { "wood": 60, "stone": 30 },
-    { "wood": 120, "stone": 80, "iron": 10 }
+    {
+      "wood": 60,
+      "stone": 40
+    },
+    {
+      "wood": 80,
+      "stone": 140,
+      "iron": 30
+    },
+    {
+      "stone": 260,
+      "iron": 90
+    }
   ],
   "spawnAt": 0.8,
   "spawnMulCap": 3,

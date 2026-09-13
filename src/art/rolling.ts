@@ -259,18 +259,9 @@ class Frame {
     for (const end of [-len / 2, len / 2]) this.dot(end, 0, z0 + 3, PAL.iron[1], 2);
   }
 
-  /** chassis with baked wheels for one-tile stock */
-  chassis(len: number, big = false) {
-    this.prism({ l: 0, len, wid: 0.2, h: 5, z0: 0, top: WHEELS, side: WHEELS, seed: 3 });
-    const xs = big ? [-len * 0.3, len * 0.28] : [-len * 0.34, -len * 0.05, len * 0.24];
-    for (const l of xs)
-      for (const w of [-0.11, 0.11]) {
-        if (!this.visible(l, w)) continue;
-        const p = this.px(l, w, 2);
-        const r = big && l < 0 ? 3 : 2;
-        this.b.rect(p.x - r + 1, p.y - r, r * 2 - 1, r * 2, WHEELS[2]);
-        this.b.set(p.x, p.y - 1, PAL.iron[3]);
-      }
+  /** Two fixed axles (four wheels) for stock without separate bogies. */
+  chassis(len: number, _big = false) {
+    wheelFrame(this, [-len * 0.32, len * 0.32], len);
   }
   finish(threshold = 190) {
     this.b.outline(PAL.outline, threshold);
@@ -980,12 +971,7 @@ function load(kind: string, f: Frame) {
   return f.b;
 }
 
-function bogie(kind: BogieKind, f: Frame) {
-  const len = kind === 'bogie' ? 0.34 : kind === 'bogie3' ? 0.52 : 0.7;
-  // Each axle carries two wheels. Drawing both sides around the narrow frame keeps the
-  // four- and six-wheel groups legible when the truck swivels out from under its body.
-  const xs =
-    kind === 'bogie' ? [-0.12, 0.12] : kind === 'bogie3' ? [-0.18, 0, 0.18] : [-0.24, 0, 0.24];
+function wheelFrame(f: Frame, xs: number[], len: number) {
   const wheels = (near: boolean) => {
     for (const l of xs)
       for (const w of [-0.105, 0.105]) {
@@ -1003,6 +989,15 @@ function bogie(kind: BogieKind, f: Frame) {
   }
   f.prism({ l: 0, len, wid: 0.1, h: 1, z0: 3, top: PAL.iron, side: WHEELS, seed: 61 });
   wheels(true);
+}
+
+function bogie(kind: BogieKind, f: Frame) {
+  const len = kind === 'bogie' ? 0.34 : kind === 'bogie3' ? 0.52 : 0.7;
+  // Each axle carries two wheels. Drawing both sides around the narrow frame keeps the
+  // four- and six-wheel groups legible when the truck swivels out from under its body.
+  const xs =
+    kind === 'bogie' ? [-0.12, 0.12] : kind === 'bogie3' ? [-0.18, 0, 0.18] : [-0.24, 0, 0.24];
+  wheelFrame(f, xs, len);
   if (kind === 'engine_unit') {
     for (const w of [-0.14, 0.14])
       f.prism({

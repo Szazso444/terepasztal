@@ -296,6 +296,13 @@ export function generateIconsAtlas(): AtlasImage {
   const gens: Record<string, () => PixelBuf> = {
     water,
     wheat,
+    food: () => {
+      const b = new PixelBuf(S, S);
+      b.ellipse(8, 9, 6, 4, [PAL.sand[2], PAL.cargoGrain, PAL.sand[0]], 18, 0.15);
+      for (const x of [5, 8, 11]) b.line(x, 6, x - 1, 9, PAL.white);
+      b.outline(PAL.outline, 220);
+      return b;
+    },
     stone,
     wood,
     coal,

@@ -1,3 +1,48 @@
+# Railway expansion verification
+
+The latest pass keeps Townhouse as the civic anchor, moves passengers to Station, and adds
+upgradable Houses, weekly food production, independent bridges, service routing and crafting
+previews. The [player guide](../docs/railway-guide.md) explains the mechanics.
+
+| Evidence                                        | Files                                                                                                 |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Fixed four-wheel stock and four building levels | [asset sheet](expansion-assets.png)                                                                   |
+| Connected wood/stone spans and city paving      | [world](expansion-city-bridges.png), [bridge upgrade](expansion-bridge-upgrade.png)                   |
+| Scoped emergency refuelling                     | [field view](expansion-refuel-visible.png), [overview](expansion-refuel-overview.png)                 |
+| Semaphore instructions                          | [guide](expansion-signals.png)                                                                        |
+| Craft filters and complete rotating vehicles    | [crafting](expansion-crafting.png), [preview](expansion-preview.png)                                  |
+| Chunk purchase and restored infrastructure      | [screenshot](expansion-chunk-purchase.png), [browser assertions](expansion-browser.json)              |
+| Unchanged curve compatibility                   | [curves](curves-expansion-after.png), [verdicts](compat-expansion-after.json)                         |
+| Art generation and atlas bounds                 | [report](assets-expansion-after.json), [sheet](assets-expansion-after.png)                            |
+| Four-train obstructed recovery                  | [report](traffic-expansion-after-4-blocked.json), [screenshot](traffic-expansion-after-4-blocked.png) |
+
+```sh
+npm test
+npm run typecheck
+npm run lint
+npm run build
+node scratchpad/verify-expansion.mjs
+node scratchpad/verify-assets.mjs expansion-after
+node scratchpad/verify-curves.mjs expansion-after
+node scratchpad/verify-bogies.mjs
+node scratchpad/verify-traffic.mjs expansion-after 4 blocked
+```
+
+Use the external Playwright runtime described below; the repository adds no runtime dependency.
+All browser runs use isolated seed-4242 worlds, not the player's live save. `verify-expansion`
+clicks both Refuel all scopes, checks that the off-screen tank stays unchanged in field view,
+and verifies the exact 2× resource bill. It rotates a signal, opens its guide, filters crafting,
+opens the turntable and upgrades a bridge through the real UI. Edge expansion restores a level-3
+stone bridge, high-speed rails, catenary, 300 residents and a level-2 windmill at shifted coordinates.
+The measured interior purchase took about 39 ms. The edge reload grew 160×160 to 224×224 while
+keeping 2× speed and advancing time. This is a local regression fixture, not a maximum-map benchmark.
+
+The simulation suite covers separately placed coaling/water services, housing caps, food recipes,
+weekly stock flows and trade, migration, whole-consist bridge access and speed, long signal blocks,
+and reversal of tender, rigid, Meyer and Garratt vehicles on curves. The updated bogie sweep still
+passes 52,128 poses. The four-train recovery fixture clears in 37.2 seconds with zero overlaps,
+stuck episodes or deadlocks. All 2,839 atlas frames fit, and total local generation takes ~0.91 s.
+
 # Rigid bogies and congestion verification
 
 Current acceptance follows the player's clarification: rigid casings and visibly independent

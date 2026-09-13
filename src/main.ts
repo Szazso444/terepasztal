@@ -121,7 +121,8 @@ async function boot() {
   else game.startFresh();
   // the game always starts paused; Space or the pause button starts the clock. A dev reload
   // keeps the speed the snapshot was taken at instead, so a running game stays running.
-  if (start !== 'editor' && !resumed) game.clock.setSpeed(0);
+  if (start !== 'editor' && !resumed && !(intent?.action === 'continue' && intent.keepSpeed))
+    game.clock.setSpeed(0);
   if (start === 'menu') game.openMainMenu();
   armDevReload(() => (game.mode === 'play' && !game.menuOpen ? game.snapshot() : null));
   if (import.meta.env.DEV)

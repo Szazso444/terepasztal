@@ -331,8 +331,15 @@ export function poseSegment(
 }
 
 /** Pose every segment of a vehicle whose front end is at `arcFront`. */
-export function poseVehicle(pl: Polyline, arcFront: number, spec: VehicleSpec): VehiclePose {
-  const segments = spec.segments.map((s) => poseSegment(pl, arcFront - s.front, s));
+export function poseVehicle(
+  pl: Polyline,
+  arcFront: number,
+  spec: VehicleSpec,
+  reversed = false,
+): VehiclePose {
+  const segments = spec.segments.map((s) =>
+    poseSegment(pl, arcFront - (reversed ? spec.L - s.front - s.L : s.front), s),
+  );
   const mid = pl.at(arcFront - spec.L / 2);
   const tg = pl.tangent(arcFront - spec.L / 2);
   return { x: mid.x, y: mid.y, heading: Math.atan2(tg.y, tg.x), segments };

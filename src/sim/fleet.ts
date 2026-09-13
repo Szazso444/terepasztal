@@ -83,6 +83,28 @@ export class Fleet {
     this.traffic.junctionReport = () => this.junctions.report();
   }
 
+  refuelAll(trains: Train[]) {
+    const valid = [...new Set(trains)].filter((t) => this.trains.includes(t));
+    const preview = new (this.stock.constructor as typeof Stockpile)();
+    preview.amounts = new Map(this.stock.amounts);
+    const clones = valid.map((t) => {
+      const c = Object.create(Object.getPrototypeOf(t)) as Train;
+      Object.assign(c, t);
+      return c;
+    });
+    for (const t of clones) {
+      t.refuel(preview, { fuel: true, water: true }, 2);
+      if (
+        t.coal < t.coalCap - 1e-6 ||
+        t.oil < t.oilCap - 1e-6 ||
+        t.water < t.waterCap - 1e-6 ||
+        t.battery < t.batteryCap - 1e-6
+      )
+        return false;
+    }
+    for (const t of valid) t.refuel(this.stock, { fuel: true, water: true }, 2);
+    return true;
+  }
   byId(id: number) {
     return this.trains.find((t) => t.id === id);
   }
@@ -523,8 +545,7 @@ export class Fleet {
       supplyAt: (x, y) => this.supplyAt(x, y),
       gridFactor: (x, y) => this.gridFactor(x, y),
       gridDraw: (x, y, u) => this.gridDraw(x, y, u),
-      signals:
-        this.signals.level === 'auto' || this.signals.level === 'token' ? null : this.signals,
+      signals: this.signals.count === 0 || this.signals.level === 'token' ? null : this.signals,
       tokenBlocked: (x, y, self) => this.tokenBlocked(x, y, self),
       headway: (t) => {
         const level = this.signals.level;
@@ -659,7 +680,7 @@ export class Fleet {
       }
       const wantsPeople = loaded.some((w) => cargoDef(w.cargo!).class === 'people');
       if (wantsPeople) {
-        // passengers: the nearest other town station
+        // Passengers travel to the nearest other passenger Station.
         const origin = loaded.find((w) => w.origin !== null)?.origin ?? -1;
         const towns = withPlat.filter(
           (s) => s.accepts('passengers') && !s.def.pool && s.id !== origin && ok(s),
@@ -719,8 +740,8 @@ export class Fleet {
       if (t.mode === 'transport') {
         if (!s.accepts('passengers')) continue;
         const waiting = this.waitingAt(s.id);
-        if (waiting < 1 && s.def.id !== 'town') continue;
-        // people waiting per tile of travel; a town with nobody waiting is still worth a visit
+        if (waiting < 1 && s.passengerPopulation <= 0) continue;
+        // People waiting per tile of travel; a populated catchment can supply the next coach.
         // distance counts at half weight and a town left alone climbs in priority
         score = ((waiting + 0.5) * this.neglect(s.id, now)) / (10 + 0.5 * dist(s));
       } else {
@@ -744,7 +765,12 @@ export class Fleet {
           haul = Math.max(haul, Math.min(cap, stored) + 0.25 * stored);
         }
         // a producer that is filling up counts even before the pile is big
-        if (t.mode === 'production' && haul > 0 && haul < trainCap * 0.15 && s.productionPerDay > 0)
+        if (
+          t.mode === 'production' &&
+          haul > 0 &&
+          haul < trainCap * 0.15 &&
+          s.productionPerWeek > 0
+        )
           haul = Math.max(haul, Math.min(trainCap, s.totalStored()) + 0.25 * s.totalStored());
         if (haul < Math.min(trainCap * 0.15, 8)) continue;
         const dump = dumpFor({ x: s.cx, y: s.cy }, haul);

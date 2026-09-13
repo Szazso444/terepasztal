@@ -216,6 +216,7 @@ export class PeopleSim {
   }
 
   tick(gdt: number, population: number, dayFraction: number) {
+    population = Math.min(160, Math.max(0, Math.floor(population)));
     const places = this.places();
     const byKey = new Map(places.map((p) => [p.key, p]));
     const regular = this.persons.filter((p) => !p.transient);
@@ -268,7 +269,11 @@ export class PeopleSim {
             if (!spot || !this.startWalk(p, home, spot, 'gather')) p.timer = 10;
           } else {
             const st = this.builder.stations
-              .filter((s) => Math.abs(s.x - home.x) + Math.abs(s.y - home.y) <= STATION_REACH)
+              .filter(
+                (s) =>
+                  s.accepts('passengers') &&
+                  Math.abs(s.x - home.x) + Math.abs(s.y - home.y) <= STATION_REACH,
+              )
               .sort(
                 (a, b) =>
                   Math.abs(a.x - home.x) +

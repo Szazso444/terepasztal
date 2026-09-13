@@ -32,8 +32,6 @@ export interface SignalPost {
   dir: Dir;
 }
 
-const BLOCK_CAP = 40;
-
 export class Signals {
   level: SignalLevel = 'auto';
   private posts = new Map<number, SignalPost>();
@@ -74,11 +72,18 @@ export class Signals {
     if (path) {
       const i = path.findIndex((s) => s.x === post.x && s.y === post.y && s.out === post.dir);
       if (i >= 0) {
-        for (let j = i + 1; j < path.length && tiles.length < BLOCK_CAP; j++) {
+        for (let j = i + 1; j < path.length && tiles.length < this.track.w * this.track.h; j++) {
           const s = path[j];
           tiles.push({ x: s.x, y: s.y });
           const next = this.governs(s.x, s.y, s.out);
           if (next) return { tiles, next };
+        }
+        const tail = path[path.length - 1];
+        if (tail) {
+          const onward = this.blockBeyond({ x: tail.x, y: tail.y, dir: tail.out });
+          for (const t of onward.tiles)
+            if (!tiles.some((p) => p.x === t.x && p.y === t.y)) tiles.push(t);
+          return { tiles, next: onward.next };
         }
         return { tiles, next: null };
       }
@@ -87,7 +92,11 @@ export class Signals {
     let y = post.y;
     let entry = opposite(post.dir);
     let out: Dir | undefined = post.dir;
-    for (let n = 0; n < BLOCK_CAP && out !== undefined; n++) {
+    const seen = new Set<string>();
+    for (let n = 0; n < this.track.w * this.track.h && out !== undefined; n++) {
+      const key = `${x},${y},${out}`;
+      if (seen.has(key)) break;
+      seen.add(key);
       if (!this.track.connected(x, y, out)) break;
       x += DIR_DX[out];
       y += DIR_DY[out];

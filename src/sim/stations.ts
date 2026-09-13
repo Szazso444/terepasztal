@@ -1,6 +1,6 @@
 import { content, type StationDef, type Cost } from '../data/content';
 import { scaleCost } from './stockpile';
-import { daySeconds } from './rules';
+import { weekSeconds } from './rules';
 import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import { rules } from './rules';
 import { cargoDef } from './cargo';
@@ -87,6 +87,8 @@ export class Station {
   productionMul = 1;
   /** a water tower stands within reach (steam engines refill water) */
   waterSupply = false;
+  /** Residents within the passenger catchment, updated by the game. */
+  passengerPopulation = 0;
   /** a coaling stage stands within reach (engines refuel from the stockpile) */
   fuelSupply = false;
   get crew() {
@@ -206,8 +208,9 @@ export class Station {
   }
   /** nearby-resource multiplier, set when placed and after terrain edits */
   terrainFactor = 1;
-  get productionPerDay() {
-    return LEVELS.production[this.level - 1] * rules.productionMul * this.terrainFactor;
+  get productionPerWeek() {
+    const rate = LEVELS.production[this.level - 1] * rules.productionMul * this.terrainFactor;
+    return this.def.id === 'station' ? Math.min(rate, this.passengerPopulation * 0.4) : rate;
   }
   get spriteLevel() {
     return LEVELS.spriteByLevel[this.level - 1];
@@ -265,12 +268,12 @@ export class Station {
     this.market.set(cargo, Math.min(1, this.satiety(cargo) + amount / (this.capacity * 1.5)));
   }
   tick(gameDt: number) {
-    const decay = Math.exp(-gameDt / daySeconds());
+    const decay = Math.exp(-gameDt / weekSeconds());
     for (const [c, v] of this.market) this.market.set(c, v * decay);
     const produced = this.producedCargo();
     if (!produced.length) return;
     const perType =
-      ((this.productionPerDay * this.productionMul) / daySeconds() / produced.length) * gameDt;
+      ((this.productionPerWeek * this.productionMul) / weekSeconds() / produced.length) * gameDt;
     for (const c of produced) {
       if (this.totalStored() >= this.capacity) break;
       const room = this.capacity - this.totalStored();

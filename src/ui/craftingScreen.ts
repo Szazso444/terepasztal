@@ -1,3 +1,4 @@
+import { showVehiclePreview, vehicleProperties } from './vehiclePreview';
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
@@ -33,6 +34,9 @@ export class CraftingScreen implements Screen {
   private pick: HTMLElement | null = null;
   private kind: CraftKind = 'loco';
   private tier = 0;
+  private filter = 'all';
+  private search = '';
+  private previewClose: (() => void) | null = null;
   /** what the last render showed, to skip needless rebuilds on refresh */
   private shownKey = '';
 
@@ -67,6 +71,7 @@ export class CraftingScreen implements Screen {
   }
   onClose() {
     this.hidePick();
+    this.previewClose?.();
   }
   refresh() {
     if (this.stateKey() !== this.shownKey) this.render();
@@ -253,7 +258,12 @@ export class CraftingScreen implements Screen {
         btn(STR.craft.keep, () => this.doChoose(id), 'small accent'),
       ),
     );
-    card.addEventListener('click', () => this.doChoose(id));
+    const art = card.querySelector('img');
+    if (art)
+      art.onclick = () => {
+        this.previewClose?.();
+        this.previewClose = showVehiclePreview(this.atlas, id);
+      };
     return card;
   }
   private doChoose(id: string) {
@@ -276,7 +286,45 @@ export class CraftingScreen implements Screen {
   private renderRecipes() {
     const c = this.recipeCol;
     c.innerHTML = '';
-    const known = this.crafting.known();
+    const filters = el('div', { class: 'row craft-filters' });
+    const select = el('select', { 'aria-label': 'Vehicle type' }) as HTMLSelectElement;
+    for (const [v, name] of [
+      ['all', 'All railcraft'],
+      ['steam', 'Steam'],
+      ['diesel', 'Diesel'],
+      ['electric', 'Electric'],
+      ['bulk', 'Bulk wagons'],
+      ['mineral', 'Mineral wagons'],
+      ['liquid', 'Tank wagons'],
+      ['people', 'Passenger coaches'],
+    ])
+      select.append(el('option', { value: v, text: name }));
+    select.value = this.filter;
+    select.onchange = () => {
+      this.filter = select.value;
+      this.renderRecipes();
+    };
+    const search = el('input', {
+      type: 'search',
+      placeholder: 'Find model…',
+      value: this.search,
+      'aria-label': 'Find model',
+    }) as HTMLInputElement;
+    search.oninput = () => {
+      this.search = search.value;
+      this.renderRecipes();
+      const input = this.recipeCol.querySelector('input')!;
+      input.focus();
+    };
+    filters.append(select, search);
+    c.append(filters);
+    const known = this.crafting.known().filter((id) => {
+      const d = itemDef(id);
+      return (
+        d.name.toLowerCase().includes(this.search.toLowerCase()) &&
+        (this.filter === 'all' || ('type' in d ? d.type : d.carries) === this.filter)
+      );
+    });
     if (!known.length) {
       c.append(el('div', { class: 'dim', text: STR.craft.noRecipes }));
       return;
@@ -290,7 +338,7 @@ export class CraftingScreen implements Screen {
     const short = Object.keys(missing).length > 0;
     const b = btn(STR.craft.craftBtn, () => this.doCraft(id), 'small accent');
     b.disabled = short;
-    return el(
+    const row = el(
       'div',
       { class: `craft-recipe rarity-${d.rarity}` },
       spriteImg(this.atlas, frameForItem(id), 1, 'sprite-preview item-art'),
@@ -311,6 +359,7 @@ export class CraftingScreen implements Screen {
             text: itemKind(id) === 'loco' ? STR.gacha.loco : STR.gacha.wagon,
           }),
         ),
+        el('div', { class: 'sub', text: vehicleProperties(id).slice(0, 3).join(' · ') }),
         el('div', { class: 'sub', text: `${STR.craft.cost}: ${fmtCost(cost)}` }),
         el('div', {
           class: 'sub',
@@ -318,8 +367,25 @@ export class CraftingScreen implements Screen {
         }),
         short ? el('div', { class: 'sub short', text: STR.craft.missing(fmtCost(missing)) }) : null,
       ),
+      btn(
+        'Inspect 3D',
+        () => {
+          this.previewClose?.();
+          this.previewClose = showVehiclePreview(this.atlas, id);
+        },
+        'small',
+      ),
       b,
     );
+    const art = row.querySelector('img');
+    if (art) {
+      art.style.cursor = 'pointer';
+      art.onclick = () => {
+        this.previewClose?.();
+        this.previewClose = showVehiclePreview(this.atlas, id);
+      };
+    }
+    return row;
   }
   private doCraft(id: string) {
     const res = this.crafting.craft(id, this.now());

@@ -33,21 +33,21 @@
     {
       "id": "daylight",
       "samples": 2432,
-      "visibleWheelPixels": 243975,
+      "visibleWheelPixels": 243974,
       "maxSwivel": 0.864352374324303,
       "maxSlide": 0.031914814152068295
     },
     {
       "id": "mallard",
       "samples": 2432,
-      "visibleWheelPixels": 243975,
+      "visibleWheelPixels": 243974,
       "maxSwivel": 0.864352374324303,
       "maxSlide": 0.031914814152068295
     },
     {
       "id": "big_boy",
       "samples": 1184,
-      "visibleWheelPixels": 238245,
+      "visibleWheelPixels": 238241,
       "maxSwivel": 0.5998165695743394,
       "maxSlide": 0.08186889217540966
     },
@@ -61,7 +61,7 @@
     {
       "id": "f7",
       "samples": 2432,
-      "visibleWheelPixels": 121971,
+      "visibleWheelPixels": 121969,
       "maxSwivel": 1.1267515395149326,
       "maxSlide": 0.07419790182683023
     },
@@ -75,7 +75,7 @@
     {
       "id": "deltic",
       "samples": 2432,
-      "visibleWheelPixels": 214185,
+      "visibleWheelPixels": 214181,
       "maxSwivel": 1.1267515395149326,
       "maxSlide": 0.07419790182683023
     },
@@ -138,21 +138,21 @@
     {
       "id": "gmam",
       "samples": 1184,
-      "visibleWheelPixels": 244640,
+      "visibleWheelPixels": 244638,
       "maxSwivel": 0.4398164802298521,
       "maxSlide": 0.05870183760803023
     },
     {
       "id": "tgv",
       "samples": 2432,
-      "visibleWheelPixels": 81477,
+      "visibleWheelPixels": 81486,
       "maxSwivel": 1.1267515395149326,
       "maxSlide": 0.07419790182683023
     },
     {
       "id": "ice1",
       "samples": 2432,
-      "visibleWheelPixels": 81477,
+      "visibleWheelPixels": 81486,
       "maxSwivel": 1.1267515395149326,
       "maxSlide": 0.07419790182683023
     },

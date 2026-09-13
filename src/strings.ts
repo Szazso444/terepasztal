@@ -172,7 +172,7 @@ export const STR = {
       station: 'On a buildable tile with track touching one side; that track becomes the platform.',
       depot:
         'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
-      town: 'On a buildable tile with track touching one side, at least 25 tiles from any other town station.',
+      town: 'On a buildable tile with track touching one side, at least 25 tiles from any other Townhouse.',
       onTrack: 'On an existing track tile. R rotates.',
       service: (r: number) => `On a free tile within ${r} tiles of the stations it should serve.`,
       powerLine:
@@ -259,7 +259,7 @@ export const STR = {
     contractFailed: (n: string) => `Contract failed: ${n}`,
     contractDone: (n: string) => `Contract completed: ${n}`,
     contractNoTrain: (n: string) => `No train can work "${n}": wrong wagons, no rails or no range`,
-    famine: 'Crews are out of wheat',
+    famine: 'Crews are out of food',
   },
   advisor: {
     button: 'Advisor',
@@ -280,9 +280,9 @@ export const STR = {
       idleStock: (n: number) =>
         `${n} locomotive(s) sit idle in the depot. Dispatch them to earn more.`,
       lowWheat:
-        'Wheat is running low for the crews. Build a farm and route a train through it, or buy wheat on the Market (K).',
+        'Food is running low. Bring wheat from a farm to the depot and build a Windmill, or buy food on the Market (K).',
       famine:
-        'The crews are starving: production halved. Get wheat in by train or from the Market (K).',
+        'The crews need food: production halved. Supply a Windmill or buy food on the Market (K).',
       outOfFuel: (n: string) =>
         `${n} is out of fuel. Fill the stockpile (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
       lowCoal:
@@ -360,7 +360,7 @@ export const STR = {
       collection:
         'Dynamic: empties warehouses into depots. Leaves a warehouse alone until it holds 100 of a resource, then the fuller it is the sooner it comes; tops up at another warehouse while room is left. Re-plans at every stop and refuels on its own.',
       transport:
-        'Dynamic: carries passengers. Heads for the town station with the most people waiting and takes them to the nearest other town. Needs coaches. Re-plans at every stop and refuels on its own.',
+        'Dynamic: carries passengers. Heads for the Station with the most people waiting and takes them to the nearest other town. Needs coaches. Re-plans at every stop and refuels on its own.',
       contract:
         'Dynamic: works contracts. Waits on its platform until a contract it can carry is accepted, is chosen for it ahead of busier trains, runs it origin to destination and returns to waiting. Refuels on its own.',
     } as Record<string, string>,
@@ -837,7 +837,7 @@ export const STR = {
       schedule: 'Static: follows the stop list below exactly.',
       production: 'Dynamic: producers → nearest warehouse or depot, biggest loads first.',
       collection: 'Dynamic: warehouses → depots.',
-      transport: 'Dynamic: passengers between town stations.',
+      transport: 'Dynamic: passengers between Stations.',
     } as Record<string, string>,
     coal: 'Coal',
     wood: 'Wood',
@@ -866,7 +866,7 @@ export const STR = {
     full: 'Stockpile is full',
     trend: 'Trend',
     driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
-    driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow daily walk.',
+    driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow weekly walk.',
     hint: 'Prices are per unit. Each depot raises the stockpile cap.',
     deals: 'Standing deals',
     dealsHint: (d: number) =>
@@ -882,19 +882,20 @@ export const STR = {
     power: 'Power (battery)',
     population: 'Population',
     populationHint:
-      'People working at stations, works, services and on trains. Each eats wheat every day; the ones not inside a building walk about.',
+      'Residents live within the capacity of finished Houses. Residents and crews eat food each week; Windmills turn wheat into food.',
     people: 'People',
     eats: 'Eats',
     famine: 'NO WHEAT',
-    wheatPerDay: 'wheat/day',
+    foodPerWeek: 'food/week',
     openMarket: 'Open the market',
     have: 'Stockpile / cap',
-    producedDay: 'Produced / day',
-    consumedDay: 'Consumed / day',
-    netDay: 'Net / day',
+    producedDay: 'Received / last week',
+    consumedDay: 'Spent / last week',
+    netDay: 'Net / last week',
     info: {
       water: 'From Water Pumps. Steam engines drink it; the refinery and power plant use it.',
-      wheat: 'From farms. Food for every crew member; run out and everything slows.',
+      wheat: 'From farms. A Windmill turns each wheat into at least 5 food.',
+      food: 'Bread from Windmills. Feeds residents and crews weekly; upgrades improve the wheat-to-food ratio.',
       stone: 'From quarries. Builds track and buildings; the grinder turns it into iron.',
       wood: 'From lumber yards. Builds almost everything; the kiln turns it into coal; steam engines can burn it.',
       coal: 'From charcoal kilns or the Market. Steam engine fuel and power plant feed.',
@@ -966,14 +967,14 @@ export const STR = {
   },
   town: {
     title: 'Towns',
-    none: 'No towns yet. Place a town station, then a townhouse and a warehouse within 7 tiles of it.',
+    none: 'No towns yet. Place a Townhouse, then a House and a warehouse within 7 tiles of it.',
     people: 'people',
     summary: (st: number, works: number, houses: number) =>
       `${st} station${st === 1 ? '' : 's'}, ${works} works, ${houses} house${houses === 1 ? '' : 's'}`,
     needs: (house: boolean, wh: boolean) =>
-      `Not founded yet: needs ${[house ? 'a townhouse' : '', wh ? 'a warehouse' : ''].filter(Boolean).join(' and ')} within 7 tiles`,
-    makes: 'Makes / day',
-    uses: 'Uses / day',
+      `Not founded yet: needs ${[house ? 'a House' : '', wh ? 'a warehouse' : ''].filter(Boolean).join(' and ')} within 7 tiles`,
+    makes: 'Makes / week',
+    uses: 'Uses / week',
     go: 'Go',
     rename: 'Rename',
     namePrompt: 'Name the town',
@@ -983,11 +984,11 @@ export const STR = {
     founded: (n: string) => `${n} is a town now`,
     housing: (res: number, cap: number, building: number) =>
       `Housing: ${res} / ${cap}${building ? ` (+${building} under construction)` : ''}`,
-    growth: (perDay: number) => `Growth: +${perDay} people / day`,
-    noGrowth: 'Growth: none (no wheat)',
+    growth: (perWeek: number) => `Growth: +${perWeek} people / week`,
+    noGrowth: 'Growth: none (no food)',
     nextHouse: (at: number, mul: number) =>
       `Next house at ${at} residents${mul > 1 ? ` (traffic ×${mul})` : ''}`,
-    fullHousing: 'Housing full; the town will build as soon as there is room',
+    fullHousing: 'Housing full; build or upgrade Houses to provide room',
     spawned: (town: string, n: number) =>
       `${town} is building ${n === 1 ? 'a new house' : `${n} new houses`}`,
     newcomers: (town: string, n: number) => `${n} newcomers moved into ${town}`,
@@ -1003,13 +1004,13 @@ export const STR = {
     finishedIn: (days: number) => `${days} day${days === 1 ? '' : 's'} to go`,
     growth: 'Next resident',
     growthIn: (days: number) => `in ${days} day${days === 1 ? '' : 's'}`,
-    growthNoFood: 'no wheat, nobody moves in',
+    growthNoFood: 'no food, nobody moves in',
     full: 'full',
-    autoUpgrade: (days: number) => `Grows a storey after ${days} full days`,
+    autoUpgrade: (days: number) => `Upgrade to provide more homes (construction: ${days} days)`,
     upgrade: (l: number, cost: string) => `Enlarge to level ${l} (${cost})`,
     maxed: 'Largest house',
-    upgraded: (l: number) => `A townhouse grew to level ${l}`,
-    finished: 'A townhouse is finished',
+    upgraded: (l: number) => `House upgraded to level ${l}`,
+    finished: 'A House is finished',
   },
   station: {
     depotName: 'Depot',
@@ -1023,7 +1024,7 @@ export const STR = {
     storage: 'Storage',
     platforms: 'Platforms',
     loadRate: 'Loading',
-    perDay: (v: number) => `${v} / day`,
+    perWeek: (v: number) => `${v} / week`,
     perSec: (v: number) => `${v} / s`,
     upgrade: 'Upgrade',
     upgradeTo: (l: number, cost: string) => `Upgrade to ${l} (${cost})`,
@@ -1035,7 +1036,7 @@ export const STR = {
     orphaned: (n: string) => `${n} lost its platform track`,
     boost: (pct: number) => `Water tower: loading +${pct}%`,
     market: 'Spot market',
-    marketHint: 'Paid for cargo without a contract. Demand recovers over a day.',
+    marketHint: 'Paid for cargo without a contract. Demand recovers over a week.',
     contracts: 'Contracts here',
   },
 } as const;

@@ -390,6 +390,39 @@ export function generateTerrainAtlas(): AtlasImage {
   ab.add('terrain/ghost_ok', cursorTile(PAL.cyan, PAL.cyan).toImageData(), HALF_W, HALF_H);
   ab.add('terrain/ghost_bad', cursorTile(PAL.red, PAL.red).toImageData(), HALF_W, HALF_H);
   ab.add('terrain/select', cursorTile(PAL.amber).toImageData(), HALF_W, HALF_H);
+  // Paving and narrow streets line up across the city grid, without changing terrain rules.
+  for (let tx = 0; tx < 3; tx++)
+    for (let ty = 0; ty < 3; ty++) {
+      const b = new PixelBuf(TILE_W, TILE_H);
+      for (let y = 0; y < TILE_H; y++)
+        for (let x = 0; x < TILE_W; x++) {
+          if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
+          const u = ((x - HALF_W) / 32 + (y - HALF_H) / 16) / 2;
+          const v = ((y - HALF_H) / 16 - (x - HALF_W) / 32) / 2;
+          const road = (tx === 0 && Math.abs(u) < 0.26) || (ty === 0 && Math.abs(v) < 0.26);
+          const kerb =
+            (tx === 0 && Math.abs(Math.abs(u) - 0.28) < 0.04) ||
+            (ty === 0 && Math.abs(Math.abs(v) - 0.28) < 0.04);
+          b.set(
+            x,
+            y,
+            kerb
+              ? [181, 180, 169]
+              : road
+                ? [75, 84, 83]
+                : x % 9 === 0 && y % 6 === 0
+                  ? [153, 157, 152]
+                  : [133, 140, 136],
+          );
+          if (
+            road &&
+            ((tx === 0 && Math.abs(u) < 0.015 && Math.abs(v) < 0.12) ||
+              (ty === 0 && Math.abs(v) < 0.015 && Math.abs(u) < 0.12))
+          )
+            b.set(x, y, [186, 174, 122]);
+        }
+      ab.add(`terrain/city_${tx}_${ty}`, b.toImageData(), HALF_W, HALF_H);
+    }
   // solid dark diamond used to fog locked regions
   const fog = new PixelBuf(TILE_W, TILE_H);
   for (let y = 0; y < TILE_H; y++)

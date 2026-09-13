@@ -13,7 +13,7 @@
   {
     "id": "water_tower",
     "name": "Water Tower",
-    "flavor": "Nearby stations load faster and fill water tanks completely.",
+    "flavor": "Supplies stockpiled water to nearby stations and rails. Steam trains seek it before running dry. Combine with a coaling stage for a complete service stop.",
     "cost": {
       "wood": 30,
       "stone": 10
@@ -28,7 +28,7 @@
   {
     "id": "fuel_stop",
     "name": "Coaling Stage",
-    "flavor": "Nearby stations fill fuel tanks completely instead of a half top-up.",
+    "flavor": "Supplies fuel from the stockpile to nearby stations and rails. Low-reserve trains seek a reachable coaling stage; place a water tower nearby for complete steam service.",
     "cost": {
       "stone": 20,
       "wood": 10
@@ -55,8 +55,8 @@
   },
   {
     "id": "townhouse",
-    "name": "Townhouse",
-    "flavor": "Homes for ten to begin with. People move in while there is wheat, a full house grows a storey, and a crowded town builds more on its own. With a warehouse near a town station it founds a town; more people mean more passengers and more mouths to feed.",
+    "name": "House",
+    "flavor": "Homes for 20 residents. Upgrade to apartments, a high-rise and a skyscraper for 60, 140 and 300 residents. Population stops at available housing; food comes from Windmills.",
     "cost": {
       "wood": 35,
       "stone": 15

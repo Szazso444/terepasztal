@@ -15,6 +15,8 @@ export class WorldRenderer {
   readonly root = new Container();
   readonly ground = new Container();
   readonly track = new Container();
+  readonly platforms = new Container();
+  private platformSprites = new Map<number, Sprite>();
   readonly objects = new Container();
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
@@ -52,6 +54,7 @@ export class WorldRenderer {
     this.root.addChild(
       this.border,
       this.ground,
+      this.platforms,
       this.track,
       this.lights,
       this.objects,
@@ -64,7 +67,17 @@ export class WorldRenderer {
     this.rebuildFog();
   }
 
+  private city = new Set<number>();
+  setCity(tiles: Set<number>) {
+    const changed = new Set([...this.city, ...tiles]);
+    const old = this.city;
+    this.city = tiles;
+    for (const k of changed)
+      if (old.has(k) !== tiles.has(k))
+        this.refreshGround(k % this.map.w, Math.floor(k / this.map.w));
+  }
   private groundFrame(x: number, y: number): string {
+    if (this.city.has(y * this.map.w + x)) return 'terrain/city_' + (x % 3) + '_' + (y % 3);
     const i = idx(this.map, x, y);
     const t = this.map.terrain[i] as Terrain;
     const v = this.map.variant[i];
@@ -178,7 +191,7 @@ export class WorldRenderer {
     const wi = this.waterSprites.findIndex((w) => w.s === s);
     if (isWater && wi < 0) this.waterSprites.push({ s, base: frame.slice(0, -3) });
     else if (!isWater && wi >= 0) this.waterSprites.splice(wi, 1);
-    s.tint = isWater ? 0xffffff : this.groundTint;
+    s.tint = isWater || this.city.has(i) ? 0xffffff : this.groundTint;
   }
 
   /**
@@ -249,6 +262,7 @@ export class WorldRenderer {
       if (this.isBuilt(i % this.map.w, Math.floor(i / this.map.w))) this.buildPropsAt(i, list);
   }
   private buildPropsAt(i: number, list: PropInstance[]) {
+    if (this.propSprites.has(i)) return;
     {
       const x = i % this.map.w;
       const y = Math.floor(i / this.map.w);
@@ -384,7 +398,7 @@ export class WorldRenderer {
       const s = this.groundSprites[i];
       if (!s) continue;
       if (this.map.terrain[i] === Terrain.Water) continue;
-      s.tint = ground;
+      s.tint = this.city.has(i) ? 0xffffff : ground;
     }
     for (const list of this.propSprites.values()) for (const s of list) s.tint = props;
   }
@@ -394,7 +408,8 @@ export class WorldRenderer {
       for (let x = x0; x < x1; x++) {
         const i = idx(this.map, x, y);
         const s = this.groundSprites[i];
-        if (s && this.map.terrain[i] !== Terrain.Water) s.tint = this.groundTint;
+        if (s && this.map.terrain[i] !== Terrain.Water)
+          s.tint = this.city.has(i) ? 0xffffff : this.groundTint;
         for (const p of this.propSprites.get(i) ?? []) p.tint = this.propTint;
       }
   }
@@ -425,6 +440,25 @@ export class WorldRenderer {
     if (Math.abs(night - this.trackNight) < 0.04) return;
     this.trackNight = night;
     for (const [i, s] of this.trackSprites) s.tint = this.trackColour(i);
+  }
+  setPlatform(x: number, y: number, frame: string | null, layer = 0) {
+    const key = y * this.map.w + x + layer * this.map.w * this.map.h;
+    let s = this.platformSprites.get(key);
+    if (!frame) {
+      s?.destroy();
+      this.platformSprites.delete(key);
+      return;
+    }
+    if (!s) {
+      s = new Sprite();
+      this.platforms.addChild(s);
+      this.platformSprites.set(key, s);
+    }
+    const f = this.atlas.get(frame);
+    s.texture = f.texture;
+    s.anchor.set(f.anchorX, f.anchorY);
+    const p = tileToWorld(x, y);
+    s.position.set(p.x, p.y);
   }
   setTrack(x: number, y: number, frame: string | null) {
     const i = idx(this.map, x, y);

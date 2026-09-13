@@ -41,7 +41,8 @@ export class RegionState {
     return newly;
   }
   own(i: number) {
-    if (this.unlocked[i]) return false;
+    if (!Number.isInteger(i) || i < 0 || i >= this.unlocked.length || this.unlocked[i])
+      return false;
     this.unlocked[i] = true;
     return true;
   }
@@ -57,6 +58,7 @@ export class RegionState {
   }
   /** Owned, or edge-adjacent to an owned chunk. */
   isRevealed(i: number) {
+    if (!Number.isInteger(i) || i < 0 || i >= this.unlocked.length) return false;
     if (this.unlocked[i]) return true;
     return this.neighbours(i).some((n) => this.unlocked[n]);
   }

@@ -1,0 +1,114 @@
+{
+  "result": {
+    "frames": 2839,
+    "items": 9
+  },
+  "scene": {
+    "anchor": true,
+    "houses": [
+      [
+        55,
+        49,
+        1,
+        20
+      ],
+      [
+        57,
+        49,
+        3,
+        140
+      ],
+      [
+        59,
+        49,
+        1,
+        20
+      ],
+      [
+        55,
+        51,
+        3,
+        140
+      ],
+      [
+        57,
+        51,
+        1,
+        20
+      ],
+      [
+        59,
+        51,
+        3,
+        140
+      ],
+      [
+        55,
+        53,
+        1,
+        20
+      ],
+      [
+        57,
+        53,
+        3,
+        140
+      ],
+      [
+        59,
+        53,
+        1,
+        20
+      ]
+    ],
+    "bridges": 16
+  },
+  "bridgeUpgrade": {
+    "level": 2,
+    "capacity": 225,
+    "reinforced": true
+  },
+  "refuelBefore": {
+    "ids": [
+      1,
+      2
+    ],
+    "oil": 10000,
+    "cap": 202.4,
+    "shown": 1
+  },
+  "refuelVisible": {
+    "tanks": [
+      202.4,
+      20
+    ],
+    "oil": 9615.2
+  },
+  "refuelOverview": {
+    "tanks": [
+      202.4,
+      202.4
+    ],
+    "oil": 9250.400000000001,
+    "shown": 2
+  },
+  "chunkBefore": {
+    "ms": 38.599999994039536,
+    "w": 160,
+    "speed": 2
+  },
+  "chunkAfter": {
+    "w": 224,
+    "speed": 2,
+    "time": 123.89999999999978
+  },
+  "restored": {
+    "bridge": 3,
+    "capacity": 975,
+    "cls": "high_speed",
+    "wire": "catenary",
+    "house": 300,
+    "mill": 2,
+    "water": true
+  }
+}

@@ -299,3 +299,97 @@ replace the calibrated simulation. `docs/bogie-model.md` records the corrected t
   It contains no saves, adds no remote-command channel, is readable only over loopback, and is
   absent from production. The pre-existing live browser could not be attached in this task;
   regression evidence comes from isolated headless worlds on the running dev server.
+
+## Weekly economy, service routing and town infrastructure
+
+The player's final clarification keeps **Townhouse** as the existing civic anchor and removes
+only its passenger role. **Station** is the separate passenger stop; **House** is the residential
+building. This supersedes the intermediate suggestion to replace the town anchor with housing.
+The rigid-body choice and independent bogies from the preceding decision remain in force.
+
+- **Running gear and reversal.** Small stock now uses exactly two fixed axles and four wheels,
+  drawn by the same wheel-frame helper as bogies. Cosmetic wheel count does not alter pivots,
+  tolerance, access or turning mechanics. Reverse posing measures asymmetric body segments from
+  the opposite end, while keeping physical vehicle order and world headings. Previous poses
+  reset at reversal, so interpolation cannot animate a half-turn. Direction is previewed at
+  the actual rear before mutation. An explicitly requested reverse cannot silently choose a
+  busy forward path. Reroutes project the current head onto the polyline to avoid a backward
+  snap to the preceding sample. The six-model curve-reversal regression keeps positions within
+  0.002 tiles and headings within numerical tolerance.
+- **Fuel.** Double reserves and 35% lower burn give approximately 3.08 times the earlier nominal
+  range. Route planning searches reachable service rails within tower/stage radii, including
+  standalone services, as well as equipped station platforms. It checks tanks every five
+  simulated seconds, starts around 40% or when the current leg threatens the reserve, and
+  allows a conservative 1.6 distance factor. When services are separated, the tank limiting
+  range determines the first stop. The next service is planned before moving again. Stock must
+  contain the needed supplies. Services transfer resources; they do not generate them. The
+  scheduled destination is preserved. This covers schedules and dynamic programs, but cannot
+  rescue an already empty train or make a disconnected service reachable.
+- **Emergency refill.** The train-panel header captures its displayed list: visible trains in
+  field view, the full fleet in overview. Preview the complete resource bill at 2× normal cost
+  before changing any tank or spending stock. An unaffordable group refill is atomic and has
+  no partial charge. Ordinary services retain ordinary resource costs.
+- **Housing and passengers.** Keep existing `town` station IDs and town names. They produce and
+  accept no passengers. New `station` stops draw passenger production from finished housing
+  within seven tiles; dynamic Transport selects passenger stops. Houses retain their existing
+  internal ID for saves and grow only within capacities 20/60/140/300. Construction and
+  upgrades require player action and payment; automatic capacity expansion is removed.
+  Crews remain a separate food-consuming workforce instead of inflating resident population.
+  Visual walkers are capped at 160 so city population does not create unbounded pathfinding.
+- **Food and weekly rates.** Add food as bulk cargo, represented by bread. Windmill levels
+  convert one wheat into 5/7/9/11 food, with base throughput 60 batches/week and another 50% of
+  base throughput per level. Upkeep is one food/person/week at default tuning. Existing
+  production numbers are now weekly, while continuous simulation avoids synchronized weekly
+  production spikes. Refineries use two stone/batch. Market settlements and fuel-price drift
+  are weekly. Resource colors use actual stock receipts minus spending, including construction,
+  trade and refuelling, rather than counting station goods that never reached the depot.
+  A bounded rolling history uses quarter-day buckets and starts after a save or initial stock
+  is loaded; the tooltip explains that warm-up period. Town make/use lines remain planning
+  estimates. Calendar days, weather and resident construction timers keep their own units.
+- **Balance.** Default offers are one every 21 days with a 28-day offer window. Cancellation
+  costs 0.25% and failure 0.5% of payout, down from 2.5% each. Fix the tuning clamp that previously
+  reduced a six-day refresh to two. New games start at $40,000 with triple construction stock,
+  600 water, 300 wheat, 600 food and 240 coal at default settings. Electric Age's earnings goal
+  is $100,000; preceding age goals and the high-speed quest still apply.
+- **Bridge structure.** Keep platforms independent of rails. Timber costs wood and carries
+  180 t; masonry costs stone and carries 650 t. Levels add 25% of base capacity each, with
+  reinforcement drawn separately to avoid multiplying the span atlas. Connected straight rails
+  of any compatible classes join spans of the same material; normal transitions still apply.
+  Repeating trusses and masonry arches have supports at ends and at four-tile intervals.
+  Deck/far-side art sits below rails; near parapets sit in the object depth pass. Train access
+  compares the entire consist's mass with each platform, including payload. Above 80%, the
+  train brakes on approach and crossing speed is halved until the last occupied bridge tile clears. The weakest platform
+  governs a crossing; upgrades require no new runtime dependency or pathfinder abstraction.
+- **Signals.** Player posts operate even with Automatic signalling selected. Remove the
+  forty-tile block cutoff and continue to the next post when a scheduled path ends inside a
+  block. Selection shows the governed direction and protected continuation; at a switch its
+  preview takes the straight route, whereas trains evaluate their actual branch. Existing
+  reservations and token working still prevent conflicting moves. The in-game guide and
+  `docs/railway-guide.md` explain entry/exit posts, train-length spacing, clear junction exits,
+  passing loops and the limits of recovery without spare track.
+- **Art and crafting.** Houses progress from pitched roofs to apartments and glass towers.
+  Windmills, works, stations and depots change with upgrades. Every sliding 6×6 town area with
+  200 residents receives cosmetic streets and paving; underlying terrain and track access
+  remain unchanged. Full vehicle previews compose all parts and wheel groups from their actual
+  atlas source, fixing wagon frames incorrectly cropped from the locomotive sheet. The
+  draggable preview uses 48 procedural isometric headings, not an additional 3D engine. Type
+  filters, search, recipe properties and complete icons help compare craftable stock.
+- **Saves and chunk purchases.** Format 12 preserves town identity, retires obsolete passenger
+  contracts without fines, adds a food cushion, and converts legacy bridge track to wooden
+  platforms plus straight rails. Existing passenger schedules require the player to build and
+  select new Stations. Expansion shifts track classes, Houses, electrification, building levels
+  and car trails together. Its reload intent preserves running speed, avoiding the apparent
+  freeze at pause. Bridge terrain restoration uses a precomputed tile set, and span redraws
+  are batched during load. Duplicate prop creation is prevented, so clearing a tree clears it.
+- **Evidence.** The 145 tests cover weekly economy, housing capacity, migration, bridge mass
+  thresholds, successful and failed reversal, partial service networks, atomic refills, long
+  semaphore blocks and expansion. The browser fixture clicks both refill scopes and verifies
+  the exact 2× bill, rotates a post, opens the guide/preview, upgrades a bridge and buys chunks.
+  The four-train obstructed-recovery fixture clears in 37.2 simulated seconds with no overlaps,
+  stuck episodes or deadlocks. The bogie GPU sweep still passes 52,128 poses across all 24
+  medium/large definitions. DDA40X/GG1 lateral offset remains 0.284381 against 0.35; geometry
+  verdicts for Big Boy, Crocodile and GMAM are unchanged, and large stock remains barred from
+  regular track by the access rule. Local generation of all nine art groups takes about 0.91 s:
+  structures 0.212 s at 2048×1024, locomotives 0.484 s at 4096×1024 and wagons 0.175 s at
+  4096×256. All 2,839 atlas frames pass bounds checks. Timings describe the local fixture,
+  not a guarantee for every computer or unlimited world size.

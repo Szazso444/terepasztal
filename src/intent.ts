@@ -5,7 +5,7 @@ import type { SupplyMode } from './sim/supply';
  * level, continue) and reload; `main.ts` consumes the intent once.
  */
 export type Intent =
-  | { action: 'continue' }
+  | { action: 'continue'; keepSpeed?: boolean }
   | { action: 'menu' }
   | { action: 'new'; seed: number; supply?: SupplyMode }
   | { action: 'play'; levelId: string; testing?: boolean }

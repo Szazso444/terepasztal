@@ -182,18 +182,74 @@ describe('v10 to v11', () => {
       version: 10,
       rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
     });
-    expect(tuned.rules).toEqual({ contractRefreshDays: 6, contractOfferCount: 2 });
+    expect(tuned.rules).toEqual({
+      contractRefreshDays: 21,
+      contractOfferCount: 1,
+      tradeCycleDays: 7,
+    });
 
     const byHand = migrate({
       ...oldestSave(),
       version: 10,
       rules: { contractRefreshDays: 4, contractOfferCount: 5 },
     });
-    expect(byHand.rules).toEqual({ contractRefreshDays: 4, contractOfferCount: 5 });
+    expect(byHand.rules).toEqual({
+      contractRefreshDays: 4,
+      contractOfferCount: 5,
+      tradeCycleDays: 7,
+    });
   });
 
   it('copes with a save that has no rules block', () => {
     expect(() => migrate({ ...oldestSave(), version: 10 })).not.toThrow();
+  });
+});
+
+describe('v11 to v12', () => {
+  it('keeps the civic town identity, retires old passenger contracts without a fine, and converts bridge platforms', () => {
+    const j = migrate({
+      ...oldestSave(),
+      version: 11,
+      stations: [
+        {
+          id: 45,
+          defId: 'town',
+          name: 'My Town',
+          x: 12,
+          y: 20,
+          level: 3,
+          storage: { passengers: 30, wheat: 12 },
+        },
+      ],
+      towns: [{ id: 7, stationId: 45, name: 'My Town', custom: true, color: 2 }],
+      track: [[4, 8, 'bridge', 1, 'high_speed']],
+      contracts: {
+        contracts: [
+          { cargo: 'passengers', status: 'active' },
+          { cargo: 'stone', status: 'active' },
+        ],
+      },
+      stockpile: { amounts: { wheat: 200, coal: 50 }, famine: false },
+    });
+    expect(j.stations[0]).toMatchObject({
+      id: 45,
+      defId: 'town',
+      name: 'My Town',
+      level: 3,
+      storage: { wheat: 12 },
+    });
+    expect(j.stations[0].storage.passengers).toBeUndefined();
+    expect(j.towns?.[0]).toMatchObject({ stationId: 45, name: 'My Town' });
+    expect(j.contracts).toEqual({
+      contracts: [
+        { cargo: 'passengers', status: 'expired' },
+        { cargo: 'stone', status: 'active' },
+      ],
+    });
+    expect(j.track[0]).toEqual([4, 8, 'straight', 1, 'high_speed', undefined]);
+    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1]);
+    expect(j.stockpile).toEqual({ amounts: { wheat: 200, coal: 50, food: 1000 }, famine: false });
+    expect(j.economy.money).toBe(1000);
   });
 });
 

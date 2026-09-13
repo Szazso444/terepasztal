@@ -465,6 +465,8 @@ export class BuildController {
     this.ghostDiamond.tint = 0xffffff;
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
     if (def.rotations > 1) parts.push(STR.build.rotate);
+    if (def.id === 'signal')
+      parts.push(`Governs travel ${['north', 'east', 'south', 'west'][this.rot]}`);
     this.status(parts.join('   '));
     for (const c of this.input.clicks)
       if (c.button === 0) this.builder.placeDecor(t.x, t.y, tool.defId, this.rot);
@@ -586,6 +588,8 @@ export class BuildController {
       return this.builder.removeStation(st);
     }
     const bld = this.builder.buildingAt(x, y);
+    if (bld && buildingDef(bld.id).bridge && this.builder.track.has(x, y))
+      return this.builder.removeTrack(x, y);
     if (bld) {
       if (this.selectedBuilding === bld) this.selectBuilding(null);
       return this.builder.removeBuilding(x, y);

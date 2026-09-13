@@ -19,6 +19,9 @@ export class TrainSide {
   onHover: ((t: Train | null) => void) | null = null;
   onDetails: ((t: Train) => void) | null = null;
   onLocate: ((t: Train) => void) | null = null;
+  onRefuel: ((trains: Train[]) => void) | null = null;
+  private shownTrains: Train[] = [];
+  private refuelButton = btn('Refuel all · 2×', () => this.onRefuel?.(this.shownTrains), 'small');
   private lastKey = '';
   private hovered: Train | null = null;
 
@@ -26,7 +29,10 @@ export class TrainSide {
     private readonly builder: Builder,
     private readonly atlas: AtlasRegistry,
   ) {
-    this.root.append(el('div', { class: 'panel-title' }, this.titleText, this.count), this.body);
+    this.root.append(
+      el('div', { class: 'panel-title' }, this.titleText, this.count, this.refuelButton),
+      this.body,
+    );
     this.root.addEventListener('mouseleave', () => this.setHover(null));
   }
   private setHover(t: Train | null) {
@@ -62,6 +68,11 @@ export class TrainSide {
   }
 
   update(trains: Train[], all: boolean, force = false) {
+    this.shownTrains = trains.slice();
+    this.refuelButton.disabled = !trains.length;
+    this.refuelButton.title = all
+      ? 'Fill every train at twice the resource cost'
+      : 'Fill trains in view at twice the resource cost';
     const key =
       (all ? 'A' : 'V') +
       trains

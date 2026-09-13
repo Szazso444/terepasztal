@@ -16,6 +16,7 @@ export interface AtlasImage {
 export type AtlasGenerator = () => AtlasImage;
 
 export interface FrameInfo {
+  image: HTMLCanvasElement | HTMLImageElement;
   texture: Texture;
   anchorX: number;
   anchorY: number;
@@ -81,7 +82,14 @@ export class AtlasRegistry {
     this.sources.push(source);
     for (const [key, f] of Object.entries(atlas.frames)) {
       const texture = new Texture({ source, frame: new Rectangle(f.x, f.y, f.w, f.h) });
-      this.frames.set(key, { texture, anchorX: f.ax / f.w, anchorY: f.ay / f.h, w: f.w, h: f.h });
+      this.frames.set(key, {
+        image: atlas.image,
+        texture,
+        anchorX: f.ax / f.w,
+        anchorY: f.ay / f.h,
+        w: f.w,
+        h: f.h,
+      });
     }
   }
 

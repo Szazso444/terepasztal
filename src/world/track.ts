@@ -40,14 +40,12 @@ export const TRACK_ITEMS: TrackItem[] = [
   { kind: 'curve', cls: 'regular' },
   { kind: 'switch', cls: 'regular' },
   { kind: 'crossing', cls: 'regular', cls2: 'regular' },
-  { kind: 'bridge', cls: 'regular' },
   { kind: 'transition', cls: 'regular' },
   { kind: 'straight', cls: 'high_speed' },
   { kind: 'curve', cls: 'high_speed' },
   { kind: 'switch', cls: 'high_speed' },
   { kind: 'crossing', cls: 'regular', cls2: 'high_speed' },
   { kind: 'crossing', cls: 'high_speed', cls2: 'high_speed' },
-  { kind: 'bridge', cls: 'high_speed' },
 ];
 export function itemKey(it: TrackItem) {
   return it.kind === 'crossing'
@@ -56,6 +54,8 @@ export function itemKey(it: TrackItem) {
 }
 
 export interface TrackPiece {
+  /** Re-derived from the independent platform under this rail. */
+  bridgeCapacity?: number;
   kind: TrackKind;
   rot: number;
   cls: TrackClass;

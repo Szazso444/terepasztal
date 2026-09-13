@@ -75,7 +75,9 @@ export class StationPanel {
         .producedCargo()
         .map((c) => cargoDef(c).name)
         .join(', ') || '-';
-    b.append(row(STR.station.produces, `${produced} (${STR.station.perDay(s.productionPerDay)})`));
+    b.append(
+      row(STR.station.produces, `${produced} (${STR.station.perWeek(s.productionPerWeek)})`),
+    );
     b.append(
       row(
         STR.station.accepts,

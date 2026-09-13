@@ -1,5 +1,5 @@
 import { CARGO, cargoDef } from './cargo';
-import { rules, daySeconds } from './rules';
+import { rules, weekSeconds } from './rules';
 import { hash2 } from '../engine/rng';
 import type { Stockpile } from './stockpile';
 import type { Economy } from './economy';
@@ -9,7 +9,7 @@ export const BUY_MUL = 1.6;
 export const SELL_MUL = 0.6;
 /** Standing deals get a little better rate than one-off spot trades. */
 const DEAL_BONUS = 0.9;
-/** Fuels whose market price drifts: a slow random walk, one step per day, within ±40 %. */
+/** Fuels whose market price drifts: a slow random walk, one step per week, within ±40 %. */
 export const DRIFTING = ['oil', 'diesel', 'crude'];
 const DRIFT_MIN = 0.6;
 const DRIFT_MAX = 1.4;
@@ -37,7 +37,7 @@ export class TradeDesk {
   nextAt = 0;
   /** current fuel price multiplier (oil, diesel, crude) */
   fuelMul = 1;
-  /** day the walk last stepped */
+  /** Week the walk last stepped; the saved field name is retained for compatibility. */
   private driftDay = 0;
   /** seeds the walk; the game sets it to the world seed */
   seed = 0;
@@ -66,7 +66,7 @@ export class TradeDesk {
     );
   }
   cycleSeconds() {
-    return rules.tradeCycleDays * daySeconds();
+    return weekSeconds();
   }
   set(resource: string, perCycle: number) {
     if (!perCycle) this.deals.delete(resource);
@@ -83,7 +83,7 @@ export class TradeDesk {
   }
   /** One step of the fuel price walk per in-game day (deterministic per seed and day). */
   private drift(now: number) {
-    const day = Math.floor(now / daySeconds());
+    const day = Math.floor(now / weekSeconds());
     if (day <= this.driftDay) return;
     // catch up at most a few days at once (a long-idle save should not spin the walk)
     const from = Math.max(this.driftDay, day - 5);

@@ -142,6 +142,7 @@ export interface StationDef {
   contracts?: boolean;
 }
 export interface BuildingDef {
+  bridge?: { material: 'wood' | 'stone'; capacity: number };
   id: string;
   name: string;
   flavor: string;
@@ -156,8 +157,8 @@ export interface BuildingDef {
   recipe: { in: Cost; out: Cost };
   /** alternative inputs used when the primary ones run short */
   altIn?: Cost;
-  /** recipe batches per in-game day */
-  perDay: number;
+  /** recipe batches per in-game week */
+  perWeek: number;
   /** feeds the power network */
   power?: boolean;
   /** must stand next to water (hydro plants) */
@@ -246,7 +247,7 @@ export interface HouseConfig {
   startResidents: number;
   /** in-game days from foundations to a finished house */
   constructionDays: number;
-  /** days per new resident per house (while wheat is on hand and there is room) */
+  /** Days per new resident per house while food and housing capacity are available. */
   growthDays: number;
   /** days a full house waits before it grows a storey on its own */
   autoUpgradeDays: number;
@@ -433,7 +434,7 @@ export function validateContent(b: ContentBundle): string[] {
   ids(b.decor, 'decor');
   ids(b.contracts.templates, 'contract template');
   for (const w of b.wagons)
-    if (!['liquid', 'mineral', 'bulk'].includes(w.carries))
+    if (!['liquid', 'mineral', 'bulk', 'people'].includes(w.carries))
       out.push(`wagon ${w.id}: bad class "${w.carries}"`);
   ids(b.buildings, 'building');
   const isCost = (c: unknown) =>
@@ -445,6 +446,8 @@ export function validateContent(b: ContentBundle): string[] {
   for (const d of b.decor)
     if (!isCost(d.cost)) out.push(`decor ${d.id}: cost must be a resource map`);
   for (const bd of b.buildings) {
+    if (!Number.isFinite(bd.perWeek) || bd.perWeek < 0)
+      out.push(`building ${bd.id}: perWeek must be non-negative`);
     if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
     for (const k of Object.keys(bd.recipe.in))
       if (!cargo.has(k)) out.push(`building ${bd.id}: unknown input "${k}"`);
