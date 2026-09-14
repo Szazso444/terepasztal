@@ -119,6 +119,10 @@ recorded in `docs/phase-decisions.md`.
 
 ### After the first playtest
 
+- Bridge piers now have shaded faces, damp waterlines, submerged fading and small contact
+  ripples. Timber braces connect to actual supports. Construction previews show a complete
+  three-tile timber truss or masonry arch instead of an isolated platform.
+
 - Small vehicles with fixed running gear now have two axles (four wheels), using the same
   wheel materials as bogies. Reversing preserves every car and tender segment's position and
   heading; a failed reverse plan cannot fall back to a forward move or interpolate a half-turn.

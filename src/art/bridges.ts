@@ -1,6 +1,6 @@
 import type { AtlasBuilder } from '../engine/atlas';
 import { PixelBuf } from './pixels';
-import { PAL, type RGB } from './palette';
+import { mix, PAL, type RGB } from './palette';
 import { drawPrism, fillPoly } from './iso3d';
 
 const OX = 48,
@@ -36,6 +36,41 @@ function span(
   };
   const stone = material === 'stone';
   const side = stone ? PAL.stone : PAL.timber;
+  const pier = (l: number, w: number) => {
+    const p = pt(l, w, -26);
+    const support = new PixelBuf(b.w, b.h);
+    drawPrism(support, {
+      ox: OX,
+      oy: OY,
+      cx: axis ? l : w,
+      cy: axis ? w : l,
+      angle: axis ? 0 : Math.PI / 2,
+      len: stone ? 0.15 : 0.075,
+      wid: stone ? 0.16 : 0.075,
+      z0: -32,
+      h: 28,
+      top: side,
+      side,
+      seed: 19,
+    });
+    // The water hides the foot: damp masonry/timber gives way to a translucent reflection.
+    for (let y = 0; y < support.h; y++)
+      for (let x = 0; x < support.w; x++) {
+        const c = support.get(x, y);
+        if (!c) continue;
+        const depth = y - p.y;
+        if (depth > 5) continue;
+        b.set(
+          x,
+          y,
+          mix(c, PAL.water[2], depth >= 0 ? 0.7 : depth > -4 ? 0.3 : 0),
+          depth >= 0 ? Math.round(150 * (1 - depth / 6)) : 255,
+        );
+      }
+    // Broken, shallow ripples meet the wet edge without drawing a solid ring around the pier.
+    b.line(p.x - 6, p.y, p.x - 3, p.y + 1, PAL.water[3]);
+    b.line(p.x + 2, p.y + 2, p.x + 6, p.y + 1, PAL.water[1]);
+  };
   if (!rail) {
     drawPrism(b, {
       ox: OX,
@@ -55,8 +90,8 @@ function span(
     for (const w of [-0.26, 0.26]) {
       const start = (edge & 1) !== 0 || phase === 0;
       const end = (edge & 2) !== 0 || phase === n - 1;
-      if (start) line(-0.48, w, -4, -0.48, w, -30, side[2], stone ? 6 : 3);
-      if (end) line(0.48, w, -4, 0.48, w, -30, side[2], stone ? 6 : 3);
+      if (start) pier(-0.46, w);
+      if (end) pier(0.46, w);
       if (stone) {
         const arc = (v: number) =>
           -25 + 19 * Math.sin(Math.PI * Math.min(1, (phase + v + 0.5) / n));
@@ -73,7 +108,10 @@ function span(
             l2 = l + 1 / 16;
           line(l, w, arc(l), l2, w, arc(l2), side[0], 4);
         }
-      } else if (start || end) line(-0.42, w, -7, 0.42, w, -26, side[1], 2);
+      } else {
+        if (start) line(-0.46, w, -23, 0.42, w, -6, side[1], 2);
+        if (end) line(-0.42, w, -6, 0.46, w, -23, side[1], 2);
+      }
     }
   }
   // Far fence belongs to the deck pass. Near fence belongs to the object pass.
@@ -119,9 +157,15 @@ function reinforcement(material: 'wood' | 'stone', axis: number, level: number, 
 }
 export function addBridgeFrames(ab: AtlasBuilder) {
   for (const material of ['wood', 'stone'] as const) {
-    const preview = span(material, 1, 1, 0, 3, false);
-    preview.blit(span(material, 1, 1, 0, 3, true), 0, 0);
-    ab.add('structures/bridge_' + material, preview.toImageData(), OX, OY);
+    const preview = new PixelBuf(160, 120);
+    for (let phase = 0; phase < 3; phase++) {
+      const edge = phase === 0 ? 1 : phase === 2 ? 2 : 0;
+      const dx = phase * 32,
+        dy = phase * 16;
+      preview.blit(span(material, 1, 3, phase, edge, false), dx, dy);
+      preview.blit(span(material, 1, 3, phase, edge, true), dx, dy);
+    }
+    ab.add('structures/bridge_' + material, preview.toImageData(), OX + 32, OY + 16);
     for (let axis = 0; axis < 2; axis++)
       for (let level = 2; level <= 4; level++)
         for (const rail of [false, true])

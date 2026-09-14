@@ -393,3 +393,14 @@ The rigid-body choice and independent bogies from the preceding decision remain 
   structures 0.212 s at 2048×1024, locomotives 0.484 s at 4096×1024 and wagons 0.175 s at
   4096×256. All 2,839 atlas frames pass bounds checks. Timings describe the local fixture,
   not a guarantee for every computer or unlimited world size.
+
+### Bridge waterline follow-up
+
+Piers use shaded timber or masonry prisms with a damp band, a short translucent submerged
+foot and broken water-contact ripples. This is procedural sprite shading within the existing
+isometric deck elevation, not a change to terrain height or bridge clearance. Timber braces
+terminate at the supports present in each span. Build previews compose three connected tiles
+so the truss and arch shapes are visible before placement. No simulation or capacity changes.
+
+Evidence: scratchpad/bridge-art-before.png and bridge-art-after.png, generated from live atlas
+frames with scratchpad/verify-bridge-art.mjs. Both bridge axes and both materials are shown.
