@@ -1,5 +1,10 @@
 # Railway expansion verification
 
+Bridge waterline follow-up: run `node scratchpad/verify-bridge-art.mjs after` for the
+[current bridge sheet](bridge-art-after.png); compare the [previous art](bridge-art-before.png).
+The sheet uses live atlas textures over the water palette and shows both orientations and
+the construction previews. It is an art inspection, not a bridge-routing test.
+
 The latest pass keeps Townhouse as the civic anchor, moves passengers to Station, and adds
 upgradable Houses, weekly food production, independent bridges, service routing and crafting
 previews. The [player guide](../docs/railway-guide.md) explains the mechanics.
