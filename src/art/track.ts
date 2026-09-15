@@ -36,8 +36,9 @@ function drawRails(b: PixelBuf, pts: Vec2[], opts: RailStyle) {
   const gauge = 0.16; // half-gauge in tile units
   const hs = opts.cls === 'high_speed';
   const shoulder = hs ? 0.4 : 0.32;
-  const sleeper: RGB = hs ? [150, 150, 146] : PAL.sleeper;
-  const sleeperDark: RGB = hs ? [110, 110, 108] : PAL.sleeperDark;
+  // high-speed: pale concrete sleepers on a tidier, slightly cooler ballast bed
+  const sleeper: RGB = hs ? [200, 196, 186] : PAL.sleeper;
+  const sleeperDark: RGB = hs ? [148, 144, 136] : PAL.sleeperDark;
   // ballast band
   if (opts.ballast) {
     for (let i = 0; i < pts.length; i++) {
@@ -54,8 +55,13 @@ function drawRails(b: PixelBuf, pts: Vec2[], opts: RailStyle) {
         const px = Math.floor(sp.x);
         const py = Math.floor(sp.y);
         const n = hash2(px >> 1, py >> 1, opts.seed);
-        const c = mix(PAL.ballast[0], PAL.ballast[Math.min(2, Math.floor(n * 3))], 0.25);
-        b.set(px, py, Math.abs(s) > shoulder - 0.06 ? shade(c, 0.85) : c);
+        const broad = hash2(px >> 3, py >> 2, opts.seed + 5);
+        const c = mix(
+          PAL.ballast[0],
+          PAL.ballast[Math.min(2, Math.floor((n * 0.5 + broad * 0.5) * 3))],
+          hs ? 0.4 : 0.6,
+        );
+        b.set(px, py, Math.abs(s) > shoulder - 0.06 ? shade(c, 0.9) : c);
       }
     }
   }
@@ -173,7 +179,8 @@ function pieceSprite(kind: TrackKind, rot: number, cls: TrackClass, cls2?: Track
         shared === Dir.E ? 0.28 : shared === Dir.W ? -0.28 : 0,
         shared === Dir.S ? 0.28 : shared === Dir.N ? -0.28 : 0,
       );
-      b.rect(Math.round(sp.x) + 4, Math.round(sp.y) - 3, 3, 3, PAL.rust[1]);
+      b.rect(Math.round(sp.x) + 4, Math.round(sp.y) - 3, 3, 3, PAL.iron[0]);
+      b.set(Math.round(sp.x) + 4, Math.round(sp.y) - 3, PAL.iron[3]);
       b.set(Math.round(sp.x) + 5, Math.round(sp.y) - 4, PAL.amber);
     }
   }

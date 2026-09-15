@@ -87,7 +87,11 @@ export class PixelBuf {
         this.set(x, y, mix(shades[0], shades[idx], 0.45));
       }
   }
-  /** Add a 1px dark outline around all opaque pixels. */
+  /**
+   * Selective contour around the opaque pixels: the lower and side rims darken towards `c` so
+   * the sprite sits on its ground, the upper rim only takes a faint tint so silhouettes are not
+   * boxed in by a black line. `a` is the contour alpha; the game composites it over terrain.
+   */
   outline(c: RGB, a = 255) {
     const mask = new Uint8Array(this.w * this.h);
     for (let y = 0; y < this.h; y++)
@@ -95,21 +99,22 @@ export class PixelBuf {
     for (let y = 0; y < this.h; y++)
       for (let x = 0; x < this.w; x++) {
         if (mask[y * this.w + x]) continue;
-        if (
-          (x > 0 && mask[y * this.w + x - 1]) ||
-          (x < this.w - 1 && mask[y * this.w + x + 1]) ||
-          (y > 0 && mask[(y - 1) * this.w + x]) ||
-          (y < this.h - 1 && mask[(y + 1) * this.w + x])
-        ) {
-          // Coloured contour: upper rims catch light; lower rims ground the miniature.
-          const neighbour =
-            this.get(x, y + 1) ??
-            this.get(x + 1, y) ??
-            this.get(x - 1, y) ??
-            this.get(x, y - 1) ??
-            c;
-          const upper = y + 1 < this.h && mask[(y + 1) * this.w + x];
-          this.set(x, y, mix(c, shade(neighbour, upper ? 0.7 : 0.4), 0.65), a);
+        const below = y < this.h - 1 && mask[(y + 1) * this.w + x];
+        const above = y > 0 && mask[(y - 1) * this.w + x];
+        const left = x > 0 && mask[y * this.w + x - 1];
+        const right = x < this.w - 1 && mask[y * this.w + x + 1];
+        if (!(below || above || left || right)) continue;
+        const neighbour =
+          this.get(x, y + 1) ?? this.get(x + 1, y) ?? this.get(x - 1, y) ?? this.get(x, y - 1) ?? c;
+        if (below && !above) {
+          // upper rim: a whisper of the neighbour's own colour, slightly darker
+          this.set(x, y, mix(shade(neighbour, 0.8), c, 0.25), Math.round(a * 0.7));
+        } else if (above && !below) {
+          // lower rim: grounds the sprite
+          this.set(x, y, mix(c, shade(neighbour, 0.45), 0.4), a);
+        } else {
+          // side rims: occluded edge, dark but coloured
+          this.set(x, y, mix(c, shade(neighbour, 0.5), 0.5), Math.round(a * 0.9));
         }
       }
   }
@@ -129,11 +134,17 @@ export class PixelBuf {
   }
 }
 
+/**
+ * Shade picker for ground and material fills: broad low-frequency patches carry most of the
+ * variation, a light 2x2 dither breaks their edges. The iso aspect (x cells twice as wide as y)
+ * keeps the patches reading as flat ground rather than vertical noise.
+ */
 export function pickShade(x: number, y: number, shades: RGB[], seed: number, block = 2): RGB {
-  const n = hash2(x >> (block === 2 ? 1 : 0), y >> (block === 2 ? 1 : 0), seed);
-  const low = hash2(x >> 3, y >> 3, seed + 99) * 0.5;
-  const v = (n * 0.7 + low) / 1.2;
-  return mix(shades[0], shades[Math.min(shades.length - 1, Math.floor(v * shades.length))], 0.35);
+  const fine = hash2(x >> (block === 2 ? 1 : 0), y >> (block === 2 ? 1 : 0), seed);
+  const patch = hash2(x >> 3, y >> 2, seed + 99);
+  const broad = hash2((x + 4) >> 4, (y + 2) >> 3, seed + 77);
+  const v = fine * 0.3 + patch * 0.4 + broad * 0.3;
+  return mix(shades[0], shades[Math.min(shades.length - 1, Math.floor(v * shades.length))], 0.45);
 }
 
 /** Point inside a 64x32 (or scaled) iso diamond centred at (cx, cy). */

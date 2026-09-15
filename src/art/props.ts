@@ -1,305 +1,321 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import { hash2 } from '../engine/rng';
-import { PAL, mix, shade, type RGB } from './palette';
+import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 
-/** Round-canopy deciduous tree. Anchor at trunk base. */
-function roundTree(seed: number, size: number): PixelBuf {
-  const w = 22 + size * 4;
-  const h = 34 + size * 6;
-  const b = new PixelBuf(w, h);
-  const cx = w / 2;
-  // trunk
-  const trunkW = 3 + (size > 1 ? 1 : 0);
-  b.rect(Math.floor(cx - trunkW / 2), h - 12, trunkW, 12, PAL.trunk);
-  b.rect(Math.floor(cx - trunkW / 2), h - 12, 1, 12, PAL.trunkDark);
-  // canopy blobs, darker lower ones first
-  const layers = 3 + size;
-  for (let i = 0; i < layers; i++) {
-    const t = i / (layers - 1);
-    const cy = h - 16 - t * (h - 26);
-    const rx = (w / 2 - 1) * (1 - Math.abs(t - 0.45) * 0.9);
-    const ry = rx * 0.75;
-    const s = PAL.leaf.map((c) => shade(c, 0.8 + t * 0.35));
-    b.ellipse(cx + (hash2(i, seed, 1) - 0.5) * 4, cy, rx, ry, s, seed + i);
-  }
-  b.outline(PAL.outline, 200);
-  return b;
-}
+/**
+ * Natural props. Silhouette first, then two or three canopy masses, then material detail in
+ * broad clusters under one upper-left light. Every sprite keeps a 1px margin for the contour
+ * and three rows below the anchor for a soft ground shadow that touches the trunk base.
+ */
 
-/** Conifer: stacked dithered triangles. Anchor at trunk base. */
-function pineTree(seed: number, size: number): PixelBuf {
-  const w = 18 + size * 2;
-  const h = 40 + size * 8;
-  const b = new PixelBuf(w, h);
-  const cx = Math.floor(w / 2);
-  b.rect(cx - 1, h - 10, 3, 10, PAL.trunk);
-  b.set(cx - 1, h - 10, PAL.trunkDark);
-  const tiers = 4;
-  for (let t = 0; t < tiers; t++) {
-    const yTop = 2 + t * ((h - 14) / tiers) * 0.85;
-    const yBot = yTop + (h - 14) / tiers + 4;
-    const halfW = ((w / 2 - 1) * (t + 1.5)) / (tiers + 0.5);
-    for (let y = Math.floor(yTop); y < Math.min(h - 8, Math.floor(yBot)); y++) {
-      const f = (y - yTop) / (yBot - yTop);
-      const hw = halfW * f;
-      for (let x = Math.floor(cx - hw); x <= Math.ceil(cx + hw); x++) {
-        const n = hash2(x >> 1, y >> 1, seed + t);
-        const side = (x - cx) / Math.max(1, hw); // -1 left (lit) .. +1 right (shadow)
-        const v = n * 0.6 + 0.4 - side * 0.3;
-        const idx = Math.max(0, Math.min(3, Math.floor(v * 3)));
-        b.set(x, y, PAL.pine[idx]);
-      }
+const SHADOW_ROWS = 3;
+const SHADOW: RGB = [30, 40, 30];
+
+/** Ellipse filled in three lighting bands with 2x2 cluster noise; upper-left is lit. */
+function mass(
+  b: PixelBuf,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  shades: RGB[],
+  seed: number,
+  contrast = 1,
+) {
+  for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++)
+    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+      const nx = (x + 0.5 - cx) / rx;
+      const ny = (y + 0.5 - cy) / ry;
+      if (nx * nx + ny * ny > 1) continue;
+      const l = -(nx * 0.45 + ny * 0.75) * contrast;
+      const n = (hash2(x >> 1, y >> 1, seed) - 0.5) * 0.5;
+      const v = l + n;
+      const c = v > 0.4 ? shades[3] : v > 0.05 ? shades[1] : v > -0.35 ? shades[0] : shades[2];
+      b.set(x, y, c);
     }
-  }
-  b.outline(PAL.outline, 200);
-  return b;
 }
 
-function boulder(seed: number, size: number): PixelBuf {
-  const w = 14 + size * 6;
-  const h = 10 + size * 4;
-  const b = new PixelBuf(w, h + 2);
-  b.ellipse(
-    w / 2,
-    h / 2 + 1,
-    w / 2 - 1,
-    h / 2 - 1,
-    PAL.rock.map((c) => shade(c, 1.05)),
-    seed,
-    0.5,
+/** Soft ground shadow ellipse drawn after the contour so it is never outlined. */
+function groundShadow(b: PixelBuf, cx: number, cy: number, rx: number, alpha = 64) {
+  const ry = Math.max(1.5, rx * 0.45);
+  for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++)
+    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+      const nx = (x + 0.5 - cx) / rx;
+      const ny = (y + 0.5 - cy) / ry;
+      const d = nx * nx + ny * ny;
+      if (d > 1 || b.alpha(x, y) > 0) continue;
+      b.set(x, y, SHADOW, Math.round(alpha * (1 - d * 0.6)));
+    }
+}
+
+/** Trunk with a lit left edge and a dark right edge; `w` is the width in pixels. */
+function trunk(b: PixelBuf, x0: number, yTop: number, w: number, h: number, base = PAL.trunk) {
+  b.rect(x0, yTop, w, h, base);
+  b.rect(x0, yTop, 1, h, shade(base, 1.18));
+  if (w > 2) b.rect(x0 + w - 1, yTop, 1, h, shade(base, 0.72));
+  if (w > 3) b.rect(x0 + w - 2, yTop, 1, h, shade(base, 0.9));
+}
+
+// --- broadleaf trees ---------------------------------------------------------------------------
+
+/** Round broadleaf: two or three connected canopy masses on a short trunk. */
+function roundTree(seed: number, v: number): PixelBuf {
+  const w = 24 + v * 3;
+  const h = 32 + v * 4 + SHADOW_ROWS;
+  const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
+  const cx = Math.floor(w / 2);
+  const trunkH = 9 + v;
+  trunk(b, cx - 1, base - trunkH, 3, trunkH + 1);
+  // main crown, then a lower side mass and a small lit top mass
+  const cr = w / 2 - 1;
+  mass(b, cx, base - trunkH - cr * 0.7, cr, cr * 0.72, PAL.leaf, seed);
+  const side = hash2(seed, 1, 2) > 0.5 ? 1 : -1;
+  mass(
+    b,
+    cx + side * cr * 0.45,
+    base - trunkH - cr * 0.35,
+    cr * 0.62,
+    cr * 0.5,
+    PAL.leaf,
+    seed + 1,
   );
-  // flat bottom
-  for (let x = 0; x < w; x++)
-    for (let y = h; y < h + 2; y++)
-      b.set(x, y, shade(PAL.rock[2], 0.7), b.alpha(x, y - 1) ? 255 : 0);
-  b.outline(PAL.outline, 200);
+  mass(
+    b,
+    cx - side * cr * 0.2,
+    base - trunkH - cr * 1.15,
+    cr * 0.55,
+    cr * 0.42,
+    PAL.leaf,
+    seed + 2,
+  );
+  b.outline(PAL.outline, 190);
+  groundShadow(b, cx, base + 1, cr * 0.8);
   return b;
 }
 
-// --- biome vegetation -------------------------------------------------------------------------
+/** Oak: wider and heavier than the round tree; strong branching and a low spreading crown. */
+function oakTree(seed: number, v: number): PixelBuf {
+  const w = 34 + v * 2;
+  const h = 38 + v * 2 + SHADOW_ROWS;
+  const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
+  const cx = w / 2;
+  const OAK: RGB[] = [
+    [74, 112, 58],
+    [92, 132, 68],
+    [54, 86, 46],
+    [114, 154, 82],
+  ];
+  const trunkW = 5;
+  const trunkH = 12;
+  trunk(b, Math.floor(cx - trunkW / 2), base - trunkH, trunkW, trunkH + 1);
+  // root flare and two visible boughs leaving the trunk
+  b.set(Math.floor(cx - trunkW / 2) - 1, base, PAL.trunkDark);
+  b.set(Math.floor(cx + trunkW / 2), base, shade(PAL.trunk, 0.85));
+  b.line(cx, base - trunkH + 1, cx - 8, base - trunkH - 6, PAL.trunkDark);
+  b.line(cx + 1, base - trunkH + 1, cx + 8, base - trunkH - 5, shade(PAL.trunk, 0.9));
+  // low wide crown built from three overlapping masses, a heavier dark one at the bottom
+  const cr = w / 2 - 1;
+  mass(b, cx, base - trunkH - 9, cr, 9, OAK, seed, 0.9);
+  mass(b, cx - cr * 0.35, base - trunkH - 15, cr * 0.62, 8, OAK, seed + 1);
+  mass(b, cx + cr * 0.32, base - trunkH - 14, cr * 0.6, 7.5, OAK, seed + 2);
+  mass(b, cx + (hash2(seed, 3, 1) - 0.5) * 6, base - trunkH - 20, cr * 0.5, 6, OAK, seed + 3);
+  b.outline(PAL.outline, 190);
+  groundShadow(b, cx, base + 1, cr * 0.85, 70);
+  return b;
+}
 
-const BIRCH_LEAF: RGB[] = PAL.leaf.map((c) => mix(shade(c, 1.25), [150, 170, 90], 0.25));
-const OAK_LEAF: RGB[] = [
-  [38, 60, 34],
-  [50, 76, 42],
-  [30, 48, 28],
-  [62, 88, 50],
-];
-const SPRUCE: RGB[] = [
-  [30, 54, 52],
-  [38, 66, 62],
-  [22, 42, 40],
-  [50, 80, 74],
-];
-const SNOW: RGB = [214, 222, 224];
-const SNOW_SHADE: RGB = [168, 184, 190];
-const BIRCH_BARK: RGB = [206, 202, 190];
-const BIRCH_BAND: RGB = [58, 56, 50];
-const CACTUS: RGB[] = [
-  [66, 108, 62],
-  [78, 122, 70],
-  [52, 88, 50],
-];
-const DEADWOOD: RGB = [96, 84, 68];
-const DEADWOOD_DARK: RGB = [66, 56, 44];
-const REED: RGB[] = [
-  [84, 104, 52],
-  [100, 118, 60],
-  [68, 86, 42],
-];
-const CATTAIL: RGB = [104, 72, 44];
-const FLOWER_COLOURS: RGB[][] = [
-  [
-    [186, 70, 62],
-    [214, 96, 82],
-  ], // red
-  [
-    [214, 176, 64],
-    [236, 204, 96],
-  ], // yellow
-  [
-    [214, 210, 196],
-    [238, 236, 226],
-  ], // white
-  [
-    [140, 96, 168],
-    [170, 126, 198],
-  ], // purple
-];
-
-/** Birch: slim white trunk with dark bands, light airy round canopy. Anchor at trunk base. */
+/** Birch: slender pale trunk with sparing dark breaks, airy uneven canopy of small masses. */
 function birchTree(seed: number, v: number): PixelBuf {
   const w = 22;
-  const h = 38 + v * 2;
+  const h = 38 + v * 2 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
   const cx = Math.floor(w / 2);
-  const trunkH = 16;
-  b.rect(cx - 1, h - trunkH, 3, trunkH, BIRCH_BARK);
-  b.rect(cx + 1, h - trunkH, 1, trunkH, shade(BIRCH_BARK, 0.78));
-  for (let y = h - trunkH + 1; y < h - 1; y += 3) {
-    const n = hash2(y, seed, 4);
-    if (n > 0.35) b.rect(cx - 1 + (n > 0.7 ? 1 : 0), y, 2, 1, BIRCH_BAND);
-  }
-  // canopy: a cluster of small ellipses, lighter towards the top-left
+  const BARK: RGB = [224, 220, 206];
+  const BAND: RGB = [72, 68, 60];
+  const LEAF: RGB[] = [
+    [124, 164, 82],
+    [146, 184, 96],
+    [98, 134, 68],
+    [172, 204, 116],
+  ];
+  const trunkH = 17;
+  b.rect(cx - 1, base - trunkH, 2, trunkH + 1, BARK);
+  b.rect(cx, base - trunkH, 1, trunkH + 1, shade(BARK, 0.84));
+  for (let y = base - trunkH + 2; y < base - 1; y += 4)
+    if (hash2(y, seed, 4) > 0.45) b.set(cx - 1 + (hash2(y, seed, 5) > 0.5 ? 1 : 0), y, BAND);
+  // airy canopy: five or six small masses with gaps, lighter towards the top-left
   const blobs = 5 + v;
   for (let i = 0; i < blobs; i++) {
     const t = i / (blobs - 1);
-    const bx = cx + (hash2(i, seed, 1) - 0.5) * 9;
-    const by = h - trunkH - 4 - t * 12 + (hash2(i, seed, 2) - 0.5) * 3;
-    const r = 4.5 + hash2(i, seed, 3) * 2.5;
-    const s = BIRCH_LEAF.map((c) => shade(c, 0.85 + t * 0.3));
-    b.ellipse(bx, by, r, r * 0.8, s, seed + i, 0.4);
+    const bx = cx + (hash2(i, seed, 1) - 0.5) * 12;
+    const by = base - trunkH - 2 - t * 13 + (hash2(i, seed, 2) - 0.5) * 3;
+    const r = 3.5 + hash2(i, seed, 3) * 2.5;
+    mass(b, bx, by, r, r * 0.8, LEAF, seed + i, 0.8);
   }
-  b.outline(PAL.outline, 200);
+  b.outline(PAL.outline, 170);
+  groundShadow(b, cx, base + 1, 5, 50);
   return b;
 }
 
-/** Spruce: tall narrow dark blue-green conifer with snow on its upper tiers. */
-function spruceTree(seed: number, v: number): PixelBuf {
-  const w = 18;
-  const h = 44 + v * 4;
-  const b = new PixelBuf(w, h);
-  const cx = Math.floor(w / 2);
-  b.rect(cx - 1, h - 9, 3, 9, PAL.trunkDark);
-  b.set(cx, h - 9, PAL.trunk);
-  const tiers = 5;
-  const tierH = (h - 12) / tiers;
-  for (let t = 0; t < tiers; t++) {
-    const yTop = 1 + t * tierH * 0.88;
-    const yBot = yTop + tierH + 3;
-    const halfW = ((w / 2 - 1) * (t + 1.2)) / (tiers + 0.2);
-    const yEnd = Math.min(h - 8, Math.floor(yBot));
-    for (let y = Math.floor(yTop); y < yEnd; y++) {
-      const f = (y - yTop) / (yBot - yTop);
-      const hw = halfW * f;
-      for (let x = Math.floor(cx - hw); x <= Math.ceil(cx + hw); x++) {
-        const n = hash2(x >> 1, y >> 1, seed + t);
-        const side = (x - cx) / Math.max(1, hw);
-        const vv = n * 0.6 + 0.4 - side * 0.3;
-        const idx = Math.max(0, Math.min(3, Math.floor(vv * 3)));
-        let c = SPRUCE[idx];
-        // snow: upper two tiers carry a snow cap along their lower edge and top
-        if (t < 2 && (y >= yEnd - 2 || f < 0.35)) {
-          const sn = hash2(x, y, seed + 30 + t);
-          c = sn > 0.3 ? (side > 0.3 ? SNOW_SHADE : SNOW) : c;
-        } else if (t === 2 && y >= yEnd - 1 && hash2(x, y, seed + 33) > 0.55) c = SNOW_SHADE;
-        b.set(x, y, c);
-      }
+// --- conifers ----------------------------------------------------------------------------------
+
+/** One conifer tier: a triangle with lit left side and dark right, cluster noise. */
+function tier(
+  b: PixelBuf,
+  cx: number,
+  yTop: number,
+  yBot: number,
+  halfW: number,
+  shades: RGB[],
+  seed: number,
+  snow = 0,
+) {
+  for (let y = Math.floor(yTop); y < Math.floor(yBot); y++) {
+    const f = (y - yTop) / (yBot - yTop);
+    const hw = halfW * f;
+    for (let x = Math.floor(cx - hw); x <= Math.ceil(cx + hw); x++) {
+      const side = (x - cx) / Math.max(1, hw);
+      const n = (hash2(x >> 1, y >> 1, seed) - 0.5) * 0.5;
+      const v = -side * 0.5 + n + (f > 0.85 ? -0.3 : 0);
+      let c = v > 0.35 ? shades[3] : v > 0 ? shades[1] : v > -0.4 ? shades[0] : shades[2];
+      if (snow > 0 && f > 0.78 && hash2(x, y, seed + 30) < snow) c = side > 0.3 ? SNOW_SHADE : SNOW;
+      b.set(x, y, c);
     }
   }
-  b.outline(PAL.outline, 200);
-  return b;
 }
+const SNOW: RGB = [230, 236, 234];
+const SNOW_SHADE: RGB = [186, 200, 204];
 
-/** Oak: broad, heavy dark canopy on a thick trunk. Bigger than the plain round tree. */
-function oakTree(seed: number, v: number): PixelBuf {
-  const w = 32 + v * 2;
-  const h = 40 + v * 2;
+/** Pine: open tiered canopy with the trunk visible between the groups. */
+function pineTree(seed: number, v: number): PixelBuf {
+  const w = 20 + v * 2;
+  const h = 40 + v * 6 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
-  const cx = w / 2;
-  const trunkW = 6;
-  const trunkH = 13;
-  b.rect(Math.floor(cx - trunkW / 2), h - trunkH, trunkW, trunkH, PAL.trunk);
-  b.rect(Math.floor(cx - trunkW / 2), h - trunkH, 2, trunkH, PAL.trunkDark);
-  b.rect(Math.floor(cx + trunkW / 2) - 1, h - trunkH, 1, trunkH, shade(PAL.trunk, 1.15));
-  // root flare
-  b.set(Math.floor(cx - trunkW / 2) - 1, h - 1, PAL.trunkDark);
-  b.set(Math.floor(cx + trunkW / 2), h - 1, PAL.trunk);
-  // canopy: wide low ellipses stacked, darker at the bottom
-  const layers = 4;
-  for (let i = 0; i < layers; i++) {
-    const t = i / (layers - 1);
-    const cy = h - trunkH - 3 - t * (h - trunkH - 16);
-    const rx = (w / 2 - 1) * (1 - Math.abs(t - 0.35) * 0.7);
-    const ry = rx * 0.62;
-    const s = OAK_LEAF.map((c) => shade(c, 0.8 + t * 0.4));
-    b.ellipse(cx + (hash2(i, seed, 1) - 0.5) * 5, cy, rx, ry, s, seed + i, 0.4);
+  const base = h - 1 - SHADOW_ROWS;
+  const cx = Math.floor(w / 2);
+  const top = 2;
+  trunk(b, cx - 1, top + 4, 3, base - top - 3);
+  const tiers = 3;
+  const span = base - 8 - top;
+  for (let t = 0; t < tiers; t++) {
+    const yTop = top + (t / tiers) * span;
+    const yBot = yTop + span / tiers - 3; // gap below each tier shows the trunk
+    const halfW = ((w / 2 - 1) * (t + 1.6)) / (tiers + 0.6);
+    tier(b, cx, yTop, yBot, halfW, PAL.pine, seed + t);
   }
-  // a few lighter leaf clusters on the lit side
-  for (let i = 0; i < 4; i++) {
-    const px = Math.floor(cx - 6 + hash2(i, seed, 7) * 10 - 4);
-    const py = Math.floor(6 + hash2(i, seed, 8) * 10);
-    if (b.alpha(px, py)) b.rect(px, py, 2, 1, OAK_LEAF[3]);
-  }
-  b.outline(PAL.outline, 200);
+  b.outline(PAL.outline, 190);
+  groundShadow(b, cx, base + 1, 5, 50);
   return b;
 }
 
-/** Palm: curved trunk with a crown of arching fronds. */
+/** Spruce: denser tapered cone with darker lower layers; a cosmetic dusting of snow. */
+function spruceTree(seed: number, v: number): PixelBuf {
+  const w = 18;
+  const h = 44 + v * 4 + SHADOW_ROWS;
+  const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
+  const cx = Math.floor(w / 2);
+  const SPRUCE: RGB[] = [
+    [44, 84, 72],
+    [56, 100, 84],
+    [32, 62, 56],
+    [74, 122, 100],
+  ];
+  trunk(b, cx - 1, base - 8, 3, 9, PAL.trunkDark);
+  const tiers = 5;
+  const span = base - 10;
+  for (let t = 0; t < tiers; t++) {
+    const yTop = 1 + (t / tiers) * span * 0.92;
+    const yBot = yTop + span / tiers + 3;
+    const halfW = ((w / 2 - 1) * (t + 1.3)) / (tiers + 0.3);
+    const dark = SPRUCE.map((c) => shade(c, 1 - t * 0.05));
+    tier(b, cx, yTop, Math.min(base - 6, yBot), halfW, dark, seed + t, t < 2 ? 0.55 : 0.2);
+  }
+  b.outline(PAL.outline, 190);
+  groundShadow(b, cx, base + 1, 4.5, 50);
+  return b;
+}
+
+// --- desert ------------------------------------------------------------------------------------
+
+/** Palm: bent trunk with a small fan of readable fronds. */
 function palmTree(seed: number, v: number): PixelBuf {
   const w = 28;
-  const h = 36 + v * 2;
+  const h = 36 + v * 2 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
   const lean = v === 0 ? 1 : -1;
   const baseX = Math.floor(w / 2) - lean * 4;
   const topX = Math.floor(w / 2) + lean * 3;
   const topY = 11;
-  // trunk: quadratic curve sampled per row, 2-3 px wide with ring marks
-  for (let y = h - 1; y >= topY; y--) {
-    const t = (h - 1 - y) / (h - 1 - topY);
+  for (let y = base; y >= topY; y--) {
+    const t = (base - y) / (base - topY);
     const ctrlX = baseX + (topX - baseX) * 0.15;
     const x = (1 - t) * (1 - t) * baseX + 2 * (1 - t) * t * ctrlX + t * t * topX;
     const xi = Math.round(x);
     const ring = y % 3 === 0;
-    b.set(xi - 1, y, ring ? PAL.trunkDark : shade(PAL.trunk, 0.9));
-    b.set(xi, y, ring ? shade(PAL.trunk, 0.85) : shade(PAL.trunk, 1.1));
+    b.set(xi - 1, y, ring ? PAL.trunkDark : shade(PAL.trunk, 1.1));
+    b.set(xi, y, ring ? shade(PAL.trunk, 0.8) : PAL.trunk);
     if (t < 0.5) b.set(xi + 1, y, PAL.trunkDark);
   }
-  // fronds: arcs radiating from the crown
-  const fronds = 7;
+  const FROND: RGB[] = [
+    [86, 132, 66],
+    [110, 158, 80],
+    [64, 104, 54],
+    [138, 180, 96],
+  ];
+  const fronds = 6;
   for (let i = 0; i < fronds; i++) {
-    // spread over a full fan from left-down through up to right-down
     const a =
-      -Math.PI * 1.1 + (i / (fronds - 1)) * Math.PI * 1.2 + (hash2(i, seed, 2) - 0.5) * 0.25;
+      -Math.PI * 1.05 + (i / (fronds - 1)) * Math.PI * 1.1 + (hash2(i, seed, 2) - 0.5) * 0.2;
     const len = 10 + hash2(i, seed, 3) * 3;
     let px = topX;
     let py = topY;
     for (let k = 0; k < len; k++) {
       const f = k / len;
-      // start outward, then droop
-      const dx = Math.cos(a) * (1 - f * 0.4);
+      const dx = Math.cos(a) * (1 - f * 0.35);
       const dy = Math.sin(a) * (1 - f) + f * 1.3;
       px += dx;
       py += dy;
       const xi = Math.round(px);
       const yi = Math.round(py);
       const lit = dx < 0 || f < 0.3;
-      const c = lit ? PAL.leaf[3] : PAL.leaf[1];
-      b.set(xi, yi, c);
-      // leaflets: 2px-wide rib with alternating hanging pixels so fronds read as feathery
-      b.set(xi, yi + 1, f < 0.6 ? PAL.leaf[1] : PAL.leaf[0]);
-      if (k % 2 === 0 && k > 1) b.set(xi, yi + 2, PAL.leaf[2]);
-      else if (k > 1) b.set(xi + (dx > 0 ? 1 : -1), yi, PAL.leaf[2]);
+      b.set(xi, yi, lit ? FROND[3] : FROND[1]);
+      b.set(xi, yi + 1, f < 0.6 ? FROND[0] : FROND[2]);
+      if (k % 3 === 1 && k > 1) b.set(xi, yi + 2, FROND[2]);
     }
   }
-  // crown core
-  b.rect(topX - 1, topY - 1, 3, 3, PAL.leaf[2]);
-  b.set(topX, topY - 1, PAL.leaf[3]);
-  // coconuts
+  b.rect(topX - 1, topY - 1, 3, 3, FROND[2]);
+  b.set(topX, topY - 1, FROND[3]);
   b.set(topX - 1, topY + 2, PAL.trunkDark);
   b.set(topX + 1, topY + 2, PAL.trunk);
-  b.outline(PAL.outline, 200);
+  b.outline(PAL.outline, 190);
+  groundShadow(b, baseX, base + 1, 5, 50);
   return b;
 }
 
-/** Saguaro cactus with one or two arms. ~10x22. */
+/** Saguaro: ribbed column with one or two arms, few highlights. */
 function cactus(seed: number, v: number): PixelBuf {
-  const w = 10;
-  const h = 22;
+  const w = 12;
+  const h = 22 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
-  const cx = 4;
+  const base = h - 1 - SHADOW_ROWS;
+  const CACTUS: RGB[] = [
+    [80, 128, 72],
+    [98, 148, 84],
+    [60, 100, 58],
+  ];
+  const cx = 5;
   const top = 3 + v;
-  // main column
-  for (let y = top; y < h; y++)
-    for (let x = cx - 1; x <= cx + 1; x++) {
-      const idx = x === cx - 1 ? 1 : x === cx + 1 ? 2 : 0;
-      b.set(x, y, CACTUS[idx]);
-    }
+  for (let y = top; y <= base; y++)
+    for (let x = cx - 1; x <= cx + 1; x++)
+      b.set(x, y, x === cx - 1 ? CACTUS[1] : x === cx + 1 ? CACTUS[2] : CACTUS[0]);
   b.set(cx, top - 1, CACTUS[1]);
-  // rib line
-  for (let y = top + 1; y < h; y += 2) b.set(cx, y, shade(CACTUS[0], 0.9));
-  // arms: horizontal stub then up
+  for (let y = top + 1; y < base; y += 3) b.set(cx, y, shade(CACTUS[0], 0.9));
   const arms = v === 2 ? 2 : 1;
   const armSide = hash2(seed, 1, 2) > 0.5 ? 1 : -1;
   for (let a = 0; a < arms; a++) {
@@ -311,229 +327,300 @@ function cactus(seed: number, v: number): PixelBuf {
     b.rect(ax - (side > 0 ? 0 : 1), ay - 4 - a, 1, 6 + a, CACTUS[side > 0 ? 1 : 2]);
     b.set(ax, ay - 5 - a, CACTUS[1]);
   }
-  b.outline(PAL.outline, 200);
+  b.outline(PAL.outline, 190);
+  groundShadow(b, cx, base + 1, 3, 50);
   return b;
 }
 
-/** Dead tree: bare grey-brown trunk with forking branches. */
+/** Dead tree: bare branching silhouette in silvered wood, no foliage. */
 function deadTree(seed: number, v: number): PixelBuf {
   const w = 22;
-  const h = 34 + v * 2;
+  const h = 34 + v * 2 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
   const cx = Math.floor(w / 2);
+  const DEAD: RGB = [148, 134, 116];
+  const DEAD_DARK: RGB = [104, 92, 78];
   const lean = v === 0 ? 1 : -1;
-  // trunk tapering upward
-  for (let y = h - 1; y >= 8; y--) {
-    const t = (h - 1 - y) / (h - 9);
+  for (let y = base; y >= 8; y--) {
+    const t = (base - y) / (base - 8);
     const x = cx + Math.round(lean * t * 2);
     const wd = t < 0.35 ? 3 : t < 0.7 ? 2 : 1;
-    b.rect(x - Math.floor(wd / 2), y, wd, 1, DEADWOOD);
-    b.set(x - Math.floor(wd / 2), y, DEADWOOD_DARK);
+    b.rect(x - Math.floor(wd / 2), y, wd, 1, DEAD);
+    b.set(x - Math.floor(wd / 2), y, shade(DEAD, 1.1));
+    if (wd > 1) b.set(x - Math.floor(wd / 2) + wd - 1, y, DEAD_DARK);
   }
-  // branches: each starts on the trunk and forks once
   const branches = 4;
   for (let i = 0; i < branches; i++) {
     const sy = 9 + Math.floor(hash2(i, seed, 1) * 14);
-    const t = (h - 1 - sy) / (h - 9);
+    const t = (base - sy) / (base - 8);
     const sx = cx + Math.round(lean * t * 2);
     const dir = i % 2 === 0 ? -1 : 1;
     const len = 4 + Math.floor(hash2(i, seed, 2) * 5);
     const ex = sx + dir * len;
     const ey = sy - 3 - Math.floor(hash2(i, seed, 3) * 4);
-    b.line(sx, sy, ex, ey, DEADWOOD);
-    // twig
+    b.line(sx, sy, ex, ey, DEAD);
     const mx = Math.round((sx + ex) / 2);
     const my = Math.round((sy + ey) / 2);
-    b.line(mx, my, mx + dir * 2, my - 3, DEADWOOD_DARK);
-    b.line(ex, ey, ex + dir, ey - 3, DEADWOOD_DARK);
+    b.line(mx, my, mx + dir * 2, my - 3, DEAD_DARK);
+    b.line(ex, ey, ex + dir, ey - 3, DEAD_DARK);
   }
-  // crown tip
-  b.line(cx + lean * 2, 8, cx + lean * 3, 3, DEADWOOD);
-  b.line(cx + lean * 2, 8, cx + lean * 0, 4, DEADWOOD_DARK);
-  b.outline(PAL.outline, 200);
+  b.line(cx + lean * 2, 8, cx + lean * 3, 3, DEAD);
+  b.line(cx + lean * 2, 8, cx, 4, DEAD_DARK);
+  b.outline(PAL.outline, 190);
+  groundShadow(b, cx, base + 1, 4, 45);
   return b;
 }
 
-/** Round shrub; variants differ in shape and tint. 14x10. */
-function bush(seed: number, v = 0): PixelBuf {
-  const b = new PixelBuf(14, 10);
-  const tint = v === 1 ? 1.15 : v === 2 ? 0.88 : 1;
+// --- low plants --------------------------------------------------------------------------------
+
+/** Bush: low two- or three-lobed cluster, shorter than a wagon body. */
+function bush(seed: number, v: number): PixelBuf {
+  const w = 16;
+  const h = 11 + SHADOW_ROWS;
+  const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
+  const tint = v === 1 ? 1.1 : v === 2 ? 0.92 : 1;
   const s = PAL.leaf.map((c) => shade(c, tint));
   if (v === 2) {
-    b.ellipse(5, 6, 4.5, 3.5, s, seed);
-    b.ellipse(9, 5, 4, 3.5, s, seed + 1);
+    mass(b, 5, base - 3, 4.5, 3.5, s, seed);
+    mass(b, 10, base - 4, 4.5, 4, s, seed + 1);
   } else {
-    b.ellipse(7, 5, 6, 4, s, seed);
-    if (v === 1)
-      b.ellipse(
-        6,
-        3.5,
-        3,
-        2.5,
-        s.map((c) => shade(c, 1.1)),
-        seed + 2,
-        0.5,
-      );
+    mass(b, 8, base - 3.5, 6.5, 4, s, seed);
+    mass(b, 5, base - 5.5, 3.5, 3, s, seed + 2);
+    if (v === 1) mass(b, 11, base - 5, 3, 2.5, s, seed + 3);
   }
   b.outline(PAL.outline, 160);
+  groundShadow(b, 8, base + 1, 6, 40);
   return b;
 }
 
-/** Low flower patch: a grass tuft with a handful of coloured blooms. 16x8. */
+/** Flower patch: a tuft with blooms concentrated in one small cluster; four colour variants. */
 function flowers(seed: number, colour: number): PixelBuf {
   const w = 16;
-  const h = 8;
+  const h = 9 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
-  const [dark, light] = FLOWER_COLOURS[colour];
-  // grass tuft base
-  b.ellipse(
-    8,
-    5.5,
-    7,
-    2.5,
-    PAL.grass.map((c) => shade(c, 1.15)),
-    seed,
-    0.2,
-  );
-  for (let i = 0; i < 6; i++) {
-    const x = 1 + Math.floor(hash2(i, seed, 1) * 14);
+  const base = h - 1 - SHADOW_ROWS;
+  const FLOWER: [RGB, RGB][] = [
+    [
+      [212, 92, 80],
+      [236, 132, 112],
+    ], // red
+    [
+      [224, 184, 72],
+      [244, 214, 116],
+    ], // yellow
+    [
+      [222, 220, 206],
+      [244, 242, 232],
+    ], // white
+    [
+      [156, 112, 184],
+      [190, 150, 214],
+    ], // lilac
+  ];
+  const [dark, light] = FLOWER[colour];
+  const tuft = PAL.grass.map((c) => shade(c, 1.1));
+  mass(b, 8, base - 2, 6.5, 2.5, tuft, seed, 0.4);
+  for (let i = 0; i < 5; i++) {
+    const x = 2 + Math.floor(hash2(i, seed, 1) * 12);
     const hgt = 1 + Math.floor(hash2(i, seed, 2) * 2);
-    for (let k = 0; k < hgt; k++) b.set(x, 4 - k, PAL.grass[3]);
+    for (let k = 0; k < hgt; k++) b.set(x, base - 3 - k, PAL.grass[3]);
   }
-  // blooms: 2x2 with a dark pixel at the lower-right, on short stems
-  const n = 4 + Math.floor(hash2(seed, colour, 3) * 2);
+  // blooms cluster around one centre
+  const ccx = 5 + Math.floor(hash2(seed, colour, 6) * 6);
+  const n = 3 + Math.floor(hash2(seed, colour, 3) * 2);
   for (let i = 0; i < n; i++) {
-    const x = 1 + Math.floor((i + hash2(i, seed, 4) * 0.8) * (13 / n));
-    const y = 1 + Math.floor(hash2(i, seed, 5) * 3);
-    b.set(x, y + 2, PAL.grass[3]);
+    const x = ccx + Math.round((hash2(i, seed, 4) - 0.5) * 6);
+    const y = 2 + Math.floor(hash2(i, seed, 5) * 3);
+    b.set(x, y + 2, PAL.grass[2]);
     b.set(x, y, light);
     b.set(x + 1, y, dark);
     b.set(x, y + 1, dark);
     b.set(x + 1, y + 1, shade(dark, 0.8));
   }
-  b.outline(PAL.outline, 130);
+  b.outline(PAL.outline, 120);
   return b;
 }
 
-/** Marsh reeds / cattails: tall thin stalks. 10x18. */
+/** Reeds: sparse upright stems standing in a grounded wet base. */
 function reeds(seed: number, v: number): PixelBuf {
-  const w = 10;
-  const h = 18;
+  const w = 12;
+  const h = 19 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
-  const stalks = 5;
+  const base = h - 1 - SHADOW_ROWS;
+  const REED: RGB[] = [
+    [104, 132, 62],
+    [124, 150, 72],
+    [84, 108, 50],
+  ];
+  const CATTAIL: RGB = [112, 76, 46];
+  const WET: RGB[] = [
+    [84, 130, 130],
+    [98, 144, 142],
+    [70, 112, 116],
+    [110, 156, 152],
+  ];
+  // wet base: a small pool the stems stand in
+  mass(b, 6, base - 1, 5.5, 2, WET, seed + 9, 0.3);
+  const stalks = 4;
   for (let i = 0; i < stalks; i++) {
-    const bx = 1 + Math.floor((i / (stalks - 1)) * 7);
+    const bx = 2 + Math.floor((i / (stalks - 1)) * 8);
     const top = 1 + Math.floor(hash2(i, seed, 1) * 6);
     const lean = Math.round((hash2(i, seed, 2) - 0.5) * 3);
     const c = REED[i % 3];
-    b.line(bx, h - 1, bx + lean, top, c);
-    // cattail heads on some stalks
-    if ((i + v) % 2 === 0 && top < 6) {
+    b.line(bx, base - 1, bx + lean, top, c);
+    if ((i + v) % 2 === 0 && top < 7) {
       b.rect(bx + lean, top, 1, 4, CATTAIL);
       b.set(bx + lean, top - 1, shade(REED[1], 1.1));
       b.set(bx + lean, top + 4, shade(CATTAIL, 0.75));
     }
   }
-  // leaf blades at the base
-  b.line(2, h - 1, 0, h - 6, REED[2]);
-  b.line(7, h - 1, 9, h - 5, REED[0]);
-  b.outline(PAL.outline, 160);
+  b.line(3, base - 2, 1, base - 7, REED[2]);
+  b.line(8, base - 2, 10, base - 6, REED[0]);
+  b.outline(PAL.outline, 150);
   return b;
 }
 
-/** Large rounded boulder with strong shading and a crack. 20x14. */
-function bigBoulder(seed: number, v: number): PixelBuf {
-  const w = 20;
-  const h = 14;
+// --- stone and minerals ------------------------------------------------------------------------
+
+/** Small low stone: a flat-topped lump, lit from the upper left. */
+function smallRock(seed: number, v: number): PixelBuf {
+  const w = 14 + v * 4;
+  const h = 9 + v * 2 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
-  const s = PAL.rock.map((c) => shade(c, 1.02 + v * 0.04));
-  b.ellipse(w / 2, 6.5, w / 2 - 1, 5.5, s, seed, 0.65);
-  if (v === 1) b.ellipse(w / 2 + 3, 5, 5, 4, s, seed + 1, 0.65); // lumpy top
-  if (v === 2)
-    b.ellipse(
-      w / 2 - 4,
-      6,
-      5,
-      4.5,
-      s.map((c) => shade(c, 1.08)),
-      seed + 2,
-      0.65,
-    );
-  // highlight
-  b.rect(6, 3, 2, 1, shade(PAL.rock[3], 1.2));
-  b.set(5, 4, shade(PAL.rock[3], 1.12));
-  // crack
-  b.line(11, 5, 13, 8, shade(PAL.rock[2], 0.7));
-  b.line(13, 8, 12, 10, shade(PAL.rock[2], 0.7));
-  // flat shadowed bottom
+  const base = h - 1 - SHADOW_ROWS;
+  const cx = w / 2;
+  const ry = (base - 1) / 2;
+  mass(b, cx, base - ry, w / 2 - 1, ry, PAL.rock, seed, 1.2);
+  // flat lit top and a dark underside
+  for (let x = Math.floor(cx - w * 0.3); x <= Math.ceil(cx); x++)
+    if (b.alpha(x, Math.round(base - ry * 1.4))) b.set(x, Math.round(base - ry * 1.4), PAL.rock[3]);
   for (let x = 0; x < w; x++)
-    for (let y = 12; y < h; y++) if (b.alpha(x, y - 1)) b.set(x, y, shade(PAL.rock[2], 0.72));
-  b.outline(PAL.outline, 200);
+    for (let y = base - 1; y <= base; y++) if (b.alpha(x, y)) b.set(x, y, shade(PAL.rock[2], 0.85));
+  b.outline(PAL.outline, 180);
+  groundShadow(b, cx, base + 1, w / 2 - 2, 45);
   return b;
 }
 
-/** Coal seam cropping out of a hillside: a low black ledge with glints. 18x9. */
-function coalSeam(seed: number, v: number): PixelBuf {
-  const w = 18;
-  const h = 9;
+/** Boulder: larger angular mass built from two or three faceted blocks. */
+function boulder(seed: number, v: number): PixelBuf {
+  const w = 22;
+  const h = 15 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
-  const c: RGB[] = [
-    [40, 40, 44],
-    [56, 56, 62],
-    [26, 26, 30],
-  ];
-  b.ellipse(w / 2, 4.5, w / 2 - 1 - (v % 2), 3.5, c, seed, 0.55);
-  if (v === 2) b.ellipse(w / 2 + 4, 4, 4, 3, c, seed + 1, 0.55);
-  // flat, slightly lighter top ledge and a few glints
-  for (let x = 3; x < w - 3; x++) if (b.alpha(x, 2)) b.set(x, 2, c[1]);
-  b.set(5, 3, [96, 96, 106]);
-  b.set(11, 4, [96, 96, 106]);
-  b.set(8 + v, 6, [80, 80, 90]);
-  for (let x = 0; x < w; x++) if (b.alpha(x, 7)) b.set(x, 8, shade(c[2], 0.8));
-  b.outline(PAL.outline, 200);
+  const base = h - 1 - SHADOW_ROWS;
+  const LIT = PAL.rock[3];
+  const MID = PAL.rock[1];
+  const DARK = PAL.rock[2];
+  const DEEP = shade(PAL.rock[2], 0.78);
+  // faceted block: left face lit, right face dark, top lightest; a jagged top edge
+  const blocks: [number, number, number, number][] =
+    v === 0
+      ? [
+          [2, 5, 12, 10],
+          [11, 3, 9, 12],
+        ]
+      : v === 1
+        ? [
+            [1, 6, 9, 9],
+            [8, 2, 10, 13],
+            [16, 7, 5, 8],
+          ]
+        : [
+            [1, 4, 13, 11],
+            [12, 6, 9, 9],
+          ];
+  for (const [x0, y0, bw, bh] of blocks) {
+    const split = x0 + Math.floor(bw * 0.55);
+    for (let y = y0; y < y0 + bh; y++)
+      for (let x = x0; x < x0 + bw; x++) {
+        const notch = y === y0 && hash2(x, seed, 3) > 0.6;
+        if (notch) continue;
+        const top = y < y0 + 2;
+        const n = hash2(x >> 1, y >> 1, seed + x0);
+        const c = top ? LIT : x < split ? (n > 0.7 ? LIT : MID) : n > 0.7 ? DARK : DEEP;
+        b.set(x, y + (base - 14), c);
+      }
+    // crack along the facet edge
+    for (let y = y0 + 2; y < y0 + bh - 1; y += 2) b.set(split, y + (base - 14), DEEP);
+  }
+  b.outline(PAL.outline, 190);
+  groundShadow(b, w / 2, base + 1, 9, 55);
   return b;
 }
-/** Oil seep: a dark puddle with a dull sheen and a bubble. 22x9. */
+
+/** Coal seam: dark stratified outcrop with a few glints, unlike ordinary grey rock. */
+function coalSeam(seed: number, v: number): PixelBuf {
+  const w = 20;
+  const h = 10 + SHADOW_ROWS;
+  const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
+  const c: RGB[] = [
+    [52, 50, 54],
+    [70, 68, 74],
+    [34, 32, 36],
+    [88, 86, 94],
+  ];
+  mass(b, w / 2, base - 4, w / 2 - 1 - (v % 2), 4, c, seed, 1.1);
+  if (v === 2) mass(b, w / 2 + 5, base - 4.5, 4, 3, c, seed + 1, 1.1);
+  // strata: dark bands every third row, lit ledge on top
+  for (let y = 0; y <= base; y++)
+    for (let x = 0; x < w; x++) {
+      if (!b.alpha(x, y)) continue;
+      if ((y + v) % 3 === 0) b.set(x, y, shade(b.get(x, y)!, 0.78));
+      else if (y === base - 7 || (y === base - 6 && x > 8)) b.set(x, y, c[3]);
+    }
+  b.set(5, base - 4, [124, 122, 134]);
+  b.set(12 + v, base - 2, [124, 122, 134]);
+  b.outline(PAL.outline, 190);
+  groundShadow(b, w / 2, base + 1, 8, 50);
+  return b;
+}
+
+/** Oil seep: a small dark pool with a restrained sheen and a bubble, no rainbow. */
 function oilSeep(seed: number, v: number): PixelBuf {
   const w = 22;
-  const h = 9;
+  const h = 9 + SHADOW_ROWS;
   const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
   const c: RGB[] = [
-    [34, 28, 30],
-    [48, 40, 40],
-    [22, 18, 20],
+    [42, 36, 38],
+    [56, 48, 50],
+    [28, 24, 26],
+    [70, 62, 66],
   ];
-  b.ellipse(w / 2, 5, w / 2 - 1, 3, c, seed, 0.4);
-  if (v > 0) b.ellipse(w / 2 - 6 + v * 4, 3 + v, 3, 1.5, c, seed + 2, 0.4);
-  b.rect(6, 4, 3, 1, [92, 80, 96]);
-  b.set(12 + v, 5, [92, 80, 96]);
-  b.set(15, 3, shade(c[1], 1.3));
-  b.outline(PAL.outline, 180);
+  mass(b, w / 2, base - 3, w / 2 - 1, 3, c, seed, 0.4);
+  if (v > 0) mass(b, w / 2 - 6 + v * 4, base - 5 + v, 3, 1.5, c, seed + 2, 0.4);
+  // muddy rim on the lit side, sheen streak, one bubble
+  for (let x = 2; x < w - 2; x++)
+    if (b.alpha(x, base - 6) && !b.alpha(x, base - 7)) b.set(x, base - 6, [96, 82, 62]);
+  b.rect(6, base - 3, 3, 1, [104, 96, 110]);
+  b.set(13 + v, base - 2, [104, 96, 110]);
+  b.set(15, base - 4, [84, 76, 84]);
+  b.outline(PAL.outline, 170);
   return b;
 }
 
 export function generatePropsAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
-  const add = (name: string, p: PixelBuf) =>
-    ab.add(name, p.toImageData(), Math.floor(p.w / 2), p.h - 1);
+  // anchor: horizontal centre, on the row just above the shadow rows
+  const add = (name: string, p: PixelBuf, ax?: number) =>
+    ab.add(name, p.toImageData(), ax ?? Math.floor(p.w / 2), p.h - 1 - SHADOW_ROWS);
   for (let v = 0; v < 3; v++) {
-    const t = roundTree(10 + v, v % 2);
-    ab.add(`props/tree_${v}`, t.toImageData(), t.w / 2, t.h - 1);
-    const p = pineTree(20 + v, v % 2);
-    ab.add(`props/pine_${v}`, p.toImageData(), Math.floor(p.w / 2) + 1, p.h - 1);
-    const r = boulder(30 + v, v % 2);
-    ab.add(`props/rock_${v}`, r.toImageData(), r.w / 2, r.h - 1);
+    add(`props/tree_${v}`, roundTree(10 + v, v));
+    add(`props/pine_${v}`, pineTree(20 + v, v));
+    add(`props/rock_${v}`, smallRock(30 + v, v));
     add(`props/birch_${v}`, birchTree(50 + v, v));
     add(`props/spruce_${v}`, spruceTree(60 + v, v));
     add(`props/oak_${v}`, oakTree(70 + v, v));
-    add(`props/cactus_${v}`, cactus(90 + v, v));
+    add(`props/cactus_${v}`, cactus(90 + v, v), 5);
     add(`props/bush_${v}`, bush(40 + v, v));
-    add(`props/boulder_${v}`, bigBoulder(130 + v, v));
+    add(`props/boulder_${v}`, boulder(130 + v, v));
     add(`props/coal_${v}`, coalSeam(140 + v, v));
     add(`props/oil_${v}`, oilSeep(150 + v, v));
   }
   for (let v = 0; v < 2; v++) {
-    add(`props/palm_${v}`, palmTree(80 + v, v));
+    add(`props/palm_${v}`, palmTree(80 + v, v), Math.floor(28 / 2) - (v === 0 ? 1 : -1) * 4);
     add(`props/deadtree_${v}`, deadTree(100 + v, v));
     add(`props/reeds_${v}`, reeds(120 + v, v));
   }

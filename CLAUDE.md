@@ -37,8 +37,19 @@ builds. `docs/live-loop.md` describes the loop it belongs to.
 ## Rules that bite
 
 **No runtime dependencies beyond PixiJS.** Everything else is a devDependency. Sprites are
-generated procedurally in `src/art`, audio synthesized in `src/engine/synth.ts`. Adding a runtime
-dependency is a decision to raise with the author, not a detail.
+generated procedurally in `src/art`, sound effects synthesized in `src/engine/synth.ts`. Adding a
+runtime dependency is a decision to raise with the author, not a detail.
+
+**Art direction lives in `docs/art-direction/README.md`.** The generators follow it: the palette
+seeds in `src/art/palette.ts`, one upper-left light, broad colour clusters rather than per-pixel
+noise, selective contours (`PixelBuf.outline` darkens lower and side rims only) and ground
+shadows that touch each object's base. Semantic colours stay brighter than any scenery colour.
+Changing a generator means re-running `scratchpad/art-sheets.mjs` and checking frame counts and
+anchors did not move.
+
+**Music is a file, effects are synthesized.** `public/assets/audio/music/pastoral-pulse.mp3`
+loops through `src/engine/audio.ts`; if it is missing the synth loop takes over. Volume sliders
+live in both menus and the settings screen and travel with the settings, not the save.
 
 **A new save format version needs a migration step.** Bumping `SAVE_VERSION` in `src/sim/save.ts`
 means adding an entry to `MIGRATIONS` with `from` set to the version before it, and adding any new

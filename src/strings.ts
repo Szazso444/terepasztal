@@ -632,7 +632,7 @@ export const STR = {
     sfx: 'Effects',
     music: 'Music',
     audioNote:
-      'Sounds and music are synthesized at runtime; an .ogg at /assets/audio/<event>.ogg overrides a synthesized effect.',
+      'Music is the looping track at /assets/audio/music; remove it and a synthesized loop takes over. Effects are synthesized at runtime; an .ogg at /assets/audio/<event>.ogg overrides a synthesized effect.',
     gameplay: 'Gameplay',
     edgeScroll: 'Edge scrolling',
     autosave: 'Autosave (every minute)',

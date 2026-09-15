@@ -4,6 +4,47 @@ import type { LevelData } from '../world/level';
 import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import type { SlotMeta } from '../sim/save';
 
+/** Shared by both menus: music and effects volume, so the player can set them from the menu. */
+export interface AudioActions {
+  volume(key: 'music' | 'sfx'): number;
+  setVolume(key: 'music' | 'sfx', v: number): void;
+}
+
+/** One labelled 0-100 slider wired straight to the live audio bus. */
+function volumeRow(actions: AudioActions, key: 'music' | 'sfx', label: string) {
+  const input = el('input', {
+    class: 'menu-volume',
+    type: 'range',
+    min: '0',
+    max: '100',
+    value: String(Math.round(actions.volume(key) * 100)),
+    'aria-label': label,
+  }) as HTMLInputElement;
+  const val = el('span', { class: 'num', text: `${Math.round(actions.volume(key) * 100)}%` });
+  input.addEventListener('input', () => {
+    actions.setVolume(key, Number(input.value) / 100);
+    val.textContent = `${input.value}%`;
+  });
+  return el(
+    'div',
+    { class: 'menu-row' },
+    el('span', { class: 'menu-volume-label dim', text: label }),
+    input,
+    val,
+  );
+}
+
+/** The audio block shown in both the title screen and the pause menu. */
+export function audioRows(actions: AudioActions) {
+  return el(
+    'div',
+    { class: 'menu-audio' },
+    el('div', { class: 'col-title', text: STR.settings.audio }),
+    volumeRow(actions, 'music', STR.settings.music),
+    volumeRow(actions, 'sfx', STR.settings.sfx),
+  );
+}
+
 /** Shared by both menus: the named saves with load / delete. */
 export interface SlotActions {
   slots(): SlotMeta[];
@@ -49,7 +90,7 @@ function slotList(actions: SlotActions, onDeleted: () => void) {
   return list;
 }
 
-export interface MainMenuActions extends SlotActions {
+export interface MainMenuActions extends SlotActions, AudioActions {
   continue(): void;
   newGame(seed: string, supply: SupplyMode): void;
   playLevel(id: string): void;
@@ -147,6 +188,7 @@ export class MainMenu {
         'menu-btn',
       ),
       btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'),
+      audioRows(this.actions),
       el('div', { class: 'col-title', style: 'margin-top:8px', text: STR.menu.savedGames }),
       slotList(this.actions, () => this.render(hasSave, levels, custom)),
     );
@@ -242,7 +284,7 @@ export class MainMenu {
   }
 }
 
-export interface PauseMenuActions extends SlotActions {
+export interface PauseMenuActions extends SlotActions, AudioActions {
   resume(): void;
   save(): void;
   saveAs(): void;
@@ -295,6 +337,7 @@ export class PauseMenu {
       );
     }
     b.append(btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'));
+    b.append(audioRows(this.actions));
     b.append(btn(STR.menu.tuning, () => this.actions.tuning(), 'menu-btn'));
     b.append(btn(STR.menu.content, () => this.actions.content(), 'menu-btn'));
     if (opts.testing)
