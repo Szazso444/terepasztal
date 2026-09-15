@@ -1,0 +1,778 @@
+<title>Willowline Art Routes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+/>
+<style>
+  :root {
+    --ground: #eceadf;
+    --surface: #f6f4ec;
+    --surface-sunk: #e3e0d2;
+    --ink: #1b2a21;
+    --ink-soft: #46554b;
+    --ink-faint: #71806f;
+    --rule: #cdc9b8;
+    --rule-strong: #a9a churches;
+    --forest: #294638;
+    --moss: #6b7a43;
+    --copper: #a3572a;
+    --slate: #5b686a;
+    --teal: #2f6b6b;
+    --chip-yes: #294638;
+    --chip-maybe: #7a6320;
+    --chip-no: #8a3f2c;
+    --shadow: 0 1px 0 rgba(27, 42, 33, 0.06);
+  }
+  :root {
+    --rule-strong: #b3ae9a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --ground: #121812;
+      --surface: #1a221b;
+      --surface-sunk: #151c16;
+      --ink: #e6e2d3;
+      --ink-soft: #b4bdae;
+      --ink-faint: #8a958a;
+      --rule: #2e3a30;
+      --rule-strong: #445044;
+      --forest: #8fc0a1;
+      --moss: #a8bb72;
+      --copper: #d99263;
+      --slate: #9db0b1;
+      --teal: #7cc0bb;
+      --chip-yes: #8fc0a1;
+      --chip-maybe: #d6c071;
+      --chip-no: #e09077;
+      --shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme='dark'] {
+    --ground: #121812;
+    --surface: #1a221b;
+    --surface-sunk: #151c16;
+    --ink: #e6e2d3;
+    --ink-soft: #b4bdae;
+    --ink-faint: #8a958a;
+    --rule: #2e3a30;
+    --rule-strong: #445044;
+    --forest: #8fc0a1;
+    --moss: #a8bb72;
+    --copper: #d99263;
+    --slate: #9db0b1;
+    --teal: #7cc0bb;
+    --chip-yes: #8fc0a1;
+    --chip-maybe: #d6c071;
+    --chip-no: #e09077;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 72px;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: 'Saira Condensed', 'Arial Narrow', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.02;
+    text-transform: uppercase;
+  }
+  h2 {
+    font-size: clamp(20px, 3vw, 26px);
+    text-transform: uppercase;
+  }
+  h3 {
+    font-size: 19px;
+  }
+  p {
+    margin: 0;
+    max-width: 68ch;
+  }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  header.sheet {
+    border-top: 3px solid var(--ink);
+    border-bottom: 1px solid var(--rule-strong);
+    padding-block: 14px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sub {
+    color: var(--ink-soft);
+    font-size: 16px;
+    max-width: 62ch;
+  }
+  .brief {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin-top: 22px;
+  }
+  .brief div {
+    background: var(--surface);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .brief dt {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .brief dd {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+
+  section {
+    margin-top: 52px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .route {
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--edge, var(--rule-strong));
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .route[data-verdict='lead'] {
+    --edge: var(--forest);
+  }
+  .route[data-verdict='open'] {
+    --edge: var(--teal);
+  }
+  .route[data-verdict='part'] {
+    --edge: var(--moss);
+  }
+  .route[data-verdict='out'] {
+    --edge: var(--copper);
+  }
+  .route-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 14px;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .route-head h3 {
+    flex: 1 1 260px;
+  }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .chip.lead {
+    color: var(--chip-yes);
+  }
+  .chip.open {
+    color: var(--teal);
+  }
+  .chip.part {
+    color: var(--chip-maybe);
+  }
+  .chip.out {
+    color: var(--chip-no);
+  }
+  .route-body {
+    padding: 14px 16px 16px;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  }
+  .route-body > p {
+    margin: 0;
+  }
+  .facts {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+    font-size: 13.5px;
+  }
+  .facts div {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+  .facts dt {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-top: 2px;
+  }
+  .facts dd {
+    margin: 0;
+    color: var(--ink-soft);
+  }
+  .facts dd b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .matrix-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 720px;
+    background: var(--surface);
+    font-size: 13.5px;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: 'Saira Condensed', sans-serif;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--surface-sunk);
+    border-bottom: 1px solid var(--rule-strong);
+    position: sticky;
+    top: 0;
+  }
+  tbody th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  td.good {
+    color: var(--forest);
+    font-weight: 600;
+  }
+  td.bad {
+    color: var(--copper);
+  }
+  tbody tr:last-child td,
+  tbody tr:last-child th {
+    border-bottom: none;
+  }
+
+  .proof {
+    display: grid;
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    padding: 16px;
+  }
+  .proof img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+  }
+  figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  figcaption {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  .measures {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .measures div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 7px 0;
+    border-bottom: 1px dotted var(--rule-strong);
+  }
+  .measures div:last-child {
+    border-bottom: none;
+  }
+  .measures span:last-child {
+    color: var(--ink);
+    font-weight: 500;
+    text-align: right;
+  }
+  .measures span:first-child {
+    color: var(--ink-soft);
+  }
+
+  .verdict {
+    border: 1px solid var(--rule-strong);
+    background: var(--surface);
+    padding: 18px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .verdict ol {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 68ch;
+  }
+  .verdict li::marker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .note {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--copper);
+    padding-left: 12px;
+    max-width: 66ch;
+  }
+  footer {
+    margin-top: 56px;
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 14px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+  @media (max-width: 760px) {
+    .route-body {
+      grid-template-columns: 1fr;
+    }
+    .proof {
+      grid-template-columns: 1fr;
+    }
+    .facts div {
+      grid-template-columns: 88px 1fr;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <header class="sheet">
+    <span class="eyebrow">Terepasztal · art direction · decision sheet</span>
+    <h1>Five routes to the Willowline look</h1>
+    <p class="sub">
+      Every route below can build a world. They differ in what produces the art, what draws it, and
+      what each new locomotive costs you two years from now.
+    </p>
+    <dl class="brief">
+      <div>
+        <dt>Target</dt>
+        <dd>The concept boards: painted 2.5D, warm key light, cream masonry, real occlusion.</dd>
+      </div>
+      <div>
+        <dt>Hard constraint</dt>
+        <dd>Fully agent-driven. Blender is a tool. No manual modelling, no cleanup by hand.</dd>
+      </div>
+      <div>
+        <dt>Planning assumption</dt>
+        <dd>Scope grows. Nuclear, maglev and hyperloop are content, not hypotheticals.</dd>
+      </div>
+      <div>
+        <dt>Fixed today</dt>
+        <dd>2,839 atlas frames, 64×32 tiles, 25 drawn facings, PixiJS only at runtime.</dd>
+      </div>
+    </dl>
+  </header>
+
+  <section>
+    <h2>The routes</h2>
+
+    <article class="route" data-verdict="out">
+      <div class="route-head">
+        <h3>Push the pixel generators harder</h3>
+        <span class="chip out">Cannot reach it</span>
+      </div>
+      <div class="route-body">
+        <p>
+          Keep drawing every frame in TypeScript, double the tile to 128×64, add shades. This is the
+          work just finished, scaled up. It makes the current look better and still lands short of
+          the boards, because flat shading has no occlusion and no soft light to give.
+        </p>
+        <dl class="facts">
+          <div>
+            <dt>Produces</dt>
+            <dd>Hand-written pixel code</dd>
+          </div>
+          <div>
+            <dt>Draws</dt>
+            <dd>PixiJS sprites, unchanged</dd>
+          </div>
+          <div>
+            <dt>Cost</dt>
+            <dd>Rewrite ~5,000 lines of generator math</dd>
+          </div>
+          <div>
+            <dt>On growth</dt>
+            <dd class="bad">Worst. Every new asset is drawn by hand, per frame</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="route" data-verdict="lead">
+      <div class="route-head">
+        <h3>Asset programs, rendered headless, baked to atlases</h3>
+        <span class="chip lead">Start here</span>
+      </div>
+      <div class="route-body">
+        <p>
+          An agent writes a parametric Python program per asset. Headless Blender runs it and
+          renders the facings. The packer that already exists bakes them into the atlases the game
+          already loads. Cycles gives real ambient occlusion and contact shadows offline, so the per
+          frame ceiling is whatever the renderer can do with unlimited time.
+          <b>Proven in the repository, not argued</b> — see below.
+        </p>
+        <dl class="facts">
+          <div>
+            <dt>Produces</dt>
+            <dd>Python programs, versioned and diffable</dd>
+          </div>
+          <div>
+            <dt>Draws</dt>
+            <dd>PixiJS sprites, unchanged</dd>
+          </div>
+          <div>
+            <dt>Automation</dt>
+            <dd class="good">Full. Gates are mechanical and fail closed</dd>
+          </div>
+          <div>
+            <dt>Cost</dt>
+            <dd>Bake pipeline, ~75 asset programs, 5 small engine changes</dd>
+          </div>
+          <div>
+            <dt>On growth</dt>
+            <dd>Frames multiply by facings and liveries. Memory is the pressure</dd>
+          </div>
+          <div>
+            <dt>Reversible</dt>
+            <dd class="good">Yes, per frame, group by group</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="route" data-verdict="open">
+      <div class="route-head">
+        <h3>Same programs, drawn live in 3D</h3>
+        <span class="chip open">Keep open</span>
+      </div>
+      <div class="route-body">
+        <p>
+          The identical asset library, rendered at runtime by Three.js through an orthographic
+          camera at the same angle. Lighting becomes a scene property, so dusk, headlights and a
+          train's shadow on the viaduct beneath it are consequences rather than features. Depth is a
+          buffer, which is the only clean answer to elevated track and a vehicle inside a tube.
+        </p>
+        <dl class="facts">
+          <div>
+            <dt>Produces</dt>
+            <dd>The same programs, exported as meshes</dd>
+          </div>
+          <div>
+            <dt>Draws</dt>
+            <dd>Three.js, orthographic, live</dd>
+          </div>
+          <div>
+            <dt>Cost</dt>
+            <dd>Replaces ~9,000 lines of render layer</dd>
+          </div>
+          <div>
+            <dt>Rule</dt>
+            <dd class="bad">Adds a runtime dependency. Author-level decision</dd>
+          </div>
+          <div>
+            <dt>On growth</dt>
+            <dd class="good">Best. A livery is a material swap, a facing is free</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="route" data-verdict="part">
+      <div class="route-head">
+        <h3>Buy the meshes from a generator</h3>
+        <span class="chip part">Supplement only</span>
+      </div>
+      <div class="route-body">
+        <p>
+          Image-to-3D services produce a usable mesh in seconds. They are good at organic shapes and
+          poor at the mechanical ones this game is made of: wheels, rods, trusses, anything that has
+          to tile exactly. The one controlled study puts first-pass time at 238 minutes against 716
+          for hand work, and states plainly that the cleanup debt it created was never costed.
+        </p>
+        <dl class="facts">
+          <div>
+            <dt>Good for</dt>
+            <dd>Trees, rock, foliage, one-off scenery</dd>
+          </div>
+          <div>
+            <dt>Bad for</dt>
+            <dd class="bad">Locomotives, track, bridges, tiling pieces</dd>
+          </div>
+          <div>
+            <dt>Licensing</dt>
+            <dd>Free tiers are attribution-only or non-commercial</dd>
+          </div>
+          <div>
+            <dt>Consistency</dt>
+            <dd>Per-asset generators. A coherent set is not what they sell</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+
+    <article class="route" data-verdict="out">
+      <div class="route-head">
+        <h3>Commission an artist</h3>
+        <span class="chip out">Breaks the constraint</span>
+      </div>
+      <div class="route-body">
+        <p>
+          The highest ceiling available and the fastest way to a look you can trust. It is also the
+          one route that fails the brief, because it puts a person back in the loop for every asset
+          and makes growth a permanent line item. It survives in one narrow form: paying once for
+          two or three reference assets that define the target, which the loop then conforms to.
+        </p>
+        <dl class="facts">
+          <div>
+            <dt>Ceiling</dt>
+            <dd class="good">Highest, immediately</dd>
+          </div>
+          <div>
+            <dt>Automation</dt>
+            <dd class="bad">None</dd>
+          </div>
+          <div>
+            <dt>On growth</dt>
+            <dd class="bad">Linear cost, forever</dd>
+          </div>
+          <div>
+            <dt>Narrow use</dt>
+            <dd>Buy the reference set, not the asset set</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>Side by side</h2>
+    <div class="matrix-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">&nbsp;</th>
+            <th scope="col">Pixels harder</th>
+            <th scope="col">Programs → sprites</th>
+            <th scope="col">Runtime 3D</th>
+            <th scope="col">Generated meshes</th>
+            <th scope="col">Commissioned</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Reaches the boards</th>
+            <td class="bad">No</td>
+            <td class="good">Close</td>
+            <td class="good">Close, coherently</td>
+            <td>Per asset, not per set</td>
+            <td class="good">Yes</td>
+          </tr>
+          <tr>
+            <th scope="row">Fully automated</th>
+            <td>Yes, low ceiling</td>
+            <td class="good">Yes</td>
+            <td class="good">Yes</td>
+            <td>API yes, cleanup no</td>
+            <td class="bad">No</td>
+          </tr>
+          <tr>
+            <th scope="row">Cost per new loco</th>
+            <td class="bad">31–39 hand frames</td>
+            <td>1 program, re-bake</td>
+            <td class="good">1 program</td>
+            <td>1 mesh + cleanup</td>
+            <td class="bad">1 commission</td>
+          </tr>
+          <tr>
+            <th scope="row">Cost per new livery</th>
+            <td class="bad">Full re-draw</td>
+            <td class="bad">Full re-bake</td>
+            <td class="good">Material swap</td>
+            <td>Re-texture</td>
+            <td class="bad">New commission</td>
+          </tr>
+          <tr>
+            <th scope="row">Viaducts, tunnels, tubes</th>
+            <td class="bad">Sorting breaks</td>
+            <td>Needs a depth pass</td>
+            <td class="good">Free, it is the z-buffer</td>
+            <td>n/a</td>
+            <td>n/a</td>
+          </tr>
+          <tr>
+            <th scope="row">Texture memory</th>
+            <td class="good">Low</td>
+            <td class="bad">Grows with variants</td>
+            <td class="good">Flat</td>
+            <td>n/a</td>
+            <td>n/a</td>
+          </tr>
+          <tr>
+            <th scope="row">Engine work</th>
+            <td>Generators only</td>
+            <td class="good">5 small changes</td>
+            <td class="bad">Render layer rewrite</td>
+            <td>None</td>
+            <td>None</td>
+          </tr>
+          <tr>
+            <th scope="row">Reversible</th>
+            <td class="good">n/a</td>
+            <td class="good">Frame by frame</td>
+            <td class="bad">All or nothing</td>
+            <td class="good">Yes</td>
+            <td class="good">Yes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the spike already settled</h2>
+    <div class="proof">
+      <figure>
+        <img
+          src="art-spike-station.png"
+          alt="An isometric station rendered from a parametric program: limestone walls, slate roof, platform canopy on iron posts, track alongside"
+          width="441"
+          height="441"
+        />
+        <figcaption>
+          A station written as a program, not modelled. Rendered headless by Cycles on CPU in 3.7
+          seconds at 192 pixels per tile. Crude geometry, correct pipeline — the geometry is what
+          the agent loop refines.
+        </figcaption>
+      </figure>
+      <div>
+        <div class="measures">
+          <div><span>Blender, headless, no display, no GPU</span><span>5.0.1 via pip</span></div>
+          <div>
+            <span>One tile through the documented camera</span><span>64 × 32 px, exact</span>
+          </div>
+          <div><span>Render, one asset, 64 px per tile</span><span>1.0 s</span></div>
+          <div><span>Render, one asset, 192 px per tile</span><span>3.7 s</span></div>
+          <div><span>EEVEE on a CPU-only runner</span><span>unavailable</span></div>
+          <div><span>Cycles on CPU</span><span>deterministic, gateable</span></div>
+        </div>
+        <p class="note">
+          The loop also found its own limit. A quality check that judged colours read a shadowed
+          limestone wall as a slate roof. Gates must read the renderer's material pass, never
+          interpret pixels. Style cannot be judged by a critic at all, so it is enforced in shared
+          code instead: one palette, one light rig, one camera, one material set.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The call</h2>
+    <div class="verdict">
+      <p>
+        Two of these routes need the same thing, and that is what makes the decision safe. A
+        rendered sprite and a live 3D scene both come from one library of asset programs. Build the
+        library and the choice of what draws it stays open until the evidence is in.
+      </p>
+      <ol>
+        <li>
+          <b>Build the library and bake it.</b> Programs, headless render, existing packer, five
+          small engine changes. Start with rolling stock: 25 drawn facings per vehicle is where a 3D
+          source pays for itself and hand-drawing never will.
+        </li>
+        <li>
+          <b>Let generated meshes cover foliage only.</b> Trees and rock, where a soft mesh is fine
+          and a licence is cheap. Never the mechanical assets.
+        </li>
+        <li>
+          <b>Decide on runtime 3D when the library exists</b>, against a real viaduct and a real
+          second livery. That is a question with an answer by then, not a bet now.
+        </li>
+        <li>
+          <b>Keep one human checkpoint.</b> Someone blesses two or three references and reviews a
+          contact sheet of the whole set once a milestone. Coherence is a property of the set, and a
+          per-asset critic never sees the set.
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <span>Measurements taken in the repository, September 2026.</span>
+    <span>Full plan: docs/art-pipeline.md</span>
+    <span>Target: docs/art-direction/</span>
+  </footer>
+</div>
