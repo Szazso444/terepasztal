@@ -12,13 +12,13 @@ export interface MinimapMarks {
 }
 
 const COLORS: Record<number, string> = {
-  [Terrain.Grass]: '#465a36',
-  [Terrain.Forest]: '#2f4028',
-  [Terrain.Hill]: '#6a6246',
-  [Terrain.Water]: '#22364a',
-  [Terrain.Rock]: '#5a5852',
-  [Terrain.Sand]: '#8a7c58',
-  [Terrain.Mountain]: '#7a7874',
+  [Terrain.Grass]: '#5b7145',
+  [Terrain.Forest]: '#3f5231',
+  [Terrain.Hill]: '#8a7a55',
+  [Terrain.Water]: '#39616a',
+  [Terrain.Rock]: '#7c7970',
+  [Terrain.Sand]: '#b7a47b',
+  [Terrain.Mountain]: '#93908a',
 };
 
 /** Cool taiga, muddy swamp, pale desert: tint the terrain colour by biome (grass/forest only). */
@@ -162,11 +162,11 @@ export class Minimap {
         s,
       );
     };
-    for (const t of marks.track) dot(t.x, t.y, '#9a9ea4', 1);
-    for (const s of marks.stations) dot(s.x, s.y, '#60c8d8', 3);
-    for (const t of marks.trains) dot(t.x, t.y, '#e0a040', 3);
+    for (const t of marks.track) dot(t.x, t.y, '#c8ced0', 1);
+    for (const s of marks.stations) dot(s.x, s.y, '#66ccd6', 3);
+    for (const t of marks.trains) dot(t.x, t.y, '#e8aa48', 3);
     const r = this.cam.viewRect();
-    ctx.strokeStyle = '#d8cfb8';
+    ctx.strokeStyle = '#e4d5b5';
     ctx.lineWidth = 1;
     ctx.strokeRect(
       Math.round(this.ox + r.x * this.sx) + 0.5,

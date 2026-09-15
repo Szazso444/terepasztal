@@ -70,13 +70,13 @@ export interface OverviewSource {
 }
 
 const FLAT_COLORS: Record<number, string> = {
-  [Terrain.Grass]: '#3a482c',
-  [Terrain.Forest]: '#2a3824',
-  [Terrain.Hill]: css([94, 86, 60]),
-  [Terrain.Water]: css([30, 46, 62]),
-  [Terrain.Rock]: css([78, 76, 70]),
-  [Terrain.Sand]: css([120, 108, 78]),
-  [Terrain.Mountain]: css([116, 114, 110]),
+  [Terrain.Grass]: '#4e6339',
+  [Terrain.Forest]: '#38492b',
+  [Terrain.Hill]: css([132, 116, 80]),
+  [Terrain.Water]: css([62, 110, 120]),
+  [Terrain.Rock]: css([120, 116, 106]),
+  [Terrain.Sand]: css([198, 180, 136]),
+  [Terrain.Mountain]: css([134, 130, 122]),
 };
 
 /** Flat top-down schematic of the whole map (the "strategic" layer). */
