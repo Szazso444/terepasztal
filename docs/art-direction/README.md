@@ -304,6 +304,22 @@ wheel bogies; hyperloop introduces enclosed tubes with selected cutaways. Keep c
 landscape colours and town landmarks. These concepts require separate gameplay and renderer
 design before production; do not silently add them to this redesign's asset count.
 
+The four panels are the agreed target look for a later release, on the same pipeline as the rest
+of the guide. They differ sharply in what the engine still owes them, so they are not one piece of
+work:
+
+| Panel      | What already exists                                                                                                            | What a release would have to build                                                                                                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| High-speed | The whole system: the 2×2 track class and its transition piece, `electric_hs` bodies, catenary and HV catenary, in-cab gating. | Art only. Concrete viaduct, regular mast spacing, a longer platform canopy and a lighter station frontage.                                                                                 |
+| Nuclear    | Cargo and fuel are data. Wagons already carry casks as a cargo type; service carts already extend an engine's range.           | A fuel kind and its servicing rule, a locomotive body family, and the stock's own wagons. Data and simulation, no renderer change.                                                         |
+| Maglev     | Bridges show the precedent: independent platforms over water with piers, and track drawn on top of them.                       | A track class that carries a height above the ground plane, its piers, depth sorting against everything underneath, and rules for building under the line. A body plan without bogie arcs. |
+| Hyperloop  | Nothing beyond the palette.                                                                                                    | Tube segments that occlude the vehicle inside them with selected cutaways, per-segment depth and alpha, and stations as portals. The heaviest of the four.                                 |
+
+Order follows that table: high-speed is reachable as soon as the art pipeline is in place, maglev
+and hyperloop are renderer projects. All four inherit the resolution and authoring decision the
+rest of the guide needs; drawing them at today's 64×32 tiles with the procedural generators would
+not reach the boards.
+
 ## 10. Implementation order and acceptance
 
 1. **Baseline:** preserve this catalog and current screenshots. Capture atlas generation times,
