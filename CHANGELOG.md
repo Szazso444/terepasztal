@@ -119,6 +119,10 @@ recorded in `docs/phase-decisions.md`.
 
 ### After the first playtest
 
+- Added an illustrated asset redesign guide, concept references, and a searchable catalog of
+  all 2,839 current atlas frames and 52 complete vehicles. Includes implementation rules,
+  source mappings and a reproducible catalog exporter; runtime artwork is unchanged.
+
 - Bridge piers now have shaded faces, damp waterlines, submerged fading and small contact
   ripples. Timber braces connect to actual supports. Construction previews show a complete
   three-tile timber truss or masonry arch instead of an isolated platform.
