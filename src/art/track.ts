@@ -104,12 +104,14 @@ function drawRails(b: PixelBuf, pts: Vec2[], opts: RailStyle) {
       const sp = proj(OX, OY, p.x + nx * side, p.y + ny * side);
       rail.push({ x: Math.round(sp.x), y: Math.round(sp.y) });
     }
+    // web in shadow, then a bright steel railhead: rails stay the strongest line on the tile,
+    // including where the track runs over dark forest floor
     for (let i = 0; i + 1 < rail.length; i++)
       b.line(rail[i].x, rail[i].y + 1, rail[i + 1].x, rail[i + 1].y + 1, PAL.railDark);
+    const head = mix(PAL.rail, PAL.railLight, 0.45);
     for (let i = 0; i + 1 < rail.length; i++)
-      b.line(rail[i].x, rail[i].y, rail[i + 1].x, rail[i + 1].y, PAL.rail);
-    for (let i = 0; i + 1 < rail.length; i += hs ? 1 : 2)
-      b.set(rail[i].x, rail[i].y, PAL.railLight);
+      b.line(rail[i].x, rail[i].y, rail[i + 1].x, rail[i + 1].y, head);
+    for (let i = 0; i + 1 < rail.length; i += 2) b.set(rail[i].x, rail[i].y, PAL.railLight);
   }
 }
 
