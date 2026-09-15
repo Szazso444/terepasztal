@@ -18,7 +18,9 @@ maglev and hyperloop are future concepts, not existing asset requirements.
   These are packed, transparency-trimmed frame dimensions and pixel anchors; a 64×32
   generator canvas can therefore appear narrower in the catalog without changing tile size.
 - Images titled concept/reference describe the intended direction. Images prefixed `current-`
-  are actual existing sprites and establish the baseline; they are not redesigned assets.
+  are actual existing sprites, regenerated from the atlas whenever the generators change. They
+  now show the redesigned art; the pre-redesign baseline sheets are the `art-*-before.png` files
+  in `scratchpad/`, listed in `scratchpad/README.md`.
 - Work from the written geometry and functionality rules when a concept picture disagrees.
   Generated pictures contain mixed detail scales, invented joinery, illustrative track layouts
   and occasional incorrect running gear. Do not trace those errors into production assets.
