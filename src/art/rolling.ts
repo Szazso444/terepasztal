@@ -4,6 +4,7 @@
  * bogies follow the rail below a raised chassis.
  */
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
+import { ART_SCALE, HALF_W, HALF_H } from '../engine/iso';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder } from './iso3d';
@@ -15,6 +16,15 @@ import {
   type SegmentSpec,
 } from '../sim/body';
 import { content, type LocoDef, type WagonDef } from '../data/content';
+
+/**
+ * Scale a base (ART_SCALE 1) pixel literal to the current art scale. Canvas sizes, sprite origins,
+ * every hand-placed b.rect/b.line/b.set offset and every z height fed to the hand-rolled `px`
+ * projection pass through this. The horizontal projection uses HALF_W/HALF_H (which already carry
+ * the scale), and z0/h/ridge/len/wid/r args to drawPrism/drawCylinder stay in base pixels because
+ * iso3d scales those itself, so neither is S()-wrapped.
+ */
+const S = (n: number) => n * ART_SCALE;
 
 const PAINTS: Record<string, RGB[]> = {
   iron: PAL.iron,
@@ -88,9 +98,9 @@ const COAL: RGB[] = [
 
 /** Sprite canvas for a segment `L` tiles long: room for the worst facing plus height. */
 function canvasFor(L: number) {
-  const W = Math.ceil(L * 46) + 40;
-  const H = Math.ceil(L * 23) + 58;
-  return { W, H, OX: Math.floor(W / 2), OY: H - 14 };
+  const W = Math.ceil(L * S(46)) + S(40);
+  const H = Math.ceil(L * S(23)) + S(58);
+  return { W, H, OX: Math.floor(W / 2), OY: H - S(14) };
 }
 
 /** One sprite in the making: a pixel buffer with a heading and drawing helpers in body space. */
@@ -119,8 +129,8 @@ class Frame {
   px(l: number, w: number, z = 0) {
     const p = this.along(l, w);
     return {
-      x: Math.round(this.ox + (p.x - p.y) * 32),
-      y: Math.round(this.oy + (p.x + p.y) * 16) - z,
+      x: Math.round(this.ox + (p.x - p.y) * HALF_W),
+      y: Math.round(this.oy + (p.x + p.y) * HALF_H) - z,
     };
   }
   /** is the body point on the side facing the viewer? */
@@ -164,7 +174,7 @@ class Frame {
     const c = this.along(l, w);
     drawCylinder(this.b, this.ox, this.oy, c.x, c.y, r, z0, h, side, top, this.seed + seed);
   }
-  dot(l: number, w: number, z: number, c: RGB, size = 2) {
+  dot(l: number, w: number, z: number, c: RGB, size = S(2)) {
     const p = this.px(l, w, z);
     this.b.rect(p.x - Math.floor(size / 2), p.y - Math.floor(size / 2), size, size, c);
   }
@@ -219,16 +229,16 @@ class Frame {
       roof,
       seed: 7,
     });
-    if (windows) this.windows([mid], wid / 2, z0 + h - 2, 4);
+    if (windows) this.windows([mid], wid / 2, S(z0 + h - 2), S(4));
   }
   /** amber windows on whichever side wall faces the viewer */
-  windows(ls: number[], w: number, z: number, hgt = 3) {
+  windows(ls: number[], w: number, z: number, hgt = S(3)) {
     for (const l of ls) {
       for (const side of [-w, w]) {
         if (!this.visible(l, side)) continue;
         const q = this.px(l, side, z);
-        this.b.rect(q.x - 1, q.y - hgt, 2, hgt, PAL.amberDark);
-        this.b.set(q.x - 1, q.y - hgt, PAL.amber);
+        this.b.rect(q.x - S(1), q.y - hgt, S(2), hgt, PAL.amberDark);
+        this.b.set(q.x - S(1), q.y - hgt, PAL.amber);
       }
     }
   }
@@ -240,23 +250,23 @@ class Frame {
   }
   lamp(l: number, z: number) {
     const p = this.px(l, 0, z);
-    this.b.rect(p.x - 1, p.y - 1, 2, 2, PAL.amber);
+    this.b.rect(p.x - S(1), p.y - S(1), S(2), S(2), PAL.amber);
   }
   pantograph(l: number, zRoof: number, wide = false) {
     const base = this.px(l, 0, zRoof);
-    const top = this.px(l, 0, zRoof + 9);
-    this.b.line(base.x - 2, base.y, top.x + 1, top.y, PAL.iron[3]);
-    this.b.line(base.x + 2, base.y, top.x - 1, top.y, PAL.iron[3]);
+    const top = this.px(l, 0, zRoof + S(9));
+    this.b.line(base.x - S(2), base.y, top.x + S(1), top.y, PAL.iron[3]);
+    this.b.line(base.x + S(2), base.y, top.x - S(1), top.y, PAL.iron[3]);
     const s = wide ? 0.11 : 0.08;
-    const a = this.px(l, -s, zRoof + 9);
-    const c = this.px(l, s, zRoof + 9);
+    const a = this.px(l, -s, zRoof + S(9));
+    const c = this.px(l, s, zRoof + S(9));
     this.b.line(a.x, a.y, c.x, c.y, PAL.iron[3]);
   }
   /** underframe bar for bodies whose wheels are separate bogie sprites */
   underframe(len: number, z0 = 3) {
     this.prism({ l: 0, len, wid: 0.18, h: 2, z0: z0 + 2, top: PAL.iron, side: WHEELS, seed: 3 });
     // Leave daylight below the sill: all axle boxes belong to the moving bogie sprites.
-    for (const end of [-len / 2, len / 2]) this.dot(end, 0, z0 + 3, PAL.iron[1], 2);
+    for (const end of [-len / 2, len / 2]) this.dot(end, 0, S(z0 + 3), PAL.iron[1], S(2));
   }
 
   /** Two fixed axles (four wheels) for stock without separate bogies. */
@@ -300,7 +310,7 @@ const steamEarly: PartDrawer = (f, L, paint) => {
     side: PAL.iron,
     seed: 5,
   });
-  f.lamp(L * 0.44, 12);
+  f.lamp(L * 0.44, S(12));
 };
 
 const steamTank: PartDrawer = (f, L, paint) => {
@@ -334,7 +344,7 @@ const steamTank: PartDrawer = (f, L, paint) => {
   f.dome(L * 0.1, 18);
   f.cab(-L * 0.36, -L * 0.1, 0.28, 16, 7, paint, [PAL.iron[0], PAL.iron[2]]);
   f.prism({ l: -L * 0.42, len: L * 0.1, wid: 0.26, h: 9, z0: 7, top: COAL, side: paint, seed: 9 });
-  f.lamp(L * 0.46, 13);
+  f.lamp(L * 0.46, S(13));
 };
 
 /** tender-plan engine: long boiler, cab at the rear end (the tender follows as its own segment) */
@@ -369,7 +379,7 @@ const steamEngine: PartDrawer = (f, L, paint) => {
       side: PAL.iron,
       seed: 11,
     });
-  f.lamp(L * 0.47, 14);
+  f.lamp(L * 0.47, S(14));
 };
 const steamStreamEngine: PartDrawer = (f, L, paint) => {
   f.underframe(L * 0.96, 3);
@@ -410,11 +420,11 @@ const steamStreamEngine: PartDrawer = (f, L, paint) => {
   for (let i = -8; i <= 8; i++) {
     const l = i * (L * 0.05);
     for (const w of [-0.16, 0.16])
-      if (f.visible(l, w)) f.b.set(f.px(l, w, 11).x, f.px(l, w, 11).y, PAL.white);
+      if (f.visible(l, w)) f.b.set(f.px(l, w, S(11)).x, f.px(l, w, S(11)).y, PAL.white);
   }
   f.cab(-L * 0.44, -L * 0.24, 0.3, 17, 7, paint, [PAL.iron[0], PAL.iron[2]]);
   f.chimney(L * 0.3, 24, 3, 0.04);
-  f.lamp(L * 0.47, 12);
+  f.lamp(L * 0.47, S(12));
 };
 const tender: PartDrawer = (f, L, paint) => {
   f.underframe(L * 0.94, 3);
@@ -457,7 +467,7 @@ const garrattEngine: PartDrawer = (f, L, paint) => {
       side: PAL.iron,
       seed: 3,
     });
-  f.lamp(L * 0.47, 10);
+  f.lamp(L * 0.47, S(10));
 };
 /** Garratt cradle: boiler and cab slung high between the engine units */
 const garrattCradle: PartDrawer = (f, L, paint) => {
@@ -497,7 +507,7 @@ const meyerFrame: PartDrawer = (f, L, paint) => {
   f.cab(-L * 0.3, -L * 0.16, 0.32, 18, 9, paint, [PAL.iron[0], PAL.iron[2]]);
   // bunker behind the cab
   f.prism({ l: -L * 0.4, len: L * 0.18, wid: 0.3, h: 12, z0: 9, top: COAL, side: paint, seed: 9 });
-  f.lamp(L * 0.48, 16);
+  f.lamp(L * 0.48, S(16));
 };
 const dieselSwitcher: PartDrawer = (f, L, paint) => {
   f.chassis(L * 0.9);
@@ -514,7 +524,7 @@ const dieselSwitcher: PartDrawer = (f, L, paint) => {
   });
   f.cab(-L * 0.4, -L * 0.18, 0.3, 15, 8, paint, [PAL.iron[0], PAL.iron[2]]);
   f.cyl(L * 0.2, 0, 0.035, 17, 3, PAL.iron, PAL.iron[0], 4);
-  f.lamp(L * 0.45, 13);
+  f.lamp(L * 0.45, S(13));
 };
 const dieselCab: PartDrawer = (f, L, paint) => {
   f.underframe(L * 0.96, 3);
@@ -551,16 +561,16 @@ const dieselCab: PartDrawer = (f, L, paint) => {
     seed: 4,
   });
   // cab windows near the nose and a side stripe
-  f.windows([L * 0.28], 0.15, 18, 4);
+  f.windows([L * 0.28], 0.15, S(18), S(4));
   for (let i = -7; i <= 6; i++) {
     const l = i * (L * 0.055);
     for (const w of [-0.155, 0.155])
-      if (f.visible(l, w)) f.b.set(f.px(l, w, 12).x, f.px(l, w, 12).y, PAL.white);
+      if (f.visible(l, w)) f.b.set(f.px(l, w, S(12)).x, f.px(l, w, S(12)).y, PAL.white);
   }
   // roof fans
   for (const l of [-L * 0.25, -L * 0.1, L * 0.05])
     f.cyl(l, 0, 0.035, 22, 1, PAL.iron, PAL.iron[3], 5);
-  f.lamp(L * 0.47, 12);
+  f.lamp(L * 0.47, S(12));
 };
 const dieselHood: PartDrawer = (f, L, paint) => {
   f.underframe(L * 0.96, 3);
@@ -593,17 +603,17 @@ const dieselHood: PartDrawer = (f, L, paint) => {
   for (const w of [-0.112, 0.112]) {
     if (!f.visible(0, w)) continue;
     for (let l = -L * 0.18; l <= L * 0.31; l += 0.09) {
-      const p = f.px(l, w, 18);
-      f.b.rect(p.x, p.y, 1, 5, PAL.iron[2]);
-      f.dot(l, w, 10, PAL.white, 1);
+      const p = f.px(l, w, S(18));
+      f.b.rect(p.x, p.y, S(1), S(5), PAL.iron[2]);
+      f.dot(l, w, S(10), PAL.white, S(1));
     }
   }
   // exhaust stack
   f.cyl(L * 0.3, 0, 0.03, 20, 3, PAL.iron, PAL.iron[0], 6);
   for (const w of [-0.16, 0.16])
-    if (f.visible(0, w)) f.b.set(f.px(L * 0.36, w, 10).x, f.px(L * 0.36, w, 10).y, PAL.amber);
-  f.lamp(L * 0.47, 11);
-  f.lamp(-L * 0.48, 11);
+    if (f.visible(0, w)) f.b.set(f.px(L * 0.36, w, S(10)).x, f.px(L * 0.36, w, S(10)).y, PAL.amber);
+  f.lamp(L * 0.47, S(11));
+  f.lamp(-L * 0.48, S(11));
 };
 const electricBox: PartDrawer = (f, L, paint) => {
   if (L <= 1.01) f.chassis(L * 0.9);
@@ -619,18 +629,18 @@ const electricBox: PartDrawer = (f, L, paint) => {
     side: paint,
     seed: 2,
   });
-  f.windows([L * 0.36, -L * 0.36], 0.15, 18, 4);
+  f.windows([L * 0.36, -L * 0.36], 0.15, S(18), S(4));
   for (let i = -6; i <= 6; i++) {
     const l = i * (L * 0.06);
     for (const w of [-0.155, 0.155])
-      if (f.visible(l, w)) f.b.set(f.px(l, w, 11).x, f.px(l, w, 11).y, PAL.amber);
+      if (f.visible(l, w)) f.b.set(f.px(l, w, S(11)).x, f.px(l, w, S(11)).y, PAL.amber);
   }
   if (L > 1.01) {
-    f.pantograph(L * 0.22, 22);
-    f.pantograph(-L * 0.22, 22);
-  } else f.pantograph(0, 22);
-  f.lamp(L * 0.46, 12);
-  f.lamp(-L * 0.46, 12);
+    f.pantograph(L * 0.22, S(22));
+    f.pantograph(-L * 0.22, S(22));
+  } else f.pantograph(0, S(22));
+  f.lamp(L * 0.46, S(12));
+  f.lamp(-L * 0.46, S(12));
 };
 const crocNose: PartDrawer = (f, L, paint) => {
   f.underframe(L * 0.96, 3);
@@ -657,7 +667,7 @@ const crocNose: PartDrawer = (f, L, paint) => {
       side: PAL.iron,
       seed: 3,
     });
-  f.lamp(L * 0.47, 12);
+  f.lamp(L * 0.47, S(12));
 };
 const crocCentre: PartDrawer = (f, L, paint) => {
   f.prism({ l: 0, len: L * 0.98, wid: 0.3, h: 3, z0: 5, top: PAL.iron, side: PAL.iron, seed: 1 });
@@ -672,9 +682,9 @@ const crocCentre: PartDrawer = (f, L, paint) => {
     side: paint,
     seed: 3,
   });
-  f.windows([L * 0.3, 0, -L * 0.3], 0.15, 21, 4);
-  f.pantograph(L * 0.22, 26);
-  f.pantograph(-L * 0.22, 26);
+  f.windows([L * 0.3, 0, -L * 0.3], 0.15, S(21), S(4));
+  f.pantograph(L * 0.22, S(26));
+  f.pantograph(-L * 0.22, S(26));
 };
 const electricHs: PartDrawer = (f, L, paint) => {
   f.underframe(L * 0.96, 3);
@@ -702,14 +712,14 @@ const electricHs: PartDrawer = (f, L, paint) => {
     side: paint,
     seed: 5,
   });
-  f.windows([L * 0.24], 0.14, 15, 3);
+  f.windows([L * 0.24], 0.14, S(15), S(3));
   for (let i = -7; i <= 5; i++) {
     const l = i * (L * 0.055);
     for (const w of [-0.155, 0.155])
-      if (f.visible(l, w)) f.b.set(f.px(l, w, 9).x, f.px(l, w, 9).y, PAL.white);
+      if (f.visible(l, w)) f.b.set(f.px(l, w, S(9)).x, f.px(l, w, S(9)).y, PAL.white);
   }
-  f.pantograph(-L * 0.2, 19, true);
-  f.lamp(L * 0.48, 8);
+  f.pantograph(-L * 0.2, S(19), true);
+  f.lamp(L * 0.48, S(8));
 };
 
 /** Which drawer draws which body and part. `body` names are the roster's; parts come from the plan. */
@@ -768,8 +778,8 @@ function wagonBody(body: string, L: number, paint: RGB[], f: Frame, service?: st
       // door
       for (const w of [-0.145, 0.145])
         if (f.visible(0, w)) {
-          const p = f.px(0, w, 12);
-          f.b.rect(p.x - 2, p.y - 6, 4, 7, shade(paint[2], 0.85));
+          const p = f.px(0, w, S(12));
+          f.b.rect(p.x - S(2), p.y - S(6), S(4), S(7), shade(paint[2], 0.85));
         }
       break;
     case 'van':
@@ -795,8 +805,8 @@ function wagonBody(body: string, L: number, paint: RGB[], f: Frame, service?: st
         side: PAL.timber,
         seed: 42,
       });
-      f.windows([L * 0.08], 0.14, 15, 3);
-      f.lamp(-L * 0.46, 9);
+      f.windows([L * 0.08], 0.14, S(15), S(3));
+      f.lamp(-L * 0.46, S(9));
       break;
     case 'hopper':
       f.prism({
@@ -849,8 +859,8 @@ function wagonBody(body: string, L: number, paint: RGB[], f: Frame, service?: st
         });
         for (const w of [-0.1, 0.1])
           if (f.visible(0, w)) {
-            const p = f.px(0, w, 15);
-            f.b.rect(p.x - 3, p.y - 1, 6, 2, PAL.amber);
+            const p = f.px(0, w, S(15));
+            f.b.rect(p.x - S(3), p.y - S(1), S(6), S(2), PAL.amber);
           }
       } else {
         for (const l of [-len * 0.28, 0, len * 0.28])
@@ -879,8 +889,8 @@ function wagonBody(body: string, L: number, paint: RGB[], f: Frame, service?: st
       });
       for (const l of [-len * 0.4, 0, len * 0.4])
         for (const w of [-0.13, 0.13]) {
-          const p = f.px(l, w, 8);
-          f.b.rect(p.x, p.y - 4, 1, 5, PAL.iron[2]);
+          const p = f.px(l, w, S(8));
+          f.b.rect(p.x, p.y - S(4), S(1), S(5), PAL.iron[2]);
         }
       break;
     case 'tank':
@@ -913,7 +923,7 @@ function wagonBody(body: string, L: number, paint: RGB[], f: Frame, service?: st
         const ws: number[] = [];
         const n = Math.round(len / 0.16);
         for (let i = 0; i < n; i++) ws.push(-len / 2 + (len / n) * (i + 0.5));
-        f.windows(ws, 0.145, 16, 4);
+        f.windows(ws, 0.145, S(16), S(4));
       }
       break;
   }
@@ -948,7 +958,7 @@ function load(kind: string, f: Frame) {
           side: grey.map((c) => shade(c, 0.85)),
           seed: 55,
         });
-        const q = f.px(l, 0.1, 10);
+        const q = f.px(l, 0.1, S(10));
         f.b.set(q.x, q.y, [120, 120, 120]);
       }
       break;
@@ -976,15 +986,15 @@ function wheelFrame(f: Frame, xs: number[], len: number) {
     for (const l of xs)
       for (const w of [-0.105, 0.105]) {
         if (f.visible(l, w) !== near) continue;
-        const p = f.px(l, w, 1);
-        f.b.rect(p.x - 1, p.y - 3, 2, 4, WHEELS[2]);
-        f.b.rect(p.x, p.y - 2, 1, 2, near ? PAL.iron[3] : PAL.iron[0]);
+        const p = f.px(l, w, S(1));
+        f.b.rect(p.x - S(1), p.y - S(3), S(2), S(4), WHEELS[2]);
+        f.b.rect(p.x, p.y - S(2), S(1), S(2), near ? PAL.iron[3] : PAL.iron[0]);
       }
   };
   wheels(false);
   for (const l of xs) {
-    const a = f.px(l, -0.105, 2),
-      b = f.px(l, 0.105, 2);
+    const a = f.px(l, -0.105, S(2)),
+      b = f.px(l, 0.105, S(2));
     f.b.line(a.x, a.y, b.x, b.y, PAL.iron[0]);
   }
   f.prism({ l: 0, len, wid: 0.1, h: 1, z0: 3, top: PAL.iron, side: WHEELS, seed: 61 });
