@@ -133,6 +133,18 @@ precedent is Diablo II Resurrected: a 3D renderer over a grid-authoritative simu
 without touching the game logic. This simulation is already grid-authoritative and renderer-
 agnostic.
 
+**The 3D foundation is built.** `art-src/export_asset.py` and `tools/export-models.mjs` export the
+same asset programs to glTF, and `src/render3d/isoScene.ts` renders them live in three.js through an
+orthographic 2:1 dimetric camera with the kit's key-and-fill light. It boots only behind the `#r3d`
+URL flag, through a dynamic import, so three.js is code-split into its own chunk and the default
+game bundle stays PixiJS-only and unchanged in size. `scratchpad/art-pipeline-3d-preview.png` is the
+station rendered live from the same `station.py` the sprite bake uses — the plan's thesis, that one
+library drives both renderers, shown running. three.js is a real dependency now, added on the
+author's instruction to build this route; the lazy load keeps it off the shipped path until a 3D
+mode is chosen. What remains for a full swap is the tile world, toon or matcap shading, outlines and
+a colour grade, and re-plumbing the `src/render` call sites — the render-layer work the matrix
+prices, not the foundation.
+
 ## 8. Risks, in the order they will bite
 
 1. **Silent style drift.** Every asset passes its own gate and the set is still incoherent. Vision

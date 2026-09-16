@@ -15,3 +15,4 @@ public/assets/*.png
 public/assets/*.json
 art-src/**/__pycache__/
 art-src/**/atlas.json
+public/models/

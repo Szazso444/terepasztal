@@ -48,6 +48,13 @@ function levelForEdit(i: Extract<Intent, { action: 'edit' }>): LevelData | null 
 }
 
 async function boot() {
+  // Runtime 3D preview (route 3): `#r3d` boots the three.js iso view instead of the game. The
+  // dynamic import keeps three.js out of the default bundle — Vite splits it into its own chunk.
+  if (location.hash.includes('r3d')) {
+    const { bootIsoPreview } = await import('./render3d/isoScene');
+    bootIsoPreview(document.getElementById('app')!);
+    return;
+  }
   const loading = el('div', { id: 'loading' }, STR.title, el('small', { text: STR.loading }));
   document.getElementById('ui-root')!.append(loading);
   const intent = takeIntent() ?? legacyHashIntent();
