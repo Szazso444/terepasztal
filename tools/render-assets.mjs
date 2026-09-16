@@ -24,7 +24,11 @@ const PX_PER_TILE = Number(process.env.PX_PER_TILE ?? 64);
 const PY = process.env.PYTHON ?? 'python3';
 
 /** The manifest: which asset program renders which atlas frame key. */
-const ASSETS = [{ module: 'art-src/structures/station.py', key: 'structures/station_1' }];
+const ASSETS = [
+  { module: 'art-src/structures/station.py', key: 'structures/station_1' },
+  { module: 'art-src/structures/windmill.py', key: 'structures/windmill' },
+  { module: 'art-src/structures/townhouse.py', key: 'structures/townhouse' },
+];
 
 function group(key) {
   return key.split('/')[0];
