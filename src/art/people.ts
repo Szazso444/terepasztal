@@ -1,15 +1,22 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
-import { TILE_W, TILE_H, HALF_W, HALF_H } from '../engine/iso';
+import { TILE_W, TILE_H, HALF_W, HALF_H, ART_SCALE } from '../engine/iso';
 import { hash2 } from '../engine/rng';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf, pickShade } from './pixels';
+
+/**
+ * Scale a base (ART_SCALE 1) pixel literal to the current art scale. TILE_W/TILE_H/HALF_W/HALF_H
+ * already carry the scale (so the ground-tile diamonds and the tile-space road/crossing geometry
+ * auto-scale); only the walker's raw pixel figure passes through S.
+ */
+const S = (n: number) => n * ART_SCALE;
 
 // ---------------------------------------------------------------------------
 // Walking people
 // ---------------------------------------------------------------------------
 
-const PW = 6;
-const PH = 12;
+const PW = S(6);
+const PH = S(12);
 const SKIN: RGB = [214, 178, 138];
 const HAIR: RGB = [68, 48, 34];
 
@@ -31,39 +38,39 @@ const OUTFITS: Outfit[] = [
 function walker(o: Outfit, f: number): PixelBuf {
   const b = new PixelBuf(PW, PH);
   // head (y=1..2), hat or hair on top
-  b.rect(2, 1, 2, 2, SKIN);
+  b.rect(S(2), S(1), S(2), S(2), SKIN);
   if (o.hat) {
-    b.rect(1, 1, 4, 1, o.hat);
-    b.set(2, 0, o.hat);
-    b.set(3, 0, o.hat);
+    b.rect(S(1), S(1), S(4), S(1), o.hat);
+    b.set(S(2), 0, o.hat);
+    b.set(S(3), 0, o.hat);
   } else {
-    b.rect(2, 0, 2, 1, HAIR);
-    b.set(1, 1, HAIR);
+    b.rect(S(2), 0, S(2), S(1), HAIR);
+    b.set(S(1), S(1), HAIR);
   }
   // torso y=3..7, 4 wide; slight shade on the right for volume
-  b.rect(1, 3, 4, 5, o.body);
-  b.rect(4, 3, 1, 5, shade(o.body, 0.8));
+  b.rect(S(1), S(3), S(4), S(5), o.body);
+  b.rect(S(4), S(3), S(1), S(5), shade(o.body, 0.8));
   // Waistcoat, brass button and lit shoulder read at miniature scale.
-  b.set(2, 3, shade(o.body, 1.3));
-  b.set(3, 5, PAL.brass);
+  b.set(S(2), S(3), shade(o.body, 1.3));
+  b.set(S(3), S(5), PAL.brass);
   // hands
-  b.set(1, 6, SKIN);
-  b.set(4, 6, SKIN);
+  b.set(S(1), S(6), SKIN);
+  b.set(S(4), S(6), SKIN);
   if (o.skirt) {
     // skirt flares at the hips, legs shorter
-    b.rect(1, 7, 4, 2, o.legs);
-    b.set(4, 8, shade(o.legs, 0.8));
-    const lift = f === 0 ? 0 : 1;
-    b.rect(1, 9, 2, 2 - lift, SKIN);
-    b.rect(3, 9, 2, 1 + lift, SKIN);
+    b.rect(S(1), S(7), S(4), S(2), o.legs);
+    b.set(S(4), S(8), shade(o.legs, 0.8));
+    const lift = f === 0 ? 0 : S(1);
+    b.rect(S(1), S(9), S(2), S(2) - lift, SKIN);
+    b.rect(S(3), S(9), S(2), S(1) + lift, SKIN);
   } else {
     // legs y=8..10: one straight, one lifted a pixel; frames alternate
-    const left = f === 0 ? 3 : 2;
-    const right = f === 0 ? 2 : 3;
-    b.rect(1, 8, 2, left, o.legs);
-    b.rect(3, 8, 2, right, o.legs);
-    b.set(1, 8 + left - 1, HAIR);
-    b.set(4, 8 + right - 1, HAIR);
+    const left = f === 0 ? S(3) : S(2);
+    const right = f === 0 ? S(2) : S(3);
+    b.rect(S(1), S(8), S(2), left, o.legs);
+    b.rect(S(3), S(8), S(2), right, o.legs);
+    b.set(S(1), S(8) + left - 1, HAIR);
+    b.set(S(4), S(8) + right - 1, HAIR);
   }
   b.outline(PAL.outline);
   return b;

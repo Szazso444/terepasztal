@@ -1,8 +1,16 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
-import { TILE_W, TILE_H, HALF_W, HALF_H, ELEV_PX } from '../engine/iso';
+import { TILE_W, TILE_H, HALF_W, HALF_H, ELEV_PX, ART_SCALE } from '../engine/iso';
 import { hash2 } from '../engine/rng';
 import { PAL, mix, shade, type RGB } from './palette';
 import { PixelBuf, inDiamond, pickShade } from './pixels';
+
+/**
+ * Scale a base (ART_SCALE 1) pixel literal to the current art scale. TILE_W/TILE_H/HALF_W/HALF_H/
+ * ELEV_PX already carry the scale, so the tile canvas, diamonds and anchors are NOT wrapped here;
+ * only the raw literal sizes of surface detail (radii, insets, offsets, feature widths) pass
+ * through S so they stay proportional to the now-larger tile.
+ */
+const S = (n: number) => n * ART_SCALE;
 
 /** Per-pixel decorator hook for ground tiles: return a colour to override the dithered base. */
 type Deco = (x: number, y: number, c: RGB) => RGB | null;
@@ -93,7 +101,7 @@ function plainsTile(seed: number): PixelBuf {
     const oy = (cy << 3) + 2 + Math.floor(hash2(cx, cy, seed + 73) * 4);
     const dx = x - ox;
     const dy = y - oy;
-    if (Math.abs(dx) > 2 || Math.abs(dy) > 1) return null;
+    if (Math.abs(dx) > S(2) || Math.abs(dy) > S(1)) return null;
     const f = hash2(x, y, seed + 74);
     if (f < 0.72) return null;
     return FLOWER_DOTS[Math.floor(hash2(cx, cy, seed + 75) * FLOWER_DOTS.length)];
@@ -177,14 +185,14 @@ function stoneFieldTile(seed: number): PixelBuf {
   ];
   const stoneOutline = shade(PAL.rock[2], 0.62);
   for (let i = 0; i < count; i++) {
-    const rx = 3 + Math.floor(hash2(i, seed, 2) * 4);
-    const ry = Math.max(2, Math.round(rx * (0.55 + hash2(i, seed, 3) * 0.2)));
+    const rx = S(3) + Math.floor(hash2(i, seed, 2) * S(4));
+    const ry = Math.max(S(2), Math.round(rx * (0.55 + hash2(i, seed, 3) * 0.2)));
     const slot = (i + Math.floor(hash2(seed, 2, 6) * 5)) % 5;
     const slotX = [0.28, 0.72, 0.5, 0.5, 0.5][slot];
     const slotY = [0.5, 0.5, 0.3, 0.7, 0.5][slot];
     let cx = (slotX + (hash2(i, seed, 10) - 0.5) * 0.22) * TILE_W;
     let cy = (slotY + (hash2(i, seed, 20) - 0.5) * 0.24) * TILE_H;
-    const limit = 1 - (rx + 1) / HALF_W - (ry + 1) / HALF_H;
+    const limit = 1 - (rx + S(1)) / HALF_W - (ry + S(1)) / HALF_H;
     const e = Math.abs(cx - HALF_W) / HALF_W + Math.abs(cy - HALF_H) / HALF_H;
     if (e > limit) {
       cx = HALF_W + ((cx - HALF_W) * limit) / e;
@@ -192,7 +200,7 @@ function stoneFieldTile(seed: number): PixelBuf {
     }
     // ground shadow touching the stone base, then the stone itself
     for (let sx = Math.floor(cx - rx); sx <= Math.ceil(cx + rx); sx++)
-      for (let sy = Math.floor(cy + ry * 0.5); sy <= Math.ceil(cy + ry) + 1; sy++) {
+      for (let sy = Math.floor(cy + ry * 0.5); sy <= Math.ceil(cy + ry) + S(1); sy++) {
         const g = b.get(sx, sy);
         if (g) b.set(sx, sy, shade(g, 0.8));
       }
@@ -201,7 +209,7 @@ function stoneFieldTile(seed: number): PixelBuf {
     for (let sx = Math.floor(cx - rx * 0.5); sx <= Math.ceil(cx + rx * 0.2); sx++)
       if (layer.alpha(sx, Math.round(cy - ry * 0.5)))
         layer.set(sx, Math.round(cy - ry * 0.5), stones[3]);
-    if (rx >= 5)
+    if (rx >= S(5))
       layer.line(
         Math.round(cx),
         Math.round(cy + ry * 0.2),
@@ -211,11 +219,11 @@ function stoneFieldTile(seed: number): PixelBuf {
       );
   }
   for (let i = 0; i < 4; i++) {
-    const px = 10 + Math.floor(hash2(i, seed, 40) * (TILE_W - 20));
-    const py = 6 + Math.floor(hash2(i, seed, 41) * (TILE_H - 12));
+    const px = S(10) + Math.floor(hash2(i, seed, 40) * (TILE_W - S(20)));
+    const py = S(6) + Math.floor(hash2(i, seed, 41) * (TILE_H - S(12)));
     if (layer.alpha(px, py)) continue;
     layer.set(px, py, stones[3]);
-    layer.set(px + 1, py, stones[1]);
+    layer.set(px + S(1), py, stones[1]);
   }
   layer.outline(stoneOutline, 200);
   for (let y = 0; y < TILE_H; y++)
@@ -248,9 +256,10 @@ function waterTile(seed: number, phase: number): PixelBuf {
       const cellY = y >> 2;
       const r = hash2(cellX, cellY, seed + 7);
       if (r > 0.86) {
-        const gx = ((cellX << 3) + Math.floor(hash2(cellX, cellY, seed + 8) * 5) + phase) % 64;
+        const gx =
+          ((cellX << 3) + Math.floor(hash2(cellX, cellY, seed + 8) * 5) + phase) % TILE_W;
         const gy = (cellY << 2) + ((phase + Math.floor(hash2(cellX, cellY, seed + 9) * 4)) % 4);
-        if (y === gy && x >= gx && x < gx + 3) c = shade(PAL.water[3], 1.1);
+        if (y === gy && x >= gx && x < gx + S(3)) c = shade(PAL.water[3], 1.1);
       } else if (r < 0.08 && ((y + 2) & 3) === phase && (x & 7) < 3) c = shade(c, 0.92);
       b.set(x, y, c);
     }
@@ -291,7 +300,7 @@ function hillTile(seed: number): PixelBuf {
           const n = hash2(x >> 2, y >> 1, seed + 3);
           const d = y - Math.floor(topEdgeY);
           // grass roots hang over the top edge, a stone course near the foot
-          const strata = d <= 1 ? 0.9 : d % 4 === 3 ? 0.9 : 1;
+          const strata = d <= S(1) ? 0.9 : d % 4 === 3 ? 0.9 : 1;
           b.set(x, y, shade(base, (0.92 + n * 0.16) * strata));
           if (d === 0 && hash2(x, 1, seed + 4) > 0.4) b.set(x, y, shade(PAL.grass[2], 0.9));
         }
@@ -334,7 +343,7 @@ function mountainTile(seed: number): PixelBuf {
         const d = y - Math.floor(topEdgeY);
         // strata bands and a couple of vertical fissures
         const strata = d % 5 === 4 ? 0.84 : 1;
-        const crack = hash2(x >> 1, seed, 5) > 0.93 && d > 2 ? 0.7 : 1;
+        const crack = hash2(x >> 1, seed, 5) > 0.93 && d > S(2) ? 0.7 : 1;
         b.set(x, y, shade(cliff[Math.floor(n * 3)], lit * strata * crack));
       }
     }
@@ -383,8 +392,8 @@ function cityTile(tx: number, ty: number): PixelBuf {
   for (let y = 0; y < TILE_H; y++)
     for (let x = 0; x < TILE_W; x++) {
       if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
-      const u = ((x - HALF_W) / 32 + (y - HALF_H) / 16) / 2;
-      const v = ((y - HALF_H) / 16 - (x - HALF_W) / 32) / 2;
+      const u = ((x - HALF_W) / HALF_W + (y - HALF_H) / HALF_H) / 2;
+      const v = ((y - HALF_H) / HALF_H - (x - HALF_W) / HALF_W) / 2;
       const road = (tx === 0 && Math.abs(u) < 0.26) || (ty === 0 && Math.abs(v) < 0.26);
       const kerb =
         (tx === 0 && Math.abs(Math.abs(u) - 0.28) < 0.04) ||
