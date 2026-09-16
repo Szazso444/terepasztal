@@ -9,3 +9,9 @@ dist
 # Blender render output; the asset programs in art-src are tracked, their renders are not
 art-src/**/*.png
 art-src/**/out/
+
+# Generated sprite-atlas overrides (produced by tools/render-assets.mjs from art-src/)
+public/assets/*.png
+public/assets/*.json
+art-src/**/__pycache__/
+art-src/**/atlas.json

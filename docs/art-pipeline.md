@@ -40,6 +40,15 @@ written as a parametric program, `measure.mjs` scores a render. `scratchpad/art-
 the outputs. The spike also showed the honest limit: geometry an agent writes without feedback is
 mediocre, and the loop needs gates, which is what section 4 is about.
 
+**The slice is built.** `art-src/kit.py` is the shared kit; `art-src/structures/station.py` is the
+first real asset; `art-src/render_asset.py` and `tools/render-assets.mjs` are the driver; and
+`src/engine/atlas.ts` now overlays a PNG override onto a procedurally generated group frame by
+frame. Running `node tools/render-assets.mjs structures` renders the station headless and packs it,
+and the game loads it over the procedural `station_1` while every other structure frame stays
+procedural — the debug panel reports the group as `mixed`. `scratchpad/art-pipeline-station-*.png`
+show the rendered frame and the two stations composited on live terrain. The generated atlases are
+build output and are gitignored; the programs are the source.
+
 ## 3. Architecture
 
 ```

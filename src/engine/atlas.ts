@@ -32,7 +32,7 @@ export interface FrameInfo {
 export class AtlasRegistry {
   private frames = new Map<string, FrameInfo>();
   private sources: ImageSource[] = [];
-  readonly groupOrigin = new Map<string, 'png' | 'procedural'>();
+  readonly groupOrigin = new Map<string, 'png' | 'procedural' | 'mixed'>();
   /** Raw atlas images by group, kept for the debug atlas viewer. */
   readonly images = new Map<string, HTMLCanvasElement | HTMLImageElement>();
 
@@ -41,17 +41,20 @@ export class AtlasRegistry {
   }
 
   private async loadGroup(name: string, generate: AtlasGenerator) {
-    const fromFile = await this.tryLoadFile(name);
-    if (fromFile) {
-      this.register(fromFile);
-      this.images.set(name, fromFile.image);
-      this.groupOrigin.set(name, 'png');
-      return;
-    }
+    // Generate first, then overlay a PNG override on top. `register` overwrites the map entry for
+    // every key the override carries and adds any new ones, so an authored `station_1.png` replaces
+    // that one frame while the other ~672 structure frames stay procedural. That is what lets the
+    // rendered-asset migration land frame by frame instead of a whole group at a time.
     const gen = generate();
     this.register(gen);
     this.images.set(name, gen.image);
     this.groupOrigin.set(name, 'procedural');
+    const fromFile = await this.tryLoadFile(name);
+    if (fromFile) {
+      this.register(fromFile);
+      this.images.set(`${name} (override)`, fromFile.image);
+      this.groupOrigin.set(name, 'mixed');
+    }
   }
 
   private async tryLoadFile(name: string): Promise<AtlasImage | null> {
