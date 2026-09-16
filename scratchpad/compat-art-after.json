@@ -1,0 +1,128 @@
+[
+  {
+    "id": "dda40x",
+    "cls": "high_speed",
+    "verdict": {
+      "ok": true,
+      "foreAft": 0.04800890103233965,
+      "sideways": 0.03913700147428834,
+      "gap": 0.28871827723076837,
+      "lateral": 0.2843806391852529,
+      "reason": null
+    },
+    "regular": {
+      "ok": false,
+      "foreAft": 0.1788122700644476,
+      "sideways": 0.0818236064761305,
+      "gap": 0.5228720873429935,
+      "lateral": 0.5623964642436587,
+      "reason": "centre bogie sits 0.56 tiles off its socket, limit 0.35"
+    },
+    "accessRegular": "Large stock: high-speed track only"
+  },
+  {
+    "id": "gg1",
+    "cls": "high_speed",
+    "verdict": {
+      "ok": true,
+      "foreAft": 0.04800890103233965,
+      "sideways": 0.03913700147428834,
+      "gap": 0.28871827723076837,
+      "lateral": 0.2843806391852529,
+      "reason": null
+    },
+    "regular": {
+      "ok": false,
+      "foreAft": 0.1788122700644476,
+      "sideways": 0.0818236064761305,
+      "gap": 0.5228720873429935,
+      "lateral": 0.5623964642436587,
+      "reason": "centre bogie sits 0.56 tiles off its socket, limit 0.35"
+    },
+    "accessRegular": "Large stock: high-speed track only"
+  },
+  {
+    "id": "big_boy",
+    "cls": "high_speed",
+    "verdict": {
+      "ok": true,
+      "foreAft": 0.05306481279980861,
+      "sideways": 0.08186889217540869,
+      "gap": 0.28896655570409946,
+      "lateral": 0,
+      "reason": null
+    },
+    "regular": {
+      "ok": true,
+      "foreAft": 0.18759966579536064,
+      "sideways": 0.10127830736490122,
+      "gap": 0.38326583036587614,
+      "lateral": 0,
+      "reason": null
+    },
+    "accessRegular": "Large stock: high-speed track only"
+  },
+  {
+    "id": "crocodile",
+    "cls": "high_speed",
+    "verdict": {
+      "ok": true,
+      "foreAft": 0.020933344783882073,
+      "sideways": 0.058712176704295134,
+      "gap": 0.08338819797038449,
+      "lateral": 0,
+      "reason": null
+    },
+    "regular": {
+      "ok": true,
+      "foreAft": 0.11671333503146206,
+      "sideways": 0.12694661170238955,
+      "gap": 0.2062882116200763,
+      "lateral": 0,
+      "reason": null
+    },
+    "accessRegular": "Large stock: high-speed track only"
+  },
+  {
+    "id": "gmam",
+    "cls": "high_speed",
+    "verdict": {
+      "ok": true,
+      "foreAft": 0.020933344783882073,
+      "sideways": 0.058712176704295134,
+      "gap": 0.08338819797038449,
+      "lateral": 0,
+      "reason": null
+    },
+    "regular": {
+      "ok": true,
+      "foreAft": 0.11671333503146206,
+      "sideways": 0.12694661170238955,
+      "gap": 0.2062882116200763,
+      "lateral": 0,
+      "reason": null
+    },
+    "accessRegular": "Large stock: high-speed track only"
+  },
+  {
+    "id": "sd40",
+    "cls": "regular",
+    "verdict": {
+      "ok": true,
+      "foreAft": 0.1290161866578444,
+      "sideways": 0.07419790182683027,
+      "gap": 0.28866939260517144,
+      "lateral": 0,
+      "reason": null
+    },
+    "regular": {
+      "ok": true,
+      "foreAft": 0.1290161866578444,
+      "sideways": 0.07419790182683027,
+      "gap": 0.28866939260517144,
+      "lateral": 0,
+      "reason": null
+    },
+    "accessRegular": null
+  }
+]

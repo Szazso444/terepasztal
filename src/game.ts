@@ -179,6 +179,8 @@ const TRANSITION_MS = 300;
 export class Game {
   app!: Application;
   atlas = new AtlasRegistry();
+  /** The sound bus, reachable from `window.game` for the debug panel and the art/audio scripts. */
+  readonly audio = audio;
   input!: Input;
   camera = new Camera();
   clock = new GameClock();
@@ -555,9 +557,20 @@ export class Game {
     const t = text.trim();
     return t ? (/^\d+$/.test(t) ? Number(t) : hashSeed(t)) : Math.floor(Math.random() * 2 ** 31);
   }
+  /** Music and effects volume for the menus: same settings the Settings screen edits. */
+  private audioActions() {
+    return {
+      volume: (key: 'music' | 'sfx') => this.settings[key],
+      setVolume: (key: 'music' | 'sfx', v: number) => {
+        this.settings[key] = v;
+        this.applySettings();
+      },
+    };
+  }
   private buildMenus() {
     this.mainMenu = new MainMenu({
       ...this.slotActions(),
+      ...this.audioActions(),
       continue: () => this.closeMenus(),
       newGame: (seed, supply) => {
         if (this.confirmReplaceSave()) this.newGame(seed, supply);
@@ -599,6 +612,7 @@ export class Game {
     });
     this.pauseMenu = new PauseMenu({
       ...this.slotActions(),
+      ...this.audioActions(),
       resume: () => this.closeMenus(),
       save: () => {
         this.save();

@@ -215,11 +215,11 @@ function oreLump(base: RGB[], glint: RGB, seed: number): PixelBuf {
 function ironOre(): PixelBuf {
   return oreLump(
     [
-      [124, 84, 60],
-      [148, 104, 72],
-      [92, 62, 44],
+      [150, 100, 70],
+      [172, 120, 84],
+      [118, 78, 56],
     ],
-    [176, 180, 188],
+    [196, 200, 206],
     11,
   );
 }
@@ -227,15 +227,15 @@ function ironOre(): PixelBuf {
 function copperOre(): PixelBuf {
   const b = oreLump(
     [
-      [110, 88, 62],
-      [128, 104, 72],
-      [84, 66, 46],
+      [132, 108, 78],
+      [152, 128, 94],
+      [106, 84, 60],
     ],
-    [206, 130, 70],
+    PAL.copper[1],
     13,
   );
-  b.set(9, 10, [78, 142, 110]);
-  b.set(5, 8, [78, 142, 110]);
+  b.set(9, 10, [92, 158, 124]);
+  b.set(5, 8, [92, 158, 124]);
   return b;
 }
 /** Crude oil: brown-black drop with a dull olive gloss. */
@@ -275,18 +275,44 @@ function sand(): PixelBuf {
   b.outline(PAL.outline, 220);
   return b;
 }
-/** Wire: a coil of copper, seen from the side. */
+/** Wire: a copper spool seen from the side, with a visible centre hole. */
 function wire(): PixelBuf {
   const b = new PixelBuf(S, S);
-  const cu: RGB[] = [
-    [196, 122, 66],
-    [222, 150, 88],
-    [150, 90, 48],
-  ];
-  for (let i = 0; i < 4; i++)
+  const cu: RGB[] = [PAL.copper[0], PAL.copper[1], PAL.copper[2]];
+  // flanges top and bottom, wound copper between them
+  for (let i = 0; i < 5; i++)
     b.ellipse(8, 5 + i * 2, 5.5, 2.2, [cu[1], cu[0], cu[2]], 20 + i, 0.15);
   b.ellipse(8, 4, 5.5, 2.2, [cu[2], cu[0]], 25, 0.1);
-  b.rect(7, 3, 3, 1, PAL.iron[1]);
+  // centre hole: dark, with a pale rim so it reads as a spool not a coil of rope
+  b.ellipse(8, 8, 2, 1.4, [PAL.outline], 26, 0);
+  b.set(6, 8, shade(cu[1], 1.15));
+  b.set(10, 8, shade(cu[2], 0.9));
+  // wire end trailing off the spool
+  b.line(12, 11, 14, 13, cu[1]);
+  b.outline(PAL.outline, 220);
+  return b;
+}
+
+/** Bread: a domed loaf with a slashed crust. Never a wheat sheaf. */
+function bread(): PixelBuf {
+  const b = new PixelBuf(S, S);
+  const crust: RGB[] = [
+    [186, 138, 76],
+    [206, 160, 96],
+    [156, 112, 60],
+  ];
+  // domed top, flat base
+  for (let y = 0; y < 8; y++) {
+    const hw = Math.round(6 * Math.sqrt(1 - ((7 - y) / 8) ** 2));
+    for (let x = 8 - hw; x <= 8 + hw; x++)
+      b.set(x, 5 + y, x < 6 ? crust[1] : x > 10 ? crust[2] : crust[0]);
+  }
+  b.rect(2, 12, 13, 2, crust[2]);
+  // three diagonal crust slashes, lit on their upper side
+  for (const x of [5, 8, 11]) {
+    b.line(x, 6, x - 2, 10, shade(crust[2], 0.82));
+    b.line(x + 1, 6, x - 1, 10, shade(crust[1], 1.12));
+  }
   b.outline(PAL.outline, 220);
   return b;
 }
@@ -296,13 +322,7 @@ export function generateIconsAtlas(): AtlasImage {
   const gens: Record<string, () => PixelBuf> = {
     water,
     wheat,
-    food: () => {
-      const b = new PixelBuf(S, S);
-      b.ellipse(8, 9, 6, 4, [PAL.sand[2], PAL.cargoGrain, PAL.sand[0]], 18, 0.15);
-      for (const x of [5, 8, 11]) b.line(x, 6, x - 1, 9, PAL.white);
-      b.outline(PAL.outline, 220);
-      return b;
-    },
+    food: bread,
     stone,
     wood,
     coal,
