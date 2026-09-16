@@ -5,7 +5,7 @@ centred on the tile ground origin. Compare the townhouse in src/art/industry.ts.
 """
 
 
-def build(k):
+def build(k, v=0):
     L, W, H = 0.6, 0.5, 0.34
     # walls: limestone with a timber ground floor band, on a low plinth
     k.box("plinth", (L + 0.04, W + 0.04, 0.03), (0, 0, 0), "trim")

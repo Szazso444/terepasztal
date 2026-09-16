@@ -26,12 +26,34 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PX_PER_TILE = Number(process.env.PX_PER_TILE ?? 128);
 const PY = process.env.PYTHON ?? 'python3';
 
-/** The manifest: which asset program renders which atlas frame key. */
+/**
+ * The manifest: which asset program renders which atlas frame key.
+ *
+ * `variants: n` renders the program n times, passing 0..n-1 as the variant, and appends `_0`..
+ * `_{n-1}` to the key. That is how the props keep the three silhouettes per family the art
+ * direction requires, from one program each.
+ */
 const ASSETS = [
   { module: 'art-src/structures/station.py', key: 'structures/station_1' },
   { module: 'art-src/structures/windmill.py', key: 'structures/windmill' },
   { module: 'art-src/structures/townhouse.py', key: 'structures/townhouse' },
+  { module: 'art-src/props/tree.py', key: 'props/tree', variants: 3 },
+  { module: 'art-src/props/oak.py', key: 'props/oak', variants: 3 },
+  { module: 'art-src/props/birch.py', key: 'props/birch', variants: 3 },
+  { module: 'art-src/props/pine.py', key: 'props/pine', variants: 3 },
+  { module: 'art-src/props/spruce.py', key: 'props/spruce', variants: 3 },
+  { module: 'art-src/props/bush.py', key: 'props/bush', variants: 3 },
+  { module: 'art-src/props/deadtree.py', key: 'props/deadtree', variants: 2 },
+  { module: 'art-src/props/rock.py', key: 'props/rock', variants: 3 },
+  { module: 'art-src/props/boulder.py', key: 'props/boulder', variants: 3 },
 ];
+
+/** Expand `variants` into one render each, so the loop below only ever sees a single frame. */
+const FRAMES = ASSETS.flatMap(({ module, key, variants }) =>
+  variants === undefined
+    ? [{ module, key, variant: 0 }]
+    : Array.from({ length: variants }, (_, v) => ({ module, key: `${key}_${v}`, variant: v })),
+);
 
 function group(key) {
   return key.split('/')[0];
@@ -41,14 +63,14 @@ function basename(key) {
 }
 
 const want = process.argv.slice(2);
-const assets = want.length ? ASSETS.filter((a) => want.includes(group(a.key))) : ASSETS;
+const assets = want.length ? FRAMES.filter((a) => want.includes(group(a.key))) : FRAMES;
 if (!assets.length) {
   console.error(`no assets for: ${want.join(', ') || '(all)'}`);
   process.exit(2);
 }
 
 const anchors = {}; // group -> { frameKey: {ax, ay} }
-for (const { module, key } of assets) {
+for (const { module, key, variant } of assets) {
   const g = group(key);
   const outDir = join(ROOT, 'art-src', g);
   mkdirSync(outDir, { recursive: true });
@@ -58,18 +80,35 @@ for (const { module, key } of assets) {
   process.stdout.write(`render ${key} ... `);
   const log = execFileSync(
     PY,
-    [join(ROOT, 'art-src', 'render_asset.py'), modPath, png, String(PX_PER_TILE)],
+    [join(ROOT, 'art-src', 'render_asset.py'), modPath, png, String(PX_PER_TILE), String(variant)],
     {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'inherit'],
     },
   );
-  const m = /ANCHOR (\{.*\})/.exec(log);
-  if (!m) throw new Error(`no anchor from ${module}:\n${log}`);
-  // Cycles renders smooth and full-colour; snap it into the game's hard-edged, palette-limited
-  // medium before the packer ever sees it, so a baked frame sits beside a generated one.
-  pixelate(png);
-  (anchors[g] ??= {})[key] = JSON.parse(m[1]);
+  const read = (tag) => {
+    const m = new RegExp(`${tag} (\\{.*\\})`).exec(log);
+    if (!m) throw new Error(`no ${tag} from ${module}:\n${log}`);
+    return JSON.parse(m[1]);
+  };
+  const anchor = read('ANCHOR');
+  const { r: shadowR } = read('SHADOW');
+  // Cycles renders smooth and full-colour; band it into the game's hard-edged, palette-limited
+  // medium before the packer ever sees it, so a baked frame sits beside a generated one. The
+  // shadow follows the snap, because it is the one thing that stays translucent.
+  pixelate(png, {
+    palette: read('PALETTE'),
+    materials: read('MATERIALS'),
+    idPath: join(outDir, 'id', `${basename(key)}.png`),
+    shadow: {
+      // the procedural props centre the ellipse one pixel below the anchor row (src/art/props.ts)
+      cx: anchor.ax,
+      cy: anchor.ay + PX_PER_TILE / 64,
+      rx: shadowR,
+      scale: PX_PER_TILE / 64,
+    },
+  });
+  (anchors[g] ??= {})[key] = anchor;
   console.log('ok');
 }
 

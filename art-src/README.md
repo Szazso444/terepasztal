@@ -13,11 +13,15 @@ loads an override frame the same way whether a human or this pipeline produced i
 
 ```
 kit.py                 the style, as code: palette, materials, primitives, camera, light, render
-structures/station.py  one asset program; build(kit) populates a Kit-owned scene
-render_asset.py        renders one program in an isolated process and prints its anchor
+structures/station.py  one asset program; build(kit, variant) populates a Kit-owned scene
+props/pine.py          a family in one program: the variant argument picks the silhouette
+render_asset.py        renders one program in an isolated process and reports what the driver needs
 ```
 
-The manifest of which program renders which frame key lives in `tools/render-assets.mjs`.
+The manifest of which program renders which frame key lives in `tools/render-assets.mjs`. A
+manifest entry with `variants: n` runs its program n times, passing 0..n-1, and keys the results
+`_0`..`_{n-1}` -- which is how one `pine.py` supplies the three `props/pine_*` silhouettes the art
+direction requires, rather than three near-copies of a program.
 
 ## Run it
 
@@ -35,6 +39,29 @@ the group as `mixed`.
 `PX_PER_TILE` (default 64) is the world scale a frame renders at, so a sprite drops straight onto
 the grid. Raising it is the "art scale" engine change, made once for the whole game.
 
+Review the result as a set, not one frame at a time:
+
+```sh
+node scratchpad/art-contact-sheet.mjs props sheet.png 3
+node scratchpad/art-scene.mjs baked          # the same assets in a built scene
+```
+
+## From render to sprite
+
+Each asset renders twice. The beauty pass is the lit Cycles render; the material pass beside it in
+`<group>/id/` paints every material a flat index. `tools/pixelate.mjs` reads both and rebuilds each
+pixel as `material base colour x light step`, so the render decides only how brightly a pixel is
+lit and never which colour family it belongs to.
+
+That second pass is the difference between a palette that holds and one that mostly holds. Matching
+a lit pixel to the nearest palette colour -- the obvious approach, and the first one here -- turns a
+sunlit leaf into cream and a shadowed limestone wall into slate, the failure `docs/art-pipeline.md`
+records from the spike. With the material known, a leaf can only ever be a shade of leaf.
+
+The soft ground shadow is composited afterwards, not lit: it is the same translucent ellipse
+`src/art/props.ts` draws under every prop, so a baked prop sits on the tile exactly as a generated
+one does. A program declares its footprint as `SHADOW_R`, in tiles.
+
 ## Rules the programs follow
 
 - **The data API only, never operators.** Geometry is built from explicit vertices so a program
@@ -43,4 +70,7 @@ the grid. Raising it is the "art scale" engine change, made once for the whole g
 - **Everything from the kit.** No asset defines its own palette, light or camera. That is what
   keeps 75 assets reading as one set without a critic judging them.
 - **Origin at the tile ground-centre.** The render's origin projects to the frame anchor the game
-  pins to the tile, matching the procedural sprite it replaces.
+  pins to the tile, matching the procedural sprite it replaces. The kit nudges the camera by the
+  fraction of a pixel needed to land that anchor on a whole pixel, as the generated sprites' are.
+- **Seeded variation, not random.** `kit.Rng` is a small fixed LCG rather than Python's `random`,
+  whose stream is an implementation detail. A variant's lumps are the same on every machine.

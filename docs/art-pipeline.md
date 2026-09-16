@@ -49,6 +49,15 @@ procedural — the debug panel reports the group as `mixed`. `scratchpad/art-pip
 show the rendered frame and the two stations composited on live terrain. The generated atlases are
 build output and are gitignored; the programs are the source.
 
+**The first whole family is built.** `art-src/props/` carries the nine vegetation and stone
+programs of section 3 of the art direction — round tree, oak, birch, pine, spruce, bush, dead tree,
+rock and boulder — as 26 frames covering every `props/*` key in those families. A manifest entry
+declares `variants: n` and the program receives the variant, so one `pine.py` renders the three
+silhouettes rather than three near-copies of a program; the seeded jitter in `kit.Rng` gives each
+its own lumps deterministically. This is the first evidence at family scale rather than one asset:
+`props` reports `mixed`, the baked frames sit within about a tenth of the sprites they replace, and
+nothing else in the group moved.
+
 ## 3. Architecture
 
 ```
@@ -84,7 +93,11 @@ ships. The research is consistent on where to spend: **scale the verifier, not t
   hashes in `src/world/mapgen.test.ts`
 - atlas bounds and page limits, palette conformance (only colours from the palette module appear),
   silhouette coverage, and lighting rules read from a material-index pass rather than guessed from
-  colour
+  colour. **Built.** Every asset renders twice: the lit pass, and a material pass where each
+  material emits a flat index. `tools/pixelate.mjs` rebuilds each pixel as its own material's base
+  colour times a light step, so palette conformance is not a gate that can fail — it is the only
+  thing the code can produce. Nearest-colour matching, which this replaced, put cream in sunlit
+  foliage exactly as the spike's judge put slate on a shadowed limestone wall
 - golden-image diff with a clustered-pixel threshold, baselines generated in CI
 
 **Visual gate, weak by construction.** A vision model ranks a render against a blessed reference,

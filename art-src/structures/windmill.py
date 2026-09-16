@@ -26,7 +26,7 @@ def _add(*vs):
     return (sum(x[0] for x in vs), sum(x[1] for x in vs), sum(x[2] for x in vs))
 
 
-def build(k):
+def build(k, v=0):
     # tapering stone tower, with two proud course bands so it does not read as one flat cylinder
     k.cylinder("tower", 0.0, 0.0, 0.26, 0.0, 0.64, "limestone", seg=20)
     k.cylinder("tower_top", 0.0, 0.0, 0.21, 0.64, 0.05, "limestone", seg=20)

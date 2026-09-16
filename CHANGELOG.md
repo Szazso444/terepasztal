@@ -48,6 +48,20 @@ Asset redesign to the art direction in `docs/art-direction/README.md`, plus the 
 - Interface recoloured to forest-green panels, oat text, limestone bevels and copper accents;
   minimap and overview terrain colours follow the tiles they stand in for.
 
+### Rendered assets
+
+- The nine vegetation and stone families of the art direction's section 3 -- round tree, oak,
+  birch, pine, spruce, bush, dead tree, rock and boulder -- are now 3D programs in `art-src/props`,
+  rendered headless in Blender and baked into `props` as 26 frames. One program per family: the
+  manifest asks for its variants and the program shapes each silhouette, seeded so the result is
+  the same on every machine. The group reports `mixed`; every other prop frame stays procedural.
+- A material pass decides the palette. Each asset renders twice, once lit and once with every
+  material emitting a flat index, and a pixel is rebuilt as its own material's colour times a light
+  step. Matching a lit pixel to the nearest palette colour, which this replaces, put cream in
+  sunlit foliage. A material a program never used can no longer appear in its sprite.
+- Baked frames carry the same soft ground shadow the procedural props draw, and their anchors land
+  on whole pixels, so an authored prop sits on the tile exactly where a generated one does.
+
 ### Audio
 
 - Music is the looping track in `public/assets/audio/music`, played through the sound bus. If the

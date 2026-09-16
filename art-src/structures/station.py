@@ -12,7 +12,7 @@ HALL_L, HALL_W, HALL_H = 0.86, 0.44, 0.36
 GABLE_H = 0.56
 
 
-def build(k):
+def build(k, v=0):
     # platform: a low limestone slab with a pale coping along the track (+y) edge
     k.box("platform", (1.0, 0.5, 0.09), (0.0, 0.06, 0.0), "limestone")
     k.box("coping", (1.0, 0.05, 0.1), (0.0, 0.29, 0.0), "trim")

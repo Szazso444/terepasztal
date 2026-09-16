@@ -1,12 +1,22 @@
-"""Render one asset program in an isolated Blender process, and print its anchor.
+"""Render one asset program in an isolated Blender process, and report it on stdout.
 
-    python3 art-src/render_asset.py <module.py> <out.png> [px_per_tile]
+    python3 art-src/render_asset.py <module.py> <out.png> [px_per_tile] [variant]
 
-The module must define `build(kit)`. This script owns the scene reset, the camera, the light and
-the render, so the asset program only describes geometry. One asset per process is the reset
-boundary: `bpy` imports once per process, and this keeps a crash in one asset from touching the
-next. The anchor printed on the last line is where the world origin projects, in render pixels
-before the packer trims — the point the game pins to the tile.
+The module must define `build(kit, variant=0)`. This script owns the scene reset, the camera, the
+light and the render, so the asset program only describes geometry. One asset per process is the
+reset boundary: `bpy` imports once per process, and this keeps a crash in one asset from touching
+the next.
+
+Three lines come back, because the driver finishes the frame in the game's 2D medium and needs
+what only Blender knows:
+
+    ANCHOR    where the world origin projects, in render pixels before the packer trims — the
+              point the game pins to the tile
+    PALETTE   the kit's colours as sRGB, so the pixel snap quantises to the palette the render was
+              actually lit with instead of a second copy that can drift out of step
+    MATERIALS the material each index in the companion `id/<out>` pass stands for, so the snap
+              reads a pixel's material instead of guessing it from the lit colour
+    SHADOW    the module's ground-shadow radius in render pixels, 0 for none
 """
 
 import importlib.util
@@ -23,6 +33,10 @@ from mathutils import Vector  # noqa: E402
 MODULE = sys.argv[1]
 OUT = sys.argv[2]
 PX_PER_TILE = int(sys.argv[3]) if len(sys.argv) > 3 else 64
+VARIANT = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+# The packer globs every PNG beside the frames, so the material pass goes in its own directory
+# rather than next to the frame it belongs to.
+ID_OUT = str(Path(OUT).parent / "id" / Path(OUT).name)
 # the frame is a fixed multiple of the tile so a whole asset fits with margin for its shadow
 RENDER_PX = PX_PER_TILE * 4
 
@@ -34,8 +48,9 @@ def load_module(path):
     return mod
 
 
+mod = load_module(MODULE)
 k = kitmod.Kit()
-load_module(MODULE).build(k)
+mod.build(k, VARIANT)
 k.light()
 cam = k.camera(PX_PER_TILE, RENDER_PX)
 k.render(OUT, RENDER_PX)
@@ -43,3 +58,16 @@ k.render(OUT, RENDER_PX)
 ndc = world_to_camera_view(k.scene, cam, Vector((0.0, 0.0, 0.0)))
 anchor = {"ax": round(ndc.x * RENDER_PX, 2), "ay": round((1.0 - ndc.y) * RENDER_PX, 2)}
 print("ANCHOR " + json.dumps(anchor))
+
+# the palette as sRGB 0-255, the inverse of kit.srgb, so the driver snaps to these exact colours
+print("PALETTE " + json.dumps({n: kitmod.to_srgb8(c) for n, c in kitmod.PAL.items()}))
+
+# the material pass, beside the beauty render; it destroys the materials, so it goes last
+print("MATERIALS " + json.dumps(k.id_render(ID_OUT, RENDER_PX)))
+
+# a ground shadow is part of the game's 2D medium, not of the lighting solve: the procedural
+# generators draw a soft ellipse under each prop, so the driver composites the same one here.
+# The module states its footprint in tiles; one tile is PX_PER_TILE across.
+shadow = getattr(mod, "SHADOW_R", 0.0)
+shadow = shadow(VARIANT) if callable(shadow) else shadow
+print("SHADOW " + json.dumps({"r": round(shadow * PX_PER_TILE, 2)}))
