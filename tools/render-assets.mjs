@@ -21,7 +21,9 @@ import { fileURLToPath } from 'node:url';
 import { pixelate } from './pixelate.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const PX_PER_TILE = Number(process.env.PX_PER_TILE ?? 64);
+// Match the engine's art scale: iso.ts ships ART_SCALE 2, i.e. a 128 px tile. The bake renders at
+// the same density so a baked frame drops onto the grid beside a generated one.
+const PX_PER_TILE = Number(process.env.PX_PER_TILE ?? 128);
 const PY = process.env.PYTHON ?? 'python3';
 
 /** The manifest: which asset program renders which atlas frame key. */

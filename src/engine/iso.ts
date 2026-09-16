@@ -1,10 +1,18 @@
-/** Isometric 2:1 projection. Base tile is 64 x 32 px. */
-export const TILE_W = 64;
-export const TILE_H = 32;
+/**
+ * The one art-scale knob. Every pixel dimension in the game derives from the tile, and the tile
+ * derives from this: the projection, the generators' canvases and their vertical (z) pixels all
+ * scale by it together, so raising it renders the whole world at a higher pixel density without
+ * moving anything relative to anything else. 1 is the historical 64 x 32 tile; 2 is 128 x 64.
+ */
+export const ART_SCALE = 2;
+
+/** Isometric 2:1 projection. Base tile is 64 x 32 px at ART_SCALE 1. */
+export const TILE_W = 64 * ART_SCALE;
+export const TILE_H = 32 * ART_SCALE;
 export const HALF_W = TILE_W / 2;
 export const HALF_H = TILE_H / 2;
 /** Screen-pixel rise of one elevation step. */
-export const ELEV_PX = 10;
+export const ELEV_PX = 10 * ART_SCALE;
 
 export interface Vec2 {
   x: number;

@@ -1,4 +1,4 @@
-import { HALF_W, HALF_H } from '../engine/iso';
+import { HALF_W, HALF_H, ART_SCALE } from '../engine/iso';
 import { hash2 } from '../engine/rng';
 import { mix, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
@@ -8,9 +8,16 @@ export interface P2 {
   y: number;
 }
 
-/** Tile-space point (fractional tiles, z in pixels up) -> sprite pixel space, given the sprite origin. */
+/**
+ * Tile-space point (fractional tiles, z in pixels up) -> sprite pixel space, given the sprite origin.
+ *
+ * The horizontal spread scales with the tile through HALF_W/HALF_H; z is a vertical pixel height, so
+ * it scales through ART_SCALE here. That keeps this the single place the vertical of every prism,
+ * cylinder and hand-placed detail follows the art scale, so a generator passes its z heights in
+ * base (ART_SCALE 1) pixels and never scales them itself.
+ */
 export function proj(ox: number, oy: number, tx: number, ty: number, z = 0): P2 {
-  return { x: ox + (tx - ty) * HALF_W, y: oy + (tx + ty) * HALF_H - z };
+  return { x: ox + (tx - ty) * HALF_W, y: oy + (tx + ty) * HALF_H - z * ART_SCALE };
 }
 
 /** Even-odd scanline polygon fill with a per-pixel colour callback. */
@@ -207,6 +214,8 @@ export function drawCylinder(
   const c = proj(ox, oy, cx, cy, z0);
   const rx = r * HALF_W;
   const ry = r * HALF_H;
+  // z0 scaled through proj; h is a raw vertical pixel height, so scale it the same way here.
+  h *= ART_SCALE;
   // body
   for (let x = Math.floor(c.x - rx); x <= Math.ceil(c.x + rx); x++) {
     const nx = (x + 0.5 - c.x) / rx;

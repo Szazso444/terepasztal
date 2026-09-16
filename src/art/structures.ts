@@ -1,9 +1,18 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
+import { ART_SCALE } from '../engine/iso';
 import { addBridgeFrames } from './bridges';
 import { residence, windmill, upgradedWorks, CIVIC_OX, CIVIC_OY } from './civic';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder, proj, fillPoly } from './iso3d';
+
+/**
+ * Scale a base (ART_SCALE 1) pixel literal to the current art scale. Canvas sizes, sprite origins,
+ * every hand-placed rect/line/set offset and every atlas anchor pass through this. Tile-space args
+ * to proj/drawPrism/drawCylinder (cx, cy, len, wid, r, angle) and their z heights are NOT scaled
+ * here: proj and iso3d already carry the scale for those.
+ */
+const S = (n: number) => n * ART_SCALE;
 import {
   STATION_FAMILIES,
   BUILDING_SPRITES,
@@ -17,39 +26,39 @@ import {
   paving,
 } from './industry';
 
-const W = 96;
-const H = 84;
-const OX = 48;
-const OY = 68;
+const W = S(96);
+const H = S(84);
+const OX = S(48);
+const OY = S(68);
 
 function lantern(b: PixelBuf, tx: number, ty: number) {
   const p = proj(OX, OY, tx, ty);
   const x = Math.round(p.x);
   const y = Math.round(p.y);
-  b.rect(x, y - 14, 1, 14, PAL.iron[2]);
-  b.rect(x - 1, y - 17, 3, 3, PAL.iron[0]);
-  b.set(x, y - 16, PAL.amber);
-  b.set(x - 1, y - 18, PAL.iron[1]);
-  b.set(x, y - 18, PAL.iron[1]);
-  b.set(x + 1, y - 18, PAL.iron[1]);
+  b.rect(x, y - S(14), S(1), S(14), PAL.iron[2]);
+  b.rect(x - S(1), y - S(17), S(3), S(3), PAL.iron[0]);
+  b.set(x, y - S(16), PAL.amber);
+  b.set(x - S(1), y - S(18), PAL.iron[1]);
+  b.set(x, y - S(18), PAL.iron[1]);
+  b.set(x + S(1), y - S(18), PAL.iron[1]);
 }
 
 /**
  * Station nameboard: a pale board on two posts with dark lettering marks. It reads as a sign at
  * game zoom without spelling anything, and never carries baked text.
  */
-function nameboard(b: PixelBuf, tx: number, ty: number, w = 11) {
+function nameboard(b: PixelBuf, tx: number, ty: number, w = S(11)) {
   const p = proj(OX, OY, tx, ty);
   const x = Math.round(p.x);
   const y = Math.round(p.y);
-  for (const px of [x - Math.floor(w / 2) + 1, x + Math.floor(w / 2) - 1])
-    b.rect(px, y - 7, 1, 7, PAL.timber[2]);
-  b.rect(x - Math.floor(w / 2), y - 12, w, 5, PAL.white);
-  b.rect(x - Math.floor(w / 2), y - 12, w, 1, shade(PAL.white, 1.05));
-  b.rect(x - Math.floor(w / 2), y - 8, w, 1, shade(PAL.white, 0.78));
-  for (let i = 1; i < w - 1; i += 2) b.set(x - Math.floor(w / 2) + i, y - 10, PAL.outline);
-  b.set(x - Math.floor(w / 2) + 2, y - 11, PAL.outline);
-  b.set(x + Math.floor(w / 2) - 3, y - 11, PAL.outline);
+  for (const px of [x - Math.floor(w / 2) + S(1), x + Math.floor(w / 2) - S(1)])
+    b.rect(px, y - S(7), S(1), S(7), PAL.timber[2]);
+  b.rect(x - Math.floor(w / 2), y - S(12), w, S(5), PAL.white);
+  b.rect(x - Math.floor(w / 2), y - S(12), w, S(1), shade(PAL.white, 1.05));
+  b.rect(x - Math.floor(w / 2), y - S(8), w, S(1), shade(PAL.white, 0.78));
+  for (let i = S(1); i < w - S(1); i += S(2)) b.set(x - Math.floor(w / 2) + i, y - S(10), PAL.outline);
+  b.set(x - Math.floor(w / 2) + S(2), y - S(11), PAL.outline);
+  b.set(x + Math.floor(w / 2) - S(3), y - S(11), PAL.outline);
 }
 
 function stationL1(): PixelBuf {
@@ -72,16 +81,16 @@ function stationL1(): PixelBuf {
   });
   // door & window on the visible +y face
   const d = proj(OX, OY, 0.05, 0.07);
-  b.rect(Math.round(d.x) - 1, Math.round(d.y) - 9, 3, 8, PAL.trunkDark);
+  b.rect(Math.round(d.x) - S(1), Math.round(d.y) - S(9), S(3), S(8), PAL.trunkDark);
   const w = proj(OX, OY, -0.25, 0.07);
-  b.rect(Math.round(w.x) - 1, Math.round(w.y) - 10, 3, 3, PAL.amberDark);
+  b.rect(Math.round(w.x) - S(1), Math.round(w.y) - S(10), S(3), S(3), PAL.amberDark);
   // nameboard, bench and lantern on the front
-  nameboard(b, -0.3, 0.26, 9);
+  nameboard(b, -0.3, 0.26, S(9));
   lantern(b, 0.32, 0.3);
   const bench = proj(OX, OY, 0.05, 0.36);
-  b.rect(Math.round(bench.x) - 5, Math.round(bench.y) - 4, 10, 2, PAL.timber[1]);
-  b.rect(Math.round(bench.x) - 5, Math.round(bench.y) - 2, 1, 2, PAL.timber[2]);
-  b.rect(Math.round(bench.x) + 4, Math.round(bench.y) - 2, 1, 2, PAL.timber[2]);
+  b.rect(Math.round(bench.x) - S(5), Math.round(bench.y) - S(4), S(10), S(2), PAL.timber[1]);
+  b.rect(Math.round(bench.x) - S(5), Math.round(bench.y) - S(2), S(1), S(2), PAL.timber[2]);
+  b.rect(Math.round(bench.x) + S(4), Math.round(bench.y) - S(2), S(1), S(2), PAL.timber[2]);
   b.outline(PAL.outline, 170);
   // a few flagstones in front of the door, shadow under the shed
   ground(b, [
@@ -114,30 +123,30 @@ function stationL2(): PixelBuf {
   // windows row on +y face
   for (const tx of [-0.32, -0.1, 0.12]) {
     const w = proj(OX, OY, tx, 0.09);
-    b.rect(Math.round(w.x) - 1, Math.round(w.y) - 14, 3, 4, PAL.amberDark);
-    b.set(Math.round(w.x), Math.round(w.y) - 13, PAL.amber);
+    b.rect(Math.round(w.x) - S(1), Math.round(w.y) - S(14), S(3), S(4), PAL.amberDark);
+    b.set(Math.round(w.x), Math.round(w.y) - S(13), PAL.amber);
   }
   const d = proj(OX, OY, 0.2, 0.09);
-  b.rect(Math.round(d.x) - 2, Math.round(d.y) - 10, 4, 9, PAL.trunkDark);
+  b.rect(Math.round(d.x) - S(2), Math.round(d.y) - S(10), S(4), S(9), PAL.trunkDark);
   // canopy along the front edge
   const c0 = proj(OX, OY, -0.44, 0.22);
   const c1 = proj(OX, OY, 0.36, 0.22);
   const c2 = proj(OX, OY, 0.36, 0.42);
   const c3 = proj(OX, OY, -0.44, 0.42);
-  const lift = 13;
+  const lift = S(13);
   fillPoly(
     b,
     [
-      { x: c0.x, y: c0.y - lift - 2 },
-      { x: c1.x, y: c1.y - lift - 2 },
-      { x: c2.x, y: c2.y - lift + 2 },
-      { x: c3.x, y: c3.y - lift + 2 },
+      { x: c0.x, y: c0.y - lift - S(2) },
+      { x: c1.x, y: c1.y - lift - S(2) },
+      { x: c2.x, y: c2.y - lift + S(2) },
+      { x: c3.x, y: c3.y - lift + S(2) },
     ],
     (x, y) => ((x + y) % 2 === 0 ? PAL.roofSlate[1] : PAL.roofSlate[0]),
   );
   for (const p of [c2, c3, { x: (c2.x + c3.x) / 2, y: (c2.y + c3.y) / 2 }])
-    b.rect(Math.round(p.x), Math.round(p.y) - lift + 2, 1, lift - 2, PAL.iron[2]);
-  nameboard(b, -0.34, 0.42, 11);
+    b.rect(Math.round(p.x), Math.round(p.y) - lift + S(2), S(1), lift - S(2), PAL.iron[2]);
+  nameboard(b, -0.34, 0.42, S(11));
   lantern(b, 0.42, 0.34);
   b.outline(PAL.outline, 170);
   // paved strip under the canopy only, shadows under the building and the canopy
@@ -199,39 +208,39 @@ function stationL3(): PixelBuf {
     seed: 9,
   });
   const clock = proj(OX, OY, -0.42, 0.0);
-  b.rect(Math.round(clock.x) - 2, Math.round(clock.y) - 30, 5, 5, PAL.white);
-  b.set(Math.round(clock.x), Math.round(clock.y) - 28, PAL.outline);
-  b.set(Math.round(clock.x), Math.round(clock.y) - 29, PAL.outline);
-  b.set(Math.round(clock.x) + 1, Math.round(clock.y) - 28, PAL.outline);
+  b.rect(Math.round(clock.x) - S(2), Math.round(clock.y) - S(30), S(5), S(5), PAL.white);
+  b.set(Math.round(clock.x), Math.round(clock.y) - S(28), PAL.outline);
+  b.set(Math.round(clock.x), Math.round(clock.y) - S(29), PAL.outline);
+  b.set(Math.round(clock.x) + S(1), Math.round(clock.y) - S(28), PAL.outline);
   // arched windows
   for (const tx of [-0.2, -0.02, 0.16, 0.32]) {
     const w = proj(OX, OY, tx, 0.09);
-    b.rect(Math.round(w.x) - 1, Math.round(w.y) - 17, 3, 6, PAL.amberDark);
-    b.set(Math.round(w.x), Math.round(w.y) - 18, PAL.amberDark);
-    b.set(Math.round(w.x), Math.round(w.y) - 15, PAL.amber);
+    b.rect(Math.round(w.x) - S(1), Math.round(w.y) - S(17), S(3), S(6), PAL.amberDark);
+    b.set(Math.round(w.x), Math.round(w.y) - S(18), PAL.amberDark);
+    b.set(Math.round(w.x), Math.round(w.y) - S(15), PAL.amber);
   }
   // long iron canopy
   const c0 = proj(OX, OY, -0.5, 0.2);
   const c1 = proj(OX, OY, 0.5, 0.2);
   const c2 = proj(OX, OY, 0.5, 0.48);
   const c3 = proj(OX, OY, -0.5, 0.48);
-  const lift = 15;
+  const lift = S(15);
   fillPoly(
     b,
     [
-      { x: c0.x, y: c0.y - lift - 3 },
-      { x: c1.x, y: c1.y - lift - 3 },
-      { x: c2.x, y: c2.y - lift + 2 },
-      { x: c3.x, y: c3.y - lift + 2 },
+      { x: c0.x, y: c0.y - lift - S(3) },
+      { x: c1.x, y: c1.y - lift - S(3) },
+      { x: c2.x, y: c2.y - lift + S(2) },
+      { x: c3.x, y: c3.y - lift + S(2) },
     ],
     (x, y) => ((x + y) % 3 === 0 ? PAL.iron[3] : PAL.iron[1]),
   );
   for (let i = 0; i <= 3; i++) {
     const t = i / 3;
     const p = { x: c3.x + (c2.x - c3.x) * t, y: c3.y + (c2.y - c3.y) * t };
-    b.rect(Math.round(p.x), Math.round(p.y) - lift + 2, 1, lift - 2, PAL.iron[2]);
+    b.rect(Math.round(p.x), Math.round(p.y) - lift + S(2), S(1), lift - S(2), PAL.iron[2]);
   }
-  nameboard(b, 0.12, 0.48, 13);
+  nameboard(b, 0.12, 0.48, S(13));
   lantern(b, 0.46, 0.42);
   lantern(b, -0.4, 0.46);
   b.outline(PAL.outline, 170);
@@ -246,10 +255,10 @@ function stationL3(): PixelBuf {
 }
 
 /** Two-tile engine shed: gates on the ±x faces (rot 0) or the ±y faces (rot 1). */
-const DW = 176;
-const DH = 132;
-const DOX = 88;
-const DOY = 100;
+const DW = S(176);
+const DH = S(132);
+const DOX = S(88);
+const DOY = S(100);
 function depot2(rot: number): PixelBuf {
   const b = new PixelBuf(DW, DH);
   const along = rot % 2 === 0; // shed axis along +x (gates west / east)
@@ -277,7 +286,7 @@ function depot2(rot: number): PixelBuf {
         const a0 = along ? P(seg[0], c) : P(c, seg[0]);
         const a1 = along ? P(seg[1], c) : P(c, seg[1]);
         b.line(px(a0), py(a0), px(a1), py(a1), PAL.railLight);
-        b.line(px(a0), py(a0) + 1, px(a1), py(a1) + 1, PAL.railDark);
+        b.line(px(a0), py(a0) + S(1), px(a1), py(a1) + S(1), PAL.railDark);
       }
     }
   // the shed: long brick prism with a slate roof, ridge along the gate axis
@@ -302,9 +311,11 @@ function depot2(rot: number): PixelBuf {
     const dx = px(d);
     const dy = py(d);
     const sl = along ? 0.5 : -0.5;
-    // limestone surround one pixel outside the opening, then the dark interior
-    for (let y = -23; y < 1; y++) {
-      const w = y < -19 ? 4 + (y + 23) : 8;
+    // limestone surround one pixel outside the opening, then the dark interior. The scan is over
+    // scaled pixel rows; the arch width is computed from the base-scale row so its shape holds.
+    for (let y = S(-23); y < S(1); y++) {
+      const yb = y / ART_SCALE;
+      const w = S(yb < -19 ? 4 + (yb + 23) : 8);
       b.line(
         dx - w,
         dy + y + Math.round(-w * sl),
@@ -313,28 +324,29 @@ function depot2(rot: number): PixelBuf {
         PAL.stone[1],
       );
     }
-    for (let y = -21; y < 0; y++) {
-      const w = y < -18 ? 3 + (y + 21) : 6;
+    for (let y = S(-21); y < 0; y++) {
+      const yb = y / ART_SCALE;
+      const w = S(yb < -18 ? 3 + (yb + 21) : 6);
       // interior: darkest at the back, a faint warm glow deep inside the shed
-      const col = y > -4 ? [22, 20, 20] : y < -15 ? shade(PAL.iron[2], 0.5) : [30, 28, 28];
+      const col = yb > -4 ? [22, 20, 20] : yb < -15 ? shade(PAL.iron[2], 0.5) : [30, 28, 28];
       b.line(dx - w, dy + y + Math.round(-w * sl), dx + w, dy + y + Math.round(w * sl), col as RGB);
     }
-    b.set(dx, dy - 8, PAL.amberDark);
-    b.set(dx, dy - 20, PAL.amber);
+    b.set(dx, dy - S(8), PAL.amberDark);
+    b.set(dx, dy - S(20), PAL.amber);
   }
   // roof vents and a brick chimney at the back corner
   for (const t of [-0.35, 0, 0.35]) {
     const v = along ? P(t, -0.2, 44) : P(-0.2, t, 44);
-    b.rect(px(v) - 2, py(v) - 3, 4, 3, PAL.iron[1]);
+    b.rect(px(v) - S(2), py(v) - S(3), S(4), S(3), PAL.iron[1]);
   }
   const ch = P(-0.6, -0.6, 40);
-  b.rect(px(ch) - 2, py(ch) - 10, 4, 10, PAL.rust[2]);
-  b.rect(px(ch) - 3, py(ch) - 11, 6, 2, PAL.rust[0]);
+  b.rect(px(ch) - S(2), py(ch) - S(10), S(4), S(10), PAL.rust[2]);
+  b.rect(px(ch) - S(3), py(ch) - S(11), S(6), S(2), PAL.rust[0]);
   // water crane and coal stage beside the near gates
   const cr = along ? P(0.95, -0.95) : P(-0.95, 0.95);
-  b.rect(px(cr) - 1, py(cr) - 22, 2, 22, PAL.iron[2]);
-  b.rect(px(cr) - 1, py(cr) - 22, 8, 2, PAL.iron[1]);
-  b.set(px(cr) + 6, py(cr) - 19, PAL.cyan);
+  b.rect(px(cr) - S(1), py(cr) - S(22), S(2), S(22), PAL.iron[2]);
+  b.rect(px(cr) - S(1), py(cr) - S(22), S(8), S(2), PAL.iron[1]);
+  b.set(px(cr) + S(6), py(cr) - S(19), PAL.cyan);
   drawCylinder(
     b,
     DOX,
@@ -360,17 +372,17 @@ function depot2(rot: number): PixelBuf {
  */
 export const SEMAPHORE_STEPS = 4;
 function semaphore(m: number, d: number): PixelBuf {
-  const W = 26;
-  const H = 46;
+  const W = S(26);
+  const H = S(46);
   const b = new PixelBuf(W, H);
-  const postX = 14;
+  const postX = S(14);
   // post, base and ladder
-  b.rect(postX, 6, 2, 38, PAL.iron[2]);
-  b.rect(postX - 1, 6, 4, 2, PAL.iron[1]);
-  b.rect(postX - 2, 42, 6, 3, PAL.iron[0]);
-  for (let y = 12; y < 42; y += 3) b.rect(postX + 3, y, 3, 1, PAL.iron[3]);
-  b.rect(postX + 3, 10, 1, 32, PAL.iron[1]);
-  b.rect(postX + 5, 10, 1, 32, PAL.iron[1]);
+  b.rect(postX, S(6), S(2), S(38), PAL.iron[2]);
+  b.rect(postX - S(1), S(6), S(4), S(2), PAL.iron[1]);
+  b.rect(postX - S(2), S(42), S(6), S(3), PAL.iron[0]);
+  for (let y = S(12); y < S(42); y += S(3)) b.rect(postX + S(3), y, S(3), S(1), PAL.iron[3]);
+  b.rect(postX + S(3), S(10), S(1), S(32), PAL.iron[1]);
+  b.rect(postX + S(5), S(10), S(1), S(32), PAL.iron[1]);
   const arm = (
     px: number,
     py: number,
@@ -386,10 +398,10 @@ function semaphore(m: number, d: number): PixelBuf {
       const x = Math.round(px - ca * i);
       const y = Math.round(py - sa * i);
       // white stripe near the tip
-      const stripe = i >= len - 4 && i <= len - 2;
+      const stripe = i >= len - S(4) && i <= len - S(2);
       const c: RGB = stripe ? PAL.white : col;
       b.set(x, y, c);
-      b.set(x, y + 1, stripe ? [190, 190, 184] : dark);
+      b.set(x, y + S(1), stripe ? [190, 190, 184] : dark);
       if (fishtail && i === len) {
         b.set(x, y, PAL.outline);
       }
@@ -399,16 +411,16 @@ function semaphore(m: number, d: number): PixelBuf {
   };
   const up = (i: number) => (Math.PI / 4) * (i / (SEMAPHORE_STEPS - 1));
   // home arm: red, raises 45° for clear
-  arm(postX, 8, up(m), 12, PAL.red, [110, 36, 30], false);
+  arm(postX, S(8), up(m), S(12), PAL.red, [110, 36, 30], false);
   // distant arm: yellow fishtail, drops 45° for clear
-  arm(postX, 24, -up(d), 11, PAL.amber, [140, 96, 30], true);
+  arm(postX, S(24), -up(d), S(11), PAL.amber, [140, 96, 30], true);
   // lamps: colour they currently show
   const homeClear = m >= SEMAPHORE_STEPS - 1;
   const distClear = d >= SEMAPHORE_STEPS - 1;
-  b.rect(postX + 2, 7, 3, 3, homeClear ? PAL.cyan : PAL.red);
-  b.set(postX + 3, 8, homeClear ? [190, 240, 250] : [230, 120, 100]);
-  b.rect(postX + 2, 23, 3, 3, distClear ? PAL.cyan : PAL.amber);
-  b.set(postX + 3, 24, distClear ? [190, 240, 250] : [240, 200, 120]);
+  b.rect(postX + S(2), S(7), S(3), S(3), homeClear ? PAL.cyan : PAL.red);
+  b.set(postX + S(3), S(8), homeClear ? [190, 240, 250] : [230, 120, 100]);
+  b.rect(postX + S(2), S(23), S(3), S(3), distClear ? PAL.cyan : PAL.amber);
+  b.set(postX + S(3), S(24), distClear ? [190, 240, 250] : [240, 200, 120]);
   b.outline(PAL.outline, 170);
   return b;
 }
@@ -429,9 +441,9 @@ function supplyOverlay(
     b.line(Math.round(a.x), Math.round(a.y), Math.round(c.x), Math.round(c.y), [200, 190, 120]);
     b.line(
       Math.round(a.x),
-      Math.round(a.y) + 1,
+      Math.round(a.y) + S(1),
       Math.round(c.x),
-      Math.round(c.y) + 1,
+      Math.round(c.y) + S(1),
       [120, 110, 60],
     );
     if (axis === 'x') {
@@ -448,15 +460,17 @@ function supplyOverlay(
     return b;
   }
   const hv = kind === 'hv_catenary';
+  // mastH stays in base pixels: it feeds proj as a z height (proj scales it) and is scaled with
+  // S() only where it is used as a raw pixel offset or size.
   const mastH = hv ? 34 : 26;
   // mast at the +side edge, bracket over the track, wire along the tile at wire height
   const m = proj(OX, OY, 0.42 * side.x, 0.42 * side.y);
   const mx = Math.round(m.x);
   const my = Math.round(m.y);
-  b.rect(mx - 1, my - mastH, hv ? 3 : 2, mastH, PAL.iron[1]);
-  b.rect(mx - 2, my - 1, hv ? 5 : 4, 2, PAL.iron[0]);
+  b.rect(mx - S(1), my - S(mastH), hv ? S(3) : S(2), S(mastH), PAL.iron[1]);
+  b.rect(mx - S(2), my - S(1), hv ? S(5) : S(4), S(2), PAL.iron[0]);
   const over = proj(OX, OY, 0, 0, mastH - 4);
-  b.line(mx, my - mastH + 3, Math.round(over.x), Math.round(over.y), PAL.iron[2]);
+  b.line(mx, my - S(mastH) + S(3), Math.round(over.x), Math.round(over.y), PAL.iron[2]);
   const wireZ = mastH - 6;
   const a = proj(OX, OY, -0.5 * dir.x, -0.5 * dir.y, wireZ);
   const c = proj(OX, OY, 0.5 * dir.x, 0.5 * dir.y, wireZ);
@@ -464,9 +478,9 @@ function supplyOverlay(
   if (hv)
     b.line(
       Math.round(a.x),
-      Math.round(a.y) - 2,
+      Math.round(a.y) - S(2),
       Math.round(c.x),
-      Math.round(c.y) - 2,
+      Math.round(c.y) - S(2),
       [190, 170, 120],
     );
   if (axis === 'x') {
@@ -475,7 +489,7 @@ function supplyOverlay(
     b.line(Math.round(a2.x), Math.round(a2.y), Math.round(c2.x), Math.round(c2.y), [190, 170, 120]);
   }
   // insulator
-  b.set(Math.round(over.x), Math.round(over.y) + 1, PAL.white);
+  b.set(Math.round(over.x), Math.round(over.y) + S(1), PAL.white);
   b.outline(PAL.outline, 150);
   return b;
 }
@@ -494,37 +508,40 @@ function waterTower(): PixelBuf {
     [-0.16, 0.16],
   ]) {
     const p = proj(OX, OY, lx, ly);
-    b.rect(Math.round(p.x) - 1, Math.round(p.y) - 22, 2, 22, PAL.timber[2]);
+    b.rect(Math.round(p.x) - S(1), Math.round(p.y) - S(22), S(2), S(22), PAL.timber[2]);
   }
   drawCylinder(b, OX, OY, 0, 0, 0.19, 22, 18, PAL.timber, PAL.timber[2], 33);
   const band = proj(OX, OY, 0, 0);
-  for (let x = -12; x <= 12; x++) {
-    const y = Math.round(band.y) - 30 + Math.round(Math.sqrt(Math.max(0, 1 - (x / 12) ** 2)) * 6);
+  for (let x = -S(12); x <= S(12); x++) {
+    const xb = x / ART_SCALE;
+    const y =
+      Math.round(band.y) - S(30) + S(Math.round(Math.sqrt(Math.max(0, 1 - (xb / 12) ** 2)) * 6));
     b.set(Math.round(band.x) + x, y, PAL.iron[1]);
   }
   const top = proj(OX, OY, 0, 0, 40);
-  for (let r = 12; r >= 0; r--) {
-    const y = Math.round(top.y) - (12 - r);
+  for (let r = S(12); r >= 0; r--) {
+    const y = Math.round(top.y) - (S(12) - r);
     for (let x = -r; x <= r; x++) b.set(Math.round(top.x) + x, y, PAL.roofSlate[(x + r) % 3]);
   }
   const sp = proj(OX, OY, 0.22, 0.05);
-  b.rect(Math.round(sp.x) - 2, Math.round(sp.y) - 26, 5, 2, PAL.iron[2]);
-  b.rect(Math.round(sp.x) + 2, Math.round(sp.y) - 26, 2, 6, PAL.iron[2]);
+  b.rect(Math.round(sp.x) - S(2), Math.round(sp.y) - S(26), S(5), S(2), PAL.iron[2]);
+  b.rect(Math.round(sp.x) + S(2), Math.round(sp.y) - S(26), S(2), S(6), PAL.iron[2]);
   b.outline(PAL.outline, 170);
   return b;
 }
 
 /** Amber "!" marker shown over stations that lost their platform track. */
 function warnMarker(color: RGB = PAL.amber, shape: 'triangle' | 'disc' = 'triangle'): PixelBuf {
-  const b = new PixelBuf(14, 16);
+  const b = new PixelBuf(S(14), S(16));
   if (shape === 'triangle') {
-    for (let y = 0; y < 14; y++) {
-      const hw = Math.round((y / 13) * 6);
-      for (let x = 7 - hw; x <= 7 + hw - 1; x++) b.set(x, y + 1, color);
+    for (let y = 0; y < S(14); y++) {
+      const yb = y / ART_SCALE;
+      const hw = S(Math.round((yb / 13) * 6));
+      for (let x = S(7) - hw; x <= S(7) + hw - S(1); x++) b.set(x, y + S(1), color);
     }
-  } else b.ellipse(7, 8, 6, 6, [color, shade(color, 0.85)], 3, 0.3);
-  b.rect(6, 4, 2, 6, PAL.outline);
-  b.rect(6, 11, 2, 2, PAL.outline);
+  } else b.ellipse(S(7), S(8), S(6), S(6), [color, shade(color, 0.85)], 3, 0.3);
+  b.rect(S(6), S(4), S(2), S(6), PAL.outline);
+  b.rect(S(6), S(11), S(2), S(2), PAL.outline);
   b.outline(PAL.outline, 220);
   return b;
 }
@@ -534,11 +551,11 @@ function warnMarker(color: RGB = PAL.amber, shape: 'triangle' | 'disc' = 'triang
  * as passenger buildings, so they never take the works' industrial annex.
  */
 function upgradedStation(base: PixelBuf, level: number): PixelBuf {
-  const b = new PixelBuf(96, 184);
-  b.blit(base, 0, CIVIC_OY - 68);
+  const b = new PixelBuf(S(96), S(184));
+  b.blit(base, 0, CIVIC_OY - S(68));
   const P = (tx: number, ty: number, z = 0) => proj(CIVIC_OX, CIVIC_OY, tx, ty, z);
   // extra canopy bay beyond the -x end of the hall, on slender iron columns
-  const lift = 15;
+  const lift = S(15);
   const k0 = P(-0.5, 0.2);
   const k1 = P(-0.5, 0.48);
   const k2 = P(-0.26, 0.48);
@@ -546,24 +563,24 @@ function upgradedStation(base: PixelBuf, level: number): PixelBuf {
   fillPoly(
     b,
     [
-      { x: k0.x, y: k0.y - lift - 3 },
-      { x: k3.x, y: k3.y - lift - 3 },
-      { x: k2.x, y: k2.y - lift + 2 },
-      { x: k1.x, y: k1.y - lift + 2 },
+      { x: k0.x, y: k0.y - lift - S(3) },
+      { x: k3.x, y: k3.y - lift - S(3) },
+      { x: k2.x, y: k2.y - lift + S(2) },
+      { x: k1.x, y: k1.y - lift + S(2) },
     ],
     (x, y) => ((x + y) % 3 === 0 ? PAL.iron[3] : PAL.iron[1]),
   );
   for (const p of [k1, k2])
-    b.rect(Math.round(p.x), Math.round(p.y) - lift + 2, 1, lift - 2, PAL.iron[2]);
+    b.rect(Math.round(p.x), Math.round(p.y) - lift + S(2), S(1), lift - S(2), PAL.iron[2]);
   // platform edge: a pale kerb line along the front of the whole platform
   const e0 = P(-0.5, 0.5);
   const e1 = P(0.5, 0.5);
   b.line(Math.round(e0.x), Math.round(e0.y), Math.round(e1.x), Math.round(e1.y), PAL.stone[1]);
   b.line(
     Math.round(e0.x),
-    Math.round(e0.y) + 1,
+    Math.round(e0.y) + S(1),
     Math.round(e1.x),
-    Math.round(e1.y) + 1,
+    Math.round(e1.y) + S(1),
     PAL.stone[2],
   );
   // benches and a luggage trolley under the new bay
@@ -572,15 +589,15 @@ function upgradedStation(base: PixelBuf, level: number): PixelBuf {
     [-0.3, 0.42],
   ]) {
     const p = P(bx, by);
-    b.rect(Math.round(p.x) - 4, Math.round(p.y) - 4, 9, 2, PAL.timber[1]);
-    b.rect(Math.round(p.x) - 4, Math.round(p.y) - 2, 1, 2, PAL.timber[2]);
-    b.rect(Math.round(p.x) + 4, Math.round(p.y) - 2, 1, 2, PAL.timber[2]);
+    b.rect(Math.round(p.x) - S(4), Math.round(p.y) - S(4), S(9), S(2), PAL.timber[1]);
+    b.rect(Math.round(p.x) - S(4), Math.round(p.y) - S(2), S(1), S(2), PAL.timber[2]);
+    b.rect(Math.round(p.x) + S(4), Math.round(p.y) - S(2), S(1), S(2), PAL.timber[2]);
   }
   const tr = P(-0.18, 0.4);
-  b.rect(Math.round(tr.x) - 4, Math.round(tr.y) - 5, 8, 4, PAL.timber[0]);
-  b.rect(Math.round(tr.x) - 4, Math.round(tr.y) - 6, 8, 1, PAL.timber[1]);
-  b.set(Math.round(tr.x) - 3, Math.round(tr.y) - 1, PAL.iron[2]);
-  b.set(Math.round(tr.x) + 3, Math.round(tr.y) - 1, PAL.iron[2]);
+  b.rect(Math.round(tr.x) - S(4), Math.round(tr.y) - S(5), S(8), S(4), PAL.timber[0]);
+  b.rect(Math.round(tr.x) - S(4), Math.round(tr.y) - S(6), S(8), S(1), PAL.timber[1]);
+  b.set(Math.round(tr.x) - S(3), Math.round(tr.y) - S(1), PAL.iron[2]);
+  b.set(Math.round(tr.x) + S(3), Math.round(tr.y) - S(1), PAL.iron[2]);
   if (level >= 4) {
     // parcels office at the far end: cream walls, slate roof, one lit window
     drawPrism(b, {
@@ -599,8 +616,8 @@ function upgradedStation(base: PixelBuf, level: number): PixelBuf {
       seed: 41,
     });
     const w = P(-0.34, -0.19);
-    b.rect(Math.round(w.x) - 1, Math.round(w.y) - 10, 3, 4, PAL.amberDark);
-    b.set(Math.round(w.x), Math.round(w.y) - 9, PAL.amber);
+    b.rect(Math.round(w.x) - S(1), Math.round(w.y) - S(10), S(3), S(4), PAL.amberDark);
+    b.set(Math.round(w.x), Math.round(w.y) - S(9), PAL.amber);
   }
   b.outline(PAL.outline, 170);
   return b;
@@ -624,10 +641,10 @@ export function generateStructuresAtlas(): AtlasImage {
     for (let l = 2; l <= 5; l++) {
       const b = depot2(r);
       for (let i = 0; i < l - 1; i++) {
-        const x = DOX - 18 + i * 10,
-          y = DOY - 32 - i * 2;
-        b.rect(x, y, 5, 8, PAL.iron[1]);
-        b.rect(x - 1, y - 2, 7, 3, PAL.iron[0]);
+        const x = DOX - S(18) + i * S(10),
+          y = DOY - S(32) - i * S(2);
+        b.rect(x, y, S(5), S(8), PAL.iron[1]);
+        b.rect(x - S(1), y - S(2), S(7), S(3), PAL.iron[0]);
       }
       ab.add(`structures/depot_r${r}_lv${l}`, b.toImageData(), DOX, DOY);
     }
@@ -638,15 +655,15 @@ export function generateStructuresAtlas(): AtlasImage {
       ab.add(`structures/supply_${k}_${ax}`, supplyOverlay(k, ax).toImageData(), OX, OY);
   for (let m = 0; m < SEMAPHORE_STEPS; m++)
     for (let d = 0; d < SEMAPHORE_STEPS; d++)
-      ab.add(semaphoreFrame(m, d), semaphore(m, d).toImageData(), 15, 44);
+      ab.add(semaphoreFrame(m, d), semaphore(m, d).toImageData(), S(15), S(44));
   // the old names stay valid for the toolbar preview and old callers
-  ab.add('structures/signal', semaphore(0, 0).toImageData(), 15, 44);
-  ab.add('structures/signal_red', semaphore(0, 0).toImageData(), 15, 44);
-  ab.add('structures/signal_green', semaphore(3, 3).toImageData(), 15, 44);
+  ab.add('structures/signal', semaphore(0, 0).toImageData(), S(15), S(44));
+  ab.add('structures/signal_red', semaphore(0, 0).toImageData(), S(15), S(44));
+  ab.add('structures/signal_green', semaphore(3, 3).toImageData(), S(15), S(44));
   ab.add('structures/water_tower', waterTower().toImageData(), OX, OY);
-  ab.add('structures/warn', warnMarker().toImageData(), 7, 15);
-  ab.add('structures/alert', warnMarker(PAL.red, 'disc').toImageData(), 7, 15);
-  ab.add('structures/note', warnMarker(PAL.cyanDark, 'disc').toImageData(), 7, 15);
+  ab.add('structures/warn', warnMarker().toImageData(), S(7), S(15));
+  ab.add('structures/alert', warnMarker(PAL.red, 'disc').toImageData(), S(7), S(15));
+  ab.add('structures/note', warnMarker(PAL.cyanDark, 'disc').toImageData(), S(7), S(15));
   for (const [fam, gen] of Object.entries(STATION_FAMILIES))
     for (let l = 1; l <= 5; l++) {
       if (l <= 3) ab.add(`structures/${fam}_${l}`, gen(l).toImageData(), OX, OY);
@@ -681,6 +698,6 @@ export function generateStructuresAtlas(): AtlasImage {
       CIVIC_OX,
       CIVIC_OY,
     );
-  ab.add('structures/power_line', powerLine().toImageData(), 8, 35);
-  return ab.build(2048);
+  ab.add('structures/power_line', powerLine().toImageData(), S(8), S(35));
+  return ab.build(4096);
 }
