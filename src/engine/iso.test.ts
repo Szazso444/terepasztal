@@ -19,7 +19,7 @@ import {
 } from './iso';
 
 describe('projection', () => {
-  it('is 2:1 on a 64 x 32 tile', () => {
+  it('is 2:1 on an ART_SCALE-scaled tile', () => {
     expect(TILE_W).toBe(2 * TILE_H);
     // One step along +tx moves half a tile right and a quarter tile down: the ratio every
     // external sprite source (Blender included) has to match.

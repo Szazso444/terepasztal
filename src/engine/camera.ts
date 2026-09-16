@@ -1,6 +1,8 @@
-import { mapWorldBounds } from './iso';
+import { mapWorldBounds, TILE_W, ART_SCALE } from './iso';
 
-export const ZOOM_STEPS = [0.5, 0.75, 1, 1.5, 2] as const;
+// The world is now ART_SCALE times larger in pixels, so each zoom level must divide by ART_SCALE
+// to preserve the historical field of view (zoom index 2 still shows the same amount of world).
+export const ZOOM_STEPS = [0.5, 0.75, 1, 1.5, 2].map((z) => z / ART_SCALE) as readonly number[];
 
 /** RTS camera: centre point in world pixels plus a discrete zoom. */
 export class Camera {
@@ -55,7 +57,8 @@ export class Camera {
     const hw = this.viewW / 2 / this.zoom;
     const hh = this.viewH / 2 / this.zoom;
     const b = this.bounds;
-    const margin = 64;
+    // One-tile pan margin: 64 was the old TILE_W, so track the tile as it scales.
+    const margin = TILE_W;
     const minX = b.minX + hw - margin;
     const maxX = b.maxX - hw + margin;
     const minY = b.minY + hh - margin;

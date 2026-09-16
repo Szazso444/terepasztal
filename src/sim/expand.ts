@@ -1,5 +1,6 @@
 import type { SaveGame } from './save';
 import type { MapGenParams } from '../world/mapgen';
+import { HALF_W } from '../engine/iso';
 
 /** Chunk edge length in tiles (must match `emptyMap`). */
 export const CHUNK_TILES = 32;
@@ -60,8 +61,8 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
     });
     save.regions = owned;
   }
-  // camera: iso shift of (d, d) tiles is straight down
-  save.camera = { ...save.camera, y: save.camera.y + d * 32 };
+  // camera: iso shift of (d, d) tiles is straight down (d tiles * HALF_W world px each)
+  save.camera = { ...save.camera, y: save.camera.y + d * HALF_W };
   void oldRY;
   return save;
 }

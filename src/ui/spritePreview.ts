@@ -9,6 +9,7 @@ import {
   DRAWN_FACINGS,
   mirrorFacing,
 } from '../sim/body';
+import { HALF_W, HALF_H } from '../engine/iso';
 import { el } from './dom';
 
 const caches = new WeakMap<AtlasRegistry, Map<string, string>>();
@@ -70,8 +71,8 @@ export function vehiclePreview(atlas: AtlasRegistry, id: string, facing = 0, sca
       flip = !DRAWN_FACINGS.has(f);
     layers.push({
       key: key(flip ? mirrorFacing(f) : f),
-      x: (x - y) * 32,
-      y: (x + y) * 16,
+      x: (x - y) * HALF_W,
+      y: (x + y) * HALF_H,
       flip,
       z,
     });
