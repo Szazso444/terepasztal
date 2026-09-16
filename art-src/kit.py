@@ -110,6 +110,23 @@ class Kit:
         f.append(tuple(range(2 * seg - 1, seg - 1, -1)))  # top
         return self._mesh(name, v, f, mat)
 
+    def panel(self, name, center, u, v, mat):
+        """A flat quad centred on `center`, spanning center +-u +-v (u, v world half-edges).
+
+        Unlike box/roof this takes an arbitrary orientation, so a sail or blade can be built in the
+        camera's picture plane rather than aligned to the world axes.
+        """
+        cx, cy, cz = center
+        ux, uy, uz = u
+        vx, vy, vz = v
+        verts = [
+            (cx - ux - vx, cy - uy - vy, cz - uz - vz),
+            (cx + ux - vx, cy + uy - vy, cz + uz - vz),
+            (cx + ux + vx, cy + uy + vy, cz + uz + vz),
+            (cx - ux + vx, cy - uy + vy, cz - uz + vz),
+        ]
+        return self._mesh(name, verts, [(0, 1, 2, 3)], mat)
+
     def _mesh(self, name, verts, faces, mat):
         me = bpy.data.meshes.new(name)
         me.from_pydata(verts, [], faces)
@@ -136,7 +153,9 @@ class Kit:
         w = bpy.data.worlds.new("sky")
         w.use_nodes = True
         bg = w.node_tree.nodes["Background"]
-        bg.inputs[0].default_value = srgb(150, 178, 190)
+        # a warm-neutral sky bounce: a cold blue fill greys the limestone and slate out of the
+        # pastoral warmth the boards carry, so the fill leans to daylight, not to shade.
+        bg.inputs[0].default_value = srgb(196, 194, 182)
         bg.inputs[1].default_value = fill
         self.scene.world = w
 

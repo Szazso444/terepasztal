@@ -18,6 +18,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pixelate } from './pixelate.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PX_PER_TILE = Number(process.env.PX_PER_TILE ?? 64);
@@ -63,6 +64,9 @@ for (const { module, key } of assets) {
   );
   const m = /ANCHOR (\{.*\})/.exec(log);
   if (!m) throw new Error(`no anchor from ${module}:\n${log}`);
+  // Cycles renders smooth and full-colour; snap it into the game's hard-edged, palette-limited
+  // medium before the packer ever sees it, so a baked frame sits beside a generated one.
+  pixelate(png);
   (anchors[g] ??= {})[key] = JSON.parse(m[1]);
   console.log('ok');
 }
