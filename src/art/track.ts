@@ -1,5 +1,5 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
-import { Dir } from '../engine/iso';
+import { Dir, ART_SCALE } from '../engine/iso';
 import { hash2 } from '../engine/rng';
 import { PAL, mix, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
@@ -18,10 +18,17 @@ import {
   type Link,
 } from '../world/track';
 
-const W = 64;
-const H = 40; // a little taller than the tile for bridge posts
-const OX = 32;
-const OY = 16;
+/**
+ * Scale a base (ART_SCALE 1) pixel literal to the current art scale. Canvas size, sprite origin
+ * and every hand-placed rect/line/set offset pass through this. proj's tile args (tx, ty) and its
+ * z heights are NOT scaled here: proj already carries the scale for those.
+ */
+const S = (n: number) => n * ART_SCALE;
+
+const W = S(64);
+const H = S(40); // a little taller than the tile for bridge posts
+const OX = S(32);
+const OY = S(16);
 
 interface RailStyle {
   ballast: boolean;
@@ -87,7 +94,13 @@ function drawRails(b: PixelBuf, pts: Vec2[], opts: RailStyle) {
     const a = proj(OX, OY, p.x + nx * 0.24, p.y + ny * 0.24);
     const c = proj(OX, OY, p.x - nx * 0.24, p.y - ny * 0.24);
     b.line(Math.round(a.x), Math.round(a.y), Math.round(c.x), Math.round(c.y), sleeper);
-    b.line(Math.round(a.x), Math.round(a.y) + 1, Math.round(c.x), Math.round(c.y) + 1, sleeperDark);
+    b.line(
+      Math.round(a.x),
+      Math.round(a.y) + S(1),
+      Math.round(c.x),
+      Math.round(c.y) + S(1),
+      sleeperDark,
+    );
   }
   // rails: dark then light highlight one px up
   for (const side of [-gauge, gauge]) {
@@ -107,7 +120,7 @@ function drawRails(b: PixelBuf, pts: Vec2[], opts: RailStyle) {
     // web in shadow, then a bright steel railhead: rails stay the strongest line on the tile,
     // including where the track runs over dark forest floor
     for (let i = 0; i + 1 < rail.length; i++)
-      b.line(rail[i].x, rail[i].y + 1, rail[i + 1].x, rail[i + 1].y + 1, PAL.railDark);
+      b.line(rail[i].x, rail[i].y + S(1), rail[i + 1].x, rail[i + 1].y + S(1), PAL.railDark);
     const head = mix(PAL.rail, PAL.railLight, 0.45);
     for (let i = 0; i + 1 < rail.length; i++)
       b.line(rail[i].x, rail[i].y, rail[i + 1].x, rail[i + 1].y, head);
@@ -128,8 +141,8 @@ function bridgeDeck(b: PixelBuf, link: Link, seed: number) {
     const ny = dx / l;
     for (const s of [-0.36, 0.36]) {
       const sp = proj(OX, OY, p.x + nx * s, p.y + ny * s);
-      b.rect(Math.round(sp.x) - 1, Math.round(sp.y), 2, 9, PAL.timber[2]);
-      b.set(Math.round(sp.x) - 1, Math.round(sp.y), PAL.timber[1]);
+      b.rect(Math.round(sp.x) - S(1), Math.round(sp.y), S(2), S(9), PAL.timber[2]);
+      b.set(Math.round(sp.x) - S(1), Math.round(sp.y), PAL.timber[1]);
     }
   }
   // planks across
@@ -181,9 +194,9 @@ function pieceSprite(kind: TrackKind, rot: number, cls: TrackClass, cls2?: Track
         shared === Dir.E ? 0.28 : shared === Dir.W ? -0.28 : 0,
         shared === Dir.S ? 0.28 : shared === Dir.N ? -0.28 : 0,
       );
-      b.rect(Math.round(sp.x) + 4, Math.round(sp.y) - 3, 3, 3, PAL.iron[0]);
-      b.set(Math.round(sp.x) + 4, Math.round(sp.y) - 3, PAL.iron[3]);
-      b.set(Math.round(sp.x) + 5, Math.round(sp.y) - 4, PAL.amber);
+      b.rect(Math.round(sp.x) + S(4), Math.round(sp.y) - S(3), S(3), S(3), PAL.iron[0]);
+      b.set(Math.round(sp.x) + S(4), Math.round(sp.y) - S(3), PAL.iron[3]);
+      b.set(Math.round(sp.x) + S(5), Math.round(sp.y) - S(4), PAL.amber);
     }
   }
   return b;
