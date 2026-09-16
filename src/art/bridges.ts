@@ -1,10 +1,12 @@
 import type { AtlasBuilder } from '../engine/atlas';
+import { ART_SCALE, HALF_W, HALF_H } from '../engine/iso';
 import { PixelBuf } from './pixels';
 import { mix, PAL, type RGB } from './palette';
 import { drawPrism, fillPoly } from './iso3d';
 
-const OX = 48,
-  OY = 38;
+const S = (n: number) => n * ART_SCALE;
+const OX = S(48),
+  OY = S(38);
 /** Connected timber trusses and masonry arches. Decks are below track; near rails occlude wheels. */
 function span(
   material: 'wood' | 'stone',
@@ -14,11 +16,13 @@ function span(
   edge: number,
   rail: boolean,
 ) {
-  const b = new PixelBuf(96, 88);
+  const b = new PixelBuf(S(96), S(88));
   const pt = (l: number, w: number, z: number) => {
     const x = axis ? l : w,
       y = axis ? w : l;
-    return { x: OX + (x - y) * 32, y: OY + (x + y) * 16 - z };
+    // Horizontal is the tile projection (HALF_W/HALF_H carry the scale); z is a raw base-pixel
+    // vertical offset, so it scales through S() here — this file's manual counterpart to proj().
+    return { x: OX + (x - y) * HALF_W, y: OY + (x + y) * HALF_H - S(z) };
   };
   const line = (
     l: number,
@@ -58,18 +62,20 @@ function span(
       for (let x = 0; x < support.w; x++) {
         const c = support.get(x, y);
         if (!c) continue;
+        // depth is a scaled-pixel distance below the pier foot, so its band limits and falloff
+        // divisor are base pixels scaled with S(); the alpha (150) and mix ratios are not pixels.
         const depth = y - p.y;
-        if (depth > 5) continue;
+        if (depth > S(5)) continue;
         b.set(
           x,
           y,
-          mix(c, PAL.water[2], depth >= 0 ? 0.7 : depth > -4 ? 0.3 : 0),
-          depth >= 0 ? Math.round(150 * (1 - depth / 6)) : 255,
+          mix(c, PAL.water[2], depth >= 0 ? 0.7 : depth > S(-4) ? 0.3 : 0),
+          depth >= 0 ? Math.round(150 * (1 - depth / S(6))) : 255,
         );
       }
     // Broken, shallow ripples meet the wet edge without drawing a solid ring around the pier.
-    b.line(p.x - 6, p.y, p.x - 3, p.y + 1, PAL.water[3]);
-    b.line(p.x + 2, p.y + 2, p.x + 6, p.y + 1, PAL.water[1]);
+    b.line(p.x - S(6), p.y, p.x - S(3), p.y + S(1), PAL.water[3]);
+    b.line(p.x + S(2), p.y + S(2), p.x + S(6), p.y + S(1), PAL.water[1]);
   };
   if (!rail) {
     drawPrism(b, {
@@ -106,32 +112,32 @@ function span(
         for (let q = 0; q < 16; q++) {
           const l = -0.5 + q / 16,
             l2 = l + 1 / 16;
-          line(l, w, arc(l), l2, w, arc(l2), side[0], 4);
+          line(l, w, arc(l), l2, w, arc(l2), side[0], S(4));
         }
       } else {
-        if (start) line(-0.46, w, -23, 0.42, w, -6, side[1], 2);
-        if (end) line(-0.42, w, -6, 0.46, w, -23, side[1], 2);
+        if (start) line(-0.46, w, -23, 0.42, w, -6, side[1], S(2));
+        if (end) line(-0.42, w, -6, 0.46, w, -23, side[1], S(2));
       }
     }
   }
   // Far fence belongs to the deck pass. Near fence belongs to the object pass.
   const w = rail ? 0.32 : -0.32;
   if (stone) {
-    line(-0.5, w, 2, 0.5, w, 2, side[1], 3);
-    for (const l of [-0.5, 0, 0.5]) line(l, w, 0, l, w, 4, side[0], 2);
+    line(-0.5, w, 2, 0.5, w, 2, side[1], S(3));
+    for (const l of [-0.5, 0, 0.5]) line(l, w, 0, l, w, 4, side[0], S(2));
   } else {
     const height = (v: number) =>
       n === 1 ? 9 : Math.min(15, 6 + Math.min(phase + v + 0.5, n - phase - v - 0.5) * 10);
-    line(-0.5, w, 1, 0.5, w, 1, side[2], 2);
-    line(-0.5, w, height(-0.5), 0.5, w, height(0.5), side[1], 2);
-    line(-0.5, w, 1, 0.5, w, height(0.5), side[0], 2);
-    line(-0.5, w, height(-0.5), 0.5, w, 1, side[2], 2);
-    line(-0.5, w, 1, -0.5, w, height(-0.5), side[1], 2);
+    line(-0.5, w, 1, 0.5, w, 1, side[2], S(2));
+    line(-0.5, w, height(-0.5), 0.5, w, height(0.5), side[1], S(2));
+    line(-0.5, w, 1, 0.5, w, height(0.5), side[0], S(2));
+    line(-0.5, w, height(-0.5), 0.5, w, 1, side[2], S(2));
+    line(-0.5, w, 1, -0.5, w, height(-0.5), side[1], S(2));
   }
   return b;
 }
 function reinforcement(material: 'wood' | 'stone', axis: number, level: number, rail: boolean) {
-  const b = new PixelBuf(96, 88);
+  const b = new PixelBuf(S(96), S(88));
   const colour = material === 'wood' ? PAL.iron : PAL.stone;
   for (const w of rail ? [0.32] : [-0.32])
     for (let k = 0; k < level - 1; k++) {
@@ -157,15 +163,17 @@ function reinforcement(material: 'wood' | 'stone', axis: number, level: number, 
 }
 export function addBridgeFrames(ab: AtlasBuilder) {
   for (const material of ['wood', 'stone'] as const) {
-    const preview = new PixelBuf(160, 120);
+    const preview = new PixelBuf(S(160), S(120));
     for (let phase = 0; phase < 3; phase++) {
       const edge = phase === 0 ? 1 : phase === 2 ? 2 : 0;
-      const dx = phase * 32,
-        dy = phase * 16;
+      // one tile step along the span projects to (S(32), S(16)) == (HALF_W, HALF_H): the blit
+      // offset and the preview anchor share it, so both scale together.
+      const dx = phase * S(32),
+        dy = phase * S(16);
       preview.blit(span(material, 1, 3, phase, edge, false), dx, dy);
       preview.blit(span(material, 1, 3, phase, edge, true), dx, dy);
     }
-    ab.add('structures/bridge_' + material, preview.toImageData(), OX + 32, OY + 16);
+    ab.add('structures/bridge_' + material, preview.toImageData(), OX + S(32), OY + S(16));
     for (let axis = 0; axis < 2; axis++)
       for (let level = 2; level <= 4; level++)
         for (const rail of [false, true])
