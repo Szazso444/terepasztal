@@ -61,6 +61,15 @@ Asset redesign to the art direction in `docs/art-direction/README.md`, plus the 
   sunlit foliage. A material a program never used can no longer appear in its sprite.
 - Baked frames carry the same soft ground shadow the procedural props draw, and their anchors land
   on whole pixels, so an authored prop sits on the tile exactly where a generated one does.
+- Six more buildings from sections 4, 5 and 6 of the guide — warehouse, water tower, coaling
+  stage, charcoal kiln, water pump and lumber yard — each built to the identifying feature its
+  table names. Nine structure frames are authored now; the other 664 stay procedural.
+- Baked sprites are banded into the palette's own shades rather than a multiplied base colour,
+  with the cluster noise and the selective contour the generators use, so an authored frame reads
+  as the same pixel art as the hand-drawn one beside it instead of as flat-shaded 3D.
+- Frontages face the camera. The rig sees an object's +x and -y faces, so details written on +y —
+  the station's windows, the cottage's door — were rendering into the back of the sprite, and no
+  baked station had ever shown a window.
 
 ### Audio
 

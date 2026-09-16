@@ -27,3 +27,7 @@ def build(k, v=0):
     for i, wx in enumerate((-0.15, 0.05, 0.22)):
         k.box(f"win_u{i}", (0.09, 0.015, 0.1), (wx, fy, 0.24), "trim")
         k.box(f"win_ug{i}", (0.065, 0.02, 0.075), (wx, fy + 0.006, 0.255), "amber")
+
+    # built with its frontage on +y, which reads better than writing every offset
+    # negative; the rig sees -y, so turn it round
+    k.face_camera()

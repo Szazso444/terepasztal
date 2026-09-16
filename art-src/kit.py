@@ -29,41 +29,41 @@ def srgb(r, g, b):
     return (_lin(r), _lin(g), _lin(b), 1.0)
 
 
-def _srgb8(c):
-    c = 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
-    return max(0, min(255, round(c * 255)))
-
-
-def to_srgb8(rgba):
-    """The inverse of `srgb`: a linear colour back to the sRGB triple it was authored as."""
-    return [_srgb8(rgba[0]), _srgb8(rgba[1]), _srgb8(rgba[2])]
-
-
+# Every material is three or four shades of one palette family under a single upper-left light,
+# the rule docs/art-direction/README.md states and src/art/palette.ts follows: index 0 is the base,
+# 1 the lit shade, 2 the shadow, 3 (where present) the brightest top face. The values are that
+# module's, family for family. Where the kit names a material the generators do not -- a pale
+# coping, a darker conifer skirt -- it takes further shades of the same family rather than a new
+# colour, so nothing outside the game's palette can reach a sprite.
 PAL = {
-    "limestone": srgb(188, 169, 139),
-    "trim": srgb(206, 190, 162),
-    "slate": srgb(98, 107, 108),
-    "roof": srgb(154, 88, 62),
-    "timber": srgb(158, 116, 70),
-    "timber_dark": srgb(112, 80, 50),
-    "iron": srgb(86, 96, 102),
-    "brass": srgb(214, 172, 92),
-    "amber": srgb(232, 170, 72),
-    "copper": srgb(163, 107, 66),
-    "brick": srgb(166, 96, 66),
-    "ballast": srgb(152, 146, 134),
-    "rail": srgb(128, 132, 136),
-    "grass": srgb(122, 146, 76),
-    "white": srgb(236, 228, 208),
-    # vegetation and stone, from PAL.leaf / PAL.pine / PAL.trunk / PAL.rock in src/art/palette.ts
-    "leaf": srgb(90, 134, 68),
-    "leaf_pale": srgb(132, 172, 94),
-    "conifer": srgb(54, 98, 78),
-    "conifer_dark": srgb(42, 80, 66),
-    "bark": srgb(112, 80, 50),
-    "bark_dark": srgb(78, 54, 34),
-    "rock": srgb(140, 136, 126),
+    "limestone": [(188, 169, 139), (206, 190, 162), (164, 146, 118)],  # stone
+    "trim": [(206, 190, 162), (222, 206, 178), (188, 169, 139)],  # stone, its pale end
+    "slate": [(98, 107, 108), (116, 126, 128), (78, 86, 88)],  # roofSlate
+    "roof": [(154, 88, 62), (176, 104, 74), (128, 70, 50)],  # roof
+    "timber": [(158, 116, 70), (180, 136, 86), (132, 94, 56)],  # timber
+    "timber_dark": [(112, 80, 50), (132, 96, 60), (78, 54, 34)],  # trunk -> trunkDark
+    "iron": [(86, 96, 102), (104, 116, 122), (64, 72, 78), (132, 144, 148)],  # iron
+    "brass": [(214, 172, 92), (232, 192, 116), (176, 140, 74)],  # brass
+    "amber": [(232, 170, 72), (248, 196, 112), (172, 112, 40)],  # amber -> amberDark
+    "copper": [(163, 107, 66), (186, 128, 84), (134, 86, 52)],  # copper
+    "brick": [(166, 96, 66), (188, 116, 84), (138, 78, 52)],  # the warm brick end of roof
+    "ballast": [(152, 146, 134), (166, 160, 148), (136, 130, 118)],  # ballast
+    "rail": [(128, 132, 136), (200, 206, 208), (82, 86, 90)],  # rail / railLight / railDark
+    "grass": [(122, 146, 76), (134, 158, 84), (108, 130, 68), (146, 170, 94)],  # grass
+    "white": [(236, 228, 208), (246, 240, 226), (206, 198, 180)],  # white
+    "leaf": [(90, 134, 68), (110, 154, 80), (70, 110, 58), (132, 172, 94)],  # leaf
+    "leaf_pale": [(132, 172, 94), (150, 190, 110), (110, 154, 80)],  # leaf, its bright end
+    "conifer": [(54, 98, 78), (68, 116, 92), (42, 80, 66), (86, 134, 106)],  # pine
+    "conifer_dark": [(42, 80, 66), (54, 98, 78), (32, 64, 52)],  # pine, its dark end
+    "bark": [(112, 80, 50), (132, 96, 60), (78, 54, 34)],  # trunk
+    "bark_dark": [(78, 54, 34), (96, 68, 44), (58, 40, 26)],  # trunkDark
+    "rock": [(140, 136, 126), (154, 150, 140), (120, 116, 106), (170, 166, 156)],  # rock
+    "coal": [(44, 44, 46), (62, 62, 66), (30, 30, 32)],  # cargoCoal
+    "cargo": [(166, 132, 88), (186, 152, 106), (138, 108, 70)],  # cargoGoods
 }
+
+# the soft contour of src/art/palette.ts: a dark green-grey, never black
+OUTLINE = (40, 46, 40)
 
 # roughness per material; anything glowing lists an emission strength
 _ROUGH = {
@@ -80,6 +80,8 @@ _ROUGH = {
     "bark": 0.95,
     "bark_dark": 0.95,
     "rock": 0.9,
+    "coal": 0.85,
+    "cargo": 0.9,
 }
 _EMIT = {"amber": 1.6}
 
@@ -100,10 +102,10 @@ class Kit:
         m = bpy.data.materials.new(name)
         m.use_nodes = True
         bsdf = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
-        bsdf.inputs["Base Color"].default_value = PAL[name]
+        bsdf.inputs["Base Color"].default_value = srgb(*PAL[name][0])
         bsdf.inputs["Roughness"].default_value = _ROUGH.get(name, 0.85)
         if name in _EMIT:
-            bsdf.inputs["Emission Color"].default_value = PAL[name]
+            bsdf.inputs["Emission Color"].default_value = srgb(*PAL[name][0])
             bsdf.inputs["Emission Strength"].default_value = _EMIT[name]
         self._mats[name] = m
         return m
@@ -163,13 +165,17 @@ class Kit:
         ]
         return self._mesh(name, verts, [(0, 1, 2, 3)], mat)
 
-    def blob(self, name, center, r, mat, seg=14, rings=6, squash=1.0, rough=0.0, seed=1):
+    def blob(self, name, center, r, mat, seg=20, rings=9, squash=1.0, rough=0.0, seed=1):
         """A lumpy sphere: one canopy mass.
 
         `squash` flattens it in z, `rough` jitters each vertex's radius so a crown reads as
         foliage rather than a billiard ball. The jitter is seeded, so a variant's lumps are the
         same on every machine and every run -- the deterministic variation the art direction asks
         for, expressed once here instead of per asset.
+
+        Keep `rough` low. The form's job is the silhouette and its broad masses; the texture within
+        a mass belongs to the pixel medium, which clusters it 2x2. Jitter high enough to show its
+        own facets fights that and reads as low-poly rather than as painted foliage.
         """
         cx, cy, cz = center
         rng = Rng(seed)
@@ -200,7 +206,7 @@ class Kit:
             faces.append((bot, a + (x + 1) % seg, a + x))
         return self._mesh(name, verts, faces, mat, recalc=True)
 
-    def cone(self, name, cx, cy, base_z, r, h, mat, seg=14):
+    def cone(self, name, cx, cy, base_z, r, h, mat, seg=18):
         """An upright cone: one tier of a conifer, or a whole spruce."""
         ring = [(cx + r * math.cos(a), cy + r * math.sin(a)) for a in _angles(seg)]
         verts = [(x, y, base_z) for x, y in ring] + [(cx, cy, base_z + h)]
@@ -244,6 +250,43 @@ class Kit:
         self.coll.objects.link(ob)
         ob.data.materials.append(self.mat(mat))
         return ob
+
+    def face_camera(self):
+        """Turn everything built so far so its front faces the rig.
+
+        The camera sees an object's +x and -y faces: docs/mcp-setup.md 6.3 puts +x down-right and
+        +y up-right, so +y points away. A door written on the +y face is a door nobody sees, which
+        is what had happened to the station's windows, the cottage's door and the warehouse's
+        loading doors. Building a frontage on +y reads far better than writing every offset
+        negative, so the programs keep doing that and call this once at the end.
+
+        The mesh data is mirrored and the winding reversed with it, so normals stay outward and
+        the light falls exactly as it did.
+        """
+        for ob in self.coll.objects:
+            if ob.type != "MESH":
+                continue
+            bm = bmesh.new()
+            bm.from_mesh(ob.data)
+            for v in bm.verts:
+                v.co.y = -v.co.y
+            bmesh.ops.reverse_faces(bm, faces=bm.faces)
+            bm.to_mesh(ob.data)
+            bm.free()
+
+    def fit(self, xy, z):
+        """Scale everything built so far about the tile ground origin.
+
+        A program is written in the proportions its subject actually has; the sprite it replaces
+        was drawn to a footprint the game's layout already assumes. Scaling about the origin keeps
+        the ground contact, and so the anchor, exactly where it was, so this only ever changes how
+        much of the tile the asset covers -- never where it sits.
+        """
+        if xy == 1.0 and z == 1.0:
+            return
+        for ob in self.coll.objects:
+            if ob.type == "MESH":
+                ob.scale = (xy, xy, z)
 
     # -- the fixed rig ---------------------------------------------------------------------------
     def light(self, sun_deg=150.0, elev_deg=48.0, fill=0.5, energy=7.5):

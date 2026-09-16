@@ -37,6 +37,12 @@ const ASSETS = [
   { module: 'art-src/structures/station.py', key: 'structures/station_1' },
   { module: 'art-src/structures/windmill.py', key: 'structures/windmill' },
   { module: 'art-src/structures/townhouse.py', key: 'structures/townhouse' },
+  { module: 'art-src/structures/warehouse.py', key: 'structures/warehouse_1' },
+  { module: 'art-src/structures/water_tower.py', key: 'structures/water_tower' },
+  { module: 'art-src/structures/fuel_stop.py', key: 'structures/fuel_stop' },
+  { module: 'art-src/structures/kiln.py', key: 'structures/kiln' },
+  { module: 'art-src/structures/pump.py', key: 'structures/pump_1' },
+  { module: 'art-src/structures/lumber.py', key: 'structures/lumber_1' },
   { module: 'art-src/props/tree.py', key: 'props/tree', variants: 3 },
   { module: 'art-src/props/oak.py', key: 'props/oak', variants: 3 },
   { module: 'art-src/props/birch.py', key: 'props/birch', variants: 3 },
@@ -100,6 +106,8 @@ for (const { module, key, variant } of assets) {
     palette: read('PALETTE'),
     materials: read('MATERIALS'),
     idPath: join(outDir, 'id', `${basename(key)}.png`),
+    // the cluster noise varies per frame, so two variants of a family do not share a pattern
+    seed: [...key].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7),
     shadow: {
       // the procedural props centre the ellipse one pixel below the anchor row (src/art/props.ts)
       cx: anchor.ax,

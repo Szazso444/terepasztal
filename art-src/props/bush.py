@@ -36,7 +36,7 @@ def build(k, v=0):
             lr,
             "leaf" if i % 2 == 0 else "leaf_pale",
             squash=0.70,
-            rough=0.30,
+            rough=0.14,
             seed=45 + v * 8 + i,
         )
 

@@ -65,6 +65,6 @@ def build(k, v=0):
             cr * rng.r(0.40, 0.56),
             "leaf_pale" if i % 2 == 0 else "leaf",
             squash=0.82,
-            rough=0.34,
+            rough=0.16,
             seed=55 + v * 8 + i,
         )

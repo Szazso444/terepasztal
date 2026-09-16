@@ -50,7 +50,7 @@ def build(k, v=0):
             cr * rng.r(0.52, 0.66),
             "leaf",
             squash=0.80,
-            rough=0.26,
+            rough=0.12,
             seed=80 + v * 8 + i,
         )
 
@@ -61,6 +61,6 @@ def build(k, v=0):
         cr * 0.74,
         "leaf_pale",
         squash=0.74,
-        rough=0.22,
+        rough=0.10,
         seed=90 + v,
     )

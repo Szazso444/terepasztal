@@ -38,10 +38,12 @@ def build(k, v=0):
     k.cylinder("cap_dome", 0.0, 0.0, 0.14, 0.74, 0.1, "slate", seg=20)
     k.box("cap_top", (0.05, 0.05, 0.04), (0.0, 0.0, 0.84), "iron")
 
-    # door, lintel and a window on the +y (camera-facing) face
-    k.box("door", (0.12, 0.02, 0.24), (0.0, 0.26, 0.0), "timber")
-    k.box("lintel", (0.14, 0.03, 0.03), (0.0, 0.26, 0.24), "trim")
-    k.box("win", (0.08, 0.02, 0.08), (0.14, 0.24, 0.34), "amber")
+    # door, lintel and a window on the -y face, which is the one the rig sees. This asset cannot
+    # use Kit.face_camera: its sails are built from the rig's own right and up axes below, so
+    # mirroring the scene would take the sail cross out of the picture plane and flatten it.
+    k.box("door", (0.12, 0.02, 0.24), (0.0, -0.26, 0.0), "timber")
+    k.box("lintel", (0.14, 0.03, 0.03), (0.0, -0.26, 0.24), "trim")
+    k.box("win", (0.08, 0.02, 0.08), (0.14, -0.24, 0.34), "amber")
 
     # sail cross, in the camera's picture plane, mounted proud of the tower toward the viewer
     hub = _add((0.0, 0.0, 0.66), _v(0.42, BACK))

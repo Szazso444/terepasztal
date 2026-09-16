@@ -12,8 +12,8 @@ what only Blender knows:
 
     ANCHOR    where the world origin projects, in render pixels before the packer trims — the
               point the game pins to the tile
-    PALETTE   the kit's colours as sRGB, so the pixel snap quantises to the palette the render was
-              actually lit with instead of a second copy that can drift out of step
+    PALETTE   each material's shade ramp as sRGB, so the banding picks the palette's own shades
+              rather than a second copy here that can drift out of step with the kit
     MATERIALS the material each index in the companion `id/<out>` pass stands for, so the snap
               reads a pixel's material instead of guessing it from the lit colour
     SHADOW    the module's ground-shadow radius in render pixels, 0 for none
@@ -51,6 +51,11 @@ def load_module(path):
 mod = load_module(MODULE)
 k = kitmod.Kit()
 mod.build(k, VARIANT)
+# FIT is the asset's fit to the sprite it replaces: (footprint, height) multipliers about the
+# ground origin, so proportions are tuned without editing the geometry that describes the subject.
+FIT = getattr(mod, "FIT", (1.0, 1.0))
+FIT = FIT(VARIANT) if callable(FIT) else FIT
+k.fit(*FIT)
 k.light()
 cam = k.camera(PX_PER_TILE, RENDER_PX)
 k.render(OUT, RENDER_PX)
@@ -59,8 +64,9 @@ ndc = world_to_camera_view(k.scene, cam, Vector((0.0, 0.0, 0.0)))
 anchor = {"ax": round(ndc.x * RENDER_PX, 2), "ay": round((1.0 - ndc.y) * RENDER_PX, 2)}
 print("ANCHOR " + json.dumps(anchor))
 
-# the palette as sRGB 0-255, the inverse of kit.srgb, so the driver snaps to these exact colours
-print("PALETTE " + json.dumps({n: kitmod.to_srgb8(c) for n, c in kitmod.PAL.items()}))
+# the shade ramps as sRGB 0-255, so the banding picks the palette's own shades rather than
+# multiplying one base colour and landing between them
+print("PALETTE " + json.dumps({"ramps": kitmod.PAL, "outline": kitmod.OUTLINE}))
 
 # the material pass, beside the beauty render; it destroys the materials, so it goes last
 print("MATERIALS " + json.dumps(k.id_render(ID_OUT, RENDER_PX)))
@@ -68,6 +74,7 @@ print("MATERIALS " + json.dumps(k.id_render(ID_OUT, RENDER_PX)))
 # a ground shadow is part of the game's 2D medium, not of the lighting solve: the procedural
 # generators draw a soft ellipse under each prop, so the driver composites the same one here.
 # The module states its footprint in tiles; one tile is PX_PER_TILE across.
+# stated in the program's own units, so the fit carries it with the footprint it belongs to
 shadow = getattr(mod, "SHADOW_R", 0.0)
 shadow = shadow(VARIANT) if callable(shadow) else shadow
-print("SHADOW " + json.dumps({"r": round(shadow * PX_PER_TILE, 2)}))
+print("SHADOW " + json.dumps({"r": round(shadow * FIT[0] * PX_PER_TILE, 2)}))

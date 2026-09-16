@@ -49,18 +49,41 @@ node scratchpad/art-scene.mjs baked          # the same assets in a built scene
 ## From render to sprite
 
 Each asset renders twice. The beauty pass is the lit Cycles render; the material pass beside it in
-`<group>/id/` paints every material a flat index. `tools/pixelate.mjs` reads both and rebuilds each
-pixel as `material base colour x light step`, so the render decides only how brightly a pixel is
-lit and never which colour family it belongs to.
+`<group>/id/` paints every material a flat index. `tools/pixelate.mjs` reads both and rebuilds the
+frame in the game's medium:
 
-That second pass is the difference between a palette that holds and one that mostly holds. Matching
-a lit pixel to the nearest palette colour -- the obvious approach, and the first one here -- turns a
-sunlit leaf into cream and a shadowed limestone wall into slate, the failure `docs/art-pipeline.md`
-records from the spike. With the material known, a leaf can only ever be a shade of leaf.
+- **The material comes from the index pass, never from the colour.** Matching a lit pixel to the
+  nearest palette colour -- the obvious approach, and the first one here -- turns a sunlit leaf
+  into cream and a shadowed limestone wall into slate, the failure `docs/art-pipeline.md` records
+  from the spike. With the material known, a leaf can only ever be a shade of leaf.
+- **The shade comes from the material's own ramp.** Every material in `kit.py` is three or four
+  shades of one `src/art/palette.ts` family, and the render only decides which. It picks by the
+  same thresholds `mass` in `src/art/props.ts` uses, so a baked frame bands like a generated one,
+  and by ratio against the material's own base, so a lit slate roof reaches slate's top shade and
+  still reads far darker than limestone's.
+- **The band edges cluster 2x2**, through `hash2` from `src/engine/rng.ts` -- the generators' own
+  noise. Without it the bands follow the mesh's facets and the sprite reads as low-poly rather
+  than as painted.
+- **The contour is `PixelBuf.outline`**, ported: lower and side rims darkened, upper rims only
+  tinted. A baked sprite without it sits visibly flat beside a generated one.
+- **The ground shadow** is the translucent ellipse `src/art/props.ts` draws, laid last so the
+  contour never outlines it. A program declares its footprint as `SHADOW_R`.
 
-The soft ground shadow is composited afterwards, not lit: it is the same translucent ellipse
-`src/art/props.ts` draws under every prop, so a baked prop sits on the tile exactly as a generated
-one does. A program declares its footprint as `SHADOW_R`, in tiles.
+## Two things every asset program has to know
+
+**The rig sees +x, -y and the top.** `docs/mcp-setup.md` 6.3 puts +x down-right and +y up-right,
+so a door written on the +y face is a door nobody sees -- which is what had happened to the
+station's windows, the cottage's door and the warehouse's loading doors. Building a frontage on +y
+reads better than writing every offset negative, so programs keep doing that and call
+`k.face_camera()` once at the end. The exception is an asset built from the rig's own axes, like
+the windmill's sails: mirroring the scene would take those out of the picture plane, so it places
+its frontage on -y directly.
+
+**`FIT` is the fit to the sprite being replaced**, a `(footprint, height)` pair scaled about the
+ground origin, so proportions are tuned without editing the geometry that describes the subject.
+Keep it near 1: past roughly a quarter either way it stops adjusting the asset and starts
+distorting it, and height a modest fit cannot reach belongs in the geometry instead. A kiln
+stretched to the right frame height is not a kiln.
 
 ## Rules the programs follow
 

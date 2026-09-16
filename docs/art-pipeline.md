@@ -58,6 +58,21 @@ its own lumps deterministically. This is the first evidence at family scale rath
 `props` reports `mixed`, the baked frames sit within about a tenth of the sprites they replace, and
 nothing else in the group moved.
 
+**Six buildings followed**, from sections 4, 5 and 6: warehouse, water tower, coaling stage,
+charcoal kiln, water pump and lumber yard, each written to the identifying feature its table names
+rather than to a generic shed. They exposed two rules the first three assets had quietly broken.
+The rig sees an object's +x and -y faces, so every frontage written on +y — the station's windows,
+the cottage's door, the warehouse's loading doors — was rendering into the back of the sprite;
+`Kit.face_camera` turns a finished asset round. And an asset has to be fitted to the sprite it
+replaces, which `FIT` now does about the ground origin; pushed too far it distorts rather than
+fits, and a kiln stretched to the right frame height stops being a kiln.
+
+**The medium is the generators' own.** Banding by a multiplied base colour produced a low-poly
+look that clashed with the hand-drawn art it sits beside. `tools/pixelate.mjs` now picks from each
+material's three or four `src/art/palette.ts` shades, by `mass`'s own thresholds, with `hash2`
+cluster noise on the band edges and `PixelBuf.outline`'s selective contour. What 3D contributes is
+the form and the light; everything above the shading is the game's existing pixel medium.
+
 ## 3. Architecture
 
 ```

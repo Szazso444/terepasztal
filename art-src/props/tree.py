@@ -33,7 +33,7 @@ def build(k, v=0):
     tx, ty = lean
 
     # the main crown, then one or two masses leaning off it: connected, not a row of balls
-    k.blob("crown", (tx, ty, th + cr * 0.62), cr, "leaf", squash=0.86, rough=0.22, seed=20 + v)
+    k.blob("crown", (tx, ty, th + cr * 0.62), cr, "leaf", squash=0.86, rough=0.10, seed=20 + v)
     for i in range(1, masses):
         a = rng.r(0.0, 2 * math.pi)
         d = cr * rng.r(0.42, 0.60)
@@ -41,4 +41,4 @@ def build(k, v=0):
         c = (tx + d * math.cos(a), ty + d * math.sin(a), th + cr * rng.r(0.5, 0.95))
         # the upper mass catches the light, so it takes the paler leaf of the two greens
         mat = "leaf_pale" if c[2] > th + cr * 0.72 else "leaf"
-        k.blob("mass%d" % i, c, r, mat, squash=0.88, rough=0.26, seed=30 + v * 4 + i)
+        k.blob("mass%d" % i, c, r, mat, squash=0.88, rough=0.13, seed=30 + v * 4 + i)

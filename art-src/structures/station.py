@@ -57,3 +57,7 @@ def build(k, v=0):
     k.box("lamp_head", (0.055, 0.055, 0.05), (-0.42, 0.26, 0.31), "amber")
     k.box("board", (0.24, 0.016, 0.075), (0.08, 0.25, 0.22), "white")
     k.box("board_post", (0.016, 0.016, 0.13), (0.08, 0.25, 0.09), "timber")
+
+    # built with its frontage on +y, which reads better than writing every offset
+    # negative; the rig sees -y, so turn it round
+    k.face_camera()
