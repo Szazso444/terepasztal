@@ -182,7 +182,13 @@ export function upgradedWorks(base: PixelBuf, level: number) {
     seed: level * 11,
   });
   const bay = P(0.29, 0.31);
-  b.rect(bay.x - S(3), bay.y - S(Math.round(annexH * 0.7)), S(7), S(Math.round(annexH * 0.7)), PAL.outline);
+  b.rect(
+    bay.x - S(3),
+    bay.y - S(Math.round(annexH * 0.7)),
+    S(7),
+    S(Math.round(annexH * 0.7)),
+    PAL.outline,
+  );
   b.rect(bay.x - S(2), bay.y - S(Math.round(annexH * 0.7)) + S(1), S(5), S(2), PAL.iron[0]);
   // covered conveyor from the annex towards the main building, on short iron legs
   const c0 = P(0.18, 0.16, annexH - 2);

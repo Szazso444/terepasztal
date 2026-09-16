@@ -256,8 +256,7 @@ function waterTile(seed: number, phase: number): PixelBuf {
       const cellY = y >> 2;
       const r = hash2(cellX, cellY, seed + 7);
       if (r > 0.86) {
-        const gx =
-          ((cellX << 3) + Math.floor(hash2(cellX, cellY, seed + 8) * 5) + phase) % TILE_W;
+        const gx = ((cellX << 3) + Math.floor(hash2(cellX, cellY, seed + 8) * 5) + phase) % TILE_W;
         const gy = (cellY << 2) + ((phase + Math.floor(hash2(cellX, cellY, seed + 9) * 4)) % 4);
         if (y === gy && x >= gx && x < gx + S(3)) c = shade(PAL.water[3], 1.1);
       } else if (r < 0.08 && ((y + 2) & 3) === phase && (x & 7) < 3) c = shade(c, 0.92);

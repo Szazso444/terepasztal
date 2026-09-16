@@ -657,7 +657,13 @@ function ingots(b: PixelBuf, tx: number, ty: number) {
   const p = proj(OX, GY, tx, ty);
   for (let r = 0; r < 3; r++)
     for (let i = 0; i < 3 - r; i++)
-      b.rect(rx(p) - S(5) + i * S(4) + r * S(2), ry(p) - S(2) - r * S(2), S(4), S(2), STEEL[(i + r) % 3]);
+      b.rect(
+        rx(p) - S(5) + i * S(4) + r * S(2),
+        ry(p) - S(2) - r * S(2),
+        S(4),
+        S(2),
+        STEEL[(i + r) % 3],
+      );
 }
 
 // ------------------------------------------------------------------ station families
@@ -1153,7 +1159,11 @@ function grinder(): PixelBuf {
   const cy = ry(c);
   for (let a = 0; a < 24; a++) {
     const ang = (a / 24) * Math.PI * 2;
-    b.set(cx + Math.round(Math.cos(ang) * S(5)), cy + Math.round(Math.sin(ang) * S(9)), PAL.iron[3]);
+    b.set(
+      cx + Math.round(Math.cos(ang) * S(5)),
+      cy + Math.round(Math.sin(ang) * S(9)),
+      PAL.iron[3],
+    );
     if (a % 3 === 0)
       b.set(
         cx + Math.round(Math.cos(ang) * S(6)),
@@ -1386,7 +1396,8 @@ function fuelStop(): PixelBuf {
   b.line(rx(c0), ry(c0) + S(1), rx(c1), ry(c1) + S(1), PAL.iron[2]);
   // ladder on the front leg
   const ld = proj(OX, OY, -0.18, 0.14);
-  for (let y = S(2); y < S(20); y += S(3)) b.rect(rx(ld) - S(3), ry(ld) - y, S(3), S(1), PAL.timber[1]);
+  for (let y = S(2); y < S(20); y += S(3))
+    b.rect(rx(ld) - S(3), ry(ld) - y, S(3), S(1), PAL.timber[1]);
   const h0 = proj(OX, OY, -0.28, 0.28);
   b.ellipse(rx(h0), ry(h0) - S(3), S(6), S(4), COAL, 132, 0.5);
   b.outline(PAL.outline, 170);

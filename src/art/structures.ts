@@ -56,7 +56,8 @@ function nameboard(b: PixelBuf, tx: number, ty: number, w = S(11)) {
   b.rect(x - Math.floor(w / 2), y - S(12), w, S(5), PAL.white);
   b.rect(x - Math.floor(w / 2), y - S(12), w, S(1), shade(PAL.white, 1.05));
   b.rect(x - Math.floor(w / 2), y - S(8), w, S(1), shade(PAL.white, 0.78));
-  for (let i = S(1); i < w - S(1); i += S(2)) b.set(x - Math.floor(w / 2) + i, y - S(10), PAL.outline);
+  for (let i = S(1); i < w - S(1); i += S(2))
+    b.set(x - Math.floor(w / 2) + i, y - S(10), PAL.outline);
   b.set(x - Math.floor(w / 2) + S(2), y - S(11), PAL.outline);
   b.set(x + Math.floor(w / 2) - S(3), y - S(11), PAL.outline);
 }

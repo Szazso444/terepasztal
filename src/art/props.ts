@@ -129,7 +129,15 @@ function oakTree(seed: number, v: number): PixelBuf {
   mass(b, cx, base - trunkH - S(9), cr, S(9), OAK, seed, 0.9);
   mass(b, cx - cr * 0.35, base - trunkH - S(15), cr * 0.62, S(8), OAK, seed + 1);
   mass(b, cx + cr * 0.32, base - trunkH - S(14), cr * 0.6, S(7.5), OAK, seed + 2);
-  mass(b, cx + (hash2(seed, 3, 1) - 0.5) * S(6), base - trunkH - S(20), cr * 0.5, S(6), OAK, seed + 3);
+  mass(
+    b,
+    cx + (hash2(seed, 3, 1) - 0.5) * S(6),
+    base - trunkH - S(20),
+    cr * 0.5,
+    S(6),
+    OAK,
+    seed + 3,
+  );
   b.outline(PAL.outline, 190);
   groundShadow(b, cx, base + S(1), cr * 0.85, 70);
   return b;
