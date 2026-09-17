@@ -29,6 +29,20 @@ def srgb(r, g, b):
     return (_lin(r), _lin(g), _lin(b), 1.0)
 
 
+def _srgb8(c):
+    c = 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+    return max(0, min(255, round(c * 255)))
+
+
+def to_srgb8(rgb):
+    """The inverse of `srgb`: a linear colour back to the sRGB triple it was authored as.
+
+    Blender hands back linear floats for an image's pixels and a shader input's colour, and the
+    palette is written in sRGB, so anything read out of an imported mesh comes through here first.
+    """
+    return (_srgb8(rgb[0]), _srgb8(rgb[1]), _srgb8(rgb[2]))
+
+
 # Every material is three or four shades of one palette family under a single upper-left light,
 # the rule docs/art-direction/README.md states and src/art/palette.ts follows: index 0 is the base,
 # 1 the lit shade, 2 the shadow, 3 (where present) the brightest top face. The values are that

@@ -8,6 +8,9 @@ dist
 
 # Blender render output; the asset programs in art-src are tracked, their renders are not
 art-src/**/*.png
+# Imported meshes. A mesh asset's program is the tracked source; the mesh it names is an input,
+# like a reference image, and is not committed. scratchpad/mesh-fixture.py makes one to test with.
+art-src/meshes/
 art-src/**/out/
 
 # Generated sprite-atlas overrides (produced by tools/render-assets.mjs from art-src/)
