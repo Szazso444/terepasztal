@@ -8,6 +8,12 @@
  * paper. No grid is assumed -- the rules between the cells are not clean enough to trust, and the
  * bottom strips have no grid at all.
  *
+ * The paper is one flat colour, so it is unmixed rather than thresholded: an edge pixel is a
+ * mixture of paper and drawing, and cutting it keeps the mixture as a pale fringe. Dividing the
+ * paper back out gives the drawing's own colour at the coverage it actually has. The shadow each
+ * specimen casts on the paper is drawn, but it is not the specimen, and it is separable because a
+ * cast shadow is the paper dimmed -- same hue, lower level -- where foliage and stone are not.
+ *
  * Labels and rules come out of the same segmentation, so they are filtered by what they are:
  * near-neutral dark ink, or long and thin. The filter is deliberately loose; `index.png` numbers
  * every survivor so the wrong ones can be seen and dropped by hand, which is a better trade than a
@@ -29,6 +35,9 @@ const NAMES = mapFile ? JSON.parse(readFileSync(mapFile, 'utf8')) : {};
 const MIN_AREA = 900; // smaller than a flower clump, larger than a word
 const INK = 46; // manhattan distance from the paper before a pixel counts as drawn
 const GAP = 3; // pixels of paper two parts of one specimen may have between them
+// A pixel this far from the paper on its strongest channel is the object and nothing else. Below
+// it the pixel is a mixture, and how far it has come from the paper is how much of it is object.
+const OPAQUE = 46;
 
 const png = PNG.sync.read(readFileSync(src));
 const { width: W, height: H, data } = png;
@@ -47,14 +56,34 @@ function paper() {
 }
 const PAPER = paper();
 
+const clamp255 = (v) => Math.max(0, Math.min(255, Math.round(v)));
+
 const drawn = new Uint8Array(W * H);
+// How much of each pixel is object rather than paper, and what the object's own colour is there.
+// A threshold alone leaves a rim of paper-tinted pixels around everything, because an edge pixel
+// is a mixture of the two and cutting it keeps the mixture. The paper is one known flat colour, so
+// it can be taken back out instead: with C = a*F + (1-a)*B and B known, estimating `a` recovers F.
+const alpha = new Uint8Array(W * H);
+const unmixed = new Uint8Array(W * H * 3);
 for (let i = 0; i < W * H; i++) {
   const o = i * 4;
-  const d =
-    Math.abs(data[o] - PAPER[0]) +
-    Math.abs(data[o + 1] - PAPER[1]) +
-    Math.abs(data[o + 2] - PAPER[2]);
-  drawn[i] = d > INK ? 1 : 0;
+  const dev = [data[o] - PAPER[0], data[o + 1] - PAPER[1], data[o + 2] - PAPER[2]];
+  const mag = Math.max(Math.abs(dev[0]), Math.abs(dev[1]), Math.abs(dev[2]));
+  // The shadow each specimen casts on the paper is drawn, but it is not the specimen: leaving it
+  // in puts a cream smear beside every tree, where the game wants the terrain to show. A cast
+  // shadow is the paper dimmed -- the same hue at a lower level -- so the channel ratios against
+  // the paper stay together, while foliage, bark and stone pull them apart. Stone is neutral too
+  // but far darker, so the ratio has to be high as well as even.
+  const ratio = [0, 1, 2].map((k) => data[o + k] / Math.max(1, PAPER[k]));
+  const even = Math.max(...ratio) - Math.min(...ratio) < 0.07;
+  const level = (ratio[0] + ratio[1] + ratio[2]) / 3;
+  const a = even && level > 0.72 && level < 0.995 ? 0 : Math.min(1, mag / OPAQUE);
+  alpha[i] = Math.round(a * 255);
+  for (let k = 0; k < 3; k++) {
+    // F = (C - (1-a)B) / a: the paper divided back out of whatever the pixel has left
+    unmixed[i * 3 + k] = a > 0.02 ? clamp255(PAPER[k] + dev[k] / a) : PAPER[k];
+  }
+  drawn[i] = Math.abs(dev[0]) + Math.abs(dev[1]) + Math.abs(dev[2]) > INK ? 1 : 0;
 }
 
 // Grow the mask by GAP before labelling, so a canopy and the trunk under it are one object, then
@@ -192,10 +221,11 @@ kept.forEach((c, i) => {
   despeck(mask, w, h);
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
-      const s = ((c.y0 + y) * W + (c.x0 + x)) * 4;
+      const src = (c.y0 + y) * W + (c.x0 + x);
       const d = (y * w + x) * 4;
-      for (let k = 0; k < 3; k++) crop.data[d + k] = data[s + k];
-      crop.data[d + 3] = mask[y * w + x] ? 255 : 0; // paper out, so the crop is also a silhouette
+      for (let k = 0; k < 3; k++) crop.data[d + k] = unmixed[src * 3 + k];
+      // the object's own colour, at the coverage it actually has; despeck decides what belongs
+      crop.data[d + 3] = mask[y * w + x] ? alpha[src] : 0;
     }
   const id = String(i).padStart(2, '0');
   const named = NAMES[id];
