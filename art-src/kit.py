@@ -228,6 +228,77 @@ class Kit:
             faces.append((bot, a + (x + 1) % seg, a + x))
         return self._mesh(name, verts, faces, mat, recalc=True)
 
+    def crown(self, name, center, rx, rz, blobs=16, seed=1, light="leaf_pale", mid="leaf",
+              dark=None, lump=0.34, reach=1.0):
+        """A canopy as many small masses over an implied ellipsoid, so its edge breaks.
+
+        One smooth blob reads as a 3D primitive whatever the shading does to it afterwards. The
+        boards draw a crown as clusters with daylight between them, and the silhouette is where
+        that shows: each mass sits *on* the ellipsoid rather than inside it, so it bulges the
+        outline instead of being swallowed by it.
+
+        The masses are laid out on a golden-angle spiral so they spread evenly without a pattern,
+        and shaded by height -- pale on top, mid on the flanks, dark underneath -- which is the
+        light the art direction asks for, expressed as placement rather than as a gradient.
+        """
+        cx, cy, cz = center
+        rng = Rng(seed)
+        ga = math.pi * (3.0 - math.sqrt(5.0))
+        for i in range(blobs):
+            t = (i + 0.5) / blobs
+            ct = max(-0.5, 1.0 - t * 1.5)  # top down through the flanks to a little underhang
+            st = math.sqrt(max(0.0, 1.0 - ct * ct))
+            a = ga * i + rng.r(-0.25, 0.25)
+            j = rng.r(0.84, 1.08)
+            mat = light if ct > 0.38 else (mid if ct > -0.12 else (dark or mid))
+            self.blob(
+                "%s%d" % (name, i),
+                (
+                    cx + rx * st * math.cos(a) * j * reach,
+                    cy + rx * st * math.sin(a) * j * reach,
+                    cz + rz * ct * j,
+                ),
+                rx * lump * rng.r(0.72, 1.12),
+                mat,
+                seg=10,
+                rings=5,
+                squash=0.92,
+                rough=0.12,
+                seed=seed * 7 + i,
+            )
+
+    def ground(self, name, r, seed=1, tufts=6, stones=3, patch=None):
+        """The little patch a prop stands on: grass tufts, a few stones, optionally bare earth.
+
+        Every specimen on the boards has one, and it is most of why they read as objects in a
+        place rather than cut-outs. The ground shadow says where the ground is; these say what it
+        is. Kept low and few -- the art direction wants scenery quietest, and a prop's base must
+        not compete with the thing standing on it.
+        """
+        rng = Rng(seed)
+        if patch:
+            self.blob(
+                "%s_patch" % name, (0.0, 0.0, 0.0), r * 1.05, patch,
+                seg=12, rings=4, squash=0.05, rough=0.24, seed=seed + 1,
+            )
+        for i in range(stones):
+            a = rng.r(0.0, 2 * math.pi)
+            d = r * rng.r(0.5, 1.05)
+            sr = r * rng.r(0.11, 0.20)
+            self.blob(
+                "%s_stone%d" % (name, i), (d * math.cos(a), d * math.sin(a), sr * 0.4), sr,
+                "rock", seg=6, rings=3, squash=0.6, rough=0.3, seed=seed * 3 + i,
+            )
+        for i in range(tufts):
+            a = rng.r(0.0, 2 * math.pi)
+            d = r * rng.r(0.35, 1.1)
+            bx, by = d * math.cos(a), d * math.sin(a)
+            self.taper(
+                "%s_tuft%d" % (name, i), (bx, by, 0.0), r * 0.05, r * 0.018,
+                r * rng.r(0.26, 0.46), "grass", seg=4,
+                lean=(bx * 0.18 + rng.r(-0.01, 0.01), by * 0.18 + rng.r(-0.01, 0.01)),
+            )
+
     def cone(self, name, cx, cy, base_z, r, h, mat, seg=18):
         """An upright cone: one tier of a conifer, or a whole spruce."""
         ring = [(cx + r * math.cos(a), cy + r * math.sin(a)) for a in _angles(seg)]
@@ -236,6 +307,30 @@ class Kit:
         faces = [(i, (i + 1) % seg, apex) for i in range(seg)]
         faces.append(tuple(range(seg)))
         return self._mesh(name, verts, faces, mat, recalc=True)
+
+    def tier(self, name, cx, cy, base_z, r, h, mat, tips=9, seed=1, droop=0.24):
+        """One conifer tier: a cone whose rim is broken by small masses that hang below it.
+
+        A clean cone edge is the tell that a conifer came out of a primitive. On the boards the
+        rim is needles -- ragged, and drooping at the tips -- so the cone is pulled in slightly
+        and the outline is made by the masses around it instead.
+        """
+        self.cone(name, cx, cy, base_z, r * 0.86, h, mat, seg=14)
+        rng = Rng(seed)
+        for i in range(tips):
+            a = 2 * math.pi * i / tips + rng.r(-0.22, 0.22)
+            d = r * rng.r(0.8, 1.05)
+            self.blob(
+                "%s_tip%d" % (name, i),
+                (cx + d * math.cos(a), cy + d * math.sin(a), base_z - h * droop * rng.r(0.0, 1.0)),
+                r * rng.r(0.13, 0.21),
+                mat,
+                seg=7,
+                rings=3,
+                squash=0.55,
+                rough=0.16,
+                seed=seed * 5 + i,
+            )
 
     def taper(self, name, base, r0, r1, h, mat, seg=10, lean=(0.0, 0.0)):
         """A tapered prism from `base`, narrowing r0 -> r1 over height h.

@@ -26,6 +26,8 @@ def build(k, v=0):
     r, extra = VARIANTS[v]
     rng = Rng(30 + v)
 
+    k.ground("base", r * 1.15, seed=32 + v, tufts=4, stones=0)
+
     k.blob(
         "rock",
         (0.0, 0.0, r * 0.42),

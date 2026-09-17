@@ -26,6 +26,8 @@ def build(k, v=0):
     courses, w, lumps = VARIANTS[v]
     rng = Rng(140 + v)
 
+    k.ground("base", w * 0.95, seed=142 + v, tufts=4, stones=0)
+
     # the outcrop: flat courses, each stepped back and narrower, so the bedding reads from the side
     z = 0.0
     for i in range(courses):

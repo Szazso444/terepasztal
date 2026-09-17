@@ -30,6 +30,11 @@ import kit as kitmod  # noqa: E402  (after sys.path is set)
 from bpy_extras.object_utils import world_to_camera_view  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
+if sys.argv[1] == "--palette":
+    # the ramps alone, for a caller that bakes frames without rendering any (tools/bake-refs.mjs)
+    print("PALETTE " + json.dumps({"ramps": kitmod.PAL, "outline": kitmod.OUTLINE}))
+    raise SystemExit(0)
+
 MODULE = sys.argv[1]
 OUT = sys.argv[2]
 PX_PER_TILE = int(sys.argv[3]) if len(sys.argv) > 3 else 64

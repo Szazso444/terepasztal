@@ -13,8 +13,8 @@ from kit import Rng
 
 # variant -> (trunk height, lean, fronds, frond reach)
 VARIANTS = [
-    (0.52, 0.16, 8, 0.30),
-    (0.58, -0.13, 9, 0.28),
+    (0.52, 0.16, 12, 0.30),
+    (0.58, -0.13, 13, 0.28),
 ]
 
 
@@ -62,5 +62,5 @@ def build(k, v=0):
             p0, p1 = pts[j], pts[j + 1]
             mid = tuple((p0[c] + p1[c]) / 2 for c in range(3))
             half = tuple((p1[c] - p0[c]) / 2 for c in range(3))
-            wide = (-sa * 0.036, ca * 0.036, 0.0)
+            wide = (-sa * 0.019, ca * 0.019, 0.0)
             k.panel(f"frond{i}_{j}", mid, half, wide, "leaf" if j else "leaf_pale")

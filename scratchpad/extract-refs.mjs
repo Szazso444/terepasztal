@@ -144,18 +144,58 @@ const kept = all.filter((c) => {
 });
 kept.sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
 
+/**
+ * Specks inside a crop that are not part of the specimen: the scale figure beside the round tree,
+ * the "1.8 m" beside it, a stray letter from the cell's label. They survive the component pass
+ * because growing the mask joined them to the specimen, and they are obvious by size -- a leaf
+ * cluster that matters is not a fiftieth of the drawing.
+ */
+function despeck(mask, w, h, minFraction = 0.04) {
+  const total = mask.reduce((a, b) => a + b, 0);
+  const seen = new Uint8Array(w * h);
+  const stack = new Int32Array(w * h);
+  for (let s0 = 0; s0 < w * h; s0++) {
+    if (!mask[s0] || seen[s0]) continue;
+    let top = 0;
+    const cells = [];
+    stack[top++] = s0;
+    seen[s0] = 1;
+    while (top) {
+      const i = stack[--top];
+      cells.push(i);
+      const x = i % w;
+      const y = (i - x) / w;
+      for (let dy = -2; dy <= 2; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const j = ny * w + nx;
+          if (mask[j] && !seen[j]) {
+            seen[j] = 1;
+            stack[top++] = j;
+          }
+        }
+    }
+    if (cells.length < total * minFraction) for (const i of cells) mask[i] = 0;
+  }
+}
+
 mkdirSync(outDir, { recursive: true });
 kept.forEach((c, i) => {
   const w = c.x1 - c.x0 + 1;
   const h = c.y1 - c.y0 + 1;
   const crop = new PNG({ width: w, height: h });
+  const mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) mask[y * w + x] = drawn[(c.y0 + y) * W + (c.x0 + x)];
+  despeck(mask, w, h);
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       const s = ((c.y0 + y) * W + (c.x0 + x)) * 4;
       const d = (y * w + x) * 4;
-      const on = drawn[(c.y0 + y) * W + (c.x0 + x)];
       for (let k = 0; k < 3; k++) crop.data[d + k] = data[s + k];
-      crop.data[d + 3] = on ? 255 : 0; // paper drops out, so the silhouette is usable directly
+      crop.data[d + 3] = mask[y * w + x] ? 255 : 0; // paper out, so the crop is also a silhouette
     }
   const id = String(i).padStart(2, '0');
   const named = NAMES[id];

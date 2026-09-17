@@ -91,6 +91,31 @@ The crops come out with the paper knocked out to transparency, so a reference is
 to compare against. They are build output, regenerated from the board, the script and the map, and
 are not committed.
 
+## The board art itself
+
+The third route, and for static scenery the best one. `tools/bake-refs.mjs` takes the crops
+`extract-refs.mjs` produced, brings each down to its frame's size, and puts it through the same
+pixel medium the rendered assets go through:
+
+```sh
+node tools/render-assets.mjs props     # programs first
+node tools/bake-refs.mjs props         # then the board over the top, where it has the object
+```
+
+The boards already contain the object, drawn, at two or three times the size the sprite needs. A
+render throws away everything that makes those drawings read -- the oak's gnarled bole, the birch's
+fine branching, the dead tree's twigs -- and rebuilds a simplified volume in its place. Downscaling
+the drawing keeps all of it.
+
+It gets no contour: the art carries its own edges, and the generators' outline on top of it rings
+the sprite with a pale halo.
+
+What it cannot do is produce anything the board did not draw. One facing, one lighting, and only
+the variants the board happened to contain -- so it suits static scenery and cannot touch rolling
+stock, which needs 25 facings of the same vehicle. Where the board drew two specimens and the game
+asks for three, the third is a sibling mirrored, because mixing the two sources inside one family
+is worse than either alone: a drawn birch beside a modelled one reads as a mistake.
+
 ## A mesh instead of a program
 
 `mesh_asset.py` is the other door in. A mesh from anywhere -- an image-to-3D generator run

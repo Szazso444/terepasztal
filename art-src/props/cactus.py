@@ -31,12 +31,8 @@ def build(k, v=0):
     h, arms, flowering = VARIANTS[v]
     rng = Rng(90 + v)
 
-    # a few stones at the foot, the board's dry-ground cue
-    for i in range(3):
-        a = rng.r(0.0, 2 * math.pi)
-        d = rng.r(0.09, 0.15)
-        k.blob(f"stone{i}", (d * math.cos(a), d * math.sin(a), 0.012), rng.r(0.022, 0.04),
-               "rock", seg=6, rings=3, squash=0.6, rough=0.3, seed=91 + v * 4 + i)
+    # the board's dry ground: a few stones and sparse tufts, nothing lush
+    k.ground("base", 0.15, seed=92 + v, tufts=3, stones=3)
 
     # the column: ribbed, so it is not a smooth post
     k.cylinder("column", 0.0, 0.0, R, 0.0, h, "leaf", seg=9)

@@ -181,14 +181,17 @@ function materialAt(ids, materials, x, y, radius = 2) {
  */
 export function pixelate(
   path,
-  { palette, materials, idPath, alphaCut = 140, shadow, seed = 0 } = {},
+  { palette, materials, idPath, alphaCut = 140, shadow, seed = 0, outline: contour = true } = {},
 ) {
-  if (!palette?.ramps || !materials || !idPath) {
-    throw new Error('pixelate: palette, materials and idPath are all required');
-  }
+  if (!palette?.ramps) throw new Error('pixelate: a palette is required');
   const png = PNG.sync.read(readFileSync(path));
-  const ids = PNG.sync.read(readFileSync(idPath));
-  if (ids.width !== png.width || ids.height !== png.height) {
+  // A render has a material pass and uses it. A frame baked from a reference crop has no geometry
+  // behind it and therefore no pass, so it matches the nearest shade in the palette instead --
+  // weaker, and the reason this is a fallback rather than the default.
+  const ids = idPath ? PNG.sync.read(readFileSync(idPath)) : null;
+  const byColour = !ids || !materials;
+  const flat = byColour ? Object.values(palette.ramps).flat() : null;
+  if (ids && (ids.width !== png.width || ids.height !== png.height)) {
     throw new Error(`pixelate: ${idPath} is not the same size as ${path}`);
   }
   const { data, width, height } = png;
@@ -203,6 +206,22 @@ export function pixelate(
     drawn++;
     const x = i % width;
     const y = (i - x) / width;
+    if (byColour) {
+      let best = flat[0];
+      let bd = Infinity;
+      for (const c of flat) {
+        const d = (data[o] - c[0]) ** 2 + (data[o + 1] - c[1]) ** 2 + (data[o + 2] - c[2]) ** 2;
+        if (d < bd) {
+          bd = d;
+          best = c;
+        }
+      }
+      data[o] = best[0];
+      data[o + 1] = best[1];
+      data[o + 2] = best[2];
+      data[o + 3] = 255;
+      continue;
+    }
     const ramp = palette.ramps[materialAt(ids, materials, x, y)];
     if (!ramp) {
       // The index pass decides what the asset covers. The beauty pass is denoised and its filter
@@ -226,7 +245,10 @@ export function pixelate(
         'index passes disagree about what this asset covers, which is not an edge artefact.',
     );
   }
-  outline(png, palette.outline, 170);
+  // Art cut from a board already carries its own edge treatment; adding the generators' contour
+  // on top of it rings the sprite with a pale halo. Only a render, which has no edges of its own,
+  // needs one.
+  if (contour) outline(png, palette.outline, 170);
   if (shadow?.rx > 0) groundShadow(png, shadow);
   writeFileSync(path, PNG.sync.write(png));
 }

@@ -1,18 +1,19 @@
 """Pine: the frames `props/pine_0..2`.
 
-An open tiered canopy with the trunk visible between the groups -- the cue that separates pine
-from spruce in the art direction, where spruce is the denser tapered cone. The tiers get a gap
-each, and the trunk runs the full height behind them.
+Reference: art-src/ref/props_pine_0.png. An open tiered canopy with the trunk showing between the
+groups -- the cue that separates pine from spruce, which is the denser tapered cone. The board's
+tiers are ragged and droop at the tips, and the tree stands in a scrap of grass with a stone or
+two, so both are here: the tier rims are broken masses rather than cone edges, and the base is
+part of the asset.
 """
 
-from kit import Rng
-
-# variant -> (total height, base radius, tiers)
 VARIANTS = [
     (0.86, 0.190, 3),
     (0.99, 0.205, 3),
     (1.12, 0.220, 4),
 ]
+
+FIT = (0.95, 1.0)
 
 
 def SHADOW_R(v):
@@ -21,21 +22,22 @@ def SHADOW_R(v):
 
 def build(k, v=0):
     h, br, tiers = VARIANTS[v]
-    rng = Rng(20 + v)
+
+    k.ground("base", br * 0.85, seed=22 + v, tufts=6, stones=2)
 
     # the trunk runs the whole height: on a pine it shows between the tiers, and that is the point
-    k.taper("trunk", (0.0, 0.0, 0.0), 0.034, 0.016, h, "bark", seg=8)
+    k.taper("roots", (0.0, 0.0, 0.0), 0.052, 0.036, h * 0.06, "bark", seg=9)
+    k.taper("trunk", (0.0, 0.0, h * 0.05), 0.032, 0.015, h * 0.95, "bark", seg=8)
 
-    # tiers from a third of the way up, each narrower and shorter than the one below it
     z0 = h * 0.34
     span = h - z0
     for i in range(tiers):
         f = i / max(1, tiers - 1)
         z = z0 + span * (i / tiers) * 1.02
-        r = br * (1.0 - 0.52 * f) * rng.r(0.94, 1.06)
-        th = span / tiers * rng.r(1.15, 1.35)
-        # the lowest tier sits in its own shade, which is how a conifer's underside reads
-        k.cone("tier%d" % i, 0.0, 0.0, z, r, th, "conifer" if i else "conifer_dark", seg=12)
+        r = br * (1.0 - 0.5 * f)
+        th = span / tiers * 1.25
+        k.tier("tier%d" % i, 0.0, 0.0, z, r, th, "conifer" if i else "conifer_dark",
+               tips=10, seed=25 + v * 8 + i)
 
-    # a short leader above the top tier, so the silhouette ends in a point rather than a stump
-    k.cone("leader", 0.0, 0.0, h - span * 0.12, br * 0.20, span * 0.24, "conifer", seg=10)
+    k.tier("leader", 0.0, 0.0, h - span * 0.12, br * 0.22, span * 0.26, "conifer", tips=6,
+           seed=29 + v, droop=0.1)

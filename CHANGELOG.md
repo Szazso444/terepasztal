@@ -80,6 +80,10 @@ Asset redesign to the art direction in `docs/art-direction/README.md`, plus the 
 - A mesh can be an asset source. `art-src/mesh_asset.py` normalises an imported mesh onto the tile
   and repaints it in the palette, so a model from an image-to-3D tool, an asset library or a
   modeller goes through the same bake as a program.
+- The props are the board's own drawings. `tools/bake-refs.mjs` brings each extracted specimen down
+  to its frame's size and through the same pixel medium as a render, which keeps the detail a
+  render cannot: the oak's gnarled bole, the birch's branching, the dead tree's twigs. All 43 prop
+  frames come from the board now, the third variant of each family being a sibling mirrored.
 
 ### Audio
 
