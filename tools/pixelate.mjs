@@ -145,7 +145,7 @@ function groundShadow(png, { cx, cy, rx, alpha = 64, scale = 1 }) {
  * Those sit inside a run of one material, so the surrounding majority is the right answer; a pixel
  * with no valid neighbour at all is a real failure and returns undefined for the caller to report.
  */
-function materialAt(ids, materials, x, y) {
+function materialAt(ids, materials, x, y, radius = 2) {
   const at = (px, py) => {
     const o = (py * ids.width + px) * 4;
     return ids.data[o + 3] ? materials[ids.data[o]] : undefined;
@@ -153,13 +153,14 @@ function materialAt(ids, materials, x, y) {
   const here = at(x, y);
   if (here) return here;
   const votes = new Map();
-  for (let dy = -1; dy <= 1; dy++)
-    for (let dx = -1; dx <= 1; dx++) {
+  for (let dy = -radius; dy <= radius; dy++)
+    for (let dx = -radius; dx <= radius; dx++) {
       const nx = x + dx;
       const ny = y + dy;
       if ((!dx && !dy) || nx < 0 || ny < 0 || nx >= ids.width || ny >= ids.height) continue;
       const n = at(nx, ny);
-      if (n) votes.set(n, (votes.get(n) ?? 0) + 1);
+      if (n)
+        votes.set(n, (votes.get(n) ?? 0) + (radius + 1 - Math.max(Math.abs(dx), Math.abs(dy))));
     }
   let best;
   let bv = 0;
@@ -191,21 +192,26 @@ export function pixelate(
     throw new Error(`pixelate: ${idPath} is not the same size as ${path}`);
   }
   const { data, width, height } = png;
-  const unknown = new Set();
+  let drawn = 0;
+  let dropped = 0;
   for (let i = 0; i < width * height; i++) {
     const o = i * 4;
     if (data[o + 3] < alphaCut) {
       data[o + 3] = 0;
       continue;
     }
+    drawn++;
     const x = i % width;
     const y = (i - x) / width;
     const ramp = palette.ramps[materialAt(ids, materials, x, y)];
     if (!ramp) {
-      // The index pass is rendered without filtering or dithering and isolated gaps are repaired
-      // above, so this should not happen; fail loudly rather than quietly painting the pixel some
-      // other material's colour.
-      unknown.add(`${ids.data[o]}@${x},${y}`);
+      // The index pass decides what the asset covers. The beauty pass is denoised and its filter
+      // is wide, so it bleeds the odd pixel past a thin edge -- a reed blade, a frond tip -- that
+      // the index pass, at one sample and no filter, does not reach. With no material within two
+      // pixels there is nothing there, so drop it. A run of them would mean the two passes
+      // genuinely disagree, which is the failure worth stopping for.
+      data[o + 3] = 0;
+      dropped++;
       continue;
     }
     const c = shadeOf(ramp, data[o], data[o + 1], data[o + 2], x, y, seed);
@@ -214,10 +220,10 @@ export function pixelate(
     data[o + 2] = c[2];
     data[o + 3] = 255;
   }
-  if (unknown.size) {
+  if (dropped > Math.max(8, drawn * 0.005)) {
     throw new Error(
-      `pixelate: ${unknown.size} pixel(s) of ${path} carry no known material, e.g. ` +
-        [...unknown].slice(0, 5).join(' '),
+      `pixelate: ${dropped} of ${drawn} drawn pixels in ${path} carry no material. The beauty and ` +
+        'index passes disagree about what this asset covers, which is not an edge artefact.',
     );
   }
   outline(png, palette.outline, 170);

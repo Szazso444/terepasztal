@@ -69,6 +69,28 @@ frame in the game's medium:
 - **The ground shadow** is the translucent ellipse `src/art/props.ts` draws, laid last so the
   contour never outlines it. A program declares its footprint as `SHADOW_R`.
 
+## References out of the boards
+
+`scratchpad/extract-refs.mjs` cuts the individual specimens out of a concept board in
+`docs/art-direction/images`:
+
+```sh
+node scratchpad/extract-refs.mjs docs/art-direction/images/02-nature-objects.png \
+     art-src/ref docs/art-direction/ref-map.json
+```
+
+The boards are studies drawn on one warm paper, so finding the objects is finding what is not
+paper -- no grid is assumed, because the rules between the cells are not clean enough to trust and
+the strip at the foot of a board has no grid at all. Headings and labels come out of the same
+segmentation and are filtered by what they are, loosely: the numbered `index.png` shows every
+survivor so a wrong one can be seen, which is a better trade than a clever filter that silently
+eats a cactus. `ref-map.json` says which index is which frame -- a judgement made once, by eye,
+kept in a file so re-running reproduces the same named set.
+
+The crops come out with the paper knocked out to transparency, so a reference is also a silhouette
+to compare against. They are build output, regenerated from the board, the script and the map, and
+are not committed.
+
 ## A mesh instead of a program
 
 `mesh_asset.py` is the other door in. A mesh from anywhere -- an image-to-3D generator run

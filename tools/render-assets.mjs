@@ -52,6 +52,12 @@ const ASSETS = [
   { module: 'art-src/props/deadtree.py', key: 'props/deadtree', variants: 2 },
   { module: 'art-src/props/rock.py', key: 'props/rock', variants: 3 },
   { module: 'art-src/props/boulder.py', key: 'props/boulder', variants: 3 },
+  { module: 'art-src/props/palm.py', key: 'props/palm', variants: 2 },
+  { module: 'art-src/props/cactus.py', key: 'props/cactus', variants: 3 },
+  { module: 'art-src/props/reeds.py', key: 'props/reeds', variants: 2 },
+  { module: 'art-src/props/flowers.py', key: 'props/flowers', variants: 4 },
+  { module: 'art-src/props/coal.py', key: 'props/coal', variants: 3 },
+  { module: 'art-src/props/oil.py', key: 'props/oil', variants: 3 },
 ];
 
 /** Expand `variants` into one render each, so the loop below only ever sees a single frame. */

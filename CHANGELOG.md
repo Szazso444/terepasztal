@@ -70,6 +70,16 @@ Asset redesign to the art direction in `docs/art-direction/README.md`, plus the 
 - Frontages face the camera. The rig sees an object's +x and -y faces, so details written on +y —
   the station's windows, the cottage's door — were rendering into the back of the sprite, and no
   baked station had ever shown a window.
+- The props group is fully authored: palm, cactus, reeds, flowers, coal seam and oil seep complete
+  it at 43 of 43 frames, modelled from the specimens on the nature board. Every frame lands within
+  a fifth of the sprite it replaces except the two smallest oil seeps, which are a few pixels
+  taller in iso projection than the hand-drawn ones.
+- Concept boards can be cut into per-object references. `scratchpad/extract-refs.mjs` segments a
+  board into its specimens and names them by a committed map, with the paper knocked out so a
+  reference doubles as a silhouette.
+- A mesh can be an asset source. `art-src/mesh_asset.py` normalises an imported mesh onto the tile
+  and repaints it in the palette, so a model from an image-to-3D tool, an asset library or a
+  modeller goes through the same bake as a program.
 
 ### Audio
 
