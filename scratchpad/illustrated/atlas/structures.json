@@ -1,0 +1,5388 @@
+{
+  "frames": {
+    "structures/alert": {
+      "x": 763,
+      "y": 753,
+      "w": 14,
+      "h": 14,
+      "ax": 7,
+      "ay": 14
+    },
+    "structures/bridge_detail_stone_0_2_deck": {
+      "x": 808,
+      "y": 753,
+      "w": 7,
+      "h": 13,
+      "ax": 13,
+      "ay": 12
+    },
+    "structures/bridge_detail_stone_0_2_rail": {
+      "x": 824,
+      "y": 753,
+      "w": 7,
+      "h": 12,
+      "ax": -7,
+      "ay": 1
+    },
+    "structures/bridge_detail_stone_0_3_deck": {
+      "x": 697,
+      "y": 753,
+      "w": 16,
+      "h": 17,
+      "ax": 18,
+      "ay": 14
+    },
+    "structures/bridge_detail_stone_0_3_rail": {
+      "x": 545,
+      "y": 753,
+      "w": 16,
+      "h": 18,
+      "ax": -3,
+      "ay": 4
+    },
+    "structures/bridge_detail_stone_0_4_deck": {
+      "x": 103,
+      "y": 706,
+      "w": 25,
+      "h": 22,
+      "ax": 22,
+      "ay": 16
+    },
+    "structures/bridge_detail_stone_0_4_rail": {
+      "x": 129,
+      "y": 706,
+      "w": 25,
+      "h": 22,
+      "ax": 2,
+      "ay": 6
+    },
+    "structures/bridge_detail_stone_1_2_deck": {
+      "x": 816,
+      "y": 753,
+      "w": 7,
+      "h": 13,
+      "ax": -7,
+      "ay": 12
+    },
+    "structures/bridge_detail_stone_1_2_rail": {
+      "x": 832,
+      "y": 753,
+      "w": 7,
+      "h": 12,
+      "ax": 13,
+      "ay": 1
+    },
+    "structures/bridge_detail_stone_1_3_deck": {
+      "x": 714,
+      "y": 753,
+      "w": 16,
+      "h": 17,
+      "ax": -3,
+      "ay": 14
+    },
+    "structures/bridge_detail_stone_1_3_rail": {
+      "x": 562,
+      "y": 753,
+      "w": 16,
+      "h": 18,
+      "ax": 18,
+      "ay": 4
+    },
+    "structures/bridge_detail_stone_1_4_deck": {
+      "x": 155,
+      "y": 706,
+      "w": 25,
+      "h": 22,
+      "ax": 2,
+      "ay": 16
+    },
+    "structures/bridge_detail_stone_1_4_rail": {
+      "x": 181,
+      "y": 706,
+      "w": 25,
+      "h": 22,
+      "ax": 22,
+      "ay": 6
+    },
+    "structures/bridge_detail_wood_0_2_deck": {
+      "x": 731,
+      "y": 753,
+      "w": 7,
+      "h": 16,
+      "ax": 13,
+      "ay": 15
+    },
+    "structures/bridge_detail_wood_0_2_rail": {
+      "x": 747,
+      "y": 753,
+      "w": 7,
+      "h": 15,
+      "ax": -7,
+      "ay": 4
+    },
+    "structures/bridge_detail_wood_0_3_deck": {
+      "x": 511,
+      "y": 753,
+      "w": 16,
+      "h": 20,
+      "ax": 18,
+      "ay": 17
+    },
+    "structures/bridge_detail_wood_0_3_rail": {
+      "x": 477,
+      "y": 753,
+      "w": 16,
+      "h": 21,
+      "ax": -3,
+      "ay": 7
+    },
+    "structures/bridge_detail_wood_0_4_deck": {
+      "x": 1190,
+      "y": 677,
+      "w": 25,
+      "h": 25,
+      "ax": 22,
+      "ay": 19
+    },
+    "structures/bridge_detail_wood_0_4_rail": {
+      "x": 1216,
+      "y": 677,
+      "w": 25,
+      "h": 25,
+      "ax": 2,
+      "ay": 9
+    },
+    "structures/bridge_detail_wood_1_2_deck": {
+      "x": 739,
+      "y": 753,
+      "w": 7,
+      "h": 16,
+      "ax": -7,
+      "ay": 15
+    },
+    "structures/bridge_detail_wood_1_2_rail": {
+      "x": 755,
+      "y": 753,
+      "w": 7,
+      "h": 15,
+      "ax": 13,
+      "ay": 4
+    },
+    "structures/bridge_detail_wood_1_3_deck": {
+      "x": 528,
+      "y": 753,
+      "w": 16,
+      "h": 20,
+      "ax": -3,
+      "ay": 17
+    },
+    "structures/bridge_detail_wood_1_3_rail": {
+      "x": 494,
+      "y": 753,
+      "w": 16,
+      "h": 21,
+      "ax": 18,
+      "ay": 7
+    },
+    "structures/bridge_detail_wood_1_4_deck": {
+      "x": 1242,
+      "y": 677,
+      "w": 25,
+      "h": 25,
+      "ax": 2,
+      "ay": 19
+    },
+    "structures/bridge_detail_wood_1_4_rail": {
+      "x": 1268,
+      "y": 677,
+      "w": 25,
+      "h": 25,
+      "ax": 22,
+      "ay": 9
+    },
+    "structures/bridge_stone": {
+      "x": 1043,
+      "y": 346,
+      "w": 123,
+      "h": 58,
+      "ax": 61,
+      "ay": 21
+    },
+    "structures/bridge_wood": {
+      "x": 1368,
+      "y": 1,
+      "w": 123,
+      "h": 73,
+      "ax": 61,
+      "ay": 27
+    },
+    "structures/colliery": {
+      "x": 97,
+      "y": 604,
+      "w": 49,
+      "h": 38,
+      "ax": 26,
+      "ay": 30
+    },
+    "structures/colliery_lv2": {
+      "x": 1002,
+      "y": 561,
+      "w": 51,
+      "h": 39,
+      "ax": 27,
+      "ay": 30
+    },
+    "structures/colliery_lv3": {
+      "x": 1054,
+      "y": 561,
+      "w": 51,
+      "h": 39,
+      "ax": 27,
+      "ay": 30
+    },
+    "structures/colliery_lv4": {
+      "x": 1106,
+      "y": 561,
+      "w": 51,
+      "h": 39,
+      "ax": 27,
+      "ay": 30
+    },
+    "structures/depot_1": {
+      "x": 1,
+      "y": 1,
+      "w": 126,
+      "h": 83,
+      "ax": 57,
+      "ay": 59
+    },
+    "structures/depot_r0": {
+      "x": 128,
+      "y": 1,
+      "w": 126,
+      "h": 83,
+      "ax": 57,
+      "ay": 59
+    },
+    "structures/depot_r0_lv2": {
+      "x": 255,
+      "y": 1,
+      "w": 126,
+      "h": 83,
+      "ax": 57,
+      "ay": 59
+    },
+    "structures/depot_r0_lv3": {
+      "x": 382,
+      "y": 1,
+      "w": 126,
+      "h": 83,
+      "ax": 57,
+      "ay": 59
+    },
+    "structures/depot_r0_lv4": {
+      "x": 509,
+      "y": 1,
+      "w": 126,
+      "h": 83,
+      "ax": 57,
+      "ay": 59
+    },
+    "structures/depot_r0_lv5": {
+      "x": 636,
+      "y": 1,
+      "w": 126,
+      "h": 83,
+      "ax": 57,
+      "ay": 59
+    },
+    "structures/depot_r1": {
+      "x": 763,
+      "y": 1,
+      "w": 120,
+      "h": 79,
+      "ax": 63,
+      "ay": 56
+    },
+    "structures/depot_r1_lv2": {
+      "x": 884,
+      "y": 1,
+      "w": 120,
+      "h": 79,
+      "ax": 63,
+      "ay": 56
+    },
+    "structures/depot_r1_lv3": {
+      "x": 1005,
+      "y": 1,
+      "w": 120,
+      "h": 79,
+      "ax": 63,
+      "ay": 56
+    },
+    "structures/depot_r1_lv4": {
+      "x": 1126,
+      "y": 1,
+      "w": 120,
+      "h": 79,
+      "ax": 63,
+      "ay": 56
+    },
+    "structures/depot_r1_lv5": {
+      "x": 1247,
+      "y": 1,
+      "w": 120,
+      "h": 79,
+      "ax": 63,
+      "ay": 56
+    },
+    "structures/diesel_refinery": {
+      "x": 893,
+      "y": 561,
+      "w": 51,
+      "h": 40,
+      "ax": 29,
+      "ay": 32
+    },
+    "structures/diesel_refinery_lv2": {
+      "x": 591,
+      "y": 561,
+      "w": 53,
+      "h": 41,
+      "ax": 30,
+      "ay": 32
+    },
+    "structures/diesel_refinery_lv3": {
+      "x": 645,
+      "y": 561,
+      "w": 53,
+      "h": 41,
+      "ax": 30,
+      "ay": 32
+    },
+    "structures/diesel_refinery_lv4": {
+      "x": 699,
+      "y": 561,
+      "w": 53,
+      "h": 41,
+      "ax": 30,
+      "ay": 32
+    },
+    "structures/farm_1": {
+      "x": 753,
+      "y": 561,
+      "w": 55,
+      "h": 41,
+      "ax": 28,
+      "ay": 28
+    },
+    "structures/farm_2": {
+      "x": 1939,
+      "y": 515,
+      "w": 56,
+      "h": 42,
+      "ax": 28,
+      "ay": 29
+    },
+    "structures/farm_3": {
+      "x": 1,
+      "y": 561,
+      "w": 57,
+      "h": 42,
+      "ax": 28,
+      "ay": 32
+    },
+    "structures/farm_4": {
+      "x": 1225,
+      "y": 515,
+      "w": 59,
+      "h": 44,
+      "ax": 29,
+      "ay": 33
+    },
+    "structures/farm_5": {
+      "x": 1285,
+      "y": 515,
+      "w": 59,
+      "h": 44,
+      "ax": 29,
+      "ay": 33
+    },
+    "structures/fuel_stop": {
+      "x": 1335,
+      "y": 466,
+      "w": 43,
+      "h": 45,
+      "ax": 25,
+      "ay": 36
+    },
+    "structures/grinder": {
+      "x": 461,
+      "y": 604,
+      "w": 42,
+      "h": 37,
+      "ax": 27,
+      "ay": 30
+    },
+    "structures/grinder_lv2": {
+      "x": 1158,
+      "y": 561,
+      "w": 44,
+      "h": 39,
+      "ax": 28,
+      "ay": 31
+    },
+    "structures/grinder_lv3": {
+      "x": 1203,
+      "y": 561,
+      "w": 44,
+      "h": 39,
+      "ax": 28,
+      "ay": 31
+    },
+    "structures/grinder_lv4": {
+      "x": 1248,
+      "y": 561,
+      "w": 44,
+      "h": 39,
+      "ax": 28,
+      "ay": 31
+    },
+    "structures/hydro_plant": {
+      "x": 504,
+      "y": 604,
+      "w": 45,
+      "h": 37,
+      "ax": 25,
+      "ay": 26
+    },
+    "structures/hydro_plant_lv2": {
+      "x": 147,
+      "y": 604,
+      "w": 47,
+      "h": 38,
+      "ax": 26,
+      "ay": 26
+    },
+    "structures/hydro_plant_lv3": {
+      "x": 195,
+      "y": 604,
+      "w": 47,
+      "h": 38,
+      "ax": 26,
+      "ay": 26
+    },
+    "structures/hydro_plant_lv4": {
+      "x": 243,
+      "y": 604,
+      "w": 47,
+      "h": 38,
+      "ax": 26,
+      "ay": 28
+    },
+    "structures/ironworks": {
+      "x": 801,
+      "y": 604,
+      "w": 48,
+      "h": 36,
+      "ax": 26,
+      "ay": 29
+    },
+    "structures/ironworks_lv2": {
+      "x": 550,
+      "y": 604,
+      "w": 50,
+      "h": 37,
+      "ax": 27,
+      "ay": 29
+    },
+    "structures/ironworks_lv3": {
+      "x": 601,
+      "y": 604,
+      "w": 50,
+      "h": 37,
+      "ax": 27,
+      "ay": 29
+    },
+    "structures/ironworks_lv4": {
+      "x": 652,
+      "y": 604,
+      "w": 50,
+      "h": 37,
+      "ax": 27,
+      "ay": 29
+    },
+    "structures/kiln": {
+      "x": 1852,
+      "y": 407,
+      "w": 44,
+      "h": 48,
+      "ax": 28,
+      "ay": 34
+    },
+    "structures/kiln_lv2": {
+      "x": 1363,
+      "y": 407,
+      "w": 46,
+      "h": 51,
+      "ax": 29,
+      "ay": 36
+    },
+    "structures/kiln_lv3": {
+      "x": 1410,
+      "y": 407,
+      "w": 46,
+      "h": 51,
+      "ax": 29,
+      "ay": 36
+    },
+    "structures/kiln_lv4": {
+      "x": 1457,
+      "y": 407,
+      "w": 46,
+      "h": 51,
+      "ax": 29,
+      "ay": 37
+    },
+    "structures/lumber_1": {
+      "x": 1200,
+      "y": 604,
+      "w": 47,
+      "h": 34,
+      "ax": 20,
+      "ay": 22
+    },
+    "structures/lumber_2": {
+      "x": 703,
+      "y": 604,
+      "w": 51,
+      "h": 37,
+      "ax": 22,
+      "ay": 25
+    },
+    "structures/lumber_3": {
+      "x": 59,
+      "y": 561,
+      "w": 58,
+      "h": 42,
+      "ax": 29,
+      "ay": 32
+    },
+    "structures/lumber_4": {
+      "x": 1345,
+      "y": 515,
+      "w": 60,
+      "h": 44,
+      "ax": 30,
+      "ay": 33
+    },
+    "structures/lumber_5": {
+      "x": 1406,
+      "y": 515,
+      "w": 60,
+      "h": 44,
+      "ax": 30,
+      "ay": 33
+    },
+    "structures/note": {
+      "x": 778,
+      "y": 753,
+      "w": 14,
+      "h": 14,
+      "ax": 7,
+      "ay": 14
+    },
+    "structures/oil_derrick": {
+      "x": 1379,
+      "y": 466,
+      "w": 41,
+      "h": 45,
+      "ax": 24,
+      "ay": 35
+    },
+    "structures/oil_derrick_lv2": {
+      "x": 37,
+      "y": 466,
+      "w": 43,
+      "h": 47,
+      "ax": 25,
+      "ay": 37
+    },
+    "structures/oil_derrick_lv3": {
+      "x": 81,
+      "y": 466,
+      "w": 43,
+      "h": 47,
+      "ax": 25,
+      "ay": 37
+    },
+    "structures/oil_derrick_lv4": {
+      "x": 125,
+      "y": 466,
+      "w": 43,
+      "h": 47,
+      "ax": 25,
+      "ay": 37
+    },
+    "structures/power_line": {
+      "x": 87,
+      "y": 677,
+      "w": 14,
+      "h": 26,
+      "ax": 7,
+      "ay": 25
+    },
+    "structures/power_plant": {
+      "x": 1644,
+      "y": 515,
+      "w": 56,
+      "h": 43,
+      "ax": 29,
+      "ay": 35
+    },
+    "structures/power_plant_lv2": {
+      "x": 1467,
+      "y": 515,
+      "w": 58,
+      "h": 44,
+      "ax": 30,
+      "ay": 35
+    },
+    "structures/power_plant_lv3": {
+      "x": 1526,
+      "y": 515,
+      "w": 58,
+      "h": 44,
+      "ax": 30,
+      "ay": 35
+    },
+    "structures/power_plant_lv4": {
+      "x": 1585,
+      "y": 515,
+      "w": 58,
+      "h": 44,
+      "ax": 30,
+      "ay": 35
+    },
+    "structures/pump_1": {
+      "x": 1407,
+      "y": 644,
+      "w": 38,
+      "h": 31,
+      "ax": 22,
+      "ay": 23
+    },
+    "structures/pump_2": {
+      "x": 1074,
+      "y": 604,
+      "w": 43,
+      "h": 35,
+      "ax": 17,
+      "ay": 27
+    },
+    "structures/pump_3": {
+      "x": 1293,
+      "y": 561,
+      "w": 47,
+      "h": 39,
+      "ax": 18,
+      "ay": 30
+    },
+    "structures/pump_4": {
+      "x": 1421,
+      "y": 466,
+      "w": 55,
+      "h": 45,
+      "ax": 25,
+      "ay": 35
+    },
+    "structures/pump_5": {
+      "x": 1477,
+      "y": 466,
+      "w": 55,
+      "h": 45,
+      "ax": 25,
+      "ay": 35
+    },
+    "structures/quarry_1": {
+      "x": 118,
+      "y": 561,
+      "w": 42,
+      "h": 42,
+      "ax": 20,
+      "ay": 29
+    },
+    "structures/quarry_2": {
+      "x": 1897,
+      "y": 407,
+      "w": 48,
+      "h": 48,
+      "ax": 22,
+      "ay": 34
+    },
+    "structures/quarry_3": {
+      "x": 1211,
+      "y": 407,
+      "w": 53,
+      "h": 53,
+      "ax": 25,
+      "ay": 38
+    },
+    "structures/quarry_4": {
+      "x": 1099,
+      "y": 407,
+      "w": 55,
+      "h": 55,
+      "ax": 26,
+      "ay": 39
+    },
+    "structures/quarry_5": {
+      "x": 1155,
+      "y": 407,
+      "w": 55,
+      "h": 55,
+      "ax": 26,
+      "ay": 39
+    },
+    "structures/refinery": {
+      "x": 1533,
+      "y": 466,
+      "w": 51,
+      "h": 45,
+      "ax": 29,
+      "ay": 36
+    },
+    "structures/refinery_lv2": {
+      "x": 169,
+      "y": 466,
+      "w": 53,
+      "h": 47,
+      "ax": 30,
+      "ay": 37
+    },
+    "structures/refinery_lv3": {
+      "x": 223,
+      "y": 466,
+      "w": 53,
+      "h": 47,
+      "ax": 30,
+      "ay": 37
+    },
+    "structures/refinery_lv4": {
+      "x": 277,
+      "y": 466,
+      "w": 53,
+      "h": 47,
+      "ax": 30,
+      "ay": 37
+    },
+    "structures/semaphore_m0_d0": {
+      "x": 809,
+      "y": 561,
+      "w": 20,
+      "h": 41,
+      "ax": 14,
+      "ay": 39
+    },
+    "structures/semaphore_m0_d1": {
+      "x": 830,
+      "y": 561,
+      "w": 20,
+      "h": 41,
+      "ax": 14,
+      "ay": 39
+    },
+    "structures/semaphore_m0_d2": {
+      "x": 851,
+      "y": 561,
+      "w": 20,
+      "h": 41,
+      "ax": 14,
+      "ay": 39
+    },
+    "structures/semaphore_m0_d3": {
+      "x": 872,
+      "y": 561,
+      "w": 20,
+      "h": 41,
+      "ax": 14,
+      "ay": 39
+    },
+    "structures/semaphore_m1_d0": {
+      "x": 161,
+      "y": 561,
+      "w": 20,
+      "h": 42,
+      "ax": 14,
+      "ay": 40
+    },
+    "structures/semaphore_m1_d1": {
+      "x": 182,
+      "y": 561,
+      "w": 20,
+      "h": 42,
+      "ax": 14,
+      "ay": 40
+    },
+    "structures/semaphore_m1_d2": {
+      "x": 203,
+      "y": 561,
+      "w": 20,
+      "h": 42,
+      "ax": 14,
+      "ay": 40
+    },
+    "structures/semaphore_m1_d3": {
+      "x": 224,
+      "y": 561,
+      "w": 20,
+      "h": 42,
+      "ax": 14,
+      "ay": 40
+    },
+    "structures/semaphore_m2_d0": {
+      "x": 1585,
+      "y": 466,
+      "w": 19,
+      "h": 45,
+      "ax": 13,
+      "ay": 43
+    },
+    "structures/semaphore_m2_d1": {
+      "x": 1605,
+      "y": 466,
+      "w": 19,
+      "h": 45,
+      "ax": 13,
+      "ay": 43
+    },
+    "structures/semaphore_m2_d2": {
+      "x": 1625,
+      "y": 466,
+      "w": 18,
+      "h": 45,
+      "ax": 12,
+      "ay": 43
+    },
+    "structures/semaphore_m2_d3": {
+      "x": 1644,
+      "y": 466,
+      "w": 18,
+      "h": 45,
+      "ax": 12,
+      "ay": 43
+    },
+    "structures/semaphore_m3_d0": {
+      "x": 1259,
+      "y": 466,
+      "w": 19,
+      "h": 46,
+      "ax": 13,
+      "ay": 44
+    },
+    "structures/semaphore_m3_d1": {
+      "x": 1279,
+      "y": 466,
+      "w": 19,
+      "h": 46,
+      "ax": 13,
+      "ay": 44
+    },
+    "structures/semaphore_m3_d2": {
+      "x": 1299,
+      "y": 466,
+      "w": 18,
+      "h": 46,
+      "ax": 12,
+      "ay": 44
+    },
+    "structures/semaphore_m3_d3": {
+      "x": 1318,
+      "y": 466,
+      "w": 16,
+      "h": 46,
+      "ax": 10,
+      "ay": 44
+    },
+    "structures/signal": {
+      "x": 1341,
+      "y": 561,
+      "w": 20,
+      "h": 39,
+      "ax": 14,
+      "ay": 37
+    },
+    "structures/signal_green": {
+      "x": 1446,
+      "y": 644,
+      "w": 16,
+      "h": 31,
+      "ax": 10,
+      "ay": 30
+    },
+    "structures/signal_red": {
+      "x": 1362,
+      "y": 561,
+      "w": 20,
+      "h": 39,
+      "ax": 14,
+      "ay": 37
+    },
+    "structures/span_stone_0_1_0_0_deck": {
+      "x": 170,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_0_0_rail": {
+      "x": 207,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_0_1_deck": {
+      "x": 230,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_0_1_rail": {
+      "x": 241,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_0_2_deck": {
+      "x": 290,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_0_2_rail": {
+      "x": 275,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_0_3_deck": {
+      "x": 350,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_0_3_rail": {
+      "x": 309,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_1_0_deck": {
+      "x": 1167,
+      "y": 346,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_1_0_rail": {
+      "x": 343,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_1_1_deck": {
+      "x": 1223,
+      "y": 346,
+      "w": 57,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_1_1_rail": {
+      "x": 377,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_1_2_deck": {
+      "x": 410,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_1_2_rail": {
+      "x": 411,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_1_3_deck": {
+      "x": 468,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_1_3_rail": {
+      "x": 445,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_2_0_deck": {
+      "x": 1281,
+      "y": 346,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_2_0_rail": {
+      "x": 479,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_2_1_deck": {
+      "x": 1337,
+      "y": 346,
+      "w": 57,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_2_1_rail": {
+      "x": 513,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_2_2_deck": {
+      "x": 528,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_2_2_rail": {
+      "x": 547,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_2_3_deck": {
+      "x": 586,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_2_3_rail": {
+      "x": 581,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_3_0_deck": {
+      "x": 1395,
+      "y": 346,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_3_0_rail": {
+      "x": 615,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_3_1_deck": {
+      "x": 1451,
+      "y": 346,
+      "w": 57,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_3_1_rail": {
+      "x": 649,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_3_2_deck": {
+      "x": 646,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_3_2_rail": {
+      "x": 683,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_1_3_3_deck": {
+      "x": 704,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_1_3_3_rail": {
+      "x": 717,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_0_0_deck": {
+      "x": 1663,
+      "y": 466,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_0_0_rail": {
+      "x": 751,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_0_1_deck": {
+      "x": 1721,
+      "y": 466,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_0_1_rail": {
+      "x": 785,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_0_2_deck": {
+      "x": 764,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_0_2_rail": {
+      "x": 819,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_0_3_deck": {
+      "x": 824,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_0_3_rail": {
+      "x": 853,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_1_0_deck": {
+      "x": 884,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_1_0_rail": {
+      "x": 887,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_1_1_deck": {
+      "x": 942,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_1_1_rail": {
+      "x": 921,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_1_2_deck": {
+      "x": 1002,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_1_2_rail": {
+      "x": 955,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_1_3_deck": {
+      "x": 1060,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_1_3_rail": {
+      "x": 989,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_2_0_deck": {
+      "x": 1509,
+      "y": 346,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_2_0_rail": {
+      "x": 1023,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_2_1_deck": {
+      "x": 1565,
+      "y": 346,
+      "w": 57,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_2_1_rail": {
+      "x": 1057,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_2_2_deck": {
+      "x": 1120,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_2_2_rail": {
+      "x": 1091,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_2_3_deck": {
+      "x": 1178,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_2_3_rail": {
+      "x": 1125,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_3_0_deck": {
+      "x": 1623,
+      "y": 346,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_3_0_rail": {
+      "x": 1159,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_3_1_deck": {
+      "x": 1679,
+      "y": 346,
+      "w": 57,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_3_1_rail": {
+      "x": 1193,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_3_2_deck": {
+      "x": 1238,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_3_2_rail": {
+      "x": 1227,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_2_3_3_deck": {
+      "x": 1296,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_2_3_3_rail": {
+      "x": 1261,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_0_0_deck": {
+      "x": 1779,
+      "y": 466,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_0_0_rail": {
+      "x": 1295,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_0_1_deck": {
+      "x": 1837,
+      "y": 466,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_0_1_rail": {
+      "x": 1329,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_0_2_deck": {
+      "x": 1356,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_0_2_rail": {
+      "x": 1363,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_0_3_deck": {
+      "x": 1416,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_0_3_rail": {
+      "x": 1397,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_1_0_deck": {
+      "x": 245,
+      "y": 561,
+      "w": 55,
+      "h": 42,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_1_0_rail": {
+      "x": 1431,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_1_1_deck": {
+      "x": 1895,
+      "y": 466,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_1_1_rail": {
+      "x": 1465,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_1_2_deck": {
+      "x": 1476,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_1_2_rail": {
+      "x": 1499,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_1_3_deck": {
+      "x": 1534,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_1_3_rail": {
+      "x": 1533,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_2_0_deck": {
+      "x": 1594,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_2_0_rail": {
+      "x": 1567,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_2_1_deck": {
+      "x": 1652,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_2_1_rail": {
+      "x": 1601,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_2_2_deck": {
+      "x": 1712,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_2_2_rail": {
+      "x": 1635,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_2_3_deck": {
+      "x": 1770,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_2_3_rail": {
+      "x": 1669,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_3_0_deck": {
+      "x": 1737,
+      "y": 346,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_3_0_rail": {
+      "x": 1703,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_3_1_deck": {
+      "x": 1793,
+      "y": 346,
+      "w": 57,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_3_1_rail": {
+      "x": 1737,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_3_2_deck": {
+      "x": 1830,
+      "y": 223,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_3_2_rail": {
+      "x": 1771,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_3_3_3_deck": {
+      "x": 1888,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_3_3_3_rail": {
+      "x": 1805,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_0_0_deck": {
+      "x": 1953,
+      "y": 466,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_0_0_rail": {
+      "x": 1839,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_0_1_deck": {
+      "x": 1,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_0_1_rail": {
+      "x": 1873,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_0_2_deck": {
+      "x": 1948,
+      "y": 223,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_0_2_rail": {
+      "x": 1907,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_0_3_deck": {
+      "x": 1,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_0_3_rail": {
+      "x": 1941,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_1_0_deck": {
+      "x": 1383,
+      "y": 561,
+      "w": 55,
+      "h": 39,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_1_0_rail": {
+      "x": 1975,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_1_1_deck": {
+      "x": 59,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_1_1_rail": {
+      "x": 2009,
+      "y": 706,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_1_2_deck": {
+      "x": 61,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_1_2_rail": {
+      "x": 1,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_1_3_deck": {
+      "x": 119,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_1_3_rail": {
+      "x": 35,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_2_0_deck": {
+      "x": 117,
+      "y": 515,
+      "w": 55,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_2_0_rail": {
+      "x": 69,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_2_1_deck": {
+      "x": 173,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_2_1_rail": {
+      "x": 103,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_2_2_deck": {
+      "x": 179,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_2_2_rail": {
+      "x": 137,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_2_3_deck": {
+      "x": 237,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_2_3_rail": {
+      "x": 171,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_3_0_deck": {
+      "x": 297,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_3_0_rail": {
+      "x": 205,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_3_1_deck": {
+      "x": 355,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_3_1_rail": {
+      "x": 239,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_3_2_deck": {
+      "x": 415,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_3_2_rail": {
+      "x": 273,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_0_4_3_3_deck": {
+      "x": 473,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_0_4_3_3_rail": {
+      "x": 307,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 6,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_0_0_deck": {
+      "x": 533,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_0_0_rail": {
+      "x": 341,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_0_1_deck": {
+      "x": 593,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_0_1_rail": {
+      "x": 375,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_0_2_deck": {
+      "x": 653,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_0_2_rail": {
+      "x": 409,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_0_3_deck": {
+      "x": 713,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_0_3_rail": {
+      "x": 443,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_1_0_deck": {
+      "x": 1851,
+      "y": 346,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_1_0_rail": {
+      "x": 477,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_1_1_deck": {
+      "x": 1907,
+      "y": 346,
+      "w": 57,
+      "h": 58,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_1_1_rail": {
+      "x": 511,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_1_2_deck": {
+      "x": 773,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_1_2_rail": {
+      "x": 545,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_1_3_deck": {
+      "x": 831,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_1_3_rail": {
+      "x": 579,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_2_0_deck": {
+      "x": 1965,
+      "y": 346,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_2_0_rail": {
+      "x": 613,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_2_1_deck": {
+      "x": 1,
+      "y": 407,
+      "w": 57,
+      "h": 58,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_2_1_rail": {
+      "x": 647,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_2_2_deck": {
+      "x": 891,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_2_2_rail": {
+      "x": 681,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_2_3_deck": {
+      "x": 949,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_2_3_rail": {
+      "x": 715,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_3_0_deck": {
+      "x": 59,
+      "y": 407,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_3_0_rail": {
+      "x": 749,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_3_1_deck": {
+      "x": 115,
+      "y": 407,
+      "w": 57,
+      "h": 58,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_3_1_rail": {
+      "x": 783,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_3_2_deck": {
+      "x": 1009,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_3_2_rail": {
+      "x": 817,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_1_3_3_deck": {
+      "x": 1067,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_1_3_3_rail": {
+      "x": 851,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_0_0_deck": {
+      "x": 231,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_0_0_rail": {
+      "x": 885,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_0_1_deck": {
+      "x": 289,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_0_1_rail": {
+      "x": 919,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_0_2_deck": {
+      "x": 1127,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_0_2_rail": {
+      "x": 953,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_0_3_deck": {
+      "x": 1187,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_0_3_rail": {
+      "x": 987,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_1_0_deck": {
+      "x": 1247,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_1_0_rail": {
+      "x": 1021,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_1_1_deck": {
+      "x": 1305,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_1_1_rail": {
+      "x": 1055,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_1_2_deck": {
+      "x": 1365,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_1_2_rail": {
+      "x": 1089,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_1_3_deck": {
+      "x": 1423,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_1_3_rail": {
+      "x": 1123,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_2_0_deck": {
+      "x": 173,
+      "y": 407,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_2_0_rail": {
+      "x": 1157,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_2_1_deck": {
+      "x": 229,
+      "y": 407,
+      "w": 57,
+      "h": 58,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_2_1_rail": {
+      "x": 1191,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_2_2_deck": {
+      "x": 1483,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_2_2_rail": {
+      "x": 1225,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_2_3_deck": {
+      "x": 1541,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_2_3_rail": {
+      "x": 1259,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_3_0_deck": {
+      "x": 287,
+      "y": 407,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_3_0_rail": {
+      "x": 1293,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_3_1_deck": {
+      "x": 343,
+      "y": 407,
+      "w": 57,
+      "h": 58,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_3_1_rail": {
+      "x": 1327,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_3_2_deck": {
+      "x": 1601,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_3_2_rail": {
+      "x": 1361,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_2_3_3_deck": {
+      "x": 1659,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_2_3_3_rail": {
+      "x": 1395,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_0_0_deck": {
+      "x": 347,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_0_0_rail": {
+      "x": 1429,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_0_1_deck": {
+      "x": 405,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_0_1_rail": {
+      "x": 1463,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_0_2_deck": {
+      "x": 1719,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_0_2_rail": {
+      "x": 1497,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_0_3_deck": {
+      "x": 1779,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_0_3_rail": {
+      "x": 1531,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_1_0_deck": {
+      "x": 301,
+      "y": 561,
+      "w": 55,
+      "h": 42,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_1_0_rail": {
+      "x": 1565,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_1_1_deck": {
+      "x": 463,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_1_1_rail": {
+      "x": 1599,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_1_2_deck": {
+      "x": 1839,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_1_2_rail": {
+      "x": 1633,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_1_3_deck": {
+      "x": 1897,
+      "y": 285,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_1_3_rail": {
+      "x": 1667,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_2_0_deck": {
+      "x": 1957,
+      "y": 285,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_2_0_rail": {
+      "x": 1701,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_2_1_deck": {
+      "x": 1,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_2_1_rail": {
+      "x": 1735,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_2_2_deck": {
+      "x": 61,
+      "y": 346,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_2_2_rail": {
+      "x": 1769,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_2_3_deck": {
+      "x": 119,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_2_3_rail": {
+      "x": 1803,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_3_0_deck": {
+      "x": 401,
+      "y": 407,
+      "w": 55,
+      "h": 58,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_3_0_rail": {
+      "x": 1837,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_3_1_deck": {
+      "x": 457,
+      "y": 407,
+      "w": 57,
+      "h": 58,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_3_1_rail": {
+      "x": 1871,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_3_2_deck": {
+      "x": 179,
+      "y": 346,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_3_2_rail": {
+      "x": 1905,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_3_3_3_deck": {
+      "x": 237,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_3_3_3_rail": {
+      "x": 1939,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_0_0_deck": {
+      "x": 521,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_0_0_rail": {
+      "x": 1973,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_0_1_deck": {
+      "x": 579,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_0_1_rail": {
+      "x": 2007,
+      "y": 730,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_0_2_deck": {
+      "x": 297,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_0_2_rail": {
+      "x": 1,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_0_3_deck": {
+      "x": 357,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_0_3_rail": {
+      "x": 35,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_1_0_deck": {
+      "x": 1439,
+      "y": 561,
+      "w": 55,
+      "h": 39,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_1_0_rail": {
+      "x": 69,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_1_1_deck": {
+      "x": 637,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_1_1_rail": {
+      "x": 103,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_1_2_deck": {
+      "x": 417,
+      "y": 346,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_1_2_rail": {
+      "x": 137,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_1_3_deck": {
+      "x": 475,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_1_3_rail": {
+      "x": 171,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_2_0_deck": {
+      "x": 695,
+      "y": 515,
+      "w": 55,
+      "h": 45,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_2_0_rail": {
+      "x": 205,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_2_1_deck": {
+      "x": 751,
+      "y": 515,
+      "w": 57,
+      "h": 45,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_2_1_rail": {
+      "x": 239,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_2_2_deck": {
+      "x": 535,
+      "y": 346,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_2_2_rail": {
+      "x": 273,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_2_3_deck": {
+      "x": 593,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_2_3_rail": {
+      "x": 307,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_3_0_deck": {
+      "x": 653,
+      "y": 346,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_3_0_rail": {
+      "x": 341,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_3_1_deck": {
+      "x": 711,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_3_1_rail": {
+      "x": 375,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_3_2_deck": {
+      "x": 771,
+      "y": 346,
+      "w": 57,
+      "h": 60,
+      "ax": 27,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_3_2_rail": {
+      "x": 409,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_stone_1_4_3_3_deck": {
+      "x": 829,
+      "y": 346,
+      "w": 59,
+      "h": 60,
+      "ax": 29,
+      "ay": 17
+    },
+    "structures/span_stone_1_4_3_3_rail": {
+      "x": 443,
+      "y": 753,
+      "w": 33,
+      "h": 22,
+      "ax": 26,
+      "ay": 7
+    },
+    "structures/span_wood_0_1_0_0_deck": {
+      "x": 1595,
+      "y": 85,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_0_0_rail": {
+      "x": 102,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_0_1_deck": {
+      "x": 1655,
+      "y": 85,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_0_1_rail": {
+      "x": 136,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_0_2_deck": {
+      "x": 1715,
+      "y": 85,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_0_2_rail": {
+      "x": 170,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_0_3_deck": {
+      "x": 1775,
+      "y": 85,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_0_3_rail": {
+      "x": 204,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_1_0_deck": {
+      "x": 1495,
+      "y": 561,
+      "w": 55,
+      "h": 39,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_1_0_rail": {
+      "x": 238,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_1_1_deck": {
+      "x": 1504,
+      "y": 407,
+      "w": 57,
+      "h": 50,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_1_1_rail": {
+      "x": 272,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_1_2_deck": {
+      "x": 1835,
+      "y": 85,
+      "w": 57,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_1_2_rail": {
+      "x": 306,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_1_3_deck": {
+      "x": 1893,
+      "y": 85,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_1_3_rail": {
+      "x": 340,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_2_0_deck": {
+      "x": 1551,
+      "y": 561,
+      "w": 55,
+      "h": 39,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_2_0_rail": {
+      "x": 374,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_2_1_deck": {
+      "x": 1562,
+      "y": 407,
+      "w": 57,
+      "h": 50,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_2_1_rail": {
+      "x": 408,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_2_2_deck": {
+      "x": 1953,
+      "y": 85,
+      "w": 57,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_2_2_rail": {
+      "x": 442,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_2_3_deck": {
+      "x": 1,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_2_3_rail": {
+      "x": 476,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_3_0_deck": {
+      "x": 1607,
+      "y": 561,
+      "w": 55,
+      "h": 39,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_3_0_rail": {
+      "x": 510,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_3_1_deck": {
+      "x": 1620,
+      "y": 407,
+      "w": 57,
+      "h": 50,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_3_1_rail": {
+      "x": 544,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_3_2_deck": {
+      "x": 61,
+      "y": 157,
+      "w": 57,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_3_2_rail": {
+      "x": 578,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_1_3_3_deck": {
+      "x": 119,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_0_1_3_3_rail": {
+      "x": 612,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 6,
+      "ay": 12
+    },
+    "structures/span_wood_0_2_0_0_deck": {
+      "x": 331,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_2_0_0_rail": {
+      "x": 1322,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_2_0_1_deck": {
+      "x": 389,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_2_0_1_rail": {
+      "x": 1356,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_2_0_2_deck": {
+      "x": 824,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_2_0_2_rail": {
+      "x": 1390,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_2_0_3_deck": {
+      "x": 884,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_2_0_3_rail": {
+      "x": 1424,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_2_1_0_deck": {
+      "x": 1492,
+      "y": 1,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_2_1_0_rail": {
+      "x": 1749,
+      "y": 604,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_2_1_1_deck": {
+      "x": 1550,
+      "y": 1,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_2_1_1_rail": {
+      "x": 1783,
+      "y": 604,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_2_1_2_deck": {
+      "x": 1610,
+      "y": 1,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_2_1_2_rail": {
+      "x": 1817,
+      "y": 604,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_2_1_3_deck": {
+      "x": 1668,
+      "y": 1,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_2_1_3_rail": {
+      "x": 1851,
+      "y": 604,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_2_2_0_deck": {
+      "x": 850,
+      "y": 604,
+      "w": 55,
+      "h": 36,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_2_2_0_rail": {
+      "x": 1463,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_2_2_1_deck": {
+      "x": 447,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_2_2_1_rail": {
+      "x": 1497,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_2_2_2_deck": {
+      "x": 944,
+      "y": 157,
+      "w": 57,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_2_2_2_rail": {
+      "x": 1531,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_2_2_3_deck": {
+      "x": 1002,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_2_2_3_rail": {
+      "x": 1565,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_2_3_0_deck": {
+      "x": 1332,
+      "y": 604,
+      "w": 55,
+      "h": 33,
+      "ax": 27,
+      "ay": 14
+    },
+    "structures/span_wood_0_2_3_0_rail": {
+      "x": 1388,
+      "y": 604,
+      "w": 33,
+      "h": 33,
+      "ax": 6,
+      "ay": 4
+    },
+    "structures/span_wood_0_2_3_1_deck": {
+      "x": 357,
+      "y": 561,
+      "w": 57,
+      "h": 42,
+      "ax": 27,
+      "ay": 14
+    },
+    "structures/span_wood_0_2_3_1_rail": {
+      "x": 1422,
+      "y": 604,
+      "w": 33,
+      "h": 33,
+      "ax": 6,
+      "ay": 4
+    },
+    "structures/span_wood_0_2_3_2_deck": {
+      "x": 515,
+      "y": 407,
+      "w": 57,
+      "h": 57,
+      "ax": 29,
+      "ay": 14
+    },
+    "structures/span_wood_0_2_3_2_rail": {
+      "x": 1456,
+      "y": 604,
+      "w": 33,
+      "h": 33,
+      "ax": 6,
+      "ay": 4
+    },
+    "structures/span_wood_0_2_3_3_deck": {
+      "x": 573,
+      "y": 407,
+      "w": 59,
+      "h": 57,
+      "ax": 29,
+      "ay": 14
+    },
+    "structures/span_wood_0_2_3_3_rail": {
+      "x": 1490,
+      "y": 604,
+      "w": 33,
+      "h": 33,
+      "ax": 6,
+      "ay": 4
+    },
+    "structures/span_wood_0_3_0_0_deck": {
+      "x": 505,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_3_0_0_rail": {
+      "x": 1458,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_3_0_1_deck": {
+      "x": 563,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_3_0_1_rail": {
+      "x": 1492,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_3_0_2_deck": {
+      "x": 1062,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_3_0_2_rail": {
+      "x": 1526,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_3_0_3_deck": {
+      "x": 1122,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_3_0_3_rail": {
+      "x": 1560,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_3_1_0_deck": {
+      "x": 809,
+      "y": 515,
+      "w": 55,
+      "h": 45,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_0_3_1_0_rail": {
+      "x": 1885,
+      "y": 604,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_3_1_1_deck": {
+      "x": 751,
+      "y": 407,
+      "w": 57,
+      "h": 56,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_0_3_1_1_rail": {
+      "x": 1919,
+      "y": 604,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_3_1_2_deck": {
+      "x": 1728,
+      "y": 1,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_3_1_2_rail": {
+      "x": 1953,
+      "y": 604,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_3_1_3_deck": {
+      "x": 1786,
+      "y": 1,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_3_1_3_rail": {
+      "x": 1987,
+      "y": 604,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_3_2_0_deck": {
+      "x": 1846,
+      "y": 1,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_3_2_0_rail": {
+      "x": 1,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_3_2_1_deck": {
+      "x": 1904,
+      "y": 1,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_3_2_1_rail": {
+      "x": 35,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_3_2_2_deck": {
+      "x": 1964,
+      "y": 1,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_3_2_2_rail": {
+      "x": 69,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_3_2_3_deck": {
+      "x": 1,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_3_2_3_rail": {
+      "x": 103,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_3_3_0_deck": {
+      "x": 906,
+      "y": 604,
+      "w": 55,
+      "h": 36,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_3_3_0_rail": {
+      "x": 1599,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_3_3_1_deck": {
+      "x": 621,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_3_3_1_rail": {
+      "x": 1633,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_3_3_2_deck": {
+      "x": 1182,
+      "y": 157,
+      "w": 57,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_3_3_2_rail": {
+      "x": 1667,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_3_3_3_deck": {
+      "x": 1240,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_3_3_3_rail": {
+      "x": 1701,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_4_0_0_deck": {
+      "x": 679,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_4_0_0_rail": {
+      "x": 1594,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_4_0_1_deck": {
+      "x": 737,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_0_4_0_1_rail": {
+      "x": 1628,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_4_0_2_deck": {
+      "x": 1300,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_4_0_2_rail": {
+      "x": 1662,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_4_0_3_deck": {
+      "x": 1360,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_0_4_0_3_rail": {
+      "x": 1696,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 6,
+      "ay": 9
+    },
+    "structures/span_wood_0_4_1_0_deck": {
+      "x": 865,
+      "y": 515,
+      "w": 55,
+      "h": 45,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_1_0_rail": {
+      "x": 137,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_1_1_deck": {
+      "x": 809,
+      "y": 407,
+      "w": 57,
+      "h": 56,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_1_1_rail": {
+      "x": 171,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_1_2_deck": {
+      "x": 61,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_1_2_rail": {
+      "x": 205,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_1_3_deck": {
+      "x": 119,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_1_3_rail": {
+      "x": 239,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_2_0_deck": {
+      "x": 921,
+      "y": 515,
+      "w": 55,
+      "h": 45,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_2_0_rail": {
+      "x": 273,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_2_1_deck": {
+      "x": 867,
+      "y": 407,
+      "w": 57,
+      "h": 56,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_2_1_rail": {
+      "x": 307,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_2_2_deck": {
+      "x": 179,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_2_2_rail": {
+      "x": 341,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_2_3_deck": {
+      "x": 237,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_2_3_rail": {
+      "x": 375,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_3_0_deck": {
+      "x": 297,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_3_0_rail": {
+      "x": 409,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_3_1_deck": {
+      "x": 355,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_3_1_rail": {
+      "x": 443,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_3_2_deck": {
+      "x": 415,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_3_2_rail": {
+      "x": 477,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_0_4_3_3_deck": {
+      "x": 473,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_0_4_3_3_rail": {
+      "x": 511,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 6,
+      "ay": 18
+    },
+    "structures/span_wood_1_1_0_0_deck": {
+      "x": 179,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_0_0_rail": {
+      "x": 646,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_0_1_deck": {
+      "x": 239,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_0_1_rail": {
+      "x": 680,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_0_2_deck": {
+      "x": 299,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_0_2_rail": {
+      "x": 714,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_0_3_deck": {
+      "x": 359,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_0_3_rail": {
+      "x": 748,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_1_0_deck": {
+      "x": 1663,
+      "y": 561,
+      "w": 55,
+      "h": 39,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_1_0_rail": {
+      "x": 782,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_1_1_deck": {
+      "x": 1678,
+      "y": 407,
+      "w": 57,
+      "h": 50,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_1_1_rail": {
+      "x": 816,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_1_2_deck": {
+      "x": 419,
+      "y": 157,
+      "w": 57,
+      "h": 65,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_1_2_rail": {
+      "x": 850,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_1_3_deck": {
+      "x": 477,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_1_3_rail": {
+      "x": 884,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_2_0_deck": {
+      "x": 1719,
+      "y": 561,
+      "w": 55,
+      "h": 39,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_2_0_rail": {
+      "x": 918,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_2_1_deck": {
+      "x": 1736,
+      "y": 407,
+      "w": 57,
+      "h": 50,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_2_1_rail": {
+      "x": 952,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_2_2_deck": {
+      "x": 537,
+      "y": 157,
+      "w": 57,
+      "h": 65,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_2_2_rail": {
+      "x": 986,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_2_3_deck": {
+      "x": 595,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_2_3_rail": {
+      "x": 1020,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_3_0_deck": {
+      "x": 1775,
+      "y": 561,
+      "w": 55,
+      "h": 39,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_3_0_rail": {
+      "x": 1054,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_3_1_deck": {
+      "x": 1794,
+      "y": 407,
+      "w": 57,
+      "h": 50,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_3_1_rail": {
+      "x": 1088,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_3_2_deck": {
+      "x": 655,
+      "y": 157,
+      "w": 57,
+      "h": 65,
+      "ax": 27,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_3_2_rail": {
+      "x": 1122,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_1_3_3_deck": {
+      "x": 713,
+      "y": 157,
+      "w": 59,
+      "h": 65,
+      "ax": 29,
+      "ay": 22
+    },
+    "structures/span_wood_1_1_3_3_rail": {
+      "x": 1156,
+      "y": 677,
+      "w": 33,
+      "h": 26,
+      "ax": 26,
+      "ay": 12
+    },
+    "structures/span_wood_1_2_0_0_deck": {
+      "x": 795,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_2_0_0_rail": {
+      "x": 1730,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_2_0_1_deck": {
+      "x": 853,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_2_0_1_rail": {
+      "x": 1764,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_2_0_2_deck": {
+      "x": 1420,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_2_0_2_rail": {
+      "x": 1798,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_2_0_3_deck": {
+      "x": 1480,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_2_0_3_rail": {
+      "x": 1832,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_2_1_0_deck": {
+      "x": 533,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_2_1_0_rail": {
+      "x": 545,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_2_1_1_deck": {
+      "x": 591,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_2_1_1_rail": {
+      "x": 579,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_2_1_2_deck": {
+      "x": 651,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_2_1_2_rail": {
+      "x": 613,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_2_1_3_deck": {
+      "x": 709,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_2_1_3_rail": {
+      "x": 647,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_2_2_0_deck": {
+      "x": 962,
+      "y": 604,
+      "w": 55,
+      "h": 36,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_1_2_2_0_rail": {
+      "x": 1735,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_2_2_1_deck": {
+      "x": 911,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_2_2_1_rail": {
+      "x": 1769,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_2_2_2_deck": {
+      "x": 1540,
+      "y": 157,
+      "w": 57,
+      "h": 62,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_1_2_2_2_rail": {
+      "x": 1803,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_2_2_3_deck": {
+      "x": 1598,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_2_2_3_rail": {
+      "x": 1837,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_2_3_0_deck": {
+      "x": 1524,
+      "y": 604,
+      "w": 55,
+      "h": 33,
+      "ax": 27,
+      "ay": 14
+    },
+    "structures/span_wood_1_2_3_0_rail": {
+      "x": 1580,
+      "y": 604,
+      "w": 33,
+      "h": 33,
+      "ax": 26,
+      "ay": 4
+    },
+    "structures/span_wood_1_2_3_1_deck": {
+      "x": 415,
+      "y": 561,
+      "w": 57,
+      "h": 42,
+      "ax": 29,
+      "ay": 14
+    },
+    "structures/span_wood_1_2_3_1_rail": {
+      "x": 1614,
+      "y": 604,
+      "w": 33,
+      "h": 33,
+      "ax": 26,
+      "ay": 4
+    },
+    "structures/span_wood_1_2_3_2_deck": {
+      "x": 633,
+      "y": 407,
+      "w": 57,
+      "h": 57,
+      "ax": 27,
+      "ay": 14
+    },
+    "structures/span_wood_1_2_3_2_rail": {
+      "x": 1648,
+      "y": 604,
+      "w": 33,
+      "h": 33,
+      "ax": 26,
+      "ay": 4
+    },
+    "structures/span_wood_1_2_3_3_deck": {
+      "x": 691,
+      "y": 407,
+      "w": 59,
+      "h": 57,
+      "ax": 29,
+      "ay": 14
+    },
+    "structures/span_wood_1_2_3_3_rail": {
+      "x": 1682,
+      "y": 604,
+      "w": 33,
+      "h": 33,
+      "ax": 26,
+      "ay": 4
+    },
+    "structures/span_wood_1_3_0_0_deck": {
+      "x": 969,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_3_0_0_rail": {
+      "x": 1866,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_3_0_1_deck": {
+      "x": 1027,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_3_0_1_rail": {
+      "x": 1900,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_3_0_2_deck": {
+      "x": 1658,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_3_0_2_rail": {
+      "x": 1934,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_3_0_3_deck": {
+      "x": 1718,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_3_0_3_rail": {
+      "x": 1968,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_3_1_0_deck": {
+      "x": 977,
+      "y": 515,
+      "w": 55,
+      "h": 45,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_3_1_0_rail": {
+      "x": 681,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_3_1_1_deck": {
+      "x": 925,
+      "y": 407,
+      "w": 57,
+      "h": 56,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_3_1_1_rail": {
+      "x": 715,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_3_1_2_deck": {
+      "x": 769,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_3_1_2_rail": {
+      "x": 749,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_3_1_3_deck": {
+      "x": 827,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_3_1_3_rail": {
+      "x": 783,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_3_2_0_deck": {
+      "x": 887,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_3_2_0_rail": {
+      "x": 817,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_3_2_1_deck": {
+      "x": 945,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_3_2_1_rail": {
+      "x": 851,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_3_2_2_deck": {
+      "x": 1005,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_3_2_2_rail": {
+      "x": 885,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_3_2_3_deck": {
+      "x": 1063,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_3_2_3_rail": {
+      "x": 919,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_3_3_0_deck": {
+      "x": 1018,
+      "y": 604,
+      "w": 55,
+      "h": 36,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_1_3_3_0_rail": {
+      "x": 1871,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_3_3_1_deck": {
+      "x": 1085,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_3_3_1_rail": {
+      "x": 1905,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_3_3_2_deck": {
+      "x": 1778,
+      "y": 157,
+      "w": 57,
+      "h": 62,
+      "ax": 27,
+      "ay": 19
+    },
+    "structures/span_wood_1_3_3_2_rail": {
+      "x": 1939,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_3_3_3_deck": {
+      "x": 1836,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_3_3_3_rail": {
+      "x": 1973,
+      "y": 644,
+      "w": 33,
+      "h": 28,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_4_0_0_deck": {
+      "x": 1143,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_4_0_0_rail": {
+      "x": 2002,
+      "y": 677,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_4_0_1_deck": {
+      "x": 1201,
+      "y": 466,
+      "w": 57,
+      "h": 47,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_4_0_1_rail": {
+      "x": 1,
+      "y": 706,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_4_0_2_deck": {
+      "x": 1896,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_4_0_2_rail": {
+      "x": 35,
+      "y": 706,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_4_0_3_deck": {
+      "x": 1956,
+      "y": 157,
+      "w": 59,
+      "h": 62,
+      "ax": 29,
+      "ay": 19
+    },
+    "structures/span_wood_1_4_0_3_rail": {
+      "x": 69,
+      "y": 706,
+      "w": 33,
+      "h": 23,
+      "ax": 26,
+      "ay": 9
+    },
+    "structures/span_wood_1_4_1_0_deck": {
+      "x": 1033,
+      "y": 515,
+      "w": 55,
+      "h": 45,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_1_0_rail": {
+      "x": 953,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_1_1_deck": {
+      "x": 983,
+      "y": 407,
+      "w": 57,
+      "h": 56,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_1_1_rail": {
+      "x": 987,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_1_2_deck": {
+      "x": 1123,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_1_2_rail": {
+      "x": 1021,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_1_3_deck": {
+      "x": 1181,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_1_3_rail": {
+      "x": 1055,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_2_0_deck": {
+      "x": 1089,
+      "y": 515,
+      "w": 55,
+      "h": 45,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_2_0_rail": {
+      "x": 1089,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_2_1_deck": {
+      "x": 1041,
+      "y": 407,
+      "w": 57,
+      "h": 56,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_2_1_rail": {
+      "x": 1123,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_2_2_deck": {
+      "x": 1241,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_2_2_rail": {
+      "x": 1157,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_2_3_deck": {
+      "x": 1299,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_2_3_rail": {
+      "x": 1191,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_3_0_deck": {
+      "x": 1359,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_3_0_rail": {
+      "x": 1225,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_3_1_deck": {
+      "x": 1417,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_3_1_rail": {
+      "x": 1259,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_3_2_deck": {
+      "x": 1477,
+      "y": 85,
+      "w": 57,
+      "h": 71,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_3_2_rail": {
+      "x": 1293,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/span_wood_1_4_3_3_deck": {
+      "x": 1535,
+      "y": 85,
+      "w": 59,
+      "h": 71,
+      "ax": 29,
+      "ay": 28
+    },
+    "structures/span_wood_1_4_3_3_rail": {
+      "x": 1327,
+      "y": 644,
+      "w": 33,
+      "h": 32,
+      "ax": 26,
+      "ay": 18
+    },
+    "structures/station_1": {
+      "x": 1,
+      "y": 677,
+      "w": 45,
+      "h": 28,
+      "ax": 23,
+      "ay": 21
+    },
+    "structures/station_2": {
+      "x": 1248,
+      "y": 604,
+      "w": 55,
+      "h": 34,
+      "ax": 30,
+      "ay": 26
+    },
+    "structures/station_3": {
+      "x": 291,
+      "y": 604,
+      "w": 61,
+      "h": 38,
+      "ax": 32,
+      "ay": 29
+    },
+    "structures/station_4": {
+      "x": 1831,
+      "y": 561,
+      "w": 63,
+      "h": 39,
+      "ax": 33,
+      "ay": 29
+    },
+    "structures/station_5": {
+      "x": 1895,
+      "y": 561,
+      "w": 63,
+      "h": 39,
+      "ax": 33,
+      "ay": 29
+    },
+    "structures/substation": {
+      "x": 1701,
+      "y": 515,
+      "w": 37,
+      "h": 43,
+      "ax": 18,
+      "ay": 31
+    },
+    "structures/substation_lv2": {
+      "x": 1145,
+      "y": 515,
+      "w": 39,
+      "h": 45,
+      "ax": 19,
+      "ay": 32
+    },
+    "structures/substation_lv3": {
+      "x": 1185,
+      "y": 515,
+      "w": 39,
+      "h": 45,
+      "ax": 20,
+      "ay": 32
+    },
+    "structures/substation_lv4": {
+      "x": 1317,
+      "y": 407,
+      "w": 45,
+      "h": 52,
+      "ax": 23,
+      "ay": 39
+    },
+    "structures/supply_catenary_ew": {
+      "x": 353,
+      "y": 604,
+      "w": 35,
+      "h": 38,
+      "ax": 17,
+      "ay": 29
+    },
+    "structures/supply_catenary_ns": {
+      "x": 389,
+      "y": 604,
+      "w": 35,
+      "h": 38,
+      "ax": 17,
+      "ay": 29
+    },
+    "structures/supply_catenary_x": {
+      "x": 425,
+      "y": 604,
+      "w": 35,
+      "h": 38,
+      "ax": 17,
+      "ay": 29
+    },
+    "structures/supply_hv_catenary_ew": {
+      "x": 1946,
+      "y": 407,
+      "w": 35,
+      "h": 48,
+      "ax": 17,
+      "ay": 39
+    },
+    "structures/supply_hv_catenary_ns": {
+      "x": 1982,
+      "y": 407,
+      "w": 35,
+      "h": 48,
+      "ax": 17,
+      "ay": 39
+    },
+    "structures/supply_hv_catenary_x": {
+      "x": 1,
+      "y": 466,
+      "w": 35,
+      "h": 48,
+      "ax": 17,
+      "ay": 39
+    },
+    "structures/supply_third_rail_ew": {
+      "x": 579,
+      "y": 753,
+      "w": 33,
+      "h": 18,
+      "ax": 24,
+      "ay": 4
+    },
+    "structures/supply_third_rail_ns": {
+      "x": 613,
+      "y": 753,
+      "w": 33,
+      "h": 18,
+      "ax": 8,
+      "ay": 4
+    },
+    "structures/supply_third_rail_x": {
+      "x": 647,
+      "y": 753,
+      "w": 49,
+      "h": 18,
+      "ax": 24,
+      "ay": 4
+    },
+    "structures/town_1": {
+      "x": 1716,
+      "y": 604,
+      "w": 32,
+      "h": 33,
+      "ax": 18,
+      "ay": 21
+    },
+    "structures/town_2": {
+      "x": 1265,
+      "y": 407,
+      "w": 51,
+      "h": 53,
+      "ax": 26,
+      "ay": 38
+    },
+    "structures/town_3": {
+      "x": 985,
+      "y": 346,
+      "w": 57,
+      "h": 59,
+      "ax": 29,
+      "ay": 44
+    },
+    "structures/town_4": {
+      "x": 1,
+      "y": 223,
+      "w": 59,
+      "h": 61,
+      "ax": 30,
+      "ay": 46
+    },
+    "structures/town_5": {
+      "x": 61,
+      "y": 223,
+      "w": 59,
+      "h": 61,
+      "ax": 30,
+      "ay": 46
+    },
+    "structures/townhouse": {
+      "x": 1739,
+      "y": 515,
+      "w": 49,
+      "h": 43,
+      "ax": 24,
+      "ay": 33
+    },
+    "structures/townhouse_2": {
+      "x": 1789,
+      "y": 515,
+      "w": 49,
+      "h": 43,
+      "ax": 24,
+      "ay": 36
+    },
+    "structures/townhouse_3": {
+      "x": 1839,
+      "y": 515,
+      "w": 49,
+      "h": 43,
+      "ax": 24,
+      "ay": 38
+    },
+    "structures/townhouse_4": {
+      "x": 1889,
+      "y": 515,
+      "w": 49,
+      "h": 43,
+      "ax": 24,
+      "ay": 40
+    },
+    "structures/townhouse_s0": {
+      "x": 1294,
+      "y": 677,
+      "w": 27,
+      "h": 24,
+      "ax": 14,
+      "ay": 12
+    },
+    "structures/townhouse_s1": {
+      "x": 1118,
+      "y": 604,
+      "w": 40,
+      "h": 35,
+      "ax": 21,
+      "ay": 26
+    },
+    "structures/townhouse_s2": {
+      "x": 1159,
+      "y": 604,
+      "w": 40,
+      "h": 35,
+      "ax": 21,
+      "ay": 27
+    },
+    "structures/warehouse_1": {
+      "x": 47,
+      "y": 677,
+      "w": 39,
+      "h": 28,
+      "ax": 20,
+      "ay": 18
+    },
+    "structures/warehouse_2": {
+      "x": 1361,
+      "y": 644,
+      "w": 45,
+      "h": 32,
+      "ax": 21,
+      "ay": 21
+    },
+    "structures/warehouse_3": {
+      "x": 945,
+      "y": 561,
+      "w": 56,
+      "h": 40,
+      "ax": 27,
+      "ay": 28
+    },
+    "structures/warehouse_4": {
+      "x": 473,
+      "y": 561,
+      "w": 58,
+      "h": 42,
+      "ax": 28,
+      "ay": 29
+    },
+    "structures/warehouse_5": {
+      "x": 532,
+      "y": 561,
+      "w": 58,
+      "h": 42,
+      "ax": 28,
+      "ay": 30
+    },
+    "structures/warn": {
+      "x": 793,
+      "y": 753,
+      "w": 14,
+      "h": 14,
+      "ax": 7,
+      "ay": 13
+    },
+    "structures/water_tower": {
+      "x": 1304,
+      "y": 604,
+      "w": 27,
+      "h": 34,
+      "ax": 13,
+      "ay": 31
+    },
+    "structures/windmill": {
+      "x": 889,
+      "y": 346,
+      "w": 47,
+      "h": 60,
+      "ax": 31,
+      "ay": 51
+    },
+    "structures/windmill_lv2": {
+      "x": 937,
+      "y": 346,
+      "w": 47,
+      "h": 60,
+      "ax": 31,
+      "ay": 52
+    },
+    "structures/windmill_lv3": {
+      "x": 121,
+      "y": 223,
+      "w": 48,
+      "h": 61,
+      "ax": 32,
+      "ay": 54
+    },
+    "structures/windmill_lv4": {
+      "x": 773,
+      "y": 157,
+      "w": 50,
+      "h": 64,
+      "ax": 33,
+      "ay": 57
+    },
+    "structures/wire_mill": {
+      "x": 755,
+      "y": 604,
+      "w": 45,
+      "h": 37,
+      "ax": 25,
+      "ay": 26
+    },
+    "structures/wire_mill_lv2": {
+      "x": 1959,
+      "y": 561,
+      "w": 47,
+      "h": 39,
+      "ax": 26,
+      "ay": 28
+    },
+    "structures/wire_mill_lv3": {
+      "x": 1,
+      "y": 604,
+      "w": 47,
+      "h": 39,
+      "ax": 26,
+      "ay": 28
+    },
+    "structures/wire_mill_lv4": {
+      "x": 49,
+      "y": 604,
+      "w": 47,
+      "h": 39,
+      "ax": 26,
+      "ay": 28
+    }
+  }
+}

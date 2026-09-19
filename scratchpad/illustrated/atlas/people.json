@@ -1,0 +1,148 @@
+{
+  "frames": {
+    "people/crossing_dirt_0": {
+      "x": 327,
+      "y": 1,
+      "w": 38,
+      "h": 22,
+      "ax": 19,
+      "ay": 11
+    },
+    "people/crossing_dirt_1": {
+      "x": 366,
+      "y": 1,
+      "w": 38,
+      "h": 22,
+      "ax": 19,
+      "ay": 11
+    },
+    "people/crossing_stone_0": {
+      "x": 405,
+      "y": 1,
+      "w": 38,
+      "h": 22,
+      "ax": 19,
+      "ay": 11
+    },
+    "people/crossing_stone_1": {
+      "x": 444,
+      "y": 1,
+      "w": 38,
+      "h": 22,
+      "ax": 19,
+      "ay": 11
+    },
+    "people/path_dirt_0": {
+      "x": 1,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 27,
+      "ay": 16
+    },
+    "people/path_dirt_1": {
+      "x": 274,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "people/path_dirt_2": {
+      "x": 219,
+      "y": 1,
+      "w": 54,
+      "h": 31,
+      "ax": 27,
+      "ay": 15
+    },
+    "people/road_stone_0": {
+      "x": 57,
+      "y": 1,
+      "w": 53,
+      "h": 32,
+      "ax": 27,
+      "ay": 16
+    },
+    "people/road_stone_1": {
+      "x": 111,
+      "y": 1,
+      "w": 53,
+      "h": 32,
+      "ax": 27,
+      "ay": 16
+    },
+    "people/road_stone_2": {
+      "x": 165,
+      "y": 1,
+      "w": 53,
+      "h": 32,
+      "ax": 27,
+      "ay": 16
+    },
+    "people/walker_0_f0": {
+      "x": 483,
+      "y": 1,
+      "w": 6,
+      "h": 3,
+      "ax": 3,
+      "ay": 3
+    },
+    "people/walker_0_f1": {
+      "x": 490,
+      "y": 1,
+      "w": 6,
+      "h": 3,
+      "ax": 3,
+      "ay": 3
+    },
+    "people/walker_1_f0": {
+      "x": 497,
+      "y": 1,
+      "w": 6,
+      "h": 3,
+      "ax": 3,
+      "ay": 3
+    },
+    "people/walker_1_f1": {
+      "x": 504,
+      "y": 1,
+      "w": 6,
+      "h": 3,
+      "ax": 3,
+      "ay": 3
+    },
+    "people/walker_2_f0": {
+      "x": 511,
+      "y": 1,
+      "w": 6,
+      "h": 3,
+      "ax": 3,
+      "ay": 3
+    },
+    "people/walker_2_f1": {
+      "x": 518,
+      "y": 1,
+      "w": 6,
+      "h": 3,
+      "ax": 3,
+      "ay": 3
+    },
+    "people/walker_3_f0": {
+      "x": 525,
+      "y": 1,
+      "w": 6,
+      "h": 3,
+      "ax": 3,
+      "ay": 3
+    },
+    "people/walker_3_f1": {
+      "x": 532,
+      "y": 1,
+      "w": 6,
+      "h": 3,
+      "ax": 3,
+      "ay": 3
+    }
+  }
+}
