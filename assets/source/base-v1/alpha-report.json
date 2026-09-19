@@ -1,0 +1,5778 @@
+{
+  "inputDirectory": "assets\\source\\base-v1",
+  "imageCount": 147,
+  "valid": true,
+  "failures": [],
+  "assets": [
+    {
+      "name": "bridge-stone.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 981643,
+        "partial": 591137,
+        "opaque": 758,
+        "nearOpaque": 557076,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9411736879007256,
+      "centralCoverageRatio": 0.7170437291223808,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1729,
+        "height": 826
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "bridge-wood.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1061833,
+        "partial": 510579,
+        "opaque": 1126,
+        "nearOpaque": 460725,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9003722848125385,
+      "centralCoverageRatio": 0.6902571110436279,
+      "bbox": {
+        "x": 57,
+        "y": 21,
+        "width": 1673,
+        "height": 846
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-coal.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1254829,
+        "partial": 318035,
+        "opaque": 0,
+        "nearOpaque": 307044,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9654409105916015,
+      "centralCoverageRatio": 0.6991678873697916,
+      "bbox": {
+        "x": 105,
+        "y": 32,
+        "width": 1273,
+        "height": 966
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-copper-ore.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1151180,
+        "partial": 421684,
+        "opaque": 0,
+        "nearOpaque": 406992,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9651587444626782,
+      "centralCoverageRatio": 0.8588968912760416,
+      "bbox": {
+        "x": 358,
+        "y": 35,
+        "width": 1020,
+        "height": 871
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-crude.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1244550,
+        "partial": 327943,
+        "opaque": 1045,
+        "nearOpaque": 318694,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9687101049278393,
+      "centralCoverageRatio": 0.5503466950096163,
+      "bbox": {
+        "x": 517,
+        "y": 39,
+        "width": 995,
+        "height": 824
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-diesel.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 986495,
+        "partial": 586038,
+        "opaque": 1005,
+        "nearOpaque": 562741,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9586026917960013,
+      "centralCoverageRatio": 0.9798663832371698,
+      "bbox": {
+        "x": 257,
+        "y": 11,
+        "width": 1487,
+        "height": 850
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-food.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1077486,
+        "partial": 495441,
+        "opaque": 611,
+        "nearOpaque": 471174,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9498479998064719,
+      "centralCoverageRatio": 0.8753720012146978,
+      "bbox": {
+        "x": 229,
+        "y": 5,
+        "width": 1420,
+        "height": 859
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-iron-ore.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1169082,
+        "partial": 403003,
+        "opaque": 1453,
+        "nearOpaque": 393044,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9717843226457266,
+      "centralCoverageRatio": 0.762959307622229,
+      "bbox": {
+        "x": 65,
+        "y": 74,
+        "width": 1439,
+        "height": 813
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "cargo-iron.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1089731,
+        "partial": 483200,
+        "opaque": 607,
+        "nearOpaque": 439726,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9088872215573566,
+      "centralCoverageRatio": 0.7981273408239701,
+      "bbox": {
+        "x": 265,
+        "y": 0,
+        "width": 1459,
+        "height": 887
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 11,
+        "right": 0,
+        "bottom": 3,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 11/255)",
+        "non-transparent pixels touch the bottom edge (maximum alpha 3/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "cargo-money.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1021810,
+        "partial": 551127,
+        "opaque": 601,
+        "nearOpaque": 512733,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9293220572455992,
+      "centralCoverageRatio": 0.9084244356716267,
+      "bbox": {
+        "x": 255,
+        "y": 28,
+        "width": 1305,
+        "height": 829
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-oil.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1206368,
+        "partial": 366247,
+        "opaque": 923,
+        "nearOpaque": 346822,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9445815289920201,
+      "centralCoverageRatio": 0.7251973883996355,
+      "bbox": {
+        "x": 340,
+        "y": 60,
+        "width": 1307,
+        "height": 827
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "cargo-passengers.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1379437,
+        "partial": 193427,
+        "opaque": 0,
+        "nearOpaque": 180035,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9307645778510756,
+      "centralCoverageRatio": 0.3830057779947917,
+      "bbox": {
+        "x": 107,
+        "y": 38,
+        "width": 1341,
+        "height": 970
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-population.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1212275,
+        "partial": 360589,
+        "opaque": 0,
+        "nearOpaque": 325457,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9025705165714983,
+      "centralCoverageRatio": 0.7169698079427084,
+      "bbox": {
+        "x": 89,
+        "y": 9,
+        "width": 1359,
+        "height": 1015
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "cargo-power.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1144503,
+        "partial": 428107,
+        "opaque": 928,
+        "nearOpaque": 392085,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9138764902630322,
+      "centralCoverageRatio": 0.8274293956878227,
+      "bbox": {
+        "x": 259,
+        "y": 77,
+        "width": 1390,
+        "height": 752
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-sand.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1108277,
+        "partial": 464550,
+        "opaque": 711,
+        "nearOpaque": 427484,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9188047139132659,
+      "centralCoverageRatio": 0.84342544791983,
+      "bbox": {
+        "x": 65,
+        "y": 21,
+        "width": 1439,
+        "height": 814
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-stone.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 940999,
+        "partial": 631865,
+        "opaque": 0,
+        "nearOpaque": 613913,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9715888678752581,
+      "centralCoverageRatio": 0.9052403767903646,
+      "bbox": {
+        "x": 187,
+        "y": 69,
+        "width": 1199,
+        "height": 931
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-water.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1259334,
+        "partial": 313394,
+        "opaque": 810,
+        "nearOpaque": 287241,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9141863248080865,
+      "centralCoverageRatio": 0.5243268549448324,
+      "bbox": {
+        "x": 174,
+        "y": 22,
+        "width": 1336,
+        "height": 840
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-wheat.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1321247,
+        "partial": 251617,
+        "opaque": 0,
+        "nearOpaque": 224345,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8916130468132122,
+      "centralCoverageRatio": 0.5043309529622396,
+      "bbox": {
+        "x": 59,
+        "y": 36,
+        "width": 1463,
+        "height": 956
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-wire.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1115242,
+        "partial": 457102,
+        "opaque": 1194,
+        "nearOpaque": 441651,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9636806779897708,
+      "centralCoverageRatio": 0.7139968620305699,
+      "bbox": {
+        "x": 65,
+        "y": 51,
+        "width": 1582,
+        "height": 804
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "cargo-wood.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1255949,
+        "partial": 316915,
+        "opaque": 0,
+        "nearOpaque": 304947,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9622359307700803,
+      "centralCoverageRatio": 0.7307993570963541,
+      "bbox": {
+        "x": 65,
+        "y": 21,
+        "width": 1383,
+        "height": 977
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "coaling-stage.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1133355,
+        "partial": 439763,
+        "opaque": 420,
+        "nearOpaque": 381572,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8668485607122492,
+      "centralCoverageRatio": 0.7372557951209636,
+      "bbox": {
+        "x": 265,
+        "y": 21,
+        "width": 1479,
+        "height": 842
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "decor-power-line.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1465948,
+        "partial": 107312,
+        "opaque": 278,
+        "nearOpaque": 87564,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8138674598010968,
+      "centralCoverageRatio": 0.12992458750885716,
+      "bbox": {
+        "x": 649,
+        "y": 17,
+        "width": 774,
+        "height": 847
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "depot.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 837863,
+        "partial": 735286,
+        "opaque": 389,
+        "nearOpaque": 708416,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9629469534780983,
+      "centralCoverageRatio": 0.9958750885717178,
+      "bbox": {
+        "x": 144,
+        "y": 0,
+        "width": 1608,
+        "height": 849
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 18,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 18/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "farm.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 942200,
+        "partial": 630664,
+        "opaque": 0,
+        "nearOpaque": 600033,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9514305557317367,
+      "centralCoverageRatio": 0.9563191731770834,
+      "bbox": {
+        "x": 25,
+        "y": 21,
+        "width": 1499,
+        "height": 987
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "fx-fog.png",
+      "colorType": 6,
+      "intentionalTranslucency": true,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 667585,
+        "partial": 905903,
+        "opaque": 50,
+        "nearOpaque": 536787,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.5925108697691823,
+      "centralCoverageRatio": 0.9963609677092823,
+      "bbox": {
+        "x": 55,
+        "y": 9,
+        "width": 1638,
+        "height": 878
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 19,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 19/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "fx-glow-small.png",
+      "colorType": 6,
+      "intentionalTranslucency": true,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1072651,
+        "partial": 500213,
+        "opaque": 0,
+        "nearOpaque": 433730,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8670906193961373,
+      "centralCoverageRatio": 0.8708623250325521,
+      "bbox": {
+        "x": 65,
+        "y": 32,
+        "width": 1457,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "fx-glow.png",
+      "colorType": 6,
+      "intentionalTranslucency": true,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1033446,
+        "partial": 539695,
+        "opaque": 397,
+        "nearOpaque": 489880,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9070306540367197,
+      "centralCoverageRatio": 0.9395738435064278,
+      "bbox": {
+        "x": 140,
+        "y": 63,
+        "width": 1425,
+        "height": 772
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "fx-light-tile.png",
+      "colorType": 6,
+      "intentionalTranslucency": true,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 883843,
+        "partial": 689021,
+        "opaque": 0,
+        "nearOpaque": 500451,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.7263218392472799,
+      "centralCoverageRatio": 0.9633916219075521,
+      "bbox": {
+        "x": 27,
+        "y": 9,
+        "width": 1495,
+        "height": 1015
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "fx-rain.png",
+      "colorType": 6,
+      "intentionalTranslucency": true,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1070417,
+        "partial": 502447,
+        "opaque": 0,
+        "nearOpaque": 454046,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9036694417520654,
+      "centralCoverageRatio": 0.8954366048177084,
+      "bbox": {
+        "x": 0,
+        "y": 15,
+        "width": 1522,
+        "height": 1009
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "fx-smoke.png",
+      "colorType": 6,
+      "intentionalTranslucency": true,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1089977,
+        "partial": 483341,
+        "opaque": 220,
+        "nearOpaque": 427356,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8837685421280872,
+      "centralCoverageRatio": 0.7918286263791882,
+      "bbox": {
+        "x": 259,
+        "y": 29,
+        "width": 1495,
+        "height": 818
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "grinder.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1075339,
+        "partial": 497931,
+        "opaque": 268,
+        "nearOpaque": 474820,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9530729688337392,
+      "centralCoverageRatio": 0.8760350237878328,
+      "bbox": {
+        "x": 259,
+        "y": 17,
+        "width": 1495,
+        "height": 830
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "house-cottage.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1009010,
+        "partial": 563854,
+        "opaque": 0,
+        "nearOpaque": 541909,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9610803505872088,
+      "centralCoverageRatio": 0.9809926350911459,
+      "bbox": {
+        "x": 295,
+        "y": 17,
+        "width": 1157,
+        "height": 991
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "hydro-plant.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 981777,
+        "partial": 591087,
+        "opaque": 0,
+        "nearOpaque": 541378,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9159023967706953,
+      "centralCoverageRatio": 0.8740412394205729,
+      "bbox": {
+        "x": 0,
+        "y": 31,
+        "width": 1498,
+        "height": 993
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "kiln.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1156798,
+        "partial": 416066,
+        "opaque": 0,
+        "nearOpaque": 393790,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.946460417337634,
+      "centralCoverageRatio": 0.8125127156575521,
+      "bbox": {
+        "x": 177,
+        "y": 23,
+        "width": 1345,
+        "height": 984
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "loco-adler.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1194880,
+        "partial": 377984,
+        "opaque": 0,
+        "nearOpaque": 332964,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8808944293938368,
+      "centralCoverageRatio": 0.7640584309895834,
+      "bbox": {
+        "x": 89,
+        "y": 36,
+        "width": 1315,
+        "height": 988
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-big-boy.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1088337,
+        "partial": 484527,
+        "opaque": 0,
+        "nearOpaque": 439921,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9079390828581276,
+      "centralCoverageRatio": 0.6390736897786459,
+      "bbox": {
+        "x": 27,
+        "y": 36,
+        "width": 1479,
+        "height": 924
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "loco-black-five.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 945630,
+        "partial": 627234,
+        "opaque": 0,
+        "nearOpaque": 585414,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9333263184074843,
+      "centralCoverageRatio": 0.8080724080403646,
+      "bbox": {
+        "x": 48,
+        "y": 32,
+        "width": 1484,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-class08.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1050870,
+        "partial": 521994,
+        "opaque": 0,
+        "nearOpaque": 483859,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.926943604715763,
+      "centralCoverageRatio": 0.8711878458658854,
+      "bbox": {
+        "x": 129,
+        "y": 21,
+        "width": 1327,
+        "height": 949
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "loco-crocodile.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1052486,
+        "partial": 520378,
+        "opaque": 0,
+        "nearOpaque": 447532,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.860013298025666,
+      "centralCoverageRatio": 0.7721303304036459,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1486,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-daylight.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1021785,
+        "partial": 551079,
+        "opaque": 0,
+        "nearOpaque": 519036,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9418540717392606,
+      "centralCoverageRatio": 0.7305501302083334,
+      "bbox": {
+        "x": 65,
+        "y": 9,
+        "width": 1436,
+        "height": 1015
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-dda40x.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1019383,
+        "partial": 553481,
+        "opaque": 0,
+        "nearOpaque": 513485,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9277373568379041,
+      "centralCoverageRatio": 0.7096964518229166,
+      "bbox": {
+        "x": 0,
+        "y": 33,
+        "width": 1502,
+        "height": 991
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-deltic.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 983423,
+        "partial": 589441,
+        "opaque": 0,
+        "nearOpaque": 549888,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9328974401169922,
+      "centralCoverageRatio": 0.7732467651367188,
+      "bbox": {
+        "x": 46,
+        "y": 21,
+        "width": 1490,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": true,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 1,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the right edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-drg01.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1025540,
+        "partial": 547324,
+        "opaque": 0,
+        "nearOpaque": 504621,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9219785721071979,
+      "centralCoverageRatio": 0.7356313069661459,
+      "bbox": {
+        "x": 47,
+        "y": 31,
+        "width": 1453,
+        "height": 975
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "loco-f7.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 989027,
+        "partial": 583837,
+        "opaque": 0,
+        "nearOpaque": 550681,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9432101768130489,
+      "centralCoverageRatio": 0.8413594563802084,
+      "bbox": {
+        "x": 105,
+        "y": 44,
+        "width": 1411,
+        "height": 980
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-flying-scotsman.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 978431,
+        "partial": 594433,
+        "opaque": 0,
+        "nearOpaque": 552905,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9301384680863949,
+      "centralCoverageRatio": 0.7525405883789062,
+      "bbox": {
+        "x": 33,
+        "y": 31,
+        "width": 1489,
+        "height": 967
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "loco-general.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 935036,
+        "partial": 637828,
+        "opaque": 0,
+        "nearOpaque": 577449,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9053365484111704,
+      "centralCoverageRatio": 0.8879267374674479,
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 1534,
+        "height": 1024
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 1,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-gg1.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 864479,
+        "partial": 708385,
+        "opaque": 0,
+        "nearOpaque": 637784,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9003352696626834,
+      "centralCoverageRatio": 0.8293228149414062,
+      "bbox": {
+        "x": 13,
+        "y": 0,
+        "width": 1507,
+        "height": 1024
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 2,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 2/255)",
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-gmam.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1034829,
+        "partial": 538035,
+        "opaque": 0,
+        "nearOpaque": 488309,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.907578503257223,
+      "centralCoverageRatio": 0.6849899291992188,
+      "bbox": {
+        "x": 33,
+        "y": 21,
+        "width": 1469,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-ice1.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 946062,
+        "partial": 626802,
+        "opaque": 0,
+        "nearOpaque": 582468,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9292695300908421,
+      "centralCoverageRatio": 0.79534912109375,
+      "bbox": {
+        "x": 59,
+        "y": 30,
+        "width": 1429,
+        "height": 994
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-j94.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 965274,
+        "partial": 607590,
+        "opaque": 0,
+        "nearOpaque": 573141,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.943302226830593,
+      "centralCoverageRatio": 0.8963165283203125,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1456,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-john-bull.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1076931,
+        "partial": 495933,
+        "opaque": 0,
+        "nearOpaque": 446952,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9012346425827682,
+      "centralCoverageRatio": 0.8559315999348959,
+      "bbox": {
+        "x": 133,
+        "y": 9,
+        "width": 1389,
+        "height": 991
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "loco-jupiter.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 984969,
+        "partial": 587895,
+        "opaque": 0,
+        "nearOpaque": 530001,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9015232311892429,
+      "centralCoverageRatio": 0.8775278727213541,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1532,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-k4s.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 995149,
+        "partial": 577715,
+        "opaque": 0,
+        "nearOpaque": 527557,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9131786434487593,
+      "centralCoverageRatio": 0.7616348266601562,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1512,
+        "height": 931
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-kando-v40.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 896381,
+        "partial": 676483,
+        "opaque": 0,
+        "nearOpaque": 596121,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8812061796083568,
+      "centralCoverageRatio": 0.9135691324869791,
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 1516,
+        "height": 1024
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 3,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 3/255)",
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-m62.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 978752,
+        "partial": 594112,
+        "opaque": 0,
+        "nearOpaque": 562573,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9469140498761176,
+      "centralCoverageRatio": 0.8211008707682291,
+      "bbox": {
+        "x": 0,
+        "y": 17,
+        "width": 1502,
+        "height": 1007
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-mallard.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 972341,
+        "partial": 600523,
+        "opaque": 0,
+        "nearOpaque": 561464,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9349583612950711,
+      "centralCoverageRatio": 0.7665532430013021,
+      "bbox": {
+        "x": 0,
+        "y": 15,
+        "width": 1512,
+        "height": 1009
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-mav375.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1045916,
+        "partial": 526948,
+        "opaque": 0,
+        "nearOpaque": 489004,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9279928949346046,
+      "centralCoverageRatio": 0.8614883422851562,
+      "bbox": {
+        "x": 105,
+        "y": 21,
+        "width": 1351,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-mav424.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 913178,
+        "partial": 659686,
+        "opaque": 0,
+        "nearOpaque": 614181,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9310202126466228,
+      "centralCoverageRatio": 0.833343505859375,
+      "bbox": {
+        "x": 25,
+        "y": 21,
+        "width": 1507,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-nine-f.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1006474,
+        "partial": 566390,
+        "opaque": 0,
+        "nearOpaque": 534077,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9429492046116633,
+      "centralCoverageRatio": 0.76629638671875,
+      "bbox": {
+        "x": 60,
+        "y": 21,
+        "width": 1462,
+        "height": 979
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "loco-re460.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 997277,
+        "partial": 575587,
+        "opaque": 0,
+        "nearOpaque": 539326,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9370017043470406,
+      "centralCoverageRatio": 0.7860997517903646,
+      "bbox": {
+        "x": 62,
+        "y": 32,
+        "width": 1378,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-rocket.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1218791,
+        "partial": 354073,
+        "opaque": 0,
+        "nearOpaque": 310956,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8782256766260065,
+      "centralCoverageRatio": 0.7536544799804688,
+      "bbox": {
+        "x": 105,
+        "y": 31,
+        "width": 1417,
+        "height": 993
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-sd40.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 924567,
+        "partial": 648297,
+        "opaque": 0,
+        "nearOpaque": 604084,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9318013194569773,
+      "centralCoverageRatio": 0.8338292439778646,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1506,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-sw1.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 976650,
+        "partial": 596214,
+        "opaque": 0,
+        "nearOpaque": 552776,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9271436095093373,
+      "centralCoverageRatio": 0.8705673217773438,
+      "bbox": {
+        "x": 57,
+        "y": 21,
+        "width": 1459,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-taurus.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1050463,
+        "partial": 522401,
+        "opaque": 0,
+        "nearOpaque": 482364,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9233596413483128,
+      "centralCoverageRatio": 0.7871958414713541,
+      "bbox": {
+        "x": 57,
+        "y": 35,
+        "width": 1457,
+        "height": 989
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "loco-tgv.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 946201,
+        "partial": 626663,
+        "opaque": 0,
+        "nearOpaque": 574885,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9173750484710282,
+      "centralCoverageRatio": 0.7745793660481771,
+      "bbox": {
+        "x": 49,
+        "y": 15,
+        "width": 1458,
+        "height": 993
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "loco-v63.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 939067,
+        "partial": 633797,
+        "opaque": 0,
+        "nearOpaque": 580531,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9159573175638256,
+      "centralCoverageRatio": 0.8450597127278646,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1506,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "lumber.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1069784,
+        "partial": 503306,
+        "opaque": 448,
+        "nearOpaque": 471748,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9364650206251464,
+      "centralCoverageRatio": 0.8562050814859804,
+      "bbox": {
+        "x": 321,
+        "y": 18,
+        "width": 1423,
+        "height": 835
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "people-crossing-dirt.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1088423,
+        "partial": 484441,
+        "opaque": 0,
+        "nearOpaque": 460783,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9511643316730004,
+      "centralCoverageRatio": 0.8240432739257812,
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 1522,
+        "height": 1000
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 1,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "people-crossing-stone.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 932868,
+        "partial": 640263,
+        "opaque": 407,
+        "nearOpaque": 611117,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9538717280347137,
+      "centralCoverageRatio": 0.9626100819921045,
+      "bbox": {
+        "x": 57,
+        "y": 30,
+        "width": 1614,
+        "height": 824
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "people-path-dirt.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1002240,
+        "partial": 570624,
+        "opaque": 0,
+        "nearOpaque": 551047,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9656919442575146,
+      "centralCoverageRatio": 0.9534250895182291,
+      "bbox": {
+        "x": 92,
+        "y": 69,
+        "width": 1402,
+        "height": 931
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "people-road-stone.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1032755,
+        "partial": 540501,
+        "opaque": 282,
+        "nearOpaque": 516559,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9552056924866351,
+      "centralCoverageRatio": 0.9398471505213079,
+      "bbox": {
+        "x": 227,
+        "y": 51,
+        "width": 1311,
+        "height": 790
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "people-walker.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 883060,
+        "partial": 689904,
+        "opaque": 574,
+        "nearOpaque": 639666,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9264103997520559,
+      "centralCoverageRatio": 0.9207688025103755,
+      "bbox": {
+        "x": 17,
+        "y": 0,
+        "width": 1735,
+        "height": 863
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 2,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 2/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "power-plant.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 879247,
+        "partial": 693617,
+        "opaque": 0,
+        "nearOpaque": 653492,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9421510718451249,
+      "centralCoverageRatio": 0.7941970825195312,
+      "bbox": {
+        "x": 0,
+        "y": 17,
+        "width": 1530,
+        "height": 979
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "props-boulder.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1029178,
+        "partial": 543840,
+        "opaque": 520,
+        "nearOpaque": 523298,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9613086927768388,
+      "centralCoverageRatio": 0.8920057698147585,
+      "bbox": {
+        "x": 372,
+        "y": 28,
+        "width": 1132,
+        "height": 835
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "props-bush.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1152050,
+        "partial": 420399,
+        "opaque": 1089,
+        "nearOpaque": 398936,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9464943248680864,
+      "centralCoverageRatio": 0.8033100516246584,
+      "bbox": {
+        "x": 299,
+        "y": 21,
+        "width": 1455,
+        "height": 850
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "props-cactus.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1353129,
+        "partial": 219688,
+        "opaque": 721,
+        "nearOpaque": 189275,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8587444251369045,
+      "centralCoverageRatio": 0.39321034517663733,
+      "bbox": {
+        "x": 614,
+        "y": 74,
+        "width": 896,
+        "height": 765
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "props-coal.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 768832,
+        "partial": 804312,
+        "opaque": 394,
+        "nearOpaque": 770246,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9571769068454814,
+      "centralCoverageRatio": 0.9297018929041401,
+      "bbox": {
+        "x": 0,
+        "y": 27,
+        "width": 1695,
+        "height": 829
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "props-deadtree.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1315056,
+        "partial": 257808,
+        "opaque": 0,
+        "nearOpaque": 171938,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.6669226711351083,
+      "centralCoverageRatio": 0.39929453531901044,
+      "bbox": {
+        "x": 89,
+        "y": 30,
+        "width": 1435,
+        "height": 968
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "props-flowers.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1382350,
+        "partial": 190514,
+        "opaque": 0,
+        "nearOpaque": 147821,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.7759062326128263,
+      "centralCoverageRatio": 0.44893646240234375,
+      "bbox": {
+        "x": 377,
+        "y": 19,
+        "width": 1071,
+        "height": 949
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "props-oil-v2.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1278433,
+        "partial": 294406,
+        "opaque": 699,
+        "nearOpaque": 249109,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8441368326527846,
+      "centralCoverageRatio": 0.697752808988764,
+      "bbox": {
+        "x": 176,
+        "y": 95,
+        "width": 1469,
+        "height": 736
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "props-palm.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1286,
+      "height": 1223,
+      "pixels": {
+        "transparent": 1284712,
+        "partial": 285945,
+        "opaque": 2121,
+        "nearOpaque": 236743,
+        "total": 1572778,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8218359681461888,
+      "centralCoverageRatio": 0.4617019444134842,
+      "bbox": {
+        "x": 67,
+        "y": 28,
+        "width": 1093,
+        "height": 1147
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "props-reeds.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1393372,
+        "partial": 177416,
+        "opaque": 2750,
+        "nearOpaque": 141778,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.7869298313777294,
+      "centralCoverageRatio": 0.3035605830549651,
+      "bbox": {
+        "x": 434,
+        "y": 5,
+        "width": 1310,
+        "height": 882
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "props-rock.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1338513,
+        "partial": 234351,
+        "opaque": 0,
+        "nearOpaque": 225169,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9608194545788156,
+      "centralCoverageRatio": 0.5956217447916666,
+      "bbox": {
+        "x": 431,
+        "y": 36,
+        "width": 947,
+        "height": 962
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "pump.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1168027,
+        "partial": 405105,
+        "opaque": 406,
+        "nearOpaque": 382153,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9423986032438084,
+      "centralCoverageRatio": 0.7655253568174917,
+      "bbox": {
+        "x": 259,
+        "y": 39,
+        "width": 1219,
+        "height": 752
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "quarry.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1104534,
+        "partial": 468570,
+        "opaque": 434,
+        "nearOpaque": 417911,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8910606306129585,
+      "centralCoverageRatio": 0.7577715355805243,
+      "bbox": {
+        "x": 59,
+        "y": 0,
+        "width": 1695,
+        "height": 860
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 2,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 2/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "refinery.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1145212,
+        "partial": 427652,
+        "opaque": 0,
+        "nearOpaque": 367123,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8584620205213584,
+      "centralCoverageRatio": 0.6785914103190104,
+      "bbox": {
+        "x": 0,
+        "y": 31,
+        "width": 1522,
+        "height": 993
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "signal.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1434875,
+        "partial": 138232,
+        "opaque": 431,
+        "nearOpaque": 115356,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8319162285541204,
+      "centralCoverageRatio": 0.1948350035428687,
+      "bbox": {
+        "x": 291,
+        "y": 18,
+        "width": 1463,
+        "height": 844
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "station.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 900030,
+        "partial": 672834,
+        "opaque": 0,
+        "nearOpaque": 628280,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9337815865428917,
+      "centralCoverageRatio": 0.9616444905598959,
+      "bbox": {
+        "x": 0,
+        "y": 9,
+        "width": 1512,
+        "height": 1015
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "stations-full-copper-mine.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1135414,
+        "partial": 437450,
+        "opaque": 0,
+        "nearOpaque": 391774,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8955857812321408,
+      "centralCoverageRatio": 0.7801462809244791,
+      "bbox": {
+        "x": 177,
+        "y": 14,
+        "width": 1211,
+        "height": 1010
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "stations-full-mine.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1065801,
+        "partial": 507063,
+        "opaque": 0,
+        "nearOpaque": 471083,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9290423477950471,
+      "centralCoverageRatio": 0.9024836222330729,
+      "bbox": {
+        "x": 59,
+        "y": 31,
+        "width": 1395,
+        "height": 993
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "stations-full-sand-pit.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1010419,
+        "partial": 562639,
+        "opaque": 480,
+        "nearOpaque": 520504,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9243232780282675,
+      "centralCoverageRatio": 0.925101224820326,
+      "bbox": {
+        "x": 170,
+        "y": 16,
+        "width": 1479,
+        "height": 839
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "substation.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1248882,
+        "partial": 323772,
+        "opaque": 884,
+        "nearOpaque": 285113,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8782003104824799,
+      "centralCoverageRatio": 0.5527988662820124,
+      "bbox": {
+        "x": 434,
+        "y": 24,
+        "width": 1310,
+        "height": 829
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-city.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1254,
+      "height": 1254,
+      "pixels": {
+        "transparent": 1133655,
+        "partial": 438689,
+        "opaque": 172,
+        "nearOpaque": 416810,
+        "total": 1572516,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9497540223442047,
+      "centralCoverageRatio": 0.841190311980202,
+      "bbox": {
+        "x": 41,
+        "y": 192,
+        "width": 1171,
+        "height": 990
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-cursor.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": true,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 965154,
+        "partial": 607710,
+        "opaque": 0,
+        "nearOpaque": 530219,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8724868769643416,
+      "centralCoverageRatio": 0.9890060424804688,
+      "bbox": {
+        "x": 93,
+        "y": 9,
+        "width": 1349,
+        "height": 1015
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "terrain-desert.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1254,
+      "height": 1254,
+      "pixels": {
+        "transparent": 1233788,
+        "partial": 337863,
+        "opaque": 865,
+        "nearOpaque": 322134,
+        "total": 1572516,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9510108405564347,
+      "centralCoverageRatio": 0.6867494624528379,
+      "bbox": {
+        "x": 0,
+        "y": 212,
+        "width": 1200,
+        "height": 984
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "terrain-forest.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1171434,
+        "partial": 401481,
+        "opaque": 623,
+        "nearOpaque": 380777,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.946961482601516,
+      "centralCoverageRatio": 0.8342013361676283,
+      "bbox": {
+        "x": 98,
+        "y": 21,
+        "width": 1509,
+        "height": 866
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "terrain-grass.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1118868,
+        "partial": 453996,
+        "opaque": 0,
+        "nearOpaque": 416197,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9167415571943365,
+      "centralCoverageRatio": 0.8665110270182291,
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 1522,
+        "height": 1008
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 1,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "terrain-hill.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1164528,
+        "partial": 408336,
+        "opaque": 0,
+        "nearOpaque": 379977,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9305498413071588,
+      "centralCoverageRatio": 0.7747370402018229,
+      "bbox": {
+        "x": 47,
+        "y": 32,
+        "width": 1437,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "terrain-hillcut.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": true,
+      "width": 1240,
+      "height": 1269,
+      "pixels": {
+        "transparent": 1137979,
+        "partial": 434696,
+        "opaque": 885,
+        "nearOpaque": 421192,
+        "total": 1573560,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9669659604069047,
+      "centralCoverageRatio": 0.8214173228346456,
+      "bbox": {
+        "x": 49,
+        "y": 21,
+        "width": 1163,
+        "height": 1184
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-mountain.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1050345,
+        "partial": 522519,
+        "opaque": 0,
+        "nearOpaque": 498548,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9541241562507775,
+      "centralCoverageRatio": 0.8916982014973959,
+      "bbox": {
+        "x": 89,
+        "y": 21,
+        "width": 1363,
+        "height": 979
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-plains.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": true,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1068959,
+        "partial": 504249,
+        "opaque": 330,
+        "nearOpaque": 481241,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.953747579665424,
+      "centralCoverageRatio": 0.9219556635286973,
+      "bbox": {
+        "x": 186,
+        "y": 28,
+        "width": 1568,
+        "height": 821
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-rock.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": true,
+      "width": 1254,
+      "height": 1254,
+      "pixels": {
+        "transparent": 1117057,
+        "partial": 454949,
+        "opaque": 510,
+        "nearOpaque": 429472,
+        "total": 1572516,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.942943272610707,
+      "centralCoverageRatio": 0.8594136678972778,
+      "bbox": {
+        "x": 0,
+        "y": 50,
+        "width": 1222,
+        "height": 1140
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "terrain-sand.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1176286,
+        "partial": 396515,
+        "opaque": 737,
+        "nearOpaque": 381663,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9607579068198524,
+      "centralCoverageRatio": 0.8294842595404394,
+      "bbox": {
+        "x": 114,
+        "y": 71,
+        "width": 1640,
+        "height": 778
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-swamp.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": true,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 897312,
+        "partial": 675843,
+        "opaque": 383,
+        "nearOpaque": 648674,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9592562249898703,
+      "centralCoverageRatio": 0.9898901710699464,
+      "bbox": {
+        "x": 2,
+        "y": 33,
+        "width": 1750,
+        "height": 822
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-taiga.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": true,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 916398,
+        "partial": 656298,
+        "opaque": 842,
+        "nearOpaque": 625454,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9517819642694099,
+      "centralCoverageRatio": 0.9842215811316934,
+      "bbox": {
+        "x": 96,
+        "y": 19,
+        "width": 1662,
+        "height": 840
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-void.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1254,
+      "height": 1254,
+      "pixels": {
+        "transparent": 1245041,
+        "partial": 326761,
+        "opaque": 714,
+        "nearOpaque": 311841,
+        "total": 1572516,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9522589510649668,
+      "centralCoverageRatio": 0.6727149174408699,
+      "bbox": {
+        "x": 81,
+        "y": 53,
+        "width": 1143,
+        "height": 968
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "terrain-water.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1254,
+      "height": 1254,
+      "pixels": {
+        "transparent": 1240984,
+        "partial": 330742,
+        "opaque": 790,
+        "nearOpaque": 315984,
+        "total": 1572516,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9531025662681128,
+      "centralCoverageRatio": 0.6837067426670453,
+      "bbox": {
+        "x": 33,
+        "y": 198,
+        "width": 1220,
+        "height": 968
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "townhouse-civic.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 934844,
+        "partial": 638020,
+        "opaque": 0,
+        "nearOpaque": 610471,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9568211027867465,
+      "centralCoverageRatio": 0.9708048502604166,
+      "bbox": {
+        "x": 0,
+        "y": 17,
+        "width": 1522,
+        "height": 981
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "track-bridge.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1004809,
+        "partial": 568374,
+        "opaque": 355,
+        "nearOpaque": 525633,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9242240153043013,
+      "centralCoverageRatio": 0.8270852312987145,
+      "bbox": {
+        "x": 120,
+        "y": 31,
+        "width": 1624,
+        "height": 844
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "track-crossing.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 863610,
+        "partial": 709670,
+        "opaque": 258,
+        "nearOpaque": 654111,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9213765339583733,
+      "centralCoverageRatio": 0.9120482842392955,
+      "bbox": {
+        "x": 0,
+        "y": 28,
+        "width": 1722,
+        "height": 840
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "track-curve.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1178599,
+        "partial": 394796,
+        "opaque": 143,
+        "nearOpaque": 365868,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9263911642051051,
+      "centralCoverageRatio": 0.5998152647029051,
+      "bbox": {
+        "x": 354,
+        "y": 43,
+        "width": 1081,
+        "height": 814
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "track-straight.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1079448,
+        "partial": 493416,
+        "opaque": 0,
+        "nearOpaque": 453593,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9192912268754966,
+      "centralCoverageRatio": 0.7621739705403646,
+      "bbox": {
+        "x": 57,
+        "y": 23,
+        "width": 1467,
+        "height": 1001
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "track-switch.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1149843,
+        "partial": 423021,
+        "opaque": 0,
+        "nearOpaque": 391640,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9258169216185484,
+      "centralCoverageRatio": 0.6300404866536459,
+      "bbox": {
+        "x": 108,
+        "y": 21,
+        "width": 1378,
+        "height": 947
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "track-transition.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1203073,
+        "partial": 369791,
+        "opaque": 0,
+        "nearOpaque": 340813,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9216368164720071,
+      "centralCoverageRatio": 0.6301676432291666,
+      "bbox": {
+        "x": 131,
+        "y": 36,
+        "width": 1275,
+        "height": 922
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "tree-birch.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1024,
+      "height": 1536,
+      "pixels": {
+        "transparent": 1287029,
+        "partial": 285835,
+        "opaque": 0,
+        "nearOpaque": 159013,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.5563104588311438,
+      "centralCoverageRatio": 0.51068115234375,
+      "bbox": {
+        "x": 63,
+        "y": 25,
+        "width": 875,
+        "height": 1471
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "tree-oak.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1374,
+      "height": 1145,
+      "pixels": {
+        "transparent": 809690,
+        "partial": 761746,
+        "opaque": 1794,
+        "nearOpaque": 596410,
+        "total": 1573230,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.7811116640909448,
+      "centralCoverageRatio": 0.8928198181744389,
+      "bbox": {
+        "x": 0,
+        "y": 17,
+        "width": 1360,
+        "height": 1128
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "tree-pine.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1269,
+      "height": 1240,
+      "pixels": {
+        "transparent": 1246112,
+        "partial": 324635,
+        "opaque": 2813,
+        "nearOpaque": 260257,
+        "total": 1573560,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.7948040604920475,
+      "centralCoverageRatio": 0.6477876555753111,
+      "bbox": {
+        "x": 33,
+        "y": 21,
+        "width": 1182,
+        "height": 1179
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "tree-round.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1259863,
+        "partial": 313001,
+        "opaque": 0,
+        "nearOpaque": 284119,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9077255344232127,
+      "centralCoverageRatio": 0.7098286946614584,
+      "bbox": {
+        "x": 89,
+        "y": 16,
+        "width": 1409,
+        "height": 1008
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "tree-spruce.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1332,
+      "height": 1181,
+      "pixels": {
+        "transparent": 1181379,
+        "partial": 390511,
+        "opaque": 1202,
+        "nearOpaque": 320339,
+        "total": 1573092,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8177900656858466,
+      "centralCoverageRatio": 0.6770882557684588,
+      "bbox": {
+        "x": 39,
+        "y": 31,
+        "width": 1253,
+        "height": 1150
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-bathtub.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 957043,
+        "partial": 615821,
+        "opaque": 0,
+        "nearOpaque": 563938,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9157498688742346,
+      "centralCoverageRatio": 0.8037363688151041,
+      "bbox": {
+        "x": 47,
+        "y": 32,
+        "width": 1459,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-battery-cart.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1068873,
+        "partial": 503991,
+        "opaque": 0,
+        "nearOpaque": 465436,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9235006180665924,
+      "centralCoverageRatio": 0.8074162801106771,
+      "bbox": {
+        "x": 95,
+        "y": 21,
+        "width": 1419,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-bolster-flat.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1148302,
+        "partial": 424562,
+        "opaque": 0,
+        "nearOpaque": 384939,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9066732302938086,
+      "centralCoverageRatio": 0.633270263671875,
+      "bbox": {
+        "x": 65,
+        "y": 21,
+        "width": 1457,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-boxcar.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1058671,
+        "partial": 514193,
+        "opaque": 0,
+        "nearOpaque": 481146,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9357303580562163,
+      "centralCoverageRatio": 0.8876419067382812,
+      "bbox": {
+        "x": 59,
+        "y": 21,
+        "width": 1397,
+        "height": 979
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "wagon-brake-van.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 984413,
+        "partial": 588451,
+        "opaque": 0,
+        "nearOpaque": 545879,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.927654129230811,
+      "centralCoverageRatio": 0.9186299641927084,
+      "bbox": {
+        "x": 0,
+        "y": 30,
+        "width": 1440,
+        "height": 994
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-bulkhead-flat.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1076475,
+        "partial": 496389,
+        "opaque": 0,
+        "nearOpaque": 455948,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9185296209223008,
+      "centralCoverageRatio": 0.6584320068359375,
+      "bbox": {
+        "x": 31,
+        "y": 32,
+        "width": 1483,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-coal-cart.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1077920,
+        "partial": 494944,
+        "opaque": 0,
+        "nearOpaque": 459185,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9277514223831383,
+      "centralCoverageRatio": 0.8863169352213541,
+      "bbox": {
+        "x": 87,
+        "y": 32,
+        "width": 1257,
+        "height": 958
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "wagon-dump-hopper.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 951107,
+        "partial": 621757,
+        "opaque": 0,
+        "nearOpaque": 565360,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9092941454619731,
+      "centralCoverageRatio": 0.8820470174153646,
+      "bbox": {
+        "x": 112,
+        "y": 19,
+        "width": 1410,
+        "height": 1005
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-flatbed.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1042739,
+        "partial": 530125,
+        "opaque": 0,
+        "nearOpaque": 466623,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.8802131572742278,
+      "centralCoverageRatio": 0.7713699340820312,
+      "bbox": {
+        "x": 0,
+        "y": 32,
+        "width": 1514,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-fuel-cart.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 986707,
+        "partial": 586157,
+        "opaque": 0,
+        "nearOpaque": 544506,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9289422458488085,
+      "centralCoverageRatio": 0.8589248657226562,
+      "bbox": {
+        "x": 0,
+        "y": 35,
+        "width": 1453,
+        "height": 989
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-heavy-flat.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1218154,
+        "partial": 354710,
+        "opaque": 0,
+        "nearOpaque": 321822,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9072820050181839,
+      "centralCoverageRatio": 0.5224253336588541,
+      "bbox": {
+        "x": 25,
+        "y": 32,
+        "width": 1487,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-pressure-tank.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 957433,
+        "partial": 615431,
+        "opaque": 0,
+        "nearOpaque": 555857,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9031995463341951,
+      "centralCoverageRatio": 0.8947347005208334,
+      "bbox": {
+        "x": 112,
+        "y": 31,
+        "width": 1390,
+        "height": 993
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-pullman.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 920276,
+        "partial": 652588,
+        "opaque": 0,
+        "nearOpaque": 617185,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.945749845231601,
+      "centralCoverageRatio": 0.8376846313476562,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1534,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-riveted-tank.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1042398,
+        "partial": 530466,
+        "opaque": 0,
+        "nearOpaque": 477775,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9006703539906422,
+      "centralCoverageRatio": 0.8187128702799479,
+      "bbox": {
+        "x": 105,
+        "y": 21,
+        "width": 1417,
+        "height": 947
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "wagon-steel-coach.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 962193,
+        "partial": 610671,
+        "opaque": 0,
+        "nearOpaque": 574863,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9413628615080788,
+      "centralCoverageRatio": 0.8198521931966146,
+      "bbox": {
+        "x": 93,
+        "y": 35,
+        "width": 1403,
+        "height": 965
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "wagon-steel-hopper.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1027559,
+        "partial": 545305,
+        "opaque": 0,
+        "nearOpaque": 504190,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9246018283346017,
+      "centralCoverageRatio": 0.8433558146158854,
+      "bbox": {
+        "x": 105,
+        "y": 35,
+        "width": 1417,
+        "height": 935
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "wagon-water-cart.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1039039,
+        "partial": 533825,
+        "opaque": 0,
+        "nearOpaque": 499490,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9356811689223996,
+      "centralCoverageRatio": 0.9086659749348959,
+      "bbox": {
+        "x": 0,
+        "y": 32,
+        "width": 1490,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-welded-tank.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1007358,
+        "partial": 565506,
+        "opaque": 0,
+        "nearOpaque": 525944,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9300414142378683,
+      "centralCoverageRatio": 0.8269068400065104,
+      "bbox": {
+        "x": 0,
+        "y": 32,
+        "width": 1522,
+        "height": 992
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-wood-hopper.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1057757,
+        "partial": 515107,
+        "opaque": 0,
+        "nearOpaque": 482355,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9364170939241749,
+      "centralCoverageRatio": 0.8840891520182291,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1522,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "wagon-wooden-coach.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 986697,
+        "partial": 586167,
+        "opaque": 0,
+        "nearOpaque": 529238,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9028792136029493,
+      "centralCoverageRatio": 0.9133377075195312,
+      "bbox": {
+        "x": 65,
+        "y": 21,
+        "width": 1421,
+        "height": 1003
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "warehouse.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 987426,
+        "partial": 585736,
+        "opaque": 376,
+        "nearOpaque": 557209,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.9506868994321904,
+      "centralCoverageRatio": 0.9484993420386679,
+      "bbox": {
+        "x": 138,
+        "y": 1,
+        "width": 1614,
+        "height": 862
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "water-tower.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1080575,
+        "partial": 492289,
+        "opaque": 0,
+        "nearOpaque": 444811,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.90355665066658,
+      "centralCoverageRatio": 0.7828547159830729,
+      "bbox": {
+        "x": 89,
+        "y": 23,
+        "width": 1433,
+        "height": 969
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "windmill.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1498,
+      "height": 1050,
+      "pixels": {
+        "transparent": 1189962,
+        "partial": 382317,
+        "opaque": 621,
+        "nearOpaque": 311394,
+        "total": 1572900,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8131708004951194,
+      "centralCoverageRatio": 0.5879062103929024,
+      "bbox": {
+        "x": 33,
+        "y": 17,
+        "width": 1443,
+        "height": 993
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "works-full-colliery.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1067455,
+        "partial": 505325,
+        "opaque": 758,
+        "nearOpaque": 447699,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8846355242124315,
+      "centralCoverageRatio": 0.7784871950602288,
+      "bbox": {
+        "x": 327,
+        "y": 0,
+        "width": 1417,
+        "height": 870
+      },
+      "touchesEdges": {
+        "top": true,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 1,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the top edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "works-full-diesel-refinery.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 1045414,
+        "partial": 527450,
+        "opaque": 0,
+        "nearOpaque": 474965,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9004929377192151,
+      "centralCoverageRatio": 0.8393224080403646,
+      "bbox": {
+        "x": 65,
+        "y": 23,
+        "width": 1419,
+        "height": 1001
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "works-full-ironworks.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 961573,
+        "partial": 611291,
+        "opaque": 0,
+        "nearOpaque": 579772,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9484386323371357,
+      "centralCoverageRatio": 0.9352035522460938,
+      "bbox": {
+        "x": 0,
+        "y": 21,
+        "width": 1498,
+        "height": 979
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    },
+    {
+      "name": "works-full-oil-derrick.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1774,
+      "height": 887,
+      "pixels": {
+        "transparent": 1264764,
+        "partial": 308055,
+        "opaque": 719,
+        "nearOpaque": 254324,
+        "total": 1573538,
+        "maxAlpha": 255
+      },
+      "nearOpaqueRatio": 0.8236574322967607,
+      "centralCoverageRatio": 0.4879415932786719,
+      "bbox": {
+        "x": 259,
+        "y": 18,
+        "width": 1485,
+        "height": 854
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": false,
+        "left": false
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "warnings": [],
+      "valid": true
+    },
+    {
+      "name": "works-full-wire-mill.png",
+      "colorType": 6,
+      "intentionalTranslucency": false,
+      "pendingDesignReview": false,
+      "width": 1536,
+      "height": 1024,
+      "pixels": {
+        "transparent": 913682,
+        "partial": 659182,
+        "opaque": 0,
+        "nearOpaque": 615202,
+        "total": 1572864,
+        "maxAlpha": 254
+      },
+      "nearOpaqueRatio": 0.9332809451714398,
+      "centralCoverageRatio": 0.9407221476236979,
+      "bbox": {
+        "x": 0,
+        "y": 19,
+        "width": 1488,
+        "height": 1005
+      },
+      "touchesEdges": {
+        "top": false,
+        "right": false,
+        "bottom": true,
+        "left": true
+      },
+      "edgeMaxAlpha": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "warnings": [
+        "non-transparent pixels touch the bottom edge (maximum alpha 1/255)",
+        "non-transparent pixels touch the left edge (maximum alpha 1/255)"
+      ],
+      "valid": true
+    }
+  ]
+}

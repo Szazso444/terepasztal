@@ -1,0 +1,1937 @@
+{
+  "schema": "base-asset-source-coverage-v1",
+  "sourceImageDirectory": "assets/source/base-v1",
+  "atlasFrameInventory": "frame-inventory.json (referenced; frame-level enumeration is intentionally not repeated here)",
+  "integrationPolicy": "generated means a matching source PNG is present; no entry is integrated into a runtime atlas",
+  "futureExcluded": [
+    "nuclear",
+    "maglev",
+    "hyperloop"
+  ],
+  "categories": {
+    "props": [
+      {
+        "id": "props.tree",
+        "sourceDefinition": "src/art/props.ts:roundTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "tree-round.png"
+        ]
+      },
+      {
+        "id": "props.pine",
+        "sourceDefinition": "src/art/props.ts:pineTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "tree-pine.png"
+        ]
+      },
+      {
+        "id": "props.rock",
+        "sourceDefinition": "src/art/props.ts:boulder",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-rock.png"
+        ]
+      },
+      {
+        "id": "props.birch",
+        "sourceDefinition": "src/art/props.ts:birchTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "tree-birch.png"
+        ]
+      },
+      {
+        "id": "props.spruce",
+        "sourceDefinition": "src/art/props.ts:spruceTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "tree-spruce.png"
+        ]
+      },
+      {
+        "id": "props.oak",
+        "sourceDefinition": "src/art/props.ts:oakTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "tree-oak.png"
+        ]
+      },
+      {
+        "id": "props.cactus",
+        "sourceDefinition": "src/art/props.ts:cactus",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-cactus.png"
+        ]
+      },
+      {
+        "id": "props.bush",
+        "sourceDefinition": "src/art/props.ts:bush",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-bush.png"
+        ]
+      },
+      {
+        "id": "props.boulder",
+        "sourceDefinition": "src/art/props.ts:bigBoulder",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-boulder.png"
+        ]
+      },
+      {
+        "id": "props.coal",
+        "sourceDefinition": "src/art/props.ts:coalSeam",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-coal.png"
+        ]
+      },
+      {
+        "id": "props.oil",
+        "sourceDefinition": "src/art/props.ts:oilSeep",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-oil-v2.png"
+        ]
+      },
+      {
+        "id": "props.palm",
+        "sourceDefinition": "src/art/props.ts:palmTree",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-palm.png"
+        ]
+      },
+      {
+        "id": "props.deadtree",
+        "sourceDefinition": "src/art/props.ts:deadTree",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-deadtree.png"
+        ]
+      },
+      {
+        "id": "props.reeds",
+        "sourceDefinition": "src/art/props.ts:reeds",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-reeds.png"
+        ]
+      },
+      {
+        "id": "props.flowers",
+        "sourceDefinition": "src/art/props.ts:flowers",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "props-flowers.png"
+        ]
+      }
+    ],
+    "terrain": [
+      {
+        "id": "terrain.grass",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-grass.png"
+        ]
+      },
+      {
+        "id": "terrain.forest",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-forest.png"
+        ]
+      },
+      {
+        "id": "terrain.rock",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-rock.png"
+        ]
+      },
+      {
+        "id": "terrain.hillcut",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-hillcut.png"
+        ]
+      },
+      {
+        "id": "terrain.hill",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-hill.png"
+        ]
+      },
+      {
+        "id": "terrain.sand",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-sand.png"
+        ]
+      },
+      {
+        "id": "terrain.plains",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-plains.png"
+        ]
+      },
+      {
+        "id": "terrain.taiga",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-taiga.png"
+        ]
+      },
+      {
+        "id": "terrain.swamp",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-swamp.png"
+        ]
+      },
+      {
+        "id": "terrain.desert",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-desert.png"
+        ]
+      },
+      {
+        "id": "terrain.water",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v2; f0-f3 animation",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-water.png"
+        ]
+      },
+      {
+        "id": "terrain.mountain",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-mountain.png"
+        ]
+      },
+      {
+        "id": "terrain.void",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-void.png"
+        ]
+      },
+      {
+        "id": "terrain.city",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "tx0-tx2 x ty0-ty2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-city.png"
+        ]
+      },
+      {
+        "id": "terrain.cursor",
+        "sourceDefinition": "src/art/terrain.ts:generateTerrainAtlas",
+        "variants": "cursor, ghost_ok, ghost_bad, select",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "terrain-cursor.png"
+        ]
+      }
+    ],
+    "stations": [
+      {
+        "id": "stations.farm",
+        "sourceDefinition": "src/data/stations.json#/defs/0 + src/art/industry.ts:farm",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "farm.png"
+        ]
+      },
+      {
+        "id": "stations.lumber",
+        "sourceDefinition": "src/data/stations.json#/defs/1 + src/art/industry.ts:lumber",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "lumber.png"
+        ]
+      },
+      {
+        "id": "stations.quarry",
+        "sourceDefinition": "src/data/stations.json#/defs/2 + src/art/industry.ts:quarry",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "quarry.png"
+        ]
+      },
+      {
+        "id": "stations.pump",
+        "sourceDefinition": "src/data/stations.json#/defs/3 + src/art/industry.ts:pump",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "pump.png"
+        ]
+      },
+      {
+        "id": "stations.town",
+        "sourceDefinition": "src/data/stations.json#/defs/4 + src/art/industry.ts:town",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "townhouse-civic.png"
+        ]
+      },
+      {
+        "id": "stations.warehouse",
+        "sourceDefinition": "src/data/stations.json#/defs/5 + src/art/industry.ts:warehouse",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "warehouse.png"
+        ]
+      },
+      {
+        "id": "stations.depot",
+        "sourceDefinition": "src/data/stations.json#/defs/6 + src/art/structures.ts:depot2",
+        "variants": "rotations r0-r1; levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "depot.png"
+        ]
+      },
+      {
+        "id": "stations.station",
+        "sourceDefinition": "src/data/stations.json#/defs/7 + src/art/structures.ts:stationL1/stationL2/stationL3",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "station.png"
+        ]
+      },
+      {
+        "id": "stations.full.mine",
+        "sourceDefinition": "src/data/stations_full.json#/mine",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "stations-full-mine.png"
+        ]
+      },
+      {
+        "id": "stations.full.sand_pit",
+        "sourceDefinition": "src/data/stations_full.json#/sand_pit",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "stations-full-sand-pit.png"
+        ]
+      },
+      {
+        "id": "stations.full.copper_mine",
+        "sourceDefinition": "src/data/stations_full.json#/copper_mine",
+        "variants": "levels 1-5",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "stations-full-copper-mine.png"
+        ]
+      }
+    ],
+    "works": [
+      {
+        "id": "works.windmill",
+        "sourceDefinition": "src/data/buildings.json#/windmill + src/art/civic.ts:windmill",
+        "variants": "levels 1-4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "windmill.png"
+        ]
+      },
+      {
+        "id": "works.kiln",
+        "sourceDefinition": "src/data/buildings.json#/kiln + src/art/industry.ts:kiln",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "kiln.png"
+        ]
+      },
+      {
+        "id": "works.grinder",
+        "sourceDefinition": "src/data/buildings.json#/grinder + src/art/industry.ts:grinder",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "grinder.png"
+        ]
+      },
+      {
+        "id": "works.refinery",
+        "sourceDefinition": "src/data/buildings.json#/refinery + src/art/industry.ts:refinery",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "refinery.png"
+        ]
+      },
+      {
+        "id": "works.power_plant",
+        "sourceDefinition": "src/data/buildings.json#/power_plant + src/art/industry.ts:powerPlant",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "power-plant.png"
+        ]
+      },
+      {
+        "id": "works.substation",
+        "sourceDefinition": "src/data/buildings.json#/substation + src/art/industry.ts:substation",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "substation.png"
+        ]
+      },
+      {
+        "id": "works.hydro_plant",
+        "sourceDefinition": "src/data/buildings.json#/hydro_plant + src/art/industry.ts:hydroPlant",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "hydro-plant.png"
+        ]
+      },
+      {
+        "id": "works.bridge_wood",
+        "sourceDefinition": "src/data/buildings.json#/bridge_wood + src/art/bridges.ts:addBridgeFrames",
+        "variants": "wood spans, straight axes and connected lengths",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "bridge-wood.png"
+        ]
+      },
+      {
+        "id": "works.bridge_stone",
+        "sourceDefinition": "src/data/buildings.json#/bridge_stone + src/art/bridges.ts:addBridgeFrames",
+        "variants": "stone spans, straight axes and connected lengths",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "bridge-stone.png"
+        ]
+      },
+      {
+        "id": "works.full.colliery",
+        "sourceDefinition": "src/data/buildings_full.json#/colliery + src/art/industry.ts:colliery",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "works-full-colliery.png"
+        ]
+      },
+      {
+        "id": "works.full.ironworks",
+        "sourceDefinition": "src/data/buildings_full.json#/ironworks + src/art/industry.ts:ironworks",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "works-full-ironworks.png"
+        ]
+      },
+      {
+        "id": "works.full.oil_derrick",
+        "sourceDefinition": "src/data/buildings_full.json#/oil_derrick + src/art/industry.ts:oilDerrick",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "works-full-oil-derrick.png"
+        ]
+      },
+      {
+        "id": "works.full.diesel_refinery",
+        "sourceDefinition": "src/data/buildings_full.json#/diesel_refinery + src/art/industry.ts:refinery",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "works-full-diesel-refinery.png"
+        ]
+      },
+      {
+        "id": "works.full.wire_mill",
+        "sourceDefinition": "src/data/buildings_full.json#/wire_mill + src/art/industry.ts:wireMill",
+        "variants": "base + lv2-lv4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "works-full-wire-mill.png"
+        ]
+      }
+    ],
+    "decorService": [
+      {
+        "id": "decor.signal",
+        "sourceDefinition": "src/data/decor.json#/signal + src/art/structures.ts:semaphoreFrame",
+        "variants": "m0-m3 x d0-d3; legacy signal frames",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "signal.png"
+        ]
+      },
+      {
+        "id": "decor.water_tower",
+        "sourceDefinition": "src/data/decor.json#/water_tower + src/art/structures.ts:waterTower",
+        "variants": "base",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "water-tower.png"
+        ]
+      },
+      {
+        "id": "decor.fuel_stop",
+        "sourceDefinition": "src/data/decor.json#/fuel_stop + src/art/industry.ts:fuelStop",
+        "variants": "base",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "coaling-stage.png"
+        ]
+      },
+      {
+        "id": "decor.power_line",
+        "sourceDefinition": "src/data/decor.json#/power_line + src/art/structures.ts:powerLine",
+        "variants": "base",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "decor-power-line.png"
+        ]
+      },
+      {
+        "id": "decor.townhouse",
+        "sourceDefinition": "src/data/decor.json#/townhouse + src/art/civic.ts:residence",
+        "variants": "levels 1-3; construction stages s0-s2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "house-cottage.png"
+        ]
+      }
+    ],
+    "locomotives": [
+      {
+        "id": "loco.rocket",
+        "sourceDefinition": "src/data/locomotives.json#/0",
+        "notes": "steam_early/yellow/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-rocket.png"
+        ]
+      },
+      {
+        "id": "loco.adler",
+        "sourceDefinition": "src/data/locomotives.json#/1",
+        "notes": "steam_early/green/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-adler.png"
+        ]
+      },
+      {
+        "id": "loco.john_bull",
+        "sourceDefinition": "src/data/locomotives.json#/2",
+        "notes": "steam_early/black/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-john-bull.png"
+        ]
+      },
+      {
+        "id": "loco.mav375",
+        "sourceDefinition": "src/data/locomotives.json#/3",
+        "notes": "steam_std/black/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-mav375.png"
+        ]
+      },
+      {
+        "id": "loco.general",
+        "sourceDefinition": "src/data/locomotives.json#/4",
+        "notes": "steam_std/rust/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-general.png"
+        ]
+      },
+      {
+        "id": "loco.jupiter",
+        "sourceDefinition": "src/data/locomotives.json#/5",
+        "notes": "steam_std/blue/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-jupiter.png"
+        ]
+      },
+      {
+        "id": "loco.mav424",
+        "sourceDefinition": "src/data/locomotives.json#/6",
+        "notes": "steam_std/black/medium tender",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-mav424.png"
+        ]
+      },
+      {
+        "id": "loco.k4s",
+        "sourceDefinition": "src/data/locomotives.json#/7",
+        "notes": "steam_std/iron/medium tender",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-k4s.png"
+        ]
+      },
+      {
+        "id": "loco.drg01",
+        "sourceDefinition": "src/data/locomotives.json#/8",
+        "notes": "steam_std/black/medium tender",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-drg01.png"
+        ]
+      },
+      {
+        "id": "loco.flying_scotsman",
+        "sourceDefinition": "src/data/locomotives.json#/9",
+        "notes": "steam_std/green/medium tender",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-flying-scotsman.png"
+        ]
+      },
+      {
+        "id": "loco.daylight",
+        "sourceDefinition": "src/data/locomotives.json#/10",
+        "notes": "steam_streamlined/rust/medium tender",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-daylight.png"
+        ]
+      },
+      {
+        "id": "loco.mallard",
+        "sourceDefinition": "src/data/locomotives.json#/11",
+        "notes": "steam_streamlined/blue/medium tender",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-mallard.png"
+        ]
+      },
+      {
+        "id": "loco.big_boy",
+        "sourceDefinition": "src/data/locomotives.json#/12",
+        "notes": "steam_std/black/large meyer",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-big-boy.png"
+        ]
+      },
+      {
+        "id": "loco.sw1",
+        "sourceDefinition": "src/data/locomotives.json#/13",
+        "notes": "diesel_switcher/black/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-sw1.png"
+        ]
+      },
+      {
+        "id": "loco.class08",
+        "sourceDefinition": "src/data/locomotives.json#/14",
+        "notes": "diesel_switcher/green/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-class08.png"
+        ]
+      },
+      {
+        "id": "loco.m62",
+        "sourceDefinition": "src/data/locomotives.json#/15",
+        "notes": "diesel_hood/green/medium 3-axle",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-m62.png"
+        ]
+      },
+      {
+        "id": "loco.f7",
+        "sourceDefinition": "src/data/locomotives.json#/16",
+        "notes": "diesel_cab/red/medium",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-f7.png"
+        ]
+      },
+      {
+        "id": "loco.sd40",
+        "sourceDefinition": "src/data/locomotives.json#/17",
+        "notes": "diesel_hood/black/medium 3-axle",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-sd40.png"
+        ]
+      },
+      {
+        "id": "loco.deltic",
+        "sourceDefinition": "src/data/locomotives.json#/18",
+        "notes": "diesel_cab/blue/medium 3-axle",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-deltic.png"
+        ]
+      },
+      {
+        "id": "loco.dda40x",
+        "sourceDefinition": "src/data/locomotives.json#/19",
+        "notes": "diesel_hood/yellow/large rigid 3-bogie",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-dda40x.png"
+        ]
+      },
+      {
+        "id": "loco.kando_v40",
+        "sourceDefinition": "src/data/locomotives.json#/20",
+        "notes": "electric_box/green/small pantograph",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-kando-v40.png"
+        ]
+      },
+      {
+        "id": "loco.v63",
+        "sourceDefinition": "src/data/locomotives.json#/21",
+        "notes": "electric_box/red/medium 3-axle pantograph",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-v63.png"
+        ]
+      },
+      {
+        "id": "loco.crocodile",
+        "sourceDefinition": "src/data/locomotives.json#/22",
+        "notes": "electric_crocodile/brown/large garratt pantograph",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-crocodile.png"
+        ]
+      },
+      {
+        "id": "loco.taurus",
+        "sourceDefinition": "src/data/locomotives.json#/23",
+        "notes": "electric_box/red/medium multi collector",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-taurus.png"
+        ]
+      },
+      {
+        "id": "loco.re460",
+        "sourceDefinition": "src/data/locomotives.json#/24",
+        "notes": "electric_box/red/medium multi collector",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-re460.png"
+        ]
+      },
+      {
+        "id": "loco.gg1",
+        "sourceDefinition": "src/data/locomotives.json#/25",
+        "notes": "electric_box/green/large rigid 3-bogie pantograph",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-gg1.png"
+        ]
+      },
+      {
+        "id": "loco.j94",
+        "sourceDefinition": "src/data/locomotives.json#/26",
+        "notes": "steam_std/black/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-j94.png"
+        ]
+      },
+      {
+        "id": "loco.black_five",
+        "sourceDefinition": "src/data/locomotives.json#/27",
+        "notes": "steam_std/black/medium tender",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-black-five.png"
+        ]
+      },
+      {
+        "id": "loco.nine_f",
+        "sourceDefinition": "src/data/locomotives.json#/28",
+        "notes": "steam_std/black/medium tender articulated pivot",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-nine-f.png"
+        ]
+      },
+      {
+        "id": "loco.gmam",
+        "sourceDefinition": "src/data/locomotives.json#/29",
+        "notes": "steam_garratt/green/large garratt",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-gmam.png"
+        ]
+      },
+      {
+        "id": "loco.tgv",
+        "sourceDefinition": "src/data/locomotives.json#/30",
+        "notes": "electric_hs/orange/medium high-speed HV",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-tgv.png"
+        ]
+      },
+      {
+        "id": "loco.ice1",
+        "sourceDefinition": "src/data/locomotives.json#/31",
+        "notes": "electric_hs/white/medium high-speed multi",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "loco-ice1.png"
+        ]
+      }
+    ],
+    "wagons": [
+      {
+        "id": "wagon.water_cart",
+        "sourceDefinition": "src/data/wagons.json#/0",
+        "notes": "tank/wood/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-water-cart.png"
+        ]
+      },
+      {
+        "id": "wagon.wood_hopper",
+        "sourceDefinition": "src/data/wagons.json#/1",
+        "notes": "hopper/wood/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-wood-hopper.png"
+        ]
+      },
+      {
+        "id": "wagon.flatbed",
+        "sourceDefinition": "src/data/wagons.json#/2",
+        "notes": "flat/wood/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-flatbed.png"
+        ]
+      },
+      {
+        "id": "wagon.riveted_tank",
+        "sourceDefinition": "src/data/wagons.json#/3",
+        "notes": "tank/black/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-riveted-tank.png"
+        ]
+      },
+      {
+        "id": "wagon.steel_hopper",
+        "sourceDefinition": "src/data/wagons.json#/4",
+        "notes": "hopper/iron/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-steel-hopper.png"
+        ]
+      },
+      {
+        "id": "wagon.bolster_flat",
+        "sourceDefinition": "src/data/wagons.json#/5",
+        "notes": "flat/iron/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-bolster-flat.png"
+        ]
+      },
+      {
+        "id": "wagon.welded_tank",
+        "sourceDefinition": "src/data/wagons.json#/6",
+        "notes": "tank/iron/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-welded-tank.png"
+        ]
+      },
+      {
+        "id": "wagon.bathtub",
+        "sourceDefinition": "src/data/wagons.json#/7",
+        "notes": "hopper/black/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-bathtub.png"
+        ]
+      },
+      {
+        "id": "wagon.bulkhead_flat",
+        "sourceDefinition": "src/data/wagons.json#/8",
+        "notes": "flat/iron/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-bulkhead-flat.png"
+        ]
+      },
+      {
+        "id": "wagon.pressure_tank",
+        "sourceDefinition": "src/data/wagons.json#/9",
+        "notes": "tank/iron/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-pressure-tank.png"
+        ]
+      },
+      {
+        "id": "wagon.dump_hopper",
+        "sourceDefinition": "src/data/wagons.json#/10",
+        "notes": "hopper/iron/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-dump-hopper.png"
+        ]
+      },
+      {
+        "id": "wagon.heavy_flat",
+        "sourceDefinition": "src/data/wagons.json#/11",
+        "notes": "flat/iron/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-heavy-flat.png"
+        ]
+      },
+      {
+        "id": "wagon.wooden_coach",
+        "sourceDefinition": "src/data/wagons.json#/12",
+        "notes": "coach/wood/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-wooden-coach.png"
+        ]
+      },
+      {
+        "id": "wagon.steel_coach",
+        "sourceDefinition": "src/data/wagons.json#/13",
+        "notes": "coach/iron/medium",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-steel-coach.png"
+        ]
+      },
+      {
+        "id": "wagon.pullman",
+        "sourceDefinition": "src/data/wagons.json#/14",
+        "notes": "coach/black/medium",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-pullman.png"
+        ]
+      },
+      {
+        "id": "wagon.brake_van",
+        "sourceDefinition": "src/data/wagons.json#/15",
+        "notes": "van/brown/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-brake-van.png"
+        ]
+      },
+      {
+        "id": "wagon.boxcar",
+        "sourceDefinition": "src/data/wagons.json#/16",
+        "notes": "box/wood/small",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-boxcar.png"
+        ]
+      },
+      {
+        "id": "wagon.coal_cart",
+        "sourceDefinition": "src/data/wagons.json#/17",
+        "notes": "cart/black service coal",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-coal-cart.png"
+        ]
+      },
+      {
+        "id": "wagon.fuel_cart",
+        "sourceDefinition": "src/data/wagons.json#/18",
+        "notes": "cart/red service fuel",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-fuel-cart.png"
+        ]
+      },
+      {
+        "id": "wagon.battery_cart",
+        "sourceDefinition": "src/data/wagons.json#/19",
+        "notes": "cart/blue service battery",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "wagon-battery-cart.png"
+        ]
+      }
+    ],
+    "cargoIcons": [
+      {
+        "id": "cargo.water",
+        "sourceDefinition": "src/data/cargo.json#/0 + src/art/icons.ts:water",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-water.png"
+        ]
+      },
+      {
+        "id": "cargo.wheat",
+        "sourceDefinition": "src/data/cargo.json#/1 + src/art/icons.ts:wheat",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-wheat.png"
+        ]
+      },
+      {
+        "id": "cargo.stone",
+        "sourceDefinition": "src/data/cargo.json#/2 + src/art/icons.ts:stone",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-stone.png"
+        ]
+      },
+      {
+        "id": "cargo.wood",
+        "sourceDefinition": "src/data/cargo.json#/3 + src/art/icons.ts:wood",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-wood.png"
+        ]
+      },
+      {
+        "id": "cargo.coal",
+        "sourceDefinition": "src/data/cargo.json#/4 + src/art/icons.ts:coal",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-coal.png"
+        ]
+      },
+      {
+        "id": "cargo.oil",
+        "sourceDefinition": "src/data/cargo.json#/5 + src/art/icons.ts:oil",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-oil.png"
+        ]
+      },
+      {
+        "id": "cargo.iron",
+        "sourceDefinition": "src/data/cargo.json#/6 + src/art/icons.ts:iron",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-iron.png"
+        ]
+      },
+      {
+        "id": "cargo.passengers",
+        "sourceDefinition": "src/data/cargo.json#/7 + src/art/icons.ts:passengers",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-passengers.png"
+        ]
+      },
+      {
+        "id": "cargo.food",
+        "sourceDefinition": "src/data/cargo.json#/8 + src/art/icons.ts:food",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-food.png"
+        ]
+      },
+      {
+        "id": "cargo.iron_ore",
+        "sourceDefinition": "src/data/cargo_full.json#/0 + src/art/icons.ts:iron_ore",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-iron-ore.png"
+        ]
+      },
+      {
+        "id": "cargo.crude",
+        "sourceDefinition": "src/data/cargo_full.json#/1 + src/art/icons.ts:crude",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-crude.png"
+        ]
+      },
+      {
+        "id": "cargo.diesel",
+        "sourceDefinition": "src/data/cargo_full.json#/2 + src/art/icons.ts:diesel",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-diesel.png"
+        ]
+      },
+      {
+        "id": "cargo.sand",
+        "sourceDefinition": "src/data/cargo_full.json#/3 + src/art/icons.ts:sand",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-sand.png"
+        ]
+      },
+      {
+        "id": "cargo.copper_ore",
+        "sourceDefinition": "src/data/cargo_full.json#/4 + src/art/icons.ts:copperOre",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-copper-ore.png"
+        ]
+      },
+      {
+        "id": "cargo.wire",
+        "sourceDefinition": "src/data/cargo_full.json#/5 + src/art/icons.ts:wire",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-wire.png"
+        ]
+      },
+      {
+        "id": "cargo.power",
+        "sourceDefinition": "src/art/icons.ts:power",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-power.png"
+        ]
+      },
+      {
+        "id": "cargo.money",
+        "sourceDefinition": "src/art/icons.ts:money",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-money.png"
+        ]
+      },
+      {
+        "id": "cargo.population",
+        "sourceDefinition": "src/art/icons.ts:population",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "cargo-population.png"
+        ]
+      }
+    ],
+    "track": [
+      {
+        "id": "track.straight",
+        "sourceDefinition": "src/data/track.json#/pieces/straight + src/art/track.ts",
+        "variants": "regular/high_speed; rotations 2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "track-straight.png"
+        ]
+      },
+      {
+        "id": "track.curve",
+        "sourceDefinition": "src/data/track.json#/pieces/curve + src/art/track.ts",
+        "variants": "regular/high_speed; rotations 4",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "track-curve.png"
+        ]
+      },
+      {
+        "id": "track.switch",
+        "sourceDefinition": "src/data/track.json#/pieces/switch + src/art/track.ts",
+        "variants": "regular/high_speed; rotations 8",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "track-switch.png"
+        ]
+      },
+      {
+        "id": "track.crossing",
+        "sourceDefinition": "src/data/track.json#/pieces/crossing + src/art/track.ts",
+        "variants": "regular/regular, regular/high_speed, high_speed/high_speed; rotation 1",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "track-crossing.png"
+        ]
+      },
+      {
+        "id": "track.bridge",
+        "sourceDefinition": "src/data/track.json#/pieces/bridge + src/art/track.ts",
+        "variants": "regular; rotations 2; bridge spans supplied by src/art/bridges.ts",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "track-bridge.png"
+        ]
+      },
+      {
+        "id": "track.transition",
+        "sourceDefinition": "src/data/track.json#/pieces/transition + src/art/track.ts",
+        "variants": "regular; rotations 2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "track-transition.png"
+        ]
+      }
+    ],
+    "fxPeople": [
+      {
+        "id": "fx.rain",
+        "sourceDefinition": "src/art/fx.ts:generateFxAtlas",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "fx-rain.png"
+        ]
+      },
+      {
+        "id": "fx.fog",
+        "sourceDefinition": "src/art/fx.ts:generateFxAtlas",
+        "variants": "fog_0-fog_3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "fx-fog.png"
+        ]
+      },
+      {
+        "id": "fx.light_tile",
+        "sourceDefinition": "src/art/fx.ts:generateFxAtlas",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "fx-light-tile.png"
+        ]
+      },
+      {
+        "id": "fx.glow",
+        "sourceDefinition": "src/art/fx.ts:generateFxAtlas",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "fx-glow.png"
+        ]
+      },
+      {
+        "id": "fx.glow_small",
+        "sourceDefinition": "src/art/fx.ts:generateFxAtlas",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "fx-glow-small.png"
+        ]
+      },
+      {
+        "id": "fx.smoke",
+        "sourceDefinition": "src/art/fx.ts:generateFxAtlas",
+        "variants": "smoke_0-smoke_3",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "fx-smoke.png"
+        ]
+      },
+      {
+        "id": "people.walker",
+        "sourceDefinition": "src/art/people.ts:generatePeopleAtlas",
+        "variants": "all outfits x animation frames f0-f1",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "people-walker.png"
+        ]
+      },
+      {
+        "id": "people.path_dirt",
+        "sourceDefinition": "src/art/people.ts:generatePeopleAtlas",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "people-path-dirt.png"
+        ]
+      },
+      {
+        "id": "people.road_stone",
+        "sourceDefinition": "src/art/people.ts:generatePeopleAtlas",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "people-road-stone.png"
+        ]
+      },
+      {
+        "id": "people.crossing_dirt",
+        "sourceDefinition": "src/art/people.ts:generatePeopleAtlas",
+        "variants": "rotations 0-1",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "people-crossing-dirt.png"
+        ]
+      },
+      {
+        "id": "people.crossing_stone",
+        "sourceDefinition": "src/art/people.ts:generatePeopleAtlas",
+        "variants": "rotations 0-1",
+        "generatedBase": true,
+        "variantsPending": true,
+        "integration": false,
+        "status": "generatedBase",
+        "generated": [
+          "people-crossing-stone.png"
+        ]
+      }
+    ]
+  },
+  "generatedFiles": [
+    "bridge-stone.png",
+    "bridge-wood.png",
+    "cargo-coal.png",
+    "cargo-copper-ore.png",
+    "cargo-crude.png",
+    "cargo-diesel.png",
+    "cargo-food.png",
+    "cargo-iron-ore.png",
+    "cargo-iron.png",
+    "cargo-money.png",
+    "cargo-oil.png",
+    "cargo-passengers.png",
+    "cargo-population.png",
+    "cargo-power.png",
+    "cargo-sand.png",
+    "cargo-stone.png",
+    "cargo-water.png",
+    "cargo-wheat.png",
+    "cargo-wire.png",
+    "cargo-wood.png",
+    "coaling-stage.png",
+    "decor-power-line.png",
+    "depot.png",
+    "farm.png",
+    "fx-fog.png",
+    "fx-glow-small.png",
+    "fx-glow.png",
+    "fx-light-tile.png",
+    "fx-rain.png",
+    "fx-smoke.png",
+    "grinder.png",
+    "house-cottage.png",
+    "hydro-plant.png",
+    "kiln.png",
+    "loco-adler.png",
+    "loco-big-boy.png",
+    "loco-black-five.png",
+    "loco-class08.png",
+    "loco-crocodile.png",
+    "loco-daylight.png",
+    "loco-dda40x.png",
+    "loco-deltic.png",
+    "loco-drg01.png",
+    "loco-f7.png",
+    "loco-flying-scotsman.png",
+    "loco-general.png",
+    "loco-gg1.png",
+    "loco-gmam.png",
+    "loco-ice1.png",
+    "loco-j94.png",
+    "loco-john-bull.png",
+    "loco-jupiter.png",
+    "loco-k4s.png",
+    "loco-kando-v40.png",
+    "loco-m62.png",
+    "loco-mallard.png",
+    "loco-mav375.png",
+    "loco-mav424.png",
+    "loco-nine-f.png",
+    "loco-re460.png",
+    "loco-rocket.png",
+    "loco-sd40.png",
+    "loco-sw1.png",
+    "loco-taurus.png",
+    "loco-tgv.png",
+    "loco-v63.png",
+    "lumber.png",
+    "people-crossing-dirt.png",
+    "people-crossing-stone.png",
+    "people-path-dirt.png",
+    "people-road-stone.png",
+    "people-walker.png",
+    "power-plant.png",
+    "props-boulder.png",
+    "props-bush.png",
+    "props-cactus.png",
+    "props-coal.png",
+    "props-deadtree.png",
+    "props-flowers.png",
+    "props-oil-v2.png",
+    "props-palm.png",
+    "props-reeds.png",
+    "props-rock.png",
+    "pump.png",
+    "quarry.png",
+    "refinery.png",
+    "signal.png",
+    "station.png",
+    "stations-full-copper-mine.png",
+    "stations-full-mine.png",
+    "stations-full-sand-pit.png",
+    "substation.png",
+    "terrain-city.png",
+    "terrain-cursor.png",
+    "terrain-desert.png",
+    "terrain-forest.png",
+    "terrain-grass.png",
+    "terrain-hill.png",
+    "terrain-hillcut.png",
+    "terrain-mountain.png",
+    "terrain-plains.png",
+    "terrain-rock.png",
+    "terrain-sand.png",
+    "terrain-swamp.png",
+    "terrain-taiga.png",
+    "terrain-void.png",
+    "terrain-water.png",
+    "townhouse-civic.png",
+    "track-bridge.png",
+    "track-crossing.png",
+    "track-curve.png",
+    "track-straight.png",
+    "track-switch.png",
+    "track-transition.png",
+    "tree-birch.png",
+    "tree-oak.png",
+    "tree-pine.png",
+    "tree-round.png",
+    "tree-spruce.png",
+    "wagon-bathtub.png",
+    "wagon-battery-cart.png",
+    "wagon-bolster-flat.png",
+    "wagon-boxcar.png",
+    "wagon-brake-van.png",
+    "wagon-bulkhead-flat.png",
+    "wagon-coal-cart.png",
+    "wagon-dump-hopper.png",
+    "wagon-flatbed.png",
+    "wagon-fuel-cart.png",
+    "wagon-heavy-flat.png",
+    "wagon-pressure-tank.png",
+    "wagon-pullman.png",
+    "wagon-riveted-tank.png",
+    "wagon-steel-coach.png",
+    "wagon-steel-hopper.png",
+    "wagon-water-cart.png",
+    "wagon-welded-tank.png",
+    "wagon-wood-hopper.png",
+    "wagon-wooden-coach.png",
+    "warehouse.png",
+    "water-tower.png",
+    "windmill.png",
+    "works-full-colliery.png",
+    "works-full-diesel-refinery.png",
+    "works-full-ironworks.png",
+    "works-full-oil-derrick.png",
+    "works-full-wire-mill.png"
+  ],
+  "integratedFiles": [],
+  "summary": {
+    "categories": 10,
+    "requiredEntries": 147,
+    "generatedSourceFiles": 147,
+    "integratedSourceFiles": 0,
+    "statusCounts": {
+      "generatedBase": 147,
+      "pending": 0
+    },
+    "notes": "Generated files cover a base family image only; required level, rotation, palette, and frame variants remain pending. Runtime atlas integration remains false for every entry."
+  },
+  "unmappedGeneratedFiles": []
+}

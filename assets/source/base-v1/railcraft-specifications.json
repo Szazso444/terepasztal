@@ -1,0 +1,3139 @@
+{
+  "schema": "railcraft-source-specifications-v1",
+  "sources": [
+    "src/data/locomotives.json",
+    "src/data/wagons.json",
+    "src/sim/body.ts",
+    "src/sim/compat.ts",
+    "src/art/rolling.ts",
+    "docs/bogie-model.md"
+  ],
+  "rules": [
+    "These specifications are derived from the checked-in roster and executable vehicleSpec/vehicleAccess functions. They describe the game, not certified historical engineering. Content-editor overrides can change the live game and require regenerating this document.",
+    "Small/medium/large body lengths are 1/2/3 tiles. Keep a common gauge and comparable widths when comparing images; equal thumbnail boxes are not equal vehicle sizes.",
+    "Each bogie follows its own exact arc position and local tangent. Body sockets may slide relative to bogies. Rigid bodies and segments never stretch, bend, or gain an invented hinge. Sideways track-centering and overhang are intentional.",
+    "Fixed axles on small stock are baked into the body. Their two solver supports are virtual; do not turn them into two visible bogie trucks. Medium and large stock have separate runtime bogie sprites beneath raised sills. Two axles means four wheels; three axles means six wheels.",
+    "Tender: engine 1.25 tiles plus tender 0.75 tiles. Garratt: 0.8 + 1.4 + 0.8 tile rigid segments. Meyer: one 3-tile rigid frame above two pivoting engine units. These are game abstractions, including the Crocodile and Big Boy body plans.",
+    "DDA40X and GG1 explicitly use three 3-axle bogies in this game. F7, Taurus and Re460 use two 2-axle bogies. M62, SD40, Deltic and V63 use two 3-axle bogies. Do not silently substitute prototype arrangements.",
+    "Separate coupled vehicles use a 0.2-tile gap. Reversal preserves the physical trail and reverses its arc indexing; body facing remains coherent. Track switches and curves do not change a vehicle's length.",
+    "Track permission is determined by geometry and size, not rarity or cosmetic wheel count. Large vehicles cannot use regular track. A consist uses the intersection of its vehicles' permissions; high-speed access additionally needs in-cab equipment, and bridge capacity, traction/power and route reservations still apply.",
+    "Base PNGs are assembled source studies, not ready-to-use runtime sprites. Runtime delivery must provide independently posed body/engine/tender/cradle/frame and bogie layers, anchors, facings, and variants. A single PNG cannot demonstrate correct curve motion.",
+    "Before integration, review every image for exact visible wheel groups, segment count, gauge, proportions, joints and underbody clearance. On straight, entering, mid-curve, leaving and reverse travel, verify rigid lengths, bogie rail positions/tangents, coupler continuity, permitted classes and intentional overhang. Automated alpha checks do not certify visual mechanical correctness."
+  ],
+  "vehicles": [
+    {
+      "id": "loco.rocket",
+      "name": "Stephenson's Rocket",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "N",
+      "tier": null,
+      "body": "steam_early",
+      "paint": "yellow",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.adler",
+      "name": "Adler",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "N",
+      "tier": null,
+      "body": "steam_early",
+      "paint": "green",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.john_bull",
+      "name": "John Bull",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "N",
+      "tier": null,
+      "body": "steam_early",
+      "paint": "black",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.mav375",
+      "name": "MÁV 375",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "N",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "black",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.general",
+      "name": "The General",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "R",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "rust",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.jupiter",
+      "name": "Jupiter",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "R",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "blue",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.mav424",
+      "name": "MÁV 424 Bivaly",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "R",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "black",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "tender",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 1.25,
+          "W": 0.875,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "tender",
+          "L": 0.75,
+          "W": 0.495,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 1.25
+        }
+      ],
+      "layout": "engine: 1.25 tile length, 2 bogies of 2 axles each, pivot span 0.88 tiles; tender: 0.75 tile length, 2 bogies of 2 axles each, pivot span 0.49 tiles",
+      "behavior": "The engine and tender are separate fixed-length rigid segments and change heading independently on curves; never bend the boiler or fuse the tender to the engine.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.051956499144634856,
+            "sideways": 0.03191481415206815,
+            "gap": 0.14843443637015252,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.006206921954892869,
+            "sideways": 0.011186670480502193,
+            "gap": 0.06240501667820248,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.k4s",
+      "name": "PRR K4s",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "R",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "iron",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "tender",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 1.25,
+          "W": 0.875,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "tender",
+          "L": 0.75,
+          "W": 0.495,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 1.25
+        }
+      ],
+      "layout": "engine: 1.25 tile length, 2 bogies of 2 axles each, pivot span 0.88 tiles; tender: 0.75 tile length, 2 bogies of 2 axles each, pivot span 0.49 tiles",
+      "behavior": "The engine and tender are separate fixed-length rigid segments and change heading independently on curves; never bend the boiler or fuse the tender to the engine.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.051956499144634856,
+            "sideways": 0.03191481415206815,
+            "gap": 0.14843443637015252,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.006206921954892869,
+            "sideways": 0.011186670480502193,
+            "gap": 0.06240501667820248,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.drg01",
+      "name": "DRG Class 01",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "SR",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "black",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "tender",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 1.25,
+          "W": 0.875,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "tender",
+          "L": 0.75,
+          "W": 0.495,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 1.25
+        }
+      ],
+      "layout": "engine: 1.25 tile length, 2 bogies of 2 axles each, pivot span 0.88 tiles; tender: 0.75 tile length, 2 bogies of 2 axles each, pivot span 0.49 tiles",
+      "behavior": "The engine and tender are separate fixed-length rigid segments and change heading independently on curves; never bend the boiler or fuse the tender to the engine.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.051956499144634856,
+            "sideways": 0.03191481415206815,
+            "gap": 0.14843443637015252,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.006206921954892869,
+            "sideways": 0.011186670480502193,
+            "gap": 0.06240501667820248,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.flying_scotsman",
+      "name": "Flying Scotsman",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "SR",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "green",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "tender",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 1.25,
+          "W": 0.875,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "tender",
+          "L": 0.75,
+          "W": 0.495,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 1.25
+        }
+      ],
+      "layout": "engine: 1.25 tile length, 2 bogies of 2 axles each, pivot span 0.88 tiles; tender: 0.75 tile length, 2 bogies of 2 axles each, pivot span 0.49 tiles",
+      "behavior": "The engine and tender are separate fixed-length rigid segments and change heading independently on curves; never bend the boiler or fuse the tender to the engine.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.051956499144634856,
+            "sideways": 0.03191481415206815,
+            "gap": 0.14843443637015252,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.006206921954892869,
+            "sideways": 0.011186670480502193,
+            "gap": 0.06240501667820248,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.daylight",
+      "name": "SP 4449 Daylight",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "SR",
+      "tier": null,
+      "body": "steam_streamlined",
+      "paint": "rust",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "tender",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 1.25,
+          "W": 0.875,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "tender",
+          "L": 0.75,
+          "W": 0.495,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 1.25
+        }
+      ],
+      "layout": "engine: 1.25 tile length, 2 bogies of 2 axles each, pivot span 0.88 tiles; tender: 0.75 tile length, 2 bogies of 2 axles each, pivot span 0.49 tiles",
+      "behavior": "The engine and tender are separate fixed-length rigid segments and change heading independently on curves; never bend the boiler or fuse the tender to the engine.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.051956499144634856,
+            "sideways": 0.03191481415206815,
+            "gap": 0.14843443637015252,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.006206921954892869,
+            "sideways": 0.011186670480502193,
+            "gap": 0.06240501667820248,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.mallard",
+      "name": "Mallard",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "SSR",
+      "tier": null,
+      "body": "steam_streamlined",
+      "paint": "blue",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "tender",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 1.25,
+          "W": 0.875,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "tender",
+          "L": 0.75,
+          "W": 0.495,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 1.25
+        }
+      ],
+      "layout": "engine: 1.25 tile length, 2 bogies of 2 axles each, pivot span 0.88 tiles; tender: 0.75 tile length, 2 bogies of 2 axles each, pivot span 0.49 tiles",
+      "behavior": "The engine and tender are separate fixed-length rigid segments and change heading independently on curves; never bend the boiler or fuse the tender to the engine.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.051956499144634856,
+            "sideways": 0.03191481415206815,
+            "gap": 0.14843443637015252,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.006206921954892869,
+            "sideways": 0.011186670480502193,
+            "gap": 0.06240501667820248,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.big_boy",
+      "name": "Big Boy 4014",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "SSR",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "black",
+      "carries": null,
+      "size": "large",
+      "lengthTiles": 3,
+      "plan": "meyer",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "frame",
+          "L": 3,
+          "W": 1.7999999999999998,
+          "nb": 2,
+          "bogie": "engine_unit",
+          "front": 0
+        }
+      ],
+      "layout": "frame: 3.00 tile length, 2 pivoting engine units (3 axles each in the current game sprite), pivot span 1.80 tiles",
+      "behavior": "One rigid full-length frame above two independently pivoting powered engine units. The boiler/frame must never bend or acquire a centre hinge.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": false,
+          "reason": "Large stock: high-speed track only",
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.18759966579536064,
+            "sideways": 0.10127830736490122,
+            "gap": 0.38326583036587614,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.05306481279980861,
+            "sideways": 0.08186889217540869,
+            "gap": 0.28896655570409946,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.sw1",
+      "name": "EMD SW1",
+      "kind": "loco",
+      "type": "diesel",
+      "rarity": "N",
+      "tier": null,
+      "body": "diesel_switcher",
+      "paint": "black",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.class08",
+      "name": "BR Class 08",
+      "kind": "loco",
+      "type": "diesel",
+      "rarity": "N",
+      "tier": null,
+      "body": "diesel_switcher",
+      "paint": "green",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.m62",
+      "name": "M62 Szergej",
+      "kind": "loco",
+      "type": "diesel",
+      "rarity": "R",
+      "tier": null,
+      "body": "diesel_hood",
+      "paint": "green",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie3",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 3 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.f7",
+      "name": "EMD F7",
+      "kind": "loco",
+      "type": "diesel",
+      "rarity": "R",
+      "tier": null,
+      "body": "diesel_cab",
+      "paint": "red",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 2 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.sd40",
+      "name": "EMD SD40-2",
+      "kind": "loco",
+      "type": "diesel",
+      "rarity": "SR",
+      "tier": null,
+      "body": "diesel_hood",
+      "paint": "black",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie3",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 3 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.deltic",
+      "name": "Deltic Class 55",
+      "kind": "loco",
+      "type": "diesel",
+      "rarity": "SR",
+      "tier": null,
+      "body": "diesel_cab",
+      "paint": "blue",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie3",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 3 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.dda40x",
+      "name": "DDA40X Centennial",
+      "kind": "loco",
+      "type": "diesel",
+      "rarity": "SSR",
+      "tier": null,
+      "body": "diesel_hood",
+      "paint": "yellow",
+      "carries": null,
+      "size": "large",
+      "lengthTiles": 3,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 3,
+          "W": 1.7399999999999998,
+          "nb": 3,
+          "bogie": "bogie3",
+          "front": 0
+        }
+      ],
+      "layout": "body: 3.00 tile length, 3 bogies of 3 axles each, pivot span 1.74 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": false,
+          "reason": "Large stock: high-speed track only",
+          "geometry": {
+            "ok": false,
+            "foreAft": 0.1788122700644476,
+            "sideways": 0.0818236064761305,
+            "gap": 0.5228720873429935,
+            "lateral": 0.5623964642436587,
+            "reason": "centre bogie sits 0.56 tiles off its socket, limit 0.35"
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.04800890103233965,
+            "sideways": 0.03913700147428834,
+            "gap": 0.28871827723076837,
+            "lateral": 0.2843806391852529,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.kando_v40",
+      "name": "Kandó V40",
+      "kind": "loco",
+      "type": "electric",
+      "rarity": "R",
+      "tier": null,
+      "body": "electric_box",
+      "paint": "green",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.v63",
+      "name": "V63 Gigant",
+      "kind": "loco",
+      "type": "electric",
+      "rarity": "R",
+      "tier": null,
+      "body": "electric_box",
+      "paint": "red",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie3",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 3 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.crocodile",
+      "name": "SBB Ce 6/8 Crocodile",
+      "kind": "loco",
+      "type": "electric",
+      "rarity": "SR",
+      "tier": null,
+      "body": "electric_crocodile",
+      "paint": "brown",
+      "carries": null,
+      "size": "large",
+      "lengthTiles": 3,
+      "plan": "garratt",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 0.8,
+          "W": 0.5599999999999999,
+          "nb": 2,
+          "bogie": "bogie3",
+          "front": 0
+        },
+        {
+          "part": "cradle",
+          "L": 1.4,
+          "W": 1.3159999999999998,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0.8
+        },
+        {
+          "part": "engine",
+          "L": 0.8,
+          "W": 0.5599999999999999,
+          "nb": 2,
+          "bogie": "bogie3",
+          "front": 2.2,
+          "mirror": true
+        }
+      ],
+      "layout": "engine: 0.80 tile length, 2 bogies of 3 axles each, pivot span 0.56 tiles; cradle: 1.40 tile length, 2 bogies of 2 axles each, pivot span 1.32 tiles; engine: 0.80 tile length, 2 bogies of 3 axles each, pivot span 0.56 tiles",
+      "behavior": "Three rigid segments articulate: front engine unit, central cradle, reversed rear engine unit. Keep the joints visible; each segment keeps its own length.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": false,
+          "reason": "Large stock: high-speed track only",
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.11671333503146206,
+            "sideways": 0.12694661170238955,
+            "gap": 0.2062882116200763,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.020933344783882073,
+            "sideways": 0.058712176704295134,
+            "gap": 0.08338819797038449,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.taurus",
+      "name": "ÖBB 1116 Taurus",
+      "kind": "loco",
+      "type": "electric",
+      "rarity": "SR",
+      "tier": null,
+      "body": "electric_box",
+      "paint": "red",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 2 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.re460",
+      "name": "SBB Re 460",
+      "kind": "loco",
+      "type": "electric",
+      "rarity": "SR",
+      "tier": null,
+      "body": "electric_box",
+      "paint": "red",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 2 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.gg1",
+      "name": "PRR GG1",
+      "kind": "loco",
+      "type": "electric",
+      "rarity": "SSR",
+      "tier": null,
+      "body": "electric_box",
+      "paint": "green",
+      "carries": null,
+      "size": "large",
+      "lengthTiles": 3,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 3,
+          "W": 1.7399999999999998,
+          "nb": 3,
+          "bogie": "bogie3",
+          "front": 0
+        }
+      ],
+      "layout": "body: 3.00 tile length, 3 bogies of 3 axles each, pivot span 1.74 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": false,
+          "reason": "Large stock: high-speed track only",
+          "geometry": {
+            "ok": false,
+            "foreAft": 0.1788122700644476,
+            "sideways": 0.0818236064761305,
+            "gap": 0.5228720873429935,
+            "lateral": 0.5623964642436587,
+            "reason": "centre bogie sits 0.56 tiles off its socket, limit 0.35"
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.04800890103233965,
+            "sideways": 0.03913700147428834,
+            "gap": 0.28871827723076837,
+            "lateral": 0.2843806391852529,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.j94",
+      "name": "Saddle Tank J94",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "N",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "black",
+      "carries": null,
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.black_five",
+      "name": "LMS Black Five",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "R",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "black",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "tender",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 1.25,
+          "W": 0.875,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "tender",
+          "L": 0.75,
+          "W": 0.495,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 1.25
+        }
+      ],
+      "layout": "engine: 1.25 tile length, 2 bogies of 2 axles each, pivot span 0.88 tiles; tender: 0.75 tile length, 2 bogies of 2 axles each, pivot span 0.49 tiles",
+      "behavior": "The engine and tender are separate fixed-length rigid segments and change heading independently on curves; never bend the boiler or fuse the tender to the engine.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.051956499144634856,
+            "sideways": 0.03191481415206815,
+            "gap": 0.14843443637015252,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.006206921954892869,
+            "sideways": 0.011186670480502193,
+            "gap": 0.06240501667820248,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.nine_f",
+      "name": "BR 9F",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "SR",
+      "tier": null,
+      "body": "steam_std",
+      "paint": "black",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "tender",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 1.25,
+          "W": 0.8500000000000001,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "tender",
+          "L": 0.75,
+          "W": 0.495,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 1.25
+        }
+      ],
+      "layout": "engine: 1.25 tile length, 2 bogies of 2 axles each, pivot span 0.85 tiles; tender: 0.75 tile length, 2 bogies of 2 axles each, pivot span 0.49 tiles",
+      "behavior": "The engine and tender are separate fixed-length rigid segments and change heading independently on curves; never bend the boiler or fuse the tender to the engine.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.04829065118509141,
+            "sideways": 0.02771157285049784,
+            "gap": 0.14621989434275964,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.005695246048283943,
+            "sideways": 0.012591170037930099,
+            "gap": 0.062152597800888096,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.gmam",
+      "name": "GMAM Garratt",
+      "kind": "loco",
+      "type": "steam",
+      "rarity": "SR",
+      "tier": null,
+      "body": "steam_garratt",
+      "paint": "green",
+      "carries": null,
+      "size": "large",
+      "lengthTiles": 3,
+      "plan": "garratt",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "engine",
+          "L": 0.8,
+          "W": 0.5599999999999999,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        },
+        {
+          "part": "cradle",
+          "L": 1.4,
+          "W": 1.3159999999999998,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0.8
+        },
+        {
+          "part": "engine",
+          "L": 0.8,
+          "W": 0.5599999999999999,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 2.2,
+          "mirror": true
+        }
+      ],
+      "layout": "engine: 0.80 tile length, 2 bogies of 2 axles each, pivot span 0.56 tiles; cradle: 1.40 tile length, 2 bogies of 2 axles each, pivot span 1.32 tiles; engine: 0.80 tile length, 2 bogies of 2 axles each, pivot span 0.56 tiles",
+      "behavior": "Three rigid segments articulate: front engine unit, central cradle, reversed rear engine unit. Keep the joints visible; each segment keeps its own length.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": false,
+          "reason": "Large stock: high-speed track only",
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.11671333503146206,
+            "sideways": 0.12694661170238955,
+            "gap": 0.2062882116200763,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.020933344783882073,
+            "sideways": 0.058712176704295134,
+            "gap": 0.08338819797038449,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.tgv",
+      "name": "TGV Sud-Est",
+      "kind": "loco",
+      "type": "electric",
+      "rarity": "SSR",
+      "tier": null,
+      "body": "electric_hs",
+      "paint": "orange",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 2 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "loco.ice1",
+      "name": "ICE 1",
+      "kind": "loco",
+      "type": "electric",
+      "rarity": "SR",
+      "tier": null,
+      "body": "electric_hs",
+      "paint": "white",
+      "carries": null,
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 2 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.water_cart",
+      "name": "Wooden Water Cart",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "N",
+      "tier": 0,
+      "body": "tank",
+      "paint": "wood",
+      "carries": "liquid",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.wood_hopper",
+      "name": "Wooden Hopper",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "N",
+      "tier": 0,
+      "body": "hopper",
+      "paint": "wood",
+      "carries": "mineral",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.flatbed",
+      "name": "Flatbed",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "N",
+      "tier": 0,
+      "body": "flat",
+      "paint": "wood",
+      "carries": "bulk",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.riveted_tank",
+      "name": "Riveted Tank",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "R",
+      "tier": 0,
+      "body": "tank",
+      "paint": "black",
+      "carries": "liquid",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.steel_hopper",
+      "name": "Steel Hopper",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "R",
+      "tier": 0,
+      "body": "hopper",
+      "paint": "iron",
+      "carries": "mineral",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.bolster_flat",
+      "name": "Bolster Flat",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "R",
+      "tier": 0,
+      "body": "flat",
+      "paint": "iron",
+      "carries": "bulk",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.welded_tank",
+      "name": "Welded Tank",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "SR",
+      "tier": 0,
+      "body": "tank",
+      "paint": "iron",
+      "carries": "liquid",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.bathtub",
+      "name": "Bathtub Gondola",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "SR",
+      "tier": 0,
+      "body": "hopper",
+      "paint": "black",
+      "carries": "mineral",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.bulkhead_flat",
+      "name": "Bulkhead Flat",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "SR",
+      "tier": 0,
+      "body": "flat",
+      "paint": "iron",
+      "carries": "bulk",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.pressure_tank",
+      "name": "Pressure Tank",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "SSR",
+      "tier": 0,
+      "body": "tank",
+      "paint": "iron",
+      "carries": "liquid",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.dump_hopper",
+      "name": "Bottom-Dump Hopper",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "SSR",
+      "tier": 0,
+      "body": "hopper",
+      "paint": "iron",
+      "carries": "mineral",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.heavy_flat",
+      "name": "Heavy Flat",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "SSR",
+      "tier": 0,
+      "body": "flat",
+      "paint": "iron",
+      "carries": "bulk",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.wooden_coach",
+      "name": "Wooden Coach",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "N",
+      "tier": 0,
+      "body": "coach",
+      "paint": "wood",
+      "carries": "people",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.steel_coach",
+      "name": "Steel Coach",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "R",
+      "tier": 0,
+      "body": "coach",
+      "paint": "iron",
+      "carries": "people",
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 2 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.pullman",
+      "name": "Pullman Car",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "SR",
+      "tier": 0,
+      "body": "coach",
+      "paint": "black",
+      "carries": "people",
+      "size": "medium",
+      "lengthTiles": 2,
+      "plan": "rigid",
+      "drawBogies": true,
+      "segments": [
+        {
+          "part": "body",
+          "L": 2,
+          "W": 1.4,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "body: 2.00 tile length, 2 bogies of 2 axles each, pivot span 1.40 tiles",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.1290161866578444,
+            "sideways": 0.07419790182683027,
+            "gap": 0.28866939260517144,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.025169276755475766,
+            "sideways": 0.027190413208789812,
+            "gap": 0.15062998329895336,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.brake_van",
+      "name": "Brake Van",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "N",
+      "tier": 0,
+      "body": "van",
+      "paint": "brown",
+      "carries": "bulk",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.boxcar",
+      "name": "Plank Boxcar",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "R",
+      "tier": 0,
+      "body": "box",
+      "paint": "wood",
+      "carries": "bulk",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.coal_cart",
+      "name": "Coal Cart",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "N",
+      "tier": 0,
+      "body": "cart",
+      "paint": "black",
+      "carries": "mineral",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.fuel_cart",
+      "name": "Fuel Cart",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "R",
+      "tier": 1,
+      "body": "cart",
+      "paint": "red",
+      "carries": "liquid",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    },
+    {
+      "id": "wagon.battery_cart",
+      "name": "Battery Cart",
+      "kind": "wagon",
+      "type": "unpowered wagon",
+      "rarity": "SR",
+      "tier": 2,
+      "body": "cart",
+      "paint": "blue",
+      "carries": "bulk",
+      "size": "small",
+      "lengthTiles": 1,
+      "plan": "rigid",
+      "drawBogies": false,
+      "segments": [
+        {
+          "part": "body",
+          "L": 1,
+          "W": 0.7,
+          "nb": 2,
+          "bogie": "bogie",
+          "front": 0
+        }
+      ],
+      "layout": "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+      "behavior": "One rigid body remains straight and fixed-length on curves; it spans the rail-support chord and can overhang the track. Never bend or stretch it.",
+      "trackClasses": {
+        "regular": {
+          "radiusTiles": 0.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.02795831798480859,
+            "sideways": 0.01866104534705422,
+            "gap": 0.10256631405126193,
+            "lateral": 0,
+            "reason": null
+          }
+        },
+        "high_speed": {
+          "radiusTiles": 1.5,
+          "permitted": true,
+          "reason": null,
+          "geometry": {
+            "ok": true,
+            "foreAft": 0.003194845435680235,
+            "sideways": 0.007381782469060058,
+            "gap": 0.04059477160934925,
+            "lateral": 0,
+            "reason": null
+          }
+        }
+      },
+      "maxLateralPlay": 0.35,
+      "specification": "Current game mechanics, not a historical wheel-arrangement claim",
+      "mechanicalRevision": 1
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "scope": "Visual review of new source images; alpha checks are separate.",
+  "issues": [
+    {
+      "id": "terrain.rock",
+      "issue": "Generated preview has thick raised block sides; ordinary rock terrain must be flat.",
+      "status": "needs-regeneration"
+    },
+    {
+      "id": "terrain.hillcut",
+      "issue": "Generated preview has thick soil side walls; hillcut must be a flat cut-earth tile.",
+      "status": "needs-regeneration"
+    },
+    {
+      "id": "terrain.plains",
+      "issue": "Ordinary ground source includes display-block side walls; remove sides to leave a flat diamond.",
+      "status": "needs-regeneration"
+    },
+    {
+      "id": "terrain.taiga",
+      "issue": "Ordinary ground source includes display-block side walls; remove sides to leave a flat diamond.",
+      "status": "needs-regeneration"
+    },
+    {
+      "id": "terrain.swamp",
+      "issue": "Ordinary ground source includes display-block side walls; remove sides to leave a flat diamond.",
+      "status": "needs-regeneration"
+    },
+    {
+      "id": "terrain.cursor",
+      "issue": "Wrong subject: generated a depot inside the cursor outline. Remove all building content; retain only the hollow diamond cursor.",
+      "status": "needs-regeneration"
+    }
+  ]
+}

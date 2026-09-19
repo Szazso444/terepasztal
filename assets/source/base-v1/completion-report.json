@@ -1,0 +1,24 @@
+{
+  "required": 147,
+  "saved": 147,
+  "missing": [],
+  "unmapped": [],
+  "alphaValid": true,
+  "alphaFailures": [],
+  "filesWithWarnings": 77,
+  "designReviewPending": 6,
+  "railcraftDocumented": 52,
+  "railcraftWithoutSource": [],
+  "legacyFilesWithoutRecordedPrompt": [
+    "coaling-stage.png",
+    "house-cottage.png",
+    "hydro-plant.png",
+    "power-plant.png",
+    "signal.png",
+    "tree-oak.png",
+    "tree-spruce.png"
+  ],
+  "queuedPromptMismatches": [],
+  "galleryHasDocs": true,
+  "complete": true
+}

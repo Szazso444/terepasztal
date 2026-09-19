@@ -1,0 +1,1102 @@
+{
+  "method": "built-in image generation",
+  "reference": "docs/art-direction/images/03-theme-town-growth.png",
+  "assets": [
+    {
+      "id": "station",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-77dc1a02-011a-4830-9a14-be10f9761709.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. A small cream-stone passenger station with slate roof and attached timber platform canopy, evergreen doors. No tracks or people.",
+      "filename": "station.png"
+    },
+    {
+      "id": "windmill",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-5ced77f6-ea62-40f3-9ae5-5e774ba9749d.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. A cream-stone windmill building with four timber lattice sails attached to its tower, slate cap, evergreen door. No sacks or ground.",
+      "filename": "windmill.png"
+    },
+    {
+      "id": "water-tower",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-47104361-d434-4eff-95b6-262c4a8f3903.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One banded timber cylindrical railway water tank on four stone supports with attached metal water spout. No other objects.",
+      "filename": "water-tower.png"
+    },
+    {
+      "id": "warehouse",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-695073f5-c3cb-485f-ba6a-abecc5e24ab9.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One brick railway warehouse with slate roof, wide evergreen loading doors and attached small timber canopy. No crates outside, no tracks.",
+      "filename": "warehouse.png"
+    },
+    {
+      "id": "depot",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-69e1c7c8-cc9d-43a5-8211-a72771a23eb5.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One two-track brick railway engine shed, slate roof, two large open arched engine doors, evergreen woodwork, no track extending out.",
+      "filename": "depot.png"
+    },
+    {
+      "id": "townhouse-civic",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-c5ddaa68-3276-426c-a973-f044bc571e16.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One small civic town hall, cream limestone and warm brick, central clock gable, slate roof, evergreen double doors. No railway platform, no surrounding buildings.",
+      "filename": "townhouse-civic.png"
+    },
+    {
+      "id": "bridge-wood",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-8b5be274-e982-407c-816b-8901851c9ef4.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One complete straight timber railway truss bridge span, two parallel truss sides with triangular bracing, plank deck and attached four timber support piers. No water or rails, no detached parts, viewed diagonally along its length.",
+      "filename": "bridge-wood.png"
+    },
+    {
+      "id": "bridge-stone",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-8779f026-567b-4511-8949-3ce7f3b653e4.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One complete straight cream limestone railway bridge with three arches and integral stone support piers, low parapets and flat deck. No rails, water, landscape or base tile. Entire bridge isolated.",
+      "filename": "bridge-stone.png"
+    },
+    {
+      "id": "kiln",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-fb0dc62f-2835-4929-9865-7e114c86e1d7.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One compact charcoal kiln with rounded brick dome, dark firing mouth and short chimney. No smoke, wood stacks or ground.",
+      "filename": "kiln.png"
+    },
+    {
+      "id": "grinder",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-75dcf2ca-49e9-4fa0-879c-086548eed478.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One stone grinding works machine building with attached hopper, heavy rollers, small brick shelter and slate roof. Single connected structure.",
+      "filename": "grinder.png"
+    },
+    {
+      "id": "refinery",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-aa4dc31a-45ae-4410-b025-2e0c762a2087.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One compact oil refinery installation, attached cylindrical tank, narrow distillation column and connecting copper/iron pipes on a shared structural frame. No ground tile, no signs.",
+      "filename": "refinery.png"
+    },
+    {
+      "id": "substation",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-c06c2f59-cb12-4fc7-b180-983e4be3f741.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One small electrical substation assembly, a transformer box with cooling fins, ceramic insulators and attached gantry on its small equipment plinth. No surrounding fence or power wires extending outside image.",
+      "filename": "substation.png"
+    },
+    {
+      "id": "farm",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-adf92640-8099-4c2d-a773-4ad49d27fd41.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One farm halt barn building, warm timber with cream stone base, slate roof, attached grain silo and loading hatch. No fields or scenery.",
+      "filename": "farm.png"
+    },
+    {
+      "id": "lumber",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-296681cf-148e-46e8-bbe0-56e4da7d3c70.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One lumber sawmill shed, timber frame, slate roof, attached exposed saw table and log feed cradle. Single connected building, no loose piles or ground.",
+      "filename": "lumber.png"
+    },
+    {
+      "id": "quarry",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-01f45c56-502b-4f96-9f7e-330e58ced974.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One stone quarry loading structure, cream-stone retaining wall and attached timber lifting crane above a stone hopper. Single coherent installation, no landscape.",
+      "filename": "quarry.png"
+    },
+    {
+      "id": "pump",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0960e-675f-7510-858f-90e0fc9d0317\\exec-5c44abfd-9dd5-4159-98a1-7a4ed458711a.png",
+      "prompt": "Create exactly one isolated game object in the reference's pastoral railway style, crisp pixel-art-inspired clustered shading, upper-left lighting, orthographic 2:1 isometric front/right view. Entire object with 10% margin. REAL RGBA transparent PNG, empty background alpha zero, solid surfaces opaque. No text, scenery, ground tile, glow or cast shadow. One object per image. One water pumping station, tiny cream-stone pump house with slate roof and attached large iron intake pipe and pump wheel. No water surface or background.",
+      "filename": "pump.png"
+    },
+    {
+      "method": "built-in image generation",
+      "id": "terrain-grass",
+      "path": "assets/source/base-v1/terrain-grass.png",
+      "prompt": "Use case: stylized-concept. Create exactly one grass terrain base tile source PNG for a pastoral isometric railway game. Match the established Willowline art direction: moss and olive greens, crisp pixel-art-inspired clustered shading, warm upper-left lighting, orthographic 2:1 isometric diamond. Flat square grass surface viewed isometrically, diamond top exactly twice as wide as tall, modest grass tufts and subtle mottling, thin dark turf edge only. Entire tile centered with 10 percent empty margin. REAL RGBA transparent background, empty pixels alpha zero, tile fully opaque. No trees, buildings, rails, rocks, flowers, labels, border, scenery, ground outside tile, cast shadow, glow, perspective convergence or thick floating island. Single game asset, not a contact sheet. Reference visual style: muted moss green fields of a cozy rural railway diorama.",
+      "filename": "terrain-grass.png"
+    },
+    {
+      "id": "terrain.forest",
+      "filename": "terrain-forest.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-3432d584-ebe3-41f7-9f75-523340cd0807.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. One isolated production source asset for The Willowline pastoral isometric railway game, matching the Land & Biomes guide. Crisp pixel-art clustered shading, broad readable color masses, restrained detail and upper-left lighting. Orthographic 2:1 isometric projection. Real RGBA transparent background with alpha zero everywhere outside the asset, solid surfaces opaque, no colored fringe or glow. Entire asset centered with generous empty margins, no cropping. No text, labels, border, track, buildings, scenery, cast shadow, or backdrop. Exactly ONE asset, no sheet or variants. A FLAT square forest ground tile projected as a diamond exactly twice as wide as tall. Muted deep forest-green leaf litter with quiet brown moss patches and a few tiny fallen leaves. NO trees, trunks or bushes. No side walls, no thick block, no raised rim; all edges flat and able to tile seamlessly."
+    },
+    {
+      "id": "terrain.sand",
+      "filename": "terrain-sand.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-a75374e7-c430-4104-82b6-c9dc32fc3f29.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. One isolated production source asset for The Willowline pastoral isometric railway game, matching the Land & Biomes guide. Crisp pixel-art clustered shading, broad readable color masses, restrained detail and upper-left lighting. Orthographic 2:1 isometric projection. Real RGBA transparent background with alpha zero everywhere outside the asset, solid surfaces opaque, no colored fringe or glow. Entire asset centered with generous empty margins, no cropping. No text, labels, border, track, buildings, scenery, cast shadow, or backdrop. Exactly ONE asset, no sheet or variants. A FLAT square sand ground tile projected as a diamond exactly twice as wide as tall. Warm oat cream and muted ochre sand with very subtle broad grain clusters. Calm even surface, no dunes or objects. No side walls, thick block, raised rim; all edges flat and able to tile seamlessly."
+    },
+    {
+      "id": "props.tree",
+      "filename": "tree-round.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-b61a3805-dc9d-44d5-9a90-5cd053b6882a.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. One isolated production source asset for The Willowline pastoral isometric railway game, matching the Land & Biomes guide. Crisp pixel-art clustered shading, broad readable color masses, restrained detail and upper-left lighting. Orthographic 2:1 isometric projection. Real RGBA transparent background with alpha zero everywhere outside the asset, solid surfaces opaque, no colored fringe or glow. Entire asset centered with generous empty margins, no cropping. No text, labels, border, track, buildings, scenery, cast shadow, or backdrop. Exactly ONE asset, no sheet or variants. One round broadleaf tree with two or three connected rounded canopy masses, moss and olive green lit leaves, deep forest-green shade, a short branching warm brown trunk clearly visible beneath foliage. More compact and upright than a spreading oak. Simplified readable pixel clusters, no individual leaf noise. Trunk bottom is the anchor. No ground tile, soil mound or detached shadow."
+    },
+    {
+      "id": "props.birch",
+      "filename": "tree-birch.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-2d4ea557-7ee8-41a1-af5b-3d9c9f24f866.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. One isolated production source asset for The Willowline pastoral isometric railway game, matching the Land & Biomes guide. Crisp pixel-art clustered shading, broad readable color masses, restrained detail and upper-left lighting. Orthographic 2:1 isometric projection. Real RGBA transparent background with alpha zero everywhere outside the asset, solid surfaces opaque, no colored fringe or glow. Entire asset centered with generous empty margins, no cropping. No text, labels, border, track, buildings, scenery, cast shadow, or backdrop. Exactly ONE asset, no sheet or variants. One slender birch tree with pale ivory bark, sparse dark bark breaks, airy uneven green canopy in small connected masses, one narrow trunk with branching upper limbs. Distinct from dense oak and spruce. Simplified readable pixel clusters, no individual leaf noise. Trunk bottom is the anchor. No ground tile, soil mound or detached shadow."
+    },
+    {
+      "id": "props.pine",
+      "filename": "tree-pine.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-3456e2b3-dfd0-4a83-92c3-872115f66235.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One pine tree, open tiered blue-green canopy with clearly visible trunk between irregular spreading horizontal groups. Distinct from a dense spruce cone. No ground tile or soil mound."
+    },
+    {
+      "id": "props.rock",
+      "filename": "props-rock.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-6a5b8ae8-83d5-4d00-8d7b-bad8c8ec8119.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small low limestone rock with three or four broad pale grey facets, compact irregular silhouette. No surrounding ground or plants."
+    },
+    {
+      "id": "props.cactus",
+      "filename": "props-cactus.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-d2000f52-fd7b-4677-9db8-8ee040c5878e.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One ribbed saguaro cactus with two unequal upward arms and clear column silhouette, restrained moss-green highlights. No soil mound or ground tile."
+    },
+    {
+      "id": "props.bush",
+      "filename": "props-bush.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-e431ed24-8f32-4945-8e54-808146b69940.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One low compact shrub with three connected rounded foliage lobes in moss and forest green, tiny woody base. No flowers, ground tile or soil mound."
+    },
+    {
+      "id": "props.boulder",
+      "filename": "props-boulder.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-cc589926-3c3c-417e-8efe-90d32bd3acc6.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One larger angular limestone boulder mass, strongly faceted light top and dark right side, sparse moss in one crevice. No surrounding ground or plants."
+    },
+    {
+      "id": "props.coal",
+      "filename": "props-coal.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-279e85fe-eb0f-4196-bcaf-e88d0ba29cc8.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One dark stratified coal seam outcrop with low angular block silhouette, charcoal layers and narrow blue-grey seams. Clearly distinct from pale ordinary rock. No surrounding ground."
+    },
+    {
+      "id": "props.oil",
+      "filename": "props-oil.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-d50f6253-e509-467a-adb3-eb5aefbefc06.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small flat dark petroleum seep with uneven puddle silhouette and restrained slate-teal sheen, slight muted brown crust around its attached edge. No rainbow reflection, no ground tile."
+    },
+    {
+      "id": "props.palm",
+      "filename": "props-palm.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-fa76c7e0-dfcf-4b4c-b798-11544e1f60de.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One oasis palm with a slightly bent warm-brown trunk and small fan of six readable broad green fronds. No coconuts, soil mound or ground tile."
+    },
+    {
+      "id": "props.oil",
+      "filename": "props-oil-v2.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-d659437e-a24b-4c62-b400-7383440cfd9d.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small flat dark petroleum seep with uneven puddle silhouette and restrained slate-teal sheen, slight muted brown crust around its attached edge. No rainbow reflection, no ground tile. CRITICAL SUBJECT CONSTRAINT: natural puddle ONLY. NO pumpjack, pump, machinery, pipes, tank, platform, building, planks, foundations, derrick, refinery or industrial equipment of any kind. Flat irregular oil stain about one handspan high; nothing rises above its thin crust."
+    },
+    {
+      "id": "props.deadtree",
+      "filename": "props-deadtree.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-205918d7-a565-49fe-bb24-df150a6de306.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One bare dead tree with weathered grey-brown trunk and irregular tapering broken branches. Strong branching silhouette, no leaves, no ground tile."
+    },
+    {
+      "id": "props.reeds",
+      "filename": "props-reeds.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-0e4673af-0397-4694-8e66-b9d606514ca1.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small grounded clump of sparse upright green reeds with three restrained brown cattail heads and narrow leaf blades. No water puddle or ground tile."
+    },
+    {
+      "id": "props.flowers",
+      "filename": "props-flowers.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-4cdb914f-09dd-4791-bd1f-52b121bafed2.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/02-nature-objects.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One tiny white wildflower clump with a few ivory petals, ochre centers, short moss-green stems and leaves, quiet simple silhouette. No pot or ground tile."
+    },
+    {
+      "id": "terrain.rock",
+      "filename": "terrain-rock.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-577da98b-4961-4fc7-995e-6fc50cff9cf6.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. Low exposed limestone bedrock with broad warm grey slabs and restrained shallow fissures, no tall boulders."
+    },
+    {
+      "id": "terrain.hillcut",
+      "filename": "terrain-hillcut.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-c732ee76-aef9-469c-b248-2a6a0284dd7c.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. Flattened ochre-brown cut earth with quiet compact soil strata and a few tiny pale aggregate specks. Not a hill."
+    },
+    {
+      "id": "terrain.hill",
+      "filename": "terrain-hill.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-7187c5b4-5639-469f-b2ce-6f2aa408950c.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One low rounded hill rising from a precise 2:1 diamond footprint. Moss-green grassy slopes with one small exposed limestone shoulder, upper-left light, modest elevation. No trees, square block walls or surrounding ground."
+    },
+    {
+      "id": "terrain.plains",
+      "filename": "terrain-plains.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-b9a9e0ed-75d5-42a7-b050-a2623677d060.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. Open meadow in moss and olive greens, broad quiet patches with only two or three tiny restrained flower dots. No wheat field."
+    },
+    {
+      "id": "terrain.taiga",
+      "filename": "terrain-taiga.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-f405be2e-d2de-4d88-a8aa-40fecda9152f.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. Cool desaturated blue-green lichen ground, subtle moss patches and a tiny optional pale frost accent. No conifers."
+    },
+    {
+      "id": "terrain.swamp",
+      "filename": "terrain-swamp.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-4fa6e737-cf35-4e02-b4de-3bcce3f4fa94.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. Muted peat-green wet earth with shallow dark teal damp patches. Mostly solid wet ground, distinct from open water. No reeds."
+    },
+    {
+      "id": "terrain.desert",
+      "filename": "terrain-desert.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-eb299ad1-2f7d-4eb4-a1e7-2d57174e4545.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. Subdued oat and ochre desert ground with subtle broad wind-swept sand mottling and two tiny warm stone flecks. No tall dunes."
+    },
+    {
+      "id": "terrain.water",
+      "filename": "terrain-water.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-04254398-ae1e-4888-b96d-51ae506a04c4.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. Quiet deep teal water with a few short muted horizontal glints. No shoreline, island, foam border, bridge or land."
+    },
+    {
+      "id": "terrain.mountain",
+      "filename": "terrain-mountain.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-63e6f1ca-94ca-4c85-91eb-87742c6a48c7.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One unmistakably raised angular mountain on a precise 2:1 diamond footprint, broad slate and limestone rock faces with a few restrained ivory snow accents at its top. No trees, scenery or floating block side walls."
+    },
+    {
+      "id": "terrain.void",
+      "filename": "terrain-void.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-7eaef91d-1c54-47c8-850a-f20f6b3ec6e2.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. A quiet dark desaturated rocky inaccessible ground surface, subtle charcoal and slate clusters, no magical elements, lights or stars."
+    },
+    {
+      "id": "terrain.city",
+      "filename": "terrain-city.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-d446047a-e705-45c8-a00e-daac73786ef9.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. Quiet warm limestone urban paving of broad rectangular slabs with restrained seams, no curbs rising above tile, no road markings or street furniture."
+    },
+    {
+      "id": "terrain.cursor",
+      "filename": "terrain-cursor.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-ba225aa1-3ec3-44b7-b215-f874241cef25.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/01-land-biomes.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One thin ivory-white 2:1 diamond outline for an isometric ground cursor, pixel-crisp stepped corners and hollow transparent center. No filled tile, shadows, glow, text or additional outlines."
+    },
+    {
+      "id": "stations.full.mine",
+      "filename": "stations-full-mine.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-aafddaa0-82a8-4b26-ac85-63697cca48c6.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One compact iron mine loading structure, limestone retaining wall, timber hoist and attached dark iron-ore hopper. Single connected installation, no mountain backdrop or landscape."
+    },
+    {
+      "id": "stations.full.sand_pit",
+      "filename": "stations-full-sand-pit.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-e72e4f4d-bf11-4723-9604-578b1b3b8128.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One compact sand-pit loading installation, low timber loading hopper with pale oat sand, small attached winch and warm stone retaining wall. Single connected structure, no landscape."
+    },
+    {
+      "id": "stations.full.copper_mine",
+      "filename": "stations-full-copper-mine.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-8d75693c-7a25-449e-933e-3d0ee6cd431e.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One compact copper mine loading structure, warm stone supports, copper-tinted ore hopper and timber hoist, readable ore-loading silhouette. Single connected structure, no landscape."
+    },
+    {
+      "id": "works.full.colliery",
+      "filename": "works-full-colliery.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-1f9595e8-9279-448a-b524-ca777366a429.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small coal colliery with timber and iron headframe, dark coal bins and attached sorting tower, slate-roofed brick machinery hut. Single connected structure, no ground base or smoke."
+    },
+    {
+      "id": "works.full.ironworks",
+      "filename": "works-full-ironworks.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-d5bc65eb-4ace-4575-a4c3-d97691ab958c.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One compact brick ironworks, strong furnace mass, restrained warm orange opening, attached handling bay with neatly staged iron ingots. Single connected structure, no smoke or ground tile."
+    },
+    {
+      "id": "works.full.oil_derrick",
+      "filename": "works-full-oil-derrick.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-8c09a954-ffc8-42e5-86a6-7973849d2b3b.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One compact triangular iron oil derrick frame with connected pump assembly and small tank, weathered copper and slate metal. Single structure, no surrounding ground."
+    },
+    {
+      "id": "works.full.diesel_refinery",
+      "filename": "works-full-diesel-refinery.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-e3c95e1d-d904-49a0-9a76-77659c73003d.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One compact diesel refinery in the existing warm brick, copper and slate family, attached cylindrical tank, distillation column and organized pipe racks. Single structure, no smoke, ground tile or text."
+    },
+    {
+      "id": "works.full.wire_mill",
+      "filename": "works-full-wire-mill.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-ae7768a2-8536-41f9-9de0-13bbc63a39ce.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One compact wire mill, warm brick roller hall with slate roof, visible copper wire reels and attached drawbench beneath a side canopy. Single connected structure, no ground tile."
+    },
+    {
+      "id": "decor.power_line",
+      "filename": "decor-power-line.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-4d944d3f-9cce-42a0-a47e-669301f455b9.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One timber utility pole with simple wooden crossarm, three pale ceramic insulators and very short attached dark wire stubs. Distinguish it from railway catenary. Entire pole visible, no long wires or ground tile."
+    },
+    {
+      "id": "cargo.water",
+      "filename": "cargo-water.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0ba90-edf0-72e1-84f7-10ef04aed46f\\exec-cc73999a-46d2-4c51-8c84-035d802bfa76.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one simple teal water droplet. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "loco.rocket",
+      "filename": "loco-rocket.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-eeff8855-e3e0-4e7f-9da8-34277d3978c8.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset for The Willowline pastoral isometric railway game: Stephenson's Rocket locomotive, 1829 Rainhill Trials winner, small yellow steam engine with cream and brass details and visible running gear. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Orthographic 2:1 isometric front/right view, front faces lower-right, rigid long axis upper-left to lower-right. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No rails, smoke, ground, scenery, numbering, lettering, captions, watermark, border, glow or detached shadow. Single source study, not a sheet. Save the generated file locally for repository import. User requests no image preview in chat; return the saved file path if supported.",
+      "status": "alpha-validated; visual review pending"
+    },
+    {
+      "id": "loco.adler",
+      "filename": "loco-adler.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-0558985c-1f29-4d60-953a-bdecc396caaf.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Adler locomotive, game body family steam_early, small size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1835, Nuremberg to Fürth. Germany's first railway engine. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.john_bull",
+      "filename": "loco-john-bull.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-66a92818-3c3e-43ea-8e2b-5ec162b168e9.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One John Bull locomotive, game body family steam_early, small size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1831, Camden & Amboy. Ran for a century and still steams. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.mav375",
+      "filename": "loco-mav375.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-c668c207-bdb9-497c-8b79-8e69aae329cc.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One MÁV 375 locomotive, game body family steam_std, small size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1907 Hungarian branch-line tank engine. Hundreds built, dozens survive. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.general",
+      "filename": "loco-general.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-bfb6d873-7ab8-4525-8d52-8861b69197a0.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One The General locomotive, game body family steam_std, small size, existing rust livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1855 Western & Atlantic 4-4-0, star of the Great Locomotive Chase. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.jupiter",
+      "filename": "loco-jupiter.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-02664472-0b42-4489-84dc-29abc420040f.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Jupiter locomotive, game body family steam_std, small size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1868 Central Pacific 4-4-0, met the Union Pacific at Promontory Summit. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.mav424",
+      "filename": "loco-mav424.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-45122c59-2896-4ad0-b22e-ace2012bf5f5.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One MÁV 424 Bivaly locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1924 Hungarian mixed-traffic 4-8-0, the Buffalo. Built until 1958. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.k4s",
+      "filename": "loco-k4s.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-3cfb9bd0-3bfd-4b6e-a734-34af9ad8be27.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One PRR K4s locomotive, game body family steam_std, medium size, existing iron livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1914 Pennsylvania Railroad Pacific, standard express power for forty years. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.drg01",
+      "filename": "loco-drg01.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-7e93d988-d932-4183-bbed-d3bf9c47c979.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One DRG Class 01 locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1926 German standard express Pacific. Black, red wheels, 130 km/h. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.flying_scotsman",
+      "filename": "loco-flying-scotsman.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-82125697-b998-4642-af3f-a2fc17921ff1.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Flying Scotsman locomotive, game body family steam_std, medium size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1923 LNER A3. First steam engine officially clocked at 100 mph. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.daylight",
+      "filename": "loco-daylight.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-225bf509-64da-472c-958b-ce676793fa3a.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SP 4449 Daylight locomotive, game body family steam_streamlined, medium size, existing rust livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1941 Southern Pacific GS-4, orange and red streamliner of the Coast Daylight. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.mallard",
+      "filename": "loco-mallard.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-5e21417e-6df1-44cc-b649-c9aaf7fc98f8.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Mallard locomotive, game body family steam_streamlined, medium size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1938 LNER A4. 126 mph, the fastest steam locomotive ever recorded. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.big_boy",
+      "filename": "loco-big-boy.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-43b3553e-c7ea-480b-9e6e-6e2fb847ba4f.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Big Boy 4014 locomotive, game body family steam_std, large size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1941 Union Pacific 4-8-8-4. Articulated giant built to drag freight over the Wasatch. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.sw1",
+      "filename": "loco-sw1.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-5f96b567-05c8-4b73-8699-018c0fd6c499.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One EMD SW1 locomotive, game body family diesel_switcher, small size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1939 six-hundred-horsepower switcher. The yard goat of a generation. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.class08",
+      "filename": "loco-class08.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-f0623d8e-f84f-4860-b10a-79e43f7c9312.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One BR Class 08 locomotive, game body family diesel_switcher, small size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1952 British shunter, nearly a thousand built. Slow, tireless, everywhere. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.m62",
+      "filename": "loco-m62.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-f73304fc-fdbc-4ce1-b3b0-b88e53b16185.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One M62 Szergej locomotive, game body family diesel_hood, medium size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1965 Soviet freight diesel exported across the Eastern Bloc. Loud and loyal. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.f7",
+      "filename": "loco-f7.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-f7868cdb-711b-4b43-8796-8e6438429436.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One EMD F7 locomotive, game body family diesel_cab, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1949 bulldog-nosed cab unit. The face of American railroading. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.sd40",
+      "filename": "loco-sd40.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-2ba30b1c-9e5c-41b9-b560-7ac102a3adde.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One EMD SD40-2 locomotive, game body family diesel_hood, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1972 six-axle road switcher. Nearly four thousand built, many still running. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.deltic",
+      "filename": "loco-deltic.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-3701dfa8-ae3c-4d30-ad29-ddbea48ce8e9.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Deltic Class 55 locomotive, game body family diesel_cab, medium size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1961 East Coast express with two opposed-piston Napier engines. Screams. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.dda40x",
+      "filename": "loco-dda40x.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-35a2e449-071f-42a1-b262-0b04ec1e4c69.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One DDA40X Centennial locomotive, game body family diesel_hood, large size, existing yellow livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1969 Union Pacific twin-engine giant, the most powerful diesel ever built. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.kando_v40",
+      "filename": "loco-kando-v40.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-20451331-92bc-45bd-b0b1-33e52078d44d.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Kandó V40 locomotive, game body family electric_box, small size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1932 Hungarian phase-converter electric by Kálmán Kandó, pioneer of 50 Hz traction. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.v63",
+      "filename": "loco-v63.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-ac5306d5-2dac-41ff-bb6a-aed83ecf173b.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One V63 Gigant locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1975 Hungarian six-axle Giant, the heavy freight electric of MÁV. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.crocodile",
+      "filename": "loco-crocodile.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-ae06fde1-4b9b-4651-aa5f-2f60f1383b84.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SBB Ce 6/8 Crocodile locomotive, game body family electric_crocodile, large size, existing brown livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1919 Gotthard freight electric with articulated snouts. Unmistakable. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.taurus",
+      "filename": "loco-taurus.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-a848af69-953d-43c5-b8e1-c60c37b534df.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One ÖBB 1116 Taurus locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 2000 Siemens universal electric that sings a scale as it pulls away. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.re460",
+      "filename": "loco-re460.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-9fc78045-51e1-47d7-8faf-b5149a757887.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SBB Re 460 locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1991 Swiss Lok 2000, the billboard engine of the Bahn 2000 programme. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.gg1",
+      "filename": "loco-gg1.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-f5d811d2-0be6-499a-a373-b7956733017d.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One PRR GG1 locomotive, game body family electric_box, large size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1934 Raymond Loewy-styled Pennsylvania electric. Fifty years of service. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.j94",
+      "filename": "loco-j94.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-ec627d48-3cf6-44aa-b656-85e327512015.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Saddle Tank J94 locomotive, game body family steam_std, small size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1943, Hunslet Austerity shunter. Yard work, short trips, no tender. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.black_five",
+      "filename": "loco-black-five.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-da0388cf-7a7d-4017-8076-d39c1feda63d.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One LMS Black Five locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1934, Stanier mixed-traffic 4-6-0. Went anywhere, pulled anything. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.nine_f",
+      "filename": "loco-nine-f.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-96f1139c-a1d9-4295-aec5-33ee9247501e.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One BR 9F locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1954, ten-coupled heavy freight engine. The last steam class built in Britain. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.gmam",
+      "filename": "loco-gmam.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-c67321f7-f013-4892-941f-c6a5d86a5c38.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One GMAM Garratt locomotive, game body family steam_garratt, large size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1953, Beyer-Garratt articulated. Two engine units, a boiler slung between: big power on light rails. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.tgv",
+      "filename": "loco-tgv.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-72d64fb1-17b3-4444-8be9-0c3c8af6c100.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One TGV Sud-Est locomotive, game body family electric_hs, medium size, existing orange livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1981, the first high-speed trainset in service. Needs high-speed track and HV wires to stretch its legs. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "loco.ice1",
+      "filename": "loco-ice1.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-818e8185-2c35-46bc-976b-e9a0f337cb38.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One ICE 1 locomotive, game body family electric_hs, medium size, existing white livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1991, Germany's first high-speed set. Multi-system power car. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Front faces lower-right; long axis runs upper-left to lower-right. Do not bend the vehicle. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.water_cart",
+      "filename": "wagon-water-cart.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-d7cfef81-c4e2-465d-8f46-72b572a58ac6.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Wooden Water Cart railway wagon, tank body family, small size, wood materials/livery. Design cue: Barrel on a frame. Leaks, but it rolls. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.wood_hopper",
+      "filename": "wagon-wood-hopper.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-8689ec3c-688b-424b-8c84-b3db131a3308.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Wooden Hopper railway wagon, hopper body family, small size, wood materials/livery. Design cue: Open hopper with a drop bottom. Stone, coal, whatever. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.flatbed",
+      "filename": "wagon-flatbed.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-4304f65e-0e06-4684-b583-00bb448b67be.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Flatbed railway wagon, flat body family, small size, wood materials/livery. Design cue: Stake-sided flat. Logs by day, hay by night. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.riveted_tank",
+      "filename": "wagon-riveted-tank.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-e437b52a-3419-4906-bb7e-a044c7bd26a5.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Riveted Tank railway wagon, tank body family, small size, black materials/livery. Design cue: Two-dome tank car. Do not smoke near it. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.steel_hopper",
+      "filename": "wagon-steel-hopper.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-9d67d08b-bab0-4857-b54e-101a6eddff3c.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Steel Hopper railway wagon, hopper body family, small size, iron materials/livery. Design cue: Pressed-steel hopper, twin bays. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.bolster_flat",
+      "filename": "wagon-bolster-flat.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-b1eb7da7-90b4-49a5-b92a-4149fda3e08b.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Bolster Flat railway wagon, flat body family, small size, iron materials/livery. Design cue: Twin-bolster flat for long loads. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.welded_tank",
+      "filename": "wagon-welded-tank.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-78944336-82b6-413b-9464-acebc46983b6.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Welded Tank railway wagon, tank body family, small size, iron materials/livery. Design cue: Single welded barrel, twice the liquid. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.bathtub",
+      "filename": "wagon-bathtub.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-5d4b4612-29c6-4e5a-ac3d-8609420a9253.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Bathtub Gondola railway wagon, hopper body family, small size, black materials/livery. Design cue: Rotary-dump gondola for unit coal trains. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.bulkhead_flat",
+      "filename": "wagon-bulkhead-flat.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-7c89b21d-8dc9-407b-bf5f-3000e7136d38.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Bulkhead Flat railway wagon, flat body family, small size, iron materials/livery. Design cue: End walls keep the stack where it belongs. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.pressure_tank",
+      "filename": "wagon-pressure-tank.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-8a51831e-138a-44fc-91b1-ad96c56f20bc.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Pressure Tank railway wagon, tank body family, small size, iron materials/livery. Design cue: Insulated pressure vessel on six axles. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.dump_hopper",
+      "filename": "wagon-dump-hopper.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-efcd03b1-37e6-4035-99e9-c4374f842813.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Bottom-Dump Hopper railway wagon, hopper body family, small size, iron materials/livery. Design cue: Air-operated doors, empties in seconds. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.heavy_flat",
+      "filename": "wagon-heavy-flat.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-07ce4d9e-fb58-46a5-9ea9-41a1687ab822.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Heavy Flat railway wagon, flat body family, small size, iron materials/livery. Design cue: Depressed-centre flat for the loads nobody else takes. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.wooden_coach",
+      "filename": "wagon-wooden-coach.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-bf1402e0-42f7-444a-a825-bf77bf0905ba.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Wooden Coach railway wagon, coach body family, small size, wood materials/livery. Design cue: Bench seats and a stove. Draughty, but it gets people to town. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.steel_coach",
+      "filename": "wagon-steel-coach.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-3f81b589-d709-4615-9fe1-a7fc959a4c22.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Steel Coach railway wagon, coach body family, medium size, iron materials/livery. Design cue: Riveted steel body with proper windows. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.pullman",
+      "filename": "wagon-pullman.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-742694a7-6cc1-46ee-aed0-f59624fc589b.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Pullman Car railway wagon, coach body family, medium size, black materials/livery. Design cue: Velvet, brass and a dining saloon. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.brake_van",
+      "filename": "wagon-brake-van.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-f1c92b2f-13c8-4ed9-ad61-32edbb4fe61b.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Brake Van railway wagon, van body family, small size, brown materials/livery. Design cue: Guard's van at the tail. A veranda, a stove, a handbrake. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.boxcar",
+      "filename": "wagon-boxcar.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-a653fc1f-5824-4f67-b22a-03a2bd683254.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Plank Boxcar railway wagon, box body family, small size, wood materials/livery. Design cue: Covered goods wagon. Keeps the grain dry and the timber straight. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.coal_cart",
+      "filename": "wagon-coal-cart.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-c99453c3-73eb-4cd0-95b0-3a4ff13c711b.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Coal Cart railway wagon, cart body family, small size, black materials/livery. Design cue: Extra bunker for a steam engine. Dead weight behind anything else. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.fuel_cart",
+      "filename": "wagon-fuel-cart.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-ca587020-bc05-4b93-8ccf-5c0b28ba42f9.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Fuel Cart railway wagon, cart body family, small size, red materials/livery. Design cue: Tank of fuel plumbed to a diesel. Dead weight behind anything else. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "wagon.battery_cart",
+      "filename": "wagon-battery-cart.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-42dd38eb-6f68-4030-b41b-07e84be07551.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/04-early-ages.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Battery Cart railway wagon, cart body family, small size, blue materials/livery. Design cue: Cells that let an electric run past the end of the wire. Dead weight behind anything else. Complete empty wagon with clear running gear, readable couplers and coherent rigid frame. No locomotive, rails, ground, cargo floating outside, numbering or text. Long axis runs upper-left to lower-right. This is a base source study, not an animation sheet."
+    },
+    {
+      "id": "cargo.wheat",
+      "filename": "cargo-wheat.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-f0582adb-79e9-4bc5-acef-d599189b347d.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one tied bundle of three ochre wheat ears. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.stone",
+      "filename": "cargo-stone.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-689c5b81-28a2-4f3d-9756-5c8db863a798.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: two connected faceted pale limestone blocks. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.wood",
+      "filename": "cargo-wood.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-d81af993-1491-44a3-bfc0-70ce873717fc.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one compact bundle of three cut warm-brown logs. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.coal",
+      "filename": "cargo-coal.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-764ed8a7-d8db-46ff-89b3-51657cf37b9b.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one compact cluster of three charcoal coal lumps. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.oil",
+      "filename": "cargo-oil.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-566d4c08-a440-45d7-8bbd-63eab8891442.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one squat dark oil can with a short spout and copper cap. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.iron",
+      "filename": "cargo-iron.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-ee95d3e8-21f4-49d1-ad4c-9aab6233694d.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one clean slate-grey iron ingot. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.passengers",
+      "filename": "cargo-passengers.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-0370e8bf-465d-4f51-b1cc-5e0e9c6dc3c1.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one travel figure carrying a small ochre suitcase. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.food",
+      "filename": "cargo-food.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-4aa468cc-9ec3-4341-aa3a-f1233f37aece.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one recognizable golden bread loaf with two scored cuts. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.iron_ore",
+      "filename": "cargo-iron-ore.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-8cebc20a-5935-432c-b0bc-30b6f1b3069d.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one rough rust-brown mineral chunk with dark iron inclusions. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.crude",
+      "filename": "cargo-crude.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-02ce235f-7ee4-476f-8ab5-4b1e7de1c0a1.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one squat dark crude-oil barrel with two restrained copper bands, distinct from an oil can. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.diesel",
+      "filename": "cargo-diesel.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-a51c81bf-0d8f-4461-b4ae-0704146edea0.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one ochre industrial fuel jerrycan with a handle, distinct from the barrel and oil can. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.sand",
+      "filename": "cargo-sand.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-9ac208b9-c26d-45f7-8328-ad985f190f0b.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one small pale oat sand mound. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.copper_ore",
+      "filename": "cargo-copper-ore.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-b06a82c8-101e-4a1e-9dc5-61617f0faabd.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one rough stone chunk with warm copper mineral inclusions. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.wire",
+      "filename": "cargo-wire.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-c21e2c35-cdb9-405f-86ac-e1a4aa3caf67.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one copper wire spool with a clearly visible center hole. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.power",
+      "filename": "cargo-power.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-9ab04edd-8014-40c6-b769-b2e77c80b933.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one clear ochre lightning bolt silhouette. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.money",
+      "filename": "cargo-money.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-9f66f13e-2587-4dcf-a3b8-5d608979d50a.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one simple copper-gold coin with a small plain center embossing and no writing. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "cargo.population",
+      "filename": "cargo-population.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-5b8e000c-4cb8-4f57-bdd1-2cbcd0a29000.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small resource icon: one small group of three resident head-and-shoulder silhouettes of differing heights. Strong single readable silhouette suitable for 16x16 pixels, simplified material clusters and selective dark edge. Not a miniature scene."
+    },
+    {
+      "id": "track.straight",
+      "filename": "track-straight.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-23317e06-8915-4864-bf14-8407536b9bdc.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One straight single-tile railway track segment aligned along one isometric axis: exactly two parallel steel rails, warm timber sleepers and restrained neutral ballast apron. Rail ends terminate cleanly at opposing tile edges. No ground tile."
+    },
+    {
+      "id": "track.curve",
+      "filename": "track-curve.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-6a53ebc2-62ee-4c30-b5de-01fcc0021221.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One continuous quarter-circle railway track segment, exactly two parallel steel rails at constant gauge on warm timber sleepers fanning radially over restrained neutral ballast. Correct continuous curve, not an angular corner. No ground tile."
+    },
+    {
+      "id": "track.switch",
+      "filename": "track-switch.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-d1a33d8e-2e4d-4393-aa24-4489cd3ffd6f.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One simple railway turnout with one straight route and one smoothly diverging route, coherent constant gauge, purposeful point blades and restrained timber sleepers on neutral ballast. No impossible extra branches or ground tile."
+    },
+    {
+      "id": "track.crossing",
+      "filename": "track-crossing.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-ed5bc45f-1f63-4537-9753-242e4424b900.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One railway diamond crossing with two perpendicular routes in world space, coherent interleaved steel railheads and dark timber sleepers on neutral ballast. No switch branch or ground tile."
+    },
+    {
+      "id": "track.bridge",
+      "filename": "track-bridge.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-b4c89ab9-5748-4270-b5b5-56a3a9fed601.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One short legacy railway bridge track segment, two clear parallel steel rails on timber sleepers and a narrow attached structural deck with modest supports. No water, ground or landscape."
+    },
+    {
+      "id": "track.transition",
+      "filename": "track-transition.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-204bc554-4b03-4266-b717-2fb245cafa0f.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One straight railway class-transition track segment: exactly two constant-gauge steel rails, warm timber sleepers at one end gradually giving way to pale concrete sleepers at the other, restrained ballast. No ground tile."
+    },
+    {
+      "id": "fx.rain",
+      "filename": "fx-rain.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-44d68041-f1f2-473b-a86b-cd185a420fca.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A small sparse group of fine diagonal muted blue-grey rain streaks, low contrast and partially transparent. No cloud or surface. Intentional effect translucency is required; override the solid-surface opacity instruction for this effect. No solid outlined shape."
+    },
+    {
+      "id": "fx.fog",
+      "filename": "fx-fog.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-847c1958-96e0-438d-ad32-8bd447cb8a5a.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One irregular soft stepped cloud of low-contrast ivory-grey translucent fog, smoothly fading to alpha zero at edges, no opaque center or rectangle. Intentional effect translucency is required; override the solid-surface opacity instruction for this effect. No solid outlined shape."
+    },
+    {
+      "id": "fx.light_tile",
+      "filename": "fx-light-tile.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-c21d729b-a9ac-41da-96c1-b4e7a634c04e.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One warm lamp illumination footprint shaped as a 2:1 diamond, very faint warm ivory center fading to transparent edges, no actual lamp or solid ground. Intentional effect translucency is required; override the solid-surface opacity instruction for this effect. No solid outlined shape."
+    },
+    {
+      "id": "fx.glow",
+      "filename": "fx-glow.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-44e776fa-caa3-442f-8767-39ad3f88977f.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small warm lamp halo, restrained ivory-ochre translucent center fading to alpha zero, no solid object or opaque background. Intentional effect translucency is required; override the solid-surface opacity instruction for this effect. No solid outlined shape."
+    },
+    {
+      "id": "fx.glow_small",
+      "filename": "fx-glow-small.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-a8518430-3223-4b96-a3d0-f556f00957ed.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One tiny dim warm amber lamp halo, simple soft stepped pixel clusters fading to transparent edges, no solid object or opaque background. Intentional effect translucency is required; override the solid-surface opacity instruction for this effect. No solid outlined shape."
+    },
+    {
+      "id": "fx.smoke",
+      "filename": "fx-smoke.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-e86ca12b-c698-4f80-a560-0a2bc3a8e6d0.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One small drifting smoke puff in soft stepped grey clusters, gently translucent and fading to alpha zero at irregular edges, no chimney or flame. Intentional effect translucency is required; override the solid-surface opacity instruction for this effect. No solid outlined shape."
+    },
+    {
+      "id": "people.walker",
+      "filename": "people-walker.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-f4b59c7d-6224-4e32-8c6d-44a81566e194.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One tiny full-body railway worker walking, readable head/body/legs, oat shirt, muted forest-green vest, charcoal trousers and copper-brown bag. Compressed sprite proportions suitable for 6x12 logical pixels, no facial microdetail or ground."
+    },
+    {
+      "id": "people.path_dirt",
+      "filename": "people-path-dirt.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-477ed321-617b-4fb5-b507-46b4e9607444.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. A quiet worn warm ochre dirt footpath surface, low contrast compact texture, consistent flat edges."
+    },
+    {
+      "id": "people.road_stone",
+      "filename": "people-road-stone.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-0892daa0-b33a-42e0-bdcc-4e06fcc2ac94.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. A flat square surface projected as a precise 2:1 diamond, no thickness, block side walls, raised rim, bevel or black outline. Shared edges must tile cleanly. No trees, structures, tracks or props. An orderly warm grey cobblestone street surface, broad readable stone clusters and restrained joints, no road paint."
+    },
+    {
+      "id": "people.crossing_dirt",
+      "filename": "people-crossing-dirt.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-2d6b4acb-5226-4783-a6fb-f60fc0a4b374.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One flat short warm-brown dirt pedestrian crossing panel in 2:1 isometric view, a restrained rectangular packed-earth strip with two narrow parallel clear gaps for running railheads. No rails painted over, no ground outside panel."
+    },
+    {
+      "id": "people.crossing_stone",
+      "filename": "people-crossing-stone.png",
+      "path": "C:\\Users\\Zso\\.codex\\generated_images\\01a0bad3-9ae5-7c42-bfad-47804aaee308\\exec-6ecfa733-4426-431c-8dc6-554801d3fba6.png",
+      "method": "built-in image generation",
+      "reference": "docs/art-direction/images/03-theme-town-growth.png",
+      "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One flat short limestone pedestrian crossing panel in 2:1 isometric view, broad stone slabs with two narrow parallel clear gaps for running railheads. No rails painted over, no ground outside panel."
+    }
+  ]
+}
