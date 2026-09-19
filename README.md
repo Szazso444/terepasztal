@@ -1,7 +1,7 @@
 # terepasztal
 
 Isometric train logistics with a crafted roster. Vite + TypeScript + PixiJS v8, no other runtime
-dependencies. Retro 2:1 isometric look with procedurally generated placeholder art.
+dependencies. Retro 2:1 isometric look with procedurally generated art.
 
 ```
 npm install
@@ -125,10 +125,15 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 
 ## Assets
 
-Everything is generated at runtime: sprites by the procedural generators in `src/art`, sound
-effects and the ambient loop by the Web Audio synthesizer in `src/engine/synth.ts`. Nothing is
-taken from other games. Sprites and individual sound effects can be overridden file by file
-(see below); the ambient loop is always synthesized.
+Sprites are generated at runtime by the procedural generators in `src/art`, following the art
+direction in `docs/art-direction/README.md`: pastoral industry and folk warmth, one upper-left
+light, broad colour clusters and selective contours. Sound effects are synthesized by the Web
+Audio synthesizer in `src/engine/synth.ts`. Nothing is taken from other games. Sprites and
+individual sound effects can be overridden file by file (see below).
+
+Music is the looping track in `public/assets/audio/music`. Remove it and the synthesized ambient
+loop in `src/engine/synth.ts` takes over, so a build without the file still has music. Music and
+effects volume are on sliders in the title screen, the pause menu and the settings screen.
 
 ## Replacing placeholder art
 
@@ -139,7 +144,8 @@ and generated procedurally otherwise. The JSON is
 pixels from the frame's top-left. Frame names are listed by the generators in `src/art`.
 
 Drop `public/assets/audio/<event>.ogg` (event names in `src/engine/audio.ts`) to replace a
-synthesized sound.
+synthesized sound. The music track is `public/assets/audio/music/pastoral-pulse.mp3`; the path is
+`MUSIC_TRACK` in `src/engine/audio.ts`.
 
 ## Modelling tools
 

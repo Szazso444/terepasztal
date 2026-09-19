@@ -2,25 +2,25 @@
   {
     "key": "fx/fog_0",
     "group": "fx",
-    "width": 79,
-    "height": 40,
-    "anchorX": 40,
-    "anchorY": 20
+    "width": 77,
+    "height": 38,
+    "anchorX": 39,
+    "anchorY": 19
   },
   {
     "key": "fx/fog_1",
     "group": "fx",
-    "width": 80,
-    "height": 40,
-    "anchorX": 40,
-    "anchorY": 20
+    "width": 78,
+    "height": 38,
+    "anchorX": 39,
+    "anchorY": 19
   },
   {
     "key": "fx/fog_2",
     "group": "fx",
-    "width": 78,
-    "height": 39,
-    "anchorX": 39,
+    "width": 76,
+    "height": 38,
+    "anchorX": 38,
     "anchorY": 19
   },
   {
@@ -114,8 +114,8 @@
   {
     "key": "icons/food",
     "group": "icons",
-    "width": 14,
-    "height": 10,
+    "width": 15,
+    "height": 11,
     "anchorX": 7,
     "anchorY": 4
   },
@@ -210,8 +210,8 @@
   {
     "key": "icons/wire",
     "group": "icons",
-    "width": 12,
-    "height": 13,
+    "width": 14,
+    "height": 15,
     "anchorX": 6,
     "anchorY": 7
   },
@@ -370,24 +370,24 @@
   {
     "key": "props/birch_0",
     "group": "props",
-    "width": 17,
-    "height": 38,
+    "width": 16,
+    "height": 40,
     "anchorX": 11,
     "anchorY": 37
   },
   {
     "key": "props/birch_1",
     "group": "props",
-    "width": 19,
-    "height": 38,
-    "anchorX": 10,
+    "width": 20,
+    "height": 40,
+    "anchorX": 11,
     "anchorY": 37
   },
   {
     "key": "props/birch_2",
     "group": "props",
     "width": 22,
-    "height": 38,
+    "height": 40,
     "anchorX": 11,
     "anchorY": 37
   },
@@ -395,103 +395,103 @@
     "key": "props/boulder_0",
     "group": "props",
     "width": 20,
-    "height": 14,
+    "height": 16,
     "anchorX": 10,
-    "anchorY": 13
+    "anchorY": 12
   },
   {
     "key": "props/boulder_1",
     "group": "props",
-    "width": 20,
-    "height": 14,
-    "anchorX": 10,
+    "width": 22,
+    "height": 17,
+    "anchorX": 11,
     "anchorY": 13
   },
   {
     "key": "props/boulder_2",
     "group": "props",
-    "width": 20,
-    "height": 14,
-    "anchorX": 10,
-    "anchorY": 13
+    "width": 22,
+    "height": 15,
+    "anchorX": 11,
+    "anchorY": 11
   },
   {
     "key": "props/bush_0",
     "group": "props",
-    "width": 14,
-    "height": 10,
-    "anchorX": 7,
+    "width": 16,
+    "height": 13,
+    "anchorX": 8,
     "anchorY": 9
   },
   {
     "key": "props/bush_1",
     "group": "props",
-    "width": 14,
-    "height": 10,
-    "anchorX": 7,
+    "width": 16,
+    "height": 13,
+    "anchorX": 8,
     "anchorY": 9
   },
   {
     "key": "props/bush_2",
     "group": "props",
-    "width": 14,
-    "height": 9,
-    "anchorX": 7,
-    "anchorY": 8
+    "width": 15,
+    "height": 13,
+    "anchorX": 8,
+    "anchorY": 9
   },
   {
     "key": "props/cactus_0",
     "group": "props",
-    "width": 7,
-    "height": 21,
+    "width": 8,
+    "height": 22,
     "anchorX": 5,
     "anchorY": 20
   },
   {
     "key": "props/cactus_1",
     "group": "props",
-    "width": 8,
-    "height": 20,
+    "width": 9,
+    "height": 21,
     "anchorX": 3,
     "anchorY": 19
   },
   {
     "key": "props/cactus_2",
     "group": "props",
-    "width": 10,
-    "height": 19,
+    "width": 11,
+    "height": 20,
     "anchorX": 5,
     "anchorY": 18
   },
   {
     "key": "props/coal_0",
     "group": "props",
-    "width": 18,
-    "height": 9,
-    "anchorX": 9,
-    "anchorY": 8
+    "width": 20,
+    "height": 13,
+    "anchorX": 10,
+    "anchorY": 9
   },
   {
     "key": "props/coal_1",
     "group": "props",
-    "width": 16,
-    "height": 9,
-    "anchorX": 8,
-    "anchorY": 8
+    "width": 18,
+    "height": 13,
+    "anchorX": 9,
+    "anchorY": 9
   },
   {
     "key": "props/coal_2",
     "group": "props",
-    "width": 18,
-    "height": 9,
-    "anchorX": 9,
-    "anchorY": 8
+    "width": 20,
+    "height": 13,
+    "anchorX": 10,
+    "anchorY": 9
   },
   {
     "key": "props/deadtree_0",
     "group": "props",
     "width": 18,
-    "height": 34,
+    "height": 36,
     "anchorX": 7,
     "anchorY": 33
   },
@@ -499,65 +499,65 @@
     "key": "props/deadtree_1",
     "group": "props",
     "width": 20,
-    "height": 34,
+    "height": 36,
     "anchorX": 11,
     "anchorY": 33
   },
   {
     "key": "props/flowers_0",
     "group": "props",
-    "width": 16,
+    "width": 14,
     "height": 8,
-    "anchorX": 8,
+    "anchorX": 7,
     "anchorY": 7
   },
   {
     "key": "props/flowers_1",
     "group": "props",
-    "width": 16,
+    "width": 14,
     "height": 8,
-    "anchorX": 8,
+    "anchorX": 7,
     "anchorY": 7
   },
   {
     "key": "props/flowers_2",
     "group": "props",
-    "width": 16,
+    "width": 14,
     "height": 8,
-    "anchorX": 8,
+    "anchorX": 7,
     "anchorY": 7
   },
   {
     "key": "props/flowers_3",
     "group": "props",
-    "width": 16,
+    "width": 14,
     "height": 8,
-    "anchorX": 8,
+    "anchorX": 7,
     "anchorY": 7
   },
   {
     "key": "props/oak_0",
     "group": "props",
-    "width": 31,
-    "height": 33,
-    "anchorX": 15,
-    "anchorY": 32
+    "width": 34,
+    "height": 41,
+    "anchorX": 17,
+    "anchorY": 37
   },
   {
     "key": "props/oak_1",
     "group": "props",
-    "width": 33,
-    "height": 35,
-    "anchorX": 16,
-    "anchorY": 34
+    "width": 36,
+    "height": 43,
+    "anchorX": 18,
+    "anchorY": 39
   },
   {
     "key": "props/oak_2",
     "group": "props",
-    "width": 35,
-    "height": 38,
-    "anchorX": 17,
-    "anchorY": 37
+    "width": 38,
+    "height": 43,
+    "anchorX": 19,
+    "anchorY": 39
   },
   {
     "key": "props/oil_0",
@@ -587,57 +587,57 @@
     "key": "props/palm_0",
     "group": "props",
     "width": 23,
-    "height": 29,
-    "anchorX": 9,
+    "height": 31,
+    "anchorX": 5,
     "anchorY": 28
   },
   {
     "key": "props/palm_1",
     "group": "props",
-    "width": 23,
-    "height": 31,
-    "anchorX": 14,
+    "width": 22,
+    "height": 33,
+    "anchorX": 17,
     "anchorY": 30
   },
   {
     "key": "props/pine_0",
     "group": "props",
-    "width": 18,
-    "height": 39,
-    "anchorX": 10,
+    "width": 19,
+    "height": 41,
+    "anchorX": 9,
     "anchorY": 38
   },
   {
     "key": "props/pine_1",
     "group": "props",
-    "width": 20,
+    "width": 21,
     "height": 47,
-    "anchorX": 11,
-    "anchorY": 46
+    "anchorX": 10,
+    "anchorY": 44
   },
   {
     "key": "props/pine_2",
     "group": "props",
-    "width": 18,
-    "height": 39,
-    "anchorX": 10,
-    "anchorY": 38
+    "width": 23,
+    "height": 53,
+    "anchorX": 11,
+    "anchorY": 50
   },
   {
     "key": "props/reeds_0",
     "group": "props",
-    "width": 10,
-    "height": 18,
-    "anchorX": 5,
-    "anchorY": 17
+    "width": 12,
+    "height": 20,
+    "anchorX": 6,
+    "anchorY": 18
   },
   {
     "key": "props/reeds_1",
     "group": "props",
-    "width": 10,
-    "height": 18,
-    "anchorX": 5,
-    "anchorY": 17
+    "width": 12,
+    "height": 20,
+    "anchorX": 6,
+    "anchorY": 18
   },
   {
     "key": "props/rock_0",
@@ -645,29 +645,29 @@
     "width": 14,
     "height": 11,
     "anchorX": 7,
-    "anchorY": 10
+    "anchorY": 8
   },
   {
     "key": "props/rock_1",
     "group": "props",
-    "width": 20,
-    "height": 15,
-    "anchorX": 10,
-    "anchorY": 14
+    "width": 18,
+    "height": 14,
+    "anchorX": 9,
+    "anchorY": 10
   },
   {
     "key": "props/rock_2",
     "group": "props",
-    "width": 14,
-    "height": 11,
-    "anchorX": 7,
-    "anchorY": 10
+    "width": 22,
+    "height": 16,
+    "anchorX": 11,
+    "anchorY": 12
   },
   {
     "key": "props/spruce_0",
     "group": "props",
     "width": 17,
-    "height": 44,
+    "height": 46,
     "anchorX": 8,
     "anchorY": 43
   },
@@ -675,7 +675,7 @@
     "key": "props/spruce_1",
     "group": "props",
     "width": 17,
-    "height": 48,
+    "height": 50,
     "anchorX": 8,
     "anchorY": 47
   },
@@ -683,33 +683,33 @@
     "key": "props/spruce_2",
     "group": "props",
     "width": 18,
-    "height": 52,
+    "height": 54,
     "anchorX": 9,
     "anchorY": 51
   },
   {
     "key": "props/tree_0",
     "group": "props",
-    "width": 20,
-    "height": 29,
-    "anchorX": 11,
-    "anchorY": 28
+    "width": 24,
+    "height": 31,
+    "anchorX": 12,
+    "anchorY": 27
   },
   {
     "key": "props/tree_1",
     "group": "props",
-    "width": 25,
-    "height": 36,
+    "width": 27,
+    "height": 35,
     "anchorX": 13,
-    "anchorY": 35
+    "anchorY": 31
   },
   {
     "key": "props/tree_2",
     "group": "props",
-    "width": 20,
-    "height": 29,
-    "anchorX": 9,
-    "anchorY": 28
+    "width": 30,
+    "height": 38,
+    "anchorX": 15,
+    "anchorY": 34
   },
   {
     "key": "rolling/bogie3_f0",
@@ -16339,25 +16339,25 @@
     "key": "structures/colliery_lv2",
     "group": "structures",
     "width": 51,
-    "height": 68,
+    "height": 61,
     "anchorX": 27,
-    "anchorY": 54
+    "anchorY": 47
   },
   {
     "key": "structures/colliery_lv3",
     "group": "structures",
     "width": 51,
-    "height": 73,
+    "height": 61,
     "anchorX": 27,
-    "anchorY": 59
+    "anchorY": 47
   },
   {
     "key": "structures/colliery_lv4",
     "group": "structures",
     "width": 51,
-    "height": 78,
+    "height": 61,
     "anchorX": 27,
-    "anchorY": 64
+    "anchorY": 47
   },
   {
     "key": "structures/depot_1",
@@ -16467,17 +16467,17 @@
     "key": "structures/diesel_refinery_lv3",
     "group": "structures",
     "width": 53,
-    "height": 75,
+    "height": 74,
     "anchorX": 30,
-    "anchorY": 59
+    "anchorY": 58
   },
   {
     "key": "structures/diesel_refinery_lv4",
     "group": "structures",
     "width": 53,
-    "height": 80,
+    "height": 74,
     "anchorX": 30,
-    "anchorY": 64
+    "anchorY": 58
   },
   {
     "key": "structures/farm_1",
@@ -16507,17 +16507,17 @@
     "key": "structures/farm_4",
     "group": "structures",
     "width": 59,
-    "height": 73,
+    "height": 55,
     "anchorX": 29,
-    "anchorY": 59
+    "anchorY": 41
   },
   {
     "key": "structures/farm_5",
     "group": "structures",
     "width": 59,
-    "height": 78,
+    "height": 55,
     "anchorX": 29,
-    "anchorY": 64
+    "anchorY": 41
   },
   {
     "key": "structures/fuel_stop",
@@ -16547,17 +16547,17 @@
     "key": "structures/grinder_lv3",
     "group": "structures",
     "width": 44,
-    "height": 74,
+    "height": 72,
     "anchorX": 28,
-    "anchorY": 59
+    "anchorY": 57
   },
   {
     "key": "structures/grinder_lv4",
     "group": "structures",
     "width": 44,
-    "height": 79,
+    "height": 72,
     "anchorX": 28,
-    "anchorY": 64
+    "anchorY": 57
   },
   {
     "key": "structures/hydro_plant",
@@ -16571,25 +16571,25 @@
     "key": "structures/hydro_plant_lv2",
     "group": "structures",
     "width": 47,
-    "height": 68,
+    "height": 44,
     "anchorX": 26,
-    "anchorY": 54
+    "anchorY": 30
   },
   {
     "key": "structures/hydro_plant_lv3",
     "group": "structures",
     "width": 47,
-    "height": 73,
+    "height": 44,
     "anchorX": 26,
-    "anchorY": 59
+    "anchorY": 30
   },
   {
     "key": "structures/hydro_plant_lv4",
     "group": "structures",
     "width": 47,
-    "height": 78,
+    "height": 53,
     "anchorX": 26,
-    "anchorY": 64
+    "anchorY": 39
   },
   {
     "key": "structures/ironworks",
@@ -16603,25 +16603,25 @@
     "key": "structures/ironworks_lv2",
     "group": "structures",
     "width": 50,
-    "height": 67,
+    "height": 62,
     "anchorX": 27,
-    "anchorY": 54
+    "anchorY": 49
   },
   {
     "key": "structures/ironworks_lv3",
     "group": "structures",
     "width": 50,
-    "height": 72,
+    "height": 62,
     "anchorX": 27,
-    "anchorY": 59
+    "anchorY": 49
   },
   {
     "key": "structures/ironworks_lv4",
     "group": "structures",
     "width": 50,
-    "height": 77,
+    "height": 62,
     "anchorX": 27,
-    "anchorY": 64
+    "anchorY": 49
   },
   {
     "key": "structures/kiln",
@@ -16635,25 +16635,25 @@
     "key": "structures/kiln_lv2",
     "group": "structures",
     "width": 46,
-    "height": 69,
+    "height": 51,
     "anchorX": 29,
-    "anchorY": 54
+    "anchorY": 36
   },
   {
     "key": "structures/kiln_lv3",
     "group": "structures",
     "width": 46,
-    "height": 74,
+    "height": 51,
     "anchorX": 29,
-    "anchorY": 59
+    "anchorY": 36
   },
   {
     "key": "structures/kiln_lv4",
     "group": "structures",
     "width": 46,
-    "height": 79,
+    "height": 54,
     "anchorX": 29,
-    "anchorY": 64
+    "anchorY": 39
   },
   {
     "key": "structures/lumber_1",
@@ -16683,17 +16683,17 @@
     "key": "structures/lumber_4",
     "group": "structures",
     "width": 60,
-    "height": 75,
+    "height": 62,
     "anchorX": 30,
-    "anchorY": 59
+    "anchorY": 46
   },
   {
     "key": "structures/lumber_5",
     "group": "structures",
     "width": 60,
-    "height": 80,
+    "height": 62,
     "anchorX": 30,
-    "anchorY": 64
+    "anchorY": 46
   },
   {
     "key": "structures/note",
@@ -16723,17 +16723,17 @@
     "key": "structures/oil_derrick_lv3",
     "group": "structures",
     "width": 43,
-    "height": 75,
+    "height": 72,
     "anchorX": 25,
-    "anchorY": 59
+    "anchorY": 56
   },
   {
     "key": "structures/oil_derrick_lv4",
     "group": "structures",
     "width": 43,
-    "height": 80,
+    "height": 72,
     "anchorX": 25,
-    "anchorY": 64
+    "anchorY": 56
   },
   {
     "key": "structures/power_line",
@@ -16771,9 +16771,9 @@
     "key": "structures/power_plant_lv4",
     "group": "structures",
     "width": 58,
-    "height": 79,
+    "height": 77,
     "anchorX": 30,
-    "anchorY": 64
+    "anchorY": 62
   },
   {
     "key": "structures/pump_1",
@@ -16802,18 +16802,18 @@
   {
     "key": "structures/pump_4",
     "group": "structures",
-    "width": 49,
-    "height": 72,
-    "anchorX": 19,
-    "anchorY": 59
+    "width": 55,
+    "height": 56,
+    "anchorX": 25,
+    "anchorY": 43
   },
   {
     "key": "structures/pump_5",
     "group": "structures",
-    "width": 49,
-    "height": 77,
-    "anchorX": 19,
-    "anchorY": 64
+    "width": 55,
+    "height": 56,
+    "anchorX": 25,
+    "anchorY": 43
   },
   {
     "key": "structures/quarry_1",
@@ -16843,17 +16843,17 @@
     "key": "structures/quarry_4",
     "group": "structures",
     "width": 60,
-    "height": 75,
+    "height": 55,
     "anchorX": 28,
-    "anchorY": 59
+    "anchorY": 39
   },
   {
     "key": "structures/quarry_5",
     "group": "structures",
     "width": 60,
-    "height": 80,
+    "height": 55,
     "anchorX": 28,
-    "anchorY": 64
+    "anchorY": 39
   },
   {
     "key": "structures/refinery",
@@ -16875,17 +16875,17 @@
     "key": "structures/refinery_lv3",
     "group": "structures",
     "width": 53,
-    "height": 75,
+    "height": 74,
     "anchorX": 30,
-    "anchorY": 59
+    "anchorY": 58
   },
   {
     "key": "structures/refinery_lv4",
     "group": "structures",
     "width": 53,
-    "height": 80,
+    "height": 74,
     "anchorX": 30,
-    "anchorY": 64
+    "anchorY": 58
   },
   {
     "key": "structures/semaphore_m0_d0",
@@ -21138,42 +21138,42 @@
   {
     "key": "structures/station_1",
     "group": "structures",
-    "width": 43,
+    "width": 45,
     "height": 44,
-    "anchorX": 21,
+    "anchorX": 23,
     "anchorY": 33
   },
   {
     "key": "structures/station_2",
     "group": "structures",
-    "width": 54,
+    "width": 55,
     "height": 64,
-    "anchorX": 29,
+    "anchorX": 30,
     "anchorY": 49
   },
   {
     "key": "structures/station_3",
     "group": "structures",
     "width": 61,
-    "height": 80,
+    "height": 71,
     "anchorX": 32,
-    "anchorY": 64
+    "anchorY": 55
   },
   {
     "key": "structures/station_4",
     "group": "structures",
     "width": 63,
-    "height": 82,
+    "height": 75,
     "anchorX": 33,
-    "anchorY": 65
+    "anchorY": 56
   },
   {
     "key": "structures/station_5",
     "group": "structures",
     "width": 63,
-    "height": 82,
+    "height": 75,
     "anchorX": 33,
-    "anchorY": 65
+    "anchorY": 56
   },
   {
     "key": "structures/substation",
@@ -21187,25 +21187,25 @@
     "key": "structures/substation_lv2",
     "group": "structures",
     "width": 49,
-    "height": 67,
+    "height": 45,
     "anchorX": 24,
-    "anchorY": 54
+    "anchorY": 32
   },
   {
     "key": "structures/substation_lv3",
     "group": "structures",
-    "width": 49,
-    "height": 72,
-    "anchorX": 24,
-    "anchorY": 59
+    "width": 50,
+    "height": 45,
+    "anchorX": 25,
+    "anchorY": 32
   },
   {
     "key": "structures/substation_lv4",
     "group": "structures",
-    "width": 49,
-    "height": 77,
-    "anchorX": 24,
-    "anchorY": 64
+    "width": 50,
+    "height": 52,
+    "anchorX": 25,
+    "anchorY": 39
   },
   {
     "key": "structures/supply_catenary_ew",
@@ -21307,17 +21307,17 @@
     "key": "structures/town_4",
     "group": "structures",
     "width": 59,
-    "height": 75,
+    "height": 63,
     "anchorX": 30,
-    "anchorY": 59
+    "anchorY": 47
   },
   {
     "key": "structures/town_5",
     "group": "structures",
     "width": 59,
-    "height": 80,
+    "height": 63,
     "anchorX": 30,
-    "anchorY": 64
+    "anchorY": 47
   },
   {
     "key": "structures/townhouse",
@@ -21403,17 +21403,17 @@
     "key": "structures/warehouse_4",
     "group": "structures",
     "width": 58,
-    "height": 75,
+    "height": 50,
     "anchorX": 28,
-    "anchorY": 59
+    "anchorY": 34
   },
   {
     "key": "structures/warehouse_5",
     "group": "structures",
     "width": 58,
-    "height": 80,
+    "height": 55,
     "anchorX": 28,
-    "anchorY": 64
+    "anchorY": 39
   },
   {
     "key": "structures/warn",
@@ -21435,7 +21435,7 @@
     "key": "structures/windmill",
     "group": "structures",
     "width": 47,
-    "height": 60,
+    "height": 63,
     "anchorX": 31,
     "anchorY": 54
   },
@@ -21443,7 +21443,7 @@
     "key": "structures/windmill_lv2",
     "group": "structures",
     "width": 47,
-    "height": 66,
+    "height": 69,
     "anchorX": 31,
     "anchorY": 60
   },
@@ -21451,7 +21451,7 @@
     "key": "structures/windmill_lv3",
     "group": "structures",
     "width": 48,
-    "height": 72,
+    "height": 75,
     "anchorX": 32,
     "anchorY": 66
   },
@@ -21459,7 +21459,7 @@
     "key": "structures/windmill_lv4",
     "group": "structures",
     "width": 50,
-    "height": 78,
+    "height": 81,
     "anchorX": 33,
     "anchorY": 72
   },
@@ -21475,25 +21475,25 @@
     "key": "structures/wire_mill_lv2",
     "group": "structures",
     "width": 47,
-    "height": 69,
+    "height": 51,
     "anchorX": 26,
-    "anchorY": 54
+    "anchorY": 36
   },
   {
     "key": "structures/wire_mill_lv3",
     "group": "structures",
     "width": 47,
-    "height": 74,
+    "height": 51,
     "anchorX": 26,
-    "anchorY": 59
+    "anchorY": 36
   },
   {
     "key": "structures/wire_mill_lv4",
     "group": "structures",
     "width": 47,
-    "height": 79,
+    "height": 54,
     "anchorX": 26,
-    "anchorY": 64
+    "anchorY": 39
   },
   {
     "key": "terrain/city_0_0",

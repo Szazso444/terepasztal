@@ -15,6 +15,50 @@ every clone), the pull requests were retitled to carry the version. Tags: `git t
 | v0.7.0  | [#6](https://github.com/Szazso444/terepasztal/pull/6), [#7](https://github.com/Szazso444/terepasztal/pull/7), [#8](https://github.com/Szazso444/terepasztal/pull/8) | see below                       | Section-based traffic control, stuck detection and traffic statistics, Static/Dynamic routing groups (Schedule, Production, Collection, Transport), dwell options.                                                     |
 | v0.8.0  | [#9](https://github.com/Szazso444/terepasztal/pull/9)                                                                                                               | see below                       | Track classes and high-speed geometry, rigid-body vehicles in three sizes, crafting instead of gacha, ages instead of reputation, electrification, growing towns, contract rarity, junction notices, block signalling. |
 
+## Unreleased
+
+Asset redesign to the art direction in `docs/art-direction/README.md`, plus the game's music.
+
+### Art
+
+- Palette rebuilt on the guide's seeds (forest, moss, oat, limestone, slate, water teal, copper).
+  Every material is three or four shades of one family under one upper-left light; warning,
+  danger, selection and valid-placement colours stay brighter than any scenery colour.
+- Ground reads as broad quiet patches instead of per-pixel noise, and tile rims are gone: the
+  shade picker weights low-frequency patches over fine dither, and tufts are single pixels.
+- Contours are selective. `PixelBuf.outline` darkens lower and side rims and only tints upper
+  rims, so sprites sit on the ground without a black box around every silhouette.
+- Terrain: meadow plains with small wildflower clusters, leaf-litter forest floor, lichen taiga,
+  peat swamp with teal pockets, oat desert with warm rock chips, quiet teal water with drifting
+  glints, exposed stone fields, earthen hill sides, a ridged snow-capped mountain, neutral city
+  paving with narrow streets and a subdued map-edge fog.
+- Props redrawn by silhouette: round broadleaf, heavier oak with visible boughs, airy birch,
+  open-tiered pine, dense spruce, fan-frond palm, ribbed cactus, bare dead tree, low bushes,
+  grounded reeds, four flower variants, low stones, faceted boulders, stratified coal and a
+  restrained oil seep. Each carries a soft ground shadow that touches its base.
+- Track keeps warm timber sleepers and neutral ballast; high-speed gets pale concrete sleepers
+  and a tidier bed. Bridges read as cream masonry arches and connected timber trusses.
+- Stations gain a nameboard, a lighter clock gable and their own upgrade art (longer canopy,
+  platform kerb, benches, luggage, a parcels office) instead of the works annex. Depot portals
+  are open, with a limestone surround and a dark interior. Windmills stack flour sacks.
+- Works upgrades add a handling annex, a covered sorting bay and refined machinery in the works'
+  own materials, so an upgraded kiln still reads as a kiln.
+- Liveries, cargo overlays, resource icons, people, paths and weather effects re-tuned to the
+  same palette. Bread no longer looks like wheat and wire is a copper spool with a centre hole.
+- Interface recoloured to forest-green panels, oat text, limestone bevels and copper accents;
+  minimap and overview terrain colours follow the tiles they stand in for.
+
+### Audio
+
+- Music is the looping track in `public/assets/audio/music`, played through the sound bus. If the
+  file is missing the synthesized ambient loop takes over, so a build without it still has music.
+- Music and effects volume sliders in the title screen and the pause menu, alongside the existing
+  settings screen sliders. They drive the live bus and travel with the settings.
+
+Atlas frame counts (2,839), atlas dimensions and anchors are unchanged, generation cost is
+unchanged on the same machine, curve compatibility verdicts are byte-identical and map generation
+is untouched. Evidence and commands: `scratchpad/README.md`.
+
 ## v0.8.0
 
 Implements `docs/phase-spec-review.md` and the conflict resolutions; the choices left open are

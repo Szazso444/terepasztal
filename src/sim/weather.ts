@@ -31,9 +31,9 @@ export function daysUntilNextSeason(day: number) {
 /** Multiply tints for ground / props and a production multiplier per station type. */
 export const SEASON_FX: Record<Season, { ground: number; props: number; label: string }> = {
   spring: { ground: 0xf4fff0, props: 0xffffff, label: 'Spring' },
-  summer: { ground: 0xfff0d0, props: 0xf6f0d8, label: 'Summer' },
-  autumn: { ground: 0xffd2a0, props: 0xe8a868, label: 'Autumn' },
-  winter: { ground: 0xd0dcec, props: 0xbccbe0, label: 'Winter' },
+  summer: { ground: 0xfff4dc, props: 0xf8f2dc, label: 'Summer' },
+  autumn: { ground: 0xffe2bc, props: 0xf0c088, label: 'Autumn' },
+  winter: { ground: 0xd8e4f0, props: 0xc4d2e4, label: 'Winter' },
 };
 const PRODUCTION: Record<string, [number, number, number, number]> = {
   farm: [1.0, 1.1, 1.35, 0.5],

@@ -10,8 +10,8 @@ import { PixelBuf, pickShade } from './pixels';
 
 const PW = 6;
 const PH = 12;
-const SKIN: RGB = [200, 162, 122];
-const HAIR: RGB = [56, 40, 28];
+const SKIN: RGB = [214, 178, 138];
+const HAIR: RGB = [68, 48, 34];
 
 interface Outfit {
   body: RGB;
@@ -21,10 +21,10 @@ interface Outfit {
 }
 /** worker blue, farmer brown, townsman grey, woman red */
 const OUTFITS: Outfit[] = [
-  { body: [62, 84, 128], legs: [44, 56, 84], hat: [70, 90, 130] },
-  { body: PAL.timber[0], legs: PAL.timber[2], hat: PAL.sand[1] },
-  { body: [92, 92, 100], legs: [58, 58, 66], hat: [40, 40, 46] },
-  { body: PAL.red, legs: [120, 40, 36], skirt: true },
+  { body: [72, 96, 124], legs: [52, 68, 88], hat: [84, 108, 132] },
+  { body: [150, 112, 70], legs: [110, 80, 50], hat: [206, 188, 148] },
+  { body: [104, 106, 104], legs: [68, 70, 70], hat: [52, 56, 54] },
+  { body: [152, 74, 70], legs: [112, 52, 50], skirt: true },
 ];
 
 /** ~4x10 figure inside a 6x12 buffer (1px margin for the outline). Frame f swaps the legs. */
@@ -80,7 +80,13 @@ function toTile(px: number, py: number) {
   return { tx: dx / TILE_W + dy / TILE_H, ty: dy / TILE_H - dx / TILE_W };
 }
 
-const DIRT: RGB[] = [PAL.sand[2], [116, 100, 70], PAL.sand[0], [100, 86, 60], PAL.sand[1]];
+const DIRT: RGB[] = [
+  [166, 138, 96],
+  [150, 124, 86],
+  [180, 152, 108],
+  [134, 110, 76],
+  [194, 168, 124],
+];
 
 /** Trodden earth diamond with a nibbled edge so it feathers into grass. */
 function pathDirt(v: number): PixelBuf {

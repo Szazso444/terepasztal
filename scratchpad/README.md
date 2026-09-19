@@ -1,3 +1,49 @@
+# Asset redesign verification
+
+The pastoral art direction in [docs/art-direction/README.md](../docs/art-direction/README.md),
+applied to the procedural generators, plus the looping music track and the menu volume sliders.
+
+| Evidence                                  | Files                                                                                                 |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Built scene, same seed, tiles and camera  | [before and after](art-scene-compare.png), [detail](art-scene-detail.png), [dusk](art-scene-dusk.png) |
+| World, same seed, camera and zoom         | [before](art-world-before.png), [after](art-world-after.png)                                          |
+| Close-up and night readability            | [close](art-world-close-after.png), [night](art-world-night-after.png)                                |
+| Terrain tiles                             | [before](art-terrain-before.png), [after](art-terrain-after.png)                                      |
+| Vegetation and natural objects            | [before](art-props-before.png), [after](art-props-after.png)                                          |
+| Stations, works and services              | [before](art-structures-before.png), [after](art-structures-after.png)                                |
+| Track pieces and both bridge classes      | [track](art-track-after.png), [bridges](art-bridges-after.png), [before](art-track-before.png)        |
+| Complete vehicles                         | [before](art-vehicles-before.png), [after](art-vehicles-after.png)                                    |
+| Resource icons, people, paths and effects | [before](art-icons-before.png), [after](art-icons-after.png)                                          |
+| Music and volume sliders in both menus    | [main menu](art-audio-main-menu.png), [pause menu](art-audio-pause-menu.png)                          |
+| Atlas frames, bounds and generation cost  | [before](assets-art-before.json), [after](assets-art-after.json), [sheet](assets-art-after.png)       |
+| Curve compatibility verdicts unchanged    | [verdicts](compat-art-after.json), [sheet](curves-art-after.png)                                      |
+
+```sh
+npm test            # 145 tests, including the mapgen golden hashes and save migrations
+npm run typecheck
+npm run lint
+npm run build
+node scratchpad/art-scene.mjs after            # builds a village, bridge and train on seed 4242
+node scratchpad/art-compare.mjs                # stacks the before/after scene shots
+node scratchpad/verify-audio.mjs               # track loads, loops, and the sliders drive it
+node scratchpad/art-sheets.mjs after           # contact sheets per atlas group
+node scratchpad/art-world-shots.mjs after      # play, close, far, night, overview, panels
+node scratchpad/verify-assets.mjs art-after    # frame counts, atlas bounds, generation time
+node scratchpad/verify-curves.mjs art-after    # compatibility verdicts
+node scratchpad/verify-bogies.mjs              # 52,128 bogie poses
+```
+
+`art-scene.mjs` builds the same line, stone bridge, station, village, works, services and steam
+train on seed 4242 from either revision, so the before and after shots line up tile for tile. Run
+the before pass against a checkout of the previous commit
+(`git checkout <rev> -- src`, then `BASE_URL=http://127.0.0.1:5173 node scratchpad/art-scene.mjs before`).
+
+All nine atlas groups keep their frame counts (2,839 frames) and atlas dimensions, and no frame
+falls outside its atlas. Measured on the same machine, total generation is 1,244 ms before the
+redesign and 1,244 ms after. Curve compatibility verdicts are byte-identical to the previous
+baseline, and the bogie sweep still passes 52,128 poses. Map generation is untouched, so the
+golden terrain, biome and variant hashes still match.
+
 # Railway expansion verification
 
 Bridge waterline follow-up: run `node scratchpad/verify-bridge-art.mjs after` for the
