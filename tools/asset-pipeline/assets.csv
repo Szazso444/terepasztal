@@ -1,0 +1,3 @@
+id,image,category,size_tiles,length_m,width_m,height_m,align,yaw_offset_deg,notes
+station_victorian,input/station_victorian.png,building,,22,,,auto,0,single-storey stone station with canopy
+#loco_example,input/loco_example.png,vehicle,2,18.9,3.0,4.3,auto,0,Bo-Bo electric; replace with the prototype's length over buffers

@@ -1,0 +1,68 @@
+# Paths are relative to this file unless absolute.
+[paths]
+assets_csv   = "assets.csv"
+out_root     = "assets_out"                       # everything the pipeline writes lands here
+workflow_api = "workflows/image_to_3d_api.json"   # ComfyUI: Workflow -> Export (API)
+blender      = "blender"                          # Windows: "C:/Program Files/Blender Foundation/Blender 5.0/blender.exe"
+blender_timeout_s = 3600
+
+[comfy]
+url        = "http://127.0.0.1:8188"
+timeout_s  = 1800            # per asset
+poll_s     = 2.0
+model      = "keep"          # "keep" | "pixal3d" | "trellis2"  (drives the PrimitiveBoolean switch)
+# Node ids from the API export. Empty = auto-detect by class_type (must be unique).
+load_image_node = ""
+save_node       = ""
+switch_node     = ""
+
+# Generic input overrides applied to every run: "<node_id>.<input_name>" = value.
+# Unknown node/input aborts the run and lists what exists. Check names in the API export.
+[comfy.set]
+# "288.value" = 2048        # Texture Resolution primitive (4096 is overkill for sprites)
+
+[grid]
+tile_m        = 8.0          # tile side in meters
+tile_px       = 128          # tile diamond width in px (height = tile_px / 2)
+elevation_deg = 30.0         # 2:1 because sin(30) = 0.5
+azimuth_deg   = 45.0
+
+[align]
+enabled       = true
+pitch_range   = [-65.0, 20.0]  # photo elevations 0..60 deg map to pitch -60..0; range excludes 90-deg-equivalent solutions
+roll_range    = [-25.0, 25.0]
+sample_faces  = 20000
+min_score     = 0.70           # below this the mesh is not boxy enough; asset fails unless align = "none"
+
+[classes.vehicle]
+dirs           = 8
+coupler_gap_m  = 0.4          # slot length = size_tiles * tile_m - gap
+compress_range = [0.80, 1.25] # length factor outside this range aborts the run
+max_dim_error  = 0.20         # width/height mismatch vs spec that triggers a warning
+
+[classes.building]
+dirs             = 4
+footprint_factor = 0.75          # target x/y compression; height always real
+footprint_range  = [0.55, 1.0]   # actual factor is snapped into whole tiles within this range
+fill             = 0.92          # share of the tile footprint the building may occupy
+max_dim_error    = 0.20
+
+[render]
+engine           = "CYCLES"    # "CYCLES" works headless everywhere; "BLENDER_EEVEE" needs a GPU context
+device           = "CPU"       # "GPU" tries OPTIX, CUDA, HIP, METAL, ONEAPI
+samples          = 32
+supersample      = 2           # render at Nx, box-downsample in post
+pad_px           = 4
+shadow           = true        # shadow-catcher ground plane
+sun_azimuth_deg  = -100.0      # world azimuth the light comes FROM (camera sits at -45)
+sun_elevation_deg = 45.0
+sun_strength     = 3.0
+ambient          = 0.6
+force_dielectric = true        # zero AI-generated metallic maps (usually wrong, renders dark)
+debug_views      = true        # raw/aligned orthographic previews per asset
+debug_res        = 320
+
+[post]
+alpha_hard_threshold = 0       # 0 = keep soft alpha (needed for shadows); e.g. 128 for hard pixel edges
+palette_colors       = 0       # 0 = off; else per-asset shared palette size
+preview_scale        = 2
