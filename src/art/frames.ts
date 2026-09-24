@@ -1,7 +1,7 @@
 import type { AtlasRegistry } from '../engine/atlas';
 import type { LocoDef, WagonDef } from '../data/content';
 import { cargoClass } from '../sim/cargo';
-import type { PartKind } from '../sim/body';
+import type { BogieKind, PartKind } from '../sim/body';
 
 /** Locomotive part frame with fallbacks so content-editor bodies or paints never leave a train invisible. */
 export function locoFrame(
@@ -32,6 +32,16 @@ export function wagonFrame(atlas: AtlasRegistry, def: WagonDef, facing: number):
     `rolling/wagon_flat_small_wood_f${facing}`,
   ];
   return tries.find((t) => atlas.has(t)) ?? tries[tries.length - 1];
+}
+/** A vehicle's own bogie style when the atlas has it, else the generic truck of that kind. */
+export function bogieFrame(
+  atlas: Pick<AtlasRegistry, 'has'>,
+  style: string | undefined,
+  kind: BogieKind,
+  facing: number,
+): string {
+  const own = style ? `rolling/${kind}_${style}_f${facing}` : null;
+  return own && atlas.has(own) ? own : `rolling/${kind}_f${facing}`;
 }
 /** Which cargo overlay a wagon shows for a cargo (none for liquids). */
 export function loadKind(

@@ -60,6 +60,8 @@ export interface LocoDef {
   plan?: BodyPlan;
   /** pivot spacing as a fraction of body length (default 0.7) */
   pivotRatio?: number;
+  /** bogie sprite style: rolling/<kind>_<style>_f<n> when the atlas has it, else the generic one */
+  bogieStyle?: string;
   /** bogies under a rigid body (3 for the Bo-Bo-Bo large body) */
   bogies?: number;
   /** axles per bogie: 2 (default) or 3 (Co-Co and the like) */
@@ -89,6 +91,8 @@ export interface WagonDef {
   weight: number;
   starter?: boolean;
   size?: VehicleSize;
+  /** bogie sprite style, as on a locomotive */
+  bogieStyle?: string;
   /** age the wagon belongs to: 0 steam, 1 diesel, 2 electric */
   tier?: number;
   /** speed ceiling, tiles per second (default above every locomotive) */

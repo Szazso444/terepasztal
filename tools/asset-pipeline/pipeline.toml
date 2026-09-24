@@ -7,7 +7,7 @@ blender      = "blender"                          # Windows: "C:/Program Files/B
 blender_timeout_s = 3600
 
 [comfy]
-url        = "http://127.0.0.1:8188"
+url        = "http://127.0.0.1:8000"   # ComfyUI Desktop's port (Settings -> Server-Config); a manual install uses 8188
 timeout_s  = 1800            # per asset
 poll_s     = 2.0
 model      = "keep"          # "keep" | "pixal3d" | "trellis2"  (drives the PrimitiveBoolean switch)
@@ -36,9 +36,17 @@ min_score     = 0.70           # below this the mesh is not boxy enough; asset f
 
 [classes.vehicle]
 dirs           = "game"     # the game's 25 drawn facings (src/sim/body.ts); an integer N renders N even headings
-coupler_gap_m  = 0.4          # slot length = size_tiles * tile_m - gap (the game's bodies are size 1..3 tiles)
-compress_range = [0.80, 1.25] # length factor outside this range aborts the run
+coupler_gap_m  = 0.4          # slot length = size_tiles * tile_m - gap (the game's bodies are size 1..3 tiles);
+                              # a cut vehicle: every part's slot is its segment length * tile_m - gap
+# width across is scaled by the game's DRAWN_WIDTH (src/sim/body.ts), not set here
+compress_range = [0.65, 1.25] # length factor outside this range aborts the run; 20-22 m engine + tender
+                              # locos go into the game's 2 tiles at about 0.72
 max_dim_error  = 0.20         # width/height mismatch vs spec that triggers a warning
+
+[classes.bogie]
+dirs           = "game"
+length_factor  = 1.0          # length along the track; width across is scaled by DRAWN_WIDTH like the bodies
+max_dim_error  = 0.20
 
 [classes.building]
 dirs             = 4

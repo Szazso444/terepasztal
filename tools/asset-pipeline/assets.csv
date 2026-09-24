@@ -1,3 +1,5 @@
-id,image,category,size_tiles,length_m,width_m,height_m,align,yaw_offset_deg,game_frame,notes
-station_victorian,input/station_victorian.png,building,1,22,,,auto,0,structures/station_1,single-storey stone station with canopy; the game's stations are one tile
-#loco_example,input/loco_example.png,vehicle,2,18.9,3.0,4.3,auto,0,rolling/loco_electric_box_medium_red_body_f{f},Bo-Bo electric; replace with the prototype's length over buffers
+id,image,category,size_tiles,length_m,width_m,height_m,align,yaw_offset_deg,plan,split_m,clip_below_m,game_frame,notes
+station_victorian,input/station_victorian.png,building,1,22,,,auto,0,,,,structures/station_1,single-storey stone station with canopy; the game's stations are one tile
+#loco_example,input/loco_example.png,vehicle,2,18.9,3.0,4.3,auto,,rigid,,1.0,rolling/loco_electric_box_medium_red_{part}_f{f},Bo-Bo electric; clip_below_m drops its own bogies for the game's
+#tender_example,input/tender_example.png,vehicle,2,21.2,2.9,4.1,auto,,tender,,,rolling/loco_steam_std_medium_black_{part}_f{f},engine + tender: cut automatically; split_m (m from the nose) overrides
+#bogie_example,input/bogie_example.png,bogie,,3.2,2.6,1.1,auto,,,,,rolling/bogie_y25_f{f},two-axle bogie; locomotives and wagons with bogieStyle y25 use it

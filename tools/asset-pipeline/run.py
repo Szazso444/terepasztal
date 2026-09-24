@@ -18,6 +18,7 @@ from pathlib import Path
 
 import comfy_client
 import export_game
+import game_rules
 import postprocess
 
 HERE = Path(__file__).resolve().parent
@@ -55,22 +56,41 @@ def load_assets(csv_path: Path, only):
                      "height_m": num(row.get("height_m")),
                      "align": (row.get("align") or "auto").strip() or "auto",
                      "game_frame": (row.get("game_frame") or "").strip(),
-                     "yaw_offset_deg": num(row.get("yaw_offset_deg")) or 0.0}
+                     # blank = let a cut vehicle pick its nose end; any number is kept as given
+                     "yaw_offset_deg": num(row.get("yaw_offset_deg")),
+                     "plan": (row.get("plan") or "").strip() or None,
+                     # cut positions in metres from the nose, ';' between them (',' is the CSV's)
+                     "split_m": [float(v) for v in (row.get("split_m") or "").split(";") if v.strip()],
+                     "clip_below_m": num(row.get("clip_below_m")) or 0.0}
             except ValueError as e:
                 errors.append(f"line {ln} ({aid}): {e}")
                 continue
-            if cat not in ("vehicle", "building"):
-                err.append("category must be vehicle|building")
-            if cat == "vehicle" and not a["length_m"]:
-                err.append("vehicle needs length_m")
+            if cat not in ("vehicle", "building", "bogie"):
+                err.append("category must be vehicle|building|bogie")
+            if cat in ("vehicle", "bogie") and not a["length_m"]:
+                err.append(f"{cat} needs length_m")
+            if cat != "vehicle" and (a["plan"] or a["split_m"]):
+                err.append("plan and split_m are for vehicles")
+            if cat == "vehicle":
+                if a["size_tiles"] and a["size_tiles"] not in game_rules.SIZE_TILES:
+                    err.append(f"a game vehicle is {sorted(game_rules.SIZE_TILES)} tiles long")
+                elif a["plan"] and a["plan"] != "rigid":
+                    try:
+                        if not a["size_tiles"]:
+                            raise ValueError(f"plan {a['plan']} needs size_tiles")
+                        game_rules.plan_parts(a["plan"], a["size_tiles"])
+                    except ValueError as e:
+                        err.append(str(e))
+                if a["clip_below_m"] and a["size_tiles"] == 1:
+                    err.append("clip_below_m: small vehicles get no separate bogies, the body would float")
+                if a["split_m"] and a["split_m"] != sorted(a["split_m"]):
+                    err.append("split_m must increase from the nose")
             if cat == "building" and not any(a[k] for k in ("height_m", "length_m", "width_m")):
                 err.append("building needs height_m, length_m or width_m")
             if a["align"] not in ("auto", "none"):
                 err.append("align must be auto|none")
-            if a["game_frame"] and cat in ("vehicle", "building"):
-                err += export_game.check_template(cat, a["game_frame"])
-                if cat == "vehicle" and a["size_tiles"] and a["size_tiles"] not in export_game.SIZE_TILES:
-                    err.append(f"a game vehicle is {export_game.SIZE_TILES} tiles long")
+            if a["game_frame"] and cat in ("vehicle", "building", "bogie"):
+                err += export_game.check_template(a)
             if err:
                 errors.append(f"line {ln} ({aid}): " + "; ".join(err))
             elif not only or aid in only:
@@ -186,7 +206,7 @@ def main():
                     raise PipelineError(f"[{aid}] no sprites at {atlas_json}; run the post stage")
                 info = json.loads(atlas_json.read_text(encoding="utf-8"))
                 try:
-                    touched = export_game.export_asset(a, info, d["sprites"] / aid,
+                    touched = export_game.export_asset(a, info,
                                                        rel(cfg["game"]["repo_root"]) / cfg["game"]["art_src"])
                 except export_game.GameExportError as e:
                     raise PipelineError(f"[{aid}] {e}") from None

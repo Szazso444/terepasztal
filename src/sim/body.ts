@@ -12,6 +12,11 @@ export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 export const SIZE_LEN: Record<VehicleSize, number> = { small: 1, medium: 2, large: 3 };
 /** distance between two coupled bodies along the track */
 export const COUPLER_GAP = 0.2;
+/**
+ * Rolling stock sprites are drawn this much wider than their length scale, so gauge and body width
+ * read at game zoom. The asset pipeline scales rendered models across by the same factor.
+ */
+export const DRAWN_WIDTH = 1.3;
 /** tolerances in tiles: fore-and-aft slide, sideways float budget, residual gap to rail */
 export const TOL = { foreAft: 0.3, sideways: 0.4, gap: 0.25 };
 export const DEFAULT_PIVOT = 0.7;

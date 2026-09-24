@@ -48,48 +48,63 @@ def checker(w, h, cell=8):
 
 
 def process_asset(meta_path: Path, post_cfg: dict, dirs: dict):
+    """One atlas row per sprite set (the whole asset, or each part of a cut vehicle)."""
     meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
     aid, ss = meta["id"], meta["supersample"]
-    frames = [downsample(Image.open(d["file"]), ss) for d in meta["dirs"]]
-    if post_cfg.get("alpha_hard_threshold"):
-        frames = [hard_alpha(f, post_cfg["alpha_hard_threshold"]) for f in frames]
-    if post_cfg.get("palette_colors"):
-        frames = shared_palette(frames, post_cfg["palette_colors"])
+    sets = []
+    for rd in meta["renders"]:
+        frames = [downsample(Image.open(d["file"]), ss) for d in rd["dirs"]]
+        if post_cfg.get("alpha_hard_threshold"):
+            frames = [hard_alpha(f, post_cfg["alpha_hard_threshold"]) for f in frames]
+        sets.append((rd, frames))
+    if post_cfg.get("palette_colors"):  # one palette across every part, so they match
+        flat = shared_palette([f for _, fs in sets for f in fs], post_cfg["palette_colors"])
+        it = iter(flat)
+        sets = [(rd, [next(it) for _ in fs]) for rd, fs in sets]
 
     sprite_dir = Path(dirs["sprites"]) / aid
     sprite_dir.mkdir(parents=True, exist_ok=True)
-    W, H = meta["canvas_px"]
-    atlas = Image.new("RGBA", (W * len(frames), H), (0, 0, 0, 0))
-    atlas_frames = []
-    for d, f in zip(meta["dirs"], frames):
-        f.save(sprite_dir / f"{aid}_d{d['index']}.png")
-        atlas.paste(f, (W * d["index"], 0))
-        atlas_frames.append({"dir": d["index"], "yaw_deg": d["yaw_deg"], "facing": d.get("facing"),
-                             "x": W * d["index"], "y": 0, "w": W,
-                             "h": H, "anchor_px": meta["anchor_px"], "tiles": d["tiles"],
-                             "screen_heading": d["screen_heading"], "footprint_px": d["footprint_px"]})
+    AW = max(rd["canvas_px"][0] * len(fs) for rd, fs in sets)
+    AH = sum(rd["canvas_px"][1] for rd, _ in sets)
+    atlas = Image.new("RGBA", (AW, AH), (0, 0, 0, 0))
+    atlas_frames, y = [], 0
+    for rd, frames in sets:
+        W, H = rd["canvas_px"]
+        stem = f"{aid}_{rd['part']}" if rd["part"] else aid
+        for d, f in zip(rd["dirs"], frames):
+            file = sprite_dir / f"{stem}_d{d['index']}.png"
+            f.save(file)
+            atlas.paste(f, (W * d["index"], y))
+            atlas_frames.append({"part": rd["part"], "dir": d["index"], "yaw_deg": d["yaw_deg"],
+                                 "facing": d.get("facing"), "file": str(file),
+                                 "x": W * d["index"], "y": y, "w": W, "h": H, "anchor_px": rd["anchor_px"],
+                                 "tiles": d["tiles"], "screen_heading": d["screen_heading"],
+                                 "footprint_px": d["footprint_px"]})
+        y += H
     atlas_dir = Path(dirs["atlas"])
     atlas_dir.mkdir(parents=True, exist_ok=True)
     atlas.save(atlas_dir / f"{aid}.png")
-    info = {k: meta[k] for k in ("id", "category", "tiles", "footprint_m", "final_dims_m", "real_dims_m",
-                                 "compression", "px_per_m", "canvas_px", "anchor_px", "align", "warnings")}
+    info = {k: meta.get(k) for k in ("id", "category", "plan", "tiles", "footprint_m", "final_dims_m",
+                                     "real_dims_m", "compression", "split", "px_per_m", "align", "warnings")}
+    info["parts"] = [{k: rd[k] for k in ("part", "tiles", "compression", "final_dims_m", "canvas_px", "anchor_px")}
+                     for rd, _ in sets]
     info["frames"] = atlas_frames
     (atlas_dir / f"{aid}.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
 
-    # preview: every direction on a checkerboard with tile footprint + anchor, then debug views
+    # preview: every direction of every part on a checkerboard with footprint + anchor, then debug views
     sc = int(post_cfg.get("preview_scale", 2))
-    row = checker(W * len(frames), H)
+    row = checker(AW, AH)
     row.alpha_composite(atlas)
     draw = ImageDraw.Draw(row)
     for fr in atlas_frames:
-        poly = [(fr["x"] + x, y) for x, y in fr["footprint_px"]]
+        poly = [(fr["x"] + x, fr["y"] + y) for x, y in fr["footprint_px"]]
         draw.line(poly + [poly[0]], fill=(255, 220, 0, 255), width=1)
-        axp, ayp = fr["x"] + meta["anchor_px"][0], meta["anchor_px"][1]
+        axp, ayp = fr["x"] + fr["anchor_px"][0], fr["y"] + fr["anchor_px"][1]
         draw.line([(axp - 3, ayp), (axp + 3, ayp)], fill=(255, 0, 80, 255))
         draw.line([(axp, ayp - 3), (axp, ayp + 3)], fill=(255, 0, 80, 255))
     row = row.resize((row.width * sc, row.height * sc), Image.NEAREST)
     parts = [row]
-    dbg = [Image.open(p).convert("RGBA") for p in meta.get("debug", {}).values() if Path(p).exists()]
+    dbg = [Image.open(p).convert("RGBA") for p in (meta.get("debug") or {}).values() if Path(p).exists()]
     if dbg:
         dh = max(i.height for i in dbg)
         drow = Image.new("RGBA", (sum(i.width for i in dbg), dh), (45, 45, 45, 255))

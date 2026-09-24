@@ -36,7 +36,8 @@ class Comfy:
             body = e.read().decode("utf-8", "replace")
             raise ComfyError(f"{method} {path} -> HTTP {e.code}: {body[:4000]}") from None
         except urllib.error.URLError as e:
-            raise ComfyError(f"cannot reach ComfyUI at {self.url}: {e.reason}") from None
+            raise ComfyError(f"cannot reach ComfyUI at {self.url}: {e.reason}. ComfyUI Desktop listens on port "
+                             f"8000 by default, a manual install on 8188; set comfy.url") from None
 
     def get_json(self, path):
         return json.loads(self._req("GET", path))

@@ -9,6 +9,7 @@ import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder } from './iso3d';
 import {
   DRAWN_FACINGS,
+  DRAWN_WIDTH,
   facingAngle,
   vehicleSpec,
   type BogieKind,
@@ -110,7 +111,7 @@ class Frame {
   }
   /** tile-space offset of a body point: l along the heading (front = +), w across */
   along(l: number, w: number) {
-    w *= 1.3;
+    w *= DRAWN_WIDTH;
     return {
       x: Math.cos(this.a) * l - Math.sin(this.a) * w,
       y: Math.sin(this.a) * l + Math.cos(this.a) * w,
@@ -150,7 +151,7 @@ class Frame {
       cy: c.y,
       angle: this.a,
       len: o.len,
-      wid: o.wid * 1.3,
+      wid: o.wid * DRAWN_WIDTH,
       h: o.h,
       z0: o.z0 ?? 0,
       top: o.top,
