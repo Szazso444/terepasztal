@@ -63,6 +63,19 @@ def manhattan_align(N, pitch_rng, roll_rng):
     return best, float(s.max())
 
 
+def directions(ccfg):
+    """(yaw_deg, game facing or None) for every rendered direction.
+
+    dirs = "game" renders the game's drawn facings: src/sim/body.ts has FACINGS = 48 (7.5 deg apart)
+    and draws only f <= mirrorFacing(f) = (12 - f) mod 48, 25 of them. Tile +ty is Blender -Y, so
+    facing f is a yaw of -7.5 f degrees (clockwise seen from above); facing 0 points down-right.
+    """
+    d = ccfg["dirs"]
+    if d == "game":
+        return [(-7.5 * f + 0.0, f) for f in range(48) if f <= (12 - f) % 48]  # + 0.0: no -0.0
+    return [(360 * i / int(d), None) for i in range(int(d))]
+
+
 def to4(m3):
     m = Matrix.Identity(4)
     for i in range(3):
@@ -292,17 +305,31 @@ def main():
         tiles = [int(size_tiles), 1]
         footprint_m = [size_tiles * tile, tile]
     else:
-        # uniform x/y compression near footprint_factor, snapped so the footprint fills whole tiles
+        # uniform x/y compression near footprint_factor, snapped so the footprint fills whole tiles;
+        # size_tiles fixes a square footprint instead (the game's stations are 1x1, its depots 2x2)
         f, fill = ccfg["footprint_factor"], ccfg["fill"]
-        lo_c, hi_c = ccfg["footprint_range"]
-        tiles = [max(1, round(real[i] * f / tile)) for i in (0, 1)]
-        while True:
-            fits = [tiles[i] * tile * fill / real[i] for i in (0, 1)]
-            c = min(min(fits), hi_c)
-            if c >= lo_c:
-                break
-            tiles[int(np.argmin(fits))] += 1
-        comp = np.array([c, c, 1.0])
+        cz = 1.0
+        if a.get("size_tiles"):
+            n = int(a["size_tiles"])
+            tiles = [n, n]
+            lo_c, hi_c = ccfg["sized_footprint_range"]
+            c = min(min(tiles[i] * tile * fill / real[i] for i in (0, 1)), hi_c)
+            if c < lo_c:
+                raise RuntimeError(f"footprint factor {c:.2f} below sized_footprint_range {lo_c} "
+                                   f"({real[0]:.1f} x {real[1]:.1f} m into {n}x{n} tiles). "
+                                   f"Raise size_tiles or lower the range.")
+            # height follows part of the way, so a crushed footprint does not stand as a tower
+            cz = c ** ccfg["sized_height_exponent"]
+        else:
+            lo_c, hi_c = ccfg["footprint_range"]
+            tiles = [max(1, round(real[i] * f / tile)) for i in (0, 1)]
+            while True:
+                fits = [tiles[i] * tile * fill / real[i] for i in (0, 1)]
+                c = min(min(fits), hi_c)
+                if c >= lo_c:
+                    break
+                tiles[int(np.argmin(fits))] += 1
+        comp = np.array([c, c, cz])
         footprint_m = [tiles[0] * tile, tiles[1] * tile]
     S = np.diag(s * comp)
     V3 = V2 @ S
@@ -350,14 +377,14 @@ def main():
     bpy.context.view_layer.update()
     cm = cam.matrix_world.to_3x3()
     right, up, back = cm.col[0], cm.col[1], cm.col[2]
-    ndirs = ccfg["dirs"]
+    dir_list = directions(ccfg)
     hx, hy, hz = final_dims / 2
     box = [Vector((sx * hx, sy * hy, z)) for sx in (-1, 1) for sy in (-1, 1) for z in (0.0, final_dims[2])]
     if r["shadow"]:
         box += [p - (p.z / L.z) * L for p in box if p.z > 0]
     pts = []
-    for i in range(ndirs):
-        Rz_ = Matrix.Rotation(math.radians(360 * i / ndirs), 3, "Z")
+    for yaw_d, _ in dir_list:
+        Rz_ = Matrix.Rotation(math.radians(yaw_d), 3, "Z")
         pts += [Rz_ @ p for p in box]
     pr = [p.dot(right) for p in pts]
     pu = [p.dot(up) for p in pts]
@@ -381,8 +408,7 @@ def main():
     fx, fy = footprint_m[0] / 2, footprint_m[1] / 2
     fp = [Vector(c) for c in ((-fx, -fy, 0), (fx, -fy, 0), (fx, fy, 0), (-fx, fy, 0))]
     dirs = []
-    for i in range(ndirs):
-        yaw_d = 360 * i / ndirs
+    for i, (yaw_d, facing) in enumerate(dir_list):
         Rz4 = Matrix.Rotation(math.radians(yaw_d), 4, "Z")
         obj.matrix_world = Rz4 @ M_base
         path = f"{job['sprites_raw_dir']}/{a['id']}_d{i}.png"
@@ -393,7 +419,7 @@ def main():
         hv = Vector((head.dot(right), -head.dot(up)))
         hv.normalize()
         rot_tiles = tiles if round(yaw_d / 90) % 2 == 0 or cat == "vehicle" else tiles[::-1]
-        dirs.append({"index": i, "yaw_deg": yaw_d, "file": path,
+        dirs.append({"index": i, "yaw_deg": yaw_d, "facing": facing, "file": path,
                      "screen_heading": [round(hv.x, 4), round(hv.y, 4)],
                      "tiles": rot_tiles,
                      "footprint_px": [to_px(R3 @ c) for c in fp]})

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Batch pipeline: image -> ComfyUI (3D) -> Blender (align/scale/render) -> post (sprites/atlas).
+"""Batch pipeline: image -> ComfyUI (3D) -> Blender (align/scale/render) -> post (sprites/atlas) -> game.
 
 Stops at the first error with a non-zero exit code. Finished stages are skipped on rerun unless --force.
-Usage: python run.py [--only id1,id2] [--stages comfy,blender,post] [--force] [--config pipeline.toml]
+Usage: python run.py [--only id1,id2] [--stages comfy,blender,post,game] [--force] [--config pipeline.toml]
 """
 import argparse
 import csv
@@ -17,10 +17,11 @@ from datetime import datetime
 from pathlib import Path
 
 import comfy_client
+import export_game
 import postprocess
 
 HERE = Path(__file__).resolve().parent
-STAGES = ("comfy", "blender", "post")
+STAGES = ("comfy", "blender", "post", "game")
 log = logging.getLogger("pipeline")
 
 
@@ -53,6 +54,7 @@ def load_assets(csv_path: Path, only):
                      "length_m": num(row.get("length_m")), "width_m": num(row.get("width_m")),
                      "height_m": num(row.get("height_m")),
                      "align": (row.get("align") or "auto").strip() or "auto",
+                     "game_frame": (row.get("game_frame") or "").strip(),
                      "yaw_offset_deg": num(row.get("yaw_offset_deg")) or 0.0}
             except ValueError as e:
                 errors.append(f"line {ln} ({aid}): {e}")
@@ -65,6 +67,10 @@ def load_assets(csv_path: Path, only):
                 err.append("building needs height_m, length_m or width_m")
             if a["align"] not in ("auto", "none"):
                 err.append("align must be auto|none")
+            if a["game_frame"] and cat in ("vehicle", "building"):
+                err += export_game.check_template(cat, a["game_frame"])
+                if cat == "vehicle" and a["size_tiles"] and a["size_tiles"] not in export_game.SIZE_TILES:
+                    err.append(f"a game vehicle is {export_game.SIZE_TILES} tiles long")
             if err:
                 errors.append(f"line {ln} ({aid}): " + "; ".join(err))
             elif not only or aid in only:
@@ -135,6 +141,7 @@ def main():
         summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     comfy = graph = None
+    game_groups = {}
     try:
         assets = load_assets(csv_path, only)
         log.info(f"{len(assets)} assets, stages {stages}, out {out}")
@@ -173,11 +180,25 @@ def main():
                                               preview=str(d["previews"] / f"{aid}.png"))
                 for w in info["warnings"]:
                     log.warning(f"[{aid}] {w}")
+            if "game" in stages and a["game_frame"]:
+                atlas_json = d["atlas"] / f"{aid}.json"
+                if not atlas_json.exists():
+                    raise PipelineError(f"[{aid}] no sprites at {atlas_json}; run the post stage")
+                info = json.loads(atlas_json.read_text(encoding="utf-8"))
+                try:
+                    touched = export_game.export_asset(a, info, d["sprites"] / aid,
+                                                       rel(cfg["game"]["repo_root"]) / cfg["game"]["art_src"])
+                except export_game.GameExportError as e:
+                    raise PipelineError(f"[{aid}] {e}") from None
+                game_groups.update(touched)
+                summary["assets"][aid]["game_groups"] = sorted(touched)
             summary["assets"][aid]["status"] = "ok"
             summary["assets"][aid]["seconds"] = round(time.time() - t0, 1)
             write_summary()
             log.info(f"[{aid}] ok ({time.time() - t0:.0f}s)")
-    except (PipelineError, comfy_client.ComfyError, KeyError, OSError) as e:
+        if game_groups and cfg["game"].get("pack", True):
+            export_game.pack(game_groups, cfg["game"], rel(cfg["game"]["repo_root"]), log.info)
+    except (PipelineError, comfy_client.ComfyError, export_game.GameExportError, KeyError, OSError) as e:
         failed = next((k for k, v in summary["assets"].items() if v["status"] == "running"), None)
         if failed:
             summary["assets"][failed].update(status="failed", error=str(e))

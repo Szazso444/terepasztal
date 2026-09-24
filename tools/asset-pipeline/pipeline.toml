@@ -23,7 +23,7 @@ switch_node     = ""
 
 [grid]
 tile_m        = 8.0          # tile side in meters
-tile_px       = 128          # tile diamond width in px (height = tile_px / 2)
+tile_px       = 64           # tile diamond width in px (height = tile_px / 2); the game's TILE_W, src/engine/iso.ts
 elevation_deg = 30.0         # 2:1 because sin(30) = 0.5
 azimuth_deg   = 45.0
 
@@ -35,8 +35,8 @@ sample_faces  = 20000
 min_score     = 0.70           # below this the mesh is not boxy enough; asset fails unless align = "none"
 
 [classes.vehicle]
-dirs           = 8
-coupler_gap_m  = 0.4          # slot length = size_tiles * tile_m - gap
+dirs           = "game"     # the game's 25 drawn facings (src/sim/body.ts); an integer N renders N even headings
+coupler_gap_m  = 0.4          # slot length = size_tiles * tile_m - gap (the game's bodies are size 1..3 tiles)
 compress_range = [0.80, 1.25] # length factor outside this range aborts the run
 max_dim_error  = 0.20         # width/height mismatch vs spec that triggers a warning
 
@@ -45,7 +45,17 @@ dirs             = 4
 footprint_factor = 0.75          # target x/y compression; height always real
 footprint_range  = [0.55, 1.0]   # actual factor is snapped into whole tiles within this range
 fill             = 0.92          # share of the tile footprint the building may occupy
+sized_footprint_range = [0.3, 1.0]  # with size_tiles set: the game fixes the footprint, so more compression is allowed
+sized_height_exponent = 0.5         # with size_tiles set: height factor = footprint factor ^ this (0 real, 1 uniform)
 max_dim_error    = 0.20
+
+[game]
+# The "game" stage copies finished sprites of assets with a game_frame into the game and packs them.
+repo_root = "../.."             # the terepasztal checkout
+art_src   = "art-src"           # per-group frame folders, relative to repo_root (tools/pack-atlas.mjs --src)
+out       = "public/assets"     # packed <group>.png + .json, relative to repo_root
+node      = "node"
+pack      = true                # false: stop after writing art-src, pack later with npm run pack-atlas
 
 [render]
 engine           = "CYCLES"    # "CYCLES" works headless everywhere; "BLENDER_EEVEE" needs a GPU context

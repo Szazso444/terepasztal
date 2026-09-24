@@ -119,6 +119,17 @@ describe('pack-atlas', () => {
     expect(f).toMatchObject({ w: 64, h: 64, ax: 32, ay: 48 });
   });
 
+  it('marks the table partial only when the source asks for it', () => {
+    run('rolling', '--src', src(), '--out', out());
+    expect(readAtlas('rolling').partial).toBeUndefined();
+    const partial = join(dir, 'partial');
+    mkdirSync(partial, { recursive: true });
+    writeFileSync(join(partial, 'atlas.json'), JSON.stringify({ partial: true }));
+    writeFileSync(join(partial, 'one.png'), readFileSync(join(src(), 'wide.png')));
+    run('structures', '--src', partial, '--out', out());
+    expect(readAtlas('structures')).toMatchObject({ partial: true, frames: { 'structures/one': {} } });
+  });
+
   it('re-packs unchanged art to the same bytes', () => {
     run('rolling', '--src', src(), '--out', out());
     const png = readFileSync(join(out(), 'rolling.png'));

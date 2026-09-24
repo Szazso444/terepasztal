@@ -64,7 +64,8 @@ def process_asset(meta_path: Path, post_cfg: dict, dirs: dict):
     for d, f in zip(meta["dirs"], frames):
         f.save(sprite_dir / f"{aid}_d{d['index']}.png")
         atlas.paste(f, (W * d["index"], 0))
-        atlas_frames.append({"dir": d["index"], "yaw_deg": d["yaw_deg"], "x": W * d["index"], "y": 0, "w": W,
+        atlas_frames.append({"dir": d["index"], "yaw_deg": d["yaw_deg"], "facing": d.get("facing"),
+                             "x": W * d["index"], "y": 0, "w": W,
                              "h": H, "anchor_px": meta["anchor_px"], "tiles": d["tiles"],
                              "screen_heading": d["screen_heading"], "footprint_px": d["footprint_px"]})
     atlas_dir = Path(dirs["atlas"])
