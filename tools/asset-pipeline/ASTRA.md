@@ -14,6 +14,16 @@ from each image. The models are then rendered as small isometric sprites for a t
 from above at 30 degrees. So the image must show one complete object that a machine can reconstruct, and its colours
 and shapes must still read when shrunk to a few dozen pixels.
 
+## How to work through this
+
+- Go through the tables in order, one image at a time, and name each file exactly as listed.
+- Start with `flying_scotsman.png`, `sd40.png`, `bogie_emd.png` and `station_2.png`, and stop for approval. Once they are
+  approved, use them as the reference for camera angle, distance, lighting, background and finish for everything else,
+  so the whole set looks like one photo session.
+- Draw each prototype as it really is. If you are unsure what a prototype looks like, say so rather than inventing one.
+- Report in one line per image: file name, subject, and anything you had to leave out or guess.
+- Never break a rule below to make an image look nicer; the reconstruction depends on them.
+
 ## Rules for every image
 
 **Subject**
@@ -54,8 +64,9 @@ Fill in `<subject>` and `<notes>` from the tables:
 
 ## Locomotives
 
-Show the whole locomotive as listed. "With tender" means engine and tender coupled, straight, both complete, in one
-image. Articulated engines are shown whole.
+Show the whole locomotive as listed, wheels and all. "With tender" means engine and tender coupled, straight, both
+complete, in one image. Articulated engines are shown whole. The wheels stay in the picture even though the game draws
+its own running gear: the pipeline cuts them off after the 3D step.
 
 | File | Subject | Notes |
 |---|---|---|
@@ -121,18 +132,23 @@ These are the game's own designs, not exact prototypes. Keep them plain and typi
 
 ## Bogies
 
-The bogie alone: no body, no track. The same camera, but 30 degrees above so the frame and wheels read. The front
-(either end) points right. Style names are placeholders until the list is confirmed.
+The running gear the game draws under every medium and large vehicle, one family per style so the whole fleet
+matches. The bogie alone, as if lifted out from under the vehicle: no body, no track. Same camera as the rest, but 30
+degrees above so the frame and wheels read; either end points right.
 
-| File | Subject |
-|---|---|
-| `bogie_archbar.png` | Archbar two-axle freight truck, early 1900s |
-| `bogie_diamond.png` | Diamond-frame two-axle bogie |
-| `bogie_y25.png` | European Y25 two-axle freight bogie |
-| `bogie_blomberg.png` | EMD Blomberg B two-axle locomotive truck |
-| `bogie3_flexicoil.png` | EMD Flexicoil C three-axle locomotive truck |
-| `bogie_modern.png` | Modern European electric-locomotive two-axle bogie |
-| `bogie_coach.png` | Two-axle passenger coach bogie with leaf springs |
+| File | Style | Subject |
+|---|---|---|
+| `bogie_steam_engine.png` | steam | Steam driving-wheel set: two large spoked driving wheels joined by a coupling rod, with the cylinder and valve gear in front, outside frame. Black, red wheel rims |
+| `bogie_steam.png` | steam | Plain two-axle steam-era tender bogie: plate frame, small spoked wheels, leaf springs. Black |
+| `engine_unit_steam.png` | steam | Big Boy engine unit: four coupled driving wheels with rods, cylinder in front, frame. Black |
+| `bogie_emd.png` | emd | EMD Blomberg B two-axle locomotive truck. Dark grey |
+| `bogie3_emd.png` | emd | EMD Flexicoil C three-axle locomotive truck. Dark grey |
+| `bogie_europe.png` | europe | Modern European two-axle locomotive bogie with coil springs. Dark grey |
+| `bogie3_europe.png` | europe | European three-axle locomotive bogie (M62 / V63 type). Dark grey |
+| `bogie_classic.png` | classic | 1920s-30s electric two-axle bogie, outside frame, spoked wheels. Black |
+| `bogie3_classic.png` | classic | 1920s-30s electric three-axle truck, outside frame, spoked wheels. Black |
+| `bogie3_classic_engine.png` | classic | Crocodile rod drive: three spoked wheels with a jackshaft and coupling rods. Black |
+| `bogie_coach.png` | coach | Two-axle passenger coach bogie with leaf springs. Black |
 
 ## Buildings
 

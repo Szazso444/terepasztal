@@ -5,18 +5,18 @@ import { bogieFrame, locoFrame, wagonFrame } from './frames';
 const atlas = (...keys: string[]) => ({ has: (k: string) => keys.includes(k) });
 
 describe('bogieFrame', () => {
-  it("uses a vehicle's own bogie style when the atlas has it", () => {
-    expect(bogieFrame(atlas('rolling/bogie_y25_f3'), 'y25', 'bogie', 3)).toBe(
-      'rolling/bogie_y25_f3',
-    );
+  it("uses a vehicle's own style, drawn for its part where there is one", () => {
+    const a = atlas('rolling/bogie_steam_engine_f3', 'rolling/bogie_steam_f3');
+    expect(bogieFrame(a, 'steam', 'bogie', 'engine', 3)).toBe('rolling/bogie_steam_engine_f3');
+    expect(bogieFrame(a, 'steam', 'bogie', 'tender', 3)).toBe('rolling/bogie_steam_f3');
   });
 
   it('falls back to the generic truck of the same kind', () => {
     // a style drawn for one kind or facing never stands in for another
-    const a = atlas('rolling/bogie_y25_f3');
-    expect(bogieFrame(a, 'y25', 'bogie3', 3)).toBe('rolling/bogie3_f3');
-    expect(bogieFrame(a, 'y25', 'bogie', 4)).toBe('rolling/bogie_f4');
-    expect(bogieFrame(a, undefined, 'bogie', 3)).toBe('rolling/bogie_f3');
+    const a = atlas('rolling/bogie_emd_f3', 'rolling/bogie_emd_body_f3');
+    expect(bogieFrame(a, 'emd', 'bogie3', 'body', 3)).toBe('rolling/bogie3_f3');
+    expect(bogieFrame(a, 'emd', 'bogie', 'body', 4)).toBe('rolling/bogie_f4');
+    expect(bogieFrame(a, undefined, 'bogie', 'body', 3)).toBe('rolling/bogie_f3');
   });
 });
 

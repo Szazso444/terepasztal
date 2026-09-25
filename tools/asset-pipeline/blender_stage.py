@@ -410,11 +410,20 @@ def main():
         bounds = [0.0] + cuts + [real[0]]
         if any(b1 <= b0 for b0, b1 in zip(bounds, bounds[1:])):
             raise RuntimeError(f"cuts {cuts} are not in order inside 0..{real[0]:.1f} m")
-        clip = a.get("clip_below_m") or 0.0
+        # clip heights: one for every part, or one per rendered part (an engine above its drivers,
+        # a tender above its own wheels)
+        clips = list(a.get("clip_below_m") or [0.0])
+        n_rendered = sum(1 for p in parts if p[2])
+        if len(clips) == 1:
+            clips *= n_rendered
+        if len(clips) != n_rendered:
+            raise RuntimeError(f"clip_below_m has {len(clips)} heights; {n_rendered} parts are rendered")
+        clips = iter(clips)
         yc, zg = (lo_r[1] + hi_r[1]) / 2, lo_r[2]
         for (part, L_tiles, rendered), d0, d1 in zip(parts, bounds, bounds[1:]):
             if not rendered:
                 continue
+            clip = next(clips)
             ob = obj.copy()
             ob.data = obj.data.copy()
             ob.name = f"part_{part}"

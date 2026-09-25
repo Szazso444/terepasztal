@@ -61,7 +61,8 @@ def load_assets(csv_path: Path, only):
                      "plan": (row.get("plan") or "").strip() or None,
                      # cut positions in metres from the nose, ';' between them (',' is the CSV's)
                      "split_m": [float(v) for v in (row.get("split_m") or "").split(";") if v.strip()],
-                     "clip_below_m": num(row.get("clip_below_m")) or 0.0}
+                     # one height, or one per rendered part front to back, ';' between them
+                     "clip_below_m": [float(v) for v in (row.get("clip_below_m") or "").split(";") if v.strip()]}
             except ValueError as e:
                 errors.append(f"line {ln} ({aid}): {e}")
                 continue
@@ -81,7 +82,7 @@ def load_assets(csv_path: Path, only):
                         game_rules.plan_parts(a["plan"], a["size_tiles"])
                     except ValueError as e:
                         err.append(str(e))
-                if a["clip_below_m"] and a["size_tiles"] == 1:
+                if any(a["clip_below_m"]) and a["size_tiles"] == 1:
                     err.append("clip_below_m: small vehicles get no separate bogies, the body would float")
                 if a["split_m"] and a["split_m"] != sorted(a["split_m"]):
                     err.append("split_m must increase from the nose")

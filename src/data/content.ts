@@ -60,10 +60,7 @@ export interface LocoDef {
   plan?: BodyPlan;
   /** pivot spacing as a fraction of body length (default 0.7) */
   pivotRatio?: number;
-  /**
-   * bogie sprite style: rolling/<kind>_<style>_f<n> when the atlas has it, else the generic one;
-   * "none" draws no bogies, for bodies whose own wheels are in the sprite (steam drivers)
-   */
+  /** bogie sprite style: rolling/<kind>_<style>[_<part>]_f<n> when the atlas has it, else the generic one */
   bogieStyle?: string;
   /** bogies under a rigid body (3 for the Bo-Bo-Bo large body) */
   bogies?: number;
