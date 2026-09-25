@@ -13,7 +13,6 @@ DRAWN_WIDTH = 1.3  # body.ts DRAWN_WIDTH: sprites are this much wider across tha
 SIZE_TILES = {1: "small", 2: "medium", 3: "large"}  # body.ts SIZE_LEN
 # plans the game honours per size (body.ts vehicleSpec overrides any other to rigid)
 PLANS = {1: ("rigid",), 2: ("rigid", "tender"), 3: ("rigid", "garratt", "meyer")}
-BOGIE_KINDS = ("bogie", "bogie3", "engine_unit")
 GROUPS = ("terrain", "props", "track", "structures", "rolling", "wagons", "fx", "icons", "people")
 
 

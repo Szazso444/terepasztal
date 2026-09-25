@@ -117,7 +117,10 @@
     "era": "1924 Hungarian mixed-traffic 4-8-0, the Buffalo. Built until 1958.",
     "body": "steam_std",
     "paint": "black",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["leading", "mastodon"],
+      "tender": "tender_truck"
+    },
     "speed": 1.25,
     "power": 130,
     "weight": 90,
@@ -137,7 +140,10 @@
     "era": "1914 Pennsylvania Railroad Pacific, standard express power for forty years.",
     "body": "steam_std",
     "paint": "iron",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["leading", "pacific"],
+      "tender": "tender_truck"
+    },
     "speed": 1.5,
     "power": 110,
     "weight": 140,
@@ -157,7 +163,10 @@
     "era": "1926 German standard express Pacific. Black, red wheels, 130 km/h.",
     "body": "steam_std",
     "paint": "black",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["leading", "pacific"],
+      "tender": "tender_truck"
+    },
     "speed": 1.65,
     "power": 140,
     "weight": 110,
@@ -177,7 +186,10 @@
     "era": "1923 LNER A3. First steam engine officially clocked at 100 mph.",
     "body": "steam_std",
     "paint": "green",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["leading", "pacific"],
+      "tender": ["uk_tender_pair", "uk_tender_pair"]
+    },
     "speed": 1.75,
     "power": 120,
     "weight": 97,
@@ -197,7 +209,10 @@
     "era": "1941 Southern Pacific GS-4, orange and red streamliner of the Coast Daylight.",
     "body": "steam_streamlined",
     "paint": "rust",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["leading", "northern"],
+      "tender": "tender_truck6"
+    },
     "speed": 1.85,
     "power": 150,
     "weight": 240,
@@ -217,7 +232,10 @@
     "era": "1938 LNER A4. 126 mph, the fastest steam locomotive ever recorded.",
     "body": "steam_streamlined",
     "paint": "blue",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["leading", "pacific"],
+      "tender": ["uk_tender_pair", "uk_tender_pair"]
+    },
     "speed": 2.3,
     "power": 130,
     "weight": 165,
@@ -237,7 +255,9 @@
     "era": "1941 Union Pacific 4-8-8-4. Articulated giant built to drag freight over the Wasatch.",
     "body": "steam_std",
     "paint": "black",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "frame": ["bigboy_front", "bigboy_rear"]
+    },
     "speed": 1.35,
     "power": 380,
     "weight": 350,
@@ -293,7 +313,7 @@
     "era": "1965 Soviet freight diesel exported across the Eastern Bloc. Loud and loyal.",
     "body": "diesel_hood",
     "paint": "green",
-    "bogieStyle": "europe",
+    "bogieStyle": "europe_c",
     "speed": 1.3,
     "power": 160,
     "weight": 116,
@@ -312,7 +332,7 @@
     "era": "1949 bulldog-nosed cab unit. The face of American railroading.",
     "body": "diesel_cab",
     "paint": "red",
-    "bogieStyle": "emd",
+    "bogieStyle": "blomberg",
     "speed": 1.6,
     "power": 140,
     "weight": 110,
@@ -330,7 +350,7 @@
     "era": "1972 six-axle road switcher. Nearly four thousand built, many still running.",
     "body": "diesel_hood",
     "paint": "black",
-    "bogieStyle": "emd",
+    "bogieStyle": "htc",
     "speed": 1.5,
     "power": 220,
     "weight": 165,
@@ -349,7 +369,7 @@
     "era": "1961 East Coast express with two opposed-piston Napier engines. Screams.",
     "body": "diesel_cab",
     "paint": "blue",
-    "bogieStyle": "europe",
+    "bogieStyle": "europe_c",
     "speed": 2,
     "power": 150,
     "weight": 100,
@@ -368,7 +388,7 @@
     "era": "1969 Union Pacific twin-engine giant, the most powerful diesel ever built.",
     "body": "diesel_hood",
     "paint": "yellow",
-    "bogieStyle": "emd",
+    "bogieStyle": "emd_d",
     "speed": 1.8,
     "power": 360,
     "weight": 245,
@@ -376,9 +396,9 @@
     "fuelCap": 560,
     "fuelPerTile": 0.195,
     "size": "large",
-    "bogieAxles": 3,
+    "bogieAxles": 4,
     "plan": "rigid",
-    "bogies": 3,
+    "bogies": 2,
     "controlClass": "emd",
     "inCab": true
   },
@@ -407,7 +427,7 @@
     "era": "1975 Hungarian six-axle Giant, the heavy freight electric of MÁV.",
     "body": "electric_box",
     "paint": "red",
-    "bogieStyle": "europe",
+    "bogieStyle": "europe_c",
     "speed": 1.6,
     "power": 200,
     "weight": 116,
@@ -426,7 +446,10 @@
     "era": "1919 Gotthard freight electric with articulated snouts. Unmistakable.",
     "body": "electric_crocodile",
     "paint": "brown",
-    "bogieStyle": "classic",
+    "bogieStyle": {
+      "engine": ["pony", "croc"],
+      "cradle": "none"
+    },
     "speed": 1.3,
     "power": 230,
     "weight": 128,
@@ -448,7 +471,7 @@
     "era": "2000 Siemens universal electric that sings a scale as it pulls away.",
     "body": "electric_box",
     "paint": "red",
-    "bogieStyle": "europe",
+    "bogieStyle": "europe_b",
     "speed": 2,
     "power": 190,
     "weight": 86,
@@ -466,7 +489,7 @@
     "era": "1991 Swiss Lok 2000, the billboard engine of the Bahn 2000 programme.",
     "body": "electric_box",
     "paint": "red",
-    "bogieStyle": "europe",
+    "bogieStyle": "europe_b",
     "speed": 2,
     "power": 180,
     "weight": 84,
@@ -484,7 +507,9 @@
     "era": "1934 Raymond Loewy-styled Pennsylvania electric. Fifty years of service.",
     "body": "electric_box",
     "paint": "green",
-    "bogieStyle": "classic",
+    "bogieStyle": {
+      "body": ["gg1_front", "gg1_rear"]
+    },
     "speed": 2.1,
     "power": 260,
     "weight": 216,
@@ -493,7 +518,7 @@
     "size": "large",
     "bogieAxles": 3,
     "plan": "rigid",
-    "bogies": 3,
+    "bogies": 2,
     "controlClass": "prr",
     "collector": "pantograph",
     "inCab": true
@@ -524,7 +549,10 @@
     "era": "1934, Stanier mixed-traffic 4-6-0. Went anywhere, pulled anything.",
     "body": "steam_std",
     "paint": "black",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["leading", "ten_wheeler"],
+      "tender": ["uk_tender_pair", "uk_tender_axle"]
+    },
     "speed": 1.5,
     "power": 125,
     "weight": 105,
@@ -544,7 +572,10 @@
     "era": "1954, ten-coupled heavy freight engine. The last steam class built in Britain.",
     "body": "steam_std",
     "paint": "black",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["pony", "decapod"],
+      "tender": ["uk_tender_pair", "uk_tender_axle"]
+    },
     "speed": 1.3,
     "power": 230,
     "weight": 140,
@@ -565,7 +596,10 @@
     "era": "1953, Beyer-Garratt articulated. Two engine units, a boiler slung between: big power on light rails.",
     "body": "steam_garratt",
     "paint": "green",
-    "bogieStyle": "steam",
+    "bogieStyle": {
+      "engine": ["leading", "gmam"],
+      "cradle": "none"
+    },
     "speed": 1.2,
     "power": 320,
     "weight": 190,
@@ -587,7 +621,7 @@
     "era": "1981, the first high-speed trainset in service. Needs high-speed track and HV wires to stretch its legs.",
     "body": "electric_hs",
     "paint": "orange",
-    "bogieStyle": "europe",
+    "bogieStyle": "europe_b",
     "speed": 3,
     "power": 150,
     "weight": 90,
@@ -607,7 +641,7 @@
     "era": "1991, Germany's first high-speed set. Multi-system power car.",
     "body": "electric_hs",
     "paint": "white",
-    "bogieStyle": "europe",
+    "bogieStyle": "europe_b",
     "speed": 2.7,
     "power": 160,
     "weight": 92,

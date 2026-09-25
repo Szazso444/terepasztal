@@ -1,5 +1,5 @@
 import type { AtlasRegistry } from '../engine/atlas';
-import type { LocoDef, WagonDef } from '../data/content';
+import type { BogieStyle, LocoDef, WagonDef } from '../data/content';
 import { cargoClass } from '../sim/cargo';
 import type { BogieKind, PartKind } from '../sim/body';
 
@@ -44,21 +44,25 @@ export function wagonFrame(
   ];
   return tries.find((t) => atlas.has(t)) ?? tries[tries.length - 1];
 }
-/**
- * Bogie frame: the vehicle's style drawn for this body part (drivers under a steam engine, a plain
- * truck under its tender), then the style for any part, then the generic truck of that kind.
- */
+/** The style of the bogie at `index` under `part`, counted from the part's own front. */
+export function bogieStyleOf(
+  style: BogieStyle | undefined,
+  part: PartKind,
+  index: number,
+): string | undefined {
+  const s = typeof style === 'object' ? style[part] : style;
+  // a list shorter than the bogies repeats its last entry
+  return Array.isArray(s) ? s[Math.min(index, s.length - 1)] : s;
+}
+/** A styled bogie's own sprite when the atlas has it, else the generic truck of that kind. */
 export function bogieFrame(
   atlas: Pick<AtlasRegistry, 'has'>,
   style: string | undefined,
   kind: BogieKind,
-  part: PartKind,
   facing: number,
 ): string {
-  const tries = style
-    ? [`rolling/${kind}_${style}_${part}_f${facing}`, `rolling/${kind}_${style}_f${facing}`]
-    : [];
-  return tries.find((t) => atlas.has(t)) ?? `rolling/${kind}_f${facing}`;
+  const own = style ? `rolling/bogie_${style}_f${facing}` : null;
+  return own && atlas.has(own) ? own : `rolling/${kind}_f${facing}`;
 }
 /** Which cargo overlay a wagon shows for a cargo (none for liquids). */
 export function loadKind(

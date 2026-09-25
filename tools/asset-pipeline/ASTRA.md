@@ -17,7 +17,7 @@ and shapes must still read when shrunk to a few dozen pixels.
 ## How to work through this
 
 - Go through the tables in order, one image at a time, and name each file exactly as listed.
-- Start with `flying_scotsman.png`, `sd40.png`, `bogie_emd.png` and `station_2.png`, and stop for approval. Once they are
+- Start with `flying_scotsman.png`, `sd40.png`, `bogie_blomberg.png` and `station_2.png`, and stop for approval. Once they are
   approved, use them as the reference for camera angle, distance, lighting, background and finish for everything else,
   so the whole set looks like one photo session.
 - Draw each prototype as it really is. If you are unsure what a prototype looks like, say so rather than inventing one.
@@ -132,23 +132,40 @@ These are the game's own designs, not exact prototypes. Keep them plain and typi
 
 ## Bogies
 
-The running gear the game draws under every medium and large vehicle, one family per style so the whole fleet
-matches. The bogie alone, as if lifted out from under the vehicle: no body, no track. Same camera as the rest, but 30
-degrees above so the frame and wheels read; either end points right.
+The running gear the game draws under every medium and large vehicle. Each image is one wheel group alone, as if lifted
+out from under its vehicle: no body, no track, no rails. Same camera as the rest, but 30 degrees above so the frame and
+wheels read. The front of the group, where the cylinders and leading wheels are, points right.
 
-| File | Style | Subject |
+Match the prototypes named in the last column: the driving-wheel sizes, the number of coupled wheels and the rod and
+valve-gear pattern come from them. A steam engine's running gear is split in two images, its leading truck and its
+driving-wheel set, because the game places them separately.
+
+| File | Subject | Rides under |
 |---|---|---|
-| `bogie_steam_engine.png` | steam | Steam driving-wheel set: two large spoked driving wheels joined by a coupling rod, with the cylinder and valve gear in front, outside frame. Black, red wheel rims |
-| `bogie_steam.png` | steam | Plain two-axle steam-era tender bogie: plate frame, small spoked wheels, leaf springs. Black |
-| `engine_unit_steam.png` | steam | Big Boy engine unit: four coupled driving wheels with rods, cylinder in front, frame. Black |
-| `bogie_emd.png` | emd | EMD Blomberg B two-axle locomotive truck. Dark grey |
-| `bogie3_emd.png` | emd | EMD Flexicoil C three-axle locomotive truck. Dark grey |
-| `bogie_europe.png` | europe | Modern European two-axle locomotive bogie with coil springs. Dark grey |
-| `bogie3_europe.png` | europe | European three-axle locomotive bogie (M62 / V63 type). Dark grey |
-| `bogie_classic.png` | classic | 1920s-30s electric two-axle bogie, outside frame, spoked wheels. Black |
-| `bogie3_classic.png` | classic | 1920s-30s electric three-axle truck, outside frame, spoked wheels. Black |
-| `bogie3_classic_engine.png` | classic | Crocodile rod drive: three spoked wheels with a jackshaft and coupling rods. Black |
-| `bogie_coach.png` | coach | Two-axle passenger coach bogie with leaf springs. Black |
+| `bogie_leading.png` | Four-wheel leading truck of a steam engine, small spoked wheels, swing links | A3, A4, DRG 01, K4s, Black Five, MÁV 424, Daylight, GMAM |
+| `bogie_pony.png` | Single-axle pony truck, small spoked wheels on a radius arm | BR 9F, Crocodile |
+| `bogie_pacific.png` | Three coupled 2 m driving wheels with coupling and connecting rods, valve gear, then a single trailing axle (4-6-2 without its leading truck) | A3, A4, DRG 01, K4s |
+| `bogie_ten_wheeler.png` | Three coupled 1.8 m driving wheels with rods and valve gear (4-6-0 without its leading truck) | Black Five |
+| `bogie_mastodon.png` | Four coupled 1.6 m driving wheels with rods and valve gear (4-8-0 without its leading truck) | MÁV 424 |
+| `bogie_decapod.png` | Five coupled 1.5 m driving wheels with rods and valve gear (2-10-0 without its pony truck) | BR 9F |
+| `bogie_northern.png` | Four coupled 2 m driving wheels with rods, then a four-wheel trailing truck (4-8-4 without its leading truck) | Daylight |
+| `bogie_gmam.png` | Garratt engine unit: four coupled driving wheels with rods and cylinders, then a pony axle (the 8-2 of a 4-8-2) | GMAM |
+| `bogie_bigboy_front.png` | Big Boy front engine unit: four-wheel leading truck, then four coupled driving wheels with cylinders and rods | Big Boy |
+| `bogie_bigboy_rear.png` | Big Boy rear engine unit: four coupled driving wheels with cylinders and rods, then a four-wheel trailing truck | Big Boy |
+| `bogie_uk_tender_pair.png` | Two fixed axles of a British rigid tender: outside frame, axleboxes and leaf springs | A3, A4 (front and rear), Black Five, 9F (front) |
+| `bogie_uk_tender_axle.png` | One fixed axle of a British rigid tender: outside frame, axlebox and leaf spring | Black Five, 9F (rear) |
+| `bogie_tender_truck.png` | Two-axle tender bogie: plate or bar frame, small wheels | DRG 01, K4s, MÁV 424 |
+| `bogie_tender_truck6.png` | Three-axle tender truck, cast frame | Daylight |
+| `bogie_blomberg.png` | EMD Blomberg B two-axle truck: cast frame, swing hangers, outside coil springs | F7 |
+| `bogie_htc.png` | EMD HT-C three-axle truck | SD40-2 |
+| `bogie_emd_d.png` | Four-axle D truck of the Union Pacific DDA40X | DDA40X |
+| `bogie_europe_b.png` | Modern European two-axle locomotive bogie: welded frame, coil springs, disc wheels | Taurus, Re 460, TGV and ICE 1 power cars |
+| `bogie_europe_c.png` | Three-axle locomotive bogie of the M62 / V63 / Deltic kind | M62, Deltic, V63 |
+| `bogie_gg1_front.png` | Front half of the GG1's running gear: two-axle guiding truck, then three coupled driving wheels | GG1 |
+| `bogie_gg1_rear.png` | Rear half of the GG1's running gear: three coupled driving wheels, then a two-axle guiding truck | GG1 |
+| `bogie_croc.png` | Crocodile rod drive: three coupled spoked wheels, a jackshaft and coupling rods | Crocodile snouts |
+| `bogie_coach.png` | Two-axle passenger coach bogie with leaf springs | Steel Coach |
+| `bogie_coach6.png` | Six-wheel heavyweight passenger truck with equalisers and leaf springs | Pullman |
 
 ## Buildings
 

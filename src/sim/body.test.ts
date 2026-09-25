@@ -46,6 +46,7 @@ describe('independent bogies', () => {
       const six = vehicleSpec({ size, bogieAxles: 3 });
       expect(four.segments[0].bogie).toBe('bogie');
       expect(six.segments[0].bogie).toBe('bogie3');
+      expect(vehicleSpec({ size, bogieAxles: 4 }).segments[0].bogie).toBe('bogie4');
       for (const cls of ['regular', 'high_speed'] as const)
         expect(measure(four, cls)).toEqual(measure(six, cls));
     }

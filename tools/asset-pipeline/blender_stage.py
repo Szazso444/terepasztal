@@ -447,11 +447,15 @@ def main():
                                        f"({length:.1f} m into {L_tiles} tiles). Change size_tiles, length_m or split_m.")
                 tiles_p, footprint = [L_tiles, 1], [L_tiles * tile, tile]
             else:
-                cx = ccfg["length_factor"]
+                cx = a.get("length_factor") or ccfg["length_factor"]  # its vehicles' compression
                 tiles_p, footprint = None, None
             comp = np.array([cx, wf, 1.0])
             # centred on its own middle and the track, standing where the whole vehicle stands
             M = to4(np.diag(comp)) @ Matrix.Translation(Vector((-(x_hi + x_lo) / 2, -yc, -zg)))
+            if cat == "bogie" and a.get("anchor_offset_m"):
+                # the game hangs a bogie at its pivot; a steam driver set sits ahead of the rear
+                # pivot, so draw it that far forward of its anchor (metres, after compression)
+                M = Matrix.Translation(Vector((a["anchor_offset_m"], 0, 0))) @ M
             plo, phi = local_bounds(ob, M)
             if footprint is None:
                 footprint = [float(phi[0] - plo[0]), float(phi[1] - plo[1])]

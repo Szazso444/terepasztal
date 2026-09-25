@@ -1,22 +1,29 @@
 import { describe, it, expect } from 'vitest';
 import { content } from '../data/content';
-import { bogieFrame, locoFrame, wagonFrame } from './frames';
+import { bogieFrame, bogieStyleOf, locoFrame, wagonFrame } from './frames';
 
 const atlas = (...keys: string[]) => ({ has: (k: string) => keys.includes(k) });
 
-describe('bogieFrame', () => {
-  it("uses a vehicle's own style, drawn for its part where there is one", () => {
-    const a = atlas('rolling/bogie_steam_engine_f3', 'rolling/bogie_steam_f3');
-    expect(bogieFrame(a, 'steam', 'bogie', 'engine', 3)).toBe('rolling/bogie_steam_engine_f3');
-    expect(bogieFrame(a, 'steam', 'bogie', 'tender', 3)).toBe('rolling/bogie_steam_f3');
+describe('bogie styles', () => {
+  it('take one style for every bogie, or one per part and position', () => {
+    expect(bogieStyleOf('blomberg', 'body', 1)).toBe('blomberg');
+    const steam = { engine: ['leading', 'pacific'], tender: 'tender_truck' };
+    expect(bogieStyleOf(steam, 'engine', 0)).toBe('leading');
+    expect(bogieStyleOf(steam, 'engine', 1)).toBe('pacific');
+    expect(bogieStyleOf(steam, 'tender', 1)).toBe('tender_truck');
+    // a part the style does not name keeps the generic truck; a short list repeats its last entry
+    expect(bogieStyleOf(steam, 'cradle', 0)).toBeUndefined();
+    expect(bogieStyleOf({ body: ['a', 'b'] }, 'body', 2)).toBe('b');
+    expect(bogieStyleOf(undefined, 'body', 0)).toBeUndefined();
   });
 
-  it('falls back to the generic truck of the same kind', () => {
-    // a style drawn for one kind or facing never stands in for another
-    const a = atlas('rolling/bogie_emd_f3', 'rolling/bogie_emd_body_f3');
-    expect(bogieFrame(a, 'emd', 'bogie3', 'body', 3)).toBe('rolling/bogie3_f3');
-    expect(bogieFrame(a, 'emd', 'bogie', 'body', 4)).toBe('rolling/bogie_f4');
-    expect(bogieFrame(a, undefined, 'bogie', 'body', 3)).toBe('rolling/bogie_f3');
+  it("draw the style's own sprite when the atlas has it, else the generic truck of that kind", () => {
+    const a = atlas('rolling/bogie_pacific_f3');
+    expect(bogieFrame(a, 'pacific', 'bogie', 3)).toBe('rolling/bogie_pacific_f3');
+    // a style is one sprite whatever the kind: the pony truck serves a 2- and a 3-axle chassis
+    expect(bogieFrame(a, 'pacific', 'bogie3', 3)).toBe('rolling/bogie_pacific_f3');
+    expect(bogieFrame(a, 'pacific', 'bogie4', 4)).toBe('rolling/bogie4_f4');
+    expect(bogieFrame(a, undefined, 'bogie3', 3)).toBe('rolling/bogie3_f3');
   });
 });
 

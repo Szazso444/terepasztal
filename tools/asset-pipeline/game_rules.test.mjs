@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   DRAWN_FACINGS,
@@ -71,5 +72,28 @@ describe('game_rules.py', () => {
       );
       expect(parts.map(([, , rendered]) => rendered)).toEqual(firsts);
     }
+  });
+});
+
+describe('bogie roster', () => {
+  const read = (f) =>
+    JSON.parse(readFileSync(new URL(`../../src/data/${f}`, import.meta.url), 'utf8'));
+  const named = new Set();
+  for (const d of [...read('locomotives.json'), ...read('wagons.json')]) {
+    const s = d.bogieStyle;
+    for (const v of s === undefined ? [] : typeof s === 'string' ? [s] : Object.values(s))
+      for (const name of [v].flat()) if (name !== 'none') named.add(name);
+  }
+  const rows = readFileSync(new URL('./assets.csv', import.meta.url), 'utf8')
+    .split('\n')
+    .map((l) => /^#?bogie_[a-z0-9_]+,.*rolling\/bogie_([a-z0-9_]+)_f\{f\}/.exec(l)?.[1])
+    .filter(Boolean);
+
+  it('has an image row for every bogie style a vehicle names', () => {
+    for (const name of named) expect(rows).toContain(name);
+  });
+
+  it('asks for no bogie that no vehicle rides on', () => {
+    for (const row of rows) expect(named.has(row)).toBe(true);
   });
 });

@@ -16,7 +16,7 @@ Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, til
 |---|---|
 | `ASTRA.md` | the brief for Astra, the image model that makes the input images: rules, prompt template, shot list |
 | `pipeline.toml` | all settings: paths, ComfyUI URL, grid, render, class rules |
-| `assets.csv` | one row per asset: id, image, category (vehicle/bogie/building), size_tiles, length_m, width_m, height_m, align (auto/none), yaw_offset_deg, plan, split_m, clip_below_m, game_frame |
+| `assets.csv` | one row per asset: id, image, category (vehicle/bogie/building), size_tiles, length_m, width_m, height_m, align (auto/none), yaw_offset_deg, plan, split_m, clip_below_m, anchor_offset_m, length_factor, game_frame; `game_rules.test.mjs` checks its bogie rows against the styles in `src/data` |
 | `workflows/image_to_3d_api.json` | ComfyUI workflow in API format (ComfyUI: Workflow -> Export (API)). UI-format JSON is rejected. |
 | `run.py` | orchestrator, CSV validation, logging, summary |
 | `comfy_client.py` | ComfyUI HTTP API: upload, patch graph, queue, poll history, download GLB |
@@ -70,7 +70,10 @@ Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>
 - `clip_below_m` cuts away everything below that height, the model's own running gear, for medium and large vehicles:
   the game draws their bogies as separate sprites under the body. The body keeps its height above the rail. One height,
   or one per rendered part front to back (`2.1;1.1`: an engine above its driving wheels, its tender above its bogies).
-- Bogies (`category = bogie`): real length x `classes.bogie.length_factor`, width x `DRAWN_WIDTH`, 25 facings.
+- Bogies (`category = bogie`): real length x `length_factor` (the row's, else `classes.bogie.length_factor`; use the
+  compression of the vehicles it rides under), width x `DRAWN_WIDTH`, 25 facings. `anchor_offset_m` draws the group
+  that far ahead of the pivot the game hangs it at: a steam driver set sits well ahead of its engine's rear pivot.
+  The roster's offsets are starting values; tune them against the game.
 - Buildings: height real, footprint compressed uniformly and snapped to whole tiles (`footprint_factor`, `footprint_range`, `fill`).
   With `size_tiles` the footprint is fixed at N x N (game stations 1x1, depots 2x2), allowed down to `sized_footprint_range`,
   and height is compressed by footprint factor ^ `sized_height_exponent` so a crushed footprint does not stand as a tower.
@@ -81,16 +84,17 @@ Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>
   `rolling/wagon_<id>_f{f}` (ids from `src/data`), wins over the shared body sprite
   `rolling/loco_<body>_<size>_<paint>_{part}_f{f}` / `rolling/wagon_<body>_<size>_<paint>_f{f}` that the generators draw.
   A prototype frame is checked against `src/data`: `size_tiles` and `plan` must be the ones the game uses for that id.
-  Bogies: `rolling/<bogie|bogie3|engine_unit>_<style>[_<part>]_f{f}`; a locomotive or wagon with
-  `"bogieStyle": "<style>"` in `src/data` draws them, the `_<part>` one under that body part (steam drivers under
-  `engine`, the plain truck under `tender`), everything else keeps the generic `rolling/<kind>_f<n>`.
+  Bogies: `rolling/bogie_<style>_f{f}`, one sprite per style whatever the kind of bogie it stands in for. A vehicle's
+  `bogieStyle` in `src/data` is one style for all its bogies, or per body part, where a list goes over that part's
+  bogies from its own front: `{"engine": ["leading", "pacific"], "tender": "tender_truck"}`. `"none"` draws no bogie
+  (a Garratt's cradle). Anything unstyled keeps the generic `rolling/<kind>_f<n>`. The game turns a styled bogie to
+  face its vehicle's own front, reversed or mirrored.
   Buildings take `{r}` for rotation (dir 0 -> r0, dir 1 -> r1), e.g. `structures/depot_r{r}`, or no placeholder for dir 0
   alone, e.g. `structures/station_1`. Keys must match what `src/art/*.ts` emits; the game's debug panel (backtick) lists them.
 - `plan` must be the plan the game uses for that body (`plan` in `src/data/locomotives.json`), or the parts are named
   for segments the game never asks for.
 - Medium and large vehicles get separate bogie sprites under the body, steam included (the game's own steam bodies
-  have no wheels either); without `clip_below_m` a model with its own bogies shows both. Styles in use: steam, emd,
-  europe, classic, coach.
+  have no wheels either); without `clip_below_m` a model with its own bogies shows both.
 - Group comes from the key: `rolling/loco_*` -> rolling, other `rolling/*` -> wagons, `structures/*` -> structures.
 - Every group written is marked `"partial": true`: the game keeps its generator and lays these frames over it.
   `art-src/<group>/atlas.json` records which asset owns each frame; a rerun of the asset replaces its own frames only.

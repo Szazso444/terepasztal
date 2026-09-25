@@ -62,7 +62,11 @@ def load_assets(csv_path: Path, only):
                      # cut positions in metres from the nose, ';' between them (',' is the CSV's)
                      "split_m": [float(v) for v in (row.get("split_m") or "").split(";") if v.strip()],
                      # one height, or one per rendered part front to back, ';' between them
-                     "clip_below_m": [float(v) for v in (row.get("clip_below_m") or "").split(";") if v.strip()]}
+                     "clip_below_m": [float(v) for v in (row.get("clip_below_m") or "").split(";") if v.strip()],
+                     # bogies: drawn this far ahead of the pivot the game hangs them at
+                     "anchor_offset_m": num(row.get("anchor_offset_m")) or 0.0,
+                     # bogies: compression along the track, that of the vehicles they ride under
+                     "length_factor": num(row.get("length_factor"))}
             except ValueError as e:
                 errors.append(f"line {ln} ({aid}): {e}")
                 continue
@@ -72,6 +76,8 @@ def load_assets(csv_path: Path, only):
                 err.append(f"{cat} needs length_m")
             if cat != "vehicle" and (a["plan"] or a["split_m"]):
                 err.append("plan and split_m are for vehicles")
+            if cat != "bogie" and (a["anchor_offset_m"] or a["length_factor"]):
+                err.append("anchor_offset_m and length_factor are for bogies")
             if cat == "vehicle":
                 if a["size_tiles"] and a["size_tiles"] not in game_rules.SIZE_TILES:
                     err.append(f"a game vehicle is {sorted(game_rules.SIZE_TILES)} tiles long")

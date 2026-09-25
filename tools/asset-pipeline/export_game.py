@@ -3,8 +3,8 @@
 An asset takes part when its `game_frame` in assets.csv names the frame it replaces:
   vehicles  `{f}` is the game facing and `{part}` the body part of its plan,
             e.g. rolling/loco_steam_std_medium_black_{part}_f{f}, rolling/wagon_box_small_iron_f{f}
-  bogies    `{f}`, e.g. rolling/bogie_emd_f{f}, or for one body part rolling/bogie_steam_engine_f{f};
-            the style after the kind is the vehicles' bogieStyle
+  bogies    `{f}`: rolling/bogie_<style>_f{f}, e.g. rolling/bogie_pacific_f{f}; <style> is a name the
+            vehicles use in their bogieStyle (src/data)
   buildings `{r}` is the rotation (dir 0 -> r0, dir 1 -> r1), e.g. structures/depot_r{r};
             without it the building supplies dir 0 alone, e.g. structures/station_1
 Every group written here is marked partial: the game keeps its generator and lays these frames
@@ -59,9 +59,12 @@ def check_template(a: dict):
     if category == "vehicle":
         err += check_prototype(a)
     if category == "bogie":
-        kinds = "|".join(game_rules.BOGIE_KINDS)
-        if not re.fullmatch(rf"rolling/({kinds})(_[a-z0-9_]+)?_f\{{f\}}", template):
-            err.append(f"bogie game_frame is rolling/<{kinds}>[_<style>]_f{{f}}")
+        # a style names one sprite whatever the kind of bogie it stands in for (src/art/frames.ts)
+        m = re.fullmatch(r"rolling/bogie_([a-z0-9_]+)_f\{f\}", template)
+        if not m:
+            err.append("bogie game_frame is rolling/bogie_<style>_f{f}")
+        elif m.group(1) == "none":
+            err.append('style "none" means no bogie; it has no sprite')
     try:
         group_of(template)
     except GameExportError as e:
