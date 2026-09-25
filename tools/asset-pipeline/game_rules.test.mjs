@@ -10,6 +10,7 @@ import {
   facingAngle,
   vehicleSpec,
 } from '../../src/sim/body';
+import { TILE_W } from '../../src/engine/iso';
 
 // The pipeline renders in Python; game_rules.py is its copy of the game's rules. These tests fail
 // when body.ts changes and the copy does not.
@@ -44,6 +45,12 @@ describe('game_rules.py', () => {
       expect(Math.cos((yaw * Math.PI) / 180)).toBeCloseTo(Math.cos(a), 9);
       expect(Math.sin((yaw * Math.PI) / 180)).toBeCloseTo(-Math.sin(a), 9);
     }
+  });
+
+  it('renders at the tile size of the game', () => {
+    // sprites are drawn at px_per_m = tile_px / (tile_m * sqrt 2); any other tile_px is the wrong size in game
+    const toml = readFileSync(new URL('./pipeline.toml', import.meta.url), 'utf8');
+    expect(Number(/^tile_px\s*=\s*(\d+)/m.exec(toml)?.[1])).toBe(TILE_W);
   });
 
   it('draws rolling stock as wide as the generators do', () => {

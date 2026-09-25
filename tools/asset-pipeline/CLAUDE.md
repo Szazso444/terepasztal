@@ -53,7 +53,7 @@ Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>
   (warning "turned round"); any number there, 0 included, is kept as given.
 - Camera: orthographic, elevation 30, azimuth 45 (rotation 60, 0, 45). World +X projects to screen lower-right, +Y upper-right.
 - Pixel density `px_per_m = tile_px / (tile_m * sqrt(2))` is identical for every asset. `tile_px = 64` is the game's
-  `TILE_W` (`src/engine/iso.ts`); changing it makes sprites the wrong size in the game.
+  `TILE_W` (`src/engine/iso.ts`, `64 * ART_SCALE` where a branch has it); `game_rules.test.mjs` fails when they differ.
 - Buildings: direction i = heading i*360/dirs degrees counter-clockwise from +X seen from above, 4 dirs.
 - Vehicles: `dirs = "game"` renders the game's 25 drawn facings (`src/sim/body.ts`: `FACINGS = 48`, `DRAWN_FACINGS`),
   facing f at yaw -7.5 f degrees, because game tile +ty is Blender -Y. Facing 0 points screen down-right. The renderer
