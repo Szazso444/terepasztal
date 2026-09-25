@@ -1,0 +1,4 @@
+# everything the pipeline writes, and the photos it reads
+assets_out/
+input/
+__pycache__/

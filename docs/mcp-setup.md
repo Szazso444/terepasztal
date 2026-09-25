@@ -299,7 +299,10 @@ trimming cuts away, so you measure it once.
    { "anchor": { "ax": 256, "ay": 336 }, "frames": { "rolling/loco_x_f6": { "ax": 250, "ay": 336 } } }
    ```
 
-   `anchor` applies to every frame; `frames` overrides it by name for the odd one out.
+   `anchor` applies to every frame; `frames` overrides it by name for the odd one out. Add
+   `"partial": true` when the folder holds only some of the group's frames: the packed table
+   carries the flag, and the game then keeps the generator for everything the file does not
+   name instead of replacing the whole group.
 
 4. Pack:
 
@@ -313,8 +316,12 @@ trimming cuts away, so you measure it once.
    global: the `wagons` group supplies keys named `rolling/wagon_*`. `--no-trim`, `--max`, `--pad`,
    `--src` and `--out` are there too; `--help` is the usage line you get from a bad invocation.
 
-5. Reload the game. The debug panel reports each group as `png` or `procedural`, so you can see
-   which override took.
+5. Reload the game. `game.atlas.groupOrigin` in the browser console reports each group as `png`,
+   `png+procedural` (partial) or `procedural`, so you can see which override took.
+
+`tools/asset-pipeline` automates steps 1-4 from a photo: ComfyUI builds the model, Blender aligns
+and scales it and renders the facings with this camera, and its game stage writes `art-src/` with
+`"partial": true` and packs. Its `CLAUDE.md` has the details.
 
 The packer is deterministic: re-packing unchanged art produces byte-identical files, so it is safe
 to run on every build. `tools/pack-atlas.test.mjs` holds it to the atlas contract.

@@ -1,0 +1,87 @@
+# Paths are relative to this file unless absolute.
+[paths]
+assets_csv   = "assets.csv"
+out_root     = "assets_out"                       # everything the pipeline writes lands here
+workflow_api = "workflows/image_to_3d_api.json"   # ComfyUI: Workflow -> Export (API)
+blender      = "blender"                          # Windows: "C:/Program Files/Blender Foundation/Blender 5.0/blender.exe"
+blender_timeout_s = 3600
+
+[comfy]
+url        = "http://127.0.0.1:8000"   # ComfyUI Desktop's port (Settings -> Server-Config); a manual install uses 8188
+timeout_s  = 1800            # per asset
+poll_s     = 2.0
+model      = "keep"          # "keep" | "pixal3d" | "trellis2"  (drives the PrimitiveBoolean switch)
+# Node ids from the API export. Empty = auto-detect by class_type (must be unique).
+load_image_node = ""
+save_node       = ""
+switch_node     = ""
+
+# Generic input overrides applied to every run: "<node_id>.<input_name>" = value.
+# Unknown node/input aborts the run and lists what exists. Check names in the API export.
+[comfy.set]
+# "288.value" = 2048        # Texture Resolution primitive (4096 is overkill for sprites)
+
+[grid]
+tile_m        = 8.0          # tile side in meters
+tile_px       = 64           # tile diamond width in px (height = tile_px / 2); the game's TILE_W, src/engine/iso.ts
+elevation_deg = 30.0         # 2:1 because sin(30) = 0.5
+azimuth_deg   = 45.0
+
+[align]
+enabled       = true
+pitch_range   = [-65.0, 20.0]  # photo elevations 0..60 deg map to pitch -60..0; range excludes 90-deg-equivalent solutions
+roll_range    = [-25.0, 25.0]
+sample_faces  = 20000
+min_score     = 0.70           # below this the mesh is not boxy enough; asset fails unless align = "none"
+
+[classes.vehicle]
+dirs           = "game"     # the game's 25 drawn facings (src/sim/body.ts); an integer N renders N even headings
+coupler_gap_m  = 0.4          # slot length = size_tiles * tile_m - gap (the game's bodies are size 1..3 tiles);
+                              # a cut vehicle: every part's slot is its segment length * tile_m - gap
+# width across is scaled by the game's DRAWN_WIDTH (src/sim/body.ts), not set here
+compress_range = [0.45, 1.25] # length factor outside this range aborts the run: a typo in length_m, not a
+                              # prototype. The game's slots are short: a 21 m A3 goes into 2 tiles at 0.72,
+                              # the 33 m Daylight at 0.46, the 13.5 m SW1 into 1 tile at 0.56
+max_dim_error  = 0.20         # width/height mismatch vs spec that triggers a warning
+
+[classes.bogie]
+dirs           = "game"
+length_factor  = 0.75         # along the track, about what the bodies get (0.72-0.83); width x DRAWN_WIDTH
+max_dim_error  = 0.20
+
+[classes.building]
+dirs             = 4
+footprint_factor = 0.75          # target x/y compression; height always real
+footprint_range  = [0.55, 1.0]   # actual factor is snapped into whole tiles within this range
+fill             = 0.92          # share of the tile footprint the building may occupy
+sized_footprint_range = [0.3, 1.0]  # with size_tiles set: the game fixes the footprint, so more compression is allowed
+sized_height_exponent = 0.5         # with size_tiles set: height factor = footprint factor ^ this (0 real, 1 uniform)
+max_dim_error    = 0.20
+
+[game]
+# The "game" stage copies finished sprites of assets with a game_frame into the game and packs them.
+repo_root = "../.."             # the terepasztal checkout
+art_src   = "art-src"           # per-group frame folders, relative to repo_root (tools/pack-atlas.mjs --src)
+out       = "public/assets"     # packed <group>.png + .json, relative to repo_root
+node      = "node"
+pack      = true                # false: stop after writing art-src, pack later with npm run pack-atlas
+
+[render]
+engine           = "CYCLES"    # "CYCLES" works headless everywhere; "BLENDER_EEVEE" needs a GPU context
+device           = "CPU"       # "GPU" tries OPTIX, CUDA, HIP, METAL, ONEAPI
+samples          = 32
+supersample      = 2           # render at Nx, box-downsample in post
+pad_px           = 4
+shadow           = true        # shadow-catcher ground plane
+sun_azimuth_deg  = -100.0      # world azimuth the light comes FROM (camera sits at -45)
+sun_elevation_deg = 45.0
+sun_strength     = 3.0
+ambient          = 0.6
+force_dielectric = true        # zero AI-generated metallic maps (usually wrong, renders dark)
+debug_views      = true        # raw/aligned orthographic previews per asset
+debug_res        = 320
+
+[post]
+alpha_hard_threshold = 0       # 0 = keep soft alpha (needed for shadows); e.g. 128 for hard pixel edges
+palette_colors       = 0       # 0 = off; else per-asset shared palette size
+preview_scale        = 2

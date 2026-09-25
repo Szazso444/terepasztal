@@ -4,7 +4,7 @@ import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
 import { PAL, hex, type RGB } from '../art/palette';
-import { locoFrame, wagonFrame, loadKind } from '../art/frames';
+import { locoFrame, wagonFrame, loadKind, bogieFrame, bogieStyleOf } from '../art/frames';
 import {
   facingOf,
   DRAWN_FACINGS,
@@ -167,6 +167,7 @@ export class TrainRenderer {
           const frameFor = isLoco
             ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
             : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
+          const styles = (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).bogieStyle;
           this.pose(s, frameFor, x, y, shown, 15);
           s.tint = tint;
           c.undercarriage.zIndex = Math.min(c.undercarriage.zIndex, s.zIndex - 1);
@@ -180,7 +181,17 @@ export class TrainRenderer {
               const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
               const bs = c.bogies[bi++];
               if (!bs) return;
-              this.pose(bs, (f) => `rolling/${b.kind}_f${f}`, bx, by, ba, 14);
+              // bogies are posed in track order; a reversed vehicle or a mirrored segment meets
+              // them back to front, and its styled trucks (cylinders ahead) must face its own front
+              const back = t.reversed !== seg.mirror;
+              const nb = seg.bogies.length;
+              const style = bogieStyleOf(styles, seg.part, back ? nb - 1 - k : k);
+              if (style === 'none') {
+                bs.visible = false;
+                return;
+              }
+              const heading = ba + (back ? Math.PI : 0);
+              this.pose(bs, (f) => bogieFrame(this.atlas, style, b.kind, f), bx, by, heading, 14);
               bs.visible &&= s.visible;
               // always just under its own body: the depth key is by position, and a bogie
               // ahead of the body centre (towards the camera) would otherwise paint over it

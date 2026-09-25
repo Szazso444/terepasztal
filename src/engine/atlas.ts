@@ -12,6 +12,8 @@ export interface FrameDef {
 export interface AtlasImage {
   image: HTMLCanvasElement | HTMLImageElement;
   frames: Record<string, FrameDef>;
+  /** a file atlas that replaces only its own frames and keeps the generator for the rest */
+  partial?: boolean;
 }
 export type AtlasGenerator = () => AtlasImage;
 
@@ -27,12 +29,14 @@ export interface FrameInfo {
 /**
  * Asset pipeline. Each named atlas group is loaded from `/assets/<group>.json` + `.png` when
  * present (exported by any packer that writes {frames:{name:{x,y,w,h,ax,ay}}}); otherwise the
- * procedural generator supplies it. Game code only ever asks for frame names.
+ * procedural generator supplies it. A file marked `"partial": true` is layered over the
+ * generator instead, so a handful of rendered frames can replace their procedural namesakes
+ * without the rest of the group going missing. Game code only ever asks for frame names.
  */
 export class AtlasRegistry {
   private frames = new Map<string, FrameInfo>();
   private sources: ImageSource[] = [];
-  readonly groupOrigin = new Map<string, 'png' | 'procedural'>();
+  readonly groupOrigin = new Map<string, 'png' | 'procedural' | 'png+procedural'>();
   /** Raw atlas images by group, kept for the debug atlas viewer. */
   readonly images = new Map<string, HTMLCanvasElement | HTMLImageElement>();
 
@@ -43,9 +47,11 @@ export class AtlasRegistry {
   private async loadGroup(name: string, generate: AtlasGenerator) {
     const fromFile = await this.tryLoadFile(name);
     if (fromFile) {
+      // generated first, so the file's frames win where the names collide
+      if (fromFile.partial) this.register(generate());
       this.register(fromFile);
       this.images.set(name, fromFile.image);
-      this.groupOrigin.set(name, 'png');
+      this.groupOrigin.set(name, fromFile.partial ? 'png+procedural' : 'png');
       return;
     }
     const gen = generate();
@@ -60,14 +66,14 @@ export class AtlasRegistry {
       if (!res.ok) return null;
       const ct = res.headers.get('content-type') ?? '';
       if (!ct.includes('json')) return null;
-      const json = (await res.json()) as { frames: Record<string, FrameDef> };
+      const json = (await res.json()) as { frames: Record<string, FrameDef>; partial?: boolean };
       const image = new Image();
       await new Promise<void>((ok, fail) => {
         image.onload = () => ok();
         image.onerror = () => fail(new Error('atlas png missing'));
         image.src = `/assets/${name}.png`;
       });
-      return { image, frames: json.frames };
+      return { image, frames: json.frames, partial: json.partial === true };
     } catch {
       return null;
     }

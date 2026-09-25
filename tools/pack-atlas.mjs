@@ -19,6 +19,9 @@
  *   3. bottom-centre of the frame
  * Anchors are given against the untrimmed render, and trimming corrects them, so a fixed
  * camera and one `anchor` entry covers a whole group.
+ *
+ * `"partial": true` in `<src>/atlas.json` is copied to the output. The game then keeps the
+ * group's generator and lays these frames over it, instead of replacing the whole group.
  */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
@@ -137,9 +140,12 @@ function main() {
   writeFileSync(pngPath, PNG.sync.write(sheet));
   // Sorted keys so a re-pack of unchanged art produces an unchanged file.
   const ordered = Object.fromEntries(Object.keys(frames).sort().map((k) => [k, frames[k]]));
-  writeFileSync(jsonPath, `${JSON.stringify({ frames: ordered }, null, 2)}\n`);
+  const table = meta.partial === true ? { partial: true, frames: ordered } : { frames: ordered };
+  writeFileSync(jsonPath, `${JSON.stringify(table, null, 2)}\n`);
 
-  console.log(`${opts.group}: ${items.length} frames -> ${size.w}x${size.h}`);
+  console.log(
+    `${opts.group}: ${items.length} frames -> ${size.w}x${size.h}${meta.partial === true ? ' (partial)' : ''}`,
+  );
   console.log(`  ${pngPath}`);
   console.log(`  ${jsonPath}`);
   if (skipped.length) console.log(`  skipped (fully transparent): ${skipped.join(', ')}`);

@@ -9,6 +9,7 @@ import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder } from './iso3d';
 import {
   DRAWN_FACINGS,
+  DRAWN_WIDTH,
   facingAngle,
   vehicleSpec,
   type BogieKind,
@@ -110,7 +111,7 @@ class Frame {
   }
   /** tile-space offset of a body point: l along the heading (front = +), w across */
   along(l: number, w: number) {
-    w *= 1.3;
+    w *= DRAWN_WIDTH;
     return {
       x: Math.cos(this.a) * l - Math.sin(this.a) * w,
       y: Math.sin(this.a) * l + Math.cos(this.a) * w,
@@ -150,7 +151,7 @@ class Frame {
       cy: c.y,
       angle: this.a,
       len: o.len,
-      wid: o.wid * 1.3,
+      wid: o.wid * DRAWN_WIDTH,
       h: o.h,
       z0: o.z0 ?? 0,
       top: o.top,
@@ -992,11 +993,17 @@ function wheelFrame(f: Frame, xs: number[], len: number) {
 }
 
 function bogie(kind: BogieKind, f: Frame) {
-  const len = kind === 'bogie' ? 0.34 : kind === 'bogie3' ? 0.52 : 0.7;
+  const len = kind === 'bogie' ? 0.34 : kind === 'bogie3' ? 0.52 : kind === 'bogie4' ? 0.66 : 0.7;
   // Each axle carries two wheels. Drawing both sides around the narrow frame keeps the
   // four- and six-wheel groups legible when the truck swivels out from under its body.
   const xs =
-    kind === 'bogie' ? [-0.12, 0.12] : kind === 'bogie3' ? [-0.18, 0, 0.18] : [-0.24, 0, 0.24];
+    kind === 'bogie'
+      ? [-0.12, 0.12]
+      : kind === 'bogie3'
+        ? [-0.18, 0, 0.18]
+        : kind === 'bogie4'
+          ? [-0.24, -0.08, 0.08, 0.24]
+          : [-0.24, 0, 0.24];
   wheelFrame(f, xs, len);
   if (kind === 'engine_unit') {
     for (const w of [-0.14, 0.14])
@@ -1099,7 +1106,7 @@ export function generateWagonAtlas(): AtlasImage {
       const f = new Frame(1, facingAngle(fi), 500 + fi);
       ab.add(`rolling/load_${k}_f${fi}`, load(k, f).toImageData(), f.ox, f.oy);
     }
-    for (const k of ['bogie', 'bogie3', 'engine_unit'] as const) {
+    for (const k of ['bogie', 'bogie3', 'bogie4', 'engine_unit'] as const) {
       const f = new Frame(1, facingAngle(fi), 600 + fi);
       ab.add(`rolling/${k}_f${fi}`, bogie(k, f).toImageData(), f.ox, f.oy);
     }
