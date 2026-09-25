@@ -55,17 +55,17 @@ station_victorian,input/station_victorian.png,building,1,22,,,auto,0,,,,structur
 #coal_cart,input/coal_cart.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_coal_cart_f{f},design length; the game's own wagon
 #fuel_cart,input/fuel_cart.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_fuel_cart_f{f},design length; the game's own wagon
 #battery_cart,input/battery_cart.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_battery_cart_f{f},design length; the game's own wagon
-#bogie_steam_engine,input/bogie_steam_engine.png,bogie,,2.8,,,auto,,,,,rolling/bogie_steam_engine_f{f},steam drivers under the engine
-#bogie_steam,input/bogie_steam.png,bogie,,2.4,,,auto,,,,,rolling/bogie_steam_f{f},steam tender and Garratt cradle bogie
-#bogie_steam_frame,input/engine_unit_steam.png,bogie,,5.2,,,auto,,,,,rolling/engine_unit_steam_f{f},Big Boy four-axle engine unit
-#bogie_emd,input/bogie_emd.png,bogie,,3.4,,,auto,,,,,rolling/bogie_emd_f{f},EMD Blomberg B
+#bogie_steam_engine,input/bogie_steam_engine.png,bogie,,5.0,,,auto,,,,,rolling/bogie_steam_engine_f{f},steam drivers under the engine
+#bogie_steam,input/bogie_steam.png,bogie,,2.6,,,auto,,,,,rolling/bogie_steam_f{f},steam tender and Garratt cradle bogie
+#bogie_steam_frame,input/engine_unit_steam.png,bogie,,8.0,,,auto,,,,,rolling/engine_unit_steam_f{f},Big Boy four-axle engine unit
+#bogie_emd,input/bogie_emd.png,bogie,,3.8,,,auto,,,,,rolling/bogie_emd_f{f},EMD Blomberg B
 #bogie_emd3,input/bogie3_emd.png,bogie,,4.6,,,auto,,,,,rolling/bogie3_emd_f{f},EMD Flexicoil C
-#bogie_europe,input/bogie_europe.png,bogie,,3.3,,,auto,,,,,rolling/bogie_europe_f{f},modern European B
-#bogie_europe3,input/bogie3_europe.png,bogie,,4.4,,,auto,,,,,rolling/bogie3_europe_f{f},European C
-#bogie_classic,input/bogie_classic.png,bogie,,2.8,,,auto,,,,,rolling/bogie_classic_f{f},1920s-30s electric B
-#bogie_classic3,input/bogie3_classic.png,bogie,,4.2,,,auto,,,,,rolling/bogie3_classic_f{f},1920s-30s electric C
-#bogie_classic3_engine,input/bogie3_classic_engine.png,bogie,,4.2,,,auto,,,,,rolling/bogie3_classic_engine_f{f},Crocodile rod-drive C under its snouts
-#bogie_coach,input/bogie_coach.png,bogie,,3.2,,,auto,,,,,rolling/bogie_coach_f{f},passenger coach bogie
+#bogie_europe,input/bogie_europe.png,bogie,,3.9,,,auto,,,,,rolling/bogie_europe_f{f},modern European B
+#bogie_europe3,input/bogie3_europe.png,bogie,,5.0,,,auto,,,,,rolling/bogie3_europe_f{f},European C
+#bogie_classic,input/bogie_classic.png,bogie,,3.6,,,auto,,,,,rolling/bogie_classic_f{f},1920s-30s electric B
+#bogie_classic3,input/bogie3_classic.png,bogie,,4.6,,,auto,,,,,rolling/bogie3_classic_f{f},1920s-30s electric C
+#bogie_classic3_engine,input/bogie3_classic_engine.png,bogie,,5.2,,,auto,,,,,rolling/bogie3_classic_engine_f{f},Crocodile rod-drive C under its snouts
+#bogie_coach,input/bogie_coach.png,bogie,,3.6,,,auto,,,,,rolling/bogie_coach_f{f},passenger coach bogie
 #station_1,input/station_1.png,building,1,,,4,auto,0,,,,structures/station_1,station level 1; height_m sets the scale
 #station_2,input/station_2.png,building,1,,,6,auto,0,,,,structures/station_2,station level 2; height_m sets the scale
 #station_3,input/station_3.png,building,1,,,10,auto,0,,,,structures/station_3,station level 3; height_m sets the scale

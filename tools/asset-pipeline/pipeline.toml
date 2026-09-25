@@ -46,7 +46,7 @@ max_dim_error  = 0.20         # width/height mismatch vs spec that triggers a wa
 
 [classes.bogie]
 dirs           = "game"
-length_factor  = 1.0          # length along the track; width across is scaled by DRAWN_WIDTH like the bodies
+length_factor  = 0.75         # along the track, about what the bodies get (0.72-0.83); width x DRAWN_WIDTH
 max_dim_error  = 0.20
 
 [classes.building]
