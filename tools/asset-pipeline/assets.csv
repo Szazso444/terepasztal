@@ -3,3 +3,67 @@ station_victorian,input/station_victorian.png,building,1,22,,,auto,0,,,,structur
 #loco_example,input/loco_example.png,vehicle,2,18.9,3.0,4.3,auto,,rigid,,1.0,rolling/loco_electric_box_medium_red_{part}_f{f},Bo-Bo electric; clip_below_m drops its own bogies for the game's
 #tender_example,input/tender_example.png,vehicle,2,21.2,2.9,4.1,auto,,tender,,,rolling/loco_steam_std_medium_black_{part}_f{f},engine + tender: cut automatically; split_m (m from the nose) overrides
 #bogie_example,input/bogie_example.png,bogie,,3.2,2.6,1.1,auto,,,,,rolling/bogie_y25_f{f},two-axle bogie; locomotives and wagons with bogieStyle y25 use it
+# roster for ASTRA.md: remove the # once input/<file> exists
+#rocket,input/rocket.png,vehicle,1,,,,auto,,rigid,,,rolling/loco_rocket_{part}_f{f},length_m: fill in (over buffers)
+#adler,input/adler.png,vehicle,1,,,,auto,,rigid,,,rolling/loco_adler_{part}_f{f},length_m: fill in (over buffers)
+#john_bull,input/john_bull.png,vehicle,1,,,,auto,,rigid,,,rolling/loco_john_bull_{part}_f{f},length_m: fill in (over buffers)
+#mav375,input/mav375.png,vehicle,1,,,,auto,,rigid,,,rolling/loco_mav375_{part}_f{f},length_m: fill in (over buffers)
+#general,input/general.png,vehicle,1,,,,auto,,rigid,,,rolling/loco_general_{part}_f{f},length_m: fill in (over buffers)
+#jupiter,input/jupiter.png,vehicle,1,,,,auto,,rigid,,,rolling/loco_jupiter_{part}_f{f},length_m: fill in (over buffers)
+#j94,input/j94.png,vehicle,1,,,,auto,,rigid,,,rolling/loco_j94_{part}_f{f},length_m: fill in (over buffers)
+#mav424,input/mav424.png,vehicle,2,,,,auto,,tender,,,rolling/loco_mav424_{part}_f{f},length_m: fill in (over buffers, engine + tender)
+#k4s,input/k4s.png,vehicle,2,,,,auto,,tender,,,rolling/loco_k4s_{part}_f{f},length_m: fill in (over buffers, engine + tender)
+#drg01,input/drg01.png,vehicle,2,23.9,,,auto,,tender,,,rolling/loco_drg01_{part}_f{f},steam/articulated: set bogieStyle "none" once its sprites are in
+#flying_scotsman,input/flying_scotsman.png,vehicle,2,21.3,,,auto,,tender,,,rolling/loco_flying_scotsman_{part}_f{f},steam/articulated: set bogieStyle "none" once its sprites are in
+#black_five,input/black_five.png,vehicle,2,19.4,,,auto,,tender,,,rolling/loco_black_five_{part}_f{f},steam/articulated: set bogieStyle "none" once its sprites are in
+#nine_f,input/nine_f.png,vehicle,2,20.2,,,auto,,tender,,,rolling/loco_nine_f_{part}_f{f},steam/articulated: set bogieStyle "none" once its sprites are in
+#daylight,input/daylight.png,vehicle,2,,,,auto,,tender,,,rolling/loco_daylight_{part}_f{f},length_m: fill in (over buffers, engine + tender)
+#mallard,input/mallard.png,vehicle,2,21.6,,,auto,,tender,,,rolling/loco_mallard_{part}_f{f},steam/articulated: set bogieStyle "none" once its sprites are in
+#big_boy,input/big_boy.png,vehicle,3,,,,auto,,meyer,,,rolling/loco_big_boy_{part}_f{f},length_m: fill in (over buffers)
+#gmam,input/gmam.png,vehicle,3,,,,auto,,garratt,,,rolling/loco_gmam_{part}_f{f},length_m: fill in (over buffers)
+#sw1,input/sw1.png,vehicle,1,13.5,,,auto,,rigid,,,rolling/loco_sw1_{part}_f{f},
+#class08,input/class08.png,vehicle,1,8.9,,,auto,,rigid,,,rolling/loco_class08_{part}_f{f},
+#m62,input/m62.png,vehicle,2,17.6,,,auto,,rigid,,1.0,rolling/loco_m62_{part}_f{f},
+#f7,input/f7.png,vehicle,2,15.4,,,auto,,rigid,,1.0,rolling/loco_f7_{part}_f{f},
+#sd40,input/sd40.png,vehicle,2,20.9,,,auto,,rigid,,1.0,rolling/loco_sd40_{part}_f{f},
+#deltic,input/deltic.png,vehicle,2,21.2,,,auto,,rigid,,1.0,rolling/loco_deltic_{part}_f{f},
+#dda40x,input/dda40x.png,vehicle,3,29.9,,,auto,,rigid,,1.0,rolling/loco_dda40x_{part}_f{f},
+#kando_v40,input/kando_v40.png,vehicle,1,,,,auto,,rigid,,,rolling/loco_kando_v40_{part}_f{f},length_m: fill in (over buffers)
+#v63,input/v63.png,vehicle,2,19.5,,,auto,,rigid,,1.0,rolling/loco_v63_{part}_f{f},
+#crocodile,input/crocodile.png,vehicle,3,19.5,,,auto,,garratt,,,rolling/loco_crocodile_{part}_f{f},body wheels in the snouts; bogieStyle "none" or a styled bogie3
+#taurus,input/taurus.png,vehicle,2,19.3,,,auto,,rigid,,1.0,rolling/loco_taurus_{part}_f{f},
+#re460,input/re460.png,vehicle,2,18.5,,,auto,,rigid,,1.0,rolling/loco_re460_{part}_f{f},
+#gg1,input/gg1.png,vehicle,3,24.2,,,auto,,rigid,,1.0,rolling/loco_gg1_{part}_f{f},
+#tgv,input/tgv.png,vehicle,2,22.2,,,auto,,rigid,,1.0,rolling/loco_tgv_{part}_f{f},
+#ice1,input/ice1.png,vehicle,2,20.6,,,auto,,rigid,,1.0,rolling/loco_ice1_{part}_f{f},
+#water_cart,input/water_cart.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_water_cart_f{f},design length; the game's own wagon
+#wood_hopper,input/wood_hopper.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_wood_hopper_f{f},design length; the game's own wagon
+#flatbed,input/flatbed.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_flatbed_f{f},design length; the game's own wagon
+#riveted_tank,input/riveted_tank.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_riveted_tank_f{f},design length; the game's own wagon
+#steel_hopper,input/steel_hopper.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_steel_hopper_f{f},design length; the game's own wagon
+#bolster_flat,input/bolster_flat.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_bolster_flat_f{f},design length; the game's own wagon
+#welded_tank,input/welded_tank.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_welded_tank_f{f},design length; the game's own wagon
+#bathtub,input/bathtub.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_bathtub_f{f},design length; the game's own wagon
+#bulkhead_flat,input/bulkhead_flat.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_bulkhead_flat_f{f},design length; the game's own wagon
+#pressure_tank,input/pressure_tank.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_pressure_tank_f{f},design length; the game's own wagon
+#dump_hopper,input/dump_hopper.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_dump_hopper_f{f},design length; the game's own wagon
+#heavy_flat,input/heavy_flat.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_heavy_flat_f{f},design length; the game's own wagon
+#wooden_coach,input/wooden_coach.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_wooden_coach_f{f},design length; the game's own wagon
+#steel_coach,input/steel_coach.png,vehicle,2,20,,,auto,,rigid,,1.0,rolling/wagon_steel_coach_f{f},design length; the game's own wagon
+#pullman,input/pullman.png,vehicle,2,20,,,auto,,rigid,,1.0,rolling/wagon_pullman_f{f},design length; the game's own wagon
+#brake_van,input/brake_van.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_brake_van_f{f},design length; the game's own wagon
+#boxcar,input/boxcar.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_boxcar_f{f},design length; the game's own wagon
+#coal_cart,input/coal_cart.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_coal_cart_f{f},design length; the game's own wagon
+#fuel_cart,input/fuel_cart.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_fuel_cart_f{f},design length; the game's own wagon
+#battery_cart,input/battery_cart.png,vehicle,1,8,,,auto,,rigid,,,rolling/wagon_battery_cart_f{f},design length; the game's own wagon
+#bogie_archbar,input/bogie_archbar.png,bogie,,2.4,,,auto,,,,,rolling/bogie_archbar_f{f},style name to confirm; vehicles opt in with bogieStyle archbar
+#bogie_diamond,input/bogie_diamond.png,bogie,,2.6,,,auto,,,,,rolling/bogie_diamond_f{f},style name to confirm; vehicles opt in with bogieStyle diamond
+#bogie_y25,input/bogie_y25.png,bogie,,2.9,,,auto,,,,,rolling/bogie_y25_f{f},style name to confirm; vehicles opt in with bogieStyle y25
+#bogie_blomberg,input/bogie_blomberg.png,bogie,,3.4,,,auto,,,,,rolling/bogie_blomberg_f{f},style name to confirm; vehicles opt in with bogieStyle blomberg
+#bogie_flexicoil,input/bogie3_flexicoil.png,bogie,,4.6,,,auto,,,,,rolling/bogie3_flexicoil_f{f},style name to confirm; vehicles opt in with bogieStyle flexicoil
+#bogie_modern,input/bogie_modern.png,bogie,,3.4,,,auto,,,,,rolling/bogie_modern_f{f},style name to confirm; vehicles opt in with bogieStyle modern
+#bogie_coach,input/bogie_coach.png,bogie,,3.2,,,auto,,,,,rolling/bogie_coach_f{f},style name to confirm; vehicles opt in with bogieStyle coach
+#station_1,input/station_1.png,building,1,,,4,auto,0,,,,structures/station_1,station level 1; height_m sets the scale
+#station_2,input/station_2.png,building,1,,,6,auto,0,,,,structures/station_2,station level 2; height_m sets the scale
+#station_3,input/station_3.png,building,1,,,10,auto,0,,,,structures/station_3,station level 3; height_m sets the scale
+#depot,input/depot.png,building,2,,,8,auto,0,,,,structures/depot_r{r},2x2 engine shed; r0 has its long axis along +x, r1 along +y

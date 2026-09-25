@@ -3,9 +3,13 @@ import type { LocoDef, WagonDef } from '../data/content';
 import { cargoClass } from '../sim/cargo';
 import type { BogieKind, PartKind } from '../sim/body';
 
-/** Locomotive part frame with fallbacks so content-editor bodies or paints never leave a train invisible. */
+/**
+ * Locomotive part frame. A rendered sprite of the prototype itself (`loco_<id>_…`) wins; then the
+ * body/size/paint the generators draw, with fallbacks so content-editor bodies or paints never
+ * leave a train invisible.
+ */
 export function locoFrame(
-  atlas: AtlasRegistry,
+  atlas: Pick<AtlasRegistry, 'has'>,
   def: LocoDef,
   facing: number,
   part: PartKind = 'body',
@@ -14,6 +18,7 @@ export function locoFrame(
   const fb =
     def.type === 'electric' ? 'electric_box' : def.type === 'diesel' ? 'diesel_hood' : 'steam_std';
   const tries = [
+    `rolling/loco_${def.id}_${part}_f${facing}`,
     `rolling/loco_${def.body}_${size}_${def.paint}_${part}_f${facing}`,
     `rolling/loco_${def.body}_${size}_iron_${part}_f${facing}`,
     `rolling/loco_${fb}_${size}_${def.paint}_${part}_f${facing}`,
@@ -23,9 +28,15 @@ export function locoFrame(
   ];
   return tries.find((t) => atlas.has(t)) ?? tries[tries.length - 1];
 }
-export function wagonFrame(atlas: AtlasRegistry, def: WagonDef, facing: number): string {
+/** Wagon frame: the wagon's own rendered sprite (`wagon_<id>_…`), then body/size/paint with fallbacks. */
+export function wagonFrame(
+  atlas: Pick<AtlasRegistry, 'has'>,
+  def: WagonDef,
+  facing: number,
+): string {
   const size = def.size ?? 'small';
   const tries = [
+    `rolling/wagon_${def.id}_f${facing}`,
     `rolling/wagon_${def.body}_${size}_${def.paint}_f${facing}`,
     `rolling/wagon_${def.body}_${size}_iron_f${facing}`,
     `rolling/wagon_${def.body}_small_iron_f${facing}`,

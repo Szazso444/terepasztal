@@ -181,6 +181,10 @@ export class TrainRenderer {
               const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
               const bs = c.bogies[bi++];
               if (!bs) return;
+              if (style === 'none') {
+                bs.visible = false;
+                return;
+              }
               this.pose(bs, (f) => bogieFrame(this.atlas, style, b.kind, f), bx, by, ba, 14);
               bs.visible &&= s.visible;
               // always just under its own body: the depth key is by position, and a bogie

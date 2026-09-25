@@ -14,6 +14,7 @@ Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, til
 ## Files
 | Path | Role |
 |---|---|
+| `ASTRA.md` | the brief for Astra, the image model that makes the input images: rules, prompt template, shot list |
 | `pipeline.toml` | all settings: paths, ComfyUI URL, grid, render, class rules |
 | `assets.csv` | one row per asset: id, image, category (vehicle/bogie/building), size_tiles, length_m, width_m, height_m, align (auto/none), yaw_offset_deg, plan, split_m, clip_below_m, game_frame |
 | `workflows/image_to_3d_api.json` | ComfyUI workflow in API format (ComfyUI: Workflow -> Export (API)). UI-format JSON is rejected. |
@@ -75,15 +76,19 @@ Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>
 
 ## Game frames
 - `game_frame` in `assets.csv` is the frame key the asset replaces; empty = the asset stays out of the game.
-  Vehicles need `{f}` (facing), locomotives `{part}` too: `rolling/loco_<body>_<size>_<paint>_{part}_f{f}`,
-  `rolling/wagon_<body>_<size>_<paint>_f{f}`. Bogies: `rolling/<bogie|bogie3|engine_unit>_<style>_f{f}`; a locomotive or
+  Vehicles need `{f}` (facing), locomotives `{part}` too. A prototype's own sprite, `rolling/loco_<id>_{part}_f{f}` or
+  `rolling/wagon_<id>_f{f}` (ids from `src/data`), wins over the shared body sprite
+  `rolling/loco_<body>_<size>_<paint>_{part}_f{f}` / `rolling/wagon_<body>_<size>_<paint>_f{f}` that the generators draw.
+  A prototype frame is checked against `src/data`: `size_tiles` and `plan` must be the ones the game uses for that id.
+  Bogies: `rolling/<bogie|bogie3|engine_unit>_<style>_f{f}`; a locomotive or
   wagon with `"bogieStyle": "<style>"` in `src/data` draws them, everything else keeps the generic `rolling/<kind>_f<n>`.
   Buildings take `{r}` for rotation (dir 0 -> r0, dir 1 -> r1), e.g. `structures/depot_r{r}`, or no placeholder for dir 0
   alone, e.g. `structures/station_1`. Keys must match what `src/art/*.ts` emits; the game's debug panel (backtick) lists them.
 - `plan` must be the plan the game uses for that body (`plan` in `src/data/locomotives.json`), or the parts are named
   for segments the game never asks for.
 - Medium and large vehicles get separate bogie sprites under the body; without `clip_below_m` a model with its own
-  bogies shows both.
+  bogies shows both. Steam engines keep their driving wheels in the body: give them `"bogieStyle": "none"` in `src/data`
+  once their sprites are in, and the game draws no bogies under them.
 - Group comes from the key: `rolling/loco_*` -> rolling, other `rolling/*` -> wagons, `structures/*` -> structures.
 - Every group written is marked `"partial": true`: the game keeps its generator and lays these frames over it.
   `art-src/<group>/atlas.json` records which asset owns each frame; a rerun of the asset replaces its own frames only.

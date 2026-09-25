@@ -55,14 +55,33 @@ def check_template(a: dict):
                 err.append("wagons are one rigid body: plan rigid, no {part}")
         else:
             err.append("vehicle game_frame is rolling/loco_* or rolling/wagon_*")
+    if category == "vehicle":
+        err += check_prototype(a)
     if category == "bogie":
         kinds = "|".join(game_rules.BOGIE_KINDS)
         if not re.fullmatch(rf"rolling/({kinds})(_[a-z0-9_]+)?_f\{{f\}}", template):
             err.append(f"bogie game_frame is rolling/<{kinds}>[_<style>]_f{{f}}")
+        if re.fullmatch(rf"rolling/({kinds})_none_f\{{f\}}", template):
+            err.append('bogieStyle "none" means no bogies; it has no sprites')
     try:
         group_of(template)
     except GameExportError as e:
         err.append(str(e))
+    return err
+
+
+def check_prototype(a: dict):
+    """A game_frame naming a prototype (rolling/loco_<id>_…, rolling/wagon_<id>_…) must be cut and sized as the
+    game draws that prototype, or its parts are named for segments the game never poses."""
+    m = re.fullmatch(r"rolling/(loco|wagon)_([a-z0-9_]+?)_(?:\{part\}_)?f\{f\}", a["game_frame"])
+    if not m or m.group(2) not in (ros := game_rules.roster()[m.group(1)]):
+        return []
+    size, plan = ros[m.group(2)]
+    err = []
+    if a["size_tiles"] and a["size_tiles"] != size:
+        err.append(f"{m.group(2)} is {size} tiles long in the game, not {a['size_tiles']}")
+    if (a.get("plan") or "rigid") != plan:
+        err.append(f"{m.group(2)} is drawn with plan {plan} in the game; set plan = {plan}")
     return err
 
 

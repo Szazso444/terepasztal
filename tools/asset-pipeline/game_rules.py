@@ -4,6 +4,10 @@ Mirrors src/sim/body.ts (facings, sizes, body plans) and src/art/index.ts (atlas
 game_rules.test.mjs holds this file to body.ts, so a change there fails the test here.
 """
 
+import json
+from pathlib import Path
+
+DATA = Path(__file__).resolve().parents[2] / "src" / "data"
 FACINGS = 48  # body.ts FACINGS, 7.5 degrees apart
 DRAWN_WIDTH = 1.3  # body.ts DRAWN_WIDTH: sprites are this much wider across than their length scale
 SIZE_TILES = {1: "small", 2: "medium", 3: "large"}  # body.ts SIZE_LEN
@@ -28,6 +32,21 @@ def directions(dirs):
     if dirs == "game":
         return [(-360.0 * f / FACINGS + 0.0, f) for f in drawn_facings()]  # + 0.0: no -0.0
     return [(360.0 * i / int(dirs), None) for i in range(int(dirs))]
+
+
+def roster():
+    """{"loco" | "wagon": {id: (size_tiles, plan the game uses)}} from src/data (content-editor overrides aside)."""
+    tiles = {v: k for k, v in SIZE_TILES.items()}
+    out = {}
+    for kind, file in (("loco", "locomotives.json"), ("wagon", "wagons.json")):
+        rows = json.loads((DATA / file).read_text(encoding="utf-8"))
+        rows = rows if isinstance(rows, list) else next(iter(rows.values()))
+        out[kind] = {}
+        for d in rows:
+            L = tiles[d.get("size", "small")]
+            plan = d.get("plan", "rigid")
+            out[kind][d["id"]] = (L, plan if plan in PLANS[L] else "rigid")  # vehicleSpec's override
+    return out
 
 
 def plan_parts(plan, size_tiles):
