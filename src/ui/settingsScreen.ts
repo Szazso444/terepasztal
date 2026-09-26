@@ -61,14 +61,17 @@ export class SettingsScreen implements Screen {
     this.render();
   }
 
-  private slider(label: string, key: 'master' | 'sfx' | 'music') {
+  private slider(label: string, key: 'master' | 'sfx' | 'music' | 'ambient') {
     const input = el('input', {
       type: 'range',
       min: '0',
       max: '100',
-      value: String(Math.round(this.settings[key] * 100)),
+      value: String(Math.round((this.settings[key] ?? 0.35) * 100)),
     }) as HTMLInputElement;
-    const val = el('span', { class: 'num', text: `${Math.round(this.settings[key] * 100)}%` });
+    const val = el('span', {
+      class: 'num',
+      text: `${Math.round((this.settings[key] ?? 0.35) * 100)}%`,
+    });
     input.addEventListener('input', () => {
       this.settings[key] = Number(input.value) / 100;
       val.textContent = `${input.value}%`;
@@ -132,6 +135,7 @@ export class SettingsScreen implements Screen {
       this.slider(STR.settings.master, 'master'),
       this.slider(STR.settings.sfx, 'sfx'),
       this.slider(STR.settings.music, 'music'),
+      this.slider(STR.settings.ambient, 'ambient'),
       el('div', { class: 'sub dim', style: 'margin:4px 0 10px', text: STR.settings.audioNote }),
       el('div', { class: 'col-title', text: STR.settings.gameplay }),
       this.toggle(STR.settings.edgeScroll, 'edgeScroll'),

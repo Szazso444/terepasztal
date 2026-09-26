@@ -1,0 +1,18 @@
+[
+  {
+    "id": "tree-round-v2",
+    "prompt": "Create a new natural shape variant of exactly this rounded broadleaf tree species: asymmetric crown, one higher crown lobe and two lower clusters, slightly forked trunk. It must read as another tree in the same game set, not a new art direction. Reference is the style and camera authority. Match the crafted illustrated pixel-cluster shading, moss/forest/oat/slate colours, upper-left light and original isometric angle exactly. One isolated whole game asset, centered, true transparent background with ample transparent margins. No halo, glow, floor, dirt slab, landscape, text, label, border or extra objects. Do not make it photorealistic or cute/cartoonish. Keep the base of the object clear and unobstructed for game placement."
+  },
+  {
+    "id": "tree-oak-v2",
+    "prompt": "Create a new natural shape variant of exactly this oak species: younger upright oak with spreading branches and a few gaps through the canopy. Preserve the visual weight, leaf clusters and palette of the reference. Reference is the style and camera authority. Match the crafted illustrated pixel-cluster shading, moss/forest/oat/slate colours, upper-left light and original isometric angle exactly. One isolated whole game asset, centered, true transparent background with ample transparent margins. No halo, glow, floor, dirt slab, landscape, text, label, border or extra objects. Do not make it photorealistic or cute/cartoonish. Keep the base of the object clear and unobstructed for game placement."
+  },
+  {
+    "id": "tree-spruce-v2",
+    "prompt": "Create a new natural shape variant of exactly this spruce species: slightly leaning crown tip, uneven branch tiers, visible trunk gaps. Preserve the species, palette, texture and realistic tree proportions. Reference is the style and camera authority. Match the crafted illustrated pixel-cluster shading, moss/forest/oat/slate colours, upper-left light and original isometric angle exactly. One isolated whole game asset, centered, true transparent background with ample transparent margins. No halo, glow, floor, dirt slab, landscape, text, label, border or extra objects. Do not make it photorealistic or cute/cartoonish. Keep the base of the object clear and unobstructed for game placement."
+  },
+  {
+    "id": "water-tower-tall-v2",
+    "prompt": "Edit this same water tower: retain the wooden cylindrical tank at exactly the same physical diameter and height, same metal rings and spout shape. Extend ONLY the stone supporting piers and timber cross-bracing vertically by about 65 percent, giving the tank more ground clearance. Extend the hanging pipe down accordingly. Do not stretch the tank or make the whole object wider. Reference is the style and camera authority. Match the crafted illustrated pixel-cluster shading, moss/forest/oat/slate colours, upper-left light and original isometric angle exactly. One isolated whole game asset, centered, true transparent background with ample transparent margins. No halo, glow, floor, dirt slab, landscape, text, label, border or extra objects. Do not make it photorealistic or cute/cartoonish. Keep the base of the object clear and unobstructed for game placement."
+  }
+]

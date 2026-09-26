@@ -1,5 +1,11 @@
 # Asset redesign implementation guide
 
+The newer [illustrated runtime conversion](../../scratchpad/illustrated-hd/README.md)
+implements the user's requested source-image appearance for supported scenery,
+buildings and icons. For those frames it supersedes this guide's original native
+pixel-scale/procedural-only delivery proposal. World geometry and railcraft motion
+requirements remain unchanged; directional/layered art is still required for trains.
+
 Pastoral industry, folk warmth and quiet ambition. The railway grows from timber and steam
 into refined electrical infrastructure while its countryside and town identity remain familiar.
 
@@ -348,3 +354,24 @@ concept is loaded by the game. Further civic/industry image generation failed wi
 
 See [concept-prompts.md](concept-prompts.md) for the prompt specifications used for the two
 new sheets and a description of the three previously approved boards reused here.
+
+
+## Production cozy landscape and scale contract
+
+See [cozy-v3.md](cozy-v3.md) for the integrated terrain, contact edges, tree variants,
+window lighting and music. It records the shared human/door scale, the explicitly
+estimated equipment families, and the checks required when adding illustrated art.
+
+
+## Terrain v4 correction (current)
+
+See [terrain-v4.md](terrain-v4.md): v3 ground and hill relief have been rolled back.
+The comparison gallery proposes textured material edges and connected illustrated
+hill families. Music, scale, foliage and cozy effects from v3 remain.
+
+
+## Approved terrain integrated in production
+
+[terrain-production.md](terrain-production.md) supersedes the v4 rollback checkpoint:
+shared-corner relief, mixed illustrated grass detail, feathered interlocks, painted
+stones and contour-following foundation features now run in the game.

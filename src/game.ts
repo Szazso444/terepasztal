@@ -731,7 +731,8 @@ export class Game {
       background: '#0a0a0c',
       antialias: false,
       roundPixels: true,
-      resolution: 1,
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      autoDensity: true,
       preference: 'webgl',
     });
     // Scene-graph inspector for the PixiJS browser extension. The dynamic import sits inside a
@@ -883,7 +884,10 @@ export class Game {
     this.world.overlay.addChild(this.cursor);
     this.rain = new Rain(this.atlas);
     this.fog = new Fog(this.atlas);
-    this.world.root.addChild(this.dayNight.overlay);
+    this.world.root.addChildAt(
+      this.dayNight.overlay,
+      this.world.root.getChildIndex(this.world.objects),
+    );
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.world.overlay.addChild(this.fog.patches);
@@ -954,6 +958,7 @@ export class Game {
     audio.master = this.settings.master;
     audio.sfx = this.settings.sfx;
     audio.music = this.settings.music;
+    audio.ambient = this.settings.ambient ?? 0.35;
     writeSettings(this.settings);
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
@@ -1213,7 +1218,7 @@ export class Game {
         const phase = s.index % 4;
         const edge = (s.index === 0 ? 1 : 0) + (s.index === s.length - 1 ? 2 : 0);
         const key = `structures/span_${s.material}_${s.axis}_${n}_${phase}_${edge}`;
-        this.world.setPlatform(b.x, b.y, key + '_deck');
+        this.world.setPlatform(b.x, b.y, key + '_deck', 0, true);
         this.world.setStructure('bridge:' + b.x + ',' + b.y, b.x, b.y, key + '_rail', 35);
         const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
         this.world.setPlatform(b.x, b.y, (b.level ?? 1) > 1 ? detail + '_deck' : null, 1);
@@ -2258,6 +2263,9 @@ export class Game {
     );
     this.groundLights.update(this.builder.stations, this.fleet.trains, night);
     this.world.setTrackNight(night);
+    this.world.setWindowNight(night);
+    this.trainRenderer.setWindowNight(night);
+    audio.updateAmbience(rainI, night);
     this.aspectTimer += dt;
     if (this.aspectTimer > 0.1) {
       this.aspectTimer = 0;
@@ -2278,6 +2286,7 @@ export class Game {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
+    this.world.setAtmosphereTint(this.dayNight.color);
     const fieldActive =
       this.viewTarget === 0 &&
       this.viewBlend === 0 &&
@@ -2675,7 +2684,7 @@ export class Game {
   // ---------------------------------------------------------------- cursor / debug
   tileUnderMouse() {
     const w = this.camera.screenToWorld(this.input.mouseX, this.input.mouseY);
-    return worldToTileInt(w.x, w.y);
+    return this.world.tileAtSurface(w.x, w.y);
   }
   private updateCursor() {
     const t = this.tileUnderMouse();

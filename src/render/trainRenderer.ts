@@ -1,4 +1,5 @@
 import { Container, Sprite } from 'pixi.js';
+import { SurfaceAssets, windowSprite } from './surfaceAssets';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
@@ -28,6 +29,13 @@ interface VehicleSprites {
  * and cargo overlays above loaded wagons. Bodies use 48 facings and a small residual rotation.
  */
 export class TrainRenderer {
+  private surfaces = new SurfaceAssets();
+  private windowLights = new Map<Sprite, Sprite>();
+  private night = 0;
+  setWindowNight(night: number) {
+    this.night = night;
+    for (const light of this.windowLights.values()) light.alpha = night * 0.9;
+  }
   private cars = new Map<number, VehicleSprites[]>();
   /** train under the cursor (bright outline pulse) and the selected one (steady tint) */
   hoverId: number | null = null;
@@ -44,7 +52,9 @@ export class TrainRenderer {
   constructor(
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
-  ) {}
+  ) {
+    layer.on('destroyed', () => this.surfaces.destroy());
+  }
 
   private make(): Sprite {
     const s = new Sprite();
@@ -98,7 +108,11 @@ export class TrainRenderer {
     return list;
   }
   private destroyCar(c: VehicleSprites) {
-    for (const s of c.parts) s.destroy();
+    for (const s of c.parts) {
+      this.windowLights.get(s)?.destroy();
+      this.windowLights.delete(s);
+      s.destroy();
+    }
     c.undercarriage.destroy({ children: true });
     c.load?.destroy();
   }
@@ -167,7 +181,29 @@ export class TrainRenderer {
           const frameFor = isLoco
             ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
             : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
-          this.pose(s, frameFor, x, y, shown, 15);
+          const key = this.pose(s, frameFor, x, y, shown, 15);
+          const fr = this.atlas.get(key);
+          // Procedural vehicle windows carry explicit amber palette pixels.
+          // Illustrated replacements need their own authored mask; never light a boiler.
+          if (fr.texture.frame.width / fr.w === 1) {
+            let light = this.windowLights.get(s);
+            if (!light) {
+              light = windowSprite();
+              this.layer.addChild(light);
+              this.windowLights.set(s, light);
+            }
+            light.texture = this.surfaces.window(key, fr, true);
+            light.anchor.set(fr.anchorX, fr.anchorY);
+            light.alpha = this.night * 0.9;
+            light.position.copyFrom(s.position);
+            light.scale.copyFrom(s.scale);
+            light.rotation = s.rotation;
+            light.zIndex = s.zIndex + 0.01;
+            light.visible = s.visible;
+          } else {
+            const light = this.windowLights.get(s);
+            if (light) light.visible = false;
+          }
           s.tint = tint;
           c.undercarriage.zIndex = Math.min(c.undercarriage.zIndex, s.zIndex - 1);
           if (c.spec.drawBogies)

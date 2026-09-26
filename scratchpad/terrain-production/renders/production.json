@@ -1,0 +1,24 @@
+{
+  "production": {
+    "size": [
+      160,
+      160
+    ],
+    "active": true,
+    "failed": false,
+    "nativeVisible": false,
+    "chunks": 144,
+    "errors": []
+  },
+  "fallback": {
+    "size": [
+      160,
+      160
+    ],
+    "active": false,
+    "failed": true,
+    "nativeVisible": true,
+    "chunks": 144,
+    "errors": []
+  }
+}

@@ -1,0 +1,1249 @@
+{
+  "resolution": 4,
+  "sourceDirectory": "assets/source/base-v1",
+  "converted": [
+    {
+      "id": "props.tree",
+      "source": "tree-round.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/tree_0",
+        "props/tree_1",
+        "props/tree_2"
+      ]
+    },
+    {
+      "id": "props.pine",
+      "source": "tree-pine.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/pine_0",
+        "props/pine_1",
+        "props/pine_2"
+      ]
+    },
+    {
+      "id": "props.rock",
+      "source": "props-rock.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/rock_0",
+        "props/rock_1",
+        "props/rock_2"
+      ]
+    },
+    {
+      "id": "props.birch",
+      "source": "tree-birch.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/birch_0",
+        "props/birch_1",
+        "props/birch_2"
+      ]
+    },
+    {
+      "id": "props.spruce",
+      "source": "tree-spruce.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/spruce_0",
+        "props/spruce_1",
+        "props/spruce_2"
+      ]
+    },
+    {
+      "id": "props.oak",
+      "source": "tree-oak.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/oak_0",
+        "props/oak_1",
+        "props/oak_2"
+      ]
+    },
+    {
+      "id": "props.cactus",
+      "source": "props-cactus.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/cactus_0",
+        "props/cactus_1",
+        "props/cactus_2"
+      ]
+    },
+    {
+      "id": "props.bush",
+      "source": "props-bush.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/bush_0",
+        "props/bush_1",
+        "props/bush_2"
+      ]
+    },
+    {
+      "id": "props.boulder",
+      "source": "props-boulder.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/boulder_0",
+        "props/boulder_1",
+        "props/boulder_2"
+      ]
+    },
+    {
+      "id": "props.coal",
+      "source": "props-coal.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/coal_0",
+        "props/coal_1",
+        "props/coal_2"
+      ]
+    },
+    {
+      "id": "props.oil",
+      "source": "props-oil-v2.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/oil_0",
+        "props/oil_1",
+        "props/oil_2"
+      ]
+    },
+    {
+      "id": "props.palm",
+      "source": "props-palm.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/palm_0",
+        "props/palm_1"
+      ]
+    },
+    {
+      "id": "props.deadtree",
+      "source": "props-deadtree.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/deadtree_0",
+        "props/deadtree_1"
+      ]
+    },
+    {
+      "id": "props.reeds",
+      "source": "props-reeds.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/reeds_0",
+        "props/reeds_1"
+      ]
+    },
+    {
+      "id": "props.flowers",
+      "source": "props-flowers.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/flowers_0",
+        "props/flowers_1",
+        "props/flowers_2",
+        "props/flowers_3"
+      ]
+    },
+    {
+      "id": "terrain.grass",
+      "source": "terrain-grass.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/grass_0",
+        "terrain/grass_1",
+        "terrain/grass_2",
+        "terrain/grass_3"
+      ]
+    },
+    {
+      "id": "terrain.forest",
+      "source": "terrain-forest.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/forest_0",
+        "terrain/forest_1",
+        "terrain/forest_2",
+        "terrain/forest_3"
+      ]
+    },
+    {
+      "id": "terrain.rock",
+      "source": "terrain-rock.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/rock_0",
+        "terrain/rock_1",
+        "terrain/rock_2",
+        "terrain/rock_3"
+      ]
+    },
+    {
+      "id": "terrain.hillcut",
+      "source": "terrain-hillcut.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/hillcut_0",
+        "terrain/hillcut_1",
+        "terrain/hillcut_2",
+        "terrain/hillcut_3"
+      ]
+    },
+    {
+      "id": "terrain.hill",
+      "source": "terrain-hill.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/hill_0",
+        "terrain/hill_1",
+        "terrain/hill_2"
+      ]
+    },
+    {
+      "id": "terrain.sand",
+      "source": "terrain-sand.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/sand_0",
+        "terrain/sand_1",
+        "terrain/sand_2",
+        "terrain/sand_3"
+      ]
+    },
+    {
+      "id": "terrain.plains",
+      "source": "terrain-plains.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/plains_0",
+        "terrain/plains_1",
+        "terrain/plains_2",
+        "terrain/plains_3"
+      ]
+    },
+    {
+      "id": "terrain.taiga",
+      "source": "terrain-taiga.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/taiga_0",
+        "terrain/taiga_1",
+        "terrain/taiga_2",
+        "terrain/taiga_3"
+      ]
+    },
+    {
+      "id": "terrain.swamp",
+      "source": "terrain-swamp.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/swamp_0",
+        "terrain/swamp_1",
+        "terrain/swamp_2",
+        "terrain/swamp_3"
+      ]
+    },
+    {
+      "id": "terrain.desert",
+      "source": "terrain-desert.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/desert_0",
+        "terrain/desert_1",
+        "terrain/desert_2",
+        "terrain/desert_3"
+      ]
+    },
+    {
+      "id": "terrain.water",
+      "source": "terrain-water.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/water_0_f0",
+        "terrain/water_0_f1",
+        "terrain/water_0_f2",
+        "terrain/water_0_f3",
+        "terrain/water_1_f0",
+        "terrain/water_1_f1",
+        "terrain/water_1_f2",
+        "terrain/water_1_f3",
+        "terrain/water_2_f0",
+        "terrain/water_2_f1",
+        "terrain/water_2_f2",
+        "terrain/water_2_f3"
+      ]
+    },
+    {
+      "id": "terrain.mountain",
+      "source": "terrain-mountain.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "terrain/mountain_0",
+        "terrain/mountain_1",
+        "terrain/mountain_2"
+      ]
+    },
+    {
+      "id": "stations.farm",
+      "source": "farm.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.39,
+          -0.28
+        ],
+        "vertical": 1.4925373134328357,
+        "shear": -0.08208955223880596,
+        "estimated": false
+      },
+      "frames": [
+        "structures/farm_1",
+        "structures/farm_2",
+        "structures/farm_3",
+        "structures/farm_4",
+        "structures/farm_5"
+      ]
+    },
+    {
+      "id": "stations.lumber",
+      "source": "lumber.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.29,
+          -0.41
+        ],
+        "vertical": 1.4285714285714286,
+        "shear": 0.08571428571428572,
+        "estimated": false
+      },
+      "frames": [
+        "structures/lumber_1",
+        "structures/lumber_2",
+        "structures/lumber_3",
+        "structures/lumber_4",
+        "structures/lumber_5"
+      ]
+    },
+    {
+      "id": "stations.quarry",
+      "source": "quarry.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/quarry_1",
+        "structures/quarry_2",
+        "structures/quarry_3",
+        "structures/quarry_4",
+        "structures/quarry_5"
+      ]
+    },
+    {
+      "id": "stations.pump",
+      "source": "pump.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/pump_1",
+        "structures/pump_2",
+        "structures/pump_3",
+        "structures/pump_4",
+        "structures/pump_5"
+      ]
+    },
+    {
+      "id": "stations.town",
+      "source": "townhouse-civic.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.25,
+          -0.49
+        ],
+        "vertical": 1.3513513513513513,
+        "shear": 0.16216216216216214,
+        "estimated": false
+      },
+      "frames": [
+        "structures/town_1",
+        "structures/town_2",
+        "structures/town_3",
+        "structures/town_4",
+        "structures/town_5"
+      ]
+    },
+    {
+      "id": "stations.warehouse",
+      "source": "warehouse.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.26,
+          -0.37
+        ],
+        "vertical": 1.5873015873015872,
+        "shear": 0.08730158730158728,
+        "estimated": false
+      },
+      "frames": [
+        "structures/warehouse_1",
+        "structures/warehouse_2",
+        "structures/warehouse_3",
+        "structures/warehouse_4",
+        "structures/warehouse_5"
+      ]
+    },
+    {
+      "id": "stations.station",
+      "source": "station.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.31,
+          -0.39
+        ],
+        "vertical": 1.4285714285714286,
+        "shear": 0.057142857142857155,
+        "estimated": false
+      },
+      "frames": [
+        "structures/station_1",
+        "structures/station_2",
+        "structures/station_3",
+        "structures/station_4",
+        "structures/station_5"
+      ]
+    },
+    {
+      "id": "works.windmill",
+      "source": "windmill.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "structures/windmill",
+        "structures/windmill_lv2",
+        "structures/windmill_lv3",
+        "structures/windmill_lv4"
+      ]
+    },
+    {
+      "id": "works.kiln",
+      "source": "kiln.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "structures/kiln",
+        "structures/kiln_lv2",
+        "structures/kiln_lv3",
+        "structures/kiln_lv4"
+      ]
+    },
+    {
+      "id": "works.grinder",
+      "source": "grinder.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/grinder",
+        "structures/grinder_lv2",
+        "structures/grinder_lv3",
+        "structures/grinder_lv4"
+      ]
+    },
+    {
+      "id": "works.refinery",
+      "source": "refinery.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/refinery",
+        "structures/refinery_lv2",
+        "structures/refinery_lv3",
+        "structures/refinery_lv4"
+      ]
+    },
+    {
+      "id": "works.power_plant",
+      "source": "power-plant.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/power_plant",
+        "structures/power_plant_lv2",
+        "structures/power_plant_lv3",
+        "structures/power_plant_lv4"
+      ]
+    },
+    {
+      "id": "works.substation",
+      "source": "substation.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/substation",
+        "structures/substation_lv2",
+        "structures/substation_lv3",
+        "structures/substation_lv4"
+      ]
+    },
+    {
+      "id": "works.hydro_plant",
+      "source": "hydro-plant.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/hydro_plant",
+        "structures/hydro_plant_lv2",
+        "structures/hydro_plant_lv3",
+        "structures/hydro_plant_lv4"
+      ]
+    },
+    {
+      "id": "works.full.colliery",
+      "source": "works-full-colliery.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/colliery",
+        "structures/colliery_lv2",
+        "structures/colliery_lv3",
+        "structures/colliery_lv4"
+      ]
+    },
+    {
+      "id": "works.full.ironworks",
+      "source": "works-full-ironworks.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/ironworks",
+        "structures/ironworks_lv2",
+        "structures/ironworks_lv3",
+        "structures/ironworks_lv4"
+      ]
+    },
+    {
+      "id": "works.full.oil_derrick",
+      "source": "works-full-oil-derrick.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/oil_derrick",
+        "structures/oil_derrick_lv2",
+        "structures/oil_derrick_lv3",
+        "structures/oil_derrick_lv4"
+      ]
+    },
+    {
+      "id": "works.full.diesel_refinery",
+      "source": "works-full-diesel-refinery.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/diesel_refinery",
+        "structures/diesel_refinery_lv2",
+        "structures/diesel_refinery_lv3",
+        "structures/diesel_refinery_lv4"
+      ]
+    },
+    {
+      "id": "works.full.wire_mill",
+      "source": "works-full-wire-mill.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/wire_mill",
+        "structures/wire_mill_lv2",
+        "structures/wire_mill_lv3",
+        "structures/wire_mill_lv4"
+      ]
+    },
+    {
+      "id": "decor.water_tower",
+      "source": "water-tower.png",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "structures/water_tower"
+      ]
+    },
+    {
+      "id": "decor.fuel_stop",
+      "source": "coaling-stage.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.3,
+          -0.38
+        ],
+        "vertical": 1.4705882352941178,
+        "shear": 0.05882352941176472,
+        "estimated": true
+      },
+      "frames": [
+        "structures/fuel_stop"
+      ]
+    },
+    {
+      "id": "decor.townhouse",
+      "source": "house-cottage.png",
+      "widthScale": 1.2,
+      "projection": {
+        "sourceSlopes": [
+          0.33,
+          -0.38
+        ],
+        "vertical": 1.4084507042253522,
+        "shear": 0.0352112676056338,
+        "estimated": false
+      },
+      "frames": [
+        "structures/townhouse",
+        "structures/townhouse_2",
+        "structures/townhouse_3",
+        "structures/townhouse_4",
+        "structures/townhouse_s0",
+        "structures/townhouse_s1",
+        "structures/townhouse_s2"
+      ]
+    },
+    {
+      "id": "cargo.water",
+      "source": "cargo-water.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/water"
+      ]
+    },
+    {
+      "id": "cargo.wheat",
+      "source": "cargo-wheat.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/wheat"
+      ]
+    },
+    {
+      "id": "cargo.stone",
+      "source": "cargo-stone.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/stone"
+      ]
+    },
+    {
+      "id": "cargo.wood",
+      "source": "cargo-wood.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/wood"
+      ]
+    },
+    {
+      "id": "cargo.coal",
+      "source": "cargo-coal.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/coal"
+      ]
+    },
+    {
+      "id": "cargo.oil",
+      "source": "cargo-oil.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/oil"
+      ]
+    },
+    {
+      "id": "cargo.iron",
+      "source": "cargo-iron.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/iron"
+      ]
+    },
+    {
+      "id": "cargo.passengers",
+      "source": "cargo-passengers.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/passengers"
+      ]
+    },
+    {
+      "id": "cargo.food",
+      "source": "cargo-food.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/food"
+      ]
+    },
+    {
+      "id": "cargo.iron_ore",
+      "source": "cargo-iron-ore.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/iron_ore"
+      ]
+    },
+    {
+      "id": "cargo.crude",
+      "source": "cargo-crude.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/crude"
+      ]
+    },
+    {
+      "id": "cargo.diesel",
+      "source": "cargo-diesel.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/diesel"
+      ]
+    },
+    {
+      "id": "cargo.sand",
+      "source": "cargo-sand.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/sand"
+      ]
+    },
+    {
+      "id": "cargo.copper_ore",
+      "source": "cargo-copper-ore.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/copper_ore"
+      ]
+    },
+    {
+      "id": "cargo.wire",
+      "source": "cargo-wire.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/wire"
+      ]
+    },
+    {
+      "id": "cargo.power",
+      "source": "cargo-power.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/power"
+      ]
+    },
+    {
+      "id": "cargo.money",
+      "source": "cargo-money.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/money"
+      ]
+    },
+    {
+      "id": "cargo.population",
+      "source": "cargo-population.png",
+      "widthScale": 1,
+      "projection": null,
+      "frames": [
+        "icons/population"
+      ]
+    }
+  ],
+  "deferred": [
+    {
+      "id": "terrain.void",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "terrain.city",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "terrain.cursor",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "stations.depot",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "stations.full.mine",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "stations.full.sand_pit",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "stations.full.copper_mine",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "works.bridge_wood",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "works.bridge_stone",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "decor.signal",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "decor.power_line",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.rocket",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.adler",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.john_bull",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.mav375",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.general",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.jupiter",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.mav424",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.k4s",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.drg01",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.flying_scotsman",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.daylight",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.mallard",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.big_boy",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.sw1",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.class08",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.m62",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.f7",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.sd40",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.deltic",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.dda40x",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.kando_v40",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.v63",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.crocodile",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.taurus",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.re460",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.gg1",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.j94",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.black_five",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.nine_f",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.gmam",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.tgv",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "loco.ice1",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.water_cart",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.wood_hopper",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.flatbed",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.riveted_tank",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.steel_hopper",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.bolster_flat",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.welded_tank",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.bathtub",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.bulkhead_flat",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.pressure_tank",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.dump_hopper",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.heavy_flat",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.wooden_coach",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.steel_coach",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.pullman",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.brake_van",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.boxcar",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.coal_cart",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.fuel_cart",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "wagon.battery_cart",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "track.straight",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "track.curve",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "track.switch",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "track.crossing",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "track.bridge",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "track.transition",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "fx.rain",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "fx.fog",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "fx.light_tile",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "fx.glow",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "fx.glow_small",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "fx.smoke",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "people.walker",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "people.path_dirt",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "people.road_stone",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "people.crossing_dirt",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    },
+    {
+      "id": "people.crossing_stone",
+      "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
+    }
+  ],
+  "groups": {
+    "props": {
+      "frames": 43,
+      "uniqueImages": 34,
+      "width": 3544,
+      "height": 199
+    },
+    "terrain": {
+      "frames": 54,
+      "uniqueImages": 47,
+      "width": 4066,
+      "height": 615
+    },
+    "structures": {
+      "frames": 92,
+      "uniqueImages": 59,
+      "width": 3993,
+      "height": 1142
+    },
+    "icons": {
+      "frames": 18,
+      "uniqueImages": 18,
+      "width": 1060,
+      "height": 84
+    }
+  }
+}

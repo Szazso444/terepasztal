@@ -1,14 +1,13 @@
 import { Synth } from './synth';
+import { Ambience } from './ambience';
+import { MUSIC_TRACKS, MusicPlaylist } from './musicPlaylist';
 
 /**
  * Sound bus. Every game event calls `sfx(name)`. If `/assets/audio/<name>.ogg` exists it is
- * played; otherwise the procedural synthesizer renders the event. Music is the looping track at
- * MUSIC_TRACK, and falls back to the synthesized loop when that file is absent, so a build
- * without the asset still has music. Volumes come from settings. The Web Audio context and the
+ * played; otherwise the procedural synthesizer renders the event. Music starts with the original Pastoral Pulse, then shuffles its genre variations.
+ * If all files fail, the synthesized loop takes over. Volumes come from settings. The Web Audio context and the
  * music element are both unlocked on the first user gesture.
  */
-/** Looping background track. Any browser-playable file at this path is used. */
-const MUSIC_TRACK = '/assets/audio/music/pastoral-pulse.mp3';
 export const SOUND_EVENTS = [
   'ui.click',
   'ui.open',
@@ -36,11 +35,20 @@ class AudioBus {
   master = 0.8;
   sfx = 0.8;
   music = 0.5;
+  ambient = 0.35;
+  private ambience = new Ambience();
+  updateAmbience(rain: number, night: number) {
+    if (!this.unlocked) return;
+    const ctx = this.synth.ensure();
+    if (ctx) this.ambience.update(ctx, this.master * this.ambient, rain, night);
+  }
   debugLog = false;
   readonly synth = new Synth();
   private files = new Map<string, FileState>();
   private unlocked = false;
   private musicEl: HTMLAudioElement | null = null;
+  readonly playlist = new MusicPlaylist();
+  private unavailableMusic = new Set<number>();
   /** `missing` means the track could not be played and the synth loop takes over. */
   private musicStatus: 'probing' | 'ready' | 'missing' = 'probing';
   /** Throttle identical events so bursts (drag-laying) do not stack. */
@@ -58,31 +66,42 @@ class AudioBus {
     this.synth.markGesture();
     if (!this.unlocked) {
       this.unlocked = true;
-      this.applyMusic();
     }
+    this.applyMusic();
   }
 
-  /** The looping track element, created on first use. */
+  /** The current playlist element, created on first use. */
   private musicTrack(): HTMLAudioElement {
     if (this.musicEl) return this.musicEl;
-    const el = new Audio(MUSIC_TRACK);
-    el.loop = true;
+    const track = this.playlist.current;
+    const el = new Audio(MUSIC_TRACKS[track]);
+    el.loop = false;
     el.preload = 'auto';
     el.volume = Math.min(1, this.master * this.music);
     el.addEventListener('canplay', () => {
-      if (this.musicStatus === 'missing') return;
+      if (this.musicEl !== el || this.musicStatus === 'missing') return;
       this.musicStatus = 'ready';
       // a synth loop may have been covering while the file loaded
       this.synth.stopMusic();
       this.applyMusic();
     });
     el.addEventListener('error', () => {
-      this.musicStatus = 'missing';
-      this.applyMusic();
+      if (this.musicEl === el) this.advanceMusic(true);
+    });
+    el.addEventListener('ended', () => {
+      if (this.musicEl === el) this.advanceMusic();
     });
     this.musicEl = el;
     el.load();
     return el;
+  }
+
+  private advanceMusic(failed = false) {
+    if (failed) this.unavailableMusic.add(this.playlist.current);
+    this.musicEl?.pause();
+    this.musicEl = null;
+    this.musicStatus = this.playlist.next(this.unavailableMusic) === null ? 'missing' : 'probing';
+    this.applyMusic();
   }
 
   /** Start, stop or re-level the music for the current master and music volumes. */
@@ -94,10 +113,15 @@ class AudioBus {
       el.volume = v;
       if (v > 0) {
         // autoplay is allowed here: applyMusic only runs after a gesture unlocked the bus
-        void el.play().catch(() => {
+        void el.play().catch((error: DOMException) => {
           // playback refused (no gesture yet, or an undecodable file): keep the synth loop
-          this.musicStatus = 'missing';
-          this.applyMusic();
+          if (
+            this.musicEl !== el ||
+            error.name === 'NotAllowedError' ||
+            error.name === 'AbortError'
+          )
+            return;
+          this.advanceMusic(true);
         });
       } else el.pause();
       this.synth.setMusicVolume(0);

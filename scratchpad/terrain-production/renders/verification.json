@@ -1,0 +1,82 @@
+{
+  "errors": [],
+  "cache": {
+    "chunks": 256,
+    "before": 256,
+    "after": 256,
+    "active": true,
+    "workerPaintMs": 9344.799999773502,
+    "medianRenderSubmitMs": 12,
+    "terrainStartupMs": 9539.90000000596
+  },
+  "excavation": {
+    "tile": [
+      100,
+      10
+    ],
+    "originalHeight": -5,
+    "flatFootprint": true,
+    "trackAligned": true,
+    "picking": true,
+    "localRepaintCount": 9,
+    "restored": true,
+    "staleResultRejected": true
+  },
+  "season": {
+    "beforeWater": [
+      47,
+      103,
+      114,
+      255
+    ],
+    "afterWater": [
+      47,
+      103,
+      114,
+      255
+    ],
+    "beforeGrass": [
+      129,
+      141,
+      56,
+      255
+    ],
+    "afterGrass": [
+      94,
+      110,
+      51,
+      255
+    ]
+  },
+  "disposal": true,
+  "detailViews": [
+    {
+      "id": "11-grass-variation",
+      "title": "Mixed grass detail and painted stones",
+      "x": 23,
+      "y": 20,
+      "zoom": 3
+    },
+    {
+      "id": "12-feathered-interlock",
+      "title": "Narrow feather on the interlock",
+      "x": 23.5,
+      "y": 17,
+      "zoom": 4
+    },
+    {
+      "id": "13-house-foundation",
+      "title": "Contour-following soil and grass",
+      "x": 21,
+      "y": 21,
+      "zoom": 4
+    },
+    {
+      "id": "14-shoreline",
+      "title": "Feathered shore",
+      "x": 29.5,
+      "y": 29,
+      "zoom": 4
+    }
+  ]
+}

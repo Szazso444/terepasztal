@@ -631,8 +631,9 @@ export const STR = {
     master: 'Master volume',
     sfx: 'Effects',
     music: 'Music',
+    ambient: 'Nature and weather',
     audioNote:
-      'Music is the looping track at /assets/audio/music; remove it and a synthesized loop takes over. Effects are synthesized at runtime; an .ogg at /assets/audio/<event>.ogg overrides a synthesized effect.',
+      'Pastoral Pulse opens each session, then its four arrangements play in shuffled order. Nature sounds follow the weather and time of day.',
     gameplay: 'Gameplay',
     edgeScroll: 'Edge scrolling',
     autosave: 'Autosave (every minute)',

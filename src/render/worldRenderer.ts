@@ -1,9 +1,22 @@
 import { Container, Sprite, Rectangle, Graphics } from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
-import { tileToWorld, depthKey, ELEV_PX, HALF_W, HALF_H, TILE_H } from '../engine/iso';
+import {
+  tileToWorld,
+  worldToTileInt,
+  depthKey,
+  ELEV_PX,
+  HALF_W,
+  HALF_H,
+  TILE_H,
+} from '../engine/iso';
 import { Terrain, Biome, type GameMap, type PropInstance, idx } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
+import { MATERIAL_COLORS, materialAt } from './landscapeModel';
+import { structureScale, hasScaleReference, TREE_SCALE, isTree } from './assetScale';
+import { SurfaceAssets, windowSprite } from './surfaceAssets';
+import { hash2 } from '../engine/rng';
+import { Landscape } from './landscape';
 
 const CHUNK = 8;
 
@@ -17,6 +30,7 @@ export class WorldRenderer {
   readonly track = new Container();
   readonly platforms = new Container();
   private platformSprites = new Map<number, Sprite>();
+  private platformMasks = new Map<number, Graphics>();
   readonly objects = new Container();
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
@@ -38,12 +52,27 @@ export class WorldRenderer {
   private propSprites = new Map<number, Sprite[]>();
   /** Tiles that must render flat (track / station on hill). */
   private flattened = new Set<number>();
+  readonly landscape: Landscape;
+  private summitSprites = new Map<number, Sprite>();
+  private terrainVisibilityVersion = -1;
+  private structureAnchors = new Map<string, { x: number; y: number; dx: number; dy: number }>();
+  private surfaces = new SurfaceAssets();
+  private windowLights = new Map<string, Sprite>();
+  private contactPatches = new Map<string, Graphics>();
+  private contactGround = new Container({ cullableChildren: true });
+  private waterDetails = new Graphics();
+  private waterClock = 0;
+  private rippleRefresh = 0;
+  private view: { x: number; y: number; w: number; h: number } | null = null;
 
   constructor(
     readonly atlas: AtlasRegistry,
     readonly map: GameMap,
     readonly regions: RegionState,
   ) {
+    this.landscape = new Landscape(map, this.flattened);
+    this.landscape.root.visible = false;
+    this.root.on('destroyed', () => this.surfaces.destroy());
     this.objects.sortableChildren = true;
     this.objects.cullableChildren = true;
     this.ground.cullableChildren = true;
@@ -53,7 +82,10 @@ export class WorldRenderer {
     this.lights.cullableChildren = true;
     this.root.addChild(
       this.border,
+      this.landscape.root,
       this.ground,
+      this.waterDetails,
+      this.contactGround,
       this.platforms,
       this.track,
       this.lights,
@@ -72,6 +104,7 @@ export class WorldRenderer {
     const changed = new Set([...this.city, ...tiles]);
     const old = this.city;
     this.city = tiles;
+    this.landscape.setCity(tiles);
     for (const k of changed)
       if (old.has(k) !== tiles.has(k))
         this.refreshGround(k % this.map.w, Math.floor(k / this.map.w));
@@ -150,6 +183,7 @@ export class WorldRenderer {
         // draw order: blocks with smaller (x+y) first so hill faces layer correctly
         chunk.zIndex = Math.floor(cx0 / CHUNK) + Math.floor(cy0 / CHUNK);
         this.ground.addChild(chunk);
+        this.landscape.add(cx0, cy0, Math.min(CHUNK, x1 - cx0), Math.min(CHUNK, y1 - cy0));
       }
     this.ground.sortChildren();
     for (let y = r.y; y < y1; y++)
@@ -172,6 +206,7 @@ export class WorldRenderer {
     s.anchor.set(f.anchorX, f.anchorY);
     const p = tileToWorld(x, y);
     s.position.set(p.x, p.y);
+    s.visible = !this.landscape.active || !this.landscape.isPainted(x, y);
     if (this.map.terrain[idx(this.map, x, y)] === Terrain.Water) {
       this.waterSprites.push({ s, base: frame.slice(0, -3) });
     }
@@ -180,6 +215,7 @@ export class WorldRenderer {
 
   /** Re-texture a ground tile (after flattening a hill, etc). */
   refreshGround(x: number, y: number) {
+    this.landscape.invalidate(x, y);
     const i = idx(this.map, x, y);
     const s = this.groundSprites[i];
     if (!s) return;
@@ -187,6 +223,7 @@ export class WorldRenderer {
     const f = this.atlas.get(frame);
     s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
+    s.visible = !this.landscape.active || !this.landscape.isPainted(x, y);
     const isWater = this.map.terrain[i] === Terrain.Water;
     const wi = this.waterSprites.findIndex((w) => w.s === s);
     if (isWater && wi < 0) this.waterSprites.push({ s, base: frame.slice(0, -3) });
@@ -241,6 +278,7 @@ export class WorldRenderer {
 
   setFlattened(x: number, y: number, flat: boolean) {
     const i = idx(this.map, x, y);
+    if (this.flattened.has(i) === flat) return;
     if (flat) this.flattened.add(i);
     else this.flattened.delete(i);
     this.refreshGround(x, y);
@@ -251,10 +289,14 @@ export class WorldRenderer {
   }
   /** Ground-level y offset for objects standing on a tile (raised hills lift them). */
   elevationOf(x: number, y: number) {
-    const i = idx(this.map, x, y);
-    const t = this.map.terrain[i];
-    if (t === Terrain.Mountain) return -2 * ELEV_PX;
-    return t === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
+    if (!this.landscape.failed) return this.landscape.elevation(x, y);
+    // Props and people pass fractional tile coordinates; elevation belongs to their tile.
+    const tx = Math.round(x),
+      ty = Math.round(y);
+    if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return 0;
+    const i = idx(this.map, tx, ty);
+    if (this.map.terrain[i] === Terrain.Mountain) return -2 * ELEV_PX;
+    return this.map.terrain[i] === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
   }
 
   private buildProps() {
@@ -274,8 +316,9 @@ export class WorldRenderer {
         const f = this.atlas.get(key);
         const s = new Sprite(f.texture);
         s.anchor.set(f.anchorX, f.anchorY);
+        if (isTree(p.kind)) s.scale.set(TREE_SCALE);
         const wp = tileToWorld(x + p.ox, y + p.oy);
-        s.position.set(Math.round(wp.x), Math.round(wp.y + this.elevationOf(x, y)));
+        s.position.set(Math.round(wp.x), Math.round(wp.y + this.elevationOf(x + p.ox, y + p.oy)));
         s.zIndex = depthKey(x + p.ox, y + p.oy, 10);
         s.cullable = true;
         s.tint = this.propTint;
@@ -321,6 +364,7 @@ export class WorldRenderer {
 
   /** Apply camera transform. */
   applyCamera(cam: Camera) {
+    this.view = cam.viewRect();
     const z = cam.zoom;
     this.root.scale.set(z);
     this.root.position.set(
@@ -330,6 +374,77 @@ export class WorldRenderer {
   }
 
   animate(dt: number) {
+    if (this.landscape.flush()) {
+      this.refreshSummits();
+      for (const [i, sprites] of this.propSprites) {
+        const props = this.map.props.get(i) ?? [],
+          x = i % this.map.w,
+          y = Math.floor(i / this.map.w);
+        props.forEach((p, j) => {
+          const s = sprites[j];
+          if (s)
+            s.y = Math.round(
+              tileToWorld(x + p.ox, y + p.oy).y + this.elevationOf(x + p.ox, y + p.oy),
+            );
+        });
+      }
+      for (const [id, a] of this.structureAnchors) {
+        const s = this.structures.get(id);
+        if (!s) continue;
+        const p = this.surfacePoint(a.x, a.y);
+        s.position.set(p.x + a.dx, p.y + a.dy);
+        this.contactPatches.get(id)?.position.copyFrom(s.position);
+        this.windowLights.get(id)?.position.copyFrom(s.position);
+      }
+      for (let i = 0; i < this.groundSprites.length; i++) {
+        const s = this.groundSprites[i];
+        if (s)
+          s.visible =
+            !this.landscape.active ||
+            !this.landscape.isPainted(i % this.map.w, Math.floor(i / this.map.w));
+      }
+    }
+    this.landscape.root.visible = this.landscape.active;
+    this.ground.visible = !this.landscape.active || !this.landscape.ready;
+    if (
+      this.landscape.active &&
+      this.terrainVisibilityVersion !== this.landscape.visibilityVersion
+    ) {
+      this.terrainVisibilityVersion = this.landscape.visibilityVersion;
+      for (let i = 0; i < this.groundSprites.length; i++) {
+        const s = this.groundSprites[i];
+        if (s) s.visible = !this.landscape.isPainted(i % this.map.w, Math.floor(i / this.map.w));
+      }
+      this.refreshSummits();
+    }
+    this.waterClock += dt;
+    this.rippleRefresh += dt;
+    if (this.rippleRefresh > 0.12 && this.view) {
+      this.rippleRefresh = 0;
+      this.waterDetails.clear();
+      const view = this.view;
+      for (let y = 0; y < this.map.h; y++)
+        for (let x = 0; x < this.map.w; x++) {
+          if (this.map.terrain[y * this.map.w + x] !== Terrain.Water || !this.isBuilt(x, y))
+            continue;
+          const h = hash2(x + this.map.originX, y + this.map.originY, this.map.seed + 95);
+          if (h > 0.28) continue;
+          const p = tileToWorld(x, y);
+          if (
+            p.x < view.x - 20 ||
+            p.x > view.x + view.w + 20 ||
+            p.y < view.y - 20 ||
+            p.y > view.y + view.h + 20
+          )
+            continue;
+          const phase = this.waterClock * 0.7 + h * 71,
+            drift = Math.sin(phase) * 2;
+          this.waterDetails
+            .moveTo(p.x - 4 + drift, p.y)
+            .quadraticCurveTo(p.x + drift, p.y + 0.7, p.x + 5 + drift, p.y - 0.2)
+            .stroke({ color: 0xb7d1be, width: 0.6, alpha: 0.04 + 0.055 * (1 + Math.sin(phase)) });
+        }
+    }
     this.waterPhase += dt;
     if (this.waterPhase > 0.28) {
       this.waterPhase = 0;
@@ -391,8 +506,37 @@ export class WorldRenderer {
   /** Multiply-tint every ground and prop sprite (seasons). Water and void are left alone. */
   private groundTint = 0xffffff;
   private propTint = 0xffffff;
+  private refreshSummits() {
+    for (let y = 0; y < this.map.h; y++)
+      for (let x = 0; x < this.map.w; x++) {
+        if (!this.isBuilt(x, y)) continue;
+        const k = idx(this.map, x, y),
+          show = this.landscape.active && this.landscape.summit(x, y);
+        let s = this.summitSprites.get(k);
+        if (!show) {
+          s?.destroy();
+          this.summitSprites.delete(k);
+          continue;
+        }
+        if (!s) {
+          const key = `terrain/mountain_${this.map.variant[k] % 3}`,
+            f = this.atlas.get(key);
+          s = new Sprite({ texture: this.surfaces.summit(key, f), cullable: true });
+          s.anchor.set(f.anchorX, f.anchorY);
+          s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
+          s.zIndex = depthKey(x, y, 2);
+          this.objects.addChild(s);
+          this.summitSprites.set(k, s);
+        }
+        const p = this.surfacePoint(x, y);
+        s.position.set(p.x, p.y);
+        s.tint = this.groundTint;
+      }
+  }
   setSeasonTint(ground: number, props: number) {
     this.groundTint = ground;
+    this.landscape.setTint(ground);
+    for (const s of this.summitSprites.values()) s.tint = ground;
     this.propTint = props;
     for (let i = 0; i < this.groundSprites.length; i++) {
       const s = this.groundSprites[i];
@@ -430,9 +574,10 @@ export class WorldRenderer {
     if (hl !== undefined) return hl;
     // ballast is light; darken it with the night so the line does not glow through the dark
     const k = 1 - 0.55 * this.trackNight;
-    const r = Math.round(0xc8 * k);
-    const g = Math.round(0xc4 * k);
-    const b = Math.round(0xbe * k + 0x20 * this.trackNight);
+    const local = MATERIAL_COLORS[materialAt(this.map, i % this.map.w, Math.floor(i / this.map.w))];
+    const r = Math.round((225 + local[0] * 0.1) * k);
+    const g = Math.round((225 + local[1] * 0.1) * k);
+    const b = Math.round((225 + local[2] * 0.1) * k + 0x10 * this.trackNight);
     return (r << 16) | (g << 8) | Math.min(255, b);
   }
   /** Darken every track sprite with the night (0 day .. 1 deep night). */
@@ -441,10 +586,12 @@ export class WorldRenderer {
     this.trackNight = night;
     for (const [i, s] of this.trackSprites) s.tint = this.trackColour(i);
   }
-  setPlatform(x: number, y: number, frame: string | null, layer = 0) {
+  setPlatform(x: number, y: number, frame: string | null, layer = 0, clipToWater = false) {
     const key = y * this.map.w + x + layer * this.map.w * this.map.h;
     let s = this.platformSprites.get(key);
     if (!frame) {
+      this.platformMasks.get(key)?.destroy();
+      this.platformMasks.delete(key);
       s?.destroy();
       this.platformSprites.delete(key);
       return;
@@ -459,6 +606,30 @@ export class WorldRenderer {
     s.anchor.set(f.anchorX, f.anchorY);
     const p = tileToWorld(x, y);
     s.position.set(p.x, p.y);
+    if (clipToWater) {
+      let mask = this.platformMasks.get(key);
+      if (!mask) {
+        mask = new Graphics();
+        this.platforms.addChild(mask);
+        this.platformMasks.set(key, mask);
+      }
+      mask.clear();
+      // Below-deck masonry must disappear behind the bank. Its screen-space height
+      // can otherwise put the foot of a pier over a completely different land tile.
+      for (let ty = Math.max(0, y - 3); ty <= Math.min(this.map.h - 1, y + 3); ty++)
+        for (let tx = Math.max(0, x - 3); tx <= Math.min(this.map.w - 1, x + 3); tx++) {
+          if (this.map.terrain[idx(this.map, tx, ty)] !== Terrain.Water) continue;
+          const q = tileToWorld(tx, ty);
+          mask
+            .poly([q.x, q.y - HALF_H, q.x + HALF_W, q.y, q.x, q.y + HALF_H, q.x - HALF_W, q.y])
+            .fill(0xffffff);
+        }
+      s.mask = mask;
+    } else if (this.platformMasks.has(key)) {
+      s.mask = null;
+      this.platformMasks.get(key)!.destroy();
+      this.platformMasks.delete(key);
+    }
   }
   setTrack(x: number, y: number, frame: string | null) {
     const i = idx(this.map, x, y);
@@ -486,6 +657,7 @@ export class WorldRenderer {
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */
   setStructure(id: string, x: number, y: number, frame: string, layer = 20, dy = 0, dx = 0) {
     const f = this.atlas.get(frame);
+    this.structureAnchors.set(id, { x, y, dx, dy });
     let s = this.structures.get(id);
     if (!s) {
       s = new Sprite(f.texture);
@@ -497,9 +669,84 @@ export class WorldRenderer {
     const p = tileToWorld(x, y);
     s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
     s.zIndex = depthKey(x, y, layer);
+    const building = hasScaleReference(frame);
+    if (building) {
+      s.scale.set(structureScale(frame, f.texture.frame.width / f.w > 1 ? f.h : undefined));
+      s.texture = this.surfaces.contact(frame, f, MATERIAL_COLORS[materialAt(this.map, x, y)]);
+      let light = this.windowLights.get(id);
+      if (!light) {
+        light = windowSprite();
+        this.objects.addChild(light);
+        this.windowLights.set(id, light);
+      }
+      light.texture = this.surfaces.window(frame, f, f.texture.frame.width / f.w === 1);
+      light.anchor.set(f.anchorX, f.anchorY);
+      light.position.copyFrom(s.position);
+      light.scale.copyFrom(s.scale);
+      light.zIndex = s.zIndex + 0.01;
+      let patches = this.contactPatches.get(id);
+      if (!patches) {
+        patches = new Graphics({ cullable: true });
+        this.contactGround.addChild(patches);
+        this.contactPatches.set(id, patches);
+      }
+      patches.clear();
+      patches.position.copyFrom(s.position);
+      const contour = this.surfaces.groundContour(frame, f);
+      for (let j = 0; j < contour.length; j++) {
+        const q = contour[j],
+          px = q.x * s.scale.x,
+          py = q.y * s.scale.y;
+        const seed = hash2(x + this.map.originX + j, y + this.map.originY, 91);
+        // Thin broken soil/grass strip follows the actual foundation silhouette.
+        if (seed < 0.2) continue;
+        patches
+          .ellipse(px, py + 0.65, 1.6 + seed * 1.6, 0.65 + seed * 0.75)
+          .fill({ color: 0x8c7950, alpha: 0.17 + seed * 0.11 });
+        if (seed > 0.6) {
+          patches
+            .moveTo(px - 0.7, py + 1.7)
+            .lineTo(px - 0.85, py + 0.25)
+            .moveTo(px + 0.35, py + 1.7)
+            .lineTo(px + 0.7, py + 0.1)
+            .stroke({ color: 0x82964c, width: 0.6, alpha: 0.52 });
+        }
+        if (seed > 0.91)
+          patches.ellipse(px + 1.1, py + 1.6, 0.85, 0.45).fill({ color: 0xa6a28a, alpha: 0.5 });
+      }
+    }
     return s;
   }
+  setWindowNight(night: number) {
+    for (const [id, light] of this.windowLights) {
+      light.alpha = night * 0.88;
+      const owner = this.structures.get(id)!;
+      light.visible = owner.visible;
+      light.position.copyFrom(owner.position);
+      light.scale.copyFrom(owner.scale);
+      light.rotation = owner.rotation;
+    }
+  }
+  private atmosphereTints = new WeakMap<Container, { base: number; applied: number }>();
+  /** Ground is tinted by the multiply layer. Objects tint before their emissive masks. */
+  setAtmosphereTint(color: number) {
+    for (const object of this.objects.children) {
+      if (object.label === 'emissive') continue;
+      const previous = this.atmosphereTints.get(object);
+      const base = previous && object.tint === previous.applied ? previous.base : object.tint;
+      let applied = 0;
+      for (const shift of [0, 8, 16])
+        applied |= Math.round((((base >> shift) & 255) * ((color >> shift) & 255)) / 255) << shift;
+      object.tint = applied;
+      this.atmosphereTints.set(object, { base, applied });
+    }
+  }
   removeStructure(id: string) {
+    this.structureAnchors.delete(id);
+    this.contactPatches.get(id)?.destroy();
+    this.contactPatches.delete(id);
+    this.windowLights.get(id)?.destroy();
+    this.windowLights.delete(id);
     const s = this.structures.get(id);
     if (s) {
       s.destroy();
@@ -512,9 +759,8 @@ export class WorldRenderer {
 
   /** Create a sprite in the overlay layer (ghost previews). */
   makeOverlaySprite(frame: string): Sprite {
-    const f = this.atlas.get(frame);
-    const s = new Sprite(f.texture);
-    s.anchor.set(f.anchorX, f.anchorY);
+    const s = new Sprite();
+    this.setSpriteFrame(s, frame);
     this.overlay.addChild(s);
     return s;
   }
@@ -522,12 +768,22 @@ export class WorldRenderer {
     const f = this.atlas.get(frame);
     s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
+    s.scale.set(
+      hasScaleReference(frame)
+        ? structureScale(frame, f.texture.frame.width / f.w > 1 ? f.h : undefined)
+        : frame.startsWith('props/') && isTree(frame.slice(6).replace(/_\d+$/, ''))
+          ? TREE_SCALE
+          : 1,
+    );
   }
 
   /** World pixel position of the top surface of a tile centre (for placing sprites). */
   surfacePoint(x: number, y: number) {
     const p = tileToWorld(x, y);
-    return { x: p.x, y: p.y + this.elevationOf(Math.floor(x + 0.5), Math.floor(y + 0.5)) };
+    return { x: p.x, y: p.y + this.elevationOf(x, y) };
+  }
+  tileAtSurface(x: number, y: number) {
+    return this.landscape.failed ? worldToTileInt(x, y) : this.landscape.tileAtWorld(x, y);
   }
 }
 
