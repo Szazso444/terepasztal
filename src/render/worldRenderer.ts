@@ -17,6 +17,8 @@ import { structureScale, hasScaleReference, TREE_SCALE, isTree } from './assetSc
 import { SurfaceAssets, windowSprite } from './surfaceAssets';
 import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
+import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
+import { scatterFor } from './scatter';
 
 const CHUNK = 8;
 
@@ -50,8 +52,14 @@ export class WorldRenderer {
   /** number of void tiles drawn around the playable map */
   static readonly BORDER = 8;
   private propSprites = new Map<number, Sprite[]>();
+  /** Visual-only nature (scatter.ts) per tile, with each sprite's offset inside its tile. */
+  private scatterSprites = new Map<number, { s: Sprite; ox: number; oy: number }[]>();
+  /** Stations, buildings and placed decor, as the game knows them; scatter keeps clear. */
+  occupied: (x: number, y: number) => boolean = () => false;
   /** Tiles that must render flat (track / station on hill). */
   private flattened = new Set<number>();
+  /** Axis each straight rail runs along, so it climbs that way; null for level pieces. */
+  private trackAxes = new Map<number, 'x' | 'y' | null>();
   readonly landscape: Landscape;
   private summitSprites = new Map<number, Sprite>();
   private terrainVisibilityVersion = -1;
@@ -106,8 +114,10 @@ export class WorldRenderer {
     this.city = tiles;
     this.landscape.setCity(tiles);
     for (const k of changed)
-      if (old.has(k) !== tiles.has(k))
+      if (old.has(k) !== tiles.has(k)) {
         this.refreshGround(k % this.map.w, Math.floor(k / this.map.w));
+        this.refreshScatter(k % this.map.w, Math.floor(k / this.map.w), 0);
+      }
   }
   private groundFrame(x: number, y: number): string {
     if (this.city.has(y * this.map.w + x)) return 'terrain/city_' + (x % 3) + '_' + (y % 3);
@@ -191,6 +201,7 @@ export class WorldRenderer {
         const i = idx(this.map, x, y);
         const list = this.map.props.get(i);
         if (list && !this.propSprites.has(i)) this.buildPropsAt(i, list);
+        else if (!list) this.buildScatterAt(x, y);
       }
     this.applyTintTo(r.x, r.y, x1, y1);
   }
@@ -263,6 +274,7 @@ export class WorldRenderer {
     const i = idx(this.map, x, y);
     const list = this.map.props.get(i);
     if (list) this.buildPropsAt(i, list);
+    else this.buildScatterAt(x, y);
   }
 
   /** Re-tile after terrain edits: ground texture, props, and objects standing on the tile. */
@@ -270,10 +282,8 @@ export class WorldRenderer {
     if (!this.isBuilt(x, y)) return;
     this.refreshGround(x, y);
     this.rebuildProps(x, y);
-    const i = idx(this.map, x, y);
-    const p = tileToWorld(x, y);
-    const t = this.trackSprites.get(i);
-    if (t) t.position.set(p.x, p.y + this.elevationOf(x, y));
+    const t = this.trackSprites.get(idx(this.map, x, y));
+    if (t) this.placeTrackSprite(t, x, y);
   }
 
   setFlattened(x: number, y: number, flat: boolean) {
@@ -311,23 +321,58 @@ export class WorldRenderer {
       if (!this.isBuilt(x, y)) return;
       const sprites: Sprite[] = [];
       for (const p of list) {
-        const key = `props/${p.kind}_${p.variant}`;
-        if (!this.atlas.has(key)) continue;
-        const f = this.atlas.get(key);
-        const s = new Sprite(f.texture);
-        s.anchor.set(f.anchorX, f.anchorY);
-        if (isTree(p.kind)) s.scale.set(TREE_SCALE);
-        const wp = tileToWorld(x + p.ox, y + p.oy);
-        s.position.set(Math.round(wp.x), Math.round(wp.y + this.elevationOf(x + p.ox, y + p.oy)));
-        s.zIndex = depthKey(x + p.ox, y + p.oy, 10);
-        s.cullable = true;
-        s.tint = this.propTint;
+        const s = this.propSprite(x, y, p);
+        if (!s) continue;
         s.visible = !this.flattened.has(i);
-        this.objects.addChild(s);
         sprites.push(s);
       }
       if (sprites.length) this.propSprites.set(i, sprites);
     }
+  }
+
+  private propSprite(x: number, y: number, p: PropInstance) {
+    const key = `props/${p.kind}_${p.variant}`;
+    if (!this.atlas.has(key)) return null;
+    const f = this.atlas.get(key);
+    const s = new Sprite(f.texture);
+    s.anchor.set(f.anchorX, f.anchorY);
+    if (isTree(p.kind)) s.scale.set(TREE_SCALE);
+    const wp = tileToWorld(x + p.ox, y + p.oy);
+    s.position.set(Math.round(wp.x), Math.round(wp.y + this.elevationOf(x + p.ox, y + p.oy)));
+    s.zIndex = depthKey(x + p.ox, y + p.oy, 10);
+    s.cullable = true;
+    s.tint = this.propTint;
+    this.objects.addChild(s);
+    return s;
+  }
+  /** Rebuild the visual-only nature on one tile from its current surroundings. */
+  private buildScatterAt(x: number, y: number) {
+    if (x < 0 || y < 0 || x >= this.map.w || y >= this.map.h) return;
+    const i = idx(this.map, x, y);
+    for (const { s } of this.scatterSprites.get(i) ?? []) s.destroy();
+    this.scatterSprites.delete(i);
+    if (!this.isBuilt(x, y)) return;
+    const list = scatterFor(this.map, x, y, {
+      occupied: (xx, yy) => this.trackSprites.has(idx(this.map, xx, yy)) || this.occupied(xx, yy),
+      city: (xx, yy) => this.city.has(idx(this.map, xx, yy)),
+      steep: (xx, yy) => !this.landscape.failed && !this.landscape.groundAllows(xx, yy, 'straight'),
+    });
+    const sprites = [];
+    for (const p of list) {
+      const s = this.propSprite(x, y, p);
+      if (s) sprites.push({ s, ox: p.ox, oy: p.oy });
+    }
+    if (sprites.length) this.scatterSprites.set(i, sprites);
+  }
+  /** Something was built or cleared near (x, y): scatter there follows. */
+  private refreshScatter(x: number, y: number, radius: number) {
+    for (let dy = -radius; dy <= radius; dy++)
+      for (let dx = -radius; dx <= radius; dx++) {
+        const xx = x + dx,
+          yy = y + dy;
+        if (xx >= 0 && yy >= 0 && xx < this.map.w && yy < this.map.h)
+          if (!this.map.props.has(idx(this.map, xx, yy))) this.buildScatterAt(xx, yy);
+      }
   }
 
   removeProps(x: number, y: number) {
@@ -378,6 +423,14 @@ export class WorldRenderer {
   animate(dt: number) {
     if (this.landscape.flush()) {
       this.refreshSummits();
+      for (const [i, s] of this.trackSprites)
+        this.placeTrackSprite(s, i % this.map.w, Math.floor(i / this.map.w));
+      for (const [i, list] of this.scatterSprites) {
+        const x = i % this.map.w,
+          y = Math.floor(i / this.map.w);
+        for (const { s, ox, oy } of list)
+          s.y = Math.round(tileToWorld(x + ox, y + oy).y + this.elevationOf(x + ox, y + oy));
+      }
       for (const [i, sprites] of this.propSprites) {
         const props = this.map.props.get(i) ?? [],
           x = i % this.map.w,
@@ -557,6 +610,7 @@ export class WorldRenderer {
         if (s && this.map.terrain[i] !== Terrain.Water)
           s.tint = this.city.has(i) ? 0xffffff : this.groundTint;
         for (const p of this.propSprites.get(i) ?? []) p.tint = this.propTint;
+        for (const p of this.scatterSprites.get(i) ?? []) p.s.tint = this.propTint;
       }
   }
 
@@ -633,14 +687,17 @@ export class WorldRenderer {
       this.platformMasks.delete(key);
     }
   }
-  setTrack(x: number, y: number, frame: string | null) {
+  /** `axis` is the direction a straight rail runs, so it climbs along it; other pieces lie level. */
+  setTrack(x: number, y: number, frame: string | null, axis: 'x' | 'y' | null = null) {
     const i = idx(this.map, x, y);
+    this.trackAxes.set(i, axis);
     let s = this.trackSprites.get(i);
     if (!frame) {
       if (s) {
         s.destroy();
         this.trackSprites.delete(i);
       }
+      this.refreshScatter(x, y, 0);
       return;
     }
     const f = this.atlas.get(frame);
@@ -652,8 +709,29 @@ export class WorldRenderer {
     } else s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
     s.tint = this.trackColour(i);
-    const p = tileToWorld(x, y);
-    s.position.set(p.x, p.y + this.elevationOf(x, y));
+    this.placeTrackSprite(s, x, y);
+    this.refreshScatter(x, y, 0);
+  }
+  /** Track lies on the hill: lifted to the surface and pitched along its own axis only. */
+  private placeTrackSprite(s: Sprite, x: number, y: number) {
+    const p = tileToWorld(x, y),
+      g = this.groundAt(x, y),
+      axis = this.trackAxes.get(idx(this.map, x, y));
+    standOnGround(s, p.x, p.y, {
+      dz: g.dz,
+      sgx: axis === 'x' ? g.sgx : 0,
+      sgy: axis === 'y' ? g.sgy : 0,
+    });
+  }
+  /** The surface under (x, y) for sprites standing on it; level ground without the painter. */
+  groundAt(x: number, y: number): Ground {
+    if (this.landscape.failed) return { ...LEVEL_GROUND, dz: this.elevationOf(x, y) };
+    const g = this.landscape.slope(x, y);
+    return { dz: -g.z, sgx: -g.gx, sgy: -g.gy };
+  }
+  /** Rails climb only straight, at most one level per tile; everything else needs level ground. */
+  groundAllows(x: number, y: number, need: 'straight' | 'level') {
+    return this.landscape.failed || this.landscape.groundAllows(x, y, need);
   }
 
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */
@@ -717,6 +795,8 @@ export class WorldRenderer {
           patches.ellipse(px + 1.1, py + 1.6, 0.85, 0.45).fill({ color: 0xa6a28a, alpha: 0.5 });
       }
     }
+    // Stations reach up to two tiles from their anchor; nature there clears away.
+    this.refreshScatter(x, y, 2);
     return s;
   }
   setWindowNight(night: number) {
@@ -744,6 +824,7 @@ export class WorldRenderer {
     }
   }
   removeStructure(id: string) {
+    const anchor = this.structureAnchors.get(id);
     this.structureAnchors.delete(id);
     this.contactPatches.get(id)?.destroy();
     this.contactPatches.delete(id);
@@ -754,6 +835,7 @@ export class WorldRenderer {
       s.destroy();
       this.structures.delete(id);
     }
+    if (anchor) this.refreshScatter(anchor.x, anchor.y, 2);
   }
   getStructure(id: string) {
     return this.structures.get(id);

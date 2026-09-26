@@ -20,19 +20,24 @@ try {
  report.excavation=await page.evaluate(async()=>{
   const g=worldReview.g,w=g.world,l=w.landscape;
   const settled=async()=>{w.animate(0);while(!l.ready){if(l.failed)throw Error('Worker failed');await new Promise(r=>setTimeout(r,20));w.animate(0);}};
-  let placed;
+  let placed,refused=null;
   for(let k=0;k<g.map.terrain.length;k++){
     const x=k%128,y=Math.floor(k/128);
     if(g.map.terrain[k]!==2||x<10||y<10||x>117||y>117||g.track.has(x,y)||w.elevationOf(x,y)>-5)continue;
-    const z=w.elevationOf(x,y),paints=l.paintCount;
-    if(g.builder.placeTrackKind(x,y,'straight',0)){placed={x,y,z,paints};break;}
+    // A slope too steep for rails must refuse them (the hill is not cut away).
+    if(!refused&&!w.groundAllows(x,y,'straight')){if(g.builder.placeTrackKind(x,y,'straight',0))throw Error('Rail laid on a too-steep tile');refused=[x,y];}
+    if(placed)continue;
+    const z=w.elevationOf(x,y),paints=l.paintCount,corners=[-.5,.5].flatMap(dx=>[-.5,.5].map(dy=>w.elevationOf(x+dx,y+dy)));
+    if(g.builder.placeTrackKind(x,y,'straight',0))placed={x,y,z,paints,corners};
   }
-  if(!placed)throw Error('No test hill for real Builder excavation');
-  const {x,y,z,paints}=placed;
+  if(!placed||!refused)throw Error('No test hill for rails on slopes');
+  const {x,y,z,paints,corners}=placed;
   await settled();
-  for(const dx of [-.49,0,.49])for(const dy of [-.49,0,.49])if(w.elevationOf(x+dx,y+dy)!==0)throw Error('Track footprint not flat');
+  // Rails sit on the hill: its corners keep their height.
+  const after=[-.5,.5].flatMap(dx=>[-.5,.5].map(dy=>w.elevationOf(x+dx,y+dy)));
+  if(after.some((v,i)=>Math.abs(v-corners[i])>1e-6))throw Error('Rail cut the hill');
   const s=w.trackSprites.get(y*128+x),p=w.surfacePoint(x,y);
-  if(s.y!==p.y||s.x!==p.x)throw Error('Track not aligned');
+  if(Math.abs(s.x-p.x)>0.5||Math.abs(s.y-p.y)>0.5)throw Error('Track not on the surface');
   const picked=w.tileAtSurface(p.x,p.y);
   if(picked.x!==x||picked.y!==y)throw Error('Raised terrain pick failed');
   const repaint=l.paintCount-paints;
@@ -42,7 +47,7 @@ try {
   g.map.terrain[y*128+x]=0;w.retile(x,y);w.animate(0);
   g.map.terrain[y*128+x]=2;w.retile(x,y);w.animate(0);await settled();
   if(w.elevationOf(x,y)!==z)throw Error('Stale edit result won');
-  return {tile:[x,y],originalHeight:z,flatFootprint:true,trackAligned:true,picking:true,localRepaintCount:repaint,restored:true,staleResultRejected:true};
+  return {tile:[x,y],originalHeight:z,hillKept:true,refusedSteepTile:refused,trackOnSurface:true,picking:true,localRepaintCount:repaint,restored:true,staleResultRejected:true};
  });
  assert(report.excavation.localRepaintCount<20);
  report.season=await page.evaluate(async()=>{

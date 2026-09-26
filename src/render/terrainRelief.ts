@@ -15,8 +15,12 @@ export interface ReliefStyle {
   /** Light each tile by its own slope, so elevated tiles read as tiles. */
   faces: boolean;
 }
-/** The shipped style. */
-export const DEFAULT_RELIEF: ReliefStyle = { step: RELIEF_STEP, maxRise: 1, faces: false };
+/**
+ * The shipped style: a level is a quarter of a tile side, a tile edge rises one or two levels,
+ * and every tile is lit by its own slope. The original relief was { step: 10, maxRise: 1,
+ * faces: false }.
+ */
+export const DEFAULT_RELIEF: ReliefStyle = { step: TILE_SIDE_PX / 4, maxRise: 2, faces: true };
 export interface TerrainRelief {
   /** Shared lattice: corner (x,y) is at tile coordinate (x-.5,y-.5). */
   corners: Uint8Array;
@@ -25,18 +29,22 @@ export interface TerrainRelief {
 }
 export type HillFamily = 'flat' | 'slope' | 'shoulder' | 'saddle' | 'ridge' | 'plateau' | 'peak';
 
-/** Discrete landform levels, not a blurred height field. No simulation planes are changed. */
+/**
+ * Discrete landform levels, not a blurred height field. No simulation planes are changed.
+ * `built` tiles (track, stations, buildings) keep the hill's corner heights: rails and structures
+ * sit on the hill instead of cutting it away. They only lose the small rounded crown, so a rail
+ * bed follows the corners exactly.
+ */
 export function buildRelief(
   map: LandscapeMap,
-  flat: ReadonlySet<number>,
+  built: ReadonlySet<number>,
   style: ReliefStyle = DEFAULT_RELIEF,
 ): TerrainRelief {
   const { w, h } = map,
     stride = w + 1,
     step = style.step;
   const corners = new Uint8Array(stride * (h + 1));
-  // A corner touching a flat or non-hill tile must stay at zero. This makes the entire
-  // railway/structure footprint flat, including its edges, rather than only its anchor.
+  // A corner touching a non-hill tile stays at zero, so ordinary ground is always level.
   for (let y = 0; y <= h; y++)
     for (let x = 0; x <= w; x++) {
       let level = 4;
@@ -45,7 +53,7 @@ export function buildRelief(
           const tx = x + dx,
             ty = y + dy,
             k = ty * w + tx;
-          if (tx < 0 || ty < 0 || tx >= w || ty >= h || flat.has(k)) {
+          if (tx < 0 || ty < 0 || tx >= w || ty >= h) {
             level = 0;
             continue;
           }
@@ -100,13 +108,17 @@ export function buildRelief(
     for (let x = 0; x < w; x++) {
       const k = y * w + x,
         t = map.terrain[k];
-      if (flat.has(k) || (t !== Terrain.Hill && t !== Terrain.Mountain)) continue;
+      if (t !== Terrain.Hill && t !== Terrain.Mountain) continue;
       const c = y * stride + x,
         a = corners[c] * step,
         b = corners[c + 1] * step,
         d = corners[c + stride + 1] * step,
         e = corners[c + stride] * step;
       let z = (a + b + d + e) / 4;
+      if (built.has(k)) {
+        centres[k] = z;
+        continue;
+      }
       const wx = x + map.originX,
         wy = y + map.originY;
       // A few distinct summit caps; the remaining tiles become connecting landforms.
@@ -201,6 +213,42 @@ export function surfaceAlongRay(
   return (lo + hi) / 2;
 }
 
+/** Corner levels of tile (x, y), lowest and highest. */
+function levelSpan(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
+  const stride = map.w + 1,
+    k = y * stride + x,
+    c = relief.corners,
+    levels = [c[k], c[k + 1], c[k + stride + 1], c[k + stride]];
+  return Math.max(...levels) - Math.min(...levels);
+}
+/**
+ * Can this ground carry it? `straight` (a straight axis-aligned rail) climbs at most one level
+ * across the tile; `level` (curves, switches, crossings, stations, buildings) needs a tile whose
+ * corners are all at the same height, at whatever height the hill is.
+ */
+export function groundAllows(
+  map: LandscapeMap,
+  relief: TerrainRelief,
+  x: number,
+  y: number,
+  need: 'straight' | 'level',
+) {
+  if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
+  return levelSpan(map, relief, x, y) <= (need === 'straight' ? 1 : 0);
+}
+/**
+ * Height and slope of the surface at (x, y): `z` in world pixels, `gx`/`gy` in world pixels per
+ * tile along +x and +y. Sprites standing on it are sheared by the slope.
+ */
+export function surfaceSlope(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
+  const d = 0.2;
+  return {
+    z: reliefHeight(map, relief, x, y),
+    gx: (reliefHeight(map, relief, x + d, y) - reliefHeight(map, relief, x - d, y)) / (2 * d),
+    gy: (reliefHeight(map, relief, x, y + d) - reliefHeight(map, relief, x, y - d)) / (2 * d),
+  };
+}
+
 export function hillFamily(
   map: LandscapeMap,
   relief: TerrainRelief,
@@ -211,7 +259,8 @@ export function hillFamily(
     z = relief.centres[y * map.w + x];
   const lo = Math.min(a, b, c, d),
     hi = Math.max(a, b, c, d);
-  if (z > hi) return hi >= 20 ? 'peak' : 'shoulder';
+  // Corner averages of irrational level heights round; a crown is a real rise above that.
+  if (z > hi + 1e-6) return hi >= 2 * relief.style.step ? 'peak' : 'shoulder';
   if (lo === hi) return hi ? 'plateau' : 'flat';
   if (a === c && b === d && a !== b) return a > b ? 'ridge' : 'saddle';
   if ([a, b, c, d].filter((v) => v === hi).length === 1) return 'shoulder';

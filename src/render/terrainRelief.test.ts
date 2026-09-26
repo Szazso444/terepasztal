@@ -7,6 +7,7 @@ import {
   reliefCorners,
   reliefTileAtWorld,
   hillFamily,
+  groundAllows,
   RELIEF_MAX,
   TILE_SIDE_PX,
   type ReliefStyle,
@@ -93,16 +94,42 @@ describe('connected illustrated terrain', () => {
         }
     expect(m.terrain).toEqual(before);
   });
-  it('keeps the entire excavated footprint flat and dry lowlands at zero', () => {
+  it('keeps the hill under built tiles and only smooths their crown', () => {
     const m = fixture(),
+      natural = buildRelief(m, new Set()),
       r = buildRelief(m, new Set([16 * 32 + 16]));
+    // Building never cuts the hill away: every corner keeps its natural level.
+    expect(r.corners).toEqual(natural.corners);
+    const [a, b, d, e] = reliefCorners(m, r, 16, 16);
+    // No crown: the built tile is exactly the bilinear surface through its corners.
+    for (let v = 0; v <= 1; v += 0.25)
+      for (let u = 0; u <= 1; u += 0.25)
+        expect(reliefHeight(m, r, 15.5 + u, 15.5 + v)).toBeCloseTo(
+          a + (b - a) * u + (e - a) * v + (a - b - e + d) * u * v,
+          4,
+        );
     for (let y = -0.5; y < 0.5; y += 0.1)
-      for (let x = -0.5; x < 0.5; x += 0.1) {
-        expect(reliefHeight(m, r, 16 + x, 16 + y)).toBeCloseTo(0, 6);
-        expect(reliefHeight(m, r, 1 + x, 1 + y)).toBe(0);
-      }
+      for (let x = -0.5; x < 0.5; x += 0.1) expect(reliefHeight(m, r, 1 + x, 1 + y)).toBe(0);
     expect(reliefHeight(m, r, -5, 4)).toBe(0);
-    expect(reliefCorners(m, r, 16, 16)).toEqual([0, 0, 0, 0]);
+  });
+  it('lets straight rails climb one level per tile and keeps everything else on level ground', () => {
+    const m = fixture(),
+      r = buildRelief(m, new Set());
+    let straightOnly = 0,
+      level = 0,
+      refused = 0;
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const c = reliefCorners(m, r, x, y).map((v) => Math.round(v / r.style.step)),
+          span = Math.max(...c) - Math.min(...c);
+        expect(groundAllows(m, r, x, y, 'level')).toBe(span === 0);
+        expect(groundAllows(m, r, x, y, 'straight')).toBe(span <= 1);
+        if (span === 0) level++;
+        else if (span === 1) straightOnly++;
+        else refused++;
+      }
+    expect(level && straightOnly && refused).toBeTruthy();
+    expect(groundAllows(m, r, -1, 0, 'straight')).toBe(false);
   });
   it('bounds projection slopes so the painted surface cannot fold behind itself', () => {
     const m = fixture(),

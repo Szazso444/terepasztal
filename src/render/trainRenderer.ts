@@ -6,6 +6,7 @@ import type { Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
 import { PAL, hex, type RGB } from '../art/palette';
 import { locoFrame, wagonFrame, loadKind, bogieFrame, bogieStyleOf } from '../art/frames';
+import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import {
   facingOf,
   DRAWN_FACINGS,
@@ -52,6 +53,8 @@ export class TrainRenderer {
   constructor(
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
+    /** The surface under a tile position; trains climb hills on it. Level when absent. */
+    private readonly ground: (x: number, y: number) => Ground = () => LEVEL_GROUND,
   ) {
     layer.on('destroyed', () => this.surfaces.destroy());
   }
@@ -140,7 +143,17 @@ export class TrainRenderer {
     s.scale.set(drawn ? 1 : -1, 1);
     s.rotation = residualRotation(angle, f) * ROTATION_SHARE;
     const wp = tileToWorld(x, y);
-    s.position.set(Math.round(wp.x), Math.round(wp.y));
+    // Each body part and bogie stands on the hill under its own position, pitched along its own
+    // heading only (the rail bed is level across the track).
+    const g = this.ground(x, y),
+      cos = Math.cos(angle),
+      sin = Math.sin(angle),
+      along = g.sgx * cos + g.sgy * sin;
+    standOnGround(s, Math.round(wp.x), Math.round(wp.y), {
+      dz: g.dz,
+      sgx: along * cos,
+      sgy: along * sin,
+    });
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
     return key;
@@ -199,6 +212,7 @@ export class TrainRenderer {
             light.position.copyFrom(s.position);
             light.scale.copyFrom(s.scale);
             light.rotation = s.rotation;
+            light.skew.copyFrom(s.skew);
             light.zIndex = s.zIndex + 0.01;
             light.visible = s.visible;
           } else {

@@ -5,18 +5,22 @@
     "before": 256,
     "after": 256,
     "active": true,
-    "workerPaintMs": 16371.399999998976,
-    "medianRenderSubmitMs": 18.40000000037253,
-    "terrainStartupMs": 16953.600000000093
+    "workerPaintMs": 21027.399999996647,
+    "medianRenderSubmitMs": 21.799999999813735,
+    "terrainStartupMs": 21663.600000000093
   },
   "excavation": {
     "tile": [
       100,
+      11
+    ],
+    "originalHeight": -14.696938514709473,
+    "hillKept": true,
+    "refusedSteepTile": [
+      101,
       10
     ],
-    "originalHeight": -5,
-    "flatFootprint": true,
-    "trackAligned": true,
+    "trackOnSurface": true,
     "picking": true,
     "localRepaintCount": 9,
     "restored": true,

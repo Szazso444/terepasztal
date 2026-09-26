@@ -5,6 +5,8 @@ import {
   reliefHeight,
   reliefCorners,
   reliefTileAtWorld,
+  groundAllows,
+  surfaceSlope,
   RELIEF_MAX,
   type TerrainRelief,
 } from './terrainRelief';
@@ -355,6 +357,16 @@ export class Landscape {
   elevation(x: number, y: number) {
     this.updateHeights();
     return -reliefHeight(this.map, this.relief, x, y);
+  }
+  /** Can the ground at tile (x, y) carry a straight climbing rail, or only level structures? */
+  groundAllows(x: number, y: number, need: 'straight' | 'level') {
+    this.updateHeights();
+    return groundAllows(this.map, this.relief, x, y, need);
+  }
+  /** Surface height and slope at (x, y), in world pixels (up is positive). */
+  slope(x: number, y: number) {
+    this.updateHeights();
+    return surfaceSlope(this.map, this.relief, x, y);
   }
   tileAtWorld(x: number, y: number) {
     this.updateHeights();

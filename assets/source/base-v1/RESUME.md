@@ -1,6 +1,16 @@
 # Asset generation checkpoint
 
-## Style consistency: both smooth (2026-09-26; latest)
+## Hills 1/4, rails on slopes, scatter (2026-09-26; latest)
+
+User chose 1/4-side levels. Implemented as the default relief; rails keep the hill
+(straight track climbs one level per tile, other pieces and structures need level
+tiles); trains pitch on slopes; visual-only scatter by context. Drive: loco/wagon
+folders empty, the 32 locomotive + 20 wagon sources are already in base-v1; no new
+decor on the Drive; Google download hosts are blocked by the environment network
+policy. Train models need the local ComfyUI/Blender pipeline (tools/asset-pipeline).
+Details: docs/art-direction/terrain-production.md (last section).
+
+## Style consistency: both smooth (2026-09-26)
 
 User compared current / both sharp / both smooth at all seven zoom steps and
 chose **both smooth**; the grass-over-bases and pixel-matched asset previews were

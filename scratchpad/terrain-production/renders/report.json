@@ -728,7 +728,7 @@
     }
   ],
   "terrainRenderer": "production balanced illustration + interlocking edges + shared-corner relief",
-  "terrainStartupMs": 23740.199999999953,
+  "terrainStartupMs": 21737.899999999907,
   "patchCount": 20,
   "treeScale": 1.5,
   "trackOnWater": 0,

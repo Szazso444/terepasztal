@@ -128,6 +128,8 @@ export const STR = {
     locked: 'Uncharted region',
     rock: 'Cannot lay track on rock',
     needBridge: 'Water needs a bridge',
+    tooSteep: 'Too steep for rails: straight track climbs one level per tile at most',
+    notLevel: 'Needs level ground: only straight track can climb a slope',
     trackInWay: 'Track in the way: remove it first',
     needWaterside: 'Must stand next to water',
     needTerrain: (t: string) => `Must stand on ${t}`,

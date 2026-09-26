@@ -78,6 +78,11 @@ export class Builder {
   /** editor mode: no costs, no region or tier locks */
   free = false;
   onTrackChanged: ((x: number, y: number) => void) | null = null;
+  /**
+   * The rendered hill decides what its ground carries: `straight` rails climb at most one level
+   * per tile, `level` pieces and structures need a level tile. Unset means level everywhere.
+   */
+  groundCheck: ((x: number, y: number, need: 'straight' | 'level') => boolean) | null = null;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
@@ -321,6 +326,14 @@ export class Builder {
     for (const t of tiles) {
       const p = probe.get(t.x, t.y);
       if (!p) continue;
+      // Only a straight rail along a tile axis may climb; everything else needs level ground.
+      const straight = p.links.length === 1 && p.links[0][0] === opposite(p.links[0][1]);
+      if (this.groundCheck && !this.groundCheck(t.x, t.y, straight ? 'straight' : 'level'))
+        return {
+          ok: false,
+          cost: {},
+          reason: straight ? STR.build.tooSteep : STR.build.notLevel,
+        };
       for (const [a, b] of p.links)
         for (const d of [a, b]) {
           const nx = t.x + DDX[d];
@@ -415,6 +428,8 @@ export class Builder {
           this.buildingAt(tx, ty)
         )
           return { ok: false, cost: {}, reason: STR.build.occupied };
+        if (this.groundCheck && !this.groundCheck(tx, ty, 'level'))
+          return { ok: false, cost: {}, reason: STR.build.notLevel };
       }
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
@@ -517,6 +532,8 @@ export class Builder {
         return STR.build.badTerrain;
       if (this.stationAt(x, y)) return STR.build.occupied;
       if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
+      if (!def.anyTile && this.groundCheck && !this.groundCheck(x, y, 'level'))
+        return STR.build.notLevel;
     }
     return null;
   }
@@ -598,6 +615,8 @@ export class Builder {
         cost: {},
         reason: def.bridge ? 'Bridge platforms must stand on water' : STR.build.badTerrain,
       };
+    if (!def.bridge && this.groundCheck && !this.groundCheck(x, y, 'level'))
+      return { ok: false, cost: {}, reason: STR.build.notLevel };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };
     if (

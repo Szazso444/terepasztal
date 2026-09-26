@@ -112,3 +112,21 @@ sharpness pass keeps base paint cost level (23 s against 26 s before, on a slowe
 Linux container). A double-resolution chunk costs about four base chunks. The
 game continues using fallback tiles while it loads. Camera movement reuses the
 cache. Exact timings depend on hardware and the number of revealed regions.
+
+## Hills, rails on slopes and scatter (approved 2026-09-26)
+
+- **Level height 1/4 of a tile side** (9.8 world px), chosen from the 1/10, 1/5, 1/4 and 1/3
+  comparison. A tile edge rises one or two levels (seeded per edge); mountains reach four.
+  Every tile is lit by its own slope, and rock shows on steep faces instead of random islands.
+  `DEFAULT_RELIEF` in `terrainRelief.ts`; the earlier style stays expressible for comparison.
+- **Rails no longer cut hills.** Built tiles keep the hill's corner heights and only lose the
+  small crown. Straight track may climb one level across a tile; curves, switches, crossings,
+  stations, buildings and placed decor need a level tile at any height (`groundAllows`,
+  enforced through `Builder.groundCheck`). Track sprites pitch along their own axis; every
+  train part and bogie stands on the surface under it, pitched along its own heading.
+  Saves are unchanged: heights still derive from terrain.
+- **Scatter** (`scatter.ts`): visual-only nature placed where it belongs — reeds on shores,
+  bushes and young trees at forest edges, flower patches in meadows, boulders at steep faces
+  and mountain feet, sparse desert and taiga accents. Seeded by world position; nothing on
+  generated props, track, stations, buildings, decor or town paving. No map generation change.
+- Evidence: `scratchpad/hill-levels/renders/` (level heights, `rails-climb-z*.jpg`).

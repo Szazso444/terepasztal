@@ -71,7 +71,7 @@ import {
 import { decorOffset, type Decor } from './sim/build';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
-import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
+import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor, opposite } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import { SettingsScreen } from './ui/settingsScreen';
 import { TuningScreen } from './ui/tuningScreen';
@@ -771,6 +771,7 @@ export class Game {
     this.stock.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
+    this.builder.groundCheck = (x, y, need) => this.world.groundAllows(x, y, need);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
@@ -875,6 +876,12 @@ export class Game {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    this.world.occupied = (x, y) =>
+      !!(
+        this.builder.stationAt(x, y) ||
+        this.builder.buildingAt(x, y) ||
+        this.builder.decorAt(x, y)
+      );
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
     this.overview.root.visible = false;
@@ -912,7 +919,9 @@ export class Game {
     this.world.overlay.addChild(this.powerLines.root);
     this.applySeason(true);
     this.applySettings();
-    this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
+    this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects, (x, y) =>
+      this.world.groundAt(x, y),
+    );
     // vehicles still inside an engine shed are hidden until they roll out
     this.trainRenderer.hideAt = (x, y) => this.builder.stationAt(x, y)?.def.depot === true;
     this.peopleRenderer = new PeopleRenderer(this.atlas, this.world.objects, (x, y) =>
@@ -1157,7 +1166,10 @@ export class Game {
       if (t === Terrain.Hill) this.world.setFlattened(x, y, true);
       if (t === Terrain.Forest || t === Terrain.Grass)
         this.world.displaceProps(x, y, p.unit ? [] : (p.links as [number, number][]));
-      this.world.setTrack(x, y, pieceFrame(p));
+      // A straight rail climbs along its axis: E–W runs along x, N–S along y.
+      const [a, b] = p.links[0] ?? [];
+      const axis = p.links.length === 1 && a === opposite(b) ? (DIR_DX[a] !== 0 ? 'x' : 'y') : null;
+      this.world.setTrack(x, y, pieceFrame(p), axis);
     } else {
       this.world.setTrack(x, y, null);
       if (t === Terrain.Hill && !this.builder.stationAt(x, y)) this.world.setFlattened(x, y, false);
