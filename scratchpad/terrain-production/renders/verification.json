@@ -5,9 +5,9 @@
     "before": 256,
     "after": 256,
     "active": true,
-    "workerPaintMs": 21987.99999999674,
-    "medianRenderSubmitMs": 39.60000000009313,
-    "terrainStartupMs": 22824.799999999814
+    "workerPaintMs": 22150.4999999993,
+    "medianRenderSubmitMs": 38.29999999993015,
+    "terrainStartupMs": 22941.800000000047
   },
   "excavation": {
     "tile": [
@@ -36,15 +36,15 @@
       255
     ],
     "beforeGrass": [
-      145,
-      154,
+      144,
+      153,
       56,
       255
     ],
     "afterGrass": [
       105,
       119,
-      51,
+      50,
       255
     ]
   },

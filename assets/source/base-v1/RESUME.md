@@ -1,6 +1,16 @@
 # Asset generation checkpoint
 
-## Terrain sharpness pass (2026-09-26; latest)
+## Style consistency: both smooth (2026-09-26; latest)
+
+User compared current / both sharp / both smooth at all seven zoom steps and
+chose **both smooth**; the grass-over-bases and pixel-matched asset previews were
+rejected. Implemented at pack time with `tools/pixel-art.mjs`: terrain surface
+sources (radius 3), fallback ground tiles and the `props` atlas (radius 2).
+Structures, rock and mountain caps unchanged; frame counts/sizes/anchors
+unchanged. Rolling stock in use is still procedural pixel art (railcraft
+conversion deferred). Game renders: `scratchpad/style-options/zooms/*-d-game.jpg`.
+
+## Terrain sharpness pass (2026-09-26)
 
 Implemented on branch `claude/charming-ramanujan-i16mhm`, based on the pushed
 `codex/illustrated-sprite-quality` (ba155f0). No map generation, save format or

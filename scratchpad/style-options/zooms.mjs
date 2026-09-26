@@ -45,10 +45,14 @@ async function capture(page, variant, apply) {
     }
 }
 try {
-  const page = await open(false);
-  await capture(page, 'a-current', '');
-  await capture(page, 'b-sharp', 'sharp');
-  await capture(await open(true), 'c-smooth', 'smooth');
+  // GAME=1 captures only the game as built, under the name d-game.
+  if (process.env.GAME) await capture(await open(false), 'd-game', '');
+  else {
+    const page = await open(false);
+    await capture(page, 'a-current', '');
+    await capture(page, 'b-sharp', 'sharp');
+    await capture(await open(true), 'c-smooth', 'smooth');
+  }
 } finally {
   await browser.close();
 }

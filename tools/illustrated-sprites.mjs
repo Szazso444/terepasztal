@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { PNG } from 'pngjs';
+import { smoothPng } from './pixel-art.mjs';
 
 const DENSITY = 4;
 const SOURCE = 'assets/source/base-v1';
@@ -250,6 +251,17 @@ function targets(entry, inventory) {
   return pattern ? inventory.filter((f) => pattern.test(f.key)) : [];
 }
 
+const smoothedSources = new Map();
+/** Ground sources smoothed once each, as tools/terrain-surfaces.mjs does for the painter. */
+function smoothedGround(src, key) {
+  if (!smoothedSources.has(key)) {
+    const copy = new PNG({ width: src.width, height: src.height });
+    src.data.copy(copy.data);
+    smoothedSources.set(key, smoothPng(copy, 3));
+  }
+  return smoothedSources.get(key);
+}
+
 export function build(output = 'public/assets') {
   const inventory = readJson('docs/art-direction/frame-inventory.json');
   const coverage = readJson(join(SOURCE, 'coverage.json'));
@@ -317,7 +329,8 @@ export function build(output = 'public/assets') {
         const variant = water
           ? Number(water[1]) + Math.sin((Number(water[2]) * Math.PI) / 2) * 0.03
           : Number(f.key.match(/_(\d+)$/)[1]);
-        png = groundTile(src, variant);
+        // Fallback ground tiles match the smoothed painter surfaces.
+        png = groundTile(smoothedGround(src, filename), variant);
         ax = 32 * DENSITY;
         ay = 16 * DENSITY;
       } else {
@@ -348,6 +361,8 @@ export function build(output = 'public/assets') {
           ax *= wider / png.width;
           png = resample(png, wider, png.height);
         }
+        // Nature is pixel art; round its steps into the painted style of trains and buildings.
+        if (f.group === 'props') png = smoothPng(png, 2);
       }
       if (!groups.has(f.group)) groups.set(f.group, []);
       groups.get(f.group).push({ key: f.key, png, ax, ay });

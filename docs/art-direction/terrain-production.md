@@ -14,7 +14,9 @@ foundation features following the actual model silhouette.
   seeded source offsets, and the slow `grassDetail` field picks the calmest, median
   or busiest of them (block contrast of the packed art). Grass strokes also follow
   that field. Nothing resets on tile borders or changes when the camera moves.
-- The illustrated tiles are pixel art at about four source pixels per art pixel.
+- The illustrated tiles are pixel art at about four source pixels per art pixel. The packer
+  now rounds them into smooth painted contours (`tools/pixel-art.mjs`, radius 3), the
+  approved "both smooth" style; see the art-direction README.
   `SURFACE_RATE` shows one art pixel per world pixel, the density of the placed
   sprites; the previous scale showed about 2.2, which read as blocks once sharp.
 - Material ownership uses the approved irregular interlock. Only a .06-tile strip

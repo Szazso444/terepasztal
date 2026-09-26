@@ -375,3 +375,18 @@ hill families. Music, scale, foliage and cozy effects from v3 remain.
 [terrain-production.md](terrain-production.md) supersedes the v4 rollback checkpoint:
 shared-corner relief, mixed illustrated grass detail, feathered interlocks, painted
 stones and contour-following foundation features now run in the game.
+
+## Style consistency: both smooth (approved 2026-09-26)
+
+Nature was pixel art with stair-stepped edges while trains, buildings and
+infrastructure are smooth painted art. The approved direction is **both smooth**:
+the illustrated pixel-art sources are rounded into painted contours when packed,
+by `tools/pixel-art.mjs` (majority filter; colour regions are never blended into
+each other, so edges stay crisp). It applies to the ground surfaces
+(`npm run art:terrain`, radius 3 at source resolution), the fallback ground tiles
+and the `props` group (`npm run art:illustrated`, radius 2 at atlas resolution).
+Painted art (rock surface, mountain caps, structures) is not filtered. Frame
+counts, sizes and anchors are unchanged. New nature art should be drawn smooth
+rather than as pixel art. The "Pixel scale" rule above predates this decision.
+The rejected alternatives and zoom comparisons are kept in
+`scratchpad/style-options/`.
