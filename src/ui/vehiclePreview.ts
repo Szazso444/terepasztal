@@ -1,6 +1,6 @@
 import type { AtlasRegistry } from '../engine/atlas';
 import { itemDef, itemKind, type LocoDef, type WagonDef } from '../gacha/items';
-import { vehicleSpec } from '../sim/body';
+import { BOGIE_AXLES, vehicleSpec } from '../sim/body';
 import { el, btn } from './dom';
 import { frameForItem, spriteDataUrl } from './spritePreview';
 
@@ -16,7 +16,7 @@ export function vehicleProperties(id: string): string[] {
     base.push(
       `${l.type} · ${l.speed.toFixed(2)} tiles/s · ${l.power} t haul`,
       s.drawBogies
-        ? `${s.segments.map((p) => `${p.nb} × ${p.bogie === 'bogie' ? 4 : 6} wheels`).join(' + ')}`
+        ? `${s.segments.map((p) => `${p.nb} × ${BOGIE_AXLES[p.bogie] * 2} wheels`).join(' + ')}`
         : '2 axles · 4 wheels',
     );
     if (l.fuelCap) base.push(`Fuel ${l.fuelCap} · ${l.fuelPerTile} per tile`);

@@ -179,6 +179,7 @@
     "era": "Riveted steel body with proper windows.",
     "body": "coach",
     "paint": "iron",
+    "bogieStyle": "coach",
     "carries": "people",
     "capacity": 36,
     "weight": 9,
@@ -192,12 +193,14 @@
     "era": "Velvet, brass and a dining saloon.",
     "body": "coach",
     "paint": "black",
+    "bogieStyle": "coach6",
     "carries": "people",
     "capacity": 52,
     "weight": 12,
     "tier": 0,
     "size": "medium",
-    "vmax": 3.0
+    "vmax": 3.0,
+    "bogieAxles": 3
   },
   {
     "id": "brake_van",

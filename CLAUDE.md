@@ -32,7 +32,8 @@ builds. `docs/live-loop.md` describes the loop it belongs to.
 - `src/ui` DOM overlay screens and panels
 - `src/art` procedural placeholder sprite generators, one file per atlas group
 - `src/data` all content as JSON, loaded through `content.ts`
-- `tools` node-side build tooling (the atlas packer)
+- `tools` node-side build tooling (the atlas packer); `tools/asset-pipeline` is the Python photo -> 3D -> sprite
+  pipeline (ComfyUI, Blender), with its own `CLAUDE.md`
 
 ## Rules that bite
 

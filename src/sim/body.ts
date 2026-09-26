@@ -12,6 +12,11 @@ export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 export const SIZE_LEN: Record<VehicleSize, number> = { small: 1, medium: 2, large: 3 };
 /** distance between two coupled bodies along the track */
 export const COUPLER_GAP = 0.2;
+/**
+ * Rolling stock sprites are drawn this much wider than their length scale, so gauge and body width
+ * read at game zoom. The asset pipeline scales rendered models across by the same factor.
+ */
+export const DRAWN_WIDTH = 1.3;
 /** tolerances in tiles: fore-and-aft slide, sideways float budget, residual gap to rail */
 export const TOL = { foreAft: 0.3, sideways: 0.4, gap: 0.25 };
 export const DEFAULT_PIVOT = 0.7;
@@ -21,7 +26,14 @@ export const DEFAULT_LATERAL_PLAY = 0.35;
 
 export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
 /** two-axle bogie, three-axle bogie, or the wheeled engine unit of a Meyer frame */
-export type BogieKind = 'bogie' | 'bogie3' | 'engine_unit';
+export type BogieKind = 'bogie' | 'bogie3' | 'bogie4' | 'engine_unit';
+/** axles under each kind of bogie */
+export const BOGIE_AXLES: Record<BogieKind, number> = {
+  bogie: 2,
+  bogie3: 3,
+  bogie4: 4,
+  engine_unit: 3,
+};
 
 export interface SegmentSpec {
   part: PartKind;
@@ -52,7 +64,7 @@ export interface BodyFields {
   plan?: BodyPlan;
   pivotRatio?: number;
   bogies?: number;
-  /** axles per bogie: 2 (default) or 3 */
+  /** axles per bogie: 2 (default), 3 or 4 */
   bogieAxles?: number;
   maxLateralPlay?: number;
   type?: string;
@@ -66,7 +78,8 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
   if (size === 'medium' && plan !== 'tender') plan = 'rigid';
   if (size === 'large' && plan === 'tender') plan = 'rigid';
   const pr = def.pivotRatio ?? (size === 'large' ? LARGE_PIVOT : DEFAULT_PIVOT);
-  const bogie: BogieKind = def.bogieAxles === 3 ? 'bogie3' : 'bogie';
+  const bogie: BogieKind =
+    def.bogieAxles === 4 ? 'bogie4' : def.bogieAxles === 3 ? 'bogie3' : 'bogie';
   const segs: SegmentSpec[] = [];
   const nbRigid = def.bogies ?? (size === 'large' ? 3 : 2);
   switch (plan) {

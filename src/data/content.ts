@@ -19,6 +19,7 @@ import cargoFullJson from './cargo_full.json';
 import stationFullJson from './stations_full.json';
 import buildingFullJson from './buildings_full.json';
 import type { SupplyMode } from '../sim/supply';
+import type { PartKind } from '../sim/body';
 export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
@@ -28,6 +29,13 @@ export type CargoClass = 'liquid' | 'mineral' | 'bulk' | 'people';
 export type LocoType = 'steam' | 'diesel' | 'electric';
 export type VehicleSize = 'small' | 'medium' | 'large';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
+/**
+ * Bogie sprites under a vehicle: one style for every bogie, or one per body part. A list goes over
+ * that part's bogies from its own front (a steam engine's leading truck, then its drivers); "none"
+ * draws no bogie there (a Garratt's cradle hangs between its engine units). A style names the
+ * sprite rolling/bogie_<style>_f<n>; without it the generic truck of the bogie's kind draws.
+ */
+export type BogieStyle = string | Partial<Record<PartKind, string | string[]>>;
 export type Collector = 'shoe' | 'pantograph' | 'hv' | 'multi';
 
 export interface LocoDef {
@@ -60,6 +68,7 @@ export interface LocoDef {
   plan?: BodyPlan;
   /** pivot spacing as a fraction of body length (default 0.7) */
   pivotRatio?: number;
+  bogieStyle?: BogieStyle;
   /** bogies under a rigid body (3 for the Bo-Bo-Bo large body) */
   bogies?: number;
   /** axles per bogie: 2 (default) or 3 (Co-Co and the like) */
@@ -89,6 +98,9 @@ export interface WagonDef {
   weight: number;
   starter?: boolean;
   size?: VehicleSize;
+  /** axles per bogie: 2 (default), 3 or 4 */
+  bogieAxles?: number;
+  bogieStyle?: BogieStyle;
   /** age the wagon belongs to: 0 steam, 1 diesel, 2 electric */
   tier?: number;
   /** speed ceiling, tiles per second (default above every locomotive) */
