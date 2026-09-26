@@ -37,11 +37,17 @@ function sprites(game, visit) {
  */
 const snapped = new Map();
 export function sharp(game) {
-  const l = game.world.landscape;
+  const l = game.world.landscape,
+    // Unfiltered at 1x and closer; zoomed out, pixel styles are reduced with filtering.
+    mode = game.camera.zoom >= 1 ? 'nearest' : 'linear';
   // Ground: the double-resolution chunks snapped to one cell per world pixel, like the assets.
+  // Zoomed out, the one-pixel-per-world-pixel base cache is already on that grid.
   for (const c of l.chunks.values()) {
     c.details.visible = false;
-    if (!c.sharp) continue;
+    if (!c.sharp || c.sprite.texture === c.base) {
+      if (c.base !== Texture.EMPTY) c.base.source.scaleMode = mode;
+      continue;
+    }
     let r = snapped.get(c.sharp.uid);
     if (!r) {
       const t = c.sharp,
@@ -49,6 +55,7 @@ export function sharp(game) {
       r = texture(g.data, g.w, g.h, g.w, 'nearest');
       snapped.set(c.sharp.uid, r);
     }
+    r.source.scaleMode = mode;
     c.sprite.texture = r;
     c.sprite.scale.set(1);
   }
@@ -66,6 +73,7 @@ export function sharp(game) {
       snapped.set(key, r);
       snapped.set(r.uid, r);
     }
+    r.source.scaleMode = mode;
     s.texture = r;
   });
 }
