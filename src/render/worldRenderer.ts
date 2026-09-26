@@ -371,6 +371,8 @@ export class WorldRenderer {
       Math.round(cam.viewW / 2 - cam.x * z),
       Math.round(cam.viewH / 2 - cam.y * z),
     );
+    // Same resolution cap as the renderer in game.ts.
+    this.landscape.focus(this.view, z * Math.min(window.devicePixelRatio || 1, 2));
   }
 
   animate(dt: number) {

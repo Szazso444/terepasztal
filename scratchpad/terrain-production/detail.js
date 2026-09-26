@@ -67,7 +67,10 @@ const views = [
 {id:'13-house-foundation',title:'Contour-following soil and grass',x:21,y:21,zoom:4},
 {id:'14-shoreline',title:'Feathered shore',x:29.5,y:29,zoom:4},
 ];
-function render(v) {
+// Renders wait for close-view terrain, so they run one at a time.
+let rendering = Promise.resolve();
+const render = (v) => (rendering = rendering.then(() => draw(v)));
+async function draw(v) {
   const p = tileToWorld(v.x, v.y);
   g.camera.viewW = g.app.screen.width;
   g.camera.viewH = g.app.screen.height;
@@ -75,6 +78,12 @@ function render(v) {
   g.camera.y = p.y - 20;
   g.camera.zoom = v.zoom;
   g.render(1, 0);
+  // Close views wait for the double-resolution terrain copies.
+  while (!g.world.landscape.sharpReady && !g.world.landscape.failed) {
+    await new Promise((r) => setTimeout(r, 25));
+    g.world.animate(0);
+    g.world.applyCamera(g.camera);
+  }
 
   g.cursor.visible = false;
   g.app.renderer.render(g.app.stage);

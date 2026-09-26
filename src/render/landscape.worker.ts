@@ -3,6 +3,7 @@ import { reliefHeight, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
 import {
   grassDetail,
   rockExposure,
+  shareSurfaceDetail,
   surfaceBlend,
   surfaceColor,
   surfaceMaterial,
@@ -10,7 +11,10 @@ import {
 import { hash2 } from '../engine/rng';
 import { Terrain } from '../world/tiles';
 
-let map: LandscapeMap, relief: TerrainRelief, samples: Uint8ClampedArray;
+let map: LandscapeMap,
+  relief: TerrainRelief,
+  samples: Uint8ClampedArray,
+  reduced: Uint8ClampedArray;
 let version = 0,
   tint = 0xffffff;
 let city = new Set<number>();
@@ -26,6 +30,8 @@ self.onmessage = async (event: MessageEvent) => {
       ctx.drawImage(bitmap, 0, 0);
       bitmap.close();
       samples = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      reduced = halve(samples, canvas.width, canvas.height);
+      shareSurfaceDetail(samples, reduced);
       self.postMessage({ loaded: true });
       return;
     }
@@ -39,11 +45,14 @@ self.onmessage = async (event: MessageEvent) => {
     }
     if (data.version !== version) return;
     const started = performance.now(),
-      { x, y, w, h, id } = data;
+      { x, y, w, h, id } = data,
+      scale: number = data.scale ?? 1,
+      // Chunks drawn at one pixel per world pixel read a half-size copy, so they stay filtered.
+      source = scale > 1 ? samples : reduced;
     const left = (x - y - h) * 32 - 4,
       top = (x + y - 1) * 16 - RELIEF_MAX - 5;
-    const width = (w + h) * 32 + 8,
-      height = (w + h) * 16 + RELIEF_MAX + 12;
+    const width = ((w + h) * 32 + 8) * scale,
+      height = ((w + h) * 16 + RELIEF_MAX + 12) * scale;
     const canvas = new OffscreenCanvas(width, height),
       ctx = canvas.getContext('2d')!;
     const pixels = new Uint8ClampedArray(width * height * 4),
@@ -59,8 +68,8 @@ self.onmessage = async (event: MessageEvent) => {
         }
     for (let py = 0; py < height; py += 1)
       for (let px = 0; px < width; px += 1) {
-        const sx = left + px + 0.5,
-          sy = top + py + 0.5,
+        const sx = left + (px + 0.5) / scale,
+          sy = top + (py + 0.5) / scale,
           bx = sx / 64 + sy / 32,
           by = sy / 32 - sx / 64;
         let z = 0;
@@ -91,7 +100,7 @@ self.onmessage = async (event: MessageEvent) => {
           let material = blend[m];
           if (city.has(tileIndex)) material = 8;
           if (z > 2 && terrain === Terrain.Mountain && material === 7) material = 9;
-          surfaceColor(samples, material, wx, wy, part);
+          surfaceColor(source, material, wx, wy, part);
           if (material === 5 || material === 8) waterWeight += weight;
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
         }
@@ -108,18 +117,16 @@ self.onmessage = async (event: MessageEvent) => {
         for (let c = 0; c < 3; c++)
           color[c] *=
             shade * (waterWeight + ((1 - waterWeight) * ((tint >> (16 - c * 8)) & 255)) / 255);
-        for (let yy = py; yy < Math.min(height, py + 1); yy++)
-          for (let xx = px; xx < Math.min(width, px + 1); xx++) {
-            const k = (yy * width + xx) * 4;
-            pixels[k] = color[0];
-            pixels[k + 1] = color[1];
-            pixels[k + 2] = color[2];
-            pixels[k + 3] = 255;
-          }
+        const k = (py * width + px) * 4;
+        pixels[k] = color[0];
+        pixels[k + 1] = color[1];
+        pixels[k + 2] = color[2];
+        pixels[k + 3] = 255;
       }
     ctx.putImageData(new ImageData(pixels, width, height), 0, 0);
     // Identical world-seeded strokes overlap without extending chunk alpha boundaries.
     ctx.globalCompositeOperation = 'source-atop';
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
     const tufts: number[] = [];
     const ox = map.originX,
       oy = map.originY;
@@ -189,6 +196,7 @@ self.onmessage = async (event: MessageEvent) => {
         top,
         width,
         height,
+        scale,
         pixels: output,
         grass,
         tint,
@@ -200,3 +208,17 @@ self.onmessage = async (event: MessageEvent) => {
     self.postMessage({ error: String(error) });
   }
 };
+/** 2×2 box reduction of the packed surface sheet. */
+function halve(pixels: Uint8ClampedArray, width: number, height: number) {
+  const w = width >> 1,
+    h = height >> 1,
+    out = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++)
+      for (let c = 0; c < 4; c++) {
+        const k = (y * 2 * width + x * 2) * 4 + c;
+        out[(y * w + x) * 4 + c] =
+          (pixels[k] + pixels[k + 4] + pixels[k + width * 4] + pixels[k + width * 4 + 4] + 2) >> 2;
+      }
+  return out;
+}

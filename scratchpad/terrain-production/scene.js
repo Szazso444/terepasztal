@@ -286,7 +286,10 @@ views.push({
   y: materialChange.y,
   zoom: 3,
 });
-function render(view) {
+// Renders wait for close-view terrain, so they run one at a time.
+let rendering = Promise.resolve();
+const render = (view) => (rendering = rendering.then(() => draw(view)));
+async function draw(view) {
   g.settings.dayNight = !!view.night;
   g.settings.weather = !!view.weather;
   g.clock.time = view.night ? 215 : 120;
@@ -299,6 +302,12 @@ function render(view) {
   g.camera.x = p.x;
   g.camera.y = p.y - (view.id === '01-whole-map' ? 0 : 30);
   g.render(1, 0);
+  // Close views wait for the double-resolution terrain copies.
+  while (!g.world.landscape.sharpReady && !g.world.landscape.failed) {
+    await new Promise((r) => setTimeout(r, 25));
+    g.world.animate(0);
+    g.world.applyCamera(g.camera);
+  }
   g.world.animate(.16);
   g.rain.update(.16, view.weather === 'rain' ? .55 : 0, g.camera.viewW, g.camera.viewH);
   g.fog.update(.16, view.weather === 'fog' ? .55 : 0, g.camera.viewRect(), g.camera.viewW, g.camera.viewH);

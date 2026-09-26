@@ -10,6 +10,8 @@ import {
   RELIEF_MAX,
 } from './terrainRelief';
 import { surfaceMaterial, surfaceColor, surfaceBlend, grassDetail } from './terrainMaterials';
+import { readFileSync } from 'node:fs';
+import { PNG } from 'pngjs';
 
 function fixture() {
   const m = emptyMap(7412, 32, 32);
@@ -149,6 +151,21 @@ describe('connected illustrated terrain', () => {
       surfaceColor(pixels, material, x + 8 + expanded.originX, y + 8 + expanded.originY, b);
       a.forEach((v, i) => expect(v).toBeCloseTo(b[i], 8));
     }
+  });
+  it('reads only the opaque painted part of every packed surface', () => {
+    // Alpha copied into the colour channels: any sample reaching a transparent tile corner or the
+    // packed cell edge comes out below full coverage.
+    const sheet = PNG.sync.read(readFileSync('public/assets/terrain-surfaces.png')),
+      alpha = new Uint8ClampedArray(sheet.data.length);
+    for (let i = 0; i < alpha.length; i += 4)
+      alpha[i] = alpha[i + 1] = alpha[i + 2] = alpha[i + 3] = sheet.data[i + 3];
+    const out = [0, 0, 0];
+    for (let material = 0; material < 10; material++)
+      for (let y = -40; y < 40; y += 0.37)
+        for (let x = -40; x < 40; x += 0.41) {
+          surfaceColor(alpha, material, x, y, out);
+          expect(out[0]).toBeGreaterThan(210);
+        }
   });
   it('keeps tile centres classified correctly, including all four shoreline directions', () => {
     const m = emptyMap(5, 16, 16);

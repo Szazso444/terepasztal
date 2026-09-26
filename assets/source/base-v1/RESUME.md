@@ -1,17 +1,30 @@
 # Asset generation checkpoint
 
-## Next task: terrain sharpness (discussed, not implemented)
+## Terrain sharpness pass (2026-09-26; latest)
 
-The user wants every terrain material as crisp as the mountain sprites. Current
-`sampleSurface()` averages four offset source samples throughout patch interiors;
-the worker rasterizes at one pixel per world pixel and linear filtering stretches
-that cache at close zoom. Proposed next work: preserve crisp patch interiors and
-blend only irregular edges, increase close-view cache resolution, and vary detail
-without washing out texture contrast. Then reassess the rock source: its paving-like
-pattern still differs from the mountain's angular faces. Keep smooth relief and
-gentle biome transitions. Reuse existing game capture tools and keep usage low.
+Implemented on branch `claude/charming-ramanujan-i16mhm`, based on the pushed
+`codex/illustrated-sprite-quality` (ba155f0). No map generation, save format or
+new artwork. Details: `docs/art-direction/terrain-production.md`.
 
-## Terrain surface correction (2026-09-26; latest)
+- Sampling: one unblended bilinear source sample per irregular patch interior;
+  only a warped .16-cell seam blends. No base-colour contrast reduction.
+- Detail variation: each patch picks the calmest/median/busiest of six seeded
+  source offsets by the `grassDetail` field, so contrast stays intact.
+- Resolution: `npm run art:terrain` packs the sampled centre window at native
+  detail. Close views (>1.4 screen px per world px) repaint the 48 nearest chunks
+  at 2x; the base cache reads a half-size sheet copy.
+- Finding: the base-v1 tiles are pixel art (~4 source px per art pixel). At the
+  old scale one art pixel covered ~2.2 world px, blocky once sharp. `SURFACE_RATE`
+  now shows one art pixel per world pixel, matching placed sprites.
+- Rock: screen-aligned mapping keeps the boulder faces' upper-left light; islands
+  are opaque with narrow edges. Paving look is gone, but it is flat ground. The
+  concept's standing outcrops need a new outcrop sprite family (not started).
+- Evidence: `scratchpad/terrain-production/sharpness/` before|after pairs;
+  refreshed `renders/`, `gallery.html`. 168 tests, lint, typecheck, build,
+  Prettier; verify.mjs and production.mjs pass (Linux Chromium, swiftshader).
+- Review scripts still hardcode Windows paths; cloud runs used path-swapped copies.
+
+## Terrain surface correction (2026-09-26)
 
 User requested a low-usage correction for stone-carpet mountain regions and visible
 polygon hills. Reused existing artwork: rock/mountain materials now mix grass with

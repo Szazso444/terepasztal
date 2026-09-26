@@ -5,7 +5,7 @@ const qa=JSON.parse(fs.readFileSync(`${root}/renders/verification.json`,'utf8'))
 const groups=[
  ['Your latest refinements',[
   ['15-foundation-closeup','Along the foundation','Broken soil, short grass and tiny stones follow the building’s bottom contour.'],
-  ['11-grass-variation','Light, balanced and rich together','World-seeded patches vary grass density and texture strength. Small stones are painted into the terrain.'],
+  ['11-grass-variation','Light, balanced and rich together','World-seeded patches pick calmer or busier parts of the source art, at full contrast. Small stones are painted into the terrain.'],
   ['12-feathered-interlock','Softened interlocking edges','A narrow feather follows the irregular material boundary, preserving the texture on either side.'],
   ['14-shoreline','The same treatment at the shore','A narrower shoreline keeps the visible edge close to the actual water tiles.'],
  ]],
@@ -20,12 +20,16 @@ const html=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="vie
 <p class="note">Every image below is captured from the actual game renderer. Close-ups use a controlled 48 × 48 comparison map; the world views use normal 128 × 128 generation. There is no custom preview ground layer or concept artwork in these captures.</p>
 ${groups.map(([title,items],j)=>`<section id="section-${j}"><h2>${title}</h2><div class="grid">${items.map(([id,title,caption])=>`<figure id="${id}"><a href="renders/${id}.png" target="_blank"><img loading="lazy" src="renders/${id}.png" alt="${title}"></a><h3>${title}</h3><figcaption>${caption}</figcaption></figure>`).join('')}</div></section>`).join('')}
 <h2>Checked in play</h2><p>Rail placement flattens the full footprint; removal restores the hill. Mouse picking follows the raised surface. Worker failure restores the native illustrated tiles. Season changes preserve the water colour. Terrain generation and save format are unchanged.</p>
-<p class="metric">${qa.cache.chunks} cached chunks · ${qa.excavation.localRepaintCount} nearby chunks repainted for a test hill edit · zero terrain repaints during camera panning · 173 tests pass.<br>Full 128 × 128 cache took ${(qa.cache.terrainStartupMs/1000).toFixed(1)} s in headless software-rendered Chrome. Normal play only paints revealed regions. This is a startup measurement, not a frame-rate claim.</p>
+<p class="metric">${qa.cache.chunks} cached chunks · ${qa.excavation.localRepaintCount} nearby chunks repainted for a test hill edit · zero terrain repaints during camera panning · 168 tests pass.<br>Full 128 × 128 cache took ${(qa.cache.terrainStartupMs/1000).toFixed(1)} s in headless software-rendered Chrome. Normal play only paints revealed regions. This is a startup measurement, not a frame-rate claim.</p>
+<h2>Sharpness pass</h2><p>Each patch interior shows one unblended, native-resolution source sample; only irregular seams blend. Close views repaint the chunks around the camera at twice the resolution. The illustrated tiles now show one art pixel per world pixel, and rock is mapped screen-aligned so its boulder faces keep their upper-left light. Before on the left, after on the right:</p><p>${['02-railway-region','06-track-ground','10-connected-hills','11-grass-variation','12-feathered-interlock'].map(id=>`<a href="sharpness/${id}.png" target="_blank">${id}</a>`).join(' · ')}</p>
 <p><a href="renders/verification.json">Browser checks</a> · <a href="renders/production.json">Production and fallback checks</a> · <a href="renders/report.json">World report</a> · <a href="terrain-production.md">Implementation notes</a></p></html>`;
 fs.writeFileSync(`${root}/gallery.html`,html);
 fs.copyFileSync('docs/art-direction/terrain-production.md',`${root}/terrain-production.md`);
 const destination='G:/DEV/Terepasztal/renders/terrain-production';
-fs.mkdirSync(destination,{recursive:true});
-for(const file of ['gallery.html','terrain-production.md'])fs.copyFileSync(`${root}/${file}`,`${destination}/${file}`);
-fs.cpSync(`${root}/renders`,`${destination}/renders`,{recursive:true});
-console.log(destination+'/gallery.html');
+// The delivery copy exists only on the author's machine.
+if(fs.existsSync('G:/')){
+ fs.mkdirSync(destination,{recursive:true});
+ for(const file of ['gallery.html','terrain-production.md'])fs.copyFileSync(`${root}/${file}`,`${destination}/${file}`);
+ for(const dir of ['renders','sharpness'])fs.cpSync(`${root}/${dir}`,`${destination}/${dir}`,{recursive:true});
+ console.log(destination+'/gallery.html');
+}else console.log(`${root}/gallery.html`);
