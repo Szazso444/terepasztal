@@ -1,9 +1,10 @@
 import { type LandscapeMap } from './landscapeModel';
-import { reliefHeight, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
+import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
 import {
   grassDetail,
   rockExposure,
   shareSurfaceDetail,
+  surfaceNoise,
   surfaceBlend,
   surfaceColor,
   surfaceMaterial,
@@ -72,17 +73,7 @@ self.onmessage = async (event: MessageEvent) => {
           sy = top + (py + 0.5) / scale,
           bx = sx / 64 + sy / 32,
           by = sy / 32 - sx / 64;
-        let z = 0;
-        if (raised) {
-          let lo = 0,
-            hi = RELIEF_MAX;
-          for (let n = 0; n < 10; n++) {
-            const mid = (lo + hi) / 2;
-            if (reliefHeight(map, relief, bx + mid / 32, by + mid / 32) > mid) lo = mid;
-            else hi = mid;
-          }
-          z = (lo + hi) / 2;
-        }
+        const z = raised ? surfaceAlongRay(map, relief, bx, by, 10) : 0;
         const tx = bx + z / 32,
           ty = by + z / 32;
         if (tx < -0.5 || ty < -0.5 || tx >= map.w - 0.5 || ty >= map.h - 0.5) continue;
@@ -94,18 +85,34 @@ self.onmessage = async (event: MessageEvent) => {
           terrain = map.terrain[tileIndex];
         color[0] = color[1] = color[2] = 0;
         let waterWeight = 0;
+        // Tile-face style: rock shows where the slope is steep, not in random islands.
+        let steep: number | undefined;
+        if (relief.style.faces && raised) {
+          faceGradient(tx, ty);
+          const levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step,
+            t = (levels - 1.4 + (surfaceNoise(wx * 3, wy * 3, 617) - 0.5) * 0.6) / 0.4;
+          steep = t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+        }
         for (let m = 0; m < 4; m++) {
           const weight = blend[m + 4];
           if (!weight) continue;
           let material = blend[m];
           if (city.has(tileIndex)) material = 8;
           if (z > 2 && terrain === Terrain.Mountain && material === 7) material = 9;
-          surfaceColor(source, material, wx, wy, part);
+          surfaceColor(
+            source,
+            material,
+            wx,
+            wy,
+            part,
+            [0, 1, 3, 4, 7, 9].includes(material) ? steep : undefined,
+          );
           if (material === 5 || material === 8) waterWeight += weight;
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
         }
         let shade = 1;
-        if (raised) {
+        if (raised && relief.style.faces) shade = faceShade(tx, ty);
+        else if (raised) {
           const dx =
             (reliefHeight(map, relief, tx + 0.65, ty) - reliefHeight(map, relief, tx - 0.65, ty)) /
             1.3;
@@ -221,4 +228,32 @@ function halve(pixels: Uint8ClampedArray, width: number, height: number) {
           (pixels[k] + pixels[k + 4] + pixels[k + width * 4] + pixels[k + width * 4 + 4] + 2) >> 2;
       }
   return out;
+}
+const gradient = [0, 0];
+/** Surface slope in world pixels per tile at (x, y): the analytic derivative of its corners. */
+function faceGradient(x: number, y: number) {
+  const tx = Math.floor(x + 0.5),
+    ty = Math.floor(y + 0.5),
+    u = x - tx + 0.5,
+    v = y - ty + 0.5,
+    stride = map.w + 1,
+    k = ty * stride + tx,
+    c = relief.corners,
+    step = relief.style.step;
+  gradient[0] = gradient[1] = 0;
+  if (tx < 0 || ty < 0 || tx >= map.w || ty >= map.h) return;
+  const a = c[k] * step,
+    b = c[k + 1] * step,
+    d = c[k + stride + 1] * step,
+    e = c[k + stride] * step;
+  gradient[0] = b - a + (a - b - e + d) * v;
+  gradient[1] = e - a + (a - b - e + d) * u;
+}
+/**
+ * Light from the tile's own surface slope, so each elevated tile reads as a face and slopes
+ * change visibly at tile edges. Upper-left light.
+ */
+function faceShade(x: number, y: number) {
+  faceGradient(x, y);
+  return Math.max(0.68, Math.min(1.24, 1 + gradient[0] * 0.016 - gradient[1] * 0.019));
 }

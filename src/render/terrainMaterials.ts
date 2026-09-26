@@ -253,27 +253,37 @@ export function rockExposure(x: number, y: number) {
   const n = surfaceNoise(x * 0.85, y * 0.85, 607) + (surfaceNoise(x * 4, y * 4, 613) - 0.5) * 0.06;
   return smooth((n - 0.64) / 0.06);
 }
+/**
+ * `exposure` overrides where rock shows (0..1), e.g. by slope; without it rock and mountain use
+ * their world-space stone islands and every other material shows as itself.
+ */
 export function surfaceColor(
   samples: Uint8ClampedArray,
   material: number,
   x: number,
   y: number,
   out: number[],
+  exposure?: number,
 ) {
-  if (material !== 7 && material !== 9) {
-    sampleSurface(samples, material, x, y, out);
-    return;
+  const rocky = material === 7 || material === 9;
+  if (exposure === undefined) {
+    if (!rocky) {
+      sampleSurface(samples, material, x, y, out);
+      return;
+    }
+    exposure = rockExposure(x, y);
   }
-  const exposure = rockExposure(x, y);
+  // Rock and mountain ground is grass between stones; exposed faces elsewhere are plain rock.
+  const ground = rocky ? 0 : material;
   if (exposure === 0) {
-    sampleSurface(samples, 0, x, y, out);
+    sampleSurface(samples, ground, x, y, out);
     return;
   }
-  sampleSurface(samples, material, x, y, out);
+  sampleSurface(samples, rocky ? material : 7, x, y, out);
   const r = out[0],
     g = out[1],
     b = out[2];
-  sampleSurface(samples, 0, x, y, out);
+  sampleSurface(samples, ground, x, y, out);
   out[0] += (r - out[0]) * exposure;
   out[1] += (g - out[1]) * exposure;
   out[2] += (b - out[2]) * exposure;

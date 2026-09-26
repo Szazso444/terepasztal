@@ -364,7 +364,8 @@ export class Landscape {
   summit(x: number, y: number) {
     if (this.failed || this.map.terrain[y * this.map.w + x] !== Terrain.Mountain) return false;
     this.updateHeights();
-    if (Math.min(...reliefCorners(this.map, this.relief, x, y)) < 10) return false;
+    if (Math.min(...reliefCorners(this.map, this.relief, x, y)) < this.relief.style.step)
+      return false;
     const rank = hash2(x + this.map.originX, y + this.map.originY, this.map.seed + 601);
     for (let dy = -2; dy <= 2; dy++)
       for (let dx = -2; dx <= 2; dx++) {

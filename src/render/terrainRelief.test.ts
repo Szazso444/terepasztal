@@ -8,6 +8,8 @@ import {
   reliefTileAtWorld,
   hillFamily,
   RELIEF_MAX,
+  TILE_SIDE_PX,
+  type ReliefStyle,
 } from './terrainRelief';
 import { surfaceMaterial, surfaceColor, surfaceBlend, grassDetail } from './terrainMaterials';
 import { readFileSync } from 'node:fs';
@@ -166,6 +168,38 @@ describe('connected illustrated terrain', () => {
           surfaceColor(alpha, material, x, y, out);
           expect(out[0]).toBeGreaterThan(210);
         }
+  });
+  it('keeps every relief style within its per-edge rise, height budget and picking', () => {
+    const m = fixture();
+    const styles: ReliefStyle[] = [
+      { step: 10, maxRise: 1, faces: false },
+      { step: TILE_SIDE_PX / 10, maxRise: 2, faces: true },
+      { step: TILE_SIDE_PX / 3, maxRise: 2, faces: true },
+    ];
+    for (const style of styles) {
+      const r = buildRelief(m, new Set([16 * 32 + 16]), style),
+        stride = 33;
+      let steep = 0;
+      for (let y = 0; y <= 32; y++)
+        for (let x = 0; x <= 32; x++) {
+          const k = y * stride + x;
+          for (const n of [x < 32 ? k + 1 : -1, y < 32 ? k + stride : -1]) {
+            if (n < 0) continue;
+            const rise = Math.abs(r.corners[k] - r.corners[n]);
+            expect(rise).toBeLessThanOrEqual(style.maxRise);
+            if (rise === 2) steep++;
+          }
+        }
+      if (style.maxRise === 2) expect(steep).toBeGreaterThan(0);
+      for (let y = 0; y < 32; y++)
+        for (let x = 0; x < 32; x++) {
+          const z = reliefHeight(m, r, x, y);
+          expect(z).toBeLessThanOrEqual(RELIEF_MAX);
+          // A tile centre that is not hidden behind nearer ground picks back to itself.
+          const hit = reliefTileAtWorld(m, r, (x - y) * 32, (x + y) * 16 - z);
+          if (hit.x !== x || hit.y !== y) expect(hit.x + hit.y).toBeGreaterThan(x + y);
+        }
+    }
   });
   it('keeps tile centres classified correctly, including all four shoreline directions', () => {
     const m = emptyMap(5, 16, 16);
