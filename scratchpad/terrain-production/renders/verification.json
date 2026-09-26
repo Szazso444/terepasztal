@@ -5,9 +5,9 @@
     "before": 256,
     "after": 256,
     "active": true,
-    "workerPaintMs": 22150.4999999993,
-    "medianRenderSubmitMs": 38.29999999993015,
-    "terrainStartupMs": 22941.800000000047
+    "workerPaintMs": 16371.399999998976,
+    "medianRenderSubmitMs": 18.40000000037253,
+    "terrainStartupMs": 16953.600000000093
   },
   "excavation": {
     "tile": [
