@@ -87,7 +87,7 @@ self.onmessage = async (event: MessageEvent) => {
         let waterWeight = 0;
         // Tile-face style: rock shows where the slope is steep, not in random islands.
         let steep: number | undefined;
-        if (relief.style.faces && raised) {
+        if (relief.style.faces && relief.style.rockFaces !== false && raised) {
           faceGradient(tx, ty);
           const levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step,
             t = (levels - 1.4 + (surfaceNoise(wx * 3, wy * 3, 617) - 0.5) * 0.6) / 0.4;
@@ -242,6 +242,15 @@ function faceGradient(x: number, y: number) {
     step = relief.style.step;
   gradient[0] = gradient[1] = 0;
   if (tx < 0 || ty < 0 || tx >= map.w || ty >= map.h) return;
+  if (relief.tiles) {
+    // Terraces: the rounded banks have no corner formula; measure the surface itself.
+    const d = 0.05;
+    gradient[0] =
+      (reliefHeight(map, relief, x + d, y) - reliefHeight(map, relief, x - d, y)) / (2 * d);
+    gradient[1] =
+      (reliefHeight(map, relief, x, y + d) - reliefHeight(map, relief, x, y - d)) / (2 * d);
+    return;
+  }
   const a = c[k] * step,
     b = c[k + 1] * step,
     d = c[k + stride + 1] * step,
@@ -255,5 +264,19 @@ function faceGradient(x: number, y: number) {
  */
 function faceShade(x: number, y: number) {
   faceGradient(x, y);
-  return Math.max(0.68, Math.min(1.24, 1 + gradient[0] * 0.016 - gradient[1] * 0.019));
+  let shade = Math.max(0.68, Math.min(1.24, 1 + gradient[0] * 0.016 - gradient[1] * 0.019));
+  if (relief.style.rims) {
+    // Curvature: convex slope tops catch light, concave feet sit in soft shadow.
+    const d = 0.12,
+      h = reliefHeight(map, relief, x, y),
+      curve =
+        (reliefHeight(map, relief, x + d, y) +
+          reliefHeight(map, relief, x - d, y) +
+          reliefHeight(map, relief, x, y + d) +
+          reliefHeight(map, relief, x, y - d) -
+          4 * h) /
+        (d * d);
+    shade *= Math.max(0.8, Math.min(1.16, 1 - curve * 0.0004));
+  }
+  return shade;
 }
