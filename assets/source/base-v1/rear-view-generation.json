@@ -1,0 +1,925 @@
+{
+ "assets/source/base-v1/loco-adler-rear.png": {
+  "id": "adler",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-adler.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Adler locomotive, game body family steam_early, small size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1835, Nuremberg to Fürth. Germany's first railway engine. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 2-2-2 with its tender. Keep the tender coupled as in the original; its back end faces the viewer. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "PASS",
+    "reasons": [
+     "Checker PASS and visual checklist PASS",
+     "Reference/prototype discrepancy: prompt names a 2-2-2 with tender, but the reference has four visible wheel positions and a coal box on the rear platform; this result preserves that reference structure and wheel arrangement"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-big-boy-rear.png": {
+  "attempts": [
+   {
+    "reasons": [
+     "Visual: three visible large coupled wheels per engine unit instead of four; running-gear arrangement incomplete.",
+     "Checker WARN: tight margin (1.6%)."
+    ],
+    "verdict": "FAIL",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Big Boy 4014 locomotive, game body family steam_std, large size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1941 Union Pacific 4-8-8-4. Articulated giant built to drag freight over the Wasatch. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-8-4 articulated with its long tender. Keep both engine units with their four coupled axles each; the tender's back faces the viewer. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet."
+   },
+   {
+    "reasons": [
+     "Visual: front engine unit has only three large coupled wheels; rear unit has four.",
+     "Checker WARN: tight margin (1.7%)."
+    ],
+    "verdict": "FAIL",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Big Boy 4014 locomotive, game body family steam_std, large size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1941 Union Pacific 4-8-8-4. Articulated giant built to drag freight over the Wasatch. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-8-4 articulated with its long tender. Keep both engine units with their four coupled axles each; the tender's back faces the viewer. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Show exactly four large coupled wheels on each of the two engine units, with no background glow or shadow."
+   },
+   {
+    "reasons": [
+     "Visual: three visible large coupled wheels per engine unit instead of four; running-gear arrangement incomplete.",
+     "Checker WARN: tight margin (1.8%)."
+    ],
+    "verdict": "FAIL",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Big Boy 4014 locomotive, game body family steam_std, large size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1941 Union Pacific 4-8-8-4. Articulated giant built to drag freight over the Wasatch. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-8-4 articulated with its long tender. Keep both engine units with their four coupled axles each; the tender's back faces the viewer. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. The front engine unit and rear engine unit must each show four distinct large coupled wheels, eight large coupled wheels total."
+   }
+  ],
+  "id": "big_boy",
+  "accepted": false,
+  "kind": "rear",
+  "method": "built-in image generation",
+  "reference": "assets/source/base-v1/loco-big-boy.png"
+ },
+ "assets/source/base-v1/loco-black-five-rear.png": {
+  "id": "black_five",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-black-five.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One LMS Black Five locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1934, Stanier mixed-traffic 4-6-0. Went anywhere, pulled anything. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-6-0 with a six-wheel tender. The tender's back faces the viewer, with buffers and lamp irons; the cab's back is hidden behind the tender. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "WARN",
+    "reasons": [
+     "checker: tight margin (3.4%); the studio images keep about 12%"
+    ],
+    "checker_verdict": "WARN",
+    "visual_verdict": "PASS",
+    "visual_notes": "Rear tender faces lower-right, front faces upper-left, left side visible; two leading axles, three drivers and three tender axles preserved; livery and proportions match; complete uncropped tender rear with buffers and lamp irons; no text, scenery, rails or smoke."
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-class08-rear.png": {
+  "method": "built-in image generation",
+  "id": "class08",
+  "accepted": true,
+  "kind": "rear",
+  "attempts": [
+   {
+    "verdict": "PASS",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One BR Class 08 locomotive, game body family diesel_switcher, small size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1952 British shunter, nearly a thousand built. Slow, tireless, everywhere. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 0-6-0 diesel shunter with coupling rods. The cab is at the rear end, so the turned view shows the cab nearest the viewer, with its rear windows and buffers; the coupling rods show on this side too. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "reasons": []
+   }
+  ],
+  "reference": "assets/source/base-v1/loco-class08.png"
+ },
+ "assets/source/base-v1/loco-crocodile-rear.png": {
+  "kind": "rear",
+  "method": "built-in image generation",
+  "accepted": true,
+  "id": "crocodile",
+  "attempts": [
+   {
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (3.1%)",
+     "Visual FAIL: asymmetric roof boxes remain in studio order (large box upper-left, small box lower-right), indicating the body was not turned round"
+    ],
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SBB Ce 6/8 Crocodile locomotive, game body family electric_crocodile, large size, existing brown livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1919 Gotthard freight electric with articulated snouts. Unmistakable. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 1-C+C-1 articulated with two long snouts. Keep the centre cab and both snouts with their rods; the second snout faces the viewer now. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet."
+   },
+   {
+    "verdict": "WARN",
+    "reasons": [
+     "Checker WARN: tight margin (3.3%)",
+     "Visual PASS: rear faces lower-right with asymmetric roof boxes reversed; both snouts, two pantographs, six large driving wheels and two small end wheels retained; livery and detail match"
+    ],
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SBB Ce 6/8 Crocodile locomotive, game body family electric_crocodile, large size, existing brown livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1919 Gotthard freight electric with articulated snouts. Unmistakable. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 1-C+C-1 articulated with two long snouts. Keep the centre cab and both snouts with their rods; the second snout faces the viewer now. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Rotate the roof equipment with the locomotive so the large roof box is lower-right of the smaller box."
+   }
+  ],
+  "reference": "assets/source/base-v1/loco-crocodile.png"
+ },
+ "assets/source/base-v1/loco-daylight-rear.png": {
+  "id": "daylight",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-daylight.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SP 4449 Daylight locomotive, game body family steam_streamlined, medium size, existing rust livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1941 Southern Pacific GS-4, orange and red streamliner of the Coast Daylight. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-4 streamliner with a tender on two six-wheel trucks. The orange and red bands carry on round the tender's back, which faces the viewer with its rear light and coupler. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker FAIL: the vehicle touches the edge of the image (cropped)",
+     "Visual FAIL: unclear leading/trailing wheel spacing and incorrect tender axle count"
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SP 4449 Daylight locomotive, game body family steam_streamlined, medium size, existing rust livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1941 Southern Pacific GS-4, orange and red streamliner of the Coast Daylight. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-4 streamliner with a tender on two six-wheel trucks. The orange and red bands carry on round the tender's back, which faces the viewer with its rear light and coupler. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Keep 12% clear margins and exactly two leading, four driving, two trailing, and six tender axles.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (1.3%); the studio images keep about 12%",
+     "Visual FAIL: extra tender axle; seven visible axle positions instead of six"
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SP 4449 Daylight locomotive, game body family steam_streamlined, medium size, existing rust livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1941 Southern Pacific GS-4, orange and red streamliner of the Coast Daylight. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-4 streamliner with a tender on two six-wheel trucks. The orange and red bands carry on round the tender's back, which faces the viewer with its rear light and coupler. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Show exactly two three-axle tender trucks and exactly two trailing axles beneath the cab, with no extra wheels.",
+    "verdict": "WARN",
+    "reasons": [
+     "tight margin (1.3%); the studio images keep about 12%",
+     "Independent reference review: final image matches the studio image's five visible tender axle positions; the prompt names a six-axle prototype tender. Visual checklist passes against the actual reference, including four drivers and two leading/trailing axles."
+    ],
+    "initial_verdict": "FAIL",
+    "initial_reasons": [
+     "Checker WARN: tight margin (1.3%); the studio images keep about 12%",
+     "Visual FAIL: tender shows five axle positions instead of two three-axle trucks"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-dda40x-rear.png": {
+  "method": "built-in image generation",
+  "accepted": true,
+  "id": "dda40x",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One DDA40X Centennial locomotive, game body family diesel_hood, large size, existing yellow livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1969 Union Pacific twin-engine giant, the most powerful diesel ever built. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a D-D with one cab. The rear is the long hood's end: walkway, handrails, end steps, pilot with coupler. The cab is at the far end now. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "reasons": [
+     "Checker WARN: tight margin (2.5%)",
+     "Visual FAIL: one of six roof fans lost; three-truck/two-tank chassis kept studio arrangement instead of rotating with cab and long hood"
+    ],
+    "verdict": "FAIL"
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One DDA40X Centennial locomotive, game body family diesel_hood, large size, existing yellow livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1969 Union Pacific twin-engine giant, the most powerful diesel ever built. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a D-D with one cab. The rear is the long hood's end: walkway, handrails, end steps, pilot with coupler. The cab is at the far end now. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Keep all six roof fans and rotate the entire chassis too, putting the two close-spaced trucks under the upper-left cab section.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (2.9%)",
+     "Visual FAIL: chassis keeps close-spaced truck pair under near hood section instead of far cab section; nearest truck reduced from three axles to two"
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One DDA40X Centennial locomotive, game body family diesel_hood, large size, existing yellow livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1969 Union Pacific twin-engine giant, the most powerful diesel ever built. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a D-D with one cab. The rear is the long hood's end: walkway, handrails, end steps, pilot with coupler. The cab is at the far end now. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Put two three-axle trucks under the far cab half and one three-axle truck under the near hood half, retaining all six roof fans.",
+    "reasons": [
+     "Checker WARN: tight margin (2.7%)",
+     "Visual PASS: flat long hood lower-right, cab upper-left, six roof fans, and all three reference truck groups retained with three axles each; pair of trucks now beneath far cab half",
+     "Reference/prototype discrepancy: studio reference depicts three three-axle truck groups, while prompt names real D-D prototype arrangement; rear preserves reference, isolated truck follows explicit four-axle truck prompt"
+    ],
+    "verdict": "WARN"
+   }
+  ],
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-dda40x.png"
+ },
+ "assets/source/base-v1/loco-dda40x-truck.png": {
+  "attempts": [
+   {
+    "reasons": [
+     "Visual PASS: four-axle truck as explicitly requested; source studio locomotive depicts three-axle truck groups, so isolated truck count intentionally follows truck prompt"
+    ],
+    "verdict": "PASS",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One four-axle truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text."
+   }
+  ],
+  "reference": "assets/source/base-v1/loco-dda40x.png",
+  "id": "dda40x",
+  "kind": "truck",
+  "accepted": true,
+  "method": "built-in image generation"
+ },
+ "assets/source/base-v1/loco-deltic-rear.png": {
+  "reference": "assets/source/base-v1/loco-deltic.png",
+  "id": "deltic",
+  "accepted": false,
+  "kind": "rear",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Deltic Class 55 locomotive, game body family diesel_cab, medium size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1961 East Coast express with two opposed-piston Napier engines. Screams. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Co-Co with a cab at each end. The rear view shows the second nose and cab, like the front one. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (2.9%)",
+     "Visual FAIL: studio side layout repeated, including offset brass fuel-tank filler toward lower-right; complete locomotive not turned round"
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Deltic Class 55 locomotive, game body family diesel_cab, medium size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1961 East Coast express with two opposed-piston Napier engines. Screams. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Co-Co with a cab at each end. The rear view shows the second nose and cab, like the front one. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Turn the complete locomotive around, including the asymmetric underbody tank, so its brass filler moves toward the upper-left end.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (3.1%)",
+     "Visual FAIL: three full underbody tank sections reduced to two full sections and a tiny stub; original asymmetric centre side grille layout retained"
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Deltic Class 55 locomotive, game body family diesel_cab, medium size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1961 East Coast express with two opposed-piston Napier engines. Screams. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Co-Co with a cab at each end. The rear view shows the second nose and cab, like the front one. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Turn the whole body, reversing the centre side grille and keeping all three tank sections with the brass filler between the far two sections.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (2.6%)",
+     "Visual FAIL: original asymmetric centre side grille and brass fuel-tank filler positions retained; locomotive is a redraw of original view"
+    ]
+   }
+  ],
+  "method": "built-in image generation"
+ },
+ "assets/source/base-v1/loco-deltic-truck.png": {
+  "kind": "truck",
+  "accepted": true,
+  "method": "built-in image generation",
+  "reference": "assets/source/base-v1/loco-deltic.png",
+  "attempts": [
+   {
+    "verdict": "PASS",
+    "reasons": [],
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One three-axle bogie of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text."
+   }
+  ],
+  "id": "deltic"
+ },
+ "assets/source/base-v1/loco-drg01-rear.png": {
+  "id": "drg01",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-drg01.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One DRG Class 01 locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1926 German standard express Pacific. Black, red wheels, 130 km/h. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-6-2 (2'C1') with a tender on two bogies. Keep the red wheels. The tender's back faces the viewer, with buffers and lamps. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "WARN",
+    "reasons": [
+     "tight margin (2.5%); the studio images keep about 12%"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-f7-rear.png": {
+  "id": "f7",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-f7.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One EMD F7 locomotive, game body family diesel_cab, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1949 bulldog-nosed cab unit. The face of American railroading. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a B-B cab unit (A unit). The rear end is flat: a door, a rubber diaphragm and a coupler, no windscreen. Do not draw a second nose. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-f7-truck.png": {
+  "id": "f7",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-f7.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One two-axle Blomberg truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-flying-scotsman-rear.png": {
+  "id": "flying_scotsman",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-flying-scotsman.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Flying Scotsman locomotive, game body family steam_std, medium size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1923 LNER A3. First steam engine officially clocked at 100 mph. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-6-2 with a six-wheel rigid tender. The tender's back faces the viewer, with buffers and lamp irons; the cab's back is hidden behind the tender. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "WARN",
+    "reasons": [
+     "tight margin (1.3%); the studio images keep about 12%"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-general-rear.png": {
+  "id": "general",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-general.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One The General locomotive, game body family steam_std, small size, existing rust livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1855 Western & Atlantic 4-4-0, star of the Great Locomotive Chase. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-4-0 with its tender. The cowcatcher and headlamp stay at the front (far end now); the wooden tender's back faces the viewer. Do not add a second cowcatcher. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "WARN",
+    "reasons": [
+     "Checker WARN: tight margin (3.6%); the studio images keep about 12%",
+     "Visual checklist PASS: rear/left orientation, cowcatcher only at front, matching livery and reference wheel arrangement",
+     "Reference/prototype discrepancy: prompt names a 4-4-0 with tender, but the reference has three large driving wheel positions, two small leading wheel positions, and no separate tender; this result preserves that reference structure"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-gg1-rear.png": {
+  "id": "gg1",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-gg1.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One PRR GG1 locomotive, game body family electric_box, large size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1934 Raymond Loewy-styled Pennsylvania electric. Fifty years of service. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 2-C+C-2 with a centre cab. Streamlined noses at both ends: the rear view shows the second nose. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker FAIL: vehicle touches the image edge (cropped).",
+     "Visual FAIL: circular rear nose headlamp replaced by a window."
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One PRR GG1 locomotive, game body family electric_box, large size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1934 Raymond Loewy-styled Pennsylvania electric. Fifty years of service. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 2-C+C-2 with a centre cab. Streamlined noses at both ends: the rear view shows the second nose. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Turn the entire locomotive around, preserve the rear nose's circular headlamp, and leave a clear 12% transparent margin on all sides.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (2.9%).",
+     "Visual FAIL: roof equipment retains the source-view order rather than turning with the body."
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One PRR GG1 locomotive, game body family electric_box, large size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1934 Raymond Loewy-styled Pennsylvania electric. Fifty years of service. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 2-C+C-2 with a centre cab. Streamlined noses at both ends: the rear view shows the second nose. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Rotate the roof-equipment order too: the extra low rectangular cover beside the raised centre section must move from the lower-right half to the upper-left half.",
+    "verdict": "WARN",
+    "reasons": [
+     "Tight margin (1.5%); the studio images keep about 12%."
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-gg1-truck.png": {
+  "id": "gg1",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-gg1.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One three-axle driving truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "WARN",
+    "reasons": [
+     "Tight margin (2.2%); the studio images keep about 12%."
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-gg1-truck2.png": {
+  "id": "gg1",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-gg1.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One two-axle guiding truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-gmam-rear.png": {
+  "reference": "assets/source/base-v1/loco-gmam.png",
+  "method": "built-in image generation",
+  "accepted": false,
+  "kind": "rear",
+  "id": "gmam",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One GMAM Garratt locomotive, game body family steam_garratt, large size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1953, Beyer-Garratt articulated. Two engine units, a boiler slung between: big power on light rails. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-2+2-8-4 Garratt. Keep all three parts: the front engine unit with the water tank (far end now), the boiler cradle, and the rear engine unit with the coal bunker, whose back now faces the viewer. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "reasons": [
+     "Checker WARN: tight margin (2.2%)",
+     "Visual FAIL: rear engine unit has three visible large coupled driving wheels instead of four; chimney shifted onto cab roof"
+    ],
+    "verdict": "FAIL"
+   },
+   {
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (2.5%)",
+     "Visual FAIL: studio orientation retained, with main cab upper-left and chimney lower-right; locomotive not turned round"
+    ],
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One GMAM Garratt locomotive, game body family steam_garratt, large size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1953, Beyer-Garratt articulated. Two engine units, a boiler slung between: big power on light rails. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-2+2-8-4 Garratt. Keep all three parts: the front engine unit with the water tank (far end now), the boiler cradle, and the rear engine unit with the coal bunker, whose back now faces the viewer. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Keep four large coupled driving wheels on each engine unit and keep the chimney on the boiler, not on a cab roof."
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One GMAM Garratt locomotive, game body family steam_garratt, large size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1953, Beyer-Garratt articulated. Two engine units, a boiler slung between: big power on light rails. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-2+2-8-4 Garratt. Keep all three parts: the front engine unit with the water tank (far end now), the boiler cradle, and the rear engine unit with the coal bunker, whose back now faces the viewer. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Put the coal bunker and main cab at lower-right and the chimney at upper-left, with four coupled driving wheels on each engine unit.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (2.8%)",
+     "Visual FAIL: chimney sits through the far cab roof instead of on the boiler; rear orientation and four driving wheels per engine unit are now correct"
+    ]
+   }
+  ]
+ },
+ "assets/source/base-v1/loco-ice1-rear.png": {
+  "id": "ice1",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-ice1.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One ICE 1 locomotive, game body family electric_hs, medium size, existing white livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1991, Germany's first high-speed set. Multi-system power car. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Bo-Bo power car. The power car alone. Its rear end is flat with the gangway to the trailer coach, no windscreen. Do not draw a second nose. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "WARN",
+    "reasons": [
+     "Tight margin (3.0%); the studio images keep about 12%."
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-ice1-truck.png": {
+  "id": "ice1",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-ice1.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One two-axle motor bogie of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-j94-rear.png": {
+  "id": "j94",
+  "reference": "assets/source/base-v1/loco-j94.png",
+  "kind": "rear",
+  "accepted": true,
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Saddle Tank J94 locomotive, game body family steam_std, small size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1943, Hunslet Austerity shunter. Yard work, short trips, no tender. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 0-6-0ST saddle tank, no tender. The rear is the cab's back wall with its bunker and buffers; the saddle tank stays over the boiler; no tender. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "reasons": [],
+    "verdict": "PASS"
+   }
+  ]
+ },
+ "assets/source/base-v1/loco-john-bull-rear.png": {
+  "id": "john_bull",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-john-bull.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One John Bull locomotive, game body family steam_early, small size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1831, Camden & Amboy. Ran for a century and still steams. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-2-0 with its tender. The cowcatcher stays at the front (far end now); the tender's back faces the viewer. Do not add a second cowcatcher. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "PASS",
+    "reasons": [
+     "Checker PASS and visual checklist PASS",
+     "Reference/prototype discrepancy: prompt names a 4-2-0 with tender and cowcatcher, but the reference shows two large wheel positions, one small front wheel, a rear coal bunker, and no cowcatcher; this result preserves that visible reference structure"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-jupiter-rear.png": {
+  "id": "jupiter",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-jupiter.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Jupiter locomotive, game body family steam_std, small size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1868 Central Pacific 4-4-0, met the Union Pacific at Promontory Summit. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-4-0 with its tender. The cowcatcher and headlamp stay at the front (far end now); the tender's back faces the viewer. Do not add a second cowcatcher. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "PASS",
+    "reasons": [
+     "Checker PASS and visual checklist PASS: matching 4-4-0 wheel arrangement, rear/left orientation, livery, and cowcatcher only at front",
+     "Reference/prototype discrepancy: prompt describes a coupled tender, but the reference ends at the rear cab with no separate tender; this result preserves that reference structure"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-k4s-rear.png": {
+  "id": "k4s",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-k4s.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One PRR K4s locomotive, game body family steam_std, medium size, existing iron livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1914 Pennsylvania Railroad Pacific, standard express power for forty years. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-6-2 with a tender on two trucks. The tender's back faces the viewer: rear ladder, back-up light, coupler (no buffers, it is American). Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "WARN",
+    "reasons": [
+     "tight margin (2.2%); the studio images keep about 12%"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-kando-v40-rear.png": {
+  "id": "kando_v40",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-kando-v40.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Kandó V40 locomotive, game body family electric_box, small size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1932 Hungarian phase-converter electric by Kálmán Kandó, pioneer of 50 Hz traction. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 1-D-1 rod-drive electric. Keep the jackshaft and coupling rods on this side too; pantograph where the original has it along the roof. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (1.1%); the studio images keep about 12%",
+     "Visual FAIL: rear cab end was changed to a blank wall with a grille, missing cab windows and lamps"
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Kandó V40 locomotive, game body family electric_box, small size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1932 Hungarian phase-converter electric by Kálmán Kandó, pioneer of 50 Hz traction. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 1-D-1 rod-drive electric. Keep the jackshaft and coupling rods on this side too; pantograph where the original has it along the roof. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Keep the rear cab's two windows and lamps, matching the reference cab-end design instead of a blank wall.",
+    "verdict": "WARN",
+    "reasons": [
+     "Checker WARN: tight margin (1.1%); the studio images keep about 12%",
+     "Visual checklist PASS: cab end windows and lamps, four large driving wheels and rod/jackshaft arrangement, partly occluded end wheels, two pantographs and central roof equipment preserved",
+     "Orientation limitation: symmetric cab ends make the full turn less visually distinct; changed opposite-side window/grille ordering and visible far-end lamp support the rear/left interpretation"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-m62-rear.png": {
+  "reference": "assets/source/base-v1/loco-m62.png",
+  "accepted": true,
+  "attempts": [
+   {
+    "reasons": [
+     "Checker PASS",
+     "Visual FAIL: original orientation retained, with large rectangular roof grille upper-left and twin fans toward lower-right"
+    ],
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One M62 Szergej locomotive, game body family diesel_hood, medium size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1965 Soviet freight diesel exported across the Eastern Bloc. Loud and loyal. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Co-Co with a cab at each end. The rear view shows the second cab: windscreen and lights like the front one, as the real one has them. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL"
+   },
+   {
+    "reasons": [],
+    "verdict": "PASS",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One M62 Szergej locomotive, game body family diesel_hood, medium size, existing green livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1965 Soviet freight diesel exported across the Eastern Bloc. Loud and loyal. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Co-Co with a cab at each end. The rear view shows the second cab: windscreen and lights like the front one, as the real one has them. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Rotate the roof layout too: the large rectangular grille must be near the lower-right cab and the twin fans toward upper-left."
+   }
+  ],
+  "id": "m62",
+  "method": "built-in image generation",
+  "kind": "rear"
+ },
+ "assets/source/base-v1/loco-m62-truck.png": {
+  "id": "m62",
+  "accepted": true,
+  "kind": "truck",
+  "method": "built-in image generation",
+  "reference": "assets/source/base-v1/loco-m62.png",
+  "attempts": [
+   {
+    "verdict": "PASS",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One three-axle truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "reasons": []
+   }
+  ]
+ },
+ "assets/source/base-v1/loco-mallard-rear.png": {
+  "id": "mallard",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-mallard.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Mallard locomotive, game body family steam_streamlined, medium size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1938 LNER A4. 126 mph, the fastest steam locomotive ever recorded. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-6-2 streamliner with an eight-wheel tender. The streamlined nose stays at the front (far end now); the tender's back faces the viewer, a plain end with buffers. The corridor opening is only at the tender's front end, towards the cab. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (2.3%); the studio images keep about 12%",
+     "Visual FAIL: four visible tender wheel positions instead of the reference three"
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Mallard locomotive, game body family steam_streamlined, medium size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1938 LNER A4. 126 mph, the fastest steam locomotive ever recorded. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-6-2 streamliner with an eight-wheel tender. The streamlined nose stays at the front (far end now); the tender's back faces the viewer, a plain end with buffers. The corridor opening is only at the tender's front end, towards the cab. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Match the reference tender's three visible near-side wheel positions, without adding a fourth.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker FAIL: the vehicle touches the edge of the image (cropped)",
+     "Visual review: orientation, livery, rear buffers/plain end, and visible wheel arrangement match the reference"
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One Mallard locomotive, game body family steam_streamlined, medium size, existing blue livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1938 LNER A4. 126 mph, the fastest steam locomotive ever recorded. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-6-2 streamliner with an eight-wheel tender. The streamlined nose stays at the front (far end now); the tender's back faces the viewer, a plain end with buffers. The corridor opening is only at the tender's front end, towards the cab. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Keep the entire vehicle inside 12% clear margins, with the reference tender's three visible near-side wheel positions.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker FAIL: the vehicle touches the edge of the image (cropped)",
+     "Visual FAIL: four visible tender wheel positions instead of the reference three"
+    ]
+   }
+  ],
+  "accepted": false
+ },
+ "assets/source/base-v1/loco-mav375-rear.png": {
+  "reference": "assets/source/base-v1/loco-mav375.png",
+  "accepted": true,
+  "kind": "rear",
+  "method": "built-in image generation",
+  "id": "mav375",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One MÁV 375 locomotive, game body family steam_std, small size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1907 Hungarian branch-line tank engine. Hundreds built, dozens survive. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 2-6-2T tank engine, no tender. The rear is the cab's back wall with the coal bunker and its ladder; no tender, no second chimney. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "reasons": [],
+    "verdict": "PASS"
+   }
+  ]
+ },
+ "assets/source/base-v1/loco-mav424-rear.png": {
+  "id": "mav424",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-mav424.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One MÁV 424 Bivaly locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1924 Hungarian mixed-traffic 4-8-0, the Buffalo. Built until 1958. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-0 with its tender. The tender's back faces the viewer, with buffers and lamps; the cab's back is hidden behind the tender, as it would be. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker: the vehicle touches the edge of the image (cropped)."
+    ],
+    "file": "tmp/rear/mav424/rear-1.png"
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One MÁV 424 Bivaly locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1924 Hungarian mixed-traffic 4-8-0, the Buffalo. Built until 1958. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 4-8-0 with its tender. The tender's back faces the viewer, with buffers and lamps; the cab's back is hidden behind the tender, as it would be. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Keep every vehicle part inside a generous clear margin and remove all background glow so every pixel outside the locomotive is fully transparent.",
+    "verdict": "WARN",
+    "reasons": [
+     "Checker: tight margin (1.9%); the studio images keep about 12%."
+    ],
+    "file": "tmp/rear/mav424/rear-2.png",
+    "visual": "PASS: tender back faces lower-right, front upper-left and other side visible; four driving wheels, two leading wheels and four tender wheels match reference; livery, detail and complete rigid body preserved; sampled surrounding glow RGB has zero alpha."
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-nine-f-rear.png": {
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One BR 9F locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1954, ten-coupled heavy freight engine. The last steam class built in Britain. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 2-10-0 with a six-wheel tender. Five coupled axles, one pony axle in front. The tender's back faces the viewer, with its ladder, buffers and lamp irons. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "reasons": [
+     "Checker WARN: tight margin (3.5%); the studio images keep about 12%.",
+     "Visual FAIL: tender has four visible wheel axles; reference and prompt require three."
+    ],
+    "candidate": "tmp/rear/nine_f/attempt-1.png",
+    "verdict": "FAIL"
+   },
+   {
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker WARN: tight margin (2.7%); the studio images keep about 12%.",
+     "Visual FAIL: only four large coupled driving wheels are identifiable; five are required."
+    ],
+    "candidate": "tmp/rear/nine_f/attempt-2.png",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One BR 9F locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1954, ten-coupled heavy freight engine. The last steam class built in Britain. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 2-10-0 with a six-wheel tender. Five coupled axles, one pony axle in front. The tender's back faces the viewer, with its ladder, buffers and lamp irons. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. The tender must have exactly three axles and three wheels visible on its left side, not four."
+   },
+   {
+    "reasons": [],
+    "verdict": "PASS",
+    "visual_notes": "Tender rear faces lower-right and front upper-left; opposite side shown. Five coupled driving axles (front driver partly behind cylinder/valve gear), small pony wheel, three tender axles. Matching black/cream/brass livery, complete locomotive and tender, rear ladder and buffers, transparent alpha, no text or ground.",
+    "candidate": "tmp/rear/nine_f/attempt-3.png",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One BR 9F locomotive, game body family steam_std, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1954, ten-coupled heavy freight engine. The last steam class built in Britain. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 2-10-0 with a six-wheel tender. Five coupled axles, one pony axle in front. The tender's back faces the viewer, with its ladder, buffers and lamp irons. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Show five clearly countable large coupled driving wheels plus the small front pony wheel, and exactly three tender wheels on the visible left side."
+   }
+  ],
+  "kind": "rear",
+  "id": "nine_f",
+  "accepted": true,
+  "reference": "assets/source/base-v1/loco-nine-f.png"
+ },
+ "assets/source/base-v1/loco-re460-rear.png": {
+  "id": "re460",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-re460.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SBB Re 460 locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1991 Swiss Lok 2000, the billboard engine of the Bahn 2000 programme. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Bo-Bo with a cab at each end. The rear view shows the second cab; pantographs stay where the original has them along the roof, not moved to the other end. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker PASS; visual FAIL: lower-right rear cab has an incorrect small single window instead of full-width twin windscreens."
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SBB Re 460 locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1991 Swiss Lok 2000, the billboard engine of the Bahn 2000 programme. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Bo-Bo with a cab at each end. The rear view shows the second cab; pantographs stay where the original has them along the roof, not moved to the other end. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. The lower-right rear cab must have the same full-width twin windscreens and cab shape as the reference's opposite cab.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker PASS; visual FAIL: roof equipment retains the source-view order instead of turning with the locomotive."
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One SBB Re 460 locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1991 Swiss Lok 2000, the billboard engine of the Bahn 2000 programme. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Bo-Bo with a cab at each end. The rear view shows the second cab; pantographs stay where the original has them along the roof, not moved to the other end. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Rotate all roof equipment with the locomotive so the small paired roof box moves to the lower-right half, while the rear cab retains full-width twin windscreens.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-re460-truck.png": {
+  "id": "re460",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-re460.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One two-axle bogie of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-rocket-rear.png": {
+  "id": "rocket",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-rocket.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset for The Willowline pastoral isometric railway game: Stephenson's Rocket locomotive, 1829 Rainhill Trials winner, small yellow steam engine with cream and brass details and visible running gear. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a 0-2-2 with its small tender. The tender stays coupled behind, so the tender's back faces the viewer: its water barrel and the wooden tender frame. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No rails, smoke, ground, scenery, numbering, lettering, captions, watermark, border, glow or detached shadow. Single source study, not a sheet.",
+    "verdict": "PASS",
+    "reasons": [
+     "Checker PASS and visual checklist PASS",
+     "Reference/prototype discrepancy: prompt describes a separate tender and water barrel, but the reference has a rear coal box and two locomotive axle positions; this result preserves the reference structure without adding a tender or barrel"
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-sd40-rear.png": {
+  "reference": "assets/source/base-v1/loco-sd40.png",
+  "accepted": true,
+  "kind": "rear",
+  "id": "sd40",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "verdict": "WARN",
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One EMD SD40-2 locomotive, game body family diesel_hood, medium size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1972 six-axle road switcher. Nearly four thousand built, many still running. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a C-C road switcher. The rear is the long hood's end: walkway, handrails, end steps, pilot with coupler, rear headlights. The cab is at the far end now. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "reasons": [
+     "tight margin (3.1%); the studio images keep about 12%"
+    ]
+   }
+  ]
+ },
+ "assets/source/base-v1/loco-sd40-truck.png": {
+  "id": "sd40",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One three-axle HT-C truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "reasons": [
+     "visual: four axles instead of the required three; automated checker PASS"
+    ],
+    "verdict": "FAIL"
+   },
+   {
+    "reasons": [
+     "visual: four axles instead of the required three; automated checker PASS"
+    ],
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One three-axle HT-C truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text. Show exactly three axles with exactly three wheels on each side, not four.",
+    "verdict": "FAIL"
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One three-axle HT-C truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text. The visible side must have only three wheels and three axle boxes: one at each end and one exactly in the middle.",
+    "reasons": [
+     "visual: four axles instead of the required three; automated checker PASS"
+    ],
+    "verdict": "FAIL"
+   }
+  ],
+  "method": "built-in image generation",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-sd40.png",
+  "accepted": false
+ },
+ "assets/source/base-v1/loco-sw1-rear.png": {
+  "id": "sw1",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-sw1.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One EMD SW1 locomotive, game body family diesel_switcher, small size, existing black livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1939 six-hundred-horsepower switcher. The yard goat of a generation. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a B-B switcher. The cab is at the rear end, so the turned view shows the cab nearest the viewer, with its rear windows, and the long hood behind it. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-sw1-truck.png": {
+  "id": "sw1",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-sw1.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One two-axle truck of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-taurus-rear.png": {
+  "id": "taurus",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-taurus.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One ÖBB 1116 Taurus locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 2000 Siemens universal electric that sings a scale as it pulls away. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Bo-Bo with a cab at each end. The rear view shows the second cab; pantographs stay where the original has them along the roof, not moved to the other end. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker PASS; visual FAIL: repeats the studio view with raised pantograph at upper-left rather than turning the rear cab toward lower-right."
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One ÖBB 1116 Taurus locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 2000 Siemens universal electric that sings a scale as it pulls away. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Bo-Bo with a cab at each end. The rear view shows the second cab; pantographs stay where the original has them along the roof, not moved to the other end. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Turn the whole locomotive 180 degrees so the raised pantograph is above the lower-right rear cab and the folded pantograph is above the upper-left front cab.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-taurus-truck.png": {
+  "id": "taurus",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-taurus.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One two-axle bogie of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-tgv-rear.png": {
+  "id": "tgv",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-tgv.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One TGV Sud-Est locomotive, game body family electric_hs, medium size, existing orange livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1981, the first high-speed trainset in service. Needs high-speed track and HV wires to stretch its legs. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Bo-Bo power car. The power car alone. Its rear end is flat with the covered connection to the trailer coach, no windscreen. Do not draw a second nose. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "WARN",
+    "reasons": [
+     "Tight margin (2.6%); the studio images keep about 12%."
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-tgv-truck.png": {
+  "id": "tgv",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-tgv.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One two-axle motor bogie of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "PASS",
+    "reasons": []
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-v63-rear.png": {
+  "id": "v63",
+  "kind": "rear",
+  "reference": "assets/source/base-v1/loco-v63.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One V63 Gigant locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1975 Hungarian six-axle Giant, the heavy freight electric of MÁV. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Co-Co with a cab at each end. The rear view shows the second cab; pantographs stay where the original has them along the roof. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker PASS; visual FAIL: roof equipment and taller pantograph remain in original orientation, and near cab has a single windscreen instead of the reference's twin windscreens."
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One V63 Gigant locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1975 Hungarian six-axle Giant, the heavy freight electric of MÁV. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Co-Co with a cab at each end. The rear view shows the second cab; pantographs stay where the original has them along the roof. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Rotate the whole locomotive 180 degrees, placing the tall pantograph at lower-right and the lower pantograph at upper-left while preserving the twin cab windscreens.",
+    "verdict": "FAIL",
+    "reasons": [
+     "Checker PASS; visual FAIL: pantograph heights exchanged, but asymmetric roof boxes remain in original order instead of rotating with the locomotive."
+    ]
+   },
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric rear/left view: the SAME locomotive as the attached image, turned 180 degrees as if on a turntable while the camera stays exactly where it was. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One V63 Gigant locomotive, game body family electric_box, medium size, existing red livery with restrained cream and brass details. Preserve its recognizable silhouette and era: 1975 Hungarian six-axle Giant, the heavy freight electric of MÁV. Match the attached image exactly: same livery and colours, same proportions and details, same wheel count, wheel sizes and spacing, same size in the frame. Not a mirror image of it: draw the left side and the rear end as the real locomotive has them. No cast shadow. Wheel arrangement as in the attached image; the real one is a Co-Co with a cab at each end. The rear view shows the second cab; pantographs stay where the original has them along the roof. Show a complete rigid locomotive source study including visible running gear. No rails, smoke, ground, scenery, numbering or text. Its rear end now faces lower-right and its front faces upper-left; the long axis still runs upper-left to lower-right, so its rear end and its left side show. Do not bend the vehicle. This is a base source study, not an animation sheet. Turn the complete locomotive around so the tall pantograph and small vented roof box move to lower-right, and the low pantograph and stepped roof box move to upper-left.",
+    "verdict": "PASS",
+    "reasons": [
+     "Checker PASS; visual PASS: rear cab faces lower-right, tall pantograph and small vented roof box now lie near that end, stepped box and lower pantograph lie upper-left, and reference livery, cab windscreens, running gear and rigid silhouette are preserved."
+    ]
+   }
+  ],
+  "accepted": true
+ },
+ "assets/source/base-v1/loco-v63-truck.png": {
+  "id": "v63",
+  "kind": "truck",
+  "reference": "assets/source/base-v1/loco-v63.png",
+  "method": "built-in image generation",
+  "attempts": [
+   {
+    "prompt": "Use case: stylized-concept. Exactly ONE isolated game source asset, never a contact sheet, for The Willowline pastoral isometric railway game. Match the guide: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, upper-left light. Palette: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained detail, strong silhouette. Orthographic 2:1 isometric front/right view. Entire object centered with generous 12% empty margin. REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No backdrop, lettering, captions, watermark, border, glow, detached shadow, scenery, extra objects or ground outside the asset. One three-axle bogie of the locomotive in the attached image, on its own, as if lifted out from under it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
+    "verdict": "PASS",
+    "reasons": [
+     "Checker PASS; visual PASS: isolated three-axle bogie with six wheels, side frames, axle boxes, springs, brake cylinders and central bolster; reference colours and requested isometric orientation preserved, with no body, coupler, rails or other extra objects."
+    ]
+   }
+  ],
+  "accepted": true
+ }
+}
