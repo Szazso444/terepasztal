@@ -1,5 +1,6 @@
 import { Terrain } from '../world/tiles';
 import { hash2 } from '../engine/rng';
+import { tileLevels } from '../world/elevation';
 import type { LandscapeMap } from './landscapeModel';
 
 export const RELIEF_STEP = 10;
@@ -25,6 +26,14 @@ export interface ReliefStyle {
   rims?: boolean;
   /** Steep slopes show rock (default); false keeps them grassy and lets light alone shape them. */
   rockFaces?: boolean;
+  /** Preview: every terrace bank is rock, as locked on 2026-09-27 before the stacked-bank rule. */
+  everyBankRock?: boolean;
+  /** Preview: raised ground casts a soft shadow onto lower ground away from the light. */
+  shadows?: boolean;
+  /** Preview: each level is a little warmer and drier than the one below. */
+  heightTint?: boolean;
+  /** Preview: banks facing the viewer show a band of earth under a grassy lip. */
+  skirts?: boolean;
 }
 /**
  * The shipped style, approved 2026-09-27: terraces. Every hill tile is a level plateau at its own
@@ -48,6 +57,8 @@ export interface TerrainRelief {
   style: ReliefStyle;
   /** Terraces only: the level of each tile. */
   tiles?: Uint8Array;
+  /** Terraces only: straight track tiles and the axis they run along; each carries a rail bed. */
+  rails?: ReadonlyMap<number, 'x' | 'y'>;
   /** Highest surface point of this relief in world pixels; the painter searches below it. */
   top: number;
 }
@@ -63,6 +74,7 @@ export function buildRelief(
   map: LandscapeMap,
   built: ReadonlySet<number>,
   style: ReliefStyle = DEFAULT_RELIEF,
+  rails: ReadonlyMap<number, 'x' | 'y' | null> = new Map(),
 ): TerrainRelief {
   const { w, h } = map,
     stride = w + 1,
@@ -158,43 +170,22 @@ export function buildRelief(
     }
   let top = 0;
   for (const c of corners) top = Math.max(top, c);
-  if (style.shape === 'terraces') return terraces(map, built, style, corners);
+  if (style.shape === 'terraces') return terraces(map, style, corners, rails);
   return { corners, centres, style, top: top * step + step };
 }
 
 /**
- * Tile levels from the same terrain targets as the corner lattice, rising at most one level per
- * tile. Corners take the lowest touching tile, so rules that read corners stay conservative.
+ * Terraces over the shared tile levels (world/elevation.ts), which the simulation also reads.
+ * Corners take the lowest touching tile, so rules that read corners stay conservative.
  */
 function terraces(
   map: LandscapeMap,
-  built: ReadonlySet<number>,
   style: ReliefStyle,
   corners: Uint8Array,
+  rails: ReadonlyMap<number, 'x' | 'y' | null>,
 ): TerrainRelief {
   const { w, h } = map,
-    tiles = new Uint8Array(w * h);
-  for (let k = 0; k < w * h; k++) {
-    const t = map.terrain[k];
-    tiles[k] = t === Terrain.Hill ? 2 : t === Terrain.Mountain ? 4 : 0;
-  }
-  for (let changed = true; changed;) {
-    changed = false;
-    for (let y = 0; y < h; y++)
-      for (let x = 0; x < w; x++) {
-        const k = y * w + x;
-        let v = tiles[k];
-        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) v = Math.min(v, 1);
-        if (x) v = Math.min(v, tiles[k - 1] + 1);
-        if (y) v = Math.min(v, tiles[k - w] + 1);
-        if (x < w - 1) v = Math.min(v, tiles[k + 1] + 1);
-        if (y < h - 1) v = Math.min(v, tiles[k + w] + 1);
-        if (v !== tiles[k]) {
-          tiles[k] = v;
-          changed = true;
-        }
-      }
-  }
+    tiles = tileLevels(map);
   const stride = w + 1,
     centres = new Float32Array(w * h);
   let top = 0;
@@ -213,8 +204,9 @@ function terraces(
     centres[k] = tiles[k] * style.step;
     top = Math.max(top, centres[k]);
   }
-  void built;
-  return { corners, centres, style, tiles, top: top + 1 };
+  const beds = new Map<number, 'x' | 'y'>();
+  for (const [k, axis] of rails) if (axis) beds.set(k, axis);
+  return { corners, centres, style, tiles, rails: beds, top: top + 1 };
 }
 
 export function reliefCorners(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
@@ -267,8 +259,27 @@ function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: n
   const a = level(fx, fy),
     b = level(fx + 1, fy),
     c = level(fx, fy + 1),
-    d = level(fx + 1, fy + 1);
-  return relief.style.step * ((a + (b - a) * su) * (1 - sv) + (c + (d - c) * su) * sv);
+    d = level(fx + 1, fy + 1),
+    step = relief.style.step,
+    terrace = step * ((a + (b - a) * su) * (1 - sv) + (c + (d - c) * su) * sv);
+  // A straight rail crossing a bank rides its own bed: it climbs linearly between the tile's
+  // two edge heights (the mean level of the tiles sharing each edge), so neighbouring track
+  // tiles meet exactly and a one-level change is spread over two tiles. Outside the bed the
+  // hill keeps its terrace shape.
+  const tx = Math.round(x),
+    ty = Math.round(y),
+    axis = relief.rails?.get(ty * map.w + tx);
+  if (!axis) return terrace;
+  const here = level(tx, ty),
+    [before, after, along, across] =
+      axis === 'x'
+        ? [level(tx - 1, ty), level(tx + 1, ty), x - tx + 0.5, y - ty]
+        : [level(tx, ty - 1), level(tx, ty + 1), y - ty + 0.5, x - tx];
+  const from = (here + before) / 2,
+    to = (here + after) / 2,
+    bed = step * (from + (to - from) * along),
+    weight = 1 - smoothstep((Math.abs(across) - 0.28) / 0.16);
+  return terrace + (bed - terrace) * weight;
 }
 
 /** Inverse of tile projection onto this surface, shared by picking and visual QA. */
@@ -336,6 +347,26 @@ export function groundAllows(
   need: 'straight' | 'level',
 ) {
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
+  if (relief.tiles) {
+    // Terraces: neighbours never differ by more than a level, so a straight rail always fits
+    // (its bed climbs at most one level per tile). Level pieces and structures need a tile
+    // no bank reaches into: all four neighbours at its own level.
+    if (need === 'straight') return true;
+    const here = relief.tiles[y * map.w + x];
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
+      const nx = x + dx,
+        ny = y + dy;
+      const there =
+        nx < 0 || ny < 0 || nx >= map.w || ny >= map.h ? 0 : relief.tiles[ny * map.w + nx];
+      if (there !== here) return false;
+    }
+    return true;
+  }
   return levelSpan(map, relief, x, y) <= (need === 'straight' ? 1 : 0);
 }
 /**

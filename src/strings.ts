@@ -68,6 +68,8 @@ export const STR = {
     hint: 'M / scroll in: return to field view',
   },
   tile: {
+    elevation: (metres: number) =>
+      metres ? `Elevation ${metres} m above sea level` : 'At sea level',
     terrain: {
       grass: 'Grassland',
       forest: 'Forest',

@@ -28,6 +28,7 @@ import { decorateProps, placeOilFields } from './world/mapgen';
 import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
+import { levelAt, LEVEL_METRES } from './world/elevation';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -1979,7 +1980,10 @@ export class Game {
     const t = terrainAt(this.map, x, y);
     const T = STR.tile;
     const title = T.terrain[TERRAIN_NAMES[t]] ?? TERRAIN_NAMES[t];
-    const lines: string[] = [biomeSummary(biomeAt(this.map, x, y))];
+    const lines: string[] = [
+      biomeSummary(biomeAt(this.map, x, y)),
+      T.elevation(levelAt(this.map, x, y) * LEVEL_METRES),
+    ];
     if (!this.regions.isTileUnlocked(x, y)) lines.push(T.uncharted);
     const piece = this.track.get(x, y);
     if (piece) lines.push(T.track(piece.kind));

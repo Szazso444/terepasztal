@@ -1,0 +1,118 @@
+<title>Terepasztal Hill Climb</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--ground:#edf0ea;--panel:#f8faf6;--ink:#1c231f;--muted:#58645c;--line:#cdd5cc;--rail:#9a4f2c;--ok:#3f7a3a;
+  font-family:"Atkinson Hyperlegible",system-ui,sans-serif;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ground:#141a16;--panel:#1b221d;--ink:#e3e9e2;--muted:#9aa79e;--line:#2e3831;--rail:#d98a5f;--ok:#7fbf73;color-scheme:dark}}
+:root[data-theme="dark"]{--ground:#141a16;--panel:#1b221d;--ink:#e3e9e2;--muted:#9aa79e;--line:#2e3831;--rail:#d98a5f;--ok:#7fbf73;color-scheme:dark}
+body{background:var(--ground);color:var(--ink);font-size:15px;line-height:1.55;padding-inline:clamp(16px,3vw,40px);padding-block:32px 64px}
+main{max-width:1500px;margin:0 auto;display:grid;gap:48px}
+h1,h2{font-family:Archivo,system-ui,sans-serif;text-wrap:balance;margin:0}
+h1{font-size:30px;font-weight:700}
+h2{font-size:21px;font-weight:700}
+header,section{display:grid;gap:14px}
+p{margin:0;max-width:72ch}
+.muted{color:var(--muted)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;font-variant-numeric:tabular-nums}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))}
+.grid.three{grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr))}
+figure{margin:0;display:grid;gap:6px;align-content:start}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:3px;cursor:zoom-in}
+figcaption{font-size:13.5px;color:var(--muted)}
+figcaption b{color:var(--ink);font-weight:700}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--rail)}
+.status{display:grid;gap:6px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
+.status li{margin:0}
+.status ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.profile{display:flex;gap:3px;flex-wrap:wrap;align-items:flex-end}
+.profile span{width:22px;background:var(--rail);opacity:.8;border-radius:2px 2px 0 0;display:flex;justify-content:center;align-items:flex-start;color:var(--panel);font-size:10px}
+dialog{padding:0;border:0;background:transparent;max-width:98vw;max-height:98vh}
+dialog img{max-width:98vw;max-height:96vh;display:block}
+dialog::backdrop{background:rgba(0,0,0,.8)}
+a{color:var(--rail)}
+:focus-visible{outline:2px solid var(--rail);outline-offset:2px}
+</style>
+<main>
+<header>
+  <span class="tag">PR #20 · branch claude/charming-ramanujan-i16mhm</span>
+  <h1>Hills, rails and climbing trains</h1>
+  <p class="muted">All images are the game's own renderer (review scene, seed of the terrain-production map, 1440×900). Click an image for full size. Locked: terraces at 1/4 tile-side levels with rock banks.</p>
+  <div class="status">
+    <ul>
+      <li><b>In the game now:</b> rails no longer flatten hills. A straight track runs on its own bed that climbs from edge to edge; curves, switches, stations and buildings need a tile no bank reaches into.</li>
+      <li><b>In the game now:</b> trains run at 50% speed on a tile that climbs and 120% on one that descends.</li>
+      <li><b>In the game now:</b> the tile tooltip shows elevation, 2 m per level (a level is a quarter of the 8 m tile side). Sea level and flat ground read "At sea level", hills reach 4 m, mountains 8 m.</li>
+      <li><b>In the game now:</b> rock only on stacked banks (two levels within about a tile, and all mountain banks); a single 1/4 bank stays grass with an odd outcrop. Boulders scatter along stacked banks.</li>
+      <li><b>In the game now:</b> the peak sprites fade into the rock over a band twice as tall.</li>
+      <li><b>Preview only, your call:</b> cast shadow, height tint, soil skirts.</li>
+    </ul>
+  </div>
+</header>
+
+<section>
+  <span class="tag">1 · Rock on banks and peak blend</span>
+  <h2>A single bank stays grassy</h2>
+  <p class="muted">Same camera, three states. Left is the look you locked. Middle keeps every bank rock but has the new peak fade. Right is the shipped rule.</p>
+  <div class="grid three">
+    <figure><img src="renders/shape-hills-z1-terraces-quarter.jpg" alt="Locked look, far zoom"><figcaption><b>Locked</b> · every bank rock, old peak fade · zoom 1</figcaption></figure>
+    <figure><img src="renders/look-z1-every-bank-rock.jpg" alt="Every bank rock with new peak fade, far zoom"><figcaption><b>Peak fade only</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look-z1-stacked-rock.jpg" alt="Stacked-bank rock rule, far zoom"><figcaption><b>Shipped</b> · rock on stacked banks, peak fade · zoom 1</figcaption></figure>
+    <figure><img src="renders/shape-hills-z2-terraces-quarter.jpg" alt="Locked look, near zoom"><figcaption><b>Locked</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/look-z2-every-bank-rock.jpg" alt="Every bank rock with new peak fade, near zoom"><figcaption><b>Peak fade only</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/look-z2-stacked-rock.jpg" alt="Stacked-bank rock rule, near zoom"><figcaption><b>Shipped</b> · zoom 2</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <span class="tag">2 · Unrendered ideas</span>
+  <h2>Cast shadow, height tint, soil skirts</h2>
+  <p class="muted">Each on top of the shipped look. Cast shadow darkens ground a higher tile hides from the upper-left light. Height tint warms and dries each level a little. Skirts show an earth band under a grassy lip on banks facing the viewer. Bank outcrops ship as scattered boulders and are visible in every image.</p>
+  <div class="grid">
+    <figure><img src="renders/look-z2-shadows.jpg" alt="Cast shadow preview"><figcaption><b>Cast shadow</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/look-z2-height-tint.jpg" alt="Height tint preview"><figcaption><b>Height tint</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/look-z2-skirts.jpg" alt="Soil skirts preview"><figcaption><b>Soil skirts</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/look-z2-all-three.jpg" alt="All three preview"><figcaption><b>All three</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/look-z1-shadows.jpg" alt="Cast shadow preview far"><figcaption><b>Cast shadow</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look-z1-height-tint.jpg" alt="Height tint preview far"><figcaption><b>Height tint</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look-z1-skirts.jpg" alt="Soil skirts preview far"><figcaption><b>Soil skirts</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look-z1-all-three.jpg" alt="All three preview far"><figcaption><b>All three</b> · zoom 1</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <span class="tag">3 · Rails on a hill</span>
+  <h2>One straight line, laid with the game's builder</h2>
+  <p class="muted">16 straight tiles running east at row 71, from open ground over a hill. Levels along the line:</p>
+  <div class="profile mono" aria-label="Levels along the line: 0,0,0,0,0,0,1,1,1,2,2,2,2,2,2,1">
+    <span style="height:8px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:22px">1</span><span style="height:22px">1</span><span style="height:22px">1</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:22px">1</span>
+  </div>
+  <p class="muted">Each rail tile climbs from the mean level of its west edge to the mean of its east edge, so pieces meet at every edge. The ramp is spread over the tiles on both sides of a bank: half a level each. Where a flat tile sits between two ramps (a one-tile level-1 plateau) the rail shows a slight bend at the joint.</p>
+  <div class="grid">
+    <figure><img src="renders/train-quarter-empty-z2.jpg" alt="Rails over hill, 1/4 level, zoom 2"><figcaption><b>1/4 level</b> · 9.8 px (2 m) per level · zoom 2</figcaption></figure>
+    <figure><img src="renders/train-eighth-empty-z2.jpg" alt="Rails over hill, 1/8 level, zoom 2"><figcaption><b>1/8 level</b> · 4.9 px (1 m) per level · zoom 2</figcaption></figure>
+    <figure><img src="renders/train-quarter-empty-z3.jpg" alt="Rails over hill, 1/4 level, zoom 3"><figcaption><b>1/4 level</b> · zoom 3</figcaption></figure>
+    <figure><img src="renders/train-eighth-empty-z3.jpg" alt="Rails over hill, 1/8 level, zoom 3"><figcaption><b>1/8 level</b> · zoom 3</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <span class="tag">4 · Trains on the climb</span>
+  <h2>Small, medium and large at 1/4 and 1/8</h2>
+  <p class="muted">Locomotive head on the first level-2 tile, heading uphill, consist trailing down the bank. Each body and bogie stands on the rail under it and pitches along its own heading. Current sprites (the illustrated models from the local session are not in yet).</p>
+  <div class="grid">
+    <figure><img src="renders/train-quarter-small-z3.jpg" alt="Small train, 1/4"><figcaption><b>Small, 1/4</b> · Rocket + 2 wooden coaches</figcaption></figure>
+    <figure><img src="renders/train-eighth-small-z3.jpg" alt="Small train, 1/8"><figcaption><b>Small, 1/8</b></figcaption></figure>
+    <figure><img src="renders/train-quarter-medium-z3.jpg" alt="Medium train, 1/4"><figcaption><b>Medium, 1/4</b> · Flying Scotsman + 2 steel coaches + Pullman</figcaption></figure>
+    <figure><img src="renders/train-eighth-medium-z3.jpg" alt="Medium train, 1/8"><figcaption><b>Medium, 1/8</b></figcaption></figure>
+    <figure><img src="renders/train-quarter-large-z3.jpg" alt="Large train, 1/4"><figcaption><b>Large, 1/4</b> · Big Boy + 4 steel hoppers</figcaption></figure>
+    <figure><img src="renders/train-eighth-large-z3.jpg" alt="Large train, 1/8"><figcaption><b>Large, 1/8</b></figcaption></figure>
+  </div>
+  <p class="muted mono">Grade on a ramp tile: 1/4 → half a level (1 m) over 8 m = 12.5% · 1/8 → 0.5 m over 8 m = 6.25%. Speed factor is the same at both: 0.5 up, 1.2 down.</p>
+</section>
+</main>
+<dialog id="zoom"><img alt=""></dialog>
+<script>
+const d=document.getElementById('zoom'),im=d.querySelector('img');
+document.querySelectorAll('figure img').forEach(i=>i.addEventListener('click',()=>{im.src=i.src;im.alt=i.alt;d.showModal();}));
+d.addEventListener('click',()=>d.close());
+</script>

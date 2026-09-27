@@ -5,7 +5,7 @@ export function reliefStyle(game, style) {
   const l = game.world.landscape;
   l.updateHeights = function () {
     if (this.heightsDirty) {
-      this.relief = buildRelief(this.map, this.flat, style);
+      this.relief = buildRelief(this.map, this.flat, style, this.rails);
       this.heightsDirty = false;
     }
   };

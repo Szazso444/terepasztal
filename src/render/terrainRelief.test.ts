@@ -230,6 +230,51 @@ describe('connected illustrated terrain', () => {
         }
     }
   });
+  it('runs straight rails over terraces on a continuous bed without cutting the hill', () => {
+    const m = fixture(),
+      y = 16,
+      rails = new Map<number, 'x' | 'y'>();
+    for (let x = 0; x < 32; x++) rails.set(y * 32 + x, 'x');
+    const natural = buildRelief(m, new Set()),
+      r = buildRelief(m, new Set(), undefined, rails),
+      step = r.style.step;
+    // The hill keeps its levels; only the bed under the rail follows its own line.
+    expect(r.tiles).toEqual(natural.tiles);
+    for (let x = 0; x < 31; x++) {
+      // Adjacent track tiles meet at the same height on their shared edge.
+      const edge = x + 0.5;
+      expect(reliefHeight(m, r, edge - 1e-6, y)).toBeCloseTo(reliefHeight(m, r, edge + 1e-6, y), 3);
+      // Across one tile the rail climbs at most one level.
+      const rise = Math.abs(reliefHeight(m, r, x + 0.49, y) - reliefHeight(m, r, x - 0.49, y));
+      expect(rise).toBeLessThanOrEqual(step * 1.001);
+    }
+    expect(reliefHeight(m, r, 16, y)).toBeGreaterThan(0);
+  });
+  it('keeps level pieces and structures on terrace tiles no bank reaches into', () => {
+    const m = fixture(),
+      r = buildRelief(m, new Set());
+    let level = 0,
+      edge = 0;
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const here = r.tiles![y * 32 + x],
+          same = [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ].every(([dx, dy]) => {
+            const nx = x + dx,
+              ny = y + dy;
+            return (nx < 0 || ny < 0 || nx > 31 || ny > 31 ? 0 : r.tiles![ny * 32 + nx]) === here;
+          });
+        expect(groundAllows(m, r, x, y, 'level')).toBe(same);
+        expect(groundAllows(m, r, x, y, 'straight')).toBe(true);
+        if (same) level++;
+        else edge++;
+      }
+    expect(level && edge).toBeTruthy();
+  });
   it('keeps tile centres classified correctly, including all four shoreline directions', () => {
     const m = emptyMap(5, 16, 16);
     for (let y = 0; y < 16; y++)

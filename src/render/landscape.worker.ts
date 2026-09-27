@@ -89,9 +89,24 @@ self.onmessage = async (event: MessageEvent) => {
         let steep: number | undefined;
         if (relief.style.faces && relief.style.rockFaces !== false && raised) {
           faceGradient(tx, ty);
-          const levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step,
-            t = (levels - 1.4 + (surfaceNoise(wx * 3, wy * 3, 617) - 0.5) * 0.6) / 0.4;
-          steep = t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+          const levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step;
+          if (relief.tiles && !relief.style.everyBankRock) {
+            // Terraces: a one-level bank stays grassy with the odd outcrop; banks stacked two
+            // levels within about a tile, or on mountains, are rock.
+            const bank = unit((levels - 0.8) / 0.6);
+            if (bank > 0) {
+              const stacked =
+                terrain === Terrain.Mountain ? 1 : unit((levelSpan(tx, ty) - 1.4) / 0.4);
+              const outcrop = unit(
+                (surfaceNoise(wx * 1.4, wy * 1.4, 631) -
+                  0.6 +
+                  (surfaceNoise(wx * 5, wy * 5, 637) - 0.5) * 0.12) /
+                  0.1,
+              );
+              steep = bank * Math.max(stacked, outcrop);
+            } else steep = 0;
+          } else
+            steep = unit((levels - 1.4 + (surfaceNoise(wx * 3, wy * 3, 617) - 0.5) * 0.6) / 0.4);
         }
         for (let m = 0; m < 4; m++) {
           const weight = blend[m + 4];
@@ -105,7 +120,12 @@ self.onmessage = async (event: MessageEvent) => {
             wx,
             wy,
             part,
-            [0, 1, 3, 4, 7, 9].includes(material) ? steep : undefined,
+            // Mountain tops are rock, so the summit caps rise out of stone rather than grass.
+            material === 9 && steep !== undefined
+              ? Math.max(steep, 0.9)
+              : [0, 1, 3, 4, 7, 9].includes(material)
+                ? steep
+                : undefined,
           );
           if (material === 5 || material === 8) waterWeight += weight;
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
@@ -121,6 +141,7 @@ self.onmessage = async (event: MessageEvent) => {
             1.3;
           shade = Math.max(0.83, Math.min(1.12, 1 + dx * 0.012 - dy * 0.015));
         }
+        if (raised && waterWeight < 1) shade *= previewLooks(tx, ty, z, color);
         for (let c = 0; c < 3; c++)
           color[c] *=
             shade * (waterWeight + ((1 - waterWeight) * ((tint >> (16 - c * 8)) & 255)) / 255);
@@ -279,4 +300,49 @@ function faceShade(x: number, y: number) {
     shade *= Math.max(0.8, Math.min(1.16, 1 - curve * 0.0004));
   }
   return shade;
+}
+/** Smoothstep of t clamped to 0..1. */
+function unit(t: number) {
+  return t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+}
+/** How many levels the surface spans within three quarters of a tile around (x, y). */
+function levelSpan(x: number, y: number) {
+  const d = 0.75,
+    hs = [
+      reliefHeight(map, relief, x, y),
+      reliefHeight(map, relief, x + d, y),
+      reliefHeight(map, relief, x - d, y),
+      reliefHeight(map, relief, x, y + d),
+      reliefHeight(map, relief, x, y - d),
+    ];
+  return (Math.max(...hs) - Math.min(...hs)) / relief.style.step;
+}
+/**
+ * Preview-only looks from the relief style (all off in the shipped style): soil skirts recolour
+ * banks facing the viewer, the height tint warms higher levels, and a cast shadow darkens ground
+ * that a higher tile hides from the upper-left light. Returns the shading factor.
+ */
+function previewLooks(x: number, y: number, z: number, color: number[]) {
+  const style = relief.style;
+  let factor = 1;
+  if (style.skirts) {
+    faceGradient(x, y);
+    const facing = unit((-(gradient[0] + gradient[1]) / style.step - 0.8) / 0.8);
+    if (facing > 0) {
+      const soil = [118, 92, 62];
+      for (let c = 0; c < 3; c++) color[c] += (soil[c] - color[c]) * facing * 0.8;
+    }
+  }
+  if (style.heightTint) {
+    const level = z / style.step;
+    color[0] *= 1 + level * 0.035;
+    color[1] *= 1 + level * 0.02;
+    color[2] *= 1 - level * 0.02;
+  }
+  if (style.shadows) {
+    const d = 0.4,
+      over = (reliefHeight(map, relief, x - d, y) - z - d * style.step * 0.9) / style.step;
+    factor *= 1 - 0.24 * unit(over / 0.6);
+  }
+  return factor;
 }

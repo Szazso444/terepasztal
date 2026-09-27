@@ -1,3 +1,4 @@
+import { gradeFactor } from '../world/elevation';
 import { blockingGroups, blockingCycles } from './recovery';
 import {
   Train,
@@ -569,6 +570,7 @@ export class Fleet {
         const d = biomeDef(biomeAt(this.map, x, y));
         return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
       },
+      gradeAt: (s) => gradeFactor(this.map, s.x, s.y, s.in, s.out),
     };
   }
   /** tile key -> train id for the next stretch of every moving train's path */

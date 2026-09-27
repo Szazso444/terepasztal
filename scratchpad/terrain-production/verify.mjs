@@ -24,8 +24,8 @@ try {
   for(let k=0;k<g.map.terrain.length;k++){
     const x=k%128,y=Math.floor(k/128);
     if(g.map.terrain[k]!==2||x<10||y<10||x>117||y>117||g.track.has(x,y)||w.elevationOf(x,y)>-5)continue;
-    // A slope too steep for rails must refuse them (the hill is not cut away).
-    if(!refused&&!w.groundAllows(x,y,'straight')){if(g.builder.placeTrackKind(x,y,'straight',0))throw Error('Rail laid on a too-steep tile');refused=[x,y];}
+    // A bank reaches into this tile: only straight rails may cross it, never a curve (the hill is not cut away).
+    if(!refused&&!w.groundAllows(x,y,'level')){for(let r=0;r<4;r++)if(g.builder.placeTrackKind(x,y,'curve',r))throw Error('Curve laid on a bank');refused=[x,y];}
     if(placed)continue;
     const z=w.elevationOf(x,y),paints=l.paintCount,corners=[-.5,.5].flatMap(dx=>[-.5,.5].map(dy=>w.elevationOf(x+dx,y+dy)));
     if(g.builder.placeTrackKind(x,y,'straight',0))placed={x,y,z,paints,corners};
@@ -47,7 +47,7 @@ try {
   g.map.terrain[y*128+x]=0;w.retile(x,y);w.animate(0);
   g.map.terrain[y*128+x]=2;w.retile(x,y);w.animate(0);await settled();
   if(w.elevationOf(x,y)!==z)throw Error('Stale edit result won');
-  return {tile:[x,y],originalHeight:z,hillKept:true,refusedSteepTile:refused,trackOnSurface:true,picking:true,localRepaintCount:repaint,restored:true,staleResultRejected:true};
+  return {tile:[x,y],originalHeight:z,hillKept:true,refusedCurveOnBank:refused,trackOnSurface:true,picking:true,localRepaintCount:repaint,restored:true,staleResultRejected:true};
  });
  assert(report.excavation.localRepaintCount<20);
  report.season=await page.evaluate(async()=>{

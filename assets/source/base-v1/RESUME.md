@@ -406,3 +406,7 @@ but generated PNGs are not projection-certified. Keep all media in the repo.
 industrial machinery, excluded from accepted coverage. Its replacement must show
 only a flat natural oil puddle. The gallery preserves image proportions and offers
 light, dark and checker backgrounds plus filename search.
+
+Follow-up (2026-09-27): rock only on stacked banks, wider summit fade, tile elevation in
+`src/world/elevation.ts` with tooltip, straight rails on beds over terraces, grade speed 0.5 up /
+1.2 down. Review: `scratchpad/hill-levels/review.html` (trains at 1/4 vs 1/8, preview looks).

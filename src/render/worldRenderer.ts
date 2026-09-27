@@ -19,6 +19,7 @@ import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { scatterFor } from './scatter';
+import { levelAt } from '../world/elevation';
 
 const CHUNK = 8;
 
@@ -78,7 +79,7 @@ export class WorldRenderer {
     readonly map: GameMap,
     readonly regions: RegionState,
   ) {
-    this.landscape = new Landscape(map, this.flattened);
+    this.landscape = new Landscape(map, this.flattened, this.trackAxes);
     this.landscape.root.visible = false;
     this.root.on('destroyed', () => this.surfaces.destroy());
     this.objects.sortableChildren = true;
@@ -355,7 +356,17 @@ export class WorldRenderer {
     const list = scatterFor(this.map, x, y, {
       occupied: (xx, yy) => this.trackSprites.has(idx(this.map, xx, yy)) || this.occupied(xx, yy),
       city: (xx, yy) => this.city.has(idx(this.map, xx, yy)),
-      steep: (xx, yy) => !this.landscape.failed && !this.landscape.groundAllows(xx, yy, 'straight'),
+      // A stacked bank passes through: one neighbour a level up, another a level down.
+      steep: (xx, yy) => {
+        const here = levelAt(this.map, xx, yy),
+          around = [
+            levelAt(this.map, xx + 1, yy),
+            levelAt(this.map, xx - 1, yy),
+            levelAt(this.map, xx, yy + 1),
+            levelAt(this.map, xx, yy - 1),
+          ];
+        return around.some((l) => l > here) && around.some((l) => l < here);
+      },
     });
     const sprites = [];
     for (const p of list) {
@@ -690,7 +701,10 @@ export class WorldRenderer {
   /** `axis` is the direction a straight rail runs, so it climbs along it; other pieces lie level. */
   setTrack(x: number, y: number, frame: string | null, axis: 'x' | 'y' | null = null) {
     const i = idx(this.map, x, y);
-    this.trackAxes.set(i, axis);
+    // A straight rail carries its own bed across a bank; the terrain around it repaints.
+    if ((this.trackAxes.get(i) ?? null) !== (frame ? axis : null)) this.landscape.invalidate(x, y);
+    if (frame) this.trackAxes.set(i, axis);
+    else this.trackAxes.delete(i);
     let s = this.trackSprites.get(i);
     if (!frame) {
       if (s) {

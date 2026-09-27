@@ -67,7 +67,8 @@ export class SurfaceAssets {
     if (cached) return cached;
     const { canvas, ctx, pixels } = read(f),
       { width: w, height: h, data: p } = pixels;
-    const band = (w / f.w) * 8;
+    // A wide fade so the cap rises out of the rocky mountain top instead of sitting on it.
+    const band = (w / f.w) * 16;
     for (let x = 0; x < w; x++) {
       let bottom = h - 1;
       while (bottom > h * 0.45 && p[(bottom * w + x) * 4 + 3] < 100) bottom--;

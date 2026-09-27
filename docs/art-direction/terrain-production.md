@@ -139,3 +139,19 @@ level); neighbouring tiles differ by at most one level; the change is a rounded 
 wide, centred on the shared edge; banks show rock; rim light on slope tops, soft shade at feet.
 Chosen from the comparison in `scratchpad/hill-levels/renders/shape-*.jpg`
 ("terraces-quarter"). The corner-slope style remains selectable for comparison only.
+
+### Follow-ups on the locked style (2026-09-27)
+
+- Rock only on stacked banks: a single one-level bank stays grass with an occasional noise
+  outcrop; banks that stack two levels within about a tile, and every mountain bank, are rock.
+  Boulders scatter along stacked banks. `everyBankRock` in the relief style restores the old rule
+  for comparison.
+- Summit sprites fade into the rock over a band twice as tall; mountain tops are always rock.
+- Tile levels live in `src/world/elevation.ts` (hills 2, mountains 4, neighbours within one
+  level, 2 m per level). The tooltip shows the tile's elevation above sea level.
+- Rails: a straight track tile runs on its own bed from the mean level of one edge to the mean of
+  the other, so the hill is never cut. Curves, switches, stations, decor and buildings need a tile
+  that no bank reaches into. Trains run at half speed on a climbing tile and 1.2x descending.
+- Preview-only style flags: `shadows`, `heightTint`, `skirts`. Renders and the train climb at 1/4
+  vs 1/8 levels: `scratchpad/hill-levels/renders/look-*.jpg`, `train-*.jpg`
+  (`climb.mjs`), review page `scratchpad/hill-levels/review.html`.

@@ -66,8 +66,10 @@ export class Landscape {
   constructor(
     private readonly map: LandscapeMap,
     private readonly flat: ReadonlySet<number>,
+    /** Axis of each straight track tile; its rail bed follows the hill (terrainRelief.ts). */
+    private readonly rails: ReadonlyMap<number, 'x' | 'y' | null> = new Map(),
   ) {
-    this.relief = buildRelief(map, flat);
+    this.relief = buildRelief(map, flat, undefined, rails);
     try {
       this.worker = new Worker(new URL('./landscape.worker.ts', import.meta.url), {
         type: 'module',
@@ -319,7 +321,7 @@ export class Landscape {
   }
   private updateHeights() {
     if (this.heightsDirty) {
-      this.relief = buildRelief(this.map, this.flat);
+      this.relief = buildRelief(this.map, this.flat, undefined, this.rails);
       this.heightsDirty = false;
     }
   }
