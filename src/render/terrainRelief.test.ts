@@ -14,6 +14,7 @@ import {
 } from './terrainRelief';
 import { surfaceMaterial, surfaceColor, surfaceBlend, grassDetail } from './terrainMaterials';
 import { readFileSync } from 'node:fs';
+import { lineSpans, type RailBed } from '../world/railProfile';
 import { PNG } from 'pngjs';
 
 /** The corner-slope style these geometry tests were written for (still selectable). */
@@ -233,10 +234,11 @@ describe('connected illustrated terrain', () => {
   it('runs straight rails over terraces on a continuous bed without cutting the hill', () => {
     const m = fixture(),
       y = 16,
-      rails = new Map<number, 'x' | 'y'>();
-    for (let x = 0; x < 32; x++) rails.set(y * 32 + x, 'x');
-    const natural = buildRelief(m, new Set()),
-      r = buildRelief(m, new Set(), undefined, rails),
+      natural = buildRelief(m, new Set()),
+      { spans } = lineSpans(Array.from({ length: 32 }, (_, x) => natural.tiles![y * 32 + x])),
+      rails = new Map<number, RailBed>();
+    for (let x = 0; x < 32; x++) rails.set(y * 32 + x, { axis: 'x', spans, flat: false });
+    const r = buildRelief(m, new Set(), undefined, rails),
       step = r.style.step;
     // The hill keeps its levels; only the bed under the rail follows its own line.
     expect(r.tiles).toEqual(natural.tiles);

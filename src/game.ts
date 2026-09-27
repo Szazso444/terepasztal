@@ -28,7 +28,8 @@ import { decorateProps, placeOilFields } from './world/mapgen';
 import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
-import { levelAt, LEVEL_METRES } from './world/elevation';
+import { levelAt } from './world/elevation';
+import { railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -72,7 +73,7 @@ import {
 import { decorOffset, type Decor } from './sim/build';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
-import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor, opposite } from './engine/iso';
+import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import { SettingsScreen } from './ui/settingsScreen';
 import { TuningScreen } from './ui/tuningScreen';
@@ -921,7 +922,7 @@ export class Game {
     this.applySeason(true);
     this.applySettings();
     this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects, (x, y) =>
-      this.world.groundAt(x, y),
+      this.world.railAt(x, y),
     );
     // vehicles still inside an engine shed are hidden until they roll out
     this.trainRenderer.hideAt = (x, y) => this.builder.stationAt(x, y)?.def.depot === true;
@@ -1157,7 +1158,17 @@ export class Game {
   }
 
   // ---------------------------------------------------------------- world edits
+  /** Rail profiles need recomputing: a track piece or a bridge changed. */
+  private railsDirty = false;
+  /** Every straight line conforms to its neighbours: inclines, transitions, bridge decks. */
+  private refreshRails() {
+    this.railsDirty = false;
+    const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
+    this.fleet.railBeds = beds;
+    if (this.world.setRailBeds(beds)) this.refreshBridges();
+  }
   private onTrackChanged(x: number, y: number) {
+    this.railsDirty = true;
     this.builder.refreshBridgeCapacity(x, y);
     this.refreshBridges();
     this.depot?.onTrackChanged();
@@ -1167,10 +1178,7 @@ export class Game {
       if (t === Terrain.Hill) this.world.setFlattened(x, y, true);
       if (t === Terrain.Forest || t === Terrain.Grass)
         this.world.displaceProps(x, y, p.unit ? [] : (p.links as [number, number][]));
-      // A straight rail climbs along its axis: E–W runs along x, N–S along y.
-      const [a, b] = p.links[0] ?? [];
-      const axis = p.links.length === 1 && a === opposite(b) ? (DIR_DX[a] !== 0 ? 'x' : 'y') : null;
-      this.world.setTrack(x, y, pieceFrame(p), axis);
+      this.world.setTrack(x, y, pieceFrame(p));
     } else {
       this.world.setTrack(x, y, null);
       if (t === Terrain.Hill && !this.builder.stationAt(x, y)) this.world.setFlattened(x, y, false);
@@ -1231,18 +1239,31 @@ export class Game {
         const phase = s.index % 4;
         const edge = (s.index === 0 ? 1 : 0) + (s.index === s.length - 1 ? 2 : 0);
         const key = `structures/span_${s.material}_${s.axis}_${n}_${phase}_${edge}`;
-        this.world.setPlatform(b.x, b.y, key + '_deck', 0, true);
-        this.world.setStructure('bridge:' + b.x + ',' + b.y, b.x, b.y, key + '_rail', 35);
+        // Over water the deck sits at the waterline; over land it carries the rail's level.
+        const water = terrainAt(this.map, b.x, b.y) === Terrain.Water,
+          deck = water ? 0 : -this.world.railAt(b.x, b.y).dz,
+          dy = -deck - this.world.elevationOf(b.x, b.y);
+        this.world.setPlatform(b.x, b.y, key + '_deck', 0, water, deck);
+        this.world.setStructure('bridge:' + b.x + ',' + b.y, b.x, b.y, key + '_rail', 35, dy);
         const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
-        this.world.setPlatform(b.x, b.y, (b.level ?? 1) > 1 ? detail + '_deck' : null, 1);
+        this.world.setPlatform(
+          b.x,
+          b.y,
+          (b.level ?? 1) > 1 ? detail + '_deck' : null,
+          1,
+          false,
+          deck,
+        );
         const detailId = 'bridge-detail:' + b.x + ',' + b.y;
-        if ((b.level ?? 1) > 1) this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36);
+        if ((b.level ?? 1) > 1)
+          this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36, dy);
         else this.world.removeStructure(detailId);
       }
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
     if (buildingDef(b.id).bridge) {
+      this.railsDirty = true;
       this.builder.refreshBridgeCapacity(b.x, b.y);
       this.track.version++;
       if (removed) {
@@ -1982,7 +2003,7 @@ export class Game {
     const title = T.terrain[TERRAIN_NAMES[t]] ?? TERRAIN_NAMES[t];
     const lines: string[] = [
       biomeSummary(biomeAt(this.map, x, y)),
-      T.elevation(levelAt(this.map, x, y) * LEVEL_METRES),
+      T.elevation(levelAt(this.map, x, y)),
     ];
     if (!this.regions.isTileUnlocked(x, y)) lines.push(T.uncharted);
     const piece = this.track.get(x, y);
@@ -2260,6 +2281,7 @@ export class Game {
     this.handleInput(dt);
     this.camera.update(dt);
     this.updateViewBlend(dt);
+    if (this.railsDirty) this.refreshRails();
     this.world.animate(dt);
     this.world.applyCamera(this.camera);
     this.layoutViews();

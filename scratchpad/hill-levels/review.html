@@ -34,81 +34,108 @@ a{color:var(--rail)}
 </style>
 <main>
 <header>
-  <span class="tag">PR #20 · branch claude/charming-ramanujan-i16mhm</span>
+  <span class="tag">PR #20 · round 2</span>
   <h1>Hills, rails and climbing trains</h1>
-  <p class="muted">All images are the game's own renderer (review scene, seed of the terrain-production map, 1440×900). Click an image for full size. Locked: terraces at 1/4 tile-side levels with rock banks.</p>
+  <p class="muted">Every image is the game's own renderer. Click an image for full size.</p>
   <div class="status">
     <ul>
-      <li><b>In the game now:</b> rails no longer flatten hills. A straight track runs on its own bed that climbs from edge to edge; curves, switches, stations and buildings need a tile no bank reaches into.</li>
-      <li><b>In the game now:</b> trains run at 50% speed on a tile that climbs and 120% on one that descends.</li>
-      <li><b>In the game now:</b> the tile tooltip shows elevation, 2 m per level (a level is a quarter of the 8 m tile side). Sea level and flat ground read "At sea level", hills reach 4 m, mountains 8 m.</li>
-      <li><b>In the game now:</b> rock only on stacked banks (two levels within about a tile, and all mountain banks); a single 1/4 bank stays grass with an odd outcrop. Boulders scatter along stacked banks.</li>
-      <li><b>In the game now:</b> the peak sprites fade into the rock over a band twice as tall.</li>
-      <li><b>Preview only, your call:</b> cast shadow, height tint, soil skirts.</li>
+      <li><b>In the game now:</b> the tooltip shows "Elevation: level N". No metres anywhere; sea level is level 0.</li>
+      <li><b>In the game now:</b> hill and mountain plateau tops are grass again, as in the locked version. The locked bank rule is kept as an option.</li>
+      <li><b>In the game now:</b> rails follow the incline rules from your table. Each straight line has one continuous height profile, and pieces conform when neighbours are laid.</li>
+      <li><b>In the game now:</b> track pieces on a climb are drawn as meshes bent to that profile, so they meet exactly at every joint.</li>
+      <li><b>In the game now:</b> bridge platforms can stand on land. Straight track over them keeps the level of the higher bank.</li>
+      <li><b>In the game now:</b> each locomotive and wagon body rests on its own front and rear bogies, so it follows the rail through the curves.</li>
+      <li><b>Preview only, your call:</b> the slope grass tone, lighter higher levels, and snow. Soil skirts are removed.</li>
     </ul>
   </div>
 </header>
 
 <section>
-  <span class="tag">1 · Rock on banks and peak blend</span>
-  <h2>A single bank stays grassy</h2>
-  <p class="muted">Same camera, three states. Left is the look you locked. Middle keeps every bank rock but has the new peak fade. Right is the shipped rule.</p>
-  <div class="grid three">
-    <figure><img src="renders/shape-hills-z1-terraces-quarter.jpg" alt="Locked look, far zoom"><figcaption><b>Locked</b> · every bank rock, old peak fade · zoom 1</figcaption></figure>
-    <figure><img src="renders/look-z1-every-bank-rock.jpg" alt="Every bank rock with new peak fade, far zoom"><figcaption><b>Peak fade only</b> · zoom 1</figcaption></figure>
-    <figure><img src="renders/look-z1-stacked-rock.jpg" alt="Stacked-bank rock rule, far zoom"><figcaption><b>Shipped</b> · rock on stacked banks, peak fade · zoom 1</figcaption></figure>
-    <figure><img src="renders/shape-hills-z2-terraces-quarter.jpg" alt="Locked look, near zoom"><figcaption><b>Locked</b> · zoom 2</figcaption></figure>
-    <figure><img src="renders/look-z2-every-bank-rock.jpg" alt="Every bank rock with new peak fade, near zoom"><figcaption><b>Peak fade only</b> · zoom 2</figcaption></figure>
-    <figure><img src="renders/look-z2-stacked-rock.jpg" alt="Stacked-bank rock rule, near zoom"><figcaption><b>Shipped</b> · zoom 2</figcaption></figure>
+  <span class="tag">1 · Plateau tops</span>
+  <h2>Grass on the flat tops again</h2>
+  <p class="muted">Left is the look you locked, where every bank is rock. Right is the shipped look: rock only where banks stack, and grass plateau tops like the locked version.</p>
+  <div class="grid">
+    <figure><img src="renders/look2-z1-locked.jpg" alt="Locked · every bank rock · zoom 1"><figcaption><b>Locked</b> · every bank rock · zoom 1</figcaption></figure>
+    <figure><img src="renders/look2-z1-shipped.jpg" alt="Shipped · zoom 1"><figcaption><b>Shipped</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look2-z2-locked.jpg" alt="Locked · zoom 2"><figcaption><b>Locked</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/look2-z2-shipped.jpg" alt="Shipped · zoom 2"><figcaption><b>Shipped</b> · zoom 2</figcaption></figure>
   </div>
 </section>
 
 <section>
-  <span class="tag">2 · Unrendered ideas</span>
-  <h2>Cast shadow, height tint, soil skirts</h2>
-  <p class="muted">Each on top of the shipped look. Cast shadow darkens ground a higher tile hides from the upper-left light. Height tint warms and dries each level a little. Skirts show an earth band under a grassy lip on banks facing the viewer. Bank outcrops ship as scattered boulders and are visible in every image.</p>
+  <span class="tag">2 · Slope grass</span>
+  <h2>Grass on a slope, a shade apart</h2>
+  <p class="muted">Grass on a slope takes a tone that fades out where rock takes over. Four tones against the shipped look, all at zoom 2. Most visible on the single-level banks at the lower right.</p>
   <div class="grid">
-    <figure><img src="renders/look-z2-shadows.jpg" alt="Cast shadow preview"><figcaption><b>Cast shadow</b> · zoom 2</figcaption></figure>
-    <figure><img src="renders/look-z2-height-tint.jpg" alt="Height tint preview"><figcaption><b>Height tint</b> · zoom 2</figcaption></figure>
-    <figure><img src="renders/look-z2-skirts.jpg" alt="Soil skirts preview"><figcaption><b>Soil skirts</b> · zoom 2</figcaption></figure>
-    <figure><img src="renders/look-z2-all-three.jpg" alt="All three preview"><figcaption><b>All three</b> · zoom 2</figcaption></figure>
-    <figure><img src="renders/look-z1-shadows.jpg" alt="Cast shadow preview far"><figcaption><b>Cast shadow</b> · zoom 1</figcaption></figure>
-    <figure><img src="renders/look-z1-height-tint.jpg" alt="Height tint preview far"><figcaption><b>Height tint</b> · zoom 1</figcaption></figure>
-    <figure><img src="renders/look-z1-skirts.jpg" alt="Soil skirts preview far"><figcaption><b>Soil skirts</b> · zoom 1</figcaption></figure>
-    <figure><img src="renders/look-z1-all-three.jpg" alt="All three preview far"><figcaption><b>All three</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look2-z2-shipped.jpg" alt="Shipped · no tone"><figcaption><b>Shipped</b> · no tone</figcaption></figure>
+    <figure><img src="renders/look2-z2-bank-dry.jpg" alt="Dry, light · warmer, 0.6"><figcaption><b>Dry, light</b> · warmer, 0.6</figcaption></figure>
+    <figure><img src="renders/look2-z2-bank-dry-strong.jpg" alt="Dry, strong · warmer, 1.2"><figcaption><b>Dry, strong</b> · warmer, 1.2</figcaption></figure>
+    <figure><img src="renders/look2-z2-bank-dark.jpg" alt="Shaded · darker, cooler"><figcaption><b>Shaded</b> · darker, cooler</figcaption></figure>
+    <figure><img src="renders/look2-z2-bank-lush.jpg" alt="Lush · deeper green"><figcaption><b>Lush</b> · deeper green</figcaption></figure>
   </div>
 </section>
 
 <section>
-  <span class="tag">3 · Rails on a hill</span>
-  <h2>One straight line, laid with the game's builder</h2>
-  <p class="muted">16 straight tiles running east at row 71, from open ground over a hill. Levels along the line:</p>
-  <div class="profile mono" aria-label="Levels along the line: 0,0,0,0,0,0,1,1,1,2,2,2,2,2,2,1">
-    <span style="height:8px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:22px">1</span><span style="height:22px">1</span><span style="height:22px">1</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:36px">2</span><span style="height:22px">1</span>
-  </div>
-  <p class="muted">Each rail tile climbs from the mean level of its west edge to the mean of its east edge, so pieces meet at every edge. The ramp is spread over the tiles on both sides of a bank: half a level each. Where a flat tile sits between two ramps (a one-tile level-1 plateau) the rail shows a slight bend at the joint.</p>
+  <span class="tag">3 · Height and snow</span>
+  <h2>Higher levels paint lighter; snow by biome</h2>
+  <p class="muted">Ground level stays exactly as it is. Each level above it is a few percent lighter. Snow starts as patches on the biome’s snow line level and turns to full snow one level up: 4 then 5 by default, 3 then 4 in taiga, 5 then 6 in desert. The tallest level is 4, so snow only shows on 4, and in taiga on 3 and 4. Desert never gets snow at the current heights. This map has only plains mountains, so the taiga images switch the hills in this view to taiga.</p>
   <div class="grid">
-    <figure><img src="renders/train-quarter-empty-z2.jpg" alt="Rails over hill, 1/4 level, zoom 2"><figcaption><b>1/4 level</b> · 9.8 px (2 m) per level · zoom 2</figcaption></figure>
-    <figure><img src="renders/train-eighth-empty-z2.jpg" alt="Rails over hill, 1/8 level, zoom 2"><figcaption><b>1/8 level</b> · 4.9 px (1 m) per level · zoom 2</figcaption></figure>
-    <figure><img src="renders/train-quarter-empty-z3.jpg" alt="Rails over hill, 1/4 level, zoom 3"><figcaption><b>1/4 level</b> · zoom 3</figcaption></figure>
-    <figure><img src="renders/train-eighth-empty-z3.jpg" alt="Rails over hill, 1/8 level, zoom 3"><figcaption><b>1/8 level</b> · zoom 3</figcaption></figure>
+    <figure><img src="renders/look2-z1-light-3.jpg" alt="Lighter 3% per level · zoom 1"><figcaption><b>Lighter 3% per level</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look2-z1-light-6.jpg" alt="Lighter 6% per level · zoom 1"><figcaption><b>Lighter 6% per level</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look2-z1-snow.jpg" alt="Snow, plains · patches on level 4 · zoom 1"><figcaption><b>Snow, plains</b> · patches on level 4 · zoom 1</figcaption></figure>
+    <figure><img src="renders/look2-z1-light-4-snow.jpg" alt="Lighter 4% + snow, plains · zoom 1"><figcaption><b>Lighter 4% + snow, plains</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look2-z2-light-4-snow.jpg" alt="Lighter 4% + snow, plains · zoom 2"><figcaption><b>Lighter 4% + snow, plains</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/look2-z2-taiga-snow.jpg" alt="Lighter 4% + snow, taiga · patches on level 3, full on level 4 · zoom 2"><figcaption><b>Lighter 4% + snow, taiga</b> · patches on level 3, full on level 4 · zoom 2</figcaption></figure>
+    <figure><img src="renders/look2-z1-taiga-snow.jpg" alt="Lighter 4% + snow, taiga · zoom 1"><figcaption><b>Lighter 4% + snow, taiga</b> · zoom 1</figcaption></figure>
+    <figure><img src="renders/look2-peak-b0-light-4-snow.jpg" alt="Plains mountain · lighter 4% + snow · zoom 1.5"><figcaption><b>Plains mountain</b> · lighter 4% + snow · zoom 1.5</figcaption></figure>
   </div>
 </section>
 
 <section>
-  <span class="tag">4 · Trains on the climb</span>
-  <h2>Small, medium and large at 1/4 and 1/8</h2>
-  <p class="muted">Locomotive head on the first level-2 tile, heading uphill, consist trailing down the bank. Each body and bogie stands on the rail under it and pitches along its own heading. Current sprites (the illustrated models from the local session are not in yet).</p>
-  <div class="grid">
-    <figure><img src="renders/train-quarter-small-z3.jpg" alt="Small train, 1/4"><figcaption><b>Small, 1/4</b> · Rocket + 2 wooden coaches</figcaption></figure>
-    <figure><img src="renders/train-eighth-small-z3.jpg" alt="Small train, 1/8"><figcaption><b>Small, 1/8</b></figcaption></figure>
-    <figure><img src="renders/train-quarter-medium-z3.jpg" alt="Medium train, 1/4"><figcaption><b>Medium, 1/4</b> · Flying Scotsman + 2 steel coaches + Pullman</figcaption></figure>
-    <figure><img src="renders/train-eighth-medium-z3.jpg" alt="Medium train, 1/8"><figcaption><b>Medium, 1/8</b></figcaption></figure>
-    <figure><img src="renders/train-quarter-large-z3.jpg" alt="Large train, 1/4"><figcaption><b>Large, 1/4</b> · Big Boy + 4 steel hoppers</figcaption></figure>
-    <figure><img src="renders/train-eighth-large-z3.jpg" alt="Large train, 1/8"><figcaption><b>Large, 1/8</b></figcaption></figure>
+  <span class="tag">4 · Rail inclines</span>
+  <h2>Your worked example, built in game</h2>
+  <p class="muted">I shaped the terrain to your table and laid the line with the game's builder, with stone bridge platforms on tiles 12 to 14. Levels along the line:</p>
+  <div class="profile mono" aria-label="Levels along the line: 0,0,0,0,0,0,1,1,1,2,2,2,1,2,2,1,0,0; bridge on tiles 12 to 14">
+    <span style="height:8px"></span>
+    <span style="height:8px"></span>
+    <span style="height:8px"></span>
+    <span style="height:8px"></span>
+    <span style="height:8px"></span>
+    <span style="height:8px"></span>
+    <span style="height:22px">1</span>
+    <span style="height:22px">1</span>
+    <span style="height:22px">1</span>
+    <span style="height:36px">2</span>
+    <span style="height:36px">2</span>
+    <span style="height:36px">2</span>
+    <span style="height:22px">1</span>
+    <span style="height:36px">2</span>
+    <span style="height:36px">2</span>
+    <span style="height:22px">1</span>
+    <span style="height:8px"></span>
+    <span style="height:8px"></span>
   </div>
-  <p class="muted mono">Grade on a ramp tile: 1/4 → half a level (1 m) over 8 m = 12.5% · 1/8 → 0.5 m over 8 m = 6.25%. Speed factor is the same at both: 0.5 up, 1.2 down.</p>
+  <p class="muted">Smooth tiles stay level. Tiles 6 and 7 are incline transitions that bend the rail up, tile 8 is a straight incline, and tiles 9 and 10 bend it level at 2. The bridge holds level 2 over the dip. Tiles 15 to 17 are decline transitions down to 0. On a monotonic climb the grade never exceeds one level per tile. The rules are written up in <span class="mono">docs/rail-inclines.md</span>.</p>
+  <div class="grid">
+    <figure><img src="renders/incline-empty-z2.jpg" alt="Whole line · zoom 2"><figcaption><b>Whole line</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/incline-empty-z3.jpg" alt="Climb and bridge · zoom 3"><figcaption><b>Climb and bridge</b> · zoom 3</figcaption></figure>
+    <figure><img src="renders/incline-ramp-z5.jpg" alt="Joints close up · tiles 5 to 10 · zoom 5"><figcaption><b>Joints close up</b> · tiles 5 to 10 · zoom 5</figcaption></figure>
+    <figure><img src="renders/incline-bridge-z4.jpg" alt="Bridge over the dip · zoom 4"><figcaption><b>Bridge over the dip</b> · zoom 4</figcaption></figure>
+  </div>
 </section>
+
+<section>
+  <span class="tag">5 · Trains on the line</span>
+  <h2>Bodies ride their bogies</h2>
+  <p class="muted">Each body sits on the line between its front and rear bogies, so it follows the rail through the bends. The sprites are still the placeholder art.</p>
+  <div class="grid">
+    <figure><img src="renders/incline-small-h10-z3.jpg" alt="Small · Rocket + 2 wooden coaches, on the climb"><figcaption><b>Small</b> · Rocket + 2 wooden coaches, on the climb</figcaption></figure>
+    <figure><img src="renders/incline-medium-h11-z3.jpg" alt="Medium · Flying Scotsman + 2 steel coaches + Pullman, cresting"><figcaption><b>Medium</b> · Flying Scotsman + 2 steel coaches + Pullman, cresting</figcaption></figure>
+    <figure><img src="renders/incline-large-h11-z3.jpg" alt="Large · Big Boy + 4 steel hoppers, cresting"><figcaption><b>Large</b> · Big Boy + 4 steel hoppers, cresting</figcaption></figure>
+    <figure><img src="renders/incline-large-h17-z3.jpg" alt="Large · over the bridge and down the decline"><figcaption><b>Large</b> · over the bridge and down the decline</figcaption></figure>
+  </div>
+</section>
+
 </main>
 <dialog id="zoom"><img alt=""></dialog>
 <script>

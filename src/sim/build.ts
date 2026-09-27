@@ -605,16 +605,9 @@ export class Builder {
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     const t = terrainAt(this.map, x, y);
-    if (
-      def.bridge
-        ? t !== Terrain.Water
-        : t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain
-    )
-      return {
-        ok: false,
-        cost: {},
-        reason: def.bridge ? 'Bridge platforms must stand on water' : STR.build.badTerrain,
-      };
+    // Bridge platforms stand on water or carry a rail level across a dip in the land.
+    if (t === Terrain.Rock || t === Terrain.Mountain || (t === Terrain.Water && !def.bridge))
+      return { ok: false, cost: {}, reason: STR.build.badTerrain };
     if (!def.bridge && this.groundCheck && !this.groundCheck(x, y, 'level'))
       return { ok: false, cost: {}, reason: STR.build.notLevel };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))

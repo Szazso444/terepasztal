@@ -157,7 +157,7 @@
   {
     "id": "bridge_wood",
     "name": "Wooden Bridge",
-    "flavor": "Timber trusses form connected spans beneath straight rails. Build platforms on water, then lay any track. Above 80% of capacity trains cross at half speed; overweight trains find another route.",
+    "flavor": "Timber trusses form connected spans beneath straight rails. Build platforms on water or across a dip in the land, then lay straight track: the rail keeps the level of the higher bank. Above 80% of capacity trains cross at half speed; overweight trains find another route.",
     "cost": {
       "wood": 24
     },
@@ -176,7 +176,7 @@
   {
     "id": "bridge_stone",
     "name": "Stone Bridge",
-    "flavor": "Masonry arches form connected spans beneath straight rails. Build platforms on water, then lay any track. Above 80% of capacity trains cross at half speed; overweight trains find another route.",
+    "flavor": "Masonry arches form connected spans beneath straight rails. Build platforms on water or across a dip in the land, then lay straight track: the rail keeps the level of the higher bank. Above 80% of capacity trains cross at half speed; overweight trains find another route.",
     "cost": {
       "stone": 35
     },

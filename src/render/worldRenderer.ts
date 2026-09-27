@@ -1,4 +1,4 @@
-import { Container, Sprite, Rectangle, Graphics } from 'pixi.js';
+import { Container, Sprite, Rectangle, Graphics, Mesh, MeshGeometry } from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
 import {
   tileToWorld,
@@ -20,6 +20,8 @@ import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
+import { railLevel, type RailBed } from '../world/railProfile';
+import { DEFAULT_RELIEF } from './terrainRelief';
 
 const CHUNK = 8;
 
@@ -59,8 +61,10 @@ export class WorldRenderer {
   occupied: (x: number, y: number) => boolean = () => false;
   /** Tiles that must render flat (track / station on hill). */
   private flattened = new Set<number>();
-  /** Axis each straight rail runs along, so it climbs that way; null for level pieces. */
-  private trackAxes = new Map<number, 'x' | 'y' | null>();
+  /** Rail profile over each straight track tile (world/railProfile.ts). */
+  private railBeds = new Map<number, RailBed>();
+  /** Track tiles whose rail bends or climbs: the piece is a mesh that follows the profile. */
+  private trackMeshes = new Map<number, Mesh>();
   readonly landscape: Landscape;
   private summitSprites = new Map<number, Sprite>();
   private terrainVisibilityVersion = -1;
@@ -79,7 +83,7 @@ export class WorldRenderer {
     readonly map: GameMap,
     readonly regions: RegionState,
   ) {
-    this.landscape = new Landscape(map, this.flattened, this.trackAxes);
+    this.landscape = new Landscape(map, this.flattened, this.railBeds);
     this.landscape.root.visible = false;
     this.root.on('destroyed', () => this.surfaces.destroy());
     this.objects.sortableChildren = true;
@@ -635,6 +639,8 @@ export class WorldRenderer {
     else this.trackHighlight.set(i, color);
     const s = this.trackSprites.get(i);
     if (s) s.tint = this.trackColour(i);
+    const m = this.trackMeshes.get(i);
+    if (m) m.tint = this.trackColour(i);
   }
   private trackColour(i: number) {
     const hl = this.trackHighlight.get(i);
@@ -652,8 +658,17 @@ export class WorldRenderer {
     if (Math.abs(night - this.trackNight) < 0.04) return;
     this.trackNight = night;
     for (const [i, s] of this.trackSprites) s.tint = this.trackColour(i);
+    for (const [i, m] of this.trackMeshes) m.tint = this.trackColour(i);
   }
-  setPlatform(x: number, y: number, frame: string | null, layer = 0, clipToWater = false) {
+  /** `lift` raises the platform above the ground plane: a bridge deck carried over land. */
+  setPlatform(
+    x: number,
+    y: number,
+    frame: string | null,
+    layer = 0,
+    clipToWater = false,
+    lift = 0,
+  ) {
     const key = y * this.map.w + x + layer * this.map.w * this.map.h;
     let s = this.platformSprites.get(key);
     if (!frame) {
@@ -672,7 +687,7 @@ export class WorldRenderer {
     s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
     const p = tileToWorld(x, y);
-    s.position.set(p.x, p.y);
+    s.position.set(p.x, p.y - lift);
     if (clipToWater) {
       let mask = this.platformMasks.get(key);
       if (!mask) {
@@ -698,19 +713,16 @@ export class WorldRenderer {
       this.platformMasks.delete(key);
     }
   }
-  /** `axis` is the direction a straight rail runs, so it climbs along it; other pieces lie level. */
-  setTrack(x: number, y: number, frame: string | null, axis: 'x' | 'y' | null = null) {
+  setTrack(x: number, y: number, frame: string | null) {
     const i = idx(this.map, x, y);
-    // A straight rail carries its own bed across a bank; the terrain around it repaints.
-    if ((this.trackAxes.get(i) ?? null) !== (frame ? axis : null)) this.landscape.invalidate(x, y);
-    if (frame) this.trackAxes.set(i, axis);
-    else this.trackAxes.delete(i);
     let s = this.trackSprites.get(i);
     if (!frame) {
       if (s) {
         s.destroy();
         this.trackSprites.delete(i);
       }
+      this.trackMeshes.get(i)?.destroy();
+      this.trackMeshes.delete(i);
       this.refreshScatter(x, y, 0);
       return;
     }
@@ -726,16 +738,119 @@ export class WorldRenderer {
     this.placeTrackSprite(s, x, y);
     this.refreshScatter(x, y, 0);
   }
-  /** Track lies on the hill: lifted to the surface and pitched along its own axis only. */
+  /**
+   * New rail profile after a track or bridge change. Tiles whose bed changed repaint their ground
+   * and re-seat their track piece, so a line conforms as its neighbours are laid.
+   */
+  setRailBeds(beds: ReadonlyMap<number, RailBed>) {
+    const changed: number[] = [];
+    for (const [k, bed] of beds)
+      if (JSON.stringify(this.railBeds.get(k)) !== JSON.stringify(bed)) changed.push(k);
+    for (const k of this.railBeds.keys()) if (!beds.has(k)) changed.push(k);
+    for (const k of changed) {
+      const bed = beds.get(k),
+        x = k % this.map.w,
+        y = Math.floor(k / this.map.w);
+      if (bed) this.railBeds.set(k, bed);
+      else this.railBeds.delete(k);
+      this.landscape.invalidate(x, y);
+      const s = this.trackSprites.get(k);
+      if (s) this.placeTrackSprite(s, x, y);
+    }
+    return changed.length;
+  }
+  /** World pixels one level rises. */
+  private get levelPx() {
+    return this.landscape.failed ? DEFAULT_RELIEF.step : this.landscape.step;
+  }
+  /**
+   * The rail under (x, y): on a straight line, its profile height and grade along the axis (a
+   * bridge deck included); elsewhere the ground. Trains and track pieces stand on this.
+   */
+  railAt(x: number, y: number): Ground {
+    const bed = this.railBeds.get(idx(this.map, Math.round(x), Math.round(y)));
+    if (!bed || this.landscape.failed) return this.groundAt(x, y);
+    const t = bed.axis === 'x' ? x : y,
+      d = 0.05,
+      step = this.levelPx,
+      grade = ((railLevel(bed, t + d) - railLevel(bed, t - d)) / (2 * d)) * -step;
+    return {
+      dz: -railLevel(bed, t) * step,
+      sgx: bed.axis === 'x' ? grade : 0,
+      sgy: bed.axis === 'y' ? grade : 0,
+    };
+  }
+  /** Height of a bridge deck above the ground under it, in world pixels (0 off bridges). */
+  deckLift(x: number, y: number) {
+    const bed = this.railBeds.get(idx(this.map, x, y));
+    return bed?.bridge ? -this.railAt(x, y).dz + this.elevationOf(x, y) : 0;
+  }
+  /** Track rests on the rail profile; a bending or climbing piece is a mesh following it. */
   private placeTrackSprite(s: Sprite, x: number, y: number) {
-    const p = tileToWorld(x, y),
-      g = this.groundAt(x, y),
-      axis = this.trackAxes.get(idx(this.map, x, y));
-    standOnGround(s, p.x, p.y, {
-      dz: g.dz,
-      sgx: axis === 'x' ? g.sgx : 0,
-      sgy: axis === 'y' ? g.sgy : 0,
-    });
+    const i = idx(this.map, x, y),
+      p = tileToWorld(x, y),
+      bed = this.railBeds.get(i);
+    let mesh = this.trackMeshes.get(i);
+    if (!bed || bed.flat || this.landscape.failed) {
+      mesh?.destroy();
+      this.trackMeshes.delete(i);
+      s.renderable = true;
+      standOnGround(s, p.x, p.y, { ...LEVEL_GROUND, dz: this.railAt(x, y).dz });
+      return;
+    }
+    const geometry = this.trackGeometry(s, x, y, bed);
+    if (!mesh) {
+      mesh = new Mesh({ geometry, texture: s.texture });
+      mesh.cullable = true;
+      this.track.addChildAt(mesh, this.track.getChildIndex(s));
+      this.trackMeshes.set(i, mesh);
+    } else {
+      mesh.geometry.destroy();
+      mesh.geometry = geometry;
+      mesh.texture = s.texture;
+    }
+    mesh.tint = s.tint;
+    mesh.position.set(p.x, p.y);
+    s.renderable = false;
+  }
+  /**
+   * The piece's texture on a grid whose vertices are lifted to the rail profile under them. Every
+   * vertex reads the one line profile, so neighbouring pieces (and their overlaps) coincide.
+   */
+  private trackGeometry(s: Sprite, x: number, y: number, bed: RailBed) {
+    const NX = 16,
+      NY = 4,
+      w = s.texture.width,
+      h = s.texture.height,
+      step = this.levelPx,
+      centre = bed.axis === 'x' ? x : y,
+      positions = new Float32Array((NX + 1) * (NY + 1) * 2),
+      uvs = new Float32Array(positions.length),
+      indices = new Uint32Array(NX * NY * 6);
+    for (let j = 0; j <= NY; j++)
+      for (let i = 0; i <= NX; i++) {
+        const k = (j * (NX + 1) + i) * 2,
+          u = i / NX,
+          v = j / NY,
+          px = (u - s.anchor.x) * w,
+          py = (v - s.anchor.y) * h,
+          // Ground offset under this pixel: tx = px/64 + py/32, ty = py/32 - px/64.
+          t = centre + (bed.axis === 'x' ? px / 64 + py / 32 : py / 32 - px / 64);
+        positions[k] = px;
+        positions[k + 1] = py - railLevel(bed, t) * step;
+        uvs[k] = u;
+        uvs[k + 1] = v;
+      }
+    for (let j = 0, n = 0; j < NY; j++)
+      for (let i = 0; i < NX; i++) {
+        const a = j * (NX + 1) + i,
+          b = a + 1,
+          c = a + NX + 1,
+          d = c + 1;
+        indices.set([a, b, c, b, d, c], n);
+        n += 6;
+      }
+    return new MeshGeometry({ positions, uvs, indices });
   }
   /** The surface under (x, y) for sprites standing on it; level ground without the painter. */
   groundAt(x: number, y: number): Ground {

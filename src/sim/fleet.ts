@@ -1,4 +1,4 @@
-import { gradeFactor } from '../world/elevation';
+import { railGrade, type RailBed } from '../world/railProfile';
 import { blockingGroups, blockingCycles } from './recovery';
 import {
   Train,
@@ -57,6 +57,8 @@ export class Fleet {
   /** last clock time seen by `tick`; used to stamp trips created between ticks */
   clockTime = 0;
   /** section claims, stuck detection and statistics */
+  /** Height profile of the straight rail lines, kept current by the game on track changes. */
+  railBeds: ReadonlyMap<number, RailBed> = new Map();
   readonly traffic: Traffic;
   /** junction clustering and congestion notifications (observes only) */
   readonly junctions: Junctions;
@@ -570,7 +572,7 @@ export class Fleet {
         const d = biomeDef(biomeAt(this.map, x, y));
         return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
       },
-      gradeAt: (s) => gradeFactor(this.map, s.x, s.y, s.in, s.out),
+      gradeAt: (s) => railGrade(this.railBeds, this.map.w, s.x, s.y, s.in, s.out),
     };
   }
   /** tile key -> train id for the next stretch of every moving train's path */

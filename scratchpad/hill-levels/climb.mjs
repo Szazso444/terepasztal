@@ -48,9 +48,7 @@ try {
       ['every-bank-rock', { everyBankRock: true }],
       ['stacked-rock', {}],
       ['shadows', { shadows: true }],
-      ['height-tint', { heightTint: true }],
-      ['skirts', { skirts: true }],
-      ['all-three', { shadows: true, heightTint: true, skirts: true }],
+      ['all', { shadows: true, heightLight: 0.04, snow: true }],
     ];
     for (const [name, extra] of LOOKS) {
       await style({ ...BASE, step: SIDE / 4, ...extra });

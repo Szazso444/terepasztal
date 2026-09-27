@@ -10,7 +10,7 @@ import {
   surfaceMaterial,
 } from './terrainMaterials';
 import { hash2 } from '../engine/rng';
-import { Terrain } from '../world/tiles';
+import { Biome, Terrain } from '../world/tiles';
 
 let map: LandscapeMap,
   relief: TerrainRelief,
@@ -86,7 +86,8 @@ self.onmessage = async (event: MessageEvent) => {
         color[0] = color[1] = color[2] = 0;
         let waterWeight = 0;
         // Tile-face style: rock shows where the slope is steep, not in random islands.
-        let steep: number | undefined;
+        let steep: number | undefined,
+          slope = 0;
         if (relief.style.faces && relief.style.rockFaces !== false && raised) {
           faceGradient(tx, ty);
           const levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step;
@@ -94,6 +95,7 @@ self.onmessage = async (event: MessageEvent) => {
             // Terraces: a one-level bank stays grassy with the odd outcrop; banks stacked two
             // levels within about a tile, or on mountains, are rock.
             const bank = unit((levels - 0.8) / 0.6);
+            slope = unit((levels - 0.3) / 0.7);
             if (bank > 0) {
               const stacked =
                 terrain === Terrain.Mountain ? 1 : unit((levelSpan(tx, ty) - 1.4) / 0.4);
@@ -120,12 +122,7 @@ self.onmessage = async (event: MessageEvent) => {
             wx,
             wy,
             part,
-            // Mountain tops are rock, so the summit caps rise out of stone rather than grass.
-            material === 9 && steep !== undefined
-              ? Math.max(steep, 0.9)
-              : [0, 1, 3, 4, 7, 9].includes(material)
-                ? steep
-                : undefined,
+            [0, 1, 3, 4, 7, 9].includes(material) ? steep : undefined,
           );
           if (material === 5 || material === 8) waterWeight += weight;
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
@@ -141,7 +138,16 @@ self.onmessage = async (event: MessageEvent) => {
             1.3;
           shade = Math.max(0.83, Math.min(1.12, 1 + dx * 0.012 - dy * 0.015));
         }
-        if (raised && waterWeight < 1) shade *= previewLooks(tx, ty, z, color);
+        if (raised && waterWeight < 1) {
+          // Grass on a slope reads a shade apart from grass on the flat.
+          const bankGrass = relief.style.bankGrass;
+          if (bankGrass && slope > 0) {
+            const k = slope * (1 - (steep ?? 0)) * bankGrass.amount,
+              tone = BANK_TONES[bankGrass.tone];
+            for (let c = 0; c < 3; c++) color[c] *= 1 + (tone[c] - 1) * k;
+          }
+          shade *= previewLooks(tx, ty, z, wx, wy, map.biome[tileIndex], steep ?? 0, color);
+        }
         for (let c = 0; c < 3; c++)
           color[c] *=
             shade * (waterWeight + ((1 - waterWeight) * ((tint >> (16 - c * 8)) & 255)) / 255);
@@ -317,27 +323,51 @@ function levelSpan(x: number, y: number) {
     ];
   return (Math.max(...hs) - Math.min(...hs)) / relief.style.step;
 }
+/** Colour multipliers for grass on a slope (`ReliefStyle.bankGrass`). */
+const BANK_TONES = {
+  dry: [1.1, 1.04, 0.84],
+  dark: [0.88, 0.92, 0.95],
+  lush: [0.9, 1.02, 0.86],
+};
+/** The level where snow starts to show, by biome: taiga a level lower, desert a level higher. */
+function snowLine(biome: number) {
+  return biome === Biome.Taiga ? 3 : biome === Biome.Desert ? 5 : 4;
+}
+const SNOW = [234, 239, 246];
 /**
- * Preview-only looks from the relief style (all off in the shipped style): soil skirts recolour
- * banks facing the viewer, the height tint warms higher levels, and a cast shadow darkens ground
- * that a higher tile hides from the upper-left light. Returns the shading factor.
+ * Preview looks from the relief style (all off in the shipped style): higher levels paint lighter
+ * (ground level unchanged), snow patches from the biome's snow line and full snow a level above,
+ * and a cast shadow darkens ground that a higher tile hides from the upper-left light. Returns
+ * the shading factor.
  */
-function previewLooks(x: number, y: number, z: number, color: number[]) {
-  const style = relief.style;
+function previewLooks(
+  x: number,
+  y: number,
+  z: number,
+  wx: number,
+  wy: number,
+  biome: number,
+  steep: number,
+  color: number[],
+) {
+  const style = relief.style,
+    level = Math.max(0, z / style.step);
   let factor = 1;
-  if (style.skirts) {
-    faceGradient(x, y);
-    const facing = unit((-(gradient[0] + gradient[1]) / style.step - 0.8) / 0.8);
-    if (facing > 0) {
-      const soil = [118, 92, 62];
-      for (let c = 0; c < 3; c++) color[c] += (soil[c] - color[c]) * facing * 0.8;
+  if (style.heightLight) factor *= 1 + style.heightLight * level;
+  if (style.snow) {
+    const above = level - snowLine(biome),
+      // Half cover (patches) on the snow line's level, full cover from the level above.
+      cover = 0.5 * unit((above + 0.25) / 0.25) + 0.5 * unit((above - 0.75) / 0.25);
+    if (cover > 0) {
+      const n =
+          surfaceNoise(wx * 1.3, wy * 1.3, 641) * 0.8 + surfaceNoise(wx * 6, wy * 6, 643) * 0.2,
+        // Patchy snow keeps off steep rock; full snow covers everything.
+        amount = unit((cover - n) / 0.06) * (cover < 0.99 ? 1 - 0.6 * steep : 1);
+      if (amount > 0) {
+        const texture = 0.88 + 0.12 * ((color[0] + color[1] + color[2]) / 3 / 140);
+        for (let c = 0; c < 3; c++) color[c] += (SNOW[c] * texture - color[c]) * amount;
+      }
     }
-  }
-  if (style.heightTint) {
-    const level = z / style.step;
-    color[0] *= 1 + level * 0.035;
-    color[1] *= 1 + level * 0.02;
-    color[2] *= 1 - level * 0.02;
   }
   if (style.shadows) {
     const d = 0.4,

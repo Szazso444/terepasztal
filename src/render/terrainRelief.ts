@@ -1,6 +1,7 @@
 import { Terrain } from '../world/tiles';
 import { hash2 } from '../engine/rng';
 import { tileLevels } from '../world/elevation';
+import { railLevel, type RailBed } from '../world/railProfile';
 import type { LandscapeMap } from './landscapeModel';
 
 export const RELIEF_STEP = 10;
@@ -30,10 +31,12 @@ export interface ReliefStyle {
   everyBankRock?: boolean;
   /** Preview: raised ground casts a soft shadow onto lower ground away from the light. */
   shadows?: boolean;
-  /** Preview: each level is a little warmer and drier than the one below. */
-  heightTint?: boolean;
-  /** Preview: banks facing the viewer show a band of earth under a grassy lip. */
-  skirts?: boolean;
+  /** Preview: grass on a slope takes a tone apart from grass on the flat. */
+  bankGrass?: { tone: 'dry' | 'dark' | 'lush'; amount: number };
+  /** Preview: each level above ground paints this much lighter; ground level is unchanged. */
+  heightLight?: number;
+  /** Preview: snow patches on the biome's snow line level, full snow from the level above. */
+  snow?: boolean;
 }
 /**
  * The shipped style, approved 2026-09-27: terraces. Every hill tile is a level plateau at its own
@@ -57,8 +60,8 @@ export interface TerrainRelief {
   style: ReliefStyle;
   /** Terraces only: the level of each tile. */
   tiles?: Uint8Array;
-  /** Terraces only: straight track tiles and the axis they run along; each carries a rail bed. */
-  rails?: ReadonlyMap<number, 'x' | 'y'>;
+  /** Terraces only: straight track tiles and the rail profile over them; each carries a bed. */
+  rails?: ReadonlyMap<number, RailBed>;
   /** Highest surface point of this relief in world pixels; the painter searches below it. */
   top: number;
 }
@@ -74,7 +77,7 @@ export function buildRelief(
   map: LandscapeMap,
   built: ReadonlySet<number>,
   style: ReliefStyle = DEFAULT_RELIEF,
-  rails: ReadonlyMap<number, 'x' | 'y' | null> = new Map(),
+  rails: ReadonlyMap<number, RailBed> = new Map(),
 ): TerrainRelief {
   const { w, h } = map,
     stride = w + 1,
@@ -182,7 +185,7 @@ function terraces(
   map: LandscapeMap,
   style: ReliefStyle,
   corners: Uint8Array,
-  rails: ReadonlyMap<number, 'x' | 'y' | null>,
+  rails: ReadonlyMap<number, RailBed>,
 ): TerrainRelief {
   const { w, h } = map,
     tiles = tileLevels(map);
@@ -204,8 +207,9 @@ function terraces(
     centres[k] = tiles[k] * style.step;
     top = Math.max(top, centres[k]);
   }
-  const beds = new Map<number, 'x' | 'y'>();
-  for (const [k, axis] of rails) if (axis) beds.set(k, axis);
+  // Bridges carry their rail over the ground, which keeps its own shape.
+  const beds = new Map<number, RailBed>();
+  for (const [k, bed] of rails) if (!bed.bridge) beds.set(k, bed);
   return { corners, centres, style, tiles, rails: beds, top: top + 1 };
 }
 
@@ -262,22 +266,14 @@ function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: n
     d = level(fx + 1, fy + 1),
     step = relief.style.step,
     terrace = step * ((a + (b - a) * su) * (1 - sv) + (c + (d - c) * su) * sv);
-  // A straight rail crossing a bank rides its own bed: it climbs linearly between the tile's
-  // two edge heights (the mean level of the tiles sharing each edge), so neighbouring track
-  // tiles meet exactly and a one-level change is spread over two tiles. Outside the bed the
-  // hill keeps its terrace shape.
+  // A straight rail rides its own bed, following the line's rail profile (world/railProfile.ts)
+  // so neighbouring track tiles meet exactly. Outside the bed the hill keeps its terrace shape.
   const tx = Math.round(x),
     ty = Math.round(y),
-    axis = relief.rails?.get(ty * map.w + tx);
-  if (!axis) return terrace;
-  const here = level(tx, ty),
-    [before, after, along, across] =
-      axis === 'x'
-        ? [level(tx - 1, ty), level(tx + 1, ty), x - tx + 0.5, y - ty]
-        : [level(tx, ty - 1), level(tx, ty + 1), y - ty + 0.5, x - tx];
-  const from = (here + before) / 2,
-    to = (here + after) / 2,
-    bed = step * (from + (to - from) * along),
+    rail = relief.rails?.get(ty * map.w + tx);
+  if (!rail) return terrace;
+  const [along, across] = rail.axis === 'x' ? [x, y - ty] : [y, x - tx],
+    bed = step * railLevel(rail, along),
     weight = 1 - smoothstep((Math.abs(across) - 0.28) / 0.16);
   return terrace + (bed - terrace) * weight;
 }

@@ -1,11 +1,6 @@
 import { Terrain, type GameMap } from './tiles';
-import { DIR_DX, DIR_DY } from '../engine/iso';
 
-/** Tile side in metres (tools/asset-pipeline/pipeline.toml `tile_m`). */
-export const TILE_METRES = 8;
-/** One elevation level is a quarter of a tile side. */
-export const LEVEL_METRES = TILE_METRES / 4;
-/** The highest level: mountain summits. */
+/** The highest level: mountain summits. One level is a quarter of a tile side. */
 export const MAX_LEVEL = 4;
 
 type Elevated = Pick<GameMap, 'w' | 'h' | 'terrain'>;
@@ -59,23 +54,4 @@ export function levelAt(map: Elevated, x: number, y: number): number {
       level = Math.min(level, target(map.terrain[yy * w + xx]) + d);
     }
   return level;
-}
-
-/** Height of the shared edge between two neighbouring tiles, in levels (a bank's midpoint). */
-export function edgeLevel(map: Elevated, x: number, y: number, nx: number, ny: number) {
-  return (levelAt(map, x, y) + levelAt(map, nx, ny)) / 2;
-}
-
-/** Speed while climbing: half. */
-export const CLIMB_SPEED = 0.5;
-/** Speed while descending: a fifth faster. */
-export const DESCENT_SPEED = 1.2;
-/**
- * Speed multiplier for a train crossing tile (x, y) from its `inDir` edge to its `outDir` edge:
- * climbing when the exit edge is higher, descending when it is lower, level otherwise.
- */
-export function gradeFactor(map: Elevated, x: number, y: number, inDir: number, outDir: number) {
-  const from = edgeLevel(map, x, y, x + DIR_DX[inDir], y + DIR_DY[inDir]),
-    to = edgeLevel(map, x, y, x + DIR_DX[outDir], y + DIR_DY[outDir]);
-  return to > from ? CLIMB_SPEED : to < from ? DESCENT_SPEED : 1;
 }

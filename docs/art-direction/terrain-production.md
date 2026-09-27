@@ -146,12 +146,16 @@ Chosen from the comparison in `scratchpad/hill-levels/renders/shape-*.jpg`
   outcrop; banks that stack two levels within about a tile, and every mountain bank, are rock.
   Boulders scatter along stacked banks. `everyBankRock` in the relief style restores the old rule
   for comparison.
-- Summit sprites fade into the rock over a band twice as tall; mountain tops are always rock.
+- Summit sprites fade into the rock over a band twice as tall. Plateau tops stay grass, as in
+  the locked version (`everyBankRock` keeps the locked bank rule selectable).
 - Tile levels live in `src/world/elevation.ts` (hills 2, mountains 4, neighbours within one
-  level, 2 m per level). The tooltip shows the tile's elevation above sea level.
-- Rails: a straight track tile runs on its own bed from the mean level of one edge to the mean of
-  the other, so the hill is never cut. Curves, switches, stations, decor and buildings need a tile
-  that no bank reaches into. Trains run at half speed on a climbing tile and 1.2x descending.
-- Preview-only style flags: `shadows`, `heightTint`, `skirts`. Renders and the train climb at 1/4
+  level). The tooltip shows the tile's elevation as a level; sea level is 0. No metres.
+- Rails follow the incline rules in `docs/rail-inclines.md`: each straight line has one
+  continuous height profile, track pieces bend with it as meshes, and bridges carry a level
+  across dips. Curves, switches, stations, decor and buildings need a tile that no bank reaches
+  into. Trains run at half speed on a climbing tile and 1.2x descending.
+- Preview-only style flags: `shadows`, `bankGrass` (slope grass tone), `heightLight` (levels
+  paint lighter, ground level unchanged), `snow` (patches on the biome's snow line level, full
+  snow a level above: 4/5 by default, taiga 3/4, desert 5/6). Soil skirts were dropped. Renders and the train climb at 1/4
   vs 1/8 levels: `scratchpad/hill-levels/renders/look-*.jpg`, `train-*.jpg`
   (`climb.mjs`), review page `scratchpad/hill-levels/review.html`.

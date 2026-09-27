@@ -12,6 +12,7 @@ import {
 } from './terrainRelief';
 import { hash2 } from '../engine/rng';
 import { Terrain } from '../world/tiles';
+import type { RailBed } from '../world/railProfile';
 
 /** Raster pixels per world pixel of the close-view chunk copies. */
 const SHARP_SCALE = 2;
@@ -66,8 +67,8 @@ export class Landscape {
   constructor(
     private readonly map: LandscapeMap,
     private readonly flat: ReadonlySet<number>,
-    /** Axis of each straight track tile; its rail bed follows the hill (terrainRelief.ts). */
-    private readonly rails: ReadonlyMap<number, 'x' | 'y' | null> = new Map(),
+    /** Rail profile of each straight track tile; its bed follows the line (terrainRelief.ts). */
+    private readonly rails: ReadonlyMap<number, RailBed> = new Map(),
   ) {
     this.relief = buildRelief(map, flat, undefined, rails);
     try {
@@ -361,6 +362,10 @@ export class Landscape {
     return -reliefHeight(this.map, this.relief, x, y);
   }
   /** Can the ground at tile (x, y) carry a straight climbing rail, or only level structures? */
+  /** World pixels one level rises. */
+  get step() {
+    return this.relief.style.step;
+  }
   groundAllows(x: number, y: number, need: 'straight' | 'level') {
     this.updateHeights();
     return groundAllows(this.map, this.relief, x, y, need);

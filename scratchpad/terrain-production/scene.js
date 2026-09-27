@@ -239,6 +239,8 @@ for (const k of g.track.pieces.keys()) {
   g.map.props.delete(k);
   g.world.rebuildProps(k % 128, Math.floor(k / 128));
 }
+// The game refreshes rail profiles in its frame, before the terrain paints.
+g.render(1, 0);
 g.world.animate(0);
 const terrainStarted=performance.now();
 while(!g.world.landscape.ready&&!g.world.landscape.failed) {g.world.animate(0);await new Promise(resolve=>setTimeout(resolve,25));}
