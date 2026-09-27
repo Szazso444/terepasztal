@@ -1,5 +1,29 @@
 # Asset generation checkpoint
 
+## Bridge kit v1 — 2026-09-27 (source kit complete)
+
+Working on `claude/charming-ramanujan-i16mhm` in the isolated worktree
+`C:/Users/Zso/.codex/worktrees/bridge-kit-v1/terepasztal` at base `c5497c5`.
+All 18 requested original PNGs are saved in `assets/source/bridges-v1/`.
+Review `index.html`, `contact-sheet.png`, and `README.md` there. Built-in imagegen
+only; exact prompts and output paths are recorded in `generation-prompts.json`.
+Seven superseded originals are retained in `drafts/`, excluded from the source
+set. Corrections addressed square deck footprints, transverse timber planks,
+the y-facing timber brace, and limestone railing proportions.
+
+All 18 decode as RGBA with real empty alpha and unclipped solid silhouettes.
+Originals are copied byte-for-byte; SHA-256 and source alpha are recorded in
+`alpha-report.json`. Low-alpha fringe and mostly near-opaque rather than exact
+255-alpha surfaces remain source characteristics for downstream cleanup.
+Exact 2:1 fit, repeat seams, anchors and assembly still need packed-scale review.
+No runtime atlas or renderer changes: the cloud session maps these source pieces,
+fits piers to the deck-to-ground drop, and checks arches/trusses in game renders.
+
+Validation: typecheck, lint, production build, and all 200 tests pass. Windows
+tests use bundled Python via `PYTHON`. Prettier passes with `--end-of-line auto`;
+the unqualified check reports this checkout's existing CRLF line endings.
+
+
 ## LOCKED hill style (2026-09-27; latest)
 
 Terraces, 1/4-side levels, rock banks, rim light: DEFAULT_RELIEF in

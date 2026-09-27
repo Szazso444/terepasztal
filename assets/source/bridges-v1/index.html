@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><title>
+    Bridge kit v1</title
+  ><style>
+    body {
+      font: 16px system-ui;
+      margin: 32px;
+      background: #eee9de;
+      color: #292b26;
+    }
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    figure {
+      margin: 0;
+      background: white;
+      border: 1px solid #bbb;
+      padding: 12px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: 300px;
+      object-fit: contain;
+      background: repeating-conic-gradient(#e0e0e0 0% 25%, #fff 0% 50%) 0/20px 20px;
+    }
+    figcaption {
+      padding: 12px 0;
+      line-height: 1.5;
+    }
+    small {
+      color: #686044;
+    }
+    a {
+      color: inherit;
+    }
+  </style>
+  <h1>Bridge kit v1</h1>
+  <p>
+    18/18 original source PNGs. <a href="README.md">Review notes</a> ·
+    <a href="generation-prompts.json">Exact prompts</a> ·
+    <a href="alpha-report.json">Alpha and SHA-256 report</a>
+  </p>
+  <p>
+    Source art for downstream atlas integration. Separate x/y generations preserve upper-left
+    lighting. Click an image to inspect its original.
+  </p>
+  <main>
+    <figure>
+      <a href="stone-deck-x.png"><img loading="lazy" src="stone-deck-x.png" /></a>
+      <figcaption>
+        <b>stone-deck-x.png</b><br />1254 × 1254<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="stone-deck-y.png"><img loading="lazy" src="stone-deck-y.png" /></a>
+      <figcaption>
+        <b>stone-deck-y.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="stone-rail-x.png"><img loading="lazy" src="stone-rail-x.png" /></a>
+      <figcaption>
+        <b>stone-rail-x.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="stone-rail-y.png"><img loading="lazy" src="stone-rail-y.png" /></a>
+      <figcaption>
+        <b>stone-rail-y.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="stone-pad.png"><img loading="lazy" src="stone-pad.png" /></a>
+      <figcaption>
+        <b>stone-pad.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="stone-pier.png"><img loading="lazy" src="stone-pier.png" /></a>
+      <figcaption>
+        <b>stone-pier.png</b><br />1145 × 1374<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="stone-arch-x.png"><img loading="lazy" src="stone-arch-x.png" /></a>
+      <figcaption>
+        <b>stone-arch-x.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="stone-arch-y.png"><img loading="lazy" src="stone-arch-y.png" /></a>
+      <figcaption>
+        <b>stone-arch-y.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-deck-x.png"><img loading="lazy" src="wood-deck-x.png" /></a>
+      <figcaption>
+        <b>wood-deck-x.png</b><br />1254 × 1254<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-deck-y.png"><img loading="lazy" src="wood-deck-y.png" /></a>
+      <figcaption>
+        <b>wood-deck-y.png</b><br />1254 × 1254<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-rail-x.png"><img loading="lazy" src="wood-rail-x.png" /></a>
+      <figcaption>
+        <b>wood-rail-x.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-rail-y.png"><img loading="lazy" src="wood-rail-y.png" /></a>
+      <figcaption>
+        <b>wood-rail-y.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-pad.png"><img loading="lazy" src="wood-pad.png" /></a>
+      <figcaption>
+        <b>wood-pad.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-post.png"><img loading="lazy" src="wood-post.png" /></a>
+      <figcaption>
+        <b>wood-post.png</b><br />1187 × 1325<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-brace-x.png"><img loading="lazy" src="wood-brace-x.png" /></a>
+      <figcaption>
+        <b>wood-brace-x.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-brace-y.png"><img loading="lazy" src="wood-brace-y.png" /></a>
+      <figcaption>
+        <b>wood-brace-y.png</b><br />1254 × 1254<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-truss-x.png"><img loading="lazy" src="wood-truss-x.png" /></a>
+      <figcaption>
+        <b>wood-truss-x.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+    <figure>
+      <a href="wood-truss-y.png"><img loading="lazy" src="wood-truss-y.png" /></a>
+      <figcaption>
+        <b>wood-truss-y.png</b><br />1536 × 1024<br /><small
+          >Low-alpha fringe: keep original; trimSource removes alpha <=64 downstream.<br />Most
+          solid pixels are near-opaque (250-254), not exactly 255.<br />Solid margin is below
+          approximately 10%.</small
+        >
+      </figcaption>
+    </figure>
+  </main>
+</html>
