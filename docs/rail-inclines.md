@@ -22,7 +22,13 @@ so pieces conform automatically as neighbours are laid or removed.
 Bridge platforms stand on water or land. Over land the deck carries the rail's level on piers
 drawn by the renderer and cut to the ground under each one: two masonry piers per stone tile, a
 braced timber trestle per wood tile, and a pier per corner under the square pad of a supported
-curve or switch. Over water the illustrated spans and their piers stay as they were.
+curve or switch. Over water the deck sits at the waterline: stone spans hang an arch wall under each long edge,
+timber spans a truss, and timber posts stand in the water with their feet faded out.
+
+The pieces are the illustrated bridge kit (`assets/source/bridges-v1`), packed by
+`node tools/bridge-kit.mjs` into the `bridges` atlas group, with the measured deck thickness,
+wall heights and shaft lengths in `src/render/bridgeKit.json`. Pier shafts are cut per drop with a
+V-shaped foot on the ground. Without the packed atlas the procedural spans are used.
 
 A crossing on a climb holds both lines level at its centre, so the two rails meet.
 

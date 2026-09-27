@@ -34,60 +34,42 @@ a{color:var(--rail)}
 </style>
 <main>
 <header>
-  <span class="tag">PR #20 · round 4</span>
+  <span class="tag">PR #20 · round 5</span>
   <h1>Hills, rails and climbing trains</h1>
-  <p class="muted">Every image is the game's own renderer. Click an image for full size.</p>
+  <p class="muted">Every image is the game's own renderer. Click an image for full size. Left: your bridge kit, now in the game. Right: the procedural bridges it replaces.</p>
   <div class="status">
     <ul>
-      <li><b>Shipped:</b> biome ground on mountain tops.</li>
-      <li><b>Shipped:</b> bridges over land stand on piers cut to the ground under them, in stone and wood. Bridges over water are unchanged.</li>
-      <li><b>Shipped:</b> the supported-bridge rules. Every tile of a curve or switch off smooth ground needs a platform. The piece sits at the level of the rails it meets. It is refused when those rails disagree or when it would sit below the ground.</li>
-      <li><b>Fixed:</b> high-speed curves could slip onto slopes, because the builder read some of their tiles as straight track.</li>
-      <li><b>Your call:</b> how far to shade the original summit sprites toward the terrain rock.</li>
+      <li><b>Shipped:</b> summit sprites fully matched to the terrain rock and snow.</li>
+      <li><b>Shipped:</b> your 18-piece bridge kit is packed into its own atlas and drawn in the game. Decks, pads and near railings come from the kit. Piers and posts are cut to the ground under each one, with a V-shaped foot. Over water, stone spans hang arches and timber spans hang trusses, and posts fade into the water.</li>
     </ul>
   </div>
 </header>
 
 <section>
-  <span class="tag">Peaks</span>
-  <h2>The original summits, shaded to the terrain</h2>
-  <p class="muted">The original sprites stay. In the last two columns their rock is recoloured toward the bank rock the painter uses, and their snow toward the painter’s snow. From “Lit” onward they also get the same 6% per level height light as the ground they stand on (24% at level 4).</p>
+  <span class="tag">Stone</span>
+  <h2>Stone bridges</h2>
+  <p class="muted">A two-level valley bridged at level 2, supported curves on a slope, and a river crossing. All at zoom 4.</p>
   <div class="grid">
-    <figure><img src="renders/summit-z3-original.jpg" alt="Original · zoom 3.2"><figcaption><b>Original</b> · zoom 3.2</figcaption></figure>
-    <figure><img src="renders/summit-z3-lit.jpg" alt="Lit · height light only"><figcaption><b>Lit</b> · height light only</figcaption></figure>
-    <figure><img src="renders/summit-z3-match-half.jpg" alt="Half match · lit, halfway to the terrain rock"><figcaption><b>Half match</b> · lit, halfway to the terrain rock</figcaption></figure>
-    <figure><img src="renders/summit-z3-match-full.jpg" alt="Full match · lit, terrain rock and snow"><figcaption><b>Full match</b> · lit, terrain rock and snow</figcaption></figure>
-    <figure><img src="renders/summit-z2-original.jpg" alt="Original · zoom 2"><figcaption><b>Original</b> · zoom 2</figcaption></figure>
-    <figure><img src="renders/summit-z2-match-full.jpg" alt="Full match · zoom 2"><figcaption><b>Full match</b> · zoom 2</figcaption></figure>
+    <figure><img src="renders/kit-stone-valley-z4.jpg" alt="Kit · valley"><figcaption><b>Kit</b> · valley</figcaption></figure>
+    <figure><img src="renders/old-stone-valley-z4.jpg" alt="Procedural · valley"><figcaption><b>Procedural</b> · valley</figcaption></figure>
+    <figure><img src="renders/kit-stone-curve-z4.jpg" alt="Kit · supported curve, bare platforms, refusals"><figcaption><b>Kit</b> · supported curve, bare platforms, refusals</figcaption></figure>
+    <figure><img src="renders/old-stone-curve-z4.jpg" alt="Procedural · same scene"><figcaption><b>Procedural</b> · same scene</figcaption></figure>
+    <figure><img src="renders/kit-stone-river-z4.jpg" alt="Kit · river"><figcaption><b>Kit</b> · river</figcaption></figure>
+    <figure><img src="renders/old-stone-river-z4.jpg" alt="Procedural · river"><figcaption><b>Procedural</b> · river</figcaption></figure>
   </div>
 </section>
 
 <section>
-  <span class="tag">Bridges over land</span>
-  <h2>Piers cut to the ground</h2>
-  <p class="muted">Each pier is drawn from the ground under it up to the deck, so none is longer than the drop and none sinks into the terrain. Stone tiles get two masonry piers. Wood tiles get a braced timber trestle. A curve or switch gets a square pad with a pier at each corner. Below: a valley two levels deep bridged at level 2, and the one-level dip from your worked example.</p>
+  <span class="tag">Wood</span>
+  <h2>Wood bridges</h2>
+  <p class="muted">A two-level valley bridged at level 2, supported curves on a slope, and a river crossing. All at zoom 4.</p>
   <div class="grid">
-    <figure><img src="renders/land-stone-valley-z4.jpg" alt="Stone · two-level valley · zoom 4"><figcaption><b>Stone</b> · two-level valley · zoom 4</figcaption></figure>
-    <figure><img src="renders/land-wood-valley-z4.jpg" alt="Wood · two-level valley · zoom 4"><figcaption><b>Wood</b> · two-level valley · zoom 4</figcaption></figure>
-    <figure><img src="renders/land-stone-dip-z4.jpg" alt="Stone · one-level dip, plus the supported-piece tests · zoom 4"><figcaption><b>Stone</b> · one-level dip, plus the supported-piece tests · zoom 4</figcaption></figure>
-    <figure><img src="renders/land-wood-dip-z4.jpg" alt="Wood · one-level dip · zoom 4"><figcaption><b>Wood</b> · one-level dip · zoom 4</figcaption></figure>
-  </div>
-</section>
-
-<section>
-  <span class="tag">Supported pieces</span>
-  <h2>Curves and switches on platforms</h2>
-  <p class="muted">Each case was tried with the game’s builder in both materials. Red ghosts are refusals.</p>
-  <div class="status"><ul>
-      <li><b>Allowed:</b> Curve on a platform, meeting its rails at one level</li>
-      <li><b>Refused:</b> Curve on a platform, its rails at two levels · “A supported piece must meet its rails at one level, no lower than the ground under it”</li>
-      <li><b>Refused:</b> High-speed curve with a platform under one tile of four · “Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece”</li>
-  </ul></div>
-  <div class="grid">
-    <figure><img src="renders/land-stone-curve-z5.jpg" alt="Stone · supported curve at deck level 1 · zoom 5"><figcaption><b>Stone</b> · supported curve at deck level 1 · zoom 5</figcaption></figure>
-    <figure><img src="renders/land-wood-curve-z5.jpg" alt="Wood · supported curve · zoom 5"><figcaption><b>Wood</b> · supported curve · zoom 5</figcaption></figure>
-    <figure><img src="renders/land-stone-support-z3.jpg" alt="Stone · all cases · zoom 3"><figcaption><b>Stone</b> · all cases · zoom 3</figcaption></figure>
-    <figure><img src="renders/land-wood-support-z3.jpg" alt="Wood · all cases · zoom 3"><figcaption><b>Wood</b> · all cases · zoom 3</figcaption></figure>
+    <figure><img src="renders/kit-wood-valley-z4.jpg" alt="Kit · valley"><figcaption><b>Kit</b> · valley</figcaption></figure>
+    <figure><img src="renders/old-wood-valley-z4.jpg" alt="Procedural · valley"><figcaption><b>Procedural</b> · valley</figcaption></figure>
+    <figure><img src="renders/kit-wood-curve-z4.jpg" alt="Kit · supported curve, bare platforms, refusals"><figcaption><b>Kit</b> · supported curve, bare platforms, refusals</figcaption></figure>
+    <figure><img src="renders/old-wood-curve-z4.jpg" alt="Procedural · same scene"><figcaption><b>Procedural</b> · same scene</figcaption></figure>
+    <figure><img src="renders/kit-wood-river-z4.jpg" alt="Kit · river"><figcaption><b>Kit</b> · river</figcaption></figure>
+    <figure><img src="renders/old-wood-river-z4.jpg" alt="Procedural · river"><figcaption><b>Procedural</b> · river</figcaption></figure>
   </div>
 </section>
 

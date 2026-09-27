@@ -1252,31 +1252,48 @@ export class Game {
             : straight
               ? `structures/landspan_${s.material}_${s.axis}`
               : `structures/landpad_${s.material}`;
-        this.world.setPlatform(
-          b.x,
-          b.y,
-          land && !straight ? land : (land ?? key) + '_deck',
-          0,
-          water,
-          deck,
-        );
-        if (land && !straight) this.world.removeStructure('bridge:' + b.x + ',' + b.y);
-        else
-          this.world.setStructure(
-            'bridge:' + b.x + ',' + b.y,
+        const id = 'bridge:' + b.x + ',' + b.y;
+        if (this.world.bridgeKit) {
+          // The illustrated kit: deck or pad, near railing, and the parts under the deck.
+          const dir = s.axis ? 'x' : 'y';
+          this.world.setPlatform(
             b.x,
             b.y,
-            (land ?? key) + '_rail',
-            35,
-            dy,
+            `bridgekit/${s.material}-${straight ? `deck-${dir}` : 'pad'}`,
+            0,
+            false,
+            deck,
           );
-        this.world.setBridgePiers(
-          b.x,
-          b.y,
-          water ? null : s.material,
-          straight ? (s.axis as 0 | 1) : null,
-          deck,
-        );
+          if (straight)
+            this.world.setStructure(id, b.x, b.y, `bridgekit/${s.material}-rail-${dir}`, 35, dy);
+          else this.world.removeStructure(id);
+          this.world.setBridgeKit(
+            b.x,
+            b.y,
+            s.material,
+            straight ? (s.axis as 0 | 1) : null,
+            deck,
+            water,
+          );
+        } else {
+          this.world.setPlatform(
+            b.x,
+            b.y,
+            land && !straight ? land : (land ?? key) + '_deck',
+            0,
+            water,
+            deck,
+          );
+          if (land && !straight) this.world.removeStructure(id);
+          else this.world.setStructure(id, b.x, b.y, (land ?? key) + '_rail', 35, dy);
+          this.world.setBridgePiers(
+            b.x,
+            b.y,
+            water ? null : s.material,
+            straight ? (s.axis as 0 | 1) : null,
+            deck,
+          );
+        }
         const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
         this.world.setPlatform(
           b.x,
@@ -1304,6 +1321,7 @@ export class Game {
         this.world.removeStructure('bridge:' + b.x + ',' + b.y);
         this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
         this.world.setBridgePiers(b.x, b.y, null);
+        this.world.setBridgeKit(b.x, b.y, null);
       }
       this.refreshBridges();
       return;

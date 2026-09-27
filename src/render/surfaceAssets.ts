@@ -120,6 +120,50 @@ export class SurfaceAssets {
     this.summits.set(id, result);
     return result;
   }
+  private shafts = new Map<string, { texture: Texture; anchorY: number }>();
+  /**
+   * A bridge pier shaft cut `length` logical px below the centre of its top face, its foot a V
+   * following the ground under a square footprint `half` px wide on each side. `fade` px at the
+   * foot fade out (a pier entering water). Lengths past the drawn shaft stretch its lowest row.
+   */
+  shaft(key: string, f: FrameInfo, length: number, half: number, fade = 0) {
+    const L = Math.round(length),
+      id = `${key}|${L}|${fade}`,
+      cached = this.shafts.get(id);
+    if (cached) return cached;
+    const { canvas: source } = read(f),
+      d = source.width / f.w,
+      top = f.anchorY * f.h,
+      height = Math.min(f.h, top + L + half / 2 + 1),
+      canvas = document.createElement('canvas');
+    canvas.width = source.width;
+    canvas.height = Math.ceil((top + L + half / 2 + 1) * d);
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(source, 0, 0, source.width, height * d, 0, 0, source.width, height * d);
+    // Past the drawn shaft, repeat its last row down to the foot.
+    for (let y = Math.floor(height * d); y < canvas.height; y++)
+      ctx.drawImage(canvas, 0, Math.floor(height * d) - 2, source.width, 1, 0, y, source.width, 1);
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height),
+      p = pixels.data,
+      cx = f.anchorX * f.w;
+    for (let y = 0; y < canvas.height; y++)
+      for (let x = 0; x < canvas.width; x++) {
+        const lx = x / d - cx,
+          foot = top + L + (half / 2) * Math.max(0, 1 - Math.abs(lx) / half),
+          below = foot - y / d,
+          k = (y * canvas.width + x) * 4;
+        if (below < 0) p[k + 3] = 0;
+        else if (fade && below < fade) p[k + 3] *= below / fade;
+      }
+    ctx.putImageData(pixels, 0, 0);
+    const texture = new Texture({
+        source: new ImageSource({ resource: canvas, scaleMode: 'linear' }),
+        orig: new Rectangle(0, 0, f.w, canvas.height / d),
+      }),
+      result = { texture, anchorY: top / (canvas.height / d) };
+    this.shafts.set(id, result);
+    return result;
+  }
   /** Bottom opaque contour in owner-local logical pixels, not its tile footprint. */
   groundContour(key: string, f: FrameInfo) {
     const cached = this.contours.get(key);
@@ -197,12 +241,18 @@ export class SurfaceAssets {
     return result;
   }
   destroy() {
-    for (const t of [...this.contacts.values(), ...this.windows.values(), ...this.summits.values()])
+    for (const t of [
+      ...this.contacts.values(),
+      ...this.windows.values(),
+      ...this.summits.values(),
+      ...[...this.shafts.values()].map((v) => v.texture),
+    ])
       t.destroy(true);
     this.contacts.clear();
     this.windows.clear();
     this.contours.clear();
     this.summits.clear();
+    this.shafts.clear();
   }
 }
 export function windowSprite() {

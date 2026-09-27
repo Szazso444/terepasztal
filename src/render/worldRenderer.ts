@@ -23,6 +23,13 @@ import { levelAt } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
 import { PAL, type RGB } from '../art/palette';
+import BRIDGE_KIT_JSON from './bridgeKit.json';
+
+/** Measured kit geometry in world px (tools/bridge-kit.mjs). */
+const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
+  string,
+  { thickness?: number; height?: number; length?: number }
+>;
 
 const CHUNK = 8;
 
@@ -785,6 +792,105 @@ export class WorldRenderer {
         }
       }
     }
+  }
+  /** The illustrated bridge kit is packed (tools/bridge-kit.mjs); else the procedural spans. */
+  get bridgeKit() {
+    return this.atlas.has('bridgekit/stone-deck-x');
+  }
+  private kitParts = new Map<number, Container>();
+  /**
+   * Everything under a kit bridge deck on one tile, in the pier layer: piers or trestle posts cut
+   * to the ground (or into the water) under each one, timber braces between the posts, and over
+   * water stone arches or timber trusses hung from both deck edges. `axis` 0 runs along y, 1
+   * along x, null is a pad under a curve or switch; `deck` is the rail level in world px.
+   */
+  setBridgeKit(
+    x: number,
+    y: number,
+    material: 'wood' | 'stone' | null,
+    axis: 0 | 1 | null = null,
+    deck = 0,
+    water = false,
+  ) {
+    const k = idx(this.map, x, y);
+    this.kitParts.get(k)?.destroy({ children: true });
+    this.kitParts.delete(k);
+    if (!material) return;
+    const c = new Container(),
+      stone = material === 'stone',
+      dir = axis === 1 ? 'x' : 'y',
+      slab = `${material}-${axis === null ? 'pad' : `deck-${dir}`}`,
+      underside = deck - BRIDGE_KIT[slab].thickness!,
+      at = (l: number, w: number) => (axis === 0 ? { dx: w, dy: l } : { dx: l, dy: w }),
+      screen = (tx: number, ty: number, z: number) => {
+        const p = tileToWorld(tx, ty);
+        return { x: p.x, y: p.y - z };
+      },
+      ground = (tx: number, ty: number) => (water ? -30 : -this.elevationOf(tx, ty));
+    // Walls hung under both long edges, over water: the far one first.
+    if (water && axis !== null) {
+      const key = `${material}-${stone ? 'arch' : 'truss'}-${dir}`,
+        f = this.atlas.get(`bridgekit/${key}`),
+        h = BRIDGE_KIT[key].height!;
+      for (const far of [true, false]) {
+        const s = new Sprite(f.texture),
+          o = far ? (axis === 1 ? { dx: 0, dy: -1 } : { dx: -1, dy: 0 }) : { dx: 0, dy: 0 },
+          // Tucked a few px up behind the deck, so no water shows between them.
+          p = screen(x + o.dx, y + o.dy, underside - h + 4);
+        s.anchor.set(f.anchorX, f.anchorY);
+        s.position.set(p.x, p.y);
+        c.addChild(s);
+      }
+    }
+    // Piers (stone) or posts (wood), far ones first so nearer ones cover them.
+    const shaft = stone ? 'stone-pier' : 'wood-post',
+      f = this.atlas.get(`bridgekit/${shaft}`),
+      half = (stone ? 0.2 : 0.07) * 32,
+      spots: { dx: number; dy: number }[] = [];
+    if (axis === null)
+      for (const a of [-0.36, 0.36]) for (const b of [-0.36, 0.36]) spots.push({ dx: a, dy: b });
+    else if (!water || !stone)
+      for (const l of [-0.4, 0.4]) for (const w of [-0.3, 0.3]) spots.push(at(l, w));
+    spots.sort((a, b) => a.dx + a.dy - (b.dx + b.dy));
+    const feet = new Map<string, number>();
+    for (const o of spots) {
+      const gx = x + o.dx,
+        gy = y + o.dy,
+        g = ground(gx, gy),
+        length = underside - g;
+      feet.set(`${o.dx},${o.dy}`, g);
+      if (length < 1) continue;
+      const cut = this.surfaces.shaft(`bridgekit/${shaft}`, f, length, half, water ? 6 : 0),
+        s = new Sprite(cut.texture),
+        p = screen(gx, gy, underside);
+      s.anchor.set(f.anchorX, cut.anchorY);
+      s.position.set(p.x, p.y);
+      c.addChild(s);
+    }
+    // Timber braces across each pair of posts along the span.
+    if (!stone && axis !== null) {
+      const key = `wood-brace-${dir}`,
+        bf = this.atlas.get(`bridgekit/${key}`),
+        bh = BRIDGE_KIT[key].height!;
+      for (const w of [-0.3, 0.3]) {
+        const a = at(-0.4, w),
+          b = at(0.4, w),
+          lo = Math.max(feet.get(`${a.dx},${a.dy}`) ?? 0, feet.get(`${b.dx},${b.dy}`) ?? 0),
+          span = underside - lo;
+        if (span < 5) continue;
+        // The brace is drawn on the near tile edge; move it onto this post line, 0.8 tile long.
+        const s = new Sprite(bf.texture),
+          edge = at(0, 0.5),
+          line = at(0, w),
+          p = screen(x + line.dx - edge.dx, y + line.dy - edge.dy, lo);
+        s.anchor.set(bf.anchorX, bf.anchorY);
+        s.scale.set(0.8, span / bh);
+        s.position.set(p.x, p.y);
+        c.addChild(s);
+      }
+    }
+    this.piers.addChild(c);
+    this.kitParts.set(k, c);
   }
   /** `lift` raises the platform above the ground plane: a bridge deck carried over land. */
   setPlatform(

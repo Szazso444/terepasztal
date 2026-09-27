@@ -22,4 +22,12 @@ export const ATLAS_GROUPS: { name: string; generate: AtlasGenerator }[] = [
   { name: 'fx', generate: generateFxAtlas },
   { name: 'icons', generate: generateIconsAtlas },
   { name: 'people', generate: generatePeopleAtlas },
+  // Illustrated bridge kit (tools/bridge-kit.mjs); without the file, bridges stay procedural.
+  { name: 'bridges', generate: emptyAtlas },
 ];
+
+function emptyAtlas() {
+  const image = document.createElement('canvas');
+  image.width = image.height = 1;
+  return { image, frames: {} };
+}

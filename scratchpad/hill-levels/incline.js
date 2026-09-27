@@ -101,3 +101,36 @@ export async function valley(g, bridgeId) {
     }
   return { x0, y, levels };
 }
+
+/** A straight bridge over the widest short water crossing: platforms on the water, rails across. */
+export function river(g, bridgeId) {
+  const m = g.map;
+  let best = null;
+  for (let y = 16; y < m.h - 16; y++)
+    for (let x = 8; x < m.w - 16; x++) {
+      const at = (xx) => m.terrain[y * m.w + xx];
+      if (at(x) === 3 || at(x + 1) !== 3) continue;
+      let n = 0;
+      while (at(x + 1 + n) === 3 && n < 8) n++;
+      if (n < 2 || n > 6 || at(x + 1 + n) === 3) continue;
+      let clear = true;
+      for (let i = -1; i <= n + 2 && clear; i++) {
+        const xx = x + i;
+        clear = !g.track.has(xx, y) && !g.builder.buildingAt(xx, y) && ![4, 6].includes(at(xx));
+      }
+      if (clear && (!best || n > best.n)) best = { x0: x, y, n };
+    }
+  if (!best) throw new Error('No river crossing');
+  const { x0, y, n } = best;
+  for (let i = 1; i <= n; i++) if (!g.builder.placeBuilding(x0 + i, y, bridgeId)) throw new Error('bridge');
+  for (let i = -1; i <= n + 2; i++)
+    for (const r of [0, 1]) {
+      const x = x0 + i;
+      m.props.delete(y * m.w + x);
+      if (!g.builder.placeTrackKind(x, y, 'straight', r)) continue;
+      const link = g.track.get(x, y).links[0];
+      if (link.includes(1) && link.includes(3)) break;
+      g.builder.removeTrack(x, y);
+    }
+  return best;
+}
