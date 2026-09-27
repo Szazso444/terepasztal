@@ -1,0 +1,66 @@
+[
+  {
+    "file": "station-isometric-v2.png",
+    "sha256": "1ae87de3eae3e32e838d975241d30dedefd1f708d1a285c87569d9dd17d5d915",
+    "bytes": 2123628,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-isometric-v2--1ae87de3.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-isometric-v3.png",
+    "sha256": "363b13235b1303022e9648a121c1468578d62cbff4b4c11f01e2abd6340f8be8",
+    "bytes": 1875911,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-isometric-v3--363b1323.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-isometric-v4.png",
+    "sha256": "b61c73f4abcfd67ac2c5906b74b9fa9e7072b038e9495ae4a276648dc4f0ac4b",
+    "bytes": 1532865,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-isometric-v4--b61c73f4.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-isometric-v5.png",
+    "sha256": "262847f133c029f173133293062f17c03562fd9c996597a26622b773b328770c",
+    "bytes": 1515063,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-isometric-v5--262847f1.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-true-isometric-v6.png",
+    "sha256": "08853b2f3047000444f7708387665b6c84018947554c8811adab5db94d38d8e5",
+    "bytes": 2181939,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-true-isometric-v6--08853b2f.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-true-isometric-v7.png",
+    "sha256": "3b6fc2a930aad7a8935c71860292529cedbc959a389f06fe8b24463afb91d9aa",
+    "bytes": 2142339,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-true-isometric-v7--3b6fc2a9.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-true-isometric-v8.png",
+    "sha256": "0a426578b17067e5a54b8ee90cd23c4130d11a9dffb2ea1dbdef9050e1151a16",
+    "bytes": 2139683,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-true-isometric-v8--0a426578.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-wider-depth-v9.png",
+    "sha256": "22d2c33598b5f324e739b7976d973e29af62337477b1d00806924674b2b26f52",
+    "bytes": 1539171,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-wider-depth-v9--22d2c335.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  }
+]

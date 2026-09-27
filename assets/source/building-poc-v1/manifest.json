@@ -1,0 +1,258 @@
+[
+  {
+    "file": "house-0.png",
+    "sha256": "47135e429b93e26d7fada557e230366f6114fc55552acd80fa6f91a18a1d3a64",
+    "bytes": 802128,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/house-0--47135e42.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/house-0.png."
+  },
+  {
+    "file": "house-1.png",
+    "sha256": "6d7e0e36334de2410e01e80e96383e950ccae233ec0f5421e76db8debb9f0bea",
+    "bytes": 556142,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/house-1--6d7e0e36.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/house-1.png."
+  },
+  {
+    "file": "house-2.png",
+    "sha256": "78d83092cbd507601fcd7b59d9bb5118475e688b247f7d66b9f36311200d2b5d",
+    "bytes": 557579,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/house-2--78d83092.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/house-2.png."
+  },
+  {
+    "file": "house-3.png",
+    "sha256": "ee6183a5bed25f6db3e04958698c6bd5dcc3739fc999ca7480c380888a8b47a9",
+    "bytes": 563495,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/house-3--ee6183a5.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/house-3.png."
+  },
+  {
+    "file": "remaining/stations-farm-0.png",
+    "sha256": "3735841b6f5cc37450938bea831859346e3b7dfe65bbefc70ebe94a7076c653d",
+    "bytes": 1965483,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-farm-0--3735841b.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-farm-0.png."
+  },
+  {
+    "file": "remaining/stations-farm-1.png",
+    "sha256": "d54522cf3c7e61887e622d8b1d54143d3e3ee40ded799db16f3845f47c5ffeaf",
+    "bytes": 1972606,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-farm-1--d54522cf.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-farm-1.png."
+  },
+  {
+    "file": "remaining/stations-farm-2.png",
+    "sha256": "18149602270ef81522f6f8e4b4223aef4ea3c267fdab99a177c41b969a912e07",
+    "bytes": 2033682,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-farm-2--18149602.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-farm-2.png."
+  },
+  {
+    "file": "remaining/stations-farm-3.png",
+    "sha256": "58bffc9e60904fdd93600ba7746a9742253754f90848a74f9f0fb23e56a2152d",
+    "bytes": 1909685,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-farm-3--58bffc9e.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-farm-3.png."
+  },
+  {
+    "file": "remaining/stations-lumber-0.png",
+    "sha256": "69e0b5f5c95d0b9d2ba405c76bfda194e614493bc11fa13ed9240baae0319475",
+    "bytes": 1219471,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-lumber-0--69e0b5f5.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-lumber-0.png."
+  },
+  {
+    "file": "remaining/stations-lumber-1.png",
+    "sha256": "8e27b2dabde52e9436e09d01478ba6707145b68c0ffdd95f98997dae3d4e8b05",
+    "bytes": 1109548,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-lumber-1--8e27b2da.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-lumber-1.png."
+  },
+  {
+    "file": "remaining/stations-lumber-2.png",
+    "sha256": "73766670d158a4a5c87300c61b3e64360f5d29b58995720dae28b5047c21f541",
+    "bytes": 1229143,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-lumber-2--73766670.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-lumber-2.png."
+  },
+  {
+    "file": "remaining/stations-lumber-3.png",
+    "sha256": "fbbecb2024100a486be3b7e46ab11cf612b7b54e20cbb8acc317981b97d17c33",
+    "bytes": 1222733,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-lumber-3--fbbecb20.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-lumber-3.png."
+  },
+  {
+    "file": "remaining/stations-pump-0.png",
+    "sha256": "63f4631dedc01f0851199d7a1f2213a058075da187a925909cd298bd0c01167d",
+    "bytes": 1363993,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-pump-0--63f4631d.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-pump-0.png."
+  },
+  {
+    "file": "remaining/stations-pump-1.png",
+    "sha256": "0037be93a969117d1d50be3a903d4a90b818c0c67b694e2dc17427827f51064b",
+    "bytes": 1074744,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-pump-1--0037be93.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-pump-1.png."
+  },
+  {
+    "file": "remaining/stations-pump-2.png",
+    "sha256": "da4ee2a8969dddca104c3cacf61dc762f8d75aa63839f0c8b9ab3b6e5f10ac95",
+    "bytes": 894150,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-pump-2--da4ee2a8.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-pump-2.png."
+  },
+  {
+    "file": "remaining/stations-pump-3.png",
+    "sha256": "a4c84adb45785ebc22449cec32bd3e41fb2d8f0262463572c4dbfd3503f4c62c",
+    "bytes": 1332376,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-pump-3--a4c84adb.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-pump-3.png."
+  },
+  {
+    "file": "remaining/stations-quarry-0.png",
+    "sha256": "1c6eea945234d001fac556457b53459b7f436ff70c7418dd573a9fb53878d7f2",
+    "bytes": 2113900,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-quarry-0--1c6eea94.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-quarry-0.png."
+  },
+  {
+    "file": "remaining/stations-quarry-1.png",
+    "sha256": "a4b37843cb8be98379d5672c4bdf35b52f38a505080f9579f8c63fc87dd639f4",
+    "bytes": 887107,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-quarry-1--a4b37843.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-quarry-1.png."
+  },
+  {
+    "file": "remaining/stations-quarry-2.png",
+    "sha256": "73d61fd2c0d156a980217d09542eb3c322b759f22137878e1509037ab31cc253",
+    "bytes": 1108745,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-quarry-2--73d61fd2.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-quarry-2.png."
+  },
+  {
+    "file": "remaining/stations-quarry-3.png",
+    "sha256": "0594f904702d5e022e5c3ba8ef279f0d86d47cff7cbfe5065be7e6f50055396b",
+    "bytes": 980735,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-quarry-3--0594f904.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-quarry-3.png."
+  },
+  {
+    "file": "remaining/stations-town-0.png",
+    "sha256": "d808e6ab1737cb40326944abf624dcbd4fb1b4a91eea331d9c63127d61c7281f",
+    "bytes": 1980072,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-town-0--d808e6ab.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-town-0.png."
+  },
+  {
+    "file": "remaining/stations-town-1.png",
+    "sha256": "c3974f4630ba561908a8bcf50897c7b193e351f14c25654c2f4905c1e1f10c43",
+    "bytes": 1826694,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-town-1--c3974f46.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-town-1.png."
+  },
+  {
+    "file": "remaining/stations-town-2.png",
+    "sha256": "3dd042cecec97cc85f773f01eed0e74c1f9119f43353949f17ef3c08c1601869",
+    "bytes": 1878120,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-town-2--3dd042ce.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-town-2.png."
+  },
+  {
+    "file": "remaining/stations-town-3.png",
+    "sha256": "27c24087b1a84b9eb8af35432afbd888660ab8edf6ff9f0368ec9f085c01a0a5",
+    "bytes": 1850706,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-town-3--27c24087.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-town-3.png."
+  },
+  {
+    "file": "remaining/stations-warehouse-0.png",
+    "sha256": "26e5f9b7f15a737e408216fd9f83aa88b766ab8d20cd37e3edff8059eb4f71a1",
+    "bytes": 1502360,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-warehouse-0--26e5f9b7.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-warehouse-0.png."
+  },
+  {
+    "file": "remaining/stations-warehouse-1.png",
+    "sha256": "f95cfae18ace7eb24a938f02ec8693f147a2374c2ee2c2570187750749165670",
+    "bytes": 1201420,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-warehouse-1--f95cfae1.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-warehouse-1.png."
+  },
+  {
+    "file": "remaining/stations-warehouse-2.png",
+    "sha256": "74135217e0b7ed482fa0f58c57934cd0c7349009acadc7359b9aad3eab6796d8",
+    "bytes": 1337956,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-warehouse-2--74135217.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-warehouse-2.png."
+  },
+  {
+    "file": "remaining/stations-warehouse-3.png",
+    "sha256": "bce48dac8b2e89290f58f3c6b5b10b0e62b0873da32e0fbd43f5c42404ee32ff",
+    "bytes": 1289834,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-warehouse-3--bce48dac.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/stations-warehouse-3.png."
+  },
+  {
+    "file": "station-0.png",
+    "sha256": "cb846a7f93fec9b770682f6edb3e1fffe50b887eadf52cb501ef91bb8e125143",
+    "bytes": 940511,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-0--cb846a7f.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/station-0.png."
+  },
+  {
+    "file": "station-1.png",
+    "sha256": "916fa52df3c7ba3255bb5c81523f35514473dc4fef81b9ce65dc6139d0c74114",
+    "bytes": 936489,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-1--916fa52d.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/station-1.png."
+  },
+  {
+    "file": "station-2.png",
+    "sha256": "ebcbe2b860af80a486a2aae182ca3f442c5015eeeea95d7e2c84f30b58a32324",
+    "bytes": 921808,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-2--ebcbe2b8.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/station-2.png."
+  },
+  {
+    "file": "station-3.png",
+    "sha256": "4620d353636416b9279c76466cd54a2ea5b150ab18f7d537130de8d9f349c7e8",
+    "bytes": 970370,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-3--4620d353.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path; also identical at assets/source/current-grid-regeneration-v2/handoff/existing-facings/station-3.png."
+  }
+]

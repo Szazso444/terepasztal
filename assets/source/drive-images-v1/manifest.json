@@ -1,0 +1,18 @@
+[
+  {
+    "file": "buildings/exec-7294b7a0-b913-4750-bab0-26d7ca3b2128.png",
+    "sha256": "266ccb8b8753f4a7160e93eb9ad7cb0e594ae079c00f1f39750d3de23d0e5bb4",
+    "bytes": 1398416,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/exec-7294b7a0-b913-4750-bab0-26d7ca3b2128--266ccb8b.png",
+    "category": "buildings",
+    "note": "Not present in either checkout; Drive-only render (unnamed exec-* output), filed as a building after visual check."
+  },
+  {
+    "file": "buildings/exec-f9f81fd0-2de3-414e-a6b9-79cbdb398405.png",
+    "sha256": "25b6a50170fe017168dacd324d82ce7607729479c92f42dc9ebbee27ab9ef848",
+    "bytes": 2010656,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/exec-f9f81fd0-2de3-414e-a6b9-79cbdb398405--25b6a501.png",
+    "category": "buildings",
+    "note": "Not present in either checkout; Drive-only render (unnamed exec-* output), filed as a building after visual check."
+  }
+]

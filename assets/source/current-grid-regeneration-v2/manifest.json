@@ -1,0 +1,202 @@
+[
+  {
+    "file": "generated/house-0.png",
+    "sha256": "6719428ed5ada6c74d114c1aa357fcba027286aebdd53627d21aba3f3a752c33",
+    "bytes": 1098569,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/house-0--6719428e.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/house-1.png",
+    "sha256": "5394305bad416f0490ff62d9b9446230793c3b6ae68b9209887db3eba71b0e9b",
+    "bytes": 1072131,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/house-1--5394305b.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/house-2.png",
+    "sha256": "fd897b91eb2fd99c6ce20a8b0f8ac12b8281ecdd97b701e89f39487fe92dadca",
+    "bytes": 1071627,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/house-2--fd897b91.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/house-3.png",
+    "sha256": "3846fc1626fbaccee9c499a603d8598f8bf02a559a660b4321602e35fd65b0db",
+    "bytes": 1060886,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/house-3--3846fc16.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/station-0.png",
+    "sha256": "6b33cbcaa16744e2429fefc1e0ad7bd5b72cd2d230d75559e01598d4729d037e",
+    "bytes": 2136411,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-0--6b33cbca.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/station-1.png",
+    "sha256": "e5521d1044ddff23cea1ed31e12dab450610088739a27bf7c7e5f62a0bae4b1a",
+    "bytes": 1905403,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-1--e5521d10.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/station-2.png",
+    "sha256": "b1f528020168dd3cce351d82fd8047ddee514270e8c4dfc1622f5c9080a3b88f",
+    "bytes": 2103872,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-2--b1f52802.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/station-3.png",
+    "sha256": "4e8f8bd9ca30c162fdde1c3fcbd4ef87afdcae05c2dc858fb32232be0063f34c",
+    "bytes": 1860872,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-3--4e8f8bd9.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-farm-0.png",
+    "sha256": "fef785e09bf9e80a843d963dee970b243d65ea951e1c046935d45008e0276e67",
+    "bytes": 2101085,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-farm-0--fef785e0.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-farm-1.png",
+    "sha256": "52b451746d4fc1c88286a1ca04f415513d7619ac921b725ca99bbe39bc1a9e1a",
+    "bytes": 1962022,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-farm-1--52b45174.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-farm-2.png",
+    "sha256": "6f15b6931399d133ac118850f4a9211eb69c61e61982b53a44579c80e75e0363",
+    "bytes": 2119796,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-farm-2--6f15b693.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-farm-3.png",
+    "sha256": "33c23eff0657605faf710b872940b0dedbf5b9f165b10c26357f4765688a9338",
+    "bytes": 2088156,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-farm-3--33c23eff.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-lumber-0.png",
+    "sha256": "6aa85fb67b9ca3562ed9b0ff61d3e0c7ce03826a11ec1d1451cbb66b935d64cf",
+    "bytes": 1260864,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-lumber-0--6aa85fb6.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-lumber-1.png",
+    "sha256": "3e4b0bb1bfdde22765e9216648dd62fa67c5516ba0b1d7165d03f2302d94fd1a",
+    "bytes": 2107214,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-lumber-1--3e4b0bb1.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-lumber-2.png",
+    "sha256": "4641f10467b551a23cbebc49961db3520c27d8be8afd66c0eac7a48946755daa",
+    "bytes": 2128296,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-lumber-2--4641f104.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-lumber-3.png",
+    "sha256": "4cec3e65fa1979caa3441ab306bc5d81d0757018fba2a791081834d2fd8fdac6",
+    "bytes": 2114830,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-lumber-3--4cec3e65.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-pump-0.png",
+    "sha256": "37531b33ede64cd919182bddfa45a334338de20bcca60029a1cc4335dc1e57ab",
+    "bytes": 1568333,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-pump-0--37531b33.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-pump-1.png",
+    "sha256": "e5b816c76a09254f66493fb3451802a4fd036eefa180b9244702b4bf64e53a1b",
+    "bytes": 1986483,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-pump-1--e5b816c7.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-pump-2.png",
+    "sha256": "94cf58f9833bdc8d8623f73c4869c1bc76e16c5943f16be4dbcd1f27a0431147",
+    "bytes": 1864526,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-pump-2--94cf58f9.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-quarry-0.png",
+    "sha256": "59491c1a81691fac7e5aba6b1e5e8d619e88e94a230d1f0ee9a74a34c162cd9c",
+    "bytes": 2318225,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-quarry-0--59491c1a.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-quarry-1.png",
+    "sha256": "de0343718a2f2e71abf45b1f7adab2a862b40adc4e88a721967fe9900fcd91c2",
+    "bytes": 1359070,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-quarry-1--de034371.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-quarry-2.png",
+    "sha256": "bafb7c5956c74ce2d9d03f70cc35369e5a735af84d53c77a5744c58a36262399",
+    "bytes": 2020963,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-quarry-2--bafb7c59.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "generated/stations-quarry-3.png",
+    "sha256": "21543b4790a8fce58ac625283b9fdabb8865a657f1b16dac8aeede41cf398ce4",
+    "bytes": 1998991,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/stations-quarry-3--21543b47.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-0-guided.png",
+    "sha256": "514d6c0bb55c910864ea2c8c3b7db44b8fc7c2ccbc4e45662f067c36c742996d",
+    "bytes": 818080,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-0-guided--514d6c0b.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  },
+  {
+    "file": "station-0.png",
+    "sha256": "35fd31a0a5aca421a6ec1a354e2a12ed731b01205b92240c9d18979559da6028",
+    "bytes": 1886321,
+    "drive_source": "G:/DEV/Terepasztal/Images/organized/buildings/station-0--35fd31a0.png",
+    "category": "buildings",
+    "note": "Identical bytes exist untracked in main checkout at this same path."
+  }
+]

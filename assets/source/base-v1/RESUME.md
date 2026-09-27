@@ -1,5 +1,34 @@
 # Asset generation checkpoint
 
+## Train models pilot: Rocket, Flying Scotsman, SD40, bogies (2026-09-26; latest)
+
+Branch `local/train-models` (worktree `C:/Users/Zso/terepasztal-local`, from PR #20's head). Pipeline
+outputs (GLBs, meta, sprites) live in `G:/DEV/Terepasztal/pipeline-out` (`run.py --out`); large files
+are listed in `assets/source/LARGE-FILES.md`. Review page: https://claude.ai/artifact/1CpkMXBqFyD1g4QmcQLrhN
+(local copy `G:/DEV/Terepasztal/renders/train-models-pilot/`, source `scratchpad/train-models/review/`).
+Its verdict buttons save to the artifact's `verdicts` collection: read them before continuing.
+
+- Fixed the POC's three failures. Colour: the Pixal3D mesh is pixel-aligned with its conditioning
+  crop, so `source_texture.py` projects the source back onto every seen texel and colour-transfers the
+  rest (Rocket mean-colour dE 3.7 vs the POC's 6.8; FS 0.3, SD40 0.9, F7 2.3). Wheels: measured on the
+  source (`landmarks.json`), rebuilt round on the rails (+-0.16 tile) for small stock; medium stock
+  gets `cut_boxes` + parametric bogies (`bogies.json`). Scale: one human metre (11 px = 1.75 m ->
+  6.23 m tile); height from `height_m`, width from `width_m` x DRAWN_WIDTH, length from the slot.
+- In game (`scratchpad/train-models/capture.mjs`, `hills.mjs`): straight, switch, curves, reversal,
+  all 48 headings, bogie sheets, hill climb; new vs current at the same pose. 0 page errors, reversal
+  shift 0. Packed as partial overrides at resolution 4: `public/assets/rolling.*` (125 frames, incl.
+  F7 as an extra), `wagons.*` (5 bogie styles x 25). The PR is a draft until the user approves.
+- Open decisions (on the review page): keep the human metre (small next to procedural wagons);
+  Pacific drivers swing with the rear pivot on tight curves vs rigid with the body; atlas budget for
+  the full roster (multi-sheet groups vs 2x); parametric bogies vs studio images.
+- Blocked: decor art needs an image generator (ComfyUI here has only the 3D models; the originals came
+  from a hosted tool); hill art waits for the hill shape decision.
+- Drive housekeeping: `Images/` had no loose file missing from `organized/` (all 153 were duplicates,
+  now in `_duplicates/`); buildings moved to `organized/buildings/`; moves in
+  `organized/moves-2026-09-26.json`. 67 building sources copied into the repo with manifests.
+- Next after approval: remaining 28 locomotives, 20 wagons and 20 bogie styles in batches; each needs
+  landmarks (wheels, nose, cut boxes) measured on its crop - `debug_grid.py` gives the metre grid.
+
 ## Hills 1/4, rails on slopes, scatter (2026-09-26; latest)
 
 User chose 1/4-side levels. Implemented as the default relief; rails keep the hill
