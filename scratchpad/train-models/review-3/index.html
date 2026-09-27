@@ -1,0 +1,1037 @@
+<meta charset="utf-8" />
+<title>Terepasztal Train Models 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+/>
+<style>
+  :root {
+    --ground: #e9ece5;
+    --surface: #f7f8f4;
+    --sunk: #dde2d9;
+    --ink: #1b221e;
+    --muted: #56625a;
+    --line: #c4ccc1;
+    --accent: #1f5c45;
+    --accent-ink: #f4f7f2;
+    --brass: #8f6a1c;
+    --ok: #2e7d4f;
+    --warn: #a86d12;
+    --bad: #ac3d2b;
+    --display: 'Barlow Semi Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+    --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      color-scheme: dark;
+      --ground: #111513;
+      --surface: #1a201c;
+      --sunk: #232b26;
+      --ink: #e2e8e0;
+      --muted: #9ba79f;
+      --line: #313b35;
+      --accent: #6cbf97;
+      --accent-ink: #0f1712;
+      --brass: #d7a94d;
+      --ok: #62c28b;
+      --warn: #e0a441;
+      --bad: #e37a66;
+    }
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --ground: #111513;
+    --surface: #1a201c;
+    --sunk: #232b26;
+    --ink: #e2e8e0;
+    --muted: #9ba79f;
+    --line: #313b35;
+    --accent: #6cbf97;
+    --accent-ink: #0f1712;
+    --brass: #d7a94d;
+    --ok: #62c28b;
+    --warn: #e0a441;
+    --bad: #e37a66;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+    padding-inline: clamp(16px, 4vw, 48px);
+    padding-block: 28px 64px;
+  }
+  .wrap {
+    max-width: 1180px;
+    margin-inline: auto;
+    display: grid;
+    gap: 40px;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--display);
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.1;
+  }
+  h1 {
+    font-size: clamp(2rem, 4.5vw, 3.1rem);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  h2 {
+    font-size: 1.9rem;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  p {
+    margin: 0;
+    max-width: 68ch;
+  }
+  .label {
+    font: 600 0.72rem/1.2 var(--body);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .mono,
+  dd,
+  .num {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  header.top {
+    display: grid;
+    gap: 14px;
+  }
+  .contract {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+  .changes {
+    margin: 0;
+    padding-left: 1.1em;
+    display: grid;
+    gap: 6px;
+    max-width: 90ch;
+    font-size: 0.95rem;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+  }
+  .trio {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  @media (max-width: 720px) {
+    .trio {
+      grid-template-columns: 1fr;
+    }
+  }
+  table.research {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.88rem;
+  }
+  table.research th,
+  table.research td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.research th {
+    font: 600 0.72rem/1.2 var(--body);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .contract b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  nav.jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  nav.jump a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 500;
+    background: var(--surface);
+  }
+  nav.jump a:focus-visible,
+  button:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--line);
+  }
+  .dot[data-s='approve'] {
+    background: var(--ok);
+  }
+  .dot[data-s='changes'] {
+    background: var(--warn);
+  }
+  .dot[data-s='reject'] {
+    background: var(--bad);
+  }
+  section.panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: clamp(16px, 3vw, 28px);
+    display: grid;
+    gap: 22px;
+    scroll-margin-top: 16px;
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .head .who {
+    display: grid;
+    gap: 6px;
+  }
+  .verdict {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    min-width: min(100%, 320px);
+  }
+  .verdict .btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .verdict button {
+    font: 600 0.9rem var(--body);
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    background: var(--ground);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .verdict button[aria-pressed='true'][data-v='approve'] {
+    background: var(--ok);
+    border-color: var(--ok);
+    color: var(--accent-ink);
+  }
+  .verdict button[aria-pressed='true'][data-v='changes'] {
+    background: var(--warn);
+    border-color: var(--warn);
+    color: var(--accent-ink);
+  }
+  .verdict button[aria-pressed='true'][data-v='reject'] {
+    background: var(--bad);
+    border-color: var(--bad);
+    color: var(--accent-ink);
+  }
+  .verdict textarea {
+    font: 0.9rem/1.4 var(--body);
+    background: var(--ground);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 8px;
+    min-height: 2.6em;
+    resize: vertical;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .verdict .saved {
+    font-size: 0.8rem;
+    color: var(--muted);
+    min-height: 1.2em;
+  }
+  dl.facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 12px 24px;
+    margin: 0;
+  }
+  dl.facts div {
+    display: grid;
+    gap: 2px;
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+  }
+  dt {
+    font: 600 0.72rem/1.2 var(--body);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  dd {
+    margin: 0;
+    font-size: 0.88rem;
+  }
+  .colour {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .colour img {
+    border-radius: 4px;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .swatches {
+    display: grid;
+    gap: 10px;
+  }
+  .swrow {
+    display: grid;
+    grid-template-columns: 96px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+  .bar {
+    display: flex;
+    height: 22px;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .bar span {
+    display: block;
+    height: 100%;
+  }
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 8px;
+  }
+  .tabs button {
+    font: 500 0.88rem var(--body);
+    padding: 5px 10px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .tabs button[aria-selected='true'] {
+    color: var(--ink);
+    background: var(--sunk);
+    border-color: var(--line);
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  figure {
+    margin: 0;
+    display: grid;
+    gap: 6px;
+  }
+  figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    background: var(--sunk);
+  }
+  figcaption {
+    font-size: 0.82rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  figcaption b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .flip {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .flip button {
+    font: 600 0.85rem var(--body);
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    background: var(--ground);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .flip button[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  .wide {
+    overflow-x: auto;
+  }
+  .wide img {
+    min-width: 720px;
+  }
+  .note {
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+  .warn {
+    color: var(--warn);
+  }
+  .questions {
+    display: grid;
+    gap: 14px;
+  }
+  .q {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    gap: 16px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  .q p + p {
+    margin-top: 6px;
+  }
+  .status {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .status ul {
+    margin: 8px 0 0;
+    padding-left: 1.1em;
+    display: grid;
+    gap: 6px;
+    font-size: 0.93rem;
+  }
+  .bogies {
+    display: grid;
+    gap: 28px;
+  }
+  .bogie {
+    display: grid;
+    gap: 10px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  @media (max-width: 720px) {
+    .pair,
+    .colour,
+    .q {
+      grid-template-columns: 1fr;
+    }
+    .swrow {
+      grid-template-columns: 80px 1fr;
+    }
+    .swrow .num {
+      grid-column: 2;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .verdict button,
+    .tabs button,
+    .flip button {
+      transition: background-color 0.15s, color 0.15s;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="label">Terepasztal · rolling stock pilot 3 · local/train-models</span>
+    <h1>Terepasztal Train Models 3</h1>
+    <p>
+      The third pilot, after your notes on the second. Every picture is a game render at the identical
+      simulation pose: the current look, the previous pilot and this one side by side. Mark each subject
+      and question; your choices are saved here and I read them back.
+    </p>
+    <ul class="changes">
+      <li><b>Flying Scotsman drivers where you drew them.</b> The coupled wheels are a bogie again, on the rail
+        at their place in the image (your blue line), with the rail's own angle there. They use the rear pivot's
+        bogie slot, drawn 0.42 tiles ahead of it with <code>bogieDraw</code>, which places a sprite on the track
+        rather than beside it. The leading bogie hangs at its pivot.</li>
+      <li><b>F7 back on the game's mechanism.</b> Its trucks sit on the simulation's pivots again (no inboard
+        offset), so the body rests on them through the switch and curves. Each truck taken from the model is also
+        squared up (up to 1.1° of pitch and 0.7° of yaw corrected), so the trucks run parallel to the rails like
+        the body.</li>
+      <li><b>End gear researched per prototype.</b> On the F7 and SD40-2 the pilot, snowplow, coupler and steps
+        hang from the body underframe; their trucks carry nothing. So they stay on the body; the F7 tab
+        <i>Gear on trucks</i> shows your variant at the same poses to compare. Where a prototype hangs them on
+        its running gear (Crocodile, GG1, Garratt, Big Boy front unit), they will turn with that bogie.</li>
+      <li><b>SD40-2: three tiles, two trucks.</b> <code>size: large, bogies: 2</code> in src/data, so it runs on
+        high-speed track only (in-cab signalling fitted); filmed on a high-speed loop. Its own trucks sit at the
+        large-body pivots, closer to the middle.</li>
+    </ul>
+    <div class="contract">
+      <span><b>Camera</b> 45° azimuth, 30° elevation, 25 drawn of 48 facings</span>
+      <span><b>Metre</b> a 1.75 m person is 11 px → 6.23 m per tile</span>
+      <span><b>Gauge</b> wheel treads on the rails at ±0.16 tile</span>
+      <span><b>Atlas</b> 4 texels per game pixel, partial overrides</span>
+    </div>
+    <nav class="jump" id="jump" aria-label="Subjects"></nav>
+  </header>
+
+  <section class="panel" id="decisions">
+    <div class="head">
+      <div class="who">
+        <span class="label">Before the rest of the roster</span>
+        <h2>Decisions for you</h2>
+      </div>
+    </div>
+    <div class="questions" id="questions"></div>
+  </section>
+
+  <div id="subjects" style="display: grid; gap: 40px"></div>
+
+  <section class="panel" id="bogies">
+    <div class="head">
+      <div class="who">
+        <span class="label">Parametric running gear · every heading on its rails</span>
+        <h2>Bogies</h2>
+        <p class="note">
+          Bogies are now rendered per train, in the same run as the body. The F7's come from its own
+          reconstruction, painted with the source's colours. The Flying Scotsman's leading bogie and trailing
+          axle are built round at the wheels measured on its image. Each sheet shows all 48 headings with the
+          game's rail centres under it; current is the generic truck the game draws without them.
+        </p>
+      </div>
+    </div>
+    <div class="bogies" id="bogielist"></div>
+  </section>
+
+  <section class="panel" id="research">
+    <div class="head">
+      <div class="who">
+        <span class="label">Where each prototype hangs its end gear</span>
+        <h2>Pilots, couplers, buffers, steps</h2>
+        <p class="note">
+          Web research, one prototype at a time. "Body" means the body, underframe or rigid main frame; "running
+          gear" means a bogie or articulated frame that turns under the body. Rows marked (?) rest on thin sources.
+        </p>
+      </div>
+    </div>
+    <div class="wide">
+      <table class="research">
+        <thead>
+          <tr><th>Locomotive</th><th>Pilot / snowplow / track clearer</th><th>Coupler</th><th>Buffers</th><th>End steps</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>LNER A3 Flying Scotsman</td><td>none (guard irons on the main frame)</td><td>body (buffer beam)</td><td>body</td><td>body</td></tr>
+          <tr><td>EMD F7 A</td><td>body underframe</td><td>body underframe</td><td>none</td><td>body</td></tr>
+          <tr><td>EMD SD40-2</td><td>body (plough pilot on the end sill)</td><td>body</td><td>none</td><td>body</td></tr>
+          <tr><td>EMD SW1, UP DDA40X</td><td>body</td><td>body</td><td>none</td><td>body</td></tr>
+          <tr><td>BR Class 08, M62, Kandó V40, V63 (?)</td><td>body / main frame</td><td>body</td><td>body</td><td>body</td></tr>
+          <tr><td>ÖBB Taurus, SBB Re 460, TGV, ICE 1 (?)</td><td>body (skirt / rail guard)</td><td>body</td><td>body (none at a power car nose)</td><td>body</td></tr>
+          <tr><td>BR Class 55 Deltic (?)</td><td>body valance; guard irons possibly on the bogies</td><td>body</td><td>body</td><td>lowest step on the bogie</td></tr>
+          <tr><td>SBB Ce 6/8 Crocodile (?)</td><td>running gear (hood frames)</td><td>running gear</td><td>running gear</td><td>running gear</td></tr>
+          <tr><td>PRR GG1 (?)</td><td>running gear (articulated frames)</td><td>running gear (?)</td><td>none</td><td>body</td></tr>
+          <tr><td>Steam, rigid frame (most of the roster)</td><td>main frame</td><td>main frame</td><td>main frame</td><td>main frame</td></tr>
+          <tr><td>Big Boy, GMAM Garratt</td><td>front engine unit / engine units</td><td>engine units</td><td>engine units</td><td>engine units</td></tr>
+          <tr><td>John Bull</td><td>on its lead truck</td><td>frame</td><td>frame</td><td>frame</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      Sources include Wikipedia's articles on the LNER A1/A3, EMD F-unit, EMD SD40-2, EMD SW1, EMD DDA40X,
+      British Rail Class 08 and Class 55, M62, MÁV V40 and V63, Schweizer Krokodil, ÖBB 1016/1116, SBB Re 460,
+      ICE 1, SNCF TGV Sud-Est, PRR GG1, John Bull and Garratt; the ASME GG1 landmark brochure; and model-maker
+      notes (Stummiforum on the Roco Taurus rail guard, Bachmann Class 55 bogie spares).
+    </p>
+  </section>
+
+  <section class="panel" id="status">
+    <div class="head">
+      <div class="who">
+        <span class="label">Where the work stands</span>
+        <h2>Approved, pending, blocked</h2>
+      </div>
+    </div>
+    <div class="status">
+      <div>
+        <h3>Approved</h3>
+        <ul>
+          <li>Stephenson's Rocket (pilot 1): kept as rendered.</li>
+          <li>Colour matching and overall size (pilot 1); the F7 model and the body angles (pilot 2).</li>
+          <li>SD40-2 as a three-tile body with two trucks.</li>
+          <li>Drive housekeeping: done (moves logged, nothing deleted).</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Pending your review</h3>
+        <ul>
+          <li>Flying Scotsman, F7 and SD40-2 with their own bogies.</li>
+          <li>The questions at the top.</li>
+          <li>Remaining roster: after approval, in batches, each train with its own bogies.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Blocked</h3>
+        <ul>
+          <li>
+            New decor art: needs an image generator. None is installed locally (ComfyUI has only the 3D
+            models) and the original art came from a hosted tool this session cannot reach.
+          </li>
+          <li>Hill rock faces and ramp pieces: wait for the hill shape decision.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const DATA = {"pilot": 3, "subjects": [{"id": "flying_scotsman", "name": "Flying Scotsman", "wagon": "steel_coach", "blurb": "The coupled wheels are a bogie again, drawn on the rail where the image has them (your blue line): they take the rear pivot's slot and follow the track there. The leading bogie hangs at its pivot; the trailing axle, splashers, frames and buffer beam stay with the body, as on the prototype.", "plan": "tender", "tiles": [2, 1], "scale_ref": "height_m", "real_dims_m": [16.162, 3.388, 4.204], "width_fix": 1.0868, "parts": [{"part": "engine", "final_dims_m": [7.394, 3.135, 4.007], "compression": [0.6815, 1.0202, 1.0], "gear": [{"name": "l1", "x_m": 1.895, "x_real_m": 2.781, "d_m": 0.642}, {"name": "l2", "x_m": 2.715, "x_real_m": 3.984, "d_m": 0.635}, {"name": "d1", "x_m": -1.45, "x_real_m": -2.128, "d_m": 1.999}, {"name": "d2", "x_m": -0.121, "x_real_m": -0.178, "d_m": 1.962}, {"name": "d3", "x_m": 1.252, "x_real_m": 1.837, "d_m": 1.837}, {"name": "tr", "x_m": -2.91, "x_real_m": -4.27, "d_m": 1.037}]}, {"part": "bogie-flying_scotsman_leading", "final_dims_m": [1.7, 2.552, 0.664], "compression": [0.6815, 1.0202, 1.0], "gear": [{"style": "flying_scotsman_leading", "pivot_tiles": 0.4375, "centre_m": 2.305, "draw_tiles": 0.0, "image_offset_tiles": -0.0678}]}, {"part": "bogie-flying_scotsman_drivers", "final_dims_m": [4.658, 2.897, 1.3], "compression": [0.6815, 1.0202, 1.0], "gear": [{"style": "flying_scotsman_drivers", "pivot_tiles": -0.4375, "centre_m": -0.107, "draw_tiles": 0.4204, "image_offset_tiles": 0.4204}]}, {"part": "tender", "final_dims_m": [4.276, 2.902, 3.581], "compression": [0.8051, 1.0202, 1.0], "gear": [{"name": "t1", "x_m": -0.778, "x_real_m": -0.966, "d_m": 1.768}, {"name": "t2", "x_m": 0.257, "x_real_m": 0.32, "d_m": 1.585}, {"name": "t3", "x_m": 1.201, "x_real_m": 1.491, "d_m": 1.111}]}], "warnings": ["wheel d2: rim point [566, 700] skipped (source pixel [566, 700] is off the mesh)", "length_m: model 16.16 m vs spec 21.3 m (-24%)"], "source": {"fov_deg": 16.099, "silhouette_iou": 0.9834, "texels": 4194304, "source_texels": 489740, "source_share": 0.117, "mirrored_share": 0.089, "median_delta_e_generated": 12.37, "median_delta_e_transferred": 11.11, "texture": "G:\\DEV\\Terepasztal\\pipeline-out\\meta\\flying_scotsman_texture.png"}, "align": {"mode": "auto", "yaw": 44.25, "pitch": -26.75, "roll": -0.5, "score": 0.8172, "refined_yaw_deg": -0.69, "refined_pitch_deg": -0.089}, "roof_vs_rails": null, "prev_label": "Pilot 2", "colour": {"source_mean": [63.3, 70.9, 57.8], "new_mean": [63.6, 73.7, 58.7], "delta_e_mean": 1.88, "source_palette": [[32, 36, 35], [45, 67, 46], [82, 75, 73], [82, 105, 74], [167, 146, 119]], "source_share": [0.306, 0.276, 0.186, 0.149, 0.083], "new_palette": [[51, 72, 50], [46, 50, 49], [94, 111, 85], [158, 147, 121], [110, 63, 44]], "new_share": [0.394, 0.359, 0.16, 0.051, 0.036]}, "colour_img": "img/colour-flying_scotsman.jpg", "reversal_error": 1.4210854715202004e-14, "facings_covered": 42, "errors": 0, "scenarios": [{"id": "01-straight", "label": "Straight", "current": "img/flying_scotsman-01-straight-current.jpg", "new": "img/flying_scotsman-01-straight-new.jpg", "p1": "img/prev-flying_scotsman-01-straight-new.jpg", "variant": null}, {"id": "02-switch-enter", "label": "Switch in", "current": "img/flying_scotsman-02-switch-enter-current.jpg", "new": "img/flying_scotsman-02-switch-enter-new.jpg", "p1": "img/prev-flying_scotsman-02-switch-enter-new.jpg", "variant": null}, {"id": "03-switch-middle", "label": "Switch middle", "current": "img/flying_scotsman-03-switch-middle-current.jpg", "new": "img/flying_scotsman-03-switch-middle-new.jpg", "p1": "img/prev-flying_scotsman-03-switch-middle-new.jpg", "variant": null}, {"id": "04-switch-leave", "label": "Switch out", "current": "img/flying_scotsman-04-switch-leave-current.jpg", "new": "img/flying_scotsman-04-switch-leave-new.jpg", "p1": "img/prev-flying_scotsman-04-switch-leave-new.jpg", "variant": null}, {"id": "05-curve", "label": "Curve 1", "current": "img/flying_scotsman-05-curve-current.jpg", "new": "img/flying_scotsman-05-curve-new.jpg", "p1": "img/prev-flying_scotsman-05-curve-new.jpg", "variant": null}, {"id": "06-curve", "label": "Curve 2", "current": "img/flying_scotsman-06-curve-current.jpg", "new": "img/flying_scotsman-06-curve-new.jpg", "p1": "img/prev-flying_scotsman-06-curve-new.jpg", "variant": null}, {"id": "07-curve", "label": "Curve 3", "current": "img/flying_scotsman-07-curve-current.jpg", "new": "img/flying_scotsman-07-curve-new.jpg", "p1": "img/prev-flying_scotsman-07-curve-new.jpg", "variant": null}, {"id": "08-reversed", "label": "Reversed", "current": "img/flying_scotsman-08-reversed-current.jpg", "new": "img/flying_scotsman-08-reversed-new.jpg", "p1": "img/prev-flying_scotsman-08-reversed-new.jpg", "variant": null}, {"id": "09-reversed-running", "label": "Reversed, running", "current": "img/flying_scotsman-09-reversed-running-current.jpg", "new": "img/flying_scotsman-09-reversed-running-new.jpg", "p1": "img/prev-flying_scotsman-09-reversed-running-new.jpg", "variant": null}], "headings": {"current": "img/flying_scotsman-headings-current.jpg", "new": "img/flying_scotsman-headings-new.jpg", "p1": "img/prev-flying_scotsman-headings-new.jpg"}, "hills": [{"zoom": 2, "current": "img/flying_scotsman-hill-z2-current.jpg", "new": "img/flying_scotsman-hill-z2-new.jpg", "p1": "img/prev-flying_scotsman-hill-z2-new.jpg"}, {"zoom": 4, "current": "img/flying_scotsman-hill-z4-current.jpg", "new": "img/flying_scotsman-hill-z4-new.jpg", "p1": "img/prev-flying_scotsman-hill-z4-new.jpg"}]}, {"id": "f7", "name": "EMD F7", "wagon": "steel_coach", "blurb": "Trucks back on the game's pivots, so the body rests on them through switches and curves, and squared up with the body. The pilot, coupler and steps stay on the body, where the prototype has them; the tab 'Gear on trucks' shows your variant at the same poses.", "plan": "rigid", "tiles": [2, 1], "scale_ref": "height_m", "real_dims_m": [15.579, 3.645, 4.778], "width_fix": 1.0764, "parts": [{"part": "body", "final_dims_m": [12.07, 3.685, 4.541], "compression": [0.7748, 1.0841, 1.0], "gear": [{"name": "r1", "x_m": -4.539, "x_real_m": -5.858, "d_m": 1.151}, {"name": "r2", "x_m": -2.567, "x_real_m": -3.313, "d_m": 1.026}, {"name": "f1", "x_m": 2.289, "x_real_m": 2.954, "d_m": 1.088}, {"name": "f2", "x_m": 4.174, "x_real_m": 5.388, "d_m": 1.092}]}, {"part": "bogie-f7_front", "final_dims_m": [3.178, 3.447, 1.369], "compression": [0.7748, 1.0841, 1.0], "gear": [{"style": "f7_front", "pivot_tiles": 0.7, "centre_m": 3.231, "draw_tiles": 0.0, "image_offset_tiles": -0.1817}]}, {"part": "bogie-f7_rear", "final_dims_m": [3.413, 3.424, 1.403], "compression": [0.7748, 1.0841, 1.0], "gear": [{"style": "f7_rear", "pivot_tiles": -0.7, "centre_m": -3.553, "draw_tiles": 0.0, "image_offset_tiles": 0.1302}]}], "warnings": [], "source": {"fov_deg": 16.11, "silhouette_iou": 0.9833, "texels": 4194304, "source_texels": 500763, "source_share": 0.119, "mirrored_share": 0.086, "median_delta_e_generated": 13.97, "median_delta_e_transferred": 13.94, "texture": "G:\\DEV\\Terepasztal\\pipeline-out\\meta\\f7_texture.png"}, "align": {"mode": "auto", "yaw": 48.25, "pitch": -20.75, "roll": 0.0, "score": 0.8582, "refined_yaw_deg": 0.67, "refined_pitch_deg": -0.505}, "roof_vs_rails": [1.15, 15], "prev_label": "Pilot 2", "colour": {"source_mean": [113.8, 64.1, 53.6], "new_mean": [119.5, 68.7, 58.1], "delta_e_mean": 2.05, "source_palette": [[158, 49, 38], [33, 41, 40], [84, 90, 88], [102, 36, 24], [211, 171, 117]], "source_share": [0.371, 0.212, 0.207, 0.126, 0.084], "new_palette": [[73, 78, 76], [147, 44, 34], [109, 41, 28], [197, 71, 55], [197, 157, 110]], "new_share": [0.409, 0.283, 0.145, 0.084, 0.079]}, "colour_img": "img/colour-f7.jpg", "reversal_error": 1.0658141036401503e-14, "facings_covered": 39, "errors": 0, "scenarios": [{"id": "01-straight", "label": "Straight", "current": "img/f7-01-straight-current.jpg", "new": "img/f7-01-straight-new.jpg", "p1": "img/prev-f7-01-straight-new.jpg", "variant": "img/f7b-01-straight-new.jpg"}, {"id": "02-switch-enter", "label": "Switch in", "current": "img/f7-02-switch-enter-current.jpg", "new": "img/f7-02-switch-enter-new.jpg", "p1": "img/prev-f7-02-switch-enter-new.jpg", "variant": "img/f7b-02-switch-enter-new.jpg"}, {"id": "03-switch-middle", "label": "Switch middle", "current": "img/f7-03-switch-middle-current.jpg", "new": "img/f7-03-switch-middle-new.jpg", "p1": "img/prev-f7-03-switch-middle-new.jpg", "variant": "img/f7b-03-switch-middle-new.jpg"}, {"id": "04-switch-leave", "label": "Switch out", "current": "img/f7-04-switch-leave-current.jpg", "new": "img/f7-04-switch-leave-new.jpg", "p1": "img/prev-f7-04-switch-leave-new.jpg", "variant": "img/f7b-04-switch-leave-new.jpg"}, {"id": "05-curve", "label": "Curve 1", "current": "img/f7-05-curve-current.jpg", "new": "img/f7-05-curve-new.jpg", "p1": "img/prev-f7-05-curve-new.jpg", "variant": "img/f7b-05-curve-new.jpg"}, {"id": "06-curve", "label": "Curve 2", "current": "img/f7-06-curve-current.jpg", "new": "img/f7-06-curve-new.jpg", "p1": "img/prev-f7-06-curve-new.jpg", "variant": "img/f7b-06-curve-new.jpg"}, {"id": "07-curve", "label": "Curve 3", "current": "img/f7-07-curve-current.jpg", "new": "img/f7-07-curve-new.jpg", "p1": "img/prev-f7-07-curve-new.jpg", "variant": "img/f7b-07-curve-new.jpg"}, {"id": "08-reversed", "label": "Reversed", "current": "img/f7-08-reversed-current.jpg", "new": "img/f7-08-reversed-new.jpg", "p1": "img/prev-f7-08-reversed-new.jpg", "variant": "img/f7b-08-reversed-new.jpg"}, {"id": "09-reversed-running", "label": "Reversed, running", "current": "img/f7-09-reversed-running-current.jpg", "new": "img/f7-09-reversed-running-new.jpg", "p1": "img/prev-f7-09-reversed-running-new.jpg", "variant": "img/f7b-09-reversed-running-new.jpg"}], "headings": {"current": "img/f7-headings-current.jpg", "new": "img/f7-headings-new.jpg", "p1": "img/prev-f7-headings-new.jpg"}, "hills": [{"zoom": 2, "current": "img/f7-hill-z2-current.jpg", "new": "img/f7-hill-z2-new.jpg", "p1": "img/prev-f7-hill-z2-new.jpg"}, {"zoom": 4, "current": "img/f7-hill-z4-current.jpg", "new": "img/f7-hill-z4-new.jpg", "p1": "img/prev-f7-hill-z4-new.jpg"}]}, {"id": "sd40", "name": "EMD SD40-2", "wagon": "steel_coach", "blurb": "Now a three-tile body with two HT-C trucks (src/data: large, two bogies), so it runs on high-speed track only; filmed on a high-speed loop. Its own trucks sit at the large-body pivots, nearer the middle; pilots, steps and fuel tank stay on the body.", "plan": "rigid", "tiles": [3, 1], "scale_ref": "height_m", "real_dims_m": [19.892, 3.858, 5.146], "width_fix": 0.8031, "parts": [{"part": "body", "final_dims_m": [18.305, 4.686, 5.007], "compression": [0.9202, 0.9608, 1.0], "gear": [{"name": "r1", "x_m": -6.769, "x_real_m": -7.355, "d_m": 0.94}, {"name": "r2", "x_m": -5.214, "x_real_m": -5.666, "d_m": 0.77}, {"name": "r3", "x_m": -3.438, "x_real_m": -3.736, "d_m": 0.856}, {"name": "f1", "x_m": 3.589, "x_real_m": 3.9, "d_m": 0.675}, {"name": "f2", "x_m": 4.954, "x_real_m": 5.384, "d_m": 0.743}, {"name": "f3", "x_m": 6.4, "x_real_m": 6.955, "d_m": 0.795}]}, {"part": "bogie-sd40_front", "final_dims_m": [4.583, 3.565, 1.265], "compression": [0.9202, 0.9608, 1.0], "gear": [{"style": "sd40_front", "pivot_tiles": 0.87, "centre_m": 4.981, "draw_tiles": 0.0, "image_offset_tiles": -0.0711}]}, {"part": "bogie-sd40_rear", "final_dims_m": [4.999, 3.685, 1.276], "compression": [0.9202, 0.9608, 1.0], "gear": [{"style": "sd40_rear", "pivot_tiles": -0.87, "centre_m": -5.14, "draw_tiles": 0.0, "image_offset_tiles": 0.0456}]}], "warnings": [], "source": {"fov_deg": 18.06, "silhouette_iou": 0.9797, "texels": 4194304, "source_texels": 462380, "source_share": 0.11, "mirrored_share": 0.089, "median_delta_e_generated": 11.43, "median_delta_e_transferred": 8.46, "texture": "G:\\DEV\\Terepasztal\\pipeline-out\\meta\\sd40_texture.png"}, "align": {"mode": "auto", "yaw": 45.0, "pitch": -25.5, "roll": -0.25, "score": 0.871, "refined_yaw_deg": -0.42, "refined_pitch_deg": 0.163}, "roof_vs_rails": [3.71, 15], "prev_label": "Pilot 1", "colour": {"source_mean": [58.6, 57.3, 53.9], "new_mean": [60.5, 59.5, 56.0], "delta_e_mean": 0.95, "source_palette": [[31, 33, 34], [59, 62, 63], [93, 95, 93], [220, 191, 147], [119, 83, 47]], "source_share": [0.552, 0.266, 0.08, 0.062, 0.041], "new_palette": [[34, 35, 36], [60, 62, 62], [85, 88, 87], [120, 92, 58], [208, 184, 147]], "new_share": [0.496, 0.296, 0.093, 0.058, 0.057]}, "colour_img": "img/colour-sd40.jpg", "reversal_error": 3.481659405224491e-13, "facings_covered": 29, "errors": 0, "scenarios": [{"id": "01-straight", "label": "Straight", "current": "img/sd40-01-straight-current.jpg", "new": "img/sd40-01-straight-new.jpg", "p1": "img/prev-sd40-01-straight-new.jpg", "variant": null}, {"id": "02-switch-enter", "label": "Switch in", "current": "img/sd40-02-switch-enter-current.jpg", "new": "img/sd40-02-switch-enter-new.jpg", "p1": "img/prev-sd40-02-switch-enter-new.jpg", "variant": null}, {"id": "03-switch-middle", "label": "Switch middle", "current": "img/sd40-03-switch-middle-current.jpg", "new": "img/sd40-03-switch-middle-new.jpg", "p1": "img/prev-sd40-03-switch-middle-new.jpg", "variant": null}, {"id": "04-switch-leave", "label": "Switch out", "current": "img/sd40-04-switch-leave-current.jpg", "new": "img/sd40-04-switch-leave-new.jpg", "p1": "img/prev-sd40-04-switch-leave-new.jpg", "variant": null}, {"id": "05-curve", "label": "Curve 1", "current": "img/sd40-05-curve-current.jpg", "new": "img/sd40-05-curve-new.jpg", "p1": "img/prev-sd40-05-curve-new.jpg", "variant": null}, {"id": "06-curve", "label": "Curve 2", "current": "img/sd40-06-curve-current.jpg", "new": "img/sd40-06-curve-new.jpg", "p1": "img/prev-sd40-06-curve-new.jpg", "variant": null}, {"id": "07-curve", "label": "Curve 3", "current": "img/sd40-07-curve-current.jpg", "new": "img/sd40-07-curve-new.jpg", "p1": "img/prev-sd40-07-curve-new.jpg", "variant": null}, {"id": "08-reversed", "label": "Reversed", "current": "img/sd40-08-reversed-current.jpg", "new": "img/sd40-08-reversed-new.jpg", "p1": "img/prev-sd40-08-reversed-new.jpg", "variant": null}, {"id": "09-reversed-running", "label": "Reversed, running", "current": "img/sd40-09-reversed-running-current.jpg", "new": "img/sd40-09-reversed-running-new.jpg", "p1": "img/prev-sd40-09-reversed-running-new.jpg", "variant": null}], "headings": {"current": "img/sd40-headings-current.jpg", "new": "img/sd40-headings-new.jpg", "p1": "img/prev-sd40-headings-new.jpg"}, "hills": [{"zoom": 2, "current": "img/sd40-hill-z2-current.jpg", "new": "img/sd40-hill-z2-new.jpg", "p1": "img/prev-sd40-hill-z2-new.jpg"}, {"zoom": 4, "current": "img/sd40-hill-z4-current.jpg", "new": "img/sd40-hill-z4-new.jpg", "p1": "img/prev-sd40-hill-z4-new.jpg"}]}], "bogies": [{"style": "flying_scotsman_leading", "rides_under": "flying_scotsman engine, bogie 1 from the front", "note": "2 axle(s) built round from the measured wheels", "axles": 2, "current": "img/bogie-flying_scotsman_leading-current.jpg", "new": "img/bogie-flying_scotsman_leading-new.jpg"}, {"style": "flying_scotsman_drivers", "rides_under": "flying_scotsman engine, bogie 2 from the front", "note": "3 axle(s) built round from the measured wheels", "axles": 3, "current": "img/bogie-flying_scotsman_drivers-current.jpg", "new": "img/bogie-flying_scotsman_drivers-new.jpg"}, {"style": "f7_front", "rides_under": "f7 body, bogie 1 from the front", "note": "cut from the model's own truck, source-coloured", "axles": 2, "current": "img/bogie-f7_front-current.jpg", "new": "img/bogie-f7_front-new.jpg"}, {"style": "f7_rear", "rides_under": "f7 body, bogie 2 from the front", "note": "cut from the model's own truck, source-coloured", "axles": 2, "current": "img/bogie-f7_rear-current.jpg", "new": "img/bogie-f7_rear-new.jpg"}, {"style": "sd40_front", "rides_under": "sd40 body, bogie 1 from the front", "note": "cut from the model's own truck, source-coloured", "axles": 2, "current": "img/bogie-sd40_front-current.jpg", "new": "img/bogie-sd40_front-new.jpg"}, {"style": "sd40_rear", "rides_under": "sd40 body, bogie 2 from the front", "note": "cut from the model's own truck, source-coloured", "axles": 2, "current": "img/bogie-sd40_rear-current.jpg", "new": "img/bogie-sd40_rear-new.jpg"}]};
+  const QUESTIONS = [
+    {
+      id: 'q3-drivers',
+      title: 'Flying Scotsman: coupled wheels as a bogie on the rail at your blue line',
+      body: [
+        'The drivers follow the track where they are drawn, so they stay on the rails through curves; on the tightest (0.5-tile) curves they sit under the boiler a little off the body\u2019s line, since the body itself is a rigid chord. The same pattern would serve every rigid-frame steam engine: leading truck at the front pivot, coupled wheels on the rail at their place, trailing wheels with the body.',
+      ],
+      rec: 'Recommended: use this for the steam roster.',
+    },
+    {
+      id: 'q3-gear',
+      title: 'F7 end gear: on the body (prototype) or on the trucks (your variant)?',
+      body: [
+        'The research puts the F7\u2019s pilot, coupler and steps on the body underframe, so they sit on the body here. Compare both in the F7\u2019s \u201cGear on trucks\u201d tab: on the trucks, the pilot is 1.5 m ahead of its truck and swings with it on curves.',
+      ],
+      rec: 'Recommended: follow the prototype (body), per train from the research table.',
+    },
+    {
+      id: 'q3-batch',
+      title: 'Go ahead with the roster in batches?',
+      body: [
+        'Each train: reconstruct, measure its wheels and trucks, render the body and its own bogies, check it in game, then a review page per batch. Suggested order: the remaining diesels and electrics first (their trucks come from their own models), then steam.',
+      ],
+      rec: 'Recommended: yes, 5 to 6 trains per batch.',
+    },
+    {
+      id: 'q-atlas',
+      title: 'Atlas budget for the whole roster',
+      body: [
+        'At 4 texels per pixel the rolling atlas already holds 125 body frames in 4080 \u00d7 1498 and the bogie atlas 150 frames. The full roster will not fit one texture: several sheets per atlas group (a small AtlasRegistry change), or 2 texels per pixel.',
+      ],
+      rec: 'Recommended: several sheets per group at 4 texels.',
+    },
+  ];
+
+  const $ = (sel, el = document) => el.querySelector(sel);
+  const h = (tag, attrs = {}, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v);
+    }
+    for (const k of kids.flat()) if (k != null) el.append(k);
+    return el;
+  };
+  const fmt = (v, d = 2) => (typeof v === 'number' ? v.toFixed(d) : v);
+  const dims = (a) => (a ? a.map((v) => fmt(v)).join(' × ') + ' m' : '—');
+
+  // ---- verdicts: saved in the artifact's own store, read back by Claude
+  const verdicts = new Map();
+  let db = null;
+  const controls = new Map();
+  function verdictBox(id) {
+    const saved = h('div', { class: 'saved', 'aria-live': 'polite' });
+    const note = h('textarea', { id: `note-${id}`, placeholder: 'Note (optional)', rows: '2' });
+    const btns = ['approve', 'changes', 'reject'].map((v) =>
+      h('button', {
+        type: 'button',
+        'data-v': v,
+        'aria-pressed': 'false',
+        text: v === 'approve' ? 'Approve' : v === 'changes' ? 'Needs changes' : 'Reject',
+        onclick: () => save(id, { status: v, note: note.value }),
+      }),
+    );
+    note.addEventListener('change', () =>
+      save(id, { status: verdicts.get(id)?.status ?? 'pending', note: note.value }),
+    );
+    const box = h('div', { class: 'verdict' }, h('div', { class: 'btns' }, btns), note, saved);
+    controls.set(id, { btns, note, saved });
+    return box;
+  }
+  function paint(id) {
+    const c = controls.get(id),
+      v = verdicts.get(id);
+    if (!c) return;
+    for (const b of c.btns) b.setAttribute('aria-pressed', String(v?.status === b.dataset.v));
+    if (v && document.activeElement !== c.note) c.note.value = v.note ?? '';
+    const dot = document.querySelector(`[data-dot="${id}"]`);
+    if (dot) dot.dataset.s = v?.status ?? '';
+  }
+  async function save(id, body) {
+    const c = controls.get(id);
+    verdicts.set(id, body);
+    paint(id);
+    if (!db) {
+      c.saved.textContent = 'Not saved: this view has no store. Tell Claude in chat instead.';
+      return;
+    }
+    c.saved.textContent = 'Saving…';
+    try {
+      await db.doc(`verdicts/${id}`).set({ ...body, at: new Date().toISOString() });
+      c.saved.textContent = 'Saved';
+    } catch (e) {
+      c.saved.textContent =
+        e?.code === 'invalid_argument'
+          ? 'Not saved: this view can only read. Tell Claude in chat instead.'
+          : 'Not saved (' + (e?.code ?? 'error') + '). Try again.';
+    }
+  }
+
+  // ---- page
+  function tabs(items, show) {
+    const bar = h('div', { class: 'tabs', role: 'tablist' });
+    const buttons = items.map((it, i) =>
+      h('button', {
+        type: 'button',
+        role: 'tab',
+        'aria-selected': String(i === 0),
+        text: it.label,
+        onclick: () => {
+          buttons.forEach((b) => b.setAttribute('aria-selected', String(b === buttons[i])));
+          show(it);
+        },
+      }),
+    );
+    bar.append(...buttons);
+    return bar;
+  }
+  function pairFig(cur, neu, caption, p1, PREV_LABEL = 'Previous') {
+    if (p1)
+      return h(
+        'div',
+        { class: 'trio' },
+        [
+          ['Current', cur],
+          [PREV_LABEL, p1],
+          ['Pilot 3', neu],
+        ].map(([lab, src]) =>
+          h(
+            'figure',
+            {},
+            h('img', { src, alt: `${lab}, ${caption}`, loading: 'lazy' }),
+            h('figcaption', {}, h('b', { text: lab }), h('span', { text: caption })),
+          ),
+        ),
+      );
+    return h(
+      'div',
+      { class: 'pair' },
+      h(
+        'figure',
+        {},
+        h('img', { src: cur, alt: `Current procedural look, ${caption}`, loading: 'lazy' }),
+        h('figcaption', {}, h('b', { text: 'Current' }), h('span', { text: caption })),
+      ),
+      h(
+        'figure',
+        {},
+        h('img', { src: neu, alt: `New rendered model, ${caption}`, loading: 'lazy' }),
+        h('figcaption', {}, h('b', { text: 'New' }), h('span', { text: caption })),
+      ),
+    );
+  }
+  function flipFig(cur, neu, what, p1, PREV_LABEL = 'Previous') {
+    const img = h('img', { src: neu, alt: `New: ${what}`, loading: 'lazy' });
+    const mk = (label, src, on) =>
+      h('button', {
+        type: 'button',
+        'aria-pressed': String(on),
+        text: label,
+        onclick: (e) => {
+          img.src = src;
+          img.alt = `${label}: ${what}`;
+          e.currentTarget.parentElement
+            .querySelectorAll('button')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b === e.currentTarget)));
+        },
+      });
+    return h(
+      'figure',
+      {},
+      h(
+        'div',
+        { class: 'flip' },
+        mk(p1 ? 'Pilot 3' : 'New', neu, true),
+        p1 ? mk(PREV_LABEL, p1, false) : null,
+        mk('Current', cur, false),
+      ),
+      h('div', { class: 'wide' }, img),
+    );
+  }
+  function swatches(label, pal, share, extra) {
+    return h(
+      'div',
+      { class: 'swrow' },
+      h('span', { class: 'label', text: label }),
+      h(
+        'div',
+        { class: 'bar' },
+        pal.map((c, i) =>
+          h('span', { style: `flex:${share[i]};background:rgb(${c.join(',')})`, title: `rgb(${c})` }),
+        ),
+      ),
+      h('span', { class: 'num', text: extra ?? '' }),
+    );
+  }
+
+  function subject(s) {
+    const c = s.colour;
+    const facts = [
+      ['Scale anchor', s.scale_ref],
+      ['Model at real scale', dims(s.real_dims_m)],
+      ...s.parts
+        .filter((p) => !String(p.part).startsWith('bogie-'))
+        .map((p) => [
+        `${p.part} sprite`,
+        `${dims(p.final_dims_m)} · length ×${fmt(p.compression[0])}`,
+      ]),
+      ['Width to real', s.width_fix && s.width_fix !== 1 ? `×${fmt(s.width_fix)}` : 'as modelled'],
+      [
+        'Source reprojection',
+        s.source
+          ? `fov ${fmt(s.source.fov_deg, 1)}°, silhouette IoU ${fmt(s.source.silhouette_iou, 3)}`
+          : '—',
+      ],
+      ['Colour vs source', `ΔE ${fmt(c.delta_e_mean)} (mean colour, facing 0)`],
+      ...(s.roof_vs_rails
+        ? [['Roof vs rails', `within ${fmt(s.roof_vs_rails[0], 2)}° over ${s.roof_vs_rails[1]} side views`]]
+        : []),
+      ...(s.align?.refined_yaw_deg != null
+        ? [
+            [
+              'Alignment refined',
+              `yaw ${fmt(s.align.refined_yaw_deg, 2)}°, pitch ${fmt(s.align.refined_pitch_deg, 2)}°`,
+            ],
+          ]
+        : []),
+      [
+        'In game',
+        `${s.facings_covered} headings driven, reversal shift ${s.reversal_error < 1e-9 ? '0' : fmt(s.reversal_error, 6)}, ${s.errors} page errors`,
+      ],
+    ];
+    const gear = s.parts.flatMap((p) => p.gear ?? []);
+    if (gear.length)
+      facts.push([
+        'Measured wheels',
+        gear
+          .filter((g) => g.d_m != null)
+          .map((g) => `${g.name ?? ''} ${fmt(g.d_m, 2)} m`)
+          .join(', '),
+      ]);
+    const own = s.parts.flatMap((p) => (p.gear ?? []).filter((g) => g.style));
+    if (own.length)
+      facts.push([
+        'Own bogies (bogieDraw)',
+        own.map((g) => `${g.style} ${g.draw_tiles >= 0 ? '+' : ''}${fmt(g.draw_tiles, 3)} tiles`).join(', '),
+      ]);
+    const view = h('div', {});
+    const showScen = (it) => {
+      view.replaceChildren(
+        it.kind === 'headings'
+          ? flipFig(s.headings.current, s.headings.new, 'all 48 headings on the rail centres', s.headings.p1, s.prev_label)
+          : it.kind === 'variant'
+            ? h(
+                'div',
+                { style: 'display:grid;gap:14px' },
+                h('p', {
+                  class: 'note',
+                  text: 'Left: the pilot, coupler and steps on the body, as on the prototype (this pilot). Right: the same pieces turning with the trucks, as you described. Same poses.',
+                }),
+                variants
+                  .filter((v) => /switch|curve/.test(v.id))
+                  .map((v) =>
+                    h(
+                      'div',
+                      { class: 'pair' },
+                      h(
+                        'figure',
+                        {},
+                        h('img', { src: v.new, alt: `Gear on the body, ${v.label}`, loading: 'lazy' }),
+                        h('figcaption', {}, h('b', { text: 'On the body' }), h('span', { text: v.label })),
+                      ),
+                      h(
+                        'figure',
+                        {},
+                        h('img', { src: v.variant, alt: `Gear on the trucks, ${v.label}`, loading: 'lazy' }),
+                        h('figcaption', {}, h('b', { text: 'On the trucks' }), h('span', { text: v.label })),
+                      ),
+                    ),
+                  ),
+              )
+            : it.kind === 'hill'
+            ? h(
+                'div',
+                { style: 'display:grid;gap:14px' },
+                s.hills.map((hl) =>
+                  pairFig(hl.current, hl.new, `standing on a climb, zoom ${hl.zoom}`, hl.p1, s.prev_label),
+                ),
+              )
+            : pairFig(it.current, it.new, `${it.label}, behind a procedural ${s.wagon}`, it.p1, s.prev_label),
+      );
+    };
+    const variants = s.scenarios.filter((it) => it.variant);
+    const items = [
+      ...s.scenarios,
+      ...(variants.length ? [{ label: 'Gear on trucks', kind: 'variant' }] : []),
+      { label: 'All 48 headings', kind: 'headings' },
+      { label: 'Hill climb', kind: 'hill' },
+    ];
+    showScen(items[0]);
+    return h(
+      'section',
+      { class: 'panel', id: s.id },
+      h(
+        'div',
+        { class: 'head' },
+        h(
+          'div',
+          { class: 'who' },
+          h('span', { class: 'label', text: `${s.plan} · ${s.tiles?.[0] ?? ''} tile${s.tiles?.[0] > 1 ? 's' : ''}` }),
+          h('h2', { text: s.name }),
+          h('p', { class: 'note', text: s.blurb }),
+        ),
+        verdictBox(s.id),
+      ),
+      h(
+        'dl',
+        { class: 'facts' },
+        facts.map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v }))),
+      ),
+      h(
+        'div',
+        { class: 'colour' },
+        h(
+          'figure',
+          {},
+          h('img', {
+            src: s.colour_img,
+            alt: `${s.name}: source image, new facing-0 sprite${c.poc_palette ? ', rejected proof of concept' : ''}`,
+            loading: 'lazy',
+          }),
+          h('figcaption', {
+            text: `Source · new sprite at facing 0 (4× texture)${c.poc_palette ? ' · rejected proof of concept' : ''}`,
+          }),
+        ),
+        h(
+          'div',
+          { class: 'swatches' },
+          h('span', { class: 'label', text: 'Five-colour palettes' }),
+          swatches('Source', c.source_palette, c.source_share),
+          swatches('New', c.new_palette, c.new_share, `ΔE ${fmt(c.delta_e_mean, 1)}`),
+          c.poc_palette ? swatches('POC', c.poc_palette, c.poc_share, `ΔE ${fmt(c.poc_delta_e_mean, 1)}`) : null,
+          s.warnings.length ? h('p', { class: 'note warn', text: s.warnings.join(' · ') }) : null,
+        ),
+      ),
+      tabs(items, showScen),
+      view,
+    );
+  }
+
+  function bogie(b) {
+    return h(
+      'div',
+      { class: 'bogie', id: `bogie-${b.style}` },
+      h(
+        'div',
+        { class: 'head' },
+        h(
+          'div',
+          { class: 'who' },
+          h('h3', { text: `bogie_${b.style} · ${b.axles} axles` }),
+          h('p', { class: 'note', text: `Rides under ${b.rides_under}.` }),
+          h('p', { class: 'note', text: b.note }),
+        ),
+        verdictBox(`bogie-${b.style}`),
+      ),
+      flipFig(b.current, b.new, `bogie ${b.style}, all 48 headings`),
+    );
+  }
+
+  const jump = $('#jump');
+  jump.append(
+    h('a', { href: '#decisions' }, h('span', { class: 'dot', 'data-dot': 'none' }), 'Decisions'),
+    ...DATA.subjects.map((s) =>
+      h('a', { href: `#${s.id}` }, h('span', { class: 'dot', 'data-dot': s.id }), s.name),
+    ),
+    h('a', { href: '#bogies' }, h('span', { class: 'dot', 'data-dot': 'none' }), 'Bogies'),
+    h('a', { href: '#status' }, h('span', { class: 'dot', 'data-dot': 'none' }), 'Status'),
+  );
+  $('#questions').append(
+    ...QUESTIONS.map((q) =>
+      h(
+        'div',
+        { class: 'q' },
+        h(
+          'div',
+          {},
+          h('h3', { text: q.title }),
+          ...q.body.map((t) => h('p', { class: 'note', text: t })),
+          h('p', { text: q.rec }),
+        ),
+        verdictBox(q.id),
+      ),
+    ),
+  );
+  $('#subjects').append(...DATA.subjects.map(subject));
+  $('#bogielist').append(...DATA.bogies.map(bogie));
+  for (const id of QUESTIONS.map((q) => q.id))
+    for (const b of controls.get(id).btns) {
+      if (b.dataset.v === 'approve') b.textContent = 'Agree';
+      if (b.dataset.v === 'changes') b.textContent = 'Other (note)';
+      if (b.dataset.v === 'reject') b.textContent = 'Disagree';
+    }
+
+  (async () => {
+    try {
+      db = await window.claude?.use?.('db');
+    } catch {
+      db = null;
+    }
+    if (!db) return;
+    db.collection('verdicts').onSnapshot(
+      (snap) => {
+        for (const d of snap.docs) {
+          verdicts.set(d.id, d.data());
+          paint(d.id);
+        }
+      },
+      () => {},
+    );
+  })();
+</script>

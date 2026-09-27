@@ -499,6 +499,131 @@
       "ax": 95,
       "ay": 131,
       "asset": "rocket"
+    },
+    "rolling/loco_sd40_body_f0": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f1": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f13": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f14": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f15": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f16": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f17": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f18": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f19": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f2": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f20": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f21": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f22": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f23": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f24": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f25": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f26": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f27": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f28": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f29": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f3": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f30": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f4": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f5": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f6": {
+      "ax": 291,
+      "ay": 283,
+      "asset": "sd40"
     }
   },
   "partial": true,

@@ -4,7 +4,12 @@
 import { launch, baseURL } from '../runtime.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
-const consists = process.argv.slice(2).map((a) => a.split(':').map((s) => s.split('+')));
+// --high-speed lays the climb in high-speed track (large stock may use nothing else)
+const cls = process.argv.includes('--high-speed') ? 'high_speed' : 'regular';
+const consists = process.argv
+  .slice(2)
+  .filter((a) => !a.startsWith('--'))
+  .map((a) => a.split(':').map((s) => s.split('+')));
 const out = 'scratchpad/train-models/renders/hills';
 mkdirSync(out, { recursive: true });
 const browser = await launch();
@@ -26,12 +31,12 @@ try {
   });
   for (const [locos, wagons = []] of consists) {
     const run = await page.evaluate(
-      ([l, w]) => {
-        const r = hills.standOnClimb(worldReview.g, l, w);
+      ([l, w, c]) => {
+        const r = hills.standOnClimb(worldReview.g, l, w, c);
         worldReview.g.world.animate(0);
         return r;
       },
-      [locos, wagons],
+      [locos, wagons, cls],
     );
     for (const zoom of [2, 4]) {
       for (const which of ['new', 'current']) {

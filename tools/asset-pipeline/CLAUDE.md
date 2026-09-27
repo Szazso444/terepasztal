@@ -126,8 +126,10 @@ the seen ones. The generated texture drifts (the Rocket's yellow went olive); th
   back into the body where the cut left daylight above smaller built wheels: they stay rigid with the body.
 - Per-train bogies (`bogies` in `landmarks.json`) are rendered in the vehicle's own run as extra sprite sets (part
   `bogie-<style>`, exported as `rolling/bogie_<style>_f<f>`): from a spec (round wheels at measured axles) or from the
-  model's own truck (`mesh` box, source-coloured), optionally with built `wheels`. Each is drawn at its truck's centre;
-  the log gives the `bogieDraw` offset from its pivot for `src/data`. `baked` running gear (a steam engine's coupled
+  model's own truck (`mesh` box, source-coloured, squared up to the rails), optionally with built `wheels`. They hang at
+  their pivot (`at = "pivot"`, the game's mechanism); coupled steam wheels use `at = "image"` and the log gives the
+  `bogieDraw` offset for `src/data`. `attach` boxes move end gear the prototype hangs on its running gear
+  (`docs/end-gear.md`) from the body onto that bogie. `baked` running gear (a steam engine's coupled
   wheels and rods, a rigid tender's axles) is built into the body sprite instead.
 - Bogies with `image = parametric` are built from `bogies.json` in the game frame, pivot at the origin: steam coupled
   wheels shrink until they clear each other at the measured, compressed spacing; diesel trucks keep near-real wheels at
@@ -142,8 +144,9 @@ carries `"resolution"` (one per group, `tools/pack-atlas.mjs` copies it from `ar
 
 ## In-game review
 `scratchpad/train-models/`: `capture.mjs` (loop with switch, curves, reversal, a 48-heading sheet per vehicle, bogie
-sheets on their rails, new against the current procedural look at the same pose) and `hills.mjs` (a consist standing on a
-climb in the generated review world). Renders land in `scratchpad/train-models/renders/`.
+sheets on their rails, new against the current procedural look at the same pose; `--cls high_speed` lays a high-speed
+loop for large stock) and `hills.mjs` (a consist standing on a climb in the generated review world; `--high-speed`).
+Renders land in `scratchpad/train-models/renders/`; `build_review.py <out> <pilot>` builds a review page.
 
 ## Game frames
 - `game_frame` in `assets.csv` is the frame key the asset replaces; empty = the asset stays out of the game.

@@ -29,21 +29,23 @@ to slice or bend a rigid casing.
    distance. The renderer's facing correction preserves the vehicle's orientation. Retreats
    preview their reversed trail and reserve a complete route before committing that reversal.
 
-## Rendered stock (train models pilot 2, pending approval)
+## Rendered stock (train models pilot 3, pending approval)
 
-7. Coupled driving wheels are rigid in a real locomotive frame, so rendered rigid-frame steam engines
-   draw them, with their rods, splashers and frames, as part of the body sprite. The body's centring
-   on the track keeps them on the rails near the middle of the body. Only what swivels on the
-   prototype is a bogie sprite: the leading bogie, the trailing axle, a tender's trucks. A rigid tender
-   draws its axles with its body (`bogieStyle` `"none"` there). Articulated engine units (Big Boy,
-   Garratt) keep swivelling.
+7. Trucks and bogies hang at the simulation's pivots, as rules 1-3 say: the body rests on them through
+   switches and curves. A rigid-frame steam engine's coupled wheels are the one group drawn away from a
+   pivot: they take the rear pivot's bogie slot and are drawn on the rail where the prototype has them,
+   so they follow the track under the boiler. The leading truck hangs at the front pivot; trailing
+   wheels next to the rear pivot, splashers, frames and a rigid tender's axles are drawn with their body
+   (`bogieStyle` `"none"` for such a tender).
 8. Bogie sprites are per train (`rolling/bogie_<id>_<position>_f<n>`), rendered in the same run as the
-   body; the shared family styles remain for stock not yet rendered. Parts a prototype hangs on its
-   bogie go on that sprite; pilots and snowplows fixed to the body frame stay on the body.
+   body; the shared family styles remain for stock not yet rendered. End gear goes where the prototype
+   mounts it (`docs/end-gear.md`): on the body for North American diesels, rigid-frame engines and most
+   European locomotives; on the running gear, turning with it, for the Crocodile, GG1, Garratt and the
+   Big Boy's front unit.
 9. `bogieDraw` (per vehicle, tiles along the track from each pivot, + towards the vehicle's front)
-   draws a bogie sprite where the prototype has its truck. The sprite sits on the rail at that point
-   with the rail's own tangent there (`BogiePose.drawX/drawY/drawAngle`); the pivot, the body pose
-   and every curve verdict are unchanged.
+   draws a bogie sprite elsewhere on the track: on the rail at that point with the rail's own tangent
+   there (`BogiePose.drawX/drawY/drawAngle`). The pivot, the body pose and every curve verdict are
+   unchanged. It is used for coupled wheels only (rule 7).
 
 ## Verification
 

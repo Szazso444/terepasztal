@@ -33,7 +33,7 @@ function findClimb(g) {
 }
 
 let run = null;
-export function layClimb(g) {
+export function layClimb(g, cls = 'regular') {
   if (run) return run;
   run = findClimb(g);
   if (!run) throw new Error('No climbable hill line found');
@@ -41,7 +41,7 @@ export function layClimb(g) {
   for (let i = 0; i < run.len; i++) {
     const x = run.x0 + i;
     for (const r of [0, 1]) {
-      if (!g.builder.placeTrackKind(x, run.y, 'straight', r)) continue;
+      if (!g.builder.placeTrack(x, run.y, { kind: 'straight', cls, cls2: cls }, r)) continue;
       const link = g.track.get(x, run.y).links[0];
       if (link.includes(1) && link.includes(3)) {
         laid++;
@@ -59,8 +59,8 @@ export function layClimb(g) {
 }
 
 let base = null;
-export function standOnClimb(g, locoIds, wagonIds) {
-  const r = layClimb(g);
+export function standOnClimb(g, locoIds, wagonIds, cls = 'regular') {
+  const r = layClimb(g, cls);
   // the review world's own train stays (its scene checks it on every render)
   base ??= [...g.fleet.trains];
   for (const old of g.fleet.trains) if (!base.includes(old)) g.trainRenderer.remove(old.id);
@@ -80,6 +80,8 @@ export function standOnClimb(g, locoIds, wagonIds) {
     cargo: null,
     amount: 0,
   }));
+  if (cls === 'high_speed') for (const l of t.locos) l.inCab = true;
+  if (!t.access.classes.has(cls)) throw new Error(`${locoIds} may not run on ${cls} track`);
   if (!t.spawnAt(g.track, r.head, r.y, 3)) throw new Error('Train spawn on the climb failed');
   g.fleet.trains = [...base, t];
   const p = t.vehiclePoses[0];

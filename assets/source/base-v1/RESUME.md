@@ -1,5 +1,21 @@
 # Asset generation checkpoint
 
+## Train models pilot 3 (2026-09-26; latest)
+
+User on pilot 2: F7 model and body angles good; F7 drifted off the track at the switch exit (conform to
+the pivot mechanism); bogies must be parallel to the rails too; FS drivers belong where the user drew
+(under the boiler, on the rail); end gear per prototype (research); SD40-2 = large, 2 trucks,
+high-speed only. Pilot 3: https://claude.ai/artifact/5m1ujki1p7B8S2qRERbqNL (verdicts collection;
+local `G:/DEV/Terepasztal/renders/train-models-pilot-3/`, source `scratchpad/train-models/review-3/`).
+
+- F7: trucks back at the sim pivots (no bogieDraw), truck meshes squared up (<=1.1 deg), pilot/coupler on
+  the body per research; variant B (gear on trucks) captured for comparison (`renders/f7b`).
+- FS: drivers bogie on the rear pivot slot drawn +0.42 tiles on the rail (bogieDraw); leading at pivot;
+  trailing axle, splashers, frames with the body.
+- SD40-2: src/data size large, plan rigid, bogies 2; own trucks at the 0.58 pivots; high-speed loop in
+  the fixture (in-cab fitted). Research table: `docs/end-gear.md`.
+- Next: user's verdicts; then roster batches (diesels/electrics first).
+
 ## Train models pilot 2 (2026-09-26; latest)
 
 User feedback on pilot 1: Rocket approved (concept), colour and overall size approved. Asked for: FS

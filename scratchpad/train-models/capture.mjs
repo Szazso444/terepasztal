@@ -7,6 +7,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 
 const [name, ...rest] = process.argv.slice(2);
 const opt = {
+  cls: 'regular',
   locos: name,
   wagons: '',
   zoom: '3',
@@ -26,7 +27,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(
-    `${baseURL('after')}/scratchpad/train-models/?locos=${opt.locos}&wagons=${opt.wagons}`,
+    `${baseURL('after')}/scratchpad/train-models/?locos=${opt.locos}&wagons=${opt.wagons}&cls=${opt.cls}`,
   );
   await page.waitForFunction(() => typeof window.qa?.advanceTo === 'function', null, {
     timeout: 120000,
@@ -41,15 +42,26 @@ try {
     }
   };
   if (opt.loop !== 'no') {
-    for (const [arc, scenario] of [
-      [2, '01-straight'],
-      [6.45, '02-switch-enter'],
-      [6.9, '03-switch-middle'],
-      [7.5, '04-switch-leave'],
-      [16.7, '05-curve'],
-      [26.5, '06-curve'],
-      [36.25, '07-curve'],
-    ]) {
+    // the regular loop's poses; a high-speed loop reports where its switch and curves are
+    const marks = await page.evaluate(() => qa.marks);
+    const poses = marks
+      ? [
+          [2, '01-straight'],
+          [marks.switch + 0.5, '02-switch-enter'],
+          [marks.switch + 1.6, '03-switch-middle'],
+          [marks.switch + 3.2, '04-switch-leave'],
+          ...marks.curves.map((c, k) => [c + 1.2, `0${5 + k}-curve`]),
+        ]
+      : [
+          [2, '01-straight'],
+          [6.45, '02-switch-enter'],
+          [6.9, '03-switch-middle'],
+          [7.5, '04-switch-leave'],
+          [16.7, '05-curve'],
+          [26.5, '06-curve'],
+          [36.25, '07-curve'],
+        ];
+    for (const [arc, scenario] of poses) {
       report.scenarios.push(await page.evaluate(([a, s]) => qa.advanceTo(a, s), [arc, scenario]));
       await both(scenario);
     }

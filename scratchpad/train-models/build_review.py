@@ -31,13 +31,17 @@ def jpg(src: Path, name: str, width=None):
     return f"img/{name}"
 
 
-def previous(name):
-    """A pilot 1 picture, copied in beside this pilot's, when there is one."""
-    src = PREV / name
+PREV_OF = {}  # subject -> (the earlier review's image folder, its label)
+
+
+def previous(name, sid=None):
+    """The earlier pilot's picture, copied in beside this pilot's, when there is one."""
+    folder, _ = PREV_OF.get(sid, (PREV, "Pilot 1"))
+    src = folder / name
     if PILOT == 1 or not src.exists():
         return None
-    (IMG / f"p1-{name}").write_bytes(src.read_bytes())
-    return f"img/p1-{name}"
+    (IMG / f"prev-{name}").write_bytes(src.read_bytes())
+    return f"img/prev-{name}"
 
 
 def roof_vs_rails(meta, part):
@@ -69,6 +73,25 @@ if PILOT == 1:
         ("f7", "EMD F7 (extra)", "steel_coach", "Not in the pilot order; rendered so the Blomberg trucks can be judged under a real body.", None),
     ]
     BOGIES = [(s, "bogies") for s in ("blomberg", "htc", "leading", "pacific", "uk_tender_pair")]
+elif PILOT == 3:
+    P2 = HERE / "review-2" / "img"
+    PREV_OF = {"flying_scotsman": (P2, "Pilot 2"), "f7": (P2, "Pilot 2"), "sd40": (PREV, "Pilot 1")}
+    SUBJECTS = [
+        ("flying_scotsman", "Flying Scotsman", "steel_coach",
+         "The coupled wheels are a bogie again, drawn on the rail where the image has them (your blue line): they "
+         "take the rear pivot's slot and follow the track there. The leading bogie hangs at its pivot; the trailing "
+         "axle, splashers, frames and buffer beam stay with the body, as on the prototype.", None),
+        ("f7", "EMD F7", "steel_coach",
+         "Trucks back on the game's pivots, so the body rests on them through switches and curves, and squared up "
+         "with the body. The pilot, coupler and steps stay on the body, where the prototype has them; the tab "
+         "'Gear on trucks' shows your variant at the same poses.", "body"),
+        ("sd40", "EMD SD40-2", "steel_coach",
+         "Now a three-tile body with two HT-C trucks (src/data: large, two bogies), so it runs on high-speed track "
+         "only; filmed on a high-speed loop. Its own trucks sit at the large-body pivots, nearer the middle; pilots, "
+         "steps and fuel tank stay on the body.", "body"),
+    ]
+    BOGIES = [(s, "bogies3") for s in ("flying_scotsman_leading", "flying_scotsman_drivers", "f7_front", "f7_rear",
+                                       "sd40_front", "sd40_rear")]
 else:
     SUBJECTS = [
         ("rocket", "Stephenson's Rocket", "wooden_coach", "Approved in pilot 1 and unchanged: the same frames.", None),
@@ -91,23 +114,25 @@ for sid, name, wagon, blurb, roof_part in SUBJECTS:
     parts = [{"part": r["part"], "final_dims_m": r["final_dims_m"], "compression": r["compression"],
               "gear": r.get("gear")} for r in meta["renders"]]
     scen = [{"id": k, "label": lab, "current": jpg(R / sid / f"{k}-current.png", f"{sid}-{k}-current.jpg"),
-             "new": jpg(R / sid / f"{k}-new.png", f"{sid}-{k}-new.jpg"), "p1": previous(f"{sid}-{k}-new.jpg")}
+             "new": jpg(R / sid / f"{k}-new.png", f"{sid}-{k}-new.jpg"), "p1": previous(f"{sid}-{k}-new.jpg", sid),
+             "variant": (jpg(R / f"{sid}b" / f"{k}-new.png", f"{sid}b-{k}-new.jpg")
+                         if PILOT == 3 and (R / f"{sid}b" / f"{k}-new.png").exists() else None)}
             for k, lab in SCENARIOS]
     head = {w: jpg(R / sid / f"headings-{sid}-{w}.png", f"{sid}-headings-{w}.jpg", width=1800)
             for w in ("current", "new")}
-    head["p1"] = previous(f"{sid}-headings-new.jpg")
+    head["p1"] = previous(f"{sid}-headings-new.jpg", sid)
     hills = []
-    for z in (2, 4):
+    for z in (2, 4) if (R / "hills" / f"{sid}-z2-new.png").exists() else ():
         hl = {"zoom": z, **{w: jpg(R / "hills" / f"{sid}-z{z}-{w}.png", f"{sid}-hill-z{z}-{w}.jpg")
                             for w in ("current", "new")}}
-        hl["p1"] = previous(f"{sid}-hill-z{z}-new.jpg")
+        hl["p1"] = previous(f"{sid}-hill-z{z}-new.jpg", sid)
         hills.append(hl)
     roof = roof_vs_rails(meta, roof_part) if roof_part and PILOT > 1 else None
     subjects.append({
         "id": sid, "name": name, "wagon": wagon, "blurb": blurb, "plan": meta["plan"], "tiles": meta["tiles"],
         "scale_ref": meta["scale_ref"], "real_dims_m": meta["real_dims_m"], "width_fix": meta.get("width_fix"),
         "parts": parts, "warnings": meta["warnings"], "source": meta.get("source"), "align": meta.get("align"),
-        "roof_vs_rails": roof,
+        "roof_vs_rails": roof, "prev_label": PREV_OF.get(sid, (None, "Pilot 1"))[1],
         "colour": colour[sid], "colour_img": f"img/colour-{sid}.jpg",
         "reversal_error": rep.get("reversalError"), "facings_covered": len(rep.get("facingsCovered") or []),
         "errors": len(rep.get("errors") or []), "scenarios": scen, "headings": head, "hills": hills,

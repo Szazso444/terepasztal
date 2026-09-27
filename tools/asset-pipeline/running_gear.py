@@ -279,6 +279,40 @@ def skirts(name, items, tile_m, shading):
     return b.finish()
 
 
+def square_up(ob, x_mid, z_mid, max_deg=8.0):
+    """Turn a truck taken from the model so its side frames run along X and level: a reconstructed
+    truck is often a few degrees askew of its body. Yaw: the narrowest turn across; pitch: the
+    principal axis in side view. Returns the two corrections in degrees."""
+    me = ob.data
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    V = co.reshape(-1, 3)
+    c = V.mean(0)
+
+    def width(th):
+        y = math.sin(th) * (V[:, 0] - c[0]) + math.cos(th) * (V[:, 1] - c[1])
+        return float(np.subtract(*np.percentile(y, [97, 3])))
+
+    ths = np.radians(np.arange(-max_deg, max_deg + 1e-9, 0.1))
+    th = float(ths[int(np.argmin([width(t) for t in ths]))])
+    ct, st = math.cos(th), math.sin(th)
+    x, y = V[:, 0] - c[0], V[:, 1] - c[1]
+    V[:, 0], V[:, 1] = c[0] + ct * x - st * y, c[1] + st * x + ct * y
+    XZ = np.stack([V[:, 0] - c[0], V[:, 2] - c[2]], 1)
+    w_, v_ = np.linalg.eigh(np.cov(XZ.T))
+    ax = v_[:, int(np.argmax(w_))]
+    ax = ax if ax[0] > 0 else -ax
+    tilt = math.atan2(ax[1], ax[0])
+    if abs(tilt) > math.radians(max_deg):
+        tilt = 0.0
+    ca, sa = math.cos(tilt), math.sin(tilt)
+    x, z = V[:, 0] - c[0], V[:, 2] - c[2]
+    V[:, 0], V[:, 2] = c[0] + ca * x + sa * z, c[2] - sa * x + ca * z
+    me.vertices.foreach_set("co", V.ravel())
+    me.update()
+    return math.degrees(th), math.degrees(tilt)
+
+
 def keep_box(ob, x0, x1, z_top):
     """Keep only ob's faces whose centre lies between x0 and x1 and below z_top (all across)."""
     me = ob.data
@@ -358,7 +392,7 @@ def bogie(name, spec, tile_m, colors, shading):
     def D(ax):  # wheel diameter in the game frame: given (d_f) or real times scale
         return ax.get("d_f", ax.get("d", 0) * s)
 
-    for ax in axles:
+    for ax in axles if spec.get("wheels", True) else []:
         r = D(ax) / 2
         for side in (-1, 1):
             wheel(b, X(ax["x"]), r, side * g, side, w, spokes=ax.get("spokes", 0))

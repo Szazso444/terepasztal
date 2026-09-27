@@ -789,7 +789,7 @@ def main():
             xmid = (x_hi + x_lo) / 2
             final_x = {wr["w"]["name"]: cx * (wr["x"] - xmid) for wr in wheels_real if x_lo <= wr["x"] <= x_hi}
             train_bogies = [tb for tb in lm.get("bogies", []) if tb["part"] == pname]
-            chunks = {}
+            chunks, attached = {}, {}
             for tb in train_bogies:
                 if tb.get("mesh"):
                     ch = ob.copy()
@@ -798,8 +798,22 @@ def main():
                     bpy.context.scene.collection.objects.link(ch)
                     xs_ = [xf / cx + xmid for xf in tb["mesh"]["x"]]
                     n_keep = running_gear.keep_box(ch, min(xs_), max(xs_), zg + tb["mesh"]["top"])
+                    dyaw, dpitch = running_gear.square_up(ch, (min(xs_) + max(xs_)) / 2, zg)
                     chunks[tb["style"]] = ch
-                    log(f"{pname}: bogie {tb['style']} keeps {n_keep} faces of the model's own truck")
+                    log(f"{pname}: bogie {tb['style']} keeps {n_keep} faces of the model's own truck, "
+                        f"squared up by yaw {dyaw:+.2f}, pitch {dpitch:+.2f} deg")
+                for at in tb.get("attach", []):
+                    # end gear the prototype hangs on this bogie (a Crocodile's or GG1's frame ends):
+                    # it leaves the body and turns with the bogie, kept where it is relative to the pivot
+                    ch2 = ob.copy()
+                    ch2.data = ob.data.copy()
+                    ch2.name = f"attach_{tb['style']}"
+                    bpy.context.scene.collection.objects.link(ch2)
+                    xs2 = [xf / cx + xmid for xf in at["x"]]
+                    running_gear.keep_box(ch2, min(xs2), max(xs2), zg + at["top"])
+                    attached.setdefault(tb["style"], []).append(ch2)
+                    n_at = running_gear.cut_box(ob, min(xs2), max(xs2), zg + at["top"])
+                    log(f"{pname}: {n_at} faces of end gear go with bogie {tb['style']} ({at.get('note', '')})")
             for cw in [c_ for c_ in lm.get("cut_wheels", []) if c_["part"] == pname]:
                 # coupled wheels baked into the body replace the model's own: outboard of the frames only
                 half_w = (hi_r[1] - lo_r[1]) / 2
@@ -867,7 +881,10 @@ def main():
                 c = (float(np.mean([final_x[n] for n in tb["centre"]])) if isinstance(tb["centre"], list)
                      else float(tb["centre"]))
                 pivot_m = piv[tb["index"]] * tile
-                draw = (c - pivot_m) / tile
+                # where the sprite is drawn: at its pivot (the game's own mechanism, bogieDraw 0) or,
+                # with at = "image", where the source has the group (bogieDraw = that offset)
+                draw_img = (c - pivot_m) / tile
+                draw = draw_img if tb.get("at", "pivot") == "image" else 0.0
                 T_ = Matrix.Translation(Vector((-c, 0, 0)))
                 b_extras = []
                 if tb["style"] in chunks:
@@ -890,6 +907,10 @@ def main():
                                              tile, wcol, shading)
                     b_extras.append((wob, Matrix.Identity(4)))
                     scene_objs.append(wob)
+                for ch2 in attached.get(tb["style"], []):
+                    # relative to the pivot the sprite is drawn at, not to the truck's own centre
+                    b_extras.append((ch2, Matrix.Translation(Vector((-(pivot_m + draw * tile), 0, 0))) @ M))
+                    scene_objs.append(ch2)
                 blo, bhi = local_bounds(bob, BM)
                 for eob, EM in b_extras:
                     elo, ehi = local_bounds(eob, EM)
@@ -899,8 +920,10 @@ def main():
                                 "comp": comp, "tiles": None, "extras": b_extras,
                                 "footprint_m": [float(bhi[0] - blo[0]), float(bhi[1] - blo[1])],
                                 "gear": [{"style": tb["style"], "pivot_tiles": round(piv[tb["index"]], 4),
-                                          "centre_m": round(c, 3), "draw_tiles": round(draw, 4)}]})
-                log(f"{pname}: bogie {tb['style']} at {c:+.3f} m, pivot {pivot_m:+.3f} m -> bogieDraw {draw:+.4f} tiles")
+                                          "centre_m": round(c, 3), "draw_tiles": round(draw, 4),
+                                          "image_offset_tiles": round(draw_img, 4)}]})
+                log(f"{pname}: bogie {tb['style']} centred {c:+.3f} m in the image, pivot {pivot_m:+.3f} m -> "
+                    f"bogieDraw {draw:+.4f} tiles ({'at the image position' if draw else 'at its pivot'})")
             log(f"{part or cat}: {length:.2f} m, compression {comp.round(3).tolist()}, "
                 f"final dims {(phi - plo).round(2).tolist()} m")
         tiles = [size_tiles, 1] if size_tiles else None

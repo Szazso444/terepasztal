@@ -3,6 +3,7 @@
 // public/assets/rolling.json and wagons.json supply, so the same pose shows the current procedural
 // look; nothing else changes between the two.
 //   ?locos=flying_scotsman&wagons=steel_coach,steel_coach
+//   &cls=high_speed lays a high-speed loop (2x2 curves and switch) for large stock
 import { Game } from '/src/game.ts';
 import { emptyMap } from '/src/world/mapgen.ts';
 import { levelFromMap } from '/src/world/level.ts';
@@ -21,6 +22,7 @@ import {
   ROTATION_SHARE,
 } from '/src/sim/body.ts';
 import { bogieFrame } from '/src/art/frames.ts';
+import { findPath } from '/src/world/pathfinding.ts';
 import { depthKey } from '/src/engine/iso.ts';
 import { Graphics, Sprite } from 'pixi.js';
 
@@ -30,6 +32,7 @@ const check = (condition, message) => {
 const params = new URLSearchParams(location.search);
 const locoIds = (params.get('locos') ?? 'rocket').split(',').filter(Boolean);
 const wagonIds = (params.get('wagons') ?? 'wooden_coach').split(',').filter(Boolean);
+const cls = params.get('cls') ?? 'regular';
 const label = document.getElementById('qa-label');
 
 const level = levelFromMap(emptyMap(7412, 64, 64), 'Train model review');
@@ -67,42 +70,69 @@ function useNew(on) {
   render();
 }
 
-// the loop: straights both ways, four regular curves, a switch on the top line and a spur
+// the loop: straights both ways, four curves, a switch on the top line and a spur
 const add = (x, y, kind, rot) => {
-  for (const q of g.track.place(x, y, kind, rot, 'regular')) g.onTrackChanged(q.x, q.y);
+  for (const q of g.track.place(x, y, kind, rot, cls)) g.onTrackChanged(q.x, q.y);
 };
-for (let x = 21; x < 30; x++) {
-  add(x, 20, x === 26 ? 'switch' : 'straight', 1);
-  add(x, 30, 'straight', 1);
-}
-for (let y = 21; y < 30; y++) {
-  add(20, y, 'straight', 0);
-  add(30, y, 'straight', 0);
-}
-add(20, 20, 'curve', 1);
-add(30, 20, 'switch', 2);
-add(30, 30, 'curve', 3);
-add(20, 30, 'curve', 0);
-for (let y = 17; y < 20; y++) add(30, y, 'straight', 0);
-for (let y = 21; y < 24; y++) add(26, y, 'straight', 0);
 const seg = (x, y, inn, out) => ({ x, y, in: inn, out });
-const route = [];
-for (let x = 24; x < 30; x++) route.push(seg(x, 20, 3, 1));
-route.push(seg(30, 20, 3, 2));
-for (let y = 21; y < 30; y++) route.push(seg(30, y, 0, 2));
-route.push(seg(30, 30, 0, 3));
-for (let x = 29; x > 20; x--) route.push(seg(x, 30, 1, 3));
-route.push(seg(20, 30, 1, 0));
-for (let y = 29; y > 20; y--) route.push(seg(20, y, 2, 0));
-route.push(seg(20, 20, 2, 1));
-for (let x = 21; x <= 24; x++) route.push(seg(x, 20, 3, 1));
-g.track.resolveRoutes(route);
-g.builder.placeStation(25, 19, 'station', 0);
-g.builder.placeDecor(23, 17, 'townhouse', 0);
-g.people.persons = [25, 27].map((x, i) => ({
+let route = [];
+let spawn = { x: 24, y: 20 };
+let marks = null;
+if (cls === 'regular') {
+  for (let x = 21; x < 30; x++) {
+    add(x, 20, x === 26 ? 'switch' : 'straight', 1);
+    add(x, 30, 'straight', 1);
+  }
+  for (let y = 21; y < 30; y++) {
+    add(20, y, 'straight', 0);
+    add(30, y, 'straight', 0);
+  }
+  add(20, 20, 'curve', 1);
+  add(30, 20, 'switch', 2);
+  add(30, 30, 'curve', 3);
+  add(20, 30, 'curve', 0);
+  for (let y = 17; y < 20; y++) add(30, y, 'straight', 0);
+  for (let y = 21; y < 24; y++) add(26, y, 'straight', 0);
+  for (let x = 24; x < 30; x++) route.push(seg(x, 20, 3, 1));
+  route.push(seg(30, 20, 3, 2));
+  for (let y = 21; y < 30; y++) route.push(seg(30, y, 0, 2));
+  route.push(seg(30, 30, 0, 3));
+  for (let x = 29; x > 20; x--) route.push(seg(x, 30, 1, 3));
+  route.push(seg(20, 30, 1, 0));
+  for (let y = 29; y > 20; y--) route.push(seg(20, y, 2, 0));
+  route.push(seg(20, 20, 2, 1));
+  for (let x = 21; x <= 24; x++) route.push(seg(x, 20, 3, 1));
+  g.track.resolveRoutes(route);
+} else {
+  // 2x2 corners anchored at their top-left tile (curve 1 top-left, 2 top-right, 3 bottom-right,
+  // 0 bottom-left) and a 2x2 switch on the top line whose branch runs south as a spur
+  const X0 = 16,
+    X1 = 44,
+    Y0 = 18,
+    Y1 = 38,
+    SW = 30;
+  for (let x = X0 + 2; x <= X1 - 2; x++) {
+    if (x !== SW && x !== SW + 1) add(x, Y0, 'straight', 1);
+    add(x, Y1, 'straight', 1);
+  }
+  add(SW, Y0, 'switch', 1);
+  for (let y = Y0 + 2; y < Y0 + 6; y++) add(SW, y, 'straight', 0);
+  for (let y = Y0 + 2; y <= Y1 - 2; y++) {
+    add(X0, y, 'straight', 0);
+    add(X1, y, 'straight', 0);
+  }
+  add(X0, Y0, 'curve', 1);
+  add(X1 - 1, Y0, 'curve', 2);
+  add(X1 - 1, Y1 - 1, 'curve', 3);
+  add(X0, Y1 - 1, 'curve', 0);
+  spawn = { x: X0 + 8, y: Y0 };
+}
+g.builder.placeStation(spawn.x + 1, spawn.y - 1, 'station', 0);
+g.builder.placeDecor(spawn.x - 1, spawn.y - 3, 'townhouse', 0);
+g.people.persons = [spawn.x + 1, spawn.x + 3].map((x, i) => ({
   id: 99001 + i,
   x,
-  y: 19,
+  y: spawn.y - 1,
   home: 'qa',
   outfit: i * 2,
   state: 'idle',
@@ -142,6 +172,8 @@ function reset() {
     'unknown loco in ' + locoIds,
   );
   t = new Train(locos, 'Review', 80001);
+  // high-speed track needs in-cab signalling: fitted, as a player would for this line
+  if (cls === 'high_speed') for (const l of t.locos) l.inCab = true;
   t.wagons = wagonIds.map((id, i) => ({
     uid: 80101 + i,
     def: content.wagons.find((d) => d.id === id),
@@ -153,8 +185,36 @@ function reset() {
     t.wagons.every((w) => w.def),
     'unknown wagon in ' + wagonIds,
   );
-  check(t.access.classes.has('regular'), locoIds + ' may not run on regular track');
-  check(t.spawnAt(g.track, 24, 20, 3), 'spawn failed');
+  check(t.access.classes.has(cls), `${locoIds} may not run on ${cls} track`);
+  check(t.spawnAt(g.track, spawn.x, spawn.y, 3), 'spawn failed');
+  if (cls !== 'regular' && !route.length) {
+    // once round the loop, found by the game's own pathfinder
+    route = findPath(
+      g.track,
+      { x: spawn.x, y: spawn.y, in: 3 },
+      (x, y) => x === spawn.x - 1 && y === spawn.y,
+      1e6,
+      undefined,
+      t.canUse,
+    );
+    check(route, 'no route round the high-speed loop');
+    route.push(seg(spawn.x, spawn.y, 3, 1));
+    g.track.resolveRoutes(route);
+    // scenario marks along it: the switch, then the first three curves
+    marks = { curves: [] };
+    let arc = 0;
+    let lastUnit = null;
+    for (const s of route) {
+      const piece = g.track.get(s.x, s.y);
+      const len = g.track.segGeom(s.x, s.y, s.in, s.out, s.route).len ?? 1;
+      const unit = piece.unit ? `${piece.unit.ax},${piece.unit.ay}` : null;
+      if (piece.kind === 'switch' && marks.switch == null) marks.switch = arc;
+      if (piece.kind === 'curve' && unit !== lastUnit && marks.curves.length < 3)
+        marks.curves.push(arc + len);
+      lastUnit = unit;
+      arc += len;
+    }
+  }
   t.coal = t.coalCap;
   t.water = t.waterCap;
   t.oil = t.oilCap;
@@ -353,5 +413,8 @@ window.qa = {
   },
   get facings() {
     return [...facings].sort((a, b) => a - b);
+  },
+  get marks() {
+    return marks;
   },
 };
