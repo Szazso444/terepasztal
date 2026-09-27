@@ -5,3 +5,6 @@ dist
 
 # agent worktrees
 .claude/worktrees/
+
+# raw in-game captures (reproducible; the review keeps JPEG copies)
+scratchpad/train-models/renders/
