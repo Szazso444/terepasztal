@@ -1,5 +1,5 @@
 {
- "_doc": "Measured on the source crop the model was conditioned on (models_raw/<id>.source.png, 1024 px). Pixel coords (x right, y down). wheels: name, hub_px = the hub (or axle box) centre, rim_px = points on the tyre's outer edge; the blender stage back-projects them onto the mesh for axle positions and diameters, levels the chassis on the wheel bottoms and puts the rail plane under them. Small stock gets round wheels built there (spokes, colours from color_px boxes [x0, y0, x1, y1]); medium and large stock records them for its bogie sprites. nose_px: a pixel on the nose, which decides which end is +X. scale: a real dimension between two named wheels (a coupled or truck wheelbase) sets the model's scale instead of length_m. inner_y: share of the model's half width inside which its own faces survive when its wheels are cut away. Without scale, a vehicle is scaled by height_m (assets.csv, height over the rail), then length_m. cut_boxes: [{part, x: [x0, x1] final metres from the part's centre (+ towards the nose), top: metres above the rail}] - everything of the model inside goes (all across): its own running gear, which the game draws as bogie sprites beneath the body. rail: \"lowest\" puts the rail plane at the mesh's lowest point instead of under the measured wheels. skirts: [{part, x: [x0, x1], bottom, top, inset (m inboard of the rail), color}] - dark inboard frame plates built into the body sprite (final metres), filling what a cut box took between the running plate and the smaller built wheels, so it stays rigid with the body instead of swinging with a bogie sprite.",
+ "_doc": "Measured on the source crop the model was conditioned on (models_raw/<id>.source.png, 1024 px), pixel coords (x right, y down). wheels: name, hub_px (hub or axle box centre), rim_px (tyre edge points); back-projected onto the mesh for axle positions and diameters. nose_px: a pixel on the nose (+X). scale: a real distance between two named wheels sets the scale instead of height_m. level: 'wheels' levels the chassis on the measured wheel bottoms, 'body' (default above one tile) on the body itself (narrowest yaw, principal axis in side view). rail: 'lowest' puts the rail plane at the mesh's lowest point instead of under the wheels. color_px: boxes [x0, y0, x1, y1] whose median colour paints built wheels (small stock). inner_y: share of the half width inside which the model survives when its wheels are cut. Final-frame entries (metres from the part's centre, + towards the nose; heights above the rail): cut_boxes remove the model's running gear below top; cut_wheels remove named wheels outboard of inner_y; baked builds running gear rigid with the body sprite (a bogies.json-style spec, axles may name a measured wheel); bogies are the train's own bogie sprites, rolling/bogie_<style>_f<f>: bogie index of the part hangs at its pivot and is drawn at centre (named wheels' mean), from a spec or from the model's own truck (mesh box); the pipeline logs the bogieDraw offset src/data needs. detaper: parts whose box body is made equally wide along its length (the source's perspective leaves the near end wider).",
  "rocket": {
   "scale": {
    "between": [
@@ -79,7 +79,8 @@
     838
    ]
   },
-  "inner_y": 0.72
+  "inner_y": 0.72,
+  "level": "wheels"
  },
  "flying_scotsman": {
   "nose_px": [
@@ -171,6 +172,58 @@
       731
      ]
     ]
+   },
+   {
+    "name": "tr",
+    "hub_px": [
+     334,
+     554
+    ],
+    "rim_px": [
+     [
+      347,
+      582
+     ]
+    ]
+   },
+   {
+    "name": "t1",
+    "hub_px": [
+     110,
+     445
+    ],
+    "rim_px": [
+     [
+      117,
+      475
+     ]
+    ]
+   },
+   {
+    "name": "t2",
+    "hub_px": [
+     169,
+     472
+    ],
+    "rim_px": [
+     [
+      180,
+      505
+     ]
+    ]
+   },
+   {
+    "name": "t3",
+    "hub_px": [
+     232,
+     504
+    ],
+    "rim_px": [
+     [
+      245,
+      535
+     ]
+    ]
    }
   ],
   "cut_boxes": [
@@ -181,7 +234,7 @@
      -2.35
     ],
     "top": 1.55,
-    "note": "trailing axle under the cab, below the cab sides"
+    "note": "trailing axle under the cab: its own bogie sprite"
    },
    {
     "part": "engine",
@@ -190,7 +243,7 @@
      1.85
     ],
     "top": 1.97,
-    "note": "coupled wheels, rods and frames up to the running plate"
+    "note": "the model's coupled wheels, rods and frames up to the running plate: rebuilt round, with frames, and baked into the body"
    },
    {
     "part": "engine",
@@ -199,7 +252,7 @@
      3.3
     ],
     "top": 0.8,
-    "note": "leading bogie, below the cylinders"
+    "note": "leading bogie, below the cylinders: its own bogie sprite"
    },
    {
     "part": "tender",
@@ -208,17 +261,334 @@
      2.5
     ],
     "top": 0.78,
-    "note": "wheels below the tender's outside frame"
+    "note": "the tender's wheels below its outside frame; rebuilt round"
+   }
+  ],
+  "baked": [
+   {
+    "part": "engine",
+    "note": "coupled wheels are rigid in the frame: drawn with the body, so they stay under their splashers on every curve. 2.03 m drivers x 0.61 clear each other at the compressed spacing",
+    "spec": {
+     "scale": 0.61,
+     "colors": {
+      "tyre": [
+       150,
+       146,
+       135
+      ],
+      "wheel": [
+       52,
+       82,
+       56
+      ],
+      "hub": [
+       60,
+       64,
+       62
+      ],
+      "rod": [
+       176,
+       170,
+       156
+      ],
+      "detail": [
+       46,
+       49,
+       49
+      ],
+      "frame": [
+       30,
+       32,
+       34
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ],
+      "splasher": [
+       60,
+       82,
+       57
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "d3",
+       "d": 2.03,
+       "spokes": 20,
+       "driver": true
+      },
+      {
+       "wheel": "d2",
+       "d": 2.03,
+       "spokes": 20,
+       "driver": true
+      },
+      {
+       "wheel": "d1",
+       "d": 2.03,
+       "spokes": 20,
+       "driver": true
+      }
+     ],
+     "boxes": {
+      "w": 0.3,
+      "h": 0.36,
+      "out": 0.08
+     },
+     "rods": {
+      "crank": 0.33,
+      "crank_deg": -35,
+      "connect": 1,
+      "crosshead": {
+       "x": 1.75,
+       "z_f": 1.15,
+       "bar": 0.8
+      }
+     },
+     "splashers": {
+      "out": 0.3,
+      "gap": 0.05,
+      "thick": 0.06
+     }
+    }
+   },
+   {
+    "part": "tender",
+    "note": "a rigid six-wheel tender: its axles are drawn with the tender body",
+    "spec": {
+     "scale": 1.0,
+     "colors": {
+      "tyre": [
+       150,
+       146,
+       135
+      ],
+      "wheel": [
+       52,
+       82,
+       56
+      ],
+      "hub": [
+       60,
+       64,
+       62
+      ],
+      "rod": [
+       176,
+       170,
+       156
+      ],
+      "detail": [
+       46,
+       49,
+       49
+      ],
+      "frame": [
+       30,
+       32,
+       34
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "t3",
+       "d": 1.27,
+       "spokes": 12
+      },
+      {
+       "wheel": "t2",
+       "d": 1.27,
+       "spokes": 12
+      },
+      {
+       "wheel": "t1",
+       "d": 1.27,
+       "spokes": 12
+      }
+     ]
+    }
+   }
+  ],
+  "bogies": [
+   {
+    "style": "flying_scotsman_leading",
+    "part": "engine",
+    "index": 0,
+    "centre": [
+     "l1",
+     "l2"
+    ],
+    "spec": {
+     "scale": 0.61,
+     "colors": {
+      "tyre": [
+       150,
+       146,
+       135
+      ],
+      "wheel": [
+       52,
+       82,
+       56
+      ],
+      "hub": [
+       60,
+       64,
+       62
+      ],
+      "rod": [
+       176,
+       170,
+       156
+      ],
+      "detail": [
+       46,
+       49,
+       49
+      ],
+      "frame": [
+       30,
+       32,
+       34
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "l2",
+       "d": 0.97,
+       "spokes": 10
+      },
+      {
+       "wheel": "l1",
+       "d": 0.97,
+       "spokes": 10
+      }
+     ],
+     "frame": {
+      "type": "plate_inside",
+      "x0": -0.85,
+      "x1": 0.85,
+      "bottom_f": 0.18,
+      "top_f": 0.62,
+      "inset": 0.3,
+      "cross": [
+       0.0
+      ]
+     },
+     "boxes": {
+      "w": 0.36,
+      "h": 0.4,
+      "out": 0.12
+     },
+     "springs": {
+      "leaf": [
+       [
+        0.4125,
+        0.95,
+        0.8
+       ],
+       [
+        -0.4125,
+        0.95,
+        0.8
+       ]
+      ],
+      "out": 0.12
+     }
+    }
+   },
+   {
+    "style": "flying_scotsman_trailing",
+    "part": "engine",
+    "index": 1,
+    "centre": [
+     "tr"
+    ],
+    "spec": {
+     "scale": 0.61,
+     "colors": {
+      "tyre": [
+       150,
+       146,
+       135
+      ],
+      "wheel": [
+       52,
+       82,
+       56
+      ],
+      "hub": [
+       60,
+       64,
+       62
+      ],
+      "rod": [
+       176,
+       170,
+       156
+      ],
+      "detail": [
+       46,
+       49,
+       49
+      ],
+      "frame": [
+       30,
+       32,
+       34
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "tr",
+       "d": 1.12,
+       "spokes": 12
+      }
+     ],
+     "frame": {
+      "type": "plate_inside",
+      "x0": -0.55,
+      "x1": 0.55,
+      "bottom_f": 0.2,
+      "top_f": 0.6,
+      "inset": 0.3,
+      "cross": [
+       0.0
+      ]
+     },
+     "boxes": {
+      "w": 0.34,
+      "h": 0.36,
+      "out": 0.12
+     }
+    }
    }
   ],
   "skirts": [
    {
     "part": "engine",
     "x": [
-     -3.35,
-     1.9
+     -2.35,
+     1.85
     ],
-    "bottom": 1.22,
+    "bottom": 1.0,
     "top": 1.99,
     "inset": 0.3,
     "color": [
@@ -226,7 +596,16 @@
      32,
      34
     ],
-    "note": "A3 frames between the coupled wheels (tops at 1.24 m) and the running plate (1.97 m)"
+    "note": "the frames between the wheels up to the running plate, rigid with the body",
+    "valance": {
+     "height": 0.24,
+     "out": 0.4,
+     "color": [
+      58,
+      86,
+      58
+     ]
+    }
    }
   ]
  },
@@ -401,21 +780,58 @@
    {
     "part": "body",
     "x": [
-     -6.0,
+     -5.2,
      -1.95
     ],
     "top": 1.3,
-    "note": "rear Blomberg truck, the source's and the game's pivot's"
+    "note": "rear truck: its own bogie sprite"
    },
    {
     "part": "body",
     "x": [
-     1.95,
-     5.9
+     1.7,
+     4.75
     ],
     "top": 1.3,
-    "note": "front truck, below the skirt; the pilot stays"
+    "note": "front truck: its own bogie sprite; the pilot stays on the body"
    }
+  ],
+  "bogies": [
+   {
+    "style": "f7_front",
+    "part": "body",
+    "index": 0,
+    "centre": [
+     "f1",
+     "f2"
+    ],
+    "mesh": {
+     "x": [
+      1.7,
+      4.75
+     ],
+     "top": 1.3
+    }
+   },
+   {
+    "style": "f7_rear",
+    "part": "body",
+    "index": 1,
+    "centre": [
+     "r1",
+     "r2"
+    ],
+    "mesh": {
+     "x": [
+      -5.2,
+      -1.95
+     ],
+     "top": 1.3
+    }
+   }
+  ],
+  "detaper": [
+   "body"
   ]
  }
 }

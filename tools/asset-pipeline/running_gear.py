@@ -124,9 +124,15 @@ class Builder:
         for q in idx:
             self._face([pts[i] for i in q], key)
 
-    def tube(self, c, r_out, r_in, y0, y1, key, n=48, key_face=None):
-        """Annulus between radii, axis along Y from y0 to y1, centred at c (x, z)."""
+    def tube(self, c, r_out, r_in, y0, y1, key, n=48, key_face=None, arc=None):
+        """Annulus between radii, axis along Y from y0 to y1, centred at c (x, z); arc = (a0, a1) radians
+        builds only that part of it (a splasher over the top of a wheel)."""
         x0, z0 = c
+        if arc:
+            a0, a1 = arc
+            m = max(2, int(n * (a1 - a0) / (2 * math.pi)))
+            ang = [a0 + (a1 - a0) * i / m for i in range(m + 1)]
+            return self._arc(x0, z0, r_out, r_in, y0, y1, key, ang)
         ang = [2 * math.pi * i / n for i in range(n)]
         ring = lambda r, y: [Vector((x0 + r * math.cos(a), y, z0 + r * math.sin(a))) for a in ang]
         oa, ob = ring(r_out, y0), ring(r_out, y1)
@@ -144,6 +150,16 @@ class Builder:
         else:
             self._face(list(reversed(oa)), fk)
             self._face(ob, fk)
+
+    def _arc(self, x0, z0, r_out, r_in, y0, y1, key, ang):
+        ring = lambda r, y: [Vector((x0 + r * math.cos(a), y, z0 + r * math.sin(a))) for a in ang]
+        oa, ob, ia, ib = ring(r_out, y0), ring(r_out, y1), ring(r_in, y0), ring(r_in, y1)
+        for i in range(len(ang) - 1):
+            j = i + 1
+            self._face([oa[i], oa[j], ob[j], ob[i]], key)
+            self._face([ia[j], ia[i], ib[i], ib[j]], key)
+            self._face([oa[j], oa[i], ia[i], ia[j]], key)
+            self._face([ob[i], ob[j], ib[j], ib[i]], key)
 
     def post(self, c, r, z0, z1, key, n=16):
         """Upright cylinder (a coil spring, a hanger) at c = (x, y) from z0 to z1."""
@@ -252,7 +268,30 @@ def skirts(name, items, tile_m, shading):
             b.box(((x0 + x1) / 2, side * y, (it["bottom"] + it["top"]) / 2),
                   (x1 - x0, 0.08 * lat, it["top"] - it["bottom"]), f"k{i}")
         b.box(((x0 + x1) / 2, 0, it["top"] - 0.05), (x1 - x0, 2 * y, 0.1), f"k{i}")
+        if it.get("valance"):
+            # the running plate's painted edge, outboard, over the frames
+            v = it["valance"]
+            b.colors[f"v{i}"] = np.array(v["color"]) / 255
+            yv = g + v.get("out", 0.35) * lat
+            for side in (-1, 1):
+                b.box(((x0 + x1) / 2, side * yv, it["top"] - v["height"] / 2),
+                      (x1 - x0, 0.06 * lat, v["height"]), f"v{i}")
     return b.finish()
+
+
+def keep_box(ob, x0, x1, z_top):
+    """Keep only ob's faces whose centre lies between x0 and x1 and below z_top (all across)."""
+    me = ob.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    dead = [f for f in bm.faces
+            if not (x0 <= (c := f.calc_center_median()).x <= x1 and c.z < z_top)]
+    bmesh.ops.delete(bm, geom=dead, context="FACES")
+    bm.to_mesh(me)
+    bm.free()
+    if not me.polygons:
+        raise RuntimeError(f"{ob.name}: nothing of the model in x {x0:.2f}..{x1:.2f} below {z_top:.2f}")
+    return len(me.polygons)
 
 
 def cut_box(ob, x0, x1, z_top):
@@ -379,6 +418,15 @@ def bogie(name, spec, tile_m, colors, shading):
                     b.box((X(x), side * Y(sp.get("out", 0.2) + 0.03), (z + 0.045 * k) * s),
                           ((length - 0.25 * k) * sx, 0.1 * lat, 0.05 * s), "spring")
 
+    sp_ = spec.get("splashers")
+    if sp_:
+        # a curved cover over the top of each coupled wheel, outboard, up to the running plate
+        for ax in [a_ for a_ in axles if a_.get("driver")]:
+            r = D(ax) / 2
+            for side in (-1, 1):
+                ya, yb = side * Y(-0.05), side * Y(sp_.get("out", 0.12))
+                b.tube((X(ax["x"]), r), r + sp_.get("gap", 0.06) + sp_.get("thick", 0.07), r + sp_.get("gap", 0.06),
+                       min(ya, yb), max(ya, yb), "splasher", arc=(math.radians(15), math.radians(165)))
     rods = spec.get("rods")
     if rods:
         # coupled wheels: crank pins at the same angle, a coupling rod through them, a connecting rod

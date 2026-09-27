@@ -234,23 +234,45 @@ def apply_transfer(lut, c):
 
 
 # ---------------- main entry ----------------
-def reproject(obj, P_raw, source_path, mask_path, out_path, cfg):
-    """Replace obj's base colour texture with the source's colours where the source camera sees the
-    surface, and the colour-transferred generated texture elsewhere. obj must still carry its raw
-    (as imported) transform. Returns a report dict and the fitted SourceView."""
+def fit_view(P_raw, source_path, mask_path, cfg):
+    """Fit the source camera to the mesh (still in its raw, as-imported frame): the field of view whose
+    projection of the surface covers the source's mask best, and a depth buffer for visibility."""
     src = load_rgba(source_path)[..., :3]
     mask = load_rgba(mask_path)[..., 0] > 0.5
     if src.shape[:2] != mask.shape:
         raise RuntimeError(f"source {src.shape[:2]} and mask {mask.shape} differ")
-    res = mask.shape[0]
     fov, iou = fit_fov(P_raw, mask)
     log(f"source camera: fov {fov:.2f} deg, silhouette IoU {iou:.3f}")
     if iou < cfg.get("min_iou", 0.8):
         raise RuntimeError(f"source projection IoU {iou:.3f} < {cfg.get('min_iou', 0.8)}: "
                            "the mesh is not in the source's camera frame (not a Pixal3D mesh?)")
-    zbuf = zbuffer(P_raw, fov, res)
-    inner = erode(mask, int(cfg.get("mask_erode_px", 3)))
+    view = SourceView(fov, zbuffer(P_raw, fov, mask.shape[0]), src)
+    view.inner = erode(mask, int(cfg.get("mask_erode_px", 3)))
+    view.iou = iou
+    return view
 
+
+def seen_weight(view, P, N, cfg):
+    """How fully the source camera sees each surface point (0..1), and its source colour."""
+    res = view.res
+    u, v, d = project(P, view.fov, res)
+    x = np.clip(np.floor(u).astype(np.int64), 0, res - 1)
+    y = np.clip(np.floor(v).astype(np.int64), 0, res - 1)
+    to_cam = camera_position(view.fov)[None, :] - P
+    to_cam /= np.linalg.norm(to_cam, axis=1, keepdims=True)
+    facing = (N * to_cam).sum(1)
+    lo, hi = cfg.get("facing_ramp", [0.12, 0.4])
+    w = np.clip((facing - lo) / (hi - lo), 0, 1)
+    w *= (d <= view.zbuf[y, x] + cfg.get("depth_tol", 0.012)) & view.inner[y, x]
+    return w, bilinear(view.image, u, v)
+
+
+def reproject(obj, view, out_path, cfg, mirror=None):
+    """Replace obj's base colour texture with the source's colours where the source camera sees the
+    surface. A texel it cannot see takes the colour of its mirror twin across the vehicle's centre plane
+    when the camera sees that (rolling stock is left-right symmetric; mirror = the rotation from the raw
+    frame to the aligned one, whose y = const planes are the vehicle's sides), else the generated colour
+    mapped through a colour transfer fitted on the seen texels. obj must still carry its raw transform."""
     mat, tex_node = base_color_image(obj)
     img = tex_node.image
     size = img.size[0]
@@ -261,21 +283,21 @@ def reproject(obj, P_raw, source_path, mask_path, out_path, cfg):
     P = pos[..., :3].reshape(-1, 3)[baked]
     N = nrm[..., :3].reshape(-1, 3)[baked]
     N /= np.linalg.norm(N, axis=1, keepdims=True) + 1e-9
-    u, v, d = project(P, fov, res)
-    x = np.clip(np.floor(u).astype(np.int64), 0, res - 1)
-    y = np.clip(np.floor(v).astype(np.int64), 0, res - 1)
-    view = camera_position(fov)[None, :] - P
-    view /= np.linalg.norm(view, axis=1, keepdims=True)
-    facing = (N * view).sum(1)
-    lo, hi = cfg.get("facing_ramp", [0.12, 0.4])
-    w = np.clip((facing - lo) / (hi - lo), 0, 1)
-    w *= (d <= zbuf[y, x] + cfg.get("depth_tol", 0.012)) & inner[y, x]
-    seen = bilinear(src, u, v)
+    w, seen = seen_weight(view, P, N, cfg)
     g = gen[baked]
     train = w > 0.75
     lut = fit_transfer(g[train], seen[train], w[train])
     mapped = apply_transfer(lut, g)
-    out = w[:, None] * seen + (1 - w[:, None]) * mapped
+    hidden = mapped
+    wm = np.zeros(len(P))
+    if mirror is not None:
+        R = np.asarray(mirror)
+        Q, Qn = P @ R.T, N @ R.T
+        yc = float(np.mean(np.percentile(Q[:, 1], [2, 98])))
+        Q[:, 1], Qn[:, 1] = 2 * yc - Q[:, 1], -Qn[:, 1]
+        wm, seen_m = seen_weight(view, Q @ R, Qn @ R, cfg)
+        hidden = wm[:, None] * seen_m + (1 - wm[:, None]) * mapped
+    out = w[:, None] * seen + (1 - w[:, None]) * hidden
     full = gen.copy()
     full[baked] = out
     rgba = np.concatenate([full.reshape(size, size, 3), np.ones((size, size, 1), np.float32)], 2)
@@ -288,14 +310,15 @@ def reproject(obj, P_raw, source_path, mask_path, out_path, cfg):
     tex_node.image = new
     before = float(np.median(delta_e(g[train], seen[train])))
     after = float(np.median(delta_e(mapped[train], seen[train])))
-    report = {"fov_deg": round(fov, 3), "silhouette_iou": round(float(iou), 4),
+    mirrored = float(((1 - w) * wm > 0.5).mean())
+    report = {"fov_deg": round(view.fov, 3), "silhouette_iou": round(float(view.iou), 4),
               "texels": int(baked.sum()), "source_texels": int((w > 0.5).sum()),
-              "source_share": round(float((w > 0.5).mean()), 3),
+              "source_share": round(float((w > 0.5).mean()), 3), "mirrored_share": round(mirrored, 3),
               "median_delta_e_generated": round(before, 2), "median_delta_e_transferred": round(after, 2),
               "texture": str(out_path)}
-    log(f"source texture: {report['source_share']:.0%} of texels from the source; generated colours "
-        f"dE {before:.1f} -> {after:.1f} after transfer")
-    return report, SourceView(fov, zbuf, src)
+    log(f"source texture: {report['source_share']:.0%} of texels from the source, {mirrored:.0%} from their "
+        f"mirror twin; generated colours dE {before:.1f} -> {after:.1f} after transfer")
+    return report
 
 
 class SourceView:
@@ -304,6 +327,7 @@ class SourceView:
     def __init__(self, fov, zbuf, image):
         self.fov, self.zbuf, self.image = fov, zbuf, image
         self.res = zbuf.shape[0]
+        self.inner, self.iou = None, None
 
     def point(self, px, reach=6):
         """Raw-frame surface point under source pixel px = (x, y). A pixel on the outline (a tyre's

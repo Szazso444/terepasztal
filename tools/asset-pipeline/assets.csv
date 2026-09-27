@@ -3,7 +3,7 @@ station_victorian,input/station_victorian.png,building,1,22,,,auto,0,,,,,,struct
 #loco_example,input/loco_example.png,vehicle,2,18.9,3.0,4.3,auto,,rigid,,1.0,,,rolling/loco_electric_box_medium_red_{part}_f{f},Bo-Bo electric; clip_below_m drops its own bogies for the game's
 #tender_example,input/tender_example.png,vehicle,2,21.2,2.9,4.1,auto,,tender,,,,,rolling/loco_steam_std_medium_black_{part}_f{f},engine + tender: cut automatically; split_m (m from the nose) overrides
 # roster for ASTRA.md: remove the # once input/<file> exists
-rocket,../../assets/source/base-v1/loco-rocket.png,vehicle,1,4.3,,,auto,,rigid,,,,,rolling/loco_rocket_{part}_f{f},"scale: the 2.16 m wheelbase (landmarks.json); its built wheels set its width on the gauge (1.66 m over the wheels; the 1935 Science Museum replica is 1.78 m)"
+rocket,../../assets/source/base-v1/loco-rocket.png,vehicle,1,4.3,1.78,,auto,,rigid,,,,,rolling/loco_rocket_{part}_f{f},"approved 2026-09-26; scale: the 2.16 m wheelbase (landmarks.json), width 1.78 m as the 1935 Science Museum replica"
 #adler,input/adler.png,vehicle,1,,,,auto,,rigid,,,,,rolling/loco_adler_{part}_f{f},length_m: fill in (over buffers)
 #john_bull,input/john_bull.png,vehicle,1,,,,auto,,rigid,,,,,rolling/loco_john_bull_{part}_f{f},length_m: fill in (over buffers)
 #mav375,input/mav375.png,vehicle,1,,,,auto,,rigid,,,,,rolling/loco_mav375_{part}_f{f},length_m: fill in (over buffers)
@@ -69,7 +69,6 @@ bogie_uk_tender_pair,parametric,bogie,,3.8,,,auto,,,,,,0.75,rolling/bogie_uk_ten
 #bogie_uk_tender_axle,input/bogie_uk_tender_axle.png,bogie,,1.9,,,auto,,,,,,0.75,rolling/bogie_uk_tender_axle_f{f},"One fixed axle of a British rigid tender: outside frame, axlebox and leaf spring; rides under Black Five, 9F (rear)"
 #bogie_tender_truck,input/bogie_tender_truck.png,bogie,,2.8,,,auto,,,,,,0.65,rolling/bogie_tender_truck_f{f},"Two-axle tender bogie: plate or bar frame, small wheels; rides under DRG 01, K4s, MÁV 424"
 #bogie_tender_truck6,input/bogie_tender_truck6.png,bogie,,3.9,,,auto,,,,,,0.47,rolling/bogie_tender_truck6_f{f},"Three-axle tender truck, cast frame; rides under Daylight"
-bogie_blomberg,parametric,bogie,,3.8,,,auto,,,,,,1.0,rolling/bogie_blomberg_f{f},"EMD Blomberg B two-axle truck: cast frame, swing hangers, outside coil springs; rides under F7"
 bogie_htc,parametric,bogie,,4.6,,,auto,,,,,,0.75,rolling/bogie_htc_f{f},EMD HT-C three-axle truck; rides under SD40-2
 #bogie_emd_d,input/bogie_emd_d.png,bogie,,6.3,,,auto,,,,,,0.79,rolling/bogie_emd_d_f{f},Four-axle D truck of the Union Pacific DDA40X; rides under DDA40X
 #bogie_europe_b,input/bogie_europe_b.png,bogie,,3.9,,,auto,,,,,,0.78,rolling/bogie_europe_b_f{f},"Modern European two-axle locomotive bogie: welded frame, coil springs, disc wheels; rides under Taurus, Re 460, TGV and ICE 1 power cars"

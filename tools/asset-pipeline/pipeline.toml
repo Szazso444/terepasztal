@@ -52,6 +52,7 @@ compress_range = [0.35, 2.0]  # length factor outside this range aborts the run:
 stretch_max    = 1.25         # a short prototype (Rocket, 4.3 m in a 6.2 m slot) is stretched no further;
                               # it then stands shorter than its slot
 shadow         = false        # the game draws trains without ground shadows
+width_follows_length = true   # a body compressed along the track is narrowed by the same factor (body.ts DRAWN_WIDTH)
 max_dim_error  = 0.20         # width/height mismatch vs spec that triggers a warning
 
 [classes.bogie]

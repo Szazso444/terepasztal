@@ -113,8 +113,23 @@ describe('bogie roster', () => {
     .map((l) => /^#?bogie_[a-z0-9_]+,.*rolling\/bogie_([a-z0-9_]+)_f\{f\}/.exec(l)?.[1])
     .filter(Boolean);
 
-  it('has an image row for every bogie style a vehicle names', () => {
-    for (const name of named) expect(rows).toContain(name);
+  // a train's own bogies come out of its vehicle's run (landmarks.json), not from a row of their own
+  const landmarks = JSON.parse(readFileSync(new URL('./landmarks.json', import.meta.url), 'utf8'));
+  const own = Object.entries(landmarks).flatMap(([id, v]) =>
+    Array.isArray(v?.bogies) ? v.bogies.map((b) => ({ id, ...b })) : [],
+  );
+
+  it('has an image row or a vehicle of its own for every bogie style a vehicle names', () => {
+    for (const name of named) expect([...rows, ...own.map((b) => b.style)]).toContain(name);
+  });
+
+  it('names a train’s own bogies where the train hangs them', () => {
+    const vehicles = [...read('locomotives.json'), ...read('wagons.json')];
+    for (const b of own) {
+      const style = vehicles.find((d) => d.id === b.id)?.bogieStyle;
+      const list = typeof style === 'object' ? [style[b.part]].flat() : [style];
+      expect(list[Math.min(b.index, list.length - 1)], `${b.id} ${b.part} ${b.index}`).toBe(b.style);
+    }
   });
 
   it('asks for no bogie that no vehicle rides on', () => {

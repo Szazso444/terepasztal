@@ -105,6 +105,18 @@ the seen ones. The generated texture drifts (the Rocket's yellow went olive); th
   for axle positions and diameters), a nose pixel (which end is +X). The chassis is levelled on the wheel bottoms and the
   rail plane put under them (or at the mesh's lowest point, `rail = "lowest"`).
 
+## Alignment, proportions, symmetry
+- Medium and large bodies are aligned on themselves after the Manhattan pass (`level = "body"`, the default above
+  one tile): the yaw that makes the body band narrowest, and the pitch of its principal axis in side view. `detaper`
+  (per part in `landmarks.json`) makes a box body equally wide and tall along its length: a reconstruction keeps a
+  little of its source's perspective, which would leave the body's edges out of parallel with the rails.
+  `edge_check.py <out> <id>` measures the roof edge against the rails in every side view.
+- Width follows the length scale (`classes.vehicle.width_follows_length`): a body compressed along the track is
+  narrowed by the same factor before `DRAWN_WIDTH`, as `body.ts` defines it, so the image's proportions survive.
+  A short vehicle is never widened by its stretch.
+- Rolling stock is left-right symmetric: a texel the source camera cannot see takes the source colour of its mirror
+  twin across the centre plane when the camera sees that (`landmarks` `mirror: false` turns it off).
+
 ## Running gear
 - Reconstructed wheels come out uneven, soft and off gauge; none reach the game. Small stock (1 tile, no bogie sprites)
   gets round wheels built at the measured axles, diameters and colours, treads on the rails (+-0.16 tile), bottoms on the
@@ -112,6 +124,11 @@ the seen ones. The generated texture drifts (the Rocket's yellow went olive); th
 - Medium and large stock: `cut_boxes` remove the model's running gear (x from the part's centre, below `top`), since the
   game draws bogie sprites beneath the body and a body sprite always covers them. `skirts` put dark inboard frame plates
   back into the body where the cut left daylight above smaller built wheels: they stay rigid with the body.
+- Per-train bogies (`bogies` in `landmarks.json`) are rendered in the vehicle's own run as extra sprite sets (part
+  `bogie-<style>`, exported as `rolling/bogie_<style>_f<f>`): from a spec (round wheels at measured axles) or from the
+  model's own truck (`mesh` box, source-coloured), optionally with built `wheels`. Each is drawn at its truck's centre;
+  the log gives the `bogieDraw` offset from its pivot for `src/data`. `baked` running gear (a steam engine's coupled
+  wheels and rods, a rigid tender's axles) is built into the body sprite instead.
 - Bogies with `image = parametric` are built from `bogies.json` in the game frame, pivot at the origin: steam coupled
   wheels shrink until they clear each other at the measured, compressed spacing; diesel trucks keep near-real wheels at
   the source's spacing so they end inside the body. Colours come from boxes on the source crops. A group drawn far ahead

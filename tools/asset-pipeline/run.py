@@ -211,6 +211,9 @@ def main():
                        "source_cfg": cfg.get("source", {})}
                 if parametric:
                     job["bogie"] = bogies[aid.removeprefix("bogie_")]
+                proto = game_rules.prototype(a["game_frame"])
+                if proto:
+                    job["pivot_ratio"], job["bogies"] = proto.get("pivotRatio"), proto.get("bogies")
                 src, msk = glb.with_suffix(".source.png"), glb.with_suffix(".mask.png")
                 if cfg.get("source", {}).get("enabled", True) and src.exists() and msk.exists():
                     job["source"] = {"image": str(src), "mask": str(msk),

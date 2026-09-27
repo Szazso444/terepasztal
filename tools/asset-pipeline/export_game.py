@@ -93,7 +93,10 @@ def frames_for(asset: dict, info: dict):
     if asset["category"] in ("vehicle", "bogie"):
         if any(f.get("facing") is None for f in frames):
             raise GameExportError(f'rendered without game facings; set classes.{asset["category"]}.dirs = "game"')
-        return [(template.replace("{part}", f["part"] or "").replace("{f}", str(f["facing"])), f) for f in frames]
+        # a vehicle's own bogies (part "bogie-<style>") are the styles its bogieStyle names
+        return [((f"rolling/bogie_{f['part'][6:]}_f{f['facing']}" if (f["part"] or "").startswith("bogie-")
+                  else template.replace("{part}", f["part"] or "").replace("{f}", str(f["facing"]))), f)
+                for f in frames]
     if "{r}" in template:
         by_dir = {f["dir"]: f for f in frames}
         if 0 not in by_dir or 1 not in by_dir or by_dir[1]["yaw_deg"] != 90:
