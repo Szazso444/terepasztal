@@ -159,8 +159,9 @@ Chosen from the comparison in `scratchpad/hill-levels/renders/shape-*.jpg`
   line level, full snow a level above (4/5 by default, taiga 3/4, desert 5/6).
 - Shipped (round 3): `biomeTops`, mountain and rock ground between stones in the biome's own
   ground (desert sand, taiga moss).
-- Preview-only style flags: `shadows`; `summitMatch` (the summit sprites recoloured toward the
-  terrain rock and snow, 0..1, and lit with the height light); `paintedPeaks` (summits rise as ridged rock cones painted with the
+- Shipped (round 4): `summitMatch: 1`, the summit sprites recoloured to the terrain rock and snow
+  and lit with the height light of the level they stand on.
+- Preview-only style flags: `shadows`; `paintedPeaks` (summits rise as ridged rock cones painted with the
   terrain's rock and snow instead of the illustrated sprites). Soil skirts were dropped. Renders and the train climb at 1/4
   vs 1/8 levels: `scratchpad/hill-levels/renders/look-*.jpg`, `train-*.jpg`
   (`climb.mjs`), review page `scratchpad/hill-levels/review.html`.
