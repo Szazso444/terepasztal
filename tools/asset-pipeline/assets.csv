@@ -24,6 +24,7 @@ nine_f,../../assets/source/base-v1/loco-nine-f.png,vehicle,2,20.2,2.72,3.96,auto
 #class08,input/class08.png,vehicle,1,8.9,,,auto,,rigid,,,,,rolling/loco_class08_{part}_f{f},
 #m62,input/m62.png,vehicle,2,17.6,,,auto,,rigid,,1.0,,,rolling/loco_m62_{part}_f{f},
 f7,../../assets/source/base-v1/loco-f7.png,vehicle,2,15.4,3.25,4.57,auto,,rigid,,,,,rolling/loco_f7_{part}_f{f},
+f7_truck,../../assets/source/base-v1/loco-f7-truck.png,part,,,,,auto,,,,,,,,"the F7's truck on its own (REAR-VIEWS.md); replaces the model's own trucks (landmarks f7 bogies model)"
 sd40,../../assets/source/base-v1/loco-sd40.png,vehicle,3,20.9,3.12,4.72,auto,,rigid,,,,,rolling/loco_sd40_{part}_f{f},
 #deltic,input/deltic.png,vehicle,2,21.2,,,auto,,rigid,,1.0,,,rolling/loco_deltic_{part}_f{f},
 #dda40x,input/dda40x.png,vehicle,3,29.9,,,auto,,rigid,,1.0,,,rolling/loco_dda40x_{part}_f{f},

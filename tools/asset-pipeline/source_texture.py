@@ -219,6 +219,19 @@ def fit_transfer(src, dst, w, n=17, sigma=1.2):
     return (num + prior * mean) / (den + prior)[..., None]
 
 
+def match_levels(src, dst):
+    """Per channel, the straight line taking src's colour levels to dst's (5th to 95th percentiles): an
+    image drawn in the same palette is nudged, not remapped. It compares the two sets of colours as
+    wholes, so pixels that do not line up exactly between two images (a drawn detail a little off the
+    model) cannot teach it that grey should turn red, as a per-texel colour lookup would."""
+    q = [5, 25, 50, 75, 95]
+    return [np.polyfit(np.percentile(src[:, k], q), np.percentile(dst[:, k], q), 1) for k in range(3)]
+
+
+def apply_levels(fit, c):
+    return np.clip(np.stack([np.polyval(fit[k], c[:, k]) for k in range(3)], 1), 0, 1)
+
+
 def apply_transfer(lut, c):
     n = lut.shape[0]
     g = np.clip(c, 0, 1) * (n - 1)
@@ -303,9 +316,11 @@ class ExtraView:
     """A second source image of the same vehicle, e.g. a rear three-quarter view: its camera is not
     known, so it is found by fitting the mesh's silhouette to the image's alpha (azimuth, elevation,
     roll, scale and offset around the object, at the main camera's distance). Works in the aligned
-    frame (R: raw -> aligned rotation), z up."""
+    frame (R: raw -> aligned rotation), z up. A box-like vehicle has nearly the same outline from either
+    end, so the search stays within 60 degrees of `expect_az` (radians) when it is given: a rear view is
+    the source's camera turned 180 degrees round the vehicle."""
 
-    def __init__(self, path, P, R, fov, cfg, debug_path=None):
+    def __init__(self, path, P, R, fov, cfg, debug_path=None, expect_az=None):
         img = load_rgba(path)
         self.path, self.R, self.image = str(path), np.asarray(R), img[..., :3]
         mask = img[..., 3] > 0.5
@@ -320,7 +335,12 @@ class ExtraView:
         ys, xs = np.nonzero(small)
         box_m = np.array([xs.min(), ys.min(), xs.max() + 1, ys.max() + 1], float)
 
+        def off(theta):
+            return 0.0 if expect_az is None else abs((theta - expect_az + math.pi) % (2 * math.pi) - math.pi)
+
         def iou(pose, pts=sub, target=small):
+            if off(pose[0]) > math.radians(75):
+                return 0.0
             u, v, z = self._project(pts, pose)
             x, y = np.floor(u).astype(np.int64), np.floor(v).astype(np.int64)
             ok = (z > 0) & (x >= 0) & (x < target.shape[1]) & (y >= 0) & (y < target.shape[0])
@@ -337,7 +357,8 @@ class ExtraView:
                              (box_m[1] + box_m[3]) / 2 - sc * bv.mean()])
 
         cands = sorted(((iou(q), tuple(q)) for q in (framed(math.radians(t), math.radians(e))
-                                                        for t in range(0, 360, 10) for e in range(0, 61, 10))),
+                                                        for t in range(0, 360, 10) for e in range(0, 61, 10)
+                                                        if off(math.radians(t)) <= math.radians(60))),
                        reverse=True)[:3]
         best, score = None, -1.0
         for _, q in cands:
@@ -483,10 +504,10 @@ def reproject(obj, view, out_path, cfg, mirror=None, extras=()):
     for ev in extras:
         we, ce = ev.seen(P, N, cfg)
         both = train & (we > 0.75)
-        # the extra image's lighting and palette onto the source's, fitted where both see the surface
-        lut_e = fit_transfer(ce[both], seen[both], np.minimum(w, we)[both]) if both.sum() >= 500 else None
+        # the extra image's colour levels onto the source's, from the surface both see
+        lut_e = match_levels(ce[both], seen[both]) if both.sum() >= 500 else None
         luts.append(lut_e)
-        layers.append((f"extra:{Path(ev.path).name}", we, ce if lut_e is None else apply_transfer(lut_e, ce)))
+        layers.append((f"extra:{Path(ev.path).name}", we, ce if lut_e is None else apply_levels(lut_e, ce)))
         extra_rep.append({"image": ev.path, "silhouette_iou": round(float(ev.iou), 4),
                           "pose_deg": [round(math.degrees(a), 2) for a in ev.pose[:3]],
                           "colour_matched": lut_e is not None, "overlap_texels": int(both.sum())})
@@ -495,7 +516,7 @@ def reproject(obj, view, out_path, cfg, mirror=None, extras=()):
         layers.append(("mirror:source", wm, cm))
         for ev, lut_e in zip(extras, luts):
             wm, cm = ev.seen(Pm, Nm, cfg)
-            layers.append((f"mirror:extra:{Path(ev.path).name}", wm, cm if lut_e is None else apply_transfer(lut_e, cm)))
+            layers.append((f"mirror:extra:{Path(ev.path).name}", wm, cm if lut_e is None else apply_levels(lut_e, cm)))
     new = bpy.data.images.new(f"{obj.name}_source", size, size, alpha=True)
     new.colorspace_settings.name = "sRGB"
     new.filepath_raw = str(out_path)

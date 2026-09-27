@@ -70,8 +70,10 @@ def load_assets(csv_path: Path, only):
             except ValueError as e:
                 errors.append(f"line {ln} ({aid}): {e}")
                 continue
-            if cat not in ("vehicle", "building", "bogie"):
-                err.append("category must be vehicle|building|bogie")
+            if cat not in ("vehicle", "building", "bogie", "part"):
+                err.append("category must be vehicle|building|bogie|part")
+            if cat == "part" and a["game_frame"]:
+                err.append("a part is used inside a vehicle's run and has no game frame of its own")
             if cat in ("vehicle", "bogie") and not a["length_m"]:
                 err.append(f"{cat} needs length_m")
             if cat != "vehicle" and (a["plan"] or a["split_m"]):
@@ -201,6 +203,12 @@ def main():
                 if not img or not img.exists():
                     raise PipelineError(f"[{aid}] image not found: {img}")
                 comfy_client.run_asset(comfy, graph, aid, img, glb, cfg["comfy"])
+            if a["category"] == "part":
+                # reconstructed on its own, used inside the vehicle's run (landmarks bogies[].model)
+                summary["assets"][aid].update(status="ok", seconds=round(time.time() - t0, 1))
+                write_summary()
+                log.info(f"[{aid}] ok: a part, used by the vehicle that names it")
+                continue
             if "blender" in stages and (args.force or not meta_path.exists()):
                 if not parametric and not glb.exists():
                     raise PipelineError(f"[{aid}] no model at {glb}; run the comfy stage first")
@@ -220,6 +228,15 @@ def main():
                 views = [(HERE / v).resolve() for v in (landmarks.get(aid) or {}).get("views", [])]
                 views += [q for q in [img.with_name(f"{img.stem}-rear.png")] if q.exists() and q not in views]
                 job["views"] = [str(v) for v in views if v.exists()]
+                # pieces reconstructed from an image of their own (a truck), for this vehicle's bogies
+                job["parts"] = {}
+                for pid in {b["model"] for b in (landmarks.get(aid) or {}).get("bogies", []) if b.get("model")}:
+                    pglb = d["models_raw"] / f"{pid}.glb"
+                    if not pglb.exists():
+                        raise PipelineError(f"[{aid}] part {pid} has no model at {pglb}; run its comfy stage")
+                    job["parts"][pid] = {"glb": str(pglb), "source": {
+                        "image": str(pglb.with_suffix(".source.png")), "mask": str(pglb.with_suffix(".mask.png")),
+                        "texture": str(d["meta"] / f"{pid}_texture.png")}}
                 src, msk = glb.with_suffix(".source.png"), glb.with_suffix(".mask.png")
                 if cfg.get("source", {}).get("enabled", True) and src.exists() and msk.exists():
                     job["source"] = {"image": str(src), "mask": str(msk),

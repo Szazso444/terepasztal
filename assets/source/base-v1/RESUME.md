@@ -1,6 +1,15 @@
 # Asset generation checkpoint
 
-## Train models pilot 4 (2026-09-27; latest)
+## Train models pilot 5 (2026-09-27; latest)
+
+Codex generated the rear views (PR 22, merged into local/train-models): 40 accepted of 45, rejected the Big
+Boy, Garratt, Deltic and Mallard rear views and the SD40-2 truck. Pilot 5 paints the five pilot locomotives'
+rear ends from them (fit azimuth constrained to the turned camera: 3 of 5 first fitted end-for-end; colour
+levels matched per channel, a per-texel lookup had turned the F7's roof fans red) and rebuilds the F7's
+trucks from `loco-f7-truck.png` (part `f7_truck`). The F7's rear end gear was dropped: the reconstruction
+has only a wall there. Open: q5 questions, and the steam all-axles fit (front trucks swinging clear).
+
+## Train models pilot 4 (2026-09-27)
 
 User on pilot 3: FS still wrong ("real solutions"); F7 looked better in pilot 2 (trucks where the image has
 them), end gear hidden or not turning, a missing wheel, hidden parts plain brown (offered more pictures);
@@ -41,7 +50,7 @@ local `G:/DEV/Terepasztal/renders/train-models-pilot-3/`, source `scratchpad/tra
   the fixture (in-cab fitted). The end-gear research was dropped in pilot 4 (user rule instead).
 - Next: user's verdicts; then roster batches (diesels/electrics first).
 
-## Train models pilot 2 (2026-09-26; latest)
+## Train models pilot 2 (2026-09-26)
 
 User feedback on pilot 1: Rocket approved (concept), colour and overall size approved. Asked for: FS
 drivers that follow the body; bogies closer to the centre with room for pilots; SD40-2 is a 3-tile
@@ -62,7 +71,7 @@ local `G:/DEV/Terepasztal/renders/train-models-pilot-2/`, source `scratchpad/tra
   "EMD F7 is a good candidate, but yo..."; atlas budget; pilots on bogie vs body (answered: follow
   the prototype, pending confirmation).
 
-## Train models pilot: Rocket, Flying Scotsman, SD40, bogies (2026-09-26; latest)
+## Train models pilot: Rocket, Flying Scotsman, SD40, bogies (2026-09-26)
 
 Branch `local/train-models` (worktree `C:/Users/Zso/terepasztal-local`, from PR #20's head). Pipeline
 outputs (GLBs, meta, sprites) live in `G:/DEV/Terepasztal/pipeline-out` (`run.py --out`); large files

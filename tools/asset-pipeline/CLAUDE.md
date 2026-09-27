@@ -103,7 +103,8 @@ More images of the same vehicle colour what the source cannot see: `landmarks` `
 `<image>-rear.png` next to the source image, e.g. a rear three-quarter view on a transparent background. Each one's
 camera is found by fitting the aligned mesh's outline to its alpha (azimuth, elevation, roll, scale, offset;
 `source.extra_min_iou`, default 0.8, else skipped with a warning; `debug/<id>_view<n>.png` shows the image beside the
-fitted mesh, front green to rear blue). Its colours are matched to the source on the texels both see. Texels then take,
+fitted mesh, front green to rear blue). A box-like vehicle has nearly the same outline from either end, so a
+`-rear.png` view is searched only within 60 degrees of the source camera turned 180 degrees round the vehicle. Its colour levels are matched to the source's on the surface both see. Texels then take,
 in turn: the source, the extra views, the mirror twins of both, and finally (`source.hidden = "nearest"`, the default)
 the colours of the nearest seen surface. A truck, pilot or other piece cut out to turn with a truck refills its hidden
 texels from its own seen faces only, so a truck's top stays dark instead of taking the body side's red.
@@ -153,6 +154,10 @@ texels from its own seen faces only, so a truck's top stays dark instead of taki
   onto its truck, so it turns with it. `baked` running gear (a steam engine's coupled wheels and rods, a rigid tender's
   axles) is built into the body sprite instead; the log gives the coupled wheelbase's centre for `coupled` in
   `src/data` (rule 8).
+- A truck drawn on its own (`loco-<name>-truck.png`, REAR-VIEWS.md) is a `category = part` row (`f7_truck`):
+  reconstructed by the comfy stage only, then used in its vehicle's run where a bogie names it (`model`). It is painted
+  from its own image, its hidden side mirrored, turned with the vehicle's rotation (same camera, front to the lower
+  right), squared up, and scaled and placed onto the model's own truck (`mesh` box), which it replaces.
 - Bogies with `image = parametric` are built from `bogies.json` in the game frame, pivot at the origin: steam coupled
   wheels shrink until they clear each other at the measured, compressed spacing; diesel trucks keep near-real wheels at
   the source's spacing so they end inside the body. Colours come from boxes on the source crops. A group drawn far ahead

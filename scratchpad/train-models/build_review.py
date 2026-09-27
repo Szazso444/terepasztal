@@ -73,6 +73,23 @@ if PILOT == 1:
         ("f7", "EMD F7 (extra)", "steel_coach", "Not in the pilot order; rendered so the Blomberg trucks can be judged under a real body.", None),
     ]
     BOGIES = [(s, "bogies") for s in ("blomberg", "htc", "leading", "pacific", "uk_tender_pair")]
+elif PILOT == 5:
+    P4 = HERE / "review-4" / "img"
+    PREV_OF = {k: (P4, "Pilot 4") for k in ("flying_scotsman", "black_five", "nine_f", "f7", "sd40")}
+    SUBJECTS = [
+        ("f7", "EMD F7", "steel_coach",
+         "Rear end painted from its rear view: the door, gangway and coupler instead of a filled-in wall. Trucks "
+         "reconstructed from their own image, with the pilot, snowplow, coupler and steps turning with them.", "body"),
+        ("sd40", "EMD SD40-2", "steel_coach",
+         "The long-hood end painted from its rear view. Trucks unchanged (its truck image was rejected).", "body"),
+        ("flying_scotsman", "Flying Scotsman", "steel_coach",
+         "The tender's back painted from the rear view. Sim unchanged from pilot 4.", None),
+        ("black_five", "LMS Black Five", "steel_coach",
+         "The tender's back painted from the rear view. Sim unchanged from pilot 4.", None),
+        ("nine_f", "BR 9F", "steel_coach",
+         "The tender's back painted from the rear view. Sim unchanged from pilot 4.", None),
+    ]
+    BOGIES = [(s_, "bogies5") for s_ in ("f7_front", "f7_rear")]
 elif PILOT == 4:
     P2, P3 = HERE / "review-2" / "img", HERE / "review-3" / "img"
     PREV_OF = {"flying_scotsman": (P3, "Pilot 3"), "f7": (P2, "Pilot 2"), "sd40": (P3, "Pilot 3")}

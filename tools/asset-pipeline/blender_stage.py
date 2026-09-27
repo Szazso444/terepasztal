@@ -11,6 +11,7 @@ import math
 import os
 import sys
 import time
+from pathlib import Path
 
 import bpy
 import bmesh  # after bpy: the bpy module from pip only finds bmesh once bpy is loaded
@@ -200,6 +201,55 @@ def import_mesh(path):
         if o is not obj:
             bpy.data.objects.remove(o)
     return obj
+
+
+def load_part(spec, R, cfg, shading, painted):
+    """A piece reconstructed from an image of its own (a truck, REAR-VIEWS.md): imported beside the
+    vehicle, painted with its own image's colours, turned into the vehicle's aligned frame with the
+    vehicle's rotation (its image was drawn from the same camera, front to the lower right) and its
+    hidden side rebuilt as the mirror of the seen one. Unscaled; fit_part places it."""
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=spec["glb"])
+    new = [o for o in bpy.data.objects if o not in before]
+    meshes = [o for o in new if o.type == "MESH"]
+    if not meshes:
+        raise RuntimeError(f"no mesh in {spec['glb']}")
+    if len(meshes) > 1:
+        with bpy.context.temp_override(active_object=meshes[0], selected_editable_objects=meshes,
+                                       selected_objects=meshes):
+            bpy.ops.object.join()
+    pm = next(o for o in bpy.data.objects if o in set(meshes))
+    mw = pm.matrix_world.copy()
+    pm.parent = None
+    pm.matrix_world = mw
+    for o in new:
+        if o is not pm and o.name in bpy.data.objects:
+            bpy.data.objects.remove(o)
+    view = source_texture.fit_view(surface_points(pm, 1500000), spec["source"]["image"], spec["source"]["mask"], cfg)
+    source_texture.reproject(pm, view, spec["source"]["texture"], cfg, mirror=R)
+    if painted:
+        running_gear.repaint(pm, shading)
+    pm.data.transform(to4(np.asarray(R)) @ pm.matrix_world)
+    pm.matrix_world = Matrix.Identity(4)
+    Pa = surface_points(pm, 100000)
+    yc = float(np.mean(np.percentile(Pa[:, 1], [1, 99])))
+    cam_y = float((np.asarray(R) @ source_texture.camera_position(view.fov))[1])
+    running_gear.symmetrize(pm, yc, cam_y < yc)
+    return pm
+
+
+def fit_part(pm, target, zg):
+    """Scale and place a part onto the piece of the vehicle's own model it replaces: its length (and
+    height with it) and width to the target's, centred on it, standing on the rail plane zg."""
+    A, B = surface_points(target, 100000), surface_points(pm, 100000)
+    ta, tb = np.percentile(A, [2, 98], axis=0), np.percentile(B, [2, 98], axis=0)
+    s = (ta[1, 0] - ta[0, 0]) / (tb[1, 0] - tb[0, 0])
+    sy = (ta[1, 1] - ta[0, 1]) / (tb[1, 1] - tb[0, 1])
+    bottom = float(np.percentile(B[:, 2], 0.5))
+    pm.data.transform(Matrix.Translation(Vector((ta.mean(0)[0], ta.mean(0)[1], zg)))
+                      @ Matrix.Diagonal((s, sy, s, 1.0))
+                      @ Matrix.Translation(Vector((-tb.mean(0)[0], -tb.mean(0)[1], -bottom))))
+    return s, sy
 
 
 def surface_points(obj, n, seed=1):
@@ -624,13 +674,17 @@ def main():
         # the source's colours onto the texture, now that the vehicle's centre plane is known (the
         # side the source camera never saw takes its mirror twin's colours)
         extras = []
+        # a rear view is the source's camera turned 180 degrees round the vehicle (REAR-VIEWS.md)
+        cam = R @ (source_texture.camera_position(view.fov) - (P_src.min(0) + P_src.max(0)) / 2)
+        rear_az = math.atan2(cam[1], cam[0]) + math.pi
         for vp in job.get("views", []):
             # more images of the same vehicle (a rear three-quarter view): their cameras are fitted to
             # the aligned mesh's silhouette, and they colour what the source cannot see
             try:
                 extras.append(source_texture.ExtraView(
                     vp, P_src, R, view.fov, job.get("source_cfg") or {},
-                    debug_path=f"{job['debug_dir']}/{a['id']}_view{len(extras) + 1}.png"))
+                    debug_path=f"{job['debug_dir']}/{a['id']}_view{len(extras) + 1}.png",
+                    expect_az=rear_az if Path(vp).stem.endswith("-rear") else None))
             except RuntimeError as e:
                 warnings.append(f"extra view skipped: {e}")
         src_report = source_texture.reproject(obj, view, job["source"]["texture"], job.get("source_cfg") or {},
@@ -638,6 +692,11 @@ def main():
                                               extras=extras)
     if r.get("shading") == "painted":
         running_gear.repaint(obj, shading)
+    part_models = {pid: load_part(spec, R, job.get("source_cfg") or {}, shading, r.get("shading") == "painted")
+                   for pid, spec in (job.get("parts") or {}).items()}
+    for pid, pm in part_models.items():
+        pm.hide_render = True
+        log(f"part {pid}: reconstructed from its own image, painted and mirrored")
     V2 = V @ R.T
     lo, hi = V2.min(0), V2.max(0)
     dims = hi - lo
@@ -818,7 +877,7 @@ def main():
             xmid = (x_hi + x_lo) / 2
             final_x = {wr["w"]["name"]: cx * (wr["x"] - xmid) for wr in wheels_real if x_lo <= wr["x"] <= x_hi}
             train_bogies = [tb for tb in lm.get("bogies", []) if tb["part"] == pname]
-            chunks, attached = {}, {}
+            chunks, attached, own = {}, {}, {}
             for tb in train_bogies:
                 if tb.get("mesh"):
                     ch = ob.copy()
@@ -829,9 +888,23 @@ def main():
                     n_keep = running_gear.keep_box(ch, min(xs_), max(xs_), zg + tb["mesh"]["top"])
                     dyaw, dpitch = running_gear.square_up(ch, (min(xs_) + max(xs_)) / 2, zg)
                     running_gear.cull_backfaces(ch)
-                    chunks[tb["style"]] = ch
+                    chunks[tb["style"]] = own[tb["style"]] = ch
                     log(f"{pname}: bogie {tb['style']} keeps {n_keep} faces of the model's own truck, "
                         f"squared up by yaw {dyaw:+.2f}, pitch {dpitch:+.2f} deg")
+                    if tb.get("model"):
+                        # a truck reconstructed from its own image takes the place of the model's own
+                        src_pm = part_models[tb["model"]]
+                        pm = src_pm.copy()
+                        pm.data = src_pm.data.copy()
+                        pm.name = f"bogie_{tb['style']}_part"
+                        pm.hide_render = False
+                        bpy.context.scene.collection.objects.link(pm)
+                        sx, sy = fit_part(pm, ch, zg)
+                        ch.hide_render = True  # replaced; kept only to mark its texels
+                        dyaw, dpitch = running_gear.square_up(pm, (min(xs_) + max(xs_)) / 2, zg)
+                        chunks[tb["style"]] = pm
+                        log(f"{pname}: bogie {tb['style']} from part {tb['model']} (scaled {sx:.3f} along, "
+                            f"{sy:.3f} across, squared up by yaw {dyaw:+.2f}, pitch {dpitch:+.2f} deg)")
                 for at in tb.get("attach", []):
                     # end gear the prototype hangs on this bogie (a Crocodile's or GG1's frame ends):
                     # it leaves the body and turns with the bogie, kept where it is relative to the pivot
@@ -845,9 +918,9 @@ def main():
                     attached.setdefault(tb["style"], []).append(ch2)
                     n_at = running_gear.cut_box(ob, min(xs2), max(xs2), zg + at["top"])
                     log(f"{pname}: {n_at} faces of end gear go with bogie {tb['style']} ({at.get('note', '')})")
-            if view is not None and view.tex is not None and (chunks or attached):
+            if view is not None and view.tex is not None and (own or attached):
                 # hidden texels of each piece that turns with a truck take that piece's own seen colours
-                pieces = list(chunks.values()) + [c_ for cs in attached.values() for c_ in cs]
+                pieces = list(own.values()) + [c_ for cs in attached.values() for c_ in cs]
                 source_texture.fill_hidden(view, [source_texture.uv_cover(c_, view.tex["size"]) for c_ in pieces])
                 log(f"{pname}: hidden texels refilled per piece ({len(pieces)} pieces apart from the body)")
             for cw in [c_ for c_ in lm.get("cut_wheels", []) if c_["part"] == pname]:
