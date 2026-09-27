@@ -383,6 +383,8 @@ export class Landscape {
   summit(x: number, y: number) {
     if (this.failed || this.map.terrain[y * this.map.w + x] !== Terrain.Mountain) return false;
     this.updateHeights();
+    // Painted peaks rise out of the terrain itself.
+    if (this.relief.style.paintedPeaks) return false;
     if (Math.min(...reliefCorners(this.map, this.relief, x, y)) < this.relief.style.step)
       return false;
     const rank = hash2(x + this.map.originX, y + this.map.originY, this.map.seed + 601);

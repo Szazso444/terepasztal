@@ -123,6 +123,10 @@ self.onmessage = async (event: MessageEvent) => {
             wy,
             part,
             [0, 1, 3, 4, 7, 9].includes(material) ? steep : undefined,
+            // Pilot: the biome's own ground between the stones (desert sand, taiga moss...).
+            relief.style.biomeTops && map.biome[tileIndex] !== Biome.Ocean
+              ? map.biome[tileIndex]
+              : 0,
           );
           if (material === 5 || material === 8) waterWeight += weight;
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;

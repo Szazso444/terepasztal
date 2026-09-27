@@ -6,7 +6,15 @@ terrain painter (rail bed), the track renderer (piece meshes), the train rendere
 simulation (grade speed). It is recomputed from the whole track on every track or bridge change,
 so pieces conform automatically as neighbours are laid or removed.
 
-Only straight pieces along a tile axis climb. Every other piece needs a tile no bank reaches into.
+## Placement
+
+- Straights, crossings and class transitions may be placed on slopes and inclines.
+- Curves and switches, regular and high speed alike, need smooth tiles: no bank reaches into any
+  tile of their footprint.
+- Exception (pilot): a curve or switch may stand on a tile carried by a bridge platform. It then
+  sits at the deck, the highest level among its tiles and their neighbours.
+
+A crossing on a climb holds both lines level at its centre, so the two rails meet.
 
 ## Tile types along a line
 

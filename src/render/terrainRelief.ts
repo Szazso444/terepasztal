@@ -1,7 +1,7 @@
 import { Terrain } from '../world/tiles';
 import { hash2 } from '../engine/rng';
 import { tileLevels } from '../world/elevation';
-import { railLevel, type RailBed } from '../world/railProfile';
+import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import type { LandscapeMap } from './landscapeModel';
 
 export const RELIEF_STEP = 10;
@@ -31,12 +31,16 @@ export interface ReliefStyle {
   everyBankRock?: boolean;
   /** Preview: raised ground casts a soft shadow onto lower ground away from the light. */
   shadows?: boolean;
-  /** Preview: grass on a slope takes a tone apart from grass on the flat. */
+  /** Grass on a slope takes a tone apart from grass on the flat (shipped: shaded). */
   bankGrass?: { tone: 'dry' | 'dark' | 'lush'; amount: number };
-  /** Preview: each level above ground paints this much lighter; ground level is unchanged. */
+  /** Each level above ground paints this much lighter; ground level is unchanged (shipped 6%). */
   heightLight?: number;
-  /** Preview: snow patches on the biome's snow line level, full snow from the level above. */
+  /** Snow patches on the tile biome's snow line level, full snow from the level above. */
   snow?: boolean;
+  /** Preview: mountain and rock ground between stones is the biome's own ground, not grass. */
+  biomeTops?: boolean;
+  /** Preview: summits rise this many levels as painted rock instead of illustrated sprites. */
+  paintedPeaks?: number;
 }
 /**
  * The shipped style, approved 2026-09-27: terraces. Every hill tile is a level plateau at its own
@@ -52,6 +56,9 @@ export const DEFAULT_RELIEF: ReliefStyle = {
   shape: 'terraces',
   bank: 0.5,
   rims: true,
+  bankGrass: { tone: 'dark', amount: 1 },
+  heightLight: 0.06,
+  snow: true,
 };
 export interface TerrainRelief {
   /** Shared lattice: corner (x,y) is at tile coordinate (x-.5,y-.5). */
@@ -60,6 +67,8 @@ export interface TerrainRelief {
   style: ReliefStyle;
   /** Terraces only: the level of each tile. */
   tiles?: Uint8Array;
+  /** Terraces with painted peaks: summit tiles, each carrying a rock peak. */
+  peaks?: ReadonlySet<number>;
   /** Terraces only: straight track tiles and the rail profile over them; each carries a bed. */
   rails?: ReadonlyMap<number, RailBed>;
   /** Highest surface point of this relief in world pixels; the painter searches below it. */
@@ -210,7 +219,71 @@ function terraces(
   // Bridges carry their rail over the ground, which keeps its own shape.
   const beds = new Map<number, RailBed>();
   for (const [k, bed] of rails) if (!bed.bridge) beds.set(k, bed);
-  return { corners, centres, style, tiles, rails: beds, top: top + 1 };
+  const peaks = style.paintedPeaks ? summitTiles(map, corners) : undefined;
+  if (peaks?.size) top += style.paintedPeaks! * style.step * PEAK_RIDGE;
+  return { corners, centres, style, tiles, rails: beds, peaks, top: top + 1 };
+}
+
+/**
+ * Local summits, as the illustrated summit sprites choose them: mountain tiles whose corners all
+ * stand at least a level up, highest ranked among the mountain tiles within two steps.
+ */
+export function summitTiles(map: LandscapeMap, corners: Uint8Array) {
+  const { w, h } = map,
+    rank = (x: number, y: number) => hash2(x + map.originX, y + map.originY, map.seed + 601),
+    out = new Set<number>();
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (map.terrain[y * w + x] !== Terrain.Mountain) continue;
+      const k = y * (w + 1) + x;
+      if (Math.min(corners[k], corners[k + 1], corners[k + w + 1], corners[k + w + 2]) < 1)
+        continue;
+      const r = rank(x, y);
+      let top = true;
+      for (let dy = -2; dy <= 2 && top; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
+          const xx = x + dx,
+            yy = y + dy;
+          if (
+            xx < 0 ||
+            yy < 0 ||
+            xx >= w ||
+            yy >= h ||
+            map.terrain[yy * w + xx] !== Terrain.Mountain
+          )
+            continue;
+          if (rank(xx, yy) > r) {
+            top = false;
+            break;
+          }
+        }
+      if (top) out.add(y * w + x);
+    }
+  return out;
+}
+
+/** Ridge modulation peaks reach at most this share above their nominal height. */
+const PEAK_RIDGE = 1.35;
+/** A painted peak: a ridged rock cone one tile across rising from its summit tile. */
+function peakRise(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
+  const tx = Math.round(x),
+    ty = Math.round(y),
+    rise = relief.style.paintedPeaks! * relief.style.step;
+  let best = 0;
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      const px = tx + dx,
+        py = ty + dy,
+        k = py * map.w + px;
+      if (!relief.peaks!.has(k)) continue;
+      const d = Math.hypot(x - px, y - py) / 1.05;
+      if (d >= 1) continue;
+      const a = Math.atan2(y - py, x - px),
+        ridge =
+          1 + (0.22 * Math.cos(5 * a + k) + 0.1 * Math.cos(9 * a + 2 * k)) * Math.min(1, d * 3);
+      best = Math.max(best, rise * (1 - d) ** 1.5 * ridge);
+    }
+  return best;
 }
 
 export function reliefCorners(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
@@ -265,13 +338,16 @@ function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: n
     c = level(fx, fy + 1),
     d = level(fx + 1, fy + 1),
     step = relief.style.step,
-    terrace = step * ((a + (b - a) * su) * (1 - sv) + (c + (d - c) * su) * sv);
+    terrace =
+      step * ((a + (b - a) * su) * (1 - sv) + (c + (d - c) * su) * sv) +
+      (relief.peaks?.size ? peakRise(map, relief, x, y) : 0);
   // A straight rail rides its own bed, following the line's rail profile (world/railProfile.ts)
   // so neighbouring track tiles meet exactly. Outside the bed the hill keeps its terrace shape.
   const tx = Math.round(x),
     ty = Math.round(y),
-    rail = relief.rails?.get(ty * map.w + tx);
-  if (!rail) return terrace;
+    tileRail = relief.rails?.get(ty * map.w + tx);
+  if (!tileRail) return terrace;
+  const rail = bedFor(tileRail, x, y);
   const [along, across] = rail.axis === 'x' ? [x, y - ty] : [y, x - tx],
     bed = step * railLevel(rail, along),
     weight = 1 - smoothstep((Math.abs(across) - 0.28) / 0.16);

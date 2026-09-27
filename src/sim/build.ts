@@ -30,6 +30,7 @@ import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
 import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
+import { climbAxes } from '../world/railProfile';
 import { sfx } from '../engine/audio';
 
 const trackData = content.track;
@@ -326,13 +327,18 @@ export class Builder {
     for (const t of tiles) {
       const p = probe.get(t.x, t.y);
       if (!p) continue;
-      // Only a straight rail along a tile axis may climb; everything else needs level ground.
-      const straight = p.links.length === 1 && p.links[0][0] === opposite(p.links[0][1]);
-      if (this.groundCheck && !this.groundCheck(t.x, t.y, straight ? 'straight' : 'level'))
+      // Straights, crossings and class transitions may climb; curves and switches (regular and
+      // high speed) need smooth ground unless a bridge platform supports them.
+      const straight = climbAxes(p.links).length > 0;
+      if (
+        this.groundCheck &&
+        !(this.bridgeAt(t.x, t.y) && !straight) &&
+        !this.groundCheck(t.x, t.y, straight ? 'straight' : 'level')
+      )
         return {
           ok: false,
           cost: {},
-          reason: straight ? STR.build.tooSteep : STR.build.notLevel,
+          reason: straight ? STR.build.tooSteep : STR.build.notSmooth,
         };
       for (const [a, b] of p.links)
         for (const d of [a, b]) {

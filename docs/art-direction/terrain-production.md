@@ -154,8 +154,11 @@ Chosen from the comparison in `scratchpad/hill-levels/renders/shape-*.jpg`
   continuous height profile, track pieces bend with it as meshes, and bridges carry a level
   across dips. Curves, switches, stations, decor and buildings need a tile that no bank reaches
   into. Trains run at half speed on a climbing tile and 1.2x descending.
-- Preview-only style flags: `shadows`, `bankGrass` (slope grass tone), `heightLight` (levels
-  paint lighter, ground level unchanged), `snow` (patches on the biome's snow line level, full
-  snow a level above: 4/5 by default, taiga 3/4, desert 5/6). Soil skirts were dropped. Renders and the train climb at 1/4
+- Shipped (approved in review round 2): shaded slope grass (`bankGrass: dark`), levels 6% lighter
+  each above ground (`heightLight: 0.06`), and snow by the tile's own biome: patches on the snow
+  line level, full snow a level above (4/5 by default, taiga 3/4, desert 5/6).
+- Preview-only style flags: `shadows`; `biomeTops` (mountain ground between stones in the biome's
+  own ground, desert sand); `paintedPeaks` (summits rise as ridged rock cones painted with the
+  terrain's rock and snow instead of the illustrated sprites). Soil skirts were dropped. Renders and the train climb at 1/4
   vs 1/8 levels: `scratchpad/hill-levels/renders/look-*.jpg`, `train-*.jpg`
   (`climb.mjs`), review page `scratchpad/hill-levels/review.html`.

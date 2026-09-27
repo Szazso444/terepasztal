@@ -22,6 +22,8 @@ export interface RailBed {
   bridge?: boolean;
   /** The rail is level across this tile and its overhang: a plain flat piece. */
   flat: boolean;
+  /** A crossing: the profile of the line along the other axis. */
+  cross?: RailBed;
 }
 
 type Levels = Pick<GameMap, 'w' | 'h' | 'terrain'>;
@@ -48,10 +50,22 @@ function spanLevel(s: RailSpan, t: number) {
   return s.a + grade * (ease / 2) + grade * (u - ease);
 }
 
-/** A straight piece's axis, or null for anything that cannot climb. */
-export function straightAxis(links: readonly (readonly [number, number])[]): 'x' | 'y' | null {
-  if (links.length !== 1 || links[0][0] !== opposite(links[0][1] as Dir)) return null;
-  return links[0][0] === Dir.E || links[0][0] === Dir.W ? 'x' : 'y';
+/**
+ * Pieces that may climb: every link runs straight through the tile (straight, crossing, class
+ * transition, bridge piece). Their axes; empty for curves, switches and wide-piece members.
+ */
+export function climbAxes(links: readonly (readonly [number, number])[]): ('x' | 'y')[] {
+  if (!links.length || links.some(([a, b]) => a !== opposite(b as Dir))) return [];
+  return links.map(([a]) => (a === Dir.E || a === Dir.W ? 'x' : 'y'));
+}
+
+/** Pick the profile a point on a crossing rides: the line whose centreline it is nearer. */
+export function bedFor(bed: RailBed, x: number, y: number): RailBed {
+  if (!bed.cross) return bed;
+  const offX = Math.abs(y - Math.round(y)),
+    offY = Math.abs(x - Math.round(x)),
+    near = offX <= offY ? 'x' : 'y';
+  return bed.axis === near ? bed : bed.cross;
 }
 
 /**
@@ -69,28 +83,54 @@ export function railProfile(
   bridgeAt: (x: number, y: number) => boolean = () => false,
 ): Map<number, RailBed> {
   const beds = new Map<number, RailBed>(),
-    axisAt = (x: number, y: number) => {
+    axesAt = (x: number, y: number) => {
       const p = track.get(x, y);
-      return p && !p.unit ? straightAxis(p.links) : null;
+      return p && !p.unit ? climbAxes(p.links) : [];
     };
   for (const [k, p] of track.pieces) {
     const x = k % map.w,
-      y = Math.floor(k / map.w),
-      axis = p.unit ? null : straightAxis(p.links);
-    if (!axis) continue;
-    const dx = axis === 'x' ? 1 : 0,
-      dy = 1 - dx;
-    // Start of a line: the tile behind is not a straight on the same axis.
-    if (axisAt(x - dx, y - dy) === axis) continue;
-    const tiles: [number, number][] = [];
-    for (let tx = x, ty = y; axisAt(tx, ty) === axis; tx += dx, ty += dy) tiles.push([tx, ty]);
-    lineProfile(map, tiles, axis, bridgeAt, beds);
+      y = Math.floor(k / map.w);
+    for (const axis of p.unit ? [] : climbAxes(p.links)) {
+      const dx = axis === 'x' ? 1 : 0,
+        dy = 1 - dx;
+      // Start of a line: the tile behind carries no rail along the same axis.
+      if (axesAt(x - dx, y - dy).includes(axis)) continue;
+      const tiles: [number, number][] = [];
+      for (let tx = x, ty = y; axesAt(tx, ty).includes(axis); tx += dx, ty += dy)
+        tiles.push([tx, ty]);
+      lineProfile(map, track, tiles, axis, bridgeAt, beds);
+    }
+  }
+  // Curves and switches carried by bridge platforms sit at the deck: the highest level they
+  // span or meet, so a supported piece can stand where the ground is not smooth.
+  for (const [k, p] of track.pieces) {
+    const x = k % map.w,
+      y = Math.floor(k / map.w);
+    if (beds.has(k) || !bridgeAt(x, y)) continue;
+    const members = p.unit ? track.unitTiles(p.unit.ax, p.unit.ay) : [{ x, y }];
+    let deck = 0;
+    for (const t of members)
+      for (const [ddx, ddy] of [
+        [0, 0],
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ])
+        deck = Math.max(deck, levelAt(map, t.x + ddx, t.y + ddy));
+    beds.set(k, {
+      axis: 'x',
+      spans: [{ from: x - 2, to: x + 2, a: deck, b: deck }],
+      bridge: true,
+      flat: true,
+    });
   }
   return beds;
 }
 
 function lineProfile(
   map: Levels,
+  track: TrackGraph,
   tiles: [number, number][],
   axis: 'x' | 'y',
   bridgeAt: (x: number, y: number) => boolean,
@@ -98,21 +138,30 @@ function lineProfile(
 ) {
   const start = axis === 'x' ? tiles[0][0] : tiles[0][1],
     bridge = tiles.map(([x, y]) => bridgeAt(x, y)),
+    // A crossing holds both lines level at its centre, so the two rails meet.
+    pinned = tiles.map(([x, y]) => (track.get(x, y)?.links.length ?? 0) > 1),
     { spans, levels } = lineSpans(
       tiles.map(([x, y]) => levelAt(map, x, y)),
       bridge,
       start,
+      pinned,
     );
   tiles.forEach(([x, y], i) => {
     const c = start + i,
+      k = y * map.w + x,
       near = spans.filter((s) => s.to > c - 1.5 && s.from < c + 1.5),
-      close = near.filter((s) => s.to > c - 0.9 && s.from < c + 0.9);
-    beds.set(y * map.w + x, {
-      axis,
-      spans: near,
-      bridge: bridge[i] || undefined,
-      flat: close.every((s) => s.a === s.b && s.a === levels[i]),
-    });
+      close = near.filter((s) => s.to > c - 0.9 && s.from < c + 0.9),
+      bed: RailBed = {
+        axis,
+        spans: near,
+        bridge: bridge[i] || undefined,
+        flat: close.every((s) => s.a === s.b && s.a === levels[i]),
+      },
+      other = beds.get(k);
+    if (!other) beds.set(k, bed);
+    // The climbing line leads (its piece bends); the other rides along as the crossing.
+    else if (other.flat && !bed.flat) beds.set(k, { ...bed, cross: other });
+    else beds.set(k, { ...other, cross: bed, flat: other.flat && bed.flat });
   });
 }
 
@@ -120,7 +169,12 @@ function lineProfile(
  * Profile spans of one straight line whose tiles have the given terrain levels, the first tile
  * centred at `start` along the axis. Returns the spans and the rail level of each tile.
  */
-export function lineSpans(terrain: readonly number[], bridge: readonly boolean[] = [], start = 0) {
+export function lineSpans(
+  terrain: readonly number[],
+  bridge: readonly boolean[] = [],
+  start = 0,
+  pinned: readonly boolean[] = [],
+) {
   const n = terrain.length,
     r = [...terrain],
     along = (i: number) => start + i;
@@ -171,7 +225,9 @@ export function lineSpans(terrain: readonly number[], bridge: readonly boolean[]
         knots.push([along(u), r[u]], [along(v), r[u]]);
       u = v + 1;
     }
+    for (let u = i; u <= q; u++) if (pinned[u]) knots.push([along(u), r[u]]);
     knots.push([along(q) + 0.5, L(q + 1)]);
+    knots.sort((a, b) => a[0] - b[0]);
     for (let k = 1; k < knots.length; k++)
       if (knots[k][0] > knots[k - 1][0])
         spans.push({ from: knots[k - 1][0], to: knots[k][0], a: knots[k - 1][1], b: knots[k][1] });
@@ -196,8 +252,10 @@ export function railGrade(
   inDir: Dir,
   outDir: Dir,
 ) {
-  const bed = beds.get(y * w + x);
-  if (!bed || bed.flat) return 1;
+  const tile = beds.get(y * w + x),
+    axis = inDir === Dir.E || inDir === Dir.W ? 'x' : 'y',
+    bed = tile?.cross && tile.axis !== axis ? tile.cross : tile;
+  if (!bed || bed.flat || bed.axis !== axis) return 1;
   const centre = bed.axis === 'x' ? x : y,
     edge = (d: Dir) => centre + 0.5 * (d === Dir.E || d === Dir.S ? 1 : -1),
     from = railLevel(bed, edge(inDir)),

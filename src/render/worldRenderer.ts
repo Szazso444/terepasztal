@@ -20,7 +20,7 @@ import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
-import { railLevel, type RailBed } from '../world/railProfile';
+import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
 
 const CHUNK = 8;
@@ -768,8 +768,9 @@ export class WorldRenderer {
    * bridge deck included); elsewhere the ground. Trains and track pieces stand on this.
    */
   railAt(x: number, y: number): Ground {
-    const bed = this.railBeds.get(idx(this.map, Math.round(x), Math.round(y)));
-    if (!bed || this.landscape.failed) return this.groundAt(x, y);
+    const tile = this.railBeds.get(idx(this.map, Math.round(x), Math.round(y)));
+    if (!tile || this.landscape.failed) return this.groundAt(x, y);
+    const bed = bedFor(tile, x, y);
     const t = bed.axis === 'x' ? x : y,
       d = 0.05,
       step = this.levelPx,

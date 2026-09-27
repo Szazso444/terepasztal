@@ -264,6 +264,8 @@ export function surfaceColor(
   y: number,
   out: number[],
   exposure?: number,
+  /** Ground between stones on rock and mountain tiles (grass unless the biome says otherwise). */
+  rockGround = 0,
 ) {
   const rocky = material === 7 || material === 9;
   if (exposure === undefined) {
@@ -274,7 +276,7 @@ export function surfaceColor(
     exposure = rockExposure(x, y);
   }
   // Rock and mountain ground is grass between stones; exposed faces elsewhere are plain rock.
-  const ground = rocky ? 0 : material;
+  const ground = rocky ? rockGround : material;
   if (exposure === 0) {
     sampleSurface(samples, ground, x, y, out);
     return;
