@@ -1,6 +1,15 @@
 # Asset generation checkpoint
 
-## Hills 1/4, rails on slopes, scatter (2026-09-26; latest)
+## LOCKED hill style (2026-09-27; latest)
+
+Terraces, 1/4-side levels, rock banks, rim light: DEFAULT_RELIEF in
+src/render/terrainRelief.ts = { step: TILE_SIDE_PX/4, maxRise: 1, faces: true,
+shape: 'terraces', bank: 0.5, rims: true }. Do not change without the user.
+Next: rock only on steep/stacked banks, peak-to-rock blend, rails on terraces
+(ramps spread across tiles, no collapse), grade speed (-50% up, +20% down),
+elevation on hover, train climb renders at 1/4 vs 1/8.
+
+## Hills 1/4, rails on slopes, scatter (2026-09-26)
 
 User chose 1/4-side levels. Implemented as the default relief; rails keep the hill
 (straight track climbs one level per tile, other pieces and structures need level

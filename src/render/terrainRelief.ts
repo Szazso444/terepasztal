@@ -27,11 +27,20 @@ export interface ReliefStyle {
   rockFaces?: boolean;
 }
 /**
- * The shipped style: a level is a quarter of a tile side, a tile edge rises one or two levels,
- * and every tile is lit by its own slope. The original relief was { step: 10, maxRise: 1,
- * faces: false }.
+ * The shipped style, approved 2026-09-27: terraces. Every hill tile is a level plateau at its own
+ * level, a level is a quarter of a tile side, neighbouring tiles differ by at most one level, and
+ * the change happens in a rounded bank half a tile wide at the shared edge. Banks show rock; slope
+ * tops catch light and their feet sit in soft shadow. (Earlier: corner slopes, { step: 10,
+ * maxRise: 1, faces: false }, then { step: side/4, maxRise: 2, faces: true }.)
  */
-export const DEFAULT_RELIEF: ReliefStyle = { step: TILE_SIDE_PX / 4, maxRise: 2, faces: true };
+export const DEFAULT_RELIEF: ReliefStyle = {
+  step: TILE_SIDE_PX / 4,
+  maxRise: 1,
+  faces: true,
+  shape: 'terraces',
+  bank: 0.5,
+  rims: true,
+};
 export interface TerrainRelief {
   /** Shared lattice: corner (x,y) is at tile coordinate (x-.5,y-.5). */
   corners: Uint8Array;

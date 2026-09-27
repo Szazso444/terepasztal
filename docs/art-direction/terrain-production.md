@@ -130,3 +130,12 @@ cache. Exact timings depend on hardware and the number of revealed regions.
   and mountain feet, sparse desert and taiga accents. Seeded by world position; nothing on
   generated props, track, stations, buildings, decor or town paving. No map generation change.
 - Evidence: `scratchpad/hill-levels/renders/` (level heights, `rails-climb-z*.jpg`).
+
+## Locked hill style: terraces at 1/4 levels with rock banks (approved 2026-09-27)
+
+`DEFAULT_RELIEF` = `{ step: TILE_SIDE_PX / 4, maxRise: 1, faces: true, shape: 'terraces',
+bank: 0.5, rims: true }`. Every hill tile is a level plateau at its own level (9.8 world px per
+level); neighbouring tiles differ by at most one level; the change is a rounded bank half a tile
+wide, centred on the shared edge; banks show rock; rim light on slope tops, soft shade at feet.
+Chosen from the comparison in `scratchpad/hill-levels/renders/shape-*.jpg`
+("terraces-quarter"). The corner-slope style remains selectable for comparison only.

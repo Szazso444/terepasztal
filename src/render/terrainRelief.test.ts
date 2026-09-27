@@ -16,6 +16,8 @@ import { surfaceMaterial, surfaceColor, surfaceBlend, grassDetail } from './terr
 import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 
+/** The corner-slope style these geometry tests were written for (still selectable). */
+const CORNERS: ReliefStyle = { step: TILE_SIDE_PX / 4, maxRise: 2, faces: true };
 function fixture() {
   const m = emptyMap(7412, 32, 32);
   for (let y = 3; y < 29; y++)
@@ -114,7 +116,7 @@ describe('connected illustrated terrain', () => {
   });
   it('lets straight rails climb one level per tile and keeps everything else on level ground', () => {
     const m = fixture(),
-      r = buildRelief(m, new Set());
+      r = buildRelief(m, new Set(), CORNERS);
     let straightOnly = 0,
       level = 0,
       refused = 0;
@@ -133,7 +135,7 @@ describe('connected illustrated terrain', () => {
   });
   it('bounds projection slopes so the painted surface cannot fold behind itself', () => {
     const m = fixture(),
-      r = buildRelief(m, new Set([16 * 32 + 16]));
+      r = buildRelief(m, new Set([16 * 32 + 16]), CORNERS);
     for (let y = 0.13; y < 31; y += 0.31)
       for (let x = 0.07; x < 31; x += 0.29) {
         const z = reliefHeight(m, r, x, y),
@@ -145,7 +147,7 @@ describe('connected illustrated terrain', () => {
   });
   it('uses varied connecting families and limits summit caps instead of stamping every tile', () => {
     const m = fixture(),
-      r = buildRelief(m, new Set()),
+      r = buildRelief(m, new Set(), CORNERS),
       families = new Set<string>();
     let peaks = 0,
       mountains = 0;
