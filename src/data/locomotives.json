@@ -187,9 +187,10 @@
     "body": "steam_std",
     "paint": "green",
     "bogieStyle": {
-      "engine": ["leading", "pacific"],
-      "tender": ["uk_tender_pair", "uk_tender_pair"]
+      "engine": ["flying_scotsman_leading", "flying_scotsman_trailing"],
+      "tender": "none"
     },
+    "bogieDraw": { "engine": [-0.0678, -0.0292] },
     "speed": 1.75,
     "power": 120,
     "weight": 97,
@@ -332,7 +333,8 @@
     "era": "1949 bulldog-nosed cab unit. The face of American railroading.",
     "body": "diesel_cab",
     "paint": "red",
-    "bogieStyle": "blomberg",
+    "bogieStyle": { "body": ["f7_front", "f7_rear"] },
+    "bogieDraw": { "body": [-0.1817, 0.1302] },
     "speed": 1.6,
     "power": 140,
     "weight": 110,

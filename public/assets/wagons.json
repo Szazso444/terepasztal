@@ -2,1005 +2,805 @@
   "resolution": 4,
   "partial": true,
   "frames": {
-    "rolling/bogie_blomberg_f0": {
-      "x": 1,
-      "y": 119,
-      "w": 118,
-      "h": 77,
-      "ax": 59,
-      "ay": 54
-    },
-    "rolling/bogie_blomberg_f1": {
-      "x": 120,
-      "y": 119,
-      "w": 116,
-      "h": 77,
-      "ax": 58,
-      "ay": 54
-    },
-    "rolling/bogie_blomberg_f13": {
-      "x": 237,
-      "y": 119,
-      "w": 118,
-      "h": 77,
-      "ax": 59,
-      "ay": 54
-    },
-    "rolling/bogie_blomberg_f14": {
-      "x": 1601,
-      "y": 119,
-      "w": 116,
-      "h": 75,
-      "ax": 58,
-      "ay": 53
-    },
-    "rolling/bogie_blomberg_f15": {
-      "x": 2287,
-      "y": 119,
-      "w": 112,
-      "h": 73,
-      "ax": 56,
-      "ay": 52
-    },
-    "rolling/bogie_blomberg_f16": {
-      "x": 3112,
-      "y": 119,
-      "w": 106,
-      "h": 71,
-      "ax": 53,
-      "ay": 51
-    },
-    "rolling/bogie_blomberg_f17": {
-      "x": 381,
-      "y": 197,
-      "w": 98,
-      "h": 67,
-      "ax": 49,
-      "ay": 49
-    },
-    "rolling/bogie_blomberg_f18": {
-      "x": 1139,
-      "y": 197,
-      "w": 89,
-      "h": 63,
-      "ax": 44,
-      "ay": 46
-    },
-    "rolling/bogie_blomberg_f19": {
-      "x": 480,
-      "y": 197,
-      "w": 98,
-      "h": 67,
-      "ax": 49,
-      "ay": 49
-    },
-    "rolling/bogie_blomberg_f2": {
-      "x": 356,
-      "y": 119,
-      "w": 112,
-      "h": 77,
-      "ax": 56,
-      "ay": 54
-    },
-    "rolling/bogie_blomberg_f20": {
-      "x": 3219,
-      "y": 119,
-      "w": 106,
-      "h": 71,
-      "ax": 53,
-      "ay": 51
-    },
-    "rolling/bogie_blomberg_f21": {
-      "x": 2400,
-      "y": 119,
-      "w": 112,
-      "h": 73,
-      "ax": 56,
-      "ay": 52
-    },
-    "rolling/bogie_blomberg_f22": {
-      "x": 1718,
-      "y": 119,
-      "w": 116,
-      "h": 75,
-      "ax": 58,
-      "ay": 53
-    },
-    "rolling/bogie_blomberg_f23": {
-      "x": 818,
-      "y": 119,
-      "w": 118,
-      "h": 76,
-      "ax": 59,
-      "ay": 54
-    },
-    "rolling/bogie_blomberg_f24": {
-      "x": 469,
-      "y": 119,
-      "w": 118,
-      "h": 77,
-      "ax": 59,
-      "ay": 54
-    },
-    "rolling/bogie_blomberg_f25": {
-      "x": 588,
-      "y": 119,
-      "w": 116,
-      "h": 77,
-      "ax": 58,
-      "ay": 54
-    },
-    "rolling/bogie_blomberg_f26": {
-      "x": 705,
-      "y": 119,
-      "w": 112,
-      "h": 77,
-      "ax": 56,
-      "ay": 54
-    },
-    "rolling/bogie_blomberg_f27": {
-      "x": 1835,
-      "y": 119,
-      "w": 106,
-      "h": 74,
-      "ax": 53,
-      "ay": 52
-    },
-    "rolling/bogie_blomberg_f28": {
-      "x": 2914,
-      "y": 119,
-      "w": 98,
-      "h": 72,
-      "ax": 49,
-      "ay": 51
-    },
-    "rolling/bogie_blomberg_f29": {
-      "x": 195,
-      "y": 197,
-      "w": 92,
-      "h": 68,
-      "ax": 46,
-      "ay": 49
-    },
-    "rolling/bogie_blomberg_f3": {
-      "x": 1942,
-      "y": 119,
-      "w": 106,
-      "h": 74,
-      "ax": 53,
-      "ay": 52
-    },
-    "rolling/bogie_blomberg_f30": {
-      "x": 957,
-      "y": 197,
-      "w": 90,
-      "h": 64,
-      "ax": 45,
-      "ay": 47
-    },
-    "rolling/bogie_blomberg_f4": {
-      "x": 3013,
-      "y": 119,
-      "w": 98,
-      "h": 72,
-      "ax": 49,
-      "ay": 51
-    },
-    "rolling/bogie_blomberg_f5": {
-      "x": 288,
-      "y": 197,
-      "w": 92,
-      "h": 68,
-      "ax": 46,
-      "ay": 49
-    },
-    "rolling/bogie_blomberg_f6": {
-      "x": 1048,
-      "y": 197,
-      "w": 90,
-      "h": 64,
-      "ax": 45,
-      "ay": 47
-    },
-    "rolling/bogie_htc_f0": {
-      "x": 2911,
+    "rolling/bogie_f7_front_f0": {
+      "x": 2101,
       "y": 1,
-      "w": 122,
+      "w": 117,
       "h": 78,
-      "ax": 61,
-      "ay": 54
+      "ax": 57,
+      "ay": 61
     },
-    "rolling/bogie_htc_f1": {
-      "x": 3034,
-      "y": 1,
-      "w": 120,
-      "h": 78,
-      "ax": 60,
-      "ay": 54
-    },
-    "rolling/bogie_htc_f13": {
-      "x": 3155,
-      "y": 1,
-      "w": 122,
-      "h": 78,
-      "ax": 61,
-      "ay": 54
-    },
-    "rolling/bogie_htc_f14": {
-      "x": 937,
-      "y": 119,
-      "w": 122,
-      "h": 76,
-      "ax": 61,
-      "ay": 53
-    },
-    "rolling/bogie_htc_f15": {
-      "x": 2049,
-      "y": 119,
-      "w": 118,
-      "h": 74,
-      "ax": 59,
-      "ay": 52
-    },
-    "rolling/bogie_htc_f16": {
-      "x": 3521,
-      "y": 119,
-      "w": 112,
-      "h": 70,
-      "ax": 56,
-      "ay": 50
-    },
-    "rolling/bogie_htc_f17": {
-      "x": 579,
-      "y": 197,
-      "w": 105,
-      "h": 66,
-      "ax": 52,
-      "ay": 48
-    },
-    "rolling/bogie_htc_f18": {
-      "x": 1416,
-      "y": 197,
-      "w": 96,
-      "h": 61,
-      "ax": 48,
-      "ay": 45
-    },
-    "rolling/bogie_htc_f19": {
-      "x": 685,
-      "y": 197,
-      "w": 105,
-      "h": 66,
-      "ax": 52,
-      "ay": 48
-    },
-    "rolling/bogie_htc_f2": {
-      "x": 3278,
+    "rolling/bogie_f7_front_f1": {
+      "x": 2219,
       "y": 1,
       "w": 114,
       "h": 78,
-      "ax": 57,
-      "ay": 54
-    },
-    "rolling/bogie_htc_f20": {
-      "x": 3634,
-      "y": 119,
-      "w": 112,
-      "h": 70,
       "ax": 56,
-      "ay": 50
+      "ay": 61
     },
-    "rolling/bogie_htc_f21": {
-      "x": 2168,
-      "y": 119,
-      "w": 118,
-      "h": 74,
-      "ax": 59,
-      "ay": 52
-    },
-    "rolling/bogie_htc_f22": {
-      "x": 1060,
-      "y": 119,
-      "w": 122,
-      "h": 76,
-      "ax": 61,
-      "ay": 53
-    },
-    "rolling/bogie_htc_f23": {
-      "x": 3393,
+    "rolling/bogie_f7_front_f13": {
+      "x": 2543,
       "y": 1,
-      "w": 122,
-      "h": 78,
-      "ax": 61,
-      "ay": 54
-    },
-    "rolling/bogie_htc_f24": {
-      "x": 3516,
-      "y": 1,
-      "w": 122,
-      "h": 78,
-      "ax": 61,
-      "ay": 54
-    },
-    "rolling/bogie_htc_f25": {
-      "x": 3639,
-      "y": 1,
-      "w": 120,
-      "h": 78,
+      "w": 119,
+      "h": 77,
       "ax": 60,
-      "ay": 54
+      "ay": 60
     },
-    "rolling/bogie_htc_f26": {
-      "x": 3760,
+    "rolling/bogie_f7_front_f14": {
+      "x": 2663,
       "y": 1,
-      "w": 114,
-      "h": 78,
+      "w": 118,
+      "h": 77,
+      "ax": 60,
+      "ay": 60
+    },
+    "rolling/bogie_f7_front_f15": {
+      "x": 2782,
+      "y": 1,
+      "w": 113,
+      "h": 77,
       "ax": 57,
-      "ay": 54
+      "ay": 61
     },
-    "rolling/bogie_htc_f27": {
-      "x": 1183,
-      "y": 119,
+    "rolling/bogie_f7_front_f16": {
+      "x": 3427,
+      "y": 1,
       "w": 108,
       "h": 76,
-      "ax": 54,
-      "ay": 53
+      "ax": 55,
+      "ay": 61
     },
-    "rolling/bogie_htc_f28": {
-      "x": 2513,
-      "y": 119,
+    "rolling/bogie_f7_front_f17": {
+      "x": 3748,
+      "y": 1,
       "w": 100,
-      "h": 73,
-      "ax": 50,
-      "ay": 51
-    },
-    "rolling/bogie_htc_f29": {
-      "x": 3747,
-      "y": 119,
-      "w": 91,
-      "h": 70,
-      "ax": 45,
-      "ay": 49
-    },
-    "rolling/bogie_htc_f3": {
-      "x": 1292,
-      "y": 119,
-      "w": 108,
-      "h": 76,
-      "ax": 54,
-      "ay": 53
-    },
-    "rolling/bogie_htc_f30": {
-      "x": 791,
-      "y": 197,
-      "w": 82,
-      "h": 66,
-      "ax": 41,
-      "ay": 47
-    },
-    "rolling/bogie_htc_f4": {
-      "x": 2614,
-      "y": 119,
-      "w": 100,
-      "h": 73,
-      "ax": 50,
-      "ay": 51
-    },
-    "rolling/bogie_htc_f5": {
-      "x": 3839,
-      "y": 119,
-      "w": 91,
-      "h": 70,
-      "ax": 45,
-      "ay": 49
-    },
-    "rolling/bogie_htc_f6": {
-      "x": 874,
-      "y": 197,
-      "w": 82,
-      "h": 66,
-      "ax": 41,
-      "ay": 47
-    },
-    "rolling/bogie_leading_f0": {
-      "x": 2125,
-      "y": 197,
-      "w": 87,
-      "h": 53,
-      "ax": 52,
-      "ay": 41
-    },
-    "rolling/bogie_leading_f1": {
-      "x": 2558,
-      "y": 197,
-      "w": 89,
-      "h": 51,
-      "ax": 52,
-      "ay": 41
-    },
-    "rolling/bogie_leading_f13": {
-      "x": 1661,
-      "y": 197,
-      "w": 84,
-      "h": 54,
-      "ax": 32,
-      "ay": 41
-    },
-    "rolling/bogie_leading_f14": {
-      "x": 1746,
-      "y": 197,
-      "w": 79,
-      "h": 54,
-      "ax": 29,
-      "ay": 40
-    },
-    "rolling/bogie_leading_f15": {
-      "x": 1513,
-      "y": 197,
-      "w": 73,
-      "h": 55,
-      "ax": 25,
-      "ay": 40
-    },
-    "rolling/bogie_leading_f16": {
-      "x": 1826,
-      "y": 197,
-      "w": 66,
-      "h": 54,
-      "ax": 21,
-      "ay": 39
-    },
-    "rolling/bogie_leading_f17": {
-      "x": 2213,
-      "y": 197,
-      "w": 57,
-      "h": 53,
-      "ax": 16,
-      "ay": 37
-    },
-    "rolling/bogie_leading_f18": {
-      "x": 2358,
-      "y": 197,
-      "w": 51,
-      "h": 52,
-      "ax": 13,
-      "ay": 36
-    },
-    "rolling/bogie_leading_f19": {
-      "x": 2410,
-      "y": 197,
-      "w": 57,
-      "h": 52,
-      "ax": 16,
-      "ay": 35
-    },
-    "rolling/bogie_leading_f2": {
-      "x": 3104,
-      "y": 197,
-      "w": 89,
-      "h": 49,
+      "h": 75,
       "ax": 51,
-      "ay": 40
+      "ay": 61
     },
-    "rolling/bogie_leading_f20": {
-      "x": 1893,
-      "y": 197,
-      "w": 66,
-      "h": 54,
-      "ax": 21,
-      "ay": 35
-    },
-    "rolling/bogie_leading_f21": {
-      "x": 1587,
-      "y": 197,
-      "w": 73,
-      "h": 55,
-      "ax": 25,
-      "ay": 35
-    },
-    "rolling/bogie_leading_f22": {
-      "x": 1960,
-      "y": 197,
-      "w": 79,
-      "h": 54,
-      "ax": 29,
-      "ay": 34
-    },
-    "rolling/bogie_leading_f23": {
-      "x": 2040,
-      "y": 197,
-      "w": 84,
-      "h": 54,
-      "ax": 32,
-      "ay": 33
-    },
-    "rolling/bogie_leading_f24": {
-      "x": 2271,
-      "y": 197,
-      "w": 86,
-      "h": 53,
-      "ax": 34,
-      "ay": 32
-    },
-    "rolling/bogie_leading_f25": {
-      "x": 2468,
-      "y": 197,
-      "w": 89,
-      "h": 52,
-      "ax": 37,
-      "ay": 31
-    },
-    "rolling/bogie_leading_f26": {
-      "x": 2648,
-      "y": 197,
-      "w": 89,
-      "h": 50,
-      "ax": 38,
-      "ay": 30
-    },
-    "rolling/bogie_leading_f27": {
-      "x": 3619,
-      "y": 197,
-      "w": 87,
-      "h": 47,
-      "ax": 39,
-      "ay": 28
-    },
-    "rolling/bogie_leading_f28": {
-      "x": 3943,
-      "y": 197,
-      "w": 84,
-      "h": 44,
-      "ax": 39,
-      "ay": 26
-    },
-    "rolling/bogie_leading_f29": {
-      "x": 382,
-      "y": 267,
-      "w": 81,
-      "h": 40,
-      "ax": 39,
-      "ay": 24
-    },
-    "rolling/bogie_leading_f3": {
-      "x": 3707,
-      "y": 197,
-      "w": 87,
-      "h": 46,
-      "ax": 48,
-      "ay": 39
-    },
-    "rolling/bogie_leading_f30": {
-      "x": 688,
-      "y": 267,
-      "w": 76,
-      "h": 37,
-      "ax": 38,
-      "ay": 22
-    },
-    "rolling/bogie_leading_f4": {
-      "x": 1,
-      "y": 267,
-      "w": 84,
-      "h": 44,
-      "ax": 45,
-      "ay": 38
-    },
-    "rolling/bogie_leading_f5": {
-      "x": 464,
-      "y": 267,
-      "w": 81,
-      "h": 40,
-      "ax": 42,
-      "ay": 36
-    },
-    "rolling/bogie_leading_f6": {
-      "x": 765,
-      "y": 267,
-      "w": 76,
-      "h": 37,
-      "ax": 38,
-      "ay": 35
-    },
-    "rolling/bogie_pacific_f0": {
-      "x": 2337,
+    "rolling/bogie_f7_front_f18": {
+      "x": 3849,
       "y": 1,
-      "w": 182,
-      "h": 87,
-      "ax": 34,
-      "ay": 32
+      "w": 93,
+      "h": 75,
+      "ax": 47,
+      "ay": 61
     },
-    "rolling/bogie_pacific_f1": {
-      "x": 1879,
+    "rolling/bogie_f7_front_f19": {
+      "x": 2896,
       "y": 1,
-      "w": 170,
-      "h": 91,
-      "ax": 35,
-      "ay": 31
+      "w": 98,
+      "h": 77,
+      "ax": 50,
+      "ay": 61
     },
-    "rolling/bogie_pacific_f13": {
-      "x": 2520,
+    "rolling/bogie_f7_front_f2": {
+      "x": 3536,
       "y": 1,
-      "w": 192,
-      "h": 83,
-      "ax": 159,
-      "ay": 34
-    },
-    "rolling/bogie_pacific_f14": {
-      "x": 2713,
-      "y": 1,
-      "w": 197,
-      "h": 80,
-      "ax": 166,
-      "ay": 37
-    },
-    "rolling/bogie_pacific_f15": {
-      "x": 1401,
-      "y": 119,
-      "w": 199,
+      "w": 110,
       "h": 76,
-      "ax": 171,
-      "ay": 39
+      "ax": 54,
+      "ay": 60
     },
-    "rolling/bogie_pacific_f16": {
-      "x": 2715,
-      "y": 119,
-      "w": 198,
-      "h": 73,
-      "ax": 173,
-      "ay": 42
-    },
-    "rolling/bogie_pacific_f17": {
-      "x": 1,
-      "y": 197,
-      "w": 193,
-      "h": 69,
-      "ax": 171,
-      "ay": 45
-    },
-    "rolling/bogie_pacific_f18": {
-      "x": 1229,
-      "y": 197,
-      "w": 186,
-      "h": 63,
-      "ax": 168,
-      "ay": 47
-    },
-    "rolling/bogie_pacific_f19": {
-      "x": 3326,
-      "y": 119,
-      "w": 194,
-      "h": 71,
-      "ax": 172,
-      "ay": 55
-    },
-    "rolling/bogie_pacific_f2": {
-      "x": 1356,
+    "rolling/bogie_f7_front_f20": {
+      "x": 2995,
       "y": 1,
-      "w": 156,
-      "h": 94,
-      "ax": 36,
-      "ay": 30
+      "w": 106,
+      "h": 77,
+      "ax": 54,
+      "ay": 60
     },
-    "rolling/bogie_pacific_f20": {
-      "x": 3875,
+    "rolling/bogie_f7_front_f21": {
+      "x": 1884,
       "y": 1,
-      "w": 198,
-      "h": 78,
-      "ax": 173,
+      "w": 111,
+      "h": 79,
+      "ax": 57,
+      "ay": 60
+    },
+    "rolling/bogie_f7_front_f22": {
+      "x": 575,
+      "y": 1,
+      "w": 115,
+      "h": 81,
+      "ax": 59,
       "ay": 62
     },
-    "rolling/bogie_pacific_f21": {
-      "x": 2050,
-      "y": 1,
-      "w": 199,
-      "h": 88,
-      "ax": 171,
-      "ay": 72
-    },
-    "rolling/bogie_pacific_f22": {
-      "x": 1158,
-      "y": 1,
-      "w": 197,
-      "h": 96,
-      "ax": 166,
-      "ay": 80
-    },
-    "rolling/bogie_pacific_f23": {
-      "x": 965,
-      "y": 1,
-      "w": 192,
-      "h": 104,
-      "ax": 159,
-      "ay": 88
-    },
-    "rolling/bogie_pacific_f24": {
-      "x": 782,
-      "y": 1,
-      "w": 182,
-      "h": 109,
-      "ax": 148,
-      "ay": 94
-    },
-    "rolling/bogie_pacific_f25": {
-      "x": 422,
-      "y": 1,
-      "w": 170,
-      "h": 114,
-      "ax": 135,
-      "ay": 100
-    },
-    "rolling/bogie_pacific_f26": {
-      "x": 265,
-      "y": 1,
-      "w": 156,
-      "h": 115,
-      "ax": 120,
-      "ay": 103
-    },
-    "rolling/bogie_pacific_f27": {
+    "rolling/bogie_f7_front_f23": {
       "x": 1,
       "y": 1,
-      "w": 140,
-      "h": 117,
-      "ax": 103,
-      "ay": 106
+      "w": 117,
+      "h": 83,
+      "ax": 60,
+      "ay": 63
     },
-    "rolling/bogie_pacific_f28": {
-      "x": 142,
+    "rolling/bogie_f7_front_f24": {
+      "x": 119,
       "y": 1,
-      "w": 122,
-      "h": 116,
-      "ax": 84,
-      "ay": 107
+      "w": 116,
+      "h": 83,
+      "ax": 59,
+      "ay": 63
     },
-    "rolling/bogie_pacific_f29": {
-      "x": 593,
+    "rolling/bogie_f7_front_f25": {
+      "x": 236,
       "y": 1,
+      "w": 114,
+      "h": 83,
+      "ax": 58,
+      "ay": 63
+    },
+    "rolling/bogie_f7_front_f26": {
+      "x": 351,
+      "y": 1,
+      "w": 110,
+      "h": 82,
+      "ax": 56,
+      "ay": 63
+    },
+    "rolling/bogie_f7_front_f27": {
+      "x": 1673,
+      "y": 1,
+      "w": 105,
+      "h": 80,
+      "ax": 53,
+      "ay": 62
+    },
+    "rolling/bogie_f7_front_f28": {
+      "x": 3102,
+      "y": 1,
+      "w": 100,
+      "h": 77,
+      "ax": 50,
+      "ay": 60
+    },
+    "rolling/bogie_f7_front_f29": {
+      "x": 323,
+      "y": 85,
+      "w": 102,
+      "h": 74,
+      "ax": 51,
+      "ay": 59
+    },
+    "rolling/bogie_f7_front_f3": {
+      "x": 3943,
+      "y": 1,
+      "w": 105,
+      "h": 75,
+      "ax": 52,
+      "ay": 60
+    },
+    "rolling/bogie_f7_front_f30": {
+      "x": 1060,
+      "y": 85,
+      "w": 102,
+      "h": 69,
+      "ax": 51,
+      "ay": 56
+    },
+    "rolling/bogie_f7_front_f4": {
+      "x": 857,
+      "y": 85,
+      "w": 100,
+      "h": 72,
+      "ax": 50,
+      "ay": 58
+    },
+    "rolling/bogie_f7_front_f5": {
+      "x": 1163,
+      "y": 85,
+      "w": 102,
+      "h": 69,
+      "ax": 51,
+      "ay": 57
+    },
+    "rolling/bogie_f7_front_f6": {
+      "x": 1266,
+      "y": 85,
+      "w": 102,
+      "h": 67,
+      "ax": 51,
+      "ay": 56
+    },
+    "rolling/bogie_f7_rear_f0": {
+      "x": 691,
+      "y": 1,
+      "w": 110,
+      "h": 81,
+      "ax": 61,
+      "ay": 59
+    },
+    "rolling/bogie_f7_rear_f1": {
+      "x": 802,
+      "y": 1,
+      "w": 107,
+      "h": 81,
+      "ax": 61,
+      "ay": 60
+    },
+    "rolling/bogie_f7_rear_f13": {
+      "x": 3203,
+      "y": 1,
+      "w": 119,
+      "h": 77,
+      "ax": 59,
+      "ay": 60
+    },
+    "rolling/bogie_f7_rear_f14": {
+      "x": 1,
+      "y": 85,
+      "w": 117,
+      "h": 75,
+      "ax": 58,
+      "ay": 59
+    },
+    "rolling/bogie_f7_rear_f15": {
+      "x": 426,
+      "y": 85,
+      "w": 114,
+      "h": 74,
+      "ax": 56,
+      "ay": 59
+    },
+    "rolling/bogie_f7_rear_f16": {
+      "x": 541,
+      "y": 85,
+      "w": 108,
+      "h": 74,
+      "ax": 53,
+      "ay": 60
+    },
+    "rolling/bogie_f7_rear_f17": {
+      "x": 752,
+      "y": 85,
+      "w": 104,
+      "h": 73,
+      "ax": 51,
+      "ay": 61
+    },
+    "rolling/bogie_f7_rear_f18": {
+      "x": 3647,
+      "y": 1,
+      "w": 100,
+      "h": 76,
+      "ax": 49,
+      "ay": 61
+    },
+    "rolling/bogie_f7_rear_f19": {
+      "x": 2334,
+      "y": 1,
+      "w": 104,
+      "h": 78,
+      "ax": 49,
+      "ay": 61
+    },
+    "rolling/bogie_f7_rear_f2": {
+      "x": 910,
+      "y": 1,
+      "w": 104,
+      "h": 81,
+      "ax": 59,
+      "ay": 60
+    },
+    "rolling/bogie_f7_rear_f20": {
+      "x": 1015,
+      "y": 1,
+      "w": 108,
+      "h": 81,
+      "ax": 51,
+      "ay": 62
+    },
+    "rolling/bogie_f7_rear_f21": {
+      "x": 1124,
+      "y": 1,
+      "w": 111,
+      "h": 81,
+      "ax": 52,
+      "ay": 61
+    },
+    "rolling/bogie_f7_rear_f22": {
+      "x": 462,
+      "y": 1,
+      "w": 112,
+      "h": 82,
+      "ax": 52,
+      "ay": 61
+    },
+    "rolling/bogie_f7_rear_f23": {
+      "x": 1236,
+      "y": 1,
+      "w": 112,
+      "h": 81,
+      "ax": 51,
+      "ay": 59
+    },
+    "rolling/bogie_f7_rear_f24": {
+      "x": 1349,
+      "y": 1,
+      "w": 110,
+      "h": 81,
+      "ax": 49,
+      "ay": 59
+    },
+    "rolling/bogie_f7_rear_f25": {
+      "x": 1460,
+      "y": 1,
+      "w": 107,
+      "h": 81,
+      "ax": 46,
+      "ay": 59
+    },
+    "rolling/bogie_f7_rear_f26": {
+      "x": 1568,
+      "y": 1,
+      "w": 104,
+      "h": 81,
+      "ax": 45,
+      "ay": 59
+    },
+    "rolling/bogie_f7_rear_f27": {
+      "x": 1996,
+      "y": 1,
+      "w": 104,
+      "h": 79,
+      "ax": 47,
+      "ay": 58
+    },
+    "rolling/bogie_f7_rear_f28": {
+      "x": 3323,
+      "y": 1,
+      "w": 103,
+      "h": 77,
+      "ax": 48,
+      "ay": 57
+    },
+    "rolling/bogie_f7_rear_f29": {
+      "x": 650,
+      "y": 85,
       "w": 101,
-      "h": 114,
-      "ax": 64,
-      "ay": 106
+      "h": 74,
+      "ax": 48,
+      "ay": 55
     },
-    "rolling/bogie_pacific_f3": {
-      "x": 1513,
+    "rolling/bogie_f7_rear_f3": {
+      "x": 1779,
       "y": 1,
-      "w": 140,
-      "h": 94,
+      "w": 104,
+      "h": 80,
+      "ax": 57,
+      "ay": 60
+    },
+    "rolling/bogie_f7_rear_f30": {
+      "x": 958,
+      "y": 85,
+      "w": 101,
+      "h": 72,
+      "ax": 48,
+      "ay": 54
+    },
+    "rolling/bogie_f7_rear_f4": {
+      "x": 2439,
+      "y": 1,
+      "w": 103,
+      "h": 78,
+      "ax": 55,
+      "ay": 59
+    },
+    "rolling/bogie_f7_rear_f5": {
+      "x": 119,
+      "y": 85,
+      "w": 101,
+      "h": 75,
+      "ax": 53,
+      "ay": 58
+    },
+    "rolling/bogie_f7_rear_f6": {
+      "x": 221,
+      "y": 85,
+      "w": 101,
+      "h": 75,
+      "ax": 53,
+      "ay": 58
+    },
+    "rolling/bogie_flying_scotsman_leading_f0": {
+      "x": 1982,
+      "y": 85,
+      "w": 86,
+      "h": 53,
+      "ax": 43,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f1": {
+      "x": 2327,
+      "y": 85,
+      "w": 88,
+      "h": 51,
+      "ax": 44,
+      "ay": 36
+    },
+    "rolling/bogie_flying_scotsman_leading_f13": {
+      "x": 1369,
+      "y": 85,
+      "w": 84,
+      "h": 54,
+      "ax": 42,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f14": {
+      "x": 1454,
+      "y": 85,
+      "w": 79,
+      "h": 54,
+      "ax": 40,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f15": {
+      "x": 1534,
+      "y": 85,
+      "w": 74,
+      "h": 54,
       "ax": 37,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f16": {
+      "x": 1609,
+      "y": 85,
+      "w": 66,
+      "h": 54,
+      "ax": 33,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f17": {
+      "x": 2069,
+      "y": 85,
+      "w": 58,
+      "h": 53,
+      "ax": 29,
+      "ay": 36
+    },
+    "rolling/bogie_flying_scotsman_leading_f18": {
+      "x": 2274,
+      "y": 85,
+      "w": 52,
+      "h": 52,
+      "ax": 26,
+      "ay": 36
+    },
+    "rolling/bogie_flying_scotsman_leading_f19": {
+      "x": 2128,
+      "y": 85,
+      "w": 58,
+      "h": 53,
+      "ax": 29,
+      "ay": 36
+    },
+    "rolling/bogie_flying_scotsman_leading_f2": {
+      "x": 2505,
+      "y": 85,
+      "w": 88,
+      "h": 49,
+      "ax": 44,
+      "ay": 35
+    },
+    "rolling/bogie_flying_scotsman_leading_f20": {
+      "x": 1676,
+      "y": 85,
+      "w": 66,
+      "h": 54,
+      "ax": 33,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f21": {
+      "x": 1743,
+      "y": 85,
+      "w": 74,
+      "h": 54,
+      "ax": 37,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f22": {
+      "x": 1818,
+      "y": 85,
+      "w": 78,
+      "h": 54,
+      "ax": 39,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f23": {
+      "x": 1897,
+      "y": 85,
+      "w": 84,
+      "h": 54,
+      "ax": 42,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f24": {
+      "x": 2187,
+      "y": 85,
+      "w": 86,
+      "h": 53,
+      "ax": 43,
+      "ay": 37
+    },
+    "rolling/bogie_flying_scotsman_leading_f25": {
+      "x": 2416,
+      "y": 85,
+      "w": 88,
+      "h": 51,
+      "ax": 44,
+      "ay": 36
+    },
+    "rolling/bogie_flying_scotsman_leading_f26": {
+      "x": 2594,
+      "y": 85,
+      "w": 88,
+      "h": 49,
+      "ax": 44,
+      "ay": 35
+    },
+    "rolling/bogie_flying_scotsman_leading_f27": {
+      "x": 2882,
+      "y": 85,
+      "w": 88,
+      "h": 47,
+      "ax": 44,
+      "ay": 34
+    },
+    "rolling/bogie_flying_scotsman_leading_f28": {
+      "x": 3254,
+      "y": 85,
+      "w": 84,
+      "h": 44,
+      "ax": 42,
+      "ay": 32
+    },
+    "rolling/bogie_flying_scotsman_leading_f29": {
+      "x": 3652,
+      "y": 85,
+      "w": 80,
+      "h": 40,
+      "ax": 40,
+      "ay": 30
+    },
+    "rolling/bogie_flying_scotsman_leading_f3": {
+      "x": 2971,
+      "y": 85,
+      "w": 88,
+      "h": 47,
+      "ax": 44,
+      "ay": 34
+    },
+    "rolling/bogie_flying_scotsman_leading_f30": {
+      "x": 3944,
+      "y": 85,
+      "w": 76,
+      "h": 38,
+      "ax": 38,
+      "ay": 29
+    },
+    "rolling/bogie_flying_scotsman_leading_f4": {
+      "x": 3339,
+      "y": 85,
+      "w": 84,
+      "h": 44,
+      "ax": 42,
+      "ay": 32
+    },
+    "rolling/bogie_flying_scotsman_leading_f5": {
+      "x": 3733,
+      "y": 85,
+      "w": 80,
+      "h": 40,
+      "ax": 40,
+      "ay": 30
+    },
+    "rolling/bogie_flying_scotsman_leading_f6": {
+      "x": 1,
+      "y": 161,
+      "w": 76,
+      "h": 38,
+      "ax": 38,
+      "ay": 29
+    },
+    "rolling/bogie_flying_scotsman_trailing_f0": {
+      "x": 3534,
+      "y": 85,
+      "w": 58,
+      "h": 41,
+      "ax": 29,
+      "ay": 29
+    },
+    "rolling/bogie_flying_scotsman_trailing_f1": {
+      "x": 3814,
+      "y": 85,
+      "w": 64,
+      "h": 39,
+      "ax": 32,
       "ay": 28
     },
-    "rolling/bogie_pacific_f30": {
-      "x": 695,
-      "y": 1,
-      "w": 86,
-      "h": 110,
-      "ax": 43,
-      "ay": 104
+    "rolling/bogie_flying_scotsman_trailing_f13": {
+      "x": 3479,
+      "y": 85,
+      "w": 54,
+      "h": 43,
+      "ax": 27,
+      "ay": 30
     },
-    "rolling/bogie_pacific_f4": {
-      "x": 1654,
-      "y": 1,
-      "w": 122,
-      "h": 94,
-      "ax": 38,
-      "ay": 27
-    },
-    "rolling/bogie_pacific_f5": {
-      "x": 1777,
-      "y": 1,
-      "w": 101,
-      "h": 92,
-      "ax": 37,
-      "ay": 25
-    },
-    "rolling/bogie_pacific_f6": {
-      "x": 2250,
-      "y": 1,
-      "w": 86,
-      "h": 88,
-      "ax": 43,
-      "ay": 23
-    },
-    "rolling/bogie_uk_tender_pair_f0": {
-      "x": 3194,
-      "y": 197,
-      "w": 72,
-      "h": 48,
-      "ax": 36,
-      "ay": 32
-    },
-    "rolling/bogie_uk_tender_pair_f1": {
-      "x": 3795,
-      "y": 197,
-      "w": 73,
-      "h": 46,
-      "ax": 36,
+    "rolling/bogie_flying_scotsman_trailing_f14": {
+      "x": 3154,
+      "y": 85,
+      "w": 49,
+      "h": 45,
+      "ax": 24,
       "ay": 31
     },
-    "rolling/bogie_uk_tender_pair_f13": {
-      "x": 3267,
-      "y": 197,
-      "w": 68,
-      "h": 48,
-      "ax": 34,
+    "rolling/bogie_flying_scotsman_trailing_f15": {
+      "x": 3060,
+      "y": 85,
+      "w": 46,
+      "h": 47,
+      "ax": 23,
       "ay": 32
     },
-    "rolling/bogie_uk_tender_pair_f14": {
-      "x": 2738,
-      "y": 197,
-      "w": 66,
-      "h": 50,
-      "ax": 33,
+    "rolling/bogie_flying_scotsman_trailing_f16": {
+      "x": 2683,
+      "y": 85,
+      "w": 42,
+      "h": 49,
+      "ax": 21,
       "ay": 33
     },
-    "rolling/bogie_uk_tender_pair_f15": {
-      "x": 2805,
-      "y": 197,
-      "w": 60,
-      "h": 50,
-      "ax": 30,
+    "rolling/bogie_flying_scotsman_trailing_f17": {
+      "x": 2726,
+      "y": 85,
+      "w": 38,
+      "h": 49,
+      "ax": 19,
       "ay": 33
     },
-    "rolling/bogie_uk_tender_pair_f16": {
-      "x": 2866,
-      "y": 197,
-      "w": 54,
-      "h": 50,
-      "ax": 27,
+    "rolling/bogie_flying_scotsman_trailing_f18": {
+      "x": 2765,
+      "y": 85,
+      "w": 34,
+      "h": 49,
+      "ax": 17,
       "ay": 33
     },
-    "rolling/bogie_uk_tender_pair_f17": {
-      "x": 3336,
-      "y": 197,
-      "w": 48,
-      "h": 48,
-      "ax": 24,
-      "ay": 32
+    "rolling/bogie_flying_scotsman_trailing_f19": {
+      "x": 2800,
+      "y": 85,
+      "w": 38,
+      "h": 49,
+      "ax": 19,
+      "ay": 33
     },
-    "rolling/bogie_uk_tender_pair_f18": {
-      "x": 3385,
-      "y": 197,
+    "rolling/bogie_flying_scotsman_trailing_f2": {
+      "x": 78,
+      "y": 161,
+      "w": 69,
+      "h": 36,
+      "ax": 35,
+      "ay": 27
+    },
+    "rolling/bogie_flying_scotsman_trailing_f20": {
+      "x": 2839,
+      "y": 85,
       "w": 42,
       "h": 48,
       "ax": 21,
-      "ay": 32
-    },
-    "rolling/bogie_uk_tender_pair_f19": {
-      "x": 3428,
-      "y": 197,
-      "w": 48,
-      "h": 48,
-      "ax": 24,
-      "ay": 32
-    },
-    "rolling/bogie_uk_tender_pair_f2": {
-      "x": 86,
-      "y": 267,
-      "w": 74,
-      "h": 44,
-      "ax": 37,
-      "ay": 30
-    },
-    "rolling/bogie_uk_tender_pair_f20": {
-      "x": 2921,
-      "y": 197,
-      "w": 54,
-      "h": 50,
-      "ax": 27,
       "ay": 33
     },
-    "rolling/bogie_uk_tender_pair_f21": {
-      "x": 2976,
-      "y": 197,
-      "w": 60,
-      "h": 50,
-      "ax": 30,
-      "ay": 33
-    },
-    "rolling/bogie_uk_tender_pair_f22": {
-      "x": 3037,
-      "y": 197,
-      "w": 66,
-      "h": 50,
-      "ax": 33,
-      "ay": 33
-    },
-    "rolling/bogie_uk_tender_pair_f23": {
-      "x": 3477,
-      "y": 197,
-      "w": 68,
-      "h": 48,
-      "ax": 34,
+    "rolling/bogie_flying_scotsman_trailing_f21": {
+      "x": 3107,
+      "y": 85,
+      "w": 46,
+      "h": 47,
+      "ax": 23,
       "ay": 32
     },
-    "rolling/bogie_uk_tender_pair_f24": {
-      "x": 3546,
-      "y": 197,
-      "w": 72,
-      "h": 48,
-      "ax": 36,
-      "ay": 32
-    },
-    "rolling/bogie_uk_tender_pair_f25": {
-      "x": 3869,
-      "y": 197,
-      "w": 73,
-      "h": 46,
-      "ax": 36,
+    "rolling/bogie_flying_scotsman_trailing_f22": {
+      "x": 3204,
+      "y": 85,
+      "w": 49,
+      "h": 45,
+      "ax": 25,
       "ay": 31
     },
-    "rolling/bogie_uk_tender_pair_f26": {
-      "x": 161,
-      "y": 267,
-      "w": 74,
+    "rolling/bogie_flying_scotsman_trailing_f23": {
+      "x": 3424,
+      "y": 85,
+      "w": 54,
       "h": 44,
+      "ax": 27,
+      "ay": 31
+    },
+    "rolling/bogie_flying_scotsman_trailing_f24": {
+      "x": 3593,
+      "y": 85,
+      "w": 58,
+      "h": 41,
+      "ax": 29,
+      "ay": 29
+    },
+    "rolling/bogie_flying_scotsman_trailing_f25": {
+      "x": 3879,
+      "y": 85,
+      "w": 64,
+      "h": 39,
+      "ax": 32,
+      "ay": 28
+    },
+    "rolling/bogie_flying_scotsman_trailing_f26": {
+      "x": 148,
+      "y": 161,
+      "w": 69,
+      "h": 36,
+      "ax": 35,
+      "ay": 27
+    },
+    "rolling/bogie_flying_scotsman_trailing_f27": {
+      "x": 218,
+      "y": 161,
+      "w": 72,
+      "h": 35,
+      "ax": 36,
+      "ay": 27
+    },
+    "rolling/bogie_flying_scotsman_trailing_f28": {
+      "x": 364,
+      "y": 161,
+      "w": 74,
+      "h": 32,
       "ax": 37,
-      "ay": 30
-    },
-    "rolling/bogie_uk_tender_pair_f27": {
-      "x": 236,
-      "y": 267,
-      "w": 72,
-      "h": 41,
-      "ax": 36,
-      "ay": 28
-    },
-    "rolling/bogie_uk_tender_pair_f28": {
-      "x": 546,
-      "y": 267,
-      "w": 70,
-      "h": 38,
-      "ax": 35,
-      "ay": 27
-    },
-    "rolling/bogie_uk_tender_pair_f29": {
-      "x": 842,
-      "y": 267,
-      "w": 66,
-      "h": 35,
-      "ax": 33,
       "ay": 26
     },
-    "rolling/bogie_uk_tender_pair_f3": {
-      "x": 309,
-      "y": 267,
-      "w": 72,
-      "h": 41,
-      "ax": 36,
-      "ay": 28
-    },
-    "rolling/bogie_uk_tender_pair_f30": {
-      "x": 976,
-      "y": 267,
-      "w": 62,
-      "h": 33,
-      "ax": 31,
+    "rolling/bogie_flying_scotsman_trailing_f29": {
+      "x": 514,
+      "y": 161,
+      "w": 76,
+      "h": 30,
+      "ax": 38,
       "ay": 25
     },
-    "rolling/bogie_uk_tender_pair_f4": {
-      "x": 617,
-      "y": 267,
-      "w": 70,
-      "h": 38,
-      "ax": 35,
+    "rolling/bogie_flying_scotsman_trailing_f3": {
+      "x": 291,
+      "y": 161,
+      "w": 72,
+      "h": 35,
+      "ax": 36,
       "ay": 27
     },
-    "rolling/bogie_uk_tender_pair_f5": {
-      "x": 909,
-      "y": 267,
-      "w": 66,
-      "h": 35,
-      "ax": 33,
+    "rolling/bogie_flying_scotsman_trailing_f30": {
+      "x": 668,
+      "y": 161,
+      "w": 76,
+      "h": 28,
+      "ax": 38,
+      "ay": 24
+    },
+    "rolling/bogie_flying_scotsman_trailing_f4": {
+      "x": 439,
+      "y": 161,
+      "w": 74,
+      "h": 32,
+      "ax": 37,
       "ay": 26
     },
-    "rolling/bogie_uk_tender_pair_f6": {
-      "x": 1039,
-      "y": 267,
-      "w": 62,
-      "h": 33,
-      "ax": 31,
+    "rolling/bogie_flying_scotsman_trailing_f5": {
+      "x": 591,
+      "y": 161,
+      "w": 76,
+      "h": 30,
+      "ax": 38,
       "ay": 25
+    },
+    "rolling/bogie_flying_scotsman_trailing_f6": {
+      "x": 745,
+      "y": 161,
+      "w": 76,
+      "h": 28,
+      "ax": 38,
+      "ay": 24
     }
   }
 }
