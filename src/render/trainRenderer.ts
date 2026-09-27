@@ -228,7 +228,7 @@ export class TrainRenderer {
               // occludes it naturally, leaving the wheels and sideways slide visible.
               const bx = pb ? pb.drawX + (b.drawX - pb.drawX) * alpha : b.drawX;
               const by = pb ? pb.drawY + (b.drawY - pb.drawY) * alpha : b.drawY;
-              const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
+              const ba = pb ? lerpAngle(pb.drawAngle, b.drawAngle, alpha) : b.drawAngle;
               const bs = c.bogies[bi++];
               if (!bs) return;
               // bogies are posed in track order; a reversed vehicle or a mirrored segment meets

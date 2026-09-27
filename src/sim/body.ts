@@ -47,6 +47,9 @@ export interface SegmentSpec {
   front: number;
   /** drawn back to front (the rear engine unit of a Garratt) */
   mirror?: boolean;
+  /** where each bogie sprite is drawn, tiles along the track from its pivot (+ towards the
+   *  vehicle's front), from the segment's front; cosmetic, see BodyFields.bogieDraw */
+  draw?: number[];
 }
 export interface VehicleSpec {
   L: number;
@@ -68,6 +71,13 @@ export interface BodyFields {
   bogieAxles?: number;
   maxLateralPlay?: number;
   type?: string;
+  /**
+   * Draw each bogie sprite this far along the track from its pivot, in tiles (+ towards the
+   * vehicle's front): a list for every part, or one per part, over that part's bogies from its
+   * front. It moves only the drawn sprite, to where the prototype has its trucks; the pivots, the
+   * body pose and every curve verdict stay as they are.
+   */
+  bogieDraw?: number[] | Partial<Record<PartKind, number[]>>;
 }
 
 export function vehicleSpec(def: BodyFields): VehicleSpec {
@@ -122,6 +132,11 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
       break;
     }
   }
+  if (def.bogieDraw)
+    for (const s of segs) {
+      const d = Array.isArray(def.bogieDraw) ? def.bogieDraw : def.bogieDraw[s.part];
+      if (d) s.draw = d;
+    }
   return {
     L,
     size,
@@ -235,6 +250,8 @@ export interface BogiePose {
   /** Rail position of the independently moving sprite, also used during interpolation. */
   drawX: number;
   drawY: number;
+  /** track tangent where the sprite is drawn (the pivot's, unless the vehicle moves it) */
+  drawAngle: number;
 }
 export interface SegmentPose {
   part: PartKind;
@@ -266,6 +283,7 @@ export function poseSegment(
   arcFront: number,
   seg: SegmentSpec,
   sideways = TOL.sideways,
+  reversed = false,
 ): SegmentPose {
   const { L, W, nb } = seg;
   const arcs: number[] = [];
@@ -309,8 +327,13 @@ export function poseSegment(
   cy += nxy * delta;
   const residualGap = Math.max(Math.abs(eMax - delta), Math.abs(eMin - delta));
   const bogies: BogiePose[] = [];
+  // bogies go in track order; a reversed vehicle or a mirrored segment meets its own front bogie last
+  const back = reversed !== !!seg.mirror;
   for (let i = 0; i < nb; i++) {
     const P = pl.at(arcs[i]);
+    const off = (seg.draw?.[back ? nb - 1 - i : i] ?? 0) * (back ? -1 : 1);
+    const D = off ? pl.at(arcs[i] + off) : P;
+    const td = pl.tangent(arcs[i] + off);
     const socket = W / 2 - (W / (nb - 1)) * i;
     const skx = cx + axx * socket;
     const sky = cy + axy * socket;
@@ -326,8 +349,9 @@ export function poseSegment(
       kind: seg.bogie,
       foreAft: Math.abs(along),
       lateral: Math.abs(across),
-      drawX: P.x,
-      drawY: P.y,
+      drawX: D.x,
+      drawY: D.y,
+      drawAngle: Math.atan2(td.y, td.x),
     });
   }
   return {
@@ -351,7 +375,13 @@ export function poseVehicle(
   reversed = false,
 ): VehiclePose {
   const segments = spec.segments.map((s) =>
-    poseSegment(pl, arcFront - (reversed ? spec.L - s.front - s.L : s.front), s),
+    poseSegment(
+      pl,
+      arcFront - (reversed ? spec.L - s.front - s.L : s.front),
+      s,
+      TOL.sideways,
+      reversed,
+    ),
   );
   const mid = pl.at(arcFront - spec.L / 2);
   const tg = pl.tangent(arcFront - spec.L / 2);

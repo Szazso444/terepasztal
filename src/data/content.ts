@@ -36,6 +36,12 @@ export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
  * sprite rolling/bogie_<style>_f<n>; without it the generic truck of the bogie's kind draws.
  */
 export type BogieStyle = string | Partial<Record<PartKind, string | string[]>>;
+/**
+ * Where each bogie sprite is drawn, in tiles along the track from the pivot the simulation hangs it
+ * at (+ towards the vehicle's own front): per bogie from the part's front, for every part or per part.
+ * Cosmetic only: pivots, curve verdicts and the body pose stay where the simulation puts them.
+ */
+export type BogieDraw = number[] | Partial<Record<PartKind, number[]>>;
 export type Collector = 'shoe' | 'pantograph' | 'hv' | 'multi';
 
 export interface LocoDef {
@@ -69,6 +75,7 @@ export interface LocoDef {
   /** pivot spacing as a fraction of body length (default 0.7) */
   pivotRatio?: number;
   bogieStyle?: BogieStyle;
+  bogieDraw?: BogieDraw;
   /** bogies under a rigid body (3 for the Bo-Bo-Bo large body) */
   bogies?: number;
   /** axles per bogie: 2 (default) or 3 (Co-Co and the like) */
@@ -101,6 +108,7 @@ export interface WagonDef {
   /** axles per bogie: 2 (default), 3 or 4 */
   bogieAxles?: number;
   bogieStyle?: BogieStyle;
+  bogieDraw?: BogieDraw;
   /** age the wagon belongs to: 0 steam, 1 diesel, 2 electric */
   tier?: number;
   /** speed ceiling, tiles per second (default above every locomotive) */

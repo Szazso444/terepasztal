@@ -80,7 +80,7 @@ export function vehiclePreview(atlas: AtlasRegistry, id: string, facing = 0, sca
   for (const s of pose.segments) {
     if (spec.drawBogies)
       for (const b of s.bogies)
-        add((f) => `rolling/${b.kind}_f${f}`, b.drawX, b.drawY, b.angle, -1000);
+        add((f) => `rolling/${b.kind}_f${f}`, b.drawX, b.drawY, b.drawAngle, -1000);
     add(
       (f) =>
         loco

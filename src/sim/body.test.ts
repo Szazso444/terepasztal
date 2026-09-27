@@ -40,6 +40,34 @@ describe('independent bogies', () => {
     expect(pose.segments[0].bogies[1].lateral).toBeGreaterThan(0.05);
   });
 
+  it('draws a moved bogie on its own rail point without moving the pivot', () => {
+    const path = referencePath('regular');
+    const plain = vehicleSpec({ size: 'medium' });
+    const moved = vehicleSpec({ size: 'medium', bogieDraw: [-0.15, 0.15] });
+    for (const reversed of [false, true]) {
+      const a = poseVehicle(path, 3.4, plain, reversed).segments[0];
+      const b = poseVehicle(path, 3.4, moved, reversed).segments[0];
+      expect(b.x).toBe(a.x);
+      expect(b.angle).toBe(a.angle);
+      for (const [k, bb] of b.bogies.entries()) {
+        const aa = a.bogies[k];
+        // the simulated pivot is untouched
+        expect([bb.x, bb.y, bb.foreAft, bb.lateral]).toEqual([aa.x, aa.y, aa.foreAft, aa.lateral]);
+        // the sprite sits on the track, 0.15 tiles towards the body's middle, facing along it there
+        const n = path.nearest({ x: bb.drawX, y: bb.drawY }, 3.4 - 1);
+        expect(Math.hypot(n.p.x - bb.drawX, n.p.y - bb.drawY)).toBeLessThan(1e-6);
+        expect(Math.hypot(bb.drawX - aa.x, bb.drawY - aa.y)).toBeCloseTo(0.15, 2);
+        const t = path.tangent(n.arc);
+        expect(Math.abs(Math.sin(bb.drawAngle - Math.atan2(t.y, t.x)))).toBeLessThan(1e-3);
+      }
+      const mid = (p: { x: number; y: number }[]) => Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+      const drawn = b.bogies.map((q) => ({ x: q.drawX, y: q.drawY }));
+      expect(mid(drawn)).toBeLessThan(mid(a.bogies));
+    }
+    for (const cls of ['regular', 'high_speed'] as const)
+      expect(measure(moved, cls)).toEqual(measure(plain, cls));
+  });
+
   it('changes wheel count without changing pivots or curve compatibility', () => {
     for (const size of ['medium', 'large'] as const) {
       const four = vehicleSpec({ size, bogieAxles: 2 });
