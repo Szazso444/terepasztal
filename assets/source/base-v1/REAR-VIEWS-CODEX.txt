@@ -1,0 +1,11 @@
+Work in this repo (Terepasztal). Check out branch `locomotive-render-v1` and create a new branch `art/rear-views-v1` from it.
+
+Task: make a second source image of each locomotive, as `assets/source/base-v1/REAR-VIEWS.md` describes. Read that file first and follow it exactly. It points you to the prompts (`assets/source/base-v1/rear-view-prompts.json`), the checker (`tools/asset-pipeline/check_rear_views.py`) and the record to keep.
+
+Plan:
+1. Run one subagent per locomotive entry in `rear-view-prompts.json`. Start with the `pilot` group (f7, sd40, flying_scotsman, black_five, nine_f); once those are accepted, run the other groups in parallel.
+2. Each subagent generates the rear view with your built-in image generation: the entry's `attach` image as the reference, its `prompt` verbatim. It checks every attempt with the checker and by eye against the visual checklist in REAR-VIEWS.md, retries up to three times, and saves only an accepted image to `save_as`. Then it does the entry's `trucks` the same way.
+3. Keep every attempt's exact prompt and verdict in `assets/source/base-v1/rear-view-generation.json`.
+4. When all are done, run `python tools/asset-pipeline/check_rear_views.py`, commit the images and the two JSON records, push the branch, and open a pull request into `local/train-models` with a table: locomotive, rear view verdict, truck verdicts, attempts, and whatever did not come out right.
+
+Change nothing else in the repo.

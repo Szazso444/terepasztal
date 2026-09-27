@@ -8,3 +8,6 @@ dist
 
 # raw in-game captures (reproducible; the review keeps JPEG copies)
 scratchpad/train-models/renders/
+
+# image-generation attempts before they are checked (assets/source/base-v1/REAR-VIEWS.md)
+/tmp/

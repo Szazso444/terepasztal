@@ -92,8 +92,19 @@ NOTES = {
 TRUCKS = {
     "sw1": "two-axle truck", "m62": "three-axle truck", "f7": "two-axle Blomberg truck", "sd40": "three-axle HT-C truck",
     "deltic": "three-axle bogie", "dda40x": "four-axle truck", "v63": "three-axle bogie", "taurus": "two-axle bogie",
-    "re460": "two-axle bogie", "gg1": "three-axle driving truck (it also has two-axle guiding trucks: make one image each)",
+    "re460": "two-axle bogie", "gg1": ["three-axle driving truck", "two-axle guiding truck"],
     "tgv": "two-axle motor bogie", "ice1": "two-axle motor bogie",
+}
+
+# work groups for an agent that fans the images out; the pilot's five come first
+GROUPS = {
+    "pilot": ["f7", "sd40", "flying_scotsman", "black_five", "nine_f"],
+    "steam_tender": ["mav424", "k4s", "drg01", "daylight", "mallard", "rocket", "adler", "john_bull", "general",
+                     "jupiter"],
+    "steam_tank": ["mav375", "j94"],
+    "articulated": ["big_boy", "gmam", "crocodile"],
+    "diesel": ["sw1", "class08", "m62", "deltic", "dda40x"],
+    "electric": ["kando_v40", "v63", "taurus", "re460", "gg1", "tgv", "ice1"],
 }
 
 
@@ -112,7 +123,11 @@ def main():
     originals = {d["id"].removeprefix("loco."): d for d in walk(src)
                  if isinstance(d.get("id"), str) and d["id"].startswith("loco.") and "prompt" in d}
     out = []
-    for lid, (wheels, note) in NOTES.items():
+    group_of = {i: g for g, ids in GROUPS.items() for i in ids}
+    if set(group_of) != set(NOTES):
+        raise SystemExit(f"groups and notes differ: {sorted(set(group_of) ^ set(NOTES))}")
+    for lid in [i for ids in GROUPS.values() for i in ids]:
+        wheels, note = NOTES[lid]
         o = originals.get(lid)
         if not o:
             raise SystemExit(f"{lid}: no original prompt in generation-prompts.json")
@@ -126,18 +141,21 @@ def main():
         p = p.replace(anchor, f"{SAME} Wheel arrangement as in the attached image; the real one is a {wheels}. {note} "
                       + anchor, 1)
         stem = Path(o["filename"]).stem
-        row = {"id": lid, "attach": f"assets/source/base-v1/{o['filename']}",
-               "save_as": f"assets/source/base-v1/{stem}-rear.png", "prompt": p}
-        if lid in TRUCKS:
+        group = group_of[lid]
+        row = {"id": lid, "group": group, "priority": 1 if group == "pilot" else 2,
+               "attach": f"assets/source/base-v1/{o['filename']}",
+               "save_as": f"assets/source/base-v1/{stem}-rear.png", "prompt": p, "trucks": []}
+        kinds = TRUCKS.get(lid, [])
+        for k, kind in enumerate([kinds] if isinstance(kinds, str) else kinds):
             style = p[:p.index("One ")]  # the shared style, palette and background rules
-            row["truck"] = {
-                "save_as": f"assets/source/base-v1/{stem}-truck.png",
+            row["trucks"].append({
+                "save_as": f"assets/source/base-v1/{stem}-truck{'' if k == 0 else k + 1}.png",
                 "prompt": style.replace(VIEW_NEW, "Orthographic 2:1 isometric front/right view.")
-                + f"One {TRUCKS[lid]} of the locomotive in the attached image, on its own, as if lifted out from under "
+                + f"One {kind} of the locomotive in the attached image, on its own, as if lifted out from under "
                   "it: side frames, wheels, axle boxes, springs, brake cylinders and bolster, in the attached image's "
                   "colours. Nothing of the body, fuel tank, pilot, snowplow or coupler. Front of the truck faces "
                   "lower-right; its long axis runs upper-left to lower-right. No rails, ground, shadow, numbering or text.",
-            }
+            })
         out.append(row)
     path = BASE / "rear-view-prompts.json"
     path.write_text(json.dumps(out, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

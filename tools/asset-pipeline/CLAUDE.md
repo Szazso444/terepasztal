@@ -95,7 +95,9 @@ the seen ones. The generated texture drifts (the Rocket's yellow went olive); th
 
 `rear_view_prompts.py` writes `assets/source/base-v1/rear-view-prompts.json`: for each locomotive, the prompt that
 made its studio image turned into a rear three-quarter view (same camera, locomotive turned 180 degrees), with its
-edge cases, and for diesel and electric trucks a prompt for the truck on its own.
+edge cases, and for diesel and electric trucks a prompt for the truck on its own. `check_rear_views.py` checks the generated images
+(transparency, framing, not flipped or redrawn); `assets/source/base-v1/REAR-VIEWS.md` is the brief for the image agent
+and `REAR-VIEWS-CODEX.txt` the one prompt that starts it.
 
 More images of the same vehicle colour what the source cannot see: `landmarks` `views` (paths from this folder) or
 `<image>-rear.png` next to the source image, e.g. a rear three-quarter view on a transparent background. Each one's
