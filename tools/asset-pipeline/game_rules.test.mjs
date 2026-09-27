@@ -11,6 +11,7 @@ import {
   vehicleSpec,
 } from '../../src/sim/body';
 import { TILE_W } from '../../src/engine/iso';
+import { HUMAN_HEIGHT_M, HUMAN_HEIGHT_PX } from '../../src/render/assetScale';
 
 // The pipeline renders in Python; game_rules.py is its copy of the game's rules. These tests fail
 // when body.ts changes and the copy does not.
@@ -26,8 +27,10 @@ parts = {}
 for size, plans in g.PLANS.items():
     for plan in plans:
         parts[f"{size}/{plan}"] = g.plan_parts(plan, size)
+import tomllib
+grid = tomllib.loads(open("pipeline.toml", encoding="utf-8").read())["grid"]
 print(json.dumps({"width": g.DRAWN_WIDTH, "facings": g.FACINGS, "drawn": g.drawn_facings(), "dirs": g.directions("game"),
-                  "sizes": g.SIZE_TILES, "plans": g.PLANS, "parts": parts}))
+                  "sizes": g.SIZE_TILES, "plans": g.PLANS, "parts": parts, "tileM": g.grid_metre(grid)}))
 `;
   py = JSON.parse(execFileSync(python, ['-c', script], { cwd: dir, encoding: 'utf8' }));
 });
@@ -51,6 +54,20 @@ describe('game_rules.py', () => {
     // sprites are drawn at px_per_m = tile_px / (tile_m * sqrt 2); any other tile_px is the wrong size in game
     const toml = readFileSync(new URL('./pipeline.toml', import.meta.url), 'utf8');
     expect(Number(/^tile_px\s*=\s*(\d+)/m.exec(toml)?.[1])).toBe(TILE_W);
+  });
+
+  it('measures in the metre the game draws its people in', () => {
+    // [grid] metre = "human": tile_m follows from a person's height in logical pixels, so a rendered
+    // locomotive stands as tall beside a person as the prototype does
+    const toml = readFileSync(new URL('./pipeline.toml', import.meta.url), 'utf8');
+    const num = (k) => Number(new RegExp(`^${k}\\s*=\\s*([\\d.]+)`, 'm').exec(toml)?.[1]);
+    expect(/^metre\s*=\s*"human"/m.test(toml)).toBe(true);
+    expect(num('human_px')).toBe(HUMAN_HEIGHT_PX);
+    expect(num('human_m')).toBe(HUMAN_HEIGHT_M);
+    const tileM = (TILE_W * Math.cos((30 * Math.PI) / 180) * HUMAN_HEIGHT_M) / (HUMAN_HEIGHT_PX * Math.SQRT2);
+    expect(py.tileM).toBeCloseTo(tileM, 9);
+    // at that metre the real rail-centre spacing, drawn DRAWN_WIDTH wide, lands on the 0.32-tile gauge
+    expect(Math.abs((1.505 * DRAWN_WIDTH) / tileM - 0.32)).toBeLessThan(0.01);
   });
 
   it('draws rolling stock as wide as the generators do', () => {
@@ -102,5 +119,18 @@ describe('bogie roster', () => {
 
   it('asks for no bogie that no vehicle rides on', () => {
     for (const row of rows) expect(named.has(row)).toBe(true);
+  });
+
+  it('builds every parametric bogie row from a spec', () => {
+    const specs = JSON.parse(readFileSync(new URL('./bogies.json', import.meta.url), 'utf8'));
+    const parametric = readFileSync(new URL('./assets.csv', import.meta.url), 'utf8')
+      .split('\n')
+      .map((l) => /^bogie_([a-z0-9_]+),parametric,/.exec(l)?.[1])
+      .filter(Boolean);
+    expect(parametric.length).toBeGreaterThan(0);
+    for (const style of parametric) {
+      expect(specs[style]?.axles?.length, style).toBeGreaterThan(0);
+      expect(named.has(style), style).toBe(true);
+    }
   });
 });

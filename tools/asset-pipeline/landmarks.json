@@ -1,0 +1,421 @@
+{
+ "_doc": "Measured on the source crop the model was conditioned on (models_raw/<id>.source.png, 1024 px). Pixel coords (x right, y down). wheels: name, hub_px = the hub (or axle box) centre, rim_px = points on the tyre's outer edge; the blender stage back-projects them onto the mesh for axle positions and diameters, levels the chassis on the wheel bottoms and puts the rail plane under them. Small stock gets round wheels built there (spokes, colours from color_px boxes [x0, y0, x1, y1]); medium and large stock records them for its bogie sprites. nose_px: a pixel on the nose, which decides which end is +X. scale: a real dimension between two named wheels (a coupled or truck wheelbase) sets the model's scale instead of length_m. inner_y: share of the model's half width inside which its own faces survive when its wheels are cut away. Without scale, a vehicle is scaled by height_m (assets.csv, height over the rail), then length_m. cut_boxes: [{part, x: [x0, x1] final metres from the part's centre (+ towards the nose), top: metres above the rail}] - everything of the model inside goes (all across): its own running gear, which the game draws as bogie sprites beneath the body. rail: \"lowest\" puts the rail plane at the mesh's lowest point instead of under the measured wheels. skirts: [{part, x: [x0, x1], bottom, top, inset (m inboard of the rail), color}] - dark inboard frame plates built into the body sprite (final metres), filling what a cut box took between the running plate and the smaller built wheels, so it stays rigid with the body instead of swinging with a bogie sprite.",
+ "rocket": {
+  "scale": {
+   "between": [
+    "rear",
+    "front"
+   ],
+   "m": 2.16,
+   "note": "Rocket wheelbase 7 ft 1 in"
+  },
+  "nose_px": [
+   958,
+   782
+  ],
+  "wheels": [
+   {
+    "name": "rear",
+    "hub_px": [
+     152,
+     588
+    ],
+    "rim_px": [
+     [
+      82,
+      590
+     ],
+     [
+      135,
+      448
+     ],
+     [
+      185,
+      729
+     ]
+    ],
+    "spokes": 12
+   },
+   {
+    "name": "front",
+    "hub_px": [
+     580,
+     835
+    ],
+    "rim_px": [
+     [
+      513,
+      840
+     ],
+     [
+      565,
+      723
+     ],
+     [
+      615,
+      954
+     ]
+    ],
+    "spokes": 12
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    90,
+    604,
+    95,
+    616
+   ],
+   "wheel": [
+    100,
+    604,
+    106,
+    616
+   ],
+   "hub": [
+    574,
+    830,
+    582,
+    838
+   ]
+  },
+  "inner_y": 0.72
+ },
+ "flying_scotsman": {
+  "nose_px": [
+   958,
+   722
+  ],
+  "wheels": [
+   {
+    "name": "l1",
+    "hub_px": [
+     745,
+     745
+    ],
+    "rim_px": [
+     [
+      729,
+      743
+     ],
+     [
+      750,
+      773
+     ]
+    ]
+   },
+   {
+    "name": "l2",
+    "hub_px": [
+     814,
+     777
+    ],
+    "rim_px": [
+     [
+      800,
+      777
+     ],
+     [
+      818,
+      807
+     ]
+    ]
+   },
+   {
+    "name": "d1",
+    "hub_px": [
+     460,
+     585
+    ],
+    "rim_px": [
+     [
+      421,
+      585
+     ],
+     [
+      470,
+      638
+     ]
+    ]
+   },
+   {
+    "name": "d2",
+    "hub_px": [
+     563,
+     634
+    ],
+    "rim_px": [
+     [
+      527,
+      632
+     ],
+     [
+      563,
+      568
+     ],
+     [
+      566,
+      700
+     ]
+    ]
+   },
+   {
+    "name": "d3",
+    "hub_px": [
+     672,
+     689
+    ],
+    "rim_px": [
+     [
+      675,
+      731
+     ]
+    ]
+   }
+  ],
+  "cut_boxes": [
+   {
+    "part": "engine",
+    "x": [
+     -3.9,
+     -2.35
+    ],
+    "top": 1.55,
+    "note": "trailing axle under the cab, below the cab sides"
+   },
+   {
+    "part": "engine",
+    "x": [
+     -2.35,
+     1.85
+    ],
+    "top": 1.97,
+    "note": "coupled wheels, rods and frames up to the running plate"
+   },
+   {
+    "part": "engine",
+    "x": [
+     1.4,
+     3.3
+    ],
+    "top": 0.8,
+    "note": "leading bogie, below the cylinders"
+   },
+   {
+    "part": "tender",
+    "x": [
+     -2.5,
+     2.5
+    ],
+    "top": 0.78,
+    "note": "wheels below the tender's outside frame"
+   }
+  ],
+  "skirts": [
+   {
+    "part": "engine",
+    "x": [
+     -3.35,
+     1.9
+    ],
+    "bottom": 1.22,
+    "top": 1.99,
+    "inset": 0.3,
+    "color": [
+     30,
+     32,
+     34
+    ],
+    "note": "A3 frames between the coupled wheels (tops at 1.24 m) and the running plate (1.97 m)"
+   }
+  ]
+ },
+ "sd40": {
+  "nose_px": [
+   955,
+   760
+  ],
+  "wheels": [
+   {
+    "name": "r1",
+    "hub_px": [
+     115,
+     480
+    ],
+    "rim_px": [
+     [
+      117,
+      500
+     ]
+    ]
+   },
+   {
+    "name": "r2",
+    "hub_px": [
+     177,
+     510
+    ],
+    "rim_px": [
+     [
+      182,
+      527
+     ]
+    ]
+   },
+   {
+    "name": "r3",
+    "hub_px": [
+     247,
+     537
+    ],
+    "rim_px": [
+     [
+      252,
+      557
+     ]
+    ]
+   },
+   {
+    "name": "f1",
+    "hub_px": [
+     575,
+     687
+    ],
+    "rim_px": [
+     [
+      580,
+      705
+     ]
+    ]
+   },
+   {
+    "name": "f2",
+    "hub_px": [
+     645,
+     717
+    ],
+    "rim_px": [
+     [
+      655,
+      737
+     ]
+    ]
+   },
+   {
+    "name": "f3",
+    "hub_px": [
+     717,
+     750
+    ],
+    "rim_px": [
+     [
+      727,
+      770
+     ]
+    ]
+   }
+  ],
+  "rail": "lowest",
+  "cut_boxes": [
+   {
+    "part": "body",
+    "x": [
+     -5.85,
+     -1.8
+    ],
+    "top": 1.1,
+    "note": "rear truck, the source's and the game's pivot's"
+   },
+   {
+    "part": "body",
+    "x": [
+     1.8,
+     5.85
+    ],
+    "top": 1.1,
+    "note": "front truck"
+   }
+  ]
+ },
+ "f7": {
+  "nose_px": [
+   930,
+   780
+  ],
+  "rail": "lowest",
+  "wheels": [
+   {
+    "name": "r1",
+    "hub_px": [
+     121,
+     509
+    ],
+    "rim_px": [
+     [
+      150,
+      542
+     ]
+    ]
+   },
+   {
+    "name": "r2",
+    "hub_px": [
+     237,
+     560
+    ],
+    "rim_px": [
+     [
+      260,
+      592
+     ]
+    ]
+   },
+   {
+    "name": "f1",
+    "hub_px": [
+     557,
+     697
+    ],
+    "rim_px": [
+     [
+      585,
+      735
+     ]
+    ]
+   },
+   {
+    "name": "f2",
+    "hub_px": [
+     700,
+     760
+    ],
+    "rim_px": [
+     [
+      727,
+      800
+     ]
+    ]
+   }
+  ],
+  "cut_boxes": [
+   {
+    "part": "body",
+    "x": [
+     -6.0,
+     -1.95
+    ],
+    "top": 1.3,
+    "note": "rear Blomberg truck, the source's and the game's pivot's"
+   },
+   {
+    "part": "body",
+    "x": [
+     1.95,
+     5.9
+    ],
+    "top": 1.3,
+    "note": "front truck, below the skirt; the pilot stays"
+   }
+  ]
+ }
+}

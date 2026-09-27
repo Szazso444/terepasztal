@@ -1,0 +1,468 @@
+{
+ "_doc": "Running gear the game draws as bogie sprites (rolling/bogie_<style>_f<f>), built by running_gear.bogie. Positions are metres in the game frame: x along the track from the pivot the game hangs the group at (+ towards the vehicle's front), heights above the rail. scale sizes the details (and wheels given as d, real metres); d_f is a wheel diameter already in the game frame. Wheels always sit on the game's rails (+-0.16 tile); other parts keep their real distance outboard of the rail, widened as the gauge is. Steam coupled wheels shrink until they clear each other at the measured, compressed spacing; everything under one engine shares that factor. Colours are sRGB 0-255, medians of boxes on the source crops (source_px).",
+ "leading": {
+  "rides_under": "flying_scotsman engine, front pivot (+2.727 m); also A4, DRG 01, K4s, Black Five, MAV 424, Daylight, GMAM",
+  "scale": 0.61,
+  "x_scale": 1.0,
+  "offset_m": -0.4325,
+  "note": "measured leading wheels l1/l2 at +1.882/+2.707 m on the engine: centre 0.4325 m behind the front pivot; A3 bogie wheels 0.97 m x 0.61",
+  "axles": [
+   {
+    "x": 0.4125,
+    "d": 0.97,
+    "spokes": 10
+   },
+   {
+    "x": -0.4125,
+    "d": 0.97,
+    "spokes": 10
+   }
+  ],
+  "frame": {
+   "type": "plate_inside",
+   "x0": -0.85,
+   "x1": 0.85,
+   "bottom_f": 0.18,
+   "top_f": 0.62,
+   "inset": 0.3,
+   "cross": [
+    0.0
+   ]
+  },
+  "boxes": {
+   "w": 0.36,
+   "h": 0.4,
+   "out": 0.12
+  },
+  "springs": {
+   "leaf": [
+    [
+     0.4125,
+     0.95,
+     0.8
+    ],
+    [
+     -0.4125,
+     0.95,
+     0.8
+    ]
+   ],
+   "out": 0.12
+  },
+  "colors": {
+   "tyre": [
+    150,
+    146,
+    135
+   ],
+   "wheel": [
+    52,
+    82,
+    56
+   ],
+   "hub": [
+    60,
+    64,
+    62
+   ],
+   "frame": [
+    38,
+    40,
+    42
+   ],
+   "detail": [
+    46,
+    49,
+    49
+   ],
+   "spring": [
+    70,
+    72,
+    74
+   ]
+  },
+  "source_px": {
+   "flying_scotsman": {
+    "tyre": [
+     423,
+     575,
+     428,
+     590
+    ],
+    "wheel": "spokes of l1 near (745, 745)"
+   }
+  }
+ },
+ "pacific": {
+  "rides_under": "flying_scotsman engine, rear pivot (-2.727 m); also A4, DRG 01, K4s",
+  "scale": 0.61,
+  "x_scale": 1.0,
+  "offset_m": 2.597,
+  "note": "coupled wheels at the measured d1/d2/d3 (-1.465/-0.13/+1.25 m on the engine), drawn from the rear pivot; A3 drivers 2.03 m and trailing wheels 1.12 m x 0.61 clear each other at the 1.34 m spacing; no frames: the group swings about the rear pivot on curves, so only wheels and rods go with it; the frames are a skirt on the body; the cylinders stay with the body",
+  "axles": [
+   {
+    "x": 1.38,
+    "d": 2.03,
+    "spokes": 20,
+    "driver": true
+   },
+   {
+    "x": 0.0,
+    "d": 2.03,
+    "spokes": 20,
+    "driver": true
+   },
+   {
+    "x": -1.335,
+    "d": 2.03,
+    "spokes": 20,
+    "driver": true
+   },
+   {
+    "x": -2.835,
+    "d": 1.12,
+    "spokes": 12
+   }
+  ],
+  "boxes": {
+   "w": 0.3,
+   "h": 0.36,
+   "out": 0.08
+  },
+  "rods": {
+   "crank": 0.33,
+   "crank_deg": -35,
+   "connect": 1,
+   "crosshead": {
+    "x": 2.35,
+    "z_f": 0.72,
+    "bar": 0.8
+   }
+  },
+  "colors": {
+   "tyre": [
+    150,
+    146,
+    135
+   ],
+   "wheel": [
+    52,
+    82,
+    56
+   ],
+   "hub": [
+    60,
+    64,
+    62
+   ],
+   "frame": [
+    30,
+    32,
+    34
+   ],
+   "detail": [
+    46,
+    49,
+    49
+   ],
+   "rod": [
+    176,
+    170,
+    156
+   ]
+  },
+  "source_px": {
+   "flying_scotsman": {
+    "rod": [
+     490,
+     610,
+     520,
+     616
+    ],
+    "tyre": [
+     423,
+     575,
+     428,
+     590
+    ]
+   }
+  }
+ },
+ "uk_tender_pair": {
+  "rides_under": "flying_scotsman tender, both pivots (+-1.543 m); also A4, Black Five, 9F",
+  "scale": 0.5,
+  "x_scale": 1.0,
+  "offset_m": 0.0,
+  "note": "two axles 0.7 m apart about the pivot, 1.27 m tender wheels x 0.5 so the outer wheels stay under the tender's 4.28 m sprite; the tender's own outside frame, axle boxes and springs stay with its body above 0.78 m",
+  "axles": [
+   {
+    "x": 0.35,
+    "d": 1.27,
+    "spokes": 12
+   },
+   {
+    "x": -0.35,
+    "d": 1.27,
+    "spokes": 12
+   }
+  ],
+  "frame": {
+   "type": "plate_inside",
+   "x0": -0.6,
+   "x1": 0.6,
+   "bottom_f": 0.12,
+   "top_f": 0.62,
+   "inset": 0.3,
+   "cross": [
+    0.0
+   ]
+  },
+  "colors": {
+   "tyre": [
+    150,
+    146,
+    135
+   ],
+   "wheel": [
+    52,
+    82,
+    56
+   ],
+   "hub": [
+    60,
+    64,
+    62
+   ],
+   "frame": [
+    46,
+    49,
+    49
+   ]
+  },
+  "source_px": {
+   "flying_scotsman": {
+    "frame": [
+     130,
+     455,
+     150,
+     470
+    ]
+   }
+  }
+ },
+ "htc": {
+  "rides_under": "sd40 body, both pivots (+-4.364 m)",
+  "scale": 1.0,
+  "x_scale": 1.0,
+  "offset_m": 0.0,
+  "note": "EMD HT-C at the game's pivot: real 1.016 m wheels, 1.1 m apart (the source's 0.93 m would make them touch) so the truck still ends inside the body; cast side frames, journal boxes, coil spring pairs, bolster",
+  "axles": [
+   {
+    "x": 1.1,
+    "d": 1.016
+   },
+   {
+    "x": 0.0,
+    "d": 1.016
+   },
+   {
+    "x": -1.1,
+    "d": 1.016
+   }
+  ],
+  "frame": {
+   "type": "cast_side",
+   "x0": -1.62,
+   "x1": 1.62,
+   "bottom_f": 0.26,
+   "top_f": 1.0,
+   "out": 0.2,
+   "chord": 0.18,
+   "posts": [],
+   "cross": [
+    0.0
+   ]
+  },
+  "boxes": {
+   "w": 0.38,
+   "h": 0.42,
+   "out": 0.2
+  },
+  "springs": {
+   "coil": [
+    [
+     0.55,
+     0.62,
+     0.95
+    ],
+    [
+     -0.55,
+     0.62,
+     0.95
+    ]
+   ],
+   "out": 0.2,
+   "r": 0.08,
+   "pair": 0.11
+  },
+  "colors": {
+   "tyre": [
+    98,
+    80,
+    58
+   ],
+   "wheel": [
+    44,
+    45,
+    48
+   ],
+   "hub": [
+    60,
+    60,
+    62
+   ],
+   "frame": [
+    88,
+    87,
+    83
+   ],
+   "detail": [
+    70,
+    70,
+    70
+   ],
+   "spring": [
+    110,
+    110,
+    108
+   ]
+  },
+  "source_px": {
+   "sd40": {
+    "frame": [
+     600,
+     690,
+     620,
+     700
+    ],
+    "detail": [
+     640,
+     712,
+     650,
+     722
+    ],
+    "tyre": [
+     650,
+     735,
+     660,
+     740
+    ],
+    "wheel": [
+     610,
+     705,
+     625,
+     712
+    ]
+   }
+  }
+ },
+ "blomberg": {
+  "rides_under": "f7 body, both pivots (+-4.364 m)",
+  "scale": 1.0,
+  "x_scale": 1.0,
+  "offset_m": 0.0,
+  "note": "EMD Blomberg B at the game's pivot: the source's axle spacing (1.93 m after the F7's 0.788 compression, measured) with real 1.016 m wheels; cast side frame with pedestals, swing-hanger coil spring nest outboard at the bolster, journal boxes",
+  "axles": [
+   {
+    "x": 0.965,
+    "d": 1.016
+   },
+   {
+    "x": -0.965,
+    "d": 1.016
+   }
+  ],
+  "frame": {
+   "type": "cast_side",
+   "x0": -1.5,
+   "x1": 1.5,
+   "bottom_f": 0.26,
+   "top_f": 1.05,
+   "out": 0.2,
+   "chord": 0.2,
+   "posts": [
+    -0.35,
+    0.35
+   ],
+   "cross": [
+    0.0
+   ]
+  },
+  "boxes": {
+   "w": 0.38,
+   "h": 0.42,
+   "out": 0.2
+  },
+  "springs": {
+   "coil": [
+    [
+     0.0,
+     0.5,
+     0.9
+    ]
+   ],
+   "out": 0.3,
+   "r": 0.1,
+   "pair": 0.15
+  },
+  "colors": {
+   "tyre": [
+    98,
+    80,
+    58
+   ],
+   "wheel": [
+    44,
+    45,
+    48
+   ],
+   "hub": [
+    60,
+    60,
+    62
+   ],
+   "frame": [
+    66,
+    72,
+    72
+   ],
+   "detail": [
+    54,
+    56,
+    58
+   ],
+   "spring": [
+    104,
+    104,
+    104
+   ]
+  },
+  "source_px": {
+   "f7": {
+    "frame": [
+     395,
+     540,
+     415,
+     560
+    ],
+    "detail": [
+     260,
+     500,
+     270,
+     510
+    ],
+    "note": "boxes on the uncropped loco-f7.png"
+   }
+  }
+ }
+}

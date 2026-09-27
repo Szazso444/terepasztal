@@ -5,6 +5,7 @@ game_rules.test.mjs holds this file to body.ts, so a change there fails the test
 """
 
 import json
+import math
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[2] / "src" / "data"
@@ -64,3 +65,13 @@ def plan_parts(plan, size_tiles):
     if plan == "meyer":
         return [("frame", L, True)]
     return [("body", L, True)]
+
+
+def grid_metre(g):
+    """tile_m from the game's human scale when [grid] metre = "human": a person of human_m metres
+    stands human_px logical pixels tall (src/render/assetScale.ts), and at elevation e a vertical
+    metre spans cos(e) * tile_px / (tile_m * sqrt 2) pixels."""
+    if g.get("metre") == "human":
+        g["tile_m"] = (g["tile_px"] * math.cos(math.radians(g["elevation_deg"])) * g["human_m"]
+                       / (g["human_px"] * math.sqrt(2)))
+    return g["tile_m"]

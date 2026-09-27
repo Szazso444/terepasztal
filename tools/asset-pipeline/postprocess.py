@@ -85,7 +85,8 @@ def process_asset(meta_path: Path, post_cfg: dict, dirs: dict):
     atlas_dir.mkdir(parents=True, exist_ok=True)
     atlas.save(atlas_dir / f"{aid}.png")
     info = {k: meta.get(k) for k in ("id", "category", "plan", "tiles", "footprint_m", "final_dims_m",
-                                     "real_dims_m", "compression", "split", "px_per_m", "align", "warnings")}
+                                     "real_dims_m", "compression", "split", "px_per_m", "align", "warnings",
+                                     "resolution", "source")}
     info["parts"] = [{k: rd[k] for k in ("part", "tiles", "compression", "final_dims_m", "canvas_px", "anchor_px")}
                      for rd, _ in sets]
     info["frames"] = atlas_frames

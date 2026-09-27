@@ -136,6 +136,9 @@ def main():
     ap.add_argument("--only", default="")
     ap.add_argument("--stages", default=",".join(STAGES))
     ap.add_argument("--force", action="store_true", help="redo stages whose outputs exist")
+    ap.add_argument("--out", default="", help="output root instead of paths.out_root (keep large GLBs out of git)")
+    ap.add_argument("--comfy-url", default="", help="ComfyUI server instead of comfy.url")
+    ap.add_argument("--blender", default="", help="Blender executable instead of paths.blender")
     args = ap.parse_args()
 
     cfg_path = Path(args.config).resolve()
@@ -146,7 +149,14 @@ def main():
         p = Path(p)
         return p if p.is_absolute() else base / p
 
-    out = rel(cfg["paths"]["out_root"])
+    game_rules.grid_metre(cfg["grid"])
+    landmarks = json.loads((HERE / "landmarks.json").read_text(encoding="utf-8"))
+    bogies = json.loads((HERE / "bogies.json").read_text(encoding="utf-8"))
+    out = rel(args.out or cfg["paths"]["out_root"])
+    if args.comfy_url:
+        cfg["comfy"]["url"] = args.comfy_url
+    if args.blender:
+        cfg["paths"]["blender"] = args.blender
     d = {k: out / k for k in ("models_raw", "jobs", "sprites_raw", "meta", "debug", "sprites", "atlas",
                               "previews", "reports", "logs")}
     for p in d.values():
@@ -183,18 +193,28 @@ def main():
             glb = d["models_raw"] / f"{aid}.glb"
             meta_path = d["meta"] / f"{aid}.json"
             t0 = time.time()
-            if "comfy" in stages and (args.force or not glb.exists()):
+            parametric = a["image"] == "parametric"
+            if parametric and not bogies.get(aid.removeprefix("bogie_")):
+                raise PipelineError(f"[{aid}] image = parametric but bogies.json has no {aid.removeprefix('bogie_')}")
+            if "comfy" in stages and not parametric and (args.force or not glb.exists()):
                 img = rel(csv_path.parent / a["image"]) if a["image"] else None
                 if not img or not img.exists():
                     raise PipelineError(f"[{aid}] image not found: {img}")
                 comfy_client.run_asset(comfy, graph, aid, img, glb, cfg["comfy"])
             if "blender" in stages and (args.force or not meta_path.exists()):
-                if not glb.exists():
+                if not parametric and not glb.exists():
                     raise PipelineError(f"[{aid}] no model at {glb}; run the comfy stage first")
                 job = {"asset": a, "glb": str(glb), "grid": cfg["grid"], "render": cfg["render"],
                        "align": cfg["align"], "class_cfg": cfg["classes"][a["category"]],
                        "meta_path": str(meta_path), "sprites_raw_dir": str(d["sprites_raw"]),
-                       "debug_dir": str(d["debug"])}
+                       "debug_dir": str(d["debug"]), "landmarks": landmarks.get(aid),
+                       "source_cfg": cfg.get("source", {})}
+                if parametric:
+                    job["bogie"] = bogies[aid.removeprefix("bogie_")]
+                src, msk = glb.with_suffix(".source.png"), glb.with_suffix(".mask.png")
+                if cfg.get("source", {}).get("enabled", True) and src.exists() and msk.exists():
+                    job["source"] = {"image": str(src), "mask": str(msk),
+                                     "texture": str(d["meta"] / f"{aid}_texture.png")}
                 job_path = d["jobs"] / f"{aid}.json"
                 job_path.write_text(json.dumps(job, indent=2), encoding="utf-8")
                 run_blender(cfg, job_path, d["logs"] / f"{aid}_blender.log")

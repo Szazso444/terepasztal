@@ -119,6 +119,16 @@ describe('pack-atlas', () => {
     expect(f).toMatchObject({ w: 64, h: 64, ax: 32, ay: 48 });
   });
 
+  it('carries the resolution of the frames from the source table', () => {
+    const hi = join(dir, 'hi');
+    mkdirSync(hi, { recursive: true });
+    writeFileSync(join(hi, 'atlas.json'), JSON.stringify({ partial: true, resolution: 4 }));
+    writeFileSync(join(hi, 'one.png'), readFileSync(join(src(), 'wide.png')));
+    run('wagons', '--src', hi, '--out', out(), '--prefix', 'rolling/');
+    expect(readAtlas('wagons')).toMatchObject({ resolution: 4, partial: true, frames: { 'rolling/one': {} } });
+    expect(readAtlas('rolling').resolution).toBeUndefined();
+  });
+
   it('marks the table partial only when the source asks for it', () => {
     run('rolling', '--src', src(), '--out', out());
     expect(readAtlas('rolling').partial).toBeUndefined();

@@ -6,6 +6,8 @@ Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, til
 ## Run
 - `python run.py` : all assets in `assets.csv`, stages comfy -> blender -> post -> game. Stops at the first error, exit code 1.
 - `python run.py --only id1,id2 --stages blender,post,game --force` : redo selected stages.
+- `--out DIR` writes outside the repo (keep GLBs out of git; the roster lives in `G:/DEV/Terepasztal/pipeline-out`),
+  `--comfy-url URL` and `--blender EXE` override `pipeline.toml` for one run.
 - Finished stages are skipped on rerun (raw GLB / meta JSON exist) unless `--force`.
 - Requirements: Python 3.11+, `pip install pillow numpy`, Blender 4.2+ (tested 5.0), ComfyUI Desktop running with the API
   workflow, Node (the game stage runs `tools/pack-atlas.mjs`).
@@ -24,6 +26,11 @@ Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, til
 | `postprocess.py` | premultiplied box downsample, optional hard alpha / palette, atlas + JSON, preview sheet |
 | `game_rules.py` | the game's facings, sizes, body plans, `DRAWN_WIDTH` and atlas groups; `game_rules.test.mjs` holds it to `src/sim/body.ts` |
 | `export_game.py` | game stage: sprites -> `art-src/<group>/` frames + anchors, then `tools/pack-atlas.mjs` -> `public/assets/<group>.png\|json` |
+| `source_texture.py` | puts the source image's own colours back on a Pixal3D mesh (see Source colours) |
+| `landmarks.json` | per asset, measured on its source crop: wheels, nose, scale dimension, cut boxes, skirts, rail plane |
+| `running_gear.py` | round wheels, parametric bogies, body skirts and the painted shading every render uses |
+| `bogies.json` | the parametric bogie styles (`image = parametric` rows): axles, frames, springs, rods, colours |
+| `debug_grid.py` | a metre grid over a vehicle's `parts_front` debug view, for measuring cut heights |
 
 Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>.json`, `sprites_raw/`, `sprites/<id>/<id>[_<part>]_d<i>.png`, `atlas/<id>.png|json`, `previews/<id>.png`, `debug/`, `logs/run_*.log`, `logs/<id>_blender.log`, `reports/summary.json`. The game stage writes outside it, into the repo:
 `art-src/<group>/<frame>.png` + `atlas.json`, and `public/assets/<group>.png|json`.
@@ -77,6 +84,49 @@ Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>
 - Buildings: height real, footprint compressed uniformly and snapped to whole tiles (`footprint_factor`, `footprint_range`, `fill`).
   With `size_tiles` the footprint is fixed at N x N (game stations 1x1, depots 2x2), allowed down to `sized_footprint_range`,
   and height is compressed by footprint factor ^ `sized_height_exponent` so a crushed footprint does not stand as a tower.
+
+## Source colours
+A Pixal3D mesh sits in the camera frame of the crop it was conditioned on (camera at -Y, object in a unit cube,
+perspective with MoGe's field of view; ComfyUI `comfy/ldm/trellis2/model.py`). The workflow saves that crop and its mask
+next to the GLB (`models_raw/<id>.source.png`, `.mask.png`, via the SaveImage nodes titled `source` and `mask`). The
+blender stage fits the field of view to the mask (silhouette IoU, must reach `source.min_iou`), gives every texel the
+camera sees the source's colour, and maps the generated colours of the hidden texels through a colour transfer fitted on
+the seen ones. The generated texture drifts (the Rocket's yellow went olive); this puts the approved art back.
+
+## Scale, measured
+- One metre for every asset: `[grid] metre = "human"` makes a `human_m` person `human_px` logical pixels tall
+  (`src/render/assetScale.ts`), a 6.23 m tile. At that metre the real rail-centre spacing times `DRAWN_WIDTH` is the game's
+  0.32-tile gauge; `game_rules.test.mjs` holds both.
+- Illustrations are not drawn to scale in every direction, so each axis has its own anchor: `height_m` (height over the
+  rail) sets the scale, `width_m` sets the width (a robust body width, then times `DRAWN_WIDTH`), and the game slot sets
+  the length. A landmark `scale` (a real distance between two measured wheels, e.g. the Rocket's 2.16 m wheelbase)
+  replaces `height_m` where the height is unknown. A short prototype is stretched at most `stretch_max` into its slot.
+- `landmarks.json` holds pixel measurements on the source crop: wheel hubs and tyre edges (back-projected onto the mesh
+  for axle positions and diameters), a nose pixel (which end is +X). The chassis is levelled on the wheel bottoms and the
+  rail plane put under them (or at the mesh's lowest point, `rail = "lowest"`).
+
+## Running gear
+- Reconstructed wheels come out uneven, soft and off gauge; none reach the game. Small stock (1 tile, no bogie sprites)
+  gets round wheels built at the measured axles, diameters and colours, treads on the rails (+-0.16 tile), bottoms on the
+  rail plane; the model's own wheels are cut away (`inner_y`).
+- Medium and large stock: `cut_boxes` remove the model's running gear (x from the part's centre, below `top`), since the
+  game draws bogie sprites beneath the body and a body sprite always covers them. `skirts` put dark inboard frame plates
+  back into the body where the cut left daylight above smaller built wheels: they stay rigid with the body.
+- Bogies with `image = parametric` are built from `bogies.json` in the game frame, pivot at the origin: steam coupled
+  wheels shrink until they clear each other at the measured, compressed spacing; diesel trucks keep near-real wheels at
+  the source's spacing so they end inside the body. Colours come from boxes on the source crops. A group drawn far ahead
+  of its pivot (`offset_m`, the Pacific's drivers) swings with that pivot on tight curves, so it carries no frames.
+
+## Shading and resolution
+`render.shading = "painted"`: emission of the texture's own colour times `ambient_level + light_level * max(0, N.L)`,
+with L fixed to the camera (upper left), so every facing is lit from the same side and the source's painted shading is
+not lit twice. `render.resolution = 4` renders 4 texels per logical pixel, as the illustrated atlases; the atlas JSON
+carries `"resolution"` (one per group, `tools/pack-atlas.mjs` copies it from `art-src/<group>/atlas.json`).
+
+## In-game review
+`scratchpad/train-models/`: `capture.mjs` (loop with switch, curves, reversal, a 48-heading sheet per vehicle, bogie
+sheets on their rails, new against the current procedural look at the same pose) and `hills.mjs` (a consist standing on a
+climb in the generated review world). Renders land in `scratchpad/train-models/renders/`.
 
 ## Game frames
 - `game_frame` in `assets.csv` is the frame key the asset replaces; empty = the asset stays out of the game.
