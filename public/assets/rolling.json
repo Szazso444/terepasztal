@@ -1,0 +1,1006 @@
+{
+  "resolution": 4,
+  "partial": true,
+  "frames": {
+    "rolling/loco_f7_body_f0": {
+      "x": 1,
+      "y": 282,
+      "w": 314,
+      "h": 242,
+      "ax": 161,
+      "ay": 181
+    },
+    "rolling/loco_f7_body_f1": {
+      "x": 3021,
+      "y": 1,
+      "w": 294,
+      "h": 253,
+      "ax": 151,
+      "ay": 186
+    },
+    "rolling/loco_f7_body_f13": {
+      "x": 455,
+      "y": 282,
+      "w": 336,
+      "h": 236,
+      "ax": 160,
+      "ay": 176
+    },
+    "rolling/loco_f7_body_f14": {
+      "x": 2947,
+      "y": 282,
+      "w": 346,
+      "h": 220,
+      "ax": 165,
+      "ay": 168
+    },
+    "rolling/loco_f7_body_f15": {
+      "x": 654,
+      "y": 525,
+      "w": 353,
+      "h": 203,
+      "ax": 169,
+      "ay": 160
+    },
+    "rolling/loco_f7_body_f16": {
+      "x": 3495,
+      "y": 525,
+      "w": 355,
+      "h": 184,
+      "ax": 172,
+      "ay": 151
+    },
+    "rolling/loco_f7_body_f17": {
+      "x": 1624,
+      "y": 736,
+      "w": 355,
+      "h": 166,
+      "ax": 175,
+      "ay": 141
+    },
+    "rolling/loco_f7_body_f18": {
+      "x": 3139,
+      "y": 736,
+      "w": 352,
+      "h": 151,
+      "ax": 176,
+      "ay": 130
+    },
+    "rolling/loco_f7_body_f19": {
+      "x": 3492,
+      "y": 736,
+      "w": 352,
+      "h": 151,
+      "ax": 175,
+      "ay": 131
+    },
+    "rolling/loco_f7_body_f2": {
+      "x": 1776,
+      "y": 1,
+      "w": 268,
+      "h": 263,
+      "ax": 137,
+      "ay": 190
+    },
+    "rolling/loco_f7_body_f20": {
+      "x": 2557,
+      "y": 736,
+      "w": 352,
+      "h": 160,
+      "ax": 173,
+      "ay": 138
+    },
+    "rolling/loco_f7_body_f21": {
+      "x": 708,
+      "y": 736,
+      "w": 349,
+      "h": 175,
+      "ax": 170,
+      "ay": 144
+    },
+    "rolling/loco_f7_body_f22": {
+      "x": 2609,
+      "y": 525,
+      "w": 342,
+      "h": 189,
+      "ax": 166,
+      "ay": 149
+    },
+    "rolling/loco_f7_body_f23": {
+      "x": 1008,
+      "y": 525,
+      "w": 330,
+      "h": 200,
+      "ax": 160,
+      "ay": 153
+    },
+    "rolling/loco_f7_body_f24": {
+      "x": 339,
+      "y": 525,
+      "w": 314,
+      "h": 209,
+      "ax": 153,
+      "ay": 157
+    },
+    "rolling/loco_f7_body_f25": {
+      "x": 3294,
+      "y": 282,
+      "w": 294,
+      "h": 216,
+      "ax": 143,
+      "ay": 159
+    },
+    "rolling/loco_f7_body_f26": {
+      "x": 2677,
+      "y": 282,
+      "w": 269,
+      "h": 221,
+      "ax": 131,
+      "ay": 161
+    },
+    "rolling/loco_f7_body_f27": {
+      "x": 2112,
+      "y": 282,
+      "w": 238,
+      "h": 226,
+      "ax": 116,
+      "ay": 163
+    },
+    "rolling/loco_f7_body_f28": {
+      "x": 1578,
+      "y": 282,
+      "w": 205,
+      "h": 231,
+      "ax": 100,
+      "ay": 165
+    },
+    "rolling/loco_f7_body_f29": {
+      "x": 792,
+      "y": 282,
+      "w": 167,
+      "h": 235,
+      "ax": 82,
+      "ay": 167
+    },
+    "rolling/loco_f7_body_f3": {
+      "x": 661,
+      "y": 1,
+      "w": 238,
+      "h": 271,
+      "ax": 122,
+      "ay": 194
+    },
+    "rolling/loco_f7_body_f30": {
+      "x": 316,
+      "y": 282,
+      "w": 138,
+      "h": 237,
+      "ax": 69,
+      "ay": 168
+    },
+    "rolling/loco_f7_body_f4": {
+      "x": 307,
+      "y": 1,
+      "w": 205,
+      "h": 276,
+      "ax": 105,
+      "ay": 196
+    },
+    "rolling/loco_f7_body_f5": {
+      "x": 139,
+      "y": 1,
+      "w": 167,
+      "h": 278,
+      "ax": 85,
+      "ay": 197
+    },
+    "rolling/loco_f7_body_f6": {
+      "x": 1,
+      "y": 1,
+      "w": 137,
+      "h": 280,
+      "ax": 69,
+      "ay": 197
+    },
+    "rolling/loco_flying_scotsman_engine_f0": {
+      "x": 1058,
+      "y": 736,
+      "w": 212,
+      "h": 175,
+      "ax": 112,
+      "ay": 142
+    },
+    "rolling/loco_flying_scotsman_engine_f1": {
+      "x": 3851,
+      "y": 525,
+      "w": 201,
+      "h": 182,
+      "ax": 106,
+      "ay": 144
+    },
+    "rolling/loco_flying_scotsman_engine_f13": {
+      "x": 1980,
+      "y": 736,
+      "w": 223,
+      "h": 164,
+      "ax": 110,
+      "ay": 137
+    },
+    "rolling/loco_flying_scotsman_engine_f14": {
+      "x": 2910,
+      "y": 736,
+      "w": 228,
+      "h": 155,
+      "ax": 112,
+      "ay": 133
+    },
+    "rolling/loco_flying_scotsman_engine_f15": {
+      "x": 309,
+      "y": 917,
+      "w": 228,
+      "h": 145,
+      "ax": 112,
+      "ay": 127
+    },
+    "rolling/loco_flying_scotsman_engine_f16": {
+      "x": 1638,
+      "y": 917,
+      "w": 225,
+      "h": 136,
+      "ax": 111,
+      "ay": 122
+    },
+    "rolling/loco_flying_scotsman_engine_f17": {
+      "x": 804,
+      "y": 1064,
+      "w": 219,
+      "h": 125,
+      "ax": 107,
+      "ay": 115
+    },
+    "rolling/loco_flying_scotsman_engine_f18": {
+      "x": 2902,
+      "y": 1064,
+      "w": 216,
+      "h": 114,
+      "ax": 108,
+      "ay": 109
+    },
+    "rolling/loco_flying_scotsman_engine_f19": {
+      "x": 3646,
+      "y": 1064,
+      "w": 224,
+      "h": 103,
+      "ax": 110,
+      "ay": 102
+    },
+    "rolling/loco_flying_scotsman_engine_f2": {
+      "x": 3306,
+      "y": 525,
+      "w": 188,
+      "h": 187,
+      "ax": 99,
+      "ay": 146
+    },
+    "rolling/loco_flying_scotsman_engine_f20": {
+      "x": 3417,
+      "y": 1064,
+      "w": 228,
+      "h": 106,
+      "ax": 111,
+      "ay": 104
+    },
+    "rolling/loco_flying_scotsman_engine_f21": {
+      "x": 2524,
+      "y": 1064,
+      "w": 229,
+      "h": 116,
+      "ax": 110,
+      "ay": 108
+    },
+    "rolling/loco_flying_scotsman_engine_f22": {
+      "x": 1354,
+      "y": 1064,
+      "w": 226,
+      "h": 123,
+      "ax": 107,
+      "ay": 111
+    },
+    "rolling/loco_flying_scotsman_engine_f23": {
+      "x": 2367,
+      "y": 917,
+      "w": 220,
+      "h": 131,
+      "ax": 104,
+      "ay": 115
+    },
+    "rolling/loco_flying_scotsman_engine_f24": {
+      "x": 1864,
+      "y": 917,
+      "w": 212,
+      "h": 136,
+      "ax": 100,
+      "ay": 118
+    },
+    "rolling/loco_flying_scotsman_engine_f25": {
+      "x": 840,
+      "y": 917,
+      "w": 202,
+      "h": 140,
+      "ax": 96,
+      "ay": 120
+    },
+    "rolling/loco_flying_scotsman_engine_f26": {
+      "x": 651,
+      "y": 917,
+      "w": 188,
+      "h": 143,
+      "ax": 89,
+      "ay": 122
+    },
+    "rolling/loco_flying_scotsman_engine_f27": {
+      "x": 1,
+      "y": 917,
+      "w": 172,
+      "h": 146,
+      "ax": 82,
+      "ay": 124
+    },
+    "rolling/loco_flying_scotsman_engine_f28": {
+      "x": 3845,
+      "y": 736,
+      "w": 155,
+      "h": 147,
+      "ax": 75,
+      "ay": 125
+    },
+    "rolling/loco_flying_scotsman_engine_f29": {
+      "x": 174,
+      "y": 917,
+      "w": 134,
+      "h": 146,
+      "ax": 66,
+      "ay": 125
+    },
+    "rolling/loco_flying_scotsman_engine_f3": {
+      "x": 2436,
+      "y": 525,
+      "w": 172,
+      "h": 191,
+      "ax": 90,
+      "ay": 148
+    },
+    "rolling/loco_flying_scotsman_engine_f30": {
+      "x": 538,
+      "y": 917,
+      "w": 112,
+      "h": 145,
+      "ax": 56,
+      "ay": 126
+    },
+    "rolling/loco_flying_scotsman_engine_f4": {
+      "x": 2280,
+      "y": 525,
+      "w": 155,
+      "h": 195,
+      "ax": 80,
+      "ay": 150
+    },
+    "rolling/loco_flying_scotsman_engine_f5": {
+      "x": 1339,
+      "y": 525,
+      "w": 134,
+      "h": 197,
+      "ax": 68,
+      "ay": 151
+    },
+    "rolling/loco_flying_scotsman_engine_f6": {
+      "x": 1474,
+      "y": 525,
+      "w": 112,
+      "h": 197,
+      "ax": 56,
+      "ay": 150
+    },
+    "rolling/loco_flying_scotsman_tender_f0": {
+      "x": 1043,
+      "y": 917,
+      "w": 155,
+      "h": 140,
+      "ax": 80,
+      "ay": 120
+    },
+    "rolling/loco_flying_scotsman_tender_f1": {
+      "x": 1199,
+      "y": 917,
+      "w": 152,
+      "h": 140,
+      "ax": 79,
+      "ay": 120
+    },
+    "rolling/loco_flying_scotsman_tender_f13": {
+      "x": 2209,
+      "y": 917,
+      "w": 157,
+      "h": 133,
+      "ax": 81,
+      "ay": 119
+    },
+    "rolling/loco_flying_scotsman_tender_f14": {
+      "x": 2588,
+      "y": 917,
+      "w": 155,
+      "h": 131,
+      "ax": 80,
+      "ay": 118
+    },
+    "rolling/loco_flying_scotsman_tender_f15": {
+      "x": 3479,
+      "y": 917,
+      "w": 151,
+      "h": 129,
+      "ax": 77,
+      "ay": 117
+    },
+    "rolling/loco_flying_scotsman_tender_f16": {
+      "x": 3926,
+      "y": 917,
+      "w": 145,
+      "h": 127,
+      "ax": 74,
+      "ay": 116
+    },
+    "rolling/loco_flying_scotsman_tender_f17": {
+      "x": 1581,
+      "y": 1064,
+      "w": 137,
+      "h": 123,
+      "ax": 69,
+      "ay": 114
+    },
+    "rolling/loco_flying_scotsman_tender_f18": {
+      "x": 2263,
+      "y": 1064,
+      "w": 126,
+      "h": 117,
+      "ax": 63,
+      "ay": 111
+    },
+    "rolling/loco_flying_scotsman_tender_f19": {
+      "x": 2390,
+      "y": 1064,
+      "w": 133,
+      "h": 117,
+      "ax": 67,
+      "ay": 109
+    },
+    "rolling/loco_flying_scotsman_tender_f2": {
+      "x": 1352,
+      "y": 917,
+      "w": 146,
+      "h": 138,
+      "ax": 76,
+      "ay": 119
+    },
+    "rolling/loco_flying_scotsman_tender_f20": {
+      "x": 1719,
+      "y": 1064,
+      "w": 142,
+      "h": 122,
+      "ax": 71,
+      "ay": 111
+    },
+    "rolling/loco_flying_scotsman_tender_f21": {
+      "x": 1,
+      "y": 1064,
+      "w": 150,
+      "h": 127,
+      "ax": 74,
+      "ay": 114
+    },
+    "rolling/loco_flying_scotsman_tender_f22": {
+      "x": 3631,
+      "y": 917,
+      "w": 154,
+      "h": 129,
+      "ax": 76,
+      "ay": 115
+    },
+    "rolling/loco_flying_scotsman_tender_f23": {
+      "x": 2744,
+      "y": 917,
+      "w": 156,
+      "h": 131,
+      "ax": 76,
+      "ay": 117
+    },
+    "rolling/loco_flying_scotsman_tender_f24": {
+      "x": 2901,
+      "y": 917,
+      "w": 155,
+      "h": 131,
+      "ax": 75,
+      "ay": 117
+    },
+    "rolling/loco_flying_scotsman_tender_f25": {
+      "x": 3057,
+      "y": 917,
+      "w": 152,
+      "h": 131,
+      "ax": 73,
+      "ay": 117
+    },
+    "rolling/loco_flying_scotsman_tender_f26": {
+      "x": 3210,
+      "y": 917,
+      "w": 146,
+      "h": 131,
+      "ax": 70,
+      "ay": 117
+    },
+    "rolling/loco_flying_scotsman_tender_f27": {
+      "x": 3786,
+      "y": 917,
+      "w": 139,
+      "h": 129,
+      "ax": 66,
+      "ay": 116
+    },
+    "rolling/loco_flying_scotsman_tender_f28": {
+      "x": 152,
+      "y": 1064,
+      "w": 130,
+      "h": 127,
+      "ax": 62,
+      "ay": 116
+    },
+    "rolling/loco_flying_scotsman_tender_f29": {
+      "x": 1101,
+      "y": 1064,
+      "w": 121,
+      "h": 124,
+      "ax": 58,
+      "ay": 114
+    },
+    "rolling/loco_flying_scotsman_tender_f3": {
+      "x": 1499,
+      "y": 917,
+      "w": 138,
+      "h": 137,
+      "ax": 72,
+      "ay": 119
+    },
+    "rolling/loco_flying_scotsman_tender_f30": {
+      "x": 1862,
+      "y": 1064,
+      "w": 116,
+      "h": 122,
+      "ax": 54,
+      "ay": 114
+    },
+    "rolling/loco_flying_scotsman_tender_f4": {
+      "x": 2077,
+      "y": 917,
+      "w": 131,
+      "h": 134,
+      "ax": 68,
+      "ay": 118
+    },
+    "rolling/loco_flying_scotsman_tender_f5": {
+      "x": 3357,
+      "y": 917,
+      "w": 121,
+      "h": 130,
+      "ax": 63,
+      "ay": 116
+    },
+    "rolling/loco_flying_scotsman_tender_f6": {
+      "x": 283,
+      "y": 1064,
+      "w": 116,
+      "h": 127,
+      "ax": 62,
+      "ay": 114
+    },
+    "rolling/loco_rocket_body_f0": {
+      "x": 1265,
+      "y": 1192,
+      "w": 138,
+      "h": 93,
+      "ax": 70,
+      "ay": 66
+    },
+    "rolling/loco_rocket_body_f1": {
+      "x": 1404,
+      "y": 1192,
+      "w": 130,
+      "h": 93,
+      "ax": 66,
+      "ay": 66
+    },
+    "rolling/loco_rocket_body_f13": {
+      "x": 1,
+      "y": 1192,
+      "w": 139,
+      "h": 98,
+      "ax": 70,
+      "ay": 69
+    },
+    "rolling/loco_rocket_body_f14": {
+      "x": 890,
+      "y": 1192,
+      "w": 144,
+      "h": 96,
+      "ax": 73,
+      "ay": 69
+    },
+    "rolling/loco_rocket_body_f15": {
+      "x": 280,
+      "y": 1192,
+      "w": 145,
+      "h": 97,
+      "ax": 73,
+      "ay": 72
+    },
+    "rolling/loco_rocket_body_f16": {
+      "x": 426,
+      "y": 1192,
+      "w": 145,
+      "h": 97,
+      "ax": 73,
+      "ay": 74
+    },
+    "rolling/loco_rocket_body_f17": {
+      "x": 572,
+      "y": 1192,
+      "w": 143,
+      "h": 97,
+      "ax": 72,
+      "ay": 77
+    },
+    "rolling/loco_rocket_body_f18": {
+      "x": 141,
+      "y": 1192,
+      "w": 138,
+      "h": 98,
+      "ax": 69,
+      "ay": 80
+    },
+    "rolling/loco_rocket_body_f19": {
+      "x": 3871,
+      "y": 1064,
+      "w": 144,
+      "h": 102,
+      "ax": 72,
+      "ay": 83
+    },
+    "rolling/loco_rocket_body_f2": {
+      "x": 1144,
+      "y": 1192,
+      "w": 120,
+      "h": 95,
+      "ax": 61,
+      "ay": 68
+    },
+    "rolling/loco_rocket_body_f20": {
+      "x": 3269,
+      "y": 1064,
+      "w": 147,
+      "h": 107,
+      "ax": 73,
+      "ay": 85
+    },
+    "rolling/loco_rocket_body_f21": {
+      "x": 3119,
+      "y": 1064,
+      "w": 149,
+      "h": 111,
+      "ax": 74,
+      "ay": 87
+    },
+    "rolling/loco_rocket_body_f22": {
+      "x": 2754,
+      "y": 1064,
+      "w": 147,
+      "h": 116,
+      "ax": 73,
+      "ay": 90
+    },
+    "rolling/loco_rocket_body_f23": {
+      "x": 2118,
+      "y": 1064,
+      "w": 144,
+      "h": 119,
+      "ax": 71,
+      "ay": 92
+    },
+    "rolling/loco_rocket_body_f24": {
+      "x": 1979,
+      "y": 1064,
+      "w": 138,
+      "h": 122,
+      "ax": 68,
+      "ay": 94
+    },
+    "rolling/loco_rocket_body_f25": {
+      "x": 1223,
+      "y": 1064,
+      "w": 130,
+      "h": 124,
+      "ax": 64,
+      "ay": 95
+    },
+    "rolling/loco_rocket_body_f26": {
+      "x": 683,
+      "y": 1064,
+      "w": 120,
+      "h": 126,
+      "ax": 59,
+      "ay": 97
+    },
+    "rolling/loco_rocket_body_f27": {
+      "x": 400,
+      "y": 1064,
+      "w": 108,
+      "h": 127,
+      "ax": 53,
+      "ay": 98
+    },
+    "rolling/loco_rocket_body_f28": {
+      "x": 509,
+      "y": 1064,
+      "w": 93,
+      "h": 127,
+      "ax": 45,
+      "ay": 99
+    },
+    "rolling/loco_rocket_body_f29": {
+      "x": 603,
+      "y": 1064,
+      "w": 79,
+      "h": 127,
+      "ax": 39,
+      "ay": 100
+    },
+    "rolling/loco_rocket_body_f3": {
+      "x": 1035,
+      "y": 1192,
+      "w": 108,
+      "h": 96,
+      "ax": 55,
+      "ay": 69
+    },
+    "rolling/loco_rocket_body_f30": {
+      "x": 1024,
+      "y": 1064,
+      "w": 76,
+      "h": 125,
+      "ax": 38,
+      "ay": 100
+    },
+    "rolling/loco_rocket_body_f4": {
+      "x": 716,
+      "y": 1192,
+      "w": 93,
+      "h": 97,
+      "ax": 48,
+      "ay": 69
+    },
+    "rolling/loco_rocket_body_f5": {
+      "x": 810,
+      "y": 1192,
+      "w": 79,
+      "h": 97,
+      "ax": 40,
+      "ay": 68
+    },
+    "rolling/loco_rocket_body_f6": {
+      "x": 4016,
+      "y": 1064,
+      "w": 76,
+      "h": 99,
+      "ax": 38,
+      "ay": 70
+    },
+    "rolling/loco_sd40_body_f0": {
+      "x": 960,
+      "y": 282,
+      "w": 308,
+      "h": 235,
+      "ax": 165,
+      "ay": 178
+    },
+    "rolling/loco_sd40_body_f1": {
+      "x": 3603,
+      "y": 1,
+      "w": 286,
+      "h": 245,
+      "ax": 155,
+      "ay": 183
+    },
+    "rolling/loco_sd40_body_f13": {
+      "x": 1784,
+      "y": 282,
+      "w": 327,
+      "h": 227,
+      "ax": 166,
+      "ay": 179
+    },
+    "rolling/loco_sd40_body_f14": {
+      "x": 3589,
+      "y": 282,
+      "w": 338,
+      "h": 212,
+      "ax": 171,
+      "ay": 173
+    },
+    "rolling/loco_sd40_body_f15": {
+      "x": 1587,
+      "y": 525,
+      "w": 346,
+      "h": 197,
+      "ax": 173,
+      "ay": 167
+    },
+    "rolling/loco_sd40_body_f16": {
+      "x": 2952,
+      "y": 525,
+      "w": 353,
+      "h": 188,
+      "ax": 176,
+      "ay": 159
+    },
+    "rolling/loco_sd40_body_f17": {
+      "x": 352,
+      "y": 736,
+      "w": 355,
+      "h": 178,
+      "ax": 177,
+      "ay": 151
+    },
+    "rolling/loco_sd40_body_f18": {
+      "x": 1271,
+      "y": 736,
+      "w": 352,
+      "h": 168,
+      "ax": 176,
+      "ay": 143
+    },
+    "rolling/loco_sd40_body_f19": {
+      "x": 2204,
+      "y": 736,
+      "w": 352,
+      "h": 164,
+      "ax": 174,
+      "ay": 141
+    },
+    "rolling/loco_sd40_body_f2": {
+      "x": 2501,
+      "y": 1,
+      "w": 259,
+      "h": 255,
+      "ax": 143,
+      "ay": 189
+    },
+    "rolling/loco_sd40_body_f20": {
+      "x": 1,
+      "y": 736,
+      "w": 350,
+      "h": 180,
+      "ax": 172,
+      "ay": 148
+    },
+    "rolling/loco_sd40_body_f21": {
+      "x": 1934,
+      "y": 525,
+      "w": 345,
+      "h": 196,
+      "ax": 167,
+      "ay": 154
+    },
+    "rolling/loco_sd40_body_f22": {
+      "x": 1,
+      "y": 525,
+      "w": 337,
+      "h": 210,
+      "ax": 161,
+      "ay": 159
+    },
+    "rolling/loco_sd40_body_f23": {
+      "x": 2351,
+      "y": 282,
+      "w": 325,
+      "h": 223,
+      "ax": 153,
+      "ay": 164
+    },
+    "rolling/loco_sd40_body_f24": {
+      "x": 1269,
+      "y": 282,
+      "w": 308,
+      "h": 235,
+      "ax": 143,
+      "ay": 169
+    },
+    "rolling/loco_sd40_body_f25": {
+      "x": 3316,
+      "y": 1,
+      "w": 286,
+      "h": 246,
+      "ax": 131,
+      "ay": 174
+    },
+    "rolling/loco_sd40_body_f26": {
+      "x": 2761,
+      "y": 1,
+      "w": 259,
+      "h": 255,
+      "ax": 116,
+      "ay": 178
+    },
+    "rolling/loco_sd40_body_f27": {
+      "x": 2273,
+      "y": 1,
+      "w": 227,
+      "h": 260,
+      "ax": 99,
+      "ay": 180
+    },
+    "rolling/loco_sd40_body_f28": {
+      "x": 1435,
+      "y": 1,
+      "w": 192,
+      "h": 264,
+      "ax": 81,
+      "ay": 182
+    },
+    "rolling/loco_sd40_body_f29": {
+      "x": 1264,
+      "y": 1,
+      "w": 170,
+      "h": 265,
+      "ax": 78,
+      "ay": 183
+    },
+    "rolling/loco_sd40_body_f3": {
+      "x": 2045,
+      "y": 1,
+      "w": 227,
+      "h": 262,
+      "ax": 128,
+      "ay": 193
+    },
+    "rolling/loco_sd40_body_f30": {
+      "x": 1628,
+      "y": 1,
+      "w": 147,
+      "h": 264,
+      "ax": 74,
+      "ay": 183
+    },
+    "rolling/loco_sd40_body_f4": {
+      "x": 1071,
+      "y": 1,
+      "w": 192,
+      "h": 268,
+      "ax": 111,
+      "ay": 197
+    },
+    "rolling/loco_sd40_body_f5": {
+      "x": 900,
+      "y": 1,
+      "w": 170,
+      "h": 270,
+      "ax": 92,
+      "ay": 199
+    },
+    "rolling/loco_sd40_body_f6": {
+      "x": 513,
+      "y": 1,
+      "w": 147,
+      "h": 272,
+      "ax": 73,
+      "ay": 200
+    }
+  }
+}

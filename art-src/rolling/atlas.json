@@ -1,0 +1,631 @@
+{
+  "frames": {
+    "rolling/loco_f7_body_f0": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f1": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f13": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f14": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f15": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f16": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f17": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f18": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f19": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f2": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f20": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f21": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f22": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f23": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f24": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f25": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f26": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f27": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f28": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f29": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f3": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f30": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f4": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f5": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_f7_body_f6": {
+      "ax": 204,
+      "ay": 228,
+      "asset": "f7"
+    },
+    "rolling/loco_flying_scotsman_engine_f0": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f1": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f13": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f14": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f15": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f16": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f17": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f18": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f19": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f2": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f20": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f21": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f22": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f23": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f24": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f25": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f26": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f27": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f28": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f29": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f3": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f30": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f4": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f5": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_engine_f6": {
+      "ax": 137,
+      "ay": 177,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f0": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f1": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f13": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f14": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f15": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f16": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f17": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f18": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f19": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f2": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f20": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f21": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f22": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f23": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f24": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f25": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f26": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f27": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f28": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f29": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f3": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f30": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f4": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f5": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_flying_scotsman_tender_f6": {
+      "ax": 104,
+      "ay": 153,
+      "asset": "flying_scotsman"
+    },
+    "rolling/loco_rocket_body_f0": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f1": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f13": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f14": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f15": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f16": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f17": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f18": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f19": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f2": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f20": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f21": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f22": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f23": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f24": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f25": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f26": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f27": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f28": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f29": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f3": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f30": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f4": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f5": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_rocket_body_f6": {
+      "ax": 95,
+      "ay": 131,
+      "asset": "rocket"
+    },
+    "rolling/loco_sd40_body_f0": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f1": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f13": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f14": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f15": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f16": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f17": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f18": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f19": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f2": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f20": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f21": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f22": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f23": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f24": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f25": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f26": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f27": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f28": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f29": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f3": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f30": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f4": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f5": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    },
+    "rolling/loco_sd40_body_f6": {
+      "ax": 206,
+      "ay": 239,
+      "asset": "sd40"
+    }
+  },
+  "partial": true,
+  "resolution": 4
+}
