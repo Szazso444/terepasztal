@@ -362,6 +362,9 @@ export class Landscape {
     return -reliefHeight(this.map, this.relief, x, y);
   }
   /** Can the ground at tile (x, y) carry a straight climbing rail, or only level structures? */
+  get style() {
+    return this.relief.style;
+  }
   /** World pixels one level rises. */
   get step() {
     return this.relief.style.step;

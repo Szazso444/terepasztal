@@ -132,7 +132,9 @@ export const STR = {
     tooSteep: 'Too steep for rails: straight track climbs one level per tile at most',
     notLevel: 'Needs level ground: only straight track can climb a slope',
     notSmooth:
-      'Curves and switches need smooth ground: only straights and crossings climb a slope, unless a bridge platform supports the piece',
+      'Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece',
+    deckLevels:
+      'A supported piece must meet its rails at one level, no lower than the ground under it',
     trackInWay: 'Track in the way: remove it first',
     needWaterside: 'Must stand next to water',
     needTerrain: (t: string) => `Must stand on ${t}`,

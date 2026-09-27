@@ -1,7 +1,7 @@
 import { levelAt } from './elevation';
 import type { GameMap } from './tiles';
 import type { TrackGraph } from './track';
-import { Dir, opposite } from '../engine/iso';
+import { Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 
 /**
  * One piece of a rail line's height profile, in tile coordinates along the line's axis: level `a`
@@ -59,6 +59,35 @@ export function climbAxes(links: readonly (readonly [number, number])[]): ('x' |
   return links.map(([a]) => (a === Dir.E || a === Dir.W ? 'x' : 'y'));
 }
 
+/**
+ * Deck level of a curve or switch carried by bridge platforms: the level of the rails it meets
+ * off the bridge (neighbours across its links that stand on the ground), or its highest tile when
+ * every neighbour is on a platform too. Null when the rails it meets disagree, or the deck would
+ * sit below the ground under one of its tiles.
+ */
+export function supportedDeck(
+  map: Levels,
+  members: readonly { x: number; y: number; links: readonly (readonly [number, number])[] }[],
+  bridgeAt: (x: number, y: number) => boolean,
+): number | null {
+  const inside = new Set(members.map((m) => m.y * map.w + m.x)),
+    meets = new Set<number>();
+  let top = 0;
+  for (const m of members) {
+    top = Math.max(top, levelAt(map, m.x, m.y));
+    for (const link of m.links)
+      for (const d of link) {
+        const nx = m.x + DIR_DX[d],
+          ny = m.y + DIR_DY[d];
+        if (inside.has(ny * map.w + nx) || bridgeAt(nx, ny)) continue;
+        meets.add(levelAt(map, nx, ny));
+      }
+  }
+  if (meets.size > 1) return null;
+  const deck = meets.size ? [...meets][0] : top;
+  return deck < top ? null : deck;
+}
+
 /** Pick the profile a point on a crossing rides: the line whose centreline it is nearer. */
 export function bedFor(bed: RailBed, x: number, y: number): RailBed {
   if (!bed.cross) return bed;
@@ -101,23 +130,18 @@ export function railProfile(
       lineProfile(map, track, tiles, axis, bridgeAt, beds);
     }
   }
-  // Curves and switches carried by bridge platforms sit at the deck: the highest level they
-  // span or meet, so a supported piece can stand where the ground is not smooth.
+  // Curves and switches carried by bridge platforms sit at the deck (supportedDeck).
   for (const [k, p] of track.pieces) {
     const x = k % map.w,
       y = Math.floor(k / map.w);
     if (beds.has(k) || !bridgeAt(x, y)) continue;
-    const members = p.unit ? track.unitTiles(p.unit.ax, p.unit.ay) : [{ x, y }];
-    let deck = 0;
-    for (const t of members)
-      for (const [ddx, ddy] of [
-        [0, 0],
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-      ])
-        deck = Math.max(deck, levelAt(map, t.x + ddx, t.y + ddy));
+    const members = (p.unit ? track.unitTiles(p.unit.ax, p.unit.ay) : [{ x, y }]).map((t) => ({
+      ...t,
+      links: track.get(t.x, t.y)?.links ?? [],
+    }));
+    const deck =
+      supportedDeck(map, members, bridgeAt) ??
+      Math.max(...members.map((t) => levelAt(map, t.x, t.y)));
     beds.set(k, {
       axis: 'x',
       spans: [{ from: x - 2, to: x + 2, a: deck, b: deck }],

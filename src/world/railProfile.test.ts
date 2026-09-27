@@ -5,6 +5,7 @@ import {
   railLevel,
   railGrade,
   railProfile,
+  supportedDeck,
   CLIMB_SPEED,
   DESCENT_SPEED,
   type RailBed,
@@ -110,5 +111,21 @@ describe('rail inclines', () => {
         pick = (b: RailBed) => (b.axis === 'x' ? b : b.cross!);
       expect(railLevel(pick(here), x + 0.5)).toBeCloseTo(railLevel(pick(next), x + 0.5));
     }
+  });
+
+  it('seats a supported curve at the level of the rails it meets, or refuses it', () => {
+    const m = emptyMap(6, 16, 16);
+    // A level-2 hill over x 4..11, y 4..11; its edge ring is level 1.
+    for (let y = 4; y < 12; y++) for (let x = 4; x < 12; x++) m.terrain[y * 16 + x] = Terrain.Hill;
+    const none = () => false,
+      curve = (x: number, y: number, rot: number) => [{ x, y, links: pieceLinks('curve', rot) }];
+    // Ring corner (4, 4), east and south: both neighbours at level 1, like the tile. Deck 1.
+    expect(supportedDeck(m, curve(4, 4, 1), none)).toBe(1);
+    // (4, 6) north and east: rails at levels 1 and 2 disagree.
+    expect(supportedDeck(m, curve(4, 6, 0), none)).toBeNull();
+    // (5, 5) north and west meet level 1, below the level-2 tile: refused.
+    expect(supportedDeck(m, curve(5, 5, 3), none)).toBeNull();
+    // Neighbours on platforms adapt: the deck is the piece's own highest tile.
+    expect(supportedDeck(m, curve(4, 6, 0), () => true)).toBe(1);
   });
 });

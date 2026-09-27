@@ -11,8 +11,18 @@ so pieces conform automatically as neighbours are laid or removed.
 - Straights, crossings and class transitions may be placed on slopes and inclines.
 - Curves and switches, regular and high speed alike, need smooth tiles: no bank reaches into any
   tile of their footprint.
-- Exception (pilot): a curve or switch may stand on a tile carried by a bridge platform. It then
-  sits at the deck, the highest level among its tiles and their neighbours.
+- Exception: a curve or switch whose tiles are not all smooth needs a bridge platform under
+  every tile it covers (all four of a high-speed curve). It sits at the deck: the level of the
+  rails it meets off the bridge, or its highest tile when every neighbour is on a platform too.
+  It is refused when those rails sit at different levels, or when the deck would be below the
+  ground under one of its tiles. It counts as a one-tile span of its platform's material.
+
+## Bridges over land
+
+Bridge platforms stand on water or land. Over land the deck carries the rail's level on piers
+drawn by the renderer and cut to the ground under each one: two masonry piers per stone tile, a
+braced timber trestle per wood tile, and a pier per corner under the square pad of a supported
+curve or switch. Over water the illustrated spans and their piers stay as they were.
 
 A crossing on a climb holds both lines level at its centre, so the two rails meet.
 

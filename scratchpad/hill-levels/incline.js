@@ -28,7 +28,7 @@ function findSite(g) {
   throw new Error('No open site');
 }
 
-export async function stamp(g) {
+export async function stamp(g, bridgeId = 'bridge_stone') {
   const w = g.world,
     m = g.map,
     { x0, y } = findSite(g),
@@ -49,7 +49,7 @@ export async function stamp(g) {
   for (let dy = -3; dy <= 4; dy++) for (let dx = -1; dx < 20; dx++) w.retile(x0 + dx, y + dy);
   const levels = LEVELS.map((_, i) => levelAt(m, x0 + i, y));
   if (levels.join() !== LEVELS.join()) throw new Error('Stamp levels ' + levels.join());
-  for (const i of BRIDGE) if (!g.builder.placeBuilding(x0 + i, y, 'bridge_stone')) throw new Error('bridge ' + i);
+  for (const i of BRIDGE) if (!g.builder.placeBuilding(x0 + i, y, bridgeId)) throw new Error('bridge ' + i);
   let laid = 0;
   for (let i = 0; i < LEVELS.length; i++)
     for (const r of [0, 1]) {
@@ -75,4 +75,29 @@ export function place(g, site, size, head) {
   t.wagons = wagons.map((id) => ({ uid: ++uid, def: content.wagons.find((d) => d.id === id), level: 0, cargo: null, amount: 0 }));
   if (!t.spawnAt(g.track, site.x0 + head, site.y, 3)) throw new Error('spawn failed ' + size);
   g.fleet.trains = [...g.fleet.trains, t];
+}
+
+/** A valley two levels deep between two level-2 hills, bridged at level 2 by platforms. */
+export async function valley(g, bridgeId) {
+  const w = g.world,
+    m = g.map,
+    { x0, y } = findSite(g);
+  for (let dy = -4; dy <= 4; dy++)
+    for (let dx = -2; dx < 20; dx++) {
+      m.props.delete((y + dy) * m.w + x0 + dx);
+      m.terrain[(y + dy) * m.w + x0 + dx] = 0;
+    }
+  for (let i = 2; i <= 14; i++) if (i !== 8) for (let dy = -2; dy <= 2; dy++) m.terrain[(y + dy) * m.w + x0 + i] = 2;
+  for (let dy = -3; dy <= 4; dy++) for (let dx = -1; dx < 20; dx++) w.retile(x0 + dx, y + dy);
+  const levels = Array.from({ length: 17 }, (_, i) => levelAt(m, x0 + i, y));
+  for (const i of [7, 8, 9]) if (!g.builder.placeBuilding(x0 + i, y, bridgeId)) throw new Error('bridge ' + i);
+  for (let i = 0; i < 17; i++)
+    for (const r of [0, 1]) {
+      const x = x0 + i;
+      if (!g.builder.placeTrackKind(x, y, 'straight', r)) continue;
+      const link = g.track.get(x, y).links[0];
+      if (link.includes(1) && link.includes(3)) break;
+      g.builder.removeTrack(x, y);
+    }
+  return { x0, y, levels };
 }

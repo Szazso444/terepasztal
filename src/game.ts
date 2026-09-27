@@ -29,7 +29,7 @@ import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { levelAt } from './world/elevation';
-import { railProfile } from './world/railProfile';
+import { climbAxes, railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -1239,12 +1239,44 @@ export class Game {
         const phase = s.index % 4;
         const edge = (s.index === 0 ? 1 : 0) + (s.index === s.length - 1 ? 2 : 0);
         const key = `structures/span_${s.material}_${s.axis}_${n}_${phase}_${edge}`;
-        // Over water the deck sits at the waterline; over land it carries the rail's level.
+        // Over water the deck sits at the waterline and its piers stand in the water. Over land
+        // it carries the rail's level on piers cut to the ground under them: a fenced span under
+        // straight rail, a square pad under a curve or switch.
         const water = terrainAt(this.map, b.x, b.y) === Terrain.Water,
           deck = water ? 0 : -this.world.railAt(b.x, b.y).dz,
-          dy = -deck - this.world.elevationOf(b.x, b.y);
-        this.world.setPlatform(b.x, b.y, key + '_deck', 0, water, deck);
-        this.world.setStructure('bridge:' + b.x + ',' + b.y, b.x, b.y, key + '_rail', 35, dy);
+          dy = -deck - this.world.elevationOf(b.x, b.y),
+          piece = this.track.get(b.x, b.y),
+          straight = !piece || climbAxes(piece.links).length > 0,
+          land = water
+            ? null
+            : straight
+              ? `structures/landspan_${s.material}_${s.axis}`
+              : `structures/landpad_${s.material}`;
+        this.world.setPlatform(
+          b.x,
+          b.y,
+          land && !straight ? land : (land ?? key) + '_deck',
+          0,
+          water,
+          deck,
+        );
+        if (land && !straight) this.world.removeStructure('bridge:' + b.x + ',' + b.y);
+        else
+          this.world.setStructure(
+            'bridge:' + b.x + ',' + b.y,
+            b.x,
+            b.y,
+            (land ?? key) + '_rail',
+            35,
+            dy,
+          );
+        this.world.setBridgePiers(
+          b.x,
+          b.y,
+          water ? null : s.material,
+          straight ? (s.axis as 0 | 1) : null,
+          deck,
+        );
         const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
         this.world.setPlatform(
           b.x,
@@ -1271,6 +1303,7 @@ export class Game {
         this.world.setPlatform(b.x, b.y, null, 1);
         this.world.removeStructure('bridge:' + b.x + ',' + b.y);
         this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
+        this.world.setBridgePiers(b.x, b.y, null);
       }
       this.refreshBridges();
       return;

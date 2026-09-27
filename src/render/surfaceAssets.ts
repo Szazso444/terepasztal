@@ -57,16 +57,53 @@ function read(f: FrameInfo) {
   return { canvas, ctx, pixels: ctx.getImageData(0, 0, canvas.width, canvas.height) };
 }
 /** Bottom-contour integration; leaves walls, roof edges, doors and rail geometry intact. */
+/**
+ * Colour statistics measured from the atlases (terrain/mountain_* frames, and the rock material
+ * of assets/terrain-surfaces.png); re-measure if either is regenerated.
+ */
+const SPRITE_ROCK = { mean: [118, 116, 109], std: [47.1, 37, 26] };
+const TERRAIN_ROCK = { mean: [138, 133, 119], std: [45.6, 36.5, 26.7] };
+const SPRITE_SNOW = [229, 219, 202];
+/** The painter's snow (landscape.worker.ts SNOW). */
+const TERRAIN_SNOW = [234, 239, 246];
+const unit = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+
 export class SurfaceAssets {
   private contacts = new Map<string, Texture>();
   private windows = new Map<string, Texture>();
   private contours = new Map<string, { x: number; y: number }[]>();
   private summits = new Map<string, Texture>();
-  summit(key: string, f: FrameInfo) {
-    const cached = this.summits.get(key);
+  /**
+   * `match` (0..1) recolours the illustration toward the terrain's own rock and snow, `light`
+   * multiplies it like the painter's height light, so the summit reads as the same stone as the
+   * banks under it.
+   */
+  summit(key: string, f: FrameInfo, match = 0, light = 1) {
+    const id = `${key}|${match}|${light.toFixed(3)}`,
+      cached = this.summits.get(id);
     if (cached) return cached;
     const { canvas, ctx, pixels } = read(f),
       { width: w, height: h, data: p } = pixels;
+    if (match > 0 || light !== 1)
+      for (let k = 0; k < p.length; k += 4) {
+        if (!p[k + 3]) continue;
+        const r = p[k],
+          g = p[k + 1],
+          b = p[k + 2],
+          lum = (r + g + b) / 3,
+          sat = Math.max(r, g, b) - Math.min(r, g, b),
+          // Snow: bright and nearly grey. It takes the painter's snow colour, shading kept.
+          snow = unit((lum - 175) / 25) * (1 - unit((sat - 35) / 20));
+        for (let c = 0; c < 3; c++) {
+          const v = p[k + c],
+            rock =
+              ((v - SPRITE_ROCK.mean[c]) * TERRAIN_ROCK.std[c]) / SPRITE_ROCK.std[c] +
+              TERRAIN_ROCK.mean[c],
+            ice = (v * TERRAIN_SNOW[c]) / SPRITE_SNOW[c],
+            target = rock + (ice - rock) * snow;
+          p[k + c] = Math.max(0, Math.min(255, (v + (target - v) * match) * light));
+        }
+      }
     // A wide fade so the cap rises out of the rocky mountain top instead of sitting on it.
     const band = (w / f.w) * 16;
     for (let x = 0; x < w; x++) {
@@ -80,7 +117,7 @@ export class SurfaceAssets {
     }
     ctx.putImageData(pixels, 0, 0);
     const result = texture(canvas, f);
-    this.summits.set(key, result);
+    this.summits.set(id, result);
     return result;
   }
   /** Bottom opaque contour in owner-local logical pixels, not its tile footprint. */

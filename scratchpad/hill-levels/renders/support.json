@@ -1,0 +1,136 @@
+{
+  "stone": {
+    "site": {
+      "x0": 71,
+      "y": 20,
+      "laid": 18,
+      "levels": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        1,
+        2,
+        2,
+        1,
+        0,
+        0
+      ]
+    },
+    "results": [
+      {
+        "label": "Curve on a platform, meeting its rails at one level",
+        "ok": true,
+        "rot": 3
+      },
+      {
+        "label": "Curve on a platform, its rails at two levels",
+        "ok": false,
+        "reason": "A supported piece must meet its rails at one level, no lower than the ground under it"
+      },
+      {
+        "label": "High-speed curve with a platform under one tile of four",
+        "ok": false,
+        "reason": "Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece"
+      }
+    ]
+  },
+  "wood": {
+    "site": {
+      "x0": 89,
+      "y": 26,
+      "laid": 18,
+      "levels": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        1,
+        2,
+        2,
+        1,
+        0,
+        0
+      ]
+    },
+    "results": [
+      {
+        "label": "Curve on a platform, meeting its rails at one level",
+        "ok": true,
+        "rot": 3
+      },
+      {
+        "label": "Curve on a platform, its rails at two levels",
+        "ok": false,
+        "reason": "A supported piece must meet its rails at one level, no lower than the ground under it"
+      },
+      {
+        "label": "High-speed curve with a platform under one tile of four",
+        "ok": false,
+        "reason": "Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece"
+      }
+    ]
+  },
+  "stone-valley": {
+    "x0": 73,
+    "y": 31,
+    "levels": [
+      0,
+      0,
+      1,
+      2,
+      2,
+      2,
+      2,
+      1,
+      0,
+      1,
+      2,
+      2,
+      2,
+      2,
+      1,
+      0,
+      0
+    ]
+  },
+  "wood-valley": {
+    "x0": 92,
+    "y": 33,
+    "levels": [
+      0,
+      0,
+      1,
+      2,
+      2,
+      2,
+      2,
+      1,
+      0,
+      1,
+      2,
+      2,
+      2,
+      2,
+      1,
+      0,
+      0
+    ]
+  }
+}

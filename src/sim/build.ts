@@ -30,7 +30,7 @@ import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
 import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
-import { climbAxes } from '../world/railProfile';
+import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
 
 const trackData = content.track;
@@ -324,22 +324,23 @@ export class Builder {
     // class compatibility with the neighbours the new piece would open onto
     const probe = new TrackGraph(this.map.w, this.map.h);
     probe.place(x, y, kind, rot, item.cls, item.cls2);
+    // Straights, crossings and class transitions may climb. Curves and switches (regular and
+    // high speed) need smooth ground on every tile, or a bridge platform under every tile: then
+    // they sit at the deck, the level of the rails they meet off the bridge.
+    const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
+      // Members of a wide piece are parts of a curve or switch, whatever their links look like.
+      climbs = !wide && members.some((m) => climbAxes(m.links).length > 0);
+    if (this.groundCheck && !climbs && !tiles.every((t) => this.groundCheck!(t.x, t.y, 'level'))) {
+      if (!tiles.every((t) => this.bridgeAt(t.x, t.y)))
+        return { ok: false, cost: {}, reason: STR.build.notSmooth };
+      if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by)) === null)
+        return { ok: false, cost: {}, reason: STR.build.deckLevels };
+    }
     for (const t of tiles) {
       const p = probe.get(t.x, t.y);
       if (!p) continue;
-      // Straights, crossings and class transitions may climb; curves and switches (regular and
-      // high speed) need smooth ground unless a bridge platform supports them.
-      const straight = climbAxes(p.links).length > 0;
-      if (
-        this.groundCheck &&
-        !(this.bridgeAt(t.x, t.y) && !straight) &&
-        !this.groundCheck(t.x, t.y, straight ? 'straight' : 'level')
-      )
-        return {
-          ok: false,
-          cost: {},
-          reason: straight ? STR.build.tooSteep : STR.build.notSmooth,
-        };
+      if (climbs && this.groundCheck && !this.groundCheck(t.x, t.y, 'straight'))
+        return { ok: false, cost: {}, reason: STR.build.tooSteep };
       for (const [a, b] of p.links)
         for (const d of [a, b]) {
           const nx = t.x + DDX[d];

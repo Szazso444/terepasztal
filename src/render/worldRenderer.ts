@@ -22,6 +22,7 @@ import { scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
+import { PAL, type RGB } from '../art/palette';
 
 const CHUNK = 8;
 
@@ -34,6 +35,9 @@ export class WorldRenderer {
   readonly ground = new Container();
   readonly track = new Container();
   readonly platforms = new Container();
+  /** Piers of bridges carried over land, standing on the ground under their decks. */
+  private piers = new Container();
+  private pierGraphics = new Map<number, Graphics>();
   private platformSprites = new Map<number, Sprite>();
   private platformMasks = new Map<number, Graphics>();
   readonly objects = new Container();
@@ -99,6 +103,7 @@ export class WorldRenderer {
       this.ground,
       this.waterDetails,
       this.contactGround,
+      this.piers,
       this.platforms,
       this.track,
       this.lights,
@@ -588,10 +593,21 @@ export class WorldRenderer {
           this.summitSprites.delete(k);
           continue;
         }
-        if (!s) {
-          const key = `terrain/mountain_${this.map.variant[k] % 3}`,
-            f = this.atlas.get(key);
-          s = new Sprite({ texture: this.surfaces.summit(key, f), cullable: true });
+        const key = `terrain/mountain_${this.map.variant[k] % 3}`,
+          f = this.atlas.get(key),
+          style = this.landscape.style,
+          // With a match set, lit like the ground it stands on (the painter's height light).
+          texture = this.surfaces.summit(
+            key,
+            f,
+            style.summitMatch ?? 0,
+            style.summitMatch === undefined
+              ? 1
+              : 1 + (style.heightLight ?? 0) * levelAt(this.map, x, y),
+          );
+        if (s) s.texture = texture;
+        else {
+          s = new Sprite({ texture, cullable: true });
           s.anchor.set(f.anchorX, f.anchorY);
           s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
           s.zIndex = depthKey(x, y, 2);
@@ -659,6 +675,116 @@ export class WorldRenderer {
     this.trackNight = night;
     for (const [i, s] of this.trackSprites) s.tint = this.trackColour(i);
     for (const [i, m] of this.trackMeshes) m.tint = this.trackColour(i);
+  }
+  /**
+   * Piers for a bridge platform over land: each stands on the ground under it and reaches up to
+   * the deck (`deck` world pixels up, 4 px thick), so none is longer than the drop it spans and
+   * none sinks into the terrain. Straight spans (`axis` 0 along y, 1 along x) get a pair of
+   * piers (stone) or a braced trestle (wood); curves and switches (`axis` null) a pier per
+   * corner. `material` null removes them.
+   */
+  setBridgePiers(
+    x: number,
+    y: number,
+    material: 'wood' | 'stone' | null,
+    axis: 0 | 1 | null = null,
+    deck = 0,
+  ) {
+    const k = idx(this.map, x, y);
+    let g = this.pierGraphics.get(k);
+    if (!material) {
+      g?.destroy();
+      this.pierGraphics.delete(k);
+      return;
+    }
+    if (!g) {
+      g = new Graphics();
+      this.piers.addChild(g);
+      this.pierGraphics.set(k, g);
+    }
+    g.clear();
+    const stone = material === 'stone',
+      side = stone ? PAL.stone : PAL.timber,
+      hex = (c: RGB, f: number) =>
+        (Math.min(255, Math.round(c[0] * f)) << 16) |
+        (Math.min(255, Math.round(c[1] * f)) << 8) |
+        Math.min(255, Math.round(c[2] * f)),
+      top = deck - 4,
+      // (along, across) in the span's own axes -> tile offsets.
+      at = (l: number, w: number) => (axis === 0 ? { dx: w, dy: l } : { dx: l, dy: w });
+    const posts: { dx: number; dy: number; hx: number; hy: number }[] = [];
+    if (axis === null)
+      for (const cx of [-0.34, 0.34])
+        for (const cy of [-0.34, 0.34])
+          posts.push({ dx: cx, dy: cy, hx: stone ? 0.09 : 0.04, hy: stone ? 0.09 : 0.04 });
+    else if (stone)
+      for (const l of [-0.38, 0.38]) {
+        const o = at(l, 0);
+        posts.push({ ...o, hx: axis ? 0.07 : 0.3, hy: axis ? 0.3 : 0.07 });
+      }
+    else
+      for (const l of [-0.4, 0.4])
+        for (const w of [-0.26, 0.26]) posts.push({ ...at(l, w), hx: 0.035, hy: 0.035 });
+    // Far posts first, so nearer ones cover them.
+    posts.sort((a, b) => a.dx + a.dy - (b.dx + b.dy));
+    const screen = (tx: number, ty: number, z: number) => {
+      const p = tileToWorld(tx, ty);
+      return { x: p.x, y: p.y - z };
+    };
+    const feet: { x: number; y: number; ground: number }[] = [];
+    for (const p of posts) {
+      const fx = x + p.dx,
+        fy = y + p.dy,
+        ground = -this.elevationOf(fx, fy);
+      feet.push({ x: fx, y: fy, ground });
+      if (top - ground < 1) continue;
+      const corner = (sx: number, sy: number, z: number) =>
+          screen(fx + sx * p.hx, fy + sy * p.hy, z),
+        face = (a: [number, number], b: [number, number], c: number) => {
+          const pa = corner(a[0], a[1], ground),
+            pb = corner(b[0], b[1], ground),
+            qb = corner(b[0], b[1], top),
+            qa = corner(a[0], a[1], top);
+          g!.poly([pa.x, pa.y, pb.x, pb.y, qb.x, qb.y, qa.x, qa.y]).fill(c);
+        };
+      // The two faces toward the camera: +y lit from the upper left, +x in shade.
+      face([-1, 1], [1, 1], hex(side[1], 0.9));
+      face([1, 1], [1, -1], hex(side[2], 0.72));
+      // A darker band where the pier meets the ground reads as contact, not as a cut.
+      const a = corner(-1, 1, ground),
+        b = corner(1, 1, ground),
+        c = corner(1, -1, ground);
+      g.moveTo(a.x, a.y)
+        .lineTo(b.x, b.y)
+        .lineTo(c.x, c.y)
+        .stroke({ width: 1.5, color: hex(side[2], 0.45), alpha: 0.6 });
+    }
+    // Timber trestles brace their near pair of posts with a cross.
+    if (!stone && axis !== null) {
+      const near = feet.filter((_, i) => {
+        const o = posts[i];
+        return (axis ? o.dy : o.dx) > 0;
+      });
+      if (near.length === 2) {
+        const [p, q] = near,
+          lo = Math.max(p.ground, q.ground),
+          span = top - lo;
+        if (span > 4) {
+          const a = screen(p.x, p.y, lo + 1),
+            b = screen(q.x, q.y, top - 1),
+            c = screen(q.x, q.y, lo + 1),
+            d = screen(p.x, p.y, top - 1);
+          g.moveTo(a.x, a.y)
+            .lineTo(b.x, b.y)
+            .moveTo(c.x, c.y)
+            .lineTo(d.x, d.y)
+            .stroke({
+              width: 1.5,
+              color: hex(side[0], 0.85),
+            });
+        }
+      }
+    }
   }
   /** `lift` raises the platform above the ground plane: a bridge deck carried over land. */
   setPlatform(

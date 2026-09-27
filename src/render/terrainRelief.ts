@@ -37,8 +37,10 @@ export interface ReliefStyle {
   heightLight?: number;
   /** Snow patches on the tile biome's snow line level, full snow from the level above. */
   snow?: boolean;
-  /** Preview: mountain and rock ground between stones is the biome's own ground, not grass. */
+  /** Mountain and rock ground between stones is the biome's own ground, not grass (shipped). */
   biomeTops?: boolean;
+  /** Preview: the summit sprites recoloured toward the terrain's rock and snow (0..1). */
+  summitMatch?: number;
   /** Preview: summits rise this many levels as painted rock instead of illustrated sprites. */
   paintedPeaks?: number;
 }
@@ -59,6 +61,7 @@ export const DEFAULT_RELIEF: ReliefStyle = {
   bankGrass: { tone: 'dark', amount: 1 },
   heightLight: 0.06,
   snow: true,
+  biomeTops: true,
 };
 export interface TerrainRelief {
   /** Shared lattice: corner (x,y) is at tile coordinate (x-.5,y-.5). */
