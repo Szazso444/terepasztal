@@ -1,5 +1,26 @@
 # Asset generation checkpoint
 
+## Train models pilot 2 (2026-09-26; latest)
+
+User feedback on pilot 1: Rocket approved (concept), colour and overall size approved. Asked for: FS
+drivers that follow the body; bogies closer to the centre with room for pilots; SD40-2 is a 3-tile
+body, so use the F7 as the medium diesel; features like snowplows rendered; per-train bogies;
+image proportions (bodies looked too wide); bodies parallel to the rails. Pilot 2:
+https://claude.ai/artifact/7mt9mZ5qTDivSGC1PPs2tQ (verdicts in its `verdicts` collection;
+local `G:/DEV/Terepasztal/renders/train-models-pilot-2/`, source `scratchpad/train-models/review-2/`).
+
+- Alignment: body-based yaw/pitch refinement plus `detaper`; F7 roof within 1.15 deg of the rails in
+  15 side views (0.2 deg in the user's straight shot). Width follows the length compression.
+- FS: coupled wheels, rods, splashers and frames baked into the engine body (rigid); leading bogie and
+  trailing axle are per-train bogies; tender axles baked (`tender: "none"`). Data: bogieStyle/bogieDraw.
+- F7: per-train trucks cut from its own model (source colours), drawn 0.18/0.13 tiles in from the pivots
+  via the new cosmetic `bogieDraw` (src/sim/body.ts, tested); pilot/snowplow kept on the body.
+- Hidden sides take their mirror twin's source colours. Shared pilot-1 bogie frames and the SD40 were
+  removed from the atlases (other locos keep their procedural bogies).
+- Open: SD40-2 to large + 2 trucks (data change, bars it from regular track); user's cut-off note
+  "EMD F7 is a good candidate, but yo..."; atlas budget; pilots on bogie vs body (answered: follow
+  the prototype, pending confirmation).
+
 ## Train models pilot: Rocket, Flying Scotsman, SD40, bogies (2026-09-26; latest)
 
 Branch `local/train-models` (worktree `C:/Users/Zso/terepasztal-local`, from PR #20's head). Pipeline

@@ -29,6 +29,22 @@ to slice or bend a rigid casing.
    distance. The renderer's facing correction preserves the vehicle's orientation. Retreats
    preview their reversed trail and reserve a complete route before committing that reversal.
 
+## Rendered stock (train models pilot 2, pending approval)
+
+7. Coupled driving wheels are rigid in a real locomotive frame, so rendered rigid-frame steam engines
+   draw them, with their rods, splashers and frames, as part of the body sprite. The body's centring
+   on the track keeps them on the rails near the middle of the body. Only what swivels on the
+   prototype is a bogie sprite: the leading bogie, the trailing axle, a tender's trucks. A rigid tender
+   draws its axles with its body (`bogieStyle` `"none"` there). Articulated engine units (Big Boy,
+   Garratt) keep swivelling.
+8. Bogie sprites are per train (`rolling/bogie_<id>_<position>_f<n>`), rendered in the same run as the
+   body; the shared family styles remain for stock not yet rendered. Parts a prototype hangs on its
+   bogie go on that sprite; pilots and snowplows fixed to the body frame stay on the body.
+9. `bogieDraw` (per vehicle, tiles along the track from each pivot, + towards the vehicle's front)
+   draws a bogie sprite where the prototype has its truck. The sprite sits on the rail at that point
+   with the rail's own tangent there (`BogiePose.drawX/drawY/drawAngle`); the pivot, the body pose
+   and every curve verdict are unchanged.
+
 ## Verification
 
 - `scratchpad/verify-bogies.mjs` sweeps all medium and large models over every permitted class,
