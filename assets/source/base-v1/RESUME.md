@@ -18,6 +18,12 @@ Pilot 4: https://claude.ai/artifact/P41Rqnkro7PNP2eEAo1wQN (verdicts collection;
   cut pieces, extra views (`<image>-rear.png`, tested on a synthetic F7 rear view: IoU 0.948), end trims.
 - Asked the user for rear three-quarter images (F7, SD40, FS, Black Five, 9F).
 - After lock-in and the user's go: roster batches; several atlas sheets per group when needed.
+- User on pilot 4 (2026-09-27): steam wheels good; the leading bogie / pony truck detaches sideways from the
+  body on curves (all steam engines, e.g. 9F). Measured: 0.19-0.25 tile off the frame on the 0.5-tile curve.
+  Proposed fix (not built): fit the frame to all its axles (weighted least squares, trucks weight ~1): trucks
+  0.09-0.12 off the frame, coupled wheels 0.06-0.11 off the rail. Snapshot branch `locomotive-render-v1`
+  (89e0d66). Rear-view prompts: https://claude.ai/artifact/Biat29EKyAgEUAiXcBv3H9
+  (`tools/asset-pipeline/rear_view_prompts.py`).
 
 ## Train models pilot 3 (2026-09-26)
 
