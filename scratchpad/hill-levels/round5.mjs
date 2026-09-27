@@ -54,10 +54,10 @@ try {
     await settle();
   }
   fs.writeFileSync(out + 'kit-sites.json', JSON.stringify(sites, null, 2));
-  for (const on of [true, false]) {
+  for (const on of (process.env.ONLY_KIT ? [true] : [true, false])) {
     await kit(on);
     await settle();
-    const tag = on ? 'kit' : 'old';
+    const tag = on ? (process.env.TAG ?? "kit") : "old";
     for (const material of ['stone', 'wood']) {
       const v = sites[`${material}-valley`],
         s = sites[`${material}-support`],

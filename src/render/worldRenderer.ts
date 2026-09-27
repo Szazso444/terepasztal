@@ -28,7 +28,7 @@ import BRIDGE_KIT_JSON from './bridgeKit.json';
 /** Measured kit geometry in world px (tools/bridge-kit.mjs). */
 const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
   string,
-  { thickness?: number; height?: number; length?: number }
+  { thickness?: number; height?: number; length?: number; along?: number }
 >;
 
 const CHUNK = 8;
@@ -884,7 +884,7 @@ export class WorldRenderer {
           line = at(0, w),
           p = screen(x + line.dx - edge.dx, y + line.dy - edge.dy, lo);
         s.anchor.set(bf.anchorX, bf.anchorY);
-        s.scale.set(0.8, span / bh);
+        s.scale.set(BRIDGE_KIT[key].along ?? 0.8, span / bh);
         s.position.set(p.x, p.y);
         c.addChild(s);
       }
