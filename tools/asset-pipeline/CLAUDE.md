@@ -93,6 +93,10 @@ blender stage fits the field of view to the mask (silhouette IoU, must reach `so
 camera sees the source's colour, and maps the generated colours of the hidden texels through a colour transfer fitted on
 the seen ones. The generated texture drifts (the Rocket's yellow went olive); this puts the approved art back.
 
+`rear_view_prompts.py` writes `assets/source/base-v1/rear-view-prompts.json`: for each locomotive, the prompt that
+made its studio image turned into a rear three-quarter view (same camera, locomotive turned 180 degrees), with its
+edge cases, and for diesel and electric trucks a prompt for the truck on its own.
+
 More images of the same vehicle colour what the source cannot see: `landmarks` `views` (paths from this folder) or
 `<image>-rear.png` next to the source image, e.g. a rear three-quarter view on a transparent background. Each one's
 camera is found by fitting the aligned mesh's outline to its alpha (azimuth, elevation, roll, scale, offset;
