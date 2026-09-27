@@ -1,0 +1,1056 @@
+<meta charset="utf-8" />
+<title>Terepasztal Train Models 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+/>
+<style>
+  :root {
+    --ground: #e9ece5;
+    --surface: #f7f8f4;
+    --sunk: #dde2d9;
+    --ink: #1b221e;
+    --muted: #56625a;
+    --line: #c4ccc1;
+    --accent: #1f5c45;
+    --accent-ink: #f4f7f2;
+    --brass: #8f6a1c;
+    --ok: #2e7d4f;
+    --warn: #a86d12;
+    --bad: #ac3d2b;
+    --display: 'Barlow Semi Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+    --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      color-scheme: dark;
+      --ground: #111513;
+      --surface: #1a201c;
+      --sunk: #232b26;
+      --ink: #e2e8e0;
+      --muted: #9ba79f;
+      --line: #313b35;
+      --accent: #6cbf97;
+      --accent-ink: #0f1712;
+      --brass: #d7a94d;
+      --ok: #62c28b;
+      --warn: #e0a441;
+      --bad: #e37a66;
+    }
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --ground: #111513;
+    --surface: #1a201c;
+    --sunk: #232b26;
+    --ink: #e2e8e0;
+    --muted: #9ba79f;
+    --line: #313b35;
+    --accent: #6cbf97;
+    --accent-ink: #0f1712;
+    --brass: #d7a94d;
+    --ok: #62c28b;
+    --warn: #e0a441;
+    --bad: #e37a66;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+    padding-inline: clamp(16px, 4vw, 48px);
+    padding-block: 28px 64px;
+  }
+  .wrap {
+    max-width: 1180px;
+    margin-inline: auto;
+    display: grid;
+    gap: 40px;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--display);
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.1;
+  }
+  h1 {
+    font-size: clamp(2rem, 4.5vw, 3.1rem);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  h2 {
+    font-size: 1.9rem;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  p {
+    margin: 0;
+    max-width: 68ch;
+  }
+  .label {
+    font: 600 0.72rem/1.2 var(--body);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .mono,
+  dd,
+  .num {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  header.top {
+    display: grid;
+    gap: 14px;
+  }
+  .contract {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+  .changes {
+    margin: 0;
+    padding-left: 1.1em;
+    display: grid;
+    gap: 6px;
+    max-width: 90ch;
+    font-size: 0.95rem;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+  }
+  .trio {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  @media (max-width: 720px) {
+    .trio {
+      grid-template-columns: 1fr;
+    }
+  }
+  table.research {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.88rem;
+  }
+  table.research th,
+  table.research td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.research th {
+    font: 600 0.72rem/1.2 var(--body);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .contract b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  nav.jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  nav.jump a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 500;
+    background: var(--surface);
+  }
+  nav.jump a:focus-visible,
+  button:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--line);
+  }
+  .dot[data-s='approve'] {
+    background: var(--ok);
+  }
+  .dot[data-s='changes'] {
+    background: var(--warn);
+  }
+  .dot[data-s='reject'] {
+    background: var(--bad);
+  }
+  section.panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: clamp(16px, 3vw, 28px);
+    display: grid;
+    gap: 22px;
+    scroll-margin-top: 16px;
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .head .who {
+    display: grid;
+    gap: 6px;
+  }
+  .verdict {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    min-width: min(100%, 320px);
+  }
+  .verdict .btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .verdict button {
+    font: 600 0.9rem var(--body);
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    background: var(--ground);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .verdict button[aria-pressed='true'][data-v='approve'] {
+    background: var(--ok);
+    border-color: var(--ok);
+    color: var(--accent-ink);
+  }
+  .verdict button[aria-pressed='true'][data-v='changes'] {
+    background: var(--warn);
+    border-color: var(--warn);
+    color: var(--accent-ink);
+  }
+  .verdict button[aria-pressed='true'][data-v='reject'] {
+    background: var(--bad);
+    border-color: var(--bad);
+    color: var(--accent-ink);
+  }
+  .verdict textarea {
+    font: 0.9rem/1.4 var(--body);
+    background: var(--ground);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 8px;
+    min-height: 2.6em;
+    resize: vertical;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .verdict .saved {
+    font-size: 0.8rem;
+    color: var(--muted);
+    min-height: 1.2em;
+  }
+  dl.facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 12px 24px;
+    margin: 0;
+  }
+  dl.facts div {
+    display: grid;
+    gap: 2px;
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+  }
+  dt {
+    font: 600 0.72rem/1.2 var(--body);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  dd {
+    margin: 0;
+    font-size: 0.88rem;
+  }
+  .colour {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .colour img {
+    border-radius: 4px;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .swatches {
+    display: grid;
+    gap: 10px;
+  }
+  .swrow {
+    display: grid;
+    grid-template-columns: 96px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+  .bar {
+    display: flex;
+    height: 22px;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .bar span {
+    display: block;
+    height: 100%;
+  }
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 8px;
+  }
+  .tabs button {
+    font: 500 0.88rem var(--body);
+    padding: 5px 10px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .tabs button[aria-selected='true'] {
+    color: var(--ink);
+    background: var(--sunk);
+    border-color: var(--line);
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  figure {
+    margin: 0;
+    display: grid;
+    gap: 6px;
+  }
+  figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    background: var(--sunk);
+  }
+  figcaption {
+    font-size: 0.82rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  figcaption b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .flip {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .flip button {
+    font: 600 0.85rem var(--body);
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    background: var(--ground);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .flip button[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  .wide {
+    overflow-x: auto;
+  }
+  .wide img {
+    min-width: 720px;
+  }
+  .note {
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+  .warn {
+    color: var(--warn);
+  }
+  .questions {
+    display: grid;
+    gap: 14px;
+  }
+  .q {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    gap: 16px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  .q p + p {
+    margin-top: 6px;
+  }
+  .status {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .status ul {
+    margin: 8px 0 0;
+    padding-left: 1.1em;
+    display: grid;
+    gap: 6px;
+    font-size: 0.93rem;
+  }
+  .bogies {
+    display: grid;
+    gap: 28px;
+  }
+  .bogie {
+    display: grid;
+    gap: 10px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  @media (max-width: 720px) {
+    .pair,
+    .colour,
+    .q {
+      grid-template-columns: 1fr;
+    }
+    .swrow {
+      grid-template-columns: 80px 1fr;
+    }
+    .swrow .num {
+      grid-column: 2;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .verdict button,
+    .tabs button,
+    .flip button {
+      transition: background-color 0.15s, color 0.15s;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="label">Terepasztal · rolling stock pilot 4 · local/train-models</span>
+    <h1>Terepasztal Train Models 4</h1>
+    <p>
+      The fourth pilot, after your notes on the third. Every picture is a game render at the identical
+      simulation pose: the current look, the previous pilot and this one side by side. Mark each subject
+      and question; your choices are saved here and I read them back.
+    </p>
+    <ul class="changes">
+      <li><b>One rule behind both fixes: pivots where the prototype has its running gear.</b> Until now every
+        medium body hung on pivots at a fixed 70% of its length, and the trucks were drawn elsewhere to look
+        right. That is what drifted (pilot 2) and splayed (pilot 3). Now each vehicle's pivots are put where its
+        image has the trucks (<code>pivots</code> in src/data), so what is drawn is what carries the body. Which
+        track each train may use is measured from the geometry and did not change for any of them.</li>
+      <li><b>Flying Scotsman: the frame stands on its coupled wheels.</b> As on a real or a model locomotive, the
+        three coupled axles are rigid in the frame, so the frame is placed on the rail where they are and along
+        the rail there (<code>coupled</code> in src/data); the leading bogie and the trailing axle swivel and slide
+        sideways under it. Pilot 3 turned the coupled wheels with the rail instead: on the tightest curves they sat
+        0.17 tiles off the boiler line at 12.5°. Now they stay within 0.05 tiles of the rail, square under the
+        boiler. The cost: on those curves the cab end swings outward and the trailing axle slides out from under
+        the cab.</li>
+      <li><b>Two more steam engines with the same rule</b>, so the choice is not made on one engine: the LMS Black
+        Five (4-6-0, no trailing axle) and the BR 9F (2-10-0, the longest coupled wheelbase in the roster, with a
+        pony truck in front).</li>
+      <li><b>F7: trucks where the image has them, turning with their end gear.</b> The pilot-2 positions are back,
+        now as the game's pivots, so the body rests on them through the switch. The pilot, snowplow, coupler and
+        steps turn with their truck (your rule for rigid bodies on two or more trucks). Pilot 3 only moved the
+        lower half of the pilot, so the upper half stayed on the body over it; now the whole piece goes. The
+        missing wheel was the front truck sitting under the pilot's plate.</li>
+      <li><b>Hidden sides no longer plain brown.</b> The side the image hides is rebuilt as the mirror of the seen
+        one, shape and colour, so the trucks have wheels on both sides. Faces no image shows, such as the F7's rear
+        end or a truck's top, take the colours of the nearest seen surface of the same piece: the rear end is now
+        red with the stripe carried round. The pipeline also takes a second image per vehicle (see below).</li>
+      <li><b>SD40-2</b> follows the same rule: trucks at the image's positions, pilots and steps on the trucks.</li>
+    </ul>
+    <div class="contract">
+      <span><b>Camera</b> 45° azimuth, 30° elevation, 25 drawn of 48 facings</span>
+      <span><b>Metre</b> a 1.75 m person is 11 px → 6.23 m per tile</span>
+      <span><b>Gauge</b> wheel treads on the rails at ±0.16 tile</span>
+      <span><b>Atlas</b> 4 texels per game pixel, partial overrides</span>
+    </div>
+    <nav class="jump" id="jump" aria-label="Subjects"></nav>
+  </header>
+
+  <section class="panel" id="decisions">
+    <div class="head">
+      <div class="who">
+        <span class="label">Before the rest of the roster</span>
+        <h2>Decisions for you</h2>
+      </div>
+    </div>
+    <div class="questions" id="questions"></div>
+  </section>
+
+  <div id="subjects" style="display: grid; gap: 40px"></div>
+
+  <section class="panel" id="bogies">
+    <div class="head">
+      <div class="who">
+        <span class="label">Parametric running gear · every heading on its rails</span>
+        <h2>Bogies</h2>
+        <p class="note">
+          Bogies are rendered per train, in the same run as the body. The F7's and SD40-2's come from their own
+          reconstructions, mirrored to both sides, with their pilots, couplers and steps. The steam engines'
+          leading bogies, trailing axle and pony truck are built round at the wheels measured on their images.
+          Each sheet shows all 48 headings with the game's rail centres under it; current is the generic truck
+          the game draws without them.
+        </p>
+      </div>
+    </div>
+    <div class="bogies" id="bogielist"></div>
+  </section>
+
+  <section class="panel" id="research">
+    <div class="head">
+      <div class="who">
+        <span class="label">Flying Scotsman on the tightest curve (radius 0.5 tile)</span>
+        <h2>Why the wheels splayed, measured</h2>
+        <p class="note">
+          The engine is 1.25 tiles long; the regular curve is a quarter circle of half a tile. Worst case over a
+          full run through it, in tiles (a rail is 0.16 tile from the centre line):
+        </p>
+      </div>
+    </div>
+    <div class="wide">
+      <table class="research">
+        <thead>
+          <tr><th>How it is drawn</th><th>Coupled wheels off rail or boiler</th><th>Coupled wheels turned against the boiler</th><th>Leading bogie slides</th><th>Trailing axle</th><th>Body end off the rail</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Pilot 2: wheels in the body, pivots at 70%</td><td>0.16</td><td>0°</td><td>0</td><td>0.11 off the rail</td><td>0.24</td></tr>
+          <tr><td>Pilot 3: wheels a bogie on the rail</td><td>0.17</td><td>12.5°</td><td>0</td><td>0.11 off the rail</td><td>0.24</td></tr>
+          <tr><td>Pivots on bogie and wheels, body between them</td><td>0.12</td><td>0°</td><td>0</td><td>0.30 off the rail</td><td>0.43</td></tr>
+          <tr><td><b>Pilot 4: frame stands on its coupled wheels</b></td><td><b>0.05</b></td><td><b>0°</b></td><td>0.14</td><td>on the rail, slides 0.19</td><td>0.31</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      On the 1.5-tile high-speed curve the same numbers are about a third as large. The pony truck of the 9F slides
+      0.25 tile on the tightest curve, within the 0.35 the game allows a bogie.
+    </p>
+  </section>
+
+  <section class="panel" id="images">
+    <div class="head">
+      <div class="who">
+        <span class="label">What would help most</span>
+        <h2>A rear view of each locomotive</h2>
+        <p class="note">
+          Yes, please send more pictures. The side the studio image hides is now filled by mirroring the seen side,
+          so a picture of the other side adds little. What no picture shows yet is the back: the F7's rear end, a
+          tender's back, a cab's rear wall. The pipeline now takes a second image per vehicle, finds its camera by
+          fitting the model's outline to it (tested on the F7: outline match 0.95), matches its colours to the first
+          image and paints what only it sees.
+        </p>
+      </div>
+    </div>
+    <ul class="changes">
+      <li>A <b>rear three-quarter view</b> from either side, in the same style and lighting as the studio image,
+        whole vehicle in frame, on a transparent background.</li>
+      <li>Save it next to the studio image as <code>assets/source/base-v1/loco-&lt;name&gt;-rear.png</code> (for
+        example <code>loco-f7-rear.png</code>); the pipeline picks it up by that name.</li>
+      <li>First the ones in this pilot: F7, SD40-2, Flying Scotsman, Black Five, 9F.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="status">
+    <div class="head">
+      <div class="who">
+        <span class="label">Where the work stands</span>
+        <h2>Approved, pending, blocked</h2>
+      </div>
+    </div>
+    <div class="status">
+      <div>
+        <h3>Approved</h3>
+        <ul>
+          <li>Stephenson's Rocket (pilot 1): kept as rendered.</li>
+          <li>Colour matching and overall size (pilot 1); the F7 model and the body angles (pilot 2).</li>
+          <li>SD40-2 as a three-tile body with two trucks (pilot 3).</li>
+          <li>End gear of rigid bodies on two or more trucks turns with the trucks (your rule, pilot 3).</li>
+          <li>Atlas: several sheets per group at 4 texels, when the roster needs it (pilot 3).</li>
+          <li>Drive housekeeping: done (moves logged, nothing deleted).</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Pending your review</h3>
+        <ul>
+          <li>Flying Scotsman, Black Five, 9F, F7 and SD40-2 as rendered here.</li>
+          <li>The questions at the top.</li>
+          <li>Remaining roster: waits until these are locked in and you say go (batches, each train with its own
+            bogies).</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Blocked</h3>
+        <ul>
+          <li>
+            New decor art: needs an image generator. None is installed locally (ComfyUI has only the 3D
+            models) and the original art came from a hosted tool this session cannot reach.
+          </li>
+          <li>Hill rock faces and ramp pieces: wait for the hill shape decision.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const DATA = /*DATA*/null;
+  const QUESTIONS = [
+    {
+      id: 'q4-steam',
+      title: 'Steam: the frame stands on its coupled wheels (Flying Scotsman, Black Five, 9F)',
+      body: [
+        'The coupled wheels stay square under the boiler and on the rail; the leading bogie or pony truck and the trailing axle swivel and slide under the frame, like on a real or a model locomotive. On the tightest curves the cab end swings outward. Would you use this for every rigid-frame steam engine?',
+      ],
+      rec: 'Recommended: yes, for every rigid-frame steam engine.',
+    },
+    {
+      id: 'q4-trailing',
+      title: 'Flying Scotsman trailing axle: on the rail, or in the frame?',
+      body: [
+        'Drawn as its own sprite it stays on the rail and slides out from under the cab on the tightest curves (as rendered). Drawn with the body it stays under the cab but leaves the rail by 0.3 tile there.',
+      ],
+      rec: 'Recommended: on the rail (as rendered).',
+    },
+    {
+      id: 'q4-gear',
+      title: 'F7 and SD40-2: pilots, couplers and steps turning with the trucks',
+      body: [
+        'Your rule from pilot 3, rendered: the whole pilot now moves with its truck, and the trucks sit where the image has them. Is this how you want every rigid body on two or more trucks?',
+      ],
+      rec: 'Recommended: yes.',
+    },
+  ];
+
+  const $ = (sel, el = document) => el.querySelector(sel);
+  const h = (tag, attrs = {}, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v);
+    }
+    for (const k of kids.flat()) if (k != null) el.append(k);
+    return el;
+  };
+  const fmt = (v, d = 2) => (typeof v === 'number' ? v.toFixed(d) : v);
+  const dims = (a) => (a ? a.map((v) => fmt(v)).join(' × ') + ' m' : '—');
+
+  // ---- verdicts: saved in the artifact's own store, read back by Claude
+  const verdicts = new Map();
+  let db = null;
+  const controls = new Map();
+  function verdictBox(id) {
+    const saved = h('div', { class: 'saved', 'aria-live': 'polite' });
+    const note = h('textarea', { id: `note-${id}`, placeholder: 'Note (optional)', rows: '2' });
+    const btns = ['approve', 'changes', 'reject'].map((v) =>
+      h('button', {
+        type: 'button',
+        'data-v': v,
+        'aria-pressed': 'false',
+        text: v === 'approve' ? 'Approve' : v === 'changes' ? 'Needs changes' : 'Reject',
+        onclick: () => save(id, { status: v, note: note.value }),
+      }),
+    );
+    note.addEventListener('change', () =>
+      save(id, { status: verdicts.get(id)?.status ?? 'pending', note: note.value }),
+    );
+    const box = h('div', { class: 'verdict' }, h('div', { class: 'btns' }, btns), note, saved);
+    controls.set(id, { btns, note, saved });
+    return box;
+  }
+  function paint(id) {
+    const c = controls.get(id),
+      v = verdicts.get(id);
+    if (!c) return;
+    for (const b of c.btns) b.setAttribute('aria-pressed', String(v?.status === b.dataset.v));
+    if (v && document.activeElement !== c.note) c.note.value = v.note ?? '';
+    const dot = document.querySelector(`[data-dot="${id}"]`);
+    if (dot) dot.dataset.s = v?.status ?? '';
+  }
+  async function save(id, body) {
+    const c = controls.get(id);
+    verdicts.set(id, body);
+    paint(id);
+    if (!db) {
+      c.saved.textContent = 'Not saved: this view has no store. Tell Claude in chat instead.';
+      return;
+    }
+    c.saved.textContent = 'Saving…';
+    try {
+      await db.doc(`verdicts/${id}`).set({ ...body, at: new Date().toISOString() });
+      c.saved.textContent = 'Saved';
+    } catch (e) {
+      c.saved.textContent =
+        e?.code === 'invalid_argument'
+          ? 'Not saved: this view can only read. Tell Claude in chat instead.'
+          : 'Not saved (' + (e?.code ?? 'error') + '). Try again.';
+    }
+  }
+
+  // ---- page
+  function tabs(items, show) {
+    const bar = h('div', { class: 'tabs', role: 'tablist' });
+    const buttons = items.map((it, i) =>
+      h('button', {
+        type: 'button',
+        role: 'tab',
+        'aria-selected': String(i === 0),
+        text: it.label,
+        onclick: () => {
+          buttons.forEach((b) => b.setAttribute('aria-selected', String(b === buttons[i])));
+          show(it);
+        },
+      }),
+    );
+    bar.append(...buttons);
+    return bar;
+  }
+  function pairFig(cur, neu, caption, p1, PREV_LABEL = 'Previous') {
+    if (p1)
+      return h(
+        'div',
+        { class: 'trio' },
+        [
+          ['Current', cur],
+          [PREV_LABEL, p1],
+          ['Pilot 4', neu],
+        ].map(([lab, src]) =>
+          h(
+            'figure',
+            {},
+            h('img', { src, alt: `${lab}, ${caption}`, loading: 'lazy' }),
+            h('figcaption', {}, h('b', { text: lab }), h('span', { text: caption })),
+          ),
+        ),
+      );
+    return h(
+      'div',
+      { class: 'pair' },
+      h(
+        'figure',
+        {},
+        h('img', { src: cur, alt: `Current procedural look, ${caption}`, loading: 'lazy' }),
+        h('figcaption', {}, h('b', { text: 'Current' }), h('span', { text: caption })),
+      ),
+      h(
+        'figure',
+        {},
+        h('img', { src: neu, alt: `New rendered model, ${caption}`, loading: 'lazy' }),
+        h('figcaption', {}, h('b', { text: 'New' }), h('span', { text: caption })),
+      ),
+    );
+  }
+  function flipFig(cur, neu, what, p1, PREV_LABEL = 'Previous') {
+    const img = h('img', { src: neu, alt: `New: ${what}`, loading: 'lazy' });
+    const mk = (label, src, on) =>
+      h('button', {
+        type: 'button',
+        'aria-pressed': String(on),
+        text: label,
+        onclick: (e) => {
+          img.src = src;
+          img.alt = `${label}: ${what}`;
+          e.currentTarget.parentElement
+            .querySelectorAll('button')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b === e.currentTarget)));
+        },
+      });
+    return h(
+      'figure',
+      {},
+      h(
+        'div',
+        { class: 'flip' },
+        mk(p1 ? 'Pilot 4' : 'New', neu, true),
+        p1 ? mk(PREV_LABEL, p1, false) : null,
+        mk('Current', cur, false),
+      ),
+      h('div', { class: 'wide' }, img),
+    );
+  }
+  function swatches(label, pal, share, extra) {
+    return h(
+      'div',
+      { class: 'swrow' },
+      h('span', { class: 'label', text: label }),
+      h(
+        'div',
+        { class: 'bar' },
+        pal.map((c, i) =>
+          h('span', { style: `flex:${share[i]};background:rgb(${c.join(',')})`, title: `rgb(${c})` }),
+        ),
+      ),
+      h('span', { class: 'num', text: extra ?? '' }),
+    );
+  }
+
+  function subject(s) {
+    const c = s.colour;
+    const facts = [
+      ['Scale anchor', s.scale_ref],
+      ['Model at real scale', dims(s.real_dims_m)],
+      ...s.parts
+        .filter((p) => !String(p.part).startsWith('bogie-'))
+        .map((p) => [
+        `${p.part} sprite`,
+        `${dims(p.final_dims_m)} · length ×${fmt(p.compression[0])}`,
+      ]),
+      ['Width to real', s.width_fix && s.width_fix !== 1 ? `×${fmt(s.width_fix)}` : 'as modelled'],
+      [
+        'Source reprojection',
+        s.source
+          ? `fov ${fmt(s.source.fov_deg, 1)}°, silhouette IoU ${fmt(s.source.silhouette_iou, 3)}`
+          : '—',
+      ],
+      ['Colour vs source', `ΔE ${fmt(c.delta_e_mean)} (mean colour, facing 0)`],
+      ...(s.roof_vs_rails
+        ? [['Roof vs rails', `within ${fmt(s.roof_vs_rails[0], 2)}° over ${s.roof_vs_rails[1]} side views`]]
+        : []),
+      ...(s.align?.refined_yaw_deg != null
+        ? [
+            [
+              'Alignment refined',
+              `yaw ${fmt(s.align.refined_yaw_deg, 2)}°, pitch ${fmt(s.align.refined_pitch_deg, 2)}°`,
+            ],
+          ]
+        : []),
+      [
+        'In game',
+        `${s.facings_covered} headings driven, reversal shift ${s.reversal_error < 1e-9 ? '0' : fmt(s.reversal_error, 6)}, ${s.errors} page errors`,
+      ],
+    ];
+    const gear = s.parts.flatMap((p) => p.gear ?? []);
+    if (gear.length)
+      facts.push([
+        'Measured wheels',
+        gear
+          .filter((g) => g.d_m != null)
+          .map((g) => `${g.name ?? ''} ${fmt(g.d_m, 2)} m`)
+          .join(', '),
+      ]);
+    const own = s.parts.flatMap((p) => (p.gear ?? []).filter((g) => g.style));
+    if (own.length)
+      facts.push([
+        'Own bogies (bogieDraw)',
+        own.map((g) => `${g.style} ${g.draw_tiles >= 0 ? '+' : ''}${fmt(g.draw_tiles, 3)} tiles`).join(', '),
+      ]);
+    const view = h('div', {});
+    const showScen = (it) => {
+      view.replaceChildren(
+        it.kind === 'headings'
+          ? flipFig(s.headings.current, s.headings.new, 'all 48 headings on the rail centres', s.headings.p1, s.prev_label)
+          : it.kind === 'variant'
+            ? h(
+                'div',
+                { style: 'display:grid;gap:14px' },
+                h('p', {
+                  class: 'note',
+                  text: 'Left: the pilot, coupler and steps on the body, as on the prototype (this pilot). Right: the same pieces turning with the trucks, as you described. Same poses.',
+                }),
+                variants
+                  .filter((v) => /switch|curve/.test(v.id))
+                  .map((v) =>
+                    h(
+                      'div',
+                      { class: 'pair' },
+                      h(
+                        'figure',
+                        {},
+                        h('img', { src: v.new, alt: `Gear on the body, ${v.label}`, loading: 'lazy' }),
+                        h('figcaption', {}, h('b', { text: 'On the body' }), h('span', { text: v.label })),
+                      ),
+                      h(
+                        'figure',
+                        {},
+                        h('img', { src: v.variant, alt: `Gear on the trucks, ${v.label}`, loading: 'lazy' }),
+                        h('figcaption', {}, h('b', { text: 'On the trucks' }), h('span', { text: v.label })),
+                      ),
+                    ),
+                  ),
+              )
+            : it.kind === 'hill'
+            ? h(
+                'div',
+                { style: 'display:grid;gap:14px' },
+                s.hills.map((hl) =>
+                  pairFig(hl.current, hl.new, `standing on a climb, zoom ${hl.zoom}`, hl.p1, s.prev_label),
+                ),
+              )
+            : pairFig(it.current, it.new, `${it.label}, behind a procedural ${s.wagon}`, it.p1, s.prev_label),
+      );
+    };
+    const variants = s.scenarios.filter((it) => it.variant);
+    const items = [
+      ...s.scenarios,
+      ...(variants.length ? [{ label: 'Gear on trucks', kind: 'variant' }] : []),
+      { label: 'All 48 headings', kind: 'headings' },
+      { label: 'Hill climb', kind: 'hill' },
+    ];
+    showScen(items[0]);
+    return h(
+      'section',
+      { class: 'panel', id: s.id },
+      h(
+        'div',
+        { class: 'head' },
+        h(
+          'div',
+          { class: 'who' },
+          h('span', { class: 'label', text: `${s.plan} · ${s.tiles?.[0] ?? ''} tile${s.tiles?.[0] > 1 ? 's' : ''}` }),
+          h('h2', { text: s.name }),
+          h('p', { class: 'note', text: s.blurb }),
+        ),
+        verdictBox(s.id),
+      ),
+      h(
+        'dl',
+        { class: 'facts' },
+        facts.map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v }))),
+      ),
+      h(
+        'div',
+        { class: 'colour' },
+        h(
+          'figure',
+          {},
+          h('img', {
+            src: s.colour_img,
+            alt: `${s.name}: source image, new facing-0 sprite${c.poc_palette ? ', rejected proof of concept' : ''}`,
+            loading: 'lazy',
+          }),
+          h('figcaption', {
+            text: `Source · new sprite at facing 0 (4× texture)${c.poc_palette ? ' · rejected proof of concept' : ''}`,
+          }),
+        ),
+        h(
+          'div',
+          { class: 'swatches' },
+          h('span', { class: 'label', text: 'Five-colour palettes' }),
+          swatches('Source', c.source_palette, c.source_share),
+          swatches('New', c.new_palette, c.new_share, `ΔE ${fmt(c.delta_e_mean, 1)}`),
+          c.poc_palette ? swatches('POC', c.poc_palette, c.poc_share, `ΔE ${fmt(c.poc_delta_e_mean, 1)}`) : null,
+          s.warnings.length ? h('p', { class: 'note warn', text: s.warnings.join(' · ') }) : null,
+        ),
+      ),
+      tabs(items, showScen),
+      view,
+    );
+  }
+
+  function bogie(b) {
+    return h(
+      'div',
+      { class: 'bogie', id: `bogie-${b.style}` },
+      h(
+        'div',
+        { class: 'head' },
+        h(
+          'div',
+          { class: 'who' },
+          h('h3', { text: `bogie_${b.style} · ${b.axles} axles` }),
+          h('p', { class: 'note', text: `Rides under ${b.rides_under}.` }),
+          h('p', { class: 'note', text: b.note }),
+        ),
+        verdictBox(`bogie-${b.style}`),
+      ),
+      flipFig(b.current, b.new, `bogie ${b.style}, all 48 headings`),
+    );
+  }
+
+  const jump = $('#jump');
+  jump.append(
+    h('a', { href: '#decisions' }, h('span', { class: 'dot', 'data-dot': 'none' }), 'Decisions'),
+    ...DATA.subjects.map((s) =>
+      h('a', { href: `#${s.id}` }, h('span', { class: 'dot', 'data-dot': s.id }), s.name),
+    ),
+    h('a', { href: '#bogies' }, h('span', { class: 'dot', 'data-dot': 'none' }), 'Bogies'),
+    h('a', { href: '#status' }, h('span', { class: 'dot', 'data-dot': 'none' }), 'Status'),
+  );
+  $('#questions').append(
+    ...QUESTIONS.map((q) =>
+      h(
+        'div',
+        { class: 'q' },
+        h(
+          'div',
+          {},
+          h('h3', { text: q.title }),
+          ...q.body.map((t) => h('p', { class: 'note', text: t })),
+          h('p', { text: q.rec }),
+        ),
+        verdictBox(q.id),
+      ),
+    ),
+  );
+  $('#subjects').append(...DATA.subjects.map(subject));
+  $('#bogielist').append(...DATA.bogies.map(bogie));
+  for (const id of QUESTIONS.map((q) => q.id))
+    for (const b of controls.get(id).btns) {
+      if (b.dataset.v === 'approve') b.textContent = 'Agree';
+      if (b.dataset.v === 'changes') b.textContent = 'Other (note)';
+      if (b.dataset.v === 'reject') b.textContent = 'Disagree';
+    }
+
+  (async () => {
+    try {
+      db = await window.claude?.use?.('db');
+    } catch {
+      db = null;
+    }
+    if (!db) return;
+    db.collection('verdicts').onSnapshot(
+      (snap) => {
+        for (const d of snap.docs) {
+          verdicts.set(d.id, d.data());
+          paint(d.id);
+        }
+      },
+      () => {},
+    );
+  })();
+</script>

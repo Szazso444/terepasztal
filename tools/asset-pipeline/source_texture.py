@@ -8,6 +8,7 @@ olive), so every texel the source camera sees takes the source's colour, and the
 keep the generated colour mapped through a colour transfer fitted on the visible ones.
 """
 import math
+from pathlib import Path
 
 import bpy
 import numpy as np
@@ -252,6 +253,165 @@ def fit_view(P_raw, source_path, mask_path, cfg):
     return view
 
 
+# ---------------- extra views ----------------
+def _axes(theta, phi, psi):
+    """Camera looking at the object from azimuth theta, elevation phi (aligned frame, z up), rolled
+    by psi: the direction to the camera and the right, up and forward axes."""
+    d = np.array([math.cos(phi) * math.cos(theta), math.cos(phi) * math.sin(theta), math.sin(phi)])
+    f = -d
+    r = np.cross(f, [0.0, 0.0, 1.0])
+    r /= np.linalg.norm(r)
+    u = np.cross(r, f)
+    return d, math.cos(psi) * r + math.sin(psi) * u, -math.sin(psi) * r + math.cos(psi) * u, f
+
+
+def _shrink(mask, k):
+    h, w = mask.shape
+    m = np.pad(mask, ((0, (-h) % k), (0, (-w) % k)))
+    return m.reshape(m.shape[0] // k, k, m.shape[1] // k, k).mean((1, 3)) > 0.5
+
+
+def _nelder_mead(fn, x0, step, iters=220):
+    n = len(x0)
+    pts = [np.array(x0, float)] + [np.array(x0, float) + np.eye(n)[i] * step[i] for i in range(n)]
+    val = [fn(q) for q in pts]
+    for _ in range(iters):
+        order = np.argsort(val)
+        pts, val = [pts[i] for i in order], [val[i] for i in order]
+        c = np.mean(pts[:-1], axis=0)
+        xr = c + (c - pts[-1])
+        fr = fn(xr)
+        if fr < val[0]:
+            xe = c + 2 * (c - pts[-1])
+            fe = fn(xe)
+            pts[-1], val[-1] = (xe, fe) if fe < fr else (xr, fr)
+        elif fr < val[-2]:
+            pts[-1], val[-1] = xr, fr
+        else:
+            xc = c + 0.5 * (pts[-1] - c)
+            fc = fn(xc)
+            if fc < val[-1]:
+                pts[-1], val[-1] = xc, fc
+            else:
+                pts = [pts[0] + 0.5 * (q - pts[0]) for q in pts]
+                val = [fn(q) for q in pts]
+    i = int(np.argmin(val))
+    return pts[i], val[i]
+
+
+class ExtraView:
+    """A second source image of the same vehicle, e.g. a rear three-quarter view: its camera is not
+    known, so it is found by fitting the mesh's silhouette to the image's alpha (azimuth, elevation,
+    roll, scale and offset around the object, at the main camera's distance). Works in the aligned
+    frame (R: raw -> aligned rotation), z up."""
+
+    def __init__(self, path, P, R, fov, cfg, debug_path=None):
+        img = load_rgba(path)
+        self.path, self.R, self.image = str(path), np.asarray(R), img[..., :3]
+        mask = img[..., 3] > 0.5
+        if mask.mean() > 0.97:
+            raise RuntimeError(f"{path}: no transparent background to take the silhouette from")
+        Q = P @ self.R.T
+        self.o = (Q.min(0) + Q.max(0)) / 2
+        self.D = 0.5 / math.tan(math.radians(fov) / 2)
+        k = max(1, int(math.ceil(max(mask.shape) / 256)))
+        small = _shrink(mask, k)
+        sub = Q[np.random.default_rng(3).choice(len(Q), min(len(Q), 60000), replace=False)]
+        ys, xs = np.nonzero(small)
+        box_m = np.array([xs.min(), ys.min(), xs.max() + 1, ys.max() + 1], float)
+
+        def iou(pose, pts=sub, target=small):
+            u, v, z = self._project(pts, pose)
+            x, y = np.floor(u).astype(np.int64), np.floor(v).astype(np.int64)
+            ok = (z > 0) & (x >= 0) & (x < target.shape[1]) & (y >= 0) & (y < target.shape[0])
+            im = np.zeros_like(target)
+            im[y[ok], x[ok]] = True
+            im = erode(dilate(im, 1), 1)
+            return (im & target).sum() / max(1, (im | target).sum())
+
+        def framed(theta, phi):
+            u, v, _ = self._project(sub, (theta, phi, 0.0, 1.0, 0.0, 0.0))
+            bu, bv = np.percentile(u, [0.5, 99.5]), np.percentile(v, [0.5, 99.5])
+            sc = 0.5 * ((box_m[2] - box_m[0]) / (bu[1] - bu[0]) + (box_m[3] - box_m[1]) / (bv[1] - bv[0]))
+            return np.array([theta, phi, 0.0, sc, (box_m[0] + box_m[2]) / 2 - sc * bu.mean(),
+                             (box_m[1] + box_m[3]) / 2 - sc * bv.mean()])
+
+        cands = sorted(((iou(q), tuple(q)) for q in (framed(math.radians(t), math.radians(e))
+                                                        for t in range(0, 360, 10) for e in range(0, 61, 10))),
+                       reverse=True)[:3]
+        best, score = None, -1.0
+        for _, q in cands:
+            q = np.array(q)
+            step = [math.radians(5), math.radians(5), math.radians(2), 0.05 * q[3], 3.0, 3.0]
+            x, fx = _nelder_mead(lambda z: -iou(z), q, step)
+            if -fx > score:
+                best, score = x, -fx
+        best[3:] = best[3:] * k  # the fit ran on the image shrunk k times
+        self.pose, self.iou = best, score
+        self.inner = erode(mask, int(cfg.get("mask_erode_px", 3)))
+        # depth buffer for visibility, at the image's own resolution
+        u, v, z = self._project(Q, self.pose)
+        x, y = np.floor(u).astype(np.int64), np.floor(v).astype(np.int64)
+        h, w = mask.shape
+        ok = (z > 0) & (x >= 0) & (x < w) & (y >= 0) & (y < h)
+        zb = np.full(h * w, np.inf)
+        np.minimum.at(zb, y[ok] * w + x[ok], z[ok])
+        zb = zb.reshape(h, w)
+        for _ in range(3):
+            hole = ~np.isfinite(zb)
+            if not hole.any():
+                break
+            pad = np.pad(zb, 1, constant_values=np.inf)
+            near = np.min([pad[1 + dy:1 + dy + h, 1 + dx:1 + dx + w] for dy in (-1, 0, 1) for dx in (-1, 0, 1)], 0)
+            zb = np.where(hole, near, zb)
+        self.zbuf = zb
+        if debug_path:
+            # the image beside the fitted mesh's visible samples, coloured front (green) to rear (blue)
+            # along the vehicle and lighter towards its +Y side
+            vis = ok.copy()
+            vis[ok] = z[ok] <= zb[y[ok], x[ok]] + 0.01
+            fx = (Q[:, 0] - Q[:, 0].min()) / np.ptp(Q[:, 0])
+            fy = (Q[:, 1] - Q[:, 1].min()) / np.ptp(Q[:, 1])
+            col = np.stack([0.4 * fy, fx, 1 - fx, np.ones_like(fx)], 1).astype(np.float32)
+            fit = np.zeros((h, w, 4), np.float32)
+            fit[..., 3] = 1
+            fit[y[vis], x[vis]] = col[vis]
+            dbg = np.concatenate([np.concatenate([self.image, np.ones((h, w, 1), np.float32)], 2), fit], 1)
+            im = bpy.data.images.new("extra_debug", dbg.shape[1], dbg.shape[0], alpha=True)
+            im.pixels.foreach_set(dbg[::-1].astype(np.float32).ravel())
+            im.filepath_raw, im.file_format = str(debug_path), "PNG"
+            im.save()
+            bpy.data.images.remove(im)
+        t, e, r_ = (math.degrees(a) for a in best[:3])
+        log(f"extra view {Path(path).name}: azimuth {t % 360:.1f}, elevation {e:.1f}, roll {r_:.1f} deg, "
+            f"silhouette IoU {score:.3f}")
+        if score < cfg.get("extra_min_iou", 0.8):
+            raise RuntimeError(f"extra view {path}: silhouette IoU {score:.3f} < {cfg.get('extra_min_iou', 0.8)}; "
+                               "is it the same vehicle, on a transparent background?")
+
+    def _project(self, Q, pose):
+        theta, phi, psi, k, cx, cy = pose
+        d, r, u, f = _axes(theta, phi, psi)
+        X = Q - (self.o + self.D * d)
+        z = X @ f
+        return cx + k * (X @ r) / z, cy - k * (X @ u) / z, z
+
+    def seen(self, P, N, cfg):
+        """How fully this view sees each raw-frame surface point (0..1), and its colour there."""
+        Q, Nq = P @ self.R.T, N @ self.R.T
+        u, v, z = self._project(Q, self.pose)
+        h, w = self.zbuf.shape
+        x, y = np.clip(np.floor(u).astype(np.int64), 0, w - 1), np.clip(np.floor(v).astype(np.int64), 0, h - 1)
+        d, *_ = _axes(*self.pose[:3])
+        to_cam = (self.o + self.D * d)[None, :] - Q
+        to_cam /= np.linalg.norm(to_cam, axis=1, keepdims=True)
+        lo, hi = cfg.get("facing_ramp", [0.12, 0.4])
+        wt = np.clip(((Nq * to_cam).sum(1) - lo) / (hi - lo), 0, 1)
+        inside = (u >= 0) & (u < w) & (v >= 0) & (v < h)
+        wt *= inside & (z <= self.zbuf[y, x] + cfg.get("depth_tol", 0.012)) & self.inner[y, x]
+        return wt, bilinear(self.image, u, v)
+
+
 def seen_weight(view, P, N, cfg):
     """How fully the source camera sees each surface point (0..1), and its source colour."""
     res = view.res
@@ -267,12 +427,36 @@ def seen_weight(view, P, N, cfg):
     return w, bilinear(view.image, u, v)
 
 
-def reproject(obj, view, out_path, cfg, mirror=None):
+def nearest_fill(Pk, Ck, Q, k=6):
+    """Colours for the points Q from their k nearest known points Pk (colours Ck), inverse-distance
+    weighted: a surface the source never shows (a rear end, a truck's top) takes the colours of the
+    seen surface next to it, so a stripe runs on round a corner instead of a generated colour."""
+    from mathutils.kdtree import KDTree
+    if len(Pk) > 400000:  # plenty of samples; the tree is built in Python
+        pick = np.random.default_rng(1).choice(len(Pk), 400000, replace=False)
+        Pk, Ck = Pk[pick], Ck[pick]
+    tree = KDTree(len(Pk))
+    for j, p in enumerate(Pk):
+        tree.insert(p, j)
+    tree.balance()
+    # one query per small cell of space (most hidden texels are neighbours on the same surface)
+    cell = 0.004
+    keys, inv = np.unique(np.floor(Q / cell).astype(np.int64), axis=0, return_inverse=True)
+    hits = [tree.find_n(q, k) for q in (keys + 0.5) * cell]
+    idx = np.array([[h[1] for h in hs] for hs in hits], np.int64)
+    w = 1.0 / (np.array([[h[2] for h in hs] for hs in hits]) + 1e-4)
+    return ((w[..., None] * Ck[idx]).sum(1) / w.sum(1, keepdims=True))[inv.ravel()]
+
+
+def reproject(obj, view, out_path, cfg, mirror=None, extras=()):
     """Replace obj's base colour texture with the source's colours where the source camera sees the
-    surface. A texel it cannot see takes the colour of its mirror twin across the vehicle's centre plane
-    when the camera sees that (rolling stock is left-right symmetric; mirror = the rotation from the raw
-    frame to the aligned one, whose y = const planes are the vehicle's sides), else the generated colour
-    mapped through a colour transfer fitted on the seen texels. obj must still carry its raw transform."""
+    surface. A texel it cannot see takes, in turn: the colour of an extra view that sees it (a rear
+    three-quarter image, colour-matched to the source on the texels both see), the colour of its mirror
+    twin across the vehicle's centre plane where a view sees that (rolling stock is left-right
+    symmetric; mirror = the rotation from the raw frame to the aligned one, whose y = const planes are
+    the vehicle's sides), else the colour of the nearest seen surface (cfg hidden = "nearest", the
+    default) or the generated colour mapped through a colour transfer fitted on the seen texels
+    (hidden = "transfer"). obj must still carry its raw transform."""
     mat, tex_node = base_color_image(obj)
     img = tex_node.image
     size = img.size[0]
@@ -288,37 +472,125 @@ def reproject(obj, view, out_path, cfg, mirror=None):
     train = w > 0.75
     lut = fit_transfer(g[train], seen[train], w[train])
     mapped = apply_transfer(lut, g)
-    hidden = mapped
-    wm = np.zeros(len(P))
     if mirror is not None:
         R = np.asarray(mirror)
         Q, Qn = P @ R.T, N @ R.T
         yc = float(np.mean(np.percentile(Q[:, 1], [2, 98])))
         Q[:, 1], Qn[:, 1] = 2 * yc - Q[:, 1], -Qn[:, 1]
-        wm, seen_m = seen_weight(view, Q @ R, Qn @ R, cfg)
-        hidden = wm[:, None] * seen_m + (1 - wm[:, None]) * mapped
-    out = w[:, None] * seen + (1 - w[:, None]) * hidden
-    full = gen.copy()
-    full[baked] = out
-    rgba = np.concatenate([full.reshape(size, size, 3), np.ones((size, size, 1), np.float32)], 2)
+        Pm, Nm = Q @ R, Qn @ R
+    layers = [("source", w, seen)]
+    extra_rep, luts = [], []
+    for ev in extras:
+        we, ce = ev.seen(P, N, cfg)
+        both = train & (we > 0.75)
+        # the extra image's lighting and palette onto the source's, fitted where both see the surface
+        lut_e = fit_transfer(ce[both], seen[both], np.minimum(w, we)[both]) if both.sum() >= 500 else None
+        luts.append(lut_e)
+        layers.append((f"extra:{Path(ev.path).name}", we, ce if lut_e is None else apply_transfer(lut_e, ce)))
+        extra_rep.append({"image": ev.path, "silhouette_iou": round(float(ev.iou), 4),
+                          "pose_deg": [round(math.degrees(a), 2) for a in ev.pose[:3]],
+                          "colour_matched": lut_e is not None, "overlap_texels": int(both.sum())})
+    if mirror is not None:
+        wm, cm = seen_weight(view, Pm, Nm, cfg)
+        layers.append(("mirror:source", wm, cm))
+        for ev, lut_e in zip(extras, luts):
+            wm, cm = ev.seen(Pm, Nm, cfg)
+            layers.append((f"mirror:extra:{Path(ev.path).name}", wm, cm if lut_e is None else apply_transfer(lut_e, cm)))
     new = bpy.data.images.new(f"{obj.name}_source", size, size, alpha=True)
     new.colorspace_settings.name = "sRGB"
-    new.pixels.foreach_set(rgba.astype(np.float32).ravel())
     new.filepath_raw = str(out_path)
     new.file_format = "PNG"
-    new.save()
+    view.tex = {"P": P, "layers": layers, "mapped": mapped, "gen": gen, "baked": baked, "size": size,
+                "image": new, "fill": cfg.get("hidden", "nearest")}
+    shares = fill_hidden(view)
     tex_node.image = new
     before = float(np.median(delta_e(g[train], seen[train])))
     after = float(np.median(delta_e(mapped[train], seen[train])))
-    mirrored = float(((1 - w) * wm > 0.5).mean())
     report = {"fov_deg": round(view.fov, 3), "silhouette_iou": round(float(view.iou), 4),
               "texels": int(baked.sum()), "source_texels": int((w > 0.5).sum()),
-              "source_share": round(float((w > 0.5).mean()), 3), "mirrored_share": round(mirrored, 3),
+              "source_share": shares["source"], "mirrored_share": round(sum(v for k, v in shares.items()
+                                                                          if k.startswith("mirror:")), 3),
+              "extra_share": round(sum(v for k, v in shares.items() if k.startswith("extra:")), 3),
+              "nearest_share": shares["hidden"], "extras": extra_rep,
               "median_delta_e_generated": round(before, 2), "median_delta_e_transferred": round(after, 2),
               "texture": str(out_path)}
-    log(f"source texture: {report['source_share']:.0%} of texels from the source, {mirrored:.0%} from their "
-        f"mirror twin; generated colours dE {before:.1f} -> {after:.1f} after transfer")
+    log(f"source texture: {report['source_share']:.0%} of texels from the source, {report['extra_share']:.0%} from "
+        f"extra views, {report['mirrored_share']:.0%} from mirror twins, {report['nearest_share']:.0%} from the "
+        f"nearest seen surface; generated colours dE {before:.1f} -> {after:.1f} after transfer")
     return report
+
+
+def fill_hidden(view, regions=None):
+    """Blend the colour layers (the source, extra views, mirror twins: each takes what the earlier ones
+    left), colour what none of them sees and write the texture. regions: (core, padded) texel masks of
+    separate pieces (a truck, a pilot): a hidden texel inside one takes colours only from seen texels
+    under the piece's own faces (core), the rest only from outside them all, so a truck's top stays
+    truck-coloured instead of taking the red of the body side just above it. Returns each layer's
+    share of the texels."""
+    t = view.tex
+    P = t["P"]
+    out = np.zeros((len(P), 3))
+    rest_w = np.ones(len(P))
+    best, best_w = np.zeros((len(P), 3)), np.zeros(len(P))
+    shares = {}
+    for name, w, c in t["layers"]:
+        take = rest_w * w
+        out += take[:, None] * c
+        shares[name] = round(float((take > 0.5).mean()), 3)
+        better = take > best_w
+        best[better], best_w[better] = c[better], take[better]
+        rest_w = rest_w * (1 - w)
+    unseen = rest_w > 0.5
+    fallback = t["mapped"]
+    if t["fill"] == "nearest" and unseen.any():
+        fallback = t["mapped"].copy()
+        groups = [(c[t["baked"]], m[t["baked"]]) for c, m in regions or []]
+        rest = ~np.logical_or.reduce([m for _, m in groups]) if groups else np.ones(len(P), bool)
+        for core, pad in groups + [(rest, rest)]:
+            known, want = core & ~unseen, pad & unseen
+            if want.any() and known.sum() >= 20:
+                fallback[want] = nearest_fill(P[known], best[known], P[want])
+    out += rest_w[:, None] * fallback
+    shares["hidden"] = round(float(unseen.mean()), 3)
+    full = t["gen"].copy()
+    full[t["baked"]] = out
+    size = t["size"]
+    rgba = np.concatenate([full.reshape(size, size, 3), np.ones((size, size, 1), np.float32)], 2)
+    t["image"].pixels.foreach_set(rgba.astype(np.float32).ravel())
+    t["image"].update()
+    t["image"].save()
+    return shares
+
+
+def uv_cover(ob, size, grow=3):
+    """Texel masks (Blender row order, flattened) of the texture area ob's faces use: the texels under
+    its triangles, and those grown by `grow` texels into the bake margin."""
+    me = ob.data
+    me.calc_loop_triangles()
+    uvl = me.uv_layers.active.data
+    uv = np.empty(len(uvl) * 2)
+    uvl.foreach_get("uv", uv)
+    uv = uv.reshape(-1, 2) * size - 0.5
+    lt = np.empty(len(me.loop_triangles) * 3, np.int32)
+    me.loop_triangles.foreach_get("loops", lt)
+    mask = np.zeros((size, size), bool)
+    for a, b, c in uv[lt.reshape(-1, 3)]:
+        x0, x1 = max(0, int(np.floor(min(a[0], b[0], c[0])))), min(size - 1, int(np.ceil(max(a[0], b[0], c[0]))))
+        y0, y1 = max(0, int(np.floor(min(a[1], b[1], c[1])))), min(size - 1, int(np.ceil(max(a[1], b[1], c[1]))))
+        if x1 < x0 or y1 < y0:
+            continue
+        X, Y = np.meshgrid(np.arange(x0, x1 + 1), np.arange(y0, y1 + 1))
+        d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+        if abs(d) < 1e-12:  # no area
+            continue
+        l1 = ((b[1] - c[1]) * (X - c[0]) + (c[0] - b[0]) * (Y - c[1])) / d
+        l2 = ((c[1] - a[1]) * (X - c[0]) + (a[0] - c[0]) * (Y - c[1])) / d
+        ins = (l1 >= 0) & (l2 >= 0) & (1 - l1 - l2 >= 0)
+        # a thin triangle may miss every texel centre: keep its nearest texel
+        if not ins.any():
+            ins[int(round(np.clip(a[1], y0, y1))) - y0, int(round(np.clip(a[0], x0, x1))) - x0] = True
+        mask[y0:y1 + 1, x0:x1 + 1] |= ins
+    return mask.ravel(), dilate(mask, grow).ravel()
 
 
 class SourceView:
@@ -328,6 +600,7 @@ class SourceView:
         self.fov, self.zbuf, self.image = fov, zbuf, image
         self.res = zbuf.shape[0]
         self.inner, self.iou = None, None
+        self.tex = None  # reproject's per-texel state, for fill_hidden
 
     def point(self, px, reach=6):
         """Raw-frame surface point under source pixel px = (x, y). A pixel on the outline (a tyre's

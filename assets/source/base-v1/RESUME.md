@@ -1,6 +1,25 @@
 # Asset generation checkpoint
 
-## Train models pilot 3 (2026-09-26; latest)
+## Train models pilot 4 (2026-09-27; latest)
+
+User on pilot 3: FS still wrong ("real solutions"); F7 looked better in pilot 2 (trucks where the image has
+them), end gear hidden or not turning, a missing wheel, hidden parts plain brown (offered more pictures);
+new rule: end gear on the front/rear trucks for rigid bodies with 2+ bogies; show more steam engines;
+roster waits until decisions are locked and the user says go; atlas: several sheets per group is okay.
+Pilot 4: https://claude.ai/artifact/P41Rqnkro7PNP2eEAo1wQN (verdicts collection; local
+`G:/DEV/Terepasztal/renders/train-models-pilot-4/`, source `scratchpad/train-models/review-4/`).
+
+- Sim: `pivots` (per part, the image's truck centres) and `coupled` (steam frame stands on its coupled
+  wheels) in src/data; verdicts re-measured, unchanged for all five (docs/bogie-model.md rules 7-10).
+- FS: frame on its coupled wheels, leading bogie + trailing axle sprites (pilot-2 sprites); Black Five and
+  9F built the same way (new landmarks, CSV rows, per-train leading bogie / pony truck).
+- F7/SD40: trucks at the image's positions, whole pilot/coupler/steps attached to the trucks.
+- Pipeline: symmetric rebuild of the hidden side, nearest-seen fill per piece, transparent back faces on
+  cut pieces, extra views (`<image>-rear.png`, tested on a synthetic F7 rear view: IoU 0.948), end trims.
+- Asked the user for rear three-quarter images (F7, SD40, FS, Black Five, 9F).
+- After lock-in and the user's go: roster batches; several atlas sheets per group when needed.
+
+## Train models pilot 3 (2026-09-26)
 
 User on pilot 2: F7 model and body angles good; F7 drifted off the track at the switch exit (conform to
 the pivot mechanism); bogies must be parallel to the rails too; FS drivers belong where the user drew
@@ -13,7 +32,7 @@ local `G:/DEV/Terepasztal/renders/train-models-pilot-3/`, source `scratchpad/tra
 - FS: drivers bogie on the rear pivot slot drawn +0.42 tiles on the rail (bogieDraw); leading at pivot;
   trailing axle, splashers, frames with the body.
 - SD40-2: src/data size large, plan rigid, bogies 2; own trucks at the 0.58 pivots; high-speed loop in
-  the fixture (in-cab fitted). Research table: `docs/end-gear.md`.
+  the fixture (in-cab fitted). The end-gear research was dropped in pilot 4 (user rule instead).
 - Next: user's verdicts; then roster batches (diesels/electrics first).
 
 ## Train models pilot 2 (2026-09-26; latest)

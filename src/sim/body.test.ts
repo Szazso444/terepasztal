@@ -68,6 +68,71 @@ describe('independent bogies', () => {
       expect(measure(moved, cls)).toEqual(measure(plain, cls));
   });
 
+  it('hangs each pivot where the part says, in either direction', () => {
+    const line = new Polyline([
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ]);
+    const spec = vehicleSpec({ size: 'medium', pivots: { body: [0.52, -0.57] } });
+    for (const reversed of [false, true]) {
+      const seg = poseVehicle(line, 5, spec, reversed).segments[0];
+      // the body stays centred on its own middle, 1 tile behind the front
+      expect(seg.x).toBeCloseTo(4, 9);
+      const xs = seg.bogies.map((b) => b.x).sort((a, b) => a - b);
+      expect(xs[0]).toBeCloseTo(reversed ? 3.48 : 3.43, 9);
+      expect(xs[1]).toBeCloseTo(reversed ? 4.57 : 4.52, 9);
+      for (const b of seg.bogies) expect(b.foreAft).toBeCloseTo(0, 9);
+    }
+    // pivots at the default spacing pose exactly like pivotRatio
+    const plain = vehicleSpec({ size: 'medium' });
+    const same = vehicleSpec({ size: 'medium', pivots: { body: [0.7, -0.7] } });
+    const path = referencePath('regular');
+    for (const reversed of [false, true]) {
+      const a = poseVehicle(path, 3.4, plain, reversed).segments[0];
+      const b = poseVehicle(path, 3.4, same, reversed).segments[0];
+      expect(b.x).toBeCloseTo(a.x, 9);
+      expect(b.y).toBeCloseTo(a.y, 9);
+      expect(b.angle).toBeCloseTo(a.angle, 9);
+    }
+  });
+
+  it('stands a steam frame on its coupled wheels and lets its trucks swing under it', () => {
+    const def = {
+      size: 'medium' as const,
+      plan: 'tender' as const,
+      pivots: { engine: [0.37, -0.467] },
+      coupled: { engine: -0.017 },
+    };
+    const spec = vehicleSpec(def);
+    const path = referencePath('regular');
+    let swung = 0;
+    for (const reversed of [false, true])
+      for (let front = 2.2; front < path.length - 0.2; front += 0.1) {
+        const eng = poseVehicle(path, front, spec, reversed).segments[0];
+        expect(eng.delta).toBe(0);
+        // the middle of the coupled wheelbase is on the rail, and the frame lies along it there
+        const dir = reversed ? -1 : 1;
+        const c = {
+          x: eng.x + Math.cos(eng.angle) * -0.017 * dir,
+          y: eng.y + Math.sin(eng.angle) * -0.017 * dir,
+        };
+        const n = path.nearest(c, front - 0.6, 2);
+        expect(Math.hypot(n.p.x - c.x, n.p.y - c.y)).toBeLessThan(1e-3);
+        const t = path.tangent(n.arc);
+        expect(Math.abs(Math.sin(eng.angle - Math.atan2(t.y, t.x)))).toBeLessThan(0.02);
+        // leading bogie and trailing axle stay on their rail points
+        for (const b of eng.bogies) {
+          const m = path.nearest({ x: b.x, y: b.y }, front - 0.6, 2);
+          expect(Math.hypot(m.p.x - b.x, m.p.y - b.y)).toBeLessThan(1e-6);
+          swung = Math.max(swung, b.lateral);
+        }
+      }
+    // on the quarter circle the trucks slide sideways under the frame, and the verdict counts it
+    expect(swung).toBeGreaterThan(0.1);
+    expect(measure(spec, 'regular').lateral).toBeCloseTo(swung, 1);
+    expect(measure(spec, 'regular').ok).toBe(true);
+  });
+
   it('changes wheel count without changing pivots or curve compatibility', () => {
     for (const size of ['medium', 'large'] as const) {
       const four = vehicleSpec({ size, bogieAxles: 2 });

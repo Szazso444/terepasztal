@@ -93,6 +93,31 @@ def repaint(obj, shading):
         slot.material = shaded_material(f"{m.name}_painted", shading, color=color, image=image)
 
 
+def cull_backfaces(ob):
+    """A piece cut out of a closed model (a truck, a pilot) is open where it was cut: what shows from
+    behind (the body's floor over a truck, the inside of the cut) is the model's interior, so on this
+    piece back faces render transparent."""
+    for slot in ob.material_slots:
+        m = slot.material
+        if not (m and m.node_tree):
+            continue
+        m2 = m.copy()
+        m2.name = f"{m.name}_culled"
+        nt = m2.node_tree
+        out = next(n for n in nt.nodes if n.type == "OUTPUT_MATERIAL")
+        if not out.inputs["Surface"].links:
+            continue
+        src = out.inputs["Surface"].links[0].from_socket
+        geo = nt.nodes.new("ShaderNodeNewGeometry")
+        clear = nt.nodes.new("ShaderNodeBsdfTransparent")
+        mix = nt.nodes.new("ShaderNodeMixShader")
+        nt.links.new(geo.outputs["Backfacing"], mix.inputs["Fac"])
+        nt.links.new(src, mix.inputs[1])
+        nt.links.new(clear.outputs[0], mix.inputs[2])
+        nt.links.new(mix.outputs[0], out.inputs["Surface"])
+        slot.material = m2
+
+
 # ---------------- mesh helpers ----------------
 class Builder:
     """Collects faces into one bmesh with one material per named colour."""
@@ -311,6 +336,39 @@ def square_up(ob, x_mid, z_mid, max_deg=8.0):
     me.vertices.foreach_set("co", V.ravel())
     me.update()
     return math.degrees(th), math.degrees(tilt)
+
+
+def symmetrize(ob, y_center, keep_below):
+    """Rebuild ob's hidden side as the mirror of the side the source shows: rolling stock is left-right
+    symmetric, and a single-view reconstruction guesses its far side (trucks come out as blobs). The
+    mesh is cut at y = y_center, the unseen half dropped and the seen half mirrored across, sharing its
+    texture. keep_below: the seen side is y < y_center. Returns the robust width before and after."""
+    me = ob.data
+
+    def width():
+        co = np.empty(len(me.vertices) * 3)
+        me.vertices.foreach_get("co", co)
+        return float(np.subtract(*np.percentile(co.reshape(-1, 3)[:, 1], [99.5, 0.5])))
+
+    before = width()
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.translate(bm, verts=bm.verts, vec=(0.0, -y_center, 0.0))
+    if not keep_below:
+        bmesh.ops.scale(bm, vec=(1.0, -1.0, 1.0), verts=bm.verts)
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+    geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+    bmesh.ops.bisect_plane(bm, geom=geom, dist=1e-6, plane_co=(0, 0, 0), plane_no=(0, 1, 0), clear_outer=True)
+    bmesh.ops.mirror(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], matrix=Matrix.Identity(4),
+                     merge_dist=1e-5, axis="Y")
+    if not keep_below:
+        bmesh.ops.scale(bm, vec=(1.0, -1.0, 1.0), verts=bm.verts)
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+    bmesh.ops.translate(bm, verts=bm.verts, vec=(0.0, y_center, 0.0))
+    bm.to_mesh(me)
+    bm.free()
+    me.update()
+    return before, width()
 
 
 def keep_box(ob, x0, x1, z_top):

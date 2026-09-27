@@ -16,7 +16,8 @@ from PIL import Image
 
 OUT, REVIEW = Path(sys.argv[1]), Path(sys.argv[2])
 POC = Path("G:/DEV/Terepasztal/poc/rocket-original-v1/renders/game-f0.png")
-SUBJECTS = {"rocket": ["body"], "flying_scotsman": ["engine", "tender"], "sd40": ["body"], "f7": ["body"]}
+SUBJECTS = {"rocket": ["body"], "flying_scotsman": ["engine", "tender"], "sd40": ["body"], "f7": ["body"],
+            "black_five": ["engine", "tender"], "nine_f": ["engine", "tender"]}
 
 
 def lab(rgb):

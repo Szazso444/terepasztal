@@ -14,9 +14,10 @@ to slice or bend a rigid casing.
    angle, including its track-centred sideways shift. Large rigid locomotives keep one full
    three-tile body. Garratt engines retain their three articulated segments; the Meyer frame
    remains rigid above its two pivoting engine units. No artificial middle hinge or slices.
-3. Geometry and compatibility remain separate from cosmetic wheel count. Existing pivot
-   spacing, body lengths, bogie counts and tolerance limits are retained. Changing two axles
-   to three changes the shared bogie sprite, not its rail position or the turn verdict.
+3. Geometry and compatibility remain separate from cosmetic wheel count. Body lengths, bogie
+   counts and tolerance limits are retained; pivot positions follow rule 7, and every verdict is
+   measured from them. Changing two axles to three changes the bogie sprite, not its rail position
+   or the turn verdict.
 4. Four wheels means two axles, with two wheels on each axle; six wheels means three axles.
    F7, Taurus and Re460 use pairs of four-wheel bogies. M62, SD40, Deltic and V63 use pairs of
    six-wheel bogies. DDA40X and GG1 keep three six-wheel bogies. Small steam stock retains its
@@ -29,23 +30,27 @@ to slice or bend a rigid casing.
    distance. The renderer's facing correction preserves the vehicle's orientation. Retreats
    preview their reversed trail and reserve a complete route before committing that reversal.
 
-## Rendered stock (train models pilot 3, pending approval)
+## Rendered stock (train models pilot 4, pending approval)
 
-7. Trucks and bogies hang at the simulation's pivots, as rules 1-3 say: the body rests on them through
-   switches and curves. A rigid-frame steam engine's coupled wheels are the one group drawn away from a
-   pivot: they take the rear pivot's bogie slot and are drawn on the rail where the prototype has them,
-   so they follow the track under the boiler. The leading truck hangs at the front pivot; trailing
-   wheels next to the rear pivot, splashers, frames and a rigid tender's axles are drawn with their body
-   (`bogieStyle` `"none"` for such a tender).
-8. Bogie sprites are per train (`rolling/bogie_<id>_<position>_f<n>`), rendered in the same run as the
-   body; the shared family styles remain for stock not yet rendered. End gear goes where the prototype
-   mounts it (`docs/end-gear.md`): on the body for North American diesels, rigid-frame engines and most
-   European locomotives; on the running gear, turning with it, for the Crocodile, GG1, Garratt and the
-   Big Boy's front unit.
-9. `bogieDraw` (per vehicle, tiles along the track from each pivot, + towards the vehicle's front)
-   draws a bogie sprite elsewhere on the track: on the rail at that point with the rail's own tangent
-   there (`BogiePose.drawX/drawY/drawAngle`). The pivot, the body pose and every curve verdict are
-   unchanged. It is used for coupled wheels only (rule 7).
+7. Pivots sit where the prototype has its running gear: a vehicle's `pivots` (per part, tiles from the
+   part's centre, + towards its front, front to rear) put them at the truck centres its image shows,
+   and its truck sprites hang there, so what is drawn is what carries the body. Without `pivots` a part
+   keeps `pivotRatio`. The asset pipeline prints the image's positions. Verdicts are re-measured: they
+   did not change for any vehicle moved so far.
+8. A rigid-frame steam engine's frame stands on its coupled wheels (`coupled`: tiles from the part's
+   centre to the middle of the coupled wheelbase): it is posed on the rail there, along the rail's
+   tangent, without the sideways float of rule 2. Its pivots are the leading and trailing trucks, which
+   swivel and slide sideways under it (the slide counts against `maxLateralPlay`); a pivot with no truck
+   under it draws nothing (`bogieStyle` `"none"` at that index). The coupled wheels, rods, splashers and
+   frames are drawn with the body, and so are a rigid tender's axles (`"none"` for the tender).
+9. Bogie sprites are per train (`rolling/bogie_<id>_<position>_f<n>`), rendered in the same run as the
+   body; the shared family styles remain for stock not yet rendered. On a rigid body with two or more
+   trucks, the pilot, snowplow, coupler and end steps hang on the front and rear trucks and turn with
+   them.
+10. `bogieDraw` (per vehicle, tiles along the track from each pivot, + towards the vehicle's front)
+    draws a bogie sprite elsewhere on the track: on the rail at that point with the rail's own tangent
+    there. The pivot, the body pose and every curve verdict are unchanged. No rendered vehicle uses it
+    since rule 7.
 
 ## Verification
 

@@ -47,15 +47,17 @@ export function measure(spec: VehicleSpec, cls: TrackClass): Verdict {
   let lateral = 0;
   for (let front = spec.L; front <= pl.length; front += 0.05) {
     const v = poseVehicle(pl, front, spec);
-    for (const seg of v.segments) {
+    v.segments.forEach((seg, si) => {
       sideways = Math.max(sideways, Math.abs(seg.delta));
       gap = Math.max(gap, seg.residualGap);
+      // outer bogies define the axis; only inner ones can sit off their sockets sideways, unless
+      // the frame stands on coupled wheels, when every truck slides under it
+      const free = spec.segments[si].coupled !== undefined;
       seg.bogies.forEach((b, i) => {
         foreAft = Math.max(foreAft, b.foreAft);
-        // outer bogies define the axis; only inner ones can sit off their sockets sideways
-        if (i > 0 && i < seg.bogies.length - 1) lateral = Math.max(lateral, b.lateral);
+        if (free || (i > 0 && i < seg.bogies.length - 1)) lateral = Math.max(lateral, b.lateral);
       });
-    }
+    });
   }
   // the rail gap a body may show grows with its length: a long body reads as "on the track"
   // when its ends sit a little further out than a short one would

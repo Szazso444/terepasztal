@@ -73,6 +73,31 @@ if PILOT == 1:
         ("f7", "EMD F7 (extra)", "steel_coach", "Not in the pilot order; rendered so the Blomberg trucks can be judged under a real body.", None),
     ]
     BOGIES = [(s, "bogies") for s in ("blomberg", "htc", "leading", "pacific", "uk_tender_pair")]
+elif PILOT == 4:
+    P2, P3 = HERE / "review-2" / "img", HERE / "review-3" / "img"
+    PREV_OF = {"flying_scotsman": (P3, "Pilot 3"), "f7": (P2, "Pilot 2"), "sd40": (P3, "Pilot 3")}
+    SUBJECTS = [
+        ("flying_scotsman", "Flying Scotsman", "steel_coach",
+         "The frame stands on its three coupled axles, on the rail where they are and along it, as a real or a "
+         "model locomotive's does; the pivots are the leading bogie and the trailing axle, which swivel and slide "
+         "under it. The coupled wheels, rods, splashers and frames are drawn with the body.", None),
+        ("black_five", "LMS Black Five", "steel_coach",
+         "New: a 4-6-0 with the same rule. The frame stands on its three coupled axles; the leading bogie swivels "
+         "under the smokebox. No trailing axle, so the rear pivot draws nothing. Its tender's three axles are drawn "
+         "with the tender.", None),
+        ("nine_f", "BR 9F", "steel_coach",
+         "New: a 2-10-0, the longest coupled wheelbase in the roster (five axles, rigid). The frame stands on them; "
+         "the pony truck in front swings under the cylinders.", None),
+        ("f7", "EMD F7", "steel_coach",
+         "Trucks where the image has them (as in pilot 2), now as the game's pivots, so the body rests on them. "
+         "Pilot, snowplow, coupler and steps turn with the trucks. The hidden side is the seen side mirrored; the "
+         "rear end takes the body's colours.", "body"),
+        ("sd40", "EMD SD40-2", "steel_coach",
+         "Trucks where the image has them, pilots, ploughs and end steps on the trucks. Three-tile body, "
+         "high-speed track only.", "body"),
+    ]
+    BOGIES = [(s_, "bogies4") for s_ in ("flying_scotsman_leading", "flying_scotsman_trailing", "black_five_leading",
+                                         "nine_f_pony", "f7_front", "f7_rear", "sd40_front", "sd40_rear")]
 elif PILOT == 3:
     P2 = HERE / "review-2" / "img"
     PREV_OF = {"flying_scotsman": (P2, "Pilot 2"), "f7": (P2, "Pilot 2"), "sd40": (PREV, "Pilot 1")}

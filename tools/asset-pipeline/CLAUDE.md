@@ -93,6 +93,15 @@ blender stage fits the field of view to the mask (silhouette IoU, must reach `so
 camera sees the source's colour, and maps the generated colours of the hidden texels through a colour transfer fitted on
 the seen ones. The generated texture drifts (the Rocket's yellow went olive); this puts the approved art back.
 
+More images of the same vehicle colour what the source cannot see: `landmarks` `views` (paths from this folder) or
+`<image>-rear.png` next to the source image, e.g. a rear three-quarter view on a transparent background. Each one's
+camera is found by fitting the aligned mesh's outline to its alpha (azimuth, elevation, roll, scale, offset;
+`source.extra_min_iou`, default 0.8, else skipped with a warning; `debug/<id>_view<n>.png` shows the image beside the
+fitted mesh, front green to rear blue). Its colours are matched to the source on the texels both see. Texels then take,
+in turn: the source, the extra views, the mirror twins of both, and finally (`source.hidden = "nearest"`, the default)
+the colours of the nearest seen surface. A truck, pilot or other piece cut out to turn with a truck refills its hidden
+texels from its own seen faces only, so a truck's top stays dark instead of taking the body side's red.
+
 ## Scale, measured
 - One metre for every asset: `[grid] metre = "human"` makes a `human_m` person `human_px` logical pixels tall
   (`src/render/assetScale.ts`), a 6.23 m tile. At that metre the real rail-centre spacing times `DRAWN_WIDTH` is the game's
@@ -115,7 +124,12 @@ the seen ones. The generated texture drifts (the Rocket's yellow went olive); th
   narrowed by the same factor before `DRAWN_WIDTH`, as `body.ts` defines it, so the image's proportions survive.
   A short vehicle is never widened by its stretch.
 - Rolling stock is left-right symmetric: a texel the source camera cannot see takes the source colour of its mirror
-  twin across the centre plane when the camera sees that (`landmarks` `mirror: false` turns it off).
+  twin across the centre plane when the camera sees that (`landmarks` `mirror: false` turns it off). The hidden side's
+  shape is rebuilt the same way: each part is cut at the centre plane between its sides and the seen half mirrored
+  across, sharing its texture, then kept at the measured width (`symmetric: false` turns it off). A single-view
+  reconstruction guesses the far side; trucks came out as blobs without wheels.
+- `trim_front_m` / `trim_rear_m` (real metres) cut off what a reconstruction runs out past a vehicle's ends (the Black
+  Five's buffers came out as a horn) before the parts are measured.
 
 ## Running gear
 - Reconstructed wheels come out uneven, soft and off gauge; none reach the game. Small stock (1 tile, no bogie sprites)
@@ -126,11 +140,13 @@ the seen ones. The generated texture drifts (the Rocket's yellow went olive); th
   back into the body where the cut left daylight above smaller built wheels: they stay rigid with the body.
 - Per-train bogies (`bogies` in `landmarks.json`) are rendered in the vehicle's own run as extra sprite sets (part
   `bogie-<style>`, exported as `rolling/bogie_<style>_f<f>`): from a spec (round wheels at measured axles) or from the
-  model's own truck (`mesh` box, source-coloured, squared up to the rails), optionally with built `wheels`. They hang at
-  their pivot (`at = "pivot"`, the game's mechanism); coupled steam wheels use `at = "image"` and the log gives the
-  `bogieDraw` offset for `src/data`. `attach` boxes move end gear the prototype hangs on its running gear
-  (`docs/end-gear.md`) from the body onto that bogie. `baked` running gear (a steam engine's coupled
-  wheels and rods, a rigid tender's axles) is built into the body sprite instead.
+  model's own truck (`mesh` box, source-coloured, squared up to the rails, back faces transparent), optionally with
+  built `wheels`. They hang at their pivot; the log prints where the image has each part's trucks and warns when the
+  game's pivot is more than 0.02 tile away: `pivots` in `src/data` puts the game's pivots there (`docs/bogie-model.md`
+  rule 7). `attach` boxes move end gear (pilots, couplers, steps of a rigid body on two or more trucks) from the body
+  onto its truck, so it turns with it. `baked` running gear (a steam engine's coupled wheels and rods, a rigid tender's
+  axles) is built into the body sprite instead; the log gives the coupled wheelbase's centre for `coupled` in
+  `src/data` (rule 8).
 - Bogies with `image = parametric` are built from `bogies.json` in the game frame, pivot at the origin: steam coupled
   wheels shrink until they clear each other at the measured, compressed spacing; diesel trucks keep near-real wheels at
   the source's spacing so they end inside the body. Colours come from boxes on the source crops. A group drawn far ahead

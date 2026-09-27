@@ -14,8 +14,8 @@ rocket,../../assets/source/base-v1/loco-rocket.png,vehicle,1,4.3,1.78,,auto,,rig
 #k4s,input/k4s.png,vehicle,2,,,,auto,,tender,,2.1;1.1,,,rolling/loco_k4s_{part}_f{f},"clip: engine just above its driving wheels, tender above its bogies; length_m: fill in (over buffers, engine + tender)"
 #drg01,input/drg01.png,vehicle,2,23.9,,,auto,,tender,,2.1;1.1,,,rolling/loco_drg01_{part}_f{f},"clip: engine just above its driving wheels, tender above its bogies"
 flying_scotsman,../../assets/source/base-v1/loco-flying-scotsman.png,vehicle,2,21.3,2.74,3.99,auto,,tender,,,,,rolling/loco_flying_scotsman_{part}_f{f},"clip: engine just above its driving wheels, tender above its bogies"
-#black_five,input/black_five.png,vehicle,2,19.4,,,auto,,tender,,1.9;1.1,,,rolling/loco_black_five_{part}_f{f},"clip: engine just above its driving wheels, tender above its bogies"
-#nine_f,input/nine_f.png,vehicle,2,20.2,,,auto,,tender,,1.6;1.1,,,rolling/loco_nine_f_{part}_f{f},"clip: engine just above its driving wheels, tender above its bogies"
+black_five,../../assets/source/base-v1/loco-black-five.png,vehicle,2,19.4,2.72,4.01,auto,,tender,,,,,rolling/loco_black_five_{part}_f{f},"pilot 4: a second steam engine for the coupled-wheel decision (4-6-0)"
+nine_f,../../assets/source/base-v1/loco-nine-f.png,vehicle,2,20.2,2.72,3.96,auto,,tender,10.7,,,,rolling/loco_nine_f_{part}_f{f},"pilot 4: the longest coupled wheelbase (2-10-0)"
 #daylight,input/daylight.png,vehicle,2,,,,auto,,tender,,2.1;1.1,,,rolling/loco_daylight_{part}_f{f},"clip: engine just above its driving wheels, tender above its bogies; length_m: fill in (over buffers, engine + tender)"
 #mallard,input/mallard.png,vehicle,2,21.6,,,auto,,tender,,2.1;1.1,,,rolling/loco_mallard_{part}_f{f},"clip: engine just above its driving wheels, tender above its bogies"
 #big_boy,input/big_boy.png,vehicle,3,,,,auto,,meyer,,1.8,,,rolling/loco_big_boy_{part}_f{f},clip: engine just above its driving wheels; length_m: fill in (over buffers)
@@ -58,15 +58,12 @@ sd40,../../assets/source/base-v1/loco-sd40.png,vehicle,3,20.9,3.12,4.72,auto,,ri
 bogie_leading,parametric,bogie,,2.9,,,auto,,,,,,0.65,rolling/bogie_leading_f{f},"Four-wheel leading truck of a steam engine, small spoked wheels, swing links; rides under A3, A4, DRG 01, K4s, Black Five, MÁV 424, Daylight, GMAM"
 #bogie_pony,input/bogie_pony.png,bogie,,1.6,,,auto,,,,,,0.75,rolling/bogie_pony_f{f},"Single-axle pony truck, small spoked wheels on a radius arm; rides under BR 9F, Crocodile"
 bogie_pacific,parametric,bogie,,8.4,,,auto,,,,,,0.65,rolling/bogie_pacific_f{f},"Three coupled 2 m driving wheels with coupling and connecting rods, valve gear, then a single trailing axle (4-6-2 without its leading truck); rides under A3, A4, DRG 01, K4s"
-#bogie_ten_wheeler,input/bogie_ten_wheeler.png,bogie,,6.6,,,auto,,,,,2.0,0.8,rolling/bogie_ten_wheeler_f{f},Three coupled 1.8 m driving wheels with rods and valve gear (4-6-0 without its leading truck); rides under Black Five
 #bogie_mastodon,input/bogie_mastodon.png,bogie,,6.7,,,auto,,,,,1.8,0.75,rolling/bogie_mastodon_f{f},Four coupled 1.6 m driving wheels with rods and valve gear (4-8-0 without its leading truck); rides under MÁV 424
-#bogie_decapod,input/bogie_decapod.png,bogie,,8.3,,,auto,,,,,1.5,0.77,rolling/bogie_decapod_f{f},Five coupled 1.5 m driving wheels with rods and valve gear (2-10-0 without its pony truck); rides under BR 9F
 #bogie_northern,input/bogie_northern.png,bogie,,11.4,,,auto,,,,,1.2,0.47,rolling/bogie_northern_f{f},"Four coupled 2 m driving wheels with rods, then a four-wheel trailing truck (4-8-4 without its leading truck); rides under Daylight"
 #bogie_gmam,input/bogie_gmam.png,bogie,,7.5,,,auto,,,,,1.0,0.8,rolling/bogie_gmam_f{f},"Garratt engine unit: four coupled driving wheels with rods and cylinders, then a pony axle (the 8-2 of a 4-8-2); rides under GMAM"
 #bogie_bigboy_front,input/bogie_bigboy_front.png,bogie,,9.5,,,auto,,,,,,0.6,rolling/bogie_bigboy_front_f{f},"Big Boy front engine unit: four-wheel leading truck, then four coupled driving wheels with cylinders and rods; rides under Big Boy"
 #bogie_bigboy_rear,input/bogie_bigboy_rear.png,bogie,,9.5,,,auto,,,,,,0.6,rolling/bogie_bigboy_rear_f{f},"Big Boy rear engine unit: four coupled driving wheels with cylinders and rods, then a four-wheel trailing truck; rides under Big Boy"
 bogie_uk_tender_pair,parametric,bogie,,3.8,,,auto,,,,,,0.75,rolling/bogie_uk_tender_pair_f{f},"Two fixed axles of a British rigid tender: outside frame, axleboxes and leaf springs; rides under A3, A4 (front and rear), Black Five, 9F (front)"
-#bogie_uk_tender_axle,input/bogie_uk_tender_axle.png,bogie,,1.9,,,auto,,,,,,0.75,rolling/bogie_uk_tender_axle_f{f},"One fixed axle of a British rigid tender: outside frame, axlebox and leaf spring; rides under Black Five, 9F (rear)"
 #bogie_tender_truck,input/bogie_tender_truck.png,bogie,,2.8,,,auto,,,,,,0.65,rolling/bogie_tender_truck_f{f},"Two-axle tender bogie: plate or bar frame, small wheels; rides under DRG 01, K4s, MÁV 424"
 #bogie_tender_truck6,input/bogie_tender_truck6.png,bogie,,3.9,,,auto,,,,,,0.47,rolling/bogie_tender_truck6_f{f},"Three-axle tender truck, cast frame; rides under Daylight"
 #bogie_emd_d,input/bogie_emd_d.png,bogie,,6.3,,,auto,,,,,,0.79,rolling/bogie_emd_d_f{f},Four-axle D truck of the Union Pacific DDA40X; rides under DDA40X

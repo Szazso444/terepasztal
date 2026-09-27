@@ -187,10 +187,11 @@
     "body": "steam_std",
     "paint": "green",
     "bogieStyle": {
-      "engine": ["flying_scotsman_leading", "flying_scotsman_drivers"],
+      "engine": ["flying_scotsman_leading", "flying_scotsman_trailing"],
       "tender": "none"
     },
-    "bogieDraw": { "engine": [0, 0.4204] },
+    "pivots": { "engine": [0.37, -0.467] },
+    "coupled": { "engine": -0.017 },
     "speed": 1.75,
     "power": 120,
     "weight": 97,
@@ -334,6 +335,7 @@
     "body": "diesel_cab",
     "paint": "red",
     "bogieStyle": { "body": ["f7_front", "f7_rear"] },
+    "pivots": { "body": [0.518, -0.57] },
     "speed": 1.6,
     "power": 140,
     "weight": 110,
@@ -352,6 +354,7 @@
     "body": "diesel_hood",
     "paint": "black",
     "bogieStyle": { "body": ["sd40_front", "sd40_rear"] },
+    "pivots": { "body": [0.799, -0.824] },
     "speed": 1.5,
     "power": 220,
     "weight": 165,
@@ -553,9 +556,11 @@
     "body": "steam_std",
     "paint": "black",
     "bogieStyle": {
-      "engine": ["leading", "ten_wheeler"],
-      "tender": ["uk_tender_pair", "uk_tender_axle"]
+      "engine": ["black_five_leading", "none"],
+      "tender": "none"
     },
+    "pivots": { "engine": [0.326, -0.326] },
+    "coupled": { "engine": -0.118 },
     "speed": 1.5,
     "power": 125,
     "weight": 105,
@@ -576,9 +581,11 @@
     "body": "steam_std",
     "paint": "black",
     "bogieStyle": {
-      "engine": ["pony", "decapod"],
-      "tender": ["uk_tender_pair", "uk_tender_axle"]
+      "engine": ["nine_f_pony", "none"],
+      "tender": "none"
     },
+    "pivots": { "engine": [0.477, -0.414] },
+    "coupled": { "engine": -0.046 },
     "speed": 1.3,
     "power": 230,
     "weight": 140,

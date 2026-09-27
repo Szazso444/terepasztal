@@ -50,6 +50,10 @@ export interface SegmentSpec {
   /** where each bogie sprite is drawn, tiles along the track from its pivot (+ towards the
    *  vehicle's front), from the segment's front; cosmetic, see BodyFields.bogieDraw */
   draw?: number[];
+  /** each pivot's distance behind the segment's front, front to rear (default: W centred) */
+  at?: number[];
+  /** distance behind the segment's front of the coupled wheelbase its frame rests on */
+  coupled?: number;
 }
 export interface VehicleSpec {
   L: number;
@@ -78,6 +82,19 @@ export interface BodyFields {
    * body pose and every curve verdict stay as they are.
    */
   bogieDraw?: number[] | Partial<Record<PartKind, number[]>>;
+  /**
+   * Where a part's bogie pivots sit, tiles from the part's centre (+ towards its front), front to
+   * rear: the prototype's truck centres. The part's body rests on them as on any pivots; it
+   * replaces pivotRatio for that part.
+   */
+  pivots?: Partial<Record<PartKind, number[]>>;
+  /**
+   * A rigid frame on coupled wheels (steam): tiles from the part's centre (+ front) to the middle
+   * of its coupled wheelbase. The part stands on the rail there, along the track's tangent, like
+   * the prototype's frame on its driving wheels; its bogies (leading and trailing trucks) swivel
+   * and slide sideways under it.
+   */
+  coupled?: Partial<Record<PartKind, number>>;
 }
 
 export function vehicleSpec(def: BodyFields): VehicleSpec {
@@ -132,11 +149,18 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
       break;
     }
   }
-  if (def.bogieDraw)
-    for (const s of segs) {
-      const d = Array.isArray(def.bogieDraw) ? def.bogieDraw : def.bogieDraw[s.part];
-      if (d) s.draw = d;
+  for (const s of segs) {
+    const d =
+      !def.bogieDraw || Array.isArray(def.bogieDraw) ? def.bogieDraw : def.bogieDraw[s.part];
+    if (d) s.draw = d;
+    const p = def.pivots?.[s.part];
+    if (p?.length === s.nb) {
+      s.at = p.map((x) => s.L / 2 - x);
+      s.W = s.at[s.nb - 1] - s.at[0];
     }
+    const c = def.coupled?.[s.part];
+    if (c !== undefined) s.coupled = s.L / 2 - c;
+  }
   return {
     L,
     size,
@@ -286,26 +310,48 @@ export function poseSegment(
   reversed = false,
 ): SegmentPose {
   const { L, W, nb } = seg;
-  const arcs: number[] = [];
-  const first = arcFront - (L - W) / 2;
-  for (let i = 0; i < nb; i++) arcs.push(first - (W / (nb - 1)) * i);
+  // bogies go in track order; a reversed vehicle or a mirrored segment meets its own front bogie last
+  const back = reversed !== !!seg.mirror;
+  // each pivot's distance behind the segment's track-forward end
+  const t = seg.at
+    ? back
+      ? seg.at.map((a) => L - a).reverse()
+      : seg.at
+    : Array.from({ length: nb }, (_, i) => (L - W) / 2 + (W / (nb - 1)) * i);
+  const arcs = t.map((ti) => arcFront - ti);
   const A = pl.at(arcs[0]);
   const B = pl.at(arcs[nb - 1]);
   let axx = A.x - B.x;
   let axy = A.y - B.y;
-  const al = Math.hypot(axx, axy);
-  if (al < 1e-9) {
-    const t = pl.tangent(arcFront - L / 2);
-    axx = t.x;
-    axy = t.y;
+  let cx: number;
+  let cy: number;
+  const coupled = seg.coupled !== undefined;
+  if (coupled) {
+    // the frame stands on its coupled wheels: on the rail there, along the rail's tangent
+    const tc = back ? L - seg.coupled! : seg.coupled!;
+    const P = pl.at(arcFront - tc);
+    const tg = pl.tangent(arcFront - tc);
+    axx = tg.x;
+    axy = tg.y;
+    cx = P.x - axx * (L / 2 - tc);
+    cy = P.y - axy * (L / 2 - tc);
   } else {
-    axx /= al;
-    axy /= al;
+    const al = Math.hypot(axx, axy);
+    if (al < 1e-9) {
+      const tg = pl.tangent(arcFront - L / 2);
+      axx = tg.x;
+      axy = tg.y;
+    } else {
+      axx /= al;
+      axy /= al;
+    }
+    // the sockets' midpoint sits midway between the outer pivots
+    const mid = L / 2 - (t[0] + t[nb - 1]) / 2;
+    cx = (A.x + B.x) / 2 - axx * mid;
+    cy = (A.y + B.y) / 2 - axy * mid;
   }
   const nxx = -axy;
   const nxy = axx;
-  let cx = (A.x + B.x) / 2;
-  let cy = (A.y + B.y) / 2;
   // centre the body on the track, not on its own bogies: the mean gap over the body's length
   // pulls a long body out towards the arc (where its middle bogie runs) rather than leaving it
   // on the chord between the outer bogies
@@ -322,19 +368,18 @@ export function poseSegment(
     eSum += e;
   }
   const want = nb > 2 ? eSum / 7 : (eMin + eMax) / 2;
-  const delta = Math.max(-sideways, Math.min(sideways, want));
+  // a frame on its coupled wheels does not float sideways: it stands where they are
+  const delta = coupled ? 0 : Math.max(-sideways, Math.min(sideways, want));
   cx += nxx * delta;
   cy += nxy * delta;
   const residualGap = Math.max(Math.abs(eMax - delta), Math.abs(eMin - delta));
   const bogies: BogiePose[] = [];
-  // bogies go in track order; a reversed vehicle or a mirrored segment meets its own front bogie last
-  const back = reversed !== !!seg.mirror;
   for (let i = 0; i < nb; i++) {
     const P = pl.at(arcs[i]);
     const off = (seg.draw?.[back ? nb - 1 - i : i] ?? 0) * (back ? -1 : 1);
     const D = off ? pl.at(arcs[i] + off) : P;
     const td = pl.tangent(arcs[i] + off);
-    const socket = W / 2 - (W / (nb - 1)) * i;
+    const socket = L / 2 - t[i];
     const skx = cx + axx * socket;
     const sky = cy + axy * socket;
     const rx = P.x - skx;

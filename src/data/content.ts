@@ -74,6 +74,10 @@ export interface LocoDef {
   plan?: BodyPlan;
   /** pivot spacing as a fraction of body length (default 0.7) */
   pivotRatio?: number;
+  /** per part, where its pivots sit: tiles from the part's centre, + front (the prototype's trucks) */
+  pivots?: Partial<Record<PartKind, number[]>>;
+  /** per part, the middle of the coupled wheelbase its rigid frame stands on (tiles from its centre) */
+  coupled?: Partial<Record<PartKind, number>>;
   bogieStyle?: BogieStyle;
   bogieDraw?: BogieDraw;
   /** bogies under a rigid body (3 for the Bo-Bo-Bo large body) */

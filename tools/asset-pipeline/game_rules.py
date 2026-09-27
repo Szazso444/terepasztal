@@ -77,9 +77,18 @@ def grid_metre(g):
     return g["tile_m"]
 
 
-def pivots(plan, size_tiles, pivot_ratio=None, bogies=None):
+def pivots(plan, size_tiles, pivot_ratio=None, bogies=None, explicit=None):
     """body.ts vehicleSpec pivots: {part: [bogie positions in tiles from the part's centre, front
-    first]} for the first segment of each part (a Garratt's rear engine is its front one reversed)."""
+    first]} for the first segment of each part (a Garratt's rear engine is its front one reversed).
+    `explicit` is the definition's own `pivots` (per part), which wins where it gives every bogie."""
+    out = _pivots(plan, size_tiles, pivot_ratio, bogies)
+    for part, xs in (explicit or {}).items():
+        if part in out and len(xs) == len(out[part]):
+            out[part] = list(xs)
+    return out
+
+
+def _pivots(plan, size_tiles, pivot_ratio=None, bogies=None):
     L = size_tiles
     pr = pivot_ratio if pivot_ratio is not None else (0.58 if L == 3 else 0.7)
 

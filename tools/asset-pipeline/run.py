@@ -214,6 +214,12 @@ def main():
                 proto = game_rules.prototype(a["game_frame"])
                 if proto:
                     job["pivot_ratio"], job["bogies"] = proto.get("pivotRatio"), proto.get("bogies")
+                    job["pivots"], job["coupled"] = proto.get("pivots"), proto.get("coupled")
+                # more images of the vehicle (a rear three-quarter view): landmarks "views" or <image>-rear.png
+                img = (csv_path.parent / a["image"]).resolve()
+                views = [(HERE / v).resolve() for v in (landmarks.get(aid) or {}).get("views", [])]
+                views += [q for q in [img.with_name(f"{img.stem}-rear.png")] if q.exists() and q not in views]
+                job["views"] = [str(v) for v in views if v.exists()]
                 src, msk = glb.with_suffix(".source.png"), glb.with_suffix(".mask.png")
                 if cfg.get("source", {}).get("enabled", True) and src.exists() and msk.exists():
                     job["source"] = {"image": str(src), "mask": str(msk),
