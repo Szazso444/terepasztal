@@ -6,10 +6,11 @@
  * the trains alike.
  */
 import type { Vec2 } from '../engine/iso';
+import { gearSegments, type Gear } from './gear';
 
-export type VehicleSize = 'small' | 'medium' | 'large';
+export type VehicleSize = 'small' | 'medium' | 'large' | 'size4' | 'size5' | 'size6';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
-export const SIZE_LEN: Record<VehicleSize, number> = { small: 1, medium: 2, large: 3 };
+export const SIZE_LEN: Record<VehicleSize, number> = { small: 1, medium: 2, large: 3, size4: 4, size5: 5, size6: 6 };
 /** distance between two coupled bodies along the track */
 export const COUPLER_GAP = 0.2;
 /**
@@ -23,6 +24,8 @@ export const DEFAULT_PIVOT = 0.7;
 /** a three-tile body keeps its bogies nearer the middle: less overhang swing on a curve */
 export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
+/** spike switch: frames on fixed axles float sideways onto the track like bogie bodies */
+export const FRAME_FLOAT = { on: false };
 
 export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
 /** two-axle bogie, three-axle bogie, or the wheeled engine unit of a Meyer frame */
@@ -47,6 +50,21 @@ export interface SegmentSpec {
   front: number;
   /** drawn back to front (the rear engine unit of a Garratt) */
   mirror?: boolean;
+  /** each pivot's distance behind the segment's front, front to rear (default: W centred) */
+  at?: number[];
+  /** wheel group of each pivot (default: `bogie` for all) */
+  kinds?: BogieKind[];
+  /** pivots that carry the body but draw no truck (a cab hung between two snouts) */
+  hidden?: boolean[];
+  /**
+   * Axles fixed in the frame (coupled drivers, a rigid tender's axles, small stock's baked axles):
+   * distance behind the segment's front, front to rear. The frame stands on the rail at the first
+   * and the last of them; the pivots then swivel and slide under it.
+   */
+  rigid?: number[];
+  /** pivots that carry the frame with its fixed axles (a Mallet's front engine): its supports
+   *  are then the fixed axles' middle and these */
+  carry?: number[];
 }
 export interface VehicleSpec {
   L: number;
@@ -68,16 +86,31 @@ export interface BodyFields {
   bogieAxles?: number;
   maxLateralPlay?: number;
   type?: string;
+  /** spike: measured running gear, at this length in tiles */
+  gear?: Gear;
+  lengthTiles?: number;
 }
 
 export function vehicleSpec(def: BodyFields): VehicleSpec {
   const size = def.size ?? 'small';
+  if (def.gear && def.lengthTiles) {
+    const segments = gearSegments(def.gear, def.lengthTiles);
+    const parts = new Set(segments.map((s) => s.part));
+    return {
+      L: def.lengthTiles,
+      size,
+      plan: parts.has('tender') ? 'tender' : parts.has('cradle') ? 'garratt' : 'rigid',
+      segments,
+      drawBogies: segments.some((s) => s.nb > 0 && !(s.hidden ?? []).every(Boolean)),
+      maxLateralPlay: def.maxLateralPlay ?? DEFAULT_LATERAL_PLAY,
+    };
+  }
   const L = SIZE_LEN[size];
   let plan: BodyPlan = def.plan ?? 'rigid';
   if (size === 'small') plan = 'rigid';
   if (size === 'medium' && plan !== 'tender') plan = 'rigid';
   if (size === 'large' && plan === 'tender') plan = 'rigid';
-  const pr = def.pivotRatio ?? (size === 'large' ? LARGE_PIVOT : DEFAULT_PIVOT);
+  const pr = def.pivotRatio ?? (L >= 3 ? LARGE_PIVOT : DEFAULT_PIVOT);
   const bogie: BogieKind =
     def.bogieAxles === 4 ? 'bogie4' : def.bogieAxles === 3 ? 'bogie3' : 'bogie';
   const segs: SegmentSpec[] = [];
@@ -87,7 +120,7 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
       segs.push({ part: 'body', L, W: pr * L, nb: nbRigid, bogie, front: 0 });
       break;
     case 'tender': {
-      const le = 1.25;
+      const le = L > 3 ? 0.58 * L : 1.25; // spike: a longer engine for sizes 4 to 6
       const lt = L - le;
       segs.push({ part: 'engine', L: le, W: pr * le, nb: 2, bogie, front: 0 });
       segs.push({ part: 'tender', L: lt, W: 0.66 * lt, nb: 2, bogie: 'bogie', front: le });
@@ -235,6 +268,8 @@ export interface BogiePose {
   /** Rail position of the independently moving sprite, also used during interpolation. */
   drawX: number;
   drawY: number;
+  /** carries the body without a drawn truck */
+  hidden?: boolean;
 }
 export interface SegmentPose {
   part: PartKind;
@@ -248,6 +283,8 @@ export interface SegmentPose {
   /** sideways shift applied to centre the body on the track, and what remains */
   delta: number;
   residualGap: number;
+  /** furthest a fixed axle between the frame's end axles sits from the rail */
+  wheelGap: number;
 }
 export interface VehiclePose {
   /** vehicle centre on the track and the tangent there */
@@ -266,68 +303,112 @@ export function poseSegment(
   arcFront: number,
   seg: SegmentSpec,
   sideways = TOL.sideways,
+  reversed = false,
 ): SegmentPose {
   const { L, W, nb } = seg;
-  const arcs: number[] = [];
-  const first = arcFront - (L - W) / 2;
-  for (let i = 0; i < nb; i++) arcs.push(first - (W / (nb - 1)) * i);
-  const A = pl.at(arcs[0]);
-  const B = pl.at(arcs[nb - 1]);
-  let axx = A.x - B.x;
-  let axy = A.y - B.y;
-  const al = Math.hypot(axx, axy);
-  if (al < 1e-9) {
-    const t = pl.tangent(arcFront - L / 2);
-    axx = t.x;
-    axy = t.y;
+  // positions in track order: a reversed vehicle or a mirrored segment meets its rear first
+  const back = reversed !== !!seg.mirror;
+  const flip = (a: number[]) => (back ? a.map((x) => L - x).reverse() : a);
+  const t = seg.at
+    ? flip(seg.at)
+    : Array.from({ length: nb }, (_, i) => (L - W) / 2 + (W / (nb - 1)) * i);
+  const kinds = seg.kinds ? (back ? [...seg.kinds].reverse() : seg.kinds) : null;
+  const hidden = seg.hidden ? (back ? [...seg.hidden].reverse() : seg.hidden) : null;
+  const rig = seg.rigid && seg.rigid.length >= 2 ? flip(seg.rigid) : null;
+  const carry = seg.carry?.length ? flip(seg.carry) : null;
+  // the frame's two supports: its end fixed axles (or their middle and a carrying unit), else its
+  // outer pivots
+  const ends =
+    rig && carry
+      ? [Math.min(carry[0], (rig[0] + rig[rig.length - 1]) / 2), Math.max(carry[carry.length - 1], (rig[0] + rig[rig.length - 1]) / 2)]
+      : rig
+        ? [rig[0], rig[rig.length - 1]]
+        : t.length >= 2
+          ? [t[0], t[t.length - 1]]
+          : null;
+  let axx: number;
+  let axy: number;
+  let cx: number;
+  let cy: number;
+  if (ends) {
+    const A = pl.at(arcFront - ends[0]);
+    const B = pl.at(arcFront - ends[1]);
+    axx = A.x - B.x;
+    axy = A.y - B.y;
+    const al = Math.hypot(axx, axy);
+    if (al < 1e-9) {
+      const tg = pl.tangent(arcFront - L / 2);
+      axx = tg.x;
+      axy = tg.y;
+    } else {
+      axx /= al;
+      axy /= al;
+    }
+    const sm = (ends[0] + ends[1]) / 2;
+    cx = (A.x + B.x) / 2 - axx * (L / 2 - sm);
+    cy = (A.y + B.y) / 2 - axy * (L / 2 - sm);
   } else {
-    axx /= al;
-    axy /= al;
+    const P = pl.at(arcFront - L / 2);
+    const tg = pl.tangent(arcFront - L / 2);
+    axx = tg.x;
+    axy = tg.y;
+    cx = P.x;
+    cy = P.y;
   }
   const nxx = -axy;
   const nxy = axx;
-  let cx = (A.x + B.x) / 2;
-  let cy = (A.y + B.y) / 2;
   // centre the body on the track, not on its own bogies: the mean gap over the body's length
   // pulls a long body out towards the arc (where its middle bogie runs) rather than leaving it
   // on the chord between the outer bogies
   let eMin = Infinity;
   let eMax = -Infinity;
   let eSum = 0;
-  for (let k = 0; k <= 6; k++) {
-    const t = (k / 6 - 0.5) * L;
-    const S = { x: cx + axx * t, y: cy + axy * t };
-    const N = pl.nearest(S, arcFront - L / 2 + t).p;
+  const K = 12;
+  for (let k = 0; k <= K; k++) {
+    const u = (k / K - 0.5) * L;
+    const S = { x: cx + axx * u, y: cy + axy * u };
+    const N = pl.nearest(S, arcFront - L / 2 + u).p;
     const e = (N.x - S.x) * nxx + (N.y - S.y) * nxy;
     if (e < eMin) eMin = e;
     if (e > eMax) eMax = e;
     eSum += e;
   }
-  const want = nb > 2 ? eSum / 7 : (eMin + eMax) / 2;
-  const delta = Math.max(-sideways, Math.min(sideways, want));
+  const want = t.length > 2 ? eSum / (K + 1) : (eMin + eMax) / 2;
+  // a frame on fixed axles does not float sideways: it stands where they are
+  const delta = rig && !FRAME_FLOAT.on ? 0 : Math.max(-sideways, Math.min(sideways, want));
   cx += nxx * delta;
   cy += nxy * delta;
   const residualGap = Math.max(Math.abs(eMax - delta), Math.abs(eMin - delta));
+  let wheelGap = 0;
+  if (rig)
+    for (const r of rig) {
+      const u = L / 2 - r;
+      const S = { x: cx + axx * u, y: cy + axy * u };
+      const N = pl.nearest(S, arcFront - r).p;
+      wheelGap = Math.max(wheelGap, Math.hypot(N.x - S.x, N.y - S.y));
+    }
   const bogies: BogiePose[] = [];
-  for (let i = 0; i < nb; i++) {
-    const P = pl.at(arcs[i]);
-    const socket = W / 2 - (W / (nb - 1)) * i;
+  for (let i = 0; i < t.length; i++) {
+    const arc = arcFront - t[i];
+    const P = pl.at(arc);
+    const socket = L / 2 - t[i];
     const skx = cx + axx * socket;
     const sky = cy + axy * socket;
     const rx = P.x - skx;
     const ry = P.y - sky;
-    const tg = pl.tangent(arcs[i]);
+    const tg = pl.tangent(arc);
     const along = rx * axx + ry * axy;
     const across = rx * nxx + ry * nxy;
     bogies.push({
       x: P.x,
       y: P.y,
       angle: Math.atan2(tg.y, tg.x),
-      kind: seg.bogie,
+      kind: kinds?.[i] ?? seg.bogie,
       foreAft: Math.abs(along),
       lateral: Math.abs(across),
       drawX: P.x,
       drawY: P.y,
+      hidden: hidden?.[i] || undefined,
     });
   }
   return {
@@ -340,6 +421,7 @@ export function poseSegment(
     bogies,
     delta,
     residualGap,
+    wheelGap,
   };
 }
 
@@ -351,7 +433,7 @@ export function poseVehicle(
   reversed = false,
 ): VehiclePose {
   const segments = spec.segments.map((s) =>
-    poseSegment(pl, arcFront - (reversed ? spec.L - s.front - s.L : s.front), s),
+    poseSegment(pl, arcFront - (reversed ? spec.L - s.front - s.L : s.front), s, TOL.sideways, reversed),
   );
   const mid = pl.at(arcFront - spec.L / 2);
   const tg = pl.tangent(arcFront - spec.L / 2);

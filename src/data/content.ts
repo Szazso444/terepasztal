@@ -5,6 +5,11 @@
  * therefore takes effect on the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
+import gearJson from './gear.json';
+import type { Gear } from '../sim/gear';
+/** spike: the proposed length of each database size */
+export const SPIKE_LENGTH: Record<string, number> = { '0.5': 0.5, '1': 1, '2': 1.5, '3': 2, '4': 2.5, '5': 3, '6': 3 };
+
 import wagonJson from './wagons.json';
 import cargoJson from './cargo.json';
 import stationJson from './stations.json';
@@ -27,7 +32,7 @@ export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 export type Cost = Record<string, number>;
 export type CargoClass = 'liquid' | 'mineral' | 'bulk' | 'people';
 export type LocoType = 'steam' | 'diesel' | 'electric';
-export type VehicleSize = 'small' | 'medium' | 'large';
+export type VehicleSize = 'small' | 'medium' | 'large' | 'size4' | 'size5' | 'size6';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 /**
  * Bogie sprites under a vehicle: one style for every bogie, or one per body part. A list goes over
@@ -39,6 +44,9 @@ export type BogieStyle = string | Partial<Record<PartKind, string | string[]>>;
 export type Collector = 'shoe' | 'pantograph' | 'hv' | 'multi';
 
 export interface LocoDef {
+  /** spike: measured running gear and length in tiles */
+  gear?: Gear;
+  lengthTiles?: number;
   id: string;
   name: string;
   rarity: Rarity;
@@ -385,7 +393,7 @@ function clone<T>(v: T): T {
  * (`*_full.json`, every entry marked `supply: "full"`) appended to the plain tables.
  */
 export const DEFAULT_CONTENT: ContentBundle = {
-  locomotives: clone(locoJson) as unknown as LocoDef[],
+  locomotives: withGear(clone(locoJson) as unknown as LocoDef[]),
   wagons: clone(wagonJson) as unknown as WagonDef[],
   cargo: clone([...cargoJson, ...cargoFullJson]) as unknown as CargoDef[],
   stations: {
@@ -581,4 +589,16 @@ export const content: ContentBundle = finalize(buildContent());
 finalize(DEFAULT_CONTENT);
 export function contentIsCustom() {
   return readContentOverrides() !== null;
+}
+
+/** spike: each loco's measured running gear */
+function withGear(list: LocoDef[]): LocoDef[] {
+  const gears = gearJson as unknown as Record<string, Gear & { dbSize: number }>;
+  for (const d of list) {
+    const g = gears[d.id];
+    if (!g) continue;
+    d.gear = g;
+    d.lengthTiles = SPIKE_LENGTH[String(g.dbSize)];
+  }
+  return list;
 }

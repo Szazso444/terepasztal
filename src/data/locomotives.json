@@ -118,7 +118,10 @@
     "body": "steam_std",
     "paint": "black",
     "bogieStyle": {
-      "engine": ["leading", "mastodon"],
+      "engine": [
+        "leading",
+        "mastodon"
+      ],
       "tender": "tender_truck"
     },
     "speed": 1.25,
@@ -141,7 +144,10 @@
     "body": "steam_std",
     "paint": "iron",
     "bogieStyle": {
-      "engine": ["leading", "pacific"],
+      "engine": [
+        "leading",
+        "pacific"
+      ],
       "tender": "tender_truck"
     },
     "speed": 1.5,
@@ -164,7 +170,10 @@
     "body": "steam_std",
     "paint": "black",
     "bogieStyle": {
-      "engine": ["leading", "pacific"],
+      "engine": [
+        "leading",
+        "pacific"
+      ],
       "tender": "tender_truck"
     },
     "speed": 1.65,
@@ -187,8 +196,14 @@
     "body": "steam_std",
     "paint": "green",
     "bogieStyle": {
-      "engine": ["leading", "pacific"],
-      "tender": ["uk_tender_pair", "uk_tender_pair"]
+      "engine": [
+        "leading",
+        "pacific"
+      ],
+      "tender": [
+        "uk_tender_pair",
+        "uk_tender_pair"
+      ]
     },
     "speed": 1.75,
     "power": 120,
@@ -210,7 +225,10 @@
     "body": "steam_streamlined",
     "paint": "rust",
     "bogieStyle": {
-      "engine": ["leading", "northern"],
+      "engine": [
+        "leading",
+        "northern"
+      ],
       "tender": "tender_truck6"
     },
     "speed": 1.85,
@@ -233,8 +251,14 @@
     "body": "steam_streamlined",
     "paint": "blue",
     "bogieStyle": {
-      "engine": ["leading", "pacific"],
-      "tender": ["uk_tender_pair", "uk_tender_pair"]
+      "engine": [
+        "leading",
+        "pacific"
+      ],
+      "tender": [
+        "uk_tender_pair",
+        "uk_tender_pair"
+      ]
     },
     "speed": 2.3,
     "power": 130,
@@ -256,7 +280,10 @@
     "body": "steam_std",
     "paint": "black",
     "bogieStyle": {
-      "frame": ["bigboy_front", "bigboy_rear"]
+      "frame": [
+        "bigboy_front",
+        "bigboy_rear"
+      ]
     },
     "speed": 1.35,
     "power": 380,
@@ -447,7 +474,10 @@
     "body": "electric_crocodile",
     "paint": "brown",
     "bogieStyle": {
-      "engine": ["pony", "croc"],
+      "engine": [
+        "pony",
+        "croc"
+      ],
       "cradle": "none"
     },
     "speed": 1.3,
@@ -508,7 +538,10 @@
     "body": "electric_box",
     "paint": "green",
     "bogieStyle": {
-      "body": ["gg1_front", "gg1_rear"]
+      "body": [
+        "gg1_front",
+        "gg1_rear"
+      ]
     },
     "speed": 2.1,
     "power": 260,
@@ -550,8 +583,14 @@
     "body": "steam_std",
     "paint": "black",
     "bogieStyle": {
-      "engine": ["leading", "ten_wheeler"],
-      "tender": ["uk_tender_pair", "uk_tender_axle"]
+      "engine": [
+        "leading",
+        "ten_wheeler"
+      ],
+      "tender": [
+        "uk_tender_pair",
+        "uk_tender_axle"
+      ]
     },
     "speed": 1.5,
     "power": 125,
@@ -573,8 +612,14 @@
     "body": "steam_std",
     "paint": "black",
     "bogieStyle": {
-      "engine": ["pony", "decapod"],
-      "tender": ["uk_tender_pair", "uk_tender_axle"]
+      "engine": [
+        "pony",
+        "decapod"
+      ],
+      "tender": [
+        "uk_tender_pair",
+        "uk_tender_axle"
+      ]
     },
     "speed": 1.3,
     "power": 230,
@@ -597,7 +642,10 @@
     "body": "steam_garratt",
     "paint": "green",
     "bogieStyle": {
-      "engine": ["leading", "gmam"],
+      "engine": [
+        "leading",
+        "gmam"
+      ],
       "cradle": "none"
     },
     "speed": 1.2,
@@ -670,5 +718,124 @@
     "size": "small",
     "controlClass": "emd",
     "starter": true
+  },
+  {
+    "id": "bm50",
+    "name": "BM-50",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "body": "diesel_switcher",
+    "paint": "red",
+    "speed": 1,
+    "power": 70,
+    "weight": 90,
+    "crew": 1,
+    "fuelCap": 120,
+    "fuelPerTile": 0.078,
+    "size": "small",
+    "controlClass": "emd"
+  },
+  {
+    "id": "muki",
+    "name": "Muki",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "body": "diesel_switcher",
+    "paint": "green",
+    "speed": 1,
+    "power": 70,
+    "weight": 90,
+    "crew": 1,
+    "fuelCap": 120,
+    "fuelPerTile": 0.078,
+    "size": "small",
+    "controlClass": "emd"
+  },
+  {
+    "id": "c50",
+    "name": "C-50",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "body": "diesel_switcher",
+    "paint": "red",
+    "speed": 1,
+    "power": 70,
+    "weight": 90,
+    "crew": 1,
+    "fuelCap": 120,
+    "fuelPerTile": 0.078,
+    "size": "small",
+    "controlClass": "emd"
+  },
+  {
+    "id": "mav490",
+    "name": "MÁV 490",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "body": "steam_std",
+    "paint": "black",
+    "speed": 1,
+    "power": 70,
+    "weight": 90,
+    "crew": 1,
+    "fuelCap": 120,
+    "fuelPerTile": 0.078,
+    "size": "small",
+    "controlClass": "emd"
+  },
+  {
+    "id": "mk45",
+    "name": "MÁV Mk45",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "body": "diesel_hood",
+    "paint": "red",
+    "speed": 1,
+    "power": 70,
+    "weight": 90,
+    "crew": 1,
+    "fuelCap": 120,
+    "fuelPerTile": 0.078,
+    "size": "small",
+    "controlClass": "emd"
+  },
+  {
+    "id": "rezet",
+    "name": "Rezét",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "body": "steam_std",
+    "paint": "green",
+    "speed": 1,
+    "power": 70,
+    "weight": 90,
+    "crew": 1,
+    "fuelCap": 120,
+    "fuelPerTile": 0.078,
+    "size": "small",
+    "controlClass": "emd"
+  },
+  {
+    "id": "koutetsujou",
+    "name": "Koutetsujou",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "body": "electric_box",
+    "paint": "iron",
+    "speed": 1,
+    "power": 70,
+    "weight": 90,
+    "crew": 1,
+    "fuelCap": 120,
+    "fuelPerTile": 0.078,
+    "size": "small",
+    "controlClass": "emd"
   }
 ]

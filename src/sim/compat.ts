@@ -95,10 +95,10 @@ export function verdictOf(def: LocoDef | WagonDef, cls: TrackClass): Verdict {
  * reason when not.
  */
 export function vehicleAccess(def: LocoDef | WagonDef, cls: TrackClass): string | null {
-  const size = def.size ?? 'small';
-  if (size === 'large' && cls === 'regular') return STR.compat.largeBarred;
-  const v = verdictOf(def, cls);
-  return v.ok ? null : v.reason;
+  // spike: every train may run anywhere, so every length can be seen on both curves
+  void def;
+  void cls;
+  return null;
 }
 
 export interface ConsistAccess {

@@ -276,6 +276,10 @@ export class TrainRenderer {
               const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
               const bs = c.bogies[bi++];
               if (!bs) return;
+              if (b.hidden) {
+                bs.visible = false;
+                return;
+              }
               // bogies are posed in track order; a reversed vehicle or a mirrored segment meets
               // them back to front, and its styled trucks (cylinders ahead) must face its own front
               const back = t.reversed !== seg.mirror;

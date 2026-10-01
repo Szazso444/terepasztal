@@ -1081,6 +1081,19 @@ export function generateRollingAtlas(): AtlasImage {
         );
       }
   }
+  // spike: geared locos at their own lengths, under their own frame names
+  for (const d of content.locomotives) {
+    if (!d.gear) continue;
+    const spec = vehicleSpec(d);
+    const parts = new Map<string, SegmentSpec>();
+    for (const s of spec.segments) if (!parts.has(s.part)) parts.set(s.part, s);
+    for (const [part, seg] of parts)
+      for (const fi of facings) {
+        const f = new Frame(seg.L, facingAngle(fi), 100 + fi);
+        locoDrawer(d.body, part)(f, seg.L, paintOf(d.paint));
+        ab.add(`rolling/loco_${d.id}_${part}_f${fi}`, f.finish().toImageData(), f.ox, f.oy);
+      }
+  }
   return ab.build(4096);
 }
 
