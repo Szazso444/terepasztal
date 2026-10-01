@@ -14,7 +14,18 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
+/**
+ * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
+ * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
+ */
+export function convertOneTileRegular(track: SaveGame['track']): SaveGame['track'] {
+  return track.map(([x, y, kind, rot, cls, cls2]) =>
+    (kind === 'curve' || kind === 'switch') && (cls ?? 'regular') === 'regular'
+      ? [x, y, kind, rot, 'narrow', cls2]
+      : [x, y, kind, rot, cls, cls2],
+  );
+}
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -266,6 +277,11 @@ export const MIGRATIONS: Migration[] = [
         return [x, y, kind, rot, cls, cls2];
       });
     },
+  },
+  {
+    from: 12,
+    note: 'regular curves and switches were one tile: they became narrow gauge, and lines meeting them need re-laying with 2×2 pieces',
+    run: (j) => (j.track = convertOneTileRegular(j.track)),
   },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */

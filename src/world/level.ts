@@ -20,6 +20,8 @@ export interface LevelData {
   /** base64 biome ids (missing: plains everywhere) */
   biome?: string;
   track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
+  /** 2: regular curves and switches are 2×2 (missing: an older level with one-tile ones) */
+  trackFormat?: 2;
   stations: { defId: string; x: number; y: number; level: number; name: string }[];
   decor: [number, number, string, number][];
   /** processing buildings [x, y, id] */

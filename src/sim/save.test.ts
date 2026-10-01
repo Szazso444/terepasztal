@@ -10,6 +10,7 @@ import {
   migrateSettings,
   contractPolicyFor,
   uniformContractPolicy,
+  convertOneTileRegular,
   CONTRACT_RARITIES,
   type SaveGame,
   type Settings,
@@ -319,5 +320,41 @@ describe('settings', () => {
   it('ships defaults that accept everything', () => {
     for (const r of CONTRACT_RARITIES)
       expect(contractPolicyFor(DEFAULT_SETTINGS, r)).toBe('accept');
+  });
+});
+
+describe('v12 to v13', () => {
+  it('migrates 1x1 regular curves and switches to narrow', () => {
+    const j = migrate({
+      ...oldestSave(),
+      version: 12,
+      track: [
+        [4, 8, 'curve', 1, 'regular'],
+        [6, 8, 'switch', 5],
+        [8, 8, 'straight', 1, 'regular'],
+        [10, 8, 'curve', 0, 'high_speed'],
+        [12, 8, 'crossing', 0, 'regular', 'high_speed'],
+      ],
+    });
+    expect(j.version).toBe(13);
+    expect(j.track).toEqual([
+      [4, 8, 'curve', 1, 'narrow', undefined],
+      [6, 8, 'switch', 5, 'narrow', undefined],
+      [8, 8, 'straight', 1, 'regular', undefined],
+      [10, 8, 'curve', 0, 'high_speed', undefined],
+      [12, 8, 'crossing', 0, 'regular', 'high_speed'],
+    ]);
+  });
+
+  it('converts a level drawn before 2x2 regular curves the same way', () => {
+    expect(
+      convertOneTileRegular([
+        [1, 1, 'curve', 2, 'regular'],
+        [2, 1, 'straight', 0],
+      ]),
+    ).toEqual([
+      [1, 1, 'curve', 2, 'narrow', undefined],
+      [2, 1, 'straight', 0, undefined, undefined],
+    ]);
   });
 });

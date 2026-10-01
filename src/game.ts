@@ -95,6 +95,7 @@ import {
   contractPolicyFor,
   uniformContractPolicy,
   CONTRACT_RARITIES,
+  convertOneTileRegular,
   type SaveGame,
   type Settings,
 } from './sim/save';
@@ -433,7 +434,8 @@ export class Game {
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    for (const [x, y, kind, rot, cls, cls2] of level.track) {
+    const track = level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track);
+    for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
       for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
         this.onTrackChanged(t.x, t.y);

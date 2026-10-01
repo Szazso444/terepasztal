@@ -96,6 +96,7 @@ export class Editor {
     l.terrain = packBytes(this.map.terrain);
     l.variant = packBytes(this.map.variant);
     l.biome = packBytes(this.map.biome);
+    l.trackFormat = 2;
     l.track = [...this.builder.track.anchors()].map((t) => [
       t.x,
       t.y,
