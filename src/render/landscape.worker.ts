@@ -122,7 +122,7 @@ self.onmessage = async (event: MessageEvent) => {
             wx,
             wy,
             part,
-            [0, 1, 3, 4, 7, 9].includes(material) ? steep : undefined,
+            EXPOSED[material] ? steep : undefined,
             // Pilot: the biome's own ground between the stones (desert sand, taiga moss...).
             relief.style.biomeTops && map.biome[tileIndex] !== Biome.Ocean
               ? map.biome[tileIndex]
@@ -260,6 +260,8 @@ function halve(pixels: Uint8ClampedArray, width: number, height: number) {
       }
   return out;
 }
+/** Materials whose rock exposure follows the slope (materials 0, 1, 3, 4, 7 and 9), by index. */
+const EXPOSED = [1, 1, 0, 1, 1, 0, 0, 1, 0, 1];
 const gradient = [0, 0];
 /** Surface slope in world pixels per tile at (x, y): the analytic derivative of its corners. */
 function faceGradient(x: number, y: number) {

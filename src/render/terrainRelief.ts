@@ -326,30 +326,38 @@ export function reliefHeight(
   return base + crown * 16 * u * (1 - u) * v * (1 - v);
 }
 
+function levelOf(tiles: Uint8Array, w: number, h: number, tx: number, ty: number) {
+  return tx < 0 || ty < 0 || tx >= w || ty >= h ? 0 : tiles[ty * w + tx];
+}
 const smoothstep = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 /** Flat at each tile's level; between tile centres, a rounded bank only near the shared edge. */
 function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
+  // The painter calls this dozens of times per pixel, so it allocates nothing.
   const tiles = relief.tiles!,
+    w = map.w,
+    h = map.h,
     bank = relief.style.bank ?? 0.5,
     fx = Math.floor(x),
     fy = Math.floor(y),
-    level = (tx: number, ty: number) =>
-      tx < 0 || ty < 0 || tx >= map.w || ty >= map.h ? 0 : tiles[ty * map.w + tx],
+    inside = fx >= 0 && fy >= 0 && fx + 1 < w && fy + 1 < h,
+    k = fy * w + fx,
+    a = inside ? tiles[k] : levelOf(tiles, w, h, fx, fy),
+    b = inside ? tiles[k + 1] : levelOf(tiles, w, h, fx + 1, fy),
+    c = inside ? tiles[k + w] : levelOf(tiles, w, h, fx, fy + 1),
+    d = inside ? tiles[k + w + 1] : levelOf(tiles, w, h, fx + 1, fy + 1),
     su = smoothstep((x - fx - 0.5) / bank + 0.5),
-    sv = smoothstep((y - fy - 0.5) / bank + 0.5);
-  const a = level(fx, fy),
-    b = level(fx + 1, fy),
-    c = level(fx, fy + 1),
-    d = level(fx + 1, fy + 1),
+    sv = smoothstep((y - fy - 0.5) / bank + 0.5),
     step = relief.style.step,
     terrace =
       step * ((a + (b - a) * su) * (1 - sv) + (c + (d - c) * su) * sv) +
       (relief.peaks?.size ? peakRise(map, relief, x, y) : 0);
   // A straight rail rides its own bed, following the line's rail profile (world/railProfile.ts)
   // so neighbouring track tiles meet exactly. Outside the bed the hill keeps its terrace shape.
+  const rails = relief.rails;
+  if (!rails?.size) return terrace;
   const tx = Math.round(x),
     ty = Math.round(y),
-    tileRail = relief.rails?.get(ty * map.w + tx);
+    tileRail = rails.get(ty * w + tx);
   if (!tileRail) return terrace;
   const rail = bedFor(tileRail, x, y);
   const [along, across] = rail.axis === 'x' ? [x, y - ty] : [y, x - tx],
@@ -383,7 +391,16 @@ export function surfaceAlongRay(
   by: number,
   iterations: number,
 ) {
-  const above = (z: number) => reliefHeight(map, relief, bx + z / 32, by + z / 32) > z;
+  const caps = relief.tiles && !relief.peaks?.size ? terraceCaps(map, relief) : null,
+    w = map.w;
+  const above = (z: number) => {
+    const x = bx + z / 32,
+      y = by + z / 32;
+    // Below its cell's highest point the surface cannot rise above z; skip the exact height.
+    if (caps && x >= 0 && y >= 0 && x < w - 1 && y < map.h - 1)
+      if (caps[Math.floor(y) * w + Math.floor(x)] <= z) return false;
+    return reliefHeight(map, relief, x, y) > z;
+  };
   const ceiling = Math.min(RELIEF_MAX, relief.top);
   let lo = 0,
     hi = ceiling;
@@ -400,6 +417,33 @@ export function surfaceAlongRay(
     else hi = z;
   }
   return (lo + hi) / 2;
+}
+
+const capCache = new WeakMap<TerrainRelief, Float32Array>();
+/**
+ * Terraces: for each cell between tile centres (fx, fy)..(fx+1, fy+1), a height the surface never
+ * exceeds there: the highest of its four tiles and of any rail bed riding them, plus a margin that
+ * covers rounding. Built once per relief.
+ */
+function terraceCaps(map: LandscapeMap, relief: TerrainRelief) {
+  let caps = capCache.get(relief);
+  if (caps) return caps;
+  const { w, h } = map,
+    tiles = relief.tiles!,
+    step = relief.style.step,
+    top = new Float32Array(w * h);
+  for (let k = 0; k < w * h; k++) top[k] = tiles[k];
+  for (const [k, bed] of relief.rails ?? [])
+    for (const b of bed.cross ? [bed, bed.cross] : [bed])
+      for (const s of b.spans) top[k] = Math.max(top[k], s.a, s.b);
+  caps = new Float32Array(w * h);
+  for (let y = 0; y < h - 1; y++)
+    for (let x = 0; x < w - 1; x++) {
+      const k = y * w + x;
+      caps[k] = Math.max(top[k], top[k + 1], top[k + w], top[k + w + 1]) * step + 1e-3;
+    }
+  capCache.set(relief, caps);
+  return caps;
 }
 
 /** Corner levels of tile (x, y), lowest and highest. */

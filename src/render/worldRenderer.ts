@@ -593,7 +593,8 @@ export class WorldRenderer {
       for (let x = 0; x < this.map.w; x++) {
         if (!this.isBuilt(x, y)) continue;
         const k = idx(this.map, x, y),
-          show = this.landscape.active && this.landscape.summit(x, y);
+          show =
+            this.landscape.active && this.landscape.isPainted(x, y) && this.landscape.summit(x, y);
         let s = this.summitSprites.get(k);
         if (!show) {
           s?.destroy();

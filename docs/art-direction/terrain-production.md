@@ -24,9 +24,18 @@ foundation features following the actual model silhouette.
 - Small stones are baked into the ground image. Grass strokes are cached vector
   geometry within each terrain chunk so they remain legible at high zoom without
   multiplying the size of every terrain texture. Neither creates simulation props.
-- `Landscape` paints 8×8 chunks in a worker, caches them and culls them. Changes
-  invalidate nearby chunks; seasonal changes repaint revealed chunks. Stale worker
-  results are discarded. City paving is painted onto the same relief surface.
+- `Landscape` paints 8×8 chunks in a pool of workers (one per core less one, at
+  most six), caches them and culls them. The chunks in the camera's view paint
+  first, nearest the centre first, and each chunk shows as soon as it is painted;
+  the native tiles cover only the chunks still waiting. Paints are deterministic,
+  so the pool produces the same pixels as one worker. Changes invalidate nearby
+  chunks; seasonal changes repaint revealed chunks. Stale worker results are
+  discarded. City paving is painted onto the same relief surface.
+- The painter's ray march skips heights above each cell's highest point
+  (`terraceCaps`), and lands on exactly the height the full march finds.
+  `scratchpad/perf/` times a 128 × 128 world (`run.mjs`, in the browser) and hashes
+  every painted chunk (`paint.mjs`, under Node), so a painter change can be shown
+  to keep its pixels.
 - Close views (above 1.4 screen pixels per world pixel, device pixel ratio included)
   add double-resolution copies of the 48 chunks nearest the view centre, about
   2.5 MB each. The base cache stays underneath and is shown again on zooming out.

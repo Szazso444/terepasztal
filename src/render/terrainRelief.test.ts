@@ -6,6 +6,7 @@ import {
   reliefHeight,
   reliefCorners,
   reliefTileAtWorld,
+  surfaceAlongRay,
   hillFamily,
   groundAllows,
   RELIEF_MAX,
@@ -251,6 +252,36 @@ describe('connected illustrated terrain', () => {
       expect(rise).toBeLessThanOrEqual(step * 1.001);
     }
     expect(reliefHeight(m, r, 16, y)).toBeGreaterThan(0);
+  });
+  it('finds the same ray hit whether or not it skips cells the surface cannot reach', () => {
+    // The painter's ray march skips heights above each cell's highest point; the plain march
+    // (every step measured) must land on exactly the same height, rails included.
+    const m = fixture(),
+      y = 16,
+      natural = buildRelief(m, new Set()),
+      { spans } = lineSpans(Array.from({ length: 32 }, (_, x) => natural.tiles![y * 32 + x])),
+      rails = new Map<number, RailBed>();
+    for (let x = 0; x < 32; x++) rails.set(y * 32 + x, { axis: 'x', spans, flat: false });
+    for (const r of [natural, buildRelief(m, new Set(), undefined, rails)]) {
+      const plain = (bx: number, by: number) => {
+        const above = (z: number) => reliefHeight(m, r, bx + z / 32, by + z / 32) > z,
+          ceiling = Math.min(RELIEF_MAX, r.top);
+        let z = ceiling - 3;
+        while (z > 0 && !above(z)) z -= 3;
+        if (z <= 0) return 0;
+        let lo = z,
+          hi = Math.min(ceiling, z + 3);
+        for (let n = 0; n < 10; n++) {
+          const mid = (lo + hi) / 2;
+          if (above(mid)) lo = mid;
+          else hi = mid;
+        }
+        return (lo + hi) / 2;
+      };
+      for (let by = -1; by < 32; by += 0.137)
+        for (let bx = -1; bx < 32; bx += 0.211)
+          expect(surfaceAlongRay(m, r, bx, by, 10)).toBe(plain(bx, by));
+    }
   });
   it('keeps level pieces and structures on terrace tiles no bank reaches into', () => {
     const m = fixture(),
