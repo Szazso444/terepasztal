@@ -57,7 +57,7 @@ that opens towards the block and is joinable (same class or a transition), and t
 connected track; otherwise `turn`. Re-evaluated when the switch is placed and whenever a piece next
 to a switch block is placed or removed. The main line's continuation does not matter.
 
-- Stored on the piece (`form`) and saved; `unitDef` is keyed by form.
+- Kept on the piece (`form`) and recomputed from the track after a save or level loads, so it is never saved and never goes stale; `unitDef` is keyed by form.
 - The S-lane runs through the block's centre corner; route clipping takes one axis first there, so
   the graph stays edge to edge.
 - Trains whose paths used the changed lane re-path as on any track change.
@@ -100,7 +100,7 @@ new size key used only by narrow stock until the size ladder lands.
 
 - `SAVE_VERSION` 13: every regular `curve` and `switch` without a multi-tile unit (1×1) becomes
   `narrow`. Lines get gauge breaks to redesign; trains on converted pieces report no route.
-- Narrow pieces, switch forms and narrow depots save and load.
+- Narrow pieces and narrow depots save and load; switch forms are recomputed on load.
 
 ## 8. Proof
 
