@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Dir, opposite, DIR_DX, DIR_DY } from '../engine/iso';
-import { unitDef, unitIconPaths } from './trackGeom';
+import { unitDef, unitIconPaths, unitRailPaths } from './trackGeom';
 import {
   TrackGraph,
   TRACK_KINDS,
@@ -414,7 +414,7 @@ describe('toolbar icon of a multi-tile piece', () => {
       for (let rot = 0; rot < rotationCount(kind); rot++) {
         const def = unitDef(kind, 2, rot);
         const paths = unitIconPaths(kind, 2, rot);
-        expect(paths).toHaveLength(def.members.reduce((a, m) => a + m.links.length, 0));
+        expect(paths).toHaveLength(def.routes.length);
         const pts = paths.flat();
         for (const p of pts) {
           expect(Math.abs(p.x)).toBeLessThanOrEqual(0.5 + 1e-9);
@@ -424,6 +424,39 @@ describe('toolbar icon of a multi-tile piece', () => {
         const span = (v: number[]) => Math.max(...v) - Math.min(...v);
         expect(span(pts.map((p) => p.x))).toBeGreaterThan(0.7);
         expect(span(pts.map((p) => p.y))).toBeGreaterThan(0.7);
+      }
+  });
+});
+
+describe('rails of a multi-tile piece', () => {
+  it('run as one unbroken line per road, with no stub where tiles meet', () => {
+    for (const [kind, form] of [
+      ['curve', 'turn'],
+      ['switch', 'turn'],
+      ['switch', 'parallel'],
+    ] as const)
+      for (let rot = 0; rot < rotationCount(kind); rot++) {
+        const def = unitDef(kind, 2, rot, form);
+        const paths = unitRailPaths(kind, 2, rot, form);
+        expect(paths).toHaveLength(def.routes.length);
+        paths.forEach((pts, k) => {
+          let len = 0;
+          for (let i = 1; i < pts.length; i++) {
+            const dx = pts[i].x - pts[i - 1].x,
+              dy = pts[i].y - pts[i - 1].y;
+            const seg = Math.hypot(dx, dy);
+            // a zero-length step has no direction: the drawing would turn its sleepers anywhere
+            expect(seg).toBeGreaterThan(1e-3);
+            len += seg;
+            if (i > 1) {
+              const ex = pts[i - 1].x - pts[i - 2].x,
+                ey = pts[i - 1].y - pts[i - 2].y;
+              const turn = Math.abs(Math.atan2(ex * dy - ey * dx, ex * dx + ey * dy));
+              expect(turn).toBeLessThan(0.05);
+            }
+          }
+          expect(len).toBeCloseTo(def.routes[k].length, 3);
+        });
       }
   });
 });

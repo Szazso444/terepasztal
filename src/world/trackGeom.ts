@@ -78,8 +78,8 @@ export interface UnitMember {
 export interface UnitDef {
   n: number;
   members: UnitMember[];
-  /** member index sequence of every route, entry to exit */
-  routes: { members: number[]; length: number; diverging: boolean }[];
+  /** every route, entry to exit: its member index sequence and its whole line (block coordinates) */
+  routes: { members: number[]; length: number; diverging: boolean; pts: Vec2[] }[];
 }
 
 const unitCache = new Map<string, UnitDef>();
@@ -164,7 +164,7 @@ export function unitDef(
       seq.push(mi);
       length += len;
     }
-    def.routes.push({ members: seq, length, diverging: r.diverging });
+    def.routes.push({ members: seq, length, diverging: r.diverging, pts: r.pts });
   });
   unitCache.set(key, def);
   return def;
@@ -261,7 +261,7 @@ function edgeOf(p: Vec2, tx: number, ty: number): Dir {
 }
 
 /**
- * A whole multi-tile piece scaled into one tile, for its toolbar icon: every member's rails,
+ * A whole multi-tile piece scaled into one tile, for its toolbar icon: every road's rails,
  * shrunk by the piece's size and centred on the tile.
  */
 export function unitIconPaths(
@@ -271,9 +271,21 @@ export function unitIconPaths(
   form: SwitchForm = 'turn',
 ): Vec2[][] {
   const mid = (n - 1) / 2;
-  return unitDef(kind, n, rot, form).members.flatMap((m) =>
-    m.links.map((l) =>
-      l.pts.map((q) => ({ x: (q.x + m.dx - mid) / n, y: (q.y + m.dy - mid) / n })),
-    ),
+  return unitRailPaths(kind, n, rot, form).map((pts) =>
+    pts.map((q) => ({ x: (q.x - mid) / n, y: (q.y - mid) / n })),
   );
+}
+
+/**
+ * The rails of a multi-tile piece as the drawing takes them: one unbroken line per road, in block
+ * coordinates (the anchor tile's centre is the origin). The per-tile links repeat points at every
+ * tile edge and hold a zero-length step where the S lane crosses the block's centre corner.
+ */
+export function unitRailPaths(
+  kind: 'curve' | 'switch',
+  n: number,
+  rot: number,
+  form: SwitchForm = 'turn',
+): Vec2[][] {
+  return unitDef(kind, n, rot, form).routes.map((r) => r.pts);
 }

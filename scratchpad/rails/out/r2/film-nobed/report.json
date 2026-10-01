@@ -1,0 +1,224 @@
+{
+ "errors": [],
+ "cells": [],
+ "snap": [],
+ "films": {
+  "mk48": [
+   [
+    "black_five:moving:0.5",
+    "f7:moving:0.5",
+    "mk48:moving:0.5",
+    "rocket:moving:0.5",
+    "class08:moving:0.5"
+   ],
+   [
+    "black_five:moving:4.3",
+    "f7:moving:4.2",
+    "mk48:moving:3.0",
+    "rocket:moving:2.4",
+    "class08:moving:3.2"
+   ],
+   [
+    "black_five:moving:9.2",
+    "f7:moving:9.4",
+    "mk48:moving:5.7",
+    "rocket:moving:5.0",
+    "class08:moving:6.2"
+   ]
+  ]
+ },
+ "info": {
+  "HAS_FORMS": true,
+  "HAS_NARROW": true,
+  "L": {
+   "X0": 8,
+   "X1": 52,
+   "Y0": 42,
+   "Y1": 66,
+   "TRA": 20,
+   "TRB": 36,
+   "XC": 28
+  },
+  "P": {
+   "y": 42,
+   "ax": 16,
+   "bx": 28,
+   "A": {
+    "rot": 7,
+    "mainDy": 0
+   },
+   "B": {
+    "rot": 1,
+    "mainDy": 0
+   },
+   "exitA": {
+    "x": 18,
+    "y": 43,
+    "out": 1
+   },
+   "exitB": {
+    "x": 27,
+    "y": 43,
+    "out": 3
+   },
+   "row": 43
+  },
+  "N": {
+   "X0": 64,
+   "X1": 84,
+   "Y0": 52,
+   "Y1": 66,
+   "sw": 70,
+   "xc": 77,
+   "depot": {
+    "x": 69,
+    "y": 66,
+    "id": 1,
+    "def": {
+     "id": "narrow_depot",
+     "name": "Narrow Depot",
+     "flavor": "Narrow-gauge engine shed. One track through. Builds and refuels narrow trains, which turn on 1×1 curves: for tight spaces, and the mines to come.",
+     "cost": {},
+     "tier": 0,
+     "produces": [],
+     "accepts": [
+      "water",
+      "wheat",
+      "stone",
+      "wood",
+      "coal",
+      "oil",
+      "iron",
+      "iron_ore",
+      "crude",
+      "diesel",
+      "sand",
+      "copper_ore",
+      "wire",
+      "food"
+     ],
+     "art": "depot_narrow",
+     "long": true,
+     "gauge": "narrow",
+     "pool": true,
+     "depot": true,
+     "fuel": true,
+     "water": true,
+     "contracts": false
+    },
+    "name": "Narrow Depot",
+    "level": 1,
+    "storage": {},
+    "occupants": {},
+    "market": {},
+    "loadBoost": 1,
+    "productionMul": 1,
+    "waterSupply": false,
+    "passengerPopulation": 0,
+    "fuelSupply": false,
+    "rot": 0,
+    "terrainFactor": 1
+   },
+   "quarry": {
+    "x": 80,
+    "y": 51,
+    "id": 2,
+    "def": {
+     "id": "quarry",
+     "name": "Quarry",
+     "flavor": "Digs stone for building and for iron.",
+     "cost": {
+      "wood": 40,
+      "stone": 5
+     },
+     "tier": 0,
+     "produces": [
+      {
+       "cargo": "stone",
+       "level": 1
+      }
+     ],
+     "accepts": [],
+     "art": "quarry",
+     "terrain": "rock"
+    },
+    "name": "Quarry",
+    "level": 1,
+    "storage": {},
+    "occupants": {},
+    "market": {},
+    "loadBoost": 1,
+    "productionMul": 1,
+    "waterSupply": false,
+    "passengerPopulation": 0,
+    "fuelSupply": false,
+    "rot": 0,
+    "terrainFactor": 0.15
+   },
+   "warehouse": {
+    "x": 65,
+    "y": 55,
+    "id": 3,
+    "def": {
+     "id": "warehouse",
+     "name": "Warehouse",
+     "flavor": "Local store: holds 1000 units per level of anything trains bring. Trains take goods out again; only a Depot feeds the stockpile.",
+     "cost": {
+      "wood": 60,
+      "stone": 30
+     },
+     "tier": 0,
+     "produces": [],
+     "accepts": [
+      "water",
+      "wheat",
+      "stone",
+      "wood",
+      "coal",
+      "oil",
+      "iron",
+      "iron_ore",
+      "crude",
+      "diesel",
+      "sand",
+      "copper_ore",
+      "wire",
+      "food"
+     ],
+     "art": "warehouse",
+     "stockpile": true,
+     "fuel": true,
+     "water": true,
+     "contracts": false
+    },
+    "name": "Warehouse",
+    "level": 1,
+    "storage": {},
+    "occupants": {},
+    "market": {},
+    "loadBoost": 1,
+    "productionMul": 1,
+    "waterSupply": false,
+    "passengerPopulation": 0,
+    "fuelSupply": false,
+    "rot": 0,
+    "terrainFactor": 1
+   }
+  },
+  "S": {
+   "x": 62,
+   "y": 44,
+   "rot": 1
+  },
+  "areas": [
+   "loop",
+   "hs",
+   "passing",
+   "snap",
+   "crossing",
+   "depot",
+   "depotTurned",
+   "narrow"
+  ]
+ }
+}
