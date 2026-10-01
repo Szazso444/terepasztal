@@ -205,7 +205,7 @@ export class DepotScreen implements Screen {
         this.itemRow(
           `${d.name} Lv${it.level}`,
           d.rarity,
-          `${STR.roster.type[d.type]} · ${STR.roster.size[d.size ?? 'small']} · ${STR.depot.speed} ${(d.speed * m).toFixed(1)} · ${STR.depot.power} ${Math.round(d.power * m)} t · ${STR.roster.crew} ${d.crew}`,
+          `${STR.roster.type[d.type]} · ${STR.roster.size[d.size ?? 'small']} · ${STR.depot.speed} ${(d.speed * m).toFixed(1)} · ${STR.depot.power} ${Math.round(d.power * m)} t · ${STR.roster.crew} ${d.crew}${d.retired ? ` · ${STR.roster.retired}` : ''}`,
           sel,
           () => {
             if (sel) this.locoUids = this.locoUids.filter((u) => u !== it.uid);
@@ -244,7 +244,7 @@ export class DepotScreen implements Screen {
         this.itemRow(
           `${d.name} Lv${it.level}`,
           d.rarity,
-          `${STR.roster.carries[d.carries]} · ${STR.roster.size[d.size ?? 'small']} · ${Math.round(d.capacity * levelMul(it.level))}u · ${d.weight}t`,
+          `${STR.roster.carries[d.carries]} · ${STR.roster.size[d.size ?? 'small']} · ${Math.round(d.capacity * levelMul(it.level))}u · ${d.weight}t${d.retired ? ` · ${STR.roster.retired}` : ''}`,
           sel,
           () => {
             if (sel) this.wagonUids = this.wagonUids.filter((u) => u !== it.uid);

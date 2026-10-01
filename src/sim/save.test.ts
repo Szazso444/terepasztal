@@ -166,7 +166,7 @@ describe('v9 to v10', () => {
     });
     const crafting = j.crafting as { recipes: string[]; stats: Record<string, number> };
     // version 13 adds its new starter models and their recipes on top
-    const later = ['john_bull', 'mine_tub', 'narrow_tank', 'narrow_box', 'narrow_coach'];
+    const later = ['mine_tub', 'narrow_tank', 'narrow_box', 'narrow_coach'];
     expect(crafting.recipes.filter((r) => !later.includes(r)).sort()).toEqual([
       'flying_scotsman',
       'rocket',
@@ -369,7 +369,8 @@ describe('v12 to v13', () => {
     });
     const items = (j.inventory as { items: { uid: number; defId: string }[] }).items;
     const count = (id: string) => items.filter((i) => i.defId === id).length;
-    expect(count('john_bull')).toBe(1);
+    // the John Bull this step once gave away is retired: no save is handed one any more
+    expect(count('john_bull')).toBe(0);
     for (const id of ['narrow_tank', 'narrow_box', 'narrow_coach'])
       expect(count(id), id).toBeGreaterThan(0);
     // already owned: left as it is
