@@ -3,13 +3,14 @@
 Two routes, picked per asset by `route` in `assets.csv`:
 - `3d` (default): photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, tile fit, 2:1 renders) ->
   sprites + atlas -> the game's atlas groups.
-- `video`: a turntable video of the vehicle -> its drawn facings in the video's own painted look -> the same atlas
-  groups (see Video route). Lives in `tools/asset-pipeline/` of the terepasztal repo; the root `CLAUDE.md` still applies.
+- `video`: the image -> a ComfyUI turntable video (orbit stage) -> its drawn facings in the video's own painted look
+  -> the same atlas groups (see Video route). Lives in `tools/asset-pipeline/` of the terepasztal repo; the root `CLAUDE.md` still applies.
 
 ## Run
 - `python run.py` : all assets in `assets.csv`, stages comfy -> blender -> post -> game. Stops at the first error, exit code 1.
 - `python run.py --only id1,id2 --stages blender,post,game --force` : redo selected stages. Stages are
-  `comfy,blender,post` (route 3d), `video` (route video) and `game`; each asset runs only its own route's.
+  `comfy,blender,post` (route 3d), `orbit,video` (route video) and `game`; each asset runs only its own route's.
+  `--images DIR` is where the route-video images live (`orbit.images`); their `image` column is relative to it.
 - Finished stages are skipped on rerun (raw GLB / meta JSON exist) unless `--force`.
 - Requirements: Python 3.11+, `pip install pillow numpy`, Blender 4.2+ (tested 5.0), ComfyUI Desktop running with the API
   workflow, Node (the game stage runs `tools/pack-atlas.mjs`). The video route needs `opencv-python-headless scipy`
@@ -29,6 +30,8 @@ Two routes, picked per asset by `route` in `assets.csv`:
 | `postprocess.py` | premultiplied box downsample, optional hard alpha / palette, atlas + JSON, preview sheet |
 | `game_rules.py` | the game's facings, sizes, body plans, `DRAWN_WIDTH` and atlas groups; `game_rules.test.mjs` holds it to `src/sim/body.ts` |
 | `export_game.py` | game stage: sprites -> `art-src/<group>/` frames + anchors, then `tools/pack-atlas.mjs` -> `public/assets/<group>.png\|json` |
+| `workflows/minimax_h3_360orbit_api.json` | the orbit stage's ComfyUI workflow (MiniMax H3, image -> 360-degree video); node ids in `[orbit.nodes]` |
+| `orbit_prompt.txt` | the orbit prompt template: one steady turn, fixed camera about 30 degrees up, flat magenta background (ASTRA.md's camera rules) |
 | `video_stage.py` | video stage: turntable video -> heading of every frame -> drawn facings cut out, scaled and anchored -> sprites + atlas |
 | `video_fixture.py` | a synthetic turntable video with known headings; `video_stage.test.mjs` holds the stage to the game's sprite invariants on it |
 
@@ -86,6 +89,11 @@ Outputs under `assets_out/`: `videos/<id>.mp4` (the video route's input), `model
   and height is compressed by footprint factor ^ `sized_height_exponent` so a crushed footprint does not stand as a tower.
 
 ## Video route
+The orbit stage lays the row's image on flat magenta, sends it with `orbit_prompt.txt` (the loco's name from `src/data`)
+through `[orbit] workflow`, saves `assets_out/videos/<id>.mp4` (skipped when it exists, unless `--force`) and runs the
+video stage's checks on it at once, so a bad video shows up in the summary before any sprite is built.
+Machine-specific model names go in `[orbit.set]`.
+
 `route = video` turns `assets_out/videos/<id>.mp4` (flat background, camera about 30 degrees above, the vehicle turning
 at least once, its first frame the input image with the nose lower right) into the vehicle's drawn facings. Every
 pixel comes from the video; settings are `[video]` in `pipeline.toml`.

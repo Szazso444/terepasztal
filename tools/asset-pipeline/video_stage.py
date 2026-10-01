@@ -407,9 +407,9 @@ def screen_heading(f, grid):
     return (v / np.linalg.norm(v)).round(4).tolist()
 
 
-def process_asset(a, video_path, grid, vcfg, dirs, log=print):
-    """Video -> sprites/<id>/<id>_body_d<i>.png, atlas/<id>.png|json (the post stage's format, so the game
-    stage exports it unchanged) and previews/<id>.png. Returns the atlas info."""
+def analyse(a, video_path, grid, vcfg, log=print):
+    """Everything up to the sprites: silhouettes, box model, scale, the turn, each drawn facing's frame and the
+    video checks. The orbit stage runs this alone to vet a fresh video. Returns the state the build needs."""
     aid = a["id"]
     if a["category"] != "vehicle":
         raise VideoError("the video route is for vehicles")
@@ -446,14 +446,27 @@ def process_asset(a, video_path, grid, vcfg, dirs, log=print):
     sc = scores(crops, sils, s, vcfg["mirror"])
     turn = fit_turn(sc[:, 0], int(vcfg["max_step"]), float(vcfg["jump_penalty"]))
     offset = facing_offset(turn["h0"], int(vcfg["start_facing"]))
-    log(f"[video] {aid}: {turn['turns']:.2f} turns ({'+' if turn['direction'] > 0 else '-'}), mean IoU along the turn "
-        f"{turn['mean_iou']:.3f}, first frame at model facing {turn['h0']:.0f}" + (f"; the side view showed the nose on the left, facings "
-                                                          f"turned by {offset}" if offset else ""))
-    drawn = game_rules.drawn_facings()
+    log(f"[video] {aid}: {turn['turns']:.2f} turns ({'+' if turn['direction'] > 0 else '-'}), mean IoU along the "
+        f"turn {turn['mean_iou']:.3f}, first frame at model facing {turn['h0']:.0f}"
+        + (f"; the side view showed the nose on the left, facings turned by {offset}" if offset else ""))
     picks = pick_frames(turn, sc, offset, vcfg["mirror"])
     vcfg = dict(vcfg, _sil_wh=[(lambda b: ((b[2] - b[0]) / s, (b[3] - b[1]) / s))(bbox(x["mask"])) for x in sils])
     check_warn, check_info = check_video(frames, masks, sc, turn, picks, vcfg)
     warnings += check_warn
+    return {"a": a, "video": str(video_path), "frames": frames, "masks": masks, "bg": bg, "side": side, "model": model,
+            "slot": slot, "k": k, "mss": mss, "s": s, "s0": s0, "mean_iou": mean_iou, "tried": tried, "sc": sc,
+            "turn": turn, "offset": offset, "picks": picks, "warnings": warnings, "check": check_info, "vcfg": vcfg}
+
+
+def process_asset(a, video_path, grid, vcfg, dirs, log=print):
+    """Video -> sprites/<id>/<id>_body_d<i>.png, atlas/<id>.png|json (the post stage's format, so the game
+    stage exports it unchanged) and previews/<id>.png. Returns the atlas info."""
+    st = analyse(a, video_path, grid, vcfg, log)
+    aid, frames, masks, bg, side, model = a["id"], st["frames"], st["masks"], st["bg"], st["side"], st["model"]
+    slot, k, mss, s, s0 = st["slot"], st["k"], st["mss"], st["s"], st["s0"]
+    mean_iou, tried, turn, offset, picks = st["mean_iou"], st["tried"], st["turn"], st["offset"], st["picks"]
+    warnings, check_info, vcfg = st["warnings"], st["check"], st["vcfg"]
+    drawn = game_rules.drawn_facings()
     # build at the sprite supersample: the scale and the model silhouettes follow it
     ss = int(vcfg["supersample"])
     sils_ss = [dict(x, origin=x["origin"]) for x in model_silhouettes(model, grid, ss)]
@@ -482,7 +495,8 @@ def process_asset(a, video_path, grid, vcfg, dirs, log=print):
             "final_dims_m": [round(slot, 3), round(model["width_m"], 3), round(model["height_m"], 3)],
             "compression": [round(k, 4)] * 3, "video": str(video_path), "side_view_frame": side,
             "scale": round(s / mss, 5), "scale_vs_side_view": round(s / s0, 4), "mean_iou": round(mean_iou, 4),
-            "scale_search": tried, "turn": {k: v for k, v in turn.items() if k != "path"}, "facing_offset": offset, "check": check_info, "warnings": warnings,
+            "scale_search": tried, "turn": {key: v for key, v in turn.items() if key != "path"},
+            "facing_offset": offset, "check": check_info, "warnings": warnings,
             "background": bg.round().tolist(), "canvas_px": canvas, "anchor_px": anchor, "frames": frames_out}
     (atlas_dir / f"{aid}.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
     preview(info, sprites, drawn, dirs, frames, masks)

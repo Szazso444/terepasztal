@@ -169,13 +169,14 @@ def prepare_graph(base, image_value, prefix, ccfg):
     return g, save_id
 
 
-def find_model_file(outputs, save_id):
+def find_output_file(outputs, save_id, exts):
+    """The first output file ending in one of `exts`, the save node's own first."""
     found = []
 
     def walk(obj, nid):
         if isinstance(obj, dict):
             fn = obj.get("filename")
-            if isinstance(fn, str) and fn.lower().endswith((".glb", ".gltf")):
+            if isinstance(fn, str) and fn.lower().endswith(exts):
                 found.append((nid, obj))
             for v in obj.values():
                 walk(v, nid)
@@ -187,8 +188,39 @@ def find_model_file(outputs, save_id):
         walk(out, nid)
     ranked = sorted(found, key=lambda x: (x[0] != save_id, x[1].get("type") != "output"))
     if not ranked:
-        raise ComfyError(f"no .glb in outputs of prompt; output nodes: {list(outputs)}")
+        raise ComfyError(f"no {'/'.join(exts)} in outputs of prompt; output nodes: {list(outputs)}")
     return ranked[0][1]
+
+
+def find_model_file(outputs, save_id):
+    return find_output_file(outputs, save_id, (".glb", ".gltf"))
+
+
+def run_orbit(comfy, base_graph, asset_id, image_path: Path, prompt: str, dest: Path, ocfg):
+    """One turntable video: the image and prompt into the orbit workflow, the video it saves downloaded to
+    dest. Node ids come from [orbit.nodes] in pipeline.toml (the workflow has two samplers and several
+    primitives, so nothing is auto-detected)."""
+    g = copy.deepcopy(base_graph)
+    nodes = ocfg["nodes"]
+    _set_input(g, nodes["image"], "image", comfy.upload_image(image_path))
+    _set_input(g, nodes["prompt"], "value", prompt)
+    _set_input(g, nodes["duration"], "value", float(ocfg["duration_s"]))
+    _set_input(g, nodes["save"], "filename_prefix", f"pipeline/orbit_{asset_id}")
+    if ocfg.get("seed") is not None:
+        for nid in nodes.get("seeds", []):
+            _set_input(g, nid, "seed", int(ocfg["seed"]))
+    for key, value in (ocfg.get("set") or {}).items():
+        nid, _, name = key.partition(".")
+        if nid not in g:
+            raise ComfyError(f"orbit.set: node {nid} not in workflow")
+        _set_input(g, nid, name, value)
+    pid = comfy.queue(g)
+    comfy.log(f"[{asset_id}] queued orbit video {pid}")
+    t0 = time.time()
+    entry = comfy.wait(pid)
+    comfy.download(find_output_file(entry.get("outputs", {}), nodes["save"], (".mp4", ".webm", ".mov")), dest)
+    comfy.log(f"[{asset_id}] video done in {time.time() - t0:.0f}s -> {dest}")
+    return dest
 
 
 def run_asset(comfy, base_graph, asset_id, image_path: Path, dest: Path, ccfg):

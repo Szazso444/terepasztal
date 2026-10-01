@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Batch pipeline, two routes per assets.csv `route`:
   3d     image -> ComfyUI (3D) -> Blender (align/scale/render) -> post (sprites/atlas) -> game
-  video  turntable video -> video (heading match, cut-out, sprites/atlas) -> game
+  video  image -> orbit (ComfyUI turntable video) -> video (heading match, cut-out, sprites/atlas) -> game
 
 Stops at the first error with a non-zero exit code. Finished stages are skipped on rerun unless --force.
-Usage: python run.py [--only id1,id2] [--stages comfy,blender,post,video,game] [--force] [--config pipeline.toml]
+Usage: python run.py [--only id1,id2] [--stages comfy,blender,post,orbit,video,game] [--force] [--images DIR]
+                     [--config pipeline.toml]
 """
 import argparse
 import csv
@@ -24,8 +25,8 @@ import game_rules
 import postprocess
 
 HERE = Path(__file__).resolve().parent
-STAGES = ("comfy", "blender", "post", "video", "game")
-ROUTES = {"3d": ("comfy", "blender", "post", "game"), "video": ("video", "game")}
+STAGES = ("comfy", "blender", "post", "orbit", "video", "game")
+ROUTES = {"3d": ("comfy", "blender", "post", "game"), "video": ("orbit", "video", "game")}
 log = logging.getLogger("pipeline")
 
 
@@ -142,12 +143,54 @@ def run_blender(cfg, job_path: Path, log_path: Path):
         raise PipelineError(f"blender exited {rc}; log: {log_path}\n" + "\n".join(tail[-25:]))
 
 
+def orbit_prompt(a, ocfg, template):
+    """The orbit workflow's prompt for one asset: its name (src/data, else its id) into the template."""
+    m = re.fullmatch(r"rolling/(loco|wagon)_([a-z0-9_]+?)_(?:\{part\}_)?f\{f\}", a["game_frame"] or "")
+    rows = json.loads((game_rules.DATA / ("locomotives.json" if m and m.group(1) == "loco" else "wagons.json"))
+                      .read_text(encoding="utf-8")) if m else []
+    rows = rows if isinstance(rows, list) else next(iter(rows.values()))
+    subject = next((r["name"] for r in rows if r["id"] == m.group(2)), None) if m else None
+    subject = subject or a["id"].replace("_", " ")
+    dur = float(ocfg["duration_s"])
+    kind = "bogie" if a["category"] == "bogie" else "locomotive"
+    return template.format(subject=f"the {subject} {kind}", kind=kind, duration=f"{dur:g}",
+                           deg_per_s=f"{360 / dur:g}", q1=f"{dur / 4:.2f}", q2=f"{dur / 2:.2f}", q3=f"{dur * 3 / 4:.2f}")
+
+
+def run_orbit(a, cfg, rel, args, comfy, graph, d, summary):
+    """Image -> flat background -> ComfyUI turntable video -> assets_out/videos/<id>.mp4, then the video checks."""
+    from PIL import Image
+    aid, ocfg = a["id"], cfg["orbit"]
+    images = Path(args.images) if args.images else rel(ocfg["images"])
+    img = images / a["image"]
+    if not a["image"] or not img.exists():
+        raise PipelineError(f"[{aid}] image not found: {img}")
+    im = Image.open(img).convert("RGBA")
+    flat = Image.new("RGBA", im.size, tuple(ocfg["background"]) + (255,))
+    flat.alpha_composite(im)
+    inp = d["orbit_inputs"] / f"{aid}.png"
+    flat.convert("RGB").save(inp)
+    prompt = orbit_prompt(a, ocfg, rel(ocfg["prompt"]).read_text(encoding="utf-8"))
+    video = d["videos"] / f"{aid}.mp4"
+    try:
+        comfy_client.run_orbit(comfy, graph, aid, inp, prompt, video, ocfg)
+    except comfy_client.ComfyError as e:
+        raise PipelineError(f"[{aid}] {e}") from None
+    if a["category"] == "vehicle" and a["width_m"]:
+        import video_stage  # check the video before the sprite stage trusts it
+        st = video_stage.analyse(a, video, cfg["grid"], {**cfg["classes"]["vehicle"], **cfg["video"]}, log.info)
+        summary.update(video_check=st["check"], video_warnings=st["warnings"])
+        for w in st["warnings"]:
+            log.warning(f"[{aid}] video: {w}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(HERE / "pipeline.toml"))
     ap.add_argument("--only", default="")
     ap.add_argument("--stages", default=",".join(STAGES))
     ap.add_argument("--force", action="store_true", help="redo stages whose outputs exist")
+    ap.add_argument("--images", default="", help="folder the route-video images are in (orbit.images)")
     args = ap.parse_args()
 
     cfg_path = Path(args.config).resolve()
@@ -160,7 +203,7 @@ def main():
 
     out = rel(cfg["paths"]["out_root"])
     d = {k: out / k for k in ("models_raw", "jobs", "sprites_raw", "meta", "debug", "sprites", "atlas",
-                              "previews", "reports", "logs", "videos")}
+                              "previews", "reports", "logs", "videos", "orbit_inputs")}
     for p in d.values():
         p.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -179,7 +222,7 @@ def main():
     def write_summary():
         summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
-    comfy = graph = None
+    comfy = graph = orbit_graph = None
     game_groups = {}
     try:
         assets = load_assets(csv_path, only)
@@ -196,6 +239,14 @@ def main():
             meta_path = d["meta"] / f"{aid}.json"
             t0 = time.time()
             route = ROUTES[a["route"]]
+            if "orbit" in stages and "orbit" in route and (args.force or not (d["videos"] / f"{aid}.mp4").exists()):
+                if comfy is None:
+                    comfy = comfy_client.Comfy(cfg["comfy"]["url"], cfg["comfy"]["timeout_s"], cfg["comfy"]["poll_s"],
+                                               log=log.info)
+                    comfy.check()
+                if orbit_graph is None:
+                    orbit_graph = comfy_client.load_api_workflow(rel(cfg["orbit"]["workflow"]))
+                run_orbit(a, cfg, rel, args, comfy, orbit_graph, d, summary["assets"][aid])
             if "video" in stages and "video" in route:
                 video = d["videos"] / f"{aid}.mp4"
                 atlas_json = d["atlas"] / f"{aid}.json"

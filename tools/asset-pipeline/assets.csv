@@ -83,4 +83,4 @@ station_victorian,input/station_victorian.png,building,1,22,,,auto,0,,,,,,struct
 #station_2,input/station_2.png,building,1,,,6,auto,0,,,,,,structures/station_2,,station level 2; height_m sets the scale
 #station_3,input/station_3.png,building,1,,,10,auto,0,,,,,,structures/station_3,,station level 3; height_m sets the scale
 #depot,input/depot.png,building,2,,,8,auto,0,,,,,,structures/depot_r{r},,"2x2 engine shed; r0 has its long axis along +x, r1 along +y"
-mk48,input/mk48.png,vehicle,1,8.965,2.39,3.415,auto,,rigid,,,,,rolling/loco_mk48_body_f{f},video,"MÁV Mk48, 760 mm narrow gauge; sprites from a turntable video (route video: assets_out/videos/mk48.mp4)"
+mk48,1/Narrow/MK48/loco-mk48.png,vehicle,1,8.965,2.39,3.415,auto,,rigid,,,,,rolling/loco_mk48_{part}_f{f},video,"MÁV Mk48, 760 mm narrow gauge; sprites from a turntable video (route video: assets_out/videos/mk48.mp4)"

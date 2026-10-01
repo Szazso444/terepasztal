@@ -114,3 +114,24 @@ max_elevation_spread  = 0.08     # height-to-width ratio against the model, coef
 min_turns             = 0.97     # the vehicle must turn at least this far
 min_frames_on_fit     = 0.8      # share of frames matching within 10% of their best where the turn puts them
 max_heading_error_deg = 3.75     # half a facing: no frame nearer than this to a drawn facing is a warning
+
+[orbit]
+# The orbit stage (route video): one turntable video per asset from its image, through a ComfyUI video workflow
+# (Workflow -> Export (API)), saved to assets_out/videos/<id>.mp4. The image is laid on flat magenta first.
+workflow    = "workflows/minimax_h3_360orbit_api.json"   # MiniMax_H3_360Orbit
+images      = "input"          # route-video images: the image column is relative to this folder (--images overrides)
+prompt      = "orbit_prompt.txt"  # {subject} {kind} {duration} {deg_per_s} {q1} {q2} {q3}; follows ASTRA.md's camera rules
+duration_s  = 10
+background  = [255, 0, 255]    # the flat colour transparent input pixels go onto
+# seed      = 1                # unset: the workflow's own seeds
+
+[orbit.nodes]
+# node ids in the API export (two samplers and several primitives: nothing is auto-detected)
+image    = "189"
+prompt   = "138"
+duration = "132"
+save     = "92"
+seeds    = ["184", "185"]
+
+[orbit.set]
+# input overrides for this machine: "<node_id>.<input>" = value (check names with /object_info)
