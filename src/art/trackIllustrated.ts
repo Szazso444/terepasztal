@@ -173,13 +173,20 @@ export function generateIllustratedTrackAtlas(): AtlasImage {
       const key = `track/${itemKey(it)}_${rotation}`;
       if (isUnitKind(it.kind, it.cls)) {
         const def = unitDef(it.kind as 'curve' | 'switch', CLASS_N[it.cls], rotation);
-        const member = (index: number) =>
-          draw(
-            def.members[index].links.map((l) => ({ points: l.pts, cls: it.cls })),
-            rotation * 13 + index,
-            false,
-            !def.members[index].links.length,
+        // every member draws the whole piece, shifted into its own tile and clipped to it, so the
+        // ballast and rails run on across tile edges; the empty inner tile shows what spills in
+        const member = (index: number) => {
+          const own = def.members[index];
+          return draw(
+            def.members.flatMap((m) =>
+              m.links.map((l) => ({
+                points: l.pts.map((p) => ({ x: p.x + m.dx - own.dx, y: p.y + m.dy - own.dy })),
+                cls: it.cls,
+              })),
+            ),
+            rotation * 13,
           );
+        };
         def.members.forEach((_, i) => ab.add(`${key}_m${i}`, member(i), OX * R, OY * R));
         ab.add(key, member(1), OX * R, OY * R);
       } else {
