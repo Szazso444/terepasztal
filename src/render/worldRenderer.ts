@@ -1,4 +1,13 @@
-import { Container, Sprite, Rectangle, Graphics, Mesh, MeshGeometry } from 'pixi.js';
+import {
+  Assets,
+  Container,
+  Sprite,
+  Rectangle,
+  Graphics,
+  Mesh,
+  MeshGeometry,
+  type Texture,
+} from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
 import {
   tileToWorld,
@@ -24,6 +33,12 @@ import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
 import { PAL, type RGB } from '../art/palette';
 import BRIDGE_KIT_JSON from './bridgeKit.json';
+import {
+  bridgeTileMeshes,
+  prepareSurface,
+  type BridgeSurfaces,
+  type BridgeTile,
+} from './bridgeMeshes';
 
 /** Measured kit geometry in world px (tools/bridge-kit.mjs). */
 const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
@@ -98,6 +113,7 @@ export class WorldRenderer {
     this.landscape.root.visible = false;
     this.root.on('destroyed', () => this.surfaces.destroy());
     this.objects.sortableChildren = true;
+    this.piers.sortableChildren = true;
     this.objects.cullableChildren = true;
     this.ground.cullableChildren = true;
     this.fog.cullableChildren = true;
@@ -796,7 +812,52 @@ export class WorldRenderer {
   }
   /** The illustrated bridge kit is packed (tools/bridge-kit.mjs); else the procedural spans. */
   get bridgeKit() {
-    return this.atlas.has('bridgekit/stone-deck-x');
+    return this.bridgeStyle === 'kit' && this.atlas.has('bridgekit/stone-deck-x');
+  }
+  /**
+   * Preview: how bridges draw. `kit` the illustrated kit pieces, `procedural` the generated
+   * spans, `textured` the procedural shapes wearing the kit's surfaces (bridgeMeshes.ts).
+   */
+  bridgeStyle: 'kit' | 'procedural' | 'textured' = 'kit';
+  private bridgeSurfaces: BridgeSurfaces | null = null;
+  /** Loads the kit's repeating surfaces (public/assets/bridge-surfaces). */
+  async loadBridgeSurfaces() {
+    if (this.bridgeSurfaces) return true;
+    const base = `${import.meta.env.BASE_URL}assets/bridge-surfaces/`;
+    try {
+      const [stoneTop, stoneWall, woodTop, woodGrain] = await Promise.all(
+        ['stone-top', 'stone-wall', 'wood-top', 'wood-grain'].map((n) =>
+          Assets.load<Texture>(`${base}${n}.png`),
+        ),
+      );
+      for (const t of [stoneTop, stoneWall, woodTop, woodGrain]) prepareSurface(t.source);
+      this.bridgeSurfaces = { stoneTop, stoneWall, woodTop, woodGrain };
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  get texturedBridges() {
+    return this.bridgeStyle === 'textured' && !!this.bridgeSurfaces;
+  }
+  private texturedParts = new Map<number, { under: Container; near: Container }>();
+  /** A textured bridge tile (or none): supports and deck under the trains, near parapet over. */
+  setBridgeTextured(x: number, y: number, tile: Omit<BridgeTile, 'x' | 'y' | 'ground'> | null) {
+    const k = idx(this.map, x, y),
+      old = this.texturedParts.get(k);
+    old?.under.destroy({ children: true });
+    old?.near.destroy({ children: true });
+    this.texturedParts.delete(k);
+    if (!tile || !this.bridgeSurfaces) return;
+    const parts = bridgeTileMeshes(
+      { ...tile, x, y, ground: (tx, ty) => -this.elevationOf(tx, ty) },
+      this.bridgeSurfaces,
+    );
+    parts.under.zIndex = x + y;
+    parts.near.zIndex = depthKey(x, y, 35);
+    this.piers.addChild(parts.under);
+    this.objects.addChild(parts.near);
+    this.texturedParts.set(k, parts);
   }
   private kitParts = new Map<number, Container>();
   /**

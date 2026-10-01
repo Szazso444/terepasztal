@@ -1160,10 +1160,17 @@ export class Game {
   // ---------------------------------------------------------------- world edits
   /** Rail profiles need recomputing: a track piece or a bridge changed. */
   private railsDirty = false;
+  /** Preview: deck levels set per bridge tile (stacked platforms), by tile index. */
+  readonly bridgeDecks = new Map<number, number>();
   /** Every straight line conforms to its neighbours: inclines, transitions, bridge decks. */
   private refreshRails() {
     this.railsDirty = false;
-    const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
+    const beds = railProfile(
+      this.map,
+      this.track,
+      (x, y) => !!this.builder.bridgeAt(x, y),
+      (x, y) => this.bridgeDecks.get(y * this.map.w + x),
+    );
     this.fleet.railBeds = beds;
     if (this.world.setRailBeds(beds)) this.refreshBridges();
   }
@@ -1253,7 +1260,21 @@ export class Game {
               ? `structures/landspan_${s.material}_${s.axis}`
               : `structures/landpad_${s.material}`;
         const id = 'bridge:' + b.x + ',' + b.y;
-        if (this.world.bridgeKit) {
+        if (this.world.texturedBridges) {
+          // Procedural shapes in the kit's surfaces: one set of meshes per tile.
+          this.world.setPlatform(b.x, b.y, null);
+          this.world.removeStructure(id);
+          this.world.setBridgePiers(b.x, b.y, null);
+          this.world.setBridgeKit(b.x, b.y, null);
+          this.world.setBridgeTextured(b.x, b.y, {
+            material: s.material,
+            axis: straight ? (s.axis as 0 | 1) : null,
+            // A stacked deck over water rises above the waterline like any other.
+            deck: water ? Math.max(0, -this.world.railAt(b.x, b.y).dz) : deck,
+            water,
+          });
+        } else if (this.world.bridgeKit) {
+          this.world.setBridgeTextured(b.x, b.y, null);
           // The illustrated kit: deck or pad, near railing, and the parts under the deck.
           const dir = s.axis ? 'x' : 'y';
           this.world.setPlatform(
@@ -1276,6 +1297,7 @@ export class Game {
             water,
           );
         } else {
+          this.world.setBridgeTextured(b.x, b.y, null);
           this.world.setPlatform(
             b.x,
             b.y,
@@ -1322,6 +1344,7 @@ export class Game {
         this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
         this.world.setBridgePiers(b.x, b.y, null);
         this.world.setBridgeKit(b.x, b.y, null);
+        this.world.setBridgeTextured(b.x, b.y, null);
       }
       this.refreshBridges();
       return;

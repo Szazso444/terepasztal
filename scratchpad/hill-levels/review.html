@@ -1,31 +1,38 @@
 <title>Terepasztal Hill Climb</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-:root{--ground:#edf0ea;--panel:#f8faf6;--ink:#1c231f;--muted:#58645c;--line:#cdd5cc;--rail:#9a4f2c;--ok:#3f7a3a;
+/* Layout: one review column; each option is a row of in-game renders, then the decision it asks. */
+:root{--ground:#edf0ea;--panel:#f8faf6;--ink:#1c231f;--muted:#58645c;--line:#cdd5cc;--rail:#9a4f2c;--ok:#3f7a3a;--water:#3d7f8f;--land:#b9b08f;
   font-family:"Atkinson Hyperlegible",system-ui,sans-serif;}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ground:#141a16;--panel:#1b221d;--ink:#e3e9e2;--muted:#9aa79e;--line:#2e3831;--rail:#d98a5f;--ok:#7fbf73;color-scheme:dark}}
-:root[data-theme="dark"]{--ground:#141a16;--panel:#1b221d;--ink:#e3e9e2;--muted:#9aa79e;--line:#2e3831;--rail:#d98a5f;--ok:#7fbf73;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ground:#141a16;--panel:#1b221d;--ink:#e3e9e2;--muted:#9aa79e;--line:#2e3831;--rail:#d98a5f;--ok:#7fbf73;--water:#4f97a8;--land:#7d7760;color-scheme:dark}}
+:root[data-theme="dark"]{--ground:#141a16;--panel:#1b221d;--ink:#e3e9e2;--muted:#9aa79e;--line:#2e3831;--rail:#d98a5f;--ok:#7fbf73;--water:#4f97a8;--land:#7d7760;color-scheme:dark}
 body{background:var(--ground);color:var(--ink);font-size:15px;line-height:1.55;padding-inline:clamp(16px,3vw,40px);padding-block:32px 64px}
 main{max-width:1500px;margin:0 auto;display:grid;gap:48px}
-h1,h2{font-family:Archivo,system-ui,sans-serif;text-wrap:balance;margin:0}
+h1,h2,h3{font-family:Archivo,system-ui,sans-serif;text-wrap:balance;margin:0}
 h1{font-size:30px;font-weight:700}
 h2{font-size:21px;font-weight:700}
+h3{font-size:16px;font-weight:700}
 header,section{display:grid;gap:14px}
 p{margin:0;max-width:72ch}
 .muted{color:var(--muted)}
-.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;font-variant-numeric:tabular-nums}
-.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))}
-.grid.three{grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr))}
-figure{margin:0;display:grid;gap:6px;align-content:start}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.grid.three{grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr))}
+figure{margin:0;display:grid;gap:6px;align-content:start;min-width:0}
 figure img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:3px;cursor:zoom-in}
 figcaption{font-size:13.5px;color:var(--muted)}
 figcaption b{color:var(--ink);font-weight:700}
 .tag{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--rail)}
 .status{display:grid;gap:6px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
-.status li{margin:0}
-.status ul{margin:0;padding-left:18px;display:grid;gap:4px}
-.profile{display:flex;gap:3px;flex-wrap:wrap;align-items:flex-end}
-.profile span{width:22px;background:var(--rail);opacity:.8;border-radius:2px 2px 0 0;display:flex;justify-content:center;align-items:flex-start;color:var(--panel);font-size:10px}
+.status ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.profile{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:3px;align-items:end;height:92px;max-width:420px;padding-top:6px}
+.profile div{position:relative;height:100%}
+.profile .g{position:absolute;bottom:0;left:0;right:0;background:var(--land);border-radius:2px 2px 0 0}
+.profile .g.w{background:var(--water)}
+.profile .r{position:absolute;left:-2px;right:-2px;height:3px;background:var(--rail)}
+.profile .b{position:absolute;left:10%;right:10%;background:repeating-linear-gradient(90deg,var(--muted) 0 2px,transparent 2px 6px);opacity:.55}
+.legend{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.case{display:grid;gap:10px;align-content:start;min-width:0}
+.choice{padding:14px 16px;border-left:3px solid var(--rail);background:var(--panel);display:grid;gap:6px}
 dialog{padding:0;border:0;background:transparent;max-width:98vw;max-height:98vh}
 dialog img{max-width:98vw;max-height:96vh;display:block}
 dialog::backdrop{background:rgba(0,0,0,.8)}
@@ -34,49 +41,113 @@ a{color:var(--rail)}
 </style>
 <main>
 <header>
-  <span class="tag">PR #20 · round 5</span>
-  <h1>Hills, rails and climbing trains</h1>
-  <p class="muted">Every image is the game's own renderer. Click an image for full size. Left: your bridge kit, now in the game. Right: the procedural bridges it replaces.</p>
+  <span class="tag">Bridges · round 6</span>
+  <h1>Bridges in the kit's stone and timber</h1>
+  <p class="muted">Every image is the game's own renderer at zoom 4 (stacking at zoom 3). Click an image for full size. Nothing here is the default yet: the game still draws the kit until you pick.</p>
   <div class="status">
     <ul>
-      <li><b>Shipped:</b> summit sprites fully matched to the terrain rock and snow.</li>
-      <li><b>Shipped:</b> your 18-piece bridge kit is packed into its own atlas and drawn in the game. Decks, pads and near railings come from the kit. Piers and posts are cut to the ground under each one, with a V-shaped foot. Over water, stone spans hang arches and timber spans hang trusses, and posts fade into the water.</li>
+      <li><b>Textured:</b> the procedural shapes you liked, built face by face. The surfaces are taken from your kit images: each painted face is flattened back to a rectangle and repeated at a fixed scale. So a pier keeps its stone courses at any height instead of stretching, and planks stay plank-sized.</li>
+      <li><b>Stone</b> uses the kit's coursed pier blocks for walls and its flagstones for tops. <b>Timber</b> uses the kit's planks for decks and the post's grain for posts, braces and rails.</li>
+      <li>Over water, stone becomes a viaduct with one arch per tile, and timber a braced trestle standing in the water. Over land, both stand on piers cut to the ground.</li>
     </ul>
   </div>
 </header>
 
 <section>
-  <span class="tag">Stone</span>
-  <h2>Stone bridges</h2>
-  <p class="muted">A two-level valley bridged at level 2, supported curves on a slope, and a river crossing. All at zoom 4.</p>
-  <div class="grid">
-    <figure><img src="renders/kit-stone-valley-z4.jpg" alt="Kit · valley"><figcaption><b>Kit</b> · valley</figcaption></figure>
-    <figure><img src="renders/old-stone-valley-z4.jpg" alt="Procedural · valley"><figcaption><b>Procedural</b> · valley</figcaption></figure>
-    <figure><img src="renders/kit-stone-curve-z4.jpg" alt="Kit · supported curve, bare platforms, refusals"><figcaption><b>Kit</b> · supported curve, bare platforms, refusals</figcaption></figure>
-    <figure><img src="renders/old-stone-curve-z4.jpg" alt="Procedural · same scene"><figcaption><b>Procedural</b> · same scene</figcaption></figure>
-    <figure><img src="renders/kit-stone-river-z4.jpg" alt="Kit · river"><figcaption><b>Kit</b> · river</figcaption></figure>
-    <figure><img src="renders/old-stone-river-z4.jpg" alt="Procedural · river"><figcaption><b>Procedural</b> · river</figcaption></figure>
+  <span class="tag">Look</span>
+  <h2>Stone: textured, procedural, kit</h2>
+  <div class="grid three">
+    <figure><img src="renders/r6-textured-stone-valley.jpg" alt="Textured stone bridge over a valley"><figcaption><b>Textured</b> · valley at level 2</figcaption></figure>
+    <figure><img src="renders/r6-procedural-stone-valley.jpg" alt="Procedural stone bridge over a valley"><figcaption><b>Procedural</b> · same valley</figcaption></figure>
+    <figure><img src="renders/r6-kit-stone-valley.jpg" alt="Kit stone bridge over a valley"><figcaption><b>Kit</b> · same valley</figcaption></figure>
+    <figure><img src="renders/r6-textured-stone-river.jpg" alt="Textured stone viaduct over a river"><figcaption><b>Textured</b> · river</figcaption></figure>
+    <figure><img src="renders/r6-procedural-stone-river.jpg" alt="Procedural stone bridge over a river"><figcaption><b>Procedural</b> · river</figcaption></figure>
+    <figure><img src="renders/r6-kit-stone-river.jpg" alt="Kit stone bridge over a river"><figcaption><b>Kit</b> · river</figcaption></figure>
   </div>
 </section>
 
 <section>
-  <span class="tag">Wood</span>
-  <h2>Wood bridges</h2>
-  <p class="muted">A two-level valley bridged at level 2, supported curves on a slope, and a river crossing. All at zoom 4.</p>
+  <span class="tag">Look</span>
+  <h2>Timber: textured, procedural, kit</h2>
+  <div class="grid three">
+    <figure><img src="renders/r6-textured-wood-valley.jpg" alt="Textured timber trestle over a valley"><figcaption><b>Textured</b> · valley at level 2</figcaption></figure>
+    <figure><img src="renders/r6-procedural-wood-valley.jpg" alt="Procedural timber bridge over a valley"><figcaption><b>Procedural</b> · same valley</figcaption></figure>
+    <figure><img src="renders/r6-kit-wood-valley.jpg" alt="Kit timber bridge over a valley"><figcaption><b>Kit</b> · same valley</figcaption></figure>
+    <figure><img src="renders/r6-textured-wood-river.jpg" alt="Textured timber trestle over a river"><figcaption><b>Textured</b> · river</figcaption></figure>
+    <figure><img src="renders/r6-procedural-wood-river.jpg" alt="Procedural timber bridge over a river"><figcaption><b>Procedural</b> · river</figcaption></figure>
+    <figure><img src="renders/r6-kit-wood-river.jpg" alt="Kit timber bridge over a river"><figcaption><b>Kit</b> · river</figcaption></figure>
+  </div>
   <div class="grid">
-    <figure><img src="renders/kit-wood-valley-z4.jpg" alt="Kit · valley"><figcaption><b>Kit</b> · valley</figcaption></figure>
-    <figure><img src="renders/old-wood-valley-z4.jpg" alt="Procedural · valley"><figcaption><b>Procedural</b> · valley</figcaption></figure>
-    <figure><img src="renders/kit-wood-curve-z4.jpg" alt="Kit · supported curve, bare platforms, refusals"><figcaption><b>Kit</b> · supported curve, bare platforms, refusals</figcaption></figure>
-    <figure><img src="renders/old-wood-curve-z4.jpg" alt="Procedural · same scene"><figcaption><b>Procedural</b> · same scene</figcaption></figure>
-    <figure><img src="renders/kit-wood-river-z4.jpg" alt="Kit · river"><figcaption><b>Kit</b> · river</figcaption></figure>
-    <figure><img src="renders/old-wood-river-z4.jpg" alt="Procedural · river"><figcaption><b>Procedural</b> · river</figcaption></figure>
+    <figure><img src="renders/r6-textured-stone-curve.jpg" alt="Textured stone pads under curves on a slope"><figcaption><b>Textured stone</b> · pads under supported curves</figcaption></figure>
+    <figure><img src="renders/r6-textured-wood-curve.jpg" alt="Textured timber pads under curves on a slope"><figcaption><b>Textured timber</b> · pads under supported curves</figcaption></figure>
   </div>
 </section>
 
+<section>
+  <span class="tag">Mechanic</span>
+  <h2>Stacking: building a platform onto a platform raises it</h2>
+  <p>A river cuts through a ridge at level 2. Ground next to water is never more than one level up, so the banks drop to level 1 at the water's edge. The three cases below are the same ground, bridged three ways. In the profiles, the bars show the ground (blue is water), the line shows the rail and the hatching shows bridge platforms. Tiles 4 to 14.</p>
+  <div class="grid three">
+    <div class="case">
+      <h3>A · Platforms on the water only</h3>
+      <div class="profile" id="p-water"></div>
+      <p class="legend">rail 2 2 2 1 1 1 1 1 2 2 2</p>
+      <p class="muted">Today's rule: the deck takes the higher bank's level, which is 1, so the line dips down the slopes to cross.</p>
+    </div>
+    <div class="case">
+      <h3>B · Platforms across the whole gap</h3>
+      <div class="profile" id="p-span"></div>
+      <p class="legend">rail 2 2 2 2 2 2 2 2 2 2 2</p>
+      <p class="muted">Also today's rule. The banks of a bridge that covers the slopes are the hilltops, so it runs level at 2.</p>
+    </div>
+    <div class="case">
+      <h3>C · Stacked: one extra platform on each</h3>
+      <div class="profile" id="p-raised"></div>
+      <p class="legend">rail 2 2 2 3 3 3 3 3 2 2 2</p>
+      <p class="muted">Each platform built onto an existing one raises that tile's deck a level, here to 3. The rails climb onto it and back down like any incline.</p>
+    </div>
+  </div>
+  <div class="grid three">
+    <figure><img src="renders/r6-stack-stone-water.jpg" alt="Case A in stone"><figcaption><b>A · stone</b> · water only, deck at 1</figcaption></figure>
+    <figure><img src="renders/r6-stack-stone-span.jpg" alt="Case B in stone"><figcaption><b>B · stone</b> · whole gap, deck at 2</figcaption></figure>
+    <figure><img src="renders/r6-stack-stone-raised.jpg" alt="Case C in stone"><figcaption><b>C · stone</b> · stacked, deck at 3</figcaption></figure>
+    <figure><img src="renders/r6-stack-wood-water.jpg" alt="Case A in timber"><figcaption><b>A · timber</b> · water only, deck at 1</figcaption></figure>
+    <figure><img src="renders/r6-stack-wood-span.jpg" alt="Case B in timber"><figcaption><b>B · timber</b> · whole gap, deck at 2</figcaption></figure>
+    <figure><img src="renders/r6-stack-wood-raised.jpg" alt="Case C in timber"><figcaption><b>C · timber</b> · stacked, deck at 3</figcaption></figure>
+  </div>
+  <div class="choice">
+    <h3>Two ways to count the stack</h3>
+    <p><b>1 · Stack adds to the bank rule (recommended).</b> One platform behaves exactly as today; every extra platform on the same tile adds a level, up to level 4. Existing saves and bridges do not change.</p>
+    <p><b>2 · Stack counts up from the ground.</b> The deck stands at the ground under it plus one level per extra platform, and the bank rule goes away. In case B you would need three platforms on each water tile to reach level 2. That is more explicit but costlier, and it changes existing bridges.</p>
+    <p class="muted">Either way, the rails on and off a stacked bridge follow the incline rules: a straight line climbs at most one level per tile. Curves and switches on a stacked pad sit at its deck. Bridges today have an upgrade level that raises their weight capacity. Stacking would sit beside it, not replace it.</p>
+  </div>
+</section>
+
+<section>
+  <span class="tag">Found while rendering</span>
+  <h2>Raised decks and things standing behind them</h2>
+  <p class="muted">The deck and supports draw in a layer beneath trees, reeds and buildings. On a raised deck, a reed growing on the tile in front correctly overlaps the deck foot. But a tree standing behind a high deck draws over it too. The full implementation sorts bridge supports with the objects around them, keeping the rails above the deck.</p>
+</section>
 </main>
 <dialog id="zoom"><img alt=""></dialog>
 <script>
 const d=document.getElementById('zoom'),im=d.querySelector('img');
 document.querySelectorAll('figure img').forEach(i=>i.addEventListener('click',()=>{im.src=i.src;im.alt=i.alt;d.showModal();}));
 d.addEventListener('click',()=>d.close());
+// Ground, rail and platforms over tiles 4..14 of the ridge, in levels (0..4 fill the bar).
+const ground=[2,2,2,1,0,0,0,1,2,2,2],water=[0,0,0,0,1,1,1,0,0,0,0];
+const cases={'p-water':{rail:[2,2,2,1,1,1,1,1,2,2,2],bridged:[4,5,6]},
+  'p-span':{rail:[2,2,2,2,2,2,2,2,2,2,2],bridged:[3,4,5,6,7]},
+  'p-raised':{rail:[2,2,2,3,3,3,3,3,2,2,2],bridged:[3,4,5,6,7]}};
+for(const [id,c] of Object.entries(cases)){
+  const el=document.getElementById(id);
+  ground.forEach((g,i)=>{
+    const cell=document.createElement('div'),pct=(v)=>`${(v/4)*100}%`;
+    const bar=document.createElement('span');bar.className='g'+(water[i]?' w':'');bar.style.height=water[i]?'6%':pct(g);
+    cell.append(bar);
+    if(c.bridged.includes(i)){const b=document.createElement('span');b.className='b';b.style.bottom=water[i]?'6%':pct(g);b.style.height=`calc(${pct(c.rail[i])} - ${water[i]?'6%':pct(g)})`;cell.append(b);}
+    const r=document.createElement('span');r.className='r';r.style.bottom=pct(c.rail[i]);cell.append(r);
+    el.append(cell);
+  });
+}
 </script>
