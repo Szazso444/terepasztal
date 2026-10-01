@@ -13,11 +13,11 @@ that have no game data yet, per-train running gear, wagon lengths for regular st
 
 ## 1. Track classes
 
-| Class | Curves and switches | Joins | Line speed cap (tiles/s) | Rules |
-|---|---|---|---|---|
-| `regular` | 2×2 (radius 1.5) | regular, transition | 2.0 | any regular-gauge stock, large included |
-| `high_speed` | 2×2 (radius 1.5) | high speed, transition | none | in-cab signalling and the per-tile charge stay |
-| `narrow` | 1×1 (radius 0.5) | narrow only | 1.2 | narrow stock only |
+| Class        | Curves and switches | Joins                  | Line speed cap (tiles/s) | Rules                                          |
+| ------------ | ------------------- | ---------------------- | ------------------------ | ---------------------------------------------- |
+| `regular`    | 2×2 (radius 1.5)    | regular, transition    | 2.0                      | any regular-gauge stock, large included        |
+| `high_speed` | 2×2 (radius 1.5)    | high speed, transition | none                     | in-cab signalling and the per-tile charge stay |
+| `narrow`     | 1×1 (radius 0.5)    | narrow only            | 1.2                      | narrow stock only                              |
 
 - `CLASS_N = { regular: 2, high_speed: 2, narrow: 1 }`. The caps are rules values (`rules.ts`), tunable.
 - Removed: the Electric Age high-speed quest (`HS_QUEST`, `hsUnlocked` build gate and toolbar hiding),
@@ -70,16 +70,16 @@ to a switch block is placed or removed. The main line's continuation does not ma
 - Stephenson's Rocket and the MÁV Mk48 become narrow gauge (their existing stats stay).
 - New narrow wagons, drawn by the game (`rolling.ts`), one per cargo class:
 
-| id | Name | Carries | Length (tiles) |
-|---|---|---|---|
-| `mine_tub` | Mine Tub | mineral | 0.5 |
-| `narrow_tank` | Narrow Tank Wagon | liquid | 1 |
-| `narrow_box` | Narrow Box Wagon | bulk | 1 |
-| `narrow_coach` | Narrow Coach | people | 1 |
+| id             | Name              | Carries | Length (tiles) |
+| -------------- | ----------------- | ------- | -------------- |
+| `mine_tub`     | Mine Tub          | mineral | 0.5            |
+| `narrow_tank`  | Narrow Tank Wagon | liquid  | 1              |
+| `narrow_box`   | Narrow Box Wagon  | bulk    | 1              |
+| `narrow_coach` | Narrow Coach      | people  | 1              |
 
-  Capacity / weight: mine tub 10 / 3, tank 8 / 2, box 9 / 3, coach 10 / 3 (about half the
-  smallest regular wagon of each class; tunable). One starter copy of each. The 0.5-tile length is a
-  new size key used only by narrow stock until the size ladder lands.
+Capacity / weight: mine tub 10 / 3, tank 8 / 2, box 9 / 3, coach 10 / 3 (about half the
+smallest regular wagon of each class; tunable). One starter copy of each. The 0.5-tile length is a
+new size key used only by narrow stock until the size ladder lands.
 
 ## 6. Narrow depot
 
