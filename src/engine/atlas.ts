@@ -12,6 +12,8 @@ export interface FrameDef {
 export interface AtlasImage {
   image: HTMLCanvasElement | HTMLImageElement;
   frames: Record<string, FrameDef>;
+  /** Physical texels per world pixel. Procedural and legacy atlases use 1. */
+  resolution?: number;
   /** a file atlas that replaces only its own frames and keeps the generator for the rest */
   partial?: boolean;
 }
@@ -66,35 +68,44 @@ export class AtlasRegistry {
       if (!res.ok) return null;
       const ct = res.headers.get('content-type') ?? '';
       if (!ct.includes('json')) return null;
-      const json = (await res.json()) as { frames: Record<string, FrameDef>; partial?: boolean };
+      const json = (await res.json()) as Omit<AtlasImage, 'image'>;
+      const resolution = json.resolution ?? 1;
+      if (!Number.isFinite(resolution) || resolution < 1 || resolution > 8) return null;
       const image = new Image();
       await new Promise<void>((ok, fail) => {
         image.onload = () => ok();
         image.onerror = () => fail(new Error('atlas png missing'));
         image.src = `/assets/${name}.png`;
       });
-      return { image, frames: json.frames, partial: json.partial === true };
+      return { image, frames: json.frames, resolution, partial: json.partial === true };
     } catch {
       return null;
     }
   }
 
   private register(atlas: AtlasImage) {
+    const resolution = atlas.resolution ?? 1;
     const source = new ImageSource({
       resource: atlas.image,
-      scaleMode: 'nearest',
-      autoGenerateMipmaps: false,
+      scaleMode: resolution > 1 ? 'linear' : 'nearest',
+      autoGenerateMipmaps: resolution > 1,
     });
     this.sources.push(source);
     for (const [key, f] of Object.entries(atlas.frames)) {
-      const texture = new Texture({ source, frame: new Rectangle(f.x, f.y, f.w, f.h) });
+      // UVs address physical texels; orig controls the sprite's world-space dimensions.
+      // This also preserves callers that mirror/rotate sprites at scale 1 (rolling stock).
+      const texture = new Texture({
+        source,
+        frame: new Rectangle(f.x, f.y, f.w, f.h),
+        orig: new Rectangle(0, 0, f.w / resolution, f.h / resolution),
+      });
       this.frames.set(key, {
         image: atlas.image,
         texture,
         anchorX: f.ax / f.w,
         anchorY: f.ay / f.h,
-        w: f.w,
-        h: f.h,
+        w: f.w / resolution,
+        h: f.h / resolution,
       });
     }
   }

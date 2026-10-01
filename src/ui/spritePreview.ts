@@ -13,7 +13,7 @@ import { el } from './dom';
 
 const caches = new WeakMap<AtlasRegistry, Map<string, string>>();
 
-/** Crop one atlas frame into a data URL, scaled with nearest-neighbour. Cached per frame+scale. */
+/** Crop a frame at its logical size; preserve smooth sampling for illustrated textures. */
 export function spriteDataUrl(atlas: AtlasRegistry, frame: string, scale = 2): string | null {
   let cache = caches.get(atlas);
   if (!cache) {
@@ -36,11 +36,12 @@ export function spriteDataUrl(atlas: AtlasRegistry, frame: string, scale = 2): s
   const src = f.image;
   if (!src) return null;
   const c = document.createElement('canvas');
-  c.width = Math.round(rect.width * scale);
-  c.height = Math.round(rect.height * scale);
+  c.width = Math.max(1, Math.round(f.w * scale));
+  c.height = Math.max(1, Math.round(f.h * scale));
   const ctx = c.getContext('2d');
   if (!ctx) return null;
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled = rect.width > f.w;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(src, rect.x, rect.y, rect.width, rect.height, 0, 0, c.width, c.height);
   const url = c.toDataURL();
   cache.set(key, url);
@@ -102,6 +103,7 @@ export function vehiclePreview(atlas: AtlasRegistry, id: string, facing = 0, sca
     if (!atlas.has(l.key)) continue;
     const f = atlas.get(l.key),
       r = f.texture.frame;
+    ctx.imageSmoothingEnabled = r.width > f.w;
     ctx.save();
     ctx.translate(l.x, l.y);
     if (l.flip) ctx.scale(-1, 1);
@@ -160,6 +162,9 @@ export function spriteImg(
   const url = spriteDataUrl(atlas, frame, scale);
   if (!url) return el('span', { class: cls });
   const img = el('img', { class: cls, src: url, alt: '' });
+  if (atlas.has(frame) && atlas.get(frame).texture.frame.width > atlas.get(frame).w) {
+    img.style.imageRendering = 'auto';
+  }
   img.draggable = false;
   return img;
 }

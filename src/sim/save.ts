@@ -86,6 +86,7 @@ export interface Settings {
   master: number;
   sfx: number;
   music: number;
+  ambient?: number;
   edgeScroll: boolean;
   autosave: boolean;
   dayNight: boolean;
@@ -128,6 +129,7 @@ export const DEFAULT_SETTINGS: Settings = {
   master: 0.8,
   sfx: 0.8,
   music: 0.5,
+  ambient: 0.35,
   edgeScroll: true,
   autosave: true,
   dayNight: true,

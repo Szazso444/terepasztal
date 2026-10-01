@@ -1,10 +1,12 @@
 import { Container, Sprite } from 'pixi.js';
+import { SurfaceAssets, windowSprite } from './surfaceAssets';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
 import { PAL, hex, type RGB } from '../art/palette';
 import { locoFrame, wagonFrame, loadKind, bogieFrame, bogieStyleOf } from '../art/frames';
+import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import {
   facingOf,
   DRAWN_FACINGS,
@@ -28,6 +30,13 @@ interface VehicleSprites {
  * and cargo overlays above loaded wagons. Bodies use 48 facings and a small residual rotation.
  */
 export class TrainRenderer {
+  private surfaces = new SurfaceAssets();
+  private windowLights = new Map<Sprite, Sprite>();
+  private night = 0;
+  setWindowNight(night: number) {
+    this.night = night;
+    for (const light of this.windowLights.values()) light.alpha = night * 0.9;
+  }
   private cars = new Map<number, VehicleSprites[]>();
   /** train under the cursor (bright outline pulse) and the selected one (steady tint) */
   hoverId: number | null = null;
@@ -44,7 +53,11 @@ export class TrainRenderer {
   constructor(
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
-  ) {}
+    /** The surface under a tile position; trains climb hills on it. Level when absent. */
+    private readonly ground: (x: number, y: number) => Ground = () => LEVEL_GROUND,
+  ) {
+    layer.on('destroyed', () => this.surfaces.destroy());
+  }
 
   private make(): Sprite {
     const s = new Sprite();
@@ -98,7 +111,11 @@ export class TrainRenderer {
     return list;
   }
   private destroyCar(c: VehicleSprites) {
-    for (const s of c.parts) s.destroy();
+    for (const s of c.parts) {
+      this.windowLights.get(s)?.destroy();
+      this.windowLights.delete(s);
+      s.destroy();
+    }
     c.undercarriage.destroy({ children: true });
     c.load?.destroy();
   }
@@ -116,6 +133,7 @@ export class TrainRenderer {
     y: number,
     angle: number,
     layer: number,
+    ground = this.ground(x, y),
   ) {
     const f = facingOf(angle);
     const drawn = DRAWN_FACINGS.has(f);
@@ -126,10 +144,56 @@ export class TrainRenderer {
     s.scale.set(drawn ? 1 : -1, 1);
     s.rotation = residualRotation(angle, f) * ROTATION_SHARE;
     const wp = tileToWorld(x, y);
-    s.position.set(Math.round(wp.x), Math.round(wp.y));
+    // Each body part and bogie stands on the rail under it, pitched along its own heading only
+    // (the rail is level across the track).
+    const g = ground,
+      cos = Math.cos(angle),
+      sin = Math.sin(angle),
+      along = g.sgx * cos + g.sgy * sin;
+    standOnGround(s, Math.round(wp.x), Math.round(wp.y), {
+      dz: g.dz,
+      sgx: along * cos,
+      sgy: along * sin,
+    });
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
     return key;
+  }
+
+  /**
+   * A rigid body rests on its end bogies: its height and pitch are the chord between the rail
+   * under the first and the last, so on a vertical curve it follows the rail it rides instead of
+   * the slope under its own centre.
+   */
+  private bodyGround(
+    seg: VehiclePose['segments'][number],
+    prev: VehiclePose['segments'][number] | undefined,
+    alpha: number,
+    x: number,
+    y: number,
+  ): Ground {
+    const n = seg.bogies.length;
+    if (n < 2) return this.ground(x, y);
+    const at = (k: number) => {
+      const b = seg.bogies[k],
+        p = prev?.bogies[k];
+      return [
+        p ? lerp(p.drawX, b.drawX, alpha) : b.drawX,
+        p ? lerp(p.drawY, b.drawY, alpha) : b.drawY,
+      ];
+    };
+    const [ax, ay] = at(0),
+      [bx, by] = at(n - 1),
+      ga = this.ground(ax, ay),
+      gb = this.ground(bx, by),
+      dx = bx - ax,
+      dy = by - ay,
+      len2 = dx * dx + dy * dy;
+    if (len2 < 1e-6) return this.ground(x, y);
+    const t = ((x - ax) * dx + (y - ay) * dy) / len2,
+      rise = (gb.dz - ga.dz) / len2;
+    // Rise per tile along each axis, so the body pitches along the chord.
+    return { dz: lerp(ga.dz, gb.dz, t), sgx: rise * dx, sgy: rise * dy };
   }
 
   /** Update sprites; alpha interpolates between the last two sim poses. */
@@ -168,7 +232,38 @@ export class TrainRenderer {
             ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
             : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
           const styles = (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).bogieStyle;
-          this.pose(s, frameFor, x, y, shown, 15);
+          const key = this.pose(
+            s,
+            frameFor,
+            x,
+            y,
+            shown,
+            15,
+            this.bodyGround(seg, ps, alpha, x, y),
+          );
+          const fr = this.atlas.get(key);
+          // Procedural vehicle windows carry explicit amber palette pixels.
+          // Illustrated replacements need their own authored mask; never light a boiler.
+          if (fr.texture.frame.width / fr.w === 1) {
+            let light = this.windowLights.get(s);
+            if (!light) {
+              light = windowSprite();
+              this.layer.addChild(light);
+              this.windowLights.set(s, light);
+            }
+            light.texture = this.surfaces.window(key, fr, true);
+            light.anchor.set(fr.anchorX, fr.anchorY);
+            light.alpha = this.night * 0.9;
+            light.position.copyFrom(s.position);
+            light.scale.copyFrom(s.scale);
+            light.rotation = s.rotation;
+            light.skew.copyFrom(s.skew);
+            light.zIndex = s.zIndex + 0.01;
+            light.visible = s.visible;
+          } else {
+            const light = this.windowLights.get(s);
+            if (light) light.visible = false;
+          }
           s.tint = tint;
           c.undercarriage.zIndex = Math.min(c.undercarriage.zIndex, s.zIndex - 1);
           if (c.spec.drawBogies)
@@ -213,6 +308,10 @@ export class TrainRenderer {
     }
     for (const id of [...this.cars.keys()]) if (!seen.has(id)) this.remove(id);
   }
+}
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
 }
 
 function lerpAngle(a: number, b: number, t: number) {

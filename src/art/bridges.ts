@@ -13,6 +13,8 @@ function span(
   phase: number,
   edge: number,
   rail: boolean,
+  /** Over land: the deck and fences only; the renderer stands piers on the ground below. */
+  land = false,
 ) {
   const b = new PixelBuf(96, 88);
   const pt = (l: number, w: number, z: number) => {
@@ -87,7 +89,7 @@ function span(
       seed: 71,
     });
     // A continuous arch below the deck, with supports at span ends and every fourth tile.
-    for (const w of [-0.26, 0.26]) {
+    for (const w of land ? [] : [-0.26, 0.26]) {
       const start = (edge & 1) !== 0 || phase === 0;
       const end = (edge & 2) !== 0 || phase === n - 1;
       if (start) pier(-0.46, w);
@@ -155,8 +157,37 @@ function reinforcement(material: 'wood' | 'stone', axis: number, level: number, 
     }
   return b;
 }
+/** A square deck for a curve or switch carried over land: no fences, piers from the renderer. */
+function pad(material: 'wood' | 'stone') {
+  const b = new PixelBuf(96, 88),
+    side = material === 'stone' ? PAL.stone : PAL.timber;
+  drawPrism(b, {
+    ox: OX,
+    oy: OY,
+    cx: 0,
+    cy: 0,
+    angle: 0,
+    len: 0.94,
+    wid: 0.94,
+    z0: -4,
+    h: 4,
+    top: side,
+    side,
+    seed: 73,
+  });
+  return b;
+}
 export function addBridgeFrames(ab: AtlasBuilder) {
   for (const material of ['wood', 'stone'] as const) {
+    ab.add(`structures/landpad_${material}`, pad(material).toImageData(), OX, OY);
+    for (let axis = 0; axis < 2; axis++)
+      for (const rail of [false, true])
+        ab.add(
+          `structures/landspan_${material}_${axis}_${rail ? 'rail' : 'deck'}`,
+          span(material, axis, 1, 0, 3, rail, true).toImageData(),
+          OX,
+          OY,
+        );
     const preview = new PixelBuf(160, 120);
     for (let phase = 0; phase < 3; phase++) {
       const edge = phase === 0 ? 1 : phase === 2 ? 2 : 0;

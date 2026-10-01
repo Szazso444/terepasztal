@@ -28,6 +28,9 @@ export class DayNight {
   readonly overlay = new Graphics();
   private poly: number[] = [];
   private lastColor = -1;
+  get color() {
+    return this.overlay.visible ? this.lastColor : 0xffffff;
+  }
   constructor() {
     this.overlay.blendMode = 'multiply';
   }
@@ -92,9 +95,9 @@ export class Glows {
       }
       const p = this.surface(st.x, st.y);
       s.position.set(p.x + 10, p.y - 6);
-      s.alpha = night;
+      s.alpha = night * 0.4;
       s.visible = night > 0.02;
-      s.scale.set(1.1 + st.level * 0.15);
+      s.scale.set(0.7 + st.level * 0.05);
     }
     for (const [id, s] of this.stationGlows)
       if (!seenS.has(id)) {
@@ -212,7 +215,7 @@ export class Rain {
     }
     while (this.drops.length > want) this.drops.pop()!.s.destroy();
     this.root.visible = this.drops.length > 0;
-    this.root.alpha = Math.min(1, intensity * 1.2);
+    this.root.alpha = Math.min(0.7, intensity * 0.8);
     for (const d of this.drops) {
       d.s.x += d.vx * dt;
       d.s.y += d.vy * dt;
@@ -307,7 +310,7 @@ export class Smoke {
   update(trains: Train[], dt: number, enabled: boolean) {
     if (enabled)
       for (const t of trains) {
-        if (t.locoDef.body !== 'steam' || t.state !== 'moving' || t.speed < 0.05) continue;
+        if (!t.hasSteam || t.state !== 'moving' || t.speed < 0.05) continue;
         const acc = (this.acc.get(t.id) ?? 0) + dt * (0.6 + t.speed);
         if (acc >= 0.35) {
           this.acc.set(t.id, 0);

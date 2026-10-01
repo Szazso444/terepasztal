@@ -2,6 +2,7 @@ import { Container, Sprite } from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey } from '../engine/iso';
 import type { PeopleSim } from '../sim/people';
+import { HUMAN_HEIGHT_PX } from './assetScale';
 
 /** Tiny walkers in the object layer; two frames alternate while they move. */
 export class PeopleRenderer {
@@ -32,11 +33,9 @@ export class PeopleRenderer {
         this.sprites.set(p.id, s);
       } else s.texture = f.texture;
       s.anchor.set(f.anchorX, f.anchorY);
+      s.scale.set(HUMAN_HEIGHT_PX / f.h);
       const w = tileToWorld(p.x, p.y);
-      s.position.set(
-        Math.round(w.x),
-        Math.round(w.y + this.elevation(Math.round(p.x), Math.round(p.y))),
-      );
+      s.position.set(Math.round(w.x), Math.round(w.y + this.elevation(p.x, p.y)));
       s.zIndex = depthKey(p.x, p.y, 16);
     }
     for (const [id, s] of this.sprites)

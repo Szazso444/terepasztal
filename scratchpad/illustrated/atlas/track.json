@@ -1,0 +1,652 @@
+{
+  "frames": {
+    "track/crossing_high_speed_high_speed_0": {
+      "x": 1110,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/crossing_regular_high_speed_0": {
+      "x": 1163,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/crossing_regular_regular_0": {
+      "x": 600,
+      "y": 36,
+      "w": 47,
+      "h": 27,
+      "ax": 24,
+      "ay": 13
+    },
+    "track/curve_high_speed_0": {
+      "x": 119,
+      "y": 1,
+      "w": 42,
+      "h": 32,
+      "ax": 21,
+      "ay": 16
+    },
+    "track/curve_high_speed_0_m0": {
+      "x": 1216,
+      "y": 1,
+      "w": 40,
+      "h": 30,
+      "ax": 17,
+      "ay": 14
+    },
+    "track/curve_high_speed_0_m1": {
+      "x": 162,
+      "y": 1,
+      "w": 42,
+      "h": 32,
+      "ax": 21,
+      "ay": 16
+    },
+    "track/curve_high_speed_0_m2": {
+      "x": 1644,
+      "y": 36,
+      "w": 9,
+      "h": 7,
+      "ax": -4,
+      "ay": 3
+    },
+    "track/curve_high_speed_0_m3": {
+      "x": 322,
+      "y": 36,
+      "w": 38,
+      "h": 29,
+      "ax": 16,
+      "ay": 15
+    },
+    "track/curve_high_speed_1": {
+      "x": 1022,
+      "y": 36,
+      "w": 34,
+      "h": 26,
+      "ax": 18,
+      "ay": 11
+    },
+    "track/curve_high_speed_1_m0": {
+      "x": 1622,
+      "y": 36,
+      "w": 10,
+      "h": 8,
+      "ax": 5,
+      "ay": -2
+    },
+    "track/curve_high_speed_1_m1": {
+      "x": 1057,
+      "y": 36,
+      "w": 34,
+      "h": 26,
+      "ax": 18,
+      "ay": 11
+    },
+    "track/curve_high_speed_1_m2": {
+      "x": 1092,
+      "y": 36,
+      "w": 34,
+      "h": 26,
+      "ax": 16,
+      "ay": 11
+    },
+    "track/curve_high_speed_1_m3": {
+      "x": 205,
+      "y": 1,
+      "w": 42,
+      "h": 32,
+      "ax": 21,
+      "ay": 16
+    },
+    "track/curve_high_speed_2": {
+      "x": 1654,
+      "y": 36,
+      "w": 9,
+      "h": 7,
+      "ax": 13,
+      "ay": 3
+    },
+    "track/curve_high_speed_2_m0": {
+      "x": 1257,
+      "y": 1,
+      "w": 40,
+      "h": 30,
+      "ax": 23,
+      "ay": 14
+    },
+    "track/curve_high_speed_2_m1": {
+      "x": 1664,
+      "y": 36,
+      "w": 9,
+      "h": 7,
+      "ax": 13,
+      "ay": 3
+    },
+    "track/curve_high_speed_2_m2": {
+      "x": 248,
+      "y": 1,
+      "w": 42,
+      "h": 32,
+      "ax": 21,
+      "ay": 16
+    },
+    "track/curve_high_speed_2_m3": {
+      "x": 361,
+      "y": 36,
+      "w": 38,
+      "h": 29,
+      "ax": 22,
+      "ay": 15
+    },
+    "track/curve_high_speed_3": {
+      "x": 1127,
+      "y": 36,
+      "w": 34,
+      "h": 26,
+      "ax": 18,
+      "ay": 15
+    },
+    "track/curve_high_speed_3_m0": {
+      "x": 291,
+      "y": 1,
+      "w": 42,
+      "h": 32,
+      "ax": 21,
+      "ay": 16
+    },
+    "track/curve_high_speed_3_m1": {
+      "x": 1162,
+      "y": 36,
+      "w": 34,
+      "h": 26,
+      "ax": 18,
+      "ay": 15
+    },
+    "track/curve_high_speed_3_m2": {
+      "x": 1197,
+      "y": 36,
+      "w": 34,
+      "h": 26,
+      "ax": 16,
+      "ay": 15
+    },
+    "track/curve_high_speed_3_m3": {
+      "x": 1633,
+      "y": 36,
+      "w": 10,
+      "h": 8,
+      "ax": 5,
+      "ay": 12
+    },
+    "track/curve_regular_0": {
+      "x": 1508,
+      "y": 36,
+      "w": 32,
+      "h": 24,
+      "ax": 5,
+      "ay": 12
+    },
+    "track/curve_regular_1": {
+      "x": 1574,
+      "y": 36,
+      "w": 23,
+      "h": 17,
+      "ax": 12,
+      "ay": 3
+    },
+    "track/curve_regular_2": {
+      "x": 1541,
+      "y": 36,
+      "w": 32,
+      "h": 24,
+      "ax": 27,
+      "ay": 12
+    },
+    "track/curve_regular_3": {
+      "x": 1598,
+      "y": 36,
+      "w": 23,
+      "h": 17,
+      "ax": 12,
+      "ay": 14
+    },
+    "track/straight_high_speed_0": {
+      "x": 1298,
+      "y": 1,
+      "w": 51,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/straight_high_speed_1": {
+      "x": 1350,
+      "y": 1,
+      "w": 51,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/straight_regular_0": {
+      "x": 648,
+      "y": 36,
+      "w": 45,
+      "h": 27,
+      "ax": 22,
+      "ay": 13
+    },
+    "track/straight_regular_1": {
+      "x": 694,
+      "y": 36,
+      "w": 45,
+      "h": 27,
+      "ax": 23,
+      "ay": 13
+    },
+    "track/switch_high_speed_0": {
+      "x": 334,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_0_m0": {
+      "x": 894,
+      "y": 1,
+      "w": 53,
+      "h": 31,
+      "ax": 27,
+      "ay": 15
+    },
+    "track/switch_high_speed_0_m1": {
+      "x": 390,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_0_m2": {
+      "x": 1402,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 25,
+      "ay": 15
+    },
+    "track/switch_high_speed_0_m3": {
+      "x": 400,
+      "y": 36,
+      "w": 50,
+      "h": 29,
+      "ax": 21,
+      "ay": 15
+    },
+    "track/switch_high_speed_1": {
+      "x": 1455,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/switch_high_speed_1_m0": {
+      "x": 1,
+      "y": 1,
+      "w": 58,
+      "h": 34,
+      "ax": 29,
+      "ay": 13
+    },
+    "track/switch_high_speed_1_m1": {
+      "x": 1508,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/switch_high_speed_1_m2": {
+      "x": 1232,
+      "y": 36,
+      "w": 45,
+      "h": 26,
+      "ax": 22,
+      "ay": 11
+    },
+    "track/switch_high_speed_1_m3": {
+      "x": 446,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_2": {
+      "x": 1561,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 27,
+      "ay": 15
+    },
+    "track/switch_high_speed_2_m0": {
+      "x": 451,
+      "y": 36,
+      "w": 50,
+      "h": 29,
+      "ax": 29,
+      "ay": 14
+    },
+    "track/switch_high_speed_2_m1": {
+      "x": 1614,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 27,
+      "ay": 15
+    },
+    "track/switch_high_speed_2_m2": {
+      "x": 502,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_2_m3": {
+      "x": 1667,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/switch_high_speed_3": {
+      "x": 1278,
+      "y": 36,
+      "w": 45,
+      "h": 26,
+      "ax": 23,
+      "ay": 15
+    },
+    "track/switch_high_speed_3_m0": {
+      "x": 558,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_3_m1": {
+      "x": 1324,
+      "y": 36,
+      "w": 45,
+      "h": 26,
+      "ax": 23,
+      "ay": 15
+    },
+    "track/switch_high_speed_3_m2": {
+      "x": 1720,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/switch_high_speed_3_m3": {
+      "x": 948,
+      "y": 1,
+      "w": 53,
+      "h": 31,
+      "ax": 27,
+      "ay": 16
+    },
+    "track/switch_high_speed_4": {
+      "x": 1773,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/switch_high_speed_4_m0": {
+      "x": 614,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_4_m1": {
+      "x": 1826,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/switch_high_speed_4_m2": {
+      "x": 1370,
+      "y": 36,
+      "w": 45,
+      "h": 26,
+      "ax": 22,
+      "ay": 15
+    },
+    "track/switch_high_speed_4_m3": {
+      "x": 1002,
+      "y": 1,
+      "w": 53,
+      "h": 31,
+      "ax": 27,
+      "ay": 16
+    },
+    "track/switch_high_speed_5": {
+      "x": 670,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_5_m0": {
+      "x": 1879,
+      "y": 1,
+      "w": 51,
+      "h": 30,
+      "ax": 22,
+      "ay": 15
+    },
+    "track/switch_high_speed_5_m1": {
+      "x": 726,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_5_m2": {
+      "x": 1931,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 25,
+      "ay": 15
+    },
+    "track/switch_high_speed_5_m3": {
+      "x": 1984,
+      "y": 1,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/switch_high_speed_6": {
+      "x": 1416,
+      "y": 36,
+      "w": 45,
+      "h": 26,
+      "ax": 23,
+      "ay": 11
+    },
+    "track/switch_high_speed_6_m0": {
+      "x": 60,
+      "y": 1,
+      "w": 58,
+      "h": 34,
+      "ax": 29,
+      "ay": 13
+    },
+    "track/switch_high_speed_6_m1": {
+      "x": 1462,
+      "y": 36,
+      "w": 45,
+      "h": 26,
+      "ax": 23,
+      "ay": 11
+    },
+    "track/switch_high_speed_6_m2": {
+      "x": 1,
+      "y": 36,
+      "w": 52,
+      "h": 30,
+      "ax": 26,
+      "ay": 15
+    },
+    "track/switch_high_speed_6_m3": {
+      "x": 782,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_7": {
+      "x": 54,
+      "y": 36,
+      "w": 52,
+      "h": 30,
+      "ax": 27,
+      "ay": 15
+    },
+    "track/switch_high_speed_7_m0": {
+      "x": 1056,
+      "y": 1,
+      "w": 53,
+      "h": 31,
+      "ax": 27,
+      "ay": 15
+    },
+    "track/switch_high_speed_7_m1": {
+      "x": 107,
+      "y": 36,
+      "w": 52,
+      "h": 30,
+      "ax": 27,
+      "ay": 15
+    },
+    "track/switch_high_speed_7_m2": {
+      "x": 838,
+      "y": 1,
+      "w": 55,
+      "h": 32,
+      "ax": 28,
+      "ay": 16
+    },
+    "track/switch_high_speed_7_m3": {
+      "x": 160,
+      "y": 36,
+      "w": 51,
+      "h": 30,
+      "ax": 29,
+      "ay": 15
+    },
+    "track/switch_regular_0": {
+      "x": 740,
+      "y": 36,
+      "w": 46,
+      "h": 27,
+      "ax": 23,
+      "ay": 13
+    },
+    "track/switch_regular_1": {
+      "x": 787,
+      "y": 36,
+      "w": 46,
+      "h": 27,
+      "ax": 23,
+      "ay": 13
+    },
+    "track/switch_regular_2": {
+      "x": 834,
+      "y": 36,
+      "w": 46,
+      "h": 27,
+      "ax": 23,
+      "ay": 14
+    },
+    "track/switch_regular_3": {
+      "x": 881,
+      "y": 36,
+      "w": 46,
+      "h": 27,
+      "ax": 23,
+      "ay": 14
+    },
+    "track/switch_regular_4": {
+      "x": 502,
+      "y": 36,
+      "w": 48,
+      "h": 28,
+      "ax": 24,
+      "ay": 14
+    },
+    "track/switch_regular_5": {
+      "x": 928,
+      "y": 36,
+      "w": 46,
+      "h": 27,
+      "ax": 23,
+      "ay": 13
+    },
+    "track/switch_regular_6": {
+      "x": 551,
+      "y": 36,
+      "w": 48,
+      "h": 28,
+      "ax": 24,
+      "ay": 14
+    },
+    "track/switch_regular_7": {
+      "x": 975,
+      "y": 36,
+      "w": 46,
+      "h": 27,
+      "ax": 23,
+      "ay": 14
+    },
+    "track/transition_regular_0": {
+      "x": 212,
+      "y": 36,
+      "w": 54,
+      "h": 30,
+      "ax": 27,
+      "ay": 15
+    },
+    "track/transition_regular_1": {
+      "x": 267,
+      "y": 36,
+      "w": 54,
+      "h": 30,
+      "ax": 27,
+      "ay": 15
+    }
+  }
+}

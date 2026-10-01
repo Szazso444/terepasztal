@@ -68,6 +68,7 @@ export const STR = {
     hint: 'M / scroll in: return to field view',
   },
   tile: {
+    elevation: (level: number) => `Elevation: level ${level}`,
     terrain: {
       grass: 'Grassland',
       forest: 'Forest',
@@ -128,6 +129,12 @@ export const STR = {
     locked: 'Uncharted region',
     rock: 'Cannot lay track on rock',
     needBridge: 'Water needs a bridge',
+    tooSteep: 'Too steep for rails: straight track climbs one level per tile at most',
+    notLevel: 'Needs level ground: only straight track can climb a slope',
+    notSmooth:
+      'Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece',
+    deckLevels:
+      'A supported piece must meet its rails at one level, no lower than the ground under it',
     trackInWay: 'Track in the way: remove it first',
     needWaterside: 'Must stand next to water',
     needTerrain: (t: string) => `Must stand on ${t}`,
@@ -631,8 +638,9 @@ export const STR = {
     master: 'Master volume',
     sfx: 'Effects',
     music: 'Music',
+    ambient: 'Nature and weather',
     audioNote:
-      'Music is the looping track at /assets/audio/music; remove it and a synthesized loop takes over. Effects are synthesized at runtime; an .ogg at /assets/audio/<event>.ogg overrides a synthesized effect.',
+      'Pastoral Pulse opens each session, then its four arrangements play in shuffled order. Nature sounds follow the weather and time of day.',
     gameplay: 'Gameplay',
     edgeScroll: 'Edge scrolling',
     autosave: 'Autosave (every minute)',

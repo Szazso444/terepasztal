@@ -308,6 +308,8 @@ export interface TickCtx {
   speedFactor: number;
   /** biome under a tile: speed and water-use multipliers */
   biomeAt: (x: number, y: number) => { speedMul: number; waterUseMul: number };
+  /** speed multiplier for crossing a segment: slower climbing a hill, faster coming down */
+  gradeAt?: (seg: PathSegment) => number;
 }
 
 export interface RetreatPlan {
@@ -1731,6 +1733,7 @@ export class Train {
       this.factorAt(this.pathPos + 0.3) *
       ctx.speedFactor *
       bio.speedMul *
+      (this.headSeg && ctx.gradeAt ? ctx.gradeAt(this.headSeg) : 1) *
       ecoMul *
       (this.reversed ? this.reverseFactor : 1);
     this.freeSpeed = vmax;

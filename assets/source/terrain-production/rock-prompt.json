@@ -1,0 +1,7 @@
+{
+  "prompt": "Generate one square, seamless-style material texture for the rocky surfaces of the isometric game Terepasztal. The attached approved mountain and grassy hill images are STYLE REFERENCES only. Match their crisp hand-painted pixel clusters, restrained slate grey/cream/moss olive palette and small angular brush strokes. This image is an unlit FLAT SURFACE TEXTURE for mapping onto connected slopes and ridges in the actual game, not a scene, not a hill sprite. Fill every pixel with irregular interlocking weathered rock plates and small fractured stones of varied sizes, narrow darker cracks, sparse olive lichen. Medium detail, subtle value contrast, no large central motif. NO mountains, no silhouettes, no peaks, no isometric diamond, no tile border, no ground pedestal, no cast shadows, no perspective, no lettering, no background. Avoid identical repeated shapes or long parallel lines. It will be cropped and sampled in overlapping world-space patches; edge seamlessness desirable. The rock features should be small and irregular enough to preserve the illustration at human scale, without looking noisy or photoreal.",
+  "referenced_image_paths": [
+    "C:/Users/Zso/terepasztal/assets/source/base-v1/terrain-mountain.png",
+    "C:/Users/Zso/terepasztal/assets/source/base-v1/terrain-hill.png"
+  ]
+}

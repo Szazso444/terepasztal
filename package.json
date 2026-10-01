@@ -12,7 +12,9 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.{ts,json,css}\" index.html",
     "typecheck": "tsc --noEmit",
-    "pack-atlas": "node tools/pack-atlas.mjs"
+    "pack-atlas": "node tools/pack-atlas.mjs",
+    "art:illustrated": "node tools/illustrated-sprites.mjs",
+    "art:terrain": "node tools/terrain-surfaces.mjs"
   },
   "dependencies": {
     "pixi.js": "^8.20.1"

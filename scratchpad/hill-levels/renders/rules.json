@@ -1,0 +1,68 @@
+{
+  "site": {
+    "x0": 71,
+    "y": 20,
+    "laid": 18,
+    "levels": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      2,
+      2,
+      2,
+      1,
+      2,
+      2,
+      1,
+      0,
+      0
+    ]
+  },
+  "results": [
+    {
+      "label": "Straight rail climbing the bank north-south (7 tiles)",
+      "ok": true
+    },
+    {
+      "label": "Crossing on a slope tile",
+      "ok": true
+    },
+    {
+      "label": "Curve on a slope",
+      "ok": false,
+      "reason": "Curves and switches need smooth ground: only straights and crossings climb a slope, unless a bridge platform supports the piece"
+    },
+    {
+      "label": "Switch on a slope",
+      "ok": false,
+      "reason": "Curves and switches need smooth ground: only straights and crossings climb a slope, unless a bridge platform supports the piece"
+    },
+    {
+      "label": "Switch on a smooth tile",
+      "ok": true
+    },
+    {
+      "label": "High-speed curve on smooth ground",
+      "ok": true
+    },
+    {
+      "label": "High-speed curve on a slope",
+      "ok": false,
+      "reason": "Curves and switches need smooth ground: only straights and crossings climb a slope, unless a bridge platform supports the piece"
+    },
+    {
+      "label": "Bridge platform on the slope",
+      "ok": true
+    },
+    {
+      "label": "Curve on the slope, supported by the bridge",
+      "ok": true
+    }
+  ]
+}

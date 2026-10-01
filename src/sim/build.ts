@@ -30,6 +30,7 @@ import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
 import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
+import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
 
 const trackData = content.track;
@@ -78,6 +79,11 @@ export class Builder {
   /** editor mode: no costs, no region or tier locks */
   free = false;
   onTrackChanged: ((x: number, y: number) => void) | null = null;
+  /**
+   * The rendered hill decides what its ground carries: `straight` rails climb at most one level
+   * per tile, `level` pieces and structures need a level tile. Unset means level everywhere.
+   */
+  groundCheck: ((x: number, y: number, need: 'straight' | 'level') => boolean) | null = null;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
@@ -318,9 +324,23 @@ export class Builder {
     // class compatibility with the neighbours the new piece would open onto
     const probe = new TrackGraph(this.map.w, this.map.h);
     probe.place(x, y, kind, rot, item.cls, item.cls2);
+    // Straights, crossings and class transitions may climb. Curves and switches (regular and
+    // high speed) need smooth ground on every tile, or a bridge platform under every tile: then
+    // they sit at the deck, the level of the rails they meet off the bridge.
+    const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
+      // Members of a wide piece are parts of a curve or switch, whatever their links look like.
+      climbs = !wide && members.some((m) => climbAxes(m.links).length > 0);
+    if (this.groundCheck && !climbs && !tiles.every((t) => this.groundCheck!(t.x, t.y, 'level'))) {
+      if (!tiles.every((t) => this.bridgeAt(t.x, t.y)))
+        return { ok: false, cost: {}, reason: STR.build.notSmooth };
+      if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by)) === null)
+        return { ok: false, cost: {}, reason: STR.build.deckLevels };
+    }
     for (const t of tiles) {
       const p = probe.get(t.x, t.y);
       if (!p) continue;
+      if (climbs && this.groundCheck && !this.groundCheck(t.x, t.y, 'straight'))
+        return { ok: false, cost: {}, reason: STR.build.tooSteep };
       for (const [a, b] of p.links)
         for (const d of [a, b]) {
           const nx = t.x + DDX[d];
@@ -415,6 +435,8 @@ export class Builder {
           this.buildingAt(tx, ty)
         )
           return { ok: false, cost: {}, reason: STR.build.occupied };
+        if (this.groundCheck && !this.groundCheck(tx, ty, 'level'))
+          return { ok: false, cost: {}, reason: STR.build.notLevel };
       }
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
@@ -517,6 +539,8 @@ export class Builder {
         return STR.build.badTerrain;
       if (this.stationAt(x, y)) return STR.build.occupied;
       if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
+      if (!def.anyTile && this.groundCheck && !this.groundCheck(x, y, 'level'))
+        return STR.build.notLevel;
     }
     return null;
   }
@@ -588,16 +612,11 @@ export class Builder {
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     const t = terrainAt(this.map, x, y);
-    if (
-      def.bridge
-        ? t !== Terrain.Water
-        : t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain
-    )
-      return {
-        ok: false,
-        cost: {},
-        reason: def.bridge ? 'Bridge platforms must stand on water' : STR.build.badTerrain,
-      };
+    // Bridge platforms stand on water or carry a rail level across a dip in the land.
+    if (t === Terrain.Rock || t === Terrain.Mountain || (t === Terrain.Water && !def.bridge))
+      return { ok: false, cost: {}, reason: STR.build.badTerrain };
+    if (!def.bridge && this.groundCheck && !this.groundCheck(x, y, 'level'))
+      return { ok: false, cost: {}, reason: STR.build.notLevel };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
       return { ok: false, cost: {}, reason: STR.build.occupied };
     if (

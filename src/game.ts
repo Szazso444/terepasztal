@@ -28,6 +28,8 @@ import { decorateProps, placeOilFields } from './world/mapgen';
 import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
+import { levelAt } from './world/elevation';
+import { climbAxes, railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -731,7 +733,8 @@ export class Game {
       background: '#0a0a0c',
       antialias: false,
       roundPixels: true,
-      resolution: 1,
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      autoDensity: true,
       preference: 'webgl',
     });
     // Scene-graph inspector for the PixiJS browser extension. The dynamic import sits inside a
@@ -770,6 +773,7 @@ export class Game {
     this.stock.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
+    this.builder.groundCheck = (x, y, need) => this.world.groundAllows(x, y, need);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
@@ -874,6 +878,12 @@ export class Game {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    this.world.occupied = (x, y) =>
+      !!(
+        this.builder.stationAt(x, y) ||
+        this.builder.buildingAt(x, y) ||
+        this.builder.decorAt(x, y)
+      );
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
     this.overview.root.visible = false;
@@ -883,7 +893,10 @@ export class Game {
     this.world.overlay.addChild(this.cursor);
     this.rain = new Rain(this.atlas);
     this.fog = new Fog(this.atlas);
-    this.world.root.addChild(this.dayNight.overlay);
+    this.world.root.addChildAt(
+      this.dayNight.overlay,
+      this.world.root.getChildIndex(this.world.objects),
+    );
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.world.overlay.addChild(this.fog.patches);
@@ -908,7 +921,9 @@ export class Game {
     this.world.overlay.addChild(this.powerLines.root);
     this.applySeason(true);
     this.applySettings();
-    this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects);
+    this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects, (x, y) =>
+      this.world.railAt(x, y),
+    );
     // vehicles still inside an engine shed are hidden until they roll out
     this.trainRenderer.hideAt = (x, y) => this.builder.stationAt(x, y)?.def.depot === true;
     this.peopleRenderer = new PeopleRenderer(this.atlas, this.world.objects, (x, y) =>
@@ -954,6 +969,7 @@ export class Game {
     audio.master = this.settings.master;
     audio.sfx = this.settings.sfx;
     audio.music = this.settings.music;
+    audio.ambient = this.settings.ambient ?? 0.35;
     writeSettings(this.settings);
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
@@ -1142,7 +1158,17 @@ export class Game {
   }
 
   // ---------------------------------------------------------------- world edits
+  /** Rail profiles need recomputing: a track piece or a bridge changed. */
+  private railsDirty = false;
+  /** Every straight line conforms to its neighbours: inclines, transitions, bridge decks. */
+  private refreshRails() {
+    this.railsDirty = false;
+    const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
+    this.fleet.railBeds = beds;
+    if (this.world.setRailBeds(beds)) this.refreshBridges();
+  }
   private onTrackChanged(x: number, y: number) {
+    this.railsDirty = true;
     this.builder.refreshBridgeCapacity(x, y);
     this.refreshBridges();
     this.depot?.onTrackChanged();
@@ -1213,18 +1239,80 @@ export class Game {
         const phase = s.index % 4;
         const edge = (s.index === 0 ? 1 : 0) + (s.index === s.length - 1 ? 2 : 0);
         const key = `structures/span_${s.material}_${s.axis}_${n}_${phase}_${edge}`;
-        this.world.setPlatform(b.x, b.y, key + '_deck');
-        this.world.setStructure('bridge:' + b.x + ',' + b.y, b.x, b.y, key + '_rail', 35);
+        // Over water the deck sits at the waterline and its piers stand in the water. Over land
+        // it carries the rail's level on piers cut to the ground under them: a fenced span under
+        // straight rail, a square pad under a curve or switch.
+        const water = terrainAt(this.map, b.x, b.y) === Terrain.Water,
+          deck = water ? 0 : -this.world.railAt(b.x, b.y).dz,
+          dy = -deck - this.world.elevationOf(b.x, b.y),
+          piece = this.track.get(b.x, b.y),
+          straight = !piece || climbAxes(piece.links).length > 0,
+          land = water
+            ? null
+            : straight
+              ? `structures/landspan_${s.material}_${s.axis}`
+              : `structures/landpad_${s.material}`;
+        const id = 'bridge:' + b.x + ',' + b.y;
+        if (this.world.bridgeKit) {
+          // The illustrated kit: deck or pad, near railing, and the parts under the deck.
+          const dir = s.axis ? 'x' : 'y';
+          this.world.setPlatform(
+            b.x,
+            b.y,
+            `bridgekit/${s.material}-${straight ? `deck-${dir}` : 'pad'}`,
+            0,
+            false,
+            deck,
+          );
+          if (straight)
+            this.world.setStructure(id, b.x, b.y, `bridgekit/${s.material}-rail-${dir}`, 35, dy);
+          else this.world.removeStructure(id);
+          this.world.setBridgeKit(
+            b.x,
+            b.y,
+            s.material,
+            straight ? (s.axis as 0 | 1) : null,
+            deck,
+            water,
+          );
+        } else {
+          this.world.setPlatform(
+            b.x,
+            b.y,
+            land && !straight ? land : (land ?? key) + '_deck',
+            0,
+            water,
+            deck,
+          );
+          if (land && !straight) this.world.removeStructure(id);
+          else this.world.setStructure(id, b.x, b.y, (land ?? key) + '_rail', 35, dy);
+          this.world.setBridgePiers(
+            b.x,
+            b.y,
+            water ? null : s.material,
+            straight ? (s.axis as 0 | 1) : null,
+            deck,
+          );
+        }
         const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
-        this.world.setPlatform(b.x, b.y, (b.level ?? 1) > 1 ? detail + '_deck' : null, 1);
+        this.world.setPlatform(
+          b.x,
+          b.y,
+          (b.level ?? 1) > 1 ? detail + '_deck' : null,
+          1,
+          false,
+          deck,
+        );
         const detailId = 'bridge-detail:' + b.x + ',' + b.y;
-        if ((b.level ?? 1) > 1) this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36);
+        if ((b.level ?? 1) > 1)
+          this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36, dy);
         else this.world.removeStructure(detailId);
       }
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
     if (buildingDef(b.id).bridge) {
+      this.railsDirty = true;
       this.builder.refreshBridgeCapacity(b.x, b.y);
       this.track.version++;
       if (removed) {
@@ -1232,6 +1320,8 @@ export class Game {
         this.world.setPlatform(b.x, b.y, null, 1);
         this.world.removeStructure('bridge:' + b.x + ',' + b.y);
         this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
+        this.world.setBridgePiers(b.x, b.y, null);
+        this.world.setBridgeKit(b.x, b.y, null);
       }
       this.refreshBridges();
       return;
@@ -1962,7 +2052,10 @@ export class Game {
     const t = terrainAt(this.map, x, y);
     const T = STR.tile;
     const title = T.terrain[TERRAIN_NAMES[t]] ?? TERRAIN_NAMES[t];
-    const lines: string[] = [biomeSummary(biomeAt(this.map, x, y))];
+    const lines: string[] = [
+      biomeSummary(biomeAt(this.map, x, y)),
+      T.elevation(levelAt(this.map, x, y)),
+    ];
     if (!this.regions.isTileUnlocked(x, y)) lines.push(T.uncharted);
     const piece = this.track.get(x, y);
     if (piece) lines.push(T.track(piece.kind));
@@ -2239,6 +2332,7 @@ export class Game {
     this.handleInput(dt);
     this.camera.update(dt);
     this.updateViewBlend(dt);
+    if (this.railsDirty) this.refreshRails();
     this.world.animate(dt);
     this.world.applyCamera(this.camera);
     this.layoutViews();
@@ -2258,6 +2352,9 @@ export class Game {
     );
     this.groundLights.update(this.builder.stations, this.fleet.trains, night);
     this.world.setTrackNight(night);
+    this.world.setWindowNight(night);
+    this.trainRenderer.setWindowNight(night);
+    audio.updateAmbience(rainI, night);
     this.aspectTimer += dt;
     if (this.aspectTimer > 0.1) {
       this.aspectTimer = 0;
@@ -2278,6 +2375,7 @@ export class Game {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
+    this.world.setAtmosphereTint(this.dayNight.color);
     const fieldActive =
       this.viewTarget === 0 &&
       this.viewBlend === 0 &&
@@ -2675,7 +2773,7 @@ export class Game {
   // ---------------------------------------------------------------- cursor / debug
   tileUnderMouse() {
     const w = this.camera.screenToWorld(this.input.mouseX, this.input.mouseY);
-    return worldToTileInt(w.x, w.y);
+    return this.world.tileAtSurface(w.x, w.y);
   }
   private updateCursor() {
     const t = this.tileUnderMouse();
