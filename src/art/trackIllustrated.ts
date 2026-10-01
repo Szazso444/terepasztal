@@ -23,18 +23,12 @@ const R = 4,
   H = 44,
   OX = 36,
   OY = 20;
-/** `even`: keep the rails the same distance apart on screen wherever the path turns. */
-type RailPath = { points: Vec2[]; cls: TrackClass; even?: boolean };
-/**
- * A track that turns across the view is drawn narrower or wider by the projection than one along
- * a tile axis: an S lane beside its straight shows it most. `s` lays the S lane of a switch at
- * the straight's width on screen, `all` does it for every piece, `none` keeps the true projection.
- */
-const EVEN_GAUGE: 'none' | 's' | 'all' = 's';
+type RailPath = { points: Vec2[]; cls: TrackClass };
 /**
  * Per class: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
  * ballast shoulder, sleeper colours and rail line widths. Narrow gauge puts its rails half as far
- * apart on short, closely spaced timber sleepers and a narrow bed, like a forest or mine line.
+ * apart on short, closely spaced timber sleepers laid straight on the ground, with no ballast,
+ * like a forest or mine line.
  */
 const STYLE: Record<
   TrackClass,
@@ -75,7 +69,7 @@ const STYLE: Record<
     sleeper: 0.14,
     step: 0.115,
     shoulder: 0.19,
-    bed: true,
+    bed: false,
     tie: '#664631',
     tieHi: '#8f6c47',
     widths: [0.95, 0.72, 0.32],
@@ -121,22 +115,17 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
   c.lineTo(OX - 32.6, OY);
   c.closePath();
   c.clip();
-  const rows = paths.map(({ points, cls, even }) => {
-    const normals = points.map((p, i) => {
+  const rows = paths.map(({ points, cls }) => ({
+    points,
+    cls,
+    normals: points.map((p, i) => {
       const a = points[Math.max(0, i - 1)],
         b = points[Math.min(points.length - 1, i + 1)];
       const l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       return { x: -(b.y - a.y) / l, y: (b.x - a.x) / l };
-    });
-    // how much wider the track must be laid here to look as wide as one along a tile axis
-    const wide = normals.map((n) =>
-      even || EVEN_GAUGE === 'all'
-        ? Math.hypot((n.y + n.x) * 32, (n.y - n.x) * 16) / Math.hypot(32, 16)
-        : 1,
-    );
-    return { points, cls, normals, wide };
-  });
-  for (const { points, normals, cls, wide } of rows) {
+    }),
+  }));
+  for (const { points, normals, cls } of rows) {
     if (!STYLE[cls].bed && !bridge) continue;
     const shoulder = STYLE[cls].shoulder * scale;
     for (const [extra, alpha] of bridge
@@ -150,8 +139,8 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
       c.globalAlpha = alpha;
       polygon(
         [
-          ...points.map((p, i) => offset(p, normals[i], (shoulder + extra) * wide[i])),
-          ...points.map((p, i) => offset(p, normals[i], (-shoulder - extra) * wide[i])).reverse(),
+          ...points.map((p, i) => offset(p, normals[i], shoulder + extra)),
+          ...points.map((p, i) => offset(p, normals[i], -shoulder - extra)).reverse(),
         ],
         bridge ? '#826446' : '#827b69',
       );
@@ -162,7 +151,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
       for (let j = -8; j <= 8; j++) {
         const k = hash2(i, j, seed);
         c.globalAlpha = bridge ? 1 : 0.25 + 0.45 * (1 - Math.abs(j) / 9);
-        const p = project(offset(points[i], normals[i], ((j * shoulder) / 8) * wide[i]));
+        const p = project(offset(points[i], normals[i], (j * shoulder) / 8));
         c.fillStyle = bridge
           ? k > 0.5
             ? '#997958'
@@ -185,7 +174,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
         c.fill();
       }
   }
-  for (const { points, normals, cls, wide } of rows) {
+  for (const { points, normals, cls } of rows) {
     c.globalAlpha = 1;
     const base = STYLE[cls];
     const st = {
@@ -205,7 +194,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
           p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
         const n = normals[i],
           along = { x: n.y, y: -n.x },
-          half = st.sleeper * wide[i];
+          half = st.sleeper;
         const corners = [
           offset(offset(p, n, -half), along, -0.028),
           offset(offset(p, n, half), along, -0.028),
@@ -214,7 +203,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
         ];
         polygon(corners, st.tie);
         line(corners.slice(0, 2), st.tieHi, 0.38, -0.22);
-        for (const side of [-st.rail * wide[i], st.rail * wide[i]]) {
+        for (const side of [-st.rail, st.rail]) {
           const q = project(offset(p, n, side));
           c.fillStyle = '#554f43';
           c.fillRect(q.x - 0.45, q.y - 0.35, 0.9, 0.7);
@@ -225,11 +214,11 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
     }
   }
   // rails last, over every road's sleepers: where two roads meet, neither rail is cut
-  for (const { points, normals, cls, wide } of rows) {
+  for (const { points, normals, cls } of rows) {
     const st = STYLE[cls];
     const widths = st.widths.map((w) => w * Math.max(scale, 0.75));
     for (const side of [-st.rail * scale, st.rail * scale]) {
-      const rail = points.map((p, i) => offset(p, normals[i], side * wide[i]));
+      const rail = points.map((p, i) => offset(p, normals[i], side));
       line(rail, '#4c4940', widths[0], 0.35);
       line(rail, '#827d70', widths[1]);
       line(rail, '#d1c7ac', widths[2], -0.3);
@@ -265,7 +254,6 @@ export function generateIllustratedTrackAtlas(): AtlasImage {
               roads.map((pts) => ({
                 points: pts.map((q) => ({ x: q.x - own.dx, y: q.y - own.dy })),
                 cls: it.cls,
-                even: EVEN_GAUGE === 's' && form === 'parallel',
               })),
               rotation * 13,
             );
