@@ -43,10 +43,6 @@ export const STR = {
       substations: 'Powered substations',
       wires: 'Live electrified tiles',
     } as Record<string, string>,
-    hsQuest: 'High-speed rail',
-    hsQuestHint:
-      'Opens in the Electric Age once the grid is proven: powered substations and live wire.',
-    hsUnlocked: 'High-speed rail unlocked: the fast track is on the Track tab',
     hint: 'An age begins once every goal listed for it is met (checked every hour).',
   },
   overview: {
@@ -138,7 +134,6 @@ export const STR = {
     trackInWay: 'Track in the way: remove it first',
     needWaterside: 'Must stand next to water',
     needTerrain: (t: string) => `Must stand on ${t}`,
-    hsLocked: 'High-speed rail is not unlocked yet (see the Age card in the top bar)',
     sameSupply: 'Already electrified this way',
     needTransition: 'Different track classes join through a transition piece',
     bridgeOnWater: 'Bridges only span water',

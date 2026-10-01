@@ -414,3 +414,12 @@ describe('line speed', () => {
     expect(hs.speed).toBeGreaterThan(0.8 * rules.trainSpeedMul + 0.1);
   });
 });
+describe('high speed without a quest', () => {
+  it('lets a player lay high-speed track from the start', () => {
+    const { builder, economy } = world();
+    builder.free = false;
+    economy.hsUnlocked = false;
+    const c = builder.checkTrack(40, 40, { kind: 'straight', cls: 'high_speed' }, 1);
+    expect(c.reason ?? '').not.toMatch(/not unlocked/i);
+  });
+});

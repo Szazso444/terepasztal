@@ -108,7 +108,6 @@ export class Toolbar {
     private readonly onSelect: (t: Tool) => void,
     private readonly tierProvider: () => number,
     private readonly atlas: AtlasRegistry,
-    private readonly hsUnlocked: () => boolean = () => true,
   ) {
     const track: ToolItem[] = TRACK_ITEMS.map((it) => {
       const k = itemKey(it);
@@ -127,12 +126,7 @@ export class Toolbar {
         costNow: () => pieceCost(it.kind, it.cls, it.cls2),
         frame: `track/${k}_0`,
         desc: STR.toolbar.trackDesc[k] ?? '',
-        tier:
-          it.cls === 'high_speed' || it.cls2 === 'high_speed' || it.kind === 'transition' ? 2 : 0,
-        hidden:
-          it.cls === 'high_speed' || it.cls2 === 'high_speed'
-            ? () => !this.hsUnlocked()
-            : undefined,
+        tier: 0,
         place: it.kind === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
       };
     });

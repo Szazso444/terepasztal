@@ -9,7 +9,7 @@ import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, setRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
-import { ageStatus, hsQuestMet, hsQuestStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
+import { ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
 import { rulesDiffer } from './sim/rules';
 import { contentIsCustom } from './data/content';
@@ -1620,11 +1620,6 @@ export class Game {
 
   private buildUi() {
     this.hud = new Hud(this.clock, () => ageStatus(this.economy.tier, this.ageSnapshot()));
-    this.hud.hsQuest = () => ({
-      goals: hsQuestStatus(this.ageSnapshot()),
-      done: this.economy.hsUnlocked,
-      open: this.economy.tier >= 2,
-    });
     this.depot = new DepotScreen(
       this.inventory,
       this.fleet,
@@ -1820,7 +1815,6 @@ export class Game {
       (t: Tool) => this.build.setTool(t),
       () => (this.mode === 'editor' ? 99 : this.economy.tier),
       this.atlas,
-      () => this.mode === 'editor' || this.economy.hsUnlocked,
     );
     this.toolbar.onHover = (it) =>
       this.buildInfo.show(it ?? this.toolbar.item(this.toolbar.active));
@@ -2017,15 +2011,6 @@ export class Game {
         this.nextAgeCheck = this.clock.time + daySeconds() / 24;
         const snap = this.ageSnapshot();
         this.economy.advanceAge(snap);
-        if (!this.economy.hsUnlocked && hsQuestMet(this.economy.tier, snap)) {
-          this.economy.hsUnlocked = true;
-          this.toasts.push(STR.ages.hsUnlocked, 'good');
-          this.notices.push(
-            { key: 'hs-unlock', kind: 'info', text: STR.ages.hsUnlocked, target: null },
-            120,
-          );
-          this.toolbar.refresh();
-        }
       }
       if (this.clock.day !== this.lastDay) {
         this.lastDay = this.clock.day;

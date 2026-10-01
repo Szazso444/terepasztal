@@ -309,12 +309,6 @@ export class Builder {
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const kind = item.kind;
-    if (
-      !this.free &&
-      (item.cls === 'high_speed' || item.cls2 === 'high_speed') &&
-      !this.economy.hsUnlocked
-    )
-      return { ok: false, cost: {}, reason: STR.build.hsLocked };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
     for (const t of tiles) {
