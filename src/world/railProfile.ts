@@ -110,6 +110,8 @@ export function railProfile(
   map: Levels,
   track: TrackGraph,
   bridgeAt: (x: number, y: number) => boolean = () => false,
+  /** A bridge tile's own deck level, where it sets one (stacked platforms); else the bank rule. */
+  deckAt: (x: number, y: number) => number | undefined = () => undefined,
 ): Map<number, RailBed> {
   const beds = new Map<number, RailBed>(),
     axesAt = (x: number, y: number) => {
@@ -127,7 +129,7 @@ export function railProfile(
       const tiles: [number, number][] = [];
       for (let tx = x, ty = y; axesAt(tx, ty).includes(axis); tx += dx, ty += dy)
         tiles.push([tx, ty]);
-      lineProfile(map, track, tiles, axis, bridgeAt, beds);
+      lineProfile(map, track, tiles, axis, bridgeAt, deckAt, beds);
     }
   }
   // Curves and switches carried by bridge platforms sit at the deck (supportedDeck).
@@ -140,6 +142,7 @@ export function railProfile(
       links: track.get(t.x, t.y)?.links ?? [],
     }));
     const deck =
+      deckAt(x, y) ??
       supportedDeck(map, members, bridgeAt) ??
       Math.max(...members.map((t) => levelAt(map, t.x, t.y)));
     beds.set(k, {
@@ -158,6 +161,7 @@ function lineProfile(
   tiles: [number, number][],
   axis: 'x' | 'y',
   bridgeAt: (x: number, y: number) => boolean,
+  deckAt: (x: number, y: number) => number | undefined,
   beds: Map<number, RailBed>,
 ) {
   const start = axis === 'x' ? tiles[0][0] : tiles[0][1],
@@ -169,6 +173,7 @@ function lineProfile(
       bridge,
       start,
       pinned,
+      tiles.map(([x, y]) => (bridgeAt(x, y) ? deckAt(x, y) : undefined)),
     );
   tiles.forEach(([x, y], i) => {
     const c = start + i,
@@ -198,6 +203,8 @@ export function lineSpans(
   bridge: readonly boolean[] = [],
   start = 0,
   pinned: readonly boolean[] = [],
+  /** Deck levels set by the bridge tiles themselves; others carry the higher bank's level. */
+  decks: readonly (number | undefined)[] = [],
 ) {
   const n = terrain.length,
     r = [...terrain],
@@ -211,7 +218,7 @@ export function lineSpans(
       (v): v is number => v !== null,
     );
     const deck = ends.length ? Math.max(...ends) : Math.max(...r.slice(i, j + 1));
-    for (let k = i; k <= j; k++) r[k] = deck;
+    for (let k = i; k <= j; k++) r[k] = decks[k] ?? deck;
     i = j;
   }
   const L = (i: number) => r[Math.max(0, Math.min(n - 1, i))],
