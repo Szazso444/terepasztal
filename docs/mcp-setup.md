@@ -321,7 +321,9 @@ trimming cuts away, so you measure it once.
 
 `tools/asset-pipeline` automates steps 1-4 from a photo: ComfyUI builds the model, Blender aligns
 and scales it and renders the facings with this camera, and its game stage writes `art-src/` with
-`"partial": true` and packs. Its `CLAUDE.md` has the details.
+`"partial": true` and packs. Its video route does the same from a turntable video, matching every
+frame's heading against this camera's projection and keeping the video's own pixels. Its
+`CLAUDE.md` has the details.
 
 The packer is deterministic: re-packing unchanged art produces byte-identical files, so it is safe
 to run on every build. `tools/pack-atlas.test.mjs` holds it to the atlas contract.

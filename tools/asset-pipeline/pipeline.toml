@@ -85,3 +85,32 @@ debug_res        = 320
 alpha_hard_threshold = 0       # 0 = keep soft alpha (needed for shadows); e.g. 128 for hard pixel edges
 palette_colors       = 0       # 0 = off; else per-asset shared palette size
 preview_scale        = 2
+
+[video]
+# route = "video" in assets.csv: a turntable video of the vehicle (assets_out/videos/<id>.mp4) -> its drawn
+# facings in the video's own look (video_stage.py). Takes coupler_gap_m, compress_range and max_dim_error from
+# [classes.vehicle]. The box model it matches against comes from the row's length_m/width_m/height_m.
+start_facing      = 0            # game facing of the video's first frame: the input image, nose lower right (ASTRA.md)
+bg_threshold      = 45           # RGB distance from the border colour that counts as vehicle (silhouettes)
+key_soft          = [30, 110]    # RGB distance over which a cut-out edge goes from background to opaque
+erode_px          = 1            # video px: the opaque core is the silhouette shrunk by this, edges ramp
+supersample       = 4            # sprites are built at Nx game px and box-downsampled
+match_supersample = 2            # silhouettes are matched at Nx game px
+profile_bins      = 48           # columns of the side view in the box model
+scale_search      = [0.8, 1.3, 0.025]  # video-to-sprite scale tried, as factors of the side view's estimate
+scale_stride      = 3            # every Nth frame during the scale search
+max_step          = 1            # facings the vehicle may turn between two frames
+jump_penalty      = 2.0          # cost (summed IoU) of the vehicle swapping ends between two frames
+mirror            = false        # also use frames mirrored left-right; one full turn already shows every heading
+min_iou           = 0.80         # a drawn facing matched worse than this is a warning
+margin_px         = 3            # game px of empty canvas round the largest frame
+
+[video.check]
+# warnings, checked on the video before its sprites are trusted
+max_background_drift  = 30       # RGB: the background's colour may not wander more than this
+max_background_noise  = 25       # RGB: standard deviation of the border pixels
+max_scale_spread      = 0.08     # frame-to-model size, coefficient of variation (a camera that dollies or zooms)
+max_elevation_spread  = 0.08     # height-to-width ratio against the model, coefficient of variation
+min_turns             = 0.97     # the vehicle must turn at least this far
+min_frames_on_fit     = 0.8      # share of frames matching within 10% of their best where the turn puts them
+max_heading_error_deg = 3.75     # half a facing: no frame nearer than this to a drawn facing is a warning

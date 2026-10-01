@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Batch pipeline: image -> ComfyUI (3D) -> Blender (align/scale/render) -> post (sprites/atlas) -> game.
+"""Batch pipeline, two routes per assets.csv `route`:
+  3d     image -> ComfyUI (3D) -> Blender (align/scale/render) -> post (sprites/atlas) -> game
+  video  turntable video -> video (heading match, cut-out, sprites/atlas) -> game
 
 Stops at the first error with a non-zero exit code. Finished stages are skipped on rerun unless --force.
-Usage: python run.py [--only id1,id2] [--stages comfy,blender,post,game] [--force] [--config pipeline.toml]
+Usage: python run.py [--only id1,id2] [--stages comfy,blender,post,video,game] [--force] [--config pipeline.toml]
 """
 import argparse
 import csv
@@ -22,7 +24,8 @@ import game_rules
 import postprocess
 
 HERE = Path(__file__).resolve().parent
-STAGES = ("comfy", "blender", "post", "game")
+STAGES = ("comfy", "blender", "post", "video", "game")
+ROUTES = {"3d": ("comfy", "blender", "post", "game"), "video": ("video", "game")}
 log = logging.getLogger("pipeline")
 
 
@@ -56,6 +59,7 @@ def load_assets(csv_path: Path, only):
                      "height_m": num(row.get("height_m")),
                      "align": (row.get("align") or "auto").strip() or "auto",
                      "game_frame": (row.get("game_frame") or "").strip(),
+                     "route": (row.get("route") or "").strip() or "3d",
                      # blank = let a cut vehicle pick its nose end; any number is kept as given
                      "yaw_offset_deg": num(row.get("yaw_offset_deg")),
                      "plan": (row.get("plan") or "").strip() or None,
@@ -96,6 +100,14 @@ def load_assets(csv_path: Path, only):
                 err.append("building needs height_m, length_m or width_m")
             if a["align"] not in ("auto", "none"):
                 err.append("align must be auto|none")
+            if a["route"] not in ROUTES:
+                err.append(f"route must be {'|'.join(ROUTES)}")
+            elif a["route"] == "video":
+                # a turntable video shows one rigid body; its box model needs all three dimensions
+                if cat != "vehicle" or (a["plan"] or "rigid") != "rigid":
+                    err.append("route video is for rigid vehicles (plan rigid)")
+                if not (a["size_tiles"] and a["length_m"] and a["width_m"]):
+                    err.append("route video needs size_tiles, length_m and width_m")
             if a["game_frame"] and cat in ("vehicle", "building", "bogie"):
                 err += export_game.check_template(a)
             if err:
@@ -148,7 +160,7 @@ def main():
 
     out = rel(cfg["paths"]["out_root"])
     d = {k: out / k for k in ("models_raw", "jobs", "sprites_raw", "meta", "debug", "sprites", "atlas",
-                              "previews", "reports", "logs")}
+                              "previews", "reports", "logs", "videos")}
     for p in d.values():
         p.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -183,12 +195,31 @@ def main():
             glb = d["models_raw"] / f"{aid}.glb"
             meta_path = d["meta"] / f"{aid}.json"
             t0 = time.time()
-            if "comfy" in stages and (args.force or not glb.exists()):
+            route = ROUTES[a["route"]]
+            if "video" in stages and "video" in route:
+                video = d["videos"] / f"{aid}.mp4"
+                atlas_json = d["atlas"] / f"{aid}.json"
+                if not video.exists():
+                    raise PipelineError(f"[{aid}] no video at {video}")
+                if args.force or not atlas_json.exists() or atlas_json.stat().st_mtime < video.stat().st_mtime:
+                    import video_stage  # opencv and scipy: needed by this route only
+                    vcfg = {**cfg["classes"]["vehicle"], **cfg["video"]}
+                    try:
+                        info = video_stage.process_asset(a, video, cfg["grid"], vcfg,
+                                                         {k: str(v) for k, v in d.items()}, log.info)
+                    except video_stage.VideoError as e:
+                        raise PipelineError(f"[{aid}] {e}") from None
+                    summary["assets"][aid].update(route="video", tiles=info["tiles"], mean_iou=info["mean_iou"],
+                                                  check=info["check"], warnings=info["warnings"],
+                                                  preview=str(d["previews"] / f"{aid}.png"))
+                    for w in info["warnings"]:
+                        log.warning(f"[{aid}] {w}")
+            if "comfy" in stages and "comfy" in route and (args.force or not glb.exists()):
                 img = rel(csv_path.parent / a["image"]) if a["image"] else None
                 if not img or not img.exists():
                     raise PipelineError(f"[{aid}] image not found: {img}")
                 comfy_client.run_asset(comfy, graph, aid, img, glb, cfg["comfy"])
-            if "blender" in stages and (args.force or not meta_path.exists()):
+            if "blender" in stages and "blender" in route and (args.force or not meta_path.exists()):
                 if not glb.exists():
                     raise PipelineError(f"[{aid}] no model at {glb}; run the comfy stage first")
                 job = {"asset": a, "glb": str(glb), "grid": cfg["grid"], "render": cfg["render"],
@@ -198,7 +229,7 @@ def main():
                 job_path = d["jobs"] / f"{aid}.json"
                 job_path.write_text(json.dumps(job, indent=2), encoding="utf-8")
                 run_blender(cfg, job_path, d["logs"] / f"{aid}_blender.log")
-            if "post" in stages:
+            if "post" in stages and "post" in route:
                 if not meta_path.exists():
                     raise PipelineError(f"[{aid}] no render metadata at {meta_path}; run the blender stage")
                 info = postprocess.process_asset(meta_path, cfg["post"], {k: str(v) for k, v in d.items()})

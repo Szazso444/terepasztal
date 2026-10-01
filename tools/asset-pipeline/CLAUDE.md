@@ -1,14 +1,19 @@
 # Train game asset pipeline
 
-Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, tile fit, 2:1 renders) -> sprites + atlas
--> the game's atlas groups. Lives in `tools/asset-pipeline/` of the terepasztal repo; the root `CLAUDE.md` still applies.
+Two routes, picked per asset by `route` in `assets.csv`:
+- `3d` (default): photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, tile fit, 2:1 renders) ->
+  sprites + atlas -> the game's atlas groups.
+- `video`: a turntable video of the vehicle -> its drawn facings in the video's own painted look -> the same atlas
+  groups (see Video route). Lives in `tools/asset-pipeline/` of the terepasztal repo; the root `CLAUDE.md` still applies.
 
 ## Run
 - `python run.py` : all assets in `assets.csv`, stages comfy -> blender -> post -> game. Stops at the first error, exit code 1.
-- `python run.py --only id1,id2 --stages blender,post,game --force` : redo selected stages.
+- `python run.py --only id1,id2 --stages blender,post,game --force` : redo selected stages. Stages are
+  `comfy,blender,post` (route 3d), `video` (route video) and `game`; each asset runs only its own route's.
 - Finished stages are skipped on rerun (raw GLB / meta JSON exist) unless `--force`.
 - Requirements: Python 3.11+, `pip install pillow numpy`, Blender 4.2+ (tested 5.0), ComfyUI Desktop running with the API
-  workflow, Node (the game stage runs `tools/pack-atlas.mjs`).
+  workflow, Node (the game stage runs `tools/pack-atlas.mjs`). The video route needs `opencv-python-headless scipy`
+  as well, and no Blender.
 - The game stage always re-exports and re-packs; it has no skip. It touches only assets with a `game_frame`.
 
 ## Files
@@ -16,7 +21,7 @@ Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, til
 |---|---|
 | `ASTRA.md` | the brief for Astra, the image model that makes the input images: rules, prompt template, shot list |
 | `pipeline.toml` | all settings: paths, ComfyUI URL, grid, render, class rules |
-| `assets.csv` | one row per asset: id, image, category (vehicle/bogie/building), size_tiles, length_m, width_m, height_m, align (auto/none), yaw_offset_deg, plan, split_m, clip_below_m, anchor_offset_m, length_factor, game_frame; `game_rules.test.mjs` checks its bogie rows against the styles in `src/data` |
+| `assets.csv` | one row per asset: id, image, category (vehicle/bogie/building), size_tiles, length_m, width_m, height_m, align (auto/none), yaw_offset_deg, plan, split_m, clip_below_m, anchor_offset_m, length_factor, game_frame, route (3d/video); `game_rules.test.mjs` checks its bogie rows against the styles in `src/data` |
 | `workflows/image_to_3d_api.json` | ComfyUI workflow in API format (ComfyUI: Workflow -> Export (API)). UI-format JSON is rejected. |
 | `run.py` | orchestrator, CSV validation, logging, summary |
 | `comfy_client.py` | ComfyUI HTTP API: upload, patch graph, queue, poll history, download GLB |
@@ -24,8 +29,10 @@ Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, til
 | `postprocess.py` | premultiplied box downsample, optional hard alpha / palette, atlas + JSON, preview sheet |
 | `game_rules.py` | the game's facings, sizes, body plans, `DRAWN_WIDTH` and atlas groups; `game_rules.test.mjs` holds it to `src/sim/body.ts` |
 | `export_game.py` | game stage: sprites -> `art-src/<group>/` frames + anchors, then `tools/pack-atlas.mjs` -> `public/assets/<group>.png\|json` |
+| `video_stage.py` | video stage: turntable video -> heading of every frame -> drawn facings cut out, scaled and anchored -> sprites + atlas |
+| `video_fixture.py` | a synthetic turntable video with known headings; `video_stage.test.mjs` holds the stage to the game's sprite invariants on it |
 
-Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>.json`, `sprites_raw/`, `sprites/<id>/<id>[_<part>]_d<i>.png`, `atlas/<id>.png|json`, `previews/<id>.png`, `debug/`, `logs/run_*.log`, `logs/<id>_blender.log`, `reports/summary.json`. The game stage writes outside it, into the repo:
+Outputs under `assets_out/`: `videos/<id>.mp4` (the video route's input), `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>.json`, `sprites_raw/`, `sprites/<id>/<id>[_<part>]_d<i>.png`, `atlas/<id>.png|json`, `previews/<id>.png`, `debug/`, `logs/run_*.log`, `logs/<id>_blender.log`, `reports/summary.json`. The game stage writes outside it, into the repo:
 `art-src/<group>/<frame>.png` + `atlas.json`, and `public/assets/<group>.png|json`.
 
 ## Inspecting state (do this after every run)
@@ -77,6 +84,31 @@ Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>
 - Buildings: height real, footprint compressed uniformly and snapped to whole tiles (`footprint_factor`, `footprint_range`, `fill`).
   With `size_tiles` the footprint is fixed at N x N (game stations 1x1, depots 2x2), allowed down to `sized_footprint_range`,
   and height is compressed by footprint factor ^ `sized_height_exponent` so a crushed footprint does not stand as a tower.
+
+## Video route
+`route = video` turns `assets_out/videos/<id>.mp4` (flat background, camera about 30 degrees above, the vehicle turning
+at least once, its first frame the input image with the nose lower right) into the vehicle's drawn facings. Every
+pixel comes from the video; settings are `[video]` in `pipeline.toml`.
+- Silhouettes: the background is each frame's border colour; the vehicle is what differs by more than `bg_threshold`.
+- Box model, a protractor only: the most side-on frame (widest for its height) gives the profile along the length,
+  `width_m` the width; length is the game slot (`size_tiles * tile_m - coupler_gap_m`), and the video and the sprite
+  keep the prototype's proportions at that one scale. Its silhouettes at all 48 facings come from the game camera's
+  own projection (numpy, no Blender), so they match the frames pixel for pixel in shape.
+- Scale: the side view's width is the slot length; `scale_search` tries factors of that estimate and keeps the one
+  whose frames match the model best (IoU, bounding boxes centred).
+- Headings: a Viterbi path through every frame's 48 match scores, at most `max_step` facings per frame, one way round.
+  A box looks nearly the same from either end; the path settles which end is which. A generated video can swap the
+  vehicle's ends between two frames: the path may jump half a turn for `jump_penalty`, and reports it. The side view
+  fixes +X at its right end, so the first frame decides whether the nose is there (`start_facing`).
+- Sprites: each drawn facing takes the frame nearest its heading (best match among ties), cut out with a soft key
+  (`key_soft`) that takes the background back out of edge pixels, scaled, and centred where the model's silhouette
+  centre is. One canvas for every facing, `margin_px` clear of its edge, and the anchor (the ground centre) the
+  same on all of them. `atlas/<id>.json` is the post stage's format, so the game stage exports it unchanged.
+- Checks, in `reports/summary.json` and as warnings: background drift and noise, a vehicle that leaves the frame,
+  scale and elevation drift against the model, the number of turns, frames that do not follow the path, half-turn
+  jumps, facings without a near frame or with a poor match (`[video.check]`).
+- A video is one rigid body (`plan = rigid`). Medium and large stock get the game's bogie sprites under the body
+  as well; the video still shows its own running gear, so the route suits small stock today.
 
 ## Game frames
 - `game_frame` in `assets.csv` is the frame key the asset replaces; empty = the asset stays out of the game.
