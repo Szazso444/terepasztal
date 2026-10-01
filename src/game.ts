@@ -99,7 +99,7 @@ import {
   type Settings,
 } from './sim/save';
 import { ContractDispatcher } from './sim/contractDispatch';
-import { Station, resetStationIds, stationDef as stationDefOf } from './sim/stations';
+import { Station, resetStationIds, stationFootprint } from './sim/stations';
 import { scaleCost as scaleCostOf } from './sim/stockpile';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
@@ -390,7 +390,7 @@ export class Game {
     let wires = 0;
     for (const e of this.catenary.entries()) if (this.catenary.isLive(e.x, e.y)) wires++;
     return {
-      depots: this.builder.depots().length,
+      depots: this.builder.depotsOf('regular').length,
       population: this.stock.population,
       earned: this.economy.earned,
       substations: this.catenary.substations.filter((s) => s.powered).length,
@@ -1060,10 +1060,8 @@ export class Game {
     for (const [x, y, kind, rot, cls] of j.track)
       for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
         fix(f.x, f.y, kind === 'bridge' || bridges.has(f.y * this.map.w + f.x));
-    for (const s of j.stations) {
-      const size = stationDefOf(s.defId).size ?? 1;
-      for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) fix(s.x + dx, s.y + dy);
-    }
+    for (const s of j.stations)
+      for (const f of stationFootprint(s.defId, s.x, s.y, s.rot ?? 0)) fix(f.x, f.y);
     for (const [x, y] of j.decor ?? []) fix(x, y);
     for (const [x, y, id] of j.buildings ?? []) fix(x, y, !!buildingDef(id).bridge);
   }
@@ -1453,7 +1451,20 @@ export class Game {
         if (terrainAt(this.map, f.x, f.y) === Terrain.Hill) this.world.setFlattened(f.x, f.y, true);
         this.world.removeProps(f.x, f.y);
       }
-      if (s.size === 2) {
+      if (s.def.long) {
+        // anchored between its two tiles, sorted with the one nearer the camera
+        const front = s.rot % 2 === 0 ? { x: s.x + 1, y: s.y } : { x: s.x, y: s.y + 1 };
+        const off = s.rot % 2 === 0 ? tileToWorld(-0.5, 0) : tileToWorld(0, -0.5);
+        this.world.setStructure(
+          id,
+          front.x,
+          front.y,
+          `structures/${s.def.art}_r${s.rot % 2}`,
+          20,
+          off.y,
+          off.x,
+        );
+      } else if (s.size === 2) {
         // the sprite is anchored at the footprint centre; sort it with its front tile
         this.world.setStructure(
           id,

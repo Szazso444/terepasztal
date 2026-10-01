@@ -152,6 +152,10 @@ export interface StationDef {
   depot?: boolean;
   /** footprint side in tiles (default 1) */
   size?: number;
+  /** 1×2 footprint along its axis (rotation 0: x, rotation 1: y) */
+  long?: boolean;
+  /** depot of this gauge: builds and serves only trains of it (default regular) */
+  gauge?: Gauge;
   /** trains refuel coal / wood / oil here */
   fuel?: boolean;
   /** trains refill water here */

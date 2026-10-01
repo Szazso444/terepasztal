@@ -15,6 +15,19 @@ export function stationDef(id: string): StationDef {
   if (!d) throw new Error(`unknown station ${id}`);
   return d;
 }
+/** Width (along x) and depth (along y) of a station turned to `rot`. */
+export function stationSpan(def: StationDef, rot: number): { w: number; h: number } {
+  if (def.long) return rot % 2 === 0 ? { w: 2, h: 1 } : { w: 1, h: 2 };
+  const n = def.size ?? 1;
+  return { w: n, h: n };
+}
+/** Tiles a station of this kind covers with its corner at (x, y), turned to `rot`. */
+export function stationFootprint(defId: string, x: number, y: number, rot: number) {
+  const { w, h } = stationSpan(stationDef(defId), rot);
+  const out: { x: number; y: number }[] = [];
+  for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) out.push({ x: x + dx, y: y + dy });
+  return out;
+}
 /** Station level cap in an age (`maxLevelByTier` is indexed by age: steam, diesel, electric). */
 export function maxLevelForTier(tier: number) {
   return LEVELS.maxLevelByTier[Math.min(tier, LEVELS.maxLevelByTier.length - 1)];
@@ -118,28 +131,44 @@ export class Station {
   get size() {
     return this.def.size ?? 1;
   }
+  /** footprint width along x */
+  get w() {
+    return stationSpan(this.def, this.rot).w;
+  }
+  /** footprint depth along y */
+  get h() {
+    return stationSpan(this.def, this.rot).h;
+  }
   /** every tile the station stands on (x, y is the top-left corner) */
   footprint(): { x: number; y: number }[] {
-    const out: { x: number; y: number }[] = [];
-    for (let dy = 0; dy < this.size; dy++)
-      for (let dx = 0; dx < this.size; dx++) out.push({ x: this.x + dx, y: this.y + dy });
-    return out;
+    return stationFootprint(this.def.id, this.x, this.y, this.rot);
   }
   covers(x: number, y: number) {
-    return x >= this.x && y >= this.y && x < this.x + this.size && y < this.y + this.size;
+    return x >= this.x && y >= this.y && x < this.x + this.w && y < this.y + this.h;
   }
   /** centre of the footprint in tile units */
   get cx() {
-    return this.x + (this.size - 1) / 2;
+    return this.x + (this.w - 1) / 2;
   }
   get cy() {
-    return this.y + (this.size - 1) / 2;
+    return this.y + (this.h - 1) / 2;
   }
   /**
    * Tiles where track may serve the station: every orthogonal neighbour of a one-tile station;
    * a depot only has its four gates, two on each of the sides its orientation selects.
    */
   gateTiles(): { x: number; y: number }[] {
+    // a one-track shed: in at one end, out at the other
+    if (this.def.long)
+      return this.rot % 2 === 0
+        ? [
+            { x: this.x - 1, y: this.y },
+            { x: this.x + 2, y: this.y },
+          ]
+        : [
+            { x: this.x, y: this.y - 1 },
+            { x: this.x, y: this.y + 2 },
+          ];
     if (this.def.depot && this.size === 2) {
       return this.rot % 2 === 0
         ? [
@@ -173,8 +202,8 @@ export class Station {
   }
   /** Chebyshev distance from the footprint to a tile. */
   distTo(x: number, y: number) {
-    const dx = Math.max(this.x - x, 0, x - (this.x + this.size - 1));
-    const dy = Math.max(this.y - y, 0, y - (this.y + this.size - 1));
+    const dx = Math.max(this.x - x, 0, x - (this.x + this.w - 1));
+    const dy = Math.max(this.y - y, 0, y - (this.y + this.h - 1));
     return Math.max(dx, dy);
   }
   /** Storage: produced goods for pickup; a warehouse holds whatever trains bring, per level. */
@@ -186,7 +215,7 @@ export class Station {
     return LEVELS.loadRate[this.level - 1];
   }
   get platforms() {
-    if (this.def.depot) return 2;
+    if (this.def.depot) return this.def.long ? 1 : 2;
     return LEVELS.platforms[this.level - 1];
   }
   /** Goods trains may take from here: what it makes, plus a warehouse's stored kinds. */

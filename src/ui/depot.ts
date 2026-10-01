@@ -13,6 +13,7 @@ import {
   type StopPlan,
 } from '../sim/trains';
 import type { Station } from '../sim/stations';
+import { consistGauge } from '../sim/compat';
 import { ScheduleEditor } from './scheduleEditor';
 import { cargoDef } from '../sim/cargo';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -196,7 +197,7 @@ export class DepotScreen implements Screen {
     if (!locos.length) c.append(el('div', { class: 'dim', text: STR.depot.noFreeLoco }));
     const depot =
       (this.depotId !== null ? this.builder.stationById(this.depotId) : undefined) ??
-      this.builder.depots()[0];
+      this.depotChoices()[0];
     for (const it of locos) {
       const d = locoDef(it.defId);
       const m = levelMul(it.level);
@@ -334,6 +335,18 @@ export class DepotScreen implements Screen {
     r.addEventListener('click', onClick);
     return r;
   }
+  /** Depots the chosen locomotives can roll out of: those of their gauge (all when none chosen). */
+  private depotChoices(): Station[] {
+    const gauge = consistGauge(
+      this.locoUids.flatMap((u) => {
+        const it = this.inventory.byUid(u);
+        return it ? [locoDef(it.defId)] : [];
+      }),
+    );
+    return gauge === 'regular' || gauge === 'narrow'
+      ? this.builder.depotsOf(gauge)
+      : this.builder.depots();
+  }
   /** Track around the depots changed: re-check what can roll out. */
   onTrackChanged() {
     if (this.root.isConnected) this.render();
@@ -344,7 +357,7 @@ export class DepotScreen implements Screen {
     c.innerHTML = '';
     const auto = this.fleet.autoSchedule(
       (this.depotId !== null ? this.builder.stationById(this.depotId) : undefined) ??
-        this.builder.depots()[0],
+        this.depotChoices()[0],
     );
     const names = auto.map((s) => this.builder.stationById(s.stationId)?.name ?? '?');
     const groups: [string, (typeof this.routeMode)[]][] = [
@@ -388,7 +401,8 @@ export class DepotScreen implements Screen {
     }
     const f = this.foot;
     f.innerHTML = '';
-    const depots = this.builder.depots();
+    // a narrow train rolls out of a narrow depot, a regular one out of a regular depot
+    const depots = this.depotChoices();
     if (this.depotId === null || !depots.some((d) => d.id === this.depotId))
       this.depotId = depots[0]?.id ?? null;
     const preview = this.fleet.previewSpawn(

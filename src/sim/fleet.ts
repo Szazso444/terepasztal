@@ -12,7 +12,8 @@ import {
 } from './trains';
 import type { TrackGraph, TrackClass } from '../world/track';
 import { findPath } from '../world/pathfinding';
-import { pieceClassFor, vehicleAccess } from './compat';
+import { pieceClassFor, vehicleAccess, consistGauge, gaugeOf } from './compat';
+import { content, type Gauge } from '../data/content';
 
 export interface GateInfo {
   x: number;
@@ -361,6 +362,8 @@ export class Fleet {
   }
   /** Why a model could not roll out of this depot (null when it can). */
   modelDeployReason(def: LocoDef | WagonDef, depot: Station): string | null {
+    // each gauge has its own sheds
+    if (gaugeOf(def) !== (depot.def.gauge ?? 'regular')) return STR.fleet.wrongDepot(depot.name);
     const classes = this.depotClasses(depot);
     if (!classes.size) return STR.fleet.depotNoGate(depot.name);
     let why: string | null = null;
@@ -370,6 +373,32 @@ export class Fleet {
       why = STR.compat.cannotUse(def.name, STR.toolbar.trackClass[cls], r);
     }
     return why;
+  }
+  /**
+   * The depot a consist of this gauge rolls out of: the one asked for, else the first of its
+   * gauge. A mixed consist, a depot of the other gauge or none at all give the reason instead.
+   */
+  depotFor(gauge: ReturnType<typeof consistGauge>, depotId: number | null): Station | string {
+    if (gauge === 'mixed') return STR.fleet.mixedGauge;
+    const own = gauge ?? 'regular';
+    const depot =
+      (depotId !== null ? this.builder.stationById(depotId) : undefined) ??
+      this.builder.depotsOf(own)[0];
+    if (!depot || !depot.def.depot)
+      return own === 'narrow' ? STR.fleet.noNarrowDepot : STR.fleet.noDepot;
+    if ((depot.def.gauge ?? 'regular') !== own) return STR.fleet.wrongDepot(depot.name);
+    return depot;
+  }
+  /** A stand-in engine of a gauge for previews: one the player owns, else a starter. */
+  probeLoco(gauge: Gauge): LocoSlotInit {
+    const owned = this.inventory.items.find(
+      (i) => i.kind === 'loco' && gaugeOf(locoDef(i.defId)) === gauge,
+    );
+    const def = owned
+      ? locoDef(owned.defId)
+      : (content.locomotives.find((l) => l.starter && gaugeOf(l) === gauge) ??
+        content.locomotives.find((l) => gaugeOf(l) === gauge)!);
+    return { uid: -1, def, level: 1 };
   }
   /** Where a train with this consist and route would appear, or why it cannot (no side effects). */
   previewSpawn(
@@ -382,18 +411,17 @@ export class Fleet {
     reason: string | null;
     stops: StopPlan[];
   } {
-    const depot =
-      (depotId !== null ? this.builder.stationById(depotId) : undefined) ??
-      this.builder.depots()[0];
-    if (!depot || !depot.def.depot)
-      return { gate: null, depot: null, reason: STR.fleet.noDepot, stops: [] };
+    const gauge = consistGauge(
+      locoUids.map((u) => this.inventory.byUid(u)).flatMap((l) => (l ? [locoDef(l.defId)] : [])),
+    );
+    const depot = this.depotFor(gauge, depotId);
+    if (typeof depot === 'string') return { gate: null, depot: null, reason: depot, stops: [] };
     let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
     if (stops.length < 2) stops = this.autoSchedule(depot);
     if (stops.length < 2) return { gate: null, depot, reason: STR.fleet.needTwoStops, stops };
     const items = locoUids
       .map((u) => this.inventory.byUid(u))
       .filter((l) => l && l.kind === 'loco');
-    const anyLoco = this.inventory.items.find((i) => i.kind === 'loco');
     const locos: LocoSlotInit[] = items.length
       ? items.map((l) => ({
           uid: l!.uid,
@@ -401,7 +429,7 @@ export class Fleet {
           level: l!.level,
           inCab: l!.inCab,
         }))
-      : [{ uid: -1, def: locoDef(anyLoco?.defId ?? 'rocket'), level: 1 }];
+      : [this.probeLoco(depot.def.gauge ?? 'regular')];
     const probe = new Train(locos, 'probe', -1);
     probe.schedule = stops;
     const r = this.rollOut(probe, depot);
@@ -444,10 +472,9 @@ export class Fleet {
     }));
     if (t.emptyWeight > t.power)
       return STR.fleet.tooHeavy(Math.round(t.emptyWeight), Math.round(t.power));
-    const depot =
-      (depotId !== null ? this.builder.stationById(depotId) : undefined) ??
-      this.builder.depots()[0];
-    if (!depot || !depot.def.depot) return STR.fleet.noDepot;
+    const gauge = consistGauge([...locos.map((l) => l.def), ...t.wagons.map((w) => w.def)]);
+    const depot = this.depotFor(gauge, depotId);
+    if (typeof depot === 'string') return depot;
     let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
     if (stops.length < 2) stops = this.autoSchedule(depot);
     if (stops.length < 2) return STR.fleet.needTwoStops;

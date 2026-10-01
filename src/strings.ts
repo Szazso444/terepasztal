@@ -960,6 +960,8 @@ export const STR = {
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',
     mixedGauge: 'A train cannot mix narrow and regular gauge.',
+    wrongDepot: (name: string) => `${name} builds only trains of its own gauge.`,
+    noNarrowDepot: 'Build a narrow depot first: narrow trains roll out of one',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,
     depotNoGate: (n: string) => `${n} has no track at its gates`,
     depotNoRoute: (d: string, s: string) =>
