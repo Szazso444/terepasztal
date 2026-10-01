@@ -192,24 +192,34 @@ export const STR = {
     },
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',
-      curve_regular: 'Quarter turn of radius half a tile. R rotates.',
+      curve_regular:
+        'Two by two tiles, radius one and a half: room for long trains to turn. The inner corner tile is blocked. R rotates.',
       switch_regular:
-        'Junction: one line splits into two. Trains take whichever branch their route needs.',
+        'Two by two tiles: one line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
       crossing_regular_regular: 'Two regular lines cross without connecting.',
       bridge_regular: 'Spans one tile of water. Only on water.',
       transition_regular:
         'Joins regular and high-speed track. Regular speed applies on the piece itself.',
-      straight_high_speed: 'High-speed straight. Drag to lay a run.',
+      straight_high_speed: 'High-speed straight: no speed limit. Drag to lay a run.',
       curve_high_speed:
-        'Two by two tiles, radius one and a half: nearly full speed through the turn. The inner corner tile is blocked. R rotates.',
+        'Two by two tiles, radius one and a half, no speed limit. The inner corner tile is blocked. R rotates.',
       switch_high_speed:
-        'Two by two tiles: a high-speed straight with a wide diverging arc. R rotates through both handings.',
+        'Two by two tiles: a high-speed straight with a wide diverging arc that bends into a parallel track beside a straight. R rotates through both handings.',
       crossing_regular_high_speed:
-        'A regular line crosses a high-speed line at grade. The slow line holds the fast one up.',
+        'A regular line crosses a high-speed line at grade. R swaps which line runs which way.',
       crossing_high_speed_high_speed: 'Two high-speed lines cross at grade.',
       bridge_high_speed: 'High-speed span over one tile of water.',
+      straight_narrow: 'Narrow-gauge straight. Only narrow trains run on it. Drag to lay a run.',
+      curve_narrow: 'Narrow-gauge quarter turn on one tile: for tight spaces. R rotates.',
+      switch_narrow: 'Narrow-gauge switch on one tile. R rotates through both handings.',
+      crossing_narrow_narrow: 'Two narrow lines cross at grade.',
+      crossing_narrow_regular:
+        'A narrow line crosses a regular line at grade. R swaps which line runs which way.',
     } as Record<string, string>,
-    trackClass: { regular: 'Regular', high_speed: 'High-speed' } as Record<string, string>,
+    trackClass: { regular: 'Regular', high_speed: 'High-speed', narrow: 'Narrow' } as Record<
+      string,
+      string
+    >,
     supply: {
       third_rail: 'Third rail',
       catenary: 'Catenary',

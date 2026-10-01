@@ -16,8 +16,14 @@ function trafficOn(
 }
 
 /** E–W straights along row `y`, x0 to x1 inclusive. */
-function line(g: TrackGraph, y: number, x0: number, x1: number) {
-  for (let x = x0; x <= x1; x++) g.place(x, y, 'straight', 1);
+function line(
+  g: TrackGraph,
+  y: number,
+  x0: number,
+  x1: number,
+  cls: 'regular' | 'narrow' = 'regular',
+) {
+  for (let x = x0; x <= x1; x++) g.place(x, y, 'straight', 1, cls);
 }
 
 const key = (g: TrackGraph, x: number, y: number) => y * g.w + x;
@@ -44,9 +50,10 @@ describe('sections', () => {
 
   it('cuts the chain at a switch', () => {
     const g = new TrackGraph(16, 16);
-    line(g, 5, 1, 8);
+    // One-tile switches are narrow gauge: the whole line is narrow.
+    line(g, 5, 1, 8, 'narrow');
     // Rotation 1 puts the through road E–W, so the line stays joined across it.
-    g.place(5, 5, 'switch', 1);
+    g.place(5, 5, 'switch', 1, 'narrow');
     const t = trafficOn(g);
 
     expect(t.sectionOf(5, 5)).toBeLessThan(0);
@@ -201,8 +208,8 @@ describe('interlocking and recovery ownership', () => {
 
   it('holds before a junction when the exit cannot fit the consist', () => {
     const g = new TrackGraph(24, 24);
-    line(g, 5, 1, 14);
-    g.place(5, 5, 'switch', 1);
+    line(g, 5, 1, 14, 'narrow');
+    g.place(5, 5, 'switch', 1, 'narrow');
     const traffic = trafficOn(g);
     const east = moving(1, [4, 5, 6, 7, 8, 9], [4], g.w);
     const parked = moving(2, [7, 8], [7], g.w);

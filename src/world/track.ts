@@ -5,17 +5,21 @@ import { linkPoints, linkLength, isCurveLink, unitDef, type MemberLink } from '.
 
 const trackData = content.track;
 
-/** Track classes. Everything about a class derives from `n`: curve footprint n×n, radius n − 0.5, cost. */
-export type TrackClass = 'regular' | 'high_speed';
-export const TRACK_CLASSES: TrackClass[] = ['regular', 'high_speed'];
-export const CLASS_N: Record<TrackClass, number> = { regular: 1, high_speed: 2 };
+/**
+ * Track classes. A class's curve footprint is n×n and its radius n − 0.5. Regular and high speed
+ * share the 2×2 curve; narrow gauge keeps the one-tile curve, and only narrow trains run on it.
+ */
+export type TrackClass = 'regular' | 'high_speed' | 'narrow';
+export const TRACK_CLASSES: TrackClass[] = ['regular', 'high_speed', 'narrow'];
+export const CLASS_N: Record<TrackClass, number> = { regular: 2, high_speed: 2, narrow: 1 };
 export function classRadius(cls: TrackClass) {
   return CLASS_N[cls] - 0.5;
 }
-/** Cost multiplier of a class: `n`, plus half again above regular. */
+/** Cost multiplier of a class: regular 1, high speed half again per block tile, narrow 0.6. */
 export function classCostMul(cls: TrackClass) {
-  const n = CLASS_N[cls];
-  return n === 1 ? 1 : n * 1.5;
+  if (cls === 'narrow') return 0.6;
+  if (cls === 'regular') return 1;
+  return CLASS_N[cls] * 1.5;
 }
 
 export type TrackKind = 'straight' | 'curve' | 'switch' | 'crossing' | 'bridge' | 'transition';
@@ -46,6 +50,11 @@ export const TRACK_ITEMS: TrackItem[] = [
   { kind: 'switch', cls: 'high_speed' },
   { kind: 'crossing', cls: 'regular', cls2: 'high_speed' },
   { kind: 'crossing', cls: 'high_speed', cls2: 'high_speed' },
+  { kind: 'straight', cls: 'narrow' },
+  { kind: 'curve', cls: 'narrow' },
+  { kind: 'switch', cls: 'narrow' },
+  { kind: 'crossing', cls: 'narrow', cls2: 'narrow' },
+  { kind: 'crossing', cls: 'narrow', cls2: 'regular' },
 ];
 export function itemKey(it: TrackItem) {
   return it.kind === 'crossing'
@@ -122,7 +131,7 @@ export function makePiece(
 /** Ratio matrix from track.json, scaled by class and the global track cost scale. */
 export function pieceCost(kind: TrackKind, cls: TrackClass = 'regular', cls2?: TrackClass): Cost {
   const base = trackData.pieces[kind]?.cost ?? trackData.pieces.straight.cost;
-  const top = cls2 && CLASS_N[cls2] > CLASS_N[cls] ? cls2 : cls;
+  const top = cls2 && classCostMul(cls2) > classCostMul(cls) ? cls2 : cls;
   const mul = classCostMul(top) * rules.trackCostScale;
   const out: Cost = {};
   for (const [k, v] of Object.entries(base)) out[k] = Math.max(1, Math.round(v * mul));
@@ -142,8 +151,11 @@ export function portClass(p: TrackPiece, d: Dir): TrackClass | 'any' {
   }
   return p.cls;
 }
+/** Like joins like; a transition joins regular and high speed, never narrow (another gauge). */
 export function classesJoin(a: TrackClass | 'any', b: TrackClass | 'any') {
-  return a === 'any' || b === 'any' || a === b;
+  if (a === 'any') return b !== 'narrow';
+  if (b === 'any') return a !== 'narrow';
+  return a === b;
 }
 
 /** Tiles a piece would cover if its anchor were at (x,y). */

@@ -14,6 +14,8 @@ import {
   isUnitKind,
   portClass,
   classesJoin,
+  TRACK_ITEMS,
+  itemKey,
 } from './track';
 
 /** A line of E–W straights of one class along row `y`, from x0 to x1 inclusive. */
@@ -45,10 +47,11 @@ describe('track classes', () => {
   });
 
   it('spreads only curves and switches over n x n tiles', () => {
-    for (const kind of TRACK_KINDS) {
-      expect(isUnitKind(kind, 'regular')).toBe(false);
-      expect(isUnitKind(kind, 'high_speed')).toBe(kind === 'curve' || kind === 'switch');
-    }
+    for (const kind of TRACK_KINDS)
+      for (const cls of TRACK_CLASSES)
+        expect(isUnitKind(kind, cls)).toBe(
+          CLASS_N[cls] > 1 && (kind === 'curve' || kind === 'switch'),
+        );
   });
 
   it('joins like with like, and anything to a transition', () => {
@@ -152,7 +155,7 @@ describe('TrackGraph', () => {
 
   it('reads exits back through whichever edge you entered by', () => {
     const g = new TrackGraph(8, 8);
-    g.place(2, 2, 'switch', 1);
+    g.place(2, 2, 'switch', 1, 'narrow');
     const links = pieceLinks('switch', 1);
     const entry = links[0][0];
     expect(g.exits(2, 2, entry).sort()).toEqual([links[0][1], links[1][1]].sort());
@@ -192,7 +195,7 @@ describe('multi-tile pieces', () => {
 
   it('treats a 1x1 piece as its own unit', () => {
     const g = new TrackGraph(8, 8);
-    g.place(2, 2, 'curve', 0, 'regular');
+    g.place(2, 2, 'curve', 0, 'narrow');
     expect(g.get(2, 2)!.unit).toBeUndefined();
     expect(g.anchorOf(2, 2)).toEqual({ x: 2, y: 2 });
     expect(g.unitTiles(2, 2)).toEqual([{ x: 2, y: 2 }]);
@@ -216,5 +219,61 @@ describe('multi-tile pieces', () => {
         }
       }
     expect(internal).toBeGreaterThan(0);
+  });
+});
+
+describe('narrow gauge and 2x2 regular track', () => {
+  it('lays regular and high-speed curves and switches over 2x2, narrow ones on one tile', () => {
+    expect(CLASS_N).toEqual({ regular: 2, high_speed: 2, narrow: 1 });
+    for (const kind of ['curve', 'switch'] as const) {
+      expect(isUnitKind(kind, 'regular')).toBe(true);
+      expect(isUnitKind(kind, 'high_speed')).toBe(true);
+      expect(isUnitKind(kind, 'narrow')).toBe(false);
+    }
+    const g = new TrackGraph(16, 16);
+    expect(g.place(4, 4, 'curve', 0, 'regular')).toHaveLength(4);
+    expect(g.place(10, 4, 'curve', 0, 'narrow')).toEqual([{ x: 10, y: 4 }]);
+  });
+
+  it('joins narrow only to narrow, never through a transition', () => {
+    expect(classesJoin('narrow', 'narrow')).toBe(true);
+    expect(classesJoin('narrow', 'regular')).toBe(false);
+    expect(classesJoin('any', 'narrow')).toBe(false);
+    expect(classesJoin('narrow', 'any')).toBe(false);
+    expect(classesJoin('any', 'regular')).toBe(true);
+  });
+
+  it('prices narrow track below regular and keeps a crossing at its dearer axis', () => {
+    const reg = pieceCost('straight', 'regular');
+    const nar = pieceCost('straight', 'narrow');
+    for (const k of Object.keys(reg)) expect(nar[k]).toBeLessThanOrEqual(reg[k]);
+    expect(pieceCost('crossing', 'regular', 'high_speed')).toEqual(
+      pieceCost('crossing', 'high_speed', 'high_speed'),
+    );
+    expect(pieceCost('crossing', 'narrow', 'regular')).toEqual(
+      pieceCost('crossing', 'regular', 'regular'),
+    );
+  });
+
+  it('turns a mixed crossing so either line can run either way', () => {
+    expect(rotationCount('crossing')).toBe(2);
+    const a = makePiece('crossing', 0, 'narrow', 'regular');
+    expect(portClass(a, Dir.N)).toBe('narrow');
+    expect(portClass(a, Dir.E)).toBe('regular');
+    const b = makePiece('crossing', 1, 'narrow', 'regular');
+    expect(portClass(b, Dir.E)).toBe('narrow');
+    expect(portClass(b, Dir.N)).toBe('regular');
+  });
+
+  it('offers the narrow pieces and both mixed crossings in the build list', () => {
+    const keys = TRACK_ITEMS.map(itemKey);
+    for (const k of [
+      'straight_narrow',
+      'curve_narrow',
+      'switch_narrow',
+      'crossing_narrow_narrow',
+      'crossing_narrow_regular',
+    ])
+      expect(keys).toContain(k);
   });
 });
