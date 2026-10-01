@@ -13,7 +13,7 @@ import {
   bogieFrame,
   bogieStyleOf,
 } from '../art/frames';
-import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
+import { pitchOnRail, LEVEL_GROUND, type Ground } from './slope';
 import {
   facingOf,
   DRAWN_FACINGS,
@@ -152,16 +152,12 @@ export class TrainRenderer {
     s.rotation = residualRotation(angle, f) * ROTATION_SHARE;
     const wp = tileToWorld(x, y);
     // Each body part and bogie stands on the rail under it, pitched along its own heading only
-    // (the rail is level across the track).
+    // (the rail is level across the track) and upright: its height does not change with the grade.
     const g = ground,
       cos = Math.cos(angle),
       sin = Math.sin(angle),
       along = g.sgx * cos + g.sgy * sin;
-    standOnGround(s, Math.round(wp.x), Math.round(wp.y), {
-      dz: g.dz,
-      sgx: along * cos,
-      sgy: along * sin,
-    });
+    pitchOnRail(s, Math.round(wp.x), Math.round(wp.y), g.dz, along, cos, sin);
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
     return key;
