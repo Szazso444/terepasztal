@@ -1,7 +1,7 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import type { Vec2 } from '../engine/iso';
 import { hash2 } from '../engine/rng';
-import { linkPoints, unitDef } from '../world/trackGeom';
+import { linkPoints, unitDef, type SwitchForm } from '../world/trackGeom';
 import {
   TRACK_ITEMS,
   CLASS_N,
@@ -18,10 +18,55 @@ const R = 4,
   OX = 36,
   OY = 20;
 type RailPath = { points: Vec2[]; cls: TrackClass };
+/**
+ * Per class: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
+ * ballast shoulder, sleeper colours and rail line widths. Narrow gauge puts its rails half as far
+ * apart on short, closely spaced timber sleepers and a narrow bed, like a forest or mine line.
+ */
+const STYLE: Record<
+  TrackClass,
+  {
+    rail: number;
+    sleeper: number;
+    step: number;
+    shoulder: number;
+    tie: string;
+    tieHi: string;
+    widths: [number, number, number];
+  }
+> = {
+  regular: {
+    rail: 0.16,
+    sleeper: 0.235,
+    step: 0.14,
+    shoulder: 0.29,
+    tie: '#725039',
+    tieHi: '#a17c52',
+    widths: [1.25, 0.95, 0.4],
+  },
+  high_speed: {
+    rail: 0.16,
+    sleeper: 0.235,
+    step: 0.14,
+    shoulder: 0.34,
+    tie: '#b9b3a0',
+    tieHi: '#d1cbb7',
+    widths: [1.25, 0.95, 0.4],
+  },
+  narrow: {
+    rail: 0.08,
+    sleeper: 0.14,
+    step: 0.115,
+    shoulder: 0.19,
+    tie: '#664631',
+    tieHi: '#8f6c47',
+    widths: [0.95, 0.72, 0.32],
+  },
+};
 const project = (p: Vec2) => ({ x: OX + (p.x - p.y) * 32, y: OY + (p.x + p.y) * 16 });
 const offset = (p: Vec2, n: Vec2, d: number) => ({ x: p.x + n.x * d, y: p.y + n.y * d });
 
-function draw(paths: RailPath[], seed: number, bridge = false, apron = false) {
+function draw(paths: RailPath[], seed: number, bridge = false) {
   const canvas = document.createElement('canvas');
   canvas.width = W * R;
   canvas.height = H * R;
@@ -67,18 +112,8 @@ function draw(paths: RailPath[], seed: number, bridge = false, apron = false) {
       return { x: -(b.y - a.y) / l, y: (b.x - a.x) / l };
     }),
   }));
-  if (apron)
-    polygon(
-      [
-        { x: -0.5, y: -0.5 },
-        { x: 0.5, y: -0.5 },
-        { x: 0.5, y: 0.5 },
-        { x: -0.5, y: 0.5 },
-      ],
-      '#827765',
-    );
   for (const { points, normals, cls } of rows) {
-    const shoulder = cls === 'high_speed' ? 0.34 : 0.29;
+    const shoulder = STYLE[cls].shoulder;
     for (const [extra, alpha] of bridge
       ? [[0, 1]]
       : [
@@ -127,8 +162,9 @@ function draw(paths: RailPath[], seed: number, bridge = false, apron = false) {
   }
   for (const { points, normals, cls } of rows) {
     c.globalAlpha = 1;
+    const st = STYLE[cls];
     let distance = 0,
-      next = 0.055;
+      next = st.step / 2.5;
     for (let i = 1; i < points.length; i++) {
       const a = points[i - 1],
         b = points[i],
@@ -139,27 +175,27 @@ function draw(paths: RailPath[], seed: number, bridge = false, apron = false) {
         const n = normals[i],
           along = { x: n.y, y: -n.x };
         const corners = [
-          offset(offset(p, n, -0.235), along, -0.028),
-          offset(offset(p, n, 0.235), along, -0.028),
-          offset(offset(p, n, 0.235), along, 0.028),
-          offset(offset(p, n, -0.235), along, 0.028),
+          offset(offset(p, n, -st.sleeper), along, -0.028),
+          offset(offset(p, n, st.sleeper), along, -0.028),
+          offset(offset(p, n, st.sleeper), along, 0.028),
+          offset(offset(p, n, -st.sleeper), along, 0.028),
         ];
-        polygon(corners, cls === 'high_speed' ? '#b9b3a0' : '#725039');
-        line(corners.slice(0, 2), cls === 'high_speed' ? '#d1cbb7' : '#a17c52', 0.38, -0.22);
-        for (const side of [-0.16, 0.16]) {
+        polygon(corners, st.tie);
+        line(corners.slice(0, 2), st.tieHi, 0.38, -0.22);
+        for (const side of [-st.rail, st.rail]) {
           const q = project(offset(p, n, side));
           c.fillStyle = '#554f43';
           c.fillRect(q.x - 0.45, q.y - 0.35, 0.9, 0.7);
         }
-        next += 0.14;
+        next += st.step;
       }
       distance += len;
     }
-    for (const side of [-0.16, 0.16]) {
+    for (const side of [-st.rail, st.rail]) {
       const rail = points.map((p, i) => offset(p, normals[i], side));
-      line(rail, '#4c4940', 1.25, 0.35);
-      line(rail, '#827d70', 0.95);
-      line(rail, '#d1c7ac', 0.4, -0.3);
+      line(rail, '#4c4940', st.widths[0], 0.35);
+      line(rail, '#827d70', st.widths[1]);
+      line(rail, '#d1c7ac', st.widths[2], -0.3);
     }
   }
   return c.getImageData(0, 0, W * R, H * R);
@@ -172,16 +208,28 @@ export function generateIllustratedTrackAtlas(): AtlasImage {
     for (let rotation = 0; rotation < rotationCount(it.kind); rotation++) {
       const key = `track/${itemKey(it)}_${rotation}`;
       if (isUnitKind(it.kind, it.cls)) {
-        const def = unitDef(it.kind as 'curve' | 'switch', CLASS_N[it.cls], rotation);
-        const member = (index: number) =>
-          draw(
-            def.members[index].links.map((l) => ({ points: l.pts, cls: it.cls })),
-            rotation * 13 + index,
-            false,
-            !def.members[index].links.length,
-          );
-        def.members.forEach((_, i) => ab.add(`${key}_m${i}`, member(i), OX * R, OY * R));
-        ab.add(key, member(1), OX * R, OY * R);
+        const forms: SwitchForm[] = it.kind === 'switch' ? ['turn', 'parallel'] : ['turn'];
+        for (const form of forms) {
+          const def = unitDef(it.kind as 'curve' | 'switch', CLASS_N[it.cls], rotation, form);
+          const tag = form === 'parallel' ? 'p' : '';
+          // every member draws the whole piece, shifted into its own tile and clipped to it, so
+          // rails and ballast run on across tile edges; the empty inner tile shows only the
+          // ballast that spills into it
+          const member = (index: number) => {
+            const own = def.members[index];
+            return draw(
+              def.members.flatMap((m) =>
+                m.links.map((l) => ({
+                  points: l.pts.map((q) => ({ x: q.x + m.dx - own.dx, y: q.y + m.dy - own.dy })),
+                  cls: it.cls,
+                })),
+              ),
+              rotation * 13,
+            );
+          };
+          def.members.forEach((_, i) => ab.add(`${key}${tag}_m${i}`, member(i), OX * R, OY * R));
+          if (form === 'turn') ab.add(key, member(1), OX * R, OY * R);
+        }
       } else {
         const paths = pieceLinks(it.kind, rotation).map((link, i) => ({
           points: linkPoints(link[0], link[1], 96),

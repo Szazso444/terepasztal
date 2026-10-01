@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { content } from '../data/content';
 import { bogieFrame, bogieStyleOf, locoFrame, wagonFrame } from './frames';
+import { pieceFrame, makePiece, TrackGraph } from '../world/track';
 
 const atlas = (...keys: string[]) => ({ has: (k: string) => keys.includes(k) });
 
@@ -50,5 +51,19 @@ describe('prototype frames', () => {
     ]);
     for (const d of content.locomotives) expect(bodies.has(`loco_${d.id}`)).toBe(false);
     for (const d of content.wagons) expect(bodies.has(`wagon_${d.id}`)).toBe(false);
+  });
+});
+
+describe('track frames', () => {
+  it('names the members of a parallel switch apart from a turning one', () => {
+    const g = new TrackGraph(20, 20);
+    g.place(4, 4, 'switch', 1, 'regular', undefined, 'parallel');
+    expect(pieceFrame(g.get(4, 4)!)).toBe('track/switch_regular_1p_m0');
+    g.place(10, 4, 'switch', 1, 'regular');
+    expect(pieceFrame(g.get(10, 4)!)).toBe('track/switch_regular_1_m0');
+    expect(pieceFrame(makePiece('curve', 2, 'narrow'))).toBe('track/curve_narrow_2');
+    expect(pieceFrame(makePiece('crossing', 1, 'narrow', 'regular'))).toBe(
+      'track/crossing_narrow_regular_1',
+    );
   });
 });
