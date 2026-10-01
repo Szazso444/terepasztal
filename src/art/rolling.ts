@@ -94,24 +94,36 @@ function canvasFor(L: number) {
   return { W, H, OX: Math.floor(W / 2), OY: H - 14 };
 }
 
+/** Narrow-gauge stock: bodies three quarters as wide, wheels on rails half as far apart. */
+const NARROW_BODY = 0.75;
+const NARROW_GAUGE = 0.5;
+
 /** One sprite in the making: a pixel buffer with a heading and drawing helpers in body space. */
 class Frame {
   readonly b: PixelBuf;
   readonly ox: number;
   readonly oy: number;
+  /** drawn width per body unit across */
+  readonly wScale: number;
   constructor(
     readonly L: number,
     readonly a: number,
     readonly seed: number,
+    readonly narrow = false,
   ) {
     const c = canvasFor(L);
     this.b = new PixelBuf(c.W, c.H);
     this.ox = c.OX;
     this.oy = c.OY;
+    this.wScale = DRAWN_WIDTH * (narrow ? NARROW_BODY : 1);
+  }
+  /** a wheel's offset across the body, kept on this frame's rails */
+  gw(w: number) {
+    return this.narrow ? (w * NARROW_GAUGE) / NARROW_BODY : w;
   }
   /** tile-space offset of a body point: l along the heading (front = +), w across */
   along(l: number, w: number) {
-    w *= DRAWN_WIDTH;
+    w *= this.wScale;
     return {
       x: Math.cos(this.a) * l - Math.sin(this.a) * w,
       y: Math.sin(this.a) * l + Math.cos(this.a) * w,
@@ -151,7 +163,7 @@ class Frame {
       cy: c.y,
       angle: this.a,
       len: o.len,
-      wid: o.wid * DRAWN_WIDTH,
+      wid: o.wid * this.wScale,
       h: o.h,
       z0: o.z0 ?? 0,
       top: o.top,
@@ -922,7 +934,8 @@ function wagonBody(body: string, L: number, paint: RGB[], f: Frame, service?: st
 
 // ------------------------------------------------------------------ overlays and bogies
 
-function load(kind: string, f: Frame) {
+/** Cargo overlays; `s` shortens them for narrow wagons. */
+function load(kind: string, f: Frame, s = 1) {
   const grey: RGB[] = [
     [200, 200, 200],
     [230, 230, 230],
@@ -930,18 +943,27 @@ function load(kind: string, f: Frame) {
   ];
   switch (kind) {
     case 'heap':
-      f.prism({ l: 0, len: 0.76, wid: 0.2, h: 3, z0: 15, top: grey, side: grey, seed: 51 });
-      f.prism({ l: 0, len: 0.5, wid: 0.12, h: 3, z0: 18, top: grey, side: grey, seed: 52 });
+      f.prism({ l: 0, len: 0.76 * s, wid: 0.2, h: 3, z0: 15, top: grey, side: grey, seed: 51 });
+      f.prism({ l: 0, len: 0.5 * s, wid: 0.12, h: 3, z0: 18, top: grey, side: grey, seed: 52 });
       break;
     case 'crates':
       for (const l of [-0.28, 0, 0.28])
-        f.prism({ l, len: 0.18, wid: 0.18, h: 6, z0: 8, top: grey, side: grey, seed: 53 });
+        f.prism({
+          l: l * s,
+          len: 0.18 * s,
+          wid: 0.18,
+          h: 6,
+          z0: 8,
+          top: grey,
+          side: grey,
+          seed: 53,
+        });
       break;
     case 'bales':
-      for (const l of [-0.3, -0.1, 0.1, 0.3]) {
+      for (const l of [-0.3, -0.1, 0.1, 0.3].map((v) => v * s)) {
         f.prism({
           l,
-          len: 0.14,
+          len: 0.14 * s,
           wid: 0.2,
           h: 5,
           z0: 8,
@@ -958,7 +980,7 @@ function load(kind: string, f: Frame) {
         f.prism({
           l: 0,
           w,
-          len: 0.8,
+          len: 0.8 * s,
           wid: 0.07,
           h: 4,
           z0: w === 0.02 ? 12 : 8,
@@ -975,7 +997,7 @@ function load(kind: string, f: Frame) {
 function wheelFrame(f: Frame, xs: number[], len: number) {
   const wheels = (near: boolean) => {
     for (const l of xs)
-      for (const w of [-0.105, 0.105]) {
+      for (const w of [f.gw(-0.105), f.gw(0.105)]) {
         if (f.visible(l, w) !== near) continue;
         const p = f.px(l, w, 1);
         f.b.rect(p.x - 1, p.y - 3, 2, 4, WHEELS[2]);
@@ -984,8 +1006,8 @@ function wheelFrame(f: Frame, xs: number[], len: number) {
   };
   wheels(false);
   for (const l of xs) {
-    const a = f.px(l, -0.105, 2),
-      b = f.px(l, 0.105, 2);
+    const a = f.px(l, f.gw(-0.105), 2),
+      b = f.px(l, f.gw(0.105), 2);
     f.b.line(a.x, a.y, b.x, b.y, PAL.iron[0]);
   }
   f.prism({ l: 0, len, wid: 0.1, h: 1, z0: 3, top: PAL.iron, side: WHEELS, seed: 61 });
@@ -1033,7 +1055,7 @@ function paintOf(name: string): RGB[] {
 function locoVariants(): { body: string; size: string; paint: string; def: LocoDef }[] {
   const seen = new Map<string, { body: string; size: string; paint: string; def: LocoDef }>();
   for (const d of content.locomotives) {
-    const size = d.size ?? 'small';
+    const size = `${d.size ?? 'small'}${d.gauge === 'narrow' ? '_n' : ''}`;
     for (const paint of [d.paint, 'iron']) {
       const key = `${d.body}|${size}|${paint}`;
       if (!seen.has(key)) seen.set(key, { body: d.body, size, paint, def: { ...d, paint } });
@@ -1044,7 +1066,7 @@ function locoVariants(): { body: string; size: string; paint: string; def: LocoD
 function wagonVariants(): { body: string; size: string; paint: string; def: WagonDef }[] {
   const seen = new Map<string, { body: string; size: string; paint: string; def: WagonDef }>();
   for (const d of content.wagons) {
-    const size = d.size ?? 'small';
+    const size = `${d.size ?? 'small'}${d.gauge === 'narrow' ? '_n' : ''}`;
     for (const paint of [d.paint, 'iron']) {
       const key = `${d.body}|${size}|${paint}|${d.service ?? ''}`;
       if (!seen.has(key)) seen.set(key, { body: d.body, size, paint, def: { ...d, paint } });
@@ -1071,7 +1093,7 @@ export function generateRollingAtlas(): AtlasImage {
     for (const s of spec.segments) if (!parts.has(s.part)) parts.set(s.part, s);
     for (const [part, seg] of parts)
       for (const fi of facings) {
-        const f = new Frame(seg.L, facingAngle(fi), 100 + fi);
+        const f = new Frame(seg.L, facingAngle(fi), 100 + fi, v.def.gauge === 'narrow');
         locoDrawer(v.body, part)(f, seg.L, paintOf(v.paint));
         ab.add(
           `rolling/loco_${v.body}_${v.size}_${v.paint}_${part}_f${fi}`,
@@ -1091,7 +1113,7 @@ export function generateWagonAtlas(): AtlasImage {
   for (const v of wagonVariants()) {
     const spec = vehicleSpec(v.def);
     for (const fi of facings) {
-      const f = new Frame(spec.L, facingAngle(fi), 300 + fi);
+      const f = new Frame(spec.L, facingAngle(fi), 300 + fi, v.def.gauge === 'narrow');
       wagonBody(v.body, spec.L, paintOf(v.paint), f, v.def.service);
       ab.add(
         `rolling/wagon_${v.body}_${v.size}_${v.paint}_f${fi}`,
@@ -1105,10 +1127,14 @@ export function generateWagonAtlas(): AtlasImage {
     for (const k of ['heap', 'crates', 'logs', 'bales']) {
       const f = new Frame(1, facingAngle(fi), 500 + fi);
       ab.add(`rolling/load_${k}_f${fi}`, load(k, f).toImageData(), f.ox, f.oy);
+      const n = new Frame(1, facingAngle(fi), 500 + fi, true);
+      ab.add(`rolling/load_${k}_n_f${fi}`, load(k, n, 0.6).toImageData(), n.ox, n.oy);
     }
     for (const k of ['bogie', 'bogie3', 'bogie4', 'engine_unit'] as const) {
       const f = new Frame(1, facingAngle(fi), 600 + fi);
       ab.add(`rolling/${k}_f${fi}`, bogie(k, f).toImageData(), f.ox, f.oy);
+      const n = new Frame(1, facingAngle(fi), 600 + fi, true);
+      ab.add(`rolling/${k}_n_f${fi}`, bogie(k, n).toImageData(), n.ox, n.oy);
     }
   }
   return ab.build(4096);

@@ -5,7 +5,14 @@ import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
 import { PAL, hex, type RGB } from '../art/palette';
-import { locoFrame, wagonFrame, loadKind, bogieFrame, bogieStyleOf } from '../art/frames';
+import {
+  locoFrame,
+  wagonFrame,
+  loadKind,
+  loadFrame,
+  bogieFrame,
+  bogieStyleOf,
+} from '../art/frames';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import {
   facingOf,
@@ -286,7 +293,16 @@ export class TrainRenderer {
                 return;
               }
               const heading = ba + (back ? Math.PI : 0);
-              this.pose(bs, (f) => bogieFrame(this.atlas, style, b.kind, f), bx, by, heading, 14);
+              const narrow =
+                (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).gauge === 'narrow';
+              this.pose(
+                bs,
+                (f) => bogieFrame(this.atlas, style, b.kind, f, narrow),
+                bx,
+                by,
+                heading,
+                14,
+              );
               bs.visible &&= s.visible;
               // always just under its own body: the depth key is by position, and a bogie
               // ahead of the body centre (towards the camera) would otherwise paint over it
@@ -297,7 +313,8 @@ export class TrainRenderer {
             const w = t.wagons[i - t.locos.length];
             if (w.cargo && w.amount > 0.5) {
               const kind = loadKind(w.def, w.cargo);
-              this.pose(c.load, (f) => `rolling/load_${kind}_f${f}`, x, y, shown, 16);
+              const thin = w.def.gauge === 'narrow';
+              this.pose(c.load, (f) => loadFrame(kind, f, thin), x, y, shown, 16);
               const col =
                 (PAL as unknown as Record<string, RGB>)[cargoDef(w.cargo).color] ?? PAL.white;
               c.load.tint = hex(col);

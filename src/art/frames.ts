@@ -3,6 +3,11 @@ import type { BogieStyle, LocoDef, WagonDef } from '../data/content';
 import { cargoClass } from '../sim/cargo';
 import type { BogieKind, PartKind } from '../sim/body';
 
+/** Narrow-gauge stock is drawn narrower, on rails half as far apart: its frames carry `_n`. */
+function gaugeTag(def: { gauge?: string }) {
+  return def.gauge === 'narrow' ? '_n' : '';
+}
+
 /**
  * Locomotive part frame. A rendered sprite of the prototype itself (`loco_<id>_…`) wins; then the
  * body/size/paint the generators draw, with fallbacks so content-editor bodies or paints never
@@ -14,7 +19,7 @@ export function locoFrame(
   facing: number,
   part: PartKind = 'body',
 ): string {
-  const size = def.size ?? 'small';
+  const size = `${def.size ?? 'small'}${gaugeTag(def)}`;
   const fb =
     def.type === 'electric' ? 'electric_box' : def.type === 'diesel' ? 'diesel_hood' : 'steam_std';
   const tries = [
@@ -23,6 +28,7 @@ export function locoFrame(
     `rolling/loco_${def.body}_${size}_iron_${part}_f${facing}`,
     `rolling/loco_${fb}_${size}_${def.paint}_${part}_f${facing}`,
     `rolling/loco_${fb}_${size}_iron_${part}_f${facing}`,
+    `rolling/loco_${fb}_small${gaugeTag(def)}_iron_body_f${facing}`,
     `rolling/loco_${fb}_small_iron_body_f${facing}`,
     `rolling/loco_steam_std_small_iron_body_f${facing}`,
   ];
@@ -34,7 +40,7 @@ export function wagonFrame(
   def: WagonDef,
   facing: number,
 ): string {
-  const size = def.size ?? 'small';
+  const size = `${def.size ?? 'small'}${gaugeTag(def)}`;
   const tries = [
     `rolling/wagon_${def.id}_f${facing}`,
     `rolling/wagon_${def.body}_${size}_${def.paint}_f${facing}`,
@@ -60,9 +66,16 @@ export function bogieFrame(
   style: string | undefined,
   kind: BogieKind,
   facing: number,
+  narrow = false,
 ): string {
   const own = style ? `rolling/bogie_${style}_f${facing}` : null;
-  return own && atlas.has(own) ? own : `rolling/${kind}_f${facing}`;
+  if (own && atlas.has(own)) return own;
+  const thin = `rolling/${kind}_n_f${facing}`;
+  return narrow && atlas.has(thin) ? thin : `rolling/${kind}_f${facing}`;
+}
+/** The cargo overlay frame; narrow wagons have their own, smaller heaps and crates. */
+export function loadFrame(kind: string, facing: number, narrow: boolean) {
+  return `rolling/load_${kind}${narrow ? '_n' : ''}_f${facing}`;
 }
 /** Which cargo overlay a wagon shows for a cargo (none for liquids). */
 export function loadKind(
