@@ -658,17 +658,16 @@
     "name": "MÁV Mk48",
     "rarity": "N",
     "type": "diesel",
-    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "era": "1958 Rába-built narrow-gauge diesel-hydraulic, the Kis Mazsola. Still hauls Hungary's forest lines.",
     "body": "diesel_switcher",
     "paint": "red",
-    "speed": 1,
-    "power": 70,
-    "weight": 90,
+    "speed": 0.95,
+    "power": 55,
+    "weight": 18,
     "crew": 1,
-    "fuelCap": 120,
-    "fuelPerTile": 0.078,
+    "fuelCap": 90,
+    "fuelPerTile": 0.055,
     "size": "small",
-    "controlClass": "emd",
-    "starter": true
+    "controlClass": "raba"
   }
 ]
