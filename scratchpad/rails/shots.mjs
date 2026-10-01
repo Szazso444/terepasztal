@@ -11,7 +11,9 @@ const browser = await launch();
 const report = { errors: [], cells: [], snap: [], films: {} };
 const open = async (page) => {
   await page.goto(`${baseURL('after')}/scratchpad/rails/yard/`);
-  await page.waitForFunction(() => typeof window.qa?.shoot === 'function' || window.qaError, null, { timeout: 240000 });
+  await page.waitForFunction(() => typeof window.qa?.shoot === 'function' || window.qaError, null, {
+    timeout: 240000,
+  });
 };
 try {
   const page = await browser.newPage({ viewport: { width: 2000, height: 1300 } });
@@ -24,18 +26,27 @@ try {
     const cells = await page.evaluate(() => qa.cells);
     for (let i = 0; i < cells.length; i++) {
       await page.evaluate((i) => qa.shoot(i), i);
-      await page.screenshot({ path: `${out}/cell-${i}.png`, clip: { x: 740, y: 460, width: 520, height: 380 } });
+      await page.screenshot({
+        path: `${out}/cell-${i}.png`,
+        clip: { x: 740, y: 460, width: 520, height: 380 },
+      });
       report.cells.push(cells[i]);
     }
     for (const a of report.info.areas) {
       await page.evaluate((a) => qa.area(a, a === 'loop' ? 0.8 : 1.6), a);
-      await page.screenshot({ path: `${out}/area-${a}.png`, clip: { x: 200, y: 130, width: 1600, height: 1040 } });
+      await page.screenshot({
+        path: `${out}/area-${a}.png`,
+        clip: { x: 200, y: 130, width: 1600, height: 1040 },
+      });
     }
     if (report.info.HAS_FORMS)
       for (const st of ['off', 'on', 'off']) {
         const form = await page.evaluate((st) => qa.snap(st), st);
         await page.evaluate(() => qa.area('snap', 2.4));
-        await page.screenshot({ path: `${out}/snap-${report.snap.length}-${st}.png`, clip: { x: 500, y: 330, width: 1000, height: 640 } });
+        await page.screenshot({
+          path: `${out}/snap-${report.snap.length}-${st}.png`,
+          clip: { x: 500, y: 330, width: 1000, height: 640 },
+        });
         report.snap.push({ st, form });
       }
   }
@@ -53,7 +64,10 @@ try {
       report.films[names[k]] = [];
       for (let f = 0; f < frames; f++) {
         await page.evaluate(([k]) => (qa.step(9), qa.follow(k, 2.2)), [k]);
-        await page.screenshot({ path: `${out}/film-${names[k]}-${String(f).padStart(3, '0')}.png`, clip: { x: 600, y: 390, width: 800, height: 520 } });
+        await page.screenshot({
+          path: `${out}/film-${names[k]}-${String(f).padStart(3, '0')}.png`,
+          clip: { x: 600, y: 390, width: 800, height: 520 },
+        });
         if (f % 24 === 0) report.films[names[k]].push(await page.evaluate(() => qa.states()));
       }
     }
@@ -61,5 +75,10 @@ try {
 } finally {
   await browser.close();
   writeFileSync(`${out}/report.json`, JSON.stringify(report, null, 1));
-  console.log(report.errors.length ? report.errors.slice(0, 5) : 'no errors', report.cells.length, 'cells', JSON.stringify(report.snap));
+  console.log(
+    report.errors.length ? report.errors.slice(0, 5) : 'no errors',
+    report.cells.length,
+    'cells',
+    JSON.stringify(report.snap),
+  );
 }

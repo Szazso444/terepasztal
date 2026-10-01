@@ -12,5 +12,17 @@
    "Depot:depot"
   ]
  },
+ "soak": [
+  "Grain 1:loading:",
+  "Narrow 1:loading:",
+  "Grain 2:moving:rerouted around traffic",
+  "Narrow 2:moving:rerouted around traffic"
+ ],
+ "moved": [
+  0,
+  0,
+  25,
+  14
+ ],
  "errors": []
 }

@@ -127,7 +127,8 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
     size,
     plan,
     segments: segs,
-    drawBogies: size !== 'small',
+    // bodies up to a tile long are drawn with their own wheels
+    drawBogies: size !== 'small' && size !== 'tiny',
     maxLateralPlay: def.maxLateralPlay ?? DEFAULT_LATERAL_PLAY,
   };
 }

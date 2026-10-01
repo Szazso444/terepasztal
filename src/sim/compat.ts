@@ -141,6 +141,14 @@ export function consistAccess(defs: (LocoDef | WagonDef)[], inCab = true): Consi
   return out;
 }
 
+/** One line for a vehicle's data sheet: the track classes it may run on. */
+export function runsOn(def: LocoDef | WagonDef): string {
+  const names = TRACK_CLASSES.filter((cls) => !vehicleAccess(def, cls)).map((cls) =>
+    STR.toolbar.trackClass[cls].toLowerCase(),
+  );
+  return STR.compat.runsOn(names);
+}
+
 /** Class a piece presents when entered through `entry` (crossings differ per axis). */
 export function pieceClassFor(p: TrackPiece, entry: number): TrackClass {
   if (p.kind === 'crossing' && p.links[1]) {

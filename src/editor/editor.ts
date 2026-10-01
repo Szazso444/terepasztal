@@ -105,13 +105,7 @@ export class Editor {
       t.piece.cls,
       t.piece.cls2,
     ]);
-    l.stations = this.builder.stations.map((s) => ({
-      defId: s.def.id,
-      x: s.x,
-      y: s.y,
-      level: s.level,
-      name: s.name,
-    }));
+    l.stations = this.builder.stations.map((s) => s.toLevel());
     l.decor = [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]);
     l.buildings = [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id]);
     l.updatedAt = Date.now();

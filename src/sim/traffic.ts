@@ -1,4 +1,4 @@
-import type { TrackGraph } from '../world/track';
+import type { TrackGraph, TrackPiece } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Builder } from './build';
 import type { Train } from './trains';
@@ -45,6 +45,11 @@ export interface TrainTraffic {
   movedSinceStuck: number;
 }
 
+/** A multi-tile piece where roads part or meet: a switch. A multi-tile curve is plain track. */
+function isJunctionUnit(p: TrackPiece) {
+  return !!p.unit && p.kind !== 'curve';
+}
+
 /**
  * Traffic control and traffic statistics.
  *
@@ -87,7 +92,10 @@ export class Traffic {
   }
 
   // ------------------------------------------------------------------ sections
-  /** Node tiles (switches, crossings, platforms, dead ends) stand alone; plain track chains form sections. */
+  /**
+   * Node tiles (switches, crossings, platforms, dead ends) stand alone; plain track chains form
+   * sections. A multi-tile curve has one road, so its tiles chain like straights.
+   */
   rebuildSections() {
     this.sections.clear();
     this.sectionTiles.clear();
@@ -98,7 +106,7 @@ export class Traffic {
     const isNode = (x: number, y: number) => {
       const p = this.track.get(x, y);
       if (!p) return true;
-      if (p.links.length > 1 || p.unit || platform.has(this.key(x, y))) return true;
+      if (p.links.length > 1 || isJunctionUnit(p) || platform.has(this.key(x, y))) return true;
       let open = 0;
       for (const d of DIRS) if (this.track.connected(x, y, d)) open++;
       return open < 2;
@@ -277,7 +285,7 @@ export class Traffic {
           // Adjacent junctions extend the required exit; a queue cannot occupy the crossing.
           const junction = (p: { x: number; y: number }) => {
             const piece = this.track.get(p.x, p.y);
-            return !!piece && (piece.links.length > 1 || !!piece.unit);
+            return !!piece && (piece.links.length > 1 || isJunctionUnit(piece));
           };
           if (junction(first)) {
             let exitArc = first.arc;

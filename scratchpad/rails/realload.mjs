@@ -16,7 +16,9 @@ try {
   }, json);
   await page.goto('http://127.0.0.1:5176/');
   await page.getByText('Continue', { exact: true }).click({ timeout: 240000 });
-  await page.waitForFunction(() => window.game?.fleet?.trains?.length > 0, null, { timeout: 120000 });
+  await page.waitForFunction(() => window.game?.fleet?.trains?.length > 0, null, {
+    timeout: 120000,
+  });
   // run the clock at normal speed for a while
   await page.evaluate(() => window.game.clock.setSpeed(1));
   await page.waitForTimeout(12000);
@@ -26,7 +28,21 @@ try {
   }));
   console.log(JSON.stringify(info));
   await page.screenshot({ path: 'scratchpad/rails/out/realload.png' });
-  writeFileSync('scratchpad/rails/out/realload.json', JSON.stringify({ info, errors }, null, 1));
+  // a soak at the fastest speed: every train must keep covering ground, none stuck or routeless
+  const dist = () => page.evaluate(() => window.game.fleet.trains.map((t) => t.distance));
+  const d0 = await dist();
+  await page.evaluate(() => window.game.clock.setSpeed(3));
+  await page.waitForTimeout(60000);
+  const d1 = await dist();
+  const soak = await page.evaluate(() =>
+    window.game.fleet.trains.map((t) => `${t.name}:${t.state}:${t.lastMessage}`),
+  );
+  const moved = d1.map((d, i) => Math.round(d - d0[i]));
+  console.log(JSON.stringify({ soak, moved }));
+  writeFileSync(
+    'scratchpad/rails/out/realload.json',
+    JSON.stringify({ info, soak, moved, errors }, null, 1),
+  );
 } finally {
   await browser.close();
   console.log(errors.length ? errors.slice(0, 3) : 'no errors');

@@ -165,7 +165,12 @@ describe('v9 to v10', () => {
       },
     });
     const crafting = j.crafting as { recipes: string[]; stats: Record<string, number> };
-    expect(crafting.recipes.sort()).toEqual(['flying_scotsman', 'rocket']);
+    // version 13 adds its new starter models and their recipes on top
+    const later = ['john_bull', 'mine_tub', 'narrow_tank', 'narrow_box', 'narrow_coach'];
+    expect(crafting.recipes.filter((r) => !later.includes(r)).sort()).toEqual([
+      'flying_scotsman',
+      'rocket',
+    ]);
     expect(crafting.stats).toEqual({ unlocks: 0, crafts: 0, failures: 0 });
   });
 
@@ -344,6 +349,37 @@ describe('v12 to v13', () => {
       [10, 8, 'curve', 0, 'high_speed', undefined],
       [12, 8, 'crossing', 0, 'regular', 'high_speed'],
     ]);
+  });
+
+  it('hands an old save the starter models that are new, once', () => {
+    const rocket = {
+      uid: 7,
+      defId: 'rocket',
+      kind: 'loco',
+      level: 1,
+      assigned: null,
+      dupes: 0,
+      obtainedAt: 0,
+    };
+    const tub = { ...rocket, uid: 9, defId: 'mine_tub', kind: 'wagon' };
+    const j = migrate({
+      ...oldestSave(),
+      version: 12,
+      inventory: { items: [rocket, tub], nextUid: 10 },
+    });
+    const items = (j.inventory as { items: { uid: number; defId: string }[] }).items;
+    const count = (id: string) => items.filter((i) => i.defId === id).length;
+    expect(count('john_bull')).toBe(1);
+    for (const id of ['narrow_tank', 'narrow_box', 'narrow_coach'])
+      expect(count(id), id).toBeGreaterThan(0);
+    // already owned: left as it is
+    expect(count('mine_tub')).toBe(1);
+    expect(count('rocket')).toBe(1);
+    expect(new Set(items.map((i) => i.uid)).size).toBe(items.length);
+    expect((j.inventory as { nextUid: number }).nextUid).toBeGreaterThan(
+      Math.max(...items.map((i) => i.uid)),
+    );
+    expect(MIGRATIONS.find((m) => m.from === 12)!.note).toMatch(/Rocket/);
   });
 
   it('converts a level drawn before 2x2 regular curves the same way', () => {

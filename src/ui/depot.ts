@@ -195,9 +195,7 @@ export class DepotScreen implements Screen {
     );
     const locos = this.inventory.free('loco');
     if (!locos.length) c.append(el('div', { class: 'dim', text: STR.depot.noFreeLoco }));
-    const depot =
-      (this.depotId !== null ? this.builder.stationById(this.depotId) : undefined) ??
-      this.depotChoices()[0];
+    const depot = this.syncDepot();
     for (const it of locos) {
       const d = locoDef(it.defId);
       const m = levelMul(it.level);
@@ -213,7 +211,9 @@ export class DepotScreen implements Screen {
             if (sel) this.locoUids = this.locoUids.filter((u) => u !== it.uid);
             else if (this.locoUids.length < MAX_LOCOS) this.locoUids.push(it.uid);
             else this.toast(STR.fleet.tooManyLocos(MAX_LOCOS), 'warn');
+            // the engines' gauge decides which depots the train can roll out of
             this.renderConsist();
+            this.renderRoute();
           },
           it.defId,
           why,
@@ -347,6 +347,13 @@ export class DepotScreen implements Screen {
       ? this.builder.depotsOf(gauge)
       : this.builder.depots();
   }
+  /** Keep the selected depot among those the chosen engines can use; returns it. */
+  private syncDepot(): Station | undefined {
+    const depots = this.depotChoices();
+    if (this.depotId === null || !depots.some((d) => d.id === this.depotId))
+      this.depotId = depots[0]?.id ?? null;
+    return depots.find((d) => d.id === this.depotId);
+  }
   /** Track around the depots changed: re-check what can roll out. */
   onTrackChanged() {
     if (this.root.isConnected) this.render();
@@ -355,10 +362,7 @@ export class DepotScreen implements Screen {
   private renderRoute() {
     const c = this.routeCol;
     c.innerHTML = '';
-    const auto = this.fleet.autoSchedule(
-      (this.depotId !== null ? this.builder.stationById(this.depotId) : undefined) ??
-        this.depotChoices()[0],
-    );
+    const auto = this.fleet.autoSchedule(this.syncDepot());
     const names = auto.map((s) => this.builder.stationById(s.stationId)?.name ?? '?');
     const groups: [string, (typeof this.routeMode)[]][] = [
       [STR.depot.groupStatic, ['auto', 'custom']],
@@ -403,8 +407,7 @@ export class DepotScreen implements Screen {
     f.innerHTML = '';
     // a narrow train rolls out of a narrow depot, a regular one out of a regular depot
     const depots = this.depotChoices();
-    if (this.depotId === null || !depots.some((d) => d.id === this.depotId))
-      this.depotId = depots[0]?.id ?? null;
+    this.syncDepot();
     const preview = this.fleet.previewSpawn(
       this.locoUids,
       this.routeMode === 'custom' ? this.schedule : [],

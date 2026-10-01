@@ -25,6 +25,7 @@ import { expandSave } from './expand';
 import type { SaveGame } from './save';
 import { AGE_DEFS } from './ages';
 import { referencePath } from './compat';
+import { STR } from '../strings';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 function world() {
@@ -421,5 +422,22 @@ describe('high speed without a quest', () => {
     economy.hsUnlocked = false;
     const c = builder.checkTrack(40, 40, { kind: 'straight', cls: 'high_speed' }, 1);
     expect(c.reason ?? '').not.toMatch(/not unlocked/i);
+  });
+});
+
+describe('a train that mixes gauges', () => {
+  const def = (id: string) => content.locomotives.find((d) => d.id === id)!;
+  it('says why it stands still when a save brings it back', () => {
+    const { track } = world();
+    // an old save: the Rocket turned narrow while the rest of its train stayed regular
+    const mixed = new Train([
+      { uid: 1, level: 0, def: def('rocket') },
+      { uid: 2, level: 0, def: def('f7') },
+    ]);
+    const back = Train.fromJSON(JSON.parse(JSON.stringify(mixed.toJSON())), track);
+    expect(back.state).toBe('noRoute');
+    expect(back.lastMessage).toBe(STR.fleet.mixedGaugeTrain);
+    const plain = Train.fromJSON(JSON.parse(JSON.stringify(train().toJSON())), track);
+    expect(plain.lastMessage).not.toBe(STR.fleet.mixedGaugeTrain);
   });
 });

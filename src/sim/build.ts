@@ -320,6 +320,8 @@ export class Builder {
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const kind = item.kind;
+    if ((item.cls === 'narrow' || item.cls2 === 'narrow') && !rules.narrowUnlocked)
+      return { ok: false, cost: {}, reason: STR.build.narrowLocked };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
     for (const t of tiles) {
@@ -353,8 +355,14 @@ export class Builder {
           if (tiles.some((q) => q.x === nx && q.y === ny)) continue;
           const q = this.track.get(nx, ny);
           if (!q || !this.track.opensTo(nx, ny, opposite(d))) continue;
-          if (!classesJoin(portClass(p, d), portClass(q, opposite(d))))
-            return { ok: false, cost: {}, reason: STR.build.needTransition };
+          const mine = portClass(p, d),
+            theirs = portClass(q, opposite(d));
+          if (!classesJoin(mine, theirs)) {
+            // no piece joins the two gauges; only regular and high speed meet at a transition
+            const gauges = mine === 'narrow' || theirs === 'narrow';
+            const reason = gauges ? STR.build.gaugeBreak : STR.build.needTransition;
+            return { ok: false, cost: {}, reason };
+          }
         }
     }
     let mul = 0;
@@ -426,6 +434,8 @@ export class Builder {
   static readonly TOWN_SPACING = 25;
   checkStation(x: number, y: number, defId: string, rot = 0): PlacementCheck {
     const def = stationDef(defId);
+    if (def.gauge === 'narrow' && !rules.narrowUnlocked)
+      return { ok: false, cost: {}, reason: STR.build.narrowLocked };
     for (const { x: tx, y: ty } of stationFootprint(defId, x, y, rot)) {
       if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
       if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };

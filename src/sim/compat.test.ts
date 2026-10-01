@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { content } from '../data/content';
-import { vehicleAccess, consistAccess, consistGauge, gaugeOf, pieceClassFor } from './compat';
+import {
+  vehicleAccess,
+  consistAccess,
+  consistGauge,
+  gaugeOf,
+  pieceClassFor,
+  runsOn,
+} from './compat';
 import { makePiece } from '../world/track';
 import { Dir } from '../engine/iso';
 
@@ -20,6 +27,14 @@ describe('gauge access', () => {
   it('no longer bars large stock from regular track', () => {
     const large = content.locomotives.find((d) => d.size === 'large')!;
     expect(vehicleAccess(large, 'regular')).toBeNull();
+  });
+
+  it('says which track a vehicle runs on', () => {
+    const large = content.locomotives.find((d) => d.size === 'large' && d.gauge !== 'narrow')!;
+    expect(runsOn(large)).toBe('Runs on regular and high-speed track');
+    expect(runsOn(wagon('boxcar'))).toBe('Runs on regular and high-speed track');
+    expect(runsOn(loco('mk48'))).toBe('Runs on narrow track');
+    expect(runsOn(wagon('mine_tub'))).toBe('Runs on narrow track');
   });
 
   it('names a consist of two gauges as mixed', () => {

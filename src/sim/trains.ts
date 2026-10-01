@@ -3,7 +3,7 @@ import type { TrackGraph, TrackPiece } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
 import { lineSpeedCap, approachCap } from './lineSpeed';
-import { consistAccess, pieceClassFor, type ConsistAccess } from './compat';
+import { consistAccess, consistGauge, pieceClassFor, type ConsistAccess } from './compat';
 import { collectorCeiling, type SupplyKind } from './catenary';
 import type { Signals } from './signals';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
@@ -1592,6 +1592,12 @@ export class Train {
     if (s !== 'moving') this.clearHold();
     this.state = s;
     this.stateTime = 0;
+    if (s === 'noRoute' && this.consistProblem) this.lastMessage = this.consistProblem;
+  }
+  /** Why the consist can run on no track at all: narrow and regular stock coupled together. */
+  get consistProblem(): string | null {
+    const defs = [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)];
+    return consistGauge(defs) === 'mixed' ? STR.fleet.mixedGaugeTrain : null;
   }
 
   /** After dispatch(): either start moving or handle "already at target". */
@@ -2448,6 +2454,7 @@ export class Train {
     }
     t.state = 'noRoute';
     t.stateTime = 10;
+    if (t.consistProblem) t.lastMessage = t.consistProblem;
     return t;
   }
 }

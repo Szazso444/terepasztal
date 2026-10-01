@@ -1,7 +1,7 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import type { Vec2 } from '../engine/iso';
 import { hash2 } from '../engine/rng';
-import { linkPoints, unitDef, type SwitchForm } from '../world/trackGeom';
+import { linkPoints, unitDef, unitIconPaths, type SwitchForm } from '../world/trackGeom';
 import {
   TRACK_ITEMS,
   CLASS_N,
@@ -66,7 +66,8 @@ const STYLE: Record<
 const project = (p: Vec2) => ({ x: OX + (p.x - p.y) * 32, y: OY + (p.x + p.y) * 16 });
 const offset = (p: Vec2, n: Vec2, d: number) => ({ x: p.x + n.x * d, y: p.y + n.y * d });
 
-function draw(paths: RailPath[], seed: number, bridge = false) {
+/** `scale` shrinks the rails, sleepers and bed with the path: an icon of a piece drawn small. */
+function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
   const canvas = document.createElement('canvas');
   canvas.width = W * R;
   canvas.height = H * R;
@@ -113,7 +114,7 @@ function draw(paths: RailPath[], seed: number, bridge = false) {
     }),
   }));
   for (const { points, normals, cls } of rows) {
-    const shoulder = STYLE[cls].shoulder;
+    const shoulder = STYLE[cls].shoulder * scale;
     for (const [extra, alpha] of bridge
       ? [[0, 1]]
       : [
@@ -162,7 +163,14 @@ function draw(paths: RailPath[], seed: number, bridge = false) {
   }
   for (const { points, normals, cls } of rows) {
     c.globalAlpha = 1;
-    const st = STYLE[cls];
+    const base = STYLE[cls];
+    const st = {
+      ...base,
+      rail: base.rail * scale,
+      sleeper: base.sleeper * scale,
+      step: base.step * Math.max(scale, 0.75),
+      widths: base.widths.map((w) => w * Math.max(scale, 0.75)),
+    };
     let distance = 0,
       next = st.step / 2.5;
     for (let i = 1; i < points.length; i++) {
@@ -228,7 +236,14 @@ export function generateIllustratedTrackAtlas(): AtlasImage {
             );
           };
           def.members.forEach((_, i) => ab.add(`${key}${tag}_m${i}`, member(i), OX * R, OY * R));
-          if (form === 'turn') ab.add(key, member(1), OX * R, OY * R);
+          // the toolbar icon: the whole piece, small, on one tile
+          if (form === 'turn') {
+            const n = CLASS_N[it.cls];
+            const icon = unitIconPaths(it.kind as 'curve' | 'switch', n, rotation).map(
+              (points) => ({ points, cls: it.cls }),
+            );
+            ab.add(key, draw(icon, rotation * 13, false, 1 / n), OX * R, OY * R);
+          }
         }
       } else {
         const paths = pieceLinks(it.kind, rotation).map((link, i) => ({

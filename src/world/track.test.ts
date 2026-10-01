@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Dir, opposite, DIR_DX, DIR_DY } from '../engine/iso';
-import { unitDef } from './trackGeom';
+import { unitDef, unitIconPaths } from './trackGeom';
 import {
   TrackGraph,
   TRACK_KINDS,
@@ -366,5 +366,64 @@ describe('S-shaped switch', () => {
     const entry = pieceLinks('switch', 1)[0][0];
     const anchorEntry = { x: 4 + (entry === Dir.E ? 1 : 0), y: 4 };
     expect(g.opensTo(anchorEntry.x, anchorEntry.y, entry)).toBe(true);
+  });
+});
+
+describe('reach', () => {
+  const W = 30;
+  const key = (x: number, y: number) => y * W + x;
+  const along = (d: Dir, cls: 'narrow' | 'regular') =>
+    [0, 1].find((r) => makePiece('straight', r, cls).links[0].includes(d))!;
+
+  it('follows the rails through a crossing without joining its two lines', () => {
+    const g = new TrackGraph(W, W);
+    // rotation 0: narrow runs north-south, regular east-west
+    g.place(10, 10, 'crossing', 0, 'narrow', 'regular');
+    for (const y of [8, 9, 11, 12]) g.place(10, y, 'straight', along(Dir.N, 'narrow'), 'narrow');
+    for (const x of [8, 9, 11, 12]) g.place(x, 10, 'straight', along(Dir.E, 'regular'), 'regular');
+    expect(g.connected(10, 10, Dir.N)).toBe(true);
+    expect(g.connected(10, 10, Dir.E)).toBe(true);
+    const narrow = g.reach([key(10, 8)]);
+    expect(narrow.has(key(10, 10))).toBe(true);
+    expect(narrow.has(key(10, 12))).toBe(true);
+    expect(narrow.has(key(9, 10))).toBe(false);
+    expect(narrow.has(key(12, 10))).toBe(false);
+    const regular = g.reach([key(8, 10)]);
+    expect(regular.has(key(12, 10))).toBe(true);
+    expect(regular.has(key(10, 9))).toBe(false);
+  });
+
+  it('reaches every branch of a switch from any of them', () => {
+    const g = new TrackGraph(W, W);
+    g.place(10, 10, 'switch', 0, 'narrow');
+    const edges = [...new Set(g.get(10, 10)!.links.flat())] as Dir[];
+    expect(edges).toHaveLength(3);
+    const ends = edges.map((d) => {
+      const x = 10 + DIR_DX[d],
+        y = 10 + DIR_DY[d];
+      g.place(x, y, 'straight', along(d, 'narrow'), 'narrow');
+      return key(x, y);
+    });
+    for (const from of ends) for (const to of ends) expect(g.reach([from]).has(to)).toBe(true);
+  });
+});
+
+describe('toolbar icon of a multi-tile piece', () => {
+  it('fits the whole piece into one tile', () => {
+    for (const kind of ['curve', 'switch'] as const)
+      for (let rot = 0; rot < rotationCount(kind); rot++) {
+        const def = unitDef(kind, 2, rot);
+        const paths = unitIconPaths(kind, 2, rot);
+        expect(paths).toHaveLength(def.members.reduce((a, m) => a + m.links.length, 0));
+        const pts = paths.flat();
+        for (const p of pts) {
+          expect(Math.abs(p.x)).toBeLessThanOrEqual(0.5 + 1e-9);
+          expect(Math.abs(p.y)).toBeLessThanOrEqual(0.5 + 1e-9);
+        }
+        // the piece reaches the tile's edges: the icon shows all of it, not a corner
+        const span = (v: number[]) => Math.max(...v) - Math.min(...v);
+        expect(span(pts.map((p) => p.x))).toBeGreaterThan(0.7);
+        expect(span(pts.map((p) => p.y))).toBeGreaterThan(0.7);
+      }
   });
 });

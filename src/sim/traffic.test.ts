@@ -3,7 +3,7 @@ import { TrackGraph } from '../world/track';
 import { Traffic } from './traffic';
 import type { Builder } from './build';
 import type { Train } from './trains';
-import { Dir } from '../engine/iso';
+import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 
 /** Traffic only reads `stations` off the builder, to find platform tiles. */
 function trafficOn(
@@ -92,11 +92,45 @@ describe('sections', () => {
     expect(t.sectionOf(3, 2)).not.toBe(t.sectionOf(3, 9));
   });
 
-  it('gives every multi-tile member its own node id', () => {
+  it('gives every member of a multi-tile switch its own node id', () => {
     const g = new TrackGraph(16, 16);
-    const tiles = g.place(6, 6, 'curve', 0, 'high_speed');
+    const tiles = g.place(6, 6, 'switch', 0, 'regular');
     const t = trafficOn(g);
     for (const tile of tiles) expect(t.sectionOf(tile.x, tile.y)).toBeLessThan(0);
+  });
+
+  it('chains a 2×2 curve into the single line it sits on', () => {
+    for (const cls of ['regular', 'high_speed'] as const) {
+      const g = new TrackGraph(24, 24);
+      const tiles = g.place(10, 10, 'curve', 0, cls);
+      const inUnit = (x: number, y: number) => tiles.some((m) => m.x === x && m.y === y);
+      // the curve's two open ends, each continued by three straights
+      const ends: { x: number; y: number }[] = [];
+      for (const m of tiles)
+        for (const d of g.get(m.x, m.y)!.links.flat() as Dir[]) {
+          const nx = m.x + DIR_DX[d],
+            ny = m.y + DIR_DY[d];
+          if (inUnit(nx, ny)) continue;
+          for (let i = 0; i < 3; i++)
+            g.place(
+              nx + DIR_DX[d] * i,
+              ny + DIR_DY[d] * i,
+              'straight',
+              d === Dir.N || d === Dir.S ? 0 : 1,
+              cls,
+            );
+          ends.push({ x: nx, y: ny });
+          expect(g.connected(m.x, m.y, d)).toBe(true);
+        }
+      expect(ends).toHaveLength(2);
+      const t = trafficOn(g);
+      const id = t.sectionOf(ends[0].x, ends[0].y);
+      // one block from one side of the curve to the other: opposing trains cannot both enter
+      expect(id).toBeGreaterThan(0);
+      expect(t.sectionOf(ends[1].x, ends[1].y)).toBe(id);
+      for (const m of tiles)
+        if (g.get(m.x, m.y)!.links.length) expect(t.sectionOf(m.x, m.y)).toBe(id);
+    }
   });
 
   it('answers for bare tiles that carry no track at all', () => {

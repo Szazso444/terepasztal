@@ -15,6 +15,8 @@ export interface Rules {
   lineSpeedRegular: number;
   /** top speed on narrow track, locomotive speed units */
   lineSpeedNarrow: number;
+  /** 1: narrow track and the narrow depot can be built; the hook for a later unlock rule */
+  narrowUnlocked: number;
   loadRateMul: number;
   productionMul: number;
   capacityMul: number;
@@ -83,6 +85,7 @@ export const DEFAULT_RULES: Rules = {
   trainSpeedMul: 1,
   lineSpeedRegular: 2,
   lineSpeedNarrow: 1.2,
+  narrowUnlocked: 1,
   loadRateMul: 1,
   productionMul: 1,
   capacityMul: 1,
@@ -290,6 +293,14 @@ export const RULE_META: RuleMeta[] = [
     min: 0.3,
     max: 5,
     step: 0.1,
+  },
+  {
+    key: 'narrowUnlocked',
+    label: 'Narrow gauge available (0 or 1)',
+    group: 'Trains & stations',
+    min: 0,
+    max: 1,
+    step: 1,
   },
   {
     key: 'loadRateMul',

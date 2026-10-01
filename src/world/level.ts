@@ -3,6 +3,15 @@ import type { TrackClass, TrackKind } from './track';
 import type { SupplyMode } from '../sim/supply';
 import { decorateProps, placeOilFields, emptyMap } from './mapgen';
 
+/** A station in a level; `rot` is the turn of a multi-tile one (missing: the default way). */
+export interface LevelStation {
+  defId: string;
+  x: number;
+  y: number;
+  level: number;
+  name: string;
+  rot?: number;
+}
 /** A hand-made map: terrain plus pre-placed track, stations and decor, and the starting economy. */
 export interface LevelData {
   id: string;
@@ -22,7 +31,7 @@ export interface LevelData {
   track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
   /** 2: regular curves and switches are 2×2 (missing: an older level with one-tile ones) */
   trackFormat?: 2;
-  stations: { defId: string; x: number; y: number; level: number; name: string }[];
+  stations: LevelStation[];
   decor: [number, number, string, number][];
   /** processing buildings [x, y, id] */
   buildings?: [number, number, string][];

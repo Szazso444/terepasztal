@@ -1,4 +1,5 @@
 import { content, type StationDef, type Cost } from '../data/content';
+import type { LevelStation } from '../world/level';
 import { scaleCost } from './stockpile';
 import { weekSeconds } from './rules';
 import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
@@ -328,6 +329,23 @@ export class Station {
     s.rot = j.rot ?? 0;
     s.storage = new Map(Object.entries(j.storage));
     s.market = new Map(Object.entries(j.market ?? {}));
+    return s;
+  }
+  /** The station as a level file holds it: what it is, where, its level, name and turn. */
+  toLevel(): LevelStation {
+    return {
+      defId: this.def.id,
+      x: this.x,
+      y: this.y,
+      level: this.level,
+      name: this.name,
+      ...(this.rot ? { rot: this.rot } : {}),
+    };
+  }
+  static fromLevel(j: LevelStation): Station {
+    const s = new Station(j.defId, j.x, j.y, j.name || undefined);
+    s.level = Math.max(1, Math.min(5, j.level));
+    s.rot = j.rot ?? 0;
     return s;
   }
 }

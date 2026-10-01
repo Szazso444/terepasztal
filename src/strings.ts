@@ -136,6 +136,8 @@ export const STR = {
     needTerrain: (t: string) => `Must stand on ${t}`,
     sameSupply: 'Already electrified this way',
     needTransition: 'Different track classes join through a transition piece',
+    gaugeBreak: 'Narrow and regular gauge do not join: cross them with a crossing piece',
+    narrowLocked: 'Narrow gauge is not unlocked yet',
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
@@ -934,6 +936,8 @@ export const STR = {
       narrowTrack
         ? 'Regular gauge: cannot run on narrow track'
         : 'Narrow gauge: runs on narrow track only',
+    runsOn: (classes: string[]) =>
+      classes.length ? `Runs on ${classes.join(' and ')} track` : 'Runs on no track',
     needInCab: 'no in-cab signalling equipment on any locomotive',
     inCabName: 'In-cab signalling',
     foreAft: (v: number, t: number) =>
@@ -960,6 +964,7 @@ export const STR = {
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',
     mixedGauge: 'A train cannot mix narrow and regular gauge.',
+    mixedGaugeTrain: 'narrow and regular gauge in one train: recall it and build it again',
     wrongDepot: (name: string) => `${name} builds only trains of its own gauge.`,
     noNarrowDepot: 'Build a narrow depot first: narrow trains roll out of one',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,

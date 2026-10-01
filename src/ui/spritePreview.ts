@@ -1,14 +1,5 @@
 import type { AtlasRegistry } from '../engine/atlas';
-import { itemKind, locoDef, wagonDef } from '../gacha/items';
-import {
-  vehicleSpec,
-  poseVehicle,
-  Polyline,
-  facingOf,
-  facingAngle,
-  DRAWN_FACINGS,
-  mirrorFacing,
-} from '../sim/body';
+import { previewLayers } from './previewLayers';
 import { el } from './dom';
 
 const caches = new WeakMap<AtlasRegistry, Map<string, string>>();
@@ -55,43 +46,7 @@ export function frameForItem(defId: string, facing = 0): string {
 
 /** Compose the entire vehicle, including articulated parts and separate wheel groups. */
 export function vehiclePreview(atlas: AtlasRegistry, id: string, facing = 0, scale = 2): string {
-  const loco = itemKind(id) === 'loco',
-    def = loco ? locoDef(id) : wagonDef(id),
-    spec = vehicleSpec(def);
-  const angle = facingAngle(facing),
-    u = { x: Math.cos(angle), y: Math.sin(angle) };
-  const pl = new Polyline([
-    { x: -u.x * 8, y: -u.y * 8 },
-    { x: u.x * 8, y: u.y * 8 },
-  ]);
-  const pose = poseVehicle(pl, 8 + spec.L / 2, spec);
-  const layers: { key: string; x: number; y: number; flip: boolean; z: number }[] = [];
-  const add = (key: (f: number) => string, x: number, y: number, a: number, z: number) => {
-    const f = facingOf(a),
-      flip = !DRAWN_FACINGS.has(f);
-    layers.push({
-      key: key(flip ? mirrorFacing(f) : f),
-      x: (x - y) * 32,
-      y: (x + y) * 16,
-      flip,
-      z,
-    });
-  };
-  for (const s of pose.segments) {
-    if (spec.drawBogies)
-      for (const b of s.bogies)
-        add((f) => `rolling/${b.kind}_f${f}`, b.drawX, b.drawY, b.angle, -1000);
-    add(
-      (f) =>
-        loco
-          ? `rolling/loco_${def.body}_${spec.size}_${def.paint}_${s.part}_f${f}`
-          : `rolling/wagon_${def.body}_${spec.size}_${def.paint}_f${f}`,
-      s.x,
-      s.y,
-      s.angle + (s.mirror ? Math.PI : 0),
-      (s.x + s.y) * 100,
-    );
-  }
+  const layers = previewLayers(atlas, id, facing);
   const c = document.createElement('canvas');
   c.width = 240 * scale;
   c.height = 150 * scale;
@@ -99,7 +54,7 @@ export function vehiclePreview(atlas: AtlasRegistry, id: string, facing = 0, sca
   ctx.imageSmoothingEnabled = false;
   ctx.scale(scale, scale);
   ctx.translate(120, 100);
-  for (const l of layers.sort((a, b) => a.z - b.z)) {
+  for (const l of layers) {
     if (!atlas.has(l.key)) continue;
     const f = atlas.get(l.key),
       r = f.texture.frame;

@@ -259,3 +259,21 @@ function edgeOf(p: Vec2, tx: number, ty: number): Dir {
   if (Math.abs(Math.abs(dy) - 0.5) < 1e-6) return dy > 0 ? Dir.S : Dir.N;
   return dx > 0 ? Dir.E : Dir.W;
 }
+
+/**
+ * A whole multi-tile piece scaled into one tile, for its toolbar icon: every member's rails,
+ * shrunk by the piece's size and centred on the tile.
+ */
+export function unitIconPaths(
+  kind: 'curve' | 'switch',
+  n: number,
+  rot: number,
+  form: SwitchForm = 'turn',
+): Vec2[][] {
+  const mid = (n - 1) / 2;
+  return unitDef(kind, n, rot, form).members.flatMap((m) =>
+    m.links.map((l) =>
+      l.pts.map((q) => ({ x: (q.x + m.dx - mid) / n, y: (q.y + m.dy - mid) / n })),
+    ),
+  );
+}

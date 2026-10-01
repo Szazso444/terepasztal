@@ -58,7 +58,8 @@ g.clock.setSpeed(0);
 g.builder.free = true;
 for (let i = 0; i < g.regions.unlocked.length; i++) g.regions.own(i);
 g.world.rebuildFog();
-for (const k of [...g.builder.decor.keys()]) g.builder.removeDecor(k % g.map.w, Math.floor(k / g.map.w));
+for (const k of [...g.builder.decor.keys()])
+  g.builder.removeDecor(k % g.map.w, Math.floor(k / g.map.w));
 // clear scattered trees and rocks off the whole test ground
 for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) g.world.removeProps?.(x, y);
 
@@ -172,8 +173,10 @@ function snap(state) {
   const rot = e.out === 0 || e.out === 2 ? 0 : 1;
   const run = [];
   for (let k = 0; k < 4; k++) run.push({ x: e.x + DIR_DX[e.out] * k, y: e.y + DIR_DY[e.out] * k });
-  if (state === 'on') for (const t of run) if (!g.track.has(t.x, t.y)) lay(t.x, t.y, 'straight', rot);
-  if (state === 'off') for (const t of run) if (g.track.has(t.x, t.y)) g.builder.removeTrack(t.x, t.y);
+  if (state === 'on')
+    for (const t of run) if (!g.track.has(t.x, t.y)) lay(t.x, t.y, 'straight', rot);
+  if (state === 'off')
+    for (const t of run) if (g.track.has(t.x, t.y)) g.builder.removeTrack(t.x, t.y);
   return g.track.get(S.x, S.y).form ?? 'turn';
 }
 
@@ -202,7 +205,13 @@ if (HAS_NARROW) {
     const links = T.pieceLinks('switch', 1);
     const branch = links[1][1];
     for (let k = 1; k <= 4; k++)
-      lay(sw + DIR_DX[branch] * k, Y0 + DIR_DY[branch] * k, 'straight', branch === 0 || branch === 2 ? 0 : 1, 'narrow');
+      lay(
+        sw + DIR_DX[branch] * k,
+        Y0 + DIR_DY[branch] * k,
+        'straight',
+        branch === 0 || branch === 2 ? 0 : 1,
+        'narrow',
+      );
   }
   // a regular line crossing both narrow sides on narrow x regular crossings (axes swapped: R)
   const xc = X0 + 13;
@@ -253,7 +262,14 @@ function makeTrain(locoId, wagons, head, entry, target, viaPath) {
   check(t.spawnAt(g.track, head.x, head.y, entry), 'spawn failed for ' + locoId);
   const path =
     viaPath ??
-    findPath(g.track, { x: head.x, y: head.y, in: entry }, (x, y) => x === target.x && y === target.y, 1e6, undefined, t.canUse);
+    findPath(
+      g.track,
+      { x: head.x, y: head.y, in: entry },
+      (x, y) => x === target.x && y === target.y,
+      1e6,
+      undefined,
+      t.canUse,
+    );
   check(path, 'no path for ' + locoId);
   g.track.resolveRoutes(path);
   t.coal = t.coalCap;
@@ -275,7 +291,8 @@ function makeTrain(locoId, wagons, head, entry, target, viaPath) {
 /** Roll a narrow train out of the narrow depot the way a player does (depot picked by gauge). */
 function deployNarrow() {
   const inv = g.inventory;
-  const take = (id) => (inv.items.find((i) => i.defId === id && i.assigned === null) ?? inv.add(id, 0)).uid;
+  const take = (id) =>
+    (inv.items.find((i) => i.defId === id && i.assigned === null) ?? inv.add(id, 0)).uid;
   const loco = take('mk48');
   const wagons = [take('mine_tub'), inv.add('mine_tub', 0).uid, take('narrow_box')];
   const r = g.fleet.create([loco], wagons, [N.quarry.id, N.warehouse.id], 'Narrow 1');
@@ -305,17 +322,32 @@ function buildDemo() {
   const wh = g.builder.placeStation(X1 - 6, Y1 + 1, 'warehouse', 0);
   check(farm && wh, 'could not place the regular stops');
   for (const st of [farm, wh]) g.onStationChanged(st, false);
-  for (const [id, n] of [['coal', 20000], ['water', 20000], ['oil', 20000], ['diesel', 20000], ['wood', 20000], ['stone', 20000], ['iron', 20000], ['food', 20000]])
+  // stock on the platforms, so the trains load and leave instead of waiting for the harvest
+  farm.storage.set('wheat', Math.min(farm.capacity, 600));
+  N.quarry.storage.set('stone', Math.min(N.quarry.capacity, 600));
+  for (const [id, n] of [
+    ['coal', 20000],
+    ['water', 20000],
+    ['oil', 20000],
+    ['diesel', 20000],
+    ['wood', 20000],
+    ['stone', 20000],
+    ['iron', 20000],
+    ['food', 20000],
+  ])
     g.stock.add(id, n);
   g.economy.money = Math.max(g.economy.money, 500000);
   const inv = g.inventory;
-  const get = (id) => (inv.items.find((i) => i.defId === id && i.assigned === null) ?? inv.add(id, 0)).uid;
+  const get = (id) =>
+    (inv.items.find((i) => i.defId === id && i.assigned === null) ?? inv.add(id, 0)).uid;
   const roll = (locoId, wagons, stops, name) => {
     const r = g.fleet.create([get(locoId)], wagons.map(get), stops, name);
     if (typeof r === 'string') return out.push(`${name}: ${r}`);
     r.coal = r.coalCap;
     r.water = r.waterCap;
     r.oil = r.oilCap;
+    // leave with what is on the platform: a demo train that waits to fill up looks stuck
+    for (const stop of r.schedule) stop.waitFull = false;
     out.push(r.name);
   };
   roll('f7', ['boxcar', 'boxcar', 'boxcar'], [farm.id, wh.id], 'Grain 1');
@@ -329,7 +361,10 @@ function buildDemo() {
 }
 /** The running game as a save file. */
 function saveJson() {
-  return JSON.stringify(g.snapshot());
+  const j = g.snapshot();
+  // the save opens with the clock running at normal speed, so the trains are seen moving
+  j.clock.speedIndex = 1;
+  return JSON.stringify(j);
 }
 /** The showcase's trains; returns their names in film order. */
 function spawnTrains() {
@@ -339,14 +374,30 @@ function spawnTrains() {
     names.push(name);
   };
   // round the regular loop through both S-switches' main lines, the transitions and the crossing
-  add('black_five', 'black_five', ['steel_hopper', 'steel_hopper', 'steel_hopper'], { x: L.X0 + 32, y: L.Y0 }, 3, { x: L.X0 + 31, y: L.Y0 });
+  add(
+    'black_five',
+    'black_five',
+    ['steel_hopper', 'steel_hopper', 'steel_hopper'],
+    { x: L.X0 + 32, y: L.Y0 },
+    3,
+    { x: L.X0 + 31, y: L.Y0 },
+  );
   if (HAS_FORMS) {
     // into the passing loop on the S lane, stopping in the middle of it
-    add('f7', 'f7', ['steel_coach', 'steel_coach'], { x: P.ax - 2, y: L.Y0 }, 3, { x: Math.round((P.exitA.x + P.exitB.x) / 2), y: P.row });
+    add('f7', 'f7', ['steel_coach', 'steel_coach'], { x: P.ax - 2, y: L.Y0 }, 3, {
+      x: Math.round((P.exitA.x + P.exitB.x) / 2),
+      y: P.row,
+    });
   }
   if (HAS_NARROW) {
-    add('mk48', 'mk48', ['mine_tub', 'mine_tub', 'narrow_box'], { x: N.X0 + 3, y: N.Y1 }, 1, { x: N.X0 + 4, y: N.Y1 });
-    add('rocket', 'rocket', ['narrow_coach'], { x: N.X1 - 2, y: N.Y0 }, 3, { x: N.X1 - 3, y: N.Y0 });
+    add('mk48', 'mk48', ['mine_tub', 'mine_tub', 'narrow_box'], { x: N.X0 + 3, y: N.Y1 }, 1, {
+      x: N.X0 + 4,
+      y: N.Y1,
+    });
+    add('rocket', 'rocket', ['narrow_coach'], { x: N.X1 - 2, y: N.Y0 }, 3, {
+      x: N.X1 - 3,
+      y: N.Y0,
+    });
     add('class08', 'class08', ['boxcar'], { x: N.xc, y: N.Y0 - 3 }, 0, { x: N.xc, y: N.Y1 + 3 });
   }
   return names;
@@ -369,12 +420,24 @@ function view(cx, cy, zoom, text) {
 function shoot(i, zoom = 2.6) {
   const c = cells[i];
   const fp = T.footprintOf(c.x, c.y, c.it.kind, c.rot, c.it.cls);
-  view(fp.reduce((a, t) => a + t.x, 0) / fp.length, fp.reduce((a, t) => a + t.y, 0) / fp.length, zoom, c.key);
+  view(
+    fp.reduce((a, t) => a + t.x, 0) / fp.length,
+    fp.reduce((a, t) => a + t.y, 0) / fp.length,
+    zoom,
+    c.key,
+  );
   return c.key;
 }
 window.qa = {
   g,
-  cells: cells.map((c) => ({ key: c.key, kind: c.it.kind, cls: c.it.cls, cls2: c.it.cls2, rot: c.rot, form: c.form })),
+  cells: cells.map((c) => ({
+    key: c.key,
+    kind: c.it.kind,
+    cls: c.it.cls,
+    cls2: c.it.cls2,
+    rot: c.rot,
+    form: c.form,
+  })),
   shoot,
   catalogue: (zoom = 0.5) => view(CX0 + (COLS * CELL) / 2, CY0 + (catRows * CELL) / 2, zoom, ''),
   area: (name, zoom = 1.6) => view(areas[name].x, areas[name].y, zoom, ''),

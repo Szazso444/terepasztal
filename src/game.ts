@@ -444,8 +444,7 @@ export class Game {
     resetStationIds(1);
     for (const sj of level.stations) {
       if (!inBounds(this.map, sj.x, sj.y)) continue;
-      const st = new Station(sj.defId, sj.x, sj.y, sj.name || undefined);
-      st.level = Math.max(1, Math.min(5, sj.level));
+      const st = Station.fromLevel(sj);
       this.builder.stations.push(st);
       this.onStationChanged(st, false);
     }

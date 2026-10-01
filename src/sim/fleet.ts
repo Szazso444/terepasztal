@@ -130,23 +130,7 @@ export class Fleet {
   }
   /** Track tiles reachable from the given tile keys (undirected walk over the rails). */
   reachableTiles(seeds: number[]): Set<number> {
-    const out = new Set<number>();
-    const stack = seeds.slice();
-    for (const k of stack) out.add(k);
-    while (stack.length) {
-      const k = stack.pop()!;
-      const x = k % this.map.w;
-      const y = Math.floor(k / this.map.w);
-      for (const d of DIRS) {
-        if (!this.track.connected(x, y, d)) continue;
-        const nk = (y + DIR_DY[d]) * this.map.w + (x + DIR_DX[d]);
-        if (!out.has(nk)) {
-          out.add(nk);
-          stack.push(nk);
-        }
-      }
-    }
-    return out;
+    return this.track.reach(seeds);
   }
   /** Stations a depot's rails lead to (every station with a platform when no depot is given). */
   stationsServedBy(depot: Station | undefined): Station[] {
@@ -375,18 +359,19 @@ export class Fleet {
     return why;
   }
   /**
-   * The depot a consist of this gauge rolls out of: the one asked for, else the first of its
-   * gauge. A mixed consist, a depot of the other gauge or none at all give the reason instead.
+   * The depot a consist rolls out of. The consist's gauge decides: the depot asked for when it is
+   * of that gauge, else the first one that is (a narrow train finds its narrow depot by itself).
+   * With no engine chosen yet, the depot asked for sets the gauge. A mixed consist, or no depot of
+   * the gauge, gives the reason instead.
    */
   depotFor(gauge: ReturnType<typeof consistGauge>, depotId: number | null): Station | string {
     if (gauge === 'mixed') return STR.fleet.mixedGauge;
-    const own = gauge ?? 'regular';
+    const st = depotId !== null ? this.builder.stationById(depotId) : undefined;
+    const asked = st?.def.depot ? st : undefined;
+    const own = gauge ?? asked?.def.gauge ?? 'regular';
     const depot =
-      (depotId !== null ? this.builder.stationById(depotId) : undefined) ??
-      this.builder.depotsOf(own)[0];
-    if (!depot || !depot.def.depot)
-      return own === 'narrow' ? STR.fleet.noNarrowDepot : STR.fleet.noDepot;
-    if ((depot.def.gauge ?? 'regular') !== own) return STR.fleet.wrongDepot(depot.name);
+      asked && (asked.def.gauge ?? 'regular') === own ? asked : this.builder.depotsOf(own)[0];
+    if (!depot) return own === 'narrow' ? STR.fleet.noNarrowDepot : STR.fleet.noDepot;
     return depot;
   }
   /** A stand-in engine of a gauge for previews: one the player owns, else a starter. */

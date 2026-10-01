@@ -1,6 +1,7 @@
 import type { AtlasRegistry } from '../engine/atlas';
 import { itemDef, itemKind, type LocoDef, type WagonDef } from '../gacha/items';
 import { BOGIE_AXLES, vehicleSpec } from '../sim/body';
+import { runsOn } from '../sim/compat';
 import { el, btn } from './dom';
 import { frameForItem, spriteDataUrl } from './spritePreview';
 
@@ -25,7 +26,7 @@ export function vehicleProperties(id: string): string[] {
     const w = d as WagonDef;
     base.push(`${w.carries} · ${w.capacity} units`, (w.accepts ?? []).join(', '));
   }
-  base.push(s.size === 'large' ? 'High-speed track required' : 'Regular and high-speed track');
+  base.push(runsOn(d));
   return base;
 }
 /** Inspect a complete procedural vehicle from all 48 isometric headings. Drag to turn it. */

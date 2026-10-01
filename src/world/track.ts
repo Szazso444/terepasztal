@@ -1,4 +1,4 @@
-import { Dir, rotateDir, opposite, DIR_DX, DIR_DY, type Vec2 } from '../engine/iso';
+import { Dir, DIRS, rotateDir, opposite, DIR_DX, DIR_DY, type Vec2 } from '../engine/iso';
 import { content, type Cost } from '../data/content';
 import { rules } from '../sim/rules';
 import {
@@ -357,6 +357,37 @@ export class TrackGraph {
     const q = this.get(nx, ny)!;
     if (p.unit && q.unit && p.unit.ax === q.unit.ax && p.unit.ay === q.unit.ay) return true;
     return classesJoin(portClass(p, d), portClass(q, opposite(d)));
+  }
+  /**
+   * Track tiles reachable from the given tile keys (`y * w + x`), ignoring direction. The walk
+   * follows each tile's own links, so the two lines of a crossing stay apart while every branch
+   * of a switch is reached from any other.
+   */
+  reach(seeds: number[]): Set<number> {
+    const out = new Set<number>(seeds);
+    const seen = new Set<number>();
+    const stack: number[] = [];
+    // a state is a tile and one of its edges: the rails that touch that edge
+    const visit = (k: number, d: Dir) => {
+      const s = k * 4 + d;
+      if (seen.has(s)) return;
+      seen.add(s);
+      out.add(k);
+      stack.push(s);
+    };
+    for (const k of seeds) for (const d of DIRS) visit(k, d);
+    while (stack.length) {
+      const s = stack.pop()!;
+      const d = (s % 4) as Dir;
+      const k = (s - d) / 4;
+      const x = k % this.w;
+      const y = Math.floor(k / this.w);
+      const p = this.get(x, y);
+      if (!p || !p.links.some(([a, b]) => a === d || b === d)) continue;
+      if (this.connected(x, y, d)) visit((y + DIR_DY[d]) * this.w + (x + DIR_DX[d]), opposite(d));
+      for (const [a, b] of p.links) if (a === d || b === d) visit(k, a === d ? b : a);
+    }
+    return out;
   }
   /** Exits reachable when entering tile (x,y) through edge `entry`. */
   exits(x: number, y: number, entry: Dir): Dir[] {
