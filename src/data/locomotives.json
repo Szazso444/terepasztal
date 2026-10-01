@@ -652,5 +652,23 @@
     "highSpeed": true,
     "collector": "multi",
     "inCab": true
+  },
+  {
+    "id": "mk48",
+    "name": "MÁV Mk48",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "Hungarian narrow-gauge diesel-hydraulic.",
+    "body": "diesel_switcher",
+    "paint": "red",
+    "speed": 1,
+    "power": 70,
+    "weight": 90,
+    "crew": 1,
+    "fuelCap": 120,
+    "fuelPerTile": 0.078,
+    "size": "small",
+    "controlClass": "emd",
+    "starter": true
   }
 ]
