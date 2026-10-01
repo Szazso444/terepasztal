@@ -20,6 +20,17 @@ const SHARP_SCALE = 2;
 const SHARP_FROM = 1.4;
 /** Close-view copies kept at once, nearest the view centre first (about 2.5 MB each). */
 const SHARP_LIMIT = 48;
+/**
+ * Paint workers. Chunks are independent and each paint is deterministic, so a pool paints the same
+ * pixels in parallel; one core is left to the game. Each worker holds its own copy of the surface
+ * sheet (about 13 MB).
+ */
+const WORKERS = Math.max(
+  1,
+  Math.min(6, (typeof navigator === 'undefined' ? 2 : navigator.hardwareConcurrency || 2) - 1),
+);
+type Job = { id: string; scale: number; version: number };
+type Slot = { worker: Worker; loaded: boolean; job: Job | null };
 type Chunk = {
   x: number;
   y: number;
@@ -39,15 +50,15 @@ type View = { x: number; y: number; w: number; h: number };
  */
 export class Landscape {
   readonly root = new Container({ cullableChildren: true, sortableChildren: true });
-  private worker: Worker | null = null;
+  private slots: Slot[] = [];
   private relief: TerrainRelief;
   private version = 0;
   private loaded = false;
-  private busy = false;
   private pending = new Set<string>();
   private sharpPending = new Set<string>();
-  private flight: { id: string; scale: number; version: number } | null = null;
   private sharpShown = false;
+  /** The camera's world rectangle; chunks in it paint first. */
+  private view: View | null = null;
   private focusKey = '';
   private chunks = new Map<string, Chunk>();
   private tint = 0xffffff;
@@ -72,101 +83,29 @@ export class Landscape {
   ) {
     this.relief = buildRelief(map, flat, undefined, rails);
     try {
-      this.worker = new Worker(new URL('./landscape.worker.ts', import.meta.url), {
-        type: 'module',
-      });
-      this.worker.onerror = () => this.fail();
-      this.worker.onmessage = ({ data }) => {
-        if (this.root.destroyed) return;
-        if (data.error) {
-          console.warn(data.error);
-          this.fail();
-          return;
-        }
-        if (data.loaded) {
-          this.loaded = true;
-          this.pump();
-          return;
-        }
-        this.busy = false;
-        this.flight = null;
-        if (data.version !== this.version) {
-          this.pump();
-          return;
-        }
-        const c = this.chunks.get(data.id);
-        if (!c) {
-          this.pump();
-          return;
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = data.width;
-        canvas.height = data.height;
-        canvas
-          .getContext('2d')!
-          .putImageData(new ImageData(data.pixels, data.width, data.height), 0, 0);
-        const texture = Texture.from(canvas);
-        texture.source.scaleMode = 'linear';
-        c.sprite.position.set(data.left, data.top);
-        if (data.scale > 1) {
-          c.sharp?.destroy(true);
-          c.sharp = texture;
-          c.sharpVersion = data.version;
-          this.show(c);
-          this.sharpPaintCount++;
-          this.sharpPaintMilliseconds += data.ms;
-          this.pump();
-          return;
-        }
-        const old = c.base;
-        c.base = texture;
-        if (c.sharp && c.sharpVersion !== data.version) {
-          c.sharp.destroy(true);
-          c.sharp = null;
-        }
-        this.show(c);
-        c.details.clear();
-        c.details.position.set(data.left, data.top);
-        const grass: Float32Array = data.grass;
-        for (let group = 0; group < 2; group++) {
-          for (let i = 0; i < grass.length; i += 4) {
-            if (grass[i + 3] !== group) continue;
-            const sx = grass[i],
-              sy = grass[i + 1],
-              length = grass[i + 2];
-            c.details
-              .moveTo(sx - 1.2, sy)
-              .lineTo(sx - 1.5, sy - length * 0.65)
-              .moveTo(sx - 0.35, sy)
-              .lineTo(sx - 0.45, sy - length)
-              .moveTo(sx + 0.45, sy)
-              .lineTo(sx + 0.7, sy - length * 0.82)
-              .moveTo(sx + 1.1, sy)
-              .lineTo(sx + 1.65, sy - length * 0.5);
-          }
-          const base = group ? [131, 145, 70] : [172, 175, 84];
-          let colour = 0;
-          for (let j = 0; j < 3; j++)
-            colour |=
-              Math.round((base[j] * ((data.tint >> (16 - j * 8)) & 255)) / 255) << (16 - j * 8);
-          c.details.stroke({ color: colour, width: 0.65, alpha: group ? 0.65 : 0.68 });
-        }
-        this.paintCount++;
-        this.paintMilliseconds += data.ms;
-        if (old !== Texture.EMPTY) old.destroy(true);
-        else this.visibilityVersion++;
-        this.pending.delete(data.id);
-        this.pump();
-      };
-      this.worker.postMessage({
-        url: new URL(`${import.meta.env.BASE_URL}assets/terrain-surfaces.png`, location.href).href,
-      });
+      for (let i = 0; i < WORKERS; i++) {
+        const slot: Slot = {
+          worker: new Worker(new URL('./landscape.worker.ts', import.meta.url), {
+            type: 'module',
+          }),
+          loaded: false,
+          job: null,
+        };
+        slot.worker.onerror = () => this.fail();
+        slot.worker.onmessage = ({ data }) => this.receive(slot, data);
+        this.slots.push(slot);
+      }
+      for (const { worker } of this.slots)
+        worker.postMessage({
+          url: new URL(`${import.meta.env.BASE_URL}assets/terrain-surfaces.png`, location.href)
+            .href,
+        });
       this.sync();
     } catch {
       this.fail();
     }
     this.root.on('destroyed', () => {
-      this.worker?.terminate();
+      for (const { worker } of this.slots) worker.terminate();
       for (const c of this.chunks.values()) {
         if (c.base !== Texture.EMPTY) c.base.destroy(true);
         c.sharp?.destroy(true);
@@ -176,12 +115,111 @@ export class Landscape {
       this.sharpPending.clear();
     });
   }
+  /** A worker's reply: its surface sheet is loaded, or a chunk paint is done. */
+  private receive(
+    slot: Slot,
+    data: {
+      error?: string;
+      loaded?: boolean;
+      id: string;
+      version: number;
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+      scale: number;
+      pixels: Uint8ClampedArray<ArrayBuffer>;
+      grass: Float32Array;
+      tint: number;
+      ms: number;
+    },
+  ) {
+    if (this.root.destroyed) return;
+    if (data.error) {
+      console.warn(data.error);
+      this.fail();
+      return;
+    }
+    if (data.loaded) {
+      slot.loaded = this.loaded = true;
+      this.pump();
+      return;
+    }
+    slot.job = null;
+    if (data.version !== this.version) {
+      this.pump();
+      return;
+    }
+    const c = this.chunks.get(data.id);
+    if (!c) {
+      this.pump();
+      return;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = data.width;
+    canvas.height = data.height;
+    canvas
+      .getContext('2d')!
+      .putImageData(new ImageData(data.pixels, data.width, data.height), 0, 0);
+    const texture = Texture.from(canvas);
+    texture.source.scaleMode = 'linear';
+    c.sprite.position.set(data.left, data.top);
+    if (data.scale > 1) {
+      c.sharp?.destroy(true);
+      c.sharp = texture;
+      c.sharpVersion = data.version;
+      this.show(c);
+      this.sharpPaintCount++;
+      this.sharpPaintMilliseconds += data.ms;
+      this.pump();
+      return;
+    }
+    const old = c.base;
+    c.base = texture;
+    if (c.sharp && c.sharpVersion !== data.version) {
+      c.sharp.destroy(true);
+      c.sharp = null;
+    }
+    this.show(c);
+    c.details.clear();
+    c.details.position.set(data.left, data.top);
+    const grass = data.grass;
+    for (let group = 0; group < 2; group++) {
+      for (let i = 0; i < grass.length; i += 4) {
+        if (grass[i + 3] !== group) continue;
+        const sx = grass[i],
+          sy = grass[i + 1],
+          length = grass[i + 2];
+        c.details
+          .moveTo(sx - 1.2, sy)
+          .lineTo(sx - 1.5, sy - length * 0.65)
+          .moveTo(sx - 0.35, sy)
+          .lineTo(sx - 0.45, sy - length)
+          .moveTo(sx + 0.45, sy)
+          .lineTo(sx + 0.7, sy - length * 0.82)
+          .moveTo(sx + 1.1, sy)
+          .lineTo(sx + 1.65, sy - length * 0.5);
+      }
+      const base = group ? [131, 145, 70] : [172, 175, 84];
+      let colour = 0;
+      for (let j = 0; j < 3; j++)
+        colour |= Math.round((base[j] * ((data.tint >> (16 - j * 8)) & 255)) / 255) << (16 - j * 8);
+      c.details.stroke({ color: colour, width: 0.65, alpha: group ? 0.65 : 0.68 });
+    }
+    this.paintCount++;
+    this.paintMilliseconds += data.ms;
+    if (old !== Texture.EMPTY) old.destroy(true);
+    else this.visibilityVersion++;
+    this.pending.delete(data.id);
+    this.pump();
+  }
   private fail() {
     this.failed = true;
     this.active = false;
     this.root.visible = false;
     this.statusChanged = true;
-    this.worker?.terminate();
+    for (const { worker } of this.slots) worker.terminate();
+    for (const slot of this.slots) slot.job = null;
     this.pending.clear();
     this.sharpPending.clear();
   }
@@ -196,6 +234,7 @@ export class Landscape {
    */
   focus(view: View, pixelScale: number) {
     if (this.failed) return;
+    this.view = view;
     const shown = pixelScale > SHARP_FROM;
     if (shown !== this.sharpShown) {
       this.sharpShown = shown;
@@ -206,23 +245,8 @@ export class Landscape {
     this.focusKey = key;
     this.sharpPending.clear();
     if (!shown) return;
-    // Chunks in view rank first, each group nearest the centre first.
-    const cx = view.x + view.w / 2,
-      cy = view.y + view.h / 2,
-      rank = (c: Chunk) => {
-        const left = (c.x - c.y - c.h) * 32 - 4,
-          top = (c.x + c.y - 1) * 16 - RELIEF_MAX - 5,
-          width = (c.w + c.h) * 32 + 8,
-          height = (c.w + c.h) * 16 + RELIEF_MAX + 12;
-        const outside =
-          left > view.x + view.w ||
-          top > view.y + view.h ||
-          left + width < view.x ||
-          top + height < view.y;
-        return (outside ? 1e9 : 0) + Math.hypot(left + width / 2 - cx, top + height / 2 - cy);
-      };
     const near = [...this.chunks]
-      .map(([id, c]) => ({ id, c, d: rank(c) }))
+      .map(([id, c]) => ({ id, c, d: this.rank(c) }))
       .sort((a, b) => a.d - b.d);
     near.forEach(({ id, c, d }, i) => {
       const wanted = d < 1e9 && i < SHARP_LIMIT;
@@ -238,26 +262,50 @@ export class Landscape {
     });
     this.pump();
   }
+  /** Chunks in view rank first (below 1e9), each group nearest the view centre first. */
+  private rank(c: Chunk) {
+    const view = this.view;
+    if (!view) return 0;
+    const left = (c.x - c.y - c.h) * 32 - 4,
+      top = (c.x + c.y - 1) * 16 - RELIEF_MAX - 5,
+      width = (c.w + c.h) * 32 + 8,
+      height = (c.w + c.h) * 16 + RELIEF_MAX + 12;
+    const outside =
+      left > view.x + view.w ||
+      top > view.y + view.h ||
+      left + width < view.x ||
+      top + height < view.y;
+    return (
+      (outside ? 1e9 : 0) +
+      Math.hypot(left + width / 2 - view.x - view.w / 2, top + height / 2 - view.y - view.h / 2)
+    );
+  }
+  /** Is a worker already painting this chunk at this scale for the current version? */
   private flying(id: string, scale: number) {
-    const f = this.flight;
-    return !!f && f.id === id && f.scale === scale && f.version === this.version;
+    return this.slots.some(
+      ({ job }) => !!job && job.id === id && job.scale === scale && job.version === this.version,
+    );
+  }
+  private get busy() {
+    return this.slots.some((slot) => slot.job);
   }
   private sync() {
-    this.worker?.postMessage({
-      map: {
-        w: this.map.w,
-        h: this.map.h,
-        seed: this.map.seed,
-        originX: this.map.originX,
-        originY: this.map.originY,
-        terrain: this.map.terrain,
-        biome: this.map.biome,
-      },
-      relief: this.relief,
-      version: this.version,
-      tint: this.tint,
-      city: [...this.city],
-    });
+    for (const { worker } of this.slots)
+      worker.postMessage({
+        map: {
+          w: this.map.w,
+          h: this.map.h,
+          seed: this.map.seed,
+          originX: this.map.originX,
+          originY: this.map.originY,
+          terrain: this.map.terrain,
+          biome: this.map.biome,
+        },
+        relief: this.relief,
+        version: this.version,
+        tint: this.tint,
+        city: [...this.city],
+      });
   }
   add(x: number, y: number, w: number, h: number) {
     const id = `${x},${y}`;
@@ -289,30 +337,42 @@ export class Landscape {
     const chunk = this.chunks.get(`${Math.floor(x / 8) * 8},${Math.floor(y / 8) * 8}`);
     return !!chunk && chunk.base !== Texture.EMPTY;
   }
-  /**
-   * Base paints come first, except for chunks already showing a close-view copy: those are
-   * repainted sharp first, so an edit never drops a close view back to the blurrier cache.
-   */
+  /** Hands every idle worker its next chunk. */
   private pump() {
-    if (!this.loaded || this.busy || this.failed) return;
-    let id: string | undefined,
-      scale = 1;
-    for (const p of this.pending)
-      if (!(this.sharpShown && this.chunks.get(p)!.sharp)) {
-        id = p;
-        break;
-      }
-    if (id === undefined && this.sharpPending.size) {
-      id = this.sharpPending.values().next().value!;
-      scale = SHARP_SCALE;
-      this.sharpPending.delete(id);
+    if (!this.loaded || this.failed) return;
+    for (const slot of this.slots) {
+      if (!slot.loaded || slot.job) continue;
+      const next = this.next();
+      if (!next) return;
+      const c = this.chunks.get(next.id)!;
+      slot.job = { ...next, version: this.version };
+      slot.worker.postMessage({ ...next, x: c.x, y: c.y, w: c.w, h: c.h, version: this.version });
     }
-    id ??= this.pending.values().next().value;
-    if (id === undefined) return;
-    const c = this.chunks.get(id)!;
-    this.busy = true;
-    this.flight = { id, scale, version: this.version };
-    this.worker!.postMessage({ id, x: c.x, y: c.y, w: c.w, h: c.h, version: this.version, scale });
+  }
+  /**
+   * Base paints come first, the chunks in view before the rest, except for chunks already showing
+   * a close-view copy: those are repainted sharp first, so an edit never drops a close view back to
+   * the blurrier cache. A chunk a worker is already painting is not handed out twice.
+   */
+  private next(): { id: string; scale: number } | null {
+    let best: string | undefined,
+      rank = Infinity;
+    for (const id of this.pending) {
+      const c = this.chunks.get(id)!;
+      if ((this.sharpShown && c.sharp) || this.flying(id, 1)) continue;
+      const r = this.rank(c);
+      if (r < rank) {
+        best = id;
+        rank = r;
+      }
+    }
+    if (best !== undefined) return { id: best, scale: 1 };
+    for (const id of this.sharpPending) {
+      this.sharpPending.delete(id);
+      if (!this.flying(id, SHARP_SCALE)) return { id, scale: SHARP_SCALE };
+    }
+    for (const id of this.pending) if (!this.flying(id, 1)) return { id, scale: 1 };
+    return null;
   }
   invalidate(x: number, y: number) {
     if (this.failed) return;
@@ -351,7 +411,8 @@ export class Landscape {
       this.allDirty = false;
       this.pump();
     }
-    if (!this.active && this.ready) {
+    // Painted chunks show as they arrive; the fallback ground covers only the unpainted ones.
+    if (!this.active && this.loaded) {
       this.active = true;
       changed = true;
     }
