@@ -575,17 +575,22 @@ export const STR = {
   roster: {
     help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, which high-speed track requires. Trains are put together in the Depot.',
     sizeLabel: 'Size',
-    sizes: { small: 'Small', medium: 'Medium', large: 'Large' } as Record<string, string>,
+    sizes: { tiny: 'Tiny', small: 'Small', medium: 'Medium', large: 'Large' } as Record<
+      string,
+      string
+    >,
     fitInCab: (cost: number) => `Fit in-cab signalling ($${cost.toLocaleString()})`,
     fitInCabHint:
       'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
     fitted: (n: string) => `${n} fitted with in-cab signalling`,
     hasInCab: 'in-cab signalling fitted',
     noMoney: 'Not enough money',
-    size: { small: 'small', medium: 'medium (2 tiles)', large: 'large (3 tiles)' } as Record<
-      string,
-      string
-    >,
+    size: {
+      tiny: 'tiny (half a tile)',
+      small: 'small',
+      medium: 'medium (2 tiles)',
+      large: 'large (3 tiles)',
+    } as Record<string, string>,
     title: 'Roster',
     kind: 'Kind',
     rarity: 'Rarity',
@@ -930,7 +935,10 @@ export const STR = {
     } as Record<string, string>,
   },
   compat: {
-    largeBarred: 'Large stock: high-speed track only',
+    wrongGauge: (narrowTrack: boolean) =>
+      narrowTrack
+        ? 'Regular gauge: cannot run on narrow track'
+        : 'Narrow gauge: runs on narrow track only',
     needInCab: 'no in-cab signalling equipment on any locomotive',
     inCabName: 'In-cab signalling',
     foreAft: (v: number, t: number) =>
@@ -956,6 +964,7 @@ export const STR = {
   },
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',
+    mixedGauge: 'A train cannot mix narrow and regular gauge.',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,
     depotNoGate: (n: string) => `${n} has no track at its gates`,
     depotNoRoute: (d: string, s: string) =>

@@ -10,9 +10,9 @@ from pathlib import Path
 DATA = Path(__file__).resolve().parents[2] / "src" / "data"
 FACINGS = 48  # body.ts FACINGS, 7.5 degrees apart
 DRAWN_WIDTH = 1.3  # body.ts DRAWN_WIDTH: sprites are this much wider across than their length scale
-SIZE_TILES = {1: "small", 2: "medium", 3: "large"}  # body.ts SIZE_LEN
+SIZE_TILES = {0.5: "tiny", 1: "small", 2: "medium", 3: "large"}  # body.ts SIZE_LEN
 # plans the game honours per size (body.ts vehicleSpec overrides any other to rigid)
-PLANS = {1: ("rigid",), 2: ("rigid", "tender"), 3: ("rigid", "garratt", "meyer")}
+PLANS = {0.5: ("rigid",), 1: ("rigid",), 2: ("rigid", "tender"), 3: ("rigid", "garratt", "meyer")}
 GROUPS = ("terrain", "props", "track", "structures", "rolling", "wagons", "fx", "icons", "people")
 
 

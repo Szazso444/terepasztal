@@ -15,8 +15,8 @@
     "fuelPerTile": 0.1625,
     "waterCap": 120,
     "waterPerTile": 0.195,
-    "starter": true,
-    "size": "small"
+    "size": "small",
+    "gauge": "narrow"
   },
   {
     "id": "adler",
@@ -53,7 +53,8 @@
     "fuelPerTile": 0.1625,
     "waterCap": 136,
     "waterPerTile": 0.195,
-    "size": "small"
+    "size": "small",
+    "starter": true
   },
   {
     "id": "mav375",
@@ -669,6 +670,7 @@
     "fuelPerTile": 0.078,
     "size": "small",
     "controlClass": "emd",
-    "starter": true
+    "starter": true,
+    "gauge": "narrow"
   }
 ]
