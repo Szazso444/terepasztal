@@ -383,3 +383,34 @@ describe('semaphore boundaries and growing worlds', () => {
     expect(grown.clock.speedIndex).toBe(2);
   });
 });
+describe('line speed', () => {
+  function runFast(cls: 'regular' | 'high_speed') {
+    const w = world(),
+      t = new Train([
+        { uid: 1, level: 1, def: content.locomotives.find((d) => d.id === 'mallard')! },
+      ]);
+    if (cls === 'high_speed') for (let x = 2; x < 90; x++) w.track.place(x, 30, 'straight', 1, cls);
+    for (const l of t.locos) l.inCab = true;
+    t.spawnAt(w.track, 40, 30, Dir.E);
+    const st = new Station('quarry', 85, 29);
+    w.builder.stations.push(st);
+    t.route = [st.id];
+    t.coal = t.coalCap;
+    t.water = t.waterCap;
+    t.speed = t.maxSpeed * t.loadFactor;
+    w.fleet.trains.push(t);
+    expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+    const ctx = (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(0, 1);
+    t.onPathReady(ctx);
+    for (let i = 0; i < 40; i++) t.tick(0.05, ctx);
+    return t;
+  }
+  it('holds an engine to the regular cap and lets it run free on high-speed track', () => {
+    // a cap below what the engine runs at, so the cap is what binds
+    rules.lineSpeedRegular = 0.8;
+    const reg = runFast('regular');
+    expect(reg.speed).toBeLessThanOrEqual(0.8 * rules.trainSpeedMul + 1e-6);
+    const hs = runFast('high_speed');
+    expect(hs.speed).toBeGreaterThan(0.8 * rules.trainSpeedMul + 0.1);
+  });
+});

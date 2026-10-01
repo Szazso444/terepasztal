@@ -11,6 +11,10 @@ export interface Rules {
   runningCostMul: number;
   spotPriceMul: number;
   trainSpeedMul: number;
+  /** top speed on regular track, locomotive speed units (high speed has no cap) */
+  lineSpeedRegular: number;
+  /** top speed on narrow track, locomotive speed units */
+  lineSpeedNarrow: number;
   loadRateMul: number;
   productionMul: number;
   capacityMul: number;
@@ -77,6 +81,8 @@ export const DEFAULT_RULES: Rules = {
   runningCostMul: 1,
   spotPriceMul: 1,
   trainSpeedMul: 1,
+  lineSpeedRegular: 2,
+  lineSpeedNarrow: 1.2,
   loadRateMul: 1,
   productionMul: 1,
   capacityMul: 1,
@@ -267,6 +273,22 @@ export const RULE_META: RuleMeta[] = [
     group: 'Trains & stations',
     min: 0.2,
     max: 4,
+    step: 0.1,
+  },
+  {
+    key: 'lineSpeedRegular',
+    label: 'Regular line speed',
+    group: 'Trains & stations',
+    min: 0.5,
+    max: 5,
+    step: 0.1,
+  },
+  {
+    key: 'lineSpeedNarrow',
+    label: 'Narrow line speed',
+    group: 'Trains & stations',
+    min: 0.3,
+    max: 5,
     step: 0.1,
   },
   {
