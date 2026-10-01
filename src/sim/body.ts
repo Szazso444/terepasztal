@@ -7,9 +7,9 @@
  */
 import type { Vec2 } from '../engine/iso';
 
-export type VehicleSize = 'small' | 'medium' | 'large';
+export type VehicleSize = 'tiny' | 'small' | 'medium' | 'large';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
-export const SIZE_LEN: Record<VehicleSize, number> = { small: 1, medium: 2, large: 3 };
+export const SIZE_LEN: Record<VehicleSize, number> = { tiny: 0.5, small: 1, medium: 2, large: 3 };
 /** distance between two coupled bodies along the track */
 export const COUPLER_GAP = 0.2;
 /**
@@ -74,7 +74,7 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
   const size = def.size ?? 'small';
   const L = SIZE_LEN[size];
   let plan: BodyPlan = def.plan ?? 'rigid';
-  if (size === 'small') plan = 'rigid';
+  if (size === 'small' || size === 'tiny') plan = 'rigid';
   if (size === 'medium' && plan !== 'tender') plan = 'rigid';
   if (size === 'large' && plan === 'tender') plan = 'rigid';
   const pr = def.pivotRatio ?? (size === 'large' ? LARGE_PIVOT : DEFAULT_PIVOT);
@@ -127,7 +127,8 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
     size,
     plan,
     segments: segs,
-    drawBogies: size !== 'small',
+    // bodies up to a tile long are drawn with their own wheels
+    drawBogies: size !== 'small' && size !== 'tiny',
     maxLateralPlay: def.maxLateralPlay ?? DEFAULT_LATERAL_PLAY,
   };
 }

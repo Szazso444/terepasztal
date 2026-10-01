@@ -1,0 +1,28 @@
+{
+ "info": {
+  "trains": [
+   "Grain 1:loading",
+   "Narrow 1:loading",
+   "Grain 2:moving",
+   "Narrow 2:moving"
+  ],
+  "depots": [
+   "Narrow Depot:narrow_depot",
+   "Narrow Depot 2:narrow_depot",
+   "Depot:depot"
+  ]
+ },
+ "soak": [
+  "Grain 1:moving:",
+  "Narrow 1:moving:",
+  "Grain 2:yielding:Pulling aside on a reserved escape route",
+  "Narrow 2:moving:"
+ ],
+ "moved": [
+  183,
+  141,
+  40,
+  119
+ ],
+ "errors": []
+}

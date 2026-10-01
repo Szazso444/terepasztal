@@ -27,7 +27,9 @@ export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
 export type Cost = Record<string, number>;
 export type CargoClass = 'liquid' | 'mineral' | 'bulk' | 'people';
 export type LocoType = 'steam' | 'diesel' | 'electric';
-export type VehicleSize = 'small' | 'medium' | 'large';
+export type VehicleSize = 'tiny' | 'small' | 'medium' | 'large';
+/** Track gauge: narrow stock runs on narrow track only, regular stock never does. */
+export type Gauge = 'regular' | 'narrow';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 /**
  * Bogie sprites under a vehicle: one style for every bogie, or one per body part. A list goes over
@@ -83,6 +85,8 @@ export interface LocoDef {
   collector?: Collector;
   /** fitted with in-cab signalling equipment (required on high-speed track) */
   inCab?: boolean;
+  /** track gauge (default regular) */
+  gauge?: Gauge;
 }
 export interface WagonDef {
   id: string;
@@ -109,6 +113,8 @@ export interface WagonDef {
   service?: 'coal' | 'fuel' | 'battery';
   /** refuelling wagons: units of that fuel (or power) the cart adds to the consist's tanks */
   serviceCap?: number;
+  /** track gauge (default regular) */
+  gauge?: Gauge;
 }
 export interface CargoDef {
   id: string;
@@ -146,6 +152,10 @@ export interface StationDef {
   depot?: boolean;
   /** footprint side in tiles (default 1) */
   size?: number;
+  /** 1×2 footprint along its axis (rotation 0: x, rotation 1: y) */
+  long?: boolean;
+  /** depot of this gauge: builds and serves only trains of it (default regular) */
+  gauge?: Gauge;
   /** trains refuel coal / wood / oil here */
   fuel?: boolean;
   /** trains refill water here */

@@ -25,6 +25,7 @@ import { expandSave } from './expand';
 import type { SaveGame } from './save';
 import { AGE_DEFS } from './ages';
 import { referencePath } from './compat';
+import { STR } from '../strings';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 function world() {
@@ -381,5 +382,62 @@ describe('semaphore boundaries and growing worlds', () => {
     expect(grown.houses?.list[0]).toMatchObject({ x: 57, y: 57, residents: 100 });
     expect(grown.wires?.[0]).toEqual([52, 52, 'catenary']);
     expect(grown.clock.speedIndex).toBe(2);
+  });
+});
+describe('line speed', () => {
+  function runFast(cls: 'regular' | 'high_speed') {
+    const w = world(),
+      t = new Train([
+        { uid: 1, level: 1, def: content.locomotives.find((d) => d.id === 'mallard')! },
+      ]);
+    if (cls === 'high_speed') for (let x = 2; x < 90; x++) w.track.place(x, 30, 'straight', 1, cls);
+    for (const l of t.locos) l.inCab = true;
+    t.spawnAt(w.track, 40, 30, Dir.E);
+    const st = new Station('quarry', 85, 29);
+    w.builder.stations.push(st);
+    t.route = [st.id];
+    t.coal = t.coalCap;
+    t.water = t.waterCap;
+    t.speed = t.maxSpeed * t.loadFactor;
+    w.fleet.trains.push(t);
+    expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+    const ctx = (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(0, 1);
+    t.onPathReady(ctx);
+    for (let i = 0; i < 40; i++) t.tick(0.05, ctx);
+    return t;
+  }
+  it('holds an engine to the regular cap and lets it run free on high-speed track', () => {
+    // a cap below what the engine runs at, so the cap is what binds
+    rules.lineSpeedRegular = 0.8;
+    const reg = runFast('regular');
+    expect(reg.speed).toBeLessThanOrEqual(0.8 * rules.trainSpeedMul + 1e-6);
+    const hs = runFast('high_speed');
+    expect(hs.speed).toBeGreaterThan(0.8 * rules.trainSpeedMul + 0.1);
+  });
+});
+describe('high speed without a quest', () => {
+  it('lets a player lay high-speed track from the start', () => {
+    const { builder, economy } = world();
+    builder.free = false;
+    economy.hsUnlocked = false;
+    const c = builder.checkTrack(40, 40, { kind: 'straight', cls: 'high_speed' }, 1);
+    expect(c.reason ?? '').not.toMatch(/not unlocked/i);
+  });
+});
+
+describe('a train that mixes gauges', () => {
+  const def = (id: string) => content.locomotives.find((d) => d.id === id)!;
+  it('says why it stands still when a save brings it back', () => {
+    const { track } = world();
+    // an old save: the Rocket turned narrow while the rest of its train stayed regular
+    const mixed = new Train([
+      { uid: 1, level: 0, def: def('rocket') },
+      { uid: 2, level: 0, def: def('f7') },
+    ]);
+    const back = Train.fromJSON(JSON.parse(JSON.stringify(mixed.toJSON())), track);
+    expect(back.state).toBe('noRoute');
+    expect(back.lastMessage).toBe(STR.fleet.mixedGaugeTrain);
+    const plain = Train.fromJSON(JSON.parse(JSON.stringify(train().toJSON())), track);
+    expect(plain.lastMessage).not.toBe(STR.fleet.mixedGaugeTrain);
   });
 });

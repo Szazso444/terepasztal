@@ -5,7 +5,6 @@ import type { Station } from './stations';
 import type { Builder } from './build';
 import type { TrackGraph } from '../world/track';
 import { findPath, type PathSegment } from '../world/pathfinding';
-import { DIR_DX, DIR_DY, DIRS } from '../engine/iso';
 import { cargoDef } from './cargo';
 import type { Notices } from './notices';
 import { STR } from '../strings';
@@ -210,23 +209,6 @@ export class ContractDispatcher {
 
   /** Track tiles reachable from a tile over the rails, ignoring direction. */
   private reachFrom(from: { x: number; y: number }): Set<number> {
-    const w = this.track.w;
-    const out = new Set<number>();
-    const stack = [from.y * w + from.x];
-    out.add(stack[0]);
-    while (stack.length) {
-      const k = stack.pop()!;
-      const x = k % w;
-      const y = Math.floor(k / w);
-      for (const d of DIRS) {
-        if (!this.track.connected(x, y, d)) continue;
-        const nk = (y + DIR_DY[d]) * w + (x + DIR_DX[d]);
-        if (!out.has(nk)) {
-          out.add(nk);
-          stack.push(nk);
-        }
-      }
-    }
-    return out;
+    return this.track.reach([from.y * this.track.w + from.x]);
   }
 }

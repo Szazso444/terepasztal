@@ -179,6 +179,38 @@
       "contracts": false
     },
     {
+      "id": "narrow_depot",
+      "name": "Narrow Depot",
+      "flavor": "Narrow-gauge engine shed. One track through. Builds and refuels narrow trains, which turn on 1×1 curves: for tight spaces, and the mines to come.",
+      "cost": {},
+      "tier": 0,
+      "produces": [],
+      "accepts": [
+        "water",
+        "wheat",
+        "stone",
+        "wood",
+        "coal",
+        "oil",
+        "iron",
+        "iron_ore",
+        "crude",
+        "diesel",
+        "sand",
+        "copper_ore",
+        "wire",
+        "food"
+      ],
+      "art": "depot_narrow",
+      "long": true,
+      "gauge": "narrow",
+      "pool": true,
+      "depot": true,
+      "fuel": true,
+      "water": true,
+      "contracts": false
+    },
+    {
       "id": "station",
       "name": "Station",
       "flavor": "Passenger platforms serving nearby homes. Connect two stations with coaches to carry people between towns.",

@@ -43,10 +43,6 @@ export const STR = {
       substations: 'Powered substations',
       wires: 'Live electrified tiles',
     } as Record<string, string>,
-    hsQuest: 'High-speed rail',
-    hsQuestHint:
-      'Opens in the Electric Age once the grid is proven: powered substations and live wire.',
-    hsUnlocked: 'High-speed rail unlocked: the fast track is on the Track tab',
     hint: 'An age begins once every goal listed for it is met (checked every hour).',
   },
   overview: {
@@ -138,9 +134,10 @@ export const STR = {
     trackInWay: 'Track in the way: remove it first',
     needWaterside: 'Must stand next to water',
     needTerrain: (t: string) => `Must stand on ${t}`,
-    hsLocked: 'High-speed rail is not unlocked yet (see the Age card in the top bar)',
     sameSupply: 'Already electrified this way',
     needTransition: 'Different track classes join through a transition piece',
+    gaugeBreak: 'Narrow and regular gauge do not join: cross them with a crossing piece',
+    narrowLocked: 'Narrow gauge is not unlocked yet',
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
@@ -192,24 +189,34 @@ export const STR = {
     },
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',
-      curve_regular: 'Quarter turn of radius half a tile. R rotates.',
+      curve_regular:
+        'Two by two tiles, radius one and a half: room for long trains to turn. The inner corner tile is blocked. R rotates.',
       switch_regular:
-        'Junction: one line splits into two. Trains take whichever branch their route needs.',
+        'Two by two tiles: one line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
       crossing_regular_regular: 'Two regular lines cross without connecting.',
       bridge_regular: 'Spans one tile of water. Only on water.',
       transition_regular:
         'Joins regular and high-speed track. Regular speed applies on the piece itself.',
-      straight_high_speed: 'High-speed straight. Drag to lay a run.',
+      straight_high_speed: 'High-speed straight: no speed limit. Drag to lay a run.',
       curve_high_speed:
-        'Two by two tiles, radius one and a half: nearly full speed through the turn. The inner corner tile is blocked. R rotates.',
+        'Two by two tiles, radius one and a half, no speed limit. The inner corner tile is blocked. R rotates.',
       switch_high_speed:
-        'Two by two tiles: a high-speed straight with a wide diverging arc. R rotates through both handings.',
+        'Two by two tiles: a high-speed straight with a wide diverging arc that bends into a parallel track beside a straight. R rotates through both handings.',
       crossing_regular_high_speed:
-        'A regular line crosses a high-speed line at grade. The slow line holds the fast one up.',
+        'A regular line crosses a high-speed line at grade. R swaps which line runs which way.',
       crossing_high_speed_high_speed: 'Two high-speed lines cross at grade.',
       bridge_high_speed: 'High-speed span over one tile of water.',
+      straight_narrow: 'Narrow-gauge straight. Only narrow trains run on it. Drag to lay a run.',
+      curve_narrow: 'Narrow-gauge quarter turn on one tile: for tight spaces. R rotates.',
+      switch_narrow: 'Narrow-gauge switch on one tile. R rotates through both handings.',
+      crossing_narrow_narrow: 'Two narrow lines cross at grade.',
+      crossing_narrow_regular:
+        'A narrow line crosses a regular line at grade. R swaps which line runs which way.',
     } as Record<string, string>,
-    trackClass: { regular: 'Regular', high_speed: 'High-speed' } as Record<string, string>,
+    trackClass: { regular: 'Regular', high_speed: 'High-speed', narrow: 'Narrow' } as Record<
+      string,
+      string
+    >,
     supply: {
       third_rail: 'Third rail',
       catenary: 'Catenary',
@@ -565,17 +572,22 @@ export const STR = {
   roster: {
     help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, which high-speed track requires. Trains are put together in the Depot.',
     sizeLabel: 'Size',
-    sizes: { small: 'Small', medium: 'Medium', large: 'Large' } as Record<string, string>,
+    sizes: { tiny: 'Tiny', small: 'Small', medium: 'Medium', large: 'Large' } as Record<
+      string,
+      string
+    >,
     fitInCab: (cost: number) => `Fit in-cab signalling ($${cost.toLocaleString()})`,
     fitInCabHint:
       'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
     fitted: (n: string) => `${n} fitted with in-cab signalling`,
     hasInCab: 'in-cab signalling fitted',
     noMoney: 'Not enough money',
-    size: { small: 'small', medium: 'medium (2 tiles)', large: 'large (3 tiles)' } as Record<
-      string,
-      string
-    >,
+    size: {
+      tiny: 'tiny (half a tile)',
+      small: 'small',
+      medium: 'medium (2 tiles)',
+      large: 'large (3 tiles)',
+    } as Record<string, string>,
     title: 'Roster',
     kind: 'Kind',
     rarity: 'Rarity',
@@ -920,7 +932,12 @@ export const STR = {
     } as Record<string, string>,
   },
   compat: {
-    largeBarred: 'Large stock: high-speed track only',
+    wrongGauge: (narrowTrack: boolean) =>
+      narrowTrack
+        ? 'Regular gauge: cannot run on narrow track'
+        : 'Narrow gauge: runs on narrow track only',
+    runsOn: (classes: string[]) =>
+      classes.length ? `Runs on ${classes.join(' and ')} track` : 'Runs on no track',
     needInCab: 'no in-cab signalling equipment on any locomotive',
     inCabName: 'In-cab signalling',
     foreAft: (v: number, t: number) =>
@@ -946,6 +963,10 @@ export const STR = {
   },
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',
+    mixedGauge: 'A train cannot mix narrow and regular gauge.',
+    mixedGaugeTrain: 'narrow and regular gauge in one train: recall it and build it again',
+    wrongDepot: (name: string) => `${name} builds only trains of its own gauge.`,
+    noNarrowDepot: 'Build a narrow depot first: narrow trains roll out of one',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,
     depotNoGate: (n: string) => `${n} has no track at its gates`,
     depotNoRoute: (d: string, s: string) =>

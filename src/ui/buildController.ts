@@ -10,7 +10,7 @@ import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
 import { buildingDef, type Building } from '../sim/buildings';
-import { stationDef, LEVELS } from '../sim/stations';
+import { stationSpan, stationDef, LEVELS } from '../sim/stations';
 import type { Decor } from '../sim/build';
 import { rules } from '../sim/rules';
 import { cargoDef } from '../sim/cargo';
@@ -109,8 +109,10 @@ export class BuildController {
         this.rot = (this.rot + 1) % rotationCount(this.tool.item.kind);
       else if (this.tool.kind === 'decor')
         this.rot = (this.rot + 1) % decorDef(this.tool.defId).rotations;
-      else if (this.tool.kind === 'station' && (stationDef(this.tool.defId).size ?? 1) > 1)
-        this.rot = (this.rot + 1) % 2;
+      else if (this.tool.kind === 'station') {
+        const def = stationDef(this.tool.defId);
+        if ((def.size ?? 1) > 1 || def.long) this.rot = (this.rot + 1) % 2;
+      }
     }
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
     if (!active) {
@@ -345,22 +347,24 @@ export class BuildController {
       this.ghostDiamond.visible = false;
       return;
     }
-    const check = this.builder.checkStation(t.x, t.y, tool.defId);
+    const check = this.builder.checkStation(t.x, t.y, tool.defId, this.rot);
     const def = stationDef(tool.defId);
     const size = def.size ?? 1;
-    const fam = size > 1 ? `structures/${def.art}_r${this.rot % 2}` : `structures/${def.art}_1`;
+    const turns = size > 1 || !!def.long;
+    const fam = turns ? `structures/${def.art}_r${this.rot % 2}` : `structures/${def.art}_1`;
     const g = this.ensureGhost(this.world.atlas.has(fam) ? fam : 'structures/station_1');
-    // a two-tile sprite is anchored at its footprint centre
-    this.placeGhostAt(g, t.x + (size - 1) / 2, t.y + (size - 1) / 2, check.ok);
+    // a sprite of more than one tile is anchored at its footprint centre
+    const span = stationSpan(def, this.rot);
+    this.placeGhostAt(g, t.x + (span.w - 1) / 2, t.y + (span.h - 1) / 2, check.ok);
     this.world.setSpriteFrame(
       this.ghostDiamond,
       check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.ghostDiamond.visible = size === 1;
+    this.ghostDiamond.visible = !turns;
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
-    if (size > 1) parts.push(STR.build.rotate);
+    if (turns) parts.push(STR.build.rotate);
     if (def.terrain) {
       const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
       const perWeek = LEVELS.production[0] * rules.productionMul * f * 7;

@@ -3,7 +3,7 @@ import { TrackGraph } from '../world/track';
 import { Traffic } from './traffic';
 import type { Builder } from './build';
 import type { Train } from './trains';
-import { Dir } from '../engine/iso';
+import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 
 /** Traffic only reads `stations` off the builder, to find platform tiles. */
 function trafficOn(
@@ -16,8 +16,14 @@ function trafficOn(
 }
 
 /** E–W straights along row `y`, x0 to x1 inclusive. */
-function line(g: TrackGraph, y: number, x0: number, x1: number) {
-  for (let x = x0; x <= x1; x++) g.place(x, y, 'straight', 1);
+function line(
+  g: TrackGraph,
+  y: number,
+  x0: number,
+  x1: number,
+  cls: 'regular' | 'narrow' = 'regular',
+) {
+  for (let x = x0; x <= x1; x++) g.place(x, y, 'straight', 1, cls);
 }
 
 const key = (g: TrackGraph, x: number, y: number) => y * g.w + x;
@@ -44,9 +50,10 @@ describe('sections', () => {
 
   it('cuts the chain at a switch', () => {
     const g = new TrackGraph(16, 16);
-    line(g, 5, 1, 8);
+    // One-tile switches are narrow gauge: the whole line is narrow.
+    line(g, 5, 1, 8, 'narrow');
     // Rotation 1 puts the through road E–W, so the line stays joined across it.
-    g.place(5, 5, 'switch', 1);
+    g.place(5, 5, 'switch', 1, 'narrow');
     const t = trafficOn(g);
 
     expect(t.sectionOf(5, 5)).toBeLessThan(0);
@@ -85,11 +92,45 @@ describe('sections', () => {
     expect(t.sectionOf(3, 2)).not.toBe(t.sectionOf(3, 9));
   });
 
-  it('gives every multi-tile member its own node id', () => {
+  it('gives every member of a multi-tile switch its own node id', () => {
     const g = new TrackGraph(16, 16);
-    const tiles = g.place(6, 6, 'curve', 0, 'high_speed');
+    const tiles = g.place(6, 6, 'switch', 0, 'regular');
     const t = trafficOn(g);
     for (const tile of tiles) expect(t.sectionOf(tile.x, tile.y)).toBeLessThan(0);
+  });
+
+  it('chains a 2×2 curve into the single line it sits on', () => {
+    for (const cls of ['regular', 'high_speed'] as const) {
+      const g = new TrackGraph(24, 24);
+      const tiles = g.place(10, 10, 'curve', 0, cls);
+      const inUnit = (x: number, y: number) => tiles.some((m) => m.x === x && m.y === y);
+      // the curve's two open ends, each continued by three straights
+      const ends: { x: number; y: number }[] = [];
+      for (const m of tiles)
+        for (const d of g.get(m.x, m.y)!.links.flat() as Dir[]) {
+          const nx = m.x + DIR_DX[d],
+            ny = m.y + DIR_DY[d];
+          if (inUnit(nx, ny)) continue;
+          for (let i = 0; i < 3; i++)
+            g.place(
+              nx + DIR_DX[d] * i,
+              ny + DIR_DY[d] * i,
+              'straight',
+              d === Dir.N || d === Dir.S ? 0 : 1,
+              cls,
+            );
+          ends.push({ x: nx, y: ny });
+          expect(g.connected(m.x, m.y, d)).toBe(true);
+        }
+      expect(ends).toHaveLength(2);
+      const t = trafficOn(g);
+      const id = t.sectionOf(ends[0].x, ends[0].y);
+      // one block from one side of the curve to the other: opposing trains cannot both enter
+      expect(id).toBeGreaterThan(0);
+      expect(t.sectionOf(ends[1].x, ends[1].y)).toBe(id);
+      for (const m of tiles)
+        if (g.get(m.x, m.y)!.links.length) expect(t.sectionOf(m.x, m.y)).toBe(id);
+    }
   });
 
   it('answers for bare tiles that carry no track at all', () => {
@@ -201,8 +242,8 @@ describe('interlocking and recovery ownership', () => {
 
   it('holds before a junction when the exit cannot fit the consist', () => {
     const g = new TrackGraph(24, 24);
-    line(g, 5, 1, 14);
-    g.place(5, 5, 'switch', 1);
+    line(g, 5, 1, 14, 'narrow');
+    g.place(5, 5, 'switch', 1, 'narrow');
     const traffic = trafficOn(g);
     const east = moving(1, [4, 5, 6, 7, 8, 9], [4], g.w);
     const parked = moving(2, [7, 8], [7], g.w);

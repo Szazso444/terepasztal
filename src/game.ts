@@ -9,7 +9,7 @@ import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, setRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
-import { ageStatus, hsQuestMet, hsQuestStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
+import { ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
 import { rulesDiffer } from './sim/rules';
 import { contentIsCustom } from './data/content';
@@ -95,11 +95,12 @@ import {
   contractPolicyFor,
   uniformContractPolicy,
   CONTRACT_RARITIES,
+  convertOneTileRegular,
   type SaveGame,
   type Settings,
 } from './sim/save';
 import { ContractDispatcher } from './sim/contractDispatch';
-import { Station, resetStationIds, stationDef as stationDefOf } from './sim/stations';
+import { Station, resetStationIds, stationFootprint } from './sim/stations';
 import { scaleCost as scaleCostOf } from './sim/stockpile';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
@@ -390,7 +391,7 @@ export class Game {
     let wires = 0;
     for (const e of this.catenary.entries()) if (this.catenary.isLive(e.x, e.y)) wires++;
     return {
-      depots: this.builder.depots().length,
+      depots: this.builder.depotsOf('regular').length,
       population: this.stock.population,
       earned: this.economy.earned,
       substations: this.catenary.substations.filter((s) => s.powered).length,
@@ -433,16 +434,17 @@ export class Game {
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    for (const [x, y, kind, rot, cls, cls2] of level.track) {
+    const track = level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track);
+    for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
       for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
         this.onTrackChanged(t.x, t.y);
     }
+    for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
     resetStationIds(1);
     for (const sj of level.stations) {
       if (!inBounds(this.map, sj.x, sj.y)) continue;
-      const st = new Station(sj.defId, sj.x, sj.y, sj.name || undefined);
-      st.level = Math.max(1, Math.min(5, sj.level));
+      const st = Station.fromLevel(sj);
       this.builder.stations.push(st);
       this.onStationChanged(st, false);
     }
@@ -1059,10 +1061,8 @@ export class Game {
     for (const [x, y, kind, rot, cls] of j.track)
       for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
         fix(f.x, f.y, kind === 'bridge' || bridges.has(f.y * this.map.w + f.x));
-    for (const s of j.stations) {
-      const size = stationDefOf(s.defId).size ?? 1;
-      for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) fix(s.x + dx, s.y + dy);
-    }
+    for (const s of j.stations)
+      for (const f of stationFootprint(s.defId, s.x, s.y, s.rot ?? 0)) fix(f.x, f.y);
     for (const [x, y] of j.decor ?? []) fix(x, y);
     for (const [x, y, id] of j.buildings ?? []) fix(x, y, !!buildingDef(id).bridge);
   }
@@ -1091,6 +1091,8 @@ export class Game {
       for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
         this.onTrackChanged(t.x, t.y);
     }
+    // switch forms follow the track around them: chosen again once every piece is down
+    for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
     if (j.wires) {
       for (const [x, y, kind] of j.wires) {
         if (!this.track.has(x, y)) continue;
@@ -1450,7 +1452,20 @@ export class Game {
         if (terrainAt(this.map, f.x, f.y) === Terrain.Hill) this.world.setFlattened(f.x, f.y, true);
         this.world.removeProps(f.x, f.y);
       }
-      if (s.size === 2) {
+      if (s.def.long) {
+        // anchored between its two tiles, sorted with the one nearer the camera
+        const front = s.rot % 2 === 0 ? { x: s.x + 1, y: s.y } : { x: s.x, y: s.y + 1 };
+        const off = s.rot % 2 === 0 ? tileToWorld(-0.5, 0) : tileToWorld(0, -0.5);
+        this.world.setStructure(
+          id,
+          front.x,
+          front.y,
+          `structures/${s.def.art}_r${s.rot % 2}`,
+          20,
+          off.y,
+          off.x,
+        );
+      } else if (s.size === 2) {
         // the sprite is anchored at the footprint centre; sort it with its front tile
         this.world.setStructure(
           id,
@@ -1617,11 +1632,6 @@ export class Game {
 
   private buildUi() {
     this.hud = new Hud(this.clock, () => ageStatus(this.economy.tier, this.ageSnapshot()));
-    this.hud.hsQuest = () => ({
-      goals: hsQuestStatus(this.ageSnapshot()),
-      done: this.economy.hsUnlocked,
-      open: this.economy.tier >= 2,
-    });
     this.depot = new DepotScreen(
       this.inventory,
       this.fleet,
@@ -1817,7 +1827,6 @@ export class Game {
       (t: Tool) => this.build.setTool(t),
       () => (this.mode === 'editor' ? 99 : this.economy.tier),
       this.atlas,
-      () => this.mode === 'editor' || this.economy.hsUnlocked,
     );
     this.toolbar.onHover = (it) =>
       this.buildInfo.show(it ?? this.toolbar.item(this.toolbar.active));
@@ -2014,15 +2023,6 @@ export class Game {
         this.nextAgeCheck = this.clock.time + daySeconds() / 24;
         const snap = this.ageSnapshot();
         this.economy.advanceAge(snap);
-        if (!this.economy.hsUnlocked && hsQuestMet(this.economy.tier, snap)) {
-          this.economy.hsUnlocked = true;
-          this.toasts.push(STR.ages.hsUnlocked, 'good');
-          this.notices.push(
-            { key: 'hs-unlock', kind: 'info', text: STR.ages.hsUnlocked, target: null },
-            120,
-          );
-          this.toolbar.refresh();
-        }
       }
       if (this.clock.day !== this.lastDay) {
         this.lastDay = this.clock.day;

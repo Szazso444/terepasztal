@@ -27,7 +27,9 @@ export function craftTier(defId: string): number {
   return WAGONS.find((w) => w.id === defId)?.tier ?? 0;
 }
 export function craftSize(defId: string): VehicleSize {
-  return itemDef(defId).size ?? 'small';
+  // half-tile narrow stock is priced like small stock
+  const s = itemDef(defId).size ?? 'small';
+  return s === 'tiny' ? 'small' : s;
 }
 export function craftRarity(defId: string): CraftRarity {
   return itemDef(defId).rarity;

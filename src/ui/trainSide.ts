@@ -1,3 +1,4 @@
+import { wagonFrame } from '../art/frames';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Train } from '../sim/trains';
@@ -213,12 +214,7 @@ export class TrainSide {
         el(
           'div',
           { class: 'ts-wagon' },
-          spriteImg(
-            this.atlas,
-            `rolling/wagon_${w.def.body}_${w.def.size ?? 'small'}_${w.def.paint}_f0`,
-            1,
-            'sprite-preview ts-wagon-art',
-          ),
+          spriteImg(this.atlas, wagonFrame(this.atlas, w.def, 0), 1, 'sprite-preview ts-wagon-art'),
           el('span', { class: 'ts-wagon-name', text: w.def.name }),
           w.cargo
             ? el(

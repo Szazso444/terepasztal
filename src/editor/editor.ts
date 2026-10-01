@@ -96,6 +96,7 @@ export class Editor {
     l.terrain = packBytes(this.map.terrain);
     l.variant = packBytes(this.map.variant);
     l.biome = packBytes(this.map.biome);
+    l.trackFormat = 2;
     l.track = [...this.builder.track.anchors()].map((t) => [
       t.x,
       t.y,
@@ -104,13 +105,7 @@ export class Editor {
       t.piece.cls,
       t.piece.cls2,
     ]);
-    l.stations = this.builder.stations.map((s) => ({
-      defId: s.def.id,
-      x: s.x,
-      y: s.y,
-      level: s.level,
-      name: s.name,
-    }));
+    l.stations = this.builder.stations.map((s) => s.toLevel());
     l.decor = [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]);
     l.buildings = [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id]);
     l.updatedAt = Date.now();

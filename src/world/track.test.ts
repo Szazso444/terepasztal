@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Dir, opposite } from '../engine/iso';
+import { Dir, opposite, DIR_DX, DIR_DY } from '../engine/iso';
+import { unitDef, unitIconPaths, unitRailPaths } from './trackGeom';
 import {
   TrackGraph,
   TRACK_KINDS,
@@ -14,6 +15,8 @@ import {
   isUnitKind,
   portClass,
   classesJoin,
+  TRACK_ITEMS,
+  itemKey,
 } from './track';
 
 /** A line of E–W straights of one class along row `y`, from x0 to x1 inclusive. */
@@ -45,10 +48,11 @@ describe('track classes', () => {
   });
 
   it('spreads only curves and switches over n x n tiles', () => {
-    for (const kind of TRACK_KINDS) {
-      expect(isUnitKind(kind, 'regular')).toBe(false);
-      expect(isUnitKind(kind, 'high_speed')).toBe(kind === 'curve' || kind === 'switch');
-    }
+    for (const kind of TRACK_KINDS)
+      for (const cls of TRACK_CLASSES)
+        expect(isUnitKind(kind, cls)).toBe(
+          CLASS_N[cls] > 1 && (kind === 'curve' || kind === 'switch'),
+        );
   });
 
   it('joins like with like, and anything to a transition', () => {
@@ -152,7 +156,7 @@ describe('TrackGraph', () => {
 
   it('reads exits back through whichever edge you entered by', () => {
     const g = new TrackGraph(8, 8);
-    g.place(2, 2, 'switch', 1);
+    g.place(2, 2, 'switch', 1, 'narrow');
     const links = pieceLinks('switch', 1);
     const entry = links[0][0];
     expect(g.exits(2, 2, entry).sort()).toEqual([links[0][1], links[1][1]].sort());
@@ -192,7 +196,7 @@ describe('multi-tile pieces', () => {
 
   it('treats a 1x1 piece as its own unit', () => {
     const g = new TrackGraph(8, 8);
-    g.place(2, 2, 'curve', 0, 'regular');
+    g.place(2, 2, 'curve', 0, 'narrow');
     expect(g.get(2, 2)!.unit).toBeUndefined();
     expect(g.anchorOf(2, 2)).toEqual({ x: 2, y: 2 });
     expect(g.unitTiles(2, 2)).toEqual([{ x: 2, y: 2 }]);
@@ -216,5 +220,243 @@ describe('multi-tile pieces', () => {
         }
       }
     expect(internal).toBeGreaterThan(0);
+  });
+});
+
+describe('narrow gauge and 2x2 regular track', () => {
+  it('lays regular and high-speed curves and switches over 2x2, narrow ones on one tile', () => {
+    expect(CLASS_N).toEqual({ regular: 2, high_speed: 2, narrow: 1 });
+    for (const kind of ['curve', 'switch'] as const) {
+      expect(isUnitKind(kind, 'regular')).toBe(true);
+      expect(isUnitKind(kind, 'high_speed')).toBe(true);
+      expect(isUnitKind(kind, 'narrow')).toBe(false);
+    }
+    const g = new TrackGraph(16, 16);
+    expect(g.place(4, 4, 'curve', 0, 'regular')).toHaveLength(4);
+    expect(g.place(10, 4, 'curve', 0, 'narrow')).toEqual([{ x: 10, y: 4 }]);
+  });
+
+  it('joins narrow only to narrow, never through a transition', () => {
+    expect(classesJoin('narrow', 'narrow')).toBe(true);
+    expect(classesJoin('narrow', 'regular')).toBe(false);
+    expect(classesJoin('any', 'narrow')).toBe(false);
+    expect(classesJoin('narrow', 'any')).toBe(false);
+    expect(classesJoin('any', 'regular')).toBe(true);
+  });
+
+  it('prices narrow track below regular and keeps a crossing at its dearer axis', () => {
+    const reg = pieceCost('straight', 'regular');
+    const nar = pieceCost('straight', 'narrow');
+    for (const k of Object.keys(reg)) expect(nar[k]).toBeLessThanOrEqual(reg[k]);
+    expect(pieceCost('crossing', 'regular', 'high_speed')).toEqual(
+      pieceCost('crossing', 'high_speed', 'high_speed'),
+    );
+    expect(pieceCost('crossing', 'narrow', 'regular')).toEqual(
+      pieceCost('crossing', 'regular', 'regular'),
+    );
+  });
+
+  it('turns a mixed crossing so either line can run either way', () => {
+    expect(rotationCount('crossing')).toBe(2);
+    const a = makePiece('crossing', 0, 'narrow', 'regular');
+    expect(portClass(a, Dir.N)).toBe('narrow');
+    expect(portClass(a, Dir.E)).toBe('regular');
+    const b = makePiece('crossing', 1, 'narrow', 'regular');
+    expect(portClass(b, Dir.E)).toBe('narrow');
+    expect(portClass(b, Dir.N)).toBe('regular');
+  });
+
+  it('offers the narrow pieces and both mixed crossings in the build list', () => {
+    const keys = TRACK_ITEMS.map(itemKey);
+    for (const k of [
+      'straight_narrow',
+      'curve_narrow',
+      'switch_narrow',
+      'crossing_narrow_narrow',
+      'crossing_narrow_regular',
+    ])
+      expect(keys).toContain(k);
+  });
+});
+
+describe('S-shaped switch', () => {
+  /** A regular switch at (4,4) rotation 1: the main line runs E–W, the points face east. */
+  function yard() {
+    const g = new TrackGraph(20, 20);
+    g.place(4, 4, 'switch', 1, 'regular');
+    return g;
+  }
+  /** The tile just past the block where a lane of the given form leaves, and the edge it leaves by. */
+  function exitOf(form: 'turn' | 'parallel', rot = 1) {
+    const def = unitDef('switch', 2, rot, form);
+    const last = def.members[def.routes[1].members[def.routes[1].members.length - 1]];
+    const out = last.links.find((l) => l.route === 1)!.out;
+    return { x: 4 + last.dx + DIR_DX[out], y: 4 + last.dy + DIR_DY[out], out };
+  }
+  const axisRot = (d: Dir) => (d === Dir.N || d === Dir.S ? 0 : 1);
+
+  it('draws the parallel lane as an S that leaves the far end of the block one track over', () => {
+    const turn = unitDef('switch', 2, 0, 'turn');
+    const par = unitDef('switch', 2, 0, 'parallel');
+    // rotation 0: the main line runs N to S down column 0; the S lane ends going south in column 1
+    const lastTurn = turn.members[turn.routes[1].members[turn.routes[1].members.length - 1]];
+    const lastPar = par.members[par.routes[1].members[par.routes[1].members.length - 1]];
+    expect(lastTurn.links.find((l) => l.route === 1)!.out).toBe(Dir.E);
+    expect(lastPar.dx).toBe(1);
+    expect(lastPar.dy).toBe(1);
+    expect(lastPar.links.find((l) => l.route === 1)!.out).toBe(Dir.S);
+    expect(par.routes[1].diverging).toBe(true);
+    expect(par.routes[0].members).toEqual(turn.routes[0].members);
+    // two reverse arcs of radius 1.25 through asin(0.8) each
+    expect(par.routes[1].length).toBeCloseTo(2 * 1.25 * Math.asin(0.8), 2);
+  });
+
+  it('snaps to the S shape when a parallel straight lies past the block, and back when it goes', () => {
+    const g = yard();
+    const e = exitOf('parallel');
+    expect(g.get(4, 4)!.form ?? 'turn').toBe('turn');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    const changed = g.refreshSwitchForms([e]);
+    expect(changed.length).toBe(4);
+    for (const t of g.unitTiles(4, 4)) expect(g.get(t.x, t.y)!.form).toBe('parallel');
+    expect(g.connected(e.x, e.y, opposite(e.out))).toBe(true);
+    g.removeAt(e.x, e.y);
+    g.refreshSwitchForms([e]);
+    for (const t of g.unitTiles(4, 4)) expect(g.get(t.x, t.y)!.form ?? 'turn').toBe('turn');
+  });
+
+  it('snaps when the switch is laid next to an existing parallel straight', () => {
+    const g = new TrackGraph(20, 20);
+    const e = exitOf('parallel');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    g.place(4, 4, 'switch', 1, 'regular');
+    g.refreshSwitchForms(g.unitTiles(4, 4));
+    expect(g.get(4, 4)!.form).toBe('parallel');
+  });
+
+  it('ignores track of another class past the block', () => {
+    const g = yard();
+    const e = exitOf('parallel');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'narrow');
+    g.refreshSwitchForms([e]);
+    expect(g.get(4, 4)!.form ?? 'turn').toBe('turn');
+  });
+
+  it('stays a turn while its side exit is connected', () => {
+    const g = yard();
+    const side = exitOf('turn');
+    g.place(side.x, side.y, 'straight', axisRot(side.out), 'regular');
+    const e = exitOf('parallel');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    g.refreshSwitchForms([side, e]);
+    expect(g.get(4, 4)!.form ?? 'turn').toBe('turn');
+  });
+
+  it('flips form under a path without breaking the graph', () => {
+    const g = yard();
+    const e = exitOf('parallel');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    const before = g.version;
+    g.refreshSwitchForms([e]);
+    expect(g.version).toBeGreaterThan(before);
+    for (const t of g.unitTiles(4, 4))
+      for (const [a, b] of g.get(t.x, t.y)!.links) expect(a).not.toBe(b);
+    expect(g.unitTiles(4, 4)).toHaveLength(4);
+    // the S lane is a real way through: from the points to the parallel straight
+    const entry = pieceLinks('switch', 1)[0][0];
+    const anchorEntry = { x: 4 + (entry === Dir.E ? 1 : 0), y: 4 };
+    expect(g.opensTo(anchorEntry.x, anchorEntry.y, entry)).toBe(true);
+  });
+});
+
+describe('reach', () => {
+  const W = 30;
+  const key = (x: number, y: number) => y * W + x;
+  const along = (d: Dir, cls: 'narrow' | 'regular') =>
+    [0, 1].find((r) => makePiece('straight', r, cls).links[0].includes(d))!;
+
+  it('follows the rails through a crossing without joining its two lines', () => {
+    const g = new TrackGraph(W, W);
+    // rotation 0: narrow runs north-south, regular east-west
+    g.place(10, 10, 'crossing', 0, 'narrow', 'regular');
+    for (const y of [8, 9, 11, 12]) g.place(10, y, 'straight', along(Dir.N, 'narrow'), 'narrow');
+    for (const x of [8, 9, 11, 12]) g.place(x, 10, 'straight', along(Dir.E, 'regular'), 'regular');
+    expect(g.connected(10, 10, Dir.N)).toBe(true);
+    expect(g.connected(10, 10, Dir.E)).toBe(true);
+    const narrow = g.reach([key(10, 8)]);
+    expect(narrow.has(key(10, 10))).toBe(true);
+    expect(narrow.has(key(10, 12))).toBe(true);
+    expect(narrow.has(key(9, 10))).toBe(false);
+    expect(narrow.has(key(12, 10))).toBe(false);
+    const regular = g.reach([key(8, 10)]);
+    expect(regular.has(key(12, 10))).toBe(true);
+    expect(regular.has(key(10, 9))).toBe(false);
+  });
+
+  it('reaches every branch of a switch from any of them', () => {
+    const g = new TrackGraph(W, W);
+    g.place(10, 10, 'switch', 0, 'narrow');
+    const edges = [...new Set(g.get(10, 10)!.links.flat())] as Dir[];
+    expect(edges).toHaveLength(3);
+    const ends = edges.map((d) => {
+      const x = 10 + DIR_DX[d],
+        y = 10 + DIR_DY[d];
+      g.place(x, y, 'straight', along(d, 'narrow'), 'narrow');
+      return key(x, y);
+    });
+    for (const from of ends) for (const to of ends) expect(g.reach([from]).has(to)).toBe(true);
+  });
+});
+
+describe('toolbar icon of a multi-tile piece', () => {
+  it('fits the whole piece into one tile', () => {
+    for (const kind of ['curve', 'switch'] as const)
+      for (let rot = 0; rot < rotationCount(kind); rot++) {
+        const def = unitDef(kind, 2, rot);
+        const paths = unitIconPaths(kind, 2, rot);
+        expect(paths).toHaveLength(def.routes.length);
+        const pts = paths.flat();
+        for (const p of pts) {
+          expect(Math.abs(p.x)).toBeLessThanOrEqual(0.5 + 1e-9);
+          expect(Math.abs(p.y)).toBeLessThanOrEqual(0.5 + 1e-9);
+        }
+        // the piece reaches the tile's edges: the icon shows all of it, not a corner
+        const span = (v: number[]) => Math.max(...v) - Math.min(...v);
+        expect(span(pts.map((p) => p.x))).toBeGreaterThan(0.7);
+        expect(span(pts.map((p) => p.y))).toBeGreaterThan(0.7);
+      }
+  });
+});
+
+describe('rails of a multi-tile piece', () => {
+  it('run as one unbroken line per road, with no stub where tiles meet', () => {
+    for (const [kind, form] of [
+      ['curve', 'turn'],
+      ['switch', 'turn'],
+      ['switch', 'parallel'],
+    ] as const)
+      for (let rot = 0; rot < rotationCount(kind); rot++) {
+        const def = unitDef(kind, 2, rot, form);
+        const paths = unitRailPaths(kind, 2, rot, form);
+        expect(paths).toHaveLength(def.routes.length);
+        paths.forEach((pts, k) => {
+          let len = 0;
+          for (let i = 1; i < pts.length; i++) {
+            const dx = pts[i].x - pts[i - 1].x,
+              dy = pts[i].y - pts[i - 1].y;
+            const seg = Math.hypot(dx, dy);
+            // a zero-length step has no direction: the drawing would turn its sleepers anywhere
+            expect(seg).toBeGreaterThan(1e-3);
+            len += seg;
+            if (i > 1) {
+              const ex = pts[i - 1].x - pts[i - 2].x,
+                ey = pts[i - 1].y - pts[i - 2].y;
+              const turn = Math.abs(Math.atan2(ex * dy - ey * dx, ex * dx + ey * dy));
+              expect(turn).toBeLessThan(0.05);
+            }
+          }
+          expect(len).toBeCloseTo(def.routes[k].length, 3);
+        });
+      }
   });
 });

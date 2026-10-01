@@ -14,7 +14,18 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
+/**
+ * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
+ * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
+ */
+export function convertOneTileRegular(track: SaveGame['track']): SaveGame['track'] {
+  return track.map(([x, y, kind, rot, cls, cls2]) =>
+    (kind === 'curve' || kind === 'switch') && (cls ?? 'regular') === 'regular'
+      ? [x, y, kind, rot, 'narrow', cls2]
+      : [x, y, kind, rot, cls, cls2],
+  );
+}
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
@@ -147,6 +158,38 @@ export interface Migration {
   note: string;
   run(j: SaveGame): void;
 }
+/** Starter models version 13 added: John Bull took the Rocket's place, and narrow wagons arrived. */
+const V13_STARTERS: [id: string, kind: 'loco' | 'wagon', copies: number][] = [
+  ['john_bull', 'loco', 1],
+  ['mine_tub', 'wagon', 2],
+  ['narrow_tank', 'wagon', 2],
+  ['narrow_box', 'wagon', 2],
+  ['narrow_coach', 'wagon', 2],
+];
+/** Give an older save the models it has none of, with their recipes, like a fresh game has. */
+function grantStarters(j: SaveGame, models: typeof V13_STARTERS) {
+  const inv = j.inventory as
+    { items?: { uid?: number; defId?: unknown }[]; nextUid?: number } | undefined;
+  if (!inv || !Array.isArray(inv.items)) return;
+  let uid = Math.max(inv.nextUid ?? 1, ...inv.items.map((i) => (i.uid ?? 0) + 1));
+  const crafting = j.crafting as { recipes?: string[] } | undefined;
+  for (const [defId, kind, copies] of models) {
+    if (inv.items.some((i) => i.defId === defId)) continue;
+    for (let n = 0; n < copies; n++)
+      inv.items.push({
+        uid: uid++,
+        defId,
+        kind,
+        level: 1,
+        assigned: null,
+        dupes: 0,
+        obtainedAt: 0,
+      } as { uid: number; defId: string });
+    if (crafting?.recipes && !crafting.recipes.includes(defId)) crafting.recipes.push(defId);
+  }
+  inv.nextUid = uid;
+}
+
 /**
  * Registry of version-to-version upgrades, run in order. Each step only knows the shape it
  * upgrades from; adding a format version means adding one entry here.
@@ -265,6 +308,14 @@ export const MIGRATIONS: Migration[] = [
         }
         return [x, y, kind, rot, cls, cls2];
       });
+    },
+  },
+  {
+    from: 12,
+    note: "regular curves and switches were one tile: they became narrow gauge, and lines meeting them need re-laying with 2×2 pieces. Stephenson's Rocket and the Mk48 are narrow gauge now: recall their trains and build them again with the narrow wagons added to the inventory",
+    run: (j) => {
+      j.track = convertOneTileRegular(j.track);
+      grantStarters(j, V13_STARTERS);
     },
   },
 ];

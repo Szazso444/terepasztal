@@ -35,21 +35,6 @@ export const AGE_DEFS: AgeDef[] = agesJson as AgeDef[];
 export const AGE_COUNT = AGE_DEFS.length;
 export const LAST_AGE = AGE_COUNT - 1;
 
-/** High-speed rail is a quest inside the Electric Age: prove the grid works before the fast track opens. */
-export const HS_QUEST: AgeGoal[] = [
-  { kind: 'substations', target: 2 },
-  { kind: 'wires', target: 60 },
-];
-export function hsQuestMet(tier: number, s: AgeSnapshot): boolean {
-  return tier >= LAST_AGE && HS_QUEST.every((g) => (s[g.kind] ?? 0) >= g.target);
-}
-export function hsQuestStatus(s: AgeSnapshot): GoalStatus[] {
-  return HS_QUEST.map((g) => ({
-    ...g,
-    current: s[g.kind] ?? 0,
-    done: (s[g.kind] ?? 0) >= g.target,
-  }));
-}
 export function ageDef(index: number): AgeDef {
   return AGE_DEFS[Math.max(0, Math.min(LAST_AGE, index))];
 }

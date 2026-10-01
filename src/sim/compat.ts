@@ -3,9 +3,9 @@
  * once over a reference curve of each class (straight lead-in, quarter arc, straight lead-out)
  * and its peak bogie slide, sideways shift, residual gap and centre-bogie offset are compared to
  * the tolerances. Runtime only looks the verdict up. On top of the geometry sits one rule about
- * size: large stock is barred from regular track, both body plans alike.
+ * gauge: narrow stock runs on narrow track only, regular-gauge stock never on narrow track.
  */
-import { content, type LocoDef, type WagonDef } from '../data/content';
+import { content, type Gauge, type LocoDef, type WagonDef } from '../data/content';
 import { TRACK_CLASSES, classRadius, type TrackClass, type TrackPiece } from '../world/track';
 import { Polyline, poseVehicle, vehicleSpec, TOL, type VehicleSpec } from './body';
 import { STR } from '../strings';
@@ -91,14 +91,28 @@ export function verdictOf(def: LocoDef | WagonDef, cls: TrackClass): Verdict {
 }
 
 /**
- * May this model use a class? One rule about size first, then the tolerance table. Returns the
- * reason when not.
+ * May this model use a class? Its gauge first, then the tolerance table. Returns the reason when
+ * not.
  */
 export function vehicleAccess(def: LocoDef | WagonDef, cls: TrackClass): string | null {
-  const size = def.size ?? 'small';
-  if (size === 'large' && cls === 'regular') return STR.compat.largeBarred;
+  const narrowTrack = cls === 'narrow';
+  if ((gaugeOf(def) === 'narrow') !== narrowTrack) return STR.compat.wrongGauge(narrowTrack);
   const v = verdictOf(def, cls);
   return v.ok ? null : v.reason;
+}
+
+export function gaugeOf(def: { gauge?: Gauge }): Gauge {
+  return def.gauge ?? 'regular';
+}
+/** The gauge every vehicle shares, 'mixed' when they differ, null for none. */
+export function consistGauge(defs: { gauge?: Gauge }[]): Gauge | 'mixed' | null {
+  let g: Gauge | null = null;
+  for (const d of defs) {
+    const own = gaugeOf(d);
+    if (g && own !== g) return 'mixed';
+    g = own;
+  }
+  return g;
 }
 
 export interface ConsistAccess {
@@ -125,6 +139,14 @@ export function consistAccess(defs: (LocoDef | WagonDef)[], inCab = true): Consi
       }
     }
   return out;
+}
+
+/** One line for a vehicle's data sheet: the track classes it may run on. */
+export function runsOn(def: LocoDef | WagonDef): string {
+  const names = TRACK_CLASSES.filter((cls) => !vehicleAccess(def, cls)).map((cls) =>
+    STR.toolbar.trackClass[cls].toLowerCase(),
+  );
+  return STR.compat.runsOn(names);
 }
 
 /** Class a piece presents when entered through `entry` (crossings differ per axis). */

@@ -33,7 +33,7 @@
         "stone": 4,
         "iron": 4
       },
-      "rotations": 1
+      "rotations": 2
     },
     "bridge": {
       "name": "Bridge",

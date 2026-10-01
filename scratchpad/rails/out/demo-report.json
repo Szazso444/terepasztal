@@ -1,0 +1,14 @@
+{
+ "info": {
+  "version": 13,
+  "trains": [
+   "Grain 1:loading",
+   "Narrow 1:moving",
+   "Grain 2:moving",
+   "Narrow 2:moving"
+  ],
+  "narrowPieces": 92
+ },
+ "errors": [],
+ "bytes": 126430
+}

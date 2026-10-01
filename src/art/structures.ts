@@ -245,6 +245,79 @@ function stationL3(): PixelBuf {
   return b;
 }
 
+/**
+ * One-track narrow-gauge shed on two tiles, anchored at its footprint centre: rot 0 runs along x
+ * (gates west and east), rot 1 along y. Timber walls, a slate roof, the narrow track (rails at
+ * ±0.08 tile) running out of a door at each end.
+ */
+const NW = 128;
+const NH = 108;
+const NOX = 64;
+const NOY = 80;
+function narrowDepot(rot: number): PixelBuf {
+  const b = new PixelBuf(NW, NH);
+  const along = rot % 2 === 0;
+  const P = (a: number, c: number, z = 0) =>
+    along ? proj(NOX, NOY, a, c, z) : proj(NOX, NOY, c, a, z);
+  const px = (p: { x: number; y: number }) => Math.round(p.x);
+  const py = (p: { x: number; y: number }) => Math.round(p.y);
+  // the track out of both ends: a little ballast, short sleepers, two close rails
+  for (const end of [-1, 1])
+    for (let a = 0.8; a <= 1.0; a += 0.02) {
+      const t = end * a;
+      for (let c = -0.17; c <= 0.17; c += 0.02) {
+        const q = P(t, c);
+        b.set(px(q), py(q), PAL.ballast[(px(q) + py(q)) % PAL.ballast.length]);
+      }
+      if (Math.round(a * 100) % 10 === 0) {
+        const l = P(t, -0.13);
+        const r = P(t, 0.13);
+        b.line(px(l), py(l), px(r), py(r), PAL.sleeper);
+      }
+    }
+  for (const c of [-0.08, 0.08])
+    for (const [a0, a1] of [
+      [-1.0, -0.8],
+      [0.8, 1.0],
+    ]) {
+      const q0 = P(a0, c);
+      const q1 = P(a1, c);
+      b.line(px(q0), py(q0), px(q1), py(q1), PAL.railLight);
+      b.line(px(q0), py(q0) + 1, px(q1), py(q1) + 1, PAL.railDark);
+    }
+  // the shed: a long timber prism under a slate roof, ridge along the track
+  drawPrism(b, {
+    ox: NOX,
+    oy: NOY,
+    cx: 0,
+    cy: 0,
+    angle: along ? 0 : Math.PI / 2,
+    len: 1.6,
+    wid: 0.66,
+    h: 20,
+    top: PAL.roofSlate,
+    side: PAL.timber.map((c) => shade(c, 0.9)),
+    ridge: 9,
+    roof: PAL.roofSlate,
+    seed: 23,
+  });
+  // the door on the visible end, dark inside with a lamp
+  const d = P(0.8, 0);
+  const sl = along ? 0.5 : -0.5;
+  for (let y = -15; y < 0; y++) {
+    const w = y < -12 ? 2 + (y + 15) : 4;
+    b.line(px(d) - w, py(d) + y + Math.round(-w * sl), px(d) + w, py(d) + y + Math.round(w * sl), [
+      26, 24, 24,
+    ] as RGB);
+  }
+  b.set(px(d), py(d) - 17, PAL.amber);
+  // a stove pipe at the back
+  const ch = P(-0.5, -0.15, 30);
+  b.rect(px(ch) - 1, py(ch) - 6, 3, 6, PAL.iron[0]);
+  b.outline(PAL.outline, 190);
+  return b;
+}
+
 /** Two-tile engine shed: gates on the ±x faces (rot 0) or the ±y faces (rot 1). */
 const DW = 176;
 const DH = 132;
@@ -633,6 +706,9 @@ export function generateStructuresAtlas(): AtlasImage {
     }
   }
   ab.add('structures/depot_1', depot2(0).toImageData(), DOX, DOY);
+  for (const r of [0, 1])
+    ab.add(`structures/depot_narrow_r${r}`, narrowDepot(r).toImageData(), NOX, NOY);
+  ab.add('structures/depot_narrow_1', narrowDepot(0).toImageData(), NOX, NOY);
   for (const k of ['third_rail', 'catenary', 'hv_catenary'] as const)
     for (const ax of ['ns', 'ew', 'x'] as const)
       ab.add(`structures/supply_${k}_${ax}`, supplyOverlay(k, ax).toImageData(), OX, OY);

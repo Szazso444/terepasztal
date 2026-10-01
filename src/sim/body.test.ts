@@ -154,6 +154,7 @@ describe('vehicleSpec', () => {
   });
 
   it('draws bogies on anything longer than one tile', () => {
+    expect(vehicleSpec({ size: 'tiny' }).drawBogies).toBe(false);
     expect(vehicleSpec({ size: 'small' }).drawBogies).toBe(false);
     expect(vehicleSpec({ size: 'medium' }).drawBogies).toBe(true);
     expect(vehicleSpec({ size: 'large' }).drawBogies).toBe(true);

@@ -14,9 +14,16 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
-import { content, type DecorDef, type Cost } from '../data/content';
+import { content, type DecorDef, type Cost, type Gauge } from '../data/content';
 import { rules } from './rules';
-import { Station, terrainFactorAt, stationDef, maxLevelForTier, MAX_LEVEL } from './stations';
+import {
+  Station,
+  terrainFactorAt,
+  stationDef,
+  stationFootprint,
+  maxLevelForTier,
+  MAX_LEVEL,
+} from './stations';
 import type { Economy } from './economy';
 import { Stockpile, scaleCost } from './stockpile';
 import {
@@ -112,6 +119,10 @@ export class Builder {
   }
   depots() {
     return this.stations.filter((s) => s.def.depot);
+  }
+  /** Depots of one gauge: each gauge has its own sheds and its own cap. */
+  depotsOf(gauge: Gauge) {
+    return this.depots().filter((s) => (s.def.gauge ?? 'regular') === gauge);
   }
   /** Depots the player may own: one, plus one per nine owned chunks. */
   depotsAllowed() {
@@ -309,12 +320,8 @@ export class Builder {
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const kind = item.kind;
-    if (
-      !this.free &&
-      (item.cls === 'high_speed' || item.cls2 === 'high_speed') &&
-      !this.economy.hsUnlocked
-    )
-      return { ok: false, cost: {}, reason: STR.build.hsLocked };
+    if ((item.cls === 'narrow' || item.cls2 === 'narrow') && !rules.narrowUnlocked)
+      return { ok: false, cost: {}, reason: STR.build.narrowLocked };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
     for (const t of tiles) {
@@ -348,8 +355,14 @@ export class Builder {
           if (tiles.some((q) => q.x === nx && q.y === ny)) continue;
           const q = this.track.get(nx, ny);
           if (!q || !this.track.opensTo(nx, ny, opposite(d))) continue;
-          if (!classesJoin(portClass(p, d), portClass(q, opposite(d))))
-            return { ok: false, cost: {}, reason: STR.build.needTransition };
+          const mine = portClass(p, d),
+            theirs = portClass(q, opposite(d));
+          if (!classesJoin(mine, theirs)) {
+            // no piece joins the two gauges; only regular and high speed meet at a transition
+            const gauges = mine === 'narrow' || theirs === 'narrow';
+            const reason = gauges ? STR.build.gaugeBreak : STR.build.needTransition;
+            return { ok: false, cost: {}, reason };
+          }
         }
     }
     let mul = 0;
@@ -380,6 +393,8 @@ export class Builder {
       this.refreshBridgeCapacity(t.x, t.y);
       this.onTrackChanged?.(t.x, t.y);
     }
+    // a switch beside a parallel track bends its branch into an S (and back)
+    for (const t of this.track.refreshSwitchForms(tiles)) this.onTrackChanged?.(t.x, t.y);
     for (const t of tiles) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     return true;
@@ -401,6 +416,7 @@ export class Builder {
     this.track.removeAt(x, y);
     this.refund(pieceCost(p.kind, p.cls, p.cls2));
     for (const t of tiles) this.onTrackChanged?.(t.x, t.y);
+    for (const t of this.track.refreshSwitchForms(tiles)) this.onTrackChanged?.(t.x, t.y);
     for (const t of tiles) this.checkOrphans(t.x, t.y);
     sfx('build.remove');
     return true;
@@ -416,35 +432,33 @@ export class Builder {
   // ------------------------------------------------------------------ stations
   /** Minimum Chebyshev distance between two town stations. */
   static readonly TOWN_SPACING = 25;
-  checkStation(x: number, y: number, defId: string): PlacementCheck {
+  checkStation(x: number, y: number, defId: string, rot = 0): PlacementCheck {
     const def = stationDef(defId);
-    const size = def.size ?? 1;
-    for (let dy = 0; dy < size; dy++)
-      for (let dx = 0; dx < size; dx++) {
-        const tx = x + dx;
-        const ty = y + dy;
-        if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
-        if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
-        const t = terrainAt(this.map, tx, ty);
-        if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
-          return { ok: false, cost: {}, reason: STR.build.badTerrain };
-        if (
-          this.track.has(tx, ty) ||
-          this.stationAt(tx, ty) ||
-          this.decorAt(tx, ty) ||
-          this.buildingAt(tx, ty)
-        )
-          return { ok: false, cost: {}, reason: STR.build.occupied };
-        if (this.groundCheck && !this.groundCheck(tx, ty, 'level'))
-          return { ok: false, cost: {}, reason: STR.build.notLevel };
-      }
+    if (def.gauge === 'narrow' && !rules.narrowUnlocked)
+      return { ok: false, cost: {}, reason: STR.build.narrowLocked };
+    for (const { x: tx, y: ty } of stationFootprint(defId, x, y, rot)) {
+      if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
+      if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
+      const t = terrainAt(this.map, tx, ty);
+      if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
+        return { ok: false, cost: {}, reason: STR.build.badTerrain };
+      if (
+        this.track.has(tx, ty) ||
+        this.stationAt(tx, ty) ||
+        this.decorAt(tx, ty) ||
+        this.buildingAt(tx, ty)
+      )
+        return { ok: false, cost: {}, reason: STR.build.occupied };
+      if (this.groundCheck && !this.groundCheck(tx, ty, 'level'))
+        return { ok: false, cost: {}, reason: STR.build.notLevel };
+    }
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     if (def.depot && !this.free) {
       const allowed = this.depotsAllowed();
-      const have = this.depots().length;
+      const have = this.depotsOf(def.gauge ?? 'regular').length;
       if (have >= allowed)
         return { ok: false, cost: {}, reason: STR.build.depotLocked(allowed * 9) };
     }
@@ -475,7 +489,7 @@ export class Builder {
     for (const s of this.stations) s.terrainFactor = terrainFactorAt(this.map, s.x, s.y, s.def.id);
   }
   placeStation(x: number, y: number, defId: string, rot = 0): Station | null {
-    const c = this.checkStation(x, y, defId);
+    const c = this.checkStation(x, y, defId, rot);
     if (!c.ok || !this.pay(c.cost)) return null;
     const count = this.stations.filter((s) => s.def.id === defId).length;
     const s = new Station(

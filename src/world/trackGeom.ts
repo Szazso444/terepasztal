@@ -78,21 +78,33 @@ export interface UnitMember {
 export interface UnitDef {
   n: number;
   members: UnitMember[];
-  /** member index sequence of every route, entry to exit */
-  routes: { members: number[]; length: number; diverging: boolean }[];
+  /** every route, entry to exit: its member index sequence and its whole line (block coordinates) */
+  routes: { members: number[]; length: number; diverging: boolean; pts: Vec2[] }[];
 }
 
 const unitCache = new Map<string, UnitDef>();
 
 /**
+ * Which way a 2×2 switch's diverging lane is laid: `turn` leaves through the side of the block,
+ * `parallel` bends back into an S and leaves through the far end, one track over.
+ */
+export type SwitchForm = 'turn' | 'parallel';
+
+/**
  * Geometry of an `n × n` curve or switch. Rotation 0 enters the anchor tile (0,0) from the north;
  * the curve leaves eastward with radius `n - 0.5` centred on the block corner, the switch also
  * runs straight through to the south. Switch rotations 4..7 are the mirror family (diverging
- * west). Every route is sampled densely, then clipped to the tiles it crosses so each member tile
- * gets its own polyline and edge pair.
+ * west). A `parallel` switch's diverging lane is an S ending at the south edge of tile (1, n-1).
+ * Every route is sampled densely, then clipped to the tiles it crosses so each member tile gets
+ * its own polyline and edge pair.
  */
-export function unitDef(kind: 'curve' | 'switch', n: number, rot: number): UnitDef {
-  const key = `${kind}:${n}:${rot}`;
+export function unitDef(
+  kind: 'curve' | 'switch',
+  n: number,
+  rot: number,
+  form: SwitchForm = 'turn',
+): UnitDef {
+  const key = `${kind}:${n}:${rot}:${kind === 'switch' ? form : 'turn'}`;
   const hit = unitCache.get(key);
   if (hit) return hit;
   const R = n - 0.5;
@@ -121,7 +133,10 @@ export function unitDef(kind: 'curve' | 'switch', n: number, rot: number): UnitD
     const straight: Vec2[] = [];
     for (let i = 0; i <= SAMPLES; i++) straight.push(xf({ x: 0, y: -0.5 + n * (i / SAMPLES) }));
     routes.push({ pts: straight, radius: null, diverging: false });
-    routes.push({ pts: arc, radius: R, diverging: true });
+    if (form === 'parallel') {
+      const s = sCurve(n);
+      routes.push({ pts: s.pts.map(xf), radius: s.radius, diverging: true });
+    } else routes.push({ pts: arc, radius: R, diverging: true });
   } else routes.push({ pts: arc, radius: null, diverging: false });
   if (kind === 'curve') routes[0].radius = R;
 
@@ -149,10 +164,34 @@ export function unitDef(kind: 'curve' | 'switch', n: number, rot: number): UnitD
       seq.push(mi);
       length += len;
     }
-    def.routes.push({ members: seq, length, diverging: r.diverging });
+    def.routes.push({ members: seq, length, diverging: r.diverging, pts: r.pts });
   });
   unitCache.set(key, def);
   return def;
+}
+
+/**
+ * An S from the anchor's north edge (0, -0.5) heading south to (1, n - 0.5) heading south: two
+ * reverse arcs of one radius meeting at the block centre, one track over in n tiles. With
+ * R(1 − cos θ) = 0.5 and R sin θ = n/2, R = n²/4 + 1/4 (1.25 for a 2×2 block).
+ */
+function sCurve(n: number): { pts: Vec2[]; radius: number } {
+  const half = n / 2;
+  const R = half * half + 0.25;
+  const theta = Math.asin(half / R);
+  const HALF = 48;
+  const first: Vec2[] = [];
+  for (let i = 0; i <= HALF; i++) {
+    const a = theta * (i / HALF);
+    first.push({ x: R - R * Math.cos(a), y: -0.5 + R * Math.sin(a) });
+  }
+  // the second arc is the first turned half round the block centre
+  const mid = { x: 0.5, y: (n - 1) / 2 };
+  const second = first
+    .slice(0, -1)
+    .reverse()
+    .map((p) => ({ x: 2 * mid.x - p.x, y: 2 * mid.y - p.y }));
+  return { pts: [...first, ...second], radius: R };
 }
 
 interface ClippedTile {
@@ -219,4 +258,34 @@ function edgeOf(p: Vec2, tx: number, ty: number): Dir {
     return dx > 0 ? Dir.E : Dir.W;
   if (Math.abs(Math.abs(dy) - 0.5) < 1e-6) return dy > 0 ? Dir.S : Dir.N;
   return dx > 0 ? Dir.E : Dir.W;
+}
+
+/**
+ * A whole multi-tile piece scaled into one tile, for its toolbar icon: every road's rails,
+ * shrunk by the piece's size and centred on the tile.
+ */
+export function unitIconPaths(
+  kind: 'curve' | 'switch',
+  n: number,
+  rot: number,
+  form: SwitchForm = 'turn',
+): Vec2[][] {
+  const mid = (n - 1) / 2;
+  return unitRailPaths(kind, n, rot, form).map((pts) =>
+    pts.map((q) => ({ x: (q.x - mid) / n, y: (q.y - mid) / n })),
+  );
+}
+
+/**
+ * The rails of a multi-tile piece as the drawing takes them: one unbroken line per road, in block
+ * coordinates (the anchor tile's centre is the origin). The per-tile links repeat points at every
+ * tile edge and hold a zero-length step where the S lane crosses the block's centre corner.
+ */
+export function unitRailPaths(
+  kind: 'curve' | 'switch',
+  n: number,
+  rot: number,
+  form: SwitchForm = 'turn',
+): Vec2[][] {
+  return unitDef(kind, n, rot, form).routes.map((r) => r.pts);
 }

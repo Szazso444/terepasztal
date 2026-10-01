@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { content } from '../data/content';
-import { bogieFrame, bogieStyleOf, locoFrame, wagonFrame } from './frames';
+import { bogieFrame, bogieStyleOf, locoFrame, wagonFrame, loadFrame } from './frames';
+import { pieceFrame, makePiece, TrackGraph } from '../world/track';
 
 const atlas = (...keys: string[]) => ({ has: (k: string) => keys.includes(k) });
 
@@ -28,7 +29,7 @@ describe('bogie styles', () => {
 });
 
 describe('prototype frames', () => {
-  const loco = content.locomotives[0];
+  const loco = content.locomotives.find((l) => l.gauge !== 'narrow')!;
   const wagon = content.wagons[0];
 
   it("prefer the prototype's own sprite and fall back to its body", () => {
@@ -50,5 +51,36 @@ describe('prototype frames', () => {
     ]);
     for (const d of content.locomotives) expect(bodies.has(`loco_${d.id}`)).toBe(false);
     for (const d of content.wagons) expect(bodies.has(`wagon_${d.id}`)).toBe(false);
+  });
+});
+
+describe('track frames', () => {
+  it('names the members of a parallel switch apart from a turning one', () => {
+    const g = new TrackGraph(20, 20);
+    g.place(4, 4, 'switch', 1, 'regular', undefined, 'parallel');
+    expect(pieceFrame(g.get(4, 4)!)).toBe('track/switch_regular_1p_m0');
+    g.place(10, 4, 'switch', 1, 'regular');
+    expect(pieceFrame(g.get(10, 4)!)).toBe('track/switch_regular_1_m0');
+    expect(pieceFrame(makePiece('curve', 2, 'narrow'))).toBe('track/curve_narrow_2');
+    expect(pieceFrame(makePiece('crossing', 1, 'narrow', 'regular'))).toBe(
+      'track/crossing_narrow_regular_1',
+    );
+  });
+});
+
+describe('narrow stock frames', () => {
+  it('looks narrow stock up under its own frames', () => {
+    const tub = content.wagons.find((w) => w.id === 'mine_tub')!;
+    const key = 'rolling/wagon_hopper_tiny_n_iron_f2';
+    expect(wagonFrame(atlas(key), tub, 2)).toBe(key);
+    const rocket = content.locomotives.find((l) => l.id === 'rocket')!;
+    const loco = `rolling/loco_${rocket.body}_small_n_${rocket.paint}_body_f2`;
+    expect(locoFrame(atlas(loco), rocket, 2)).toBe(loco);
+    expect(bogieFrame(atlas('rolling/bogie_n_f2'), undefined, 'bogie', 2, true)).toBe(
+      'rolling/bogie_n_f2',
+    );
+    expect(bogieFrame(atlas('rolling/bogie_f2'), undefined, 'bogie', 2)).toBe('rolling/bogie_f2');
+    expect(loadFrame('heap', 3, true)).toBe('rolling/load_heap_n_f3');
+    expect(loadFrame('heap', 3, false)).toBe('rolling/load_heap_f3');
   });
 });
