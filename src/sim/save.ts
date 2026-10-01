@@ -158,9 +158,11 @@ export interface Migration {
   note: string;
   run(j: SaveGame): void;
 }
-/** Starter models version 13 added: John Bull took the Rocket's place, and narrow wagons arrived. */
+/**
+ * Starter models version 13 added: the narrow wagons. The step used to hand out a John Bull too,
+ * in the Rocket's place; that engine is retired, and a retired model is never given away.
+ */
 const V13_STARTERS: [id: string, kind: 'loco' | 'wagon', copies: number][] = [
-  ['john_bull', 'loco', 1],
   ['mine_tub', 'wagon', 2],
   ['narrow_tank', 'wagon', 2],
   ['narrow_box', 'wagon', 2],

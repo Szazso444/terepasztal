@@ -64,6 +64,11 @@ export interface LocoDef {
   /** electric only: power units per tile */
   powerPerTile?: number;
   starter?: boolean;
+  /**
+   * Withdrawn from the game: no banner, starter kit or workshop hands out a new one. The entry
+   * stays in the table so copies a player already owns keep loading and running.
+   */
+  retired?: boolean;
   /** body length class: 1, 2 or 3 tiles (default small) */
   size?: VehicleSize;
   /** rigid body, engine + tender, Garratt (engine, cradle, engine) or Meyer (frame on two engine units) */
@@ -101,6 +106,8 @@ export interface WagonDef {
   capacity: number;
   weight: number;
   starter?: boolean;
+  /** withdrawn from the game: owned copies keep working, nothing hands out a new one */
+  retired?: boolean;
   size?: VehicleSize;
   /** axles per bogie: 2 (default), 3 or 4 */
   bogieAxles?: number;
@@ -493,13 +500,19 @@ export function validateContent(b: ContentBundle): string[] {
     for (const p of s.produces)
       if (!cargo.has(p.cargo)) out.push(`station ${s.id}: unknown cargo "${p.cargo}"`);
   }
+  const retired = new Set(
+    [...b.locomotives, ...b.wagons].filter((d) => d.retired).map((d) => d.id),
+  );
   for (const bn of b.gacha.banners) {
     if (!bn.pool.length) out.push(`banner ${bn.id}: empty pool`);
+    // a pool may still list a retired model (it is skipped), but something must be left to pull
+    else if (bn.pool.every((id) => retired.has(id)))
+      out.push(`banner ${bn.id}: every item in the pool is retired`);
     for (const id of bn.pool)
       if (!locos.has(id) && !wagons.has(id)) out.push(`banner ${bn.id}: unknown item "${id}"`);
   }
-  if (!b.locomotives.some((l) => l.starter)) out.push('no starter locomotive');
-  if (!b.wagons.some((w) => w.starter)) out.push('no starter wagon');
+  if (!b.locomotives.some((l) => l.starter && !l.retired)) out.push('no starter locomotive');
+  if (!b.wagons.some((w) => w.starter && !w.retired)) out.push('no starter wagon');
   const lv = b.stations.levels;
   for (const k of [
     'capacity',

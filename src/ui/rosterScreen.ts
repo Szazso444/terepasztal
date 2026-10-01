@@ -223,6 +223,9 @@ export class RosterScreen implements Screen {
         { class: 'rcard-head' },
         el('span', { class: `rarity-${d.rarity}`, text: d.rarity }),
         el('span', { class: 'name', text: d.name }),
+        d.retired
+          ? el('span', { class: 'tag', text: STR.roster.retired, title: STR.roster.retiredHint })
+          : null,
         el('span', { class: 'num', text: `Lv ${it.level}` }),
       ),
       el(

@@ -581,6 +581,9 @@ export const STR = {
       'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
     fitted: (n: string) => `${n} fitted with in-cab signalling`,
     hasInCab: 'in-cab signalling fitted',
+    retired: 'Retired',
+    retiredHint:
+      'This model is no longer made. The copies you own keep running, but no new one can be pulled or built.',
     noMoney: 'Not enough money',
     size: {
       tiny: 'tiny (half a tile)',

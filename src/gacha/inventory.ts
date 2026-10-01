@@ -6,12 +6,16 @@ export class Inventory {
   items: Item[] = [];
   private nextUid = 1;
 
-  /** A fresh game starts with the starter models, as many copies as the crafting table says. */
+  /**
+   * A fresh game starts with the starter models, as many copies as the crafting table says. A
+   * retired model is never handed out, even if its entry still carries the starter mark.
+   */
   seedStarter(now: number) {
     const copies = content.crafting.starterCopies;
-    for (const l of LOCOS) if (l.starter) for (let i = 0; i < copies.loco; i++) this.add(l.id, now);
+    for (const l of LOCOS)
+      if (l.starter && !l.retired) for (let i = 0; i < copies.loco; i++) this.add(l.id, now);
     for (const w of WAGONS)
-      if (w.starter) for (let i = 0; i < copies.wagon; i++) this.add(w.id, now);
+      if (w.starter && !w.retired) for (let i = 0; i < copies.wagon; i++) this.add(w.id, now);
   }
 
   /** Add a new copy of a model; copies never merge. */

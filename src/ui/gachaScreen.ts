@@ -6,6 +6,7 @@ import {
   RATES,
   PITY,
   PULL_COST,
+  bannerPool,
   type Banner,
   type PullResult,
   type Gacha,
@@ -84,7 +85,7 @@ export class GachaScreen implements Screen {
           el('div', { class: 'name', text: b.name }),
           el('div', {
             class: 'sub',
-            text: locked ? STR.build.tierLocked(b.tier) : STR.gacha.poolSize(b.pool.length),
+            text: locked ? STR.build.tierLocked(b.tier) : STR.gacha.poolSize(bannerPool(b).length),
           }),
         ),
       );
@@ -171,10 +172,11 @@ export class GachaScreen implements Screen {
       box.append(row);
       this.stage.append(box);
     }
-    // preview of the pool grouped by rarity
+    // preview of the pool grouped by rarity: only what a pull can still give
     const pool = el('div', { class: 'gacha-pool' });
+    const offered = bannerPool(this.banner);
     for (const r of [...RARITIES].reverse()) {
-      const ids = this.banner.pool.filter((id) => itemDef(id).rarity === r);
+      const ids = offered.filter((id) => itemDef(id).rarity === r);
       if (!ids.length) continue;
       pool.append(
         el('div', {
