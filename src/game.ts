@@ -438,6 +438,7 @@ export class Game {
       for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
         this.onTrackChanged(t.x, t.y);
     }
+    for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
     resetStationIds(1);
     for (const sj of level.stations) {
       if (!inBounds(this.map, sj.x, sj.y)) continue;
@@ -1091,6 +1092,8 @@ export class Game {
       for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
         this.onTrackChanged(t.x, t.y);
     }
+    // switch forms follow the track around them: chosen again once every piece is down
+    for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
     if (j.wires) {
       for (const [x, y, kind] of j.wires) {
         if (!this.track.has(x, y)) continue;

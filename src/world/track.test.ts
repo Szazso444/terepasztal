@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Dir, opposite } from '../engine/iso';
+import { Dir, opposite, DIR_DX, DIR_DY } from '../engine/iso';
+import { unitDef } from './trackGeom';
 import {
   TrackGraph,
   TRACK_KINDS,
@@ -275,5 +276,95 @@ describe('narrow gauge and 2x2 regular track', () => {
       'crossing_narrow_regular',
     ])
       expect(keys).toContain(k);
+  });
+});
+
+describe('S-shaped switch', () => {
+  /** A regular switch at (4,4) rotation 1: the main line runs E–W, the points face east. */
+  function yard() {
+    const g = new TrackGraph(20, 20);
+    g.place(4, 4, 'switch', 1, 'regular');
+    return g;
+  }
+  /** The tile just past the block where a lane of the given form leaves, and the edge it leaves by. */
+  function exitOf(form: 'turn' | 'parallel', rot = 1) {
+    const def = unitDef('switch', 2, rot, form);
+    const last = def.members[def.routes[1].members[def.routes[1].members.length - 1]];
+    const out = last.links.find((l) => l.route === 1)!.out;
+    return { x: 4 + last.dx + DIR_DX[out], y: 4 + last.dy + DIR_DY[out], out };
+  }
+  const axisRot = (d: Dir) => (d === Dir.N || d === Dir.S ? 0 : 1);
+
+  it('draws the parallel lane as an S that leaves the far end of the block one track over', () => {
+    const turn = unitDef('switch', 2, 0, 'turn');
+    const par = unitDef('switch', 2, 0, 'parallel');
+    // rotation 0: the main line runs N to S down column 0; the S lane ends going south in column 1
+    const lastTurn = turn.members[turn.routes[1].members[turn.routes[1].members.length - 1]];
+    const lastPar = par.members[par.routes[1].members[par.routes[1].members.length - 1]];
+    expect(lastTurn.links.find((l) => l.route === 1)!.out).toBe(Dir.E);
+    expect(lastPar.dx).toBe(1);
+    expect(lastPar.dy).toBe(1);
+    expect(lastPar.links.find((l) => l.route === 1)!.out).toBe(Dir.S);
+    expect(par.routes[1].diverging).toBe(true);
+    expect(par.routes[0].members).toEqual(turn.routes[0].members);
+    // two reverse arcs of radius 1.25 through asin(0.8) each
+    expect(par.routes[1].length).toBeCloseTo(2 * 1.25 * Math.asin(0.8), 2);
+  });
+
+  it('snaps to the S shape when a parallel straight lies past the block, and back when it goes', () => {
+    const g = yard();
+    const e = exitOf('parallel');
+    expect(g.get(4, 4)!.form ?? 'turn').toBe('turn');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    const changed = g.refreshSwitchForms([e]);
+    expect(changed.length).toBe(4);
+    for (const t of g.unitTiles(4, 4)) expect(g.get(t.x, t.y)!.form).toBe('parallel');
+    expect(g.connected(e.x, e.y, opposite(e.out))).toBe(true);
+    g.removeAt(e.x, e.y);
+    g.refreshSwitchForms([e]);
+    for (const t of g.unitTiles(4, 4)) expect(g.get(t.x, t.y)!.form ?? 'turn').toBe('turn');
+  });
+
+  it('snaps when the switch is laid next to an existing parallel straight', () => {
+    const g = new TrackGraph(20, 20);
+    const e = exitOf('parallel');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    g.place(4, 4, 'switch', 1, 'regular');
+    g.refreshSwitchForms(g.unitTiles(4, 4));
+    expect(g.get(4, 4)!.form).toBe('parallel');
+  });
+
+  it('ignores track of another class past the block', () => {
+    const g = yard();
+    const e = exitOf('parallel');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'narrow');
+    g.refreshSwitchForms([e]);
+    expect(g.get(4, 4)!.form ?? 'turn').toBe('turn');
+  });
+
+  it('stays a turn while its side exit is connected', () => {
+    const g = yard();
+    const side = exitOf('turn');
+    g.place(side.x, side.y, 'straight', axisRot(side.out), 'regular');
+    const e = exitOf('parallel');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    g.refreshSwitchForms([side, e]);
+    expect(g.get(4, 4)!.form ?? 'turn').toBe('turn');
+  });
+
+  it('flips form under a path without breaking the graph', () => {
+    const g = yard();
+    const e = exitOf('parallel');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    const before = g.version;
+    g.refreshSwitchForms([e]);
+    expect(g.version).toBeGreaterThan(before);
+    for (const t of g.unitTiles(4, 4))
+      for (const [a, b] of g.get(t.x, t.y)!.links) expect(a).not.toBe(b);
+    expect(g.unitTiles(4, 4)).toHaveLength(4);
+    // the S lane is a real way through: from the points to the parallel straight
+    const entry = pieceLinks('switch', 1)[0][0];
+    const anchorEntry = { x: 4 + (entry === Dir.E ? 1 : 0), y: 4 };
+    expect(g.opensTo(anchorEntry.x, anchorEntry.y, entry)).toBe(true);
   });
 });

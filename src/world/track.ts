@@ -1,7 +1,16 @@
 import { Dir, rotateDir, opposite, DIR_DX, DIR_DY, type Vec2 } from '../engine/iso';
 import { content, type Cost } from '../data/content';
 import { rules } from '../sim/rules';
-import { linkPoints, linkLength, isCurveLink, unitDef, type MemberLink } from './trackGeom';
+import {
+  linkPoints,
+  linkLength,
+  isCurveLink,
+  unitDef,
+  type MemberLink,
+  type SwitchForm,
+} from './trackGeom';
+
+export type { SwitchForm };
 
 const trackData = content.track;
 
@@ -73,6 +82,8 @@ export interface TrackPiece {
   links: Link[];
   /** part of a multi-tile piece: anchor tile and member index */
   unit?: { ax: number; ay: number; member: number };
+  /** 2×2 switches: which diverging lane is laid (absent: turn); chosen by the track around it */
+  form?: SwitchForm;
 }
 
 const BASE: Record<TrackKind, Link[][]> = {
@@ -173,10 +184,11 @@ export function footprintOf(
 
 /** Frame name of a piece's sprite. */
 export function pieceFrame(p: TrackPiece): string {
+  const formTag = p.kind === 'switch' && p.form === 'parallel' ? 'p' : '';
   const base =
     p.kind === 'crossing'
       ? `track/crossing_${p.cls}_${p.cls2 ?? p.cls}_${p.rot}`
-      : `track/${p.kind}_${p.cls}_${p.rot}`;
+      : `track/${p.kind}_${p.cls}_${p.rot}${formTag}`;
   return p.unit ? `${base}_m${p.unit.member}` : base;
 }
 
@@ -222,12 +234,13 @@ export class TrackGraph {
     rot: number,
     cls: TrackClass = 'regular',
     cls2?: TrackClass,
+    form: SwitchForm = 'turn',
   ): { x: number; y: number }[] {
     if (!isUnitKind(kind, cls)) {
       this.set(x, y, makePiece(kind, rot, cls, cls2));
       return [{ x, y }];
     }
-    const def = unitDef(kind as 'curve' | 'switch', CLASS_N[cls], rot);
+    const def = unitDef(kind as 'curve' | 'switch', CLASS_N[cls], rot, form);
     const out: { x: number; y: number }[] = [];
     def.members.forEach((m, i) => {
       const mx = x + m.dx;
@@ -237,13 +250,9 @@ export class TrackGraph {
       for (const l of m.links)
         if (!links.some(([a, b]) => (a === l.in && b === l.out) || (a === l.out && b === l.in)))
           links.push([l.in, l.out]);
-      this.pieces.set(this.key(mx, my), {
-        kind,
-        rot,
-        cls,
-        links,
-        unit: { ax: x, ay: y, member: i },
-      });
+      const piece: TrackPiece = { kind, rot, cls, links, unit: { ax: x, ay: y, member: i } };
+      if (kind === 'switch' && form === 'parallel') piece.form = form;
+      this.pieces.set(this.key(mx, my), piece);
       out.push({ x: mx, y: my });
     });
     this.version++;
@@ -277,8 +286,60 @@ export class TrackGraph {
   memberLinks(x: number, y: number): MemberLink[] | null {
     const p = this.get(x, y);
     if (!p?.unit) return null;
-    return unitDef(p.kind as 'curve' | 'switch', CLASS_N[p.cls], p.rot).members[p.unit.member]
-      .links;
+    return unitDef(p.kind as 'curve' | 'switch', CLASS_N[p.cls], p.rot, p.form ?? 'turn').members[
+      p.unit.member
+    ].links;
+  }
+  /** Where a 2×2 switch's diverging lane leaves its block in a form: the tile beyond and the edge. */
+  switchExit(ax: number, ay: number, rot: number, cls: TrackClass, form: SwitchForm) {
+    const def = unitDef('switch', CLASS_N[cls], rot, form);
+    const route = def.routes[1].members;
+    const last = def.members[route[route.length - 1]];
+    const out = last.links.find((l) => l.route === 1)!.out;
+    return { x: ax + last.dx + DIR_DX[out], y: ay + last.dy + DIR_DY[out], out };
+  }
+  /** Does joinable track outside the unit anchored at (ax, ay) meet the block at this exit? */
+  private meets(ax: number, ay: number, cls: TrackClass, e: { x: number; y: number; out: Dir }) {
+    const q = this.get(e.x, e.y);
+    if (!q || (q.unit && q.unit.ax === ax && q.unit.ay === ay)) return false;
+    if (!this.opensTo(e.x, e.y, opposite(e.out))) return false;
+    return classesJoin(cls, portClass(q, opposite(e.out)));
+  }
+  /**
+   * Re-choose the form of every 2×2 switch whose block touches one of `near` (every switch when
+   * omitted): `parallel` when joinable track lies past the S exit and nothing meets the turn exit,
+   * otherwise `turn`. Rewrites the switches that change and returns their tiles.
+   */
+  refreshSwitchForms(near?: { x: number; y: number }[]): { x: number; y: number }[] {
+    const found: { x: number; y: number; piece: TrackPiece }[] = [];
+    for (const t of this.anchors()) {
+      if (t.piece.kind !== 'switch' || !t.piece.unit) continue;
+      if (near) {
+        const fp = footprintOf(t.x, t.y, 'switch', t.piece.rot, t.piece.cls);
+        const touches = near.some((n) =>
+          fp.some((f) => Math.abs(f.x - n.x) + Math.abs(f.y - n.y) <= 1),
+        );
+        if (!touches) continue;
+      }
+      found.push(t);
+    }
+    const changed: { x: number; y: number }[] = [];
+    for (const { x, y, piece } of found) {
+      const s = this.switchExit(x, y, piece.rot, piece.cls, 'parallel');
+      const side = this.switchExit(x, y, piece.rot, piece.cls, 'turn');
+      const want: SwitchForm =
+        this.meets(x, y, piece.cls, s) && !this.meets(x, y, piece.cls, side) ? 'parallel' : 'turn';
+      if ((piece.form ?? 'turn') === want) continue;
+      // a bridge platform's capacity lives on each tile's piece: carry it over
+      const caps = this.unitTiles(x, y).map((t) => ({
+        ...t,
+        cap: this.get(t.x, t.y)!.bridgeCapacity,
+      }));
+      const tiles = this.place(x, y, 'switch', piece.rot, piece.cls, undefined, want);
+      for (const c of caps) if (c.cap !== undefined) this.get(c.x, c.y)!.bridgeCapacity = c.cap;
+      changed.push(...tiles);
+    }
+    return changed;
   }
   /** Does the piece at (x,y) have a link touching edge d? */
   opensTo(x: number, y: number, d: Dir): boolean {

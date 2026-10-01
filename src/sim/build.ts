@@ -380,6 +380,8 @@ export class Builder {
       this.refreshBridgeCapacity(t.x, t.y);
       this.onTrackChanged?.(t.x, t.y);
     }
+    // a switch beside a parallel track bends its branch into an S (and back)
+    for (const t of this.track.refreshSwitchForms(tiles)) this.onTrackChanged?.(t.x, t.y);
     for (const t of tiles) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     return true;
@@ -401,6 +403,7 @@ export class Builder {
     this.track.removeAt(x, y);
     this.refund(pieceCost(p.kind, p.cls, p.cls2));
     for (const t of tiles) this.onTrackChanged?.(t.x, t.y);
+    for (const t of this.track.refreshSwitchForms(tiles)) this.onTrackChanged?.(t.x, t.y);
     for (const t of tiles) this.checkOrphans(t.x, t.y);
     sfx('build.remove');
     return true;
