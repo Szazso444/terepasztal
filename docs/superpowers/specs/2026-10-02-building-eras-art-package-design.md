@@ -32,14 +32,17 @@ implementation), old-save compatibility beyond not crashing, bridges, signals, p
 
 ### Ages
 
-| Index | Id         | Tag  | Look of its buildings                                             |
-| ----- | ---------- | ---- | ----------------------------------------------------------------- |
-| 0     | `steam`    | `a0` | timber, warm brick, cream stone, slate (today's pictures)         |
-| 1     | `diesel`   | `a1` | concrete, steel frames, corrugated sheet, roller doors            |
-| 2     | `electric` | `a2` | glass and steel, clean lines, insulators and gantries             |
-| 3     | `nuclear`  | `a3` | white concrete, domes, cooling fins, hazard-yellow trim           |
-| 4     | `magnetic` | `a4` | smooth composite shells, curved forms, teal light strips          |
-| 5     | `hyper`    | `a5` | tubes and rings, cantilevered or hovering parts, dark glass, glow |
+| Index | Id         | Tag  | Look of its buildings                                                          |
+| ----- | ---------- | ---- | ------------------------------------------------------------------------------ |
+| 0     | `steam`    | `a0` | small and rural: timber, cream limestone, warm brick, slate (today's pictures) |
+| 1     | `diesel`   | `a1` | larger, industrial: brick on cream stone, riveted iron trusses, roof lights    |
+| 2     | `electric` | `a2` | refined and civic: dressed cream stone, glass-and-iron canopies, insulators    |
+| 3     | `nuclear`  | `a3` | broad and substantial: cream concrete, low domes, olive-green armour, fins     |
+| 4     | `magnetic` | `a4` | light and elegant: cream-white walls, green bands, teal glass, planted roofs   |
+| 5     | `hyper`    | `a5` | calm pastoral futurism: cream tubes and rings on stone bases, teal glass       |
+
+The looks follow the repository's own art direction (`docs/art-direction/`, boards 04 and 05):
+one landscape through every age, cream masonry and the game's palette throughout, no neon.
 
 A building's first model is that of the age it unlocks in. Level `n` of a building is the model of
 age `first + n - 1`. Buildings that cannot be upgraded have one model.
@@ -75,11 +78,12 @@ All pictures are drawn in the game's own projection: orthographic, ground edges 
 (26.57 degrees), verticals vertical. The canvases are the sizes image generators return, so a
 picture comes back at the size of its guide.
 
-| Footprint            | Canvas      | Canvas px per game px | Footprint centre | Used by      |
-| -------------------- | ----------- | --------------------- | ---------------- | ------------ |
-| 1x1                  | 1024 x 1024 | 8                     | (512, 832)       | all others   |
-| 1x2 (long way front) | 1024 x 1024 | 8                     | (512, 800)       | narrow depot |
-| 2x2                  | 1536 x 1024 | 6                     | (768, 760)       | depot        |
+| Footprint                   | Canvas      | Canvas px per game px | Footprint centre | Used by      |
+| --------------------------- | ----------- | --------------------- | ---------------- | ------------ |
+| `t1`: 1x1                   | 1024 x 1024 | 8                     | (512, 832)       | all others   |
+| `t1tall`: 1x1, room to grow | 1024 x 1536 | 8                     | (512, 1344)      | houses       |
+| `t1x2`: 1x2, long way front | 1024 x 1024 | 8                     | (512, 800)       | narrow depot |
+| `t2x2`: 2x2                 | 1536 x 1024 | 6                     | (768, 760)       | depot        |
 
 A tile is 64 x 32 game px. The footprint centre is a fixed pixel and the scale is fixed per
 footprint, so the game can place a picture without measuring it.
@@ -112,14 +116,18 @@ Everything lives in `assets/source/buildings-v2/`.
 - **`GUIDE.md`**: the conventions of section 1 in plain words, the shared style block, how to make
   one picture, how to check it, how to record progress, what to do when a picture fails, and
   where to stop.
-- **`queue.json`**: one entry per picture, in working order:
-  `{ id, family, age, rot, file, guide, references[], prompt, status, attempts, note }`.
-  `status` is `pending`, `generated`, `approved` or `rejected`. Codex edits only `status`,
-  `attempts` and `note`.
-- **`families.json`**: hand-written, the source of the prompts. Per family: what the building does,
-  the features that must stay recognisable in every age (a windmill keeps a rotor, a depot keeps
-  its portals), its front, and an optional line per age. The six age styles are written once.
-- **`guides/`**: one grey block-out per footprint and rotation (12 files), drawn by code in the
+- **`queue.json`**: the record of progress, one entry per picture in working order:
+  `{ id, family, age, rot, file, status, attempts, note }`. `status` is `pending`, `generated`,
+  `approved` or `rejected`. It holds no prompts, so it stays small enough to read and to diff.
+- **The queue tool** (`tools/building-queue.mjs`) is how Codex works the list: `next` prints the
+  next picture with its file, guide, references and prompt; `set` records a result; `status`
+  shows progress; `approve-pilot` opens the work after the pilot. `next` stops at the pilot gate
+  and skips pictures whose reference was never made.
+- **`families.json`**: hand-written, the source of the prompts. The shared block, the six age
+  styles, the four view sentences, and per family: what the building does, the features that must
+  stay recognisable in every age (a windmill keeps its sails, a depot its portals), its front,
+  today's picture, and a line for each of its ages.
+- **`guides/`**: one grey block-out per footprint and rotation (16 files), drawn by code in the
   game's projection: the footprint as a low plinth, a plain massing block on it, the front marked
   by a door opening (depots: portal openings in the end walls). The picture is made as an edit of
   its guide, so camera, scale and position come out the same for every picture.
@@ -128,7 +136,8 @@ Everything lives in `assets/source/buildings-v2/`.
 
 1. Edit the entry's guide image; attach the references; paste the entry's prompt.
 2. References, in this order: the style board `docs/art-direction/images/03-theme-town-growth.png`;
-   then the picture that fixes the building's identity:
+   then the picture that fixes the building's identity (and, for the first picture of an age, the
+   mood board of the early or the later ages last):
    - age a0, `r0`: today's picture of the family from `assets/source/base-v1/`, for materials and
      details only, not for its angle;
    - any other rotation: the approved `r0` of the same age ("the same building turned on a
@@ -150,16 +159,17 @@ Codex works on its own branch, `art/buildings-v2`, and touches only `assets/sour
 
 ## 4. Tools (written in this sub-project)
 
-- **`tools/building-guides.mjs`**: draws the 12 block-outs. Pure geometry shared with the tests.
+- **`tools/building-guides.mjs`**: draws the 16 block-outs. Pure geometry shared with the tests.
 - **`tools/building-queue.mjs`**: builds `queue.json` from the game's data files and
-  `families.json`, so the list cannot drift from the game. Run again, it keeps every entry's
-  `status`, `attempts` and `note`.
+  `families.json`, so the list cannot drift from the game, and hands the work out (see above).
+  Run again, it keeps every entry's `status`, `attempts` and `note`.
 - **`tools/building-check.mjs <file | --family x | --all>`**: for each picture:
   - the canvas size of its footprint, RGBA, a transparent background, nothing opaque on the edge;
   - the building stands on its footprint: its lowest opaque pixels lie on the footprint's front
     corner within 16 canvas px, and at ground level it stays inside the diamond within 24 px;
   - it is not a sliver or a blob: its box is at least half the footprint's width, and its height
-    stays under the canvas limit.
+    stays under the canvas limit;
+  - it was painted: a picture that is still grey is the guide come back unchanged.
     It prints one line per picture and writes `report.json`. Exit code 1 if any picture fails.
 - **`tools/building-sheets.mjs`**: one review sheet per family (`review/<family>.png`: a row per
   age, a column per rotation, each picture on its footprint diamond over grass) and
@@ -182,6 +192,6 @@ Only `pngjs`, which the repository already uses for its other art tools.
   right wall for each rotation); the queue (560 entries, the counts per family of section 2, the
   order, statuses kept on a re-run); the check (hand-made pictures that pass and that fail each
   rule).
-- The 12 guides and a sample review sheet rendered and shown on a review page before the package
+- The 16 guides and a sample review sheet rendered and shown on a review page before the package
   is handed to Codex.
 - Typecheck, lint, tests, build and formatting pass before every push.
