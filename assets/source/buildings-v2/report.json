@@ -1,5 +1,15 @@
 {
-  "checked": 0,
-  "failed": 0,
-  "pictures": {}
+  "checked": 1,
+  "failed": 1,
+  "pictures": {
+    "depot-a0-r0": {
+      "ok": false,
+      "problems": [
+        "base is 38 px below the footprint",
+        "reaches outside the footprint at the left",
+        "reaches outside the footprint at the right",
+        "reaches outside the footprint at the ground"
+      ]
+    }
+  }
 }

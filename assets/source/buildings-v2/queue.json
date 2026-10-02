@@ -16,9 +16,9 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "All three attempts misplaced the portals on the front wall or allowed the ground/base pixels and halo beyond the footprint; final checker also reports base 38 px below. Failed wall-orientation/footprint checklist, so no candidate kept."
     },
     {
       "id": "depot-a0-r1",
