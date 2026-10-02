@@ -63,8 +63,11 @@ export class BuildController {
   }
 
   setTool(t: Tool) {
+    // the same shape in another type (Q / E) keeps its turn
+    const sameShape =
+      this.tool.kind === 'track' && t.kind === 'track' && this.tool.item.kind === t.item.kind;
     this.tool = t;
-    this.rot = 0;
+    if (!sameShape) this.rot = 0;
     this.dragStart = null;
     this.clearGhost();
     if (t.kind !== 'none') this.select(null);

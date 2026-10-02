@@ -12,6 +12,14 @@ import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
 import { content, type SupplyMode } from '../data/content';
 import { inSupplyMode } from '../sim/supply';
+import {
+  TRACK_GROUPS,
+  trackGroupOf,
+  trackSlot,
+  shortName,
+  stepGroup,
+  slotMate,
+} from './trackGroups';
 
 export type Tool =
   | { kind: 'none' }
@@ -44,6 +52,12 @@ export interface ToolItem {
   costNow?: () => Cost;
   /** not offered at all right now (quests) */
   hidden?: () => boolean;
+  /** the type it is listed under, in a category that has types */
+  group?: string;
+  /** its place in the type: the number key that picks it, counted from 0 */
+  slot?: number;
+  /** the name on its button when the type is shown above it */
+  label?: string;
 }
 export type CategoryId = 'track' | 'stations' | 'decor' | 'utility' | 'works' | 'terrain';
 interface Category {
@@ -51,6 +65,8 @@ interface Category {
   label: string;
   items: ToolItem[];
   editorOnly?: boolean;
+  /** types the items are listed by; one is open at a time */
+  groups?: { id: string; label: string }[];
 }
 
 function toolKey(t: Tool): string {
@@ -76,8 +92,9 @@ function toolKey(t: Tool): string {
 
 /**
  * Bottom build bar. Row one holds the categories (plus Remove); opening a category shows its
- * items with an icon, name and cost. Number keys and the mouse wheel step through the open
- * category; hovering an item feeds the info panel.
+ * items with an icon, name and cost. Number keys pick an item, Tab steps through them; hovering
+ * an item feeds the info panel. A category with types (track) shows one type at a time: the
+ * number keys count inside it, and Q and E step between the types.
  */
 export class Toolbar {
   readonly root: HTMLElement;
@@ -85,6 +102,9 @@ export class Toolbar {
   private catButtons = new Map<string, HTMLButtonElement>();
   private itemButtons = new Map<string, HTMLButtonElement>();
   private itemRow = el('div', { class: 'tb-row tb-items' });
+  private groupRow = el('div', { class: 'tb-row tb-types' });
+  /** the type last open in each category that has types */
+  private groupOf = new Map<CategoryId, string>();
   private status = el('span', { class: 'tb-status dim' });
   private hint = el('span', { class: 'tb-status dim', style: 'margin-left:auto' });
   readonly extra = el('div', { class: 'tb-group' });
@@ -128,8 +148,14 @@ export class Toolbar {
         desc: STR.toolbar.trackDesc[k] ?? '',
         tier: 0,
         place: it.kind === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
+        group: trackGroupOf(it),
+        slot: trackSlot(it),
+        label: shortName(it, base),
       };
     });
+    // listed type by type, each in the order of its number keys
+    const typeAt = (i: ToolItem) => TRACK_GROUPS.indexOf(i.group as (typeof TRACK_GROUPS)[number]);
+    track.sort((a, b) => typeAt(a) - typeAt(b) || a.slot! - b.slot!);
     const stations: ToolItem[] = STATION_DEFS.map((d) => ({
       key: `station:${d.id}`,
       tool: { kind: 'station', defId: d.id },
@@ -193,7 +219,9 @@ export class Toolbar {
       reach: d.power ? 2 : undefined,
     }));
     track.push(
-      ...BUILDING_DEFS.filter((d) => d.bridge).map((d) => ({
+      ...BUILDING_DEFS.filter((d) => d.bridge).map((d, i) => ({
+        group: 'bridges',
+        slot: i,
         key: 'building:' + d.id,
         tool: { kind: 'building' as const, defId: d.id },
         name: d.name,
@@ -224,7 +252,15 @@ export class Toolbar {
       place: '',
     }));
     this.categories = [
-      { id: 'track', label: STR.toolbar.track, items: track },
+      {
+        id: 'track',
+        label: STR.toolbar.track,
+        items: track,
+        groups: TRACK_GROUPS.map((id) => ({
+          id,
+          label: id === 'bridges' ? STR.toolbar.bridges : STR.toolbar.trackClass[id],
+        })),
+      },
       { id: 'stations', label: STR.toolbar.stations, items: stations },
       { id: 'works', label: STR.toolbar.buildings, items: works },
       { id: 'decor', label: STR.toolbar.services, items: services },
@@ -242,10 +278,12 @@ export class Toolbar {
     this.removeBtn.title = STR.toolbar.removeHint;
     catRow.append(this.removeBtn, this.extra);
     this.itemRow.style.display = 'none';
+    this.groupRow.style.display = 'none';
     this.root = el(
       'div',
       { id: 'toolbar', class: 'panel' },
       catRow,
+      this.groupRow,
       this.itemRow,
       el('div', { class: 'tb-row tb-statusrow' }, this.status, this.hint),
     );
@@ -263,14 +301,16 @@ export class Toolbar {
     for (const [k, b] of this.catButtons) b.classList.toggle('active', k === id);
     this.removeBtn.classList.remove('active');
     this.renderItems();
-    const items = this.enabledItems();
-    if (selectFirst && items.length) this.select(items[0].tool);
+    const items = this.openItems();
+    if (selectFirst && items.length) this.select(slotMate(items, 0)!.tool);
   }
   closeCategory() {
     this.open = null;
     for (const b of this.catButtons.values()) b.classList.remove('active');
     this.itemRow.style.display = 'none';
     this.itemRow.innerHTML = '';
+    this.groupRow.style.display = 'none';
+    this.groupRow.innerHTML = '';
     this.itemButtons.clear();
     this.hint.textContent = '';
     this.onHover?.(null);
@@ -281,7 +321,50 @@ export class Toolbar {
     const tier = this.tierProvider();
     return this.modeItems().filter((i) => i.tier <= tier && !i.hidden?.());
   }
-  /** Step through the open category (wheel / keys). */
+  /** The open category's types, when it has any. */
+  private groupsOfOpen() {
+    return this.open ? (this.category(this.open).groups ?? null) : null;
+  }
+  /** The type shown in the open category: the one used last, if it still has something to offer. */
+  private openGroup(): string | null {
+    const groups = this.groupsOfOpen();
+    if (!groups) return null;
+    const enabled = this.enabledItems();
+    const offers = (g: string) => enabled.some((i) => i.group === g);
+    const last = this.groupOf.get(this.open!);
+    if (last !== undefined && groups.some((g) => g.id === last) && offers(last)) return last;
+    return groups.find((g) => offers(g.id))?.id ?? groups[0].id;
+  }
+  /** Enabled items of the open type (of the whole category when it has no types). */
+  private openItems() {
+    const g = this.openGroup();
+    return this.enabledItems().filter((i) => g === null || i.group === g);
+  }
+  /** Open a type, holding the piece in the slot of the one held before. */
+  private setGroup(id: string) {
+    if (!this.open) return;
+    const slot = this.item(this.active)?.slot ?? 0;
+    this.groupOf.set(this.open, id);
+    const pick = slotMate(this.openItems(), slot);
+    if (pick) this.select(pick.tool);
+    this.renderItems();
+  }
+  /** Q / E: step to the previous or next type. Returns false when the open category has none. */
+  cycleGroup(dir: 1 | -1) {
+    const groups = this.groupsOfOpen();
+    if (!groups) return false;
+    const enabled = this.enabledItems();
+    const current = this.openGroup()!;
+    const next = stepGroup(
+      groups.map((g) => g.id),
+      current,
+      dir,
+      (g) => enabled.some((i) => i.group === g),
+    );
+    if (next !== current) this.setGroup(next);
+    return true;
+  }
+  /** Step through the open category (Tab). */
   cycle(dir: number) {
     const items = this.enabledItems();
     if (!items.length) return;
@@ -290,10 +373,10 @@ export class Toolbar {
     const next = cur < 0 ? 0 : (cur + (dir > 0 ? 1 : items.length - 1)) % items.length;
     this.select(items[next].tool);
   }
-  /** Number key: pick the n-th item of the open category. Returns false when none is open. */
+  /** Number key: pick the n-th item of the open type or category. Returns false when none is open. */
   selectIndex(n: number) {
     if (!this.open) return false;
-    const items = this.enabledItems();
+    const items = this.openItems();
     if (n < items.length) this.select(items[n].tool);
     return true;
   }
@@ -311,8 +394,24 @@ export class Toolbar {
     row.style.display = '';
     const tier = this.tierProvider();
     const items = this.modeItems();
+    const groups = this.groupsOfOpen();
+    const shown = this.openGroup();
+    this.groupRow.innerHTML = '';
+    this.groupRow.style.display = groups ? '' : 'none';
+    if (groups) {
+      const enabledItems = this.enabledItems();
+      this.groupRow.append(el('span', { class: 'tb-key', text: 'Q' }));
+      for (const g of groups) {
+        const b = btn(g.label, () => this.setGroup(g.id), 'tb-type');
+        b.disabled = !enabledItems.some((i) => i.group === g.id);
+        b.classList.toggle('active', g.id === shown);
+        this.groupRow.append(b);
+      }
+      this.groupRow.append(el('span', { class: 'tb-key', text: 'E' }));
+    }
     let n = 0;
     for (const it of items) {
+      if (shown !== null && it.group !== shown) continue;
       const enabled = it.tier <= tier && !it.hidden?.();
       if (enabled) n++;
       const b = el(
@@ -323,7 +422,7 @@ export class Toolbar {
         el(
           'span',
           { class: 'tb-text' },
-          el('span', { class: 'tb-name', text: it.name }),
+          el('span', { class: 'tb-name', text: shown !== null ? (it.label ?? it.name) : it.name }),
           el('span', { class: 'tb-cost', text: fmtCost(it.cost) }),
         ),
       ) as HTMLButtonElement;
@@ -335,7 +434,7 @@ export class Toolbar {
       this.itemButtons.set(it.key, b);
       row.append(b);
     }
-    this.hint.textContent = STR.toolbar.cycleHint;
+    this.hint.textContent = groups ? STR.toolbar.typeHint : STR.toolbar.cycleHint;
     const key = toolKey(this.active);
     for (const [k, b] of this.itemButtons) b.classList.toggle('active', k === key);
   }
@@ -371,6 +470,12 @@ export class Toolbar {
                 ? 'terrain'
                 : null;
     if (cat && this.open !== cat) this.openCategory(cat, false);
+    // a piece picked some other way (Tab, a click on the map) brings its type with it
+    const group = this.item(t)?.group;
+    if (group && this.open && group !== this.openGroup()) {
+      this.groupOf.set(this.open, group);
+      this.renderItems();
+    }
     this.removeBtn.classList.toggle('active', t.kind === 'remove');
     for (const [k, b] of this.itemButtons) b.classList.toggle('active', k === key);
   }

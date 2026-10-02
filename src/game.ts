@@ -2502,6 +2502,11 @@ export class Game {
     if (inp.wasPressed('KeyM')) this.toggleOverview();
     if (inp.wasPressed('Tab') && this.toolbar.open && this.viewTarget === 0)
       this.toolbar.cycle(inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? -1 : 1);
+    // Q / E: the previous and the next type of the open category (track by gauge)
+    if (this.toolbar.open && this.viewTarget === 0) {
+      if (inp.wasPressed('KeyQ')) this.toolbar.cycleGroup(-1);
+      if (inp.wasPressed('KeyE')) this.toolbar.cycleGroup(1);
+    }
     if (inp.wasPressed('Escape') && this.viewTarget === 1) {
       if (this.recording) this.cancelRecording();
       else if (this.ovSelected !== null) {

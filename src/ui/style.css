@@ -369,6 +369,19 @@ body {
   font-size: 11px;
   padding: 3px 12px;
 }
+.tb-types {
+  border-top: 1px solid var(--border-dark);
+  box-shadow: 0 1px 0 var(--border-light) inset;
+  gap: 4px;
+}
+.tb-types .tb-key {
+  width: auto;
+  padding: 0 2px;
+}
+.btn.tb-type {
+  font-size: 11px;
+  padding: 2px 10px;
+}
 .tb-items {
   border-top: 1px solid var(--border-dark);
   box-shadow: 0 1px 0 var(--border-light) inset;

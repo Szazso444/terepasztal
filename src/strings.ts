@@ -170,6 +170,8 @@ export const STR = {
     removeHint: 'Right-click / Delete removes',
     select: 'Select',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
+    typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
+    bridges: 'Bridges',
     place: {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
