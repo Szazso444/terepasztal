@@ -44,7 +44,7 @@ export function previewLayers(atlas: Pick<AtlasRegistry, 'has'>, id: string, fac
         // a mirrored segment meets its bogies back to front, like the train renderer
         const n = s.bogies.length;
         const style = bogieStyleOf(def.bogieStyle, s.part, s.mirror ? n - 1 - k : k);
-        if (style === 'none') return;
+        if (style === 'none' || b.hidden) return;
         add(
           (f) => bogieFrame(atlas, style, b.kind, f, narrow),
           b.drawX,

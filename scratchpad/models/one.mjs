@@ -1,0 +1,12 @@
+import { launch } from '../runtime.mjs';
+const [query, out, expr] = process.argv.slice(2);
+const b = await launch();
+const p = await b.newPage({ viewport: { width: 1440, height: 1000 } });
+const errs = [];
+p.on('pageerror', (e) => errs.push(e.message));
+await p.goto(`http://127.0.0.1:5182/scratchpad/models/?${query}`);
+await p.waitForFunction(() => typeof window.qa?.shot === 'function', null, { timeout: 180000 });
+const r = await p.evaluate(expr ?? 'qa.shot()');
+await p.screenshot({ path: out });
+console.log(JSON.stringify(r), errs);
+await b.close();

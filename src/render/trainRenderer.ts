@@ -245,17 +245,21 @@ export class TrainRenderer {
             this.bodyGround(seg, ps, alpha, x, y),
           );
           const fr = this.atlas.get(key);
-          // Procedural vehicle windows carry explicit amber palette pixels.
-          // Illustrated replacements need their own authored mask; never light a boiler.
-          if (fr.texture.frame.width / fr.w === 1) {
+          // A rendered model brings its window panes as a frame of its own (`…_lit_f<n>`).
+          // Procedural vehicle windows carry explicit amber palette pixels. Any other
+          // illustrated replacement stays dark: never light a boiler.
+          const litKey = key.replace(/_f(d+)$/, '_lit_f$1');
+          const lit = this.atlas.has(litKey) ? this.atlas.get(litKey) : null;
+          const own = isLoco && key.startsWith(`rolling/loco_${t.locos[i].def.id}_`);
+          if (lit || (!own && fr.texture.frame.width / fr.w === 1)) {
             let light = this.windowLights.get(s);
             if (!light) {
               light = windowSprite();
               this.layer.addChild(light);
               this.windowLights.set(s, light);
             }
-            light.texture = this.surfaces.window(key, fr, true);
-            light.anchor.set(fr.anchorX, fr.anchorY);
+            light.texture = lit ? lit.texture : this.surfaces.window(key, fr, true);
+            light.anchor.set((lit ?? fr).anchorX, (lit ?? fr).anchorY);
             light.alpha = this.night * 0.9;
             light.position.copyFrom(s.position);
             light.scale.copyFrom(s.scale);
@@ -279,6 +283,10 @@ export class TrainRenderer {
               const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
               const bs = c.bogies[bi++];
               if (!bs) return;
+              if (b.hidden) {
+                bs.visible = false;
+                return;
+              }
               // bogies are posed in track order; a reversed vehicle or a mirrored segment meets
               // them back to front, and its styled trucks (cylinders ahead) must face its own front
               const back = t.reversed !== seg.mirror;

@@ -170,6 +170,8 @@ function startStock(): Record<string, number> {
     wheat: 300,
     food: 600,
     coal: 240,
+    // a tank each for the two starter diesels (BM-50, Muki)
+    oil: 120,
   };
 }
 
@@ -910,7 +912,7 @@ export class Game {
       (x, y) => this.world.surfacePoint(x, y),
       (x, y) => inBounds(this.map, x, y),
     );
-    this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.smoke = new Smoke(this.atlas, this.world.overlay, (x, y) => this.world.railAt(x, y).dz);
     this.floaters = new Floaters(this.atlas, this.world.overlay, (x, y) =>
       this.world.surfacePoint(x, y),
     );

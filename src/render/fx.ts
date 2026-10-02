@@ -177,8 +177,10 @@ export class GroundLights {
         const pose = t.poses[0];
         if (!pose) continue;
         const dir = pose.heading + (t.reversed ? Math.PI : 0);
-        const x = Math.floor(pose.x + Math.cos(dir) * 1.1 + 0.5);
-        const y = Math.floor(pose.y + Math.sin(dir) * 1.1 + 0.5);
+        // the tile just ahead of the nose, whatever the engine's length
+        const reach = (t.vehicleSpecs[0]?.L ?? 1) / 2 + 0.6;
+        const x = Math.floor(pose.x + Math.cos(dir) * reach + 0.5);
+        const y = Math.floor(pose.y + Math.sin(dir) * reach + 0.5);
         if (!this.inBounds(x, y)) continue;
         const key = `${x},${y}`;
         const s = this.get(key);
@@ -306,6 +308,8 @@ export class Smoke {
   constructor(
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
+    /** screen offset of the rail under a tile position (negative is up); level when absent */
+    private readonly railDz: (x: number, y: number) => number = () => 0,
   ) {}
   update(trains: Train[], dt: number, enabled: boolean) {
     if (enabled)
@@ -316,13 +320,23 @@ export class Smoke {
           this.acc.set(t.id, 0);
           const pose = t.poses[0];
           const dir = pose.heading + (t.reversed ? Math.PI : 0);
-          const cx = pose.x + Math.cos(dir) * 0.24;
-          const cy = pose.y + Math.sin(dir) * 0.24;
+          let cx = pose.x + Math.cos(dir) * 0.24;
+          let cy = pose.y + Math.sin(dir) * 0.24;
+          let up = 30;
+          // a rendered model says where its chimney is: on its own part, ahead of that part's centre
+          const outlet = t.locos[0]?.def.smoke?.[0];
+          const seg = outlet && t.vehiclePoses[0]?.segments.find((g) => g.part === outlet.part);
+          if (outlet && seg) {
+            const nose = seg.angle + (t.reversed ? Math.PI : 0) + (seg.mirror ? Math.PI : 0);
+            cx = seg.x + Math.cos(nose) * outlet.along;
+            cy = seg.y + Math.sin(nose) * outlet.along;
+            up = outlet.up;
+          }
           const w = tileToWorld(cx, cy);
           const f = this.atlas.get(`fx/smoke_${Math.floor(Math.random() * 3)}`);
           const s = new Sprite(f.texture);
           s.anchor.set(0.5);
-          s.position.set(w.x, w.y - 30);
+          s.position.set(w.x, w.y - up + this.railDz(cx, cy));
           s.alpha = 0.8;
           this.layer.addChild(s);
           this.puffs.push({

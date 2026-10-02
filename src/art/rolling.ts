@@ -1058,7 +1058,14 @@ function locoVariants(): { body: string; size: string; paint: string; def: LocoD
     const size = `${d.size ?? 'small'}${d.gauge === 'narrow' ? '_n' : ''}`;
     for (const paint of [d.paint, 'iron']) {
       const key = `${d.body}|${size}|${paint}`;
-      if (!seen.has(key)) seen.set(key, { body: d.body, size, paint, def: { ...d, paint } });
+      // the shared frames are drawn at the size's length and plan, not at one engine's own
+      if (!seen.has(key))
+        seen.set(key, {
+          body: d.body,
+          size,
+          paint,
+          def: { ...d, paint, gear: undefined, lengthTiles: undefined },
+        });
     }
   }
   return [...seen.values()];
@@ -1101,6 +1108,19 @@ export function generateRollingAtlas(): AtlasImage {
           f.ox,
           f.oy,
         );
+      }
+  }
+  // an engine with its own length and running gear but no rendered model: its body drawn at that
+  // length under its own frame names (a rendered sprite of the same name replaces these)
+  for (const d of content.locomotives) {
+    if (!d.gear || d.spriteGear) continue;
+    const parts = new Map<string, SegmentSpec>();
+    for (const s of vehicleSpec(d).segments) if (!parts.has(s.part)) parts.set(s.part, s);
+    for (const [part, seg] of parts)
+      for (const fi of facings) {
+        const f = new Frame(seg.L, facingAngle(fi), 100 + fi, d.gauge === 'narrow');
+        locoDrawer(d.body, part)(f, seg.L, paintOf(d.paint));
+        ab.add(`rolling/loco_${d.id}_${part}_f${fi}`, f.finish().toImageData(), f.ox, f.oy);
       }
   }
   return ab.build(4096);

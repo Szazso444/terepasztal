@@ -4,7 +4,7 @@ const browser = await launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
-await page.goto('http://127.0.0.1:5179/scratchpad/slope-pitch/');
+await page.goto('http://127.0.0.1:5182/scratchpad/slope-pitch/');
 await page.waitForFunction(() => typeof window.qa?.start === 'function', null, { timeout: 180000 });
 await page.waitForFunction(() => qa.settled(), null, { timeout: 180000, polling: 200 });
 for (const [line, dir] of [['x', 1], ['y', 1]]) {

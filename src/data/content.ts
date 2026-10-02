@@ -5,6 +5,9 @@
  * therefore takes effect on the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
+import gearJson from './gear.json';
+import locoFitJson from './locoFit.json';
+import type { Gear } from '../sim/gear';
 import wagonJson from './wagons.json';
 import cargoJson from './cargo.json';
 import stationJson from './stations.json';
@@ -64,6 +67,16 @@ export interface LocoDef {
   /** electric only: power units per tile */
   powerPerTile?: number;
   starter?: boolean;
+  /**
+   * The engine's own running gear and length (src/data/gear.json, locoFit.json): they replace the
+   * size's length and the plan's segments. Filled in at load, not written in locomotives.json.
+   */
+  gear?: Gear;
+  lengthTiles?: number;
+  /** its sprite is a rendered model with its own wheels: no bogie is drawn under it */
+  spriteGear?: boolean;
+  /** where smoke leaves it: the part, tiles ahead of that part's centre, pixels above the rail */
+  smoke?: { part: PartKind; along: number; up: number }[];
   /**
    * Withdrawn from the game: no banner, starter kit or workshop hands out a new one. The entry
    * stays in the table so copies a player already owns keep loading and running.
@@ -593,7 +606,25 @@ function buildContent(): ContentBundle {
 }
 
 /** Fill derived fields (wagon accept lists from cargo classes). */
+/** One engine's fit: its length in tiles, whether its sprite is a rendered model, its smoke outlets. */
+interface LocoFit {
+  tiles: number;
+  sprite?: boolean;
+  smoke?: { part: PartKind; along: number; up: number }[];
+}
 function finalize(b: ContentBundle): ContentBundle {
+  // each engine's own running gear and length, where both are measured
+  const gears = gearJson as unknown as Record<string, Gear>;
+  const fits = locoFitJson as unknown as Record<string, LocoFit>;
+  for (const d of b.locomotives) {
+    const g = gears[d.id],
+      f = fits[d.id];
+    if (!g || !f) continue;
+    d.gear = g;
+    d.lengthTiles = f.tiles;
+    d.spriteGear = f.sprite === true;
+    d.smoke = f.smoke;
+  }
   for (const w of b.wagons)
     w.accepts = b.cargo.filter((c) => c.class === w.carries).map((c) => c.id);
   return b;

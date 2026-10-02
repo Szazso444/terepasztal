@@ -1,0 +1,13 @@
+{
+  "black_five": {
+    "tiles": 2,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.347,
+        "up": 24
+      }
+    ]
+  }
+}
