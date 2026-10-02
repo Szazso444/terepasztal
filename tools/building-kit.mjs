@@ -29,6 +29,8 @@ export function wallRole(wall, rot) {
  */
 export const FOOTPRINTS = {
   t1: { id: 't1', canvas: [1024, 1024], scale: 8, centre: [512, 832], tiles: [1, 1] },
+  // one tile on a tall canvas, for buildings that grow upwards with the ages (houses)
+  t1tall: { id: 't1tall', canvas: [1024, 1536], scale: 8, centre: [512, 1344], tiles: [1, 1] },
   // two tiles along the front: 2 x 1 when the front faces S or N, 1 x 2 when it faces W or E
   t1x2: { id: 't1x2', canvas: [1024, 1024], scale: 8, centre: [512, 800], tiles: [2, 1] },
   t2x2: { id: 't2x2', canvas: [1536, 1024], scale: 6, centre: [768, 760], tiles: [2, 2] },
@@ -117,7 +119,7 @@ export function loadInventory(root = '.') {
       id: d.id,
       name: d.name,
       kind: d.residents ? 'house' : 'service',
-      footprint: 't1',
+      footprint: d.residents ? 't1tall' : 't1',
       firstAge: 0,
       upgradeable: !!d.residents,
     });

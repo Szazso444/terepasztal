@@ -39,6 +39,8 @@ describe('building inventory', () => {
     expect(family('depot')).toMatchObject({ footprint: 't2x2', kind: 'depot' });
     expect(family('depot_narrow')).toMatchObject({ footprint: 't1x2', id: 'narrow_depot' });
     expect(family('farm').footprint).toBe('t1');
+    // houses grow tall in the later ages: they get the tall canvas
+    expect(family('townhouse').footprint).toBe('t1tall');
   });
 
   it('lists a family age by age, the front view first', () => {
@@ -103,6 +105,9 @@ describe('building conventions', () => {
     expect(project(FOOTPRINTS.t1, 0, 0)).toEqual([512, 832]);
     expect(project(FOOTPRINTS.t1x2, 0, 0)).toEqual([512, 800]);
     expect(project(FOOTPRINTS.t2x2, 0, 0)).toEqual([768, 760]);
+    expect(project(FOOTPRINTS.t1tall, 0, 0)).toEqual([512, 1344]);
+    expect(FOOTPRINTS.t1tall.canvas).toEqual([1024, 1536]);
+    expect(Object.keys(FOOTPRINTS)).toEqual(['t1', 't1tall', 't1x2', 't2x2']);
     expect(FOOTPRINTS.t2x2.canvas).toEqual([1536, 1024]);
     expect(diamond(FOOTPRINTS.t1, 0)).toEqual({
       n: [512, 704],

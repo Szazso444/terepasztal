@@ -24,10 +24,11 @@ export const GREY = {
 /** Game px. The plinth is the footprint; the block stands on it, set in from its edge. */
 const PLINTH = 4;
 const INSET = 0.06;
-const HEIGHT = { t1: 40, t1x2: 34, t2x2: 46 };
+const HEIGHT = { t1: 40, t1tall: 40, t1x2: 34, t2x2: 46 };
 /** Openings per footprint: `at` is the offset along the wall from its middle, in tiles. */
 const OPENINGS = {
   t1: { front: [{ at: 0, width: 0.24, height: 20 }] },
+  t1tall: { front: [{ at: 0, width: 0.24, height: 20 }] },
   t1x2: {
     front: [{ at: 0, width: 0.16, height: 18 }],
     side: [{ at: 0, width: 0.44, height: 24 }],
@@ -174,7 +175,7 @@ export function drawGuide(fpId, rot) {
   return png;
 }
 
-/** Write the twelve guides. */
+/** Write a guide for every footprint and rotation. */
 export function writeGuides(root = '.') {
   const out = [];
   for (const fpId of Object.keys(FOOTPRINTS))
