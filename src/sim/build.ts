@@ -39,6 +39,7 @@ import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
+import { planReclass, type PieceChange, type WideClass } from '../world/reclass';
 
 const trackData = content.track;
 
@@ -396,6 +397,59 @@ export class Builder {
     // a switch beside a parallel track bends its branch into an S (and back)
     for (const t of this.track.refreshSwitchForms(tiles)) this.onTrackChanged?.(t.x, t.y);
     for (const t of tiles) this.checkOrphans(t.x, t.y);
+    sfx('build.place');
+    return true;
+  }
+  /**
+   * What converting the pieces on `tiles` to `target` would change and cost. An upgrade to high
+   * speed charges, piece by piece, what the new piece costs above the old one; a downgrade is free
+   * and returns nothing. `from` is the tile a stroke came from (it picks a crossing's line).
+   */
+  checkReclass(
+    tiles: { x: number; y: number }[],
+    target: WideClass,
+    from?: { x: number; y: number },
+  ): PlacementCheck & { changes: PieceChange[] } {
+    const plan = planReclass(this.track, tiles, target, from);
+    if (!plan.changes.length)
+      return {
+        ok: false,
+        cost: {},
+        changes: [],
+        reason: STR.build.reclass[plan.reason ?? 'nothing'],
+      };
+    const cost: Cost = {};
+    if (target === 'high_speed')
+      for (const c of plan.changes) {
+        const old = this.track.get(c.x, c.y)!;
+        const was = pieceCost(old.kind, old.cls, old.cls2);
+        const more: Cost = {};
+        for (const [k, v] of Object.entries(pieceCost(c.kind, c.cls, c.cls2)))
+          if (v > (was[k] ?? 0)) more[k] = v - (was[k] ?? 0);
+        let mul = 0;
+        for (const t of this.track.unitTiles(c.x, c.y))
+          mul = Math.max(mul, this.terrainMul(t.x, t.y));
+        for (const [k, v] of Object.entries(this.priced(more, mul))) cost[k] = (cost[k] ?? 0) + v;
+      }
+    return { ...this.affordable(cost), changes: plan.changes };
+  }
+  /** Convert the pieces on `tiles` between wide and high-speed track, keeping the line joined. */
+  reclassTrack(
+    tiles: { x: number; y: number }[],
+    target: WideClass,
+    from?: { x: number; y: number },
+  ): boolean {
+    const c = this.checkReclass(tiles, target, from);
+    if (!c.ok || !this.pay(c.cost)) return false;
+    const laid: { x: number; y: number }[] = [];
+    for (const p of c.changes)
+      laid.push(...this.track.place(p.x, p.y, p.kind, p.rot, p.cls, p.cls2, p.form ?? 'turn'));
+    for (const t of laid) {
+      this.refreshBridgeCapacity(t.x, t.y);
+      this.onTrackChanged?.(t.x, t.y);
+    }
+    for (const t of this.track.refreshSwitchForms(laid)) this.onTrackChanged?.(t.x, t.y);
+    for (const t of laid) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     return true;
   }

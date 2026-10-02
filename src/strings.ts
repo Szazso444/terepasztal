@@ -138,6 +138,11 @@ export const STR = {
     needTransition: 'Different track classes join through a transition piece',
     gaugeBreak: 'Narrow and wide gauge do not join: cross them with a crossing piece',
     narrowLocked: 'Narrow gauge is not unlocked yet',
+    reclass: {
+      narrow: 'Narrow track cannot be converted: its curves are a different size',
+      nothing: 'Nothing to convert here',
+      blocked: 'No straight beside this piece to carry the transition: lay one first',
+    } as Record<string, string>,
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
