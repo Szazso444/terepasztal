@@ -10,14 +10,20 @@ a more modern one and the player can turn it. The pictures are produced by Codex
 own from one prompt, one guide and one work list. This spec covers that package. It also fixes
 the conventions the game will rely on.
 
-The whole feature is three sub-projects, each with its own spec and plan:
+The whole feature is four sub-projects, each with its own spec and plan:
 
 1. **Art package (this spec).** Conventions, guides, work list, checks, review sheets. No change
    to how the game runs.
-2. **Six ages and one level per age.** Nuclear, Magnetic and Hyper join Steam, Diesel and
-   Electric. For now a new age only unlocks the next building level.
-3. **Rotation, front platform and art integration.** Buildings turn in four steps; a station's
-   platform is the track along its front; the game loads the new pictures.
+2. **Track toolbar.** Track pieces grouped by type with hotkeys, regular track renamed to wide,
+   and tools that upgrade wide track to high speed or downgrade it by dragging along it. Its own
+   spec: `2026-10-02-track-toolbar-design.md`.
+3. **Ages and upgrading.** Nuclear, Magnetic and Hyper join Steam, Diesel and Electric; for now a
+   new age only unlocks the next building level. An upgrade takes game time, during which the
+   building neither produces nor consumes (the depot's is instant), and ends with a halo over the
+   building, like a level-up.
+4. **Rotation, front platform and art integration.** Buildings turn in four steps with R, the key
+   that already turns track; a station's platform is the track along its front; the game loads
+   the new pictures.
 
 Out of scope everywhere: new locomotives, wagons or track for the new ages (a separate
 implementation), old-save compatibility beyond not crashing, bridges, signals, power lines.
@@ -52,7 +58,8 @@ standing outside and facing it, B on its left).
 | `r2` | N (up-right)   | back                  | side B                 |
 | `r3` | E (down-right) | side B                | front                  |
 
-Each step turns the building a quarter turn clockwise seen from above. The front is where the
+Each step turns the building a quarter turn clockwise seen from above; in the game the player
+takes a step with R, as for track. The front is where the
 door and, for stations, the platform canopy are. Track always runs parallel to the front: in
 front of it for stations, through the hall for depots, whose portals are in sides A and B.
 
@@ -65,15 +72,17 @@ front of it for stations, through the hall for depots, whose portals are in side
 ### Canvas
 
 All pictures are drawn in the game's own projection: orthographic, ground edges at exactly 2:1
-(26.57 degrees), verticals vertical, 8 canvas px per game px (a tile is 512 x 256 canvas px).
+(26.57 degrees), verticals vertical. The canvases are the sizes image generators return, so a
+picture comes back at the size of its guide.
 
-| Footprint          | Canvas      | Footprint centre | Used by      |
-| ------------------ | ----------- | ---------------- | ------------ |
-| 1x1                | 1024 x 1024 | (512, 832)       | all others   |
-| 1x2 (along a side) | 1024 x 1024 | (512, 800)       | narrow depot |
-| 2x2                | 1536 x 1280 | (768, 960)       | depot        |
+| Footprint            | Canvas      | Canvas px per game px | Footprint centre | Used by      |
+| -------------------- | ----------- | --------------------- | ---------------- | ------------ |
+| 1x1                  | 1024 x 1024 | 8                     | (512, 832)       | all others   |
+| 1x2 (long way front) | 1024 x 1024 | 8                     | (512, 800)       | narrow depot |
+| 2x2                  | 1536 x 1024 | 6                     | (768, 760)       | depot        |
 
-The footprint centre is a fixed pixel, so the game can place a picture without measuring it.
+A tile is 64 x 32 game px. The footprint centre is a fixed pixel and the scale is fixed per
+footprint, so the game can place a picture without measuring it.
 Background alpha 0. Light from the upper left: tops lightest, lower-left wall mid, lower-right
 wall darkest. No ground, shadow, rails, people, smoke, text or loose objects. The building stands
 inside its footprint; nothing may reach below or beside the footprint diamond at ground level.
@@ -158,10 +167,10 @@ Codex works on its own branch, `art/buildings-v2`, and touches only `assets/sour
 
 Only `pngjs`, which the repository already uses for its other art tools.
 
-## 5. What the game will do with the pictures (sub-project 3, stated here so the art fits)
+## 5. What the game will do with the pictures (sub-project 4, stated here so the art fits)
 
-- Pictures are placed by the fixed footprint centre, without the reprojection and widening that
-  today's converter applies to the older pictures.
+- Pictures are placed by the fixed footprint centre and scale, without the reprojection and
+  widening that today's converter applies to the older pictures.
 - A missing picture falls back to the same age in another rotation, then to the age before, then
   to today's picture. The game stays playable while Codex works.
 - The structures atlas is split into several files, since one 4096 px sheet cannot hold 560
