@@ -51,7 +51,7 @@
         "stone": 2,
         "iron": 2
       },
-      "rotations": 2
+      "rotations": 4
     }
   },
   "terrainCost": {
