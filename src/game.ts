@@ -2502,6 +2502,11 @@ export class Game {
     if (inp.wasPressed('KeyM')) this.toggleOverview();
     if (inp.wasPressed('Tab') && this.toolbar.open && this.viewTarget === 0)
       this.toolbar.cycle(inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? -1 : 1);
+    // U / Shift+U: the tools that upgrade wide track to high speed and downgrade it
+    if (inp.wasPressed('KeyU') && this.viewTarget === 0 && !this.screens.current)
+      this.toolbar.toggleReclass(
+        inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? 'regular' : 'high_speed',
+      );
     // Q / E: the previous and the next type of the open category (track by gauge)
     if (this.toolbar.open && this.viewTarget === 0) {
       if (inp.wasPressed('KeyQ')) this.toolbar.cycleGroup(-1);

@@ -138,6 +138,8 @@ export const STR = {
     needTransition: 'Different track classes join through a transition piece',
     gaugeBreak: 'Narrow and wide gauge do not join: cross them with a crossing piece',
     narrowLocked: 'Narrow gauge is not unlocked yet',
+    reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
+    reclassFree: (what: string) => `${what}: free`,
     reclass: {
       narrow: 'Narrow track cannot be converted: its curves are a different size',
       nothing: 'Nothing to convert here',
@@ -173,6 +175,12 @@ export const STR = {
     services: 'Services',
     utility: 'Utility',
     removeHint: 'Right-click / Delete removes',
+    upgrade: 'Upgrade',
+    downgrade: 'Downgrade',
+    upgradeHint:
+      'Wide track to high speed: click a piece or drag along the line. Costs the difference. (U)',
+    downgradeHint:
+      'High-speed track back to wide: click a piece or drag along the line. Free. (Shift+U)',
     select: 'Select',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
     typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',

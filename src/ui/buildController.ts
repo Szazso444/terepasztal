@@ -1,3 +1,4 @@
+import { stepTiles, type WideClass } from '../world/reclass';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
 import { rotationCount, itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
@@ -38,6 +39,8 @@ export class BuildController {
   onSelect: ((s: Station | null) => void) | null = null;
   onStatus: ((text: string) => void) | null = null;
   onToolChanged: ((t: Tool) => void) | null = null;
+  /** Upgrade / Downgrade: the tile converted last while the button is held */
+  private reclassAt: { x: number; y: number } | null = null;
   hoverStation: Station | null = null;
   hoverBuilding: Building | null = null;
   selectedBuilding: Building | null = null;
@@ -68,6 +71,7 @@ export class BuildController {
       this.tool.kind === 'track' && t.kind === 'track' && this.tool.item.kind === t.item.kind;
     this.tool = t;
     if (!sameShape) this.rot = 0;
+    this.reclassAt = null;
     this.dragStart = null;
     this.clearGhost();
     if (t.kind !== 'none') this.select(null);
@@ -149,6 +153,9 @@ export class BuildController {
         break;
       case 'remove':
         this.updateRemoveTool(t, inMap);
+        break;
+      case 'reclass':
+        this.updateReclassTool(t, inMap);
         break;
       case 'terrain':
         this.updateTerrainTool(t, inMap);
@@ -526,6 +533,52 @@ export class BuildController {
             : {};
     this.status(Object.keys(refund).length ? STR.build.refund(fmtCost(refund)) : '');
     for (const c of this.input.clicks) if (c.button === 0) this.removeAt(t.x, t.y);
+  }
+
+  /**
+   * Upgrade / Downgrade: convert the piece under the cursor on a press, and every tile the cursor
+   * enters while the button stays down. Each step knows the tile it came from, so a crossing
+   * converts the line the stroke runs along.
+   */
+  private updateReclassTool(t: { x: number; y: number }, inMap: boolean) {
+    const tool = this.tool as { kind: 'reclass'; target: WideClass };
+    const inp = this.input;
+    if (this.ghost) this.ghost.visible = false;
+    if (!inp.buttons.has(0)) this.reclassAt = null;
+    if (!inMap) {
+      this.ghostDiamond.visible = false;
+      return;
+    }
+    const what = tool.target === 'high_speed' ? STR.toolbar.upgrade : STR.toolbar.downgrade;
+    if (inp.buttons.has(0)) {
+      // a fast stroke skips tiles between frames: walk every tile from the last one to this one
+      const path = this.reclassAt ? stepTiles(this.reclassAt, t) : [t];
+      for (const p of path) {
+        if (this.reclassAt && p.x === this.reclassAt.x && p.y === this.reclassAt.y) continue;
+        this.builder.reclassTrack([p], tool.target, this.reclassAt ?? undefined);
+        this.reclassAt = p;
+      }
+    }
+    const piece = this.builder.track.get(t.x, t.y);
+    if (!piece) {
+      this.ghostDiamond.visible = false;
+      this.status('');
+      return;
+    }
+    const check = this.builder.checkReclass([t], tool.target, this.reclassAt ?? undefined);
+    this.world.setSpriteFrame(
+      this.ghostDiamond,
+      check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
+    );
+    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
+    this.ghostDiamond.tint = 0xffffff;
+    this.status(
+      check.changes.length
+        ? Object.keys(check.cost).length
+          ? `${STR.build.reclassCost(what, fmtCost(check.cost))}${check.ok ? '' : ` (${check.reason})`}`
+          : STR.build.reclassFree(what)
+        : (check.reason ?? ''),
+    );
   }
 
   private updateTerrainTool(t: { x: number; y: number }, inMap: boolean) {

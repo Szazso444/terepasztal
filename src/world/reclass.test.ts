@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Dir, DIRS, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import { TrackGraph, pieceLinks, type TrackClass } from './track';
-import { planReclass, type ReclassPlan } from './reclass';
+import { planReclass, stepTiles, type ReclassPlan } from './reclass';
 
 const W = 40;
 const NS = 0,
@@ -459,5 +459,37 @@ describe('downgrading', () => {
     expect(g.get(10, 10)!.rot).toBe(1);
     expect(at(g, 9, 10)).toBe('transition/regular');
     expect(at(g, 10, 9)).toBe('straight/high_speed');
+  });
+});
+
+describe('a stroke across tiles', () => {
+  it('visits every tile on the way, one step at a time', () => {
+    for (const [a, b] of [
+      [
+        { x: 5, y: 5 },
+        { x: 9, y: 5 },
+      ],
+      [
+        { x: 5, y: 5 },
+        { x: 8, y: 7 },
+      ],
+      [
+        { x: 5, y: 5 },
+        { x: 3, y: 11 },
+      ],
+      [
+        { x: 5, y: 5 },
+        { x: 5, y: 5 },
+      ],
+    ]) {
+      const path = stepTiles(a, b);
+      expect(path).toHaveLength(Math.abs(b.x - a.x) + Math.abs(b.y - a.y));
+      let at = a;
+      for (const p of path) {
+        expect(Math.abs(p.x - at.x) + Math.abs(p.y - at.y)).toBe(1);
+        at = p;
+      }
+      expect(at).toEqual(b);
+    }
   });
 });

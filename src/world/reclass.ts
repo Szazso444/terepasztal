@@ -243,3 +243,29 @@ export function planReclass(
   changes.sort((a, b) => a.y - b.y || a.x - b.x);
   return { changes };
 }
+
+/**
+ * The tiles a stroke passes from `a` to `b`, after `a` and up to `b`, each beside the one before:
+ * a cursor that jumps several tiles between frames still visits every tile on the way.
+ */
+export function stepTiles(a: Tile, b: Tile): Tile[] {
+  const out: Tile[] = [];
+  const nx = Math.abs(b.x - a.x),
+    ny = Math.abs(b.y - a.y);
+  const sx = Math.sign(b.x - a.x),
+    sy = Math.sign(b.y - a.y);
+  let x = a.x,
+    y = a.y;
+  // step along whichever axis has fallen further behind the straight line
+  for (let ix = 0, iy = 0; ix < nx || iy < ny;) {
+    if (iy >= ny || (ix < nx && (ix + 0.5) * ny < (iy + 0.5) * nx)) {
+      x += sx;
+      ix++;
+    } else {
+      y += sy;
+      iy++;
+    }
+    out.push({ x, y });
+  }
+  return out;
+}
