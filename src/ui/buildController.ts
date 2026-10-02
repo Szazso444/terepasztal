@@ -566,10 +566,9 @@ export class BuildController {
       return;
     }
     const check = this.builder.checkReclass([t], tool.target, this.reclassAt ?? undefined);
-    this.world.setSpriteFrame(
-      this.ghostDiamond,
-      check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
-    );
+    // red only where something stops the conversion; track already converted is fine
+    const fine = check.ok || check.reason === STR.build.reclass.nothing;
+    this.world.setSpriteFrame(this.ghostDiamond, fine ? 'terrain/ghost_ok' : 'terrain/ghost_bad');
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
     this.status(
