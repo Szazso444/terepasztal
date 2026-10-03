@@ -58,6 +58,22 @@ export function diamond(fp, rot) {
   };
 }
 
+/** A building's walls stand this far inside its footprint's edge, in tiles. */
+export const WALL_INSET = 0.06;
+
+/** The ground corners of a building's walls on the canvas: the footprint, set in by WALL_INSET. */
+export function wallBase(fp, rot) {
+  const { w, h } = footprintTiles(fp, rot);
+  const x = w / 2 - WALL_INSET,
+    y = h / 2 - WALL_INSET;
+  return {
+    n: project(fp, -x, -y),
+    e: project(fp, x, -y),
+    s: project(fp, x, y),
+    w: project(fp, -x, y),
+  };
+}
+
 export function pictureFile(family, age, rot) {
   return `${ROOT}/${family}/${family}-a${age}-r${rot}.png`;
 }

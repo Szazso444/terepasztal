@@ -9,7 +9,15 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
-import { FOOTPRINTS, ROOT, ROTATIONS, footprintTiles, project, wallRole } from './building-kit.mjs';
+import {
+  FOOTPRINTS,
+  ROOT,
+  ROTATIONS,
+  WALL_INSET,
+  footprintTiles,
+  project,
+  wallRole,
+} from './building-kit.mjs';
 
 export const GREY = {
   top: [222, 222, 222],
@@ -23,7 +31,6 @@ export const GREY = {
 };
 /** Game px. The plinth is the footprint; the block stands on it, set in from its edge. */
 const PLINTH = 4;
-const INSET = 0.06;
 const HEIGHT = { t1: 40, t1tall: 40, t1x2: 34, t2x2: 46 };
 /** Openings per footprint: `at` is the offset along the wall from its middle, in tiles. */
 const OPENINGS = {
@@ -49,8 +56,8 @@ export function guideFile(fpId, rot) {
 /** The block of a guide: tile offsets from the footprint centre, heights in game px. */
 export function blockOf(fpId, rot) {
   const { w, h } = footprintTiles(FOOTPRINTS[fpId], rot);
-  const x1 = w / 2 - INSET,
-    y1 = h / 2 - INSET;
+  const x1 = w / 2 - WALL_INSET,
+    y1 = h / 2 - WALL_INSET;
   return { x0: -x1, y0: -y1, x1, y1, z0: PLINTH, z1: PLINTH + HEIGHT[fpId] };
 }
 

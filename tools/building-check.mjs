@@ -1,35 +1,38 @@
-/** Check building pictures against the conventions: canvas, background, footprint, size.
+/** Check building pictures: background, view, size, and where the building stands.
  *
  *   node tools/building-check.mjs <file> [<file> ...]
  *   node tools/building-check.mjs --family depot
  *   node tools/building-check.mjs --all
  *
  * One line per picture; assets/source/buildings-v2/report.json keeps the results. Exit code 1 when
- * a picture fails. The check knows where a building must stand, not what it must look like: whether
- * the front is on the right wall and the style is right is for eyes to judge, on the review sheets.
+ * a picture fails. A picture need not match its guide to the pixel: image generators fill the
+ * canvas and pick its size themselves. The check measures where the building stands instead
+ * (building-fit.mjs) and records it, and fails only what a new attempt can put right. It cannot
+ * see what the building is: whether the front is on the right wall and the style is right is for
+ * eyes to judge, on the review sheets.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
-import { FOOTPRINTS, ROOT, diamond, loadInventory, pictures } from './building-kit.mjs';
+import { FOOTPRINTS, ROOT, loadInventory, pictures, wallBase } from './building-kit.mjs';
+import { FIT, fitPicture } from './building-fit.mjs';
 
 export const REPORT_FILE = `${ROOT}/report.json`;
 
-/** Canvas px. */
 const LIMIT = {
-  /** the lowest pixel may sit this far above the footprint's near corner (walls set in a little) */
-  above: 48,
-  /** ... and this far below it */
-  below: 12,
-  /** the building's middle may be this far to the side of the footprint's */
-  aside: 40,
-  /** roofs and cranes may overhang the footprint's left and right corners by this much */
-  overhang: 48,
-  /** the canvas edge stays empty for this many pixels */
+  /** the shortest side of a picture, px */
+  side: 768,
+  /** the picture's edge stays empty for this many pixels */
   edge: 2,
-  /** and the top of the canvas for this many */
-  headroom: 16,
+  /** picture px the building needs per game px: the density of the game's atlas */
+  density: 4,
+  /** a trusted ground line outside these slopes is not the game's view (the game's is 0.5) */
+  slope: [0.25, 0.8],
+  /** share of the building's columns that may end on one level line */
+  level: 0.5,
+  /** translucent pixels, as a share of the solid ones: more is a shadow or a glow */
+  haze: 0.08,
 };
 
 /** Which picture a file is, from its name: `<family>-a<age>-r<rot>.png`. */
@@ -39,13 +42,20 @@ export function pictureOf(path) {
   return { id: `${m[1]}-a${m[2]}-r${m[3]}`, family: m[1], age: Number(m[2]), rot: Number(m[3]) };
 }
 
-/** Check one decoded picture of a footprint at a rotation. */
+const SIDES = ['lower-left', 'lower-right'];
+
+/**
+ * Check one decoded picture of a footprint at a rotation. `problems` fail the picture; `notes`
+ * are for the person who reviews it; `fit` is how it is laid onto its footprint.
+ */
 export function checkPicture(png, fpId, rot) {
   const fp = FOOTPRINTS[fpId];
   const { width: W, height: H, data } = png;
-  if (W !== fp.canvas[0] || H !== fp.canvas[1])
-    return { ok: false, problems: [`canvas ${W}x${H}, expected ${fp.canvas[0]}x${fp.canvas[1]}`] };
-  const alpha = (x, y) => data[(y * W + x) * 4 + 3];
+  if (Math.min(W, H) < LIMIT.side)
+    return {
+      ok: false,
+      problems: [`picture is ${W}x${H}; its short side must be at least ${LIMIT.side} px`],
+    };
   let empty = 0,
     present = 0,
     solid = 0,
@@ -55,7 +65,7 @@ export function checkPicture(png, fpId, rot) {
     maxX = -1,
     minY = H,
     maxY = -1;
-  /** lowest opaque pixel of every column */
+  /** lowest building pixel of every column */
   const low = new Int32Array(W).fill(-1);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
@@ -67,7 +77,7 @@ export function checkPicture(png, fpId, rot) {
       }
       present++;
       if (a >= 240) solid++;
-      if (a <= 128) continue;
+      if (a <= FIT.alpha) continue;
       opaque++;
       if (Math.abs(data[o] - data[o + 1]) <= 4 && Math.abs(data[o + 1] - data[o + 2]) <= 4) grey++;
       if (x < minX) minX = x;
@@ -78,46 +88,75 @@ export function checkPicture(png, fpId, rot) {
     }
   if (!opaque) return { ok: false, problems: ['empty picture'] };
 
-  const problems = [];
   const corner = (cx, cy) => {
     for (let y = cy; y < cy + 16; y++)
-      for (let x = cx; x < cx + 16; x++) if (alpha(x, y) > 8) return false;
+      for (let x = cx; x < cx + 16; x++) if (data[(y * W + x) * 4 + 3] > 8) return false;
     return true;
   };
   const corners = corner(0, 0) && corner(W - 16, 0) && corner(0, H - 16) && corner(W - 16, H - 16);
-  if (empty < 0.25 * W * H || !corners) problems.push('background is not transparent');
-  if (grey >= 0.9 * opaque) problems.push('still grey: not painted');
+  // nothing else can be measured on a picture with a background
+  if (empty < 0.25 * W * H || !corners)
+    return { ok: false, problems: ['background is not transparent'] };
 
+  const problems = [];
+  const notes = [];
+  if (grey >= 0.9 * opaque) problems.push('still grey: not painted');
   if (minY < LIMIT.edge) problems.push('touches the top edge');
   if (minX < LIMIT.edge) problems.push('touches the left edge');
   if (maxX >= W - LIMIT.edge) problems.push('touches the right edge');
   if (maxY >= H - LIMIT.edge) problems.push('touches the bottom edge');
-
-  const d = diamond(fp, rot);
-  const up = Math.round(d.s[1] - maxY);
-  if (up > LIMIT.above) problems.push(`base is ${up} px above the footprint`);
-  if (up < -LIMIT.below) problems.push(`base is ${-up} px below the footprint`);
-  const side = Math.round((minX + maxX) / 2 - (d.w[0] + d.e[0]) / 2);
-  if (side > LIMIT.aside) problems.push(`base is ${side} px right of the footprint`);
-  if (side < -LIMIT.aside) problems.push(`base is ${-side} px left of the footprint`);
-
-  // at ground level the building stays inside the footprint's two near edges
-  if (minX < d.w[0] - LIMIT.overhang) problems.push('reaches outside the footprint at the left');
-  if (maxX > d.e[0] + LIMIT.overhang) problems.push('reaches outside the footprint at the right');
-  const edge = (x) =>
-    x <= d.s[0]
-      ? d.w[1] + ((x - d.w[0]) * (d.s[1] - d.w[1])) / (d.s[0] - d.w[0])
-      : d.s[1] + ((x - d.s[0]) * (d.e[1] - d.s[1])) / (d.e[0] - d.s[0]);
-  for (let x = Math.max(minX, Math.ceil(d.w[0])); x <= Math.min(maxX, Math.floor(d.e[0])); x++)
-    if (low[x] > edge(x) + LIMIT.below) {
-      problems.push('reaches outside the footprint at the ground');
-      break;
-    }
-
-  if (maxX - minX + 1 < 0.5 * (d.e[0] - d.w[0])) problems.push('too small');
-  if (minY < LIMIT.headroom) problems.push('too tall for the canvas');
   if (solid < 0.5 * present) problems.push('mostly translucent');
-  return { ok: problems.length === 0, problems };
+  else if (present - opaque > LIMIT.haze * opaque)
+    problems.push(
+      `a translucent shadow or glow surrounds the building (${Math.round(
+        (100 * (present - opaque)) / opaque,
+      )} % of its size)`,
+    );
+
+  // seen from the front, a building's foot is one level line; in the game's view it is a corner
+  const tol = Math.max(3, Math.round((maxX - minX) * 0.006));
+  let level = 0;
+  for (let x = minX; x <= maxX; x++) if (low[x] >= maxY - tol) level++;
+  if (level > LIMIT.level * (maxX - minX + 1)) {
+    problems.push(
+      "not the game's view: the building's foot is a level line, as if seen from the front",
+    );
+    return { ok: false, problems };
+  }
+
+  const fit = fitPicture(png, fpId, rot);
+  if (!fit) {
+    problems.push('no building found in the picture');
+    return { ok: false, problems };
+  }
+  // both ground lines far from the game's: a wrong camera. One alone is more often clutter at
+  // the foot of that wall than a camera, so it is left to the reviewer.
+  const far = (i) =>
+    fit.sure[i] &&
+    (Math.abs(fit.measured[i]) < LIMIT.slope[0] || Math.abs(fit.measured[i]) > LIMIT.slope[1]);
+  const wrongView = far(0) && far(1);
+  fit.sure.forEach((sure, i) => {
+    if (!sure) return;
+    const s = fit.measured[i].toFixed(2);
+    if (wrongView)
+      problems.push(
+        `not the game's view: the ${SIDES[i]} wall's ground line slopes ${s}, the game's ${(i ? -0.5 : 0.5).toFixed(2)}`,
+      );
+    else if (fit.measured[i] !== fit.slopes[i])
+      notes.push(`camera corrected only part of the way: the ${SIDES[i]} ground line slopes ${s}`);
+  });
+  const base = wallBase(fp, rot);
+  const foot = fit.base.e[0] - fit.base.w[0];
+  const needed = Math.ceil(((base.e[0] - base.w[0]) / fp.scale) * LIMIT.density);
+  if (foot < needed)
+    problems.push(
+      `too small in the picture: its foot is ${Math.round(foot)} px wide, at least ${needed} px are needed`,
+    );
+  if (fit.method === 'outline')
+    notes.push('placed by its outline: no straight wall base was found');
+  if (fit.box.top < 0)
+    notes.push(`taller than its canvas by ${Math.round(-fit.box.top)} px once on its footprint`);
+  return { ok: problems.length === 0, problems, notes, fit };
 }
 
 /** Check a file on disk. */
@@ -136,6 +175,24 @@ export function summarise(results, previous = null) {
   const all = { ...(previous?.pictures ?? {}), ...results };
   const list = Object.values(all);
   return { checked: list.length, failed: list.filter((r) => !r.ok).length, pictures: all };
+}
+
+export function readReport(root = '.') {
+  const file = `${root}/${REPORT_FILE}`;
+  return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
+}
+
+/** Add results to the report on disk; `fresh` starts it anew. */
+export function writeReport(results, fresh = false) {
+  const report = summarise(results, fresh ? null : readReport());
+  writeFileSync(REPORT_FILE, JSON.stringify(report, null, 2) + '\n');
+  return report;
+}
+
+/** One line for a checked picture. */
+export function resultLine(id, r) {
+  if (!r.ok) return `FAIL  ${id}: ${r.problems.join('; ')}`;
+  return `ok    ${id}${r.notes?.length ? `  (${r.notes.join('; ')})` : ''}`;
 }
 
 function main(args) {
@@ -157,12 +214,14 @@ function main(args) {
     return 1;
   }
   const results = {};
-  let missing = 0;
+  let missing = 0,
+    strangers = 0;
   for (const file of files) {
     const p = pictureOf(file);
     if (!p || !footprintOf.has(p.family)) {
+      // not a picture of the list: said, but kept out of the report
       console.log(`FAIL  ${file}: not a building picture's name (<family>-a<age>-r<rot>.png)`);
-      results[file] = { ok: false, problems: ['not a building picture'] };
+      strangers++;
       continue;
     }
     if (!existsSync(file)) {
@@ -175,14 +234,12 @@ function main(args) {
     }
     const r = checkFile(file, footprintOf.get(p.family), p.rot);
     results[p.id] = r;
-    console.log(r.ok ? `ok    ${p.id}` : `FAIL  ${p.id}: ${r.problems.join('; ')}`);
+    console.log(resultLine(p.id, r));
   }
-  const previous = existsSync(REPORT_FILE) ? JSON.parse(readFileSync(REPORT_FILE, 'utf8')) : null;
-  const report = summarise(results, args[0] === '--all' ? null : previous);
-  writeFileSync(REPORT_FILE, JSON.stringify(report, null, 2) + '\n');
-  const failed = Object.values(results).filter((r) => !r.ok).length;
+  writeReport(results, args[0] === '--all');
+  const failed = Object.values(results).filter((r) => !r.ok).length + strangers;
   console.log(
-    `${Object.keys(results).length} checked, ${failed} failed` +
+    `${Object.keys(results).length + strangers} checked, ${failed} failed` +
       (missing ? `, ${missing} not made yet` : ''),
   );
   return failed ? 1 : 0;

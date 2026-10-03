@@ -11,6 +11,8 @@ import {
   pictures,
   pictureFile,
   frameKey,
+  WALL_INSET,
+  wallBase,
 } from './building-kit.mjs';
 
 describe('building inventory', () => {
@@ -115,6 +117,26 @@ describe('building conventions', () => {
       s: [512, 960],
       w: [256, 832],
     });
+  });
+
+  it('sets the walls in from the footprint edge, where the guide block stands', () => {
+    expect(WALL_INSET).toBe(0.06);
+    // one tile: 0.06 tile in from each edge, on the ground
+    expect(wallBase(FOOTPRINTS.t1, 0)).toEqual({
+      n: project(FOOTPRINTS.t1, -0.44, -0.44),
+      e: project(FOOTPRINTS.t1, 0.44, -0.44),
+      s: project(FOOTPRINTS.t1, 0.44, 0.44),
+      w: project(FOOTPRINTS.t1, -0.44, 0.44),
+    });
+    // the narrow depot turns: two tiles along x at r0, along y at r1
+    expect(wallBase(FOOTPRINTS.t1x2, 0).s).toEqual(project(FOOTPRINTS.t1x2, 0.94, 0.44));
+    expect(wallBase(FOOTPRINTS.t1x2, 1).s).toEqual(project(FOOTPRINTS.t1x2, 0.44, 0.94));
+    // its middle is the footprint centre
+    for (const fp of Object.values(FOOTPRINTS))
+      for (const r of ROTATIONS) {
+        const b = wallBase(fp, r.index);
+        expect([(b.w[0] + b.e[0]) / 2, (b.w[1] + b.e[1]) / 2]).toEqual(fp.centre);
+      }
   });
 
   it("turns the narrow depot's footprint with it", () => {
