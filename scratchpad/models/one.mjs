@@ -7,6 +7,7 @@ p.on('pageerror', (e) => errs.push(e.message));
 await p.goto(`http://127.0.0.1:5182/scratchpad/models/?${query}`);
 await p.waitForFunction(() => typeof window.qa?.shot === 'function', null, { timeout: 180000 });
 const r = await p.evaluate(expr ?? 'qa.shot()');
+if (!expr) await p.evaluate(() => qa.settle());
 await p.screenshot({ path: out });
 console.log(JSON.stringify(r), errs);
 await b.close();

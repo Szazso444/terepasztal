@@ -119,6 +119,10 @@ function frame(progress, zoom = 2, follow = false) {
     const q = t.vehiclePoses[Math.min(1, t.vehiclePoses.length - 1)];
     cx = (p.x + q.x) / 2;
     cy = (p.y + q.y) / 2;
+    if (follow === 'engine') {
+      cx = p.x;
+      cy = p.y;
+    }
   }
   const at = tileToWorld(cx, cy);
   const dz = follow ? g.world.railAt(cx, cy).dz : -8;

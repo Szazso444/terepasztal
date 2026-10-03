@@ -16,49 +16,36 @@ const SHEET = ['rocket', 'bm50', 'muki', 'c50', 'mav490', 'mk45', 'mk48', 'rezet
   'big_boy', 'koutetsujou'];
 const numbered = SHEET.map((id, i) => ({ id, n: i + 1 })).filter((e) => e.id);
 const GROUPS = [
-  { name: 'ids-01-08', from: 1, to: 8, zoom: 3 },
-  { name: 'ids-11-17', from: 11, to: 17, zoom: 2.6 },
-  { name: 'ids-18-24', from: 18, to: 24, zoom: 2.2 },
-  { name: 'ids-25-31', from: 25, to: 31, zoom: 2.2 },
-  { name: 'ids-32-39', from: 32, to: 39, zoom: 1.9 },
-  { name: 'all', from: 1, to: 39, zoom: 1.15 },
+  { name: 'ids-01-08', from: 1, to: 8, zoom: 3, gap: 1 },
+  { name: 'ids-11-17', from: 11, to: 17, zoom: 3, gap: 2 },
+  { name: 'ids-18-24', from: 18, to: 24, zoom: 3, gap: 2 },
+  { name: 'ids-25-31', from: 25, to: 31, zoom: 3, gap: 2 },
+  { name: 'ids-32-39', from: 32, to: 39, zoom: 3, gap: 2 },
+  { name: 'all', from: 1, to: 39, zoom: 1.5, gap: 1 },
 ];
-const W = 1800, H = 1100;
+const W = 2400, H = 1400;
 const browser = await launch();
 const report = { errors: [], lineups: {}, curves: [] };
 try {
   if (what !== 'curve')
     for (const grp of GROUPS) {
       const es = numbered.filter((e) => e.n >= grp.from && e.n <= grp.to);
-      const q = `rows=${es.map((e) => e.id).join(',')}&ids=${es.map((e) => e.n).join(',')}&zoom=${grp.zoom}`;
+      const q = `rows=${es.map((e) => e.id).join(',')}&ids=${es.map((e) => e.n).join(',')}&zoom=${grp.zoom}&gap=${grp.gap}`;
       const shots = {};
-      let placed = null;
+      let placed = null, box = null;
       for (const night of [0, 1]) {
         const page = await browser.newPage({ viewport: { width: W, height: H } });
         page.on('pageerror', (e) => report.errors.push(`${grp.name}: ${e.message}`));
         await page.goto(`${BASE}?${q}&night=${night}`);
         await page.waitForFunction(() => typeof window.qa?.shot === 'function', null, { timeout: 240000 });
-        placed = await page.evaluate(() => qa.shot());
+        ({ placed, box } = await page.evaluate(() => qa.shot()));
+        if (!(await page.evaluate(() => qa.settle()))) report.errors.push(`${grp.name}: the painted ground was not ready`);
         shots[night ? 'night' : 'day'] = PNG.sync.read(await page.screenshot());
-        if (!night) {
-          await page.evaluate(() => qa.bare());
-          shots.bare = PNG.sync.read(await page.screenshot());
-        }
         await page.close();
       }
-      let x0 = W, y0 = H, x1 = 0, y1 = 0;
-      for (let y = 0; y < H; y++)
-        for (let x = 0; x < W; x++) {
-          const i = (y * W + x) * 4, a = shots.day.data, b = shots.bare.data;
-          if (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) > 30) {
-            if (x < x0) x0 = x;
-            if (x > x1) x1 = x;
-            if (y < y0) y0 = y;
-            if (y > y1) y1 = y;
-          }
-        }
-      const pad = 30;
-      x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(W - 1, x1 + pad); y1 = Math.min(H - 1, y1 + pad);
+      const x0 = Math.max(0, Math.floor(box.x0)), y0 = Math.max(0, Math.floor(box.y0));
+      const x1 = Math.min(W - 1, Math.ceil(box.x1)), y1 = Math.min(H - 1, Math.ceil(box.y1));
+      if (box.x0 < 0 || box.y0 < 0 || box.x1 > W || box.y1 > H) report.errors.push(`${grp.name}: the lineup does not fit the viewport at zoom ${grp.zoom}`);
       const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
       for (const k of ['day', 'night']) {
         const crop = new PNG({ width: cw, height: ch });
@@ -75,6 +62,7 @@ try {
     await page.waitForFunction(() => typeof window.qa?.shot === 'function', null, { timeout: 240000 });
     for (const e of numbered) {
       const r = await page.evaluate(([id]) => qa.curve(id, 3), [e.id]);
+      await page.evaluate(() => qa.settle());
       await page.screenshot({ path: `${out}/curve-${e.id}.png`, clip: { x: 400, y: 260, width: 640, height: 480 } });
       report.curves.push({ ...e, ...r });
     }

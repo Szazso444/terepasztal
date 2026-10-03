@@ -77,6 +77,8 @@ export interface LocoDef {
   spriteGear?: boolean;
   /** where smoke leaves it: the part, tiles ahead of that part's centre, pixels above the rail */
   smoke?: { part: PartKind; along: number; up: number }[];
+  /** its headlamps: the part, tiles ahead of and to the left of that part's centre, pixels above the rail */
+  lamps?: { part: PartKind; along: number; across: number; up: number }[];
   /**
    * Withdrawn from the game: no banner, starter kit or workshop hands out a new one. The entry
    * stays in the table so copies a player already owns keep loading and running.
@@ -611,6 +613,7 @@ interface LocoFit {
   tiles: number;
   sprite?: boolean;
   smoke?: { part: PartKind; along: number; up: number }[];
+  lamps?: { part: PartKind; along: number; across: number; up: number }[];
 }
 function finalize(b: ContentBundle): ContentBundle {
   // each engine's own running gear and length, where both are measured
@@ -624,6 +627,7 @@ function finalize(b: ContentBundle): ContentBundle {
     d.lengthTiles = f.tiles;
     d.spriteGear = f.sprite === true;
     d.smoke = f.smoke;
+    d.lamps = f.lamps;
   }
   for (const w of b.wagons)
     w.accepts = b.cargo.filter((c) => c.class === w.carries).map((c) => c.id);

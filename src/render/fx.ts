@@ -69,11 +69,13 @@ export class DayNight {
 /** Additive lantern glows on stations and locomotive headlamps, visible at night. */
 export class Glows {
   private stationGlows = new Map<number, Sprite>();
-  private trainGlows = new Map<number, Sprite>();
+  private trainGlows = new Map<number, Sprite[]>();
   constructor(
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
     private readonly surface: (x: number, y: number) => { x: number; y: number },
+    /** screen offset of the rail under a tile position (negative is up); level when absent */
+    private readonly railDz: (x: number, y: number) => number = () => 0,
   ) {}
   private make(frame: string) {
     const f = this.atlas.get(frame);
@@ -109,22 +111,51 @@ export class Glows {
       const pose = t.poses[0];
       if (!pose) continue;
       seenT.add(t.id);
-      let s = this.trainGlows.get(t.id);
-      if (!s) {
-        s = this.make('fx/glow_small');
-        this.trainGlows.set(t.id, s);
-      }
       const dir = pose.heading + (t.reversed ? Math.PI : 0);
-      const fx = pose.x + Math.cos(dir) * 0.36;
-      const fy = pose.y + Math.sin(dir) * 0.36;
-      const w = tileToWorld(fx, fy);
-      s.position.set(Math.round(w.x), Math.round(w.y) - 8);
-      s.alpha = night * 0.9;
-      s.visible = night > 0.02;
+      // a rendered model says where its lamps are; any other engine glows ahead of its middle
+      const spots: { x: number; y: number; up: number; size: number; front: number }[] = [];
+      for (const lamp of t.locos[0]?.def.lamps ?? []) {
+        const seg = t.vehiclePoses[0]?.segments.find((g) => g.part === lamp.part);
+        if (!seg) continue;
+        const nose = seg.angle + (t.reversed ? Math.PI : 0) + (seg.mirror ? Math.PI : 0);
+        const c = Math.cos(nose);
+        const sn = Math.sin(nose);
+        spots.push({
+          x: seg.x + c * lamp.along + sn * lamp.across,
+          y: seg.y + sn * lamp.along - c * lamp.across,
+          up: lamp.up,
+          size: 0.6,
+          // a lamp is on the nose: seen while the nose points at the viewer's half
+          front: Math.min(1, Math.max(0, (c + sn) * 2.5 + 0.5)),
+        });
+      }
+      if (!spots.length)
+        spots.push({
+          x: pose.x + Math.cos(dir) * 0.36,
+          y: pose.y + Math.sin(dir) * 0.36,
+          up: 8,
+          size: 1,
+          front: 1,
+        });
+      let glows = this.trainGlows.get(t.id);
+      if (!glows) this.trainGlows.set(t.id, (glows = []));
+      while (glows.length < spots.length) glows.push(this.make('fx/glow_small'));
+      glows.forEach((s, i) => {
+        const spot = spots[i];
+        if (!spot) {
+          s.visible = false;
+          return;
+        }
+        const w = tileToWorld(spot.x, spot.y);
+        s.position.set(Math.round(w.x), Math.round(w.y - spot.up + this.railDz(spot.x, spot.y)));
+        s.scale.set(spot.size);
+        s.alpha = night * 0.9 * spot.front;
+        s.visible = night > 0.02 && spot.front > 0;
+      });
     }
-    for (const [id, s] of this.trainGlows)
+    for (const [id, glows] of this.trainGlows)
       if (!seenT.has(id)) {
-        s.destroy();
+        for (const s of glows) s.destroy();
         this.trainGlows.delete(id);
       }
   }

@@ -16,6 +16,18 @@ import { Text } from 'pixi.js';
 import gearJson from '/src/data/gear.json';
 import fitJson from '/src/data/locoFit.json';
 
+// the Mk48 as main has it (sprites from the turntable video, one tile long), beside the rendered model
+if (!content.locomotives.some((d) => d.id === 'mk48video'))
+  content.locomotives.push({
+    ...content.locomotives.find((d) => d.id === 'mk48'),
+    id: 'mk48video',
+    name: 'MÁV Mk48 (video sprite)',
+    gear: undefined,
+    lengthTiles: undefined,
+    spriteGear: false,
+    smoke: undefined,
+    lamps: undefined,
+  });
 // not in the game's data yet: the Koutetsujou stands in the lineup on the Big Boy's numbers
 if (!content.locomotives.some((d) => d.id === 'koutetsujou') && fitJson.koutetsujou)
   content.locomotives.push({
@@ -26,6 +38,7 @@ if (!content.locomotives.some((d) => d.id === 'koutetsujou') && fitJson.koutetsu
     lengthTiles: fitJson.koutetsujou.tiles,
     spriteGear: true,
     smoke: fitJson.koutetsujou.smoke,
+    lamps: fitJson.koutetsujou.lamps,
   });
 
 const params = new URLSearchParams(location.search);
@@ -57,6 +70,16 @@ for (let y = 10; y < 100; y++)
     }
   }
 const defOf = (id) => content.locomotives.find((d) => d.id === id);
+// ?old=1: '<id>__old' is the engine as it was rendered for the Ladder B review (its sprites and length then)
+if (params.get('old')) {
+  await g.atlas.load([{ name: 'rollingold', generate: () => { throw new Error('rollingold atlas missing'); } }]);
+  const oldLengths = await (await fetch('/scratchpad/models/old-lengths.json')).json();
+  for (const [id, L] of Object.entries(oldLengths)) {
+    const base = defOf(id);
+    if (!base || !gearJson[id] || defOf(id + '__old')) continue;
+    content.locomotives.push({ ...base, id: id + '__old', name: base.name + ' (before)', gear: gearJson[id], lengthTiles: L, spriteGear: true, smoke: undefined, lamps: undefined });
+  }
+}
 const clsOf = (id) => (defOf(id)?.gauge === 'narrow' ? 'narrow' : 'regular');
 const add = (x, y, kind, rot, cls) => {
   for (const q of g.track.place(x, y, kind, rot, cls)) g.onTrackChanged(q.x, q.y);
@@ -136,13 +159,27 @@ function draw(cx, cy, zoom, night) {
     g.clock.time = (23 / 24) / g.clock.dayFraction;
   }
   g.render(1, 0);
+  g.render(1, 0); // twice: the night tint reaches sprites made in the first pass
   g.app.renderer.render(g.app.stage);
   label.textContent = '';
 }
 const NIGHT = Number(params.get('night') ?? 0);
 function shot(zoom = Number(params.get('zoom') ?? 2)) {
-  draw(XS + 2 + RUN - 1.5, rowY((ROWS.length - 1) / 2), zoom, NIGHT);
-  return placed;
+  // where the lineup is on the screen: noses at XS + 2 + RUN, bodies behind them, labels ahead
+  const Lmax = Math.max(1, ...placed.map((p) => p.L ?? 1));
+  const cx = XS + 2 + RUN + 0.3 - Lmax / 2, cy = rowY((ROWS.length - 1) / 2);
+  draw(cx, cy, zoom, NIGHT);
+  const c0 = tileToWorld(cx, cy);
+  const pts = [[XS + 2 + RUN - Lmax - 0.4, rowY(0) - 0.6], [XS + 2 + RUN + 1, rowY(0) - 0.6],
+    [XS + 2 + RUN - Lmax - 0.4, rowY(ROWS.length - 1) + 0.6], [XS + 2 + RUN + 1, rowY(ROWS.length - 1) + 0.6]].map(([x, y]) => {
+    const w = tileToWorld(x, y);
+    return [(w.x - c0.x) * zoom + innerWidth / 2, (w.y - (c0.y - 10)) * zoom + innerHeight / 2];
+  });
+  const box = {
+    x0: Math.min(...pts.map((q) => q[0])), x1: Math.max(...pts.map((q) => q[0])),
+    y0: Math.min(...pts.map((q) => q[1])) - 46 * zoom, y1: Math.max(...pts.map((q) => q[1])) + 6 * zoom,
+  };
+  return { placed, box };
 }
 function bare() {
   for (const l of labels) l.visible = false;
@@ -162,4 +199,16 @@ function curve(id, zoom = 3, wagons) {
   draw(c.corner.x, c.corner.y, zoom, NIGHT);
   return { id, L, progress: t.pathProgress, state: t.state };
 }
-window.qa = { g, shot, bare, curve, placed, defOf };
+// the painted ground arrives from a worker: wait for it (and its close-view copies) at this camera
+async function settle(ms = 30000) {
+  const t0 = performance.now();
+  while (performance.now() - t0 < ms) {
+    g.render(1, 0);
+    if (g.world.landscape.failed || g.world.landscape.sharpReady) break;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  g.render(1, 0);
+  g.app.renderer.render(g.app.stage);
+  return g.world.landscape.sharpReady;
+}
+window.qa = { g, shot, bare, curve, placed, defOf, settle };

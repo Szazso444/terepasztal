@@ -16,6 +16,8 @@ export interface AtlasImage {
   resolution?: number;
   /** a file atlas that replaces only its own frames and keeps the generator for the rest */
   partial?: boolean;
+  /** a file atlas too large for one texture: `<group>-2` .. `<group>-<pages>` hold the rest */
+  pages?: number;
 }
 export type AtlasGenerator = () => AtlasImage;
 
@@ -52,6 +54,10 @@ export class AtlasRegistry {
       // generated first, so the file's frames win where the names collide
       if (fromFile.partial) this.register(generate());
       this.register(fromFile);
+      for (let i = 2; i <= (fromFile.pages ?? 1); i++) {
+        const page = await this.tryLoadFile(`${name}-${i}`);
+        if (page) this.register(page);
+      }
       this.images.set(name, fromFile.image);
       this.groupOrigin.set(name, fromFile.partial ? 'png+procedural' : 'png');
       return;
@@ -77,7 +83,11 @@ export class AtlasRegistry {
         image.onerror = () => fail(new Error('atlas png missing'));
         image.src = `/assets/${name}.png`;
       });
-      return { image, frames: json.frames, resolution, partial: json.partial === true };
+      const pages =
+        Number.isInteger(json.pages) && json.pages! > 1 && json.pages! <= 16
+          ? json.pages
+          : undefined;
+      return { image, frames: json.frames, resolution, partial: json.partial === true, pages };
     } catch {
       return null;
     }

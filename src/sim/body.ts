@@ -371,7 +371,7 @@ export function poseSegment(
   let eSum = 0;
   const K = 12;
   for (let k = 0; k <= K; k++) {
-    const u = (k / K - 0.5) * L;
+    const u = ((k + 0.5) / (K + 1) - 0.5) * L;
     const S = { x: cx + axx * u, y: cy + axy * u };
     const N = pl.nearest(S, arcFront - L / 2 + u).p;
     const e = (N.x - S.x) * nxx + (N.y - S.y) * nxy;

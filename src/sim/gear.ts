@@ -32,8 +32,9 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
   const parts = [...gear.parts].sort((a, b) => b.to - a.to);
   return parts.map((p) => {
     const len = (p.to - p.from) * L;
-    // distances behind this part's front, front to rear
-    const behind = (f: number) => (p.to - f) * L;
+    // distances behind this part's own front, front to rear. A part drawn back to front (a rear
+    // snout) has its own front at the vehicle's rear: the body poser turns it round again.
+    const behind = p.mirror ? (f: number) => (f - p.from) * L : (f: number) => (p.to - f) * L;
     const rigid = (p.rigid ?? []).map(behind).sort((a, b) => a - b);
     const trucks = (p.trucks ?? [])
       .map((axles, i) => ({

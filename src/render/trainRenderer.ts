@@ -248,8 +248,8 @@ export class TrainRenderer {
           // A rendered model brings its window panes as a frame of its own (`…_lit_f<n>`).
           // Procedural vehicle windows carry explicit amber palette pixels. Any other
           // illustrated replacement stays dark: never light a boiler.
-          const litKey = key.replace(/_f(d+)$/, '_lit_f$1');
-          const lit = this.atlas.has(litKey) ? this.atlas.get(litKey) : null;
+          const litKey = key.replace(/_f(\d+)$/, '_lit_f$1');
+          const lit = litKey !== key && this.atlas.has(litKey) ? this.atlas.get(litKey) : null;
           const own = isLoco && key.startsWith(`rolling/loco_${t.locos[i].def.id}_`);
           if (lit || (!own && fr.texture.frame.width / fr.w === 1)) {
             let light = this.windowLights.get(s);
