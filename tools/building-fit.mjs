@@ -160,6 +160,7 @@ export function measureBase(png) {
     s: [sx, sy],
     e: [ex, r.a * ex + r.b],
     top,
+    low,
     minX,
     maxX,
   };
@@ -194,9 +195,11 @@ export function fitPicture(png, fpId, rot) {
   const place = (x, y) => [fp.centre[0] + scale * (x - cx), fp.centre[1] + scale * (up(x, y) - cy)];
   let topY = Infinity,
     lowY = -Infinity;
-  for (let x = m.minX; x <= m.maxX; x++)
-    if (m.top[x] >= 0) topY = Math.min(topY, place(x, m.top[x])[1]);
-  for (const p of [m.w, m.s, m.e]) lowY = Math.max(lowY, place(...p)[1]);
+  for (let x = m.minX; x <= m.maxX; x++) {
+    if (m.top[x] < 0) continue;
+    topY = Math.min(topY, place(x, m.top[x])[1]);
+    lowY = Math.max(lowY, place(x, m.low[x])[1]);
+  }
   return {
     method: m.sure[0] && m.sure[1] ? 'base' : 'outline',
     sure: m.sure,
@@ -249,8 +252,13 @@ export function normalisePicture(png, fit, fpId, shrink = 1) {
   // samples per output pixel along each axis: about one per picture pixel
   const n = Math.max(1, Math.min(8, Math.ceil(shrink / fit.scale)));
   const acc = [0, 0, 0, 0];
-  for (let y = 0; y < H; y++)
-    for (let x = 0; x < W; x++) {
+  // only where the building is: the rest of the canvas stays empty
+  const x0 = Math.max(0, Math.floor(fit.box.left / shrink) - 2),
+    x1 = Math.min(W - 1, Math.ceil(fit.box.right / shrink) + 2),
+    y0 = Math.max(0, Math.floor(fit.box.top / shrink) - 2),
+    y1 = Math.min(H - 1, Math.ceil(fit.box.bottom / shrink) + 2);
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
       acc[0] = acc[1] = acc[2] = acc[3] = 0;
       for (let j = 0; j < n; j++)
         for (let i = 0; i < n; i++) {
