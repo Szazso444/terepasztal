@@ -1,6 +1,8 @@
 # Buildings by era and rotation: the art package for Codex
 
-Status: design agreed in conversation 2026-10-02; this spec awaits review.
+Status: design agreed in conversation 2026-10-02. Revised 2026-10-04 after the depot pilot's first
+pictures and the branch review: pictures are measured, not required to match their guide to the
+pixel (section 1, Canvas; section 4), and there are two gates (section 3).
 Branch: `buildings/art-package` from `origin/main`.
 
 ## Goal
@@ -74,9 +76,9 @@ front of it for stations, through the hall for depots, whose portals are in side
 
 ### Canvas
 
-All pictures are drawn in the game's own projection: orthographic, ground edges at exactly 2:1
-(26.57 degrees), verticals vertical. The canvases are the sizes image generators return, so a
-picture comes back at the size of its guide.
+All pictures are drawn in the game's own projection: orthographic, ground edges at 2:1
+(26.57 degrees), verticals vertical. Each footprint has a canvas with the footprint's centre on a
+fixed pixel. The guides are drawn on it, and it is the size Codex asks the image tool for.
 
 | Footprint                   | Canvas      | Canvas px per game px | Footprint centre | Used by      |
 | --------------------------- | ----------- | --------------------- | ---------------- | ------------ |
@@ -85,11 +87,21 @@ picture comes back at the size of its guide.
 | `t1x2`: 1x2, long way front | 1024 x 1024 | 8                     | (512, 800)       | narrow depot |
 | `t2x2`: 2x2                 | 1536 x 1024 | 6                     | (768, 760)       | depot        |
 
-A tile is 64 x 32 game px. The footprint centre is a fixed pixel and the scale is fixed per
-footprint, so the game can place a picture without measuring it.
+A tile is 64 x 32 game px. A building's walls stand 0.06 tile inside its footprint's edge.
+
+**A picture is measured, not prescribed.** The depot pilot showed what an image generator returns
+for a guide: the guide's view, but the building half as large again, not where the block is, on a
+canvas size of its own choosing (1254 x 1254 for a 1024 x 1024 guide), and with ground lines a
+little off 2:1 (0.30 to 0.56 instead of 0.5). So a picture is not required to match its guide.
+`tools/building-fit.mjs` finds the bases of the two visible walls in the picture and derives from
+them the scale, the place and a small camera correction (a vertical stretch and shear that leave
+upright edges upright) that lay the building onto its footprint. A building whose foot is not two
+straight walls (a round tower, a yard of machinery) is placed by its outline, without a camera
+correction. The check, the review sheets and the game's atlas all use this one measurement.
+
 Background alpha 0. Light from the upper left: tops lightest, lower-left wall mid, lower-right
-wall darkest. No ground, shadow, rails, people, smoke, text or loose objects. The building stands
-inside its footprint; nothing may reach below or beside the footprint diamond at ground level.
+wall darkest. No ground, shadow, rails, people, smoke, text or loose objects. The foot of the two
+visible walls stays plain and straight, with nothing in front of it: it is what is measured.
 
 ## 2. Inventory
 
@@ -121,8 +133,11 @@ Everything lives in `assets/source/buildings-v2/`.
   `approved` or `rejected`. It holds no prompts, so it stays small enough to read and to diff.
 - **The queue tool** (`tools/building-queue.mjs`) is how Codex works the list: `next` prints the
   next picture with its file, guide, references and prompt; `set` records a result; `status`
-  shows progress; `approve-pilot` opens the work after the pilot. `next` stops at the pilot gate
-  and skips pictures whose reference was never made.
+  shows progress and where the list and the disk disagree; `redo` puts pictures back;
+  `approve-pilot` and `accept` record the user's decisions. `next` answers with its exit code: 0 a
+  picture, 2 a gate, 3 nothing left, 4 a stop. A picture is recorded as made only when its file is
+  there and passes the check; a rejected picture's file is set aside (`*.rejected.png`), and
+  nothing is ever built on a picture that was rejected or whose file is gone.
 - **`families.json`**: hand-written, the source of the prompts. The shared block, the six age
   styles, the four view sentences, and per family: what the building does, the features that must
   stay recognisable in every age (a windmill keeps its sails, a depot its portals), its front,
@@ -130,7 +145,7 @@ Everything lives in `assets/source/buildings-v2/`.
 - **`guides/`**: one grey block-out per footprint and rotation (16 files), drawn by code in the
   game's projection: the footprint as a low plinth, a plain massing block on it, the front marked
   by a door opening (depots: portal openings in the end walls). The picture is made as an edit of
-  its guide, so camera, scale and position come out the same for every picture.
+  its guide, which fixes its view and which wall is which; its scale and position are measured.
 
 ### How one picture is made
 
@@ -149,11 +164,14 @@ So within a family the order is a0 r0, a0 r1 to r3, a1 r0, a1 r1 to r3, and so o
 
 ### Order and gates
 
-1. **Pilot: depot, all 24 pictures.** Then stop: the user reviews the sheet. The guide, the
-   prompts and the block-outs are corrected from what the pilot shows before anything else is made.
-2. The station building, then the other stations, depot_narrow, works, houses, the two
-   one-model buildings. One commit per family. A gate after every family: build its review sheet,
-   then go on unless the check failed for more than a quarter of its pictures.
+1. **First gate: depot, all 24 pictures.** It is the only two-by-two building. Then stop: the user
+   reviews the sheet. The guide, the prompts and the tools are corrected from what it shows.
+2. **Second gate: station, all 24 pictures.** It is the first one-tile building, on another canvas
+   and with a canopy on posts along its front: what the depot cannot show.
+3. The other stations, depot_narrow, works, houses, the two one-model buildings. One commit per
+   family. When more than a quarter of a family could not be made (rejected, or built on a
+   rejected picture), the tool stops the work until the pictures are put back (`redo`) or the user
+   accepts the loss (`accept`).
 
 Codex works on its own branch, `art/buildings-v2`, and touches only `assets/source/buildings-v2/`.
 
@@ -163,24 +181,35 @@ Codex works on its own branch, `art/buildings-v2`, and touches only `assets/sour
 - **`tools/building-queue.mjs`**: builds `queue.json` from the game's data files and
   `families.json`, so the list cannot drift from the game, and hands the work out (see above).
   Run again, it keeps every entry's `status`, `attempts` and `note`.
-- **`tools/building-check.mjs <file | --family x | --all>`**: for each picture:
-  - the canvas size of its footprint, RGBA, a transparent background, nothing opaque on the edge;
-  - the building stands on its footprint: its lowest opaque pixels lie on the footprint's front
-    corner within 16 canvas px, and at ground level it stays inside the diamond within 24 px;
-  - it is not a sliver or a blob: its box is at least half the footprint's width, and its height
-    stays under the canvas limit;
-  - it was painted: a picture that is still grey is the guide come back unchanged.
-    It prints one line per picture and writes `report.json`. Exit code 1 if any picture fails.
+- **`tools/building-fit.mjs`**: the measurement described in section 1. `fitPicture` returns
+  how a picture goes onto its footprint's canvas; `normalisePicture` draws it there, at the
+  canvas's size or a fraction of it.
+- **`tools/building-check.mjs <file | --family x | --all>`** fails only what a new attempt can
+  put right:
+  - a short side under 768 px; a background that is not transparent; a building that touches the
+    picture's edge; surfaces that are mostly translucent; a translucent shadow or glow around it;
+  - a picture that is still grey (the guide come back unchanged);
+  - a view that is not the game's: the foot is one level line (seen from the front), or both
+    ground lines slope outside 0.25 to 0.8;
+  - too few pixels: the foot narrower than the footprint's walls at 4 px per game px.
+    It notes, without failing: a picture placed by its outline, a camera corrected only part of the
+    way, a building taller than its canvas. It prints one line per picture and writes
+    `report.json` with every picture's result and measurement. Exit code 1 if any picture fails.
 - **`tools/building-sheets.mjs`**: one review sheet per family (`review/<family>.png`: a row per
-  age, a column per rotation, each picture on its footprint diamond over grass) and
-  `review/index.html` listing them with the check results.
+  age, a column per rotation, each picture laid onto its footprint diamond over grass, as the game
+  will lay it) and `review/index.html` listing them with what was made, what failed and what the
+  check noted.
 
 Only `pngjs`, which the repository already uses for its other art tools.
 
 ## 5. What the game will do with the pictures (sub-project 4, stated here so the art fits)
 
-- Pictures are placed by the fixed footprint centre and scale, without the reprojection and
-  widening that today's converter applies to the older pictures.
+- The atlas tool lays each picture onto its footprint with `normalisePicture`, from the same
+  measurement the review sheets show, and packs it at the atlas's density. The hand-measured
+  slopes and the widening that today's converter applies to the older pictures are not needed.
+  Where a measurement is wrong, a per-picture override corrects it.
+- Whether every building fills its footprint, or families are also scaled to a common door
+  height as today's pictures are, is decided in sub-project 4 on renders from the game.
 - A missing picture falls back to the same age in another rotation, then to the age before, then
   to today's picture. The game stays playable while Codex works.
 - The structures atlas is split into several files, since one 4096 px sheet cannot hold 560
@@ -189,9 +218,13 @@ Only `pngjs`, which the repository already uses for its other art tools.
 ## 6. Proof
 
 - Unit tests: guide geometry (2:1 slopes, the footprint centre at its pixel, the front on the
-  right wall for each rotation); the queue (560 entries, the counts per family of section 2, the
-  order, statuses kept on a re-run); the check (hand-made pictures that pass and that fail each
-  rule).
+  right wall for each rotation); the fit (the guide's own block, a building drawn larger and off
+  centre, a camera off 2:1, open doors in front of a wall, a round tower); the queue (560 entries,
+  the counts per family of section 2, the order, statuses kept on a re-run, the gates, the stop,
+  nothing built on a failed picture, the commands run as Codex runs them); the check (hand-made
+  pictures that pass and that fail each rule; the guide's block painted in place passes on every
+  footprint).
+- The depot pilot's four real pictures pass the check and stand on their footprint in the sheet.
 - The 16 guides and a sample review sheet rendered and shown on a review page before the package
   is handed to Codex.
 - Typecheck, lint, tests, build and formatting pass before every push.
