@@ -12,8 +12,8 @@ import { STR } from '../strings';
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
-function world() {
-  const map = emptyMap(4242, 48, 48, Terrain.Grass),
+function world(ground = Terrain.Grass) {
+  const map = emptyMap(4242, 48, 48, ground),
     track = new TrackGraph(48, 48),
     stock = new Stockpile(),
     economy = new Economy();
@@ -52,6 +52,33 @@ describe('upgrading and downgrading track', () => {
     ]);
     for (const t of run)
       expect(track.get(t.x, t.y)).toMatchObject({ kind: 'straight', cls: 'high_speed' });
+  });
+
+  it('charges the difference of the list prices on any ground, however the stroke gets there', () => {
+    // sand and forest cost more than grass, and prices round up: rounding a difference, or
+    // rounding once for the transition a tile passes through and once more for the high-speed
+    // piece, must not add to the bill
+    for (const ground of [Terrain.Sand, Terrain.Forest]) {
+      const { builder, track, run, held } = world(ground);
+      expect(builder.terrainMul(5, 10)).toBeGreaterThan(1);
+      const list = (cls: 'regular' | 'high_speed') =>
+        builder.checkTrack(5, 14, { kind: 'straight', cls }, 1).cost;
+      const wide = list('regular'),
+        fast = list('high_speed');
+      const before = held();
+      // a stroke: tile by tile, each step knowing the tile before it
+      let prev: { x: number; y: number } | undefined;
+      for (const t of run) {
+        expect(builder.reclassTrack([t], 'high_speed', prev)).toBe(true);
+        prev = t;
+      }
+      for (const t of run)
+        expect(track.get(t.x, t.y)).toMatchObject({ kind: 'straight', cls: 'high_speed' });
+      const paid = held().map((v, i) => before[i] - v);
+      expect(paid, `terrain ${ground}`).toEqual(
+        ['wood', 'stone', 'iron'].map((k) => run.length * (fast[k] - wide[k])),
+      );
+    }
   });
 
   it('charges a transition as the piece it is', () => {
@@ -120,6 +147,29 @@ describe('upgrading and downgrading track', () => {
     builder.reclassTrack([{ x: 20, y: 20 }], 'high_speed');
     for (const t of tiles) expect(seen).toContain(`${t.x},${t.y}`);
     expect(track.get(20, 20)!.cls).toBe('high_speed');
+  });
+
+  it('leaves a switch in the form it had, so the lane it joins stays joined', () => {
+    // a wide switch bent into an S towards a parallel track, and a high-speed stub that faces its
+    // unused turn exit: once the switch is high speed too, that stub could join it
+    const { builder, track } = world();
+    const axis = (out: number) => (out % 2 === 0 ? 0 : 1);
+    for (const rot of [0, 3, 5]) {
+      const x = 20 + rot * 5,
+        y = 30;
+      track.place(x, y, 'switch', rot, 'regular');
+      const lane = track.switchExit(x, y, rot, 'regular', 'parallel');
+      const side = track.switchExit(x, y, rot, 'regular', 'turn');
+      track.place(lane.x, lane.y, 'straight', axis(lane.out), 'regular');
+      track.place(side.x, side.y, 'straight', axis(side.out), 'high_speed');
+      track.refreshSwitchForms();
+      expect(track.get(x, y)!.form, `rot ${rot}`).toBe('parallel');
+      expect(builder.reclassTrack([{ x, y }], 'high_speed'), `rot ${rot}`).toBe(true);
+      expect(track.get(x, y), `rot ${rot}`).toMatchObject({ cls: 'high_speed', form: 'parallel' });
+      // the lane's piece still joins the switch: high speed itself, or a transition
+      const beyond = track.get(lane.x, lane.y)!;
+      expect(beyond.kind === 'transition' || beyond.cls === 'high_speed', `rot ${rot}`).toBe(true);
+    }
   });
 
   it('says why nothing can be converted', () => {

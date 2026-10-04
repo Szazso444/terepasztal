@@ -246,9 +246,11 @@ export function planReclass(
 
 /**
  * The tiles a stroke passes from `a` to `b`, after `a` and up to `b`, each beside the one before:
- * a cursor that jumps several tiles between frames still visits every tile on the way.
+ * a cursor that jumps several tiles between frames still visits every tile on the way. Where the
+ * straight line runs exactly between two tiles, a stroke heading along `heading` steps across
+ * first, back onto its line, and then along it.
  */
-export function stepTiles(a: Tile, b: Tile): Tile[] {
+export function stepTiles(a: Tile, b: Tile, heading?: 'x' | 'y'): Tile[] {
   const out: Tile[] = [];
   const nx = Math.abs(b.x - a.x),
     ny = Math.abs(b.y - a.y);
@@ -258,7 +260,8 @@ export function stepTiles(a: Tile, b: Tile): Tile[] {
     y = a.y;
   // step along whichever axis has fallen further behind the straight line
   for (let ix = 0, iy = 0; ix < nx || iy < ny;) {
-    if (iy >= ny || (ix < nx && (ix + 0.5) * ny < (iy + 0.5) * nx)) {
+    const behind = (ix + 0.5) * ny - (iy + 0.5) * nx;
+    if (iy >= ny || (ix < nx && (behind < 0 || (behind === 0 && heading === 'y')))) {
       x += sx;
       ix++;
     } else {

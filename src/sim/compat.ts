@@ -149,6 +149,17 @@ export function runsOn(def: LocoDef | WagonDef): string {
   return STR.compat.runsOn(names);
 }
 
+/**
+ * How many trains may not run on high-speed track: those with no in-cab signalling on any
+ * locomotive, fitted or built into its type.
+ */
+export function withoutInCab(
+  trains: readonly { locos: readonly { inCab?: boolean; def: { inCab?: boolean } }[] }[],
+): { barred: number; total: number } {
+  const barred = trains.filter((t) => !t.locos.some((l) => l.inCab || l.def.inCab)).length;
+  return { barred, total: trains.length };
+}
+
 /** Class a piece presents when entered through `entry` (crossings differ per axis). */
 export function pieceClassFor(p: TrackPiece, entry: number): TrackClass {
   if (p.kind === 'crossing' && p.links[1]) {

@@ -422,14 +422,14 @@ export class Builder {
     if (target === 'high_speed')
       for (const c of plan.changes) {
         const old = this.track.get(c.x, c.y)!;
-        const was = pieceCost(old.kind, old.cls, old.cls2);
-        const more: Cost = {};
-        for (const [k, v] of Object.entries(pieceCost(c.kind, c.cls, c.cls2)))
-          if (v > (was[k] ?? 0)) more[k] = v - (was[k] ?? 0);
         let mul = 0;
         for (const t of this.track.unitTiles(c.x, c.y))
           mul = Math.max(mul, this.terrainMul(t.x, t.y));
-        for (const [k, v] of Object.entries(this.priced(more, mul))) cost[k] = (cost[k] ?? 0) + v;
+        // the difference of the two prices as they would be charged here: rounding the
+        // difference instead would bill more than the list on any ground but grass
+        const was = this.priced(pieceCost(old.kind, old.cls, old.cls2), mul);
+        for (const [k, v] of Object.entries(this.priced(pieceCost(c.kind, c.cls, c.cls2), mul)))
+          if (v > (was[k] ?? 0)) cost[k] = (cost[k] ?? 0) + v - (was[k] ?? 0);
       }
     return { ...this.affordable(cost), changes: plan.changes };
   }
@@ -448,7 +448,8 @@ export class Builder {
       this.refreshBridgeCapacity(t.x, t.y);
       this.onTrackChanged?.(t.x, t.y);
     }
-    for (const t of this.track.refreshSwitchForms(laid)) this.onTrackChanged?.(t.x, t.y);
+    // switches keep the form they had: re-choosing it here could swing a branch over to a stub
+    // that only now matches its class, and part the lane it carried
     for (const t of laid) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     return true;

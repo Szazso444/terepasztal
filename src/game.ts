@@ -136,7 +136,7 @@ import { Advisor, type Tip } from './ui/advisor';
 import { resourceStats } from './sim/stats';
 import { locoFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
-import { buildCompatTable } from './sim/compat';
+import { buildCompatTable, withoutInCab } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
@@ -951,6 +951,7 @@ export class Game {
       return c ? c.destId : null;
     };
     this.build.onStatus = (t) => this.toolbar.setStatus(t);
+    this.build.barredTrains = () => withoutInCab(this.fleet.trains);
     this.build.onToolChanged = (t) => {
       this.toolbar.setActive(t);
       this.buildInfo.show(this.toolbar.item(t));

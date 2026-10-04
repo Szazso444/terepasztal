@@ -140,6 +140,9 @@ export const STR = {
     narrowLocked: 'Narrow gauge is not unlocked yet',
     reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
     reclassFree: (what: string) => `${what}: free`,
+    reclassIdle: (what: string) => `${what}: click a piece or drag along the line`,
+    reclassBarred: (barred: number, total: number) =>
+      `${barred} of ${total} train${total === 1 ? ' has' : 's have'} no in-cab signalling and cannot run on high-speed track`,
     reclass: {
       narrow: 'Narrow track cannot be converted: its curves are a different size',
       nothing: 'Nothing to convert here',
@@ -178,7 +181,7 @@ export const STR = {
     upgrade: 'Upgrade',
     downgrade: 'Downgrade',
     upgradeHint:
-      'Wide track to high speed: click a piece or drag along the line. Costs the difference. (U)',
+      'Wide track to high speed: click a piece or drag along the line. Costs the difference. Trains need in-cab signalling to run on it. (U)',
     downgradeHint:
       'High-speed track back to wide: click a piece or drag along the line. Free. (Shift+U)',
     select: 'Select',
@@ -679,7 +682,7 @@ export const STR = {
     off: 'Off',
     controls: 'Controls',
     controlsText:
-      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
+      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Track: 1-5 piece, Q / E type · U upgrade track, Shift+U downgrade · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
     lastSave: 'Last save',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
