@@ -43,7 +43,11 @@ every piece the cursor passes while the left button is held is converted: Upgrad
 track into high-speed track, Downgrade turns high-speed track into wide track. A click converts
 the piece under the cursor.
 
-- The piece keeps its shape, its turn and everything standing on it (signals, wires, trains).
+- The piece keeps its shape, its turn, a switch its form, and everything standing on it (signals,
+  wires, trains).
+- **Trains.** High-speed track takes only trains with in-cab signalling (the game's rule for
+  high-speed track however it is laid). The Upgrade tool's hint says so, and its status line says
+  how many of the player's trains have none.
 - **Joints.** Wide and high-speed track join only through a transition piece, so the tools keep
   the line connected by themselves:
   - a converted straight that still meets track of the other type becomes a transition; when the
@@ -54,8 +58,15 @@ the piece under the cursor.
 - **Crossings.** Only the line being converted changes: a wide × wide crossing with one line
   upgraded becomes wide × high-speed. A crossing with a narrow line keeps its wide line (there is
   no narrow × high-speed crossing); the track beside it ends in a transition.
+- **The stroke.** A fast cursor skips tiles between frames, so every tile on the way is converted.
+  A crossing is taken by the direction the stroke runs in, read over its last few tiles: a hand
+  that wobbles a tile to the side still converts the line it runs along. A stroke that starts on
+  a crossing waits for its first move; a click on a crossing converts the line that track of the
+  new type already runs up to, else both. A cursor that leaves the field starts a new stroke where
+  it comes back.
 - **Narrow track** is not converted (its curves are a different size); the status line says so.
-- **Cost.** Upgrade charges, per piece, the difference between the new piece and the old one.
+- **Cost.** Upgrade charges, per piece, the difference between the new piece's price and the old
+  one's, each as it would be charged on that ground.
   When the next piece cannot be paid for, nothing changes and the status line says so. Downgrade
   costs nothing and returns nothing.
 - A transition piece gets four turns instead of two, so its high-speed half can face either way;
