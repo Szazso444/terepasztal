@@ -705,30 +705,30 @@
     ]
   },
   "dda40x": {
-    "tiles": 3.5,
+    "tiles": 3.4,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": -0.372,
+        "along": -0.361,
         "up": 33.5
       },
       {
         "part": "body",
-        "along": 0.353,
+        "along": 0.342,
         "up": 32.6
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 1.59,
+        "along": 1.544,
         "across": -0.025,
         "up": 22.4
       },
       {
         "part": "body",
-        "along": 1.596,
+        "along": 1.55,
         "across": -0.028,
         "up": 19.9
       }
