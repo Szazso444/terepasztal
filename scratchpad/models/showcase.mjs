@@ -16,6 +16,8 @@ console.log(JSON.stringify({ trains: made.trains, skipped: made.skipped, states:
 console.log(made.parked.map((q) => `${q.n}:${q.id}:${q.state}:L${q.L}:head${q.head}`).join(' '));
 const json = await p.evaluate(() => qa.saveJson());
 writeFileSync('G:/DEV/Terepasztal/saves/engine-models-demo.json', json);
+// a copy the loader page (load-save.html) can fetch
+writeFileSync('scratchpad/models/engine-models-demo.json', json);
 console.log('save', (json.length / 1024).toFixed(0), 'kB');
 for (const [name, x, y, zoom, hour] of [['parade-a', 18, 78, 1.5, 13], ['parade-b', 50, 78, 1.5, 13], ['parade-night', 18, 70, 2, 23], ['loop', 43, 32, 1, 13], ['narrow', 102, 26, 2, 13]]) {
   await p.evaluate(([x, y, zoom, hour]) => qa.view(x, y, zoom, hour), [x, y, zoom, hour]);

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Terepasztal · load the engine showcase</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #17221f; color: #eee6cf; font: 600 16px/1.5 system-ui; }
+      p { max-width: 46ch; text-align: center; padding: 16px; }
+    </style>
+  </head>
+  <body>
+    <p id="msg">Loading the engine showcase save…</p>
+    <script type="module">
+      // Puts the showcase save where the game keeps its save, then opens the game: press Continue there.
+      // (The game's own Settings > Import is overwritten by the autosave on reload while autosave is on.)
+      import { parseSave, writeSave, writeSettings, DEFAULT_SETTINGS } from '/src/sim/save.ts';
+      const msg = document.getElementById('msg');
+      try {
+        const file = new URLSearchParams(location.search).get('file') ?? 'engine-models-demo';
+        const text = await (await fetch(`./${file}.json`, { cache: 'no-cache' })).text();
+        const j = parseSave(text);
+        if (!j) throw new Error('not a save');
+        if (j.settings) writeSettings({ ...DEFAULT_SETTINGS, ...j.settings });
+        writeSave(j);
+        msg.textContent = 'Saved game replaced. Opening the game: press Continue.';
+        location.replace(`/#seed=${j.seed}`);
+      } catch (e) {
+        msg.textContent = `Could not load the save: ${e.message}`;
+      }
+    </script>
+  </body>
+</html>
