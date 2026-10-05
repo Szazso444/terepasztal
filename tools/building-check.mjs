@@ -7,16 +7,18 @@
  * One line per picture; assets/source/buildings-v2/report.json keeps the results. Exit code 1 when
  * a picture fails. A picture need not match its guide to the pixel: image generators fill the
  * canvas and pick its size themselves. The check measures where the building stands instead
- * (building-fit.mjs) and records it, and fails only what a new attempt can put right. It cannot
- * see what the building is: whether the front is on the right wall and the style is right is for
- * eyes to judge, on the review sheets.
+ * (building-fit.mjs) and records it, and fails only what a new attempt can put right. The camera
+ * is one of those: a picture seen from higher or lower than the game's camera, or turned, fails,
+ * with the words to ask the generator for next time. The check cannot see what the building is:
+ * whether the front is on the right wall and the style is right is for eyes to judge, on the
+ * review sheets.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, ROOT, loadInventory, pictures, wallBase } from './building-kit.mjs';
-import { FIT, fitPicture } from './building-fit.mjs';
+import { FIT, cameraOff, fitPicture } from './building-fit.mjs';
 
 export const REPORT_FILE = `${ROOT}/report.json`;
 
@@ -44,11 +46,51 @@ export function pictureOf(path) {
 
 const SIDES = ['lower-left', 'lower-right'];
 
+/** A camera that is off, in words: `line` for the record, `say` for the generator's next attempt. */
+function cameraWords(fit, off) {
+  if (off.by === null) {
+    const side = SIDES[off.foot];
+    const game = off.foot ? -0.5 : 0.5;
+    return {
+      line: `camera off: the ${side} wall's foot slopes ${off.slope.toFixed(2)} where the game's slopes ${game.toFixed(2)}`,
+      say: `The ${side} wall's foot runs too ${Math.abs(off.slope) > 0.5 ? 'steep' : 'flat'}: it must run parallel to the plinth's ${side} edge, two pixels across for one down.`,
+    };
+  }
+  const parts = [],
+    say = [];
+  if (Math.abs(off.elevation) > FIT.camera) {
+    const seen = fit.camera.elevation.toFixed(1);
+    parts.push(`it looks down from ${seen}° where the game looks down from 30°`);
+    say.push(
+      off.elevation < 0
+        ? 'The camera is too low: the wall feet run too flat and too little of the roof shows. Look down on the building more steeply, exactly as the block-out is seen.'
+        : 'The camera is too high: the wall feet run too steep and too much of the roof shows. Look down on the building less steeply, exactly as the block-out is seen.',
+    );
+  }
+  if (Math.abs(off.turn) > FIT.camera) {
+    const to = off.turn > 0 ? 1 : 0;
+    parts.push(
+      `the building is turned ${Math.abs(off.turn).toFixed(1)}° towards its ${SIDES[to]} wall`,
+    );
+    say.push(
+      `The building is turned: its ${SIDES[to]} wall faces the viewer too much, so that wall's foot runs too flat and the ${SIDES[1 - to]} wall's too steep. Turn it back until both walls are seen equally from the side and both feet are equally steep, parallel to the plinth's edges.`,
+    );
+  }
+  const feet = fit.measured.map((s) => s.toFixed(2)).join(' and ');
+  return {
+    line: `camera off by ${off.by.toFixed(1)}°: ${parts.join(' and ')} (the wall feet slope ${feet}, the game's 0.50 and -0.50)`,
+    say: say.join(' '),
+  };
+}
+
 /**
  * Check one decoded picture of a footprint at a rotation. `problems` fail the picture; `notes`
- * are for the person who reviews it; `fit` is how it is laid onto its footprint.
+ * are for the person who reviews it; `fit` is how it is laid onto its footprint. A camera that
+ * is off fails the picture, and `camera` then holds how far off it is and what to say in the next
+ * attempt. With `camera: false` such a picture passes with a note instead: it is the closest of
+ * its attempts, kept for the user to judge.
  */
-export function checkPicture(png, fpId, rot) {
+export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
   const fp = FOOTPRINTS[fpId];
   const { width: W, height: H, data } = png;
   if (Math.min(W, H) < LIMIT.side)
@@ -135,19 +177,25 @@ export function checkPicture(png, fpId, rot) {
     fit.sure[i] &&
     (Math.abs(fit.measured[i]) < LIMIT.slope[0] || Math.abs(fit.measured[i]) > LIMIT.slope[1]);
   const wrongView = far(0) && far(1);
-  fit.sure.forEach((sure, i) => {
-    if (!sure) return;
-    const game = i ? -0.5 : 0.5;
-    const s = fit.measured[i];
-    const slopes = `the ${SIDES[i]} ground line slopes ${s.toFixed(2)} where the game's slopes ${game.toFixed(2)}`;
-    if (wrongView)
+  if (wrongView)
+    fit.measured.forEach((s, i) =>
       problems.push(
-        `not the game's view: the ${SIDES[i]} wall's ground line slopes ${s.toFixed(2)}, the game's ${game.toFixed(2)}`,
+        `not the game's view: the ${SIDES[i]} wall's ground line slopes ${s.toFixed(2)}, the game's ${(i ? -0.5 : 0.5).toFixed(2)}`,
+      ),
+    );
+  const off = wrongView ? null : cameraOff(fit);
+  let camera = null;
+  if (off?.off) {
+    const words = cameraWords(fit, off);
+    camera = { by: off.by, say: words.say };
+    // a slope outside what the fit uses is corrected only as far as that
+    const partly = fit.sure.some((sure, i) => sure && fit.measured[i] !== fit.slopes[i]);
+    if (wanted) problems.push(words.line);
+    else
+      notes.push(
+        `${words.line}; kept, and corrected ${partly ? 'part of the way ' : ''}by the tools`,
       );
-    else if (s !== fit.slopes[i])
-      notes.push(`camera far off: ${slopes} (corrected part of the way)`);
-    else if (Math.abs(s - game) > FIT.drift) notes.push(`camera off: ${slopes} (corrected)`);
-  });
+  }
   const base = wallBase(fp, rot);
   const foot = fit.base.e[0] - fit.base.w[0];
   const needed = Math.ceil(((base.e[0] - base.w[0]) / fp.scale) * LIMIT.density);
@@ -159,18 +207,18 @@ export function checkPicture(png, fpId, rot) {
     notes.push('placed by its outline: no straight wall base was found');
   if (fit.box.top < 0)
     notes.push(`taller than its canvas by ${Math.round(-fit.box.top)} px once on its footprint`);
-  return { ok: problems.length === 0, problems, notes, fit };
+  return { ok: problems.length === 0, problems, notes, fit, ...(camera ? { camera } : {}) };
 }
 
 /** Check a file on disk. */
-export function checkFile(path, fpId, rot) {
+export function checkFile(path, fpId, rot, options) {
   let png;
   try {
     png = PNG.sync.read(readFileSync(path));
   } catch (e) {
     return { ok: false, problems: [`not a readable PNG (${e.message})`] };
   }
-  return checkPicture(png, fpId, rot);
+  return checkPicture(png, fpId, rot, options);
 }
 
 /** The report: every picture checked so far, with new results laid over an earlier report. */
@@ -198,9 +246,21 @@ export function resultLine(id, r) {
   return `ok    ${id}${r.notes?.length ? `  (${r.notes.join('; ')})` : ''}`;
 }
 
+/**
+ * The pictures the queue records as kept with their camera off: each the closest of its attempts,
+ * waiting for the user to judge. For them a camera that is off is a note, not a failure.
+ */
+function keptPictures() {
+  const file = `${ROOT}/queue.json`;
+  if (!existsSync(file)) return new Set();
+  const entries = JSON.parse(readFileSync(file, 'utf8')).entries ?? [];
+  return new Set(entries.filter((e) => e.kept).map((e) => e.id));
+}
+
 function main(args) {
   const inventory = loadInventory();
   const footprintOf = new Map(inventory.map((f) => [f.family, f.footprint]));
+  const kept = keptPictures();
   let files;
   let skipMissing = true;
   if (args[0] === '--all') files = pictures(inventory).map((p) => p.file);
@@ -235,7 +295,7 @@ function main(args) {
       }
       continue;
     }
-    const r = checkFile(file, footprintOf.get(p.family), p.rot);
+    const r = checkFile(file, footprintOf.get(p.family), p.rot, { camera: !kept.has(p.id) });
     results[p.id] = r;
     console.log(resultLine(p.id, r));
   }

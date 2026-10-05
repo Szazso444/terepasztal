@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { AGES, FOOTPRINTS, ROOT } from './building-kit.mjs';
+import { FIT } from './building-fit.mjs';
 import { STATUSES } from './building-queue.mjs';
 
 const guide = readFileSync(`${ROOT}/GUIDE.md`, 'utf8');
 const prompt = readFileSync(`${ROOT}/PROMPT.md`, 'utf8');
 const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts;
+const ignored = readFileSync(`${ROOT}/.gitignore`, 'utf8');
 
 describe('the guide for the artist agent', () => {
   it('names every building command, and package.json has them', () => {
@@ -13,7 +15,16 @@ describe('the guide for the artist agent', () => {
       expect(scripts[`art:buildings:${tool}`]).toBe(`node tools/building-${tool}.mjs`);
       expect(guide).toContain(`tools/building-${tool}.mjs`);
     }
-    for (const command of ['next', 'show', 'set', 'status', 'redo', 'accept', 'approve-pilot'])
+    for (const command of [
+      'next',
+      'show',
+      'set',
+      'status',
+      'recheck',
+      'redo',
+      'accept',
+      'approve-pilot',
+    ])
       expect(guide).toContain(`building-queue.mjs ${command}`);
   });
 
@@ -43,6 +54,22 @@ describe('the guide for the artist agent', () => {
     expect(guide).toContain('-angles.png');
     expect(guide).toMatch(/camera off/);
     expect(guide).toMatch(/parallel to the plinth/);
+  });
+
+  it('has a picture painted again when its camera is off', () => {
+    // the tools refuse it and say what to add to the prompt; the limit is the tools' own
+    expect(guide).toContain(`more than ${FIT.camera}°`);
+    expect(guide).toMatch(/adding to the prompt/);
+    expect(guide).not.toMatch(/the tools correct it, but/);
+    // the closest of three attempts is kept, and marked for the user
+    expect(guide).toContain('--keep');
+    expect(guide).toContain('.tries/');
+    expect(prompt).toContain('--keep');
+    // pictures made before go back in the queue and are painted again from their earlier selves
+    expect(guide).toContain('.before.png');
+    expect(guide).toMatch(/to paint again/);
+    for (const kept of ['*.before.png', '.tries/', '*.rejected.png', '.fitted/'])
+      expect(ignored, kept).toContain(kept);
   });
 
   it('holds the gates and the limits on failure', () => {

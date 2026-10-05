@@ -9,6 +9,10 @@
  * whose foot is not two straight walls (a round tower, a yard of machinery) is placed by its
  * outline, without a camera correction. The check, the review sheets and the game's atlas all use
  * this one measurement.
+ *
+ * The correction is for small differences only. It stretches the picture, so a camera further
+ * than FIT.camera degrees from the game's is not corrected into use: the check fails the picture
+ * and it is painted again (`cameraOff`).
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -20,8 +24,8 @@ export const FIT = {
   span: 0.6,
   /** how far a measured ground slope is used; the game's slopes are 0.5 and -0.5 */
   slope: [0.33, 0.67],
-  /** a ground slope further than this from the game's is corrected, and worth a look */
-  drift: 0.08,
+  /** degrees a picture's camera may be from the game's, in height and in turn */
+  camera: 3,
   /** pixels more solid than this belong to the building */
   alpha: 128,
 };
@@ -171,7 +175,11 @@ export function measureBase(png) {
   };
 }
 
+/** The game's camera looks down at this many degrees, on a building turned 45 degrees. */
+const ELEVATION = 30;
+
 const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
+const rad = (deg) => (deg * Math.PI) / 180;
 // `+ 0` turns a rounded -0 into 0, so the record reads the same either way
 const round = (v, digits = 1) => Math.round(v * 10 ** digits) / 10 ** digits + 0;
 
@@ -186,6 +194,31 @@ function cameraOf([pos, neg]) {
   const elevation = (Math.asin(Math.min(1, Math.sqrt(pos * -neg))) * 180) / Math.PI;
   const turn = (Math.atan(Math.sqrt(pos / -neg)) * 180) / Math.PI - 45;
   return { elevation: round(elevation), turn: round(turn) };
+}
+
+/**
+ * How far a picture's camera is from the game's, from its measurement. With both wall feet found:
+ * `elevation` and `turn`, degrees from the game's (looking down from higher, and turned towards
+ * the lower-right wall, are positive), and `by`, the larger of the two. With one foot found there
+ * is no telling the camera's height from the building's turn: `foot` is that wall (0 lower left,
+ * 1 lower right) and `slope` its foot's, and the camera is off when no camera near the game's
+ * draws a foot so steep or so flat. `off` says the picture has to be painted again. Null when no
+ * straight wall foot was found: there is nothing to judge the camera by.
+ */
+export function cameraOff(fit) {
+  const camera = fit.camera ?? (fit.sure[0] && fit.sure[1] ? cameraOf(fit.measured) : null);
+  if (camera) {
+    const elevation = round(camera.elevation - ELEVATION);
+    const by = Math.max(Math.abs(elevation), Math.abs(camera.turn));
+    return { off: by > FIT.camera, by, elevation, turn: camera.turn };
+  }
+  const foot = fit.sure.indexOf(true);
+  if (foot < 0) return null;
+  const slope = fit.measured[foot];
+  // the flattest and the steepest foot a camera within the limit draws
+  const flat = Math.sin(rad(ELEVATION - FIT.camera)) * Math.tan(rad(45 - FIT.camera)),
+    steep = Math.sin(rad(ELEVATION + FIT.camera)) * Math.tan(rad(45 + FIT.camera));
+  return { off: Math.abs(slope) < flat || Math.abs(slope) > steep, by: null, foot, slope };
 }
 
 /**

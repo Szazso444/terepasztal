@@ -51,8 +51,10 @@ picture needs instead:
 | two by two tiles | 1536 x 1024 | depot        |
 
 **Projection.** Orthographic 2:1 isometric: ground edges run two pixels across for one down,
-vertical edges are vertical, there is no perspective. The tools correct a camera that is a little
-off; they cannot correct a building seen from the front or from above.
+vertical edges are vertical, there is no perspective. The camera is the one thing the tools do not
+put right for you: they straighten a camera that is a little off, but a picture whose camera is
+more than 3° from the guide's, in height or in turn, is refused and has to be made again
+(section 7). Straightening stretches a picture, and a stretched building looks wrong in the game.
 
 **Contents.** One building, standing on its footprint and filling it. At ground level nothing
 reaches outside the footprint; roofs, cranes and chimneys may overhang a little higher up. Light
@@ -72,6 +74,11 @@ Everything is in `assets/source/buildings-v2/`.
 - `<family>/<family>-a<age>-r<view>.png`: the pictures you make.
 - `<family>/<family>-a<age>-r<view>.rejected.png`: a picture that was given up, set aside by the
   tool for the user to look at. Never use one as a reference, and do not commit them.
+- `<family>/<family>-a<age>-r<view>.before.png`: a picture that was made with its camera off and is
+  being painted again. The tool keeps its earlier self here and names it, straightened, as a
+  reference (section 5). Do not edit, remove or commit these.
+- `.tries/`: your own folder for the attempts of the picture you are working on (section 7). Not
+  committed.
 - `.fitted/<family>-a<age>-r<view>.png`: an earlier picture laid onto its footprint by the tool,
   at exactly the guide's camera, scale and place. `next` names these as references: a later
   picture copies the angles of what it is shown, so it is shown them straightened. Attach them as
@@ -86,8 +93,12 @@ The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`
 - `node tools/building-queue.mjs next`: the next picture to make, with everything it needs.
 - `node tools/building-queue.mjs show <id>`: the same for any picture.
 - `node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]`: record a result.
+  With `--keep`: keep the closest attempt of a picture whose camera stays off (section 7).
 - `node tools/building-queue.mjs status`: progress per family, the gates, and where the list and
   the disk disagree.
+- `node tools/building-queue.mjs recheck` or `recheck <family>`: look again at the pictures that
+  are made. One whose camera is more than 3° off goes back in the queue, to be painted again as
+  the same building. Only when the user asks.
 - `node tools/building-queue.mjs redo <id>` or `redo <family>`: put pictures back in the queue.
   Only when the user asks.
 - `node tools/building-queue.mjs accept <family>` and
@@ -104,7 +115,8 @@ Repeat until the queue tool tells you to stop:
 
 1. Run `node tools/building-queue.mjs next`. It answers with its exit code:
    - exit code 0: a picture to make. It prints the picture's name, the file to save, the guide to
-     edit, the references to attach in order, and the prompt.
+     edit, the references to attach in order, and the prompt. A name followed by
+     `(to paint again: the same building)` is a picture that was made before with its camera off.
    - exit code 2: `GATE`. A family the user wants to see is finished. Stop (section 8).
    - exit code 4: `STOP`. Too much of a family could not be made. Stop (section 8).
    - exit code 3: `DONE`. Nothing is left.
@@ -129,6 +141,12 @@ first, then its three other views, then the next age. Each picture is built on o
 4. Ask for the size `next` printed and a transparent background.
 5. Save the result under the file name `next` printed, as a PNG with an alpha channel, exactly as
    the image tool returned it.
+
+**A picture to paint again.** Its second reference is the picture as it was, laid onto its
+footprint and straightened to the guide's camera, and the prompt's last lines say what was wrong
+with its camera. Make it like any other picture: the same building, wall for wall, this time seen
+exactly as the guide's block is seen. Straightening has stretched the reference a little, so take
+the building and the lines of its wall feet from it, not its height.
 
 ## 6. Looking at your own picture
 
@@ -161,11 +179,30 @@ lower-left wall"), and keep the rest of the prompt. Give a picture up to three a
 A picture's place and size in its file are never a reason to make it again: the tools take care of
 those. Its view is: a building seen from the front, from above or in perspective cannot be used.
 
-When the tool records a picture it prints what it measured. `camera off` means a wall's foot does
-not run at the guide's angle; the tools correct it, but a corrected picture is never as good as
-one painted right, and every picture made from it starts from that correction. Say so in the next
-picture's edit if the same wall drifts again ("the lower-right wall's foot must run parallel to
-the plinth's lower-right edge").
+**The camera.** The tool measures every picture's camera from the feet of its two visible walls,
+and refuses a picture whose camera is more than 3° from the guide's: seen from too low or too
+high, or with the building turned so that one wall faces the viewer more than the other. It says
+what it measured, and gives a sentence for the next attempt:
+
+```text
+not recorded: camera off by 6.4°: it looks down from 23.6° where the game looks down from 30°
+(the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). Make depot-a0-r0 again,
+adding to the prompt: "The camera is too low: the wall feet run too flat and too little of the
+roof shows. Look down on the building more steeply, exactly as the block-out is seen."
+```
+
+1. Copy the refused attempt to `.tries/<id>-<attempt>.png`, for example
+   `.tries/depot-a0-r0-1.png`, and note how far off it was.
+2. Make the picture again: the same edit of the guide, the same references, the same prompt with
+   the tool's sentence added at its end.
+3. If the third attempt is refused for its camera as well, do not reject the picture. Copy the
+   attempt that was off by the least back to the picture's file name and record it with
+   `node tools/building-queue.mjs set <id> generated --attempts 3 --keep`. It counts as made, the
+   tools straighten it as far as they can, and it is marked for the user, who decides whether it
+   stays.
+
+`--keep` is for the camera alone, and only from the third attempt on. A picture with any other
+fault after three attempts is rejected:
 
 After three attempts, record the picture with
 `node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go
@@ -195,6 +232,12 @@ this guide, to `families.json` or to the guides; those are not yours to change.
    building, every age and view, on grass, each picture laid onto its footprint as the game will
    lay it.
 3. Commit: `Buildings: <name>, <n> of <total> pictures`.
+
+**Pictures painted again.** When the user has had pictures put back with `recheck`, `next` hands
+those out before anything new, family by family in the list's order. Each time `next` moves on to
+another family, close the family you have just finished repainting as above (check, sheets), and
+commit: `Buildings: <name>, camera repainted`. In your message to the user, name the pictures you
+had to keep with `--keep`.
 
 **A stop.** When more than a quarter of a family could not be made (rejected, or built on a
 rejected picture), `next` prints `STOP` (exit code 4). Close the family as above, tell the user

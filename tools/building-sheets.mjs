@@ -23,7 +23,7 @@ import {
   wallBase,
 } from './building-kit.mjs';
 import { fillPoly, strokePoly } from './building-guides.mjs';
-import { FIT, fitGroup, normalisePicture } from './building-fit.mjs';
+import { FIT, cameraOff, fitGroup, normalisePicture } from './building-fit.mjs';
 import { buildQueue, loadFamilies, progress, readQueue } from './building-queue.mjs';
 import { readReport } from './building-check.mjs';
 
@@ -133,8 +133,18 @@ export function indexHtml(inventory, queue, report, rows) {
     const mine = queue.entries
       .filter((e) => e.family === f.family)
       .map((e) => ({ e, check: report?.pictures?.[e.id] }));
+    // put back for its camera: not a failure, it is being painted again
+    const again = ({ e }) => e.status === 'pending' && e.repaint;
+    const repainted = mine
+      .filter(again)
+      .map(
+        ({ e, check }) =>
+          `<li class="note"><code>${esc(e.id)}</code> to paint again${
+            check && !check.ok ? `: ${esc(check.problems.join('; '))}` : ''
+          }</li>`,
+      );
     const failed = mine
-      .filter(({ e, check }) => e.status === 'rejected' || (check && !check.ok))
+      .filter((m) => !again(m) && (m.e.status === 'rejected' || (m.check && !m.check.ok)))
       .map(
         ({ e, check }) =>
           `<li><code>${esc(e.id)}</code> ${esc(e.status)}${
@@ -152,14 +162,12 @@ export function indexHtml(inventory, queue, report, rows) {
       const fit = report?.pictures?.[e.id]?.fit;
       if (!fit) return '<td class="none">-</td>';
       if (fit.method !== 'base') return '<td class="outline">by its outline</td>';
-      const off = (s, game) =>
-        Math.abs(s) < FIT.slope[0] || Math.abs(s) > FIT.slope[1]
-          ? 2
-          : Math.abs(s - game) > FIT.drift
-            ? 1
-            : 0;
-      const worst = Math.max(off(fit.measured[0], 0.5), off(fit.measured[1], -0.5));
-      return `<td class="${['', 'off', 'far'][worst]}">${fit.measured[0].toFixed(2)} / ${fit.measured[1].toFixed(2)}</td>`;
+      // far: further than the tools correct; off: a camera the check refuses
+      const far = fit.measured.some(
+        (s) => Math.abs(s) < FIT.slope[0] || Math.abs(s) > FIT.slope[1],
+      );
+      const mark = far ? 'far' : cameraOff(fit)?.off ? 'off' : '';
+      return `<td class="${mark}">${fit.measured[0].toFixed(2)} / ${fit.measured[1].toFixed(2)}</td>`;
     };
     const rows = [];
     for (let n = 0; n < f.ages; n++) {
@@ -182,15 +190,21 @@ export function indexHtml(inventory, queue, report, rows) {
     const counts =
       `${p.made} of ${p.total} made` +
       (p.approved ? `, ${p.approved} approved` : '') +
+      (p.kept ? `, ${p.kept} kept with the camera off` : '') +
+      (p.repaint ? `, ${p.repaint} to paint again` : '') +
       (p.rejected ? `, ${p.rejected} rejected` : '') +
       (p.behind ? `, ${p.behind} not made (built on a picture that failed)` : '');
     return `<section id="${esc(f.family)}">
   <h2>${esc(f.name)} <small>${esc(f.family)}</small></h2>
   <p>${counts}. Rows: ${esc(ages)}. Columns: r0 (front lower left), r1, r2, r3 (front lower right).</p>
   <img src="${esc(f.family)}.png" alt="${esc(f.name)}: every age and view" loading="lazy" />
-  <p><a href="${esc(f.family)}-angles.png">The same sheet with the footprint and the wall lines drawn in</a>. Ground lines as measured, lower left / lower right (the game's are 0.50 / -0.50):</p>
+  <p><a href="${esc(f.family)}-angles.png">The same sheet with the footprint and the wall lines drawn in</a>. Ground lines as measured, lower left / lower right (the game's are 0.50 / -0.50), marked where the camera is further than ${FIT.camera}° from the game's:</p>
   <table><tr><th></th><th>r0</th><th>r1</th><th>r2</th><th>r3</th><th>sizes apart</th></tr>${rows.join('')}</table>
-  ${failed.length || noted.length ? `<ul>${failed.join('')}${noted.join('')}</ul>` : ''}
+  ${
+    failed.length || repainted.length || noted.length
+      ? `<ul>${failed.join('')}${repainted.join('')}${noted.join('')}</ul>`
+      : ''
+  }
 </section>`;
   });
   const total = queue.entries.length;

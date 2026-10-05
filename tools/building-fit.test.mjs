@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, ROTATIONS, project, wallBase } from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly } from './building-guides.mjs';
-import { fitGroup, fitPicture, normalisePicture } from './building-fit.mjs';
+import { FIT, cameraOff, fitGroup, fitPicture, normalisePicture } from './building-fit.mjs';
 
 const SHADE = { top: [220, 210, 180], left: [160, 120, 90], right: [110, 80, 60] };
 
@@ -226,6 +226,55 @@ describe('building fit', () => {
       [200, 180, 150],
     );
     expect(fitPicture(round, 't1', 0).camera).toBeNull();
+  });
+
+  it("says how far a picture's camera is from the game's", () => {
+    const off = (map) => cameraOff(fitPicture(building('t1', 0, { map }), 't1', 0));
+    // the game's own camera, and one within three degrees of it: 0.5 x 0.93 = 0.465 is 27.7 degrees
+    expect(FIT.camera).toBe(3);
+    expect(off((p) => p)).toMatchObject({ off: false });
+    expect(off(([x, y]) => [x, 832 + (y - 832) * 0.93])).toMatchObject({ off: false });
+    // a lower camera: 0.5 x 0.8 = 0.4 is 23.6 degrees, 6.4 below the game's
+    const low = off(([x, y]) => [x, 832 + (y - 832) * 0.8]);
+    expect(low).toMatchObject({ off: true, by: 6.4, elevation: -6.4 });
+    expect(Math.abs(low.turn)).toBeLessThan(0.6);
+    // a higher one: 0.5 x 1.2 = 0.6 is 36.9 degrees
+    expect(off(([x, y]) => [x, 832 + (y - 832) * 1.2])).toMatchObject({
+      off: true,
+      by: 6.9,
+      elevation: 6.9,
+    });
+    // turned towards its lower-right wall
+    const turned = off(([x, y]) => [x, y + (x - 512) * 0.08]);
+    expect(turned.off).toBe(true);
+    expect(turned.turn).toBeGreaterThan(4);
+    expect(turned.by).toBe(turned.turn);
+    expect(Math.abs(turned.elevation)).toBeLessThan(1);
+    // and towards its lower-left wall: the turn is negative, how far off is not
+    const other = off(([x, y]) => [x, y - (x - 512) * 0.08]);
+    expect(other.turn).toBeLessThan(-4);
+    expect(other.by).toBe(-other.turn);
+    // a measurement from an earlier report, written before the camera was recorded
+    expect(cameraOff({ sure: [true, true], measured: [0.4, -0.4] })).toMatchObject({
+      off: true,
+      by: 6.4,
+    });
+    // one straight wall foot: no telling height from turn, but a foot no near camera draws is off
+    expect(cameraOff({ sure: [true, false], measured: [0.5, -0.5], camera: null })).toEqual({
+      off: false,
+      by: null,
+      foot: 0,
+      slope: 0.5,
+    });
+    expect(cameraOff({ sure: [false, true], measured: [0.5, -0.65], camera: null })).toEqual({
+      off: true,
+      by: null,
+      foot: 1,
+      slope: -0.65,
+    });
+    expect(cameraOff({ sure: [true, false], measured: [0.38, -0.5], camera: null }).off).toBe(true);
+    // no straight wall foot at all: nothing to judge the camera by
+    expect(cameraOff({ sure: [false, false], measured: [0.5, -0.5], camera: null })).toBeNull();
   });
 
   it('can lay a picture down without correcting its camera', () => {
