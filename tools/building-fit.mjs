@@ -32,7 +32,8 @@ function columns(png) {
   const low = new Int32Array(W).fill(-1),
     top = new Int32Array(W).fill(-1);
   let minX = W,
-    maxX = -1;
+    maxX = -1,
+    area = 0;
   for (let x = 0; x < W; x++)
     for (let y = 0; y < H; y++)
       if (data[(y * W + x) * 4 + 3] > FIT.alpha) {
@@ -40,8 +41,9 @@ function columns(png) {
         low[x] = y;
         if (x < minX) minX = x;
         maxX = x;
+        area++;
       }
-  return { low, top, minX, maxX };
+  return { low, top, minX, maxX, area };
 }
 
 /**
@@ -102,7 +104,7 @@ function restLine(pts, a) {
  * whether a straight base was found.
  */
 export function measureBase(png) {
-  const { low, top, minX, maxX } = columns(png);
+  const { low, top, minX, maxX, area } = columns(png);
   if (maxX < 0) return null;
   const tol = Math.max(3, Math.round((maxX - minX) * 0.006));
   const side = (from, to) => {
@@ -165,6 +167,7 @@ export function measureBase(png) {
     low,
     minX,
     maxX,
+    area,
   };
 }
 
@@ -234,7 +237,48 @@ export function fitPicture(png, fpId, rot, { rectify = true } = {}) {
       bottom: round(lowY),
     },
     camera: m.sure[0] && m.sure[1] ? cameraOf(m.slopes) : null,
+    // picture pixels the building covers
+    area: m.area,
   };
+}
+
+/** The same fit with the building `g` times as large, grown about the footprint's centre. */
+function rescaled(fit, fp, g) {
+  if (Math.abs(g - 1) < 1e-9) return fit;
+  const about = (v, c) => round(c + (v - c) * g);
+  return {
+    ...fit,
+    scale: round(fit.scale * g, 4),
+    box: {
+      left: about(fit.box.left, fp.centre[0]),
+      top: about(fit.box.top, fp.centre[1]),
+      right: about(fit.box.right, fp.centre[0]),
+      bottom: about(fit.box.bottom, fp.centre[1]),
+    },
+  };
+}
+
+/**
+ * The views of one building (index = rotation, null where a view is not made), brought to one
+ * size.
+ *
+ * A generator fills its canvas rather than keeping a scale, so the same building comes back
+ * larger in one view than in the next. Its wall base is no sure measure either: a silo that stands
+ * beside the barn in one view and behind it in another makes the base wider there, and the barn
+ * would be laid down smaller. What every view of a building shares is how much building there is
+ * to see, the area it covers. So each view is fitted by its own base, and then the views are
+ * scaled to cover the same area, their mean scale staying what the bases said. `size` then makes
+ * the whole family larger or smaller on its tile (a depot stands a little larger than its
+ * footprint, so that the rails fit its portals).
+ */
+export function fitGroup(pngs, fpId, { size = 1, rectify = true } = {}) {
+  const fp = FOOTPRINTS[fpId];
+  const fits = pngs.map((png, rot) => (png ? fitPicture(png, fpId, rot, { rectify }) : null));
+  const made = fits.filter(Boolean);
+  if (!made.length) return fits;
+  const sizeOf = (f) => Math.sqrt(f.area * f.vertical) * f.scale;
+  const mean = Math.exp(made.reduce((a, f) => a + Math.log(sizeOf(f)), 0) / made.length);
+  return fits.map((f) => (f ? rescaled(f, fp, (mean / sizeOf(f)) * size) : null));
 }
 
 /** One sample of a picture between its pixels, colour weighted by coverage. */
