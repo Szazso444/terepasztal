@@ -37,6 +37,14 @@ describe('the guide for the artist agent', () => {
     expect(guide).not.toMatch(/delete the file/i);
   });
 
+  it('keeps the camera from drifting', () => {
+    // later pictures are shown earlier ones laid onto their footprint, and the angles are watched
+    expect(guide).toContain('.fitted/');
+    expect(guide).toContain('-angles.png');
+    expect(guide).toMatch(/camera off/);
+    expect(guide).toMatch(/parallel to the plinth/);
+  });
+
   it('holds the gates and the limits on failure', () => {
     expect(guide).toMatch(/GATE/);
     expect(guide).toMatch(/STOP/);

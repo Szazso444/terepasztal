@@ -1,9 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { PNG } from 'pngjs';
-import { FOOTPRINTS, loadInventory, pictureFile, project } from './building-kit.mjs';
+import {
+  FOOTPRINTS,
+  diamond,
+  loadInventory,
+  pictureFile,
+  project,
+  wallBase,
+} from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly } from './building-guides.mjs';
 import { buildQueue, loadFamilies, progress, setStatus } from './building-queue.mjs';
-import { SHEET, drawSheet, indexHtml, sheetFile } from './building-sheets.mjs';
+import { SHEET, anglesFile, drawSheet, indexHtml, sheetFile } from './building-sheets.mjs';
 
 const inv = loadInventory();
 const fam = loadFamilies();
@@ -66,6 +73,23 @@ describe('building review sheets', () => {
     expect(at(sheet, 1 * 256 + sx / 4, 4 * 256 + sy / 4 - 2)).toEqual(SHEET.footprint);
   });
 
+  it('draws the footprint and the wall lines over the pictures on the angles sheet', () => {
+    // twice the size, with the lines every wall's foot should run along: drift shows at a glance
+    const f = family('farm');
+    const sheet = drawSheet(f, pictures(f), undefined, { outlines: true, shrink: 2 });
+    expect([sheet.width, sheet.height]).toEqual([2048, 3072]);
+    expect(anglesFile('farm')).toBe('assets/source/buildings-v2/review/farm-angles.png');
+    const fp = FOOTPRINTS.t1;
+    // first age, second view: the near corner of the footprint and of the walls
+    const [fx, fy] = diamond(fp, 1).s;
+    const [wx, wy] = wallBase(fp, 1).s;
+    expect(at(sheet, 512 + fx / 2, fy / 2)).toEqual(SHEET.outline);
+    expect(at(sheet, 512 + wx / 2, wy / 2)).toEqual(SHEET.walls);
+    // the plain sheet shows the picture and nothing over it
+    const plain = drawSheet(f, pictures(f));
+    expect(at(plain, 256 + wx / 4, wy / 4)).not.toEqual(SHEET.walls);
+  });
+
   it("leaves a missing picture's cell empty", () => {
     const f = family('farm');
     const sheet = drawSheet(f, pictures(f, { without: [pictureFile('farm', 1, 2)] }));
@@ -101,12 +125,24 @@ describe('building review sheets', () => {
       checked: 3,
       failed: 1,
       pictures: {
-        'depot-a0-r0': { ok: true, problems: [], notes: [] },
+        'depot-a0-r0': {
+          ok: true,
+          problems: [],
+          notes: [],
+          fit: { method: 'base', sure: [true, true], measured: [0.504, -0.326] },
+        },
         'depot-a0-r1': { ok: false, problems: ['background is not transparent'] },
         'depot-a0-r2': {
           ok: true,
           problems: [],
           notes: ['placed by its outline: no straight wall base was found'],
+          fit: { method: 'outline', sure: [false, true], measured: [0.5, -0.5] },
+        },
+        'depot-a1-r0': {
+          ok: true,
+          problems: [],
+          notes: [],
+          fit: { method: 'base', sure: [true, true], measured: [0.498, -0.503] },
         },
       },
     };
@@ -126,6 +162,11 @@ describe('building review sheets', () => {
     expect(html).toContain('depot-a0-r2');
     expect(html).toContain('placed by its outline');
     expect(html).toContain('0 of 4 made');
+    // the ground lines as measured, picture by picture, and the sheet that shows them
+    expect(html).toContain('href="depot-angles.png"');
+    expect(html).toMatch(/<td class="far">0\.50 \/ -0\.33<\/td>/);
+    expect(html).toMatch(/<td class="">0\.50 \/ -0\.50<\/td>/);
+    expect(html).toMatch(/<td class="outline">by its outline<\/td>/);
     // both gates and where they stand
     expect(html).toContain('"depot": waiting for approval');
     expect(html).toContain('"station": waiting for approval');

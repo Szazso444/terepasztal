@@ -18,12 +18,22 @@
  * `next` answers with its exit code: 0 a picture to make, 2 a gate (the user reviews a family
  * before the work goes on), 3 nothing left, 4 a stop (too much of a family could not be made).
  */
-import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PNG } from 'pngjs';
 import { AGES, FOOTPRINTS, ROOT, loadInventory, pictureFile, pictures } from './building-kit.mjs';
 import { guideFile } from './building-guides.mjs';
-import { checkFile, resultLine, writeReport } from './building-check.mjs';
+import { checkFile, pictureOf, resultLine, writeReport } from './building-check.mjs';
+import { fitPicture, normalisePicture } from './building-fit.mjs';
 
 export const STYLE_BOARD = 'docs/art-direction/images/03-theme-town-growth.png';
 export const MOOD_EARLY = 'docs/art-direction/images/04-early-ages.png';
@@ -40,6 +50,16 @@ const PILOT = 'depot';
 const GATES = [PILOT, 'station'];
 /** A family that lost more than this share of its pictures stops the work. */
 const LOSS = 0.25;
+
+/**
+ * An earlier picture as a later one is shown it: laid onto its footprint, at the guide's camera,
+ * scale and place. A generator copies what it is shown, so a picture that came back larger than
+ * its guide, or with a ground line a little flat, would hand that on to every picture made from
+ * it. These files are made when a picture is handed out and are not kept in git.
+ */
+export function fittedFile(id) {
+  return `${ROOT}/.fitted/${id}.png`;
+}
 
 export function loadFamilies(root = '.') {
   return JSON.parse(readFileSync(join(root, FAMILIES_FILE), 'utf8'));
@@ -155,9 +175,39 @@ export function describeEntry(id, inventory, families) {
     footprint: f.footprint,
     canvas: FOOTPRINTS[f.footprint].canvas,
     guide: guideFile(f.footprint, rot),
-    references: ref.files,
+    // what the picture is built on, and what the generator is shown of it
+    sources: ref.files,
+    references: ref.files.map((file) => {
+      const made = file.startsWith(`${ROOT}/`) ? pictureOf(file) : null;
+      return made ? fittedFile(made.id) : file;
+    }),
     prompt,
   };
+}
+
+/**
+ * Make the fitted pictures an entry is shown, where the pictures they come from are on disk.
+ * Returns the files to attach: a picture that cannot be laid onto its footprint is attached as it
+ * is.
+ */
+export function fittedReferences(d, inventory) {
+  return d.references.map((file, i) => {
+    const raw = d.sources[i];
+    if (file === raw || !existsSync(raw)) return file;
+    if (existsSync(file) && statSync(file).mtimeMs >= statSync(raw).mtimeMs) return file;
+    const footprint = inventory.find((f) => f.family === pictureOf(raw).family).footprint;
+    let png;
+    try {
+      png = PNG.sync.read(readFileSync(raw));
+    } catch {
+      return raw;
+    }
+    const fit = fitPicture(png, footprint, pictureOf(raw).rot);
+    if (!fit) return raw;
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, PNG.sync.write(normalisePicture(png, fit, footprint)));
+    return file;
+  });
 }
 
 const isMade = (e) => e.status === 'generated' || e.status === 'approved';
@@ -178,7 +228,7 @@ function standings(queue, inventory, families, exists) {
     else if (isMade(e)) s = exists(e.file) ? 'made' : 'lost';
     else {
       s = 'ready';
-      for (const file of describeEntry(e.id, inventory, families).references) {
+      for (const file of describeEntry(e.id, inventory, families).sources) {
         const on = byFile.get(file);
         if (!on) {
           if (!exists(file)) throw new Error(`${e.id} needs ${file}, which is not there`);
@@ -345,7 +395,7 @@ export function redo(queue, inventory, families, target, disk = DISK) {
     .filter((e) => {
       const built =
         e === first ||
-        describeEntry(e.id, inventory, families).references.some((file) => again.has(file));
+        describeEntry(e.id, inventory, families).sources.some((file) => again.has(file));
       if (built) again.add(e.file);
       return built;
     })
@@ -435,14 +485,17 @@ function main(args) {
       const code = { picture: 0, gate: 2, done: 3, stop: 4 }[n.kind];
       if (rest.includes('--json')) {
         const d = n.kind === 'picture' ? describeEntry(n.id, inventory, families) : null;
+        if (d) d.references = fittedReferences(d, inventory);
         console.log(JSON.stringify({ ...n, picture: d }, null, 2));
         return code;
       }
       if (n.kind === 'picture') {
         if (n.finished)
           console.log(`Family "${n.finished.family}" is finished: ${tally(n.finished)}.\n`);
+        const d = describeEntry(n.id, inventory, families);
+        d.references = fittedReferences(d, inventory);
         printEntry(
-          describeEntry(n.id, inventory, families),
+          d,
           queue.entries.find((e) => e.id === n.id),
         );
         if (n.behind.length)
@@ -464,6 +517,7 @@ function main(args) {
     }
     case 'show': {
       const d = describeEntry(rest[0], inventory, families);
+      d.references = fittedReferences(d, inventory);
       printEntry(
         d,
         queue.entries.find((e) => e.id === d.id),

@@ -20,6 +20,8 @@ export const FIT = {
   span: 0.6,
   /** how far a measured ground slope is used; the game's slopes are 0.5 and -0.5 */
   slope: [0.33, 0.67],
+  /** a ground slope further than this from the game's is corrected, and worth a look */
+  drift: 0.08,
   /** pixels more solid than this belong to the building */
   alpha: 128,
 };
@@ -171,20 +173,34 @@ const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 const round = (v, digits = 1) => Math.round(v * 10 ** digits) / 10 ** digits + 0;
 
 /**
+ * Where the camera stood, read from the two ground lines. The game's camera looks down at 30
+ * degrees on a building turned 45 degrees, which draws the lines at 0.5 and -0.5. `elevation` is
+ * how far it looked down (lower: both lines flatter, less roof seen); `turn` is how far the
+ * building was turned from 45 degrees, positive towards its lower-right wall (that wall's foot
+ * flatter, the other steeper).
+ */
+function cameraOf([pos, neg]) {
+  const elevation = (Math.asin(Math.min(1, Math.sqrt(pos * -neg))) * 180) / Math.PI;
+  const turn = (Math.atan(Math.sqrt(pos / -neg)) * 180) / Math.PI - 45;
+  return { elevation: round(elevation), turn: round(turn) };
+}
+
+/**
  * How a picture goes onto its footprint's canvas. A point (x, y) of the picture lands at
  * X = centre.x + scale * (x - cx), Y = centre.y + scale * (vertical * y + shear * x - cy):
  * `vertical` and `shear` turn the measured ground slopes into 0.5 and -0.5 and leave upright edges
  * upright; `scale` makes the foot as wide as the walls of the footprint; (cx, cy) is the middle of
- * the foot. Null when the picture is empty.
+ * the foot. Null when the picture is empty. With `rectify: false` the camera is left as the
+ * generator drew it and only scale and place are set (for looking at what came back).
  */
-export function fitPicture(png, fpId, rot) {
+export function fitPicture(png, fpId, rot, { rectify = true } = {}) {
   const m = measureBase(png);
   if (!m) return null;
   const fp = FOOTPRINTS[fpId];
   const target = wallBase(fp, rot);
   const slopes = [
-    m.sure[0] ? clamp(m.slopes[0], FIT.slope) : 0.5,
-    m.sure[1] ? -clamp(-m.slopes[1], FIT.slope) : -0.5,
+    rectify && m.sure[0] ? clamp(m.slopes[0], FIT.slope) : 0.5,
+    rectify && m.sure[1] ? -clamp(-m.slopes[1], FIT.slope) : -0.5,
   ];
   const vertical = 1 / (slopes[0] - slopes[1]),
     shear = (-(slopes[0] + slopes[1]) * vertical) / 2;
@@ -217,6 +233,7 @@ export function fitPicture(png, fpId, rot) {
       right: round(place(m.maxX, 0)[0]),
       bottom: round(lowY),
     },
+    camera: m.sure[0] && m.sure[1] ? cameraOf(m.slopes) : null,
   };
 }
 

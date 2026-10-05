@@ -154,13 +154,24 @@ describe('building check', () => {
   });
 
   it('notes what a person should look at without failing the picture', () => {
-    // a camera a little off: corrected, and said
+    // ground lines within a little of the game's: nothing to say
+    const near = picture('t1', 0, { map: ([x, y]) => [x, y - Math.max(0, 512 - x) * 0.05] });
+    expect(checkPicture(near, 't1', 0)).toMatchObject({ ok: true, notes: [] });
+    // one wall drawn flatter than the game's: corrected, and said, so drift is seen early
+    const drift = picture('t1', 0, { map: ([x, y]) => [x, y + Math.max(0, 512 - x) * 0.1] });
+    expect(checkPicture(drift, 't1', 0)).toMatchObject({
+      ok: true,
+      notes: [
+        "camera off: the lower-left ground line slopes 0.40 where the game's slopes 0.50 (corrected)",
+      ],
+    });
+    // a camera too far off to correct all the way
     const off = picture('t1', 0, { map: ([x, y]) => [x, 832 + (y - 832) * 0.6] });
     const r = checkPicture(off, 't1', 0);
     expect(r.ok).toBe(true);
     expect(r.notes).toEqual([
-      'camera corrected only part of the way: the lower-left ground line slopes 0.30',
-      'camera corrected only part of the way: the lower-right ground line slopes -0.30',
+      "camera far off: the lower-left ground line slopes 0.30 where the game's slopes 0.50 (corrected part of the way)",
+      "camera far off: the lower-right ground line slopes -0.30 where the game's slopes -0.50 (corrected part of the way)",
     ]);
     // one ground line far off and the other right: more likely clutter at the wall's foot than a
     // wrong camera, so it is left to the reviewer
@@ -168,7 +179,7 @@ describe('building check', () => {
     const k = checkPicture(skew, 't1', 0);
     expect(k.ok).toBe(true);
     expect(k.notes).toEqual([
-      'camera corrected only part of the way: the lower-left ground line slopes 0.20',
+      "camera far off: the lower-left ground line slopes 0.20 where the game's slopes 0.50 (corrected part of the way)",
     ]);
     // a round tower: placed by its outline
     const tower = new PNG({ width: 1024, height: 1024 });
@@ -210,6 +221,7 @@ describe('building check', () => {
       'cx',
       'cy',
       'box',
+      'camera',
     ]);
   });
 

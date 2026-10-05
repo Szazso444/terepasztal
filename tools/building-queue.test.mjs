@@ -11,6 +11,7 @@ import {
   approveGate,
   buildQueue,
   describeEntry,
+  fittedFile,
   loadFamilies,
   mismatches,
   nextEntry,
@@ -101,32 +102,50 @@ describe('building queue', () => {
     expect(fam.families.depot_narrow.base).toBeNull();
   });
 
-  it('names the references that fix what a picture shows', () => {
+  it('names the pictures that fix what a picture shows', () => {
     // the first picture of a family: today's picture, and the mood of its age
-    expect(about('depot-a0-r0').references).toEqual([
+    expect(about('depot-a0-r0').sources).toEqual([
       STYLE_BOARD,
       'assets/source/base-v1/depot.png',
       MOOD_EARLY,
     ]);
-    expect(about('refinery-a1-r0').references).toEqual([
+    expect(about('refinery-a1-r0').sources).toEqual([
       STYLE_BOARD,
       'assets/source/base-v1/refinery.png',
       MOOD_EARLY,
     ]);
     // another view: the same age's front view
-    expect(about('depot-a0-r2').references).toEqual([STYLE_BOARD, pictureFile('depot', 0, 0)]);
+    expect(about('depot-a0-r2').sources).toEqual([STYLE_BOARD, pictureFile('depot', 0, 0)]);
     // a later age: the front view of the age before
-    expect(about('depot-a3-r0').references).toEqual([
+    expect(about('depot-a3-r0').sources).toEqual([
       STYLE_BOARD,
       pictureFile('depot', 2, 0),
       MOOD_LATE,
     ]);
     // no picture of its own today: the main-line depot of the same age
-    expect(about('depot_narrow-a0-r0').references).toEqual([
+    expect(about('depot_narrow-a0-r0').sources).toEqual([
       STYLE_BOARD,
       pictureFile('depot', 0, 0),
       MOOD_EARLY,
     ]);
+  });
+
+  it('hands the generator earlier pictures laid onto their footprint, not as they came back', () => {
+    // a picture comes back larger than its guide and with its ground lines a little off; a later
+    // picture copies what it is shown, so it is shown the earlier one at the guide's camera
+    expect(fittedFile('depot-a0-r0')).toBe('assets/source/buildings-v2/.fitted/depot-a0-r0.png');
+    expect(about('depot-a0-r2').references).toEqual([STYLE_BOARD, fittedFile('depot-a0-r0')]);
+    expect(about('depot-a3-r0').references).toEqual([
+      STYLE_BOARD,
+      fittedFile('depot-a2-r0'),
+      MOOD_LATE,
+    ]);
+    expect(about('depot_narrow-a0-r0').references[1]).toBe(fittedFile('depot-a0-r0'));
+    // boards and today's pictures are attached as they are
+    expect(about('depot-a0-r0').references).toEqual(about('depot-a0-r0').sources);
+    // and the prompt says what the generator is looking at
+    expect(about('depot-a0-r2').prompt).toMatch(/exactly the block-out's camera and scale/);
+    expect(about('depot-a3-r0').prompt).toMatch(/exactly the block-out's camera, scale and place/);
   });
 
   it('writes a prompt from the shared block, the age, the family and the view', () => {
@@ -550,7 +569,12 @@ describe('the queue tool on the command line', () => {
       readFileSync(join(root, 'assets/source/buildings-v2/report.json'), 'utf8'),
     );
     expect(report.pictures['depot-a0-r0'].ok).toBe(true);
-    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
+    const second = run(root, 'next');
+    expect(second.out).toMatch(/^picture: +depot-a0-r1$/m);
+    // the front view it is turned from is attached laid onto its footprint
+    expect(second.out).toMatch(/^ +2\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r0\.png$/m);
+    const fitted = PNG.sync.read(readFileSync(join(root, fittedFile('depot-a0-r0'))));
+    expect([fitted.width, fitted.height]).toEqual(FOOTPRINTS.t2x2.canvas);
     // a rejected picture leaves the list's hand: its file is set aside
     paint(root, 'depot-a0-r1');
     const no = run(

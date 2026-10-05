@@ -72,7 +72,13 @@ Everything is in `assets/source/buildings-v2/`.
 - `<family>/<family>-a<age>-r<view>.png`: the pictures you make.
 - `<family>/<family>-a<age>-r<view>.rejected.png`: a picture that was given up, set aside by the
   tool for the user to look at. Never use one as a reference, and do not commit them.
-- `review/`: the review sheets and their index, made by the sheet tool.
+- `.fitted/<family>-a<age>-r<view>.png`: an earlier picture laid onto its footprint by the tool,
+  at exactly the guide's camera, scale and place. `next` names these as references: a later
+  picture copies the angles of what it is shown, so it is shown them straightened. Attach them as
+  named; do not edit or commit them.
+- `review/`: the review sheets and their index, made by the sheet tool. `review/<family>.png`
+  shows the pictures as the game will lay them; `review/<family>-angles.png` is the same sheet at
+  twice the size with the footprint and the line of the walls' feet drawn over each picture.
 - `report.json`: the results of the check, with the measurement of every picture.
 
 The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`, `:fit`):
@@ -138,6 +144,10 @@ by side and answer:
   prompt's Keep line, in the materials of the new age?
 - Is the plinth gone, with nothing on the ground around the building?
 - Is the foot of both visible walls plain and straight, with nothing standing in front of it?
+- Does the foot of each visible wall run parallel to the plinth's edge below it in the guide, both
+  walls equally steep? A wall turned towards the viewer, its foot flatter than the plinth's edge,
+  is the commonest fault, and so is a camera that looks from lower than the guide's and shows
+  less roof than the guide shows top.
 - Is the lower-left wall lighter than the lower-right wall?
 - Is it free of lettering, people, rails and smoke?
 
@@ -150,6 +160,12 @@ lower-left wall"), and keep the rest of the prompt. Give a picture up to three a
 
 A picture's place and size in its file are never a reason to make it again: the tools take care of
 those. Its view is: a building seen from the front, from above or in perspective cannot be used.
+
+When the tool records a picture it prints what it measured. `camera off` means a wall's foot does
+not run at the guide's angle; the tools correct it, but a corrected picture is never as good as
+one painted right, and every picture made from it starts from that correction. Say so in the next
+picture's edit if the same wall drifts again ("the lower-right wall's foot must run parallel to
+the plinth's lower-right edge").
 
 After three attempts, record the picture with
 `node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go

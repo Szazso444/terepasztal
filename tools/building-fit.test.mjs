@@ -193,6 +193,52 @@ describe('building fit', () => {
     expect(Math.abs(f.box.right - wallBase(fp, 0).e[0])).toBeLessThan(3);
   });
 
+  it('says where the camera stood: how high, and how far turned', () => {
+    // the game's camera looks down at 30 degrees on a building turned 45 degrees
+    const game = fitPicture(building('t1', 0), 't1', 0).camera;
+    expect(Math.abs(game.elevation - 30)).toBeLessThan(0.6);
+    expect(Math.abs(game.turn)).toBeLessThan(0.6);
+    // a lower camera flattens both ground lines: 0.5 x 0.8 = 0.4 is 23.6 degrees
+    const low = fitPicture(
+      building('t1', 0, { map: ([x, y]) => [x, 832 + (y - 832) * 0.8] }),
+      't1',
+      0,
+    );
+    expect(Math.abs(low.camera.elevation - 23.6)).toBeLessThan(0.6);
+    expect(Math.abs(low.camera.turn)).toBeLessThan(0.6);
+    // a building turned towards its lower-right wall: that wall's foot flatter, the other steeper
+    const turned = fitPicture(
+      building('t1', 0, { map: ([x, y]) => [x, y + (x - 512) * 0.08] }),
+      't1',
+      0,
+    );
+    expect(turned.measured.map((v) => Math.round(v * 100) / 100)).toEqual([0.58, -0.42]);
+    expect(turned.camera.turn).toBeGreaterThan(4);
+    expect(turned.camera.turn).toBeLessThan(6);
+    // a foot that is not two straight walls says nothing about the camera
+    const round = new PNG({ width: 1024, height: 1024 });
+    fillPoly(
+      round,
+      Array.from({ length: 48 }, (_, i) => [
+        512 + 200 * Math.cos((i / 48) * 2 * Math.PI),
+        600 + 100 * Math.sin((i / 48) * 2 * Math.PI),
+      ]),
+      [200, 180, 150],
+    );
+    expect(fitPicture(round, 't1', 0).camera).toBeNull();
+  });
+
+  it('can lay a picture down without correcting its camera', () => {
+    // for looking at what the generator drew: scale and place only
+    const png = building('t1', 3, {
+      map: ([x, y]) => [x, 832 + (y - 832) * 0.78 + (x - 512) * 0.03],
+    });
+    const f = fitPicture(png, 't1', 3, { rectify: false });
+    expect(f.slopes).toEqual([0.5, -0.5]);
+    expect([f.vertical, f.shear]).toEqual([1, 0]);
+    expect(Math.abs(f.measured[0] - 0.42)).toBeLessThan(0.02);
+  });
+
   it('has nothing to say about an empty picture', () => {
     expect(fitPicture(new PNG({ width: 1024, height: 1024 }), 't1', 0)).toBeNull();
   });

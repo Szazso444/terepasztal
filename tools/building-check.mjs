@@ -137,13 +137,16 @@ export function checkPicture(png, fpId, rot) {
   const wrongView = far(0) && far(1);
   fit.sure.forEach((sure, i) => {
     if (!sure) return;
-    const s = fit.measured[i].toFixed(2);
+    const game = i ? -0.5 : 0.5;
+    const s = fit.measured[i];
+    const slopes = `the ${SIDES[i]} ground line slopes ${s.toFixed(2)} where the game's slopes ${game.toFixed(2)}`;
     if (wrongView)
       problems.push(
-        `not the game's view: the ${SIDES[i]} wall's ground line slopes ${s}, the game's ${(i ? -0.5 : 0.5).toFixed(2)}`,
+        `not the game's view: the ${SIDES[i]} wall's ground line slopes ${s.toFixed(2)}, the game's ${game.toFixed(2)}`,
       );
-    else if (fit.measured[i] !== fit.slopes[i])
-      notes.push(`camera corrected only part of the way: the ${SIDES[i]} ground line slopes ${s}`);
+    else if (s !== fit.slopes[i])
+      notes.push(`camera far off: ${slopes} (corrected part of the way)`);
+    else if (Math.abs(s - game) > FIT.drift) notes.push(`camera off: ${slopes} (corrected)`);
   });
   const base = wallBase(fp, rot);
   const foot = fit.base.e[0] - fit.base.w[0];
