@@ -57,26 +57,27 @@ describe('the guide for the artist agent', () => {
   });
 
   it('has a picture painted again when its camera is off', () => {
-    // the tools refuse it and say what to add to the prompt; the limit is the tools' own
+    // the tools refuse it; the limit is the tools' own
     expect(guide).toContain(`more than ${FIT.camera}°`);
-    expect(guide).toMatch(/adding to the prompt/);
     expect(guide).not.toMatch(/the tools correct it, but/);
-    // the closest of three attempts is kept, and marked for the user
-    expect(guide).toContain('--keep');
-    expect(guide).toContain('.tries/');
-    expect(prompt).toContain('--keep');
+    // the tool keeps the refused attempt and hands the picture out again, painted from it
+    expect(guide).toMatch(/run\s+`node tools\/building-queue\.mjs next`\s+again/);
+    // after three attempts the tool keeps the closest itself: nothing to copy, add or choose
+    expect(guide).toMatch(/keeps the closest/);
+    for (const gone of ['--keep', '.tries/']) {
+      expect(guide, gone).not.toContain(gone);
+      expect(prompt, gone).not.toContain(gone);
+    }
+    expect(guide).not.toMatch(/adding to the prompt/);
     // pictures made before go back in the queue and are painted again from their earlier selves
     expect(guide).toContain('.before.png');
     expect(guide).toMatch(/to paint again/);
-    // the earlier self counts when the closest attempt is chosen
-    expect(guide).toMatch(/earlier self counts/);
-    // the tool counts the attempts it refused; the user sees a gate family again
-    expect(guide).toMatch(/counts the attempts it refused/);
     expect(guide).toMatch(/closes its gate again/);
     // a picture recorded as made that fails a later check is the user's to decide, not remade
     expect(guide).toMatch(/already recorded as made/);
-    // too many kept pictures stop the work like too many lost ones
+    // too many pictures kept far off stop the work like too many lost ones
     expect(guide).toMatch(/kept with its camera off/);
+    expect(guide).toContain(`more than ${FIT.near}°`);
     for (const kept of [
       '*.before.png',
       '*.before.*.png',

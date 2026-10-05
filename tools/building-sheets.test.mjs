@@ -327,8 +327,8 @@ describe('building review sheets', () => {
       file.endsWith('depot-a0-r2.before.png');
     const html = indexHtml(inv, queue, report, progress(queue, inv, fam, there));
     expect(html).toContain('2 of 24 made, 1 kept with the camera off, 1 to paint again.');
-    // the angles table marks a camera further than three degrees from the game's
-    expect(html).toContain("further than 3° from the game's");
+    // the angles table marks a camera further than two degrees from the game's
+    expect(html).toContain("further than 2° from the game's");
     expect(html).toMatch(/<td class="">0\.52 \/ -0\.47<\/td>/);
     expect(html).toMatch(/<td class="off">0\.58 \/ -0\.42<\/td>/);
     expect(html).toMatch(/<td class="off">0\.40 \/ -0\.40<\/td>/);

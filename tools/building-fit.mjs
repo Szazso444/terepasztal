@@ -25,7 +25,12 @@ export const FIT = {
   /** how far a measured ground slope is used; the game's slopes are 0.5 and -0.5 */
   slope: [0.33, 0.67],
   /** degrees a picture's camera may be from the game's, in height and in turn */
-  camera: 3,
+  camera: 2,
+  /**
+   * a picture kept as the closest of its attempts is near enough within this many degrees: it is
+   * marked, but not held against its family
+   */
+  near: 3,
   /** pixels more solid than this belong to the building */
   alpha: 128,
 };

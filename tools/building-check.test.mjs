@@ -166,11 +166,9 @@ describe('building check', () => {
       "camera off by 6.4°: it looks down from 23.6° where the game looks down from 30° (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50)",
     ]);
     expect(low.camera.by).toBe(6.4);
-    // for the next attempt: the feet as they are, the cause, the cure, and what is wanted
-    expect(low.camera.say).toBe(
-      "Both wall feet run too flat. The camera is too low, so too little of the roof shows: look down on the building more steeply. Both wall feet must run parallel to the plinth's edges, as the block-out's do.",
-    );
-    // for a picture that is painted again later: what was wrong with it, not what to do
+    // for the next attempt, which is painted from this one straightened: what was wrong with it.
+    // Not what to do about it: told to look down more steeply, a generator overshoots
+    expect(Object.keys(low.camera)).toEqual(['by', 'was']);
     expect(low.camera.was).toBe(
       'It was painted from too low a camera, so too little of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen.',
     );
@@ -179,9 +177,6 @@ describe('building check', () => {
     expect(high.problems).toEqual([
       "camera off by 6.9°: it looks down from 36.9° where the game looks down from 30° (the wall feet slope 0.60 and -0.60, the game's 0.50 and -0.50)",
     ]);
-    expect(high.camera.say).toMatch(
-      /^Both wall feet run too steep\. The camera is too high, so too much of the roof shows: look down on the building less steeply\. /,
-    );
     expect(high.camera.was).toMatch(
       /^It was painted from too high a camera, so too much of its roof showed\. /,
     );
@@ -191,16 +186,13 @@ describe('building check', () => {
     expect(right.problems[0]).toMatch(
       /^camera off by 4\.\d°: the building is turned 4\.\d° towards its lower-right wall \(the wall feet slope 0\.58 and -0\.42, the game's 0\.50 and -0\.50\)$/,
     );
-    expect(right.camera.say).toMatch(
-      /^The lower-left wall's foot runs too steep and the lower-right wall's too flat\. The building is turned, its lower-right wall facing the viewer too much: turn it back until both walls are seen equally from the side\. /,
-    );
     expect(right.camera.was).toMatch(
       /^It was painted turned, its lower-right wall facing the viewer too much\. /,
     );
     const left = seen(([x, y]) => [x, y - (x - 512) * 0.08]);
     expect(left.problems[0]).toMatch(/the building is turned 4\.\d° towards its lower-left wall/);
-    expect(left.camera.say).toMatch(
-      /^The lower-left wall's foot runs too flat and the lower-right wall's too steep\. The building is turned, its lower-left wall facing the viewer too much: /,
+    expect(left.camera.was).toMatch(
+      /^It was painted turned, its lower-left wall facing the viewer too much\. /,
     );
     // both at once: said in one line, and both asked for
     const both = seen(([x, y]) => [x, 832 + (y - 832) * 0.8 + (x - 512) * 0.08]);
@@ -208,22 +200,15 @@ describe('building check', () => {
     expect(both.problems[0]).toMatch(
       /^camera off by 6\.\d°: it looks down from 23\.\d° where the game looks down from 30° and the building is turned 5\.\d° towards its lower-right wall \(/,
     );
-    // the feet are said as they are: here the lower-left one is right, whatever each fault
-    // alone would do to it
-    expect(both.fit.measured.map((s) => Math.round(s * 100) / 100)).toEqual([0.48, -0.32]);
-    expect(both.camera.say).toMatch(
-      /^The lower-right wall's foot runs too flat; the lower-left wall's is right\. The camera is too low, .*: look down on the building more steeply\. The building is turned, its lower-right wall facing the viewer too much: /,
-    );
-    expect(both.camera.say).not.toMatch(/too steep/);
     expect(both.camera.was).toMatch(
       /^It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much\. /,
     );
   });
 
-  it("passes a camera within three degrees of the game's", () => {
-    // 0.5 x 0.93 = 0.465 is 27.7 degrees; and one wall's foot a little flat
+  it("passes a camera within two degrees of the game's", () => {
+    // 0.5 x 0.96 = 0.48 is 28.7 degrees; and one wall's foot a little flat
     for (const map of [
-      ([x, y]) => [x, 832 + (y - 832) * 0.93],
+      ([x, y]) => [x, 832 + (y - 832) * 0.96],
       ([x, y]) => [x, y - Math.max(0, 512 - x) * 0.05],
     ]) {
       const r = seen(map);
@@ -290,7 +275,6 @@ describe('building check', () => {
     ]);
     expect(steep.camera).toEqual({
       by: null,
-      say: "The lower-left wall's foot runs too steep: it must run parallel to the plinth's lower-left edge, two pixels across for one down.",
       was: "Its lower-left wall's foot ran too steep. The reference shows it put right: paint it as the reference and the block-out are seen.",
     });
   });
