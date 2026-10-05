@@ -159,9 +159,10 @@
       "age": 2,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a2-r2.png",
-      "status": "rejected",
+      "status": "generated",
       "attempts": 3,
-      "note": "Repeatedly added front windows and a crew door to the plain lower-left BACK wall in r2; the corrected second attempt had a camera error of 2.5 degrees, and the third restored the wrong front wall.",
+      "note": "kept with its camera off by 2.5° after 3 attempts: an earlier one was the closest",
+      "kept": 2.5,
       "repaint": {
         "by": 2.5,
         "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
@@ -262,11 +263,11 @@
       "status": "generated",
       "attempts": 3,
       "note": "kept with its camera off by 4.4° after 3 attempts: an earlier one was the closest",
+      "kept": 4.4,
       "repaint": {
         "by": 4.4,
         "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      },
-      "kept": 4.4
+      }
     },
     {
       "id": "depot-a4-r3",
@@ -274,12 +275,13 @@
       "age": 4,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a4-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.2° after 3 attempts: an earlier one was the closest",
+      "kept": 2.2,
       "repaint": {
-        "by": 4.1,
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 2.2,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -288,8 +290,8 @@
       "age": 5,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a5-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 5.6,
@@ -302,8 +304,8 @@
       "age": 5,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a5-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 2.7,
@@ -316,11 +318,11 @@
       "age": 5,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a5-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "Earlier-self reference omitted portals; repainted with two open lower-right portals and no threshold rails.",
       "repaint": {
-        "by": 7.6,
+        "by": 3.1,
         "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
@@ -330,8 +332,8 @@
       "age": 5,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a5-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 3.9,
