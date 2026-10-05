@@ -1583,9 +1583,9 @@ export class Game {
   }
   /** A new age begins: its works, stations and rolling stock unlock. */
   /** DEMO: which picture the two-by-two depots show; a name ending in [new], [raw] or [old] pins one */
-  depotLook: 'new' | 'raw' | 'old' = 'raw';
+  depotLook: 'new' | 'raw' | 'old' = 'new';
   /** DEMO: how large the pilot's pictures stand on the depot's footprint */
-  depotSize = 1.15;
+  depotSize = 1.3;
   /** DEMO: the age every depot shows; null takes it from the depot's level */
   depotAge: number | null = null;
   /** DEMO: straight track drawn on the tiles under a depot, along its gates */
@@ -2535,7 +2535,7 @@ export class Game {
     // DEMO: B the look, N the size, L the age, T the rails under the depot
     if (this.viewTarget === 0 && !this.screens.current) {
       if (inp.wasPressed('KeyB')) {
-        const looks = ['raw', 'new', 'old'] as const;
+        const looks = ['new', 'raw', 'old'] as const;
         this.depotLook = looks[(looks.indexOf(this.depotLook) + 1) % looks.length];
         this.redrawDepots(
           {
