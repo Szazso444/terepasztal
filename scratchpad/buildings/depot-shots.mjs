@@ -1,10 +1,11 @@
-// Demo: the depot pilot's four pictures in the running game, each turn of the depot in three
-// looks from the same spot (today's picture, the new one with its camera corrected, the new one
-// as it was drawn), with track through its gates. Then all four new views side by side.
-//   BASE_URL=http://127.0.0.1:5186 node scratchpad/buildings/depot-shots.mjs
+// Demo: the depot's pictures in the running game, from one spot, with track through its gates.
+// Sets: `sizes` (as drawn, five sizes, rails under the hall), `looks` (as drawn and corrected at
+// the chosen size, with and without rails), `ages` (the six levels).
+//   BASE_URL=http://127.0.0.1:5186 node scratchpad/buildings/depot-shots.mjs [size]
 import { launch, openGame } from '../runtime.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 const out = 'scratchpad/buildings/out';
+const chosen = Number(process.argv[2] ?? 1.15);
 mkdirSync(out, { recursive: true });
 const browser = await launch();
 try {
@@ -18,19 +19,15 @@ try {
     const c = g.build.tileUnderMouse();
     const clear = (x, y) =>
       b.checkTrack(x, y, { kind: 'straight', cls: 'regular' }, 1).ok && !b.stationAt(x, y);
-    const patch = (w, h) => {
-      for (let r = 0; r < 40; r++)
-        for (let oy = c.y - r; oy <= c.y + r; oy++)
-          for (let ox = c.x - r - (w >> 1); ox <= c.x + r - (w >> 1); ox++) {
-            let ok = true;
-            for (let y = oy; y < oy + h && ok; y++)
-              for (let x = ox; x < ox + w && ok; x++) ok = clear(x, y);
-            if (ok) return { x: ox, y: oy };
-          }
-      return null;
-    };
-    const one = patch(14, 14);
-    const row = patch(34, 14);
+    let one = null;
+    for (let r = 0; r < 40 && !one; r++)
+      for (let oy = c.y - r; oy <= c.y + r && !one; oy++)
+        for (let ox = c.x - r - 7; ox <= c.x + r - 7 && !one; ox++) {
+          let ok = true;
+          for (let y = oy; y < oy + 14 && ok; y++)
+            for (let x = ox; x < ox + 14 && ok; x++) ok = clear(x, y);
+          if (ok) one = { x: ox, y: oy };
+        }
     const laid = [];
     let depots = [];
     const wipe = () => {
@@ -38,12 +35,14 @@ try {
       depots = [];
       for (const t of laid.splice(0)) b.removeTrack(t.x, t.y);
     };
-    const put = (cx, cy, rot, look) => {
+    const put = (cx, cy, rot, o) => {
       b.free = true;
+      g.depotLook = o.look;
+      g.depotSize = o.size;
+      g.depotAge = o.age;
+      g.depotRails = o.rails;
       const s = b.placeStation(cx, cy, 'depot', rot);
       if (!s) return null;
-      s.name = `Depot [${look}]`;
-      b.onStationChanged(s, false);
       depots.push(s);
       const lay = (x, y, r) => {
         if (b.placeTrack(x, y, { kind: 'straight', cls: 'regular' }, r)) laid.push({ x, y });
@@ -61,11 +60,12 @@ try {
     };
     window.demo = { wipe, put };
     for (const k of ['wood', 'stone', 'iron']) g.stock.amounts.set(k, 5000);
-    return { one, row };
+    return { one };
   });
-  console.log(JSON.stringify(scene));
   if (!scene.one) throw new Error('no clear patch');
-  const look = async (tx, ty, zoomIndex) =>
+  const cx = scene.one.x + 6,
+    cy = scene.one.y + 6;
+  const look = (zoomIndex) =>
     page.evaluate(
       ([tx, ty, zi]) => {
         const g = window.game;
@@ -73,49 +73,44 @@ try {
         g.camera.zoom = g.camera.targetZoom;
         const p = g.world.surfacePoint(tx, ty);
         g.camera.centerOn(p.x, p.y);
-        return { zoom: g.camera.zoom, steps: g.camera.zoomIndex };
+        return g.camera.zoom;
       },
-      [tx, ty, zoomIndex],
+      [cx + 1, cy + 1, zoomIndex],
     );
-  // the depot stands with its corner at (cx, cy); its middle is the corner shared by its four tiles
-  const cx = scene.one.x + 6,
-    cy = scene.one.y + 6;
-  const report = { scene, shots: [] };
-  for (let rot = 0; rot < 4; rot++)
-    for (const lookName of ['old', 'new', 'raw']) {
-      await page.evaluate(
-        ([cx, cy, rot, lookName]) => {
-          window.demo.wipe();
-          return window.demo.put(cx, cy, rot, lookName);
-        },
-        [cx, cy, rot, lookName],
-      );
-      const z = await look(cx + 1, cy + 1, 4);
-      await page.mouse.move(60, 200);
-      await page.waitForTimeout(500);
-      const file = `${out}/depot-r${rot}-${lookName}.png`;
-      await page.screenshot({ path: file, clip: { x: 720 - 470, y: 500 - 360, width: 940, height: 640 } });
-      report.shots.push({ file, rot, look: lookName, zoom: z.zoom });
-    }
-  // all four turns of the new picture side by side, at the normal zoom
-  if (scene.row) {
-    for (const lookName of ['new', 'raw', 'old']) {
-      await page.evaluate(
-        ([ox, oy, lookName]) => {
-          window.demo.wipe();
-          for (let rot = 0; rot < 4; rot++) window.demo.put(ox + 3 + rot * 8, oy + 6, rot, lookName);
-        },
-        [scene.row.x, scene.row.y, lookName],
-      );
-      const z = await look(scene.row.x + 17, scene.row.y + 7, 3);
-      await page.waitForTimeout(500);
-      const file = `${out}/depot-row-${lookName}.png`;
-      await page.screenshot({ path: file, clip: { x: 0, y: 140, width: 1440, height: 720 } });
-      report.shots.push({ file, look: lookName, zoom: z.zoom });
-    }
+  const report = { chosen, shots: [] };
+  const shot = async (name, rot, o, zoomIndex, clip) => {
+    await page.evaluate(
+      ([cx, cy, rot, o]) => {
+        window.demo.wipe();
+        return window.demo.put(cx, cy, rot, o);
+      },
+      [cx, cy, rot, o],
+    );
+    const zoom = await look(zoomIndex);
+    await page.mouse.move(60, 200);
+    await page.waitForTimeout(450);
+    const file = `${out}/${name}.png`;
+    await page.screenshot({ path: file, clip });
+    report.shots.push({ file, rot, ...o, zoom });
+  };
+  const wide = { x: 720 - 470, y: 500 - 360, width: 940, height: 640 };
+  const close = { x: 720 - 400, y: 500 - 330, width: 800, height: 560 };
+  // 1. how large: as drawn, the gates towards the viewer on either side, rails under the hall
+  for (const rot of [0, 3])
+    for (const size of [1, 1.08, 1.15, 1.22, 1.3])
+      await shot(`size-r${rot}-${Math.round(size * 100)}`, rot, { look: 'raw', size, age: 0, rails: true }, 5, close);
+  // 2. the looks at the chosen size, every turn; and the flat tiles there were before
+  for (let rot = 0; rot < 4; rot++) {
+    await shot(`look-r${rot}-raw`, rot, { look: 'raw', size: chosen, age: 0, rails: true }, 4, wide);
+    await shot(`look-r${rot}-new`, rot, { look: 'new', size: chosen, age: 0, rails: true }, 4, wide);
+    await shot(`look-r${rot}-raw-flat`, rot, { look: 'raw', size: 1, age: 0, rails: false }, 4, wide);
   }
+  // 3. the six levels, as drawn, at the chosen size
+  for (let age = 0; age < 6; age++)
+    for (const rot of [0, 1])
+      await shot(`age-a${age}-r${rot}`, rot, { look: 'raw', size: chosen, age, rails: true }, 4, wide);
   writeFileSync(`${out}/report.json`, JSON.stringify(report, null, 1));
-  console.log(`${report.shots.length} shots`, JSON.stringify(report.shots.slice(0, 2)));
+  console.log(`${report.shots.length} shots`);
 } finally {
   await browser.close();
 }

@@ -1444,6 +1444,10 @@ export class Game {
     if (removed) {
       this.onStationOrphaned(s, false);
       this.world.removeStructure(id);
+      // DEMO: the rails drawn under a depot go with it
+      if (s.def.depot && s.size === 2)
+        for (const f of s.footprint())
+          if (!this.track.has(f.x, f.y)) this.world.setTrack(f.x, f.y, null);
       for (const f of s.footprint())
         if (terrainAt(this.map, f.x, f.y) === Terrain.Hill && !this.track.has(f.x, f.y))
           this.world.setFlattened(f.x, f.y, false);
@@ -1468,7 +1472,17 @@ export class Game {
         );
       } else if (s.size === 2) {
         // the sprite is anchored at the footprint centre; sort it with its front tile
-        this.world.setStructure(id, s.x + 1, s.y + 1, this.depotFrame(s), 20, -HALF_H_PX);
+        const frame = this.depotFrame(s);
+        const sprite = this.world.setStructure(id, s.x + 1, s.y + 1, frame, 20, -HALF_H_PX);
+        // DEMO: the pilot's pictures stand as large as asked; rails run under the hall, gate to gate
+        sprite.scale.set(frame.includes('_a') ? this.depotSize : 1);
+        for (const f of s.footprint())
+          if (!this.track.has(f.x, f.y))
+            this.world.setTrack(
+              f.x,
+              f.y,
+              this.depotRails ? `track/straight_regular_${s.rot % 2 === 0 ? 1 : 0}` : null,
+            );
       } else {
         const fam = `structures/${s.def.art}_${s.spriteLevel}`;
         this.world.setStructure(
@@ -1569,13 +1583,26 @@ export class Game {
   }
   /** A new age begins: its works, stations and rolling stock unlock. */
   /** DEMO: which picture the two-by-two depots show; a name ending in [new], [raw] or [old] pins one */
-  depotLook: 'new' | 'raw' | 'old' = 'new';
+  depotLook: 'new' | 'raw' | 'old' = 'raw';
+  /** DEMO: how large the pilot's pictures stand on the depot's footprint */
+  depotSize = 1.15;
+  /** DEMO: the age every depot shows; null takes it from the depot's level */
+  depotAge: number | null = null;
+  /** DEMO: straight track drawn on the tiles under a depot, along its gates */
+  depotRails = true;
   private depotFrame(s: Station): string {
     const pinned = /\[(new|raw|old)\]$/.exec(s.name)?.[1] as 'new' | 'raw' | 'old' | undefined;
     const look = pinned ?? this.depotLook;
-    const pilot = `structures/${s.def.art}_a0_r${s.rot % 4}${look === 'raw' ? '_raw' : ''}`;
+    const age = this.depotAge ?? Math.max(0, Math.min(5, s.level - 1));
+    const pilot = `structures/${s.def.art}_a${age}_r${s.rot % 4}${look === 'raw' ? '_raw' : ''}`;
     if (look !== 'old' && this.atlas.has(pilot)) return pilot;
     return `structures/${s.def.art}_r${s.rot % 2}${s.level > 1 ? '_lv' + s.level : ''}`;
+  }
+  /** DEMO: redraw every two-by-two depot after one of the demo's switches changed */
+  private redrawDepots(text: string) {
+    for (const s of this.builder.stations)
+      if (s.def.depot && s.size === 2) this.onStationChanged(s, false);
+    this.toasts.push(text, 'info');
   }
   private onAgeUp(tier: number) {
     this.toolbar.refresh();
@@ -2505,20 +2532,35 @@ export class Game {
     if (inp.wasPressed('KeyM')) this.toggleOverview();
     if (inp.wasPressed('Tab') && this.toolbar.open && this.viewTarget === 0)
       this.toolbar.cycle(inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? -1 : 1);
-    // DEMO: B switches every depot between the new picture, the new one as drawn, and today's
-    if (inp.wasPressed('KeyB') && this.viewTarget === 0 && !this.screens.current) {
-      const looks = ['new', 'raw', 'old'] as const;
-      this.depotLook = looks[(looks.indexOf(this.depotLook) + 1) % looks.length];
-      for (const s of this.builder.stations)
-        if (s.def.depot && s.size === 2) this.onStationChanged(s, false);
-      this.toasts.push(
-        {
-          new: 'Depot: new picture, camera corrected',
-          raw: 'Depot: new picture as it was drawn',
-          old: "Depot: today's picture",
-        }[this.depotLook],
-        'info',
-      );
+    // DEMO: B the look, N the size, L the age, T the rails under the depot
+    if (this.viewTarget === 0 && !this.screens.current) {
+      if (inp.wasPressed('KeyB')) {
+        const looks = ['raw', 'new', 'old'] as const;
+        this.depotLook = looks[(looks.indexOf(this.depotLook) + 1) % looks.length];
+        this.redrawDepots(
+          {
+            new: 'Depot: new picture, camera corrected',
+            raw: 'Depot: new picture as it was drawn',
+            old: "Depot: today's picture",
+          }[this.depotLook],
+        );
+      }
+      if (inp.wasPressed('KeyN')) {
+        const sizes = [1, 1.08, 1.15, 1.22, 1.3];
+        this.depotSize = sizes[(sizes.indexOf(this.depotSize) + 1) % sizes.length];
+        this.redrawDepots(`Depot size: x${this.depotSize.toFixed(2)}`);
+      }
+      if (inp.wasPressed('KeyL')) {
+        this.depotAge = this.depotAge === null ? 0 : this.depotAge >= 5 ? null : this.depotAge + 1;
+        const names = ['Steam', 'Diesel', 'Electric', 'Nuclear', 'Magnetic', 'Hyper'];
+        this.redrawDepots(
+          this.depotAge === null ? 'Depot age: by its level' : `Depot age: ${names[this.depotAge]}`,
+        );
+      }
+      if (inp.wasPressed('KeyT')) {
+        this.depotRails = !this.depotRails;
+        this.redrawDepots(this.depotRails ? 'Rails under the depot' : 'No rails under the depot');
+      }
     }
     // U / Shift+U: the tools that upgrade wide track to high speed and downgrade it
     if (inp.wasPressed('KeyU') && this.viewTarget === 0 && !this.screens.current)
