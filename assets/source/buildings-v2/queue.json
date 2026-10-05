@@ -25,8 +25,8 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 2.6,
@@ -39,8 +39,8 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
         "by": 2.5,
@@ -54,7 +54,7 @@
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a0-r2.png",
       "status": "pending",
-      "attempts": 0,
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 3,
