@@ -25,9 +25,7 @@ export const DEFAULT_PIVOT = 0.7;
 export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
 
-/** `rear`: the rear half of a hinged body (its front half is `body`) */
-export type PartKind =
-  'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre' | 'rear';
+export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
 /** two-axle bogie, three-axle bogie, or the wheeled engine unit of a Meyer frame */
 export type BogieKind = 'bogie' | 'bogie3' | 'bogie4' | 'engine_unit';
 /** axles under each kind of bogie */

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { gearSegments, type Gear } from './gear';
 import { vehicleSpec, poseVehicle, Polyline } from './body';
 import { content } from '../data/content';
-import { vehicleAccess } from './compat';
+import { gaugeOf, vehicleAccess } from './compat';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -41,56 +41,6 @@ describe('running gear from the table', () => {
     expect(seg.truck).toEqual([0, -1]);
     expect(seg.nb).toBe(2);
   });
-
-  it('carries a hinged half on the part next to it, without a truck there', () => {
-    const gear: Gear = {
-      parts: [
-        { part: 'rear', from: 0, to: 0.5, trucks: [[0.1, 0.2]], hinge: 'front' },
-        {
-          part: 'body',
-          from: 0.5,
-          to: 1,
-          trucks: [
-            [0.55, 0.65],
-            [0.85, 0.95],
-          ],
-        },
-      ],
-    };
-    const segs = gearSegments(gear, 4);
-    const rear = segs.find((s) => s.part === 'rear')!;
-    // its front end (the hinge) and its own truck
-    expect(rear.at).toEqual([0, expect.closeTo(1.4, 9)]);
-    expect(rear.truck).toEqual([-1, 0]);
-    expect(rear.hidden).toEqual([true, false]);
-    const body = segs.find((s) => s.part === 'body')!;
-    expect(body.hidden).toBeUndefined();
-    expect(body.truck).toEqual([1, 0]);
-  });
-
-  it('keeps the halves end to end on straight track', () => {
-    const gear: Gear = {
-      parts: [
-        { part: 'rear', from: 0, to: 0.5, trucks: [[0.1, 0.2]], hinge: 'front' },
-        {
-          part: 'body',
-          from: 0.5,
-          to: 1,
-          trucks: [
-            [0.55, 0.65],
-            [0.85, 0.95],
-          ],
-        },
-      ],
-    };
-    const spec = vehicleSpec({ gear, lengthTiles: 4 });
-    const pose = poseVehicle(straight, 20, spec);
-    const [front, rear] = pose.segments;
-    expect(front.part).toBe('body');
-    expect(front.x).toBeCloseTo(19, 6);
-    expect(rear.x).toBeCloseTo(17, 6);
-    expect(rear.angle).toBeCloseTo(0, 6);
-  });
 });
 
 describe('trucks drawn as sprites of their own', () => {
@@ -124,12 +74,26 @@ describe('trucks drawn as sprites of their own', () => {
 
 describe('the DDA40X', () => {
   const def = content.locomotives.find((d) => d.id === 'dda40x')!;
-  it('is two hinged halves', () => {
+  it('is one rigid body on its two end trucks', () => {
     const spec = vehicleSpec(def);
-    expect(spec.segments.map((s) => s.part)).toEqual(['body', 'rear']);
-    expect(spec.segments.reduce((n, s) => n + s.L, 0)).toBeCloseTo(def.lengthTiles!, 6);
+    expect(spec.segments.map((s) => s.part)).toEqual(['body']);
+    expect(spec.segments[0].L).toBeCloseTo(def.lengthTiles!, 6);
+    expect(spec.segments[0].nb).toBe(2);
   });
   it('may run on regular track', () => {
     expect(vehicleAccess(def, 'regular')).toBeNull();
+  });
+});
+
+describe('every engine', () => {
+  it('may run on the track of its own gauge', () => {
+    // a length or a bogie moved can bar an engine from every curve: the rail rules measure each one
+    const barred = content.locomotives
+      .map((def) => ({
+        id: def.id,
+        why: vehicleAccess(def, gaugeOf(def) === 'narrow' ? 'narrow' : 'regular'),
+      }))
+      .filter((x) => x.why !== null);
+    expect(barred).toEqual([]);
   });
 });

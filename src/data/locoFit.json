@@ -1,153 +1,153 @@
 {
   "rocket": {
-    "tiles": 0.75,
+    "tiles": 0.7538,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.173,
-        "up": 21.1
+        "along": 0.155,
+        "up": 21.9
       }
     ],
     "wheels": {
       "engine": {
         "phases": 8,
-        "cycle": 0.7191
+        "cycle": 0.723
       }
     }
   },
   "bm50": {
-    "tiles": 0.625,
+    "tiles": 0.7609,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.196,
-        "up": 8.9
+        "along": 0.233,
+        "up": 9.2
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 0.253,
-        "across": 0.009,
-        "up": 8
+        "along": 0.312,
+        "across": 0.012,
+        "up": 8.3
       }
     ],
     "wheels": {
       "body": {
         "phases": 4,
-        "cycle": 0.0446
+        "cycle": 0.0567
       }
     }
   },
   "muki": {
-    "tiles": 0.5,
+    "tiles": 0.5982,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.03,
-        "up": 9.4
+        "along": 0.022,
+        "up": 9.6
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 0.192,
-        "across": -0.07,
-        "up": 7.2
+        "along": 0.236,
+        "across": -0.061,
+        "up": 7.6
       },
       {
         "part": "body",
-        "along": 0.201,
-        "across": 0.069,
-        "up": 7
+        "along": 0.242,
+        "across": 0.062,
+        "up": 7.3
       }
     ],
     "wheels": {
       "body": {
         "phases": 4,
-        "cycle": 0.0518
+        "cycle": 0.063
       }
     }
   },
   "c50": {
-    "tiles": 0.8,
+    "tiles": 0.8821,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.304,
-        "up": 11.9
+        "along": 0.333,
+        "up": 12.4
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 0.345,
-        "across": -0.106,
-        "up": 10.4
+        "along": 0.389,
+        "across": -0.085,
+        "up": 10.9
       },
       {
         "part": "body",
-        "along": 0.352,
-        "across": 0.11,
-        "up": 10.3
+        "along": 0.387,
+        "across": 0.094,
+        "up": 10.8
       }
     ],
     "wheels": {
       "body": {
         "phases": 4,
-        "cycle": 0.0678
+        "cycle": 0.0756
       }
     }
   },
   "mav490": {
-    "tiles": 1,
+    "tiles": 1.064,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.359,
+        "along": 0.374,
         "up": 19.7
       }
     ],
     "wheels": {
       "engine": {
         "phases": 8,
-        "cycle": 0.3356
+        "cycle": 0.3779
       }
     }
   },
   "mk45": {
-    "tiles": 1.25,
+    "tiles": 1.5021,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": -0.119,
+        "along": -0.191,
         "up": 19.2
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 0.531,
-        "across": -0.015,
-        "up": 15.6
+        "along": 0.643,
+        "across": -0.016,
+        "up": 16.3
       },
       {
         "part": "body",
-        "along": 0.528,
-        "across": 0.098,
-        "up": 8.2
+        "along": 0.628,
+        "across": 0.075,
+        "up": 8.3
       },
       {
         "part": "body",
-        "along": 0.523,
-        "across": -0.115,
-        "up": 8.2
+        "along": 0.63,
+        "across": -0.098,
+        "up": 8.4
       }
     ],
     "trucks": {
@@ -156,30 +156,30 @@
     "wheels": {
       "body-t0": {
         "phases": 4,
-        "cycle": 0.0783
+        "cycle": 0.0945
       },
       "body-t1": {
         "phases": 4,
-        "cycle": 0.0783
+        "cycle": 0.0945
       }
     }
   },
   "mk48": {
-    "tiles": 1.125,
+    "tiles": 1.1133,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.397,
+        "along": 0.396,
         "up": 15.8
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 0.451,
-        "across": -0.02,
-        "up": 13.7
+        "along": 0.452,
+        "across": -0.01,
+        "up": 13.6
       }
     ],
     "trucks": {
@@ -188,231 +188,158 @@
     "wheels": {
       "body-t0": {
         "phases": 4,
-        "cycle": 0.0945
+        "cycle": 0.0882
       },
       "body-t1": {
         "phases": 4,
-        "cycle": 0.0945
+        "cycle": 0.0882
       }
     }
   },
   "rezet": {
-    "tiles": 1,
+    "tiles": 1.1544,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.322,
-        "up": 20.2
+        "along": 0.355,
+        "up": 20
       }
     ],
     "lamps": [
       {
         "part": "engine",
-        "along": 0.424,
-        "across": -0.008,
-        "up": 15.3
+        "along": 0.493,
+        "across": -0.004,
+        "up": 15.2
       },
       {
         "part": "engine",
-        "along": 0.433,
-        "across": 0.124,
-        "up": 6.9
+        "along": 0.492,
+        "across": 0.101,
+        "up": 6.7
       },
       {
         "part": "engine",
-        "along": 0.419,
-        "across": -0.145,
-        "up": 7.2
+        "along": 0.489,
+        "across": -0.117,
+        "up": 7
       }
     ],
     "wheels": {
       "engine": {
         "phases": 8,
-        "cycle": 0.3014
+        "cycle": 0.3779
       }
     }
   },
   "mav375": {
-    "tiles": 1.25,
+    "tiles": 1.3464,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.349,
-        "up": 24.5
+        "along": 0.368,
+        "up": 24.6
       }
     ],
     "lamps": [
       {
         "part": "engine",
-        "along": 0.446,
-        "across": 0.043,
-        "up": 20
+        "along": 0.48,
+        "across": 0,
+        "up": 19.9
       },
       {
         "part": "engine",
-        "along": 0.519,
-        "across": 0.211,
-        "up": 11
+        "along": 0.557,
+        "across": 0.12,
+        "up": 10.5
       },
       {
         "part": "engine",
-        "along": 0.516,
-        "across": -0.12,
-        "up": 11.6
+        "along": 0.558,
+        "across": -0.127,
+        "up": 11.1
       }
     ],
     "wheels": {
       "engine": {
         "phases": 8,
-        "cycle": 0.4044
+        "cycle": 0.4373
       }
     }
   },
   "j94": {
-    "tiles": 1.125,
+    "tiles": 1.2559,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.324,
-        "up": 22.7
+        "along": 0.332,
+        "up": 22.5
       }
-    ]
+    ],
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6355
+      }
+    }
   },
   "class08": {
-    "tiles": 1.125,
+    "tiles": 1.4377,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.05,
-        "up": 24.4
+        "along": 0.049,
+        "up": 24.3
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 0.439,
-        "across": -0.031,
-        "up": 21.3
+        "along": 0.587,
+        "across": -0.017,
+        "up": 20.8
       },
       {
         "part": "body",
-        "along": 0.467,
-        "across": 0.089,
-        "up": 11.8
+        "along": 0.602,
+        "across": 0.114,
+        "up": 10.7
       },
       {
         "part": "body",
-        "along": 0.452,
-        "across": -0.134,
-        "up": 12.3
+        "along": 0.598,
+        "across": -0.131,
+        "up": 11.2
       }
     ],
     "wheels": {
       "body": {
         "phases": 8,
-        "cycle": 0.5294
+        "cycle": 0.6913
       }
     }
   },
   "general": {
-    "tiles": 1.5,
+    "tiles": 1.58,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.328,
-        "up": 25.2
+        "along": 0.318,
+        "up": 25.1
       }
     ],
     "lamps": [
       {
         "part": "engine",
-        "along": 0.517,
-        "across": -0.029,
-        "up": 18.1
-      }
-    ]
-  },
-  "jupiter": {
-    "tiles": 1.5,
-    "sprite": true,
-    "smoke": [
-      {
-        "part": "engine",
-        "along": 0.309,
-        "up": 27.2
-      }
-    ]
-  },
-  "kando_v40": {
-    "tiles": 1.5,
-    "sprite": true,
-    "lamps": [
-      {
-        "part": "body",
-        "along": 0.662,
-        "across": -0.046,
-        "up": 21.2
-      },
-      {
-        "part": "body",
-        "along": 0.671,
-        "across": 0.113,
-        "up": 11.3
-      },
-      {
-        "part": "body",
-        "along": 0.652,
-        "across": -0.126,
-        "up": 11.4
-      }
-    ]
-  },
-  "sw1": {
-    "tiles": 1.5,
-    "sprite": true,
-    "smoke": [
-      {
-        "part": "body",
-        "along": -0.063,
-        "up": 23.2
-      }
-    ],
-    "lamps": [
-      {
-        "part": "body",
-        "along": 0.622,
-        "across": -0.052,
-        "up": 18.9
-      }
-    ]
-  },
-  "black_five": {
-    "tiles": 2,
-    "sprite": true,
-    "smoke": [
-      {
-        "part": "engine",
-        "along": 0.35,
-        "up": 23.2
-      }
-    ],
-    "lamps": [
-      {
-        "part": "engine",
-        "along": 0.521,
-        "across": -0.152,
-        "up": 10.9
-      },
-      {
-        "part": "engine",
-        "along": 0.551,
-        "across": 0.141,
-        "up": 9.8
+        "along": 0.536,
+        "across": -0.021,
+        "up": 17.9
       }
     ],
     "trucks": {
@@ -421,126 +348,84 @@
     "wheels": {
       "engine": {
         "phases": 8,
-        "cycle": 0.6541
+        "cycle": 0.7679
       },
       "engine-t0": {
         "phases": 4,
-        "cycle": 0.0437
-      },
-      "tender": {
-        "phases": 4,
-        "cycle": 0.0457
+        "cycle": 0.048
       }
     }
   },
-  "crocodile": {
-    "tiles": 3,
+  "jupiter": {
+    "tiles": 1.7611,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.374,
+        "up": 27.2
+      }
+    ],
+    "trucks": {
+      "engine": [0]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.7679
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0384
+      }
+    }
+  },
+  "kando_v40": {
+    "tiles": 1.9225,
     "sprite": true,
     "lamps": [
       {
-        "part": "engine",
-        "along": 0.23,
-        "across": -0.014,
-        "up": 15.5
+        "part": "body",
+        "along": 0.86,
+        "across": -0.036,
+        "up": 22.9
       },
       {
-        "part": "engine",
-        "along": 0.255,
-        "across": 0.226,
-        "up": 10.7
+        "part": "body",
+        "along": 0.854,
+        "across": 0.098,
+        "up": 11.9
       },
       {
-        "part": "engine",
-        "along": 0.212,
-        "across": -0.105,
-        "up": 10.1
-      },
-      {
-        "part": "cradle",
-        "along": 0.472,
-        "across": -0.033,
-        "up": 19.8
+        "part": "body",
+        "along": 0.841,
+        "across": -0.103,
+        "up": 11.9
       }
-    ]
+    ],
+    "wheels": {
+      "body": {
+        "phases": 8,
+        "cycle": 0.7645
+      }
+    }
   },
-  "deltic": {
-    "tiles": 2,
+  "sw1": {
+    "tiles": 1.5976,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.015,
-        "up": 22.8
+        "along": -0.124,
+        "up": 23.5
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 0.92,
-        "across": -0.119,
-        "up": 12.3
-      },
-      {
-        "part": "body",
-        "along": 0.922,
-        "across": 0.094,
-        "up": 11.4
-      }
-    ]
-  },
-  "drg01": {
-    "tiles": 2,
-    "sprite": true,
-    "smoke": [
-      {
-        "part": "engine",
-        "along": 0.415,
-        "up": 27.5
-      }
-    ],
-    "lamps": [
-      {
-        "part": "engine",
-        "along": 0.574,
-        "across": -0.109,
-        "up": 12.3
-      },
-      {
-        "part": "engine",
-        "along": 0.574,
-        "across": 0.134,
-        "up": 11.4
-      }
-    ]
-  },
-  "f7": {
-    "tiles": 2.25,
-    "sprite": true,
-    "smoke": [
-      {
-        "part": "body",
-        "along": -0.591,
-        "up": 28.6
-      }
-    ],
-    "lamps": [
-      {
-        "part": "body",
-        "along": 1.013,
-        "across": -0.018,
-        "up": 20.1
-      },
-      {
-        "part": "body",
-        "along": 0.993,
-        "across": -0.201,
-        "up": 12.8
-      },
-      {
-        "part": "body",
-        "along": 1.019,
-        "across": 0.171,
-        "up": 12
+        "along": 0.662,
+        "across": -0.022,
+        "up": 19.9
       }
     ],
     "trucks": {
@@ -549,36 +434,254 @@
     "wheels": {
       "body-t0": {
         "phases": 4,
-        "cycle": 0.1124
+        "cycle": 0.128
       },
       "body-t1": {
         "phases": 4,
-        "cycle": 0.1124
+        "cycle": 0.128
       }
     }
   },
-  "flying_scotsman": {
-    "tiles": 2,
+  "black_five": {
+    "tiles": 2.3744,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.395,
-        "up": 23.2
+        "along": 0.421,
+        "up": 23.6
       }
     ],
     "lamps": [
       {
         "part": "engine",
-        "along": 0.561,
-        "across": -0.196,
-        "up": 10.9
+        "along": 0.659,
+        "across": -0.155,
+        "up": 11.3
       },
       {
         "part": "engine",
-        "along": 0.594,
-        "across": 0.127,
+        "along": 0.679,
+        "across": 0.151,
         "up": 10.2
+      }
+    ],
+    "trucks": {
+      "engine": [0]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.8427
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0462
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0434
+      }
+    }
+  },
+  "crocodile": {
+    "tiles": 2.5421,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.206,
+        "across": -0.005,
+        "up": 15.6
+      },
+      {
+        "part": "engine",
+        "along": 0.22,
+        "across": 0.172,
+        "up": 10.6
+      },
+      {
+        "part": "engine",
+        "along": 0.188,
+        "across": -0.073,
+        "up": 10
+      },
+      {
+        "part": "cradle",
+        "along": 0.375,
+        "across": -0.021,
+        "up": 20
+      }
+    ],
+    "trucks": {
+      "engine": [0]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6802
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0479
+      }
+    }
+  },
+  "deltic": {
+    "tiles": 2.8504,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": 0.006,
+        "up": 23.1
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.326,
+        "across": -0.122,
+        "up": 12.8
+      },
+      {
+        "part": "body",
+        "along": 1.327,
+        "across": 0.104,
+        "up": 11.9
+      }
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1376
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1376
+      }
+    }
+  },
+  "drg01": {
+    "tiles": 3.022,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.641,
+        "up": 28.1
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.922,
+        "across": -0.14,
+        "up": 13.1
+      },
+      {
+        "part": "engine",
+        "along": 0.904,
+        "across": 0.156,
+        "up": 12
+      }
+    ],
+    "trucks": {
+      "engine": [0, 1],
+      "tender": [0, 1]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 1.0019
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0569
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.0557
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.056
+      },
+      "tender-t1": {
+        "phases": 4,
+        "cycle": 0.056
+      }
+    }
+  },
+  "f7": {
+    "tiles": 2.4764,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": -0.732,
+        "up": 27
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.116,
+        "across": -0.018,
+        "up": 20.4
+      },
+      {
+        "part": "body",
+        "along": 1.094,
+        "across": -0.174,
+        "up": 12.8
+      },
+      {
+        "part": "body",
+        "along": 1.108,
+        "across": 0.142,
+        "up": 11.9
+      }
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.128
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.128
+      }
+    }
+  },
+  "flying_scotsman": {
+    "tiles": 2.6092,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.509,
+        "up": 24.5
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.751,
+        "across": -0.183,
+        "up": 11.8
+      },
+      {
+        "part": "engine",
+        "along": 0.778,
+        "across": 0.123,
+        "up": 11.1
       }
     ],
     "trucks": {
@@ -587,43 +690,43 @@
     "wheels": {
       "engine": {
         "phases": 8,
-        "cycle": 0.7616
+        "cycle": 1.0088
       },
       "engine-t0": {
         "phases": 4,
-        "cycle": 0.0349
+        "cycle": 0.0463
       },
       "engine-t1": {
         "phases": 4,
-        "cycle": 0.0362
+        "cycle": 0.0479
       },
       "tender": {
         "phases": 4,
-        "cycle": 0.0347
+        "cycle": 0.0486
       }
     }
   },
   "ice1": {
-    "tiles": 2.5,
+    "tiles": 2.7183,
     "sprite": true,
     "lamps": [
       {
         "part": "body",
-        "along": 1.006,
-        "across": -0.002,
-        "up": 15.2
+        "along": 1.075,
+        "across": 0.004,
+        "up": 15.6
       },
       {
         "part": "body",
-        "along": 1.108,
-        "across": 0.117,
-        "up": 11.6
+        "along": 1.189,
+        "across": 0.109,
+        "up": 11.8
       },
       {
         "part": "body",
-        "along": 1.086,
-        "across": -0.155,
-        "up": 12.2
+        "along": 1.179,
+        "across": -0.133,
+        "up": 12.5
       }
     ],
     "trucks": {
@@ -632,273 +735,87 @@
     "wheels": {
       "body-t0": {
         "phases": 4,
-        "cycle": 0.122
+        "cycle": 0.131
       },
       "body-t1": {
         "phases": 4,
-        "cycle": 0.122
+        "cycle": 0.131
       }
     }
   },
   "k4s": {
-    "tiles": 2.5,
+    "tiles": 3.0539,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.407,
+        "along": 0.487,
         "up": 28.9
       }
     ],
     "lamps": [
       {
         "part": "engine",
-        "along": 0.526,
-        "across": 0.162,
-        "up": 15
+        "along": 0.617,
+        "across": 0.156,
+        "up": 14.5
       }
-    ]
+    ],
+    "trucks": {
+      "engine": [0, 1],
+      "tender": [0, 1]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.9682
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0504
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.1089
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.1151
+      },
+      "tender-t1": {
+        "phases": 4,
+        "cycle": 0.1151
+      }
+    }
   },
   "m62": {
-    "tiles": 2.5,
+    "tiles": 2.6221,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.461,
-        "up": 27.2
+        "along": 0.423,
+        "up": 27.4
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 1.047,
-        "across": -0.013,
+        "along": 1.099,
+        "across": -0.009,
         "up": 24.1
       },
       {
         "part": "body",
-        "along": 1.122,
-        "across": 0.166,
-        "up": 12.5
-      },
-      {
-        "part": "body",
-        "along": 1.098,
-        "across": -0.203,
-        "up": 13.6
-      }
-    ]
-  },
-  "mallard": {
-    "tiles": 2,
-    "sprite": true,
-    "smoke": [
-      {
-        "part": "engine",
-        "along": 0.363,
-        "up": 24.8
-      }
-    ],
-    "lamps": [
-      {
-        "part": "engine",
-        "along": 0.415,
-        "across": -0.027,
-        "up": 22.1
-      },
-      {
-        "part": "engine",
-        "along": 0.545,
-        "across": -0.154,
-        "up": 11.7
-      },
-      {
-        "part": "engine",
-        "along": 0.564,
-        "across": 0.123,
-        "up": 10
-      }
-    ]
-  },
-  "re460": {
-    "tiles": 2.5,
-    "sprite": true,
-    "lamps": [
-      {
-        "part": "body",
-        "along": 1.134,
-        "across": -0.189,
-        "up": 10.7
-      },
-      {
-        "part": "body",
-        "along": 1.14,
-        "across": 0.179,
-        "up": 10
-      },
-      {
-        "part": "body",
-        "along": 0.97,
-        "across": -0.02,
-        "up": 20.7
-      }
-    ]
-  },
-  "taurus": {
-    "tiles": 2.5,
-    "sprite": true,
-    "lamps": [
-      {
-        "part": "body",
-        "along": 1.056,
-        "across": -0.22,
+        "along": 1.159,
+        "across": 0.154,
         "up": 11.6
       },
       {
         "part": "body",
-        "along": 1.096,
-        "across": 0.168,
-        "up": 10.7
-      },
-      {
-        "part": "body",
-        "along": 1.074,
-        "across": -0.051,
-        "up": 15.3
-      }
-    ]
-  },
-  "tgv": {
-    "tiles": 2.5,
-    "sprite": true,
-    "lamps": [
-      {
-        "part": "body",
-        "along": 1.08,
-        "across": -0.186,
-        "up": 12
-      },
-      {
-        "part": "body",
-        "along": 1.09,
-        "across": -0.15,
-        "up": 11.9
-      },
-      {
-        "part": "body",
-        "along": 1.107,
-        "across": 0.094,
-        "up": 11.5
-      },
-      {
-        "part": "body",
-        "along": 1.109,
-        "across": 0.136,
-        "up": 11.4
-      }
-    ]
-  },
-  "v63": {
-    "tiles": 2.5,
-    "sprite": true,
-    "lamps": [
-      {
-        "part": "body",
-        "along": 1.084,
-        "across": -0.025,
-        "up": 20.3
-      },
-      {
-        "part": "body",
-        "along": 1.162,
-        "across": 0.14,
-        "up": 10.6
-      },
-      {
-        "part": "body",
-        "along": 1.142,
-        "across": -0.215,
-        "up": 11.3
-      }
-    ]
-  },
-  "daylight": {
-    "tiles": 3.5,
-    "sprite": true,
-    "smoke": [
-      {
-        "part": "engine",
-        "along": 0.606,
-        "up": 29.9
-      }
-    ],
-    "lamps": [
-      {
-        "part": "engine",
-        "along": 0.801,
-        "across": -0.033,
-        "up": 29.2
-      }
-    ]
-  },
-  "dda40x": {
-    "tiles": 3.4,
-    "sprite": true,
-    "smoke": [
-      {
-        "part": "body",
-        "along": -0.487,
-        "up": 32.6
-      },
-      {
-        "part": "rear",
-        "along": 0.457,
-        "up": 33.5
-      }
-    ],
-    "lamps": [
-      {
-        "part": "body",
-        "along": 0.749,
-        "across": -0.025,
-        "up": 22.4
-      },
-      {
-        "part": "body",
-        "along": 0.754,
-        "across": -0.028,
-        "up": 19.9
-      }
-    ],
-    "trucks": {
-      "body": [0, 1],
-      "rear": [0]
-    },
-    "wheels": {
-      "body-t0": {
-        "phases": 4,
-        "cycle": 0.1031
-      },
-      "body-t1": {
-        "phases": 4,
-        "cycle": 0.1031
-      },
-      "rear-t0": {
-        "phases": 4,
-        "cycle": 0.0935
-      }
-    }
-  },
-  "gg1": {
-    "tiles": 3.5,
-    "sprite": true,
-    "lamps": [
-      {
-        "part": "body",
-        "along": 1.474,
-        "across": -0.029,
-        "up": 22.9
+        "along": 1.153,
+        "across": -0.182,
+        "up": 12.8
       }
     ],
     "trucks": {
@@ -907,123 +824,494 @@
     "wheels": {
       "body-t0": {
         "phases": 4,
-        "cycle": 0.1824
+        "cycle": 0.1323
       },
       "body-t1": {
+        "phases": 4,
+        "cycle": 0.1323
+      }
+    }
+  },
+  "mallard": {
+    "tiles": 2.7736,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.439,
+        "up": 25
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.506,
+        "across": -0.019,
+        "up": 22.1
+      },
+      {
+        "part": "engine",
+        "along": 0.68,
+        "across": -0.151,
+        "up": 10.9
+      },
+      {
+        "part": "engine",
+        "along": 0.68,
+        "across": 0.142,
+        "up": 9.1
+      }
+    ],
+    "trucks": {
+      "engine": [0, 1]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.7004
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0321
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.0333
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0533
+      }
+    }
+  },
+  "re460": {
+    "tiles": 2.5931,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.176,
+        "across": -0.138,
+        "up": 10.7
+      },
+      {
+        "part": "body",
+        "along": 1.166,
+        "across": 0.144,
+        "up": 9.9
+      },
+      {
+        "part": "body",
+        "along": 0.989,
+        "across": -0.006,
+        "up": 21.5
+      }
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1386
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1386
+      }
+    }
+  },
+  "taurus": {
+    "tiles": 2.1329,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.895,
+        "across": -0.166,
+        "up": 11.7
+      },
+      {
+        "part": "body",
+        "along": 0.914,
+        "across": 0.124,
+        "up": 10.7
+      },
+      {
+        "part": "body",
+        "along": 0.908,
+        "across": -0.038,
+        "up": 15.6
+      }
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1449
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1449
+      }
+    }
+  },
+  "tgv": {
+    "tiles": 2.723,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.171,
+        "across": -0.149,
+        "up": 13
+      },
+      {
+        "part": "body",
+        "along": 1.181,
+        "across": -0.12,
+        "up": 13
+      },
+      {
+        "part": "body",
+        "along": 1.185,
+        "across": 0.077,
+        "up": 12.5
+      },
+      {
+        "part": "body",
+        "along": 1.184,
+        "across": 0.111,
+        "up": 12.4
+      }
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1159
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1159
+      }
+    }
+  },
+  "v63": {
+    "tiles": 2.1823,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.947,
+        "across": -0.013,
+        "up": 21.3
+      },
+      {
+        "part": "body",
+        "along": 1.009,
+        "across": 0.099,
+        "up": 10.9
+      },
+      {
+        "part": "body",
+        "along": 1.007,
+        "across": -0.144,
+        "up": 11.6
+      }
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1574
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1574
+      }
+    }
+  },
+  "daylight": {
+    "tiles": 3.4232,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.573,
+        "up": 30.1
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.782,
+        "across": -0.025,
+        "up": 29.6
+      }
+    ],
+    "trucks": {
+      "engine": [0, 1],
+      "tender": [0, 1]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.7217
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0812
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.0812
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.1151
+      },
+      "tender-t1": {
         "phases": 4,
         "cycle": 0.1151
       }
     }
   },
+  "dda40x": {
+    "tiles": 4.3544,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": -0.624,
+        "up": 33.5
+      },
+      {
+        "part": "body",
+        "along": 0.292,
+        "up": 33.9
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.981,
+        "across": -0.043,
+        "up": 25
+      },
+      {
+        "part": "body",
+        "along": 1.988,
+        "across": -0.046,
+        "up": 22.3
+      }
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.128
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.128
+      }
+    }
+  },
+  "gg1": {
+    "tiles": 3.1631,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.335,
+        "across": -0.022,
+        "up": 22
+      }
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1771
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1118
+      }
+    }
+  },
   "mav424": {
-    "tiles": 3,
+    "tiles": 2.6568,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.53,
-        "up": 28.4
+        "along": 0.412,
+        "up": 28.2
       }
     ],
     "lamps": [
       {
         "part": "engine",
-        "along": 0.754,
-        "across": -0.01,
-        "up": 24.2
+        "along": 0.61,
+        "across": -0.003,
+        "up": 23.9
       },
       {
         "part": "engine",
-        "along": 0.851,
-        "across": -0.158,
-        "up": 12.2
-      },
-      {
-        "part": "engine",
-        "along": 0.887,
-        "across": 0.147,
+        "along": 0.692,
+        "across": -0.154,
         "up": 11.3
+      },
+      {
+        "part": "engine",
+        "along": 0.701,
+        "across": 0.156,
+        "up": 10.4
       }
-    ]
+    ],
+    "trucks": {
+      "engine": [0],
+      "tender": [0, 1]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6997
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0453
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.0524
+      },
+      "tender-t1": {
+        "phases": 4,
+        "cycle": 0.0524
+      }
+    }
   },
   "nine_f": {
-    "tiles": 3,
+    "tiles": 2.679,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.533,
-        "up": 23.9
+        "along": 0.423,
+        "up": 23.7
       }
     ],
     "lamps": [
       {
         "part": "engine",
-        "along": 0.855,
-        "across": -0.15,
-        "up": 11.4
+        "along": 0.722,
+        "across": -0.173,
+        "up": 10.3
       },
       {
         "part": "engine",
-        "along": 0.92,
-        "across": 0.12,
-        "up": 11.3
+        "along": 0.768,
+        "across": 0.111,
+        "up": 10.2
       }
-    ]
+    ],
+    "trucks": {
+      "engine": [0]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6264
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0376
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0505
+      }
+    }
   },
   "sd40": {
-    "tiles": 3.4,
+    "tiles": 3.0715,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.388,
-        "up": 28.6
+        "along": 0.242,
+        "up": 29.4
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 1.236,
-        "across": -0.047,
-        "up": 25.5
+        "along": 1.077,
+        "across": -0.035,
+        "up": 27.1
       },
       {
         "part": "body",
-        "along": 1.254,
-        "across": -0.028,
-        "up": 25.9
+        "along": 1.095,
+        "across": -0.015,
+        "up": 27.5
       },
       {
         "part": "body",
-        "along": 1.56,
-        "across": -0.188,
-        "up": 11.2
+        "along": 1.41,
+        "across": -0.184,
+        "up": 11.9
       },
       {
         "part": "body",
-        "along": 1.572,
-        "across": 0.094,
-        "up": 10.1
+        "along": 1.398,
+        "across": 0.114,
+        "up": 10.7
       }
-    ]
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.128
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.128
+      }
+    }
   },
   "big_boy": {
-    "tiles": 4,
+    "tiles": 4.3473,
     "sprite": true,
     "smoke": [
       {
         "part": "engine",
-        "along": 0.683,
-        "up": 27.2
+        "along": 0.598,
+        "up": 29.2
       }
     ],
     "lamps": [
       {
         "part": "engine",
-        "along": 0.98,
-        "across": -0.069,
-        "up": 19.2
+        "along": 0.916,
+        "across": -0.059,
+        "up": 20.8
       }
     ],
     "trucks": {
@@ -1033,46 +1321,46 @@
     "wheels": {
       "engine": {
         "phases": 8,
-        "cycle": 0.5828
+        "cycle": 0.5607
       },
       "engine-t0": {
         "phases": 4,
-        "cycle": 0.09
+        "cycle": 0.0866
       },
       "engine-t1": {
         "phases": 8,
-        "cycle": 0.5828
+        "cycle": 0.5607
       },
       "engine-t2": {
         "phases": 4,
-        "cycle": 0.0771
+        "cycle": 0.0742
       },
       "tender": {
         "phases": 4,
-        "cycle": 0.091
+        "cycle": 0.1344
       },
       "tender-t0": {
         "phases": 4,
-        "cycle": 0.091
+        "cycle": 0.1344
       }
     }
   },
   "koutetsujou": {
-    "tiles": 4,
+    "tiles": 4.3138,
     "sprite": true,
     "smoke": [
       {
         "part": "body",
-        "along": 0.365,
+        "along": 0.256,
         "up": 34.1
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 1.386,
-        "across": -0.091,
-        "up": 21.1
+        "along": 1.456,
+        "across": -0.124,
+        "up": 20.5
       }
     ]
   }
