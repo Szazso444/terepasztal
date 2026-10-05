@@ -211,4 +211,28 @@ async function settle(ms = 30000) {
   g.app.renderer.render(g.app.stage);
   return g.world.landscape.sharpReady;
 }
-window.qa = { g, shot, bare, curve, placed, defOf, settle };
+// ---- film: one engine with wagons rolling along the straight of its gauge and into its curve; the
+// camera rides with the engine. start() puts it on the track, roll(n) runs n ticks and draws.
+let filmed = null;
+function start(id, wagons, lead = 6) {
+  bare();
+  const cls = clsOf(id), c = CURVES[cls];
+  const t = make(id, wagons ?? (cls === 'narrow' ? ['mine_tub', 'mine_tub'] : ['boxcar', 'boxcar']));
+  run(t, c.x + 2, c.y, c.end.x, c.end.y, (tt) => tt.pathProgress >= lead);
+  filmed = t;
+  return { id, L: vehicleSpec(t.locos[0].def).L, speed: t.speed };
+}
+function roll(ticks = 1, zoom = 6, part = 0, night = NIGHT) {
+  const t = filmed;
+  for (let k = 0; k < ticks && t.state === 'moving'; k++) g.fleet.tick(1 / 60, (now += 1 / 60));
+  const seg = t.vehiclePoses[0].segments[Math.min(part, t.vehiclePoses[0].segments.length - 1)];
+  const at = tileToWorld(seg.x, seg.y);
+  g.camera.centerOn(at.x, at.y - 10);
+  g.camera.zoom = zoom;
+  g.settings.dayNight = !!night;
+  g.render(1, 0);
+  g.app.renderer.render(g.app.stage);
+  label.textContent = '';
+  return { progress: +t.pathProgress.toFixed(3), speed: +t.speed.toFixed(3), state: t.state, distance: +t.distance.toFixed(3) };
+}
+window.qa = { g, shot, bare, curve, placed, defOf, settle, start, roll };

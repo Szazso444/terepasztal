@@ -73,8 +73,15 @@ export interface LocoDef {
    */
   gear?: Gear;
   lengthTiles?: number;
-  /** its sprite is a rendered model with its own wheels: no bogie is drawn under it */
+  /** its sprite is a rendered model: the generic bogies are not drawn under it */
   spriteGear?: boolean;
+  /** trucks rendered as sprites of their own, by part (indices in the gear table) */
+  truckSprites?: Record<string, number[]>;
+  /**
+   * Wheel layers that turn, by sprite set (`engine`, `engine-t0`, ...): frames per cycle and tiles
+   * of track per cycle.
+   */
+  wheels?: Record<string, { phases: number; cycle: number }>;
   /** where smoke leaves it: the part, tiles ahead of that part's centre, pixels above the rail */
   smoke?: { part: PartKind; along: number; up: number }[];
   /** its headlamps: the part, tiles ahead of and to the left of that part's centre, pixels above the rail */
@@ -614,6 +621,8 @@ interface LocoFit {
   sprite?: boolean;
   smoke?: { part: PartKind; along: number; up: number }[];
   lamps?: { part: PartKind; along: number; across: number; up: number }[];
+  trucks?: Record<string, number[]>;
+  wheels?: Record<string, { phases: number; cycle: number }>;
 }
 function finalize(b: ContentBundle): ContentBundle {
   // each engine's own running gear and length, where both are measured
@@ -628,6 +637,8 @@ function finalize(b: ContentBundle): ContentBundle {
     d.spriteGear = f.sprite === true;
     d.smoke = f.smoke;
     d.lamps = f.lamps;
+    d.truckSprites = f.trucks;
+    d.wheels = f.wheels;
   }
   for (const w of b.wagons)
     w.accepts = b.cargo.filter((c) => c.class === w.carries).map((c) => c.id);

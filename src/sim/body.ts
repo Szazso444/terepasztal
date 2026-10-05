@@ -25,7 +25,9 @@ export const DEFAULT_PIVOT = 0.7;
 export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
 
-export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
+/** `rear`: the rear half of a hinged body (its front half is `body`) */
+export type PartKind =
+  'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre' | 'rear';
 /** two-axle bogie, three-axle bogie, or the wheeled engine unit of a Meyer frame */
 export type BogieKind = 'bogie' | 'bogie3' | 'bogie4' | 'engine_unit';
 /** axles under each kind of bogie */
@@ -54,6 +56,8 @@ export interface SegmentSpec {
   kinds?: BogieKind[];
   /** pivots that carry the body but draw no truck (a cab hung between two snouts) */
   hidden?: boolean[];
+  /** which of the part's trucks (its index in the gear table) each pivot is; -1: none, a fixed axle */
+  truck?: number[];
   /**
    * Axles fixed in the frame (coupled drivers, a rigid tender's axles, small stock's baked axles):
    * distance behind the segment's front, front to rear. The frame stands on the rail at the first
@@ -88,15 +92,25 @@ export interface BodyFields {
    *  tiles: together they replace the size's length and the plan's segments. */
   gear?: Gear;
   lengthTiles?: number;
-  /** The sprite carries its own wheels (a rendered model): the pivots pose the body, no truck is drawn. */
+  /** The sprite is a rendered model: the generic trucks are not drawn under it. */
   spriteGear?: boolean;
+  /** Trucks rendered as sprites of their own, by part: their indices in the gear table. Each is drawn
+   *  at its own place on the rail; the others (and all of them without this) are part of the body. */
+  truckSprites?: Record<string, number[]>;
 }
 
 export function vehicleSpec(def: BodyFields): VehicleSpec {
   const size = def.size ?? 'small';
   if (def.gear && def.lengthTiles) {
     const segments = gearSegments(def.gear, def.lengthTiles);
-    if (def.spriteGear) for (const g of segments) if (g.at) g.hidden = g.at.map(() => true);
+    if (def.spriteGear)
+      for (const g of segments)
+        if (g.at) {
+          const own = def.truckSprites?.[g.part];
+          g.hidden = g.at.map(
+            (_, k) => (g.hidden?.[k] ?? false) || !own?.includes(g.truck?.[k] ?? -1),
+          );
+        }
     const parts = new Set(segments.map((s) => s.part));
     return {
       L: def.lengthTiles,
@@ -273,6 +287,8 @@ export interface BogiePose {
   drawY: number;
   /** carries the body without a drawn truck */
   hidden?: boolean;
+  /** the part's truck this is (its index in the gear table), where the gear table names it */
+  truck?: number;
 }
 export interface SegmentPose {
   part: PartKind;
@@ -317,6 +333,7 @@ export function poseSegment(
     : Array.from({ length: nb }, (_, i) => (L - W) / 2 + (W / (nb - 1)) * i);
   const kinds = seg.kinds ? (back ? [...seg.kinds].reverse() : seg.kinds) : null;
   const hidden = seg.hidden ? (back ? [...seg.hidden].reverse() : seg.hidden) : null;
+  const truck = seg.truck ? (back ? [...seg.truck].reverse() : seg.truck) : null;
   const rig = seg.rigid && seg.rigid.length >= 2 ? flip(seg.rigid) : null;
   const carry = seg.carry?.length ? flip(seg.carry) : null;
   // the frame's two supports: its end fixed axles (or their middle and a carrying unit), else its
@@ -415,6 +432,7 @@ export function poseSegment(
       drawX: P.x,
       drawY: P.y,
       hidden: hidden?.[i] || undefined,
+      truck: truck?.[i],
     });
   }
   return {

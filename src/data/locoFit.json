@@ -8,7 +8,13 @@
         "along": 0.173,
         "up": 21.1
       }
-    ]
+    ],
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.7191
+      }
+    }
   },
   "bm50": {
     "tiles": 0.625,
@@ -27,7 +33,13 @@
         "across": 0.009,
         "up": 8
       }
-    ]
+    ],
+    "wheels": {
+      "body": {
+        "phases": 4,
+        "cycle": 0.0446
+      }
+    }
   },
   "muki": {
     "tiles": 0.5,
@@ -52,7 +64,13 @@
         "across": 0.069,
         "up": 7
       }
-    ]
+    ],
+    "wheels": {
+      "body": {
+        "phases": 4,
+        "cycle": 0.0518
+      }
+    }
   },
   "c50": {
     "tiles": 0.8,
@@ -77,7 +95,13 @@
         "across": 0.11,
         "up": 10.3
       }
-    ]
+    ],
+    "wheels": {
+      "body": {
+        "phases": 4,
+        "cycle": 0.0678
+      }
+    }
   },
   "mav490": {
     "tiles": 1,
@@ -88,7 +112,13 @@
         "along": 0.359,
         "up": 19.7
       }
-    ]
+    ],
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.3356
+      }
+    }
   },
   "mk45": {
     "tiles": 1.25,
@@ -119,7 +149,20 @@
         "across": -0.115,
         "up": 8.2
       }
-    ]
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.0783
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.0783
+      }
+    }
   },
   "mk48": {
     "tiles": 1.125,
@@ -138,7 +181,20 @@
         "across": -0.02,
         "up": 13.7
       }
-    ]
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.0945
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.0945
+      }
+    }
   },
   "rezet": {
     "tiles": 1,
@@ -169,7 +225,13 @@
         "across": -0.145,
         "up": 7.2
       }
-    ]
+    ],
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.3014
+      }
+    }
   },
   "mav375": {
     "tiles": 1.25,
@@ -200,7 +262,13 @@
         "across": -0.12,
         "up": 11.6
       }
-    ]
+    ],
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.4044
+      }
+    }
   },
   "j94": {
     "tiles": 1.125,
@@ -220,7 +288,7 @@
       {
         "part": "body",
         "along": 0.05,
-        "up": 24.3
+        "up": 24.4
       }
     ],
     "lamps": [
@@ -228,21 +296,27 @@
         "part": "body",
         "along": 0.439,
         "across": -0.031,
-        "up": 21.1
+        "up": 21.3
       },
       {
         "part": "body",
         "along": 0.467,
         "across": 0.089,
-        "up": 11.7
+        "up": 11.8
       },
       {
         "part": "body",
         "along": 0.452,
         "across": -0.134,
-        "up": 12.2
+        "up": 12.3
       }
-    ]
+    ],
+    "wheels": {
+      "body": {
+        "phases": 8,
+        "cycle": 0.5294
+      }
+    }
   },
   "general": {
     "tiles": 1.5,
@@ -340,7 +414,24 @@
         "across": 0.141,
         "up": 9.8
       }
-    ]
+    ],
+    "trucks": {
+      "engine": [0]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6541
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0437
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0457
+      }
+    }
   },
   "crocodile": {
     "tiles": 3,
@@ -451,7 +542,20 @@
         "across": 0.171,
         "up": 12
       }
-    ]
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1124
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1124
+      }
+    }
   },
   "flying_scotsman": {
     "tiles": 2,
@@ -476,7 +580,28 @@
         "across": 0.127,
         "up": 10.2
       }
-    ]
+    ],
+    "trucks": {
+      "engine": [0, 1]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.7616
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0349
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.0362
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0347
+      }
+    }
   },
   "ice1": {
     "tiles": 2.5,
@@ -500,7 +625,20 @@
         "across": -0.155,
         "up": 12.2
       }
-    ]
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.122
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.122
+      }
+    }
   },
   "k4s": {
     "tiles": 2.5,
@@ -710,29 +848,47 @@
     "smoke": [
       {
         "part": "body",
-        "along": -0.361,
-        "up": 33.5
+        "along": -0.487,
+        "up": 32.6
       },
       {
-        "part": "body",
-        "along": 0.342,
-        "up": 32.6
+        "part": "rear",
+        "along": 0.457,
+        "up": 33.5
       }
     ],
     "lamps": [
       {
         "part": "body",
-        "along": 1.544,
+        "along": 0.749,
         "across": -0.025,
         "up": 22.4
       },
       {
         "part": "body",
-        "along": 1.55,
+        "along": 0.754,
         "across": -0.028,
         "up": 19.9
       }
-    ]
+    ],
+    "trucks": {
+      "body": [0, 1],
+      "rear": [0]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1031
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1031
+      },
+      "rear-t0": {
+        "phases": 4,
+        "cycle": 0.0935
+      }
+    }
   },
   "gg1": {
     "tiles": 3.5,
@@ -744,7 +900,20 @@
         "across": -0.029,
         "up": 22.9
       }
-    ]
+    ],
+    "trucks": {
+      "body": [0, 1]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1824
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1151
+      }
+    }
   },
   "mav424": {
     "tiles": 3,
@@ -856,7 +1025,37 @@
         "across": -0.069,
         "up": 19.2
       }
-    ]
+    ],
+    "trucks": {
+      "engine": [0, 1, 2],
+      "tender": [0]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.5828
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.09
+      },
+      "engine-t1": {
+        "phases": 8,
+        "cycle": 0.5828
+      },
+      "engine-t2": {
+        "phases": 4,
+        "cycle": 0.0771
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.091
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.091
+      }
+    }
   },
   "koutetsujou": {
     "tiles": 4,

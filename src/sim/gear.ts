@@ -18,6 +18,11 @@ export interface GearPart {
   mirror?: boolean;
   /** indices into `trucks` of units that carry the frame (a Mallet's front engine) */
   carry?: number[];
+  /**
+   * A half of a hinged body: this end of it ('front' or 'rear', as the vehicle runs) rests on the
+   * part next to it. The part is carried there, on the track's centre line, without a truck.
+   */
+  hinge?: 'front' | 'rear';
 }
 export interface Gear {
   parts: GearPart[];
@@ -41,6 +46,7 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
         at: behind(axles.reduce((a, b) => a + b, 0) / axles.length),
         kind: kindOf(axles.length),
         carries: p.carry?.includes(i) ?? false,
+        src: i,
       }))
       .sort((a, b) => a.at - b.at);
     const seg: SegmentSpec = {
@@ -55,6 +61,7 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
     if (trucks.length) {
       seg.at = trucks.map((t) => t.at);
       seg.kinds = trucks.map((t) => t.kind);
+      seg.truck = trucks.map((t) => t.src);
       seg.W = seg.at[seg.at.length - 1] - seg.at[0];
     }
     const carried = trucks.filter((x) => x.carries).map((x) => x.at);
@@ -62,15 +69,44 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
     if (rigid.length >= 2) seg.rigid = rigid;
     else if (rigid.length === 1) {
       // one fixed axle: a truck that cannot swivel; carried like a pivot
-      seg.at = [...(seg.at ?? []), rigid[0]].sort((a, b) => a - b);
+      const all = [
+        ...trucks.map((t) => ({ at: t.at, src: t.src })),
+        { at: rigid[0], src: -1 },
+      ].sort((a, b) => a.at - b.at);
+      seg.at = all.map((x) => x.at);
       seg.kinds = seg.at.map(() => 'bogie');
+      seg.truck = all.map((x) => x.src);
       seg.nb = seg.at.length;
+    }
+    if (p.hinge) {
+      const own = (seg.at ?? []).map((at, i) => ({
+        at,
+        kind: seg.kinds![i],
+        src: seg.truck![i],
+        hidden: false,
+      }));
+      const all = [
+        ...own,
+        {
+          at: behind(p.hinge === 'front' ? p.to : p.from),
+          kind: 'bogie' as BogieKind,
+          src: -1,
+          hidden: true,
+        },
+      ].sort((a, b) => a.at - b.at);
+      seg.at = all.map((x) => x.at);
+      seg.kinds = all.map((x) => x.kind);
+      seg.truck = all.map((x) => x.src);
+      seg.hidden = all.map((x) => x.hidden);
+      seg.nb = all.length;
+      seg.W = seg.at[seg.at.length - 1] - seg.at[0];
     }
     if (!seg.rigid && seg.nb < 2) {
       // no wheels of its own (a cab hung between two snouts): it rests on its two ends
       seg.at = [0, len];
       seg.kinds = ['bogie', 'bogie'];
       seg.hidden = [true, true];
+      seg.truck = [-1, -1];
       seg.nb = 2;
       seg.W = len;
     }

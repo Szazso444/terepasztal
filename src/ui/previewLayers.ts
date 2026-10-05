@@ -45,13 +45,24 @@ export function previewLayers(atlas: Pick<AtlasRegistry, 'has'>, id: string, fac
         const n = s.bogies.length;
         const style = bogieStyleOf(def.bogieStyle, s.part, s.mirror ? n - 1 - k : k);
         if (style === 'none' || b.hidden) return;
+        // a rendered engine's own truck, with its wheels as they stand at rest
+        const own =
+          loco && b.truck !== undefined && b.truck >= 0
+            ? `rolling/loco_${def.id}_${s.part}-t${b.truck}`
+            : null;
+        const heading = b.angle + (s.mirror ? Math.PI : 0);
         add(
-          (f) => bogieFrame(atlas, style, b.kind, f, narrow),
+          (f) =>
+            own && atlas.has(`${own}_f${f}`)
+              ? `${own}_f${f}`
+              : bogieFrame(atlas, style, b.kind, f, narrow),
           b.drawX,
           b.drawY,
-          b.angle + (s.mirror ? Math.PI : 0),
+          heading,
           -1000,
         );
+        if (own && atlas.has(`${own}_w0_f0`))
+          add((f) => `${own}_w0_f${f}`, b.drawX, b.drawY, heading, -999);
       });
     add(
       (f) =>
@@ -61,6 +72,15 @@ export function previewLayers(atlas: Pick<AtlasRegistry, 'has'>, id: string, fac
       s.angle + (s.mirror ? Math.PI : 0),
       (s.x + s.y) * 100,
     );
+    const fixed = loco ? `rolling/loco_${def.id}_${s.part}_w0` : null;
+    if (fixed && atlas.has(`${fixed}_f0`))
+      add(
+        (f) => `${fixed}_f${f}`,
+        s.x,
+        s.y,
+        s.angle + (s.mirror ? Math.PI : 0),
+        (s.x + s.y) * 100 + 0.5,
+      );
   }
   return layers.sort((a, b) => a.z - b.z);
 }

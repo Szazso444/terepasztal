@@ -13,6 +13,7 @@ import {
   bogieFrame,
   bogieStyleOf,
 } from '../art/frames';
+import { advanceSpin, spinPhase } from './wheelSpin';
 import { pitchOnRail, LEVEL_GROUND, type Ground } from './slope';
 import {
   facingOf,
@@ -39,6 +40,12 @@ interface VehicleSprites {
 export class TrainRenderer {
   private surfaces = new SurfaceAssets();
   private windowLights = new Map<Sprite, Sprite>();
+  /** A body part's or a truck's layer of turning wheels, by the sprite that owns it. */
+  private wheelLayers = new Map<Sprite, Sprite>();
+  /** How far through its cycle each wheel layer is (0..1), by the same owner. */
+  private spin = new Map<Sprite, number>();
+  /** The distance each train had run when it was last drawn. */
+  private ran = new Map<number, number>();
   private night = 0;
   setWindowNight(night: number) {
     this.night = night;
@@ -121,7 +128,14 @@ export class TrainRenderer {
     for (const s of c.parts) {
       this.windowLights.get(s)?.destroy();
       this.windowLights.delete(s);
+      this.wheelLayers.get(s)?.destroy();
+      this.wheelLayers.delete(s);
+      this.spin.delete(s);
       s.destroy();
+    }
+    for (const b of c.bogies) {
+      this.wheelLayers.delete(b);
+      this.spin.delete(b);
     }
     c.undercarriage.destroy({ children: true });
     c.load?.destroy();
@@ -130,6 +144,47 @@ export class TrainRenderer {
   remove(trainId: number) {
     for (const c of this.cars.get(trainId) ?? []) this.destroyCar(c);
     this.cars.delete(trainId);
+    this.ran.delete(trainId);
+  }
+
+  /**
+   * The layer of turning wheels over (or under) the sprite that owns them: the frame for how far
+   * its wheels have turned, posed exactly as its owner. `rolled` is the track covered since the
+   * last frame, towards the owner's own front. A fast train's wheels are held to a third of a cycle
+   * a frame, so they never seem to stand or run backwards.
+   */
+  private turnWheels(
+    owner: Sprite,
+    parent: Container,
+    stem: string,
+    w: { phases: number; cycle: number } | undefined,
+    rolled: number,
+    angle: number,
+    place: (s: Sprite, frameFor: (f: number) => string) => void,
+  ): Sprite | null {
+    let ws = this.wheelLayers.get(owner) ?? null;
+    if (!w || !this.atlas.has(`${stem}_w0_f0`)) {
+      if (ws) ws.visible = false;
+      return null;
+    }
+    if (!ws) {
+      ws = new Sprite({ cullable: true });
+      parent.addChild(ws);
+      this.wheelLayers.set(owner, ws);
+    }
+    const u = advanceSpin(this.spin.get(owner) ?? 0, rolled, w.cycle);
+    this.spin.set(owner, u);
+    const phase = spinPhase(u, w.phases);
+    // a facing in which the owner covers its wheels entirely has no frame
+    const f0 = facingOf(angle);
+    if (!this.atlas.has(`${stem}_w${phase}_f${DRAWN_FACINGS.has(f0) ? f0 : mirrorFacing(f0)}`)) {
+      ws.visible = false;
+      return ws;
+    }
+    place(ws, (f) => `${stem}_w${phase}_f${f}`);
+    ws.tint = owner.tint;
+    ws.visible = owner.visible;
+    return ws;
   }
 
   /** Place a sprite for a tile-space heading: pick the facing, mirror when needed, rotate the rest. */
@@ -214,6 +269,11 @@ export class TrainRenderer {
         tint = mix(0xffffff, 0x9be8ff, pulse);
       } else if (t.id === this.selectedId) tint = 0xc8f0ff;
       const flip = t.reversed ? Math.PI : 0;
+      // track covered since the last frame, nose first (a consist running tail first rolls back)
+      const before = this.ran.get(t.id) ?? t.distance;
+      this.ran.set(t.id, t.distance);
+      const moved = t.distance - before;
+      const rolled = Math.abs(moved) < 2 ? (t.reversed ? -moved : moved) : 0;
       for (let i = 0; i < list.length; i++) {
         const cur: VehiclePose | undefined = t.vehiclePoses[i];
         if (!cur) continue;
@@ -272,6 +332,21 @@ export class TrainRenderer {
             if (light) light.visible = false;
           }
           s.tint = tint;
+          if (isLoco) {
+            // wheels fixed in this part's frame (coupled wheels and their rods, a rigid tender's)
+            const def = t.locos[i].def;
+            const ground = this.bodyGround(seg, ps, alpha, x, y);
+            const ws = this.turnWheels(
+              s,
+              this.layer,
+              `rolling/loco_${def.id}_${seg.part}`,
+              def.wheels?.[seg.part],
+              seg.mirror ? -rolled : rolled,
+              shown,
+              (w, frame) => this.pose(w, frame, x, y, shown, 15, ground),
+            );
+            if (ws) ws.zIndex = s.zIndex + 0.005;
+          }
           c.undercarriage.zIndex = Math.min(c.undercarriage.zIndex, s.zIndex - 1);
           if (c.spec.drawBogies)
             seg.bogies.forEach((b, k) => {
@@ -299,9 +374,17 @@ export class TrainRenderer {
               const heading = ba + (back ? Math.PI : 0);
               const narrow =
                 (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).gauge === 'narrow';
+              // a rendered engine brings each of its trucks as a sprite set of its own
+              const own =
+                isLoco && b.truck !== undefined && b.truck >= 0
+                  ? `rolling/loco_${t.locos[i].def.id}_${seg.part}-t${b.truck}`
+                  : null;
+              const mine = own !== null && this.atlas.has(`${own}_f0`);
               this.pose(
                 bs,
-                (f) => bogieFrame(this.atlas, style, b.kind, f, narrow),
+                mine
+                  ? (f) => `${own}_f${f}`
+                  : (f) => bogieFrame(this.atlas, style, b.kind, f, narrow),
                 bx,
                 by,
                 heading,
@@ -312,6 +395,21 @@ export class TrainRenderer {
               // ahead of the body centre (towards the camera) would otherwise paint over it
               bs.zIndex = s.zIndex - 1;
               bs.tint = tint;
+              if (mine) {
+                const ws = this.turnWheels(
+                  bs,
+                  c.undercarriage,
+                  own,
+                  t.locos[i].def.wheels?.[`${seg.part}-t${b.truck}`],
+                  seg.mirror ? -rolled : rolled,
+                  heading,
+                  (w, frame) => this.pose(w, frame, bx, by, heading, 14),
+                );
+                if (ws) ws.zIndex = bs.zIndex + 0.5;
+              } else {
+                const ws = this.wheelLayers.get(bs);
+                if (ws) ws.visible = false;
+              }
             });
           if (c.load && si === 0) {
             const w = t.wagons[i - t.locos.length];
