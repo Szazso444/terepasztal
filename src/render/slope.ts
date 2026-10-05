@@ -98,7 +98,8 @@ export function pitchTilt(
 /**
  * Places `s` (anchored at its ground contact) at world (x, y) on a rail at screen offset `dz`
  * that climbs `along` per tile in the tile-space direction (cos, sin): the body tilted along its
- * heading as a whole (pitchTilt). Keeps the sprite's own scale (mirroring) and rotation.
+ * heading as a whole (pitchTilt). Keeps the sprite's own scale (mirroring) and rotation, or takes
+ * the sprite's own map `local` in their place (mirroring and the swing between two facings).
  */
 export function pitchOnRail(
   s: Container,
@@ -108,19 +109,25 @@ export function pitchOnRail(
   along: number,
   cos: number,
   sin: number,
+  local?: { a: number; b: number; c: number; d: number },
 ) {
   s.skew.set(0, 0);
-  if (!along) {
+  if (!along && !local) {
     s.position.set(x, y + dz);
     return;
   }
-  const m = pitchTilt(along, cos, sin),
-    rc = Math.cos(s.rotation),
+  const rc = Math.cos(s.rotation),
     rs = Math.sin(s.rotation),
-    a = rc * s.scale.x,
-    b = rs * s.scale.x,
-    c = -rs * s.scale.y,
-    d = rc * s.scale.y;
+    a = local ? local.a : rc * s.scale.x,
+    b = local ? local.b : rs * s.scale.x,
+    c = local ? local.c : -rs * s.scale.y,
+    d = local ? local.d : rc * s.scale.y;
+  if (!along) {
+    matrix.set(a, b, c, d, x, y + dz);
+    s.setFromMatrix(matrix);
+    return;
+  }
+  const m = pitchTilt(along, cos, sin);
   matrix.set(m.a * a + m.c * b, m.b * a + m.d * b, m.a * c + m.c * d, m.b * c + m.d * d, x, y + dz);
   s.setFromMatrix(matrix);
 }

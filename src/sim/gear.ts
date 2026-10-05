@@ -18,6 +18,11 @@ export interface GearPart {
   mirror?: boolean;
   /** indices into `trucks` of units that carry the frame (a Mallet's front engine) */
   carry?: number[];
+  /**
+   * A half of a hinged body: this end of it ('front' or 'rear', as the vehicle runs) rests on the
+   * part next to it. The part is carried there, on the track's centre line, without a truck.
+   */
+  hinge?: 'front' | 'rear';
 }
 export interface Gear {
   parts: GearPart[];
@@ -72,6 +77,30 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
       seg.kinds = seg.at.map(() => 'bogie');
       seg.truck = all.map((x) => x.src);
       seg.nb = seg.at.length;
+    }
+    if (p.hinge) {
+      seg.hinge = p.hinge;
+      const own = (seg.at ?? []).map((at, i) => ({
+        at,
+        kind: seg.kinds![i],
+        src: seg.truck![i],
+        hidden: false,
+      }));
+      const all = [
+        ...own,
+        {
+          at: behind(p.hinge === 'front' ? p.to : p.from),
+          kind: 'bogie' as BogieKind,
+          src: -1,
+          hidden: true,
+        },
+      ].sort((a, b) => a.at - b.at);
+      seg.at = all.map((x) => x.at);
+      seg.kinds = all.map((x) => x.kind);
+      seg.truck = all.map((x) => x.src);
+      seg.hidden = all.map((x) => x.hidden);
+      seg.nb = all.length;
+      seg.W = seg.at[seg.at.length - 1] - seg.at[0];
     }
     if (!seg.rigid && seg.nb < 2) {
       // no wheels of its own (a cab hung between two snouts): it rests on its two ends

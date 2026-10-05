@@ -25,7 +25,9 @@ export const DEFAULT_PIVOT = 0.7;
 export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
 
-export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
+/** `rear`: the rear half of a hinged body (its front half is `body`) */
+export type PartKind =
+  'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre' | 'rear';
 /** two-axle bogie, three-axle bogie, or the wheeled engine unit of a Meyer frame */
 export type BogieKind = 'bogie' | 'bogie3' | 'bogie4' | 'engine_unit';
 /** axles under each kind of bogie */
@@ -65,6 +67,16 @@ export interface SegmentSpec {
   /** pivots that carry the frame with its fixed axles (a Mallet's front engine): its supports
    *  are then the fixed axles' middle and these */
   carry?: number[];
+  /** a half of a hinged body: this end of it (as the vehicle runs) rests on the part next to it */
+  hinge?: 'front' | 'rear';
+  /**
+   * The body rides pinned on its wheel groups (a model that brings its own trucks): its axis is the
+   * line that fits the rail points of its fixed axles and trucks best, its outermost groups stand as
+   * far apart through the air as they are on the body, and it is not shifted sideways towards the
+   * arc. On two trucks they never leave their sockets; with more groups (a steam engine's drivers,
+   * leading and trailing trucks) each is a little off, none far.
+   */
+  pinned?: boolean;
 }
 export interface VehicleSpec {
   L: number;
@@ -102,13 +114,15 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
   if (def.gear && def.lengthTiles) {
     const segments = gearSegments(def.gear, def.lengthTiles);
     if (def.spriteGear)
-      for (const g of segments)
+      for (const g of segments) {
+        g.pinned = true;
         if (g.at) {
           const own = def.truckSprites?.[g.part];
           g.hidden = g.at.map(
             (_, k) => (g.hidden?.[k] ?? false) || !own?.includes(g.truck?.[k] ?? -1),
           );
         }
+      }
     const parts = new Set(segments.map((s) => s.part));
     return {
       L: def.lengthTiles,
@@ -351,9 +365,60 @@ export function poseSegment(
   let axy: number;
   let cx: number;
   let cy: number;
-  if (ends) {
-    const A = pl.at(arcFront - ends[0]);
-    const B = pl.at(arcFront - ends[1]);
+  // a pinned body sits on every wheel group it has: its fixed axles and its trucks. Its outermost
+  // groups stand this much further apart along the rail than on the body (a chord is shorter than
+  // its arc), measured from their middle.
+  const groups = seg.pinned ? [...(rig ?? []), ...t] : [];
+  const span = groups.length >= 2 ? [Math.min(...groups), Math.max(...groups)] : (ends ?? [0, 0]);
+  const pinned = seg.pinned && groups.length >= 2 && span[1] - span[0] > 1e-6;
+  const mid = (span[0] + span[1]) / 2;
+  let stretch = 1;
+  if (pinned) {
+    const h = (span[1] - span[0]) / 2;
+    let a = h;
+    for (let k = 0; k < 8; k++) {
+      const P = pl.at(arcFront - mid + a);
+      const Q = pl.at(arcFront - mid - a);
+      const chord = Math.hypot(P.x - Q.x, P.y - Q.y);
+      if (chord < 1e-9) break;
+      a *= (2 * h) / chord;
+    }
+    stretch = a / h;
+  }
+  /** where a point `t` behind the segment's front stands along the rail */
+  const arcOf = (t: number) => arcFront - mid - (t - mid) * stretch;
+  if (pinned) {
+    // the line that fits the rail points of all groups best: two groups are met exactly, more
+    // share what a rigid body cannot follow of the curve
+    const pts = groups.map((g) => pl.at(arcOf(g)));
+    const n = pts.length;
+    const mx = pts.reduce((a, p) => a + p.x, 0) / n;
+    const my = pts.reduce((a, p) => a + p.y, 0) / n;
+    let sxx = 0;
+    let sxy = 0;
+    let syy = 0;
+    for (const p of pts) {
+      sxx += (p.x - mx) * (p.x - mx);
+      sxy += (p.x - mx) * (p.y - my);
+      syy += (p.y - my) * (p.y - my);
+    }
+    const th = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+    axx = Math.cos(th);
+    axy = Math.sin(th);
+    // towards the front: from the rearmost group to the foremost
+    const F = pl.at(arcOf(span[0]));
+    const R = pl.at(arcOf(span[1]));
+    if ((F.x - R.x) * axx + (F.y - R.y) * axy < 0) {
+      axx = -axx;
+      axy = -axy;
+    }
+    // the groups' middle on the body stands on the middle of their rail points
+    const gm = groups.reduce((a, g) => a + g, 0) / n;
+    cx = mx + axx * (gm - L / 2);
+    cy = my + axy * (gm - L / 2);
+  } else if (ends) {
+    const A = pl.at(arcOf(ends[0]));
+    const B = pl.at(arcOf(ends[1]));
     axx = A.x - B.x;
     axy = A.y - B.y;
     const al = Math.hypot(axx, axy);
@@ -395,8 +460,9 @@ export function poseSegment(
     eSum += e;
   }
   const want = t.length > 2 ? eSum / (K + 1) : (eMin + eMax) / 2;
-  // a frame on fixed axles does not float sideways: it stands where they are
-  const delta = rig ? 0 : Math.max(-sideways, Math.min(sideways, want));
+  // a frame on fixed axles does not float sideways: it stands where they are, and so does a body
+  // pinned on its supports
+  const delta = rig || seg.pinned ? 0 : Math.max(-sideways, Math.min(sideways, want));
   cx += nxx * delta;
   cy += nxy * delta;
   const residualGap = Math.max(Math.abs(eMax - delta), Math.abs(eMin - delta));
@@ -405,12 +471,12 @@ export function poseSegment(
     for (const r of rig) {
       const u = L / 2 - r;
       const S = { x: cx + axx * u, y: cy + axy * u };
-      const N = pl.nearest(S, arcFront - r).p;
+      const N = pl.nearest(S, arcOf(r)).p;
       wheelGap = Math.max(wheelGap, Math.hypot(N.x - S.x, N.y - S.y));
     }
   const bogies: BogiePose[] = [];
   for (let i = 0; i < t.length; i++) {
-    const arc = arcFront - t[i];
+    const arc = arcOf(t[i]);
     const P = pl.at(arc);
     const socket = L / 2 - t[i];
     const skx = cx + axx * socket;
@@ -463,6 +529,44 @@ export function poseVehicle(
       reversed,
     ),
   );
+  // a hinged half hangs on the end of the part it is hinged to (spec order: front part first), and
+  // stands on its own truck: its axis runs from that truck's rail point to the carrying part's end
+  spec.segments.forEach((s, i) => {
+    if (!s.hinge) return;
+    const host = segments[s.hinge === 'front' ? i - 1 : i + 1];
+    const seg = segments[i];
+    const truck = seg.bogies.filter((b) => !b.hidden);
+    if (!host || !truck.length) return;
+    const hx = Math.cos(host.angle),
+      hy = Math.sin(host.angle);
+    // the carrying part's end that faces this half
+    const ends = [1, -1].map((k) => ({
+      x: host.x + (k * hx * host.L) / 2,
+      y: host.y + (k * hy * host.L) / 2,
+    }));
+    const E =
+      Math.hypot(ends[0].x - seg.x, ends[0].y - seg.y) <
+      Math.hypot(ends[1].x - seg.x, ends[1].y - seg.y)
+        ? ends[0]
+        : ends[1];
+    const ox = Math.cos(seg.angle),
+      oy = Math.sin(seg.angle);
+    // which of its own ends is the hinge: the one towards the carrying part
+    const side = (E.x - seg.x) * ox + (E.y - seg.y) * oy >= 0 ? 1 : -1;
+    // its own support: the truck furthest from the joint
+    const T = truck.reduce((a, b) =>
+      Math.hypot(b.x - E.x, b.y - E.y) > Math.hypot(a.x - E.x, a.y - E.y) ? b : a,
+    );
+    let ax = (E.x - T.x) * side,
+      ay = (E.y - T.y) * side;
+    const al = Math.hypot(ax, ay);
+    if (al < 1e-9) return;
+    ax /= al;
+    ay /= al;
+    seg.x = E.x - (side * ax * seg.L) / 2;
+    seg.y = E.y - (side * ay * seg.L) / 2;
+    seg.angle = Math.atan2(ay, ax);
+  });
   const mid = pl.at(arcFront - spec.L / 2);
   const tg = pl.tangent(arcFront - spec.L / 2);
   return { x: mid.x, y: mid.y, heading: Math.atan2(tg.y, tg.x), segments };
@@ -513,6 +617,38 @@ export function screenAngle(angle: number) {
   const c = Math.cos(angle);
   const s = Math.sin(angle);
   return Math.atan2((c + s) * 0.5, c - s);
+}
+/**
+ * The screen map that takes the sprite drawn for facing f to the exact heading: the drawn heading's
+ * picture (its direction and its foreshortened length) goes to the true heading's, and the screen's
+ * vertical stays where it is, so uprights stay upright while the body swings. Exact for the body's
+ * centre plane; a point half a body-width to the side is off by a pixel at most. A heading that
+ * runs up the screen has no screen x to shear about: there the sprite is turned instead (half the
+ * difference, as before), and between the two the maps blend. PIXI matrix terms: x' = a·x + c·y,
+ * y' = b·x + d·y.
+ */
+export function headingShear(
+  angle: number,
+  f: number,
+): { a: number; b: number; c: number; d: number } {
+  const af = facingAngle(f);
+  const fx = Math.cos(af) - Math.sin(af),
+    fy = (Math.cos(af) + Math.sin(af)) / 2,
+    tx = Math.cos(angle) - Math.sin(angle),
+    ty = (Math.cos(angle) + Math.sin(angle)) / 2,
+    share = Math.min(1, Math.max(0, (Math.abs(fx) - 0.25) / 0.5)),
+    th = residualRotation(angle, f) * ROTATION_SHARE,
+    rc = Math.cos(th),
+    rs = Math.sin(th);
+  if (!share) return { a: rc, b: rs, c: -rs, d: rc };
+  const sa = tx / fx,
+    sb = (ty - fy) / fx;
+  return {
+    a: rc + (sa - rc) * share,
+    b: rs + (sb - rs) * share,
+    c: -rs * (1 - share),
+    d: rc + (1 - rc) * share,
+  };
 }
 /** Runtime rotation that turns the sprite drawn for facing f into the exact heading. */
 export function residualRotation(angle: number, f: number) {

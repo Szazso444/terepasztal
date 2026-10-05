@@ -19,8 +19,7 @@ import {
   facingOf,
   DRAWN_FACINGS,
   mirrorFacing,
-  residualRotation,
-  ROTATION_SHARE,
+  headingShear,
   type VehicleSpec,
   type VehiclePose,
 } from '../sim/body';
@@ -35,7 +34,8 @@ interface VehicleSprites {
 
 /**
  * Depth-sorted rigid segments, with independently swivelling bogies beneath the raised decks
- * and cargo overlays above loaded wagons. Bodies use 48 facings and a small residual rotation.
+ * and cargo overlays above loaded wagons. Bodies use 48 facings; between two of them a sprite is
+ * sheared along its own length to the exact heading (headingShear).
  */
 export class TrainRenderer {
   private surfaces = new SurfaceAssets();
@@ -203,8 +203,10 @@ export class TrainRenderer {
     const fr = this.atlas.get(key);
     s.texture = fr.texture;
     s.anchor.set(fr.anchorX, fr.anchorY);
-    s.scale.set(drawn ? 1 : -1, 1);
-    s.rotation = residualRotation(angle, f) * ROTATION_SHARE;
+    // the sprite's own map: mirrored when its twin is the drawn one, then swung from the drawn
+    // facing to the exact heading
+    const m = headingShear(angle, f);
+    const flip = drawn ? 1 : -1;
     const wp = tileToWorld(x, y);
     // Each body part and bogie stands on the rail under it, pitched along its own heading only
     // (the rail is level across the track) and upright: its height does not change with the grade.
@@ -212,7 +214,12 @@ export class TrainRenderer {
       cos = Math.cos(angle),
       sin = Math.sin(angle),
       along = g.sgx * cos + g.sgy * sin;
-    pitchOnRail(s, Math.round(wp.x), Math.round(wp.y), g.dz, along, cos, sin);
+    pitchOnRail(s, snap(wp.x), snap(wp.y), g.dz, along, cos, sin, {
+      a: m.a * flip,
+      b: m.b * flip,
+      c: m.c,
+      d: m.d,
+    });
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
     return key;
@@ -427,6 +434,16 @@ export class TrainRenderer {
     }
     for (const id of [...this.cars.keys()]) if (!seen.has(id)) this.remove(id);
   }
+}
+
+/**
+ * Sprites are placed in thirds of a pixel. Each sprite of a vehicle is placed on its own (a body,
+ * its trucks, a tender), so on whole pixels they stepped at different moments and jolted a pixel
+ * against each other while running.
+ */
+const SNAP = 3;
+function snap(v: number) {
+  return Math.round(v * SNAP) / SNAP;
 }
 
 function lerp(a: number, b: number, t: number) {

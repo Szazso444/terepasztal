@@ -75,6 +75,17 @@ const STYLE: Record<
     widths: [0.95, 0.72, 0.32],
   },
 };
+// Preview only (scratch scenes): ?gauge=<half gauge in tiles> draws regular and high-speed track with
+// its rails that far from the centre line, sleepers and ballast narrowed with them.
+const previewGauge =
+  typeof location !== 'undefined' ? Number(new URLSearchParams(location.search).get('gauge')) : 0;
+if (previewGauge > 0)
+  for (const cls of ['regular', 'high_speed'] as const) {
+    const k = previewGauge / STYLE[cls].rail;
+    STYLE[cls].rail = previewGauge;
+    STYLE[cls].sleeper *= k;
+    STYLE[cls].shoulder *= k;
+  }
 const project = (p: Vec2) => ({ x: OX + (p.x - p.y) * 32, y: OY + (p.x + p.y) * 16 });
 const offset = (p: Vec2, n: Vec2, d: number) => ({ x: p.x + n.x * d, y: p.y + n.y * d });
 
