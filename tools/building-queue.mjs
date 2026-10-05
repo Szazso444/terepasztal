@@ -894,6 +894,10 @@ async function main(args) {
       return code;
     }
     case 'take': {
+      if (!rest[0] || rest[0].startsWith('--'))
+        throw new Error('say which picture: node tools/building-queue.mjs take <id>');
+      if (rest.includes('--from') && !option('--from'))
+        throw new Error('--from needs a folder or a file');
       const r = take(queue, rest[0], option('--from'));
       // the sheet tool reads this one: loaded here, where it is needed
       const { showPicture } = await import('./building-sheets.mjs');

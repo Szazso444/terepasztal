@@ -1492,6 +1492,13 @@ describe('the queue tool on the command line', () => {
     expect(run(root, 'take', 'nothing-a0-r0', '--from', from).out).toMatch(
       /no picture is called "nothing-a0-r0"/,
     );
+    // a command that is cut short says what it lacks, and takes nothing from anywhere else
+    const bare = run(root, 'take');
+    expect(bare.code).toBe(1);
+    expect(bare.out).toMatch(/say which picture: node tools\/building-queue\.mjs take <id>/);
+    const cut = run(root, 'take', 'depot-a0-r1', '--from');
+    expect(cut.code).toBe(1);
+    expect(cut.out).toMatch(/--from needs a folder or a file/);
     // a picture with no building in it is taken all the same, and said to show nothing
     const blank = join(from, 'chat', 'exec-blank.png');
     writeFileSync(blank, PNG.sync.write(new PNG({ width: 64, height: 64 })));
