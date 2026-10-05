@@ -136,8 +136,18 @@ export const STR = {
     needTerrain: (t: string) => `Must stand on ${t}`,
     sameSupply: 'Already electrified this way',
     needTransition: 'Different track classes join through a transition piece',
-    gaugeBreak: 'Narrow and regular gauge do not join: cross them with a crossing piece',
+    gaugeBreak: 'Narrow and wide gauge do not join: cross them with a crossing piece',
     narrowLocked: 'Narrow gauge is not unlocked yet',
+    reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
+    reclassFree: (what: string) => `${what}: free`,
+    reclassIdle: (what: string) => `${what}: click a piece or drag along the line`,
+    reclassBarred: (barred: number, total: number) =>
+      `${barred} of ${total} train${total === 1 ? ' has' : 's have'} no in-cab signalling and cannot run on high-speed track`,
+    reclass: {
+      narrow: 'Narrow track cannot be converted: its curves are a different size',
+      nothing: 'Nothing to convert here',
+      blocked: 'No straight beside this piece to carry the transition: lay one first',
+    } as Record<string, string>,
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
@@ -168,8 +178,16 @@ export const STR = {
     services: 'Services',
     utility: 'Utility',
     removeHint: 'Right-click / Delete removes',
+    upgrade: 'Upgrade',
+    downgrade: 'Downgrade',
+    upgradeHint:
+      'Wide track to high speed: click a piece or drag along the line. Costs the difference. Trains need in-cab signalling to run on it. (U)',
+    downgradeHint:
+      'High-speed track back to wide: click a piece or drag along the line. Free. (Shift+U)',
     select: 'Select',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
+    typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
+    bridges: 'Bridges',
     place: {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
@@ -193,17 +211,17 @@ export const STR = {
         'Two by two tiles, radius one and a half: room for long trains to turn. The inner corner tile is blocked. R rotates.',
       switch_regular:
         'Two by two tiles: one line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
-      crossing_regular_regular: 'Two regular lines cross without connecting.',
+      crossing_regular_regular: 'Two wide lines cross without connecting.',
       bridge_regular: 'Spans one tile of water. Only on water.',
       transition_regular:
-        'Joins regular and high-speed track. Regular speed applies on the piece itself.',
+        'Joins wide and high-speed track. Wide-track speed applies on the piece itself.',
       straight_high_speed: 'High-speed straight: no speed limit. Drag to lay a run.',
       curve_high_speed:
         'Two by two tiles, radius one and a half, no speed limit. The inner corner tile is blocked. R rotates.',
       switch_high_speed:
         'Two by two tiles: a high-speed straight with a wide diverging arc that bends into a parallel track beside a straight. R rotates through both handings.',
       crossing_regular_high_speed:
-        'A regular line crosses a high-speed line at grade. R swaps which line runs which way.',
+        'A wide line crosses a high-speed line at grade. R swaps which line runs which way.',
       crossing_high_speed_high_speed: 'Two high-speed lines cross at grade.',
       bridge_high_speed: 'High-speed span over one tile of water.',
       straight_narrow: 'Narrow-gauge straight. Only narrow trains run on it. Drag to lay a run.',
@@ -211,9 +229,9 @@ export const STR = {
       switch_narrow: 'Narrow-gauge switch on one tile. R rotates through both handings.',
       crossing_narrow_narrow: 'Two narrow lines cross at grade.',
       crossing_narrow_regular:
-        'A narrow line crosses a regular line at grade. R swaps which line runs which way.',
+        'A narrow line crosses a wide line at grade. R swaps which line runs which way.',
     } as Record<string, string>,
-    trackClass: { regular: 'Regular', high_speed: 'High-speed', narrow: 'Narrow' } as Record<
+    trackClass: { regular: 'Wide', high_speed: 'High-speed', narrow: 'Narrow' } as Record<
       string,
       string
     >,
@@ -664,7 +682,7 @@ export const STR = {
     off: 'Off',
     controls: 'Controls',
     controlsText:
-      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
+      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Track: 1-5 piece, Q / E type · U upgrade track, Shift+U downgrade · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
     lastSave: 'Last save',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
@@ -934,7 +952,7 @@ export const STR = {
   compat: {
     wrongGauge: (narrowTrack: boolean) =>
       narrowTrack
-        ? 'Regular gauge: cannot run on narrow track'
+        ? 'Wide gauge: cannot run on narrow track'
         : 'Narrow gauge: runs on narrow track only',
     runsOn: (classes: string[]) =>
       classes.length ? `Runs on ${classes.join(' and ')} track` : 'Runs on no track',
@@ -963,8 +981,8 @@ export const STR = {
   },
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',
-    mixedGauge: 'A train cannot mix narrow and regular gauge.',
-    mixedGaugeTrain: 'narrow and regular gauge in one train: recall it and build it again',
+    mixedGauge: 'A train cannot mix narrow and wide gauge.',
+    mixedGaugeTrain: 'narrow and wide gauge in one train: recall it and build it again',
     wrongDepot: (name: string) => `${name} builds only trains of its own gauge.`,
     noNarrowDepot: 'Build a narrow depot first: narrow trains roll out of one',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,

@@ -280,7 +280,7 @@ export const RULE_META: RuleMeta[] = [
   },
   {
     key: 'lineSpeedRegular',
-    label: 'Regular line speed',
+    label: 'Wide line speed',
     group: 'Trains & stations',
     min: 0.5,
     max: 5,

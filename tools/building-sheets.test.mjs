@@ -1,9 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { PNG } from 'pngjs';
-import { FOOTPRINTS, loadInventory, pictureFile, project } from './building-kit.mjs';
+import {
+  FOOTPRINTS,
+  diamond,
+  loadInventory,
+  pictureFile,
+  project,
+  wallBase,
+} from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly } from './building-guides.mjs';
 import { buildQueue, loadFamilies, progress, setStatus } from './building-queue.mjs';
-import { SHEET, drawSheet, indexHtml, sheetFile } from './building-sheets.mjs';
+import { SHEET, anglesFile, drawSheet, indexHtml, sheetFile } from './building-sheets.mjs';
 
 const inv = loadInventory();
 const fam = loadFamilies();
@@ -66,6 +73,52 @@ describe('building review sheets', () => {
     expect(at(sheet, 1 * 256 + sx / 4, 4 * 256 + sy / 4 - 2)).toEqual(SHEET.footprint);
   });
 
+  it('draws the footprint and the wall lines over the pictures on the angles sheet', () => {
+    // twice the size, with the lines every wall's foot should run along: drift shows at a glance
+    const f = family('farm');
+    const sheet = drawSheet(f, pictures(f), undefined, { outlines: true, shrink: 2 });
+    expect([sheet.width, sheet.height]).toEqual([2048, 3072]);
+    expect(anglesFile('farm')).toBe('assets/source/buildings-v2/review/farm-angles.png');
+    const fp = FOOTPRINTS.t1;
+    // first age, second view: the near corner of the footprint and of the walls
+    const [fx, fy] = diamond(fp, 1).s;
+    const [wx, wy] = wallBase(fp, 1).s;
+    expect(at(sheet, 512 + fx / 2, fy / 2)).toEqual(SHEET.outline);
+    expect(at(sheet, 512 + wx / 2, wy / 2)).toEqual(SHEET.walls);
+    // the plain sheet shows the picture and nothing over it
+    const plain = drawSheet(f, pictures(f));
+    expect(at(plain, 256 + wx / 4, wy / 4)).not.toEqual(SHEET.walls);
+  });
+
+  it('shows the views of a building at one size, however large each came back', () => {
+    // the first view drawn at 0.7 of the others: on the sheet all four are equally large
+    const f = family('farm');
+    const load = (file) =>
+      painted(
+        f.footprint,
+        rotOf(file),
+        rotOf(file) === 0
+          ? { map: ([x, y]) => [512 + (x - 512) * 0.7, 832 + (y - 832) * 0.7] }
+          : {},
+      );
+    const sheet = drawSheet(f, load);
+    const [tx, ty] = project(FOOTPRINTS.t1, 0, 0, blockOf('t1', 0).z1);
+    // the middle of every view's top face is where a full-size block has it
+    for (let rot = 0; rot < 4; rot++)
+      expect(at(sheet, rot * 256 + tx / 4, ty / 4), `r${rot}`).toEqual(SHADE.top);
+  });
+
+  it('stands a family as large on its tile as its description says', () => {
+    const f = family('farm');
+    const [sx, sy] = wallBase(FOOTPRINTS.t1, 0).s;
+    const just = [sx / 4, sy / 4 + 3];
+    // a little below the near corner of the walls: footprint at size 1, building at size 1.25
+    expect(at(drawSheet(f, pictures(f)), ...just)).toEqual(SHEET.footprint);
+    expect(at(drawSheet(f, pictures(f), undefined, { size: 1.25 }), ...just)).not.toEqual(
+      SHEET.footprint,
+    );
+  });
+
   it("leaves a missing picture's cell empty", () => {
     const f = family('farm');
     const sheet = drawSheet(f, pictures(f, { without: [pictureFile('farm', 1, 2)] }));
@@ -101,12 +154,38 @@ describe('building review sheets', () => {
       checked: 3,
       failed: 1,
       pictures: {
-        'depot-a0-r0': { ok: true, problems: [], notes: [] },
+        'depot-a0-r0': {
+          ok: true,
+          problems: [],
+          notes: [],
+          fit: {
+            method: 'base',
+            sure: [true, true],
+            measured: [0.504, -0.326],
+            area: 10000,
+            vertical: 1,
+            scale: 1,
+          },
+        },
         'depot-a0-r1': { ok: false, problems: ['background is not transparent'] },
         'depot-a0-r2': {
           ok: true,
           problems: [],
           notes: ['placed by its outline: no straight wall base was found'],
+          fit: {
+            method: 'outline',
+            sure: [false, true],
+            measured: [0.5, -0.5],
+            area: 14400,
+            vertical: 1,
+            scale: 1,
+          },
+        },
+        'depot-a1-r0': {
+          ok: true,
+          problems: [],
+          notes: [],
+          fit: { method: 'base', sure: [true, true], measured: [0.498, -0.503] },
         },
       },
     };
@@ -126,6 +205,14 @@ describe('building review sheets', () => {
     expect(html).toContain('depot-a0-r2');
     expect(html).toContain('placed by its outline');
     expect(html).toContain('0 of 4 made');
+    // the ground lines as measured, picture by picture, and the sheet that shows them
+    expect(html).toContain('href="depot-angles.png"');
+    expect(html).toMatch(/<td class="far">0\.50 \/ -0\.33<\/td>/);
+    expect(html).toMatch(/<td class="">0\.50 \/ -0\.50<\/td>/);
+    expect(html).toMatch(/<td class="outline">by its outline<\/td>/);
+    // how far apart in size the views of one building came back, before they were evened out
+    expect(html).toContain('<th>sizes apart</th>');
+    expect(html).toMatch(/<td class="off">x1\.20<\/td>/);
     // both gates and where they stand
     expect(html).toContain('"depot": waiting for approval');
     expect(html).toContain('"station": waiting for approval');

@@ -111,7 +111,15 @@ const BASE: Record<TrackKind, Link[][]> = {
 };
 
 export function rotationCount(kind: TrackKind): number {
-  return trackData.pieces[kind]?.rotations ?? (kind === 'transition' ? 2 : 1);
+  return trackData.pieces[kind]?.rotations ?? (kind === 'transition' ? 4 : 1);
+}
+/**
+ * The turn of a transition whose high-speed half lies towards `hsEnd`. The piece is drawn wide
+ * from its first link end and high speed towards its second; both ends join either class.
+ */
+export function transitionRot(hsEnd: Dir): number {
+  for (let rot = 0; rot < 4; rot++) if (pieceLinks('transition', rot)[0][1] === hsEnd) return rot;
+  return 0;
 }
 
 export function pieceLinks(kind: TrackKind, rot: number): Link[] {

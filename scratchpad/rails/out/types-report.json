@@ -1,0 +1,183 @@
+[
+ {
+  "what": "track opened",
+  "tool": "straight/narrow r0",
+  "types": [
+   "Narrow*",
+   "Wide",
+   "High-speed",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Crossing × Wide"
+  ]
+ },
+ {
+  "what": "2: curve; R twice",
+  "tool": "curve/narrow r2",
+  "types": [
+   "Narrow*",
+   "Wide",
+   "High-speed",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Crossing × Wide"
+  ]
+ },
+ {
+  "what": "E: the wide curve, same turn",
+  "tool": "curve/regular r2",
+  "types": [
+   "Narrow",
+   "Wide*",
+   "High-speed",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Transition"
+  ]
+ },
+ {
+  "what": "E: the high-speed curve, same turn",
+  "tool": "curve/high_speed r2",
+  "types": [
+   "Narrow",
+   "Wide",
+   "High-speed*",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Crossing × Wide"
+  ]
+ },
+ {
+  "what": "5: crossing with wide",
+  "tool": "crossing/regular+high_speed r0",
+  "types": [
+   "Narrow",
+   "Wide",
+   "High-speed*",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Crossing × Wide"
+  ]
+ },
+ {
+  "what": "E: bridges have no fifth piece: the first",
+  "tool": "building/bridge_wood",
+  "types": [
+   "Narrow",
+   "Wide",
+   "High-speed",
+   "Bridges*"
+  ],
+  "items": [
+   "1:Wooden Bridge",
+   "2:Stone Bridge"
+  ]
+ },
+ {
+  "what": "E: round to narrow",
+  "tool": "straight/narrow r0",
+  "types": [
+   "Narrow*",
+   "Wide",
+   "High-speed",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Crossing × Wide"
+  ]
+ },
+ {
+  "what": "Q: back to bridges",
+  "tool": "building/bridge_wood",
+  "types": [
+   "Narrow",
+   "Wide",
+   "High-speed",
+   "Bridges*"
+  ],
+  "items": [
+   "1:Wooden Bridge",
+   "2:Stone Bridge"
+  ]
+ },
+ {
+  "what": "Q Q: wide",
+  "tool": "straight/regular r0",
+  "types": [
+   "Narrow",
+   "Wide*",
+   "High-speed",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Transition"
+  ]
+ },
+ {
+  "what": "3: switch",
+  "tool": "switch/regular r0",
+  "types": [
+   "Narrow",
+   "Wide*",
+   "High-speed",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Transition"
+  ]
+ },
+ {
+  "what": "Tab x3: on through the pieces into the next type",
+  "tool": "straight/high_speed r0",
+  "types": [
+   "Narrow",
+   "Wide",
+   "High-speed*",
+   "Bridges"
+  ],
+  "items": [
+   "1:Straight",
+   "2:Curve",
+   "3:Switch",
+   "4:Crossing",
+   "5:Crossing × Wide"
+  ]
+ }
+]

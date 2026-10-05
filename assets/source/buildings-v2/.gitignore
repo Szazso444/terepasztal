@@ -1,2 +1,6 @@
 # pictures that were given up: kept on disk for the user to look at, not part of the art
 *.rejected.png
+# earlier pictures laid onto their footprint, made on demand as references for later ones
+.fitted/
+# review sheets with the footprint and wall lines drawn over the pictures
+review/*-angles.png

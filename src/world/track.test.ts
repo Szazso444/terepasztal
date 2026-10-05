@@ -10,6 +10,7 @@ import {
   classCostMul,
   pieceLinks,
   rotationCount,
+  transitionRot,
   makePiece,
   pieceCost,
   isUnitKind,
@@ -458,5 +459,22 @@ describe('rails of a multi-tile piece', () => {
           expect(len).toBeCloseTo(def.routes[k].length, 3);
         });
       }
+  });
+});
+
+describe('transition', () => {
+  it('turns four ways, so its high-speed half can face any side', () => {
+    expect(rotationCount('transition')).toBe(4);
+    // the first two turns are what they always were
+    expect(pieceLinks('transition', 0)).toEqual([[Dir.N, Dir.S]]);
+    expect(pieceLinks('transition', 1)).toEqual([[Dir.E, Dir.W]]);
+    expect(pieceLinks('transition', 2)).toEqual([[Dir.S, Dir.N]]);
+    expect(pieceLinks('transition', 3)).toEqual([[Dir.W, Dir.E]]);
+  });
+
+  it('names the turn that puts the high-speed half towards a side', () => {
+    // the piece is drawn wide from its first link end and high speed towards its second
+    for (const d of [Dir.N, Dir.E, Dir.S, Dir.W])
+      expect(pieceLinks('transition', transitionRot(d))[0][1]).toBe(d);
   });
 });

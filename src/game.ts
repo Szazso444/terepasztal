@@ -136,7 +136,7 @@ import { Advisor, type Tip } from './ui/advisor';
 import { resourceStats } from './sim/stats';
 import { locoFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
-import { buildCompatTable } from './sim/compat';
+import { buildCompatTable, withoutInCab } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
@@ -951,6 +951,7 @@ export class Game {
       return c ? c.destId : null;
     };
     this.build.onStatus = (t) => this.toolbar.setStatus(t);
+    this.build.barredTrains = () => withoutInCab(this.fleet.trains);
     this.build.onToolChanged = (t) => {
       this.toolbar.setActive(t);
       this.buildInfo.show(this.toolbar.item(t));
@@ -2502,6 +2503,16 @@ export class Game {
     if (inp.wasPressed('KeyM')) this.toggleOverview();
     if (inp.wasPressed('Tab') && this.toolbar.open && this.viewTarget === 0)
       this.toolbar.cycle(inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? -1 : 1);
+    // U / Shift+U: the tools that upgrade wide track to high speed and downgrade it
+    if (inp.wasPressed('KeyU') && this.viewTarget === 0 && !this.screens.current)
+      this.toolbar.toggleReclass(
+        inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? 'regular' : 'high_speed',
+      );
+    // Q / E: the previous and the next type of the open category (track by gauge)
+    if (this.toolbar.open && this.viewTarget === 0) {
+      if (inp.wasPressed('KeyQ')) this.toolbar.cycleGroup(-1);
+      if (inp.wasPressed('KeyE')) this.toolbar.cycleGroup(1);
+    }
     if (inp.wasPressed('Escape') && this.viewTarget === 1) {
       if (this.recording) this.cancelRecording();
       else if (this.ovSelected !== null) {

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, ROTATIONS, project, wallBase } from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly } from './building-guides.mjs';
-import { fitPicture, normalisePicture } from './building-fit.mjs';
+import { fitGroup, fitPicture, normalisePicture } from './building-fit.mjs';
 
 const SHADE = { top: [220, 210, 180], left: [160, 120, 90], right: [110, 80, 60] };
 
@@ -191,6 +191,104 @@ describe('building fit', () => {
     expect(Math.abs(f.box.top - top)).toBeLessThan(3);
     expect(Math.abs(f.box.left - wallBase(fp, 0).w[0])).toBeLessThan(3);
     expect(Math.abs(f.box.right - wallBase(fp, 0).e[0])).toBeLessThan(3);
+  });
+
+  it('says where the camera stood: how high, and how far turned', () => {
+    // the game's camera looks down at 30 degrees on a building turned 45 degrees
+    const game = fitPicture(building('t1', 0), 't1', 0).camera;
+    expect(Math.abs(game.elevation - 30)).toBeLessThan(0.6);
+    expect(Math.abs(game.turn)).toBeLessThan(0.6);
+    // a lower camera flattens both ground lines: 0.5 x 0.8 = 0.4 is 23.6 degrees
+    const low = fitPicture(
+      building('t1', 0, { map: ([x, y]) => [x, 832 + (y - 832) * 0.8] }),
+      't1',
+      0,
+    );
+    expect(Math.abs(low.camera.elevation - 23.6)).toBeLessThan(0.6);
+    expect(Math.abs(low.camera.turn)).toBeLessThan(0.6);
+    // a building turned towards its lower-right wall: that wall's foot flatter, the other steeper
+    const turned = fitPicture(
+      building('t1', 0, { map: ([x, y]) => [x, y + (x - 512) * 0.08] }),
+      't1',
+      0,
+    );
+    expect(turned.measured.map((v) => Math.round(v * 100) / 100)).toEqual([0.58, -0.42]);
+    expect(turned.camera.turn).toBeGreaterThan(4);
+    expect(turned.camera.turn).toBeLessThan(6);
+    // a foot that is not two straight walls says nothing about the camera
+    const round = new PNG({ width: 1024, height: 1024 });
+    fillPoly(
+      round,
+      Array.from({ length: 48 }, (_, i) => [
+        512 + 200 * Math.cos((i / 48) * 2 * Math.PI),
+        600 + 100 * Math.sin((i / 48) * 2 * Math.PI),
+      ]),
+      [200, 180, 150],
+    );
+    expect(fitPicture(round, 't1', 0).camera).toBeNull();
+  });
+
+  it('can lay a picture down without correcting its camera', () => {
+    // for looking at what the generator drew: scale and place only
+    const png = building('t1', 3, {
+      map: ([x, y]) => [x, 832 + (y - 832) * 0.78 + (x - 512) * 0.03],
+    });
+    const f = fitPicture(png, 't1', 3, { rectify: false });
+    expect(f.slopes).toEqual([0.5, -0.5]);
+    expect([f.vertical, f.shear]).toEqual([1, 0]);
+    expect(Math.abs(f.measured[0] - 0.42)).toBeLessThan(0.02);
+  });
+
+  /** how large the building is once laid onto its footprint: the root of the area it covers */
+  const sizeOf = (f) => Math.sqrt(f.area * f.vertical) * f.scale;
+  /** a barn with a silo beside its lower-left wall, the silo seen (`true`) or hidden behind it */
+  const barn = (rot, silo, k = 1) =>
+    building('t1', rot, {
+      map: ([x, y]) => [512 + (x - 512) * k, 832 + (y - 832) * k],
+      extra: (png, fp, map) => {
+        if (!silo) return;
+        const b = blockOf('t1', rot);
+        const box = { x0: b.x0 - 0.5, x1: b.x0, y0: b.y1 - 0.3, y1: b.y1, z0: 0, z1: 30 };
+        for (const [name, pts] of Object.entries(boxFaces(fp, box)))
+          fillPoly(png, pts.map(map), SHADE[name]);
+      },
+    });
+
+  it('brings the views of one building to one size', () => {
+    // a generator fills its canvas: the same barn comes back larger where its silo is hidden,
+    // and where the silo shows it widens the wall base, so the barn would be laid down smaller
+    const views = [barn(0, true, 0.8), barn(1, false, 1.2), barn(2, false, 0.9), barn(3, true, 1)];
+    const each = views.map((png, rot) => fitPicture(png, 't1', rot));
+    const spread = (fits) => Math.max(...fits.map(sizeOf)) / Math.min(...fits.map(sizeOf));
+    expect(spread(each)).toBeGreaterThan(1.15);
+    const group = fitGroup(views, 't1');
+    expect(spread(group)).toBeLessThan(1.02);
+    // together they are as large as their wall bases said: only the differences are evened out
+    const mean = (fits) => Math.exp(fits.reduce((a, f) => a + Math.log(f.scale), 0) / fits.length);
+    expect(Math.abs(mean(group) / mean(each) - 1)).toBeLessThan(0.02);
+    // each still stands with the middle of its foot on the footprint's centre
+    for (const [i, f] of group.entries()) expect([f.cx, f.cy]).toEqual([each[i].cx, each[i].cy]);
+  });
+
+  it('skips the views that are not made, and leaves a single view as it is', () => {
+    const one = barn(0, true);
+    const group = fitGroup([one, null, null, null], 't1');
+    expect(group.slice(1)).toEqual([null, null, null]);
+    expect(group[0].scale).toBe(fitPicture(one, 't1', 0).scale);
+  });
+
+  it('gives a family its size on the tile', () => {
+    // a depot stands a little larger than its footprint, so that the rails fit its portals
+    const views = [0, 1, 2, 3].map((rot) => building('t2x2', rot));
+    const plain = fitGroup(views, 't2x2');
+    const larger = fitGroup(views, 't2x2', { size: 1.15 });
+    for (const [i, f] of larger.entries()) {
+      expect(Math.abs(f.scale / plain[i].scale - 1.15)).toBeLessThan(0.001);
+      // it grows about the footprint's centre
+      const c = FOOTPRINTS.t2x2.centre;
+      expect(Math.abs((f.box.left - c[0]) / (plain[i].box.left - c[0]) - 1.15)).toBeLessThan(0.01);
+      expect(Math.abs((f.box.top - c[1]) / (plain[i].box.top - c[1]) - 1.15)).toBeLessThan(0.01);
+    }
   });
 
   it('has nothing to say about an empty picture', () => {

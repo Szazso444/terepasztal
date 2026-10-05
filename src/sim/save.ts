@@ -225,7 +225,7 @@ export const MIGRATIONS: Migration[] = [
   { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
   {
     from: 8,
-    note: 'every track piece counted as regular class; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple; contracts rated Common with no train assigned; the auto-accept switch became a per-rarity policy',
+    note: 'every track piece counted as wide track; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple; contracts rated Common with no train assigned; the auto-accept switch became a per-rarity policy',
     run: (j) => {
       const book = j.contracts as { contracts?: Record<string, unknown>[] } | undefined;
       for (const c of book?.contracts ?? []) {
@@ -312,7 +312,7 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 12,
-    note: "regular curves and switches were one tile: they became narrow gauge, and lines meeting them need re-laying with 2×2 pieces. Stephenson's Rocket and the Mk48 are narrow gauge now: recall their trains and build them again with the narrow wagons added to the inventory",
+    note: "wide-track curves and switches were one tile: they became narrow gauge, and lines meeting them need re-laying with 2×2 pieces. Stephenson's Rocket and the Mk48 are narrow gauge now: recall their trains and build them again with the narrow wagons added to the inventory",
     run: (j) => {
       j.track = convertOneTileRegular(j.track);
       grantStarters(j, V13_STARTERS);
