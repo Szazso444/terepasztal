@@ -18,7 +18,8 @@
     "art:buildings:guides": "node tools/building-guides.mjs",
     "art:buildings:queue": "node tools/building-queue.mjs",
     "art:buildings:check": "node tools/building-check.mjs",
-    "art:buildings:sheets": "node tools/building-sheets.mjs"
+    "art:buildings:sheets": "node tools/building-sheets.mjs",
+    "art:buildings:fit": "node tools/building-fit.mjs"
   },
   "dependencies": {
     "pixi.js": "^8.20.1"

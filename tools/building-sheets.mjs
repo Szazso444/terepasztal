@@ -3,9 +3,11 @@
  *   node tools/building-sheets.mjs                  every family
  *   node tools/building-sheets.mjs --family depot   one family (the index is rebuilt too)
  *
- * A sheet has a row per age and a column per view (r0 to r3). Each cell is the picture at a
- * quarter of its size on grass, standing on its footprint, as it will in the game. A picture that
- * is not made yet leaves its cell empty.
+ * A sheet has a row per age and a column per view (r0 to r3). Each cell is the picture on grass,
+ * laid onto its footprint the way the game will lay it (building-fit.mjs), at a quarter of the
+ * footprint's canvas. So a picture that is too large, off centre or a little off the game's camera
+ * in its file shows here as it will stand in the game. A picture that is not made yet leaves its
+ * cell empty.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -13,8 +15,9 @@ import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { AGES, FOOTPRINTS, ROOT, diamond, loadInventory, pictureFile } from './building-kit.mjs';
 import { fillPoly } from './building-guides.mjs';
+import { fitPicture, normalisePicture } from './building-fit.mjs';
 import { buildQueue, loadFamilies, progress, readQueue } from './building-queue.mjs';
-import { REPORT_FILE } from './building-check.mjs';
+import { readReport } from './building-check.mjs';
 
 export const SHEET = { grass: [124, 143, 60], footprint: [98, 116, 48], shrink: 4 };
 
@@ -22,35 +25,24 @@ export function sheetFile(family) {
   return `${ROOT}/review/${family}.png`;
 }
 
-/** Lay a picture into the sheet at (ox, oy), averaged down by SHEET.shrink over what is there. */
+/** Lay a picture the size of a cell into the sheet at (ox, oy), over what is there. */
 function paste(sheet, pic, ox, oy) {
-  const k = SHEET.shrink;
-  for (let y = 0; y < Math.floor(pic.height / k); y++)
-    for (let x = 0; x < Math.floor(pic.width / k); x++) {
-      let a = 0,
-        r = 0,
-        g = 0,
-        b = 0;
-      for (let j = 0; j < k; j++)
-        for (let i = 0; i < k; i++) {
-          const o = ((y * k + j) * pic.width + x * k + i) * 4;
-          const pa = pic.data[o + 3];
-          a += pa;
-          r += pic.data[o] * pa;
-          g += pic.data[o + 1] * pa;
-          b += pic.data[o + 2] * pa;
-        }
-      if (!a) continue;
-      const cover = a / (255 * k * k);
+  for (let y = 0; y < pic.height; y++)
+    for (let x = 0; x < pic.width; x++) {
+      const o = (y * pic.width + x) * 4;
+      const cover = pic.data[o + 3] / 255;
+      if (!cover) continue;
       const t = ((oy + y) * sheet.width + ox + x) * 4;
-      sheet.data[t] = Math.round((r / a) * cover + sheet.data[t] * (1 - cover));
-      sheet.data[t + 1] = Math.round((g / a) * cover + sheet.data[t + 1] * (1 - cover));
-      sheet.data[t + 2] = Math.round((b / a) * cover + sheet.data[t + 2] * (1 - cover));
+      for (let c = 0; c < 3; c++)
+        sheet.data[t + c] = Math.round(pic.data[o + c] * cover + sheet.data[t + c] * (1 - cover));
     }
 }
 
-/** One family's sheet. `load(file)` returns the picture as a PNG, or null when it is not made. */
-export function drawSheet(f, load) {
+/**
+ * One family's sheet. `load(file)` returns the picture as a PNG, or null when it is not made; a
+ * picture that cannot be read or holds no building leaves its cell empty and is told to `problem`.
+ */
+export function drawSheet(f, load, problem = () => {}) {
   const fp = FOOTPRINTS[f.footprint];
   const k = SHEET.shrink;
   const cw = fp.canvas[0] / k,
@@ -72,9 +64,20 @@ export function drawSheet(f, load) {
         [d.n, d.e, d.s, d.w].map(([x, y]) => [ox + x / k, oy + y / k]),
         SHEET.footprint,
       );
-      const pic = load(pictureFile(f.family, f.firstAge + row, rot));
-      if (pic && pic.width === fp.canvas[0] && pic.height === fp.canvas[1])
-        paste(sheet, pic, ox, oy);
+      const file = pictureFile(f.family, f.firstAge + row, rot);
+      let pic = null;
+      try {
+        pic = load(file);
+      } catch (e) {
+        problem(file, e.message);
+      }
+      if (!pic) continue;
+      const fit = fitPicture(pic, f.footprint, rot);
+      if (!fit) {
+        problem(file, 'no building in the picture');
+        continue;
+      }
+      paste(sheet, normalisePicture(pic, fit, f.footprint, k), ox, oy);
     }
   return sheet;
 }
@@ -85,18 +88,21 @@ const esc = (s) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
   );
 
-/** The index page: every family with its sheet, its progress and what the check found. */
-export function indexHtml(inventory, queue, report) {
-  const rows = new Map(progress(queue).map((r) => [r.family, r]));
+/**
+ * The index page: every family with its sheet, what was made, what failed and what the check
+ * noted for the reviewer. `rows` is the progress per family (building-queue.mjs).
+ */
+export function indexHtml(inventory, queue, report, rows) {
+  const byFamily = new Map(rows.map((r) => [r.family, r]));
   const sections = inventory.map((f) => {
-    const p = rows.get(f.family);
-    const done = p.total - p.pending;
+    const p = byFamily.get(f.family);
     const ages = AGES.slice(f.firstAge, f.firstAge + f.ages)
       .map((a) => a.name)
       .join(', ');
-    const failed = queue.entries
+    const mine = queue.entries
       .filter((e) => e.family === f.family)
-      .map((e) => ({ e, check: report?.pictures?.[e.id] }))
+      .map((e) => ({ e, check: report?.pictures?.[e.id] }));
+    const failed = mine
       .filter(({ e, check }) => e.status === 'rejected' || (check && !check.ok))
       .map(
         ({ e, check }) =>
@@ -104,17 +110,29 @@ export function indexHtml(inventory, queue, report) {
             check && !check.ok ? `: ${esc(check.problems.join('; '))}` : ''
           }${e.note ? ` <em>(${esc(e.note)})</em>` : ''}</li>`,
       );
+    const noted = mine
+      .filter(({ e, check }) => e.status !== 'rejected' && check?.ok && check.notes?.length)
+      .map(
+        ({ e, check }) =>
+          `<li class="note"><code>${esc(e.id)}</code>: ${esc(check.notes.join('; '))}</li>`,
+      );
+    const counts =
+      `${p.made} of ${p.total} made` +
+      (p.approved ? `, ${p.approved} approved` : '') +
+      (p.rejected ? `, ${p.rejected} rejected` : '') +
+      (p.behind ? `, ${p.behind} not made (built on a picture that failed)` : '');
     return `<section id="${esc(f.family)}">
   <h2>${esc(f.name)} <small>${esc(f.family)}</small></h2>
-  <p>${done} of ${p.total} made${p.approved ? `, ${p.approved} approved` : ''}${
-    p.rejected ? `, ${p.rejected} rejected` : ''
-  }. Rows: ${esc(ages)}. Columns: r0 (front lower left), r1, r2, r3 (front lower right).</p>
+  <p>${counts}. Rows: ${esc(ages)}. Columns: r0 (front lower left), r1, r2, r3 (front lower right).</p>
   <img src="${esc(f.family)}.png" alt="${esc(f.name)}: every age and view" loading="lazy" />
-  ${failed.length ? `<ul>${failed.join('')}</ul>` : ''}
+  ${failed.length || noted.length ? `<ul>${failed.join('')}${noted.join('')}</ul>` : ''}
 </section>`;
   });
   const total = queue.entries.length;
-  const made = queue.entries.filter((e) => e.status !== 'pending').length;
+  const made = rows.reduce((n, r) => n + r.made, 0);
+  const gates = queue.gates
+    .map((g) => `"${esc(g.family)}": ${g.approved ? 'approved' : 'waiting for approval'}`)
+    .join('; ');
   return `<!doctype html>
 <meta charset="utf-8" />
 <title>Building pictures</title>
@@ -125,38 +143,45 @@ export function indexHtml(inventory, queue, report) {
   section { margin: 28px 0; }
   img { max-width: 100%; height: auto; display: block; border-radius: 4px; }
   li { color: #e37a66; }
+  li.note { color: #d7a94d; }
   code { color: inherit; }
 </style>
 <h1>Building pictures</h1>
-<p>${made} of ${total} made. Pilot "${esc(queue.pilot.family)}": ${
-    queue.pilot.approved ? 'approved' : 'waiting for approval'
-  }.</p>
+<p>${made} of ${total} made. Each picture is shown laid onto its footprint, as the game will lay it. Gates: ${gates}.</p>
 ${sections.join('\n')}
 `;
 }
 
 function main(args) {
   const inventory = loadInventory();
+  const families = loadFamilies();
   const only = args[0] === '--family' ? args[1] : null;
   const load = (file) => (existsSync(file) ? PNG.sync.read(readFileSync(file)) : null);
+  const problem = (file, why) => console.log(`left out  ${file}: ${why}`);
   let n = 0;
   for (const f of inventory) {
     if (only && f.family !== only) continue;
     const file = sheetFile(f.family);
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, PNG.sync.write(drawSheet(f, load)));
+    writeFileSync(file, PNG.sync.write(drawSheet(f, load, problem)));
     n++;
   }
   if (only && !n) {
     console.error(`no family is called "${only}"`);
     return 1;
   }
-  const queue = buildQueue(inventory, loadFamilies(), readQueue());
-  const report = existsSync(REPORT_FILE) ? JSON.parse(readFileSync(REPORT_FILE, 'utf8')) : null;
-  writeFileSync(`${ROOT}/review/index.html`, indexHtml(inventory, queue, report));
+  const queue = buildQueue(inventory, families, readQueue());
+  const rows = progress(queue, inventory, families);
+  writeFileSync(`${ROOT}/review/index.html`, indexHtml(inventory, queue, readReport(), rows));
   console.log(`${n} sheet${n === 1 ? '' : 's'} and the index in ${ROOT}/review`);
   return 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
-  process.exitCode = main(process.argv.slice(2));
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  try {
+    process.exitCode = main(process.argv.slice(2));
+  } catch (e) {
+    console.error(e.message);
+    process.exitCode = 1;
+  }
+}

@@ -1,0 +1,305 @@
+/** Find where a building stands in its picture, and lay the picture onto its footprint.
+ *
+ *   node tools/building-fit.mjs <id> [<id> ...]     print the measurement of pictures on disk
+ *
+ * An image generator keeps a guide's view but not its size or place: it fills the canvas, and its
+ * ground lines are a little off the game's 2:1. So a picture is not required to match its guide to
+ * the pixel. It is measured instead: the bases of its two visible walls are found, and from them
+ * the scale, the place and the small camera correction that put it on its footprint. A building
+ * whose foot is not two straight walls (a round tower, a yard of machinery) is placed by its
+ * outline, without a camera correction. The check, the review sheets and the game's atlas all use
+ * this one measurement.
+ */
+import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { PNG } from 'pngjs';
+import { FOOTPRINTS, loadInventory, pictureFile, wallBase } from './building-kit.mjs';
+
+export const FIT = {
+  /** a wall base is trusted when its points span this share of its side of the picture */
+  span: 0.6,
+  /** how far a measured ground slope is used; the game's slopes are 0.5 and -0.5 */
+  slope: [0.33, 0.67],
+  /** pixels more solid than this belong to the building */
+  alpha: 128,
+};
+
+/** The highest and lowest building pixel of every column. */
+function columns(png) {
+  const { width: W, height: H, data } = png;
+  const low = new Int32Array(W).fill(-1),
+    top = new Int32Array(W).fill(-1);
+  let minX = W,
+    maxX = -1;
+  for (let x = 0; x < W; x++)
+    for (let y = 0; y < H; y++)
+      if (data[(y * W + x) * 4 + 3] > FIT.alpha) {
+        if (top[x] < 0) top[x] = y;
+        low[x] = y;
+        if (x < minX) minX = x;
+        maxX = x;
+      }
+  return { low, top, minX, maxX };
+}
+
+/**
+ * The straight line most of the points lie on, sloping the way `sign` says: the base of a wall,
+ * whatever stands in front of it. Random pairs propose lines (the same pairs every run), the line
+ * with most points near it wins, and a least-squares fit through those points refines it.
+ */
+function wallLine(pts, tol, sign) {
+  if (pts.length < 8) return null;
+  let best = null,
+    seed = 12345;
+  const pick = () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return pts[seed % pts.length];
+  };
+  for (let i = 0; i < 500; i++) {
+    const p = pick(),
+      q = pick();
+    if (Math.abs(p[0] - q[0]) < 16) continue;
+    const a = (q[1] - p[1]) / (q[0] - p[0]);
+    if (a * sign < 0.15 || a * sign > 1.2) continue;
+    const b = p[1] - a * p[0];
+    let n = 0;
+    for (const r of pts) if (Math.abs(r[1] - (a * r[0] + b)) <= tol) n++;
+    if (!best || n > best.n) best = { a, b, n };
+  }
+  if (!best) return null;
+  let n = 0,
+    sx = 0,
+    sy = 0,
+    sxx = 0,
+    sxy = 0,
+    from = Infinity,
+    to = -Infinity;
+  for (const [x, y] of pts) {
+    if (Math.abs(y - (best.a * x + best.b)) > tol) continue;
+    n++;
+    sx += x;
+    sy += y;
+    sxx += x * x;
+    sxy += x * y;
+    from = Math.min(from, x);
+    to = Math.max(to, x);
+  }
+  const a = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+  return { a, b: (sy - a * sx) / n, from, to };
+}
+
+/** The line of slope `a` the points rest on, ignoring the few that reach lowest. */
+function restLine(pts, a) {
+  const c = pts.map(([x, y]) => y - a * x).sort((u, v) => u - v);
+  return { a, b: c[Math.floor(c.length * 0.97)] };
+}
+
+/**
+ * The building's foot in its picture: the base lines of the lower-left and lower-right wall, the
+ * near corner `s` where they meet, and the outer corners `w` and `e`. `sure` says for each wall
+ * whether a straight base was found.
+ */
+export function measureBase(png) {
+  const { low, top, minX, maxX } = columns(png);
+  if (maxX < 0) return null;
+  const tol = Math.max(3, Math.round((maxX - minX) * 0.006));
+  const side = (from, to) => {
+    const pts = [];
+    for (let x = from; x <= to; x++) if (low[x] >= 0) pts.push([x, low[x]]);
+    return pts;
+  };
+  const meet = (l, r) => (r.b - l.b) / (l.a - r.a);
+  let split = minX;
+  for (let x = minX; x <= maxX; x++) if (low[x] > low[split]) split = x;
+  let l = null,
+    r = null;
+  // the near corner is where the two bases meet: find the bases, split there, find them again
+  for (let i = 0; i < 3; i++) {
+    l = wallLine(side(minX, split), tol, 1);
+    r = wallLine(side(split, maxX), tol, -1);
+    if (!l || !r) break;
+    const x = Math.round(meet(l, r));
+    if (!(x > minX && x < maxX)) break;
+    split = x;
+  }
+  const spans = (line, from, to) =>
+    !!line && (line.to - line.from) / Math.max(1, to - from) >= FIT.span;
+  const sure = [spans(l, minX, split), spans(r, split, maxX)];
+  if (!sure[0]) l = restLine(side(minX, split), 0.5);
+  if (!sure[1]) r = restLine(side(split, maxX), -0.5);
+  const sx = meet(l, r),
+    sy = l.a * sx + l.b;
+  // an outer corner: the outermost columns whose lowest pixel is still on the base
+  const on = (line, x, by) => low[x] >= 0 && Math.abs(low[x] - (line.a * x + line.b)) <= by;
+  const corners = (byL, byR) => {
+    let wx = Math.round(sx),
+      ex = Math.round(sx);
+    for (let x = minX; x < sx; x++)
+      if (on(l, x, byL) && on(l, x + 1, byL) && on(l, x + 2, byL)) {
+        wx = x;
+        break;
+      }
+    for (let x = maxX; x > sx; x--)
+      if (on(r, x, byR) && on(r, x - 1, byR) && on(r, x - 2, byR)) {
+        ex = x;
+        break;
+      }
+    return [wx, ex];
+  };
+  let [wx, ex] = corners(tol * 2, tol * 2);
+  // a foot that is not a straight wall curves away from its line: follow it a tenth of its width
+  if (!sure[0] || !sure[1]) {
+    const by = Math.max(tol * 2, Math.round((ex - wx) * 0.1));
+    [wx, ex] = corners(sure[0] ? tol * 2 : by, sure[1] ? tol * 2 : by);
+  }
+  if (ex - wx < 8) return null;
+  return {
+    sure,
+    slopes: [l.a, r.a],
+    w: [wx, l.a * wx + l.b],
+    s: [sx, sy],
+    e: [ex, r.a * ex + r.b],
+    top,
+    low,
+    minX,
+    maxX,
+  };
+}
+
+const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
+// `+ 0` turns a rounded -0 into 0, so the record reads the same either way
+const round = (v, digits = 1) => Math.round(v * 10 ** digits) / 10 ** digits + 0;
+
+/**
+ * How a picture goes onto its footprint's canvas. A point (x, y) of the picture lands at
+ * X = centre.x + scale * (x - cx), Y = centre.y + scale * (vertical * y + shear * x - cy):
+ * `vertical` and `shear` turn the measured ground slopes into 0.5 and -0.5 and leave upright edges
+ * upright; `scale` makes the foot as wide as the walls of the footprint; (cx, cy) is the middle of
+ * the foot. Null when the picture is empty.
+ */
+export function fitPicture(png, fpId, rot) {
+  const m = measureBase(png);
+  if (!m) return null;
+  const fp = FOOTPRINTS[fpId];
+  const target = wallBase(fp, rot);
+  const slopes = [
+    m.sure[0] ? clamp(m.slopes[0], FIT.slope) : 0.5,
+    m.sure[1] ? -clamp(-m.slopes[1], FIT.slope) : -0.5,
+  ];
+  const vertical = 1 / (slopes[0] - slopes[1]),
+    shear = (-(slopes[0] + slopes[1]) * vertical) / 2;
+  const up = (x, y) => vertical * y + shear * x;
+  const scale = (target.e[0] - target.w[0]) / (m.e[0] - m.w[0]);
+  const cx = (m.w[0] + m.e[0]) / 2,
+    cy = (up(...m.w) + up(...m.e)) / 2;
+  const place = (x, y) => [fp.centre[0] + scale * (x - cx), fp.centre[1] + scale * (up(x, y) - cy)];
+  let topY = Infinity,
+    lowY = -Infinity;
+  for (let x = m.minX; x <= m.maxX; x++) {
+    if (m.top[x] < 0) continue;
+    topY = Math.min(topY, place(x, m.top[x])[1]);
+    lowY = Math.max(lowY, place(x, m.low[x])[1]);
+  }
+  return {
+    method: m.sure[0] && m.sure[1] ? 'base' : 'outline',
+    sure: m.sure,
+    measured: m.slopes.map((s) => round(s, 3)),
+    slopes: slopes.map((s) => round(s, 3)),
+    base: { w: m.w.map((v) => round(v)), s: m.s.map((v) => round(v)), e: m.e.map((v) => round(v)) },
+    scale: round(scale, 4),
+    vertical: round(vertical, 4),
+    shear: round(shear, 4),
+    cx: round(cx),
+    cy: round(cy),
+    box: {
+      left: round(place(m.minX, 0)[0]),
+      top: round(topY),
+      right: round(place(m.maxX, 0)[0]),
+      bottom: round(lowY),
+    },
+  };
+}
+
+/** One sample of a picture between its pixels, colour weighted by coverage. */
+function sample(src, x, y, acc) {
+  const x0 = Math.floor(x),
+    y0 = Math.floor(y);
+  const fx = x - x0,
+    fy = y - y0;
+  for (let j = 0; j < 2; j++)
+    for (let i = 0; i < 2; i++) {
+      const xx = x0 + i,
+        yy = y0 + j;
+      if (xx < 0 || yy < 0 || xx >= src.width || yy >= src.height) continue;
+      const o = (yy * src.width + xx) * 4;
+      const a = (src.data[o + 3] / 255) * (i ? fx : 1 - fx) * (j ? fy : 1 - fy);
+      acc[0] += src.data[o] * a;
+      acc[1] += src.data[o + 1] * a;
+      acc[2] += src.data[o + 2] * a;
+      acc[3] += a;
+    }
+}
+
+/**
+ * The picture on its footprint's canvas, placed by `fit`. `shrink` divides the canvas, for review
+ * sheets and for the game's atlas: every output pixel averages the picture's pixels under it.
+ */
+export function normalisePicture(png, fit, fpId, shrink = 1) {
+  const fp = FOOTPRINTS[fpId];
+  const W = Math.round(fp.canvas[0] / shrink),
+    H = Math.round(fp.canvas[1] / shrink);
+  const out = new PNG({ width: W, height: H });
+  // samples per output pixel along each axis: about one per picture pixel
+  const n = Math.max(1, Math.min(8, Math.ceil(shrink / fit.scale)));
+  const acc = [0, 0, 0, 0];
+  // only where the building is: the rest of the canvas stays empty
+  const x0 = Math.max(0, Math.floor(fit.box.left / shrink) - 2),
+    x1 = Math.min(W - 1, Math.ceil(fit.box.right / shrink) + 2),
+    y0 = Math.max(0, Math.floor(fit.box.top / shrink) - 2),
+    y1 = Math.min(H - 1, Math.ceil(fit.box.bottom / shrink) + 2);
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
+      acc[0] = acc[1] = acc[2] = acc[3] = 0;
+      for (let j = 0; j < n; j++)
+        for (let i = 0; i < n; i++) {
+          // the centre of the sample on the full canvas, then back into the picture
+          const X = (x + (i + 0.5) / n) * shrink - 0.5,
+            Y = (y + (j + 0.5) / n) * shrink - 0.5;
+          const sx = (X - fp.centre[0]) / fit.scale + fit.cx;
+          const sy = ((Y - fp.centre[1]) / fit.scale + fit.cy - fit.shear * sx) / fit.vertical;
+          sample(png, sx, sy, acc);
+        }
+      if (acc[3] <= 0) continue;
+      const o = (y * W + x) * 4;
+      out.data[o] = Math.round(acc[0] / acc[3]);
+      out.data[o + 1] = Math.round(acc[1] / acc[3]);
+      out.data[o + 2] = Math.round(acc[2] / acc[3]);
+      out.data[o + 3] = Math.round((255 * acc[3]) / (n * n));
+    }
+  return out;
+}
+
+function main(ids) {
+  const inventory = loadInventory();
+  if (!ids.length) {
+    console.error('give picture ids, for example depot-a0-r0');
+    return 1;
+  }
+  let bad = 0;
+  for (const id of ids) {
+    const m = /^(.+)-a(\d)-r(\d)$/.exec(id);
+    const f = m && inventory.find((x) => x.family === m[1]);
+    const file = f && pictureFile(f.family, Number(m[2]), Number(m[3]));
+    if (!f || !existsSync(file)) {
+      console.log(`${id}: no such picture`);
+      bad++;
+      continue;
+    }
+    const fit = fitPicture(PNG.sync.read(readFileSync(file)), f.footprint, Number(m[3]));
+    console.log(`${id}: ${fit ? JSON.stringify(fit) : 'empty picture'}`);
+  }
+  return bad ? 1 : 0;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url))
+  process.exitCode = main(process.argv.slice(2));
