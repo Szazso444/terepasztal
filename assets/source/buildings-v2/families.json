@@ -24,6 +24,7 @@
   "families": {
     "depot": {
       "what": "A two-track engine shed that trains run through: one hall, as wide as it is long, with a portal for each of its two tracks in both end walls.",
+      "size": 1.3,
       "keep": "two train portals side by side in each end wall, clearly open and tall enough for a locomotive; one hall on a square footprint; a small crew door in the front wall",
       "front": "the side wall with the crew door and windows; the tracks run through the hall parallel to it",
       "base": "assets/source/base-v1/depot.png",

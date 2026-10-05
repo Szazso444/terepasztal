@@ -117,6 +117,9 @@ describe('building review sheets', () => {
     expect(at(drawSheet(f, pictures(f), undefined, { size: 1.25 }), ...just)).not.toEqual(
       SHEET.footprint,
     );
+    // the depot stands 1.3 times its footprint, so that the rails fit its portals (seen in the game)
+    expect(fam.families.depot.size).toBe(1.3);
+    expect(fam.families.farm.size).toBeUndefined();
   });
 
   it("leaves a missing picture's cell empty", () => {
