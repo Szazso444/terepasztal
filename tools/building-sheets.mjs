@@ -23,7 +23,7 @@ import {
   wallBase,
 } from './building-kit.mjs';
 import { fillPoly, strokePoly } from './building-guides.mjs';
-import { FIT, fitPicture, normalisePicture } from './building-fit.mjs';
+import { FIT, fitGroup, normalisePicture } from './building-fit.mjs';
 import { buildQueue, loadFamilies, progress, readQueue } from './building-queue.mjs';
 import { readReport } from './building-check.mjs';
 
@@ -61,13 +61,14 @@ function paste(sheet, pic, ox, oy) {
  * One family's sheet. `load(file)` returns the picture as a PNG, or null when it is not made; a
  * picture that cannot be read or holds no building leaves its cell empty and is told to `problem`.
  * With `outlines` the footprint's edge and the line of the walls' feet are drawn over each picture:
- * a wall whose foot leaves its line was painted at another angle than the game's.
+ * a wall whose foot leaves its line was painted at another angle than the game's. The views of one
+ * age are brought to one size (`fitGroup`), and `size` is how large the family stands on its tile.
  */
 export function drawSheet(
   f,
   load,
   problem = () => {},
-  { outlines = false, shrink = SHEET.shrink } = {},
+  { outlines = false, shrink = SHEET.shrink, size = 1 } = {},
 ) {
   const fp = FOOTPRINTS[f.footprint];
   const k = shrink;
@@ -80,36 +81,35 @@ export function drawSheet(
     sheet.data[i + 2] = SHEET.grass[2];
     sheet.data[i + 3] = 255;
   }
-  for (let row = 0; row < f.ages; row++)
+  for (let row = 0; row < f.ages; row++) {
+    const pics = [0, 1, 2, 3].map((rot) => {
+      const file = pictureFile(f.family, f.firstAge + row, rot);
+      try {
+        return load(file);
+      } catch (e) {
+        problem(file, e.message);
+        return null;
+      }
+    });
+    const fits = fitGroup(pics, f.footprint, { size });
     for (let rot = 0; rot < 4; rot++) {
       const ox = rot * cw,
         oy = row * ch;
       const d = diamond(fp, rot);
-      fillPoly(
-        sheet,
-        [d.n, d.e, d.s, d.w].map(([x, y]) => [ox + x / k, oy + y / k]),
-        SHEET.footprint,
-      );
-      const file = pictureFile(f.family, f.firstAge + row, rot);
-      let pic = null;
-      try {
-        pic = load(file);
-      } catch (e) {
-        problem(file, e.message);
-      }
-      if (!pic) continue;
-      const fit = fitPicture(pic, f.footprint, rot);
-      if (!fit) {
-        problem(file, 'no building in the picture');
+      const at = ([x, y]) => [ox + x / k, oy + y / k];
+      fillPoly(sheet, [d.n, d.e, d.s, d.w].map(at), SHEET.footprint);
+      if (!pics[rot]) continue;
+      if (!fits[rot]) {
+        problem(pictureFile(f.family, f.firstAge + row, rot), 'no building in the picture');
         continue;
       }
-      paste(sheet, normalisePicture(pic, fit, f.footprint, k), ox, oy);
+      paste(sheet, normalisePicture(pics[rot], fits[rot], f.footprint, k), ox, oy);
       if (!outlines) continue;
-      const at = ([x, y]) => [ox + x / k, oy + y / k];
       const b = wallBase(fp, rot);
       strokePoly(sheet, [d.n, d.e, d.s, d.w].map(at), SHEET.outline, 1.5);
       strokePoly(sheet, [b.n, b.e, b.s, b.w].map(at), SHEET.walls, 1.5);
     }
+  }
   return sheet;
 }
 
@@ -164,8 +164,20 @@ export function indexHtml(inventory, queue, report, rows) {
     const rows = [];
     for (let n = 0; n < f.ages; n++) {
       const age = AGES[f.firstAge + n];
-      const cells = mine.filter(({ e }) => e.age === age.index).map(({ e }) => angle(e));
-      rows.push(`<tr><th>${esc(age.name)}</th>${cells.join('')}</tr>`);
+      const views = mine.filter(({ e }) => e.age === age.index);
+      // how large each view came back, by the root of the area it covers once on its footprint
+      const sizes = views
+        .map(({ check }) => check?.fit)
+        .filter((fit) => fit?.area)
+        .map((fit) => Math.sqrt(fit.area * fit.vertical) * fit.scale);
+      const apart = sizes.length > 1 ? Math.max(...sizes) / Math.min(...sizes) : 1;
+      const spread =
+        sizes.length > 1
+          ? `<td class="${apart > 1.15 ? 'off' : ''}">x${apart.toFixed(2)}</td>`
+          : '<td class="none">-</td>';
+      rows.push(
+        `<tr><th>${esc(age.name)}</th>${views.map(({ e }) => angle(e)).join('')}${spread}</tr>`,
+      );
     }
     const counts =
       `${p.made} of ${p.total} made` +
@@ -177,7 +189,7 @@ export function indexHtml(inventory, queue, report, rows) {
   <p>${counts}. Rows: ${esc(ages)}. Columns: r0 (front lower left), r1, r2, r3 (front lower right).</p>
   <img src="${esc(f.family)}.png" alt="${esc(f.name)}: every age and view" loading="lazy" />
   <p><a href="${esc(f.family)}-angles.png">The same sheet with the footprint and the wall lines drawn in</a>. Ground lines as measured, lower left / lower right (the game's are 0.50 / -0.50):</p>
-  <table><tr><th></th><th>r0</th><th>r1</th><th>r2</th><th>r3</th></tr>${rows.join('')}</table>
+  <table><tr><th></th><th>r0</th><th>r1</th><th>r2</th><th>r3</th><th>sizes apart</th></tr>${rows.join('')}</table>
   ${failed.length || noted.length ? `<ul>${failed.join('')}${noted.join('')}</ul>` : ''}
 </section>`;
   });
@@ -221,8 +233,9 @@ function main(args) {
     if (only && f.family !== only) continue;
     const file = sheetFile(f.family);
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, PNG.sync.write(drawSheet(f, load, problem)));
-    const lined = drawSheet(f, load, undefined, { outlines: true, shrink: 2 });
+    const size = families.families[f.family]?.size ?? 1;
+    writeFileSync(file, PNG.sync.write(drawSheet(f, load, problem, { size })));
+    const lined = drawSheet(f, load, undefined, { outlines: true, shrink: 2, size });
     writeFileSync(anglesFile(f.family), PNG.sync.write(lined));
     n++;
   }

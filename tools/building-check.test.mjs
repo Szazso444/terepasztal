@@ -222,6 +222,7 @@ describe('building check', () => {
       'cy',
       'box',
       'camera',
+      'area',
     ]);
   });
 
