@@ -155,6 +155,9 @@ describe('the guide for the artist agent', () => {
     const inventory = loadInventory();
     expect(production).toContain(`${inventory.length} kinds of building`);
     expect(production).toContain(`${pictures(inventory).length} pictures`);
+    expect(guide).toContain(`${pictures(inventory).length} pictures in all`);
+    // a building that is not modernised to the end is named with its last age
+    expect(production).toContain('lastTier');
     for (const name of ['FIT', 'LIMIT', 'GATES', 'LOSS', 'ATTEMPTS'])
       expect(production, name).toContain(`\`${name}\``);
     // how to put a run back, and what is not built

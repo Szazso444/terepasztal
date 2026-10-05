@@ -1,7 +1,7 @@
 # Building pictures: how they are made
 
 The game's buildings are painted by an image-generating agent working from a list, one picture
-per building, age and view: 27 kinds of building, 560 pictures. This document is for whoever runs
+per building, age and view: 27 kinds of building, 548 pictures. This document is for whoever runs
 that work or has to run it again: what the parts are, how to start it, what the tools enforce,
 what the generator does wrong, and how to change the set. The artist agent has its own brief,
 `assets/source/buildings-v2/GUIDE.md`; the design and its reasons are in
@@ -139,6 +139,10 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
 - A new building: it appears in the list once it is in the game's data. Give it an entry in
   `families.json` (`what`, `keep`, `front`, `base`, and a line for each of its ages); the queue
   tool names whatever is missing.
+- A building that is not modernised to the end: `lastTier` in the game's data, beside its
+  `tier`. The charcoal kiln has 2: it is upgraded up to the Electric age and keeps that model.
+  Take its later lines out of `families.json`; the next rebuild drops its later pictures from
+  the list.
 - A new age: `AGES` in `building-kit.mjs`, its style under `ages` in `families.json`, and a line
   in every family.
 - A new footprint: `FOOTPRINTS` in `building-kit.mjs`, its block and openings in
