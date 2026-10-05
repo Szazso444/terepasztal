@@ -1,5 +1,5 @@
 {
-  "checked": 49,
+  "checked": 73,
   "failed": 1,
   "pictures": {
     "depot-a0-r0": {
@@ -2183,6 +2183,1109 @@
           "top": 499.3,
           "right": 777.5,
           "bottom": 952.1
+        }
+      }
+    },
+    "farm-a0-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.443,
+          -0.5
+        ],
+        "slopes": [
+          0.443,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            204,
+            943
+          ],
+          "s": [
+            735.5,
+            1178.2
+          ],
+          "e": [
+            1158,
+            967
+          ]
+        },
+        "scale": 0.4723,
+        "vertical": 1.0609,
+        "shear": 0.0304,
+        "cx": 681,
+        "cy": 1033.9,
+        "box": {
+          "left": 269.2,
+          "top": 443.9,
+          "right": 739.6,
+          "bottom": 912.5
+        }
+      }
+    },
+    "farm-a0-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.68"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.679,
+          -0.442
+        ],
+        "slopes": [
+          0.67,
+          -0.442
+        ],
+        "base": {
+          "w": [
+            328,
+            947.1
+          ],
+          "s": [
+            656,
+            1169.8
+          ],
+          "e": [
+            1109,
+            969.5
+          ]
+        },
+        "scale": 0.5769,
+        "vertical": 0.8992,
+        "shear": -0.1025,
+        "cx": 718.5,
+        "cy": 788.1,
+        "box": {
+          "left": 166.1,
+          "top": 429.2,
+          "right": 752.9,
+          "bottom": 948.1
+        }
+      }
+    },
+    "farm-a0-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.517,
+          -0.388
+        ],
+        "slopes": [
+          0.517,
+          -0.388
+        ],
+        "base": {
+          "w": [
+            179,
+            950.7
+          ],
+          "s": [
+            576.3,
+            1156
+          ],
+          "e": [
+            945,
+            1013.1
+          ]
+        },
+        "scale": 0.5882,
+        "vertical": 1.1055,
+        "shear": -0.0714,
+        "cx": 562,
+        "cy": 1045.4,
+        "box": {
+          "left": 266.7,
+          "top": 292.8,
+          "right": 872.6,
+          "bottom": 950.1
+        }
+      }
+    },
+    "farm-a0-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          false,
+          true
+        ],
+        "measured": [
+          0.5,
+          -0.396
+        ],
+        "slopes": [
+          0.5,
+          -0.396
+        ],
+        "base": {
+          "w": [
+            129,
+            942.5
+          ],
+          "s": [
+            601.2,
+            1178.6
+          ],
+          "e": [
+            1083,
+            987.6
+          ]
+        },
+        "scale": 0.4723,
+        "vertical": 1.1156,
+        "shear": -0.0578,
+        "cx": 606,
+        "cy": 1041.6,
+        "box": {
+          "left": 280.1,
+          "top": 394.6,
+          "right": 750.5,
+          "bottom": 938
+        }
+      }
+    },
+    "farm-a1-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.484,
+          -0.5
+        ],
+        "slopes": [
+          0.484,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            130,
+            975.7
+          ],
+          "s": [
+            705.6,
+            1254.2
+          ],
+          "e": [
+            1205,
+            1004.5
+          ]
+        },
+        "scale": 0.4191,
+        "vertical": 1.0165,
+        "shear": 0.0083,
+        "cx": 667.5,
+        "cy": 1012,
+        "box": {
+          "left": 265.8,
+          "top": 456.8,
+          "right": 742.7,
+          "bottom": 918.9
+        }
+      }
+    },
+    "farm-a1-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          false,
+          true
+        ],
+        "measured": [
+          0.5,
+          -0.458
+        ],
+        "slopes": [
+          0.5,
+          -0.458
+        ],
+        "base": {
+          "w": [
+            104,
+            957
+          ],
+          "s": [
+            634.8,
+            1222.4
+          ],
+          "e": [
+            1125,
+            997.7
+          ]
+        },
+        "scale": 0.4413,
+        "vertical": 1.0434,
+        "shear": -0.0217,
+        "cx": 614.5,
+        "cy": 1006.4,
+        "box": {
+          "left": 278.3,
+          "top": 421.7,
+          "right": 756.3,
+          "bottom": 940
+        }
+      }
+    },
+    "farm-a1-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.628,
+          -0.5
+        ],
+        "slopes": [
+          0.628,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            225,
+            884.4
+          ],
+          "s": [
+            792.1,
+            1240.5
+          ],
+          "e": [
+            1120,
+            1076.5
+          ]
+        },
+        "scale": 0.5034,
+        "vertical": 0.8866,
+        "shear": -0.0567,
+        "cx": 672.5,
+        "cy": 831.1,
+        "box": {
+          "left": 251.5,
+          "top": 462,
+          "right": 741.8,
+          "bottom": 911.5
+        }
+      }
+    },
+    "farm-a1-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.84"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.844,
+          -0.393
+        ],
+        "slopes": [
+          0.67,
+          -0.393
+        ],
+        "base": {
+          "w": [
+            88,
+            772.8
+          ],
+          "s": [
+            611.4,
+            1214.4
+          ],
+          "e": [
+            1048,
+            1042.9
+          ]
+        },
+        "scale": 0.4693,
+        "vertical": 0.941,
+        "shear": -0.1305,
+        "cx": 568,
+        "cy": 780.2,
+        "box": {
+          "left": 283.4,
+          "top": 476,
+          "right": 778.1,
+          "bottom": 966
+        }
+      }
+    },
+    "farm-a2-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.554,
+          -0.367
+        ],
+        "slopes": [
+          0.554,
+          -0.367
+        ],
+        "base": {
+          "w": [
+            152,
+            968.3
+          ],
+          "s": [
+            540.7,
+            1183.7
+          ],
+          "e": [
+            1215,
+            936.6
+          ]
+        },
+        "scale": 0.4239,
+        "vertical": 1.0859,
+        "shear": -0.102,
+        "cx": 683.5,
+        "cy": 964.6,
+        "box": {
+          "left": 268.5,
+          "top": 430.1,
+          "right": 744.5,
+          "bottom": 950
+        }
+      }
+    },
+    "farm-a2-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.67"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.674,
+          -0.377
+        ],
+        "slopes": [
+          0.67,
+          -0.377
+        ],
+        "base": {
+          "w": [
+            197,
+            894.5
+          ],
+          "s": [
+            562,
+            1140.5
+          ],
+          "e": [
+            1019,
+            968.2
+          ]
+        },
+        "scale": 0.5481,
+        "vertical": 0.9551,
+        "shear": -0.1399,
+        "cx": 608,
+        "cy": 804.4,
+        "box": {
+          "left": 266.4,
+          "top": 385.2,
+          "right": 844.2,
+          "bottom": 947.8
+        }
+      }
+    },
+    "farm-a2-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.64,
+          -0.488
+        ],
+        "slopes": [
+          0.64,
+          -0.488
+        ],
+        "base": {
+          "w": [
+            335,
+            952.3
+          ],
+          "s": [
+            635.2,
+            1144.5
+          ],
+          "e": [
+            1063,
+            935.7
+          ]
+        },
+        "scale": 0.6189,
+        "vertical": 0.8862,
+        "shear": -0.0674,
+        "cx": 699,
+        "cy": 789.4,
+        "box": {
+          "left": 178.4,
+          "top": 384.7,
+          "right": 754.6,
+          "bottom": 950
+        }
+      }
+    },
+    "farm-a2-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.576,
+          -0.446
+        ],
+        "slopes": [
+          0.576,
+          -0.446
+        ],
+        "base": {
+          "w": [
+            128,
+            894.6
+          ],
+          "s": [
+            649.9,
+            1195.4
+          ],
+          "e": [
+            1085,
+            1001.5
+          ]
+        },
+        "scale": 0.4708,
+        "vertical": 0.9785,
+        "shear": -0.064,
+        "cx": 606.5,
+        "cy": 888.9,
+        "box": {
+          "left": 280.1,
+          "top": 438.2,
+          "right": 756.6,
+          "bottom": 952.2
+        }
+      }
+    },
+    "farm-a3-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.517,
+          -0.381
+        ],
+        "slopes": [
+          0.517,
+          -0.381
+        ],
+        "base": {
+          "w": [
+            171,
+            947
+          ],
+          "s": [
+            609.4,
+            1173.5
+          ],
+          "e": [
+            1188,
+            952.9
+          ]
+        },
+        "scale": 0.443,
+        "vertical": 1.1137,
+        "shear": -0.0753,
+        "cx": 679.5,
+        "cy": 1006.7,
+        "box": {
+          "left": 279.6,
+          "top": 416,
+          "right": 737.3,
+          "bottom": 951.9
+        }
+      }
+    },
+    "farm-a3-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.647,
+          -0.418
+        ],
+        "slopes": [
+          0.647,
+          -0.418
+        ],
+        "base": {
+          "w": [
+            137,
+            888.2
+          ],
+          "s": [
+            585.1,
+            1178.1
+          ],
+          "e": [
+            1147,
+            943.4
+          ]
+        },
+        "scale": 0.4461,
+        "vertical": 0.9394,
+        "shear": -0.1077,
+        "cx": 642,
+        "cy": 791.2,
+        "box": {
+          "left": 286.7,
+          "top": 503.5,
+          "right": 737.3,
+          "bottom": 949.1
+        }
+      }
+    },
+    "farm-a3-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.52,
+          -0.529
+        ],
+        "slopes": [
+          0.52,
+          -0.529
+        ],
+        "base": {
+          "w": [
+            145,
+            904.8
+          ],
+          "s": [
+            677.7,
+            1181.7
+          ],
+          "e": [
+            1155,
+            929.5
+          ]
+        },
+        "scale": 0.4461,
+        "vertical": 0.9538,
+        "shear": 0.0042,
+        "cx": 650,
+        "cy": 877.5,
+        "box": {
+          "left": 286.7,
+          "top": 488.3,
+          "right": 737.3,
+          "bottom": 945.6
+        }
+      }
+    },
+    "farm-a3-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.589,
+          -0.502
+        ],
+        "slopes": [
+          0.589,
+          -0.502
+        ],
+        "base": {
+          "w": [
+            158,
+            897.2
+          ],
+          "s": [
+            656.2,
+            1190.4
+          ],
+          "e": [
+            1103,
+            966.3
+          ]
+        },
+        "scale": 0.4768,
+        "vertical": 0.9172,
+        "shear": -0.0399,
+        "cx": 630.5,
+        "cy": 829.5,
+        "box": {
+          "left": 286.7,
+          "top": 487.4,
+          "right": 738.7,
+          "bottom": 946.9
+        }
+      }
+    },
+    "farm-a4-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.54,
+          -0.43
+        ],
+        "slopes": [
+          0.54,
+          -0.43
+        ],
+        "base": {
+          "w": [
+            171,
+            942.5
+          ],
+          "s": [
+            601.2,
+            1174.5
+          ],
+          "e": [
+            1192,
+            920.5
+          ]
+        },
+        "scale": 0.4413,
+        "vertical": 1.0314,
+        "shear": -0.0565,
+        "cx": 681.5,
+        "cy": 922.3,
+        "box": {
+          "left": 270.8,
+          "top": 463.3,
+          "right": 737.3,
+          "bottom": 948.2
+        }
+      }
+    },
+    "farm-a4-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.71"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.712,
+          -0.618
+        ],
+        "slopes": [
+          0.67,
+          -0.618
+        ],
+        "base": {
+          "w": [
+            254,
+            863.7
+          ],
+          "s": [
+            705.5,
+            1184.9
+          ],
+          "e": [
+            1146,
+            912.6
+          ]
+        },
+        "scale": 0.5051,
+        "vertical": 0.7763,
+        "shear": -0.0201,
+        "cx": 700,
+        "cy": 675.4,
+        "box": {
+          "left": 259.9,
+          "top": 553.7,
+          "right": 737.3,
+          "bottom": 931.3
+        }
+      }
+    },
+    "farm-a4-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.504,
+          -0.563
+        ],
+        "slopes": [
+          0.504,
+          -0.563
+        ],
+        "base": {
+          "w": [
+            117,
+            894.5
+          ],
+          "s": [
+            672.8,
+            1174.7
+          ],
+          "e": [
+            1135,
+            914.5
+          ]
+        },
+        "scale": 0.4426,
+        "vertical": 0.9371,
+        "shear": 0.0276,
+        "cx": 626,
+        "cy": 864.9,
+        "box": {
+          "left": 286.7,
+          "top": 501.9,
+          "right": 737.3,
+          "bottom": 946.5
+        }
+      }
+    },
+    "farm-a4-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.81"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.807,
+          -0.402
+        ],
+        "slopes": [
+          0.67,
+          -0.402
+        ],
+        "base": {
+          "w": [
+            223,
+            911.2
+          ],
+          "s": [
+            569.6,
+            1190.7
+          ],
+          "e": [
+            1052,
+            997
+          ]
+        },
+        "scale": 0.5435,
+        "vertical": 0.9332,
+        "shear": -0.1252,
+        "cx": 637.5,
+        "cy": 810.5,
+        "box": {
+          "left": 286.7,
+          "top": 406.4,
+          "right": 756.3,
+          "bottom": 958
+        }
+      }
+    },
+    "farm-a5-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.5,
+          -0.475
+        ],
+        "slopes": [
+          0.5,
+          -0.475
+        ],
+        "base": {
+          "w": [
+            171,
+            967.8
+          ],
+          "s": [
+            624.3,
+            1194.4
+          ],
+          "e": [
+            1063,
+            986.2
+          ]
+        },
+        "scale": 0.5051,
+        "vertical": 1.026,
+        "shear": -0.013,
+        "cx": 617,
+        "cy": 994.4,
+        "box": {
+          "left": 274.6,
+          "top": 385.5,
+          "right": 806.5,
+          "bottom": 947.5
+        }
+      }
+    },
+    "farm-a5-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.68",
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.678,
+          -0.5
+        ],
+        "slopes": [
+          0.67,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            191,
+            837.8
+          ],
+          "s": [
+            769.6,
+            1230.2
+          ],
+          "e": [
+            1060,
+            1085
+          ]
+        },
+        "scale": 0.5185,
+        "vertical": 0.8547,
+        "shear": -0.0726,
+        "cx": 625.5,
+        "cy": 776.3,
+        "box": {
+          "left": 282.1,
+          "top": 507.2,
+          "right": 737.3,
+          "bottom": 917.8
+        }
+      }
+    },
+    "farm-a5-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.526,
+          -0.536
+        ],
+        "slopes": [
+          0.526,
+          -0.536
+        ],
+        "base": {
+          "w": [
+            272,
+            992.3
+          ],
+          "s": [
+            667.5,
+            1200.2
+          ],
+          "e": [
+            1169,
+            931.3
+          ]
+        },
+        "scale": 0.5023,
+        "vertical": 0.9417,
+        "shear": 0.0049,
+        "cx": 720.5,
+        "cy": 909.3,
+        "box": {
+          "left": 192.3,
+          "top": 438.4,
+          "right": 737.3,
+          "bottom": 944.6
+        }
+      }
+    },
+    "farm-a5-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.585,
+          -0.497
+        ],
+        "slopes": [
+          0.585,
+          -0.497
+        ],
+        "base": {
+          "w": [
+            284,
+            988.1
+          ],
+          "s": [
+            678.8,
+            1219
+          ],
+          "e": [
+            1126,
+            996.9
+          ]
+        },
+        "scale": 0.5351,
+        "vertical": 0.9247,
+        "shear": -0.0409,
+        "cx": 705,
+        "cy": 888.9,
+        "box": {
+          "left": 200.6,
+          "top": 405.3,
+          "right": 747.4,
+          "bottom": 945.2
         }
       }
     }
