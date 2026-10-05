@@ -24,10 +24,12 @@ then git merge origin/buildings/art-package, then run `node tools/building-queue
    `node tools/building-queue.mjs set <id> generated`. The tool checks the picture and refuses
    one that fails, saying why. When it refuses a picture for its camera it keeps the attempt
    itself: run `next` again and paint the picture from what it hands out.
-4. Repeat. Give a picture up to three attempts; after that record it as rejected with a note and
-   go on. When only the camera is still off, the tool keeps the closest attempt itself (section
-   7 of the guide). Where the building sits in the picture and how large it is are never a
-   reason to make it again: the tools measure that.
+4. Repeat. Give a picture up to three attempts. When only the camera is still off, the tool
+   keeps the closest attempt itself. When the third attempt fails for another reason but an
+   earlier one was right and was refused only for its camera, keep that one with
+   `node tools/building-queue.mjs keep <id>`. Only when no attempt was right, record the picture
+   as rejected with a note and go on (section 7 of the guide). Where the building sits in the
+   picture and how large it is are never a reason to make it again: the tools measure that.
 5. The depot is the first gate and the station the second. When `next` prints GATE, check the
    family, build its review sheet, commit, tell me it is ready and stop. Do not go on until I say
    it is approved.

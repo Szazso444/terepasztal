@@ -24,6 +24,7 @@ import {
   describeEntry,
   describeQueued,
   fittedFile,
+  keepEarlier,
   loadFamilies,
   mismatches,
   nextEntry,
@@ -746,6 +747,83 @@ describe('working through the queue', () => {
       expect(queue.entries[0].repaint).toBeUndefined();
     }
     expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 3 });
+  });
+
+  it('keeps the closest attempt it holds where the last one failed for another reason', () => {
+    // a rear view came right at the second attempt but for its camera (2.5 degrees), the third
+    // had a door on the back wall again, and the agent gave the whole picture up
+    const file = pictureFile('depot', 0, 0);
+    const aside = file.replace(/\.png$/, '.rejected.png');
+    const queue = fresh();
+    const shots = new Map();
+    attempt(queue, shots, 6.4);
+    attempt(queue, shots, 2.5);
+    // the third attempt in hand: taken and looked at, not recorded
+    shots.set(file, 0);
+    queue.entries[0].taken = true;
+    const r = keepEarlier(queue, inv, 'depot-a0-r0', {}, studio(shots));
+    expect(r.entry).toMatchObject({
+      status: 'generated',
+      attempts: 3,
+      kept: 2.5,
+      note: 'kept with its camera off by 2.5° after 3 attempts: the closest the tool held',
+    });
+    expect(r.entry.taken).toBeUndefined();
+    expect(r.check.notes[0]).toMatch(/camera off by 2\.5°.*kept, and corrected by the tools$/);
+    // the attempt that failed goes aside; the others stay where they were
+    expect(r.aside).toBe(file);
+    expect(Object.fromEntries(shots)).toEqual({
+      [file]: 2.5,
+      [beforeFile(file)]: 2.5,
+      [beforeFile(file).replace(/\.png$/, '.1.png')]: 6.4,
+      [aside]: 0,
+    });
+    expect(next(queue, shots)).toMatchObject({ kind: 'picture', id: 'depot-a0-r1' });
+
+    // a picture that was given up already is kept after all
+    const given = fresh();
+    const lost = new Map();
+    attempt(given, lost, 2.5);
+    lost.set(file, 0);
+    const note = { attempts: 3, note: 'a door on the back wall' };
+    settle(given, inv, 'depot-a0-r0', 'rejected', note, studio(lost));
+    expect(keepEarlier(given, inv, 'depot-a0-r0', {}, studio(lost)).entry).toMatchObject({
+      status: 'generated',
+      attempts: 3,
+      kept: 2.5,
+    });
+    expect(lost.get(file)).toBe(2.5);
+
+    // not before the third attempt: it is made again first
+    const early = fresh();
+    const one = new Map();
+    attempt(early, one, 2.5);
+    expect(() => keepEarlier(early, inv, 'depot-a0-r0', {}, studio(one))).toThrow(
+      /depot-a0-r0 has had 1 attempt: .*run `node tools\/building-queue\.mjs next`/,
+    );
+    expect(early.entries[0]).toMatchObject({ status: 'pending', attempts: 1 });
+    // attempts the tool never saw are said, as with `set`
+    expect(
+      keepEarlier(early, inv, 'depot-a0-r0', { attempts: 3 }, studio(one)).entry,
+    ).toMatchObject({ status: 'generated', attempts: 3, kept: 2.5 });
+
+    // nothing held, nothing to keep; and a picture that is made stays as it is
+    const none = fresh();
+    expect(() => keepEarlier(none, inv, 'depot-a0-r0', {}, studio(new Map()))).toThrow(
+      /holds no picture of depot-a0-r0 whose only fault was its camera/,
+    );
+    expect(() => keepEarlier(queue, inv, 'depot-a0-r0', {}, studio(shots))).toThrow(
+      /depot-a0-r0 is recorded as generated/,
+    );
+    // an earlier self with another fault as well is not kept
+    const two = fresh();
+    Object.assign(two.entries[0], { attempts: 3, repaint: { by: 6.4, was: WAS } });
+    const files = new Set([beforeFile(file)]);
+    expect(() => keepEarlier(two, inv, 'depot-a0-r0', {}, disk(files, twoFaults))).toThrow(
+      /^not kept: touches the top edge/,
+    );
+    expect(two.entries[0].status).toBe('pending');
+    expect([...files]).toEqual([beforeFile(file)]);
   });
 
   it('leaves a kept picture marked when the user approves it, not when it is given up', () => {
@@ -1483,6 +1561,40 @@ describe('the queue tool on the command line', () => {
     expect(done.code).toBe(3);
     expect(done.out).toMatch(/DONE/);
     expect(run(root, 'frobnicate').code).toBe(1);
+  }, 60000);
+
+  it('keeps the attempt it holds for a picture that would be given up', () => {
+    const root = sandbox();
+    run(root);
+    const low = ([x, y]) => [x, 760 + (y - 760) * 0.8];
+    paint(root, 'depot-a0-r0', low);
+    expect(run(root, 'set', 'depot-a0-r0', 'generated').code).toBe(1);
+    // not at the first attempt: the picture is made again first
+    const early = run(root, 'keep', 'depot-a0-r0');
+    expect(early.code).toBe(1);
+    expect(early.out).toMatch(/depot-a0-r0 has had 1 attempt/);
+    // given up at the third, with the tool holding an attempt: it says how that one is kept
+    const up = run(root, 'set', 'depot-a0-r0', 'rejected', '--attempts', '3', '--note', 'a door');
+    expect(up.code).toBe(0);
+    expect(up.out).toMatch(
+      /^note: +the tool holds a picture of depot-a0-r0 whose only fault was its camera \(off by 6\.\d°\).*node tools\/building-queue\.mjs keep depot-a0-r0$/m,
+    );
+    const back = run(root, 'keep', 'depot-a0-r0');
+    expect(back.code).toBe(0);
+    expect(back.out).toMatch(
+      /depot-a0-r0: generated, 3 attempts \(kept with its camera off by 6\.\d° after 3 attempts: the closest the tool held\)/,
+    );
+    expect(existsSync(join(root, pictureFile('depot', 0, 0)))).toBe(true);
+    // what was kept is shown, to be looked at: the closest by its camera may not be the one meant
+    expect(back.out).toMatch(/^look at: +assets\/source\/buildings-v2\/\.look\/depot-a0-r0\.png$/m);
+    expect(existsSync(join(root, 'assets/source/buildings-v2/.look/depot-a0-r0.png'))).toBe(true);
+    expect(run(root, 'status').out).toMatch(/depot +1\/24 made, 1 kept with the camera off/);
+    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
+    // made now: nothing more to keep
+    expect(run(root, 'keep', 'depot-a0-r0').code).toBe(1);
+    expect(run(root, 'keep').out).toMatch(
+      /say which picture: node tools\/building-queue\.mjs keep <id>/,
+    );
   }, 60000);
 
   it('takes the picture the image tool just wrote, and lays it out to look at', () => {

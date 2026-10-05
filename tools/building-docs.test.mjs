@@ -21,6 +21,7 @@ describe('the guide for the artist agent', () => {
       'take',
       'show',
       'set',
+      'keep',
       'status',
       'recheck',
       'redo',
@@ -123,6 +124,12 @@ describe('the guide for the artist agent', () => {
     expect(guide).not.toMatch(/set <id> generated --attempts/);
     expect(prompt).not.toMatch(/--attempts/);
     expect(guide).toMatch(/never lower it/);
+    // a picture is not given up while the tool holds an attempt of it that was right
+    expect(guide).toContain('node tools/building-queue.mjs keep <id>');
+    expect(prompt).toContain('node tools/building-queue.mjs keep <id>');
+    expect(guide).toMatch(
+      /[Rr]eject a\s+picture\s+only\s+when\s+none\s+of\s+its\s+attempts\s+was\s+right/,
+    );
     expect(guide).toMatch(/another session/);
     expect(production).toMatch(/## Handing the work to another session/);
   });

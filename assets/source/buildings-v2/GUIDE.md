@@ -98,6 +98,8 @@ The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`
   is written to the picture's file as it is, and laid on grass for you to look at (sections 5, 6).
 - `node tools/building-queue.mjs show <id>`: the same for any picture.
 - `node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]`: record a result.
+- `node tools/building-queue.mjs keep <id>`: where a picture would be given up, make the closest
+  attempt the tool holds the picture (section 7).
 - `node tools/building-queue.mjs status`: progress per family, the gates, and where the list and
   the disk disagree.
 - `node tools/building-queue.mjs recheck` or `recheck <family>`: look again at the pictures that
@@ -254,6 +256,21 @@ After three attempts, record the picture with
 `node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go
 on. The tool sets the file aside as `<name>.rejected.png`. Nothing is ever built on a picture that
 failed: `next` skips the pictures that would have been, and says how many cannot be made.
+
+**Before you give a picture up.** If one of its attempts was right and was refused only for its
+camera, the tool still holds the closest such attempt as `<name>.before.png` (look at it with
+`node tools/building-sheets.mjs --picture <that file>`). Then the picture is not lost because the
+last attempt failed for another reason, a door on the back wall, say. Do not reject it:
+`node tools/building-queue.mjs keep <id>` makes the attempt the tool holds the picture, recorded
+as made and marked for the user with how far its camera is off, and sets the failed attempt
+aside. It works at the third attempt, and on a picture that was rejected already. The tool keeps
+the attempt whose camera was closest and shows it to you (`.look/<name>.png`): if that is not the
+attempt that was right, take the picture back (`set <id> pending`) and say so in your message.
+Reject a picture only when none of its attempts was right.
+
+If the earlier self you are given to paint from is itself wrong (the portals missing, the front
+where the back should be), say what is wrong in the edit, as for any fault; an attempt that puts
+it right is the one to keep.
 
 **A fault found after recording.** If you find a fault in a picture you have already recorded as
 `generated`, take it back with `node tools/building-queue.mjs set <id> pending` and make it again:

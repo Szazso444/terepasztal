@@ -7,6 +7,8 @@
  *                                                 file, and shown for the eye
  *   node tools/building-queue.mjs show <id>       any picture, with its prompt
  *   node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]
+ *   node tools/building-queue.mjs keep <id>       the closest attempt the tool holds becomes
+ *                                                 the picture, where it would be given up
  *   node tools/building-queue.mjs status          progress per family, gates, list against disk
  *   node tools/building-queue.mjs recheck [<family>]   made pictures whose camera is off: back
  *                                                 in the queue, to be painted again
@@ -567,6 +569,54 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
 }
 
 /**
+ * Make the closest attempt the tool holds the picture, where the picture would be given up: its
+ * last attempt failed for another reason than the camera, but an earlier one was right and was
+ * refused for its camera alone (`beforeFile`). It is recorded as made and marked `kept`, like the
+ * closest of three attempts; the attempt that lies under the picture's name goes aside. A picture
+ * that was rejected already is kept the same way.
+ *
+ * Only at the last attempt: before that the picture is made again. The count is the tool's own
+ * (a picture in hand is one more attempt); a number given can raise it, as with `set`.
+ */
+export function keepEarlier(queue, inventory, id, options = {}, disk = DISK) {
+  const e = queue.entries.find((x) => x.id === id);
+  if (!e) throw new Error(`no picture is called ${id}`);
+  if (isMade(e))
+    throw new Error(`${id} is recorded as ${e.status}: there is nothing to keep in its place`);
+  checkAttempts(options.attempts);
+  if (!earlierSelf(e, disk))
+    throw new Error(
+      `the tool holds no picture of ${id} whose only fault was its camera: make it again, or record it as rejected`,
+    );
+  const attempts = Math.max(options.attempts ?? 0, e.attempts + (e.taken ? 1 : 0));
+  if (attempts < ATTEMPTS)
+    throw new Error(
+      `${id} has had ${attempts} attempt${attempts === 1 ? '' : 's'}: an attempt is kept at the last of ${ATTEMPTS}. Make it again first: run \`node tools/building-queue.mjs next\``,
+    );
+  const f = inventory.find((x) => x.family === e.family);
+  const check = disk.check(beforeFile(e.file), f.footprint, e.rot, { camera: false });
+  if (!check.ok)
+    throw new Error(
+      `not kept: ${check.problems.join('; ')}. Make ${id} again, or record it as rejected.`,
+    );
+  let aside = null;
+  if (disk.exists(e.file)) {
+    disk.setAside(e.file);
+    aside = e.file;
+  }
+  disk.restoreBefore(e.file);
+  const by = check.camera?.by;
+  delete e.taken;
+  Object.assign(e, {
+    status: 'generated',
+    attempts,
+    kept: typeof by === 'number' ? by : true,
+    note: `kept with its camera off${degrees(by)} after ${attempts} attempts: the closest the tool held`,
+  });
+  return { entry: e, check, aside };
+}
+
+/**
  * Look again at the pictures that are made, by the check as it is today. A picture whose camera
  * is off, and nothing else wrong with it, goes back in the queue to be painted again: its file is
  * kept beside it (`beforeFile`) and the generator is shown that, so it is the same building and
@@ -1107,6 +1157,35 @@ async function main(args) {
           (r.entry.kept ? ` (${r.entry.note})` : '') +
           (r.aside
             ? `; its file was set aside as ${r.aside.replace(/\.png$/, '.rejected.png')}`
+            : ''),
+      );
+      // given up, though an attempt of it was right but for its camera: said, not decided
+      if (r.entry.status === 'rejected' && earlierSelf(r.entry, DISK))
+        console.log(
+          `note:      the tool holds a picture of ${r.entry.id} whose only fault was its camera` +
+            `${degrees(r.entry.repaint.by).replace(' by ', ' (off by ')}${typeof r.entry.repaint.by === 'number' ? ')' : ''}, in ${beforeFile(r.entry.file)}. ` +
+            `If that one was right, do not give the picture up: node tools/building-queue.mjs keep ${r.entry.id}`,
+        );
+      return 0;
+    }
+    case 'keep': {
+      if (!rest[0] || rest[0].startsWith('--'))
+        throw new Error('say which picture: node tools/building-queue.mjs keep <id>');
+      const attempts = option('--attempts');
+      const r = keepEarlier(queue, inventory, rest[0], {
+        attempts: attempts === undefined ? undefined : Number(attempts),
+      });
+      writeQueue(queue);
+      writeReport({ [r.entry.id]: r.check });
+      // shown for the eye: the closest by its camera is kept, which may not be the one meant
+      const { showPicture } = await import('./building-sheets.mjs');
+      const shown = showPicture(r.entry.file, inventory);
+      console.log(resultLine(r.entry.id, r.check));
+      if (shown.file) console.log(`look at:   ${shown.file}`);
+      console.log(
+        `${r.entry.id}: ${r.entry.status}, ${r.entry.attempts} attempts (${r.entry.note})` +
+          (r.aside
+            ? `; the attempt that lay there was set aside as ${r.aside.replace(/\.png$/, '.rejected.png')}`
             : ''),
       );
       return 0;

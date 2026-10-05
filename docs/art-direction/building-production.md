@@ -102,6 +102,10 @@ and shows it in a running build, as drawn or straightened.
   generation that failed does not hand the picture before it to the next entry, and another
   chat's pictures are not taken unasked. It counts a picture that was taken and given up as an
   attempt, and a count the agent gives can raise the tool's own but not lower it.
+- A picture is not lost to one bad last attempt: `node tools/building-queue.mjs keep <id>` makes
+  the closest attempt the tool holds the picture, where the third attempt failed for another
+  reason than its camera. One session rejected a rear view whose second attempt had been right
+  but for 2.5° of camera, because the third had a door on the back wall again.
 - Size and place are not enforced. A generator fills its canvas, so every picture is measured
   and laid onto its footprint by the tools, and the four views of an age are brought to one size.
   A family can stand larger than its footprint (`size` in `families.json`; the depot has 1.3).
