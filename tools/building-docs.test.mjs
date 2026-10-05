@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { AGES, FOOTPRINTS, ROOT } from './building-kit.mjs';
+import { AGES, FOOTPRINTS, ROOT, loadInventory, pictures } from './building-kit.mjs';
 import { FIT } from './building-fit.mjs';
 import { STATUSES } from './building-queue.mjs';
 
@@ -8,6 +8,7 @@ const guide = readFileSync(`${ROOT}/GUIDE.md`, 'utf8');
 const prompt = readFileSync(`${ROOT}/PROMPT.md`, 'utf8');
 const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts;
 const ignored = readFileSync(`${ROOT}/.gitignore`, 'utf8');
+const production = readFileSync('docs/art-direction/building-production.md', 'utf8');
 
 describe('the guide for the artist agent', () => {
   it('names every building command, and package.json has them', () => {
@@ -114,6 +115,28 @@ describe('the guide for the artist agent', () => {
     expect(guide).toContain('families.json');
     // the repository's general note about progress files does not apply to this work
     expect(guide).toContain('RESUME.md');
+  });
+
+  it('has a document for whoever runs the work again, held to what the tools do', () => {
+    for (const tool of ['kit', 'guides', 'queue', 'check', 'fit', 'sheets'])
+      expect(production, tool).toContain(`tools/building-${tool}.mjs`);
+    for (const file of ['families.json', 'GUIDE.md', 'PROMPT.md', 'queue.json', 'report.json'])
+      expect(production, file).toContain(`${ROOT}/${file}`);
+    for (const command of ['next', 'set <id> generated', 'approve-pilot', 'recheck', 'status'])
+      expect(production, command).toContain(`building-queue.mjs ${command}`);
+    expect(production).toContain('building-sheets.mjs --picture');
+    // the limits it quotes are the tools' own
+    expect(production).toContain(`more than ${FIT.camera}° off`);
+    expect(production).toContain(`kept within ${FIT.near}°`);
+    // and so are the numbers of the work
+    const inventory = loadInventory();
+    expect(production).toContain(`${inventory.length} kinds of building`);
+    expect(production).toContain(`${pictures(inventory).length} pictures`);
+    for (const name of ['FIT', 'LIMIT', 'GATES', 'LOSS', 'ATTEMPTS'])
+      expect(production, name).toContain(`\`${name}\``);
+    // how to put a run back, and what is not built
+    expect(production).toMatch(/git checkout <that commit> -- /);
+    expect(production).toMatch(/## Not built yet/);
   });
 
   it('is what the prompt sends the agent to', () => {
