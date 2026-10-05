@@ -5,6 +5,8 @@
 *.before.*.png
 # the attempts of the picture being worked on, until the closest one is recorded
 .tries/
+# pictures laid on grass for the agent's eye
+.look/
 # earlier pictures laid onto their footprint, made on demand as references for later ones
 .fitted/
 # review sheets with the footprint and wall lines drawn over the pictures

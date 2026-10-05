@@ -21,6 +21,7 @@ import {
   progress,
   recheck,
   redo,
+  redoPlan,
   setStatus,
   settle,
   STYLE_BOARD,
@@ -722,11 +723,22 @@ describe('working through the queue', () => {
     expect(again.prompt.endsWith(`What was wrong with it: ${WAS}`)).toBe(true);
     // its earlier self counts when the closest attempt is chosen: how far off that was
     expect(again.earlier).toEqual({ file: beforeFile(first.file), by: 6.4 });
-    // once painted again and right, it is a picture like any other
+    // painted again and right: made, and the work goes on
     files.add(first.file);
     settle(queue, inv, 'depot-a0-r0', 'generated', {}, disk(files));
     expect(first).toMatchObject({ status: 'generated', attempts: 1, note: '' });
-    expect(first.repaint).toBeUndefined();
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r2' });
+    // a fault found in it afterwards: taken back, it is painted again the way it was, from its
+    // earlier self, and nothing built on it is touched
+    settle(queue, inv, 'depot-a0-r0', 'pending', {}, disk(files));
+    expect(first).toMatchObject({ status: 'pending', repaint: { by: 6.4, was: WAS } });
+    expect(entry('depot-a0-r1').status).toBe('generated');
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r0' });
+    expect(describeQueued(queue, 'depot-a0-r0', inv, fam, onDisk(files)).sources).toEqual([
+      STYLE_BOARD,
+      beforeFile(first.file),
+    ]);
+    settle(queue, inv, 'depot-a0-r0', 'generated', {}, disk(files));
     expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r2' });
     // a second look finds nothing new
     expect(recheck(queue, inv, null, disk(files, fine)).back).toEqual([]);
@@ -890,6 +902,33 @@ describe('working through the queue', () => {
     }
     expect(files.has(pictureFile('depot', 0, 3))).toBe(true);
     expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a1-r0' });
+  });
+
+  it('says what putting a picture back would undo, before anything is done', () => {
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    const two = (file, o) => (/depot-a0-r[02]\.png$/.test(file) ? cameraOff(file, o) : fine);
+    recheck(queue, inv, null, disk(files, two));
+    // the steam front view: every picture of the depot is built on it, and the narrow depot too,
+    // which has no picture of its own today and leans on this one
+    const plan = redoPlan(queue, inv, fam, 'depot-a0-r0', onDisk(files));
+    expect(plan.ids).toHaveLength(48);
+    expect(plan.ids[0]).toBe('depot-a0-r0');
+    expect(plan.ids.filter((id) => id.startsWith('depot_narrow-'))).toHaveLength(24);
+    // 22 are made and would be set aside; 2 wait to be painted again and would be made afresh
+    expect(plan).toMatchObject({ made: 22, repaint: 2 });
+    expect(queue.entries[1].status).toBe('generated');
+    expect(queue.entries[0].repaint).toBeDefined();
+    // a picture nothing is built on
+    expect(redoPlan(queue, inv, fam, 'depot-a5-r3', onDisk(files))).toEqual({
+      ids: ['depot-a5-r3'],
+      made: 1,
+      repaint: 0,
+    });
+    // a family: its rejected pictures
+    setStatus(queue, 'depot-a5-r3', 'rejected', { attempts: 3 });
+    expect(redoPlan(queue, inv, fam, 'depot', onDisk(files)).ids).toEqual(['depot-a5-r3']);
+    expect(() => redoPlan(queue, inv, fam, 'lighthouse', onDisk(files))).toThrow(/lighthouse/);
   });
 
   it('makes a picture afresh, not from its earlier self, when it is put back by name', () => {
@@ -1145,6 +1184,28 @@ describe('the queue tool on the command line', () => {
     expect(Math.abs(far.elevation - 30)).toBeLessThan(0.7);
     expect(Math.abs(far.turn)).toBeLessThan(0.7);
     expect(run(root, 'recheck', 'lighthouse').code).toBe(1);
+    // a picture on grass for the eye, as painted: opaque, whatever lies under its transparency
+    const looked = execFileSync(
+      process.execPath,
+      [resolve('tools/building-sheets.mjs'), '--picture', pictureFile('depot', 0, 0)],
+      { cwd: root, encoding: 'utf8' },
+    );
+    expect(looked).toMatch(/^assets\/source\/buildings-v2\/\.look\/depot-a0-r0\.png$/m);
+    const look = PNG.sync.read(
+      readFileSync(at('assets/source/buildings-v2/.look/depot-a0-r0.png')),
+    );
+    expect([look.width, look.height]).toEqual([768, 512]);
+    // putting a front view back takes everything built on it along: said first, done when told
+    const before = readFileSync(file, 'utf8');
+    const plan = run(root, 'redo', 'depot-a0-r0');
+    expect(plan.code).toBe(1);
+    expect(plan.out).toMatch(/would put 48 pictures back, each to be made afresh/);
+    expect(plan.out).toMatch(/Nothing was changed/);
+    expect(plan.out).toMatch(/set depot-a0-r0 pending/);
+    expect(readFileSync(file, 'utf8')).toBe(before);
+    expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(true);
+    expect(run(root, 'redo', 'depot-a0-r0', '--yes').out).toMatch(/48 pictures back in the queue/);
+    expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(false);
   }, 60000);
 
   it('answers with the exit code for a gate, a stop and the end', () => {

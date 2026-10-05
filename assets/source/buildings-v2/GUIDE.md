@@ -80,6 +80,8 @@ Everything is in `assets/source/buildings-v2/`.
   `.before.1.png`, left from an earlier round).
 - `.tries/`: your own folder for the attempts of the picture you are working on (section 7). Not
   committed.
+- `.look/<name>.png`: a picture as you should look at it (section 6), written by
+  `node tools/building-sheets.mjs --picture <file>`. Not committed.
 - `.fitted/<family>-a<age>-r<view>.png`: an earlier picture laid onto its footprint by the tool,
   at exactly the guide's camera, scale and place. `next` names these as references: a later
   picture copies the angles of what it is shown, so it is shown them straightened. Attach them as
@@ -101,12 +103,15 @@ The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`
   are made. One whose camera is more than 3° off goes back in the queue, to be painted again as
   the same building. Only when the user asks.
 - `node tools/building-queue.mjs redo <id>` or `redo <family>`: put pictures back in the queue.
-  Only when the user asks.
+  `redo <id>` puts back that picture and every picture built on it, each to be made afresh: for a
+  first front view that is the whole family. It says what it would undo and waits for `--yes`.
+  Only when the user asks for exactly that. To make one picture again, see section 7.
 - `node tools/building-queue.mjs accept <family>` and
   `node tools/building-queue.mjs approve-pilot`: the user's decisions. Run them only when the user
   says so.
 - `node tools/building-check.mjs <file>` (or `--family <name>`, `--all`): check pictures.
 - `node tools/building-sheets.mjs --family <name>`: build a family's review sheet and the index.
+- `node tools/building-sheets.mjs --picture <file>`: lay one picture on grass for you to look at.
 - `node tools/building-fit.mjs <id>`: print how a picture is measured. For curiosity only.
 - `node tools/building-guides.mjs`: redraw the guides. You should not need it.
 
@@ -153,7 +158,17 @@ the building and the lines of its wall feet from it, not its height.
 
 The check measures where the building stands and whether the picture can be used. It cannot see
 what the building is. Before you record a picture as `generated`, look at it and at its guide side
-by side and answer:
+by side.
+
+Look at the picture as `node tools/building-sheets.mjs --picture <file>` shows it, in
+`.look/<name>.png`: on grass, on its footprint as you painted it, with the footprint's edge in
+white and the line its walls' feet should stand on in pink. Do not judge the raw file's
+background by eye. A viewer that ignores transparency shows the colour stored under the
+transparent pixels as a brown or green glow round the building; that glow is not in the picture.
+Whether the background is clean is the tool's to say: `set` refuses a picture with a shadow or a
+glow, and a picture it accepts has none.
+
+Then answer:
 
 - Is the front on the wall the prompt's View line names? In `r1` and `r2` no front door may show.
 - For a depot: are the portals in the wall the guide shows them in, and open?
@@ -214,6 +229,10 @@ After three attempts, record the picture with
 `node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go
 on. The tool sets the file aside as `<name>.rejected.png`. Nothing is ever built on a picture that
 failed: `next` skips the pictures that would have been, and says how many cannot be made.
+
+**A fault found after recording.** If you find a fault in a picture you have already recorded as
+`generated`, take it back with `node tools/building-queue.mjs set <id> pending` and make it again:
+`next` hands it out the way it was being made. Do not use `redo` for this.
 
 ## 8. Gates, stops and commits
 

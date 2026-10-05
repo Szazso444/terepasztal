@@ -81,6 +81,17 @@ describe('the guide for the artist agent', () => {
       expect(ignored, kept).toContain(kept);
   });
 
+  it('gives the agent a picture it can judge by eye, and a way to take one back', () => {
+    // on grass and opaque: the colour under transparent pixels is not a glow round the building
+    expect(guide).toContain('building-sheets.mjs --picture');
+    expect(guide).toContain('.look/');
+    expect(ignored).toContain('.look/');
+    expect(guide).toMatch(/not in the picture/);
+    // a recorded picture found faulty is taken back, never put back with everything built on it
+    expect(guide).toContain('set <id> pending');
+    expect(guide).toContain('--yes');
+  });
+
   it('holds the gates and the limits on failure', () => {
     expect(guide).toMatch(/GATE/);
     expect(guide).toMatch(/STOP/);
