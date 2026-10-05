@@ -1,5 +1,5 @@
 {
-  "checked": 25,
+  "checked": 49,
   "failed": 1,
   "pictures": {
     "depot-a0-r0": {
@@ -1093,6 +1093,1096 @@
           "top": 356.5,
           "right": 1129,
           "bottom": 944.9
+        }
+      }
+    },
+    "station-a0-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.443,
+          -0.51
+        ],
+        "slopes": [
+          0.443,
+          -0.51
+        ],
+        "base": {
+          "w": [
+            247,
+            881.8
+          ],
+          "s": [
+            810,
+            1130.9
+          ],
+          "e": [
+            1119,
+            973.3
+          ]
+        },
+        "scale": 0.5167,
+        "vertical": 1.0496,
+        "shear": 0.0355,
+        "cx": 683,
+        "cy": 997.8,
+        "box": {
+          "left": 220.6,
+          "top": 416.8,
+          "right": 745,
+          "bottom": 941.2
+        }
+      }
+    },
+    "station-a0-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.558,
+          -0.445
+        ],
+        "slopes": [
+          0.558,
+          -0.445
+        ],
+        "base": {
+          "w": [
+            169,
+            950.1
+          ],
+          "s": [
+            535.3,
+            1154.4
+          ],
+          "e": [
+            1088,
+            908.3
+          ]
+        },
+        "scale": 0.4903,
+        "vertical": 0.9969,
+        "shear": -0.056,
+        "cx": 628.5,
+        "cy": 891.1,
+        "box": {
+          "left": 278.9,
+          "top": 466.1,
+          "right": 744.6,
+          "bottom": 941.2
+        }
+      }
+    },
+    "station-a0-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.48,
+          -0.547
+        ],
+        "slopes": [
+          0.48,
+          -0.547
+        ],
+        "base": {
+          "w": [
+            171,
+            974.3
+          ],
+          "s": [
+            620.2,
+            1189.8
+          ],
+          "e": [
+            1011,
+            976.1
+          ]
+        },
+        "scale": 0.5364,
+        "vertical": 0.974,
+        "shear": 0.0327,
+        "cx": 591,
+        "cy": 969.3,
+        "box": {
+          "left": 264.7,
+          "top": 400,
+          "right": 789.3,
+          "bottom": 938
+        }
+      }
+    },
+    "station-a0-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.506,
+          -0.37
+        ],
+        "slopes": [
+          0.506,
+          -0.37
+        ],
+        "base": {
+          "w": [
+            215,
+            957.2
+          ],
+          "s": [
+            534.5,
+            1118.9
+          ],
+          "e": [
+            1043,
+            930.9
+          ]
+        },
+        "scale": 0.5442,
+        "vertical": 1.1418,
+        "shear": -0.0779,
+        "cx": 629,
+        "cy": 1029,
+        "box": {
+          "left": 264.4,
+          "top": 348.8,
+          "right": 800.9,
+          "bottom": 952.8
+        }
+      }
+    },
+    "station-a1-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.47,
+          -0.484
+        ],
+        "slopes": [
+          0.47,
+          -0.484
+        ],
+        "base": {
+          "w": [
+            210,
+            897.1
+          ],
+          "s": [
+            814.1,
+            1180.9
+          ],
+          "e": [
+            1184,
+            1001.7
+          ]
+        },
+        "scale": 0.4626,
+        "vertical": 1.0477,
+        "shear": 0.0076,
+        "cx": 697,
+        "cy": 1000,
+        "box": {
+          "left": 233.5,
+          "top": 466.9,
+          "right": 741.4,
+          "bottom": 942.7
+        }
+      }
+    },
+    "station-a1-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.472,
+          -0.453
+        ],
+        "slopes": [
+          0.472,
+          -0.453
+        ],
+        "base": {
+          "w": [
+            112,
+            1011
+          ],
+          "s": [
+            546.8,
+            1216.4
+          ],
+          "e": [
+            1212,
+            915.1
+          ]
+        },
+        "scale": 0.4096,
+        "vertical": 1.0807,
+        "shear": -0.0105,
+        "cx": 662,
+        "cy": 1033.8,
+        "box": {
+          "left": 278.1,
+          "top": 443.2,
+          "right": 737.3,
+          "bottom": 940.9
+        }
+      }
+    },
+    "station-a1-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.498,
+          -0.59
+        ],
+        "slopes": [
+          0.498,
+          -0.59
+        ],
+        "base": {
+          "w": [
+            98,
+            948.7
+          ],
+          "s": [
+            649.9,
+            1223.5
+          ],
+          "e": [
+            1159,
+            923.2
+          ]
+        },
+        "scale": 0.4247,
+        "vertical": 0.9193,
+        "shear": 0.0423,
+        "cx": 628.5,
+        "cy": 887,
+        "box": {
+          "left": 284.2,
+          "top": 478,
+          "right": 739.4,
+          "bottom": 941.2
+        }
+      }
+    },
+    "station-a1-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-right ground line slopes -0.32"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.537,
+          -0.316
+        ],
+        "slopes": [
+          0.537,
+          -0.33
+        ],
+        "base": {
+          "w": [
+            116,
+            970
+          ],
+          "s": [
+            489.9,
+            1170.7
+          ],
+          "e": [
+            1142,
+            964.4
+          ]
+        },
+        "scale": 0.4391,
+        "vertical": 1.1538,
+        "shear": -0.1193,
+        "cx": 629,
+        "cy": 1040.9,
+        "box": {
+          "left": 286.7,
+          "top": 385,
+          "right": 780.3,
+          "bottom": 941.8
+        }
+      }
+    },
+    "station-a2-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.51,
+          -0.466
+        ],
+        "slopes": [
+          0.51,
+          -0.466
+        ],
+        "base": {
+          "w": [
+            178,
+            876.2
+          ],
+          "s": [
+            811.9,
+            1199.2
+          ],
+          "e": [
+            1208,
+            1014.8
+          ]
+        },
+        "scale": 0.4374,
+        "vertical": 1.0255,
+        "shear": -0.0225,
+        "cx": 693,
+        "cy": 954,
+        "box": {
+          "left": 233.8,
+          "top": 454.6,
+          "right": 739.5,
+          "bottom": 943.8
+        }
+      }
+    },
+    "station-a2-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.642,
+          -0.387
+        ],
+        "slopes": [
+          0.642,
+          -0.387
+        ],
+        "base": {
+          "w": [
+            156,
+            862.2
+          ],
+          "s": [
+            680.6,
+            1198.9
+          ],
+          "e": [
+            1141,
+            1020.9
+          ]
+        },
+        "scale": 0.4574,
+        "vertical": 0.9721,
+        "shear": -0.1241,
+        "cx": 648.5,
+        "cy": 834.8,
+        "box": {
+          "left": 284,
+          "top": 451.2,
+          "right": 740.5,
+          "bottom": 944.5
+        }
+      }
+    },
+    "station-a2-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.48,
+          -0.525
+        ],
+        "slopes": [
+          0.48,
+          -0.525
+        ],
+        "base": {
+          "w": [
+            163,
+            990.1
+          ],
+          "s": [
+            652.6,
+            1225
+          ],
+          "e": [
+            1098,
+            991.1
+          ]
+        },
+        "scale": 0.4819,
+        "vertical": 0.995,
+        "shear": 0.0226,
+        "cx": 630.5,
+        "cy": 999.9,
+        "box": {
+          "left": 284.8,
+          "top": 368.8,
+          "right": 740.2,
+          "bottom": 944.2
+        }
+      }
+    },
+    "station-a2-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.604,
+          -0.345
+        ],
+        "slopes": [
+          0.604,
+          -0.345
+        ],
+        "base": {
+          "w": [
+            100,
+            964.9
+          ],
+          "s": [
+            445,
+            1173.4
+          ],
+          "e": [
+            1048,
+            965.6
+          ]
+        },
+        "scale": 0.4753,
+        "vertical": 1.0536,
+        "shear": -0.1369,
+        "cx": 574,
+        "cy": 938.5,
+        "box": {
+          "left": 285.3,
+          "top": 392.9,
+          "right": 800,
+          "bottom": 943.9
+        }
+      }
+    },
+    "station-a3-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.591,
+          -0.488
+        ],
+        "slopes": [
+          0.591,
+          -0.488
+        ],
+        "base": {
+          "w": [
+            98,
+            871.7
+          ],
+          "s": [
+            747.9,
+            1255.6
+          ],
+          "e": [
+            1237,
+            1016.9
+          ]
+        },
+        "scale": 0.3956,
+        "vertical": 0.927,
+        "shear": -0.0475,
+        "cx": 667.5,
+        "cy": 843.6,
+        "box": {
+          "left": 261,
+          "top": 511.7,
+          "right": 738.5,
+          "bottom": 930.8
+        }
+      }
+    },
+    "station-a3-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.573,
+          -0.452
+        ],
+        "slopes": [
+          0.573,
+          -0.452
+        ],
+        "base": {
+          "w": [
+            46,
+            986.1
+          ],
+          "s": [
+            454.5,
+            1220.2
+          ],
+          "e": [
+            1183,
+            890.6
+          ]
+        },
+        "scale": 0.3963,
+        "vertical": 0.9751,
+        "shear": -0.0588,
+        "cx": 614.5,
+        "cy": 878.8,
+        "box": {
+          "left": 286.3,
+          "top": 502,
+          "right": 746.8,
+          "bottom": 946.6
+        }
+      }
+    },
+    "station-a3-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.415,
+          -0.662
+        ],
+        "slopes": [
+          0.415,
+          -0.662
+        ],
+        "base": {
+          "w": [
+            31,
+            907.7
+          ],
+          "s": [
+            722.1,
+            1194.5
+          ],
+          "e": [
+            1179,
+            892.2
+          ]
+        },
+        "scale": 0.3925,
+        "vertical": 0.9287,
+        "shear": 0.1145,
+        "cx": 605,
+        "cy": 905.1,
+        "box": {
+          "left": 282,
+          "top": 529.1,
+          "right": 761.2,
+          "bottom": 950.5
+        }
+      }
+    },
+    "station-a3-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.634,
+          -0.364
+        ],
+        "slopes": [
+          0.634,
+          -0.364
+        ],
+        "base": {
+          "w": [
+            43,
+            953.1
+          ],
+          "s": [
+            487.3,
+            1234.9
+          ],
+          "e": [
+            1102,
+            1011.1
+          ]
+        },
+        "scale": 0.4255,
+        "vertical": 1.0015,
+        "shear": -0.1352,
+        "cx": 572.5,
+        "cy": 906.2,
+        "box": {
+          "left": 285.9,
+          "top": 414.8,
+          "right": 797.3,
+          "bottom": 941.7
+        }
+      }
+    },
+    "station-a4-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.53,
+          -0.504
+        ],
+        "slopes": [
+          0.53,
+          -0.504
+        ],
+        "base": {
+          "w": [
+            74,
+            830.4
+          ],
+          "s": [
+            819.3,
+            1225.6
+          ],
+          "e": [
+            1236,
+            1015.5
+          ]
+        },
+        "scale": 0.3877,
+        "vertical": 0.9665,
+        "shear": -0.0126,
+        "cx": 655,
+        "cy": 883.8,
+        "box": {
+          "left": 271.2,
+          "top": 515.6,
+          "right": 739.2,
+          "bottom": 946.5
+        }
+      }
+    },
+    "station-a4-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.73"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.727,
+          -0.407
+        ],
+        "slopes": [
+          0.67,
+          -0.407
+        ],
+        "base": {
+          "w": [
+            91,
+            860.6
+          ],
+          "s": [
+            615.7,
+            1242.2
+          ],
+          "e": [
+            1174,
+            1014.7
+          ]
+        },
+        "scale": 0.416,
+        "vertical": 0.9281,
+        "shear": -0.1218,
+        "cx": 632.5,
+        "cy": 793.2,
+        "box": {
+          "left": 285.9,
+          "top": 505.1,
+          "right": 756.4,
+          "bottom": 951.8
+        }
+      }
+    },
+    "station-a4-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.71"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.71,
+          -0.525
+        ],
+        "slopes": [
+          0.67,
+          -0.525
+        ],
+        "base": {
+          "w": [
+            77,
+            891.6
+          ],
+          "s": [
+            563.6,
+            1237.1
+          ],
+          "e": [
+            1184,
+            911.7
+          ]
+        },
+        "scale": 0.407,
+        "vertical": 0.8371,
+        "shear": -0.0608,
+        "cx": 630.5,
+        "cy": 716.4,
+        "box": {
+          "left": 286.7,
+          "top": 539.9,
+          "right": 749.5,
+          "bottom": 944.7
+        }
+      }
+    },
+    "station-a4-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-right ground line slopes -0.33"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.621,
+          -0.327
+        ],
+        "slopes": [
+          0.621,
+          -0.33
+        ],
+        "base": {
+          "w": [
+            84,
+            974.1
+          ],
+          "s": [
+            467.7,
+            1212.3
+          ],
+          "e": [
+            1154,
+            987.7
+          ]
+        },
+        "scale": 0.4211,
+        "vertical": 1.0517,
+        "shear": -0.153,
+        "cx": 619,
+        "cy": 936.9,
+        "box": {
+          "left": 286.7,
+          "top": 426.8,
+          "right": 772.7,
+          "bottom": 946.2
+        }
+      }
+    },
+    "station-a5-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.506,
+          -0.523
+        ],
+        "slopes": [
+          0.506,
+          -0.523
+        ],
+        "base": {
+          "w": [
+            79,
+            841.4
+          ],
+          "s": [
+            830.7,
+            1221.8
+          ],
+          "e": [
+            1238,
+            1009
+          ]
+        },
+        "scale": 0.3887,
+        "vertical": 0.9722,
+        "shear": 0.008,
+        "cx": 658.5,
+        "cy": 904.7,
+        "box": {
+          "left": 270,
+          "top": 515.4,
+          "right": 737.3,
+          "bottom": 946.5
+        }
+      }
+    },
+    "station-a5-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.489,
+          -0.503
+        ],
+        "slopes": [
+          0.489,
+          -0.503
+        ],
+        "base": {
+          "w": [
+            60,
+            977.9
+          ],
+          "s": [
+            562.3,
+            1223.4
+          ],
+          "e": [
+            1201,
+            902
+          ]
+        },
+        "scale": 0.3949,
+        "vertical": 1.0083,
+        "shear": 0.0073,
+        "cx": 630.5,
+        "cy": 952.4,
+        "box": {
+          "left": 286.7,
+          "top": 477.6,
+          "right": 737.3,
+          "bottom": 946.5
+        }
+      }
+    },
+    "station-a5-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.585,
+          -0.588
+        ],
+        "slopes": [
+          0.585,
+          -0.588
+        ],
+        "base": {
+          "w": [
+            198,
+            967.4
+          ],
+          "s": [
+            635.1,
+            1223
+          ],
+          "e": [
+            1131,
+            931.5
+          ]
+        },
+        "scale": 0.4829,
+        "vertical": 0.8527,
+        "shear": 0.0013,
+        "cx": 664.5,
+        "cy": 810.5,
+        "box": {
+          "left": 253.9,
+          "top": 460.8,
+          "right": 737.3,
+          "bottom": 952.1
+        }
+      }
+    },
+    "station-a5-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera corrected only part of the way: the lower-left ground line slopes 0.77"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.772,
+          -0.5
+        ],
+        "slopes": [
+          0.67,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            114,
+            930.6
+          ],
+          "s": [
+            500.4,
+            1228.8
+          ],
+          "e": [
+            1112,
+            923.2
+          ]
+        },
+        "scale": 0.4515,
+        "vertical": 0.855,
+        "shear": -0.0729,
+        "cx": 613,
+        "cy": 747.9,
+        "box": {
+          "left": 268.2,
+          "top": 499.3,
+          "right": 777.5,
+          "bottom": 952.1
         }
       }
     }

@@ -4,7 +4,7 @@
   "gates": [
     {
       "family": "depot",
-      "approved": false
+      "approved": true
     },
     {
       "family": "station",
@@ -263,8 +263,8 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/station/station-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -273,8 +273,8 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -283,8 +283,8 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a0-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -293,8 +293,8 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a0-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -303,8 +303,8 @@
       "age": 1,
       "rot": 0,
       "file": "assets/source/buildings-v2/station/station-a1-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -313,8 +313,8 @@
       "age": 1,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a1-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -323,8 +323,8 @@
       "age": 1,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a1-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -333,8 +333,8 @@
       "age": 1,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a1-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -343,8 +343,8 @@
       "age": 2,
       "rot": 0,
       "file": "assets/source/buildings-v2/station/station-a2-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": ""
     },
     {
@@ -353,8 +353,8 @@
       "age": 2,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a2-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -363,8 +363,8 @@
       "age": 2,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a2-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -373,8 +373,8 @@
       "age": 2,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a2-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -383,8 +383,8 @@
       "age": 3,
       "rot": 0,
       "file": "assets/source/buildings-v2/station/station-a3-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -393,8 +393,8 @@
       "age": 3,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a3-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -403,8 +403,8 @@
       "age": 3,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -413,8 +413,8 @@
       "age": 3,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a3-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -423,8 +423,8 @@
       "age": 4,
       "rot": 0,
       "file": "assets/source/buildings-v2/station/station-a4-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -433,8 +433,8 @@
       "age": 4,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a4-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -443,8 +443,8 @@
       "age": 4,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a4-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 3,
       "note": ""
     },
     {
@@ -453,8 +453,8 @@
       "age": 4,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a4-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -463,8 +463,8 @@
       "age": 5,
       "rot": 0,
       "file": "assets/source/buildings-v2/station/station-a5-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -473,8 +473,8 @@
       "age": 5,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a5-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -483,8 +483,8 @@
       "age": 5,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a5-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -493,8 +493,8 @@
       "age": 5,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a5-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
