@@ -17,10 +17,12 @@ origin/buildings/art-package, then run `node tools/building-queue.mjs` once.
 3. Make the picture with your image generation tool as an edit of the guide image and save it
    exactly as the tool returned it. Look at it against the guide's checklist, then record it with
    `node tools/building-queue.mjs set <id> generated --attempts <n>`. The tool checks the picture
-   and refuses one that fails, saying why.
+   and refuses one that fails, saying why. When it refuses a picture for its camera it prints a
+   sentence: make the picture again with that sentence added to the prompt.
 4. Repeat. Give a picture up to three attempts; after that record it as rejected with a note and
-   go on. Where the building sits in the picture and how large it is are never a reason to make
-   it again: the tools measure that.
+   go on, unless only its camera is still off: then keep the closest attempt with `--keep`
+   (section 7 of the guide). Where the building sits in the picture and how large it is are never
+   a reason to make it again: the tools measure that.
 5. The depot is the first gate and the station the second. When `next` prints GATE, check the
    family, build its review sheet, commit, tell me it is ready and stop. Do not go on until I say
    it is approved.

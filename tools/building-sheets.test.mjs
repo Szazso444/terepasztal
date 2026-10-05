@@ -117,6 +117,9 @@ describe('building review sheets', () => {
     expect(at(drawSheet(f, pictures(f), undefined, { size: 1.25 }), ...just)).not.toEqual(
       SHEET.footprint,
     );
+    // the depot stands 1.3 times its footprint, so that the rails fit its portals (seen in the game)
+    expect(fam.families.depot.size).toBe(1.3);
+    expect(fam.families.farm.size).toBeUndefined();
   });
 
   it("leaves a missing picture's cell empty", () => {
@@ -216,5 +219,56 @@ describe('building review sheets', () => {
     // both gates and where they stand
     expect(html).toContain('"depot": waiting for approval');
     expect(html).toContain('"station": waiting for approval');
+  });
+
+  it('shows in the index where the camera is off: what was kept, and what is painted again', () => {
+    const queue = buildQueue(inv, fam);
+    setStatus(queue, 'depot-a0-r0', 'generated');
+    Object.assign(queue.entries[1], {
+      status: 'generated',
+      attempts: 3,
+      note: 'kept with its camera off by 4.6° after 3 attempts',
+      kept: true,
+    });
+    Object.assign(queue.entries[2], { note: 'The camera is too low.', repaint: true });
+    const fit = (measured) => ({
+      method: 'base',
+      sure: [true, true],
+      measured,
+      area: 10000,
+      vertical: 1,
+      scale: 1,
+    });
+    const turned = 'camera off by 4.6°: the building is turned 4.6° towards its lower-right wall';
+    const low = 'camera off by 6.4°: it looks down from 23.6° where the game looks down from 30°';
+    const report = {
+      checked: 3,
+      failed: 1,
+      pictures: {
+        'depot-a0-r0': { ok: true, problems: [], notes: [], fit: fit([0.52, -0.47]) },
+        'depot-a0-r1': {
+          ok: true,
+          problems: [],
+          notes: [`${turned}; kept, and corrected by the tools`],
+          fit: fit([0.58, -0.42]),
+        },
+        'depot-a0-r2': { ok: false, problems: [low], fit: fit([0.4, -0.4]) },
+      },
+    };
+    const there = (file) =>
+      !file.startsWith('assets/source/buildings-v2/') ||
+      /depot-a0-r[01]\.png$/.test(file) ||
+      file.endsWith('depot-a0-r2.before.png');
+    const html = indexHtml(inv, queue, report, progress(queue, inv, fam, there));
+    expect(html).toContain('2 of 24 made, 1 kept with the camera off, 1 to paint again.');
+    // the angles table marks a camera further than three degrees from the game's
+    expect(html).toContain("further than 3° from the game's");
+    expect(html).toMatch(/<td class="">0\.52 \/ -0\.47<\/td>/);
+    expect(html).toMatch(/<td class="off">0\.58 \/ -0\.42<\/td>/);
+    expect(html).toMatch(/<td class="off">0\.40 \/ -0\.40<\/td>/);
+    // the kept picture is one to look at; the one painted again is named with its reason
+    expect(html).toContain(`<li class="note"><code>depot-a0-r1</code>: ${turned}; kept`);
+    expect(html).toContain(`<li class="note"><code>depot-a0-r2</code> to paint again: ${low}</li>`);
+    expect(html).not.toMatch(/depot-a0-r2<\/code> pending/);
   });
 });

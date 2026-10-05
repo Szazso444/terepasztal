@@ -6,16 +6,20 @@ import { dirname, join, resolve } from 'node:path';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, loadInventory, pictureFile } from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly, guideFile } from './building-guides.mjs';
+import { fitPicture } from './building-fit.mjs';
 import {
   accept,
   approveGate,
+  beforeFile,
   buildQueue,
   describeEntry,
+  describeQueued,
   fittedFile,
   loadFamilies,
   mismatches,
   nextEntry,
   progress,
+  recheck,
   redo,
   setStatus,
   settle,
@@ -148,6 +152,30 @@ describe('building queue', () => {
     expect(about('depot-a3-r0').prompt).toMatch(/exactly the block-out's camera, scale and place/);
   });
 
+  it('shows a picture that is painted again its own earlier self, straightened', () => {
+    // its camera was off: the same building is asked for again, from what the tools made of it
+    const say = 'The camera is too low: the wall feet run too flat.';
+    const before = beforeFile(pictureFile('depot', 3, 2));
+    expect(before).toBe('assets/source/buildings-v2/depot/depot-a3-r2.before.png');
+    const again = describeEntry('depot-a3-r2', inv, fam, { repaint: true, note: say });
+    expect(again.sources).toEqual([STYLE_BOARD, before]);
+    expect(again.references).toEqual([
+      STYLE_BOARD,
+      'assets/source/buildings-v2/.fitted/depot-a3-r2.before.png',
+    ]);
+    expect(again.prompt).toContain(fam.references.repaint);
+    expect(again.prompt.endsWith(`What was wrong with it: ${say}`)).toBe(true);
+    expect(again.prompt).not.toContain(fam.references.turn);
+    // the rest of the prompt is the picture's own
+    for (const part of [fam.shared, fam.ages.a3, fam.families.depot.ages.a3, fam.views.r2])
+      expect(again.prompt).toContain(part);
+    expect(again.file).toBe(pictureFile('depot', 3, 2));
+    expect(fam.references.repaint).toMatch(/SAME building/);
+    expect(fam.references.repaint).toMatch(/straightened/);
+    // any other picture says nothing of the kind
+    expect(about('depot-a3-r2').prompt).not.toMatch(/What was wrong with it/);
+  });
+
   it('writes a prompt from the shared block, the age, the family and the view', () => {
     const turn = about('depot-a3-r1').prompt;
     for (const part of [
@@ -199,6 +227,18 @@ describe('building queue', () => {
     expect(again.entries[3]).toMatchObject({ status: 'approved', attempts: 2, note: 'second try' });
     expect(again.entries[30]).toMatchObject({ status: 'rejected', attempts: 3, note: 'floats' });
     expect(again.entries[4].status).toBe('pending');
+  });
+
+  it('keeps what was kept with its camera off, and what is to be painted again, on a re-run', () => {
+    const before = structuredClone(q);
+    Object.assign(before.entries[3], { status: 'generated', attempts: 3, kept: true });
+    const was = { by: 6.4, was: 'It was painted from too low a camera.' };
+    Object.assign(before.entries[5], { repaint: was });
+    const again = buildQueue(inv, fam, before);
+    expect(again.entries[3]).toMatchObject({ status: 'generated', kept: true });
+    expect(again.entries[5]).toMatchObject({ status: 'pending', repaint: was });
+    // the other pictures carry neither mark
+    expect(Object.keys(again.entries[4])).toEqual(Object.keys(q.entries[4]));
   });
 
   it('keeps approvals and accepted families, and refuses a status it does not know', () => {
@@ -368,9 +408,11 @@ describe('working through the queue', () => {
       total: 24,
       made: 23,
       approved: 1,
+      kept: 0,
       rejected: 1,
       behind: 0,
       pending: 0,
+      repaint: 0,
     });
     expect(rows.find((r) => r.family === 'station')).toMatchObject({
       total: 24,
@@ -419,12 +461,33 @@ describe('working through the queue', () => {
   /** a disk in memory for the commands that look at files */
   const disk = (files, verdict = { ok: true, problems: [] }) => ({
     exists: onDisk(files),
-    check: () => verdict,
+    check: (file, footprint, rot, options) =>
+      typeof verdict === 'function' ? verdict(file, options) : verdict,
     setAside: (f) => {
       files.delete(f);
       files.add(f.replace(/\.png$/, '.rejected.png'));
     },
+    setBefore: (f) => {
+      files.delete(f);
+      files.add(beforeFile(f));
+    },
   });
+  /** what the check says of a camera that is off: it fails, or passes with a note when waived */
+  const SAY = 'The camera is too low: look down more steeply.';
+  const WAS = 'It was painted from too low a camera.';
+  const LINE = 'camera off by 6.4°: it looks down from 23.6° where the game looks down from 30°';
+  const CAMERA = { by: 6.4, say: SAY, was: WAS };
+  const KEPT = `${LINE}; kept, and corrected by the tools`;
+  const cameraOff = (file, options) =>
+    options?.camera === false
+      ? { ok: true, problems: [], notes: [KEPT], camera: CAMERA }
+      : { ok: false, problems: [LINE], camera: CAMERA };
+  /** a camera that is off and the top edge touched: the second fault stays when the first is waived */
+  const twoFaults = (file, options) =>
+    options?.camera === false
+      ? { ok: false, problems: ['touches the top edge'], notes: [KEPT], camera: CAMERA }
+      : { ok: false, problems: ['touches the top edge', LINE], camera: CAMERA };
+  const fine = { ok: true, problems: [] };
 
   it('records a picture as made only when its file is there and passes the check', () => {
     const queue = fresh();
@@ -437,7 +500,8 @@ describe('working through the queue', () => {
     expect(() => settle(queue, inv, 'depot-a0-r0', 'generated', {}, disk(files, bad))).toThrow(
       /not recorded.*background is not transparent/,
     );
-    expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 0 });
+    // not made, but tried: the tool keeps count of the attempts it refused
+    expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 1 });
     const done = settle(queue, inv, 'depot-a0-r0', 'generated', { attempts: 2 }, disk(files));
     expect(done.entry).toMatchObject({ status: 'generated', attempts: 2 });
     expect(done.check).toEqual({ ok: true, problems: [] });
@@ -445,6 +509,348 @@ describe('working through the queue', () => {
     expect(() => settle(queue, inv, 'depot-a0-r1', 'approved', {}, disk(files))).toThrow(
       /has not been made/,
     );
+  });
+
+  it('asks for a picture again when its camera is off, with the words to add to the prompt', () => {
+    const queue = fresh();
+    const files = new Set([pictureFile('depot', 0, 0)]);
+    /** try to record the picture; the error, or null when it was recorded */
+    const refusal = (options = {}, verdict = cameraOff) => {
+      try {
+        settle(queue, inv, 'depot-a0-r0', 'generated', options, disk(files, verdict));
+      } catch (e) {
+        return e;
+      }
+      return null;
+    };
+    const first = refusal();
+    expect(first.message).toMatch(
+      /^not recorded: camera off by 6\.4°.*\. Make depot-a0-r0 again, adding to the prompt: "The camera is too low: look down more steeply\."$/,
+    );
+    // not made, but tried: the tool counts what it refuses, so the count outlasts a session
+    expect(first.refused).toBe(true);
+    expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 1 });
+    expect(refusal().message).toMatch(/Make depot-a0-r0 again, adding to the prompt/);
+    // the third attempt: time to keep the closest one
+    expect(refusal().message).toMatch(/That was attempt 3\..*--keep/);
+    expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 3 });
+    // a number given says which attempt this is
+    queue.entries[0].attempts = 0;
+    expect(refusal({ attempts: 3 }).message).toMatch(/That was attempt 3\./);
+    expect(queue.entries[0].attempts).toBe(3);
+    // a picture with another fault as well is simply made again
+    expect(refusal({ attempts: 3 }, twoFaults).message).toMatch(
+      /touches the top edge.*Make depot-a0-r0 again, adding to the prompt/,
+    );
+    // a file that is not there was not tried
+    files.clear();
+    queue.entries[0].attempts = 0;
+    expect(refusal().refused).toBeUndefined();
+    expect(queue.entries[0].attempts).toBe(0);
+  });
+
+  it('keeps the closest attempt of a picture whose camera stays off, and marks it', () => {
+    const queue = fresh();
+    const files = new Set([pictureFile('depot', 0, 0)]);
+    // not before the third attempt
+    expect(() =>
+      settle(
+        queue,
+        inv,
+        'depot-a0-r0',
+        'generated',
+        { attempts: 2, keep: true },
+        disk(files, cameraOff),
+      ),
+    ).toThrow(/third attempt/);
+    const r = settle(
+      queue,
+      inv,
+      'depot-a0-r0',
+      'generated',
+      { attempts: 3, keep: true },
+      disk(files, cameraOff),
+    );
+    expect(r.entry).toMatchObject({
+      status: 'generated',
+      attempts: 3,
+      kept: true,
+      note: 'kept with its camera off by 6.4° after 3 attempts',
+    });
+    expect(r.check.notes[0]).toMatch(/kept, and corrected by the tools$/);
+    // a kept picture is a made one: the work goes on from it
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r1' });
+    expect(progress(queue, inv, fam, onDisk(files))[0]).toMatchObject({ made: 1, kept: 1 });
+    // --keep is no way round another fault
+    files.add(pictureFile('depot', 0, 1));
+    const bad = { ok: false, problems: ['background is not transparent'] };
+    expect(() =>
+      settle(queue, inv, 'depot-a0-r1', 'generated', { attempts: 3, keep: true }, disk(files, bad)),
+    ).toThrow(/background is not transparent/);
+    // nor is the other fault called a camera: what is left when the camera is waived is said plainly
+    expect(() =>
+      settle(
+        queue,
+        inv,
+        'depot-a0-r1',
+        'generated',
+        { attempts: 3, keep: true },
+        disk(files, twoFaults),
+      ),
+    ).toThrow(
+      /^not recorded: touches the top edge\. Make depot-a0-r1 again, or record it as rejected\.$/,
+    );
+    queue.entries[1].attempts = 0;
+    // a picture whose camera is right is recorded as any other
+    const right = settle(
+      queue,
+      inv,
+      'depot-a0-r1',
+      'generated',
+      { attempts: 3, keep: true },
+      disk(files),
+    );
+    expect(right.entry.kept).toBeUndefined();
+    expect(right.entry.note).toBe('');
+    // made again and right this time: no longer marked
+    settle(queue, inv, 'depot-a0-r0', 'generated', { attempts: 4 }, disk(files));
+    expect(queue.entries[0].kept).toBeUndefined();
+    expect(queue.entries[0].note).toBe('');
+  });
+
+  it('keeps the closest attempt by its own count of the attempts it refused', () => {
+    const queue = fresh();
+    const files = new Set([pictureFile('depot', 0, 0)]);
+    const record = (options) =>
+      settle(queue, inv, 'depot-a0-r0', 'generated', options, disk(files, cameraOff));
+    // too early, whoever counts
+    expect(() => record({ keep: true })).toThrow(/third attempt.*0 attempts so far/);
+    for (let n = 0; n < 3; n++) expect(() => record({})).toThrow(/not recorded/);
+    // putting the closest attempt back is no new attempt
+    const r = record({ keep: true });
+    expect(r.entry).toMatchObject({
+      status: 'generated',
+      attempts: 3,
+      kept: true,
+      note: 'kept with its camera off by 6.4° after 3 attempts',
+    });
+  });
+
+  it('leaves a kept picture marked when the user approves it, not when it is given up', () => {
+    const queue = fresh();
+    const files = new Set([pictureFile('depot', 0, 0)]);
+    const d = disk(files, cameraOff);
+    settle(queue, inv, 'depot-a0-r0', 'generated', { attempts: 3, keep: true }, d);
+    settle(queue, inv, 'depot-a0-r0', 'approved', {}, d);
+    expect(queue.entries[0]).toMatchObject({ status: 'approved', kept: true });
+    settle(queue, inv, 'depot-a0-r0', 'rejected', { attempts: 3, note: 'too far off' }, d);
+    expect(queue.entries[0]).toMatchObject({ status: 'rejected', note: 'too far off' });
+    expect(queue.entries[0].kept).toBeUndefined();
+    expect(files.has(pictureFile('depot', 0, 0))).toBe(false);
+  });
+
+  it('puts the made pictures whose camera is off back, to be painted again as the same building', () => {
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    setStatus(queue, 'depot-a2-r1', 'approved');
+    const entry = (id) => queue.entries.find((e) => e.id === id);
+    entry('depot-a3-r0').kept = true;
+    entry('depot-a4-r0').kept = true;
+    const off = new Set(
+      ['depot-a0-r0', 'depot-a0-r2', 'depot-a1-r0', 'depot-a2-r1', 'depot-a3-r0'].map(
+        (id) => entry(id).file,
+      ),
+    );
+    const verdict = (file, options) =>
+      file === pictureFile('depot', 5, 3) || file === pictureFile('depot', 4, 0)
+        ? twoFaults(file, options)
+        : off.has(file)
+          ? cameraOff(file, options)
+          : fine;
+    const r = recheck(queue, inv, null, disk(files, verdict));
+    expect(r.checked).toBe(24);
+    expect(r.back).toEqual([
+      { id: 'depot-a0-r0', problem: LINE },
+      { id: 'depot-a0-r2', problem: LINE },
+      { id: 'depot-a1-r0', problem: LINE },
+    ]);
+    // a picture the user approved, and one with another fault: named, and left as they are
+    expect(r.left).toEqual([
+      { id: 'depot-a2-r1', why: `approved by the user; ${LINE}` },
+      // a kept picture's camera is not asked about again: its other fault is no camera fault
+      { id: 'depot-a4-r0', why: 'touches the top edge' },
+      { id: 'depot-a5-r3', why: `touches the top edge; ${LINE}` },
+    ]);
+    expect(entry('depot-a2-r1').status).toBe('approved');
+    expect(entry('depot-a4-r0')).toMatchObject({ status: 'generated', kept: true });
+    expect(entry('depot-a4-r0').repaint).toBeUndefined();
+    expect(entry('depot-a5-r3').status).toBe('generated');
+    // the depot is a gate family: the user sees it again once it is painted again
+    expect(r.gates).toEqual(['depot']);
+    expect(queue.gates).toEqual([
+      { family: 'depot', approved: false },
+      { family: 'station', approved: true },
+    ]);
+    // kept as the closest of its attempts: not asked for again
+    expect(entry('depot-a3-r0')).toMatchObject({ status: 'generated', kept: true });
+    expect(Object.keys(r.results)).toHaveLength(24);
+    expect(r.results['depot-a3-r0'].ok).toBe(true);
+    const first = entry('depot-a0-r0');
+    // what was wrong with it is kept apart from the note, which is the agent's to write
+    expect(first).toMatchObject({
+      status: 'pending',
+      attempts: 0,
+      note: '',
+      repaint: { by: 6.4, was: WAS },
+    });
+    expect(files.has(first.file)).toBe(false);
+    expect(files.has(beforeFile(first.file))).toBe(true);
+    // the pictures built on it stay: it will be the same building
+    expect(entry('depot-a0-r1').status).toBe('generated');
+    expect(entry('depot-a2-r0').status).toBe('generated');
+    expect(progress(queue, inv, fam, onDisk(files))[0]).toMatchObject({
+      made: 21,
+      kept: 2,
+      repaint: 3,
+      rejected: 0,
+      behind: 0,
+    });
+    // they are handed out before anything new, in the list's order
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r0', behind: [] });
+    const again = describeQueued(queue, 'depot-a0-r0', inv, fam, onDisk(files));
+    expect(again.sources).toEqual([STYLE_BOARD, beforeFile(first.file)]);
+    expect(again.prompt.endsWith(`What was wrong with it: ${WAS}`)).toBe(true);
+    // its earlier self counts when the closest attempt is chosen: how far off that was
+    expect(again.earlier).toEqual({ file: beforeFile(first.file), by: 6.4 });
+    // once painted again and right, it is a picture like any other
+    files.add(first.file);
+    settle(queue, inv, 'depot-a0-r0', 'generated', {}, disk(files));
+    expect(first).toMatchObject({ status: 'generated', attempts: 1, note: '' });
+    expect(first.repaint).toBeUndefined();
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r2' });
+    // a second look finds nothing new
+    expect(recheck(queue, inv, null, disk(files, fine)).back).toEqual([]);
+  });
+
+  it('looks again at one family alone', () => {
+    const queue = fresh(true);
+    const files = made(queue, 48);
+    const r = recheck(queue, inv, 'station', disk(files, cameraOff));
+    expect(r.checked).toBe(24);
+    expect(r.back).toHaveLength(24);
+    expect(r.gates).toEqual(['station']);
+    expect(queue.gates[0]).toEqual({ family: 'depot', approved: true });
+    expect(r.back.every((b) => b.id.startsWith('station-'))).toBe(true);
+    expect(queue.entries[0].status).toBe('generated');
+    expect(() => recheck(queue, inv, 'lighthouse', disk(files))).toThrow(/lighthouse/);
+  });
+
+  it('shows the user a gate family again once its pictures are painted again', () => {
+    const queue = fresh(true);
+    const files = made(queue, 48);
+    const one = (file, o) => (/depot-a0-r0\.png$/.test(file) ? cameraOff(file, o) : fine);
+    expect(recheck(queue, inv, null, disk(files, one)).gates).toEqual(['depot']);
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r0' });
+    files.add(pictureFile('depot', 0, 0));
+    settle(queue, inv, 'depot-a0-r0', 'generated', {}, disk(files));
+    expect(next(queue, files)).toMatchObject({ kind: 'gate', family: 'depot', made: 24 });
+    expect(approveGate(queue)).toEqual(['depot']);
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: queue.entries[48].id });
+  });
+
+  it('leaves a picture where it is when it cannot be moved aside, and goes on', () => {
+    // a picture open in a viewer cannot be renamed: the list and the disk must still agree
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    const two = (file, o) => (/depot-a0-r[01]\.png$/.test(file) ? cameraOff(file, o) : fine);
+    const d = disk(files, two);
+    const move = d.setBefore;
+    d.setBefore = (file) => {
+      if (file === pictureFile('depot', 0, 0)) throw new Error('EBUSY: resource busy or locked');
+      move(file);
+    };
+    const r = recheck(queue, inv, null, d);
+    expect(r.back.map((b) => b.id)).toEqual(['depot-a0-r1']);
+    expect(r.left).toEqual([
+      {
+        id: 'depot-a0-r0',
+        why: `${LINE}; it could not be moved aside (EBUSY: resource busy or locked) and stays as it is`,
+      },
+    ]);
+    expect(queue.entries[0].status).toBe('generated');
+    expect(queue.entries[0].repaint).toBeUndefined();
+    expect(files.has(pictureFile('depot', 0, 0))).toBe(true);
+    expect(mismatches(queue, onDisk(files))).toEqual([]);
+  });
+
+  it("puts a family's rejected picture back to be painted again as it was being", () => {
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    const one = (file, o) => (/depot-a0-r2\.png$/.test(file) ? cameraOff(file, o) : fine);
+    recheck(queue, inv, null, disk(files, one));
+    // given up while it was being painted again, with a note of the agent's own
+    settle(
+      queue,
+      inv,
+      'depot-a0-r2',
+      'rejected',
+      { attempts: 3, note: 'the door moved to the other wall' },
+      disk(files),
+    );
+    expect(redo(queue, inv, fam, 'depot', disk(files))).toEqual(['depot-a0-r2']);
+    expect(queue.entries[2]).toMatchObject({
+      status: 'pending',
+      attempts: 0,
+      note: '',
+      repaint: { by: 6.4, was: WAS },
+    });
+    expect(describeQueued(queue, 'depot-a0-r2', inv, fam, onDisk(files)).prompt).toContain(
+      `What was wrong with it: ${WAS}`,
+    );
+  });
+
+  it('stops when more than a quarter of a family had to be kept with the camera off', () => {
+    const queue = fresh(true);
+    const third = queue.entries[48].family;
+    const files = made(queue, ['depot', 'station', third]);
+    const mine = queue.entries.filter((e) => e.family === third);
+    const quarter = Math.floor(mine.length / 4);
+    for (const e of mine.slice(0, quarter)) e.kept = true;
+    // a quarter is not more than a quarter
+    expect(next(queue, files).kind).toBe('picture');
+    mine[quarter].kept = true;
+    expect(next(queue, files)).toMatchObject({
+      kind: 'stop',
+      family: third,
+      made: mine.length,
+      kept: quarter + 1,
+    });
+    // the user takes the family as it is: on to the next
+    accept(queue, third);
+    expect(next(queue, files).kind).toBe('picture');
+  });
+
+  it('makes a picture afresh when its earlier self is gone', () => {
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    const two = (file, o) => (/depot-a0-r[01]\.png$/.test(file) ? cameraOff(file, o) : fine);
+    recheck(queue, inv, null, disk(files, two));
+    const before = beforeFile(pictureFile('depot', 0, 1));
+    const sources = () => describeQueued(queue, 'depot-a0-r1', inv, fam, onDisk(files)).sources;
+    expect(sources()).toEqual([STYLE_BOARD, before]);
+    files.delete(before);
+    // nothing to paint it again from: it is turned from the front view, like a new picture
+    expect(sources()).toEqual([STYLE_BOARD, pictureFile('depot', 0, 0)]);
+    expect(describeQueued(queue, 'depot-a0-r1', inv, fam, onDisk(files)).prompt).toContain(
+      fam.references.turn,
+    );
+    expect(mismatches(queue, onDisk(files))).toEqual([
+      'depot-a0-r1: to be painted again, but its earlier picture is missing; it will be made afresh',
+    ]);
+    // and so it waits for the front view, which is painted again first
+    files.add(pictureFile('depot', 0, 0));
+    settle(queue, inv, 'depot-a0-r0', 'generated', {}, disk(files));
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r1' });
   });
 
   it("sets a rejected picture's file aside", () => {
@@ -484,6 +890,26 @@ describe('working through the queue', () => {
     }
     expect(files.has(pictureFile('depot', 0, 3))).toBe(true);
     expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a1-r0' });
+  });
+
+  it('makes a picture afresh, not from its earlier self, when it is put back by name', () => {
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    queue.entries[20].kept = true;
+    recheck(
+      queue,
+      inv,
+      null,
+      disk(files, (file, o) => (/depot-a5-r1\.png$/.test(file) ? cameraOff(file, o) : fine)),
+    );
+    expect(queue.entries[21]).toMatchObject({ id: 'depot-a5-r1', repaint: { by: 6.4 } });
+    const again = redo(queue, inv, fam, 'depot-a5-r0', disk(files));
+    expect(again).toEqual(['depot-a5-r0', 'depot-a5-r1', 'depot-a5-r2', 'depot-a5-r3']);
+    for (const e of queue.entries.slice(20, 24)) {
+      expect([e.status, e.attempts, e.note]).toEqual(['pending', 0, '']);
+      expect(e.kept).toBeUndefined();
+      expect(e.repaint).toBeUndefined();
+    }
   });
 
   it("puts a family's rejected pictures back in the queue", () => {
@@ -538,14 +964,14 @@ describe('the queue tool on the command line', () => {
       return { code: e.status, out: `${e.stdout}${e.stderr}` };
     }
   };
-  /** a painted depot, as the generator returns it */
-  const paint = (root, id) => {
+  /** a painted depot, as the generator returns it; `map` moves every point of it */
+  const paint = (root, id, map = (p) => p) => {
     const d = about(id);
     const fp = FOOTPRINTS[d.footprint];
     const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
     const faces = boxFaces(fp, { ...blockOf(d.footprint, d.rot), z0: 0 });
     const shade = { top: [220, 210, 180], left: [160, 120, 90], right: [110, 80, 60] };
-    for (const [name, pts] of Object.entries(faces)) fillPoly(png, pts, shade[name]);
+    for (const [name, pts] of Object.entries(faces)) fillPoly(png, pts.map(map), shade[name]);
     mkdirSync(dirname(join(root, d.file)), { recursive: true });
     writeFileSync(join(root, d.file), PNG.sync.write(png));
   };
@@ -601,6 +1027,124 @@ describe('the queue tool on the command line', () => {
     // redo it, and the list offers it again
     expect(run(root, 'redo', 'depot-a0-r1').out).toMatch(/1 picture back in the queue/);
     expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
+  }, 60000);
+
+  it('refuses a camera that is off, keeps the closest attempt, and repaints what was made', () => {
+    const root = sandbox();
+    run(root);
+    const at = (file) => join(root, file);
+    // a depot seen from too low: its wall feet at 0.4, which is 23.6 degrees
+    const low = ([x, y]) => [x, 760 + (y - 760) * 0.8];
+    paint(root, 'depot-a0-r0', low);
+    const no = run(root, 'set', 'depot-a0-r0', 'generated');
+    expect(no.code).toBe(1);
+    expect(no.out).toMatch(/not recorded: camera off by 6\.\d°: it looks down from 23\.\d°/);
+    expect(no.out).toMatch(
+      /adding to the prompt: "Both wall feet run too flat\. The camera is too low, /,
+    );
+    // the tool counts the attempts it refuses: no number need be given, and none is lost
+    expect(run(root, 'set', 'depot-a0-r0', 'generated', '--keep').out).toMatch(
+      /--keep is for the third attempt.*1 attempt so far/,
+    );
+    expect(run(root, 'set', 'depot-a0-r0', 'generated').out).toMatch(/Make depot-a0-r0 again/);
+    const third = run(root, 'set', 'depot-a0-r0', 'generated');
+    expect(third.code).toBe(1);
+    expect(third.out).toMatch(/That was attempt 3\..*--keep/);
+    const kept = run(root, 'set', 'depot-a0-r0', 'generated', '--keep');
+    expect(kept.code).toBe(0);
+    expect(kept.out).toMatch(
+      /^ok +depot-a0-r0 +\(camera off by 6\.\d°.*kept, and corrected by the tools\)$/m,
+    );
+    expect(kept.out).toMatch(
+      /depot-a0-r0: generated, 3 attempts \(kept with its camera off by 6\.\d° after 3 attempts\)/,
+    );
+    expect(run(root, 'status').out).toMatch(/depot +1\/24 made, 1 kept with the camera off/);
+    // the check of a family knows a kept picture: it passes, with its camera named
+    const family = (() => {
+      try {
+        const out = execFileSync(
+          process.execPath,
+          [resolve('tools/building-check.mjs'), '--family', 'depot'],
+          { cwd: root, encoding: 'utf8' },
+        );
+        return { code: 0, out };
+      } catch (e) {
+        return { code: e.status, out: `${e.stdout}${e.stderr}` };
+      }
+    })();
+    expect(family.out).toMatch(
+      /^ok +depot-a0-r0 +\(camera off by 6\.\d°.*kept, and corrected by the tools\)$/m,
+    );
+    expect(family.out).toMatch(/1 checked, 0 failed/);
+    expect(family.code).toBe(0);
+    // a picture recorded before the camera was looked at: `recheck` finds it
+    paint(root, 'depot-a0-r1', low);
+    const file = at('assets/source/buildings-v2/queue.json');
+    const queue = JSON.parse(readFileSync(file, 'utf8'));
+    Object.assign(queue.entries[1], { status: 'generated', attempts: 1 });
+    writeFileSync(file, JSON.stringify(queue, null, 2) + '\n');
+    const again = run(root, 'recheck');
+    expect(again.code).toBe(0);
+    expect(again.out).toMatch(
+      /^2 made pictures checked: 1 back in the queue, to be painted again/m,
+    );
+    expect(again.out).toMatch(/^ +depot-a0-r1 +camera off by 6\.\d°/m);
+    expect(again.out).not.toMatch(/^ +depot-a0-r0 /m);
+    expect(existsSync(at(pictureFile('depot', 0, 1)))).toBe(false);
+    expect(existsSync(at(beforeFile(pictureFile('depot', 0, 1))))).toBe(true);
+    const report = JSON.parse(readFileSync(at('assets/source/buildings-v2/report.json'), 'utf8'));
+    expect(report.pictures['depot-a0-r1'].ok).toBe(false);
+    expect(report.pictures['depot-a0-r0'].ok).toBe(true);
+    const status = run(root, 'status');
+    expect(status.out).toMatch(/depot +1\/24 made, 1 kept with the camera off, 1 to paint again/);
+    expect(status.out).not.toMatch(/mismatch/);
+    // it is handed out with its earlier self, straightened, and with what was wrong with it
+    const next = run(root, 'next');
+    expect(next.out).toMatch(/^picture: +depot-a0-r1 \(to paint again: the same building\)$/m);
+    expect(next.out).toMatch(
+      /^ +2\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r1\.before\.png$/m,
+    );
+    expect(next.out).toContain(
+      'What was wrong with it: It was painted from too low a camera, so too little of its roof showed.',
+    );
+    // its earlier self counts when the closest attempt is chosen
+    expect(next.out).toMatch(
+      /^earlier self: +off by 6\.\d°, in assets\/source\/buildings-v2\/depot\/depot-a0-r1\.before\.png$/m,
+    );
+    const straightened = (id) =>
+      PNG.sync.read(readFileSync(at(`assets/source/buildings-v2/.fitted/${id}.before.png`)));
+    const fitted = straightened('depot-a0-r1');
+    expect([fitted.width, fitted.height]).toEqual(FOOTPRINTS.t2x2.canvas);
+    // and what the generator is shown of it stands at the game's camera
+    const shown = fitPicture(fitted, 't2x2', 1).camera;
+    expect(Math.abs(shown.elevation - 30)).toBeLessThan(0.7);
+    expect(Math.abs(shown.turn)).toBeLessThan(0.7);
+    expect(JSON.parse(run(root, 'next', '--json').out).picture.sources[1]).toBe(
+      beforeFile(pictureFile('depot', 0, 1)),
+    );
+    // painted again from the game's camera: recorded, and the work goes on
+    paint(root, 'depot-a0-r1');
+    expect(run(root, 'set', 'depot-a0-r1', 'generated').out).toMatch(
+      /depot-a0-r1: generated, 1 attempt$/m,
+    );
+    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r2$/m);
+    // put back a second time: its first self is not lost, it is kept under a number
+    paint(root, 'depot-a0-r1', low);
+    expect(run(root, 'recheck').out).toMatch(/: 1 back in the queue/);
+    expect(existsSync(at(beforeFile(pictureFile('depot', 0, 1))))).toBe(true);
+    expect(existsSync(at('assets/source/buildings-v2/depot/depot-a0-r1.before.1.png'))).toBe(true);
+    // an earlier self is straightened all the way, however far off: 0.5 x 0.6 is 17.5 degrees,
+    // flatter than the fit corrects a picture for the game
+    paint(root, 'depot-a0-r3', ([x, y]) => [x, 760 + (y - 760) * 0.6]);
+    const list = JSON.parse(readFileSync(file, 'utf8'));
+    Object.assign(list.entries[3], { status: 'generated', attempts: 1 });
+    writeFileSync(file, JSON.stringify(list, null, 2) + '\n');
+    expect(run(root, 'recheck').out).toMatch(/^ +depot-a0-r3 +camera off by 12\.\d°/m);
+    expect(run(root, 'show', 'depot-a0-r3').out).toMatch(/^earlier self: +off by 12\.\d°, /m);
+    const far = fitPicture(straightened('depot-a0-r3'), 't2x2', 3).camera;
+    expect(Math.abs(far.elevation - 30)).toBeLessThan(0.7);
+    expect(Math.abs(far.turn)).toBeLessThan(0.7);
+    expect(run(root, 'recheck', 'lighthouse').code).toBe(1);
   }, 60000);
 
   it('answers with the exit code for a gate, a stop and the end', () => {
