@@ -1,10 +1,17 @@
 {
-  "schema": 1,
+  "schema": 2,
   "guide": "assets/source/buildings-v2/GUIDE.md",
-  "pilot": {
-    "family": "depot",
-    "approved": false
-  },
+  "gates": [
+    {
+      "family": "depot",
+      "approved": false
+    },
+    {
+      "family": "station",
+      "approved": false
+    }
+  ],
+  "accepted": [],
   "counts": {
     "pictures": 560,
     "families": 27
@@ -16,9 +23,9 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a0-r0.png",
-      "status": "rejected",
+      "status": "generated",
       "attempts": 3,
-      "note": "All three attempts misplaced the portals on the front wall or allowed the ground/base pixels and halo beyond the footprint; final checker also reports base 38 px below. Failed wall-orientation/footprint checklist, so no candidate kept."
+      "note": "Pilot footprint exception: base is 38 px below the footprint; reaches outside the footprint at the left; reaches outside the footprint at the right; reaches outside the footprint at the ground."
     },
     {
       "id": "depot-a0-r1",
@@ -26,9 +33,9 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 1,
+      "note": "Pilot footprint exception: base is 37 px below the footprint; reaches outside the footprint at the left; reaches outside the footprint at the right; reaches outside the footprint at the ground."
     },
     {
       "id": "depot-a0-r2",
@@ -36,9 +43,9 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a0-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 1,
+      "note": "Pilot footprint exception: base is 44 px below the footprint; reaches outside the footprint at the left; reaches outside the footprint at the right; reaches outside the footprint at the ground."
     },
     {
       "id": "depot-a0-r3",
@@ -46,9 +53,9 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a0-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 1,
+      "note": "Pilot footprint exception: base is 28 px below the footprint; reaches outside the footprint at the left; reaches outside the footprint at the right; reaches outside the footprint at the ground."
     },
     {
       "id": "depot-a1-r0",
@@ -56,8 +63,8 @@
       "age": 1,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a1-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 3,
       "note": ""
     },
     {
@@ -66,8 +73,8 @@
       "age": 1,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a1-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": ""
     },
     {
@@ -76,8 +83,8 @@
       "age": 1,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a1-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -86,8 +93,8 @@
       "age": 1,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a1-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -96,8 +103,8 @@
       "age": 2,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a2-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -106,8 +113,8 @@
       "age": 2,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a2-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -116,8 +123,8 @@
       "age": 2,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a2-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -126,8 +133,8 @@
       "age": 2,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a2-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -136,8 +143,8 @@
       "age": 3,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a3-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -146,8 +153,8 @@
       "age": 3,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a3-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -156,8 +163,8 @@
       "age": 3,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -166,8 +173,8 @@
       "age": 3,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a3-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": ""
     },
     {
@@ -176,8 +183,8 @@
       "age": 4,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a4-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -186,8 +193,8 @@
       "age": 4,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a4-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -196,8 +203,8 @@
       "age": 4,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a4-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -206,8 +213,8 @@
       "age": 4,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a4-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": ""
     },
     {
@@ -216,8 +223,8 @@
       "age": 5,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a5-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -226,8 +233,8 @@
       "age": 5,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a5-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -236,8 +243,8 @@
       "age": 5,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a5-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -246,8 +253,8 @@
       "age": 5,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a5-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
