@@ -53,7 +53,7 @@ picture needs instead:
 **Projection.** Orthographic 2:1 isometric: ground edges run two pixels across for one down,
 vertical edges are vertical, there is no perspective. The camera is the one thing the tools do not
 put right for you: they straighten a camera that is a little off, but a picture whose camera is
-more than 3° from the guide's, in height or in turn, is refused and has to be made again
+more than 2° from the guide's, in height or in turn, is refused and has to be made again
 (section 7). Straightening stretches a picture, and a stretched building looks wrong in the game.
 
 **Contents.** One building, standing on its footprint and filling it. At ground level nothing
@@ -78,8 +78,6 @@ Everything is in `assets/source/buildings-v2/`.
   being painted again. The tool keeps its earlier self here and names it, straightened, as a
   reference (section 5). Do not edit, remove or commit these (nor a numbered
   `.before.1.png`, left from an earlier round).
-- `.tries/`: your own folder for the attempts of the picture you are working on (section 7). Not
-  committed.
 - `.look/<name>.png`: a picture as you should look at it (section 6), written by
   `node tools/building-sheets.mjs --picture <file>`. Not committed.
 - `.fitted/<family>-a<age>-r<view>.png`: an earlier picture laid onto its footprint by the tool,
@@ -96,11 +94,10 @@ The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`
 - `node tools/building-queue.mjs next`: the next picture to make, with everything it needs.
 - `node tools/building-queue.mjs show <id>`: the same for any picture.
 - `node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]`: record a result.
-  With `--keep`: keep the closest attempt of a picture whose camera stays off (section 7).
 - `node tools/building-queue.mjs status`: progress per family, the gates, and where the list and
   the disk disagree.
 - `node tools/building-queue.mjs recheck` or `recheck <family>`: look again at the pictures that
-  are made. One whose camera is more than 3° off goes back in the queue, to be painted again as
+  are made. One whose camera is more than 2° off goes back in the queue, to be painted again as
   the same building. Only when the user asks.
 - `node tools/building-queue.mjs redo <id>` or `redo <family>`: put pictures back in the queue.
   `redo <id>` puts back that picture and every picture built on it, each to be made afresh: for a
@@ -205,34 +202,33 @@ wall has the portals and which is the plain back or the front, as the prompt's V
 them. The tool cannot tell a front from a back, so that is still yours to see.
 
 **The camera.** The tool measures every picture's camera from the feet of its two visible walls,
-and refuses a picture whose camera is more than 3° from the guide's: seen from too low or too
-high, or with the building turned so that one wall faces the viewer more than the other. It says
-what it measured, and gives a sentence for the next attempt:
+and refuses a picture whose camera is more than 2° from the guide's: seen from too low or too
+high, or with the building turned so that one wall faces the viewer more than the other. That is
+a narrow mark, and most pictures miss it at the first attempt. The tool does the rest:
 
 ```text
 not recorded: camera off by 6.4°: it looks down from 23.6° where the game looks down from 30°
-(the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). Make depot-a0-r0 again,
-adding to the prompt: "Both wall feet run too flat. The camera is too low, so too little of the
-roof shows: look down on the building more steeply. Both wall feet must run parallel to the
-plinth's edges, as the block-out's do."
+(the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). It is kept as the picture's
+earlier self: run `node tools/building-queue.mjs next` again, and it is handed out to be painted
+from that, straightened.
 ```
 
-1. Copy the refused attempt to `.tries/<id>-<attempt>.png`, for example
-   `.tries/depot-a0-r0-1.png`, and note how far off it was.
-2. Make the picture again: the same edit of the guide, the same references, the same prompt with
-   the tool's sentence added at its end.
-3. If the third attempt is refused for its camera as well, do not reject the picture. Copy the
-   attempt that was off by the least back to the picture's file name and record it with
-   `node tools/building-queue.mjs set <id> generated --keep`. It counts as made, the tools
-   straighten it as far as they can, and it is marked for the user, who decides whether it stays.
-   For a picture that is painted again its earlier self counts too: `next` prints how far off
-   that was (`earlier self: off by 6.2°, in ...`). If none of your attempts came closer, copy
-   that file back instead.
+1. When a picture is refused for its camera alone, the tool keeps it. You copy nothing and you
+   add nothing to the prompt: run `node tools/building-queue.mjs next` again. It hands the same
+   picture out, marked `(to paint again: the same building)`: its second reference is the
+   closest attempt so far, laid onto its footprint and straightened, and the prompt's last lines
+   say what was wrong with it. Paint the same building from that (section 5).
+2. Do not tell the generator to raise or lower the camera yourself. Told to look down more
+   steeply it overshoots, and the camera swings from too low to too high and back.
+3. At the third attempt the tool keeps the closest of them all by itself: it records the picture
+   as made, straightens it as far as it straightens, and marks it for the user
+   (`kept with its camera off by 2.4° after 3 attempts`). It may be an earlier attempt that is
+   kept, or the picture's earlier self. There is nothing for you to choose, and no picture is
+   lost: the other attempts lie beside it as `<name>.before.1.png`, `.before.2.png`.
 
 The tool counts the attempts it refused, so the count is not lost when a session ends;
-`--attempts` is needed only where you made a picture again without recording it. `--keep` is for
-the camera alone, and only from the third attempt on. A picture with any other fault after three
-attempts is rejected:
+`--attempts` is needed only where you made a picture again without recording it. A picture with
+any other fault is made again as before, and rejected after three attempts:
 
 After three attempts, record the picture with
 `node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go
@@ -254,7 +250,8 @@ building. The station comes second; it is the first of the one-tile buildings. A
 2. `node tools/building-sheets.mjs --family <family>`
 3. Commit: `Buildings: <family>, <n> of 24 pictures`.
 4. Tell the user the family is ready, with the path of `review/<family>.png`, the number of
-   pictures made, kept with `--keep` and rejected, and anything you found hard. Then wait.
+   pictures made, kept with the camera off and rejected, and anything you found hard. Then
+   wait.
 
 Work continues only after the user approves the family. The user may first ask for changes to
 this guide, to `families.json` or to the guides; those are not yours to change.
@@ -277,11 +274,12 @@ those out before anything new, family by family in the list's order. For the dep
 station `recheck` closes its gate again: `next` prints `GATE` when the family is painted again,
 and you stop as at any gate. Each time `next` moves on from any other family, close the family
 you have just finished repainting as above (check, sheets), and commit:
-`Buildings: <name>, camera repainted`. In your message to the user, name the pictures you had to
-keep with `--keep`.
+`Buildings: <name>, camera repainted`. In your message to the user, name the pictures the tool
+kept with the camera off, and by how much.
 
 **A stop.** When more than a quarter of a family could not be made as it should be (rejected,
-built on a rejected picture, or kept with its camera off), `next` prints `STOP` (exit code 4).
+built on a rejected picture, or kept with its camera off by more than 3°), `next` prints `STOP`
+(exit code 4). A picture kept within 3° is near enough: it is marked, and the work goes on.
 Close the family as above, tell the user what kept going wrong, and wait. The user either has the
 pictures put back or accepts the family as it is (`accept`).
 

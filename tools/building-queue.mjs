@@ -3,7 +3,7 @@
  *   node tools/building-queue.mjs                 rebuild queue.json from the game's data
  *   node tools/building-queue.mjs next [--json]   the next picture to make, with its prompt
  *   node tools/building-queue.mjs show <id>       any picture, with its prompt
- *   node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"] [--keep]
+ *   node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]
  *   node tools/building-queue.mjs status          progress per family, gates, list against disk
  *   node tools/building-queue.mjs recheck [<family>]   made pictures whose camera is off: back
  *                                                 in the queue, to be painted again
@@ -20,7 +20,15 @@
  * `next` answers with its exit code: 0 a picture to make, 2 a gate (the user reviews a family
  * before the work goes on), 3 nothing left, 4 a stop (too much of a family could not be made).
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
@@ -113,7 +121,7 @@ export function buildQueue(inventory, families, previous = null) {
       note: old?.note ?? '',
       // kept as the closest attempt though its camera is off; to be painted again from its
       // earlier self
-      ...(old?.kept ? { kept: true } : {}),
+      ...(old?.kept ? { kept: old.kept } : {}),
       ...(old?.repaint ? { repaint: old.repaint } : {}),
     };
   });
@@ -308,6 +316,7 @@ export function progress(queue, inventory, families, exists = existsSync) {
       made: 0,
       approved: 0,
       kept: 0,
+      far: 0,
       rejected: 0,
       behind: 0,
       pending: 0,
@@ -319,6 +328,8 @@ export function progress(queue, inventory, families, exists = existsSync) {
     if (s === 'made' && e.status === 'approved') row.approved++;
     // made, but with the camera off: the closest of its attempts
     if (s === 'made' && e.kept) row.kept++;
+    // of those: the ones not near enough, which are held against the family
+    if (s === 'made' && e.kept && !(typeof e.kept === 'number' && e.kept <= FIT.near)) row.far++;
     if (s === 'rejected') row.rejected++;
     // a picture whose file is gone was not made, and nothing can be built on it
     if (s === 'behind' || s === 'lost') row.behind++;
@@ -334,8 +345,8 @@ export function progress(queue, inventory, families, exists = existsSync) {
  * What to do next. Families are worked in the list's order, a family's pictures each as soon as
  * the picture it is turned or modernised from is made. A finished gate family waits for the user;
  * any other finished family stops the work when more than a quarter of its pictures were lost
- * (rejected, or built on a rejected one) or kept with the camera off, until the user accepts it
- * as it is or the pictures are put back.
+ * (rejected, or built on a rejected one) or kept with the camera far off, until the user accepts
+ * it as it is or the pictures are put back.
  */
 export function nextEntry(queue, inventory, families, exists = existsSync) {
   const state = standings(queue, inventory, families, exists);
@@ -361,11 +372,12 @@ export function nextEntry(queue, inventory, families, exists = existsSync) {
       total: row.total,
       made: row.made,
       kept: row.kept,
+      far: row.far,
       rejected: row.rejected,
     };
     if (gate && !gate.approved)
       return { kind: 'gate', ...counts, behind: row.behind, lost: facts.lost };
-    const lostShare = (row.rejected + row.behind + row.kept) / row.total;
+    const lostShare = (row.rejected + row.behind + row.far) / row.total;
     if (!gate && lostShare > LOSS && !queue.accepted.includes(row.family))
       return { kind: 'stop', ...counts, behind: row.behind, lost: facts.lost };
   }
@@ -418,19 +430,44 @@ const DISK = {
   setBefore(file) {
     moveTo(file, beforeFile(file));
   },
+  /** keep an attempt that was not the closest: beside the earlier self, under a number */
+  shelve(file) {
+    const to = beforeFile(file);
+    let n = 1;
+    while (existsSync(to.replace(/\.png$/, `.${n}.png`))) n++;
+    renameSync(file, to.replace(/\.png$/, `.${n}.png`));
+  },
+  /** make the earlier self the picture again; it stays where it is as well */
+  restoreBefore(file) {
+    copyFileSync(beforeFile(file), file);
+  },
 };
+
+/**
+ * Is a camera `a` degrees off closer to the game's than one `b` degrees off? A camera not told
+ * in degrees (one wall foot only was measured) is taken for the further.
+ */
+const closer = (a, b) =>
+  typeof a === 'number' ? typeof b !== 'number' || a < b : typeof b !== 'number';
+
+/** The earlier self a picture is painted from, where it has one on disk. */
+const earlierSelf = (e, disk) => (e.repaint && disk.exists(beforeFile(e.file)) ? e.repaint : null);
+const degrees = (by) => (typeof by === 'number' ? ` by ${by.toFixed(1)}°` : '');
 
 /**
  * Record a result with the disk in step: a picture counts as made only when its file is there and
  * passes the check, and a rejected picture's file is set aside so nothing is built on it.
  *
- * A picture whose camera is off is not recorded: the error says what to add to the prompt for the
- * next attempt. When the camera is still off at the third attempt, `keep` records the attempt
- * that came closest: the picture is made, the tools correct its camera as far as they can, and it
- * is marked `kept` for the user to judge. `keep` waives nothing else.
- *
  * A picture that fails the check is not made, but it was tried: the attempt is counted in the
  * list, and the error thrown carries `refused` so that the list is saved all the same.
+ *
+ * A picture refused for its camera alone is kept: the closest attempt so far is the picture's
+ * earlier self (`beforeFile`), the others lie beside it under numbers, and the next attempt is
+ * painted from the earlier self, straightened. An attempt painted from a picture whose wall
+ * feet already run right comes closer than one made again from scratch with a sentence added;
+ * and the agent has nothing to copy, to add or to choose. At the last attempt the closest of
+ * them all becomes the picture: made, corrected by the tools as far as they correct, and marked
+ * `kept` with how far off it is, for the user to judge.
  */
 export function settle(queue, inventory, id, status, options = {}, disk = DISK) {
   const e = queue.entries.find((x) => x.id === id);
@@ -444,31 +481,46 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
   if (status === 'generated') {
     if (!disk.exists(e.file)) throw new Error(`not recorded: no such file ${e.file}`);
     const f = inventory.find((x) => x.family === e.family);
-    // which attempt this is: the number given, or one more than were counted. Putting the
-    // closest attempt back is no new attempt.
-    const attempt = options.attempts ?? (options.keep ? e.attempts : e.attempts + 1);
-    if (options.keep && attempt < ATTEMPTS)
-      throw new Error(
-        `not recorded: --keep is for the third attempt of a picture whose camera stays off; ${id} has had ${attempt} attempt${attempt === 1 ? '' : 's'} so far`,
-      );
-    check = disk.check(e.file, f.footprint, e.rot, { camera: !options.keep });
+    // which attempt this is: the number given, or one more than were counted
+    const attempt = options.attempts ?? e.attempts + 1;
+    check = disk.check(e.file, f.footprint, e.rot);
     if (!check.ok) {
       // not made, but tried: counted, so that a later session knows where the picture stands
       e.attempts = Math.max(e.attempts, attempt);
-      // with the camera waived, whatever fails the picture is something else
-      const camera = !options.keep && check.camera;
-      let what = `Make ${id} again, or record it as rejected.`;
-      if (camera && (check.problems.length > 1 || attempt < ATTEMPTS))
-        what = `Make ${id} again, adding to the prompt: "${check.camera.say}"`;
-      else if (camera)
-        what = `That was attempt ${attempt}. Put back the attempt whose camera was closest and record it with --keep: it is kept, and marked for the user.`;
-      throw Object.assign(new Error(`not recorded: ${check.problems.join('; ')}. ${what}`), {
-        refused: true,
-      });
-    }
-    if (options.keep && check.camera) {
-      const by = check.camera.by === null ? '' : ` by ${check.camera.by.toFixed(1)}°`;
-      kept = `kept with its camera off${by} after ${attempt} attempts`;
+      const refuse = (what) =>
+        Object.assign(new Error(`not recorded: ${check.problems.join('; ')}. ${what}`), {
+          refused: true,
+        });
+      if (!check.camera || check.problems.length > 1)
+        throw refuse(`Make ${id} again, or record it as rejected.`);
+      const again = 'run `node tools/building-queue.mjs next` again';
+      const earlier = earlierSelf(e, disk);
+      const closest = !earlier || closer(check.camera.by, earlier.by);
+      if (attempt < ATTEMPTS) {
+        if (closest) {
+          disk.setBefore(e.file);
+          e.repaint = { by: check.camera.by, was: check.camera.was };
+          throw refuse(
+            `It is kept as the picture's earlier self: ${again}, and it is handed out to be painted from that, straightened.`,
+          );
+        }
+        disk.shelve(e.file);
+        throw refuse(
+          `An earlier attempt was closer${degrees(earlier.by).replace(' by ', ' (')}${typeof earlier.by === 'number' ? ')' : ''} and stays what the picture is painted from: ${again}.`,
+        );
+      }
+      // the last attempt: the closest of them all is the picture
+      if (!closest) {
+        disk.shelve(e.file);
+        disk.restoreBefore(e.file);
+      }
+      check = disk.check(e.file, f.footprint, e.rot, { camera: false });
+      if (!check.ok) throw refuse(`Make ${id} again, or record it as rejected.`);
+      const by = check.camera?.by;
+      kept = {
+        by: typeof by === 'number' ? by : true,
+        note: `kept with its camera off${degrees(by)} after ${attempt} attempts${closest ? '' : ': an earlier one was the closest'}`,
+      };
     }
     options = { ...options, attempts: attempt };
   }
@@ -476,8 +528,8 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
     throw new Error(`${id} has not been made: only a picture that was made can be approved`);
   // a made picture taken back is a picture found faulty: its file goes aside like a rejected one
   const takenBack = status === 'pending' && isMade(e);
-  const entry = setStatus(queue, id, status, kept ? { ...options, note: kept } : options);
-  if (kept) entry.kept = true;
+  const entry = setStatus(queue, id, status, kept ? { ...options, note: kept.note } : options);
+  if (kept) entry.kept = kept.by;
   else if (status !== 'approved') delete entry.kept;
   // `repaint` stays when the picture is made: taken back (`pending`), it is painted again the
   // way it was, from its earlier self
@@ -492,7 +544,8 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
  * Look again at the pictures that are made, by the check as it is today. A picture whose camera
  * is off, and nothing else wrong with it, goes back in the queue to be painted again: its file is
  * kept beside it (`beforeFile`) and the generator is shown that, so it is the same building and
- * the pictures built on it stay. Left as they are, and named: a picture the user approved, one
+ * the pictures built on it stay. Where an earlier self of it was closer still, that one stays
+ * what it is painted from. Left as they are, and named: a picture the user approved, one
  * with another fault, and one whose file could not be moved. A picture kept as the closest of
  * its attempts is not asked for again. A gate family that has pictures put back is shown to the
  * user again: its gate is closed, and `gates` names it. `only` is one family.
@@ -517,8 +570,11 @@ export function recheck(queue, inventory, only = null, disk = DISK) {
       left.push({ id: e.id, why: camera ? `approved by the user; ${why}` : why });
       continue;
     }
+    const earlier = earlierSelf(e, disk);
+    const closest = !earlier || closer(check.camera.by, earlier.by);
     try {
-      disk.setBefore(e.file);
+      if (closest) disk.setBefore(e.file);
+      else disk.shelve(e.file);
     } catch (err) {
       // open in a viewer, say: the picture stays made, so the list and the disk agree
       left.push({
@@ -531,7 +587,7 @@ export function recheck(queue, inventory, only = null, disk = DISK) {
       status: 'pending',
       attempts: 0,
       note: '',
-      repaint: { by: check.camera.by, was: check.camera.was },
+      repaint: closest ? { by: check.camera.by, was: check.camera.was } : earlier,
     });
     back.push({ id: e.id, problem: check.problems[0] });
     families.add(e.family);
@@ -666,11 +722,17 @@ function printEntry(d, entry) {
   );
 }
 
+/** ", 5 kept with the camera off (2 by more than 3°)" */
+const keptWords = (r) =>
+  r.kept
+    ? `, ${r.kept} kept with the camera off${r.far ? ` (${r.far} by more than ${FIT.near}°)` : ''}`
+    : '';
+
 /** "20 of 24 made, 2 kept with the camera off, 1 rejected, 3 not made (built on a picture that failed)" */
 function tally(r) {
   return (
     `${r.made} of ${r.total} made` +
-    (r.kept ? `, ${r.kept} kept with the camera off` : '') +
+    keptWords(r) +
     (r.rejected ? `, ${r.rejected} rejected` : '') +
     (r.behind ? `, ${r.behind} not made (built on a picture that failed)` : '')
   );
@@ -743,7 +805,6 @@ function main(args) {
         r = settle(queue, inventory, rest[0], rest[1], {
           attempts: attempts === undefined ? undefined : Number(attempts),
           note: option('--note'),
-          keep: rest.includes('--keep'),
         });
       } catch (e) {
         // a picture that was refused was tried: the count is saved
@@ -819,7 +880,7 @@ function main(args) {
       for (const r of progress(queue, inventory, families))
         console.log(
           `${r.family.padEnd(16)} ${`${r.made}/${r.total}`.padStart(6)} made` +
-            (r.kept ? `, ${r.kept} kept with the camera off` : '') +
+            keptWords(r) +
             (r.repaint ? `, ${r.repaint} to paint again` : '') +
             (r.rejected ? `, ${r.rejected} rejected` : '') +
             (r.behind ? `, ${r.behind} not made (built on a picture that failed)` : ''),

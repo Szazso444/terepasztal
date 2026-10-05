@@ -230,10 +230,12 @@ describe('building fit', () => {
 
   it("says how far a picture's camera is from the game's", () => {
     const off = (map) => cameraOff(fitPicture(building('t1', 0, { map }), 't1', 0));
-    // the game's own camera, and one within three degrees of it: 0.5 x 0.93 = 0.465 is 27.7 degrees
-    expect(FIT.camera).toBe(3);
+    // the game's own camera, and one within two degrees of it: 0.5 x 0.96 = 0.48 is 28.7 degrees
+    expect(FIT.camera).toBe(2);
     expect(off((p) => p)).toMatchObject({ off: false });
-    expect(off(([x, y]) => [x, 832 + (y - 832) * 0.93])).toMatchObject({ off: false });
+    expect(off(([x, y]) => [x, 832 + (y - 832) * 0.96])).toMatchObject({ off: false });
+    // a picture kept as the closest of its attempts is near enough within three
+    expect(FIT.near).toBe(3);
     // a lower camera: 0.5 x 0.8 = 0.4 is 23.6 degrees, 6.4 below the game's
     const low = off(([x, y]) => [x, 832 + (y - 832) * 0.8]);
     expect(low).toMatchObject({ off: true, by: 6.4, elevation: -6.4 });
@@ -259,11 +261,11 @@ describe('building fit', () => {
       off: true,
       by: 6.4,
     });
-    // the limit itself is inside: three degrees is right, a tenth more is not
+    // the limit itself is inside: two degrees is right, a tenth more is not
     const at = (elevation, turn) =>
       cameraOff({ sure: [true, true], measured: [0.5, -0.5], camera: { elevation, turn } }).off;
-    expect([at(33, 0), at(27, 0), at(30, 3), at(30, -3)]).toEqual([false, false, false, false]);
-    expect([at(33.1, 0), at(26.9, 0), at(30, 3.1), at(30, -3.1)]).toEqual([true, true, true, true]);
+    expect([at(32, 0), at(28, 0), at(30, 2), at(30, -2)]).toEqual([false, false, false, false]);
+    expect([at(32.1, 0), at(27.9, 0), at(30, 2.1), at(30, -2.1)]).toEqual([true, true, true, true]);
     // one straight wall foot: no telling height from turn, but a foot no near camera draws is off
     expect(cameraOff({ sure: [true, false], measured: [0.5, -0.5], camera: null })).toEqual({
       off: false,

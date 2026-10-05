@@ -410,6 +410,7 @@ describe('working through the queue', () => {
       made: 23,
       approved: 1,
       kept: 0,
+      far: 0,
       rejected: 1,
       behind: 0,
       pending: 0,
@@ -472,12 +473,16 @@ describe('working through the queue', () => {
       files.delete(f);
       files.add(beforeFile(f));
     },
+    shelve: (f) => {
+      files.delete(f);
+      files.add(beforeFile(f).replace(/\.png$/, '.1.png'));
+    },
+    restoreBefore: (f) => files.add(f),
   });
   /** what the check says of a camera that is off: it fails, or passes with a note when waived */
-  const SAY = 'The camera is too low: look down more steeply.';
   const WAS = 'It was painted from too low a camera.';
   const LINE = 'camera off by 6.4°: it looks down from 23.6° where the game looks down from 30°';
-  const CAMERA = { by: 6.4, say: SAY, was: WAS };
+  const CAMERA = { by: 6.4, was: WAS };
   const KEPT = `${LINE}; kept, and corrected by the tools`;
   const cameraOff = (file, options) =>
     options?.camera === false
@@ -489,6 +494,55 @@ describe('working through the queue', () => {
       ? { ok: false, problems: ['touches the top edge'], notes: [KEPT], camera: CAMERA }
       : { ok: false, problems: ['touches the top edge', LINE], camera: CAMERA };
   const fine = { ok: true, problems: [] };
+  /**
+   * A disk in memory whose pictures have a camera: `shots` maps a file to how many degrees its
+   * camera is off. The check reads that, and the commands move the pictures about as on disk,
+   * a picture under a name that is taken being kept under a number.
+   */
+  const studio = (shots) => {
+    const numbered = (name) => {
+      let n = 1;
+      while (shots.has(name.replace(/\.png$/, `.${n}.png`))) n++;
+      return name.replace(/\.png$/, `.${n}.png`);
+    };
+    const move = (from, to) => {
+      shots.set(to, shots.get(from));
+      shots.delete(from);
+    };
+    const moveTo = (from, to) => {
+      if (shots.has(to)) move(to, numbered(to));
+      move(from, to);
+    };
+    return {
+      exists: onDisk(shots),
+      check: (file, footprint, rot, options) => {
+        const by = shots.get(file);
+        if (by <= 2) return fine;
+        const line = `camera off by ${by.toFixed(1)}°: it looks down from too low`;
+        return options?.camera === false
+          ? {
+              ok: true,
+              problems: [],
+              notes: [`${line}; kept, and corrected by the tools`],
+              camera: { by, was: WAS },
+            }
+          : { ok: false, problems: [line], camera: { by, was: WAS } };
+      },
+      setAside: (f) => moveTo(f, f.replace(/\.png$/, '.rejected.png')),
+      setBefore: (f) => moveTo(f, beforeFile(f)),
+      shelve: (f) => move(f, numbered(beforeFile(f))),
+      restoreBefore: (f) => shots.set(f, shots.get(beforeFile(f))),
+    };
+  };
+  /** save an attempt whose camera is `by` degrees off and try to record it: the result or the error */
+  const attempt = (queue, shots, by, options = {}) => {
+    shots.set(pictureFile('depot', 0, 0), by);
+    try {
+      return settle(queue, inv, 'depot-a0-r0', 'generated', options, studio(shots));
+    } catch (e) {
+      return e;
+    }
+  };
 
   it('records a picture as made only when its file is there and passes the check', () => {
     const queue = fresh();
@@ -512,142 +566,139 @@ describe('working through the queue', () => {
     );
   });
 
-  it('asks for a picture again when its camera is off, with the words to add to the prompt', () => {
+  it('keeps a picture refused for its camera as what the next attempt is painted from', () => {
     const queue = fresh();
-    const files = new Set([pictureFile('depot', 0, 0)]);
-    /** try to record the picture; the error, or null when it was recorded */
-    const refusal = (options = {}, verdict = cameraOff) => {
-      try {
-        settle(queue, inv, 'depot-a0-r0', 'generated', options, disk(files, verdict));
-      } catch (e) {
-        return e;
-      }
-      return null;
-    };
-    const first = refusal();
-    expect(first.message).toMatch(
-      /^not recorded: camera off by 6\.4°.*\. Make depot-a0-r0 again, adding to the prompt: "The camera is too low: look down more steeply\."$/,
-    );
-    // not made, but tried: the tool counts what it refuses, so the count outlasts a session
+    const file = pictureFile('depot', 0, 0);
+    const shots = new Map();
+    const first = attempt(queue, shots, 6.4);
     expect(first.refused).toBe(true);
-    expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 1 });
-    expect(refusal().message).toMatch(/Make depot-a0-r0 again, adding to the prompt/);
-    // the third attempt: time to keep the closest one
-    expect(refusal().message).toMatch(/That was attempt 3\..*--keep/);
-    expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 3 });
-    // a number given says which attempt this is
-    queue.entries[0].attempts = 0;
-    expect(refusal({ attempts: 3 }).message).toMatch(/That was attempt 3\./);
-    expect(queue.entries[0].attempts).toBe(3);
-    // a picture with another fault as well is simply made again
-    expect(refusal({ attempts: 3 }, twoFaults).message).toMatch(
-      /touches the top edge.*Make depot-a0-r0 again, adding to the prompt/,
+    expect(first.message).toMatch(
+      /^not recorded: camera off by 6\.4°.*\. It is kept as the picture's earlier self: run `node tools\/building-queue\.mjs next` again, and it is handed out to be painted from that, straightened\.$/,
     );
+    // not made, but tried: counted, and kept, so that nothing has to be copied or remembered
+    expect(queue.entries[0]).toMatchObject({
+      status: 'pending',
+      attempts: 1,
+      note: '',
+      repaint: { by: 6.4, was: WAS },
+    });
+    expect([...shots.keys()]).toEqual([beforeFile(file)]);
+    expect(next(queue, shots)).toMatchObject({ kind: 'picture', id: 'depot-a0-r0' });
+    const again = describeQueued(queue, 'depot-a0-r0', inv, fam, onDisk(shots));
+    expect(again.sources).toEqual([STYLE_BOARD, beforeFile(file)]);
+    expect(again.prompt.endsWith(`What was wrong with it: ${WAS}`)).toBe(true);
+    // a closer attempt takes its place as the earlier self; the first is kept under a number
+    expect(attempt(queue, shots, 4).message).toMatch(/camera off by 4\.0°.*kept as the picture's/);
+    expect(queue.entries[0]).toMatchObject({ attempts: 2, repaint: { by: 4 } });
+    expect(Object.fromEntries(shots)).toEqual({
+      [beforeFile(file)]: 4,
+      [beforeFile(file).replace(/\.png$/, '.1.png')]: 6.4,
+    });
     // a file that is not there was not tried
-    files.clear();
-    queue.entries[0].attempts = 0;
-    expect(refusal().refused).toBeUndefined();
-    expect(queue.entries[0].attempts).toBe(0);
+    shots.delete(file);
+    expect(() => settle(queue, inv, 'depot-a0-r0', 'generated', {}, studio(shots))).toThrow(
+      /no such file/,
+    );
+    expect(queue.entries[0].attempts).toBe(2);
   });
 
-  it('keeps the closest attempt of a picture whose camera stays off, and marks it', () => {
+  it('paints on from the closest attempt, not from a later one that was worse', () => {
     const queue = fresh();
-    const files = new Set([pictureFile('depot', 0, 0)]);
-    // not before the third attempt
-    expect(() =>
-      settle(
-        queue,
-        inv,
-        'depot-a0-r0',
-        'generated',
-        { attempts: 2, keep: true },
-        disk(files, cameraOff),
-      ),
-    ).toThrow(/third attempt/);
-    const r = settle(
-      queue,
-      inv,
-      'depot-a0-r0',
-      'generated',
-      { attempts: 3, keep: true },
-      disk(files, cameraOff),
+    const file = pictureFile('depot', 0, 0);
+    const shots = new Map();
+    attempt(queue, shots, 3.5);
+    const worse = attempt(queue, shots, 6.4);
+    expect(worse.message).toMatch(
+      /^not recorded: camera off by 6\.4°.*\. An earlier attempt was closer \(3\.5°\) and stays what the picture is painted from: run `node tools\/building-queue\.mjs next` again\.$/,
     );
+    expect(queue.entries[0]).toMatchObject({ attempts: 2, repaint: { by: 3.5 } });
+    expect(shots.get(beforeFile(file))).toBe(3.5);
+    expect(shots.get(beforeFile(file).replace(/\.png$/, '.1.png'))).toBe(6.4);
+  });
+
+  it('keeps the closest of three attempts by itself, and marks the picture', () => {
+    const file = pictureFile('depot', 0, 0);
+    // the third attempt is the closest: it stays
+    const queue = fresh();
+    const shots = new Map();
+    expect(attempt(queue, shots, 6.4).refused).toBe(true);
+    expect(attempt(queue, shots, 5).refused).toBe(true);
+    const r = attempt(queue, shots, 3.4);
     expect(r.entry).toMatchObject({
       status: 'generated',
       attempts: 3,
-      kept: true,
-      note: 'kept with its camera off by 6.4° after 3 attempts',
+      kept: 3.4,
+      note: 'kept with its camera off by 3.4° after 3 attempts',
     });
-    expect(r.check.notes[0]).toMatch(/kept, and corrected by the tools$/);
+    expect(shots.get(file)).toBe(3.4);
+    expect(r.check.notes[0]).toMatch(/camera off by 3\.4°.*kept, and corrected by the tools$/);
     // a kept picture is a made one: the work goes on from it
-    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r1' });
-    expect(progress(queue, inv, fam, onDisk(files))[0]).toMatchObject({ made: 1, kept: 1 });
-    // --keep is no way round another fault
-    files.add(pictureFile('depot', 0, 1));
-    const bad = { ok: false, problems: ['background is not transparent'] };
-    expect(() =>
-      settle(queue, inv, 'depot-a0-r1', 'generated', { attempts: 3, keep: true }, disk(files, bad)),
-    ).toThrow(/background is not transparent/);
-    // nor is the other fault called a camera: what is left when the camera is waived is said plainly
-    expect(() =>
-      settle(
-        queue,
-        inv,
-        'depot-a0-r1',
-        'generated',
-        { attempts: 3, keep: true },
-        disk(files, twoFaults),
-      ),
-    ).toThrow(
-      /^not recorded: touches the top edge\. Make depot-a0-r1 again, or record it as rejected\.$/,
-    );
-    queue.entries[1].attempts = 0;
-    // a picture whose camera is right is recorded as any other
-    const right = settle(
-      queue,
-      inv,
-      'depot-a0-r1',
-      'generated',
-      { attempts: 3, keep: true },
-      disk(files),
-    );
-    expect(right.entry.kept).toBeUndefined();
-    expect(right.entry.note).toBe('');
-    // made again and right this time: no longer marked
-    settle(queue, inv, 'depot-a0-r0', 'generated', { attempts: 4 }, disk(files));
-    expect(queue.entries[0].kept).toBeUndefined();
-    expect(queue.entries[0].note).toBe('');
-  });
+    expect(next(queue, shots)).toMatchObject({ kind: 'picture', id: 'depot-a0-r1' });
+    // further than three degrees off, it is held against its family
+    expect(progress(queue, inv, fam, onDisk(shots))[0]).toMatchObject({ made: 1, kept: 1, far: 1 });
 
-  it('keeps the closest attempt by its own count of the attempts it refused', () => {
-    const queue = fresh();
-    const files = new Set([pictureFile('depot', 0, 0)]);
-    const record = (options) =>
-      settle(queue, inv, 'depot-a0-r0', 'generated', options, disk(files, cameraOff));
-    // too early, whoever counts
-    expect(() => record({ keep: true })).toThrow(/third attempt.*0 attempts so far/);
-    for (let n = 0; n < 3; n++) expect(() => record({})).toThrow(/not recorded/);
-    // putting the closest attempt back is no new attempt
-    const r = record({ keep: true });
-    expect(r.entry).toMatchObject({
+    // an earlier attempt was the closest: that one becomes the picture
+    const other = fresh();
+    const taken = new Map();
+    attempt(other, taken, 6.4);
+    attempt(other, taken, 2.4);
+    const e = attempt(other, taken, 5);
+    expect(e.entry).toMatchObject({
       status: 'generated',
       attempts: 3,
-      kept: true,
-      note: 'kept with its camera off by 6.4° after 3 attempts',
+      kept: 2.4,
+      note: 'kept with its camera off by 2.4° after 3 attempts: an earlier one was the closest',
     });
+    expect(taken.get(file)).toBe(2.4);
+    expect(e.check.notes[0]).toMatch(/camera off by 2\.4°/);
+    // nothing painted is lost: the other two attempts are still there
+    expect([...taken.values()].sort()).toEqual([2.4, 2.4, 5, 6.4]);
+    // within three degrees it is near enough: kept, but not held against its family
+    expect(progress(other, inv, fam, onDisk(taken))[0]).toMatchObject({ made: 1, kept: 1, far: 0 });
+
+    // right at the second attempt: made like any other picture
+    const third = fresh();
+    const good = new Map();
+    attempt(third, good, 6.4);
+    const made2 = attempt(third, good, 1.2);
+    expect(made2.entry).toMatchObject({ status: 'generated', attempts: 2, note: '' });
+    expect(made2.entry.kept).toBeUndefined();
+    // a number given says which attempt this is
+    const fourth = fresh();
+    expect(attempt(fourth, new Map(), 6.4, { attempts: 3 }).entry).toMatchObject({
+      status: 'generated',
+      attempts: 3,
+      kept: 6.4,
+    });
+  });
+
+  it('asks for a picture with another fault to be made again, however often', () => {
+    const queue = fresh();
+    const files = new Set([pictureFile('depot', 0, 0)]);
+    // a camera that is off and the top edge touched: no earlier self is made of such a picture
+    for (const attempts of [1, 3]) {
+      expect(() =>
+        settle(queue, inv, 'depot-a0-r0', 'generated', { attempts }, disk(files, twoFaults)),
+      ).toThrow(
+        /^not recorded: touches the top edge; camera off by 6\.4°.*\. Make depot-a0-r0 again, or record it as rejected\.$/,
+      );
+      expect(files.has(pictureFile('depot', 0, 0))).toBe(true);
+      expect(queue.entries[0].repaint).toBeUndefined();
+    }
+    expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 3 });
   });
 
   it('leaves a kept picture marked when the user approves it, not when it is given up', () => {
     const queue = fresh();
-    const files = new Set([pictureFile('depot', 0, 0)]);
-    const d = disk(files, cameraOff);
-    settle(queue, inv, 'depot-a0-r0', 'generated', { attempts: 3, keep: true }, d);
+    const shots = new Map();
+    attempt(queue, shots, 6.4, { attempts: 3 });
+    const d = studio(shots);
     settle(queue, inv, 'depot-a0-r0', 'approved', {}, d);
-    expect(queue.entries[0]).toMatchObject({ status: 'approved', kept: true });
+    expect(queue.entries[0]).toMatchObject({ status: 'approved', kept: 6.4 });
     settle(queue, inv, 'depot-a0-r0', 'rejected', { attempts: 3, note: 'too far off' }, d);
     expect(queue.entries[0]).toMatchObject({ status: 'rejected', note: 'too far off' });
     expect(queue.entries[0].kept).toBeUndefined();
-    expect(files.has(pictureFile('depot', 0, 0))).toBe(false);
+    expect(shots.has(pictureFile('depot', 0, 0))).toBe(false);
   });
 
   it('puts the made pictures whose camera is off back, to be painted again as the same building', () => {
@@ -847,6 +898,15 @@ describe('working through the queue', () => {
     // the user takes the family as it is: on to the next
     accept(queue, third);
     expect(next(queue, files).kind).toBe('picture');
+    // kept within three degrees is near enough: a whole family of those does not stop the work
+    const near = fresh(true);
+    const all = made(near, ['depot', 'station', third]);
+    for (const e of near.entries.filter((x) => x.family === third)) e.kept = 2.6;
+    expect(next(near, all).kind).toBe('picture');
+    expect(progress(near, inv, fam, onDisk(all)).find((r) => r.family === third)).toMatchObject({
+      kept: mine.length,
+      far: 0,
+    });
   });
 
   it('makes a picture afresh when its earlier self is gone', () => {
@@ -1086,24 +1146,30 @@ describe('the queue tool on the command line', () => {
     expect(no.code).toBe(1);
     expect(no.out).toMatch(/not recorded: camera off by 6\.\d°: it looks down from 23\.\d°/);
     expect(no.out).toMatch(
-      /adding to the prompt: "Both wall feet run too flat\. The camera is too low, /,
+      /kept as the picture's earlier self: run `node tools\/building-queue\.mjs next` again/,
     );
-    // the tool counts the attempts it refuses: no number need be given, and none is lost
-    expect(run(root, 'set', 'depot-a0-r0', 'generated', '--keep').out).toMatch(
-      /--keep is for the third attempt.*1 attempt so far/,
+    // the refused attempt is what the next one is painted from: the tool has moved it itself
+    expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(false);
+    expect(existsSync(at(beforeFile(pictureFile('depot', 0, 0))))).toBe(true);
+    const second = run(root, 'next');
+    expect(second.out).toMatch(/^picture: +depot-a0-r0 \(to paint again: the same building\)$/m);
+    expect(second.out).toMatch(/^attempts so far: 1$/m);
+    expect(second.out).toMatch(
+      /^ +2\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r0\.before\.png$/m,
     );
-    expect(run(root, 'set', 'depot-a0-r0', 'generated').out).toMatch(/Make depot-a0-r0 again/);
-    const third = run(root, 'set', 'depot-a0-r0', 'generated');
-    expect(third.code).toBe(1);
-    expect(third.out).toMatch(/That was attempt 3\..*--keep/);
-    const kept = run(root, 'set', 'depot-a0-r0', 'generated', '--keep');
+    // the same camera twice more: the tool counts, and keeps the closest of the three itself
+    paint(root, 'depot-a0-r0', low);
+    expect(run(root, 'set', 'depot-a0-r0', 'generated').code).toBe(1);
+    paint(root, 'depot-a0-r0', low);
+    const kept = run(root, 'set', 'depot-a0-r0', 'generated');
     expect(kept.code).toBe(0);
     expect(kept.out).toMatch(
       /^ok +depot-a0-r0 +\(camera off by 6\.\d°.*kept, and corrected by the tools\)$/m,
     );
     expect(kept.out).toMatch(
-      /depot-a0-r0: generated, 3 attempts \(kept with its camera off by 6\.\d° after 3 attempts\)/,
+      /depot-a0-r0: generated, 3 attempts \(kept with its camera off by 6\.\d° after 3 attempts/,
     );
+    expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(true);
     expect(run(root, 'status').out).toMatch(/depot +1\/24 made, 1 kept with the camera off/);
     // the check of a family knows a kept picture: it passes, with its camera named
     const family = (() => {
@@ -1142,7 +1208,9 @@ describe('the queue tool on the command line', () => {
     expect(report.pictures['depot-a0-r1'].ok).toBe(false);
     expect(report.pictures['depot-a0-r0'].ok).toBe(true);
     const status = run(root, 'status');
-    expect(status.out).toMatch(/depot +1\/24 made, 1 kept with the camera off, 1 to paint again/);
+    expect(status.out).toMatch(
+      /depot +1\/24 made, 1 kept with the camera off \(1 by more than 3°\), 1 to paint again/,
+    );
     expect(status.out).not.toMatch(/mismatch/);
     // it is handed out with its earlier self, straightened, and with what was wrong with it
     const next = run(root, 'next');
