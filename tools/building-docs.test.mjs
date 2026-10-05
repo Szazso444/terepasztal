@@ -123,6 +123,22 @@ describe('the guide for the artist agent', () => {
     // the file the image tool reported is the surest; the tool does not guess between chats
     expect(guide).toContain('take <id> --from <file>');
     expect(guide).toMatch(/more than one chat's folder/);
+    expect(prompt).toContain('take <id> --from <file>');
+    // every answer `take` gives is named in the guide, and a picture is made one at a time
+    for (const answer of [
+      'no new picture: this is the one that was taken before',
+      'was made before the last picture that was taken or recorded',
+      "another chat's folder",
+      'was refused by set',
+    ])
+      expect(guide, answer).toContain(answer);
+    expect(guide).toMatch(/one picture at a time/);
+    expect(guide).toMatch(/15 minutes/);
+    // what the tool keeps of a picture is had back by its name
+    expect(guide).toMatch(/is had back by\s+naming that file/);
+    // a rejection takes no count from the agent
+    expect(guide).not.toMatch(/rejected --attempts/);
+    expect(guide).not.toMatch(/where a copy takes one/);
     expect(guide).not.toMatch(/follows your chat/);
     expect(production).not.toMatch(/follows the chat/);
     // the count is the tool's: the plain form everywhere, a number only for what it never saw

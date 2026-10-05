@@ -67,9 +67,9 @@ the checkout, and the way of working is in the guide and in what `next` prints.
 2. A picture the earlier session made but did not record shows in `status` as
    `on disk, but not recorded`. The new session looks at it and records it, or makes it again.
 3. A gate holds across sessions: the new session stops at `GATE` like the old one.
-4. Nothing about the image tool's folders has to be told. The new chat's pictures are newer
-   than the mark in the list, and what the old chat left behind is older, or too old to be taken
-   for a picture just made.
+4. Nothing about the image tool's folders has to be told. The new chat names the file its
+   image tool reports; its pictures are newer than the mark in the list, and what the old chat
+   left behind is older, or too old to be taken for a picture just made.
 
 On another machine the branch has to be pushed first. The earlier selves of pictures that wait to
 be painted again (`*.before.png`) are not committed, so there those pictures are made afresh.
@@ -97,11 +97,14 @@ and shows it in a running build, as drawn or straightened.
   the work (`STOP`).
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
   them on the other side, and in the game the rails would run into a wall.
-- Which picture is taken: `take` takes only a picture made after the last one was taken or
-  recorded (one mark in time in `queue.json`, moved forward only), and never one whose bytes are
-  in the list's folders already. So a generation that failed does not hand an earlier picture to
-  the next entry, whether the file is named or found. It does not guess between chats: where new
-  pictures lie in more than one chat's folder it names them and takes none.
+- Which picture is taken: the agent names the file its image tool reported. `take` takes only a
+  picture made after the last one was taken, recorded or given up (one mark in time in
+  `queue.json`, moved forward only), and no picture of the image tool whose bytes are in the
+  list's folders already. So a generation that failed does not hand an earlier picture to the
+  next entry, whether the file is named or found. It does not guess between chats: a picture it
+  finds itself is taken only from the chat the last one came from, and where new pictures lie in
+  another chat's folder or in more than one it names them and takes none. What the tool keeps
+  of an entry (`<name>.before.png`, `<name>.rejected.png`) is had back by naming that file.
 - The count of attempts is the tool's: a picture taken and given up counts, the same picture
   refused twice counts once, a number the agent gives can raise the count but not lower it, and
   a picture taken back starts again with three.

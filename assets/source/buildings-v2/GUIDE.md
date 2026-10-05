@@ -149,27 +149,33 @@ first, then its three other views, then the next age. Each picture is built on o
    prompt's last paragraph says what each of the others is for.
 3. Paste the prompt exactly as printed.
 4. Ask for the size `next` printed and a transparent background.
-5. Take the result: `node tools/building-queue.mjs take <id>`. Do not save the picture yourself.
-   Your image tool has written it to a file of its own (Codex keeps them in
+5. Take the result: `node tools/building-queue.mjs take <id> --from <file>`, naming the file your
+   image tool reported. Do not save the picture yourself. (Codex keeps its pictures in
    `$CODEX_HOME/generated_images/`, which is `~/.codex/generated_images/` when that is not set,
-   a folder for each chat). Where your image tool tells you the file it wrote, name it:
-   `take <id> --from <file>` is the surest way. Without `--from` the tool looks for the one
-   picture made since the last one was taken or recorded. Either way it writes the picture to the
-   picture's file exactly as it is, and writes the picture for you to look at (section 6).
+   a folder for each chat.) Without `--from` the tool looks there itself for the one picture
+   made in the last 15 minutes, since the last one was taken or recorded, in the chat the last
+   one came from. Either way it writes the picture to the picture's file exactly as it is, and
+   writes the picture for you to look at (section 6).
    - `nothing new was made`, or `was made before the last picture that was taken or recorded`:
      the generation failed, or you have not made the picture yet, or you named an earlier file.
-     Nothing is taken; make the picture. A picture is taken once: one you gave up is not had back
-     by naming it.
-   - `more than one chat's folder`: other chats are making pictures as well, and the tool does
-     not guess which is yours. Name the file your image tool reported.
+     Nothing is taken; make the picture. A picture of the image tool is taken once: one you gave
+     up is not had back by naming it.
+   - `no new picture: this is the one that was taken before`: you asked again without making a
+     picture, and it shows you the one in hand.
+   - `more than one chat's folder`, or `another chat's folder`: other chats are making pictures
+     as well, or you have taken the work over from another chat. The tool does not guess: name
+     the file your image tool reported.
    - `was refused by set`: the picture that lies there failed the check. Make it again.
+   - What the tool keeps of a picture (`<name>.before.png`, `<name>.rejected.png`) is had back by
+     naming that file with `--from`.
    - If your image tool keeps its pictures somewhere else, name that folder with `--from`.
 
    Look at what `take` shows you. If it is not the picture you asked for, your generation failed:
-   make the picture, and take again.
+   make the picture, and take again. Make one picture at a time: a picture made before the one in
+   hand was recorded is not taken afterwards.
 
    Never pass a picture through the shell as text (base64, in pieces): that takes a hundred
-   commands where a copy takes one.
+   commands where `take` needs one.
 
 **A picture to paint again.** Its second reference is the picture as it was, laid onto its
 footprint and straightened to the guide's camera, and the prompt's last lines say what was wrong
@@ -254,13 +260,13 @@ from that, straightened.
 
 The tool counts the attempts it refused and the pictures you took and gave up after looking, so
 the count is not lost when a session ends. `--attempts <n>` on `set` is only for attempts the
-tool never saw: it can raise the count, never lower it. A picture with any other fault is made
-again as before, and rejected after three attempts:
+tool never saw: it can raise the count, never lower it.
 
-After three attempts, record the picture with
-`node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go
-on. The tool sets the file aside as `<name>.rejected.png`. Nothing is ever built on a picture that
-failed: `next` skips the pictures that would have been, and says how many cannot be made.
+A picture with any other fault is made again as before. After three attempts, when none of them
+was right (see below), record the picture with
+`node tools/building-queue.mjs set <id> rejected --note "<what went wrong>"`, and go on. The tool
+sets the file aside as `<name>.rejected.png`. Nothing is ever built on a picture that failed:
+`next` skips the pictures that would have been, and says how many cannot be made.
 
 **Before you give a picture up.** If one of its attempts was right and was refused only for its
 camera, the tool still holds the closest such attempt as `<name>.before.png` (look at it with

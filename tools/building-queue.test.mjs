@@ -790,6 +790,40 @@ describe('working through the queue', () => {
     expect(again.entry).toMatchObject({ status: 'pending', attempts: 0, repaint: { by: 6.4 } });
   });
 
+  it('moves the mark on when a picture is given up, and counts no attempt twice', () => {
+    const file = pictureFile('depot', 0, 0);
+    const at = new Date('2031-01-01T12:00:00Z').getTime();
+    // refused for its camera, so kept aside, and then given up: nothing lies there to count
+    const queue = fresh();
+    const shots = new Map();
+    attempt(queue, shots, 6.4);
+    settle(queue, inv, 'depot-a0-r0', 'rejected', { note: 'x', now: at }, studio(shots));
+    expect(queue.entries[0]).toMatchObject({ status: 'rejected', attempts: 1 });
+    // what was made before it was given up is new no longer
+    expect(queue.mark).toBe(at);
+    // a picture in hand that is given up was an attempt
+    const other = fresh();
+    other.entries[0].taken = true;
+    const door = { note: 'a door on the back wall' };
+    settle(other, inv, 'depot-a0-r0', 'rejected', door, studio(new Map([[file, 0]])));
+    expect(other.entries[0]).toMatchObject({ status: 'rejected', attempts: 1 });
+    expect(other.entries[0].taken).toBeUndefined();
+    // refused where it lay, and then given up: counted once
+    const third = fresh();
+    const edge = {
+      ...studio(new Map([[file, 1]])),
+      check: () => ({ ok: false, problems: ['touches the top edge'] }),
+    };
+    expect(() => settle(third, inv, 'depot-a0-r0', 'generated', {}, edge)).toThrow(/not recorded/);
+    settle(third, inv, 'depot-a0-r0', 'rejected', { note: 'the edge' }, edge);
+    expect(third.entries[0]).toMatchObject({ status: 'rejected', attempts: 1 });
+    // said to be pending while a picture is in hand, the picture stays in hand
+    const fourth = fresh();
+    fourth.entries[0].taken = true;
+    settle(fourth, inv, 'depot-a0-r0', 'pending', {}, studio(new Map([[file, 0]])));
+    expect(fourth.entries[0].taken).toBe(true);
+  });
+
   it('knows a picture in hand until it is settled, and across a rebuild of the list', () => {
     const queue = fresh();
     queue.entries[0].taken = true;
@@ -874,6 +908,18 @@ describe('working through the queue', () => {
       kept: 2.5,
     });
     expect(lost.get(file)).toBe(2.5);
+
+    // given up below the third attempt, it is kept all the same: nothing else leads on from there
+    const low = fresh();
+    const few = new Map();
+    attempt(low, few, 2.5);
+    settle(low, inv, 'depot-a0-r0', 'rejected', { note: 'gave up early' }, studio(few));
+    expect(keepEarlier(low, inv, 'depot-a0-r0', {}, studio(few)).entry).toMatchObject({
+      status: 'generated',
+      attempts: 1,
+      kept: 2.5,
+      note: 'kept with its camera off by 2.5° after 1 attempt: the closest the tool held',
+    });
 
     // not before the third attempt: it is made again first
     const early = fresh();
@@ -1063,6 +1109,11 @@ describe('working through the queue', () => {
     // a picture the tool took for an entry that waits to be painted again is in hand, not stray
     shots.set(other, 1.5);
     queue.entries[2].taken = true;
+    expect(recheck(queue, inv, null, d).strays).toEqual([]);
+    expect(shots.get(other)).toBe(1.5);
+    // nor is a picture that `set` refused where it lies
+    delete queue.entries[2].taken;
+    queue.entries[2].refused = '1.5';
     expect(recheck(queue, inv, null, d).strays).toEqual([]);
     expect(shots.get(other)).toBe(1.5);
   });
@@ -1712,7 +1763,7 @@ describe('the queue tool on the command line', () => {
     expect(head).not.toMatch(/save as/);
     // how a picture is taken is said after how it is made
     expect(head).toMatch(
-      /----- end of prompt -----\n\nwhen the picture is made: node tools\/building-queue\.mjs take depot-a0-r0\n/,
+      /----- end of prompt -----\n\nwhen the picture is made: node tools\/building-queue\.mjs take depot-a0-r0 --from <the file your image tool reported>\n/,
     );
     // nothing made yet
     mkdirSync(from);
@@ -1748,7 +1799,7 @@ describe('the queue tool on the command line', () => {
     // asked again with nothing new made, it shows the same picture and says so
     const twice = run(root, 'take', 'depot-a0-r0', '--from', from);
     expect(twice.code).toBe(0);
-    expect(twice.out).toMatch(/^nothing new was made: this is the picture that was taken before$/m);
+    expect(twice.out).toMatch(/^no new picture: this is the one that was taken before$/m);
     expect(twice.out).toMatch(
       /^look at: +assets\/source\/buildings-v2\/\.look\/depot-a0-r0\.png$/m,
     );
@@ -1813,10 +1864,16 @@ describe('the queue tool on the command line', () => {
     // what the tool keeps of this picture can be had back by its own name, and that is no attempt
     expect(run(root, 'take', 'depot-a0-r2', '--from', at(beforeFile(r2))).code).toBe(0);
     expect(readFileSync(at(r2)).equals(readFileSync(low))).toBe(true);
-    const same = run(root, 'take', 'depot-a0-r2', '--from', at(beforeFile(r2)));
+    const same = run(root, 'take', 'depot-a0-r2', '--from', beforeFile(r2));
     expect(same.code).toBe(0);
-    expect(same.out).toMatch(/^nothing new was made: this is the picture that was taken before$/m);
+    expect(same.out).toMatch(/^no new picture: this is the one that was taken before$/m);
     expect(run(root, 'show', 'depot-a0-r2').out).toMatch(/^attempts so far: 1$/m);
+    // a picture had back is no new attempt: one made after it takes its place uncounted
+    const newer = made('chat', { id: 'depot-a0-r2' });
+    const place = run(root, 'take', 'depot-a0-r2', '--from', newer);
+    expect(place.code).toBe(0);
+    expect(place.out).toMatch(/^replaced: +the picture that lay there, which was not recorded$/m);
+    expect(place.out).not.toMatch(/counted as an attempt/);
     // what cannot be read as a picture, or shows no building, is not taken
     const bad = join(from, 'chat', 'exec-bad.png');
     writeFileSync(bad, '');
@@ -1828,7 +1885,7 @@ describe('the queue tool on the command line', () => {
     const empty = run(root, 'take', 'depot-a0-r2', '--from', blank);
     expect(empty.code).toBe(1);
     expect(empty.out).toMatch(/there is no building in .*exec-blank\.png/);
-    expect(readFileSync(at(r2)).equals(readFileSync(low))).toBe(true);
+    expect(readFileSync(at(r2)).equals(readFileSync(newer))).toBe(true);
 
     // refused by `set` for another fault, a picture stays under its name: asked for again with
     // nothing new made, it is not sent to `set` once more, and it is not counted twice
@@ -1910,28 +1967,90 @@ describe('the queue tool on the command line', () => {
     expect(told.code).toBe(0);
     expect(told.out).toMatch(/^took: +.*chat-a.exec-2\.png/m);
     expect(run(root, 'set', 'depot-a0-r1', 'generated').code).toBe(0);
-    // the work goes on in a new chat, and the old one left a picture it never took, long ago:
-    // the new chat's picture is found, the leftover is passed over
+    // our generation fails while another chat goes on: its picture is the only new one, and it
+    // is not taken for ours
+    made('chat-b');
+    const lone = run(root, 'take', 'depot-a0-r2');
+    expect(lone.code).toBe(1);
+    expect(lone.out).toMatch(/another chat's folder than the last picture that was taken/);
+    expect(lone.out).toMatch(/chat-b.exec-4\.png/);
+    expect(lone.out).toMatch(/--from <the file your image tool reported>/);
+    expect(lone.out).not.toMatch(/--from ".*chat-b/);
+    expect(existsSync(join(root, pictureFile('depot', 0, 2)))).toBe(false);
+    // the work goes on in a new chat, and the old one left a picture it never took, long ago.
+    // The leftover is passed over; the new chat's picture is named once, and found from then on
     const long = new Date(Date.now() - 3 * 3600 * 1000);
     for (const [chat, n] of [
       ['chat-a', 1],
       ['chat-a', 2],
       ['chat-b', 3],
+      ['chat-b', 4],
     ])
       utimesSync(join(base, chat, `exec-${n}.png`), long, long);
     const queue = JSON.parse(readFileSync(file, 'utf8'));
     queue.mark = Date.now() - 2 * 3600 * 1000;
     writeFileSync(file, JSON.stringify(queue, null, 2) + '\n');
     made('chat-a', { id: 'depot-a0-r2', old: true });
-    made('chat-c', { id: 'depot-a0-r2' });
-    const moved = run(root, 'take', 'depot-a0-r2');
+    const mine = made('chat-c', { id: 'depot-a0-r2' });
+    const over = run(root, 'take', 'depot-a0-r2');
+    expect(over.code).toBe(1);
+    expect(over.out).toMatch(/another chat's folder than the last picture that was taken/);
+    expect(over.out).toMatch(/chat-c.exec-6\.png/);
+    expect(over.out).not.toMatch(/exec-5\.png/);
+    const moved = run(root, 'take', 'depot-a0-r2', '--from', mine);
     expect(moved.code).toBe(0);
-    expect(moved.out).toMatch(/^took: +.*chat-c.exec-5\.png/m);
-    // a picture dated in the future does not hold the mark there
+    expect(moved.out).toMatch(/^took: +.*chat-c.exec-6\.png/m);
+    expect(JSON.parse(readFileSync(file, 'utf8')).chat).toBe('chat-c');
+    // a picture dated in the future does not hold the mark there, nor hide the next one
     const ahead = made('chat-c', { id: 'depot-a0-r2' });
     const soon = new Date(Date.now() + 3600 * 1000);
     utimesSync(ahead, soon, soon);
-    expect(run(root, 'take', 'depot-a0-r2').code).toBe(0);
+    expect(run(root, 'take', 'depot-a0-r2').out).toMatch(/^took: +.*chat-c.exec-7\.png/m);
     expect(JSON.parse(readFileSync(file, 'utf8')).mark).toBeLessThanOrEqual(Date.now());
+    made('chat-c', { id: 'depot-a0-r2' });
+    expect(run(root, 'take', 'depot-a0-r2').out).toMatch(/^took: +.*chat-c.exec-8\.png/m);
   }, 120000);
+
+  it('starts from the pictures saved by hand in a list that has no mark yet', () => {
+    // as the work stood before `take`: pictures copied by hand, the list written by an older tool
+    const root = sandbox();
+    run(root);
+    const base = join(root, 'codex', 'generated_images');
+    const made = imageTool(root, base);
+    const file = join(root, 'assets/source/buildings-v2/queue.json');
+    const one = made('chat-a');
+    const r0 = join(root, pictureFile('depot', 0, 0));
+    mkdirSync(dirname(r0), { recursive: true });
+    cpSync(one, r0);
+    const queue = JSON.parse(readFileSync(file, 'utf8'));
+    Object.assign(queue.entries[0], { status: 'generated', attempts: 1 });
+    expect(queue.mark).toBeUndefined();
+    writeFileSync(file, JSON.stringify(queue, null, 2) + '\n');
+    // the next picture's generation fails: the one saved by hand is not taken for it
+    const none = run(root, 'take', 'depot-a0-r1');
+    expect(none.code).toBe(1);
+    expect(none.out).toMatch(
+      /nothing new was made: the newest picture there, .*exec-1\.png, is depot-a0-r0's/,
+    );
+    expect(run(root, 'take', 'depot-a0-r1', '--from', one).out).toMatch(
+      /exec-1\.png is depot-a0-r0's picture/,
+    );
+    // the next one made is taken, and the list has its mark and its chat from then on
+    const two = made('chat-a', { id: 'depot-a0-r1' });
+    expect(run(root, 'take', 'depot-a0-r1', '--from', two).code).toBe(0);
+    const list = JSON.parse(readFileSync(file, 'utf8'));
+    expect(list.mark).toBe(statSync(two).mtimeMs);
+    expect(list.chat).toBe('chat-a');
+
+    // pictures of an age that is no longer in the list are named when the list is rebuilt
+    list.entries.push({ id: 'kiln-a3-r0', family: 'kiln', status: 'generated', attempts: 1 });
+    list.entries.push({ id: 'kiln-a3-r1', family: 'kiln', status: 'pending', attempts: 0 });
+    writeFileSync(file, JSON.stringify(list, null, 2) + '\n');
+    const rebuilt = run(root);
+    expect(rebuilt.out).toMatch(/548 pictures, 27 families/);
+    expect(rebuilt.out).toMatch(
+      /2 pictures of the earlier list are no longer in it \(kiln-a3-r0, kiln-a3-r1\); 1 of them was made, and its file stays on disk/,
+    );
+    expect(run(root).out).not.toMatch(/no longer in it/);
+  }, 60000);
 });

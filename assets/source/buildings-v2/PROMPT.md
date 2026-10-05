@@ -17,10 +17,11 @@ then git merge origin/buildings/art-package, then run `node tools/building-queue
    `node tools/building-queue.mjs next` for the next picture. It prints the picture's file, the
    guide image to edit, the references to attach, the prompt to use and the command that takes
    the finished picture.
-3. Make the picture with your image generation tool as an edit of the guide image. Do not save it
-   yourself: take it with `node tools/building-queue.mjs take <id>`, which writes the picture
-   your image tool made to the picture's file, exactly as it is, and lays it on grass for you to
-   look at. Look at it against the guide's checklist, then record it with
+3. Make the picture with your image generation tool as an edit of the guide image, one picture at
+   a time. Do not save it yourself: take it with
+   `node tools/building-queue.mjs take <id> --from <file>`, naming the file your image tool
+   reported. That writes the picture to the picture's file, exactly as it is, and lays it on
+   grass for you to look at. Look at it against the guide's checklist, then record it with
    `node tools/building-queue.mjs set <id> generated`. The tool checks the picture and refuses
    one that fails, saying why. When it refuses a picture for its camera it keeps the attempt
    itself: run `next` again and paint the picture from what it hands out.
