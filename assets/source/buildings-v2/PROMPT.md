@@ -1,6 +1,7 @@
 # The prompt for the artist agent
 
-Paste the block below into a fresh agent session opened on this repository.
+Paste the block below into a fresh agent session opened on this repository. The same block starts
+the work and takes it over from an earlier session: the list knows how far the work has got.
 
 ```text
 You are painting the building pictures of this game. Work on your own, in the branch
@@ -15,11 +16,13 @@ then git merge origin/buildings/art-package, then run `node tools/building-queue
 2. Run `node tools/building-queue.mjs status` to see how far the work has got, then
    `node tools/building-queue.mjs next` for the next picture. It prints the file to save, the
    guide image to edit, the references to attach and the prompt to use.
-3. Make the picture with your image generation tool as an edit of the guide image and save it
-   exactly as the tool returned it. Look at it against the guide's checklist, then record it with
-   `node tools/building-queue.mjs set <id> generated --attempts <n>`. The tool checks the picture
-   and refuses one that fails, saying why. When it refuses a picture for its camera it keeps
-   the attempt itself: run `next` again and paint the picture from what it hands out.
+3. Make the picture with your image generation tool as an edit of the guide image. Take it with
+   `node tools/building-queue.mjs take <id>`: that copies the file your image tool wrote, exactly
+   as it is, and lays the picture on grass for you to look at. Look at it against the guide's
+   checklist, then record it with `node tools/building-queue.mjs set <id> generated`. The tool
+   checks the picture and refuses one that fails, saying why. When it refuses a picture for its
+   camera it keeps the attempt itself: run `next` again and paint the picture from what it hands
+   out.
 4. Repeat. Give a picture up to three attempts; after that record it as rejected with a note and
    go on. When only the camera is still off, the tool keeps the closest attempt itself (section
    7 of the guide). Where the building sits in the picture and how large it is are never a

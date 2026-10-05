@@ -2,6 +2,8 @@
  *
  *   node tools/building-queue.mjs                 rebuild queue.json from the game's data
  *   node tools/building-queue.mjs next [--json]   the next picture to make, with its prompt
+ *   node tools/building-queue.mjs take <id> [--from <folder or file>]   the picture the image
+ *                                                 tool just wrote: copied, and shown for the eye
  *   node tools/building-queue.mjs show <id>       any picture, with its prompt
  *   node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]
  *   node tools/building-queue.mjs status          progress per family, gates, list against disk
@@ -24,13 +26,15 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   renameSync,
   rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { homedir } from 'node:os';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { AGES, FOOTPRINTS, ROOT, loadInventory, pictureFile, pictures } from './building-kit.mjs';
@@ -722,6 +726,72 @@ export function mismatches(queue, exists = existsSync) {
   return out;
 }
 
+/** How many minutes old the newest picture of an image tool may be, and still be the one just made. */
+const TAKE = { fresh: 15 };
+
+/** Where an image tool keeps the pictures it makes, when nothing else is said: Codex's folder. */
+function picturesFolder() {
+  return join(process.env.CODEX_HOME || join(homedir(), '.codex'), 'generated_images');
+}
+
+/** The PNG files in a folder and in the folders in it (an image tool keeps one a chat), newest first. */
+function picturesIn(dir, depth = 2) {
+  const out = [];
+  for (const d of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, d.name);
+    if (d.isDirectory()) {
+      if (depth > 1) out.push(...picturesIn(path, depth - 1));
+    } else if (/\.png$/i.test(d.name)) out.push({ path, at: statSync(path).mtimeMs });
+  }
+  return out.sort((a, b) => b.at - a.at);
+}
+
+/**
+ * Take the picture an image tool wrote as a picture of the list: copy it, as it is, to the entry's
+ * file. `from` is a file, or a folder whose newest picture is the one; without it, the folder Codex
+ * keeps its pictures in. Nothing is recorded: the picture is looked at first, then `set`.
+ *
+ * A picture that is this entry's already (as it lies, an earlier self, or set aside) is not taken
+ * again, nor is the newest of a folder when it is old: either means that nothing new was made.
+ */
+export function take(queue, id, from, now = Date.now()) {
+  const entry = queue.entries.find((e) => e.id === id);
+  if (!entry) throw new Error(`no picture is called "${id}"`);
+  if (entry.status !== 'pending')
+    throw new Error(
+      `${id} is recorded as ${entry.status}: only a picture that waits to be made is taken` +
+        (isMade(entry)
+          ? `. To make it again, take it back first: node tools/building-queue.mjs set ${id} pending`
+          : ''),
+    );
+  const where = from ?? picturesFolder();
+  const how = 'say where your image tool writes its pictures with --from <folder or file>';
+  if (!existsSync(where)) throw new Error(`no folder of pictures at ${where}: ${how}`);
+  const named = statSync(where).isFile();
+  const found = named ? { path: where, at: statSync(where).mtimeMs } : picturesIn(where)[0];
+  if (!found) throw new Error(`no picture in ${where}: make the picture first, or ${how}`);
+  const bytes = readFileSync(found.path);
+  const what = named ? found.path : `the newest picture there, ${found.path},`;
+  // this picture's own files: as it lies, its earlier selves, what was set aside
+  const dir = dirname(entry.file),
+    stem = basename(entry.file, '.png');
+  const own = existsSync(dir)
+    ? readdirSync(dir)
+        .filter((n) => n.startsWith(`${stem}.`) && n.endsWith('.png'))
+        .map((n) => `${dir}/${n}`)
+    : [];
+  const same = own.find((f) => statSync(f).size === bytes.length && readFileSync(f).equals(bytes));
+  if (same) throw new Error(`${what} was taken before (it is ${same}): make the picture first`);
+  const minutes = Math.round((now - found.at) / 60000);
+  if (!named && minutes > TAKE.fresh)
+    throw new Error(
+      `${what} was made ${minutes} minutes ago: make the picture first, or name the file with --from <file>`,
+    );
+  mkdirSync(dir, { recursive: true });
+  copyFileSync(found.path, entry.file);
+  return { entry, source: found.path, seconds: Math.max(0, Math.round((now - found.at) / 1000)) };
+}
+
 export function readQueue(root = '.') {
   const file = join(root, QUEUE_FILE);
   return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
@@ -735,6 +805,7 @@ function printEntry(d, entry) {
     [
       `picture:    ${d.id}${d.repaint ? ' (to paint again: the same building)' : ''}`,
       `save as:    ${d.file}`,
+      `take it:    node tools/building-queue.mjs take ${d.id}`,
       `ask for:    ${d.canvas[0]} x ${d.canvas[1]} px (the guide's size), transparent background`,
       `edit this:  ${d.guide}`,
       'attach, in this order:',
@@ -773,7 +844,7 @@ function tally(r) {
 const some = (ids, n = 6) =>
   ids.slice(0, n).join(', ') + (ids.length > n ? ` and ${ids.length - n} more` : '');
 
-function main(args) {
+async function main(args) {
   const [command, ...rest] = args;
   const inventory = loadInventory();
   const families = loadFamilies();
@@ -821,6 +892,22 @@ function main(args) {
       if (n.lost.length)
         console.log(`\nrecorded as made, but the file is missing: ${some(n.lost)}`);
       return code;
+    }
+    case 'take': {
+      const r = take(queue, rest[0], option('--from'));
+      // the sheet tool reads this one: loaded here, where it is needed
+      const { showPicture } = await import('./building-sheets.mjs');
+      const shown = showPicture(r.entry.file, inventory);
+      const ago = r.seconds < 120 ? `${r.seconds} s` : `${Math.round(r.seconds / 60)} minutes`;
+      console.log(
+        [
+          `took:      ${r.source} (made ${ago} ago)`,
+          `saved as:  ${r.entry.file}`,
+          `look at:   ${shown.file ?? `nothing to look at: ${shown.why}`}`,
+          `then:      node tools/building-queue.mjs set ${r.entry.id} generated`,
+        ].join('\n'),
+      );
+      return 0;
     }
     case 'show': {
       const d = describeQueued(queue, rest[0], inventory, families);
@@ -934,11 +1021,14 @@ function main(args) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  try {
-    process.exitCode = main(process.argv.slice(2));
-  } catch (e) {
-    console.error(e.message);
-    process.exitCode = 1;
-  }
-}
+// not awaited here: `take` loads the sheet tool, which reads this module and waits for it
+if (process.argv[1] === fileURLToPath(import.meta.url))
+  main(process.argv.slice(2)).then(
+    (code) => {
+      process.exitCode = code;
+    },
+    (e) => {
+      console.error(e.message);
+      process.exitCode = 1;
+    },
+  );

@@ -92,6 +92,8 @@ Everything is in `assets/source/buildings-v2/`.
 The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`, `:fit`):
 
 - `node tools/building-queue.mjs next`: the next picture to make, with everything it needs.
+- `node tools/building-queue.mjs take <id>`: take the picture your image tool has just written. It
+  is copied to the picture's file as it is, and laid on grass for you to look at (sections 5, 6).
 - `node tools/building-queue.mjs show <id>`: the same for any picture.
 - `node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]`: record a result.
 - `node tools/building-queue.mjs status`: progress per family, the gates, and where the list and
@@ -123,7 +125,7 @@ Repeat until the queue tool tells you to stop:
    - exit code 2: `GATE`. A family the user wants to see is finished. Stop (section 8).
    - exit code 4: `STOP`. Too much of a family could not be made. Stop (section 8).
    - exit code 3: `DONE`. Nothing is left.
-2. Make the picture (section 5).
+2. Make the picture and take it with `node tools/building-queue.mjs take <id>` (section 5).
 3. Look at it yourself (section 6).
 4. Record it: `node tools/building-queue.mjs set <id> generated --attempts <how many tries>`.
    The tool checks the picture first. If the check fails it prints why and records nothing: make
@@ -142,8 +144,13 @@ first, then its three other views, then the next age. Each picture is built on o
    prompt's last paragraph says what each of the others is for.
 3. Paste the prompt exactly as printed.
 4. Ask for the size `next` printed and a transparent background.
-5. Save the result under the file name `next` printed, as a PNG with an alpha channel, exactly as
-   the image tool returned it.
+5. Take the result: `node tools/building-queue.mjs take <id>`. Your image tool has written the
+   picture to a file of its own (Codex keeps them in `$CODEX_HOME/generated_images/`, a folder for
+   each chat). `take` copies the newest picture there to the file name `next` printed, exactly as
+   it is, and writes the picture for you to look at (section 6). If your image tool keeps its
+   pictures somewhere else, or another chat is making pictures at the same time, name the folder
+   or the file: `--from <folder or file>`. Never pass a picture through the shell as text (base64,
+   in pieces): that takes a hundred commands where a copy takes one.
 
 **A picture to paint again.** Its second reference is the picture as it was, laid onto its
 footprint and straightened to the guide's camera, and the prompt's last lines say what was wrong
@@ -157,8 +164,8 @@ The check measures where the building stands and whether the picture can be used
 what the building is. Before you record a picture as `generated`, look at it and at its guide side
 by side.
 
-Look at the picture as `node tools/building-sheets.mjs --picture <file>` shows it, in
-`.look/<name>.png`: on grass, on its footprint as you painted it, with the footprint's edge in
+Look at the picture as `take` has written it, in `.look/<name>.png`
+(`node tools/building-sheets.mjs --picture <file>` writes the same for any other file): on grass, on its footprint as you painted it, with the footprint's edge in
 white, the line its walls' feet should stand on in pink, and in yellow the frames of the guide's
 openings: the front door, and a depot's portals. The frames show which wall the door and the
 portals belong to; where there is no door frame (`r1`, `r2`), no front door may show. Do not judge
@@ -291,8 +298,14 @@ stash pictures: a commit is the one safe place for work in hand.
 
 `queue.json` is the only record of progress. To resume after any interruption, run
 `node tools/building-queue.mjs status`, then `next`. `status` lists every place where the list and
-the disk disagree. A picture saved on disk but not recorded counts as not made: record it with
-`set <id> generated` (the tool checks it), or remove it.
+the disk disagree. A picture saved on disk but not recorded counts as not made: look at it and
+record it with `set <id> generated` (the tool checks it), or make it again (`take` replaces it).
+
+This is also how another session takes the work over. A new chat, on another account or after
+this one has run out, is started with the block in `PROMPT.md` and needs nothing from the chat
+before it: everything a session has to know is in this guide and in what `next` prints. Go by
+those, not by what you remember. When a long chat is shortened, its way of working is the first
+thing lost, and the tools are how it is kept.
 
 The repository's `AGENTS.md` asks for progress notes in `assets/source/base-v1/RESUME.md`. That
 does not apply to this work: do not edit `RESUME.md`; the queue is the record.
