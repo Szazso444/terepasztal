@@ -20,15 +20,7 @@
  * `next` answers with its exit code: 0 a picture to make, 2 a gate (the user reviews a family
  * before the work goes on), 3 nothing left, 4 a stop (too much of a family could not be made).
  */
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  renameSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
@@ -402,25 +394,29 @@ export function setStatus(queue, id, status, { attempts, note } = {}) {
   return e;
 }
 
+/**
+ * Move a picture to another name. A picture already under that name is kept too, under a
+ * number: nothing that was painted is ever removed.
+ */
+function moveTo(file, to) {
+  if (existsSync(to)) {
+    let n = 1;
+    while (existsSync(to.replace(/\.png$/, `.${n}.png`))) n++;
+    renameSync(to, to.replace(/\.png$/, `.${n}.png`));
+  }
+  renameSync(file, to);
+}
+
 /** The files a command touches: is a file there, does a picture pass, move a picture aside. */
 const DISK = {
   exists: existsSync,
   check: checkFile,
   setAside(file) {
-    const to = file.replace(/\.png$/, '.rejected.png');
-    rmSync(to, { force: true });
-    renameSync(file, to);
+    moveTo(file, file.replace(/\.png$/, '.rejected.png'));
   },
   /** keep a picture beside its place while it is painted again */
   setBefore(file) {
-    const to = beforeFile(file);
-    // put back before: that earlier self is kept too, under a number
-    if (existsSync(to)) {
-      let n = 1;
-      while (existsSync(to.replace(/\.png$/, `.${n}.png`))) n++;
-      renameSync(to, to.replace(/\.png$/, `.${n}.png`));
-    }
-    renameSync(file, to);
+    moveTo(file, beforeFile(file));
   },
 };
 
@@ -478,12 +474,14 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
   }
   if (status === 'approved' && !isMade(e))
     throw new Error(`${id} has not been made: only a picture that was made can be approved`);
+  // a made picture taken back is a picture found faulty: its file goes aside like a rejected one
+  const takenBack = status === 'pending' && isMade(e);
   const entry = setStatus(queue, id, status, kept ? { ...options, note: kept } : options);
   if (kept) entry.kept = true;
   else if (status !== 'approved') delete entry.kept;
   // `repaint` stays when the picture is made: taken back (`pending`), it is painted again the
   // way it was, from its earlier self
-  if (status === 'rejected' && disk.exists(e.file)) {
+  if ((status === 'rejected' || takenBack) && disk.exists(e.file)) {
     disk.setAside(e.file);
     aside = e.file;
   }

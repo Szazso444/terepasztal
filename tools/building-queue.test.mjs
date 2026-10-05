@@ -730,16 +730,23 @@ describe('working through the queue', () => {
     expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r2' });
     // a fault found in it afterwards: taken back, it is painted again the way it was, from its
     // earlier self, and nothing built on it is touched
-    settle(queue, inv, 'depot-a0-r0', 'pending', {}, disk(files));
+    const back = settle(queue, inv, 'depot-a0-r0', 'pending', {}, disk(files));
     expect(first).toMatchObject({ status: 'pending', repaint: { by: 6.4, was: WAS } });
     expect(entry('depot-a0-r1').status).toBe('generated');
+    // the faulty picture is set aside, so that nothing shows it or is built on it
+    expect(back.aside).toBe(first.file);
+    expect(files.has(first.file)).toBe(false);
+    expect(files.has(first.file.replace(/\.png$/, '.rejected.png'))).toBe(true);
     expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r0' });
     expect(describeQueued(queue, 'depot-a0-r0', inv, fam, onDisk(files)).sources).toEqual([
       STYLE_BOARD,
       beforeFile(first.file),
     ]);
+    files.add(first.file);
     settle(queue, inv, 'depot-a0-r0', 'generated', {}, disk(files));
     expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'depot-a0-r2' });
+    // a picture that was never made has nothing to set aside
+    expect(settle(queue, inv, 'station-a0-r0', 'pending', {}, disk(files)).aside).toBeNull();
     // a second look finds nothing new
     expect(recheck(queue, inv, null, disk(files, fine)).back).toEqual([]);
   });
@@ -1172,6 +1179,17 @@ describe('the queue tool on the command line', () => {
     expect(run(root, 'recheck').out).toMatch(/: 1 back in the queue/);
     expect(existsSync(at(beforeFile(pictureFile('depot', 0, 1))))).toBe(true);
     expect(existsSync(at('assets/source/buildings-v2/depot/depot-a0-r1.before.1.png'))).toBe(true);
+    // set aside twice: the first picture set aside is kept too, under a number
+    paint(root, 'depot-a0-r1');
+    expect(run(root, 'set', 'depot-a0-r1', 'rejected', '--note', 'again').code).toBe(0);
+    expect(run(root, 'redo', 'depot').out).toMatch(/1 picture back in the queue: depot-a0-r1/);
+    paint(root, 'depot-a0-r1');
+    expect(run(root, 'set', 'depot-a0-r1', 'rejected', '--note', 'and again').code).toBe(0);
+    expect(existsSync(at('assets/source/buildings-v2/depot/depot-a0-r1.rejected.png'))).toBe(true);
+    expect(existsSync(at('assets/source/buildings-v2/depot/depot-a0-r1.rejected.1.png'))).toBe(
+      true,
+    );
+    expect(run(root, 'redo', 'depot').out).toMatch(/1 picture back in the queue: depot-a0-r1/);
     // an earlier self is straightened all the way, however far off: 0.5 x 0.6 is 17.5 degrees,
     // flatter than the fit corrects a picture for the game
     paint(root, 'depot-a0-r3', ([x, y]) => [x, 760 + (y - 760) * 0.6]);

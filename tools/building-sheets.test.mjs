@@ -8,7 +8,7 @@ import {
   project,
   wallBase,
 } from './building-kit.mjs';
-import { blockOf, boxFaces, fillPoly } from './building-guides.mjs';
+import { blockOf, boxFaces, fillPoly, openingsOf } from './building-guides.mjs';
 import { buildQueue, loadFamilies, progress, setStatus } from './building-queue.mjs';
 import {
   SHEET,
@@ -149,6 +149,9 @@ describe('building review sheets', () => {
     expect(at(look, foot[0] / 2, foot[1] / 2)).toEqual(SHEET.walls);
     // the building stands on that line: just above its near corner is wall
     expect(at(look, foot[0] / 2, foot[1] / 2 - 6)).not.toEqual(SHEET.footprint);
+    // and the frames of the guide's openings say which wall the door and the portals belong to
+    for (const o of openingsOf('t2x2', 1))
+      expect(at(look, o.pts[3][0] / 2, o.pts[3][1] / 2)).toEqual(SHEET.openings);
     // a camera that is off is left as painted, so the eye sees the foot leave its line: seen
     // from too low, the near corner stands well above where it should
     const low = painted('t2x2', 1, { map: ([x, y]) => [x, 760 + (y - 760) * 0.8] });
@@ -173,6 +176,8 @@ describe('building review sheets', () => {
       rot: 3,
     });
     expect(lookedAt('depot/depot-a0-r0.rejected.png')).toMatchObject({ family: 'depot', rot: 0 });
+    expect(lookedAt('depot/depot-a0-r0.rejected.2.png')).toMatchObject({ family: 'depot', rot: 0 });
+    expect(lookedAt('depot/depot-a4-r1.before.1.png')).toMatchObject({ age: 4, rot: 1 });
     expect(lookedAt('notes.png')).toBeNull();
     // each is shown under its own name, so attempts can be told apart
     expect(lookFile('assets/source/buildings-v2/.tries/depot-a0-r1-2.png')).toBe(

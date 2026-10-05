@@ -23,7 +23,7 @@ import {
   pictureFile,
   wallBase,
 } from './building-kit.mjs';
-import { fillPoly, strokePoly } from './building-guides.mjs';
+import { fillPoly, openingsOf, strokePoly } from './building-guides.mjs';
 import { FIT, cameraOff, fitGroup, fitPicture, normalisePicture } from './building-fit.mjs';
 import { buildQueue, loadFamilies, progress, readQueue } from './building-queue.mjs';
 import { readReport } from './building-check.mjs';
@@ -35,6 +35,8 @@ export const SHEET = {
   /** on the angles sheet: the footprint's edge, and the line the walls' feet should stand on */
   outline: [255, 255, 255],
   walls: [255, 60, 200],
+  /** on a picture laid out for the eye: where the guide has the door and a depot's portals */
+  openings: [255, 214, 64],
 };
 
 export function sheetFile(family) {
@@ -51,7 +53,7 @@ export function anglesFile(family) {
  */
 export function lookedAt(path) {
   const name = basename(path.replaceAll('\\', '/'));
-  const m = /^(.+)-a(\d)-r(\d)(?:-\d+)?(?:\.before(?:\.\d+)?|\.rejected)?\.png$/.exec(name);
+  const m = /^(.+)-a(\d)-r(\d)(?:-\d+)?(?:\.(?:before|rejected)(?:\.\d+)?)?\.png$/.exec(name);
   return m ? { family: m[1], age: Number(m[2]), rot: Number(m[3]) } : null;
 }
 
@@ -131,8 +133,9 @@ export function drawSheet(
 
 /**
  * One picture for the eye: on grass, laid onto its footprint as it was painted, with the
- * footprint's edge and the line the walls' feet should stand on drawn over it. The camera is not
- * corrected here, so a foot that leaves its line shows. The result is opaque: a viewer that
+ * footprint's edge, the line the walls' feet should stand on and the frames of the guide's
+ * openings (the front door, a depot's portals) drawn over it. The camera is not corrected here,
+ * so a foot that leaves its line shows, and so does a door or a portal in the wrong wall. The result is opaque: a viewer that
  * ignores transparency shows the colour stored under a picture's transparent pixels as a glow
  * round the building, which is not in the picture. Null when the picture holds no building.
  */
@@ -155,6 +158,7 @@ export function drawLook(png, fpId, rot, shrink = 2) {
   paste(look, normalisePicture(png, fit, fpId, k), 0, 0);
   strokePoly(look, [d.n, d.e, d.s, d.w].map(at), SHEET.outline, 1.5);
   strokePoly(look, [b.n, b.e, b.s, b.w].map(at), SHEET.walls, 1.5);
+  for (const o of openingsOf(fpId, rot)) strokePoly(look, o.pts.map(at), SHEET.openings, 1.5);
   return look;
 }
 

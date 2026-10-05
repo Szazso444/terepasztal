@@ -1,5 +1,6 @@
 # pictures that were given up: kept on disk for the user to look at, not part of the art
 *.rejected.png
+*.rejected.*.png
 # pictures as they were before they were painted again for their camera: shown to the generator
 *.before.png
 *.before.*.png

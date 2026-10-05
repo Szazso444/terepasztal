@@ -162,7 +162,10 @@ by side.
 
 Look at the picture as `node tools/building-sheets.mjs --picture <file>` shows it, in
 `.look/<name>.png`: on grass, on its footprint as you painted it, with the footprint's edge in
-white and the line its walls' feet should stand on in pink. Do not judge the raw file's
+white, the line its walls' feet should stand on in pink, and in yellow the frames of the guide's
+openings: the front door, and a depot's portals. The frames show which wall the door and the
+portals belong to; where there is no door frame (`r1`, `r2`), no front door may show. Do not judge
+the raw file's
 background by eye. A viewer that ignores transparency shows the colour stored under the
 transparent pixels as a brown or green glow round the building; that glow is not in the picture.
 Whether the background is clean is the tool's to say: `set` refuses a picture with a shadow or a
@@ -194,6 +197,12 @@ lower-left wall"), and keep the rest of the prompt. Give a picture up to three a
 
 A picture's place and size in its file are never a reason to make it again: the tools take care of
 those. Its view is: a building seen from the front, from above or in perspective cannot be used.
+
+**A depot's portals.** The tool also tells which of a depot's two visible walls has the portals.
+A view of the wrong rotation is refused with `the portals are in the lower-right wall; they belong
+in the lower-left wall, where the block-out has them`: make it again, saying in the edit which
+wall has the portals and which is the plain back or the front, as the prompt's View line names
+them. The tool cannot tell a front from a back, so that is still yours to see.
 
 **The camera.** The tool measures every picture's camera from the feet of its two visible walls,
 and refuses a picture whose camera is more than 3° from the guide's: seen from too low or too
@@ -232,7 +241,8 @@ failed: `next` skips the pictures that would have been, and says how many cannot
 
 **A fault found after recording.** If you find a fault in a picture you have already recorded as
 `generated`, take it back with `node tools/building-queue.mjs set <id> pending` and make it again:
-`next` hands it out the way it was being made. Do not use `redo` for this.
+the tool sets the faulty file aside, and `next` hands the picture out the way it was being made.
+Do not use `redo` for this.
 
 ## 8. Gates, stops and commits
 
