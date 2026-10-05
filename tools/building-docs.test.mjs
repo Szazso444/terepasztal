@@ -145,6 +145,12 @@ describe('the guide for the artist agent', () => {
     expect(prompt).toMatch(/GATE/);
     expect(prompt).toMatch(/STOP/);
     expect(prompt).toContain('origin/buildings/art-package');
+    // work in hand is committed before the tools are brought up to date, never stashed: a merge
+    // over staged and unrecorded pictures had the agent juggling five stashes
+    expect(prompt).toMatch(/commit\s+what\s+you\s+have/);
+    expect(prompt).toMatch(/never\s+stash/);
+    expect(guide).toMatch(/never\s+stash/);
+    expect(production).toMatch(/never\s+stash/i);
     expect(prompt).not.toMatch(/delete it/i);
   });
 });

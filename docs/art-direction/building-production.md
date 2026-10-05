@@ -122,7 +122,9 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
 
 ## When a run goes wrong
 
-- Have the agent commit before any step that moves many files. A run is put back with
+- Have the agent commit before any step that moves many files and before it merges the tools,
+  and never stash pictures: with staged and unrecorded pictures in its tree, a merge had the
+  agent juggling five stashes. A run is put back with
   `git checkout <that commit> -- <the family folders> assets/source/buildings-v2/queue.json`
   and `recheck`.
 - `redo <id>` puts back a picture and every picture built on it, to be made afresh. For a first
