@@ -46,8 +46,8 @@ const idsOf = (queue, family) => queue.entries.filter((e) => e.family === family
 
 describe('building queue', () => {
   it('lists every picture once, the depot first and the station second', () => {
-    expect(q.entries).toHaveLength(560);
-    expect(new Set(q.entries.map((e) => e.id)).size).toBe(560);
+    expect(q.entries).toHaveLength(548);
+    expect(new Set(q.entries.map((e) => e.id)).size).toBe(548);
     expect(q.entries.slice(0, 24).every((e) => e.family === 'depot')).toBe(true);
     expect(q.entries.slice(0, 5).map((e) => e.id)).toEqual([
       'depot-a0-r0',
@@ -63,7 +63,7 @@ describe('building queue', () => {
       { family: 'station', approved: false },
     ]);
     expect(q.accepted).toEqual([]);
-    expect(q.counts).toEqual({ pictures: 560, families: 27 });
+    expect(q.counts).toEqual({ pictures: 548, families: 27 });
     for (const e of q.entries) expect([e.status, e.attempts, e.note]).toEqual(['pending', 0, '']);
     // the list is the record of progress: it stays small, prompts are written on demand
     expect(Object.keys(q.entries[0])).toEqual([
@@ -252,7 +252,7 @@ describe('building queue', () => {
     Object.assign(before.entries[30], { status: 'rejected', attempts: 3, note: 'floats' });
     before.entries.push({ id: 'gone-a0-r0', status: 'approved', attempts: 1, note: '' });
     const again = buildQueue(inv, fam, before);
-    expect(again.entries).toHaveLength(560);
+    expect(again.entries).toHaveLength(548);
     expect(again.entries[3]).toMatchObject({ status: 'approved', attempts: 2, note: 'second try' });
     expect(again.entries[30]).toMatchObject({ status: 'rejected', attempts: 3, note: 'floats' });
     expect(again.entries[4].status).toBe('pending');
@@ -415,7 +415,7 @@ describe('working through the queue', () => {
 
   it('says so when nothing is left', () => {
     const queue = fresh(true);
-    const files = made(queue, 560);
+    const files = made(queue, 548);
     expect(next(queue, files)).toMatchObject({ kind: 'done' });
   });
 
@@ -1225,7 +1225,7 @@ describe('the queue tool on the command line', () => {
 
   it('hands out a picture, records it only when it passes, and holds the gate', () => {
     const root = sandbox();
-    expect(run(root).out).toMatch(/560 pictures, 27 families/);
+    expect(run(root).out).toMatch(/548 pictures, 27 families/);
     const first = run(root, 'next');
     expect(first.code).toBe(0);
     expect(first.out).toMatch(/^picture: +depot-a0-r0$/m);

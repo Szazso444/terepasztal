@@ -265,7 +265,7 @@ describe('building review sheets', () => {
     expect(html).toContain('src="depot.png"');
     // a rejected picture is not a made one
     expect(html).toContain('2 of 24 made, 1 rejected');
-    expect(html).toContain('2 of 560 made');
+    expect(html).toContain('2 of 548 made');
     expect(html).not.toContain('3 of 24');
     expect(html).toContain('depot-a0-r1');
     expect(html).toContain('background is not transparent');

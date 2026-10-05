@@ -87,13 +87,22 @@ const KIND_ORDER = { station: 2, depot: 3, works: 4, house: 5, service: 6 };
 
 /**
  * Every building family of the game, in working order.
- * Stations and works are upgradeable: one model per age from the age they unlock in.
+ * Stations and works are upgradeable: one model per age from the age they unlock in (`tier`) to
+ * the last age, or to their own last one (`lastTier`): a building of one period, the charcoal
+ * kiln, is not modernised after it.
  */
 export function loadInventory(root = '.') {
   const data = (file) => JSON.parse(readFileSync(join(root, 'src/data', file), 'utf8'));
   const out = [];
-  const add = (f) =>
-    out.push({ ...f, ages: f.upgradeable ? AGES.length - f.firstAge : 1, order: out.length });
+  const add = ({ lastTier, ...f }) => {
+    const last = f.upgradeable ? (lastTier ?? AGES.length - 1) : f.firstAge;
+    if (!AGES[last]) throw new Error(`${f.id}: there is no age ${last} (lastTier)`);
+    if (last < f.firstAge)
+      throw new Error(
+        `${f.id}: its last age (lastTier ${last}) is before its first (tier ${f.firstAge})`,
+      );
+    out.push({ ...f, lastAge: last, ages: last - f.firstAge + 1, order: out.length });
+  };
   const footprint = (d) => (d.long ? 't1x2' : (d.size ?? 1) > 1 ? 't2x2' : 't1');
   for (const d of data('stations.json').defs)
     add({
@@ -103,6 +112,7 @@ export function loadInventory(root = '.') {
       kind: d.depot ? 'depot' : 'station',
       footprint: footprint(d),
       firstAge: d.tier ?? 0,
+      lastTier: d.lastTier,
       upgradeable: true,
     });
   // the full-chain mines share the quarry's picture in the game today; each gets its own
@@ -114,6 +124,7 @@ export function loadInventory(root = '.') {
       kind: 'station',
       footprint: footprint(d),
       firstAge: d.tier ?? 0,
+      lastTier: d.lastTier,
       upgradeable: true,
     });
   for (const file of ['buildings.json', 'buildings_full.json'])
@@ -126,6 +137,7 @@ export function loadInventory(root = '.') {
           kind: 'works',
           footprint: 't1',
           firstAge: d.tier ?? 0,
+          lastTier: d.lastTier,
           upgradeable: true,
         });
   for (const d of data('decor.json')) {

@@ -1,7 +1,7 @@
 # Building pictures: the guide
 
 You are painting the buildings of an isometric railway game: 27 kinds of building, each in up to
-six ages and four views, 560 pictures in all. This guide tells you how to make them one by one on
+six ages and four views, 548 pictures in all. This guide tells you how to make them one by one on
 your own, how each is checked, and where to stop. Read it once, then work from the queue.
 
 ## 1. What the pictures are for
@@ -14,7 +14,8 @@ footprint, the same camera, the same building seen from four sides.
 ## 2. The rules every picture follows
 
 **Ages.** `a0` steam, `a1` diesel, `a2` electric, `a3` nuclear, `a4` magnetic, `a5` hyper. A
-building's first model is that of the age it appears in; some start at `a1` or `a2`. Every age
+building's first model is that of the age it appears in; some start at `a1` or `a2`, and a
+building of one period ends early (the charcoal kiln is upgraded up to `a2`). Every age
 stays inside the same pastoral world and palette: an upgrade modernises a building, it does not
 replace it with something from another game.
 
