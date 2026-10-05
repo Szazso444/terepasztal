@@ -2,6 +2,7 @@
 *.rejected.png
 # pictures as they were before they were painted again for their camera: shown to the generator
 *.before.png
+*.before.*.png
 # the attempts of the picture being worked on, until the closest one is recorded
 .tries/
 # earlier pictures laid onto their footprint, made on demand as references for later ones

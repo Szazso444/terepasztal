@@ -941,6 +941,11 @@ describe('the queue tool on the command line', () => {
       /depot-a0-r1: generated, 1 attempt$/m,
     );
     expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r2$/m);
+    // put back a second time: its first self is not lost, it is kept under a number
+    paint(root, 'depot-a0-r1', low);
+    expect(run(root, 'recheck').out).toMatch(/: 1 back in the queue/);
+    expect(existsSync(at(beforeFile(pictureFile('depot', 0, 1))))).toBe(true);
+    expect(existsSync(at('assets/source/buildings-v2/depot/depot-a0-r1.before.1.png'))).toBe(true);
     expect(run(root, 'recheck', 'lighthouse').code).toBe(1);
   }, 60000);
 

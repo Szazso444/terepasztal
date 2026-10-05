@@ -396,7 +396,12 @@ const DISK = {
   /** keep a picture beside its place while it is painted again */
   setBefore(file) {
     const to = beforeFile(file);
-    rmSync(to, { force: true });
+    // put back before: that earlier self is kept too, under a number
+    if (existsSync(to)) {
+      let n = 1;
+      while (existsSync(to.replace(/\.png$/, `.${n}.png`))) n++;
+      renameSync(to, to.replace(/\.png$/, `.${n}.png`));
+    }
     renameSync(file, to);
   },
 };

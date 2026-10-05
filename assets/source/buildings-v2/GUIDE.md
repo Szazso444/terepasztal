@@ -76,7 +76,8 @@ Everything is in `assets/source/buildings-v2/`.
   tool for the user to look at. Never use one as a reference, and do not commit them.
 - `<family>/<family>-a<age>-r<view>.before.png`: a picture that was made with its camera off and is
   being painted again. The tool keeps its earlier self here and names it, straightened, as a
-  reference (section 5). Do not edit, remove or commit these.
+  reference (section 5). Do not edit, remove or commit these (nor a numbered
+  `.before.1.png`, left from an earlier round).
 - `.tries/`: your own folder for the attempts of the picture you are working on (section 7). Not
   committed.
 - `.fitted/<family>-a<age>-r<view>.png`: an earlier picture laid onto its footprint by the tool,
