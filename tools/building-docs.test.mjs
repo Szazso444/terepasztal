@@ -130,6 +130,8 @@ describe('the guide for the artist agent', () => {
       'was made before the last picture that was taken or recorded',
       "another chat's folder",
       'was refused by set',
+      'was taken before',
+      "does not know your chat's folder yet",
     ])
       expect(guide, answer).toContain(answer);
     expect(guide).toMatch(/one picture at a time/);

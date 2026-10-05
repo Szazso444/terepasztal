@@ -591,11 +591,10 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
   if (status === 'approved' && !isMade(e))
     throw new Error(`${id} has not been made: only a picture that was made can be approved`);
   if (status === 'rejected') {
-    // given up: a picture that lies there and was not counted yet (in hand, or saved by hand)
-    // was one more attempt; one that `set` refused where it lies was counted then. And what
-    // was made before a picture was given up is new no longer
-    const counted = e.refused !== undefined && !!disk.stamp && disk.stamp(e.file) === e.refused;
-    const more = disk.exists(e.file) && !counted ? 1 : 0;
+    // given up: a picture of the image tool that is in hand, never settled, was one more
+    // attempt. Whatever else lies there was counted when it was refused, made or had back. And
+    // what was made before a picture was given up is new no longer
+    const more = e.taken ? 1 : 0;
     options = { ...options, attempts: Math.max(options.attempts ?? 0, e.attempts + more) };
     delete e.taken;
     queue.mark = Math.max(queue.mark ?? 0, options.now ?? Date.now());
@@ -608,7 +607,8 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
   const entry = setStatus(queue, id, status, kept ? { ...options, note: kept.note } : options);
   if (kept) entry.kept = kept.by;
   else if (status !== 'approved') delete entry.kept;
-  if (status !== 'approved') delete entry.refused;
+  // a file that `set` refused where it lies stays known as refused until it is gone from there
+  if (status === 'generated' || status === 'rejected' || takenBack) delete entry.refused;
   // taken back, a picture starts again: three attempts, as when `recheck` or `redo` puts it back.
   // `repaint` stays when the picture is made: taken back, it is painted again the way it was,
   // from its earlier self
@@ -928,14 +928,9 @@ export function choosePicture(queue, id, from, now = Date.now()) {
   const first = 'Make the picture first.';
   const list = listPictures(queue);
   const sizes = new Set(list.map((f) => f.size));
-  /** the file of the list that holds exactly these bytes; `but` is the source itself */
-  const holder = (bytes, but = null) =>
-    list.find(
-      (f) =>
-        f.size === bytes.length &&
-        (but === null || fold(f.path) !== but) &&
-        readFileSync(f.path).equals(bytes),
-    )?.path ?? null;
+  /** the file of the list that holds exactly these bytes */
+  const holder = (bytes) =>
+    list.find((f) => f.size === bytes.length && readFileSync(f.path).equals(bytes))?.path ?? null;
   const owner = (path) =>
     queue.entries.find((e) => basename(path).startsWith(`${basename(e.file, '.png')}.`))?.id;
   const whose = (path) => (owner(path) ? `${owner(path)}'s` : "the list's");
@@ -958,13 +953,19 @@ export function choosePicture(queue, id, from, now = Date.now()) {
   if (statSync(where).isFile()) {
     const bytes = readFileSync(where);
     if (inHand?.equals(bytes)) return again(where);
-    // what the tool keeps of this entry is had back by its own name
-    const stem = `${basename(entry.file, '.png')}.`.toLowerCase();
-    const own =
-      fold(dirname(where)) === fold(dirname(entry.file)) &&
-      basename(where).toLowerCase().startsWith(stem);
-    if (own) return { entry, source: where, bytes, at: null, again: false };
-    const held = holder(bytes, fold(where));
+    // a file in the list's own folders is no picture of the image tool. What the tool keeps of
+    // this entry (an earlier self, a picture set aside), or a picture laid there by hand, is had
+    // back by its name; another entry's file is that entry's picture
+    const folders = [...new Set(queue.entries.map((e) => dirname(e.file)))].filter((d) =>
+      existsSync(d),
+    );
+    if (folders.some((d) => fold(d) === fold(dirname(where)))) {
+      const who = owner(where);
+      if (who && who !== id)
+        throw new Error(`${where} is ${who}'s picture: nothing new was made. ${first}`);
+      return { entry, source: where, bytes, at: null, again: false };
+    }
+    const held = holder(bytes);
     if (held && owner(held) !== id)
       throw new Error(
         `${where} is ${whose(held)} picture (${held}): nothing new was made. ${first}`,
@@ -984,10 +985,11 @@ export function choosePicture(queue, id, from, now = Date.now()) {
       `no picture in ${where} or in the folders in it: make the picture first, or ${how}`,
     );
   const mark = markOf(files);
-  // made after the mark and in the last minutes, and not in the list already (a picture dated
-  // ahead of the clock, or saved by hand, is in it though it is newer than the mark). Only
-  // these few are read: a folder may hold hundreds of pictures
-  const after = files.filter((f) => f.at > mark);
+  // made after the mark and in the last minutes, and not in the list already (a picture saved
+  // by hand is in it though it is newer than the mark). Only these few are read: a folder may
+  // hold hundreds of pictures. A picture dated ahead of the clock is never found: it would stay
+  // new for as long as its date lies ahead
+  const after = files.filter((f) => f.at > mark && f.at <= now + 60000);
   const recent = (f) => now - f.at <= TAKE.fresh * 60000;
   const fresh = after
     .filter(recent)
@@ -995,15 +997,18 @@ export function choosePicture(queue, id, from, now = Date.now()) {
     .filter((f) => !inHand?.equals(f.bytes) && !(sizes.has(f.size) && holder(f.bytes)));
   const stale = after.filter((f) => !recent(f));
   const chats = [...new Set(fresh.map((f) => f.dir))].map((d) => fresh.find((f) => f.dir === d));
-  // a folder that was named and holds the picture itself is the caller's word for the chat
+  // whose the picture is: the caller's word (the folder that was named holds it), or the chat
+  // the last picture was taken from. Without either the tool does not take it on trust
   const named = from !== undefined && chats.length === 1 && fold(chats[0].dir) === fold(where);
-  const other = chats.length === 1 && !named && queue.chat && basename(chats[0].dir) !== queue.chat;
-  if (chats.length > 1 || other)
+  const known = chats.length === 1 && (named || basename(chats[0].dir) === queue.chat);
+  if (chats.length && !known)
     throw new Error(
       [
         chats.length > 1
           ? `pictures were made in more than one chat's folder since the last one was taken or recorded:`
-          : `the one new picture lies in another chat's folder than the last picture that was taken:`,
+          : queue.chat
+            ? `the one new picture lies in another chat's folder than the last picture that was taken:`
+            : `the tool has taken no picture from a chat's folder yet, and does not know your chat's folder yet:`,
         ...chats.map((f) => `  ${f.path} (made ${ago(now - f.at)} ago)`),
         `The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: ${tool} take ${id} --from <the file your image tool reported>`,
         'If it has not, your generation failed: make the picture first.',
@@ -1033,8 +1038,20 @@ export function readQueue(root = '.') {
   const file = join(root, QUEUE_FILE);
   return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
 }
+/** pictures of the list as it was read that are no longer in it (an age that was dropped) */
+let dropped = [];
 function writeQueue(queue) {
   writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2) + '\n');
+  if (!dropped.length) return;
+  // said once, by whichever command writes the list first: after that they are gone from it
+  const made = dropped.filter(isMade).length;
+  console.log(
+    `${dropped.length} picture${dropped.length === 1 ? '' : 's'} of the earlier list ${dropped.length === 1 ? 'is' : 'are'} no longer in it (${some(dropped.map((e) => e.id))})` +
+      (made
+        ? `; ${made} of them ${made === 1 ? 'was made, and its file stays' : 'were made, and their files stay'} on disk`
+        : ''),
+  );
+  dropped = [];
 }
 
 function printEntry(d, entry) {
@@ -1087,29 +1104,19 @@ async function main(args) {
   const [command, ...rest] = args;
   const inventory = loadInventory();
   const families = loadFamilies();
-  const queue = buildQueue(inventory, families, readQueue());
+  const before = readQueue();
+  const queue = buildQueue(inventory, families, before);
+  const ids = new Set(queue.entries.map((e) => e.id));
+  dropped = (before?.entries ?? []).filter((e) => !ids.has(e.id));
   const option = (name) => {
     const i = rest.indexOf(name);
     return i < 0 ? undefined : rest[i + 1];
   };
   switch (command) {
-    case undefined: {
-      // pictures of an earlier list that are no longer in it (an age that was dropped)
-      const now = new Set(queue.entries.map((e) => e.id));
-      const gone = (readQueue()?.entries ?? []).filter((e) => !now.has(e.id));
+    case undefined:
       writeQueue(queue);
       console.log(`${queue.counts.pictures} pictures, ${queue.counts.families} families`);
-      if (gone.length) {
-        const made = gone.filter(isMade).length;
-        console.log(
-          `${gone.length} picture${gone.length === 1 ? '' : 's'} of the earlier list ${gone.length === 1 ? 'is' : 'are'} no longer in it (${some(gone.map((e) => e.id))})` +
-            (made
-              ? `; ${made} of them ${made === 1 ? 'was made, and its file stays' : 'were made, and their files stay'} on disk`
-              : ''),
-        );
-      }
       return 0;
-    }
     case 'next': {
       const n = nextEntry(queue, inventory, families);
       const code = { picture: 0, gate: 2, done: 3, stop: 4 }[n.kind];
@@ -1283,7 +1290,7 @@ async function main(args) {
       console.log(resultLine(r.entry.id, r.check));
       if (shown.file) console.log(`look at:   ${shown.file}`);
       console.log(
-        `${r.entry.id}: ${r.entry.status}, ${r.entry.attempts} attempts (${r.entry.note})` +
+        `${r.entry.id}: ${r.entry.status}, ${r.entry.attempts} attempt${r.entry.attempts === 1 ? '' : 's'} (${r.entry.note})` +
           (r.aside
             ? `; the attempt that lay there was set aside as ${r.aside.replace(/\.png$/, '.rejected.png')}`
             : ''),

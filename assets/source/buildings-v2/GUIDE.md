@@ -94,8 +94,9 @@ Everything is in `assets/source/buildings-v2/`.
 The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`, `:fit`):
 
 - `node tools/building-queue.mjs next`: the next picture to make, with everything it needs.
-- `node tools/building-queue.mjs take <id>`: take the picture your image tool has just made. It
-  is written to the picture's file as it is, and laid on grass for you to look at (sections 5, 6).
+- `node tools/building-queue.mjs take <id> --from <file>`: take the picture your image tool has
+  just made, by the file it reported. It is written to the picture's file as it is, and laid on
+  grass for you to look at (sections 5, 6).
 - `node tools/building-queue.mjs show <id>`: the same for any picture.
 - `node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]`: record a result.
 - `node tools/building-queue.mjs keep <id>`: where a picture would be given up, make the closest
@@ -130,7 +131,8 @@ Repeat until the queue tool tells you to stop:
    - exit code 2: `GATE`. A family the user wants to see is finished. Stop (section 8).
    - exit code 4: `STOP`. Too much of a family could not be made. Stop (section 8).
    - exit code 3: `DONE`. Nothing is left.
-2. Make the picture and take it with `node tools/building-queue.mjs take <id>` (section 5).
+2. Make the picture and take it with `node tools/building-queue.mjs take <id> --from <file>`
+   (section 5).
 3. Look at it yourself (section 6).
 4. Record it: `node tools/building-queue.mjs set <id> generated`. The tool checks the picture
    first. If the check fails it prints why, the picture is not recorded as made, and the attempt
@@ -152,14 +154,17 @@ first, then its three other views, then the next age. Each picture is built on o
 5. Take the result: `node tools/building-queue.mjs take <id> --from <file>`, naming the file your
    image tool reported. Do not save the picture yourself. (Codex keeps its pictures in
    `$CODEX_HOME/generated_images/`, which is `~/.codex/generated_images/` when that is not set,
-   a folder for each chat.) Without `--from` the tool looks there itself for the one picture
+   a folder for each chat.) Without `--from` the tool looks there itself for the newest picture
    made in the last 15 minutes, since the last one was taken or recorded, in the chat the last
    one came from. Either way it writes the picture to the picture's file exactly as it is, and
    writes the picture for you to look at (section 6).
-   - `nothing new was made`, or `was made before the last picture that was taken or recorded`:
-     the generation failed, or you have not made the picture yet, or you named an earlier file.
-     Nothing is taken; make the picture. A picture of the image tool is taken once: one you gave
-     up is not had back by naming it.
+   - `nothing new was made`, `was made before the last picture that was taken or recorded`,
+     `was taken before`, `was made ... minutes ago`, or `no picture in`: the generation failed,
+     or you have not made the picture yet, or you named an earlier file. Nothing is taken; make
+     the picture. A picture of the image tool is taken once: one you gave up is not had back by
+     naming it.
+   - `does not know your chat's folder yet`: the first picture of a list, or the first since the
+     tools were brought up to date. Name the file your image tool reported.
    - `no new picture: this is the one that was taken before`: you asked again without making a
      picture, and it shows you the one in hand.
    - `more than one chat's folder`, or `another chat's folder`: other chats are making pictures

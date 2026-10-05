@@ -42,8 +42,9 @@ document to what the tools do.
    and keeps what was recorded.
 2. Open an agent session on the repository and paste the block from `PROMPT.md`. The agent runs
    `node tools/building-queue.mjs next`, paints the picture as an edit of the block-out with the
-   references and the prompt `next` printed, takes it (`node tools/building-queue.mjs take <id>`
-   writes the picture the image tool made to the picture's file and lays it on grass, as
+   references and the prompt `next` printed, takes it
+   (`node tools/building-queue.mjs take <id> --from <file>` writes the picture the image tool
+   reported to the picture's file and lays it on grass, as
    `node tools/building-sheets.mjs --picture <file>` does for any file), looks at it, and records
    it (`node tools/building-queue.mjs set <id> generated`). The tool refuses what fails the check.
 3. The depot and the station are gates: when one is finished `next` prints `GATE` and the agent
@@ -102,8 +103,9 @@ and shows it in a running build, as drawn or straightened.
   `queue.json`, moved forward only), and no picture of the image tool whose bytes are in the
   list's folders already. So a generation that failed does not hand an earlier picture to the
   next entry, whether the file is named or found. It does not guess between chats: a picture it
-  finds itself is taken only from the chat the last one came from, and where new pictures lie in
-  another chat's folder or in more than one it names them and takes none. What the tool keeps
+  finds itself is taken only from the chat the last one came from (none before a picture was
+  taken by name), and where new pictures lie in another chat's folder or in more than one it
+  names them and takes none. What the tool keeps
   of an entry (`<name>.before.png`, `<name>.rejected.png`) is had back by naming that file.
 - The count of attempts is the tool's: a picture taken and given up counts, the same picture
   refused twice counts once, a number the agent gives can raise the count but not lower it, and
