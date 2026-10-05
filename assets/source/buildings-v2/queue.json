@@ -53,9 +53,10 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a0-r2.png",
-      "status": "pending",
-      "attempts": 1,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.0° after 3 attempts: an earlier one was the closest",
+      "kept": 3,
       "repaint": {
         "by": 3,
         "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
@@ -82,8 +83,8 @@
       "age": 1,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a1-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 2.2,
@@ -158,11 +159,11 @@
       "age": 2,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a2-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "rejected",
+      "attempts": 3,
+      "note": "Repeatedly added front windows and a crew door to the plain lower-left BACK wall in r2; the corrected second attempt had a camera error of 2.5 degrees, and the third restored the wrong front wall.",
       "repaint": {
-        "by": 5.3,
+        "by": 2.5,
         "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
@@ -182,8 +183,8 @@
       "age": 3,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a3-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 5.8,
@@ -206,8 +207,8 @@
       "age": 3,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
         "by": 7.2,
@@ -220,8 +221,8 @@
       "age": 3,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a3-r3.png",
-      "status": "pending",
-      "attempts": 1,
+      "status": "generated",
+      "attempts": 3,
       "note": ""
     },
     {
@@ -230,8 +231,8 @@
       "age": 4,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot/depot-a4-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 5.1,
@@ -244,8 +245,8 @@
       "age": 4,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a4-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
         "by": 2.5,
@@ -258,13 +259,14 @@
       "age": 4,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a4-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 4.4° after 3 attempts: an earlier one was the closest",
       "repaint": {
-        "by": 6.8,
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
+        "by": 4.4,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      },
+      "kept": 4.4
     },
     {
       "id": "depot-a4-r3",

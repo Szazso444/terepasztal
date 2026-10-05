@@ -1,6 +1,6 @@
 {
   "checked": 92,
-  "failed": 66,
+  "failed": 58,
   "pictures": {
     "depot-a0-r0": {
       "ok": true,
@@ -103,11 +103,11 @@
       }
     },
     "depot-a0-r2": {
-      "ok": false,
-      "problems": [
-        "camera off by 4.5°: it looks down from 27.1° where the game looks down from 30° and the building is turned 4.5° towards its lower-right wall (the wall feet slope 0.53 and -0.39, the game's 0.50 and -0.50)"
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 3.0°: the building is turned 3.0° towards its lower-right wall (the wall feet slope 0.58 and -0.47, the game's 0.50 and -0.50); kept, and corrected by the tools"
       ],
-      "notes": [],
       "fit": {
         "method": "base",
         "sure": [
@@ -115,47 +115,47 @@
           true
         ],
         "measured": [
-          0.533,
-          -0.389
+          0.578,
+          -0.468
         ],
         "slopes": [
-          0.533,
-          -0.389
+          0.578,
+          -0.468
         ],
         "base": {
           "w": [
-            265,
-            677.6
+            364,
+            652.2
           ],
           "s": [
-            770.9,
-            947.2
+            793,
+            900.3
           ],
           "e": [
-            1261,
-            756.4
+            1216,
+            702.1
           ]
         },
-        "scale": 0.7248,
-        "vertical": 1.0844,
-        "shear": -0.078,
-        "cx": 763,
-        "cy": 718,
+        "scale": 0.8473,
+        "vertical": 0.9554,
+        "shear": -0.0525,
+        "cx": 790,
+        "cy": 605.4,
         "box": {
-          "left": 406.3,
-          "top": 287.1,
-          "right": 1139.1,
-          "bottom": 942.9
+          "left": 400.3,
+          "top": 340.7,
+          "right": 1129,
+          "bottom": 942
         },
         "camera": {
-          "elevation": 27.1,
-          "turn": 4.5
+          "elevation": 31.4,
+          "turn": 3
         },
-        "area": 527452
+        "area": 394484
       },
       "camera": {
-        "by": 4.5,
-        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 3,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     "depot-a0-r3": {
@@ -221,10 +221,8 @@
       ]
     },
     "depot-a1-r0": {
-      "ok": false,
-      "problems": [
-        "camera off by 2.2°: the building is turned 2.2° towards its lower-right wall (the wall feet slope 0.53 and -0.46, the game's 0.50 and -0.50)"
-      ],
+      "ok": true,
+      "problems": [],
       "notes": [],
       "fit": {
         "method": "base",
@@ -233,47 +231,43 @@
           true
         ],
         "measured": [
-          0.531,
-          -0.455
+          0.514,
+          -0.477
         ],
         "slopes": [
-          0.531,
-          -0.455
+          0.514,
+          -0.477
         ],
         "base": {
           "w": [
-            272,
-            688.7
+            312,
+            713.7
           ],
           "s": [
-            776.3,
-            956.7
+            766.5,
+            947.4
           ],
           "e": [
-            1271,
-            731.4
+            1239,
+            722.2
           ]
         },
-        "scale": 0.7226,
-        "vertical": 1.0135,
-        "shear": -0.0386,
-        "cx": 771.5,
-        "cy": 689.9,
+        "scale": 0.7788,
+        "vertical": 1.0092,
+        "shear": -0.019,
+        "cx": 775.5,
+        "cy": 709.8,
         "box": {
-          "left": 399.8,
-          "top": 296.2,
-          "right": 1137.6,
-          "bottom": 939.5
+          "left": 403.1,
+          "top": 293.9,
+          "right": 1139.1,
+          "bottom": 939.4
         },
         "camera": {
-          "elevation": 29.5,
-          "turn": 2.2
+          "elevation": 29.7,
+          "turn": 1.1
         },
-        "area": 566481
-      },
-      "camera": {
-        "by": 2.2,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 487584
       }
     },
     "depot-a1-r1": {
@@ -634,10 +628,8 @@
       }
     },
     "depot-a3-r0": {
-      "ok": false,
-      "problems": [
-        "camera off by 5.8°: it looks down from 35.8° where the game looks down from 30° (the wall feet slope 0.61 and -0.56, the game's 0.50 and -0.50)"
-      ],
+      "ok": true,
+      "problems": [],
       "notes": [],
       "fit": {
         "method": "base",
@@ -646,48 +638,43 @@
           true
         ],
         "measured": [
-          0.614,
-          -0.557
+          0.515,
+          -0.481
         ],
         "slopes": [
-          0.614,
-          -0.557
+          0.515,
+          -0.481
         ],
         "base": {
           "w": [
-            231,
-            632.1
+            286,
+            675.3
           ],
           "s": [
-            818.1,
-            992.6
+            823.3,
+            951.7
           ],
           "e": [
-            1308,
-            719.9
+            1287,
+            728.7
           ]
         },
-        "scale": 0.6703,
-        "vertical": 0.8541,
-        "shear": -0.0245,
-        "cx": 769.5,
-        "cy": 558.5,
+        "scale": 0.7212,
+        "vertical": 1.0046,
+        "shear": -0.0169,
+        "cx": 786.5,
+        "cy": 692,
         "box": {
-          "left": 407,
-          "top": 384.1,
-          "right": 1129,
-          "bottom": 939
+          "left": 406.3,
+          "top": 375.8,
+          "right": 1130.4,
+          "bottom": 940
         },
         "camera": {
-          "elevation": 35.8,
-          "turn": 1.4
+          "elevation": 29.8,
+          "turn": 1
         },
-        "area": 637170
-      },
-      "camera": {
-        "by": 5.8,
-        "say": "Both wall feet run too steep. The camera is too high, so too much of the roof shows: look down on the building less steeply. Both wall feet must run parallel to the plinth's edges, as the block-out's do.",
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 474231
       }
     },
     "depot-a3-r1": {
@@ -741,10 +728,8 @@
       }
     },
     "depot-a3-r2": {
-      "ok": false,
-      "problems": [
-        "camera off by 7.2°: it looks down from 37.2° where the game looks down from 30° (the wall feet slope 0.64 and -0.57, the game's 0.50 and -0.50)"
-      ],
+      "ok": true,
+      "problems": [],
       "notes": [],
       "fit": {
         "method": "base",
@@ -753,55 +738,48 @@
           true
         ],
         "measured": [
-          0.642,
-          -0.568
+          0.524,
+          -0.509
         ],
         "slopes": [
-          0.642,
-          -0.568
+          0.524,
+          -0.509
         ],
         "base": {
           "w": [
-            230,
-            619.5
+            305,
+            667
           ],
           "s": [
-            813.3,
-            994.2
+            820.1,
+            937
           ],
           "e": [
-            1310,
-            712.2
+            1263,
+            711.6
           ]
         },
-        "scale": 0.6684,
-        "vertical": 0.8263,
-        "shear": -0.0308,
-        "cx": 770,
-        "cy": 526.5,
+        "scale": 0.7536,
+        "vertical": 0.9679,
+        "shear": -0.0074,
+        "cx": 784,
+        "cy": 661.4,
         "box": {
           "left": 407,
-          "top": 407.1,
+          "top": 402.6,
           "right": 1129,
-          "bottom": 939.9
+          "bottom": 940.5
         },
         "camera": {
-          "elevation": 37.2,
-          "turn": 1.8
+          "elevation": 31.1,
+          "turn": 0.4
         },
-        "area": 624966
-      },
-      "camera": {
-        "by": 7.2,
-        "say": "Both wall feet run too steep. The camera is too high, so too much of the roof shows: look down on the building less steeply. Both wall feet must run parallel to the plinth's edges, as the block-out's do.",
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 426085
       }
     },
     "depot-a3-r3": {
-      "ok": false,
-      "problems": [
-        "the portals are in the lower-right wall; they belong in the lower-left wall, where the block-out has them"
-      ],
+      "ok": true,
+      "problems": [],
       "notes": [],
       "fit": {
         "method": "base",
@@ -810,50 +788,48 @@
           true
         ],
         "measured": [
-          0.55,
-          -0.459
+          0.459,
+          -0.489
         ],
         "slopes": [
-          0.55,
-          -0.459
+          0.459,
+          -0.489
         ],
         "base": {
           "w": [
-            215,
-            658.2
+            217,
+            706.2
           ],
           "s": [
-            806,
-            983.4
+            742.5,
+            947.5
           ],
           "e": [
-            1333,
-            741.3
+            1311,
+            669.3
           ]
         },
-        "scale": 0.6457,
-        "vertical": 0.9904,
-        "shear": -0.0451,
-        "cx": 774,
-        "cy": 658.2,
+        "scale": 0.6599,
+        "vertical": 1.0544,
+        "shear": 0.016,
+        "cx": 764,
+        "cy": 737.4,
         "box": {
-          "left": 407,
-          "top": 369.4,
-          "right": 1129.6,
-          "bottom": 939.2
+          "left": 404.4,
+          "top": 356,
+          "right": 1130.3,
+          "bottom": 939.5
         },
         "camera": {
-          "elevation": 30.2,
-          "turn": 2.6
+          "elevation": 28.3,
+          "turn": -0.9
         },
-        "area": 611619
+        "area": 562485
       }
     },
     "depot-a4-r0": {
-      "ok": false,
-      "problems": [
-        "camera off by 5.1°: it looks down from 35.1° where the game looks down from 30° (the wall feet slope 0.63 and -0.53, the game's 0.50 and -0.50)"
-      ],
+      "ok": true,
+      "problems": [],
       "notes": [],
       "fit": {
         "method": "base",
@@ -862,55 +838,48 @@
           true
         ],
         "measured": [
-          0.628,
-          -0.527
+          0.512,
+          -0.465
         ],
         "slopes": [
-          0.628,
-          -0.527
+          0.512,
+          -0.465
         ],
         "base": {
           "w": [
-            226,
-            624.1
+            273,
+            683.2
           ],
           "s": [
-            801.3,
-            985.2
+            805.9,
+            956.2
           ],
           "e": [
-            1310,
-            717
+            1295,
+            729
           ]
         },
-        "scale": 0.666,
-        "vertical": 0.866,
-        "shear": -0.0435,
-        "cx": 768,
-        "cy": 547.3,
+        "scale": 0.7064,
+        "vertical": 1.0237,
+        "shear": -0.0243,
+        "cx": 784,
+        "cy": 703.7,
         "box": {
           "left": 407,
-          "top": 389.1,
+          "top": 362.6,
           "right": 1129,
-          "bottom": 940.4
+          "bottom": 941.1
         },
         "camera": {
-          "elevation": 35.1,
-          "turn": 2.5
+          "elevation": 29.2,
+          "turn": 1.4
         },
-        "area": 617614
-      },
-      "camera": {
-        "by": 5.1,
-        "say": "The lower-left wall's foot runs too steep; the lower-right wall's is right. The camera is too high, so too much of the roof shows: look down on the building less steeply. Both wall feet must run parallel to the plinth's edges, as the block-out's do.",
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 488646
       }
     },
     "depot-a4-r1": {
-      "ok": false,
-      "problems": [
-        "camera off by 2.5°: it looks down from 32.5° where the game looks down from 30° (the wall feet slope 0.52 and -0.55, the game's 0.50 and -0.50)"
-      ],
+      "ok": true,
+      "problems": [],
       "notes": [],
       "fit": {
         "method": "base",
@@ -919,104 +888,99 @@
           true
         ],
         "measured": [
-          0.521,
-          -0.554
+          0.481,
+          -0.528
         ],
         "slopes": [
-          0.521,
-          -0.554
+          0.481,
+          -0.528
         ],
         "base": {
           "w": [
-            191,
-            728.1
+            332,
+            737.2
           ],
           "s": [
-            713,
-            999.9
-          ],
-          "e": [
-            1336,
-            654.8
-          ]
-        },
-        "scale": 0.6305,
-        "vertical": 0.9307,
-        "shear": 0.0154,
-        "cx": 763.5,
-        "cy": 655.3,
-        "box": {
-          "left": 407,
-          "top": 361.1,
-          "right": 1129,
-          "bottom": 939.4
-        },
-        "camera": {
-          "elevation": 32.5,
-          "turn": -0.9
-        },
-        "area": 671158
-      },
-      "camera": {
-        "by": 2.5,
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
-    },
-    "depot-a4-r2": {
-      "ok": false,
-      "problems": [
-        "camera off by 6.8°: it looks down from 36.8° where the game looks down from 30° (the wall feet slope 0.61 and -0.59, the game's 0.50 and -0.50)"
-      ],
-      "notes": [],
-      "fit": {
-        "method": "base",
-        "sure": [
-          true,
-          true
-        ],
-        "measured": [
-          0.606,
-          -0.592
-        ],
-        "slopes": [
-          0.606,
-          -0.592
-        ],
-        "base": {
-          "w": [
-            288,
-            649.3
-          ],
-          "s": [
-            803.7,
-            961.6
+            759,
+            942.5
           ],
           "e": [
             1237,
-            705.3
+            690.2
           ]
         },
-        "scale": 0.7607,
-        "vertical": 0.8351,
-        "shear": -0.0059,
-        "cx": 762.5,
-        "cy": 561.1,
+        "scale": 0.7977,
+        "vertical": 0.9913,
+        "shear": 0.0233,
+        "cx": 784.5,
+        "cy": 725.8,
         "box": {
           "left": 407,
-          "top": 355.5,
+          "top": 353.1,
           "right": 1129,
-          "bottom": 942.6
+          "bottom": 939.3
         },
         "camera": {
-          "elevation": 36.8,
-          "turn": 0.3
+          "elevation": 30.3,
+          "turn": -1.3
         },
-        "area": 545651
+        "area": 406131
+      }
+    },
+    "depot-a4-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 4.4°: the building is turned 4.4° towards its lower-right wall (the wall feet slope 0.61 and -0.45, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.615,
+          -0.452
+        ],
+        "slopes": [
+          0.615,
+          -0.452
+        ],
+        "base": {
+          "w": [
+            307,
+            657.3
+          ],
+          "s": [
+            750.5,
+            930
+          ],
+          "e": [
+            1228,
+            714.3
+          ]
+        },
+        "scale": 0.7838,
+        "vertical": 0.9377,
+        "shear": -0.0765,
+        "cx": 767.5,
+        "cy": 584.4,
+        "box": {
+          "left": 407,
+          "top": 379,
+          "right": 1129,
+          "bottom": 941.5
+        },
+        "camera": {
+          "elevation": 31.8,
+          "turn": 4.4
+        },
+        "area": 437839
       },
       "camera": {
-        "by": 6.8,
-        "say": "Both wall feet run too steep. The camera is too high, so too much of the roof shows: look down on the building less steeply. Both wall feet must run parallel to the plinth's edges, as the block-out's do.",
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 4.4,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     "depot-a4-r3": {
