@@ -553,7 +553,8 @@ export class Builder {
       y,
       count ? `${stationDef(defId).name} ${count + 1}` : undefined,
     );
-    s.rot = rot % 2;
+    // DEMO: the two-by-two depot keeps all four turns (its gates only care about two)
+    s.rot = s.def.depot && s.size === 2 ? rot % 4 : rot % 2;
     s.terrainFactor = terrainFactorAt(this.map, x, y, defId);
     this.stations.push(s);
     this.refreshStationBoosts();

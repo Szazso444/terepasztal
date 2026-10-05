@@ -24,6 +24,8 @@ export const ATLAS_GROUPS: { name: string; generate: AtlasGenerator }[] = [
   { name: 'people', generate: generatePeopleAtlas },
   // Illustrated bridge kit (tools/bridge-kit.mjs); without the file, bridges stay procedural.
   { name: 'bridges', generate: emptyAtlas },
+  // DEMO: the depot pilot's four pictures (scratchpad/buildings/pack-depot-demo.mjs)
+  { name: 'buildings2', generate: emptyAtlas },
 ];
 
 function emptyAtlas() {

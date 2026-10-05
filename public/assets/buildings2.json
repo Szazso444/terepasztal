@@ -1,0 +1,70 @@
+{
+  "resolution": 6,
+  "partial": true,
+  "frames": {
+    "structures/depot_a0_r0": {
+      "x": 4,
+      "y": 4,
+      "w": 757,
+      "h": 712,
+      "ax": 375,
+      "ay": 526
+    },
+    "structures/depot_a0_r0_raw": {
+      "x": 765,
+      "y": 4,
+      "w": 757,
+      "h": 609,
+      "ax": 375,
+      "ay": 447
+    },
+    "structures/depot_a0_r1": {
+      "x": 4,
+      "y": 720,
+      "w": 779,
+      "h": 678,
+      "ax": 402,
+      "ay": 491
+    },
+    "structures/depot_a0_r1_raw": {
+      "x": 787,
+      "y": 720,
+      "w": 779,
+      "h": 634,
+      "ax": 402,
+      "ay": 458
+    },
+    "structures/depot_a0_r2": {
+      "x": 4,
+      "y": 1402,
+      "w": 752,
+      "h": 666,
+      "ax": 374,
+      "ay": 483
+    },
+    "structures/depot_a0_r2_raw": {
+      "x": 760,
+      "y": 1402,
+      "w": 752,
+      "h": 613,
+      "ax": 374,
+      "ay": 442
+    },
+    "structures/depot_a0_r3": {
+      "x": 4,
+      "y": 2072,
+      "w": 745,
+      "h": 686,
+      "ax": 372,
+      "ay": 502
+    },
+    "structures/depot_a0_r3_raw": {
+      "x": 753,
+      "y": 2072,
+      "w": 745,
+      "h": 607,
+      "ax": 372,
+      "ay": 441
+    }
+  }
+}

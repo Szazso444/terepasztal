@@ -1,0 +1,101 @@
+{
+ "scene": {
+  "one": {
+   "x": 68,
+   "y": 81
+  },
+  "row": {
+   "x": 58,
+   "y": 81
+  }
+ },
+ "shots": [
+  {
+   "file": "scratchpad/buildings/out/depot-r0-old.png",
+   "rot": 0,
+   "look": "old",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r0-new.png",
+   "rot": 0,
+   "look": "new",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r0-raw.png",
+   "rot": 0,
+   "look": "raw",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r1-old.png",
+   "rot": 1,
+   "look": "old",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r1-new.png",
+   "rot": 1,
+   "look": "new",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r1-raw.png",
+   "rot": 1,
+   "look": "raw",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r2-old.png",
+   "rot": 2,
+   "look": "old",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r2-new.png",
+   "rot": 2,
+   "look": "new",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r2-raw.png",
+   "rot": 2,
+   "look": "raw",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r3-old.png",
+   "rot": 3,
+   "look": "old",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r3-new.png",
+   "rot": 3,
+   "look": "new",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-r3-raw.png",
+   "rot": 3,
+   "look": "raw",
+   "zoom": 2
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-row-new.png",
+   "look": "new",
+   "zoom": 1.5
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-row-raw.png",
+   "look": "raw",
+   "zoom": 1.5
+  },
+  {
+   "file": "scratchpad/buildings/out/depot-row-old.png",
+   "look": "old",
+   "zoom": 1.5
+  }
+ ]
+}

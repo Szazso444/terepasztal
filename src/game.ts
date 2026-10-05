@@ -1468,14 +1468,7 @@ export class Game {
         );
       } else if (s.size === 2) {
         // the sprite is anchored at the footprint centre; sort it with its front tile
-        this.world.setStructure(
-          id,
-          s.x + 1,
-          s.y + 1,
-          `structures/${s.def.art}_r${s.rot % 2}${s.level > 1 ? '_lv' + s.level : ''}`,
-          20,
-          -HALF_H_PX,
-        );
+        this.world.setStructure(id, s.x + 1, s.y + 1, this.depotFrame(s), 20, -HALF_H_PX);
       } else {
         const fam = `structures/${s.def.art}_${s.spriteLevel}`;
         this.world.setStructure(
@@ -1575,6 +1568,15 @@ export class Game {
     return null;
   }
   /** A new age begins: its works, stations and rolling stock unlock. */
+  /** DEMO: which picture the two-by-two depots show; a name ending in [new], [raw] or [old] pins one */
+  depotLook: 'new' | 'raw' | 'old' = 'new';
+  private depotFrame(s: Station): string {
+    const pinned = /\[(new|raw|old)\]$/.exec(s.name)?.[1] as 'new' | 'raw' | 'old' | undefined;
+    const look = pinned ?? this.depotLook;
+    const pilot = `structures/${s.def.art}_a0_r${s.rot % 4}${look === 'raw' ? '_raw' : ''}`;
+    if (look !== 'old' && this.atlas.has(pilot)) return pilot;
+    return `structures/${s.def.art}_r${s.rot % 2}${s.level > 1 ? '_lv' + s.level : ''}`;
+  }
   private onAgeUp(tier: number) {
     this.toolbar.refresh();
     const text = STR.hud.ageUp(tier);
@@ -2503,6 +2505,21 @@ export class Game {
     if (inp.wasPressed('KeyM')) this.toggleOverview();
     if (inp.wasPressed('Tab') && this.toolbar.open && this.viewTarget === 0)
       this.toolbar.cycle(inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? -1 : 1);
+    // DEMO: B switches every depot between the new picture, the new one as drawn, and today's
+    if (inp.wasPressed('KeyB') && this.viewTarget === 0 && !this.screens.current) {
+      const looks = ['new', 'raw', 'old'] as const;
+      this.depotLook = looks[(looks.indexOf(this.depotLook) + 1) % looks.length];
+      for (const s of this.builder.stations)
+        if (s.def.depot && s.size === 2) this.onStationChanged(s, false);
+      this.toasts.push(
+        {
+          new: 'Depot: new picture, camera corrected',
+          raw: 'Depot: new picture as it was drawn',
+          old: "Depot: today's picture",
+        }[this.depotLook],
+        'info',
+      );
+    }
     // U / Shift+U: the tools that upgrade wide track to high speed and downgrade it
     if (inp.wasPressed('KeyU') && this.viewTarget === 0 && !this.screens.current)
       this.toolbar.toggleReclass(

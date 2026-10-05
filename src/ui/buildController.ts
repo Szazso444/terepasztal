@@ -121,7 +121,8 @@ export class BuildController {
         this.rot = (this.rot + 1) % decorDef(this.tool.defId).rotations;
       else if (this.tool.kind === 'station') {
         const def = stationDef(this.tool.defId);
-        if ((def.size ?? 1) > 1 || def.long) this.rot = (this.rot + 1) % 2;
+        // DEMO: the two-by-two depot turns in four steps
+        if ((def.size ?? 1) > 1 || def.long) this.rot = (this.rot + 1) % (def.long ? 2 : 4);
       }
     }
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
@@ -366,7 +367,12 @@ export class BuildController {
     const def = stationDef(tool.defId);
     const size = def.size ?? 1;
     const turns = size > 1 || !!def.long;
-    const fam = turns ? `structures/${def.art}_r${this.rot % 2}` : `structures/${def.art}_1`;
+    const pilot = `structures/${def.art}_a0_r${this.rot % 4}`;
+    const fam = !turns
+      ? `structures/${def.art}_1`
+      : this.world.atlas.has(pilot)
+        ? pilot
+        : `structures/${def.art}_r${this.rot % 2}`;
     const g = this.ensureGhost(this.world.atlas.has(fam) ? fam : 'structures/station_1');
     // a sprite of more than one tile is anchored at its footprint centre
     const span = stationSpan(def, this.rot);
