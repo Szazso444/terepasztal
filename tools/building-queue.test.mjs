@@ -6,7 +6,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
-  renameSync,
+  statSync,
   utimesSync,
   writeFileSync,
 } from 'node:fs';
@@ -689,6 +689,30 @@ describe('working through the queue', () => {
     });
   });
 
+  it('does not let a count that is given lower its own', () => {
+    // an agent that has lost count says "1" every time: the third attempt is the last all the same
+    const queue = fresh();
+    const shots = new Map();
+    expect(attempt(queue, shots, 6.4, { attempts: 1 }).refused).toBe(true);
+    expect(attempt(queue, shots, 5, { attempts: 1 }).refused).toBe(true);
+    expect(queue.entries[0].attempts).toBe(2);
+    const r = attempt(queue, shots, 3.4, { attempts: 1 });
+    expect(r.entry).toMatchObject({ status: 'generated', attempts: 3, kept: 3.4 });
+    // a number that is higher is taken: attempts the tool never saw
+    const other = fresh();
+    expect(attempt(other, new Map(), 1, { attempts: 2 }).entry).toMatchObject({ attempts: 2 });
+  });
+
+  it('knows a picture in hand until it is settled, and across a rebuild of the list', () => {
+    const queue = fresh();
+    queue.entries[0].taken = true;
+    expect(buildQueue(inv, fam, queue).entries[0].taken).toBe(true);
+    expect(buildQueue(inv, fam, queue).entries[1].taken).toBeUndefined();
+    // recorded or refused, it is in hand no longer
+    attempt(queue, new Map(), 6.4);
+    expect(queue.entries[0].taken).toBeUndefined();
+  });
+
   it('asks for a picture with another fault to be made again, however often', () => {
     const queue = fresh();
     const files = new Set([pictureFile('depot', 0, 0)]);
@@ -858,6 +882,11 @@ describe('working through the queue', () => {
     expect(recheck(queue, inv, null, d).strays).toEqual([]);
     expect(shots.get(pictureFile('depot', 0, 1))).toBe(1.5);
     expect(mismatches(queue, d.exists)).toEqual(['depot-a0-r1: on disk, but not recorded']);
+    // a picture the tool took for an entry that waits to be painted again is in hand, not stray
+    shots.set(other, 1.5);
+    queue.entries[2].taken = true;
+    expect(recheck(queue, inv, null, d).strays).toEqual([]);
+    expect(shots.get(other)).toBe(1.5);
   });
 
   it('brings the marks of an earlier list up to date when it looks again', () => {
@@ -1147,15 +1176,32 @@ describe('the queue tool on the command line', () => {
     }
   };
   /** a painted depot, as the generator returns it; `map` moves every point of it */
-  const paint = (root, id, map = (p) => p) => {
+  const paint = (root, id, map = (p) => p, to = null) => {
     const d = about(id);
     const fp = FOOTPRINTS[d.footprint];
     const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
     const faces = boxFaces(fp, { ...blockOf(d.footprint, d.rot), z0: 0 });
     const shade = { top: [220, 210, 180], left: [160, 120, 90], right: [110, 80, 60] };
     for (const [name, pts] of Object.entries(faces)) fillPoly(png, pts.map(map), shade[name]);
-    mkdirSync(dirname(join(root, d.file)), { recursive: true });
-    writeFileSync(join(root, d.file), PNG.sync.write(png));
+    const out = to ?? join(root, d.file);
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, PNG.sync.write(png));
+  };
+  /**
+   * An image tool's folder under `base`: a folder for each chat, a file for each picture made.
+   * The pictures are numbered as they are made, each a few seconds newer than the one before and
+   * none the same as another; `old` is one made an hour ago, `low` one seen from too low a camera.
+   */
+  const imageTool = (root, base) => {
+    let n = 0;
+    return (chat, { id = 'depot-a0-r0', low = false, old = false } = {}) => {
+      const k = ++n;
+      const to = join(base, chat, `exec-${k}.png`);
+      paint(root, id, ([x, y]) => [x + k, low ? 760 + (y - 760) * 0.8 : y], to);
+      const t = new Date(Date.now() - (old ? 3600 : 300 - 10 * k) * 1000);
+      utimesSync(to, t, t);
+      return to;
+    };
   };
 
   it('hands out a picture, records it only when it passes, and holds the gate', () => {
@@ -1427,19 +1473,14 @@ describe('the queue tool on the command line', () => {
     run(root);
     const at = (file) => join(root, file);
     const file = pictureFile('depot', 0, 0);
-    // the image tool's folder: a folder for each chat, a file for each picture it made
     const from = join(root, 'made');
-    const made = (name, ago, map) => {
-      paint(root, 'depot-a0-r0', map);
-      const to = join(from, 'chat', name);
-      mkdirSync(dirname(to), { recursive: true });
-      renameSync(at(file), to);
-      const t = new Date(Date.now() - ago * 1000);
-      utimesSync(to, t, t);
-      return to;
-    };
-    expect(run(root, 'next').out).toMatch(
-      /^take it: +node tools\/building-queue\.mjs take depot-a0-r0$/m,
+    const made = imageTool(root, from);
+    const head = run(root, 'next').out;
+    expect(head).toMatch(/^file: +assets\/source\/buildings-v2\/depot\/depot-a0-r0\.png$/m);
+    expect(head).not.toMatch(/save as/);
+    // how a picture is taken is said after how it is made
+    expect(head).toMatch(
+      /----- end of prompt -----\n\nwhen the picture is made: node tools\/building-queue\.mjs take depot-a0-r0\n/,
     );
     // nothing made yet
     mkdirSync(from);
@@ -1447,70 +1488,122 @@ describe('the queue tool on the command line', () => {
     expect(none.code).toBe(1);
     expect(none.out).toMatch(/no picture in /);
     // an old picture is not the one just made
-    const low = ([x, y]) => [x, 760 + (y - 760) * 0.8];
-    const old = made('exec-old.png', 3600, low);
+    made('chat', { old: true });
     const stale = run(root, 'take', 'depot-a0-r0', '--from', from);
     expect(stale.code).toBe(1);
-    expect(stale.out).toMatch(/exec-old\.png, was made 60 minutes ago/);
+    expect(stale.out).toMatch(/exec-1\.png, was made 60 minutes ago/);
     expect(existsSync(at(file))).toBe(false);
-    // the newest one is taken: copied as it is, and laid on grass for the eye
-    const fresh = made('exec-new.png', 5);
+    // the newest one is taken: written as it is, and laid on grass for the eye
+    const first = made('chat');
     const ok = run(root, 'take', 'depot-a0-r0', '--from', from);
     expect(ok.code).toBe(0);
-    expect(ok.out).toMatch(/^took: +.*exec-new\.png \(made \d+ s ago\)$/m);
+    expect(ok.out).toMatch(/^took: +.*exec-2\.png \(made \d+ (s|minutes) ago\)$/m);
+    expect(ok.out).not.toMatch(/replaced/);
     expect(ok.out).toMatch(/^saved as: +assets\/source\/buildings-v2\/depot\/depot-a0-r0\.png$/m);
     expect(ok.out).toMatch(/^look at: +assets\/source\/buildings-v2\/\.look\/depot-a0-r0\.png$/m);
     expect(ok.out).toMatch(/^then: +node tools\/building-queue\.mjs set depot-a0-r0 generated$/m);
-    expect(readFileSync(at(file)).equals(readFileSync(fresh))).toBe(true);
-    expect(existsSync(fresh)).toBe(true);
-    const look = PNG.sync.read(
-      readFileSync(at('assets/source/buildings-v2/.look/depot-a0-r0.png')),
-    );
-    expect(look.data[3]).toBe(255);
-    // taking records nothing: the picture waits to be looked at and recorded
+    expect(ok.out).not.toMatch(/^note:/m);
+    expect(readFileSync(at(file)).equals(readFileSync(first))).toBe(true);
+    expect(existsSync(first)).toBe(true);
+    // under a date of its own: what is made from a picture is renewed by its date
+    expect(statSync(at(file)).mtimeMs).toBeGreaterThan(statSync(first).mtimeMs);
+    const look = at('assets/source/buildings-v2/.look/depot-a0-r0.png');
+    expect(PNG.sync.read(readFileSync(look)).data[3]).toBe(255);
+    // taking does not make a picture: it waits to be looked at and recorded
     expect(run(root, 'status').out).toMatch(/mismatch +depot-a0-r0: on disk, but not recorded/);
-    // a generation that failed leaves the last picture the newest: it is not taken twice
+    // asked again with nothing new made, it shows the same picture and says so
     const twice = run(root, 'take', 'depot-a0-r0', '--from', from);
-    expect(twice.code).toBe(1);
-    expect(twice.out).toMatch(/exec-new\.png, was taken before \(it is .*depot-a0-r0\.png\)/);
-    // a file that is named is taken whatever its age, over a picture that was not recorded
-    expect(run(root, 'take', 'depot-a0-r0', '--from', old).code).toBe(0);
-    expect(readFileSync(at(file)).equals(readFileSync(old))).toBe(true);
-    // refused for its camera, the tool keeps it: it is still known as taken
-    expect(run(root, 'set', 'depot-a0-r0', 'generated').code).toBe(1);
-    const again = run(root, 'take', 'depot-a0-r0', '--from', old);
-    expect(again.code).toBe(1);
-    expect(again.out).toMatch(/was taken before \(it is .*depot-a0-r0\.before\.png\)/);
-    // a picture that is recorded as made is not taken over
-    expect(run(root, 'take', 'depot-a0-r0', '--from', fresh).code).toBe(0);
-    expect(run(root, 'set', 'depot-a0-r0', 'generated').code).toBe(0);
-    const over = run(root, 'take', 'depot-a0-r0', '--from', fresh);
-    expect(over.code).toBe(1);
+    expect(twice.code).toBe(0);
+    expect(twice.out).toMatch(/^nothing new was made: .*exec-2\.png was taken already$/m);
+    expect(twice.out).toMatch(
+      /^look at: +assets\/source\/buildings-v2\/\.look\/depot-a0-r0\.png$/m,
+    );
+    // looked at and given up: the next one takes its place, and the one given up is counted
+    const second = made('chat');
+    const over = run(root, 'take', 'depot-a0-r0', '--from', from);
+    expect(over.code).toBe(0);
+    expect(over.out).toMatch(/^took: +.*exec-3\.png/m);
     expect(over.out).toMatch(
+      /^replaced: +the picture taken before, which was not recorded: counted as an attempt \(1 so far\)$/m,
+    );
+    expect(run(root, 'set', 'depot-a0-r0', 'generated').out).toMatch(
+      /depot-a0-r0: generated, 2 attempts/,
+    );
+    // a picture that is recorded as made is not taken over
+    const done = run(root, 'take', 'depot-a0-r0', '--from', from);
+    expect(done.code).toBe(1);
+    expect(done.out).toMatch(
       /depot-a0-r0 is recorded as generated.*node tools\/building-queue\.mjs set depot-a0-r0 pending/,
     );
-    expect(run(root, 'take', 'nothing-a0-r0', '--from', from).out).toMatch(
-      /no picture is called "nothing-a0-r0"/,
+
+    // the next picture, and a generation that failed: the newest picture is the last one's, and
+    // the one that was given up before it is no new picture either
+    const other = pictureFile('depot', 0, 1);
+    const failed = run(root, 'take', 'depot-a0-r1', '--from', from);
+    expect(failed.code).toBe(1);
+    expect(failed.out).toMatch(
+      /nothing new was made: the newest picture there, .*exec-3\.png, is depot-a0-r0's \(.*depot-a0-r0\.png\)/,
     );
-    // a command that is cut short says what it lacks, and takes nothing from anywhere else
-    const bare = run(root, 'take');
-    expect(bare.code).toBe(1);
-    expect(bare.out).toMatch(/say which picture: node tools\/building-queue\.mjs take <id>/);
-    const cut = run(root, 'take', 'depot-a0-r1', '--from');
-    expect(cut.code).toBe(1);
-    expect(cut.out).toMatch(/--from needs a folder or a file/);
-    // a picture with no building in it is taken all the same, and said to show nothing
+    const named = run(root, 'take', 'depot-a0-r1', '--from', second);
+    expect(named.code).toBe(1);
+    expect(named.out).toMatch(/exec-3\.png is depot-a0-r0's picture/);
+    expect(existsSync(at(other))).toBe(false);
+    // a file that is named is taken whatever its age
+    const low = made('chat', { id: 'depot-a0-r1', low: true, old: true });
+    expect(run(root, 'take', 'depot-a0-r1', '--from', low).code).toBe(0);
+    expect(readFileSync(at(other)).equals(readFileSync(low))).toBe(true);
+    // refused for its camera, the tool keeps it: it is still known as taken
+    expect(run(root, 'set', 'depot-a0-r1', 'generated').code).toBe(1);
+    expect(existsSync(at(other))).toBe(false);
+    const again = run(root, 'take', 'depot-a0-r1', '--from', low);
+    expect(again.code).toBe(1);
+    expect(again.out).toMatch(/was taken before \(it is .*depot-a0-r1\.before\.png\)/);
+    // what the tool keeps of this picture can be had back by its own name
+    expect(run(root, 'take', 'depot-a0-r1', '--from', at(beforeFile(other))).code).toBe(0);
+    expect(readFileSync(at(other)).equals(readFileSync(low))).toBe(true);
+    // what cannot be read as a picture, or shows no building, is not taken
+    const bad = join(from, 'chat', 'exec-bad.png');
+    writeFileSync(bad, '');
+    const unread = run(root, 'take', 'depot-a0-r1', '--from', bad);
+    expect(unread.code).toBe(1);
+    expect(unread.out).toMatch(/exec-bad\.png cannot be read as a picture/);
     const blank = join(from, 'chat', 'exec-blank.png');
     writeFileSync(blank, PNG.sync.write(new PNG({ width: 64, height: 64 })));
     const empty = run(root, 'take', 'depot-a0-r1', '--from', blank);
-    expect(empty.code).toBe(0);
-    expect(empty.out).toMatch(/^look at: +nothing to look at: /m);
-  }, 60000);
+    expect(empty.code).toBe(1);
+    expect(empty.out).toMatch(/there is no building in .*exec-blank\.png/);
+    expect(readFileSync(at(other)).equals(readFileSync(low))).toBe(true);
+    // a picture whose turn has not come is taken, and said to be out of turn
+    const early = made('chat', { id: 'depot-a5-r3' });
+    const ahead = run(root, 'take', 'depot-a5-r3', '--from', early);
+    expect(ahead.code).toBe(0);
+    expect(ahead.out).toMatch(/^note: +`next` hands out depot-a0-r1, not depot-a5-r3$/m);
+    // a command that is cut short or padded says what it does not understand, and takes nothing
+    const bare = run(root, 'take');
+    expect(bare.code).toBe(1);
+    expect(bare.out).toMatch(/say which picture: node tools\/building-queue\.mjs take <id>/);
+    const cut = run(root, 'take', 'depot-a0-r2', '--from');
+    expect(cut.code).toBe(1);
+    expect(cut.out).toMatch(/--from needs a folder or a file/);
+    const padded = run(root, 'take', 'depot-a0-r2', first);
+    expect(padded.code).toBe(1);
+    expect(padded.out).toMatch(/take does not understand ".*exec-2\.png"/);
+    expect(run(root, 'take', 'depot-a0-r2', '--from=x').out).toMatch(
+      /take does not understand "--from=x"/,
+    );
+    expect(existsSync(at(pictureFile('depot', 0, 2)))).toBe(false);
+    expect(run(root, 'take', 'nothing-a0-r0', '--from', from).out).toMatch(
+      /no picture is called "nothing-a0-r0"/,
+    );
+  }, 120000);
 
-  it('looks for the picture where the image tool keeps its own', () => {
+  it('follows its own chat where several chats make pictures', () => {
+    // an image tool keeps a folder for each chat, and other chats paint other things meanwhile
     const root = sandbox();
     run(root);
     const home = join(root, 'codex');
+    const base = join(home, 'generated_images');
+    const made = imageTool(root, base);
     const exec = (...args) => {
       try {
         const env = { ...process.env, CODEX_HOME: home };
@@ -1530,12 +1623,44 @@ describe('the queue tool on the command line', () => {
     expect(none.out).toMatch(
       /no folder of pictures at .*generated_images.*--from <folder or file>/,
     );
-    paint(root, 'depot-a0-r0');
-    const to = join(home, 'generated_images', 'chat', 'exec-a.png');
-    mkdirSync(dirname(to), { recursive: true });
-    renameSync(join(root, pictureFile('depot', 0, 0)), to);
-    const ok = exec('take', 'depot-a0-r0');
-    expect(ok.code).toBe(0);
-    expect(ok.out).toMatch(/^took: +.*generated_images.*exec-a\.png/m);
-  }, 60000);
+    // two chats have just made pictures and nothing was ever taken: the tool does not guess
+    made('chat-a');
+    made('chat-b');
+    const which = exec('take', 'depot-a0-r0');
+    expect(which.code).toBe(1);
+    expect(which.out).toMatch(/more than one chat/);
+    expect(which.out).toMatch(/chat-a.exec-1\.png/);
+    expect(which.out).toMatch(/chat-b.exec-2\.png/);
+    expect(which.out).toMatch(/node tools\/building-queue\.mjs take depot-a0-r0 --from "<folder>"/);
+    expect(existsSync(join(root, pictureFile('depot', 0, 0)))).toBe(false);
+    // told once, it follows that chat: the other chat's newer pictures are not its own
+    const told = exec('take', 'depot-a0-r0', '--from', join(base, 'chat-a'));
+    expect(told.code).toBe(0);
+    expect(told.out).toMatch(/^took: +.*chat-a.exec-1\.png/m);
+    expect(exec('set', 'depot-a0-r0', 'generated').code).toBe(0);
+    made('chat-a', { id: 'depot-a0-r1' });
+    made('chat-b');
+    const mine = exec('take', 'depot-a0-r1');
+    expect(mine.code).toBe(0);
+    expect(mine.out).toMatch(/^took: +.*chat-a.exec-3\.png/m);
+    expect(exec('set', 'depot-a0-r1', 'generated').code).toBe(0);
+    // a generation that failed while the other chat goes on: nothing is taken from there unasked
+    made('chat-b', { id: 'depot-a0-r2' });
+    const lost = exec('take', 'depot-a0-r2');
+    expect(lost.code).toBe(1);
+    expect(lost.out).toMatch(/nothing new in .*chat-a, where the last picture was taken from/);
+    expect(lost.out).toMatch(/chat-b.exec-5\.png/);
+    expect(lost.out).toMatch(/take depot-a0-r2 --from ".*chat-b"/);
+    expect(existsSync(join(root, pictureFile('depot', 0, 2)))).toBe(false);
+    // the work goes on in another chat: said once, and that chat is followed from then on
+    const moved = exec('take', 'depot-a0-r2', '--from', join(base, 'chat-b'));
+    expect(moved.code).toBe(0);
+    expect(moved.out).toMatch(/^took: +.*chat-b.exec-5\.png/m);
+    expect(exec('set', 'depot-a0-r2', 'generated').code).toBe(0);
+    made('chat-b', { id: 'depot-a0-r3' });
+    made('chat-a');
+    const followed = exec('take', 'depot-a0-r3');
+    expect(followed.code).toBe(0);
+    expect(followed.out).toMatch(/^took: +.*chat-b.exec-6\.png/m);
+  }, 120000);
 });
