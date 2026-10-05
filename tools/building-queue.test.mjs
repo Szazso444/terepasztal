@@ -478,6 +478,7 @@ describe('working through the queue', () => {
       files.add(beforeFile(f).replace(/\.png$/, '.1.png'));
     },
     restoreBefore: (f) => files.add(f),
+    clearStray: (f) => files.delete(f),
   });
   /** what the check says of a camera that is off: it fails, or passes with a note when waived */
   const WAS = 'It was painted from too low a camera.';
@@ -532,6 +533,13 @@ describe('working through the queue', () => {
       setBefore: (f) => moveTo(f, beforeFile(f)),
       shelve: (f) => move(f, numbered(beforeFile(f))),
       restoreBefore: (f) => shots.set(f, shots.get(beforeFile(f))),
+      clearStray: (f, keepBeside) => {
+        const kept = [beforeFile(f), f.replace(/\.png$/, '.rejected.png')];
+        if (kept.some((k) => shots.has(k) && shots.get(k) === shots.get(f))) shots.delete(f);
+        else if (keepBeside) move(f, numbered(beforeFile(f)));
+        else return false;
+        return true;
+      },
     };
   };
   /** save an attempt whose camera is `by` degrees off and try to record it: the result or the error */
@@ -800,6 +808,65 @@ describe('working through the queue', () => {
     expect(settle(queue, inv, 'station-a0-r0', 'pending', {}, disk(files)).aside).toBeNull();
     // a second look finds nothing new
     expect(recheck(queue, inv, null, disk(files, fine)).back).toEqual([]);
+  });
+
+  it('clears away pictures left on disk for entries that wait to be painted again', () => {
+    // a checkout or a stash put pictures back under their names. They are not attempts: recorded
+    // as such they would each cost the picture one of its three
+    const queue = fresh(true);
+    const file = pictureFile('depot', 0, 0),
+      other = pictureFile('depot', 0, 2);
+    const shots = new Map();
+    for (const e of queue.entries.slice(0, 24)) {
+      e.status = 'generated';
+      shots.set(e.file, 0);
+    }
+    shots.set(file, 6.4);
+    shots.set(other, 5);
+    const d = studio(shots);
+    expect(recheck(queue, inv, null, d).back).toHaveLength(2);
+    // back under their names: a copy of the earlier self, and a picture that is not one
+    shots.set(file, 6.4);
+    shots.set(other, 3.3);
+    expect(mismatches(queue, d.exists)).toHaveLength(2);
+    const r = recheck(queue, inv, null, d);
+    expect(r.strays).toEqual(['depot-a0-r0', 'depot-a0-r2']);
+    expect(r.back).toEqual([]);
+    // the copy is gone; the other is kept beside the earlier self, under a number
+    expect([...shots.keys()].filter((f) => f.includes('depot-a0-r0'))).toEqual([beforeFile(file)]);
+    expect(shots.has(other)).toBe(false);
+    expect(shots.get(beforeFile(other))).toBe(5);
+    expect(shots.get(beforeFile(other).replace(/\.png$/, '.1.png'))).toBe(3.3);
+    expect(mismatches(queue, d.exists)).toEqual([]);
+    expect(queue.entries[0]).toMatchObject({ status: 'pending', attempts: 0 });
+    // a picture taken back and set aside, put back under its name: the copy goes as well
+    settle(queue, inv, 'depot-a0-r1', 'pending', {}, d);
+    shots.set(pictureFile('depot', 0, 1), 0);
+    expect(recheck(queue, inv, null, d).strays).toEqual(['depot-a0-r1']);
+    expect(shots.has(pictureFile('depot', 0, 1))).toBe(false);
+    // but a new picture that only waits to be recorded is the agent's: it stays
+    shots.set(pictureFile('depot', 0, 1), 1.5);
+    expect(recheck(queue, inv, null, d).strays).toEqual([]);
+    expect(shots.get(pictureFile('depot', 0, 1))).toBe(1.5);
+    expect(mismatches(queue, d.exists)).toEqual(['depot-a0-r1: on disk, but not recorded']);
+  });
+
+  it('brings the marks of an earlier list up to date when it looks again', () => {
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    // as an earlier tool left it: a mark without the camera, an instruction in the note
+    const e = queue.entries[0];
+    Object.assign(e, {
+      status: 'pending',
+      attempts: 0,
+      note: 'Look down more steeply.',
+      repaint: true,
+    });
+    files.delete(e.file);
+    files.add(beforeFile(e.file));
+    const was = (file, o) => (file === beforeFile(e.file) ? cameraOff(file, o) : fine);
+    recheck(queue, inv, null, disk(files, was));
+    expect(e).toMatchObject({ status: 'pending', note: '', repaint: { by: 6.4, was: WAS } });
   });
 
   it('looks again at one family alone', () => {
@@ -1247,6 +1314,14 @@ describe('the queue tool on the command line', () => {
     expect(run(root, 'recheck').out).toMatch(/: 1 back in the queue/);
     expect(existsSync(at(beforeFile(pictureFile('depot', 0, 1))))).toBe(true);
     expect(existsSync(at('assets/source/buildings-v2/depot/depot-a0-r1.before.1.png'))).toBe(true);
+    // a checkout put the earlier self back under the picture's name: `recheck` clears the copy
+    cpSync(at(beforeFile(pictureFile('depot', 0, 1))), at(pictureFile('depot', 0, 1)));
+    expect(run(root, 'status').out).toMatch(/mismatch +depot-a0-r1: on disk, but not recorded/);
+    const tidy = run(root, 'recheck');
+    expect(tidy.out).toMatch(/^1 picture was on disk for an entry that waits to be painted again/m);
+    expect(existsSync(at(pictureFile('depot', 0, 1)))).toBe(false);
+    expect(existsSync(at(beforeFile(pictureFile('depot', 0, 1))))).toBe(true);
+    expect(run(root, 'status').out).not.toMatch(/mismatch/);
     // set aside twice: the first picture set aside is kept too, under a number
     paint(root, 'depot-a0-r1');
     expect(run(root, 'set', 'depot-a0-r1', 'rejected', '--note', 'again').code).toBe(0);

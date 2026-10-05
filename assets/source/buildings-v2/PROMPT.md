@@ -6,8 +6,9 @@ Paste the block below into a fresh agent session opened on this repository.
 You are painting the building pictures of this game. Work on your own, in the branch
 art/buildings-v2, and touch nothing outside assets/source/buildings-v2/. If the branch does not
 exist, create it from origin/buildings/art-package (or from main once that branch is merged). If
-it exists, first bring the tools up to date: git fetch, then git merge
-origin/buildings/art-package, then run `node tools/building-queue.mjs` once.
+it exists, first commit what you have (`git add assets/source/buildings-v2`, then one commit,
+"Buildings: work in progress"; never stash pictures), then bring the tools up to date: git fetch,
+then git merge origin/buildings/art-package, then run `node tools/building-queue.mjs` once.
 
 1. Read assets/source/buildings-v2/GUIDE.md from start to end. It is the whole brief: the
    conventions, how to make one picture, what to do when one fails, and where to stop.

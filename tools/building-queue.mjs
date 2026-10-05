@@ -26,6 +26,7 @@ import {
   mkdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
@@ -441,6 +442,21 @@ const DISK = {
   restoreBefore(file) {
     copyFileSync(beforeFile(file), file);
   },
+  /**
+   * Clear a picture that lies under its name though it is not made. A copy of a picture that is
+   * kept already (the earlier self, or the one set aside) is removed. Anything else is kept
+   * beside the earlier self under a number when `keepBeside` says so, and left where it is
+   * otherwise: it may be a new picture that waits to be recorded. Says whether it was cleared.
+   */
+  clearStray(file, keepBeside) {
+    const bytes = readFileSync(file);
+    const same = (kept) =>
+      existsSync(kept) && statSync(kept).size === bytes.length && readFileSync(kept).equals(bytes);
+    if (same(beforeFile(file)) || same(file.replace(/\.png$/, '.rejected.png'))) rmSync(file);
+    else if (keepBeside) this.shelve(file);
+    else return false;
+    return true;
+  },
 };
 
 /**
@@ -549,17 +565,33 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
  * with another fault, and one whose file could not be moved. A picture kept as the closest of
  * its attempts is not asked for again. A gate family that has pictures put back is shown to the
  * user again: its gate is closed, and `gates` names it. `only` is one family.
+ *
+ * It also tidies what other tools left: a picture lying under its name though it is not made (a
+ * checkout or a stash put it back) is cleared where it is a copy of one that is kept already, or
+ * where its entry waits to be painted again; and a mark from an earlier list is brought up to
+ * date.
  */
 export function recheck(queue, inventory, only = null, disk = DISK) {
   if (only && !queue.entries.some((e) => e.family === only))
     throw new Error(`no family is called ${only}`);
   const back = [],
     left = [],
+    strays = [],
     results = {},
     families = new Set();
   for (const e of queue.entries) {
-    if ((only && e.family !== only) || !isMade(e) || !disk.exists(e.file)) continue;
+    if (only && e.family !== only) continue;
     const f = inventory.find((x) => x.family === e.family);
+    const waits = e.status === 'pending' && e.repaint && disk.exists(beforeFile(e.file));
+    // a list written when the mark was only a mark: read the earlier self's camera now
+    if (waits && typeof e.repaint !== 'object') {
+      const was = disk.check(beforeFile(e.file), f.footprint, e.rot).camera;
+      if (was) Object.assign(e, { note: '', repaint: { by: was.by, was: was.was } });
+    }
+    // a checkout or a stash put a picture back under its name: it is not an attempt
+    if (e.status === 'pending' && disk.exists(e.file) && disk.clearStray(e.file, !!waits))
+      strays.push(e.id);
+    if (!isMade(e) || !disk.exists(e.file)) continue;
     const check = disk.check(e.file, f.footprint, e.rot, { camera: !e.kept });
     results[e.id] = check;
     if (check.ok) continue;
@@ -598,6 +630,7 @@ export function recheck(queue, inventory, only = null, disk = DISK) {
     checked: Object.keys(results).length,
     back,
     left,
+    strays,
     results,
     gates: gates.map((g) => g.family),
   };
@@ -835,6 +868,10 @@ function main(args) {
       for (const b of r.back) console.log(`  ${b.id.padEnd(22)} ${b.problem}`);
       if (r.left.length) console.log('left as they are:');
       for (const l of r.left) console.log(`  ${l.id.padEnd(22)} ${l.why}`);
+      if (r.strays.length)
+        console.log(
+          `${r.strays.length} picture${r.strays.length === 1 ? ' was' : 's were'} on disk for ${r.strays.length === 1 ? 'an entry that waits' : 'entries that wait'} to be painted again, put there by something other than this tool: cleared (a copy of a picture that is kept already is removed, anything else kept beside the earlier self under a number).`,
+        );
       for (const family of r.gates)
         console.log(
           `The gate of "${family}" is closed again: \`next\` prints GATE when its pictures are painted again, for the user to look at them.`,
