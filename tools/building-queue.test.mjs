@@ -220,6 +220,25 @@ describe('building queue', () => {
     expect(fam.shared).not.toMatch(/keep the canvas size/i);
   });
 
+  it('says in a rear view that nothing of the front is in the picture', () => {
+    // told of a crew door in the front wall, the generator painted one on the back wall of rear
+    // views time and again, though the view said the front could not be seen
+    for (const id of ['depot-a2-r1', 'depot-a2-r2', 'station-a0-r2', 'kiln-a0-r1']) {
+      const prompt = about(id).prompt;
+      expect(prompt, id).toMatch(/nothing of it is in this picture/);
+      expect(prompt, id).toMatch(/no entrance door/);
+    }
+    for (const id of ['depot-a2-r0', 'depot-a2-r3'])
+      expect(about(id).prompt, id).not.toMatch(/no entrance door/);
+    // the walls are named as before
+    expect(fam.views.r1).toMatch(
+      /lower-left wall is the right-hand side; the lower-right wall is the BACK/,
+    );
+    expect(fam.views.r2).toMatch(
+      /lower-left wall is the BACK.*; the lower-right wall is the left-hand side/,
+    );
+  });
+
   it('calls a building what its description calls it', () => {
     // the game's data names the town hall "Townhouse": the description's own title wins
     expect(about('town-a0-r0').prompt).toContain('Building: Town hall.');
