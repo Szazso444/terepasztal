@@ -885,8 +885,8 @@
       "age": 3,
       "rot": 2,
       "file": "assets/source/buildings-v2/lumber/lumber-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -895,8 +895,8 @@
       "age": 3,
       "rot": 3,
       "file": "assets/source/buildings-v2/lumber/lumber-a3-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -905,8 +905,8 @@
       "age": 4,
       "rot": 0,
       "file": "assets/source/buildings-v2/lumber/lumber-a4-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": ""
     },
     {
@@ -915,8 +915,8 @@
       "age": 4,
       "rot": 1,
       "file": "assets/source/buildings-v2/lumber/lumber-a4-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -925,8 +925,8 @@
       "age": 4,
       "rot": 2,
       "file": "assets/source/buildings-v2/lumber/lumber-a4-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": ""
     },
     {

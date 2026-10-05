@@ -1,5 +1,5 @@
 {
-  "checked": 87,
+  "checked": 92,
   "failed": 1,
   "pictures": {
     "depot-a0-r0": {
@@ -4080,6 +4080,264 @@
           "turn": -0.2
         },
         "area": 633274
+      }
+    },
+    "lumber-a3-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off: the lower-left ground line slopes 0.59 where the game's slopes 0.50 (corrected)"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.586,
+          -0.573
+        ],
+        "slopes": [
+          0.586,
+          -0.573
+        ],
+        "base": {
+          "w": [
+            207,
+            880.2
+          ],
+          "s": [
+            653.5,
+            1141.7
+          ],
+          "e": [
+            1011,
+            936.7
+          ]
+        },
+        "scale": 0.5604,
+        "vertical": 0.8627,
+        "shear": -0.0053,
+        "cx": 609,
+        "cy": 780.5,
+        "box": {
+          "left": 283.9,
+          "top": 462.9,
+          "right": 778.7,
+          "bottom": 941.4
+        },
+        "camera": {
+          "elevation": 35.4,
+          "turn": 0.3
+        },
+        "area": 569391
+      }
+    },
+    "lumber-a3-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera far off: the lower-left ground line slopes 0.69 where the game's slopes 0.50 (corrected part of the way)",
+        "camera off: the lower-right ground line slopes -0.40 where the game's slopes -0.50 (corrected)"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.687,
+          -0.404
+        ],
+        "slopes": [
+          0.67,
+          -0.404
+        ],
+        "base": {
+          "w": [
+            205,
+            890.7
+          ],
+          "s": [
+            604.8,
+            1165.5
+          ],
+          "e": [
+            1036,
+            991.1
+          ]
+        },
+        "scale": 0.5422,
+        "vertical": 0.9307,
+        "shear": -0.1236,
+        "cx": 620.5,
+        "cy": 799.1,
+        "box": {
+          "left": 278,
+          "top": 405,
+          "right": 759,
+          "bottom": 947.4
+        },
+        "camera": {
+          "elevation": 31.8,
+          "turn": 7.5
+        },
+        "area": 601264
+      }
+    },
+    "lumber-a4-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.54,
+          -0.497
+        ],
+        "slopes": [
+          0.54,
+          -0.497
+        ],
+        "base": {
+          "w": [
+            265,
+            899.7
+          ],
+          "s": [
+            664.3,
+            1115.2
+          ],
+          "e": [
+            1045,
+            926.1
+          ]
+        },
+        "scale": 0.5776,
+        "vertical": 0.9646,
+        "shear": -0.0207,
+        "cx": 655,
+        "cy": 867,
+        "box": {
+          "left": 272.3,
+          "top": 448,
+          "right": 739.6,
+          "bottom": 937.6
+        },
+        "camera": {
+          "elevation": 31.2,
+          "turn": 1.2
+        },
+        "area": 450851
+      }
+    },
+    "lumber-a4-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.513,
+          -0.482
+        ],
+        "slopes": [
+          0.513,
+          -0.482
+        ],
+        "base": {
+          "w": [
+            582,
+            647.4
+          ],
+          "s": [
+            943.1,
+            832.5
+          ],
+          "e": [
+            1249,
+            684.9
+          ]
+        },
+        "scale": 0.6755,
+        "vertical": 1.0048,
+        "shear": -0.0152,
+        "cx": 915.5,
+        "cy": 655.4,
+        "box": {
+          "left": 232.7,
+          "top": 473.1,
+          "right": 752.1,
+          "bottom": 947
+        },
+        "camera": {
+          "elevation": 29.8,
+          "turn": 0.9
+        },
+        "area": 360922
+      }
+    },
+    "lumber-a4-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off: the lower-left ground line slopes 0.61 where the game's slopes 0.50 (corrected)",
+        "camera far off: the lower-right ground line slopes -0.71 where the game's slopes -0.50 (corrected part of the way)"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.611,
+          -0.707
+        ],
+        "slopes": [
+          0.611,
+          -0.67
+        ],
+        "base": {
+          "w": [
+            279,
+            905.1
+          ],
+          "s": [
+            673.2,
+            1146.1
+          ],
+          "e": [
+            993,
+            920
+          ]
+        },
+        "scale": 0.631,
+        "vertical": 0.7804,
+        "shear": 0.0229,
+        "cx": 636,
+        "cy": 726.7,
+        "box": {
+          "left": 276.6,
+          "top": 511.5,
+          "right": 753.1,
+          "bottom": 946.6
+        },
+        "camera": {
+          "elevation": 41.1,
+          "turn": -2.1
+        },
+        "area": 423654
       }
     }
   }
