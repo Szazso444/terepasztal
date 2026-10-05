@@ -1,6 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { PNG } from 'pngjs';
@@ -1409,5 +1418,124 @@ describe('the queue tool on the command line', () => {
     expect(done.code).toBe(3);
     expect(done.out).toMatch(/DONE/);
     expect(run(root, 'frobnicate').code).toBe(1);
+  }, 60000);
+
+  it('takes the picture the image tool just wrote, and lays it out to look at', () => {
+    // an agent that had lost its way of saving moved each picture through the shell as text, a
+    // hundred commands a picture: the way is the tool's, and `next` names it every time
+    const root = sandbox();
+    run(root);
+    const at = (file) => join(root, file);
+    const file = pictureFile('depot', 0, 0);
+    // the image tool's folder: a folder for each chat, a file for each picture it made
+    const from = join(root, 'made');
+    const made = (name, ago, map) => {
+      paint(root, 'depot-a0-r0', map);
+      const to = join(from, 'chat', name);
+      mkdirSync(dirname(to), { recursive: true });
+      renameSync(at(file), to);
+      const t = new Date(Date.now() - ago * 1000);
+      utimesSync(to, t, t);
+      return to;
+    };
+    expect(run(root, 'next').out).toMatch(
+      /^take it: +node tools\/building-queue\.mjs take depot-a0-r0$/m,
+    );
+    // nothing made yet
+    mkdirSync(from);
+    const none = run(root, 'take', 'depot-a0-r0', '--from', from);
+    expect(none.code).toBe(1);
+    expect(none.out).toMatch(/no picture in /);
+    // an old picture is not the one just made
+    const low = ([x, y]) => [x, 760 + (y - 760) * 0.8];
+    const old = made('exec-old.png', 3600, low);
+    const stale = run(root, 'take', 'depot-a0-r0', '--from', from);
+    expect(stale.code).toBe(1);
+    expect(stale.out).toMatch(/exec-old\.png, was made 60 minutes ago/);
+    expect(existsSync(at(file))).toBe(false);
+    // the newest one is taken: copied as it is, and laid on grass for the eye
+    const fresh = made('exec-new.png', 5);
+    const ok = run(root, 'take', 'depot-a0-r0', '--from', from);
+    expect(ok.code).toBe(0);
+    expect(ok.out).toMatch(/^took: +.*exec-new\.png \(made \d+ s ago\)$/m);
+    expect(ok.out).toMatch(/^saved as: +assets\/source\/buildings-v2\/depot\/depot-a0-r0\.png$/m);
+    expect(ok.out).toMatch(/^look at: +assets\/source\/buildings-v2\/\.look\/depot-a0-r0\.png$/m);
+    expect(ok.out).toMatch(/^then: +node tools\/building-queue\.mjs set depot-a0-r0 generated$/m);
+    expect(readFileSync(at(file)).equals(readFileSync(fresh))).toBe(true);
+    expect(existsSync(fresh)).toBe(true);
+    const look = PNG.sync.read(
+      readFileSync(at('assets/source/buildings-v2/.look/depot-a0-r0.png')),
+    );
+    expect(look.data[3]).toBe(255);
+    // taking records nothing: the picture waits to be looked at and recorded
+    expect(run(root, 'status').out).toMatch(/mismatch +depot-a0-r0: on disk, but not recorded/);
+    // a generation that failed leaves the last picture the newest: it is not taken twice
+    const twice = run(root, 'take', 'depot-a0-r0', '--from', from);
+    expect(twice.code).toBe(1);
+    expect(twice.out).toMatch(/exec-new\.png, was taken before \(it is .*depot-a0-r0\.png\)/);
+    // a file that is named is taken whatever its age, over a picture that was not recorded
+    expect(run(root, 'take', 'depot-a0-r0', '--from', old).code).toBe(0);
+    expect(readFileSync(at(file)).equals(readFileSync(old))).toBe(true);
+    // refused for its camera, the tool keeps it: it is still known as taken
+    expect(run(root, 'set', 'depot-a0-r0', 'generated').code).toBe(1);
+    const again = run(root, 'take', 'depot-a0-r0', '--from', old);
+    expect(again.code).toBe(1);
+    expect(again.out).toMatch(/was taken before \(it is .*depot-a0-r0\.before\.png\)/);
+    // a picture that is recorded as made is not taken over
+    expect(run(root, 'take', 'depot-a0-r0', '--from', fresh).code).toBe(0);
+    expect(run(root, 'set', 'depot-a0-r0', 'generated').code).toBe(0);
+    const over = run(root, 'take', 'depot-a0-r0', '--from', fresh);
+    expect(over.code).toBe(1);
+    expect(over.out).toMatch(
+      /depot-a0-r0 is recorded as generated.*node tools\/building-queue\.mjs set depot-a0-r0 pending/,
+    );
+    expect(run(root, 'take', 'nothing-a0-r0', '--from', from).out).toMatch(
+      /no picture is called "nothing-a0-r0"/,
+    );
+    // a command that is cut short says what it lacks, and takes nothing from anywhere else
+    const bare = run(root, 'take');
+    expect(bare.code).toBe(1);
+    expect(bare.out).toMatch(/say which picture: node tools\/building-queue\.mjs take <id>/);
+    const cut = run(root, 'take', 'depot-a0-r1', '--from');
+    expect(cut.code).toBe(1);
+    expect(cut.out).toMatch(/--from needs a folder or a file/);
+    // a picture with no building in it is taken all the same, and said to show nothing
+    const blank = join(from, 'chat', 'exec-blank.png');
+    writeFileSync(blank, PNG.sync.write(new PNG({ width: 64, height: 64 })));
+    const empty = run(root, 'take', 'depot-a0-r1', '--from', blank);
+    expect(empty.code).toBe(0);
+    expect(empty.out).toMatch(/^look at: +nothing to look at: /m);
+  }, 60000);
+
+  it('looks for the picture where the image tool keeps its own', () => {
+    const root = sandbox();
+    run(root);
+    const home = join(root, 'codex');
+    const exec = (...args) => {
+      try {
+        const env = { ...process.env, CODEX_HOME: home };
+        const out = execFileSync(process.execPath, [tool, ...args], {
+          cwd: root,
+          encoding: 'utf8',
+          env,
+        });
+        return { code: 0, out };
+      } catch (e) {
+        return { code: e.status, out: `${e.stdout}${e.stderr}` };
+      }
+    };
+    // no such folder: the tool says how to name one
+    const none = exec('take', 'depot-a0-r0');
+    expect(none.code).toBe(1);
+    expect(none.out).toMatch(
+      /no folder of pictures at .*generated_images.*--from <folder or file>/,
+    );
+    paint(root, 'depot-a0-r0');
+    const to = join(home, 'generated_images', 'chat', 'exec-a.png');
+    mkdirSync(dirname(to), { recursive: true });
+    renameSync(join(root, pictureFile('depot', 0, 0)), to);
+    const ok = exec('take', 'depot-a0-r0');
+    expect(ok.code).toBe(0);
+    expect(ok.out).toMatch(/^took: +.*generated_images.*exec-a\.png/m);
   }, 60000);
 });

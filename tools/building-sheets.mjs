@@ -285,6 +285,25 @@ ${sections.join('\n')}
 `;
 }
 
+/** Write one picture for the eye. Answers with the `file` written, or `why` there is none. */
+export function showPicture(file, inventory) {
+  const p = lookedAt(file);
+  const f = p && inventory.find((x) => x.family === p.family);
+  if (!f) return { why: "not a building picture's name" };
+  if (!existsSync(file)) return { why: 'no such file' };
+  let shown;
+  try {
+    shown = drawLook(PNG.sync.read(readFileSync(file)), f.footprint, p.rot);
+  } catch (e) {
+    return { why: e.message };
+  }
+  if (!shown) return { why: 'no building in the picture' };
+  const out = lookFile(file);
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, PNG.sync.write(shown));
+  return { file: out };
+}
+
 /** Write the pictures named for the eye; one line each, the file written or why not. */
 function look(files, inventory) {
   if (!files.length) {
@@ -293,27 +312,12 @@ function look(files, inventory) {
   }
   let bad = 0;
   for (const file of files) {
-    const p = lookedAt(file);
-    const f = p && inventory.find((x) => x.family === p.family);
-    let shown = null,
-      why = "not a building picture's name";
-    if (f && !existsSync(file)) why = 'no such file';
-    else if (f)
-      try {
-        shown = drawLook(PNG.sync.read(readFileSync(file)), f.footprint, p.rot);
-        why = 'no building in the picture';
-      } catch (e) {
-        why = e.message;
-      }
-    if (!shown) {
-      console.log(`left out  ${file}: ${why}`);
+    const shown = showPicture(file, inventory);
+    if (shown.file) console.log(shown.file);
+    else {
+      console.log(`left out  ${file}: ${shown.why}`);
       bad++;
-      continue;
     }
-    const out = lookFile(file);
-    mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, PNG.sync.write(shown));
-    console.log(out);
   }
   return bad ? 1 : 0;
 }

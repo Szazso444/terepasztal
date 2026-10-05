@@ -42,9 +42,10 @@ document to what the tools do.
    and keeps what was recorded.
 2. Open an agent session on the repository and paste the block from `PROMPT.md`. The agent runs
    `node tools/building-queue.mjs next`, paints the picture as an edit of the block-out with the
-   references and the prompt `next` printed, looks at it
-   (`node tools/building-sheets.mjs --picture <file>`), and records it
-   (`node tools/building-queue.mjs set <id> generated`). The tool refuses what fails the check.
+   references and the prompt `next` printed, takes it (`node tools/building-queue.mjs take <id>`
+   copies the file the image tool wrote and lays the picture on grass, as
+   `node tools/building-sheets.mjs --picture <file>` does for any file), looks at it, and records
+   it (`node tools/building-queue.mjs set <id> generated`). The tool refuses what fails the check.
 3. The depot and the station are gates: when one is finished `next` prints `GATE` and the agent
    stops. Look at `review/index.html` and `review/<family>.png`, then have the agent run
    `node tools/building-queue.mjs approve-pilot`. After the gates the agent closes each family
@@ -53,6 +54,27 @@ document to what the tools do.
    is made and puts back what no longer passes for its camera.
 5. `node tools/building-queue.mjs status` says how far each family has got and where the list
    and the disk disagree.
+
+## Handing the work to another session
+
+The work outlasts a chat: a session runs out of its allowance, or the work moves to another
+account. Nothing has to be carried over. Progress is in `queue.json` and in the picture files of
+the checkout, and the way of working is in the guide and in what `next` prints.
+
+1. In the same checkout, open a new session (log the agent in with the other account first) and
+   paste the block from `PROMPT.md`. It commits what is in hand, brings the tools up to date,
+   reads the guide, and goes on from `status` and `next`.
+2. A picture the earlier session made but did not record shows in `status` as
+   `on disk, but not recorded`. The new session looks at it and records it, or makes it again.
+3. A gate holds across sessions: the new session stops at `GATE` like the old one.
+
+On another machine the branch has to be pushed first. The earlier selves of pictures that wait to
+be painted again (`*.before.png`) are not committed, so there those pictures are made afresh.
+
+Why the tool takes the picture: the agent's own method does not survive its chat being shortened.
+One session copied the image tool's file for ninety pictures, lost that after a compaction, and
+moved each later picture through the shell as base64, a hundred commands and two minutes a
+picture. What must not be forgotten goes into the tools and into what `next` prints.
 
 A picture is judged in the game, not on a sheet. Until the game loads the pictures, the branch
 `demo/depot-pilot` packs the depot into an atlas (`scratchpad/buildings/pack-depot-demo.mjs`)

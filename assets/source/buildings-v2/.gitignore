@@ -12,3 +12,5 @@
 .fitted/
 # review sheets with the footprint and wall lines drawn over the pictures
 review/*-angles.png
+# a picture on its way through the shell as text, left behind by an agent that was interrupted
+*.b64

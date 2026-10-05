@@ -18,6 +18,7 @@ describe('the guide for the artist agent', () => {
     }
     for (const command of [
       'next',
+      'take',
       'show',
       'set',
       'status',
@@ -102,6 +103,16 @@ describe('the guide for the artist agent', () => {
     // a recorded picture found faulty is taken back, never put back with everything built on it
     expect(guide).toContain('set <id> pending');
     expect(guide).toContain('--yes');
+  });
+
+  it('lets another session take the work over', () => {
+    // the way of working is in the tool and in what `next` prints, not in one chat's memory
+    for (const text of [guide, prompt, production])
+      expect(text).toContain('node tools/building-queue.mjs take <id>');
+    // a picture is copied as a file, never passed through the shell as text
+    expect(guide).toMatch(/through the shell as text/);
+    expect(guide).toMatch(/another session/);
+    expect(production).toMatch(/## Handing the work to another session/);
   });
 
   it('holds the gates and the limits on failure', () => {
