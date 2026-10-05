@@ -7,7 +7,7 @@
  *   node tools/building-queue.mjs status          progress per family, gates, list against disk
  *   node tools/building-queue.mjs recheck [<family>]   made pictures whose camera is off: back
  *                                                 in the queue, to be painted again
- *   node tools/building-queue.mjs redo <id>       a picture and all built on it: to do again
+ *   node tools/building-queue.mjs redo <id> [--yes]   a picture and all built on it: afresh
  *   node tools/building-queue.mjs redo <family>   a family's rejected pictures: to do again
  *   node tools/building-queue.mjs approve-pilot [--all]   the user has approved the next gate
  *   node tools/building-queue.mjs accept <family>         the user accepts a family's losses
@@ -20,15 +20,7 @@
  * `next` answers with its exit code: 0 a picture to make, 2 a gate (the user reviews a family
  * before the work goes on), 3 nothing left, 4 a stop (too much of a family could not be made).
  */
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  renameSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
@@ -402,25 +394,29 @@ export function setStatus(queue, id, status, { attempts, note } = {}) {
   return e;
 }
 
+/**
+ * Move a picture to another name. A picture already under that name is kept too, under a
+ * number: nothing that was painted is ever removed.
+ */
+function moveTo(file, to) {
+  if (existsSync(to)) {
+    let n = 1;
+    while (existsSync(to.replace(/\.png$/, `.${n}.png`))) n++;
+    renameSync(to, to.replace(/\.png$/, `.${n}.png`));
+  }
+  renameSync(file, to);
+}
+
 /** The files a command touches: is a file there, does a picture pass, move a picture aside. */
 const DISK = {
   exists: existsSync,
   check: checkFile,
   setAside(file) {
-    const to = file.replace(/\.png$/, '.rejected.png');
-    rmSync(to, { force: true });
-    renameSync(file, to);
+    moveTo(file, file.replace(/\.png$/, '.rejected.png'));
   },
   /** keep a picture beside its place while it is painted again */
   setBefore(file) {
-    const to = beforeFile(file);
-    // put back before: that earlier self is kept too, under a number
-    if (existsSync(to)) {
-      let n = 1;
-      while (existsSync(to.replace(/\.png$/, `.${n}.png`))) n++;
-      renameSync(to, to.replace(/\.png$/, `.${n}.png`));
-    }
-    renameSync(file, to);
+    moveTo(file, beforeFile(file));
   },
 };
 
@@ -478,12 +474,14 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
   }
   if (status === 'approved' && !isMade(e))
     throw new Error(`${id} has not been made: only a picture that was made can be approved`);
+  // a made picture taken back is a picture found faulty: its file goes aside like a rejected one
+  const takenBack = status === 'pending' && isMade(e);
   const entry = setStatus(queue, id, status, kept ? { ...options, note: kept } : options);
   if (kept) entry.kept = true;
   else if (status !== 'approved') delete entry.kept;
-  // made: whatever it was made from, it is a picture like any other now
-  if (status === 'generated') delete entry.repaint;
-  if (status === 'rejected' && disk.exists(e.file)) {
+  // `repaint` stays when the picture is made: taken back (`pending`), it is painted again the
+  // way it was, from its earlier self
+  if ((status === 'rejected' || takenBack) && disk.exists(e.file)) {
     disk.setAside(e.file);
     aside = e.file;
   }
@@ -550,36 +548,58 @@ export function recheck(queue, inventory, only = null, disk = DISK) {
 }
 
 /**
+ * The pictures `redo` puts back. A family's name: the family's rejected pictures. A picture's id:
+ * that picture and every picture built on it, `afresh`.
+ */
+function redoList(queue, inventory, families, target) {
+  if (queue.entries.some((e) => e.family === target))
+    return {
+      afresh: false,
+      entries: queue.entries.filter((e) => e.family === target && e.status === 'rejected'),
+    };
+  const first = queue.entries.find((e) => e.id === target);
+  if (!first) throw new Error(`no picture or family is called ${target}`);
+  const again = new Set([first.file]);
+  // the list is in working order, so a picture always comes after the one it is built on
+  const entries = queue.entries.filter((e) => {
+    const built =
+      e === first ||
+      describeEntry(e.id, inventory, families).sources.some((file) => again.has(file));
+    if (built) again.add(e.file);
+    return built;
+  });
+  return { afresh: true, entries };
+}
+
+/**
+ * What `redo` would undo, before it is done: the pictures it puts back, how many of them are made
+ * (their files would be set aside) and how many wait to be painted again from their earlier
+ * selves (they would be made afresh instead). A front view of a family's first age takes the
+ * whole family with it.
+ */
+export function redoPlan(queue, inventory, families, target, exists = existsSync) {
+  const { entries } = redoList(queue, inventory, families, target);
+  return {
+    ids: entries.map((e) => e.id),
+    made: entries.filter((e) => isMade(e) && exists(e.file)).length,
+    repaint: entries.filter((e) => e.status === 'pending' && e.repaint).length,
+  };
+}
+
+/**
  * Put pictures back in the queue. A picture's id: that picture and every picture built on it, their
  * files set aside, each to be made afresh. A family's name: the family's rejected pictures, each
  * to be made as it was being made.
  */
 export function redo(queue, inventory, families, target, disk = DISK) {
-  const reset = (e) => {
+  const { afresh, entries } = redoList(queue, inventory, families, target);
+  return entries.map((e) => {
     if (disk.exists(e.file)) disk.setAside(e.file);
     Object.assign(e, { status: 'pending', attempts: 0, note: '' });
     delete e.kept;
+    if (afresh) delete e.repaint;
     return e.id;
-  };
-  const afresh = (e) => {
-    delete e.repaint;
-    return reset(e);
-  };
-  if (queue.entries.some((e) => e.family === target))
-    return queue.entries.filter((e) => e.family === target && e.status === 'rejected').map(reset);
-  const first = queue.entries.find((e) => e.id === target);
-  if (!first) throw new Error(`no picture or family is called ${target}`);
-  const again = new Set([first.file]);
-  // the list is in working order, so a picture always comes after the one it is built on
-  return queue.entries
-    .filter((e) => {
-      const built =
-        e === first ||
-        describeEntry(e.id, inventory, families).sources.some((file) => again.has(file));
-      if (built) again.add(e.file);
-      return built;
-    })
-    .map(afresh);
+  });
 }
 
 /** The user has looked at a gate family: approve the first gate still closed, or all of them. */
@@ -761,6 +781,20 @@ function main(args) {
       return 0;
     }
     case 'redo': {
+      const plan = redoPlan(queue, inventory, families, rest[0]);
+      const more = plan.ids.length - 1;
+      // more than the picture named: said first, and done only when the user has asked for it
+      if (more > 0 && plan.ids[0] === rest[0] && !rest.includes('--yes')) {
+        const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+        console.log(
+          `redo ${rest[0]} would put ${plan.ids.length} pictures back, each to be made afresh: ${rest[0]} and the ${more} built on it. ` +
+            `${count(plan.made, 'of them is made (its file would be set aside)', 'of them are made (their files would be set aside)')}, ` +
+            `${count(plan.repaint, 'is waiting to be painted again from its earlier self', 'are waiting to be painted again from their earlier selves')} (that would be lost). ` +
+            `Nothing was changed. This is for the user to ask for: if they asked for exactly this, run it again with --yes. ` +
+            `To make one recorded picture again, take it back instead: node tools/building-queue.mjs set ${rest[0]} pending`,
+        );
+        return 1;
+      }
       const ids = redo(queue, inventory, families, rest[0]);
       writeQueue(queue);
       console.log(

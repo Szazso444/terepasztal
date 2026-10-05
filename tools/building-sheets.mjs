@@ -2,6 +2,7 @@
  *
  *   node tools/building-sheets.mjs                  every family
  *   node tools/building-sheets.mjs --family depot   one family (the index is rebuilt too)
+ *   node tools/building-sheets.mjs --picture <file> [<file> ...]   one picture for the eye
  *
  * A sheet has a row per age and a column per view (r0 to r3). Each cell is the picture on grass,
  * laid onto its footprint the way the game will lay it (building-fit.mjs), at a quarter of the
@@ -10,7 +11,7 @@
  * cell empty.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import {
@@ -22,8 +23,8 @@ import {
   pictureFile,
   wallBase,
 } from './building-kit.mjs';
-import { fillPoly, strokePoly } from './building-guides.mjs';
-import { FIT, cameraOff, fitGroup, normalisePicture } from './building-fit.mjs';
+import { fillPoly, openingsOf, strokePoly } from './building-guides.mjs';
+import { FIT, cameraOff, fitGroup, fitPicture, normalisePicture } from './building-fit.mjs';
 import { buildQueue, loadFamilies, progress, readQueue } from './building-queue.mjs';
 import { readReport } from './building-check.mjs';
 
@@ -34,6 +35,8 @@ export const SHEET = {
   /** on the angles sheet: the footprint's edge, and the line the walls' feet should stand on */
   outline: [255, 255, 255],
   walls: [255, 60, 200],
+  /** on a picture laid out for the eye: where the guide has the door and a depot's portals */
+  openings: [255, 214, 64],
 };
 
 export function sheetFile(family) {
@@ -42,6 +45,21 @@ export function sheetFile(family) {
 /** The same sheet at twice the size with the footprint and the wall lines drawn over each picture. */
 export function anglesFile(family) {
   return `${ROOT}/review/${family}-angles.png`;
+}
+
+/**
+ * Which picture a file shows, from its name: in any folder, any attempt (`-2`), set aside
+ * (`.rejected`) or kept from before (`.before`). Null for another file.
+ */
+export function lookedAt(path) {
+  const name = basename(path.replaceAll('\\', '/'));
+  const m = /^(.+)-a(\d)-r(\d)(?:-\d+)?(?:\.(?:before|rejected)(?:\.\d+)?)?\.png$/.exec(name);
+  return m ? { family: m[1], age: Number(m[2]), rot: Number(m[3]) } : null;
+}
+
+/** Where a picture is shown for the eye: under its own name, so attempts can be told apart. */
+export function lookFile(path) {
+  return `${ROOT}/.look/${basename(path.replaceAll('\\', '/'))}`;
 }
 
 /** Lay a picture the size of a cell into the sheet at (ox, oy), over what is there. */
@@ -111,6 +129,37 @@ export function drawSheet(
     }
   }
   return sheet;
+}
+
+/**
+ * One picture for the eye: on grass, laid onto its footprint as it was painted, with the
+ * footprint's edge, the line the walls' feet should stand on and the frames of the guide's
+ * openings (the front door, a depot's portals) drawn over it. The camera is not corrected here,
+ * so a foot that leaves its line shows, and so does a door or a portal in the wrong wall. The result is opaque: a viewer that
+ * ignores transparency shows the colour stored under a picture's transparent pixels as a glow
+ * round the building, which is not in the picture. Null when the picture holds no building.
+ */
+export function drawLook(png, fpId, rot, shrink = 2) {
+  const fp = FOOTPRINTS[fpId];
+  const fit = fitPicture(png, fpId, rot, { rectify: false });
+  if (!fit) return null;
+  const k = shrink;
+  const look = new PNG({ width: fp.canvas[0] / k, height: fp.canvas[1] / k });
+  for (let i = 0; i < look.data.length; i += 4) {
+    look.data[i] = SHEET.grass[0];
+    look.data[i + 1] = SHEET.grass[1];
+    look.data[i + 2] = SHEET.grass[2];
+    look.data[i + 3] = 255;
+  }
+  const d = diamond(fp, rot),
+    b = wallBase(fp, rot);
+  const at = ([x, y]) => [x / k, y / k];
+  fillPoly(look, [d.n, d.e, d.s, d.w].map(at), SHEET.footprint);
+  paste(look, normalisePicture(png, fit, fpId, k), 0, 0);
+  strokePoly(look, [d.n, d.e, d.s, d.w].map(at), SHEET.outline, 1.5);
+  strokePoly(look, [b.n, b.e, b.s, b.w].map(at), SHEET.walls, 1.5);
+  for (const o of openingsOf(fpId, rot)) strokePoly(look, o.pts.map(at), SHEET.openings, 1.5);
+  return look;
 }
 
 const esc = (s) =>
@@ -236,8 +285,42 @@ ${sections.join('\n')}
 `;
 }
 
+/** Write the pictures named for the eye; one line each, the file written or why not. */
+function look(files, inventory) {
+  if (!files.length) {
+    console.error('give the picture files to look at');
+    return 1;
+  }
+  let bad = 0;
+  for (const file of files) {
+    const p = lookedAt(file);
+    const f = p && inventory.find((x) => x.family === p.family);
+    let shown = null,
+      why = "not a building picture's name";
+    if (f && !existsSync(file)) why = 'no such file';
+    else if (f)
+      try {
+        shown = drawLook(PNG.sync.read(readFileSync(file)), f.footprint, p.rot);
+        why = 'no building in the picture';
+      } catch (e) {
+        why = e.message;
+      }
+    if (!shown) {
+      console.log(`left out  ${file}: ${why}`);
+      bad++;
+      continue;
+    }
+    const out = lookFile(file);
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, PNG.sync.write(shown));
+    console.log(out);
+  }
+  return bad ? 1 : 0;
+}
+
 function main(args) {
   const inventory = loadInventory();
+  if (args[0] === '--picture') return look(args.slice(1), inventory);
   const families = loadFamilies();
   const only = args[0] === '--family' ? args[1] : null;
   const load = (file) => (existsSync(file) ? PNG.sync.read(readFileSync(file)) : null);

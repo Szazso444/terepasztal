@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, ROOT, loadInventory, pictures, wallBase } from './building-kit.mjs';
 import { FIT, cameraOff, fitPicture } from './building-fit.mjs';
+import { portalWall } from './building-guides.mjs';
 
 export const REPORT_FILE = `${ROOT}/report.json`;
 
@@ -35,6 +36,13 @@ const LIMIT = {
   level: 0.5,
   /** translucent pixels, as a share of the solid ones: more is a shadow or a glow */
   haze: 0.08,
+  /**
+   * a depot's portals are in the wrong wall when that wall's foot is dark over this share of it,
+   * and this many times as dark as the wall they belong in
+   */
+  portal: { share: 0.25, times: 1.5 },
+  /** a pixel darker than this is an opening: a hall's inside, an open door, a window */
+  dark: 70,
 };
 
 /** Which picture a file is, from its name: `<family>-a<age>-r<rot>.png`. */
@@ -45,6 +53,31 @@ export function pictureOf(path) {
 }
 
 const SIDES = ['lower-left', 'lower-right'];
+/**
+ * How much of the lower part of a wall is dark, from the wall's foot (`from` to `to`, picture px)
+ * `up` px high: open portals with the hall behind them make a wall far darker than brick or stone.
+ */
+function darkShare(png, from, to, up) {
+  const steps = Math.round(Math.abs(to[0] - from[0]));
+  let seen = 0,
+    dark = 0;
+  // the middle of the wall, clear of its corners and of the ground line
+  for (let i = Math.round(steps * 0.12); i <= steps * 0.88; i++) {
+    const x = Math.round(from[0] + ((to[0] - from[0]) * i) / steps);
+    const foot = from[1] + ((to[1] - from[1]) * i) / steps;
+    for (let h = Math.round(up * 0.15); h < up; h++) {
+      const y = Math.round(foot - h);
+      if (x < 0 || y < 0 || x >= png.width || y >= png.height) continue;
+      const o = (y * png.width + x) * 4;
+      if (png.data[o + 3] <= FIT.alpha) continue;
+      seen++;
+      const light = 0.299 * png.data[o] + 0.587 * png.data[o + 1] + 0.114 * png.data[o + 2];
+      if (light < LIMIT.dark) dark++;
+    }
+  }
+  return seen ? dark / seen : 0;
+}
+
 /** A wall foot this close to the game's slope is said to be right. */
 const NEAR = 0.03;
 
@@ -227,6 +260,22 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
     else
       notes.push(
         `${words.line}; kept, and corrected ${partly ? 'part of the way ' : ''}by the tools`,
+      );
+  }
+  // a depot's portals: in the wall the guide has them in. The check cannot read a building, but
+  // an end wall with two open portals is far darker at its foot than a front or a back wall, and
+  // a view of the wrong rotation has that dark wall on the other side.
+  const portals = portalWall(fpId, rot);
+  if (portals !== null) {
+    const up = (fit.base.e[0] - fit.base.w[0]) * 0.16;
+    const dark = [
+      darkShare(png, fit.base.w, fit.base.s, up),
+      darkShare(png, fit.base.s, fit.base.e, up),
+    ];
+    const other = 1 - portals;
+    if (dark[other] > LIMIT.portal.share && dark[other] > LIMIT.portal.times * dark[portals])
+      problems.push(
+        `the portals are in the ${SIDES[other]} wall; they belong in the ${SIDES[portals]} wall, where the block-out has them`,
       );
   }
   const base = wallBase(fp, rot);

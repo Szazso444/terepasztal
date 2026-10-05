@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { PNG } from 'pngjs';
-import { FOOTPRINTS, ROTATIONS } from './building-kit.mjs';
+import { FOOTPRINTS, ROTATIONS, project } from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly, drawGuide } from './building-guides.mjs';
 import { checkPicture, pictureOf, summarise } from './building-check.mjs';
 
@@ -20,6 +20,7 @@ function picture(fpId, rot, o = {}) {
   o.under?.(png, fp, map);
   for (const [name, pts] of Object.entries(faces))
     fillPoly(png, pts.map(map), shade[name], o.alpha ?? 255);
+  o.over?.(png, fp, map);
   return png;
 }
 /** Scale a picture's contents about a point and move them. */
@@ -292,6 +293,65 @@ describe('building check', () => {
       say: "The lower-left wall's foot runs too steep: it must run parallel to the plinth's lower-left edge, two pixels across for one down.",
       was: "Its lower-left wall's foot ran too steep. The reference shows it put right: paint it as the reference and the block-out are seen.",
     });
+  });
+
+  /**
+   * A block with two dark portals painted on one of its visible walls (0 the lower-left, 1 the
+   * lower-right), as a depot has them.
+   */
+  const portals = (fpId, rot, wall) =>
+    picture(fpId, rot, {
+      over: (png, fp) => {
+        const b = blockOf(fpId, rot);
+        for (const mid of [-0.5, 0.5]) {
+          const a = (mid - 0.25) * (wall ? b.y1 : b.x1),
+            c = (mid + 0.25) * (wall ? b.y1 : b.x1);
+          const quad = wall
+            ? [
+                [b.x1, a, 0],
+                [b.x1, c, 0],
+                [b.x1, c, 30],
+                [b.x1, a, 30],
+              ]
+            : [
+                [a, b.y1, 0],
+                [c, b.y1, 0],
+                [c, b.y1, 30],
+                [a, b.y1, 30],
+              ];
+          fillPoly(
+            png,
+            quad.map(([x, y, z]) => project(fp, x, y, z)),
+            [30, 44, 34],
+          );
+        }
+      },
+    });
+
+  it("wants a depot's portals in the wall the guide has them in", () => {
+    // r0 and r2 show an end wall on the lower right, r1 and r3 on the lower left
+    for (const [rot, wall] of [
+      [0, 1],
+      [1, 0],
+      [2, 1],
+      [3, 0],
+    ]) {
+      const names = ['lower-left', 'lower-right'];
+      expect(checkPicture(portals('t2x2', rot, wall), 't2x2', rot), `r${rot}`).toMatchObject({
+        ok: true,
+        problems: [],
+      });
+      // the view of another rotation: in the game the rails would run into a blank wall
+      const wrong = checkPicture(portals('t2x2', rot, 1 - wall), 't2x2', rot);
+      expect(wrong.ok, `r${rot}`).toBe(false);
+      expect(wrong.problems, `r${rot}`).toEqual([
+        `the portals are in the ${names[1 - wall]} wall; they belong in the ${names[wall]} wall, where the block-out has them`,
+      ]);
+    }
+    // a building with no portals may be dark on either wall
+    expect(checkPicture(portals('t1', 0, 0), 't1', 0)).toMatchObject({ ok: true, problems: [] });
+    // and a depot whose walls are much alike is left to the eye
+    expect(checkPicture(picture('t2x2', 0), 't2x2', 0)).toMatchObject({ ok: true, problems: [] });
   });
 
   it('notes what a person should look at without failing the picture', () => {

@@ -8,9 +8,18 @@ import {
   project,
   wallBase,
 } from './building-kit.mjs';
-import { blockOf, boxFaces, fillPoly } from './building-guides.mjs';
+import { blockOf, boxFaces, fillPoly, openingsOf } from './building-guides.mjs';
 import { buildQueue, loadFamilies, progress, setStatus } from './building-queue.mjs';
-import { SHEET, anglesFile, drawSheet, indexHtml, sheetFile } from './building-sheets.mjs';
+import {
+  SHEET,
+  anglesFile,
+  drawLook,
+  drawSheet,
+  indexHtml,
+  lookFile,
+  lookedAt,
+  sheetFile,
+} from './building-sheets.mjs';
 
 const inv = loadInventory();
 const fam = loadFamilies();
@@ -120,6 +129,63 @@ describe('building review sheets', () => {
     // the depot stands 1.3 times its footprint, so that the rails fit its portals (seen in the game)
     expect(fam.families.depot.size).toBe(1.3);
     expect(fam.families.farm.size).toBeUndefined();
+  });
+
+  it('shows one picture on grass, as painted, with the lines its walls should stand on', () => {
+    const fp = FOOTPRINTS.t2x2;
+    const look = drawLook(painted('t2x2', 1), 't2x2', 1);
+    expect([look.width, look.height]).toEqual([768, 512]);
+    // opaque everywhere: a viewer that ignores transparency cannot show a glow that is not there
+    let faintest = 255;
+    for (let i = 3; i < look.data.length; i += 4) faintest = Math.min(faintest, look.data[i]);
+    expect(faintest).toBe(255);
+    const [tx, ty] = project(fp, 0, 0, blockOf('t2x2', 1).z1);
+    expect(at(look, tx / 2, ty / 2)).toEqual(SHADE.top);
+    expect(at(look, 4, 4)).toEqual(SHEET.grass);
+    // the footprint's edge and the line of the walls' feet are drawn over it
+    const corner = diamond(fp, 1).s;
+    const foot = wallBase(fp, 1).s;
+    expect(at(look, corner[0] / 2, corner[1] / 2)).toEqual(SHEET.outline);
+    expect(at(look, foot[0] / 2, foot[1] / 2)).toEqual(SHEET.walls);
+    // the building stands on that line: just above its near corner is wall
+    expect(at(look, foot[0] / 2, foot[1] / 2 - 6)).not.toEqual(SHEET.footprint);
+    // and the frames of the guide's openings say which wall the door and the portals belong to
+    for (const o of openingsOf('t2x2', 1))
+      expect(at(look, o.pts[3][0] / 2, o.pts[3][1] / 2)).toEqual(SHEET.openings);
+    // a camera that is off is left as painted, so the eye sees the foot leave its line: seen
+    // from too low, the near corner stands well above where it should
+    const low = painted('t2x2', 1, { map: ([x, y]) => [x, 760 + (y - 760) * 0.8] });
+    expect(at(drawLook(low, 't2x2', 1), foot[0] / 2, foot[1] / 2 - 6)).toEqual(SHEET.footprint);
+    // nothing to show of an empty picture
+    expect(drawLook(new PNG({ width: 1024, height: 1024 }), 't1', 0)).toBeNull();
+  });
+
+  it('knows which picture a file is, wherever it lies and whichever attempt it is', () => {
+    expect(lookedAt('assets/source/buildings-v2/depot/depot-a3-r2.png')).toEqual({
+      family: 'depot',
+      age: 3,
+      rot: 2,
+    });
+    expect(lookedAt('assets/source/buildings-v2/.tries/depot-a0-r1-2.png')).toMatchObject({
+      family: 'depot',
+      age: 0,
+      rot: 1,
+    });
+    expect(lookedAt('C:\\x\\depot_narrow-a1-r3.before.png')).toMatchObject({
+      family: 'depot_narrow',
+      rot: 3,
+    });
+    expect(lookedAt('depot/depot-a0-r0.rejected.png')).toMatchObject({ family: 'depot', rot: 0 });
+    expect(lookedAt('depot/depot-a0-r0.rejected.2.png')).toMatchObject({ family: 'depot', rot: 0 });
+    expect(lookedAt('depot/depot-a4-r1.before.1.png')).toMatchObject({ age: 4, rot: 1 });
+    expect(lookedAt('notes.png')).toBeNull();
+    // each is shown under its own name, so attempts can be told apart
+    expect(lookFile('assets/source/buildings-v2/.tries/depot-a0-r1-2.png')).toBe(
+      'assets/source/buildings-v2/.look/depot-a0-r1-2.png',
+    );
+    expect(lookFile('C:\\x\\depot-a0-r1.before.png')).toBe(
+      'assets/source/buildings-v2/.look/depot-a0-r1.before.png',
+    );
   });
 
   it("leaves a missing picture's cell empty", () => {
