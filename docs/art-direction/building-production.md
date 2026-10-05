@@ -67,9 +67,9 @@ the checkout, and the way of working is in the guide and in what `next` prints.
 2. A picture the earlier session made but did not record shows in `status` as
    `on disk, but not recorded`. The new session looks at it and records it, or makes it again.
 3. A gate holds across sessions: the new session stops at `GATE` like the old one.
-4. `take` follows the chat the last picture was taken from. A new chat's first picture lies in
-   another folder of the image tool: the tool names that folder and the agent takes the picture
-   from there once (`--from`), or it names the file its image tool reports each time.
+4. Nothing about the image tool's folders has to be told. The new chat's pictures are newer
+   than the mark in the list, and what the old chat left behind is older, or too old to be taken
+   for a picture just made.
 
 On another machine the branch has to be pushed first. The earlier selves of pictures that wait to
 be painted again (`*.before.png`) are not committed, so there those pictures are made afresh.
@@ -97,11 +97,14 @@ and shows it in a running build, as drawn or straightened.
   the work (`STOP`).
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
   them on the other side, and in the game the rails would run into a wall.
-- Which picture is taken: `take` takes only a picture made after the last one it took, from the
-  chat that one came from, and never one whose bytes are in the list's folders already. So a
-  generation that failed does not hand the picture before it to the next entry, and another
-  chat's pictures are not taken unasked. It counts a picture that was taken and given up as an
-  attempt, and a count the agent gives can raise the tool's own but not lower it.
+- Which picture is taken: `take` takes only a picture made after the last one was taken or
+  recorded (one mark in time in `queue.json`, moved forward only), and never one whose bytes are
+  in the list's folders already. So a generation that failed does not hand an earlier picture to
+  the next entry, whether the file is named or found. It does not guess between chats: where new
+  pictures lie in more than one chat's folder it names them and takes none.
+- The count of attempts is the tool's: a picture taken and given up counts, the same picture
+  refused twice counts once, a number the agent gives can raise the count but not lower it, and
+  a picture taken back starts again with three.
 - A picture is not lost to one bad last attempt: `node tools/building-queue.mjs keep <id>` makes
   the closest attempt the tool holds the picture, where the third attempt failed for another
   reason than its camera. One session rejected a rear view whose second attempt had been right
@@ -170,8 +173,9 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   one recorded picture again the command is `set <id> pending`.
 - Nothing painted is removed by the tools. A picture set aside is `<name>.rejected.png`, an
   earlier attempt `<name>.before.png`, and an older one under the same name is kept with a number.
-  None of these are committed. The one exception: `take` writes over a picture that was taken
-  and never recorded, which the agent looked at and gave up; the image tool still has it.
+  None of these are committed. The one exception: `take` writes over a picture that lies under
+  the entry's name and was never recorded, one the agent looked at and gave up; where the image
+  tool made it, its file there remains.
 
 ## Not built yet
 

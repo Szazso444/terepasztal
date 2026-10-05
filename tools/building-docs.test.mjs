@@ -120,6 +120,11 @@ describe('the guide for the artist agent', () => {
     expect(guide).toContain('generated_images');
     expect(guide).toContain('--from');
     expect(guide).toMatch(/nothing new was made/);
+    // the file the image tool reported is the surest; the tool does not guess between chats
+    expect(guide).toContain('take <id> --from <file>');
+    expect(guide).toMatch(/more than one chat's folder/);
+    expect(guide).not.toMatch(/follows your chat/);
+    expect(production).not.toMatch(/follows the chat/);
     // the count is the tool's: the plain form everywhere, a number only for what it never saw
     expect(guide).not.toMatch(/set <id> generated --attempts/);
     expect(prompt).not.toMatch(/--attempts/);

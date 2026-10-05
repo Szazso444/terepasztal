@@ -26,7 +26,6 @@
  * before the work goes on), 3 nothing left, 4 a stop (too much of a family could not be made).
  */
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -133,6 +132,8 @@ export function buildQueue(inventory, families, previous = null) {
       ...(old?.repaint ? { repaint: old.repaint } : {}),
       // taken from the image tool, not looked at and recorded yet
       ...(old?.taken ? { taken: true } : {}),
+      // refused by `set` for another fault than its camera, and still lying under its name
+      ...(old?.refused ? { refused: old.refused } : {}),
     };
   });
   const approved = (family) =>
@@ -145,6 +146,8 @@ export function buildQueue(inventory, families, previous = null) {
     guide: `${ROOT}/GUIDE.md`,
     gates: GATES.map((family) => ({ family, approved: approved(family) })),
     accepted: (previous?.accepted ?? []).filter((f) => families_.has(f)),
+    // the moment up to which the image tool's pictures were taken or given up (`choosePicture`)
+    ...(typeof previous?.mark === 'number' ? { mark: previous.mark } : {}),
     counts: { pictures: entries.length, families: inventory.length },
     entries,
   };
@@ -410,7 +413,8 @@ export function setStatus(queue, id, status, { attempts, note } = {}) {
   if (!e) throw new Error(`no picture is called ${id}`);
   checkAttempts(attempts);
   const counts = status === 'generated' || status === 'rejected';
-  e.attempts = attempts ?? e.attempts + (counts ? 1 : 0);
+  e.attempts =
+    attempts === undefined ? e.attempts + (counts ? 1 : 0) : Math.max(attempts, e.attempts);
   e.note = note ?? (status === 'generated' || status === 'pending' ? '' : e.note);
   e.status = status;
   return e;
@@ -447,9 +451,22 @@ const DISK = {
     while (existsSync(to.replace(/\.png$/, `.${n}.png`))) n++;
     renameSync(file, to.replace(/\.png$/, `.${n}.png`));
   },
-  /** make the earlier self the picture again; it stays where it is as well */
+  /**
+   * make the earlier self the picture again; it stays where it is as well. Written, not copied:
+   * a copy keeps the date of its source, and what is made from a picture is renewed by its date
+   */
   restoreBefore(file) {
-    copyFileSync(beforeFile(file), file);
+    writeFileSync(file, readFileSync(beforeFile(file)));
+  },
+  /** what tells one picture under a name from the next */
+  stamp(file) {
+    const { size, mtimeMs } = statSync(file);
+    return `${size}:${mtimeMs}`;
+  },
+  /** are these two files the same picture */
+  same(a, b) {
+    if (!existsSync(a) || !existsSync(b) || statSync(a).size !== statSync(b).size) return false;
+    return readFileSync(a).equals(readFileSync(b));
   },
   /**
    * Clear a picture that lies under its name though it is not made. A copy of a picture that is
@@ -508,19 +525,35 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
   if (status === 'generated') {
     if (!disk.exists(e.file)) throw new Error(`not recorded: no such file ${e.file}`);
     const f = inventory.find((x) => x.family === e.family);
+    // whatever was made before this picture was settled is new no longer (`choosePicture`)
+    queue.mark = Math.max(queue.mark ?? 0, options.now ?? Date.now());
     // which attempt this is: one more than were counted, or the number given where that is
     // higher (attempts the tool never saw). A lower one is an agent that has lost count
     const attempt = Math.max(options.attempts ?? 0, e.attempts + 1);
     check = disk.check(e.file, f.footprint, e.rot);
     if (!check.ok) {
-      // not made, but tried: counted, so that a later session knows where the picture stands
-      e.attempts = Math.max(e.attempts, attempt);
       const refuse = (what) =>
         Object.assign(new Error(`not recorded: ${check.problems.join('; ')}. ${what}`), {
           refused: true,
         });
+      // refused for another fault, the picture stays under its name. Recorded again unchanged
+      // it is refused again, which is no new attempt: only a number that is given counts then
+      const stays = (what) => {
+        const stamp = disk.stamp ? disk.stamp(e.file) : null;
+        const twice = stamp !== null && e.refused === stamp;
+        e.attempts = Math.max(e.attempts, twice ? (options.attempts ?? 0) : attempt);
+        if (stamp !== null) e.refused = stamp;
+        return refuse(
+          twice
+            ? `It is the picture that was refused before: make ${id} again, or record it as rejected.`
+            : what,
+        );
+      };
       if (!check.camera || check.problems.length > 1)
-        throw refuse(`Make ${id} again, or record it as rejected.`);
+        throw stays(`Make ${id} again, or record it as rejected.`);
+      // not made, but tried: counted, so that a later session knows where the picture stands
+      e.attempts = Math.max(e.attempts, attempt);
+      delete e.refused;
       const again = 'run `node tools/building-queue.mjs next` again';
       const earlier = earlierSelf(e, disk);
       const closest = !earlier || closer(check.camera.by, earlier.by);
@@ -543,7 +576,7 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
         disk.restoreBefore(e.file);
       }
       check = disk.check(e.file, f.footprint, e.rot, { camera: false });
-      if (!check.ok) throw refuse(`Make ${id} again, or record it as rejected.`);
+      if (!check.ok) throw stays(`Make ${id} again, or record it as rejected.`);
       const by = check.camera?.by;
       kept = {
         by: typeof by === 'number' ? by : true,
@@ -556,11 +589,18 @@ export function settle(queue, inventory, id, status, options = {}, disk = DISK) 
     throw new Error(`${id} has not been made: only a picture that was made can be approved`);
   // a made picture taken back is a picture found faulty: its file goes aside like a rejected one
   const takenBack = status === 'pending' && isMade(e);
+  // where the picture taken back is its own earlier self (the closest of its attempts was
+  // kept), that is faulty too: the picture is made afresh, and it is never "the closest" again
+  const itself = takenBack && !!disk.same?.(e.file, beforeFile(e.file));
   const entry = setStatus(queue, id, status, kept ? { ...options, note: kept.note } : options);
   if (kept) entry.kept = kept.by;
   else if (status !== 'approved') delete entry.kept;
-  // `repaint` stays when the picture is made: taken back (`pending`), it is painted again the
-  // way it was, from its earlier self
+  if (status !== 'approved') delete entry.refused;
+  // taken back, a picture starts again: three attempts, as when `recheck` or `redo` puts it back.
+  // `repaint` stays when the picture is made: taken back, it is painted again the way it was,
+  // from its earlier self
+  if (takenBack) entry.attempts = 0;
+  if (itself) delete entry.repaint;
   if ((status === 'rejected' || takenBack) && disk.exists(e.file)) {
     disk.setAside(e.file);
     aside = e.file;
@@ -607,6 +647,8 @@ export function keepEarlier(queue, inventory, id, options = {}, disk = DISK) {
   disk.restoreBefore(e.file);
   const by = check.camera?.by;
   delete e.taken;
+  delete e.refused;
+  queue.mark = Math.max(queue.mark ?? 0, options.now ?? Date.now());
   Object.assign(e, {
     status: 'generated',
     attempts,
@@ -751,6 +793,8 @@ export function redo(queue, inventory, families, target, disk = DISK) {
     if (disk.exists(e.file)) disk.setAside(e.file);
     Object.assign(e, { status: 'pending', attempts: 0, note: '' });
     delete e.kept;
+    delete e.taken;
+    delete e.refused;
     if (afresh) delete e.repaint;
     return e.id;
   });
@@ -825,20 +869,24 @@ const ago = (ms) =>
   ms < 120000 ? `${Math.round(ms / 1000)} s` : `${Math.round(ms / 60000)} minutes`;
 
 /**
- * Choose the picture an image tool wrote for an entry of the list. `from` is a file, or a folder
- * whose newest new picture is the one; without it, the folder Codex keeps its pictures in, where
- * each chat has a folder of its own. Answers with the `source`, its `bytes`, how many `seconds`
- * old it is, and `again` where it is the picture that lies under the entry's name already.
- * Nothing is written here.
+ * Choose the picture an image tool wrote for an entry of the list. `from` is the file the image
+ * tool reported, or a folder in which the one new picture is looked for; without it, the folder
+ * Codex keeps its pictures in, a folder for each chat. Answers with the `source`, its `bytes`,
+ * when it was made (`at`), and `again` where it is the picture that lies under the entry's name
+ * already. Nothing is written here.
  *
- * What is new: a picture made after the last one that was taken, and not long ago. Whatever is
- * older than the last one taken was taken itself or given up, and a picture whose bytes lie in
- * the list's folders was taken, whoever's it is: so a generation that failed never hands the
- * picture before it to the next entry.
+ * What is new is told by one mark in time, kept in the list (`queue.mark`) and only ever moved
+ * forward: the date of the last picture taken, and the moment the last picture was recorded or
+ * refused. A picture made at or before the mark was taken already or given up, whoever's it is
+ * and whether it is named or found: so a generation that failed never hands an earlier picture
+ * to the next entry. A list that has no mark yet starts from the newest picture whose bytes lie
+ * in its folders.
  *
- * Whose chat: the folder the last picture was taken from. Other chats make other pictures
- * meanwhile, and theirs are not taken unasked: where the new pictures are in another chat's
- * folder, or in more than one and none was ever taken, the folders are named for `--from`.
+ * Which chat's: the tool cannot know, and does not guess. Where new pictures lie in more than one
+ * chat's folder it names them and takes none; the file the image tool reported settles it.
+ *
+ * What the tool keeps of the entry itself (an earlier self, a picture set aside) is had back by
+ * naming that file; and a picture that `set` refused where it lies is not offered to `set` again.
  */
 export function choosePicture(queue, id, from, now = Date.now()) {
   const tool = 'node tools/building-queue.mjs';
@@ -854,6 +902,7 @@ export function choosePicture(queue, id, from, now = Date.now()) {
   const where = from ?? picturesFolder();
   const how = 'say where your image tool writes its pictures with --from <folder or file>';
   if (!existsSync(where)) throw new Error(`no folder of pictures at ${where}: ${how}`);
+  const first = 'Make the picture first.';
   const list = listPictures(queue);
   /** the file of the list that holds exactly these bytes */
   const holder = (bytes) =>
@@ -861,21 +910,44 @@ export function choosePicture(queue, id, from, now = Date.now()) {
   const owner = (path) =>
     queue.entries.find((e) => basename(path).startsWith(`${basename(e.file, '.png')}.`))?.id;
   const whose = (path) => (owner(path) ? `${owner(path)}'s` : "the list's");
-  const first = 'Make the picture first.';
+  const inHand = existsSync(entry.file) ? readFileSync(entry.file) : null;
+  /** the picture that lies under the entry's name, asked for once more */
+  const again = (source) => {
+    if (entry.refused)
+      throw new Error(
+        `nothing new was made, and the picture in ${entry.file} was refused by \`set\`: make the picture again`,
+      );
+    return { entry, source, bytes: inHand, at: null, again: true };
+  };
+  /** the mark, or where a list without one starts: the newest of `files` that was taken */
+  const markOf = (files) => {
+    if (typeof queue.mark === 'number') return queue.mark;
+    const sizes = new Set(list.map((f) => f.size));
+    return files.find((f) => sizes.has(f.size) && holder(readFileSync(f.path)))?.at ?? 0;
+  };
 
   if (statSync(where).isFile()) {
-    // a file that is named: taken whatever its age, unless it is another entry's picture, or one
-    // this entry was refused before (which the tool gives back only by its own name)
     const bytes = readFileSync(where);
+    if (inHand?.equals(bytes)) return again(where);
+    // what the tool keeps of this entry is had back by its own name
+    const fold = (path) =>
+      process.platform === 'win32' ? resolve(path).toLowerCase() : resolve(path);
+    const own =
+      fold(dirname(where)) === fold(dirname(entry.file)) &&
+      basename(where).startsWith(`${basename(entry.file, '.png')}.`);
+    if (own) return { entry, source: where, bytes, at: null, again: false };
     const held = holder(bytes);
-    const seconds = Math.max(0, Math.round((now - statSync(where).mtimeMs) / 1000));
     if (held && owner(held) !== id)
       throw new Error(
         `${where} is ${whose(held)} picture (${held}): nothing new was made. ${first}`,
       );
-    if (held && held !== entry.file && resolve(held) !== resolve(where))
-      throw new Error(`${where} was taken before (it is ${held}). ${first}`);
-    return { entry, source: where, bytes, seconds, again: held === entry.file };
+    if (held) throw new Error(`${where} was taken before (it is ${held}). ${first}`);
+    const at = statSync(where).mtimeMs;
+    if (at <= markOf(picturesIn(dirname(where), 1)))
+      throw new Error(
+        `${where} was made before the last picture that was taken or recorded: it was given up, or it is not this picture's. ${first}`,
+      );
+    return { entry, source: where, bytes, at, again: false };
   }
 
   const files = picturesIn(where);
@@ -883,76 +955,43 @@ export function choosePicture(queue, id, from, now = Date.now()) {
     throw new Error(
       `no picture in ${where} or in the folders in it: make the picture first, or ${how}`,
     );
-  const sizes = new Set(list.map((f) => f.size));
-  // the last picture taken from here, and what was made after it
-  let last = null;
-  for (const f of files) {
-    const held = sizes.has(f.size) ? holder(readFileSync(f.path)) : null;
-    if (held) {
-      last = { ...f, held };
-      break;
-    }
-  }
-  const fresh = (f) => now - f.at <= TAKE.fresh * 60000;
-  const made = (f) => `${f.path} (made ${ago(now - f.at)} ago)`;
-  const newestOf = (some) =>
-    [...new Set(some.map((f) => f.dir))].map((d) => some.find((f) => f.dir === d));
-  let news = files.filter((f) => !last || f.at > last.at);
-  if (from === undefined) {
-    if (last) {
-      // its own chat's folder: the one the last picture came from
-      const others = newestOf(news.filter((f) => f.dir !== last.dir && fresh(f)));
-      news = news.filter((f) => f.dir === last.dir);
-      if (!news.length && others.length)
-        throw new Error(
-          [
-            `nothing new in ${last.dir}, where the last picture was taken from. ${others.length === 1 ? 'There is a new picture in another' : 'There are new pictures in other'} chat's folder${others.length === 1 ? '' : 's'}:`,
-            ...others.map((f) => `  ${made(f)}`),
-            `If that chat is yours, take the picture from there: ${tool} take ${id} --from "${others[0].dir}"`,
-            'The tool follows that chat from then on. If it is not, make the picture first.',
-          ].join('\n'),
-        );
-    } else {
-      const chats = newestOf(news.filter(fresh));
-      if (chats.length > 1)
-        throw new Error(
-          [
-            `pictures were made in more than one chat's folder in the last ${TAKE.fresh} minutes:`,
-            ...chats.map((f) => `  ${made(f)}`),
-            `Say which is yours: ${tool} take ${id} --from "<folder>"`,
-            'The tool follows that chat from then on.',
-          ].join('\n'),
-        );
-      if (chats.length) news = news.filter((f) => f.dir === chats[0].dir);
-    }
-  }
-  const found = news[0];
-  if (found && fresh(found))
-    return {
-      entry,
-      source: found.path,
-      bytes: readFileSync(found.path),
-      seconds: Math.max(0, Math.round((now - found.at) / 1000)),
-      again: false,
-    };
-  if (found)
+  const mark = markOf(files);
+  const after = files.filter((f) => f.at > mark);
+  const fresh = after.filter((f) => now - f.at <= TAKE.fresh * 60000);
+  const chats = [...new Set(fresh.map((f) => f.dir))].map((d) => fresh.find((f) => f.dir === d));
+  if (chats.length > 1)
     throw new Error(
-      `the newest picture there, ${found.path}, was made ${Math.round((now - found.at) / 60000)} minutes ago: make the picture first, or name the file with --from <file>`,
+      [
+        `pictures were made in more than one chat's folder since the last one was taken or recorded:`,
+        ...chats.map((f) => `  ${f.path} (made ${ago(now - f.at)} ago)`),
+        `The tool cannot tell which is yours. Name it: ${tool} take ${id} --from <the file your image tool reported>`,
+        `(or --from "<your chat's folder>"). If none of them is yours, your generation failed: make the picture first.`,
+      ].join('\n'),
     );
-  // nothing was made since the last picture taken: is that one this entry's, in hand?
-  if (last.held === entry.file)
-    return {
-      entry,
-      source: last.path,
-      bytes: readFileSync(last.path),
-      seconds: Math.max(0, Math.round((now - last.at) / 1000)),
-      again: true,
-    };
+  if (fresh.length) {
+    const found = fresh[0];
+    const bytes = readFileSync(found.path);
+    if (inHand?.equals(bytes)) return again(found.path);
+    const held = holder(bytes);
+    if (held)
+      throw new Error(
+        `nothing new was made: the newest picture there, ${found.path}, is ${whose(held)} (${held}). ${first}`,
+      );
+    return { entry, source: found.path, bytes, at: found.at, again: false };
+  }
+  if (after.length)
+    throw new Error(
+      `the newest picture there, ${after[0].path}, was made ${Math.round((now - after[0].at) / 60000)} minutes ago: make the picture first, or name the file with --from <file>`,
+    );
+  // nothing was made since the mark
+  if (inHand) return again(null);
+  const newest = files[0];
+  const held = holder(readFileSync(newest.path));
   throw new Error(
-    `nothing new was made: the newest picture there, ${last.path}, ` +
-      (owner(last.held) === id
-        ? `was taken before (it is ${last.held}). ${first}`
-        : `is ${whose(last.held)} (${last.held}). ${first}`),
+    `nothing new was made: the newest picture there, ${newest.path}, ` +
+      (held
+        ? `is ${whose(held)} (${held}). ${first}`
+        : `was made before the last picture was taken or recorded. ${first}`),
   );
 }
 
@@ -1072,7 +1111,8 @@ async function main(args) {
         );
       // the sheet tool reads this one: loaded here, and before anything is written
       const { drawLook, lookFile } = await import('./building-sheets.mjs');
-      const pick = choosePicture(queue, id, option('--from'));
+      const now = Date.now();
+      const pick = choosePicture(queue, id, option('--from'), now);
       const e = pick.entry;
       // whose turn it is; trouble with the list itself is for `next` to tell
       let turn = null;
@@ -1094,9 +1134,13 @@ async function main(args) {
       }
       if (!shown) throw new Error(`there is no building in ${pick.source}: ${nothing}`);
       const lines = [];
-      if (pick.again) lines.push(`nothing new was made: ${pick.source} was taken already`);
+      if (pick.again) lines.push('nothing new was made: this is the picture that was taken before');
       else {
-        lines.push(`took:      ${pick.source} (made ${ago(pick.seconds * 1000)} ago)`);
+        lines.push(
+          pick.at === null
+            ? `took:      ${pick.source}`
+            : `took:      ${pick.source} (made ${ago(Math.max(0, now - pick.at))} ago)`,
+        );
         if (existsSync(e.file)) {
           // a picture taken and never recorded was looked at and given up: that was an attempt
           if (e.taken) e.attempts += 1;
@@ -1111,6 +1155,9 @@ async function main(args) {
         // picture (its straightened self, shown to later ones) is renewed by the picture's date
         writeFileSync(e.file, pick.bytes);
         e.taken = true;
+        delete e.refused;
+        // what was made up to this picture is new no longer; a date in the future holds nothing
+        if (pick.at !== null) queue.mark = Math.max(queue.mark ?? 0, Math.min(pick.at, now));
         writeQueue(queue);
       }
       const look = lookFile(e.file);

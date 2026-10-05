@@ -152,16 +152,21 @@ first, then its three other views, then the next age. Each picture is built on o
 5. Take the result: `node tools/building-queue.mjs take <id>`. Do not save the picture yourself.
    Your image tool has written it to a file of its own (Codex keeps them in
    `$CODEX_HOME/generated_images/`, which is `~/.codex/generated_images/` when that is not set,
-   a folder for each chat). `take` finds the picture made since the last one it took, in the
-   folder of the chat that one came from, writes it to the picture's file exactly as it is, and
-   writes the picture for you to look at (section 6). Where your image tool tells you the file it
-   wrote, you may name it instead: `--from <file>`.
-   - `nothing new was made`: the generation failed, or you have not made the picture yet. Nothing
-     is taken; make the picture.
-   - It names another chat's folder: the new picture is not where the last one came from, as
-     when you take the work over from another chat. Take the picture from there once,
-     `--from "<folder>"`, and the tool follows your chat from then on.
+   a folder for each chat). Where your image tool tells you the file it wrote, name it:
+   `take <id> --from <file>` is the surest way. Without `--from` the tool looks for the one
+   picture made since the last one was taken or recorded. Either way it writes the picture to the
+   picture's file exactly as it is, and writes the picture for you to look at (section 6).
+   - `nothing new was made`, or `was made before the last picture that was taken or recorded`:
+     the generation failed, or you have not made the picture yet, or you named an earlier file.
+     Nothing is taken; make the picture. A picture is taken once: one you gave up is not had back
+     by naming it.
+   - `more than one chat's folder`: other chats are making pictures as well, and the tool does
+     not guess which is yours. Name the file your image tool reported.
+   - `was refused by set`: the picture that lies there failed the check. Make it again.
    - If your image tool keeps its pictures somewhere else, name that folder with `--from`.
+
+   Look at what `take` shows you. If it is not the picture you asked for, your generation failed:
+   make the picture, and take again.
 
    Never pass a picture through the shell as text (base64, in pieces): that takes a hundred
    commands where a copy takes one.
