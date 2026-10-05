@@ -18,8 +18,8 @@
   },
   "views": {
     "r0": "The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the building's right-hand side (to the right of someone standing outside and facing the front).",
-    "r1": "The building is turned a quarter turn clockwise seen from above. The front faces the upper left and cannot be seen. The lower-left wall is the right-hand side; the lower-right wall is the BACK.",
-    "r2": "The building is turned half round. The front faces the upper right and cannot be seen. The lower-left wall is the BACK; the lower-right wall is the left-hand side.",
+    "r1": "The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.",
+    "r2": "The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side.",
     "r3": "The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT."
   },
   "families": {
