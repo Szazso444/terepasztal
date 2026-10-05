@@ -20,15 +20,16 @@ upgraded.
 
 `src/data/ages.json` gains three ages after Steam, Diesel and Electric.
 
-| Age      | Reached when                                 |
-| -------- | -------------------------------------------- |
-| Diesel   | 3 depots and 1,000 people (as today)         |
-| Electric | 100,000 earned (as today)                    |
-| Nuclear  | 400,000 earned and 3 substations under power |
-| Magnetic | 1,500,000 earned and 4,000 people            |
-| Hyper    | 5,000,000 earned and 10,000 people           |
+| Age      | Reached when                         |
+| -------- | ------------------------------------ |
+| Diesel   | 3 depots and 1,000 people (as today) |
+| Electric | 100,000 earned (as today)            |
+| Nuclear  | 1 substation under power             |
+| Magnetic | 150,000 earned                       |
+| Hyper    | 500,000 earned                       |
 
-The three new goals are first guesses in the data file, to be tuned by play.
+The three new goals are easy on purpose (the user's choice), so that all six ages can be walked
+through quickly while the buildings are tried out. They are values in the data file.
 
 For now a new age only raises the level cap of buildings (the user's decision; locomotives, wagons
 and track for the new ages are a separate piece of work). So everything else that reads the age
