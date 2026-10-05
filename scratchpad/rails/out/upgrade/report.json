@@ -1,0 +1,42 @@
+{
+ "scene": {
+  "ox": 70,
+  "oy": 78,
+  "y0": 83,
+  "curve": {
+   "x": 81,
+   "y": 83,
+   "rot": 2
+  },
+  "ends": [
+   {
+    "x": 82,
+    "y": 85,
+    "d": 2
+   }
+  ]
+ },
+ "steps": [
+  {
+   "what": "laid",
+   "row": "s:W s:W s:W s:W cx:WW s:W s:W s:W s:W s:W | curve c:W | after s:W",
+   "status": ""
+  },
+  {
+   "what": "upgrade tool over the first straight",
+   "row": "s:W s:W s:W s:W cx:WW s:W s:W s:W s:W s:W | curve c:W | after s:W",
+   "status": "Upgrade: 1 iron"
+  },
+  {
+   "what": "upgraded by one stroke along the line and over the curve",
+   "row": "s:H s:H s:H s:H cx:WH s:H s:H s:H s:H s:H | curve c:H | after t:W",
+   "status": "Nothing to convert here"
+  },
+  {
+   "what": "downgraded the first four tiles",
+   "row": "s:W s:W s:W t:W cx:WH s:H s:H s:H s:H s:H | curve c:H | after t:W",
+   "status": "Nothing to convert here"
+  }
+ ],
+ "money": "wood 4960, stone 4950, iron 4969"
+}

@@ -31,8 +31,8 @@ describe('gauge access', () => {
 
   it('says which track a vehicle runs on', () => {
     const large = content.locomotives.find((d) => d.size === 'large' && d.gauge !== 'narrow')!;
-    expect(runsOn(large)).toBe('Runs on regular and high-speed track');
-    expect(runsOn(wagon('boxcar'))).toBe('Runs on regular and high-speed track');
+    expect(runsOn(large)).toBe('Runs on wide and high-speed track');
+    expect(runsOn(wagon('boxcar'))).toBe('Runs on wide and high-speed track');
     expect(runsOn(loco('mk48'))).toBe('Runs on narrow track');
     expect(runsOn(wagon('mine_tub'))).toBe('Runs on narrow track');
   });
