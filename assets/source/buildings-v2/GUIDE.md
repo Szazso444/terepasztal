@@ -78,8 +78,9 @@ Everything is in `assets/source/buildings-v2/`.
   being painted again. The tool keeps its earlier self here and names it, straightened, as a
   reference (section 5). Do not edit, remove or commit these (nor a numbered
   `.before.1.png`, left from an earlier round).
-- `.look/<name>.png`: a picture as you should look at it (section 6), written by
-  `node tools/building-sheets.mjs --picture <file>`. Not committed.
+- `.look/<name>.png`: a picture as you should look at it (section 6), written by `take`
+  (`node tools/building-sheets.mjs --picture <file>` writes one for any other file). Not
+  committed.
 - `.fitted/<family>-a<age>-r<view>.png`: an earlier picture laid onto its footprint by the tool,
   at exactly the guide's camera, scale and place. `next` names these as references: a later
   picture copies the angles of what it is shown, so it is shown them straightened. Attach them as
@@ -92,8 +93,8 @@ Everything is in `assets/source/buildings-v2/`.
 The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`, `:fit`):
 
 - `node tools/building-queue.mjs next`: the next picture to make, with everything it needs.
-- `node tools/building-queue.mjs take <id>`: take the picture your image tool has just written. It
-  is copied to the picture's file as it is, and laid on grass for you to look at (sections 5, 6).
+- `node tools/building-queue.mjs take <id>`: take the picture your image tool has just made. It
+  is written to the picture's file as it is, and laid on grass for you to look at (sections 5, 6).
 - `node tools/building-queue.mjs show <id>`: the same for any picture.
 - `node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]`: record a result.
 - `node tools/building-queue.mjs status`: progress per family, the gates, and where the list and
@@ -119,17 +120,18 @@ The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`
 Repeat until the queue tool tells you to stop:
 
 1. Run `node tools/building-queue.mjs next`. It answers with its exit code:
-   - exit code 0: a picture to make. It prints the picture's name, the file to save, the guide to
-     edit, the references to attach in order, and the prompt. A name followed by
-     `(to paint again: the same building)` is a picture that was made before with its camera off.
+   - exit code 0: a picture to make. It prints the picture's name and file, the guide to edit,
+     the references to attach in order, the prompt, and the command that takes the finished
+     picture. A name followed by `(to paint again: the same building)` is a picture that was made
+     before with its camera off.
    - exit code 2: `GATE`. A family the user wants to see is finished. Stop (section 8).
    - exit code 4: `STOP`. Too much of a family could not be made. Stop (section 8).
    - exit code 3: `DONE`. Nothing is left.
 2. Make the picture and take it with `node tools/building-queue.mjs take <id>` (section 5).
 3. Look at it yourself (section 6).
-4. Record it: `node tools/building-queue.mjs set <id> generated --attempts <how many tries>`.
-   The tool checks the picture first. If the check fails it prints why and records nothing: make
-   the picture again (section 7).
+4. Record it: `node tools/building-queue.mjs set <id> generated`. The tool checks the picture
+   first. If the check fails it prints why, the picture is not recorded as made, and the attempt
+   is counted: make the picture again (section 7).
 5. When `next` says a family is finished, close it (section 8).
 
 The queue hands pictures out in an order that matters: a building's front view of an age comes
@@ -144,13 +146,22 @@ first, then its three other views, then the next age. Each picture is built on o
    prompt's last paragraph says what each of the others is for.
 3. Paste the prompt exactly as printed.
 4. Ask for the size `next` printed and a transparent background.
-5. Take the result: `node tools/building-queue.mjs take <id>`. Your image tool has written the
-   picture to a file of its own (Codex keeps them in `$CODEX_HOME/generated_images/`, a folder for
-   each chat). `take` copies the newest picture there to the file name `next` printed, exactly as
-   it is, and writes the picture for you to look at (section 6). If your image tool keeps its
-   pictures somewhere else, or another chat is making pictures at the same time, name the folder
-   or the file: `--from <folder or file>`. Never pass a picture through the shell as text (base64,
-   in pieces): that takes a hundred commands where a copy takes one.
+5. Take the result: `node tools/building-queue.mjs take <id>`. Do not save the picture yourself.
+   Your image tool has written it to a file of its own (Codex keeps them in
+   `$CODEX_HOME/generated_images/`, which is `~/.codex/generated_images/` when that is not set,
+   a folder for each chat). `take` finds the picture made since the last one it took, in the
+   folder of the chat that one came from, writes it to the picture's file exactly as it is, and
+   writes the picture for you to look at (section 6). Where your image tool tells you the file it
+   wrote, you may name it instead: `--from <file>`.
+   - `nothing new was made`: the generation failed, or you have not made the picture yet. Nothing
+     is taken; make the picture.
+   - It names another chat's folder: the new picture is not where the last one came from, as
+     when you take the work over from another chat. Take the picture from there once,
+     `--from "<folder>"`, and the tool follows your chat from then on.
+   - If your image tool keeps its pictures somewhere else, name that folder with `--from`.
+
+   Never pass a picture through the shell as text (base64, in pieces): that takes a hundred
+   commands where a copy takes one.
 
 **A picture to paint again.** Its second reference is the picture as it was, laid onto its
 footprint and straightened to the guide's camera, and the prompt's last lines say what was wrong
@@ -233,9 +244,10 @@ from that, straightened.
    kept, or the picture's earlier self. There is nothing for you to choose, and no picture is
    lost: the other attempts lie beside it as `<name>.before.1.png`, `.before.2.png`.
 
-The tool counts the attempts it refused, so the count is not lost when a session ends;
-`--attempts` is needed only where you made a picture again without recording it. A picture with
-any other fault is made again as before, and rejected after three attempts:
+The tool counts the attempts it refused and the pictures you took and gave up after looking, so
+the count is not lost when a session ends. `--attempts <n>` on `set` is only for attempts the
+tool never saw: it can raise the count, never lower it. A picture with any other fault is made
+again as before, and rejected after three attempts:
 
 After three attempts, record the picture with
 `node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go

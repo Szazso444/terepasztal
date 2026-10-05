@@ -109,8 +109,20 @@ describe('the guide for the artist agent', () => {
     // the way of working is in the tool and in what `next` prints, not in one chat's memory
     for (const text of [guide, prompt, production])
       expect(text).toContain('node tools/building-queue.mjs take <id>');
-    // a picture is copied as a file, never passed through the shell as text
+    // a picture is taken as a file, never passed through the shell as text, nor saved by hand
     expect(guide).toMatch(/through the shell as text/);
+    for (const text of [guide, prompt]) {
+      expect(text).not.toMatch(/the file to save/);
+      expect(text).toMatch(/[Dd]o not save (it|the picture)\s+yourself/);
+    }
+    // where the pictures are looked for, and how another place is named
+    expect(guide).toContain('generated_images');
+    expect(guide).toContain('--from');
+    expect(guide).toMatch(/nothing new was made/);
+    // the count is the tool's: the plain form everywhere, a number only for what it never saw
+    expect(guide).not.toMatch(/set <id> generated --attempts/);
+    expect(prompt).not.toMatch(/--attempts/);
+    expect(guide).toMatch(/never lower it/);
     expect(guide).toMatch(/another session/);
     expect(production).toMatch(/## Handing the work to another session/);
   });

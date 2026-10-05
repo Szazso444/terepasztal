@@ -43,7 +43,7 @@ document to what the tools do.
 2. Open an agent session on the repository and paste the block from `PROMPT.md`. The agent runs
    `node tools/building-queue.mjs next`, paints the picture as an edit of the block-out with the
    references and the prompt `next` printed, takes it (`node tools/building-queue.mjs take <id>`
-   copies the file the image tool wrote and lays the picture on grass, as
+   writes the picture the image tool made to the picture's file and lays it on grass, as
    `node tools/building-sheets.mjs --picture <file>` does for any file), looks at it, and records
    it (`node tools/building-queue.mjs set <id> generated`). The tool refuses what fails the check.
 3. The depot and the station are gates: when one is finished `next` prints `GATE` and the agent
@@ -67,6 +67,9 @@ the checkout, and the way of working is in the guide and in what `next` prints.
 2. A picture the earlier session made but did not record shows in `status` as
    `on disk, but not recorded`. The new session looks at it and records it, or makes it again.
 3. A gate holds across sessions: the new session stops at `GATE` like the old one.
+4. `take` follows the chat the last picture was taken from. A new chat's first picture lies in
+   another folder of the image tool: the tool names that folder and the agent takes the picture
+   from there once (`--from`), or it names the file its image tool reports each time.
 
 On another machine the branch has to be pushed first. The earlier selves of pictures that wait to
 be painted again (`*.before.png`) are not committed, so there those pictures are made afresh.
@@ -94,6 +97,11 @@ and shows it in a running build, as drawn or straightened.
   the work (`STOP`).
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
   them on the other side, and in the game the rails would run into a wall.
+- Which picture is taken: `take` takes only a picture made after the last one it took, from the
+  chat that one came from, and never one whose bytes are in the list's folders already. So a
+  generation that failed does not hand the picture before it to the next entry, and another
+  chat's pictures are not taken unasked. It counts a picture that was taken and given up as an
+  attempt, and a count the agent gives can raise the tool's own but not lower it.
 - Size and place are not enforced. A generator fills its canvas, so every picture is measured
   and laid onto its footprint by the tools, and the four views of an age are brought to one size.
   A family can stand larger than its footprint (`size` in `families.json`; the depot has 1.3).
@@ -154,7 +162,8 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   one recorded picture again the command is `set <id> pending`.
 - Nothing painted is removed by the tools. A picture set aside is `<name>.rejected.png`, an
   earlier attempt `<name>.before.png`, and an older one under the same name is kept with a number.
-  None of these are committed.
+  None of these are committed. The one exception: `take` writes over a picture that was taken
+  and never recorded, which the agent looked at and gave up; the image tool still has it.
 
 ## Not built yet
 
