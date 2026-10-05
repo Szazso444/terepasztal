@@ -165,15 +165,15 @@ what the building is. Before you record a picture as `generated`, look at it and
 by side.
 
 Look at the picture as `take` has written it, in `.look/<name>.png`
-(`node tools/building-sheets.mjs --picture <file>` writes the same for any other file): on grass, on its footprint as you painted it, with the footprint's edge in
-white, the line its walls' feet should stand on in pink, and in yellow the frames of the guide's
-openings: the front door, and a depot's portals. The frames show which wall the door and the
-portals belong to; where there is no door frame (`r1`, `r2`), no front door may show. Do not judge
-the raw file's
-background by eye. A viewer that ignores transparency shows the colour stored under the
-transparent pixels as a brown or green glow round the building; that glow is not in the picture.
-Whether the background is clean is the tool's to say: `set` refuses a picture with a shadow or a
-glow, and a picture it accepts has none.
+(`node tools/building-sheets.mjs --picture <file>` writes the same for any other file): on grass,
+on its footprint as you painted it, with the footprint's edge in white, the line its walls' feet
+should stand on in pink, and in yellow the frames of the guide's openings: the front door, and a
+depot's portals. The frames show which wall the door and the portals belong to; where there is no
+door frame (`r1`, `r2`), no front door may show. That picture is the one to judge: you need not
+look at the raw result at all, and do not judge its background by eye. A viewer that ignores
+transparency shows the colour stored under the transparent pixels as a brown or green glow round
+the building; that glow is not in the picture. Whether the background is clean is the tool's to
+say: `set` refuses a picture with a shadow or a glow, and a picture it accepts has none.
 
 Then answer:
 
