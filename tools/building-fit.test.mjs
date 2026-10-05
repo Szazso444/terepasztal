@@ -259,6 +259,11 @@ describe('building fit', () => {
       off: true,
       by: 6.4,
     });
+    // the limit itself is inside: three degrees is right, a tenth more is not
+    const at = (elevation, turn) =>
+      cameraOff({ sure: [true, true], measured: [0.5, -0.5], camera: { elevation, turn } }).off;
+    expect([at(33, 0), at(27, 0), at(30, 3), at(30, -3)]).toEqual([false, false, false, false]);
+    expect([at(33.1, 0), at(26.9, 0), at(30, 3.1), at(30, -3.1)]).toEqual([true, true, true, true]);
     // one straight wall foot: no telling height from turn, but a foot no near camera draws is off
     expect(cameraOff({ sure: [true, false], measured: [0.5, -0.5], camera: null })).toEqual({
       off: false,
@@ -275,6 +280,21 @@ describe('building fit', () => {
     expect(cameraOff({ sure: [true, false], measured: [0.38, -0.5], camera: null }).off).toBe(true);
     // no straight wall foot at all: nothing to judge the camera by
     expect(cameraOff({ sure: [false, false], measured: [0.5, -0.5], camera: null })).toBeNull();
+  });
+
+  it('straightens a picture all the way when it is to be a reference', () => {
+    // 0.5 x 0.6 = 0.3: flatter than the fit corrects for the game, where a stretch must stay small
+    const fp = FOOTPRINTS.t1;
+    const png = building('t1', 0, { map: ([x, y]) => [x, 832 + (y - 832) * 0.6] });
+    expect(fitPicture(png, 't1', 0).slopes).toEqual([0.33, -0.33]);
+    // a later picture copies the wall feet it is shown: there they matter more than proportions
+    const f = fitPicture(png, 't1', 0, { fully: true });
+    expect(f.slopes.map((s) => Math.round(s * 100) / 100)).toEqual([0.3, -0.3]);
+    const b = wallBase(fp, 0);
+    const at = stands(normalisePicture(png, f, 't1'));
+    expect(near(at.left, b.w, 4)).toBe(true);
+    expect(near(at.low, b.s, 4)).toBe(true);
+    expect(near(at.right, b.e, 4)).toBe(true);
   });
 
   it('can lay a picture down without correcting its camera', () => {

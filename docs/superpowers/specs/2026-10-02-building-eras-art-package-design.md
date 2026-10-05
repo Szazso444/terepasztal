@@ -111,6 +111,13 @@ the tools correct, and marked for the user. A picture made before this rule goes
 queue (`recheck`) and is painted again from its own earlier self laid onto its footprint, so it
 stays the same building and the pictures built on it stay as they are.
 
+What keeps this from running away: the tool counts the attempts it refuses, so three stays three
+across sessions; a gate family that has pictures put back is shown to the user again before the
+work goes on; and a family where more than a quarter of the pictures had to be kept stops the
+work like one that lost them. A picture shown to the generator as a reference is straightened all
+the way, however far off it was, because the generator copies the wall feet it is shown; only
+what goes into the game is limited in how far it is stretched.
+
 Background alpha 0. Light from the upper left: tops lightest, lower-left wall mid, lower-right
 wall darkest. No ground, shadow, rails, people, smoke, text or loose objects. The foot of the two
 visible walls stays plain and straight, with nothing in front of it: it is what is measured.
@@ -145,7 +152,8 @@ Everything lives in `assets/source/buildings-v2/`.
   `approved` or `rejected`. It holds no prompts, so it stays small enough to read and to diff.
   Two marks are added where they apply: `kept` (made, but with its camera off: the closest of
   three attempts) and `repaint` (back in the queue to be painted again from its earlier self,
-  which is kept beside it as `<name>.before.png`).
+  which is kept beside it as `<name>.before.png`; the mark holds how far off that was and what
+  was wrong with it, for the prompt).
 - **The queue tool** (`tools/building-queue.mjs`) is how Codex works the list: `next` prints the
   next picture with its file, guide, references and prompt; `set` records a result; `status`
   shows progress and where the list and the disk disagree; `redo` puts pictures back, to be made

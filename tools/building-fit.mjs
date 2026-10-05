@@ -227,16 +227,20 @@ export function cameraOff(fit) {
  * `vertical` and `shear` turn the measured ground slopes into 0.5 and -0.5 and leave upright edges
  * upright; `scale` makes the foot as wide as the walls of the footprint; (cx, cy) is the middle of
  * the foot. Null when the picture is empty. With `rectify: false` the camera is left as the
- * generator drew it and only scale and place are set (for looking at what came back).
+ * generator drew it and only scale and place are set (for looking at what came back). With
+ * `fully` the measured slopes are used however far they are from the game's: for a picture that
+ * is shown to the generator as a reference, where the wall feet it will copy matter more than
+ * the picture's proportions.
  */
-export function fitPicture(png, fpId, rot, { rectify = true } = {}) {
+export function fitPicture(png, fpId, rot, { rectify = true, fully = false } = {}) {
   const m = measureBase(png);
   if (!m) return null;
   const fp = FOOTPRINTS[fpId];
   const target = wallBase(fp, rot);
+  const used = (slope) => (fully ? slope : clamp(slope, FIT.slope));
   const slopes = [
-    rectify && m.sure[0] ? clamp(m.slopes[0], FIT.slope) : 0.5,
-    rectify && m.sure[1] ? -clamp(-m.slopes[1], FIT.slope) : -0.5,
+    rectify && m.sure[0] ? used(m.slopes[0]) : 0.5,
+    rectify && m.sure[1] ? -used(-m.slopes[1]) : -0.5,
   ];
   const vertical = 1 / (slopes[0] - slopes[1]),
     shear = (-(slopes[0] + slopes[1]) * vertical) / 2;

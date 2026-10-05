@@ -188,8 +188,9 @@ what it measured, and gives a sentence for the next attempt:
 ```text
 not recorded: camera off by 6.4°: it looks down from 23.6° where the game looks down from 30°
 (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). Make depot-a0-r0 again,
-adding to the prompt: "The camera is too low: the wall feet run too flat and too little of the
-roof shows. Look down on the building more steeply, exactly as the block-out is seen."
+adding to the prompt: "Both wall feet run too flat. The camera is too low, so too little of the
+roof shows: look down on the building more steeply. Both wall feet must run parallel to the
+plinth's edges, as the block-out's do."
 ```
 
 1. Copy the refused attempt to `.tries/<id>-<attempt>.png`, for example
@@ -198,12 +199,16 @@ roof shows. Look down on the building more steeply, exactly as the block-out is 
    the tool's sentence added at its end.
 3. If the third attempt is refused for its camera as well, do not reject the picture. Copy the
    attempt that was off by the least back to the picture's file name and record it with
-   `node tools/building-queue.mjs set <id> generated --attempts 3 --keep`. It counts as made, the
-   tools straighten it as far as they can, and it is marked for the user, who decides whether it
-   stays.
+   `node tools/building-queue.mjs set <id> generated --keep`. It counts as made, the tools
+   straighten it as far as they can, and it is marked for the user, who decides whether it stays.
+   For a picture that is painted again its earlier self counts too: `next` prints how far off
+   that was (`earlier self: off by 6.2°, in ...`). If none of your attempts came closer, copy
+   that file back instead.
 
-`--keep` is for the camera alone, and only from the third attempt on. A picture with any other
-fault after three attempts is rejected:
+The tool counts the attempts it refused, so the count is not lost when a session ends;
+`--attempts` is needed only where you made a picture again without recording it. `--keep` is for
+the camera alone, and only from the third attempt on. A picture with any other fault after three
+attempts is rejected:
 
 After three attempts, record the picture with
 `node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go
@@ -220,7 +225,7 @@ building. The station comes second; it is the first of the one-tile buildings. A
 2. `node tools/building-sheets.mjs --family <family>`
 3. Commit: `Buildings: <family>, <n> of 24 pictures`.
 4. Tell the user the family is ready, with the path of `review/<family>.png`, the number of
-   pictures made and rejected, and anything you found hard. Then wait.
+   pictures made, kept with `--keep` and rejected, and anything you found hard. Then wait.
 
 Work continues only after the user approves the family. The user may first ask for changes to
 this guide, to `families.json` or to the guides; those are not yours to change.
@@ -234,16 +239,22 @@ this guide, to `families.json` or to the guides; those are not yours to change.
    lay it.
 3. Commit: `Buildings: <name>, <n> of <total> pictures`.
 
-**Pictures painted again.** When the user has had pictures put back with `recheck`, `next` hands
-those out before anything new, family by family in the list's order. Each time `next` moves on to
-another family, close the family you have just finished repainting as above (check, sheets), and
-commit: `Buildings: <name>, camera repainted`. In your message to the user, name the pictures you
-had to keep with `--keep`.
+If the check fails a picture that is already recorded as made (the tools may have been brought up
+to date since it was made), do not make it again on your own. Name it in your message to the
+user, who decides whether it is put back.
 
-**A stop.** When more than a quarter of a family could not be made (rejected, or built on a
-rejected picture), `next` prints `STOP` (exit code 4). Close the family as above, tell the user
-what kept going wrong, and wait. The user either has the pictures put back (`redo`) or accepts the
-loss (`accept`).
+**Pictures painted again.** When the user has had pictures put back with `recheck`, `next` hands
+those out before anything new, family by family in the list's order. For the depot and the
+station `recheck` closes its gate again: `next` prints `GATE` when the family is painted again,
+and you stop as at any gate. Each time `next` moves on from any other family, close the family
+you have just finished repainting as above (check, sheets), and commit:
+`Buildings: <name>, camera repainted`. In your message to the user, name the pictures you had to
+keep with `--keep`.
+
+**A stop.** When more than a quarter of a family could not be made as it should be (rejected,
+built on a rejected picture, or kept with its camera off), `next` prints `STOP` (exit code 4).
+Close the family as above, tell the user what kept going wrong, and wait. The user either has the
+pictures put back or accepts the family as it is (`accept`).
 
 One commit per family, on the branch `art/buildings-v2`.
 

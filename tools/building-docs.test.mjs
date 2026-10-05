@@ -68,6 +68,15 @@ describe('the guide for the artist agent', () => {
     // pictures made before go back in the queue and are painted again from their earlier selves
     expect(guide).toContain('.before.png');
     expect(guide).toMatch(/to paint again/);
+    // the earlier self counts when the closest attempt is chosen
+    expect(guide).toMatch(/earlier self counts/);
+    // the tool counts the attempts it refused; the user sees a gate family again
+    expect(guide).toMatch(/counts the attempts it refused/);
+    expect(guide).toMatch(/closes its gate again/);
+    // a picture recorded as made that fails a later check is the user's to decide, not remade
+    expect(guide).toMatch(/already recorded as made/);
+    // too many kept pictures stop the work like too many lost ones
+    expect(guide).toMatch(/kept with its camera off/);
     for (const kept of ['*.before.png', '.tries/', '*.rejected.png', '.fitted/'])
       expect(ignored, kept).toContain(kept);
   });

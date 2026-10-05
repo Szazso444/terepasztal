@@ -45,50 +45,83 @@ export function pictureOf(path) {
 }
 
 const SIDES = ['lower-left', 'lower-right'];
+/** A wall foot this close to the game's slope is said to be right. */
+const NEAR = 0.03;
 
-/** A camera that is off, in words: `line` for the record, `say` for the generator's next attempt. */
+/**
+ * A camera that is off, in words. `line` is for the record. `say` is for the generator's next
+ * attempt at the picture: the wall feet as they are, the cause, the cure. `was` is for a picture
+ * that is painted again later from its straightened earlier self: there it says what was wrong
+ * and asks for nothing, since a camera moved away from the reference would be wrong again.
+ */
 function cameraWords(fit, off) {
+  const shown =
+    'The reference shows it put right: paint it as the reference and the block-out are seen.';
   if (off.by === null) {
     const side = SIDES[off.foot];
     const game = off.foot ? -0.5 : 0.5;
+    const how = Math.abs(off.slope) > 0.5 ? 'steep' : 'flat';
     return {
       line: `camera off: the ${side} wall's foot slopes ${off.slope.toFixed(2)} where the game's slopes ${game.toFixed(2)}`,
-      say: `The ${side} wall's foot runs too ${Math.abs(off.slope) > 0.5 ? 'steep' : 'flat'}: it must run parallel to the plinth's ${side} edge, two pixels across for one down.`,
+      say: `The ${side} wall's foot runs too ${how}: it must run parallel to the plinth's ${side} edge, two pixels across for one down.`,
+      was: `Its ${side} wall's foot ran too ${how}. ${shown}`,
     };
   }
   const parts = [],
-    say = [];
+    say = [],
+    was = [];
   if (Math.abs(off.elevation) > FIT.camera) {
+    const low = off.elevation < 0;
     const seen = fit.camera.elevation.toFixed(1);
     parts.push(`it looks down from ${seen}° where the game looks down from 30°`);
     say.push(
-      off.elevation < 0
-        ? 'The camera is too low: the wall feet run too flat and too little of the roof shows. Look down on the building more steeply, exactly as the block-out is seen.'
-        : 'The camera is too high: the wall feet run too steep and too much of the roof shows. Look down on the building less steeply, exactly as the block-out is seen.',
+      low
+        ? 'The camera is too low, so too little of the roof shows: look down on the building more steeply.'
+        : 'The camera is too high, so too much of the roof shows: look down on the building less steeply.',
+    );
+    was.push(
+      low
+        ? 'from too low a camera, so too little of its roof showed'
+        : 'from too high a camera, so too much of its roof showed',
     );
   }
   if (Math.abs(off.turn) > FIT.camera) {
-    const to = off.turn > 0 ? 1 : 0;
-    parts.push(
-      `the building is turned ${Math.abs(off.turn).toFixed(1)}° towards its ${SIDES[to]} wall`,
-    );
+    const to = SIDES[off.turn > 0 ? 1 : 0];
+    parts.push(`the building is turned ${Math.abs(off.turn).toFixed(1)}° towards its ${to} wall`);
     say.push(
-      `The building is turned: its ${SIDES[to]} wall faces the viewer too much, so that wall's foot runs too flat and the ${SIDES[1 - to]} wall's too steep. Turn it back until both walls are seen equally from the side and both feet are equally steep, parallel to the plinth's edges.`,
+      `The building is turned, its ${to} wall facing the viewer too much: turn it back until both walls are seen equally from the side.`,
     );
+    was.push(`turned, its ${to} wall facing the viewer too much`);
   }
-  const feet = fit.measured.map((s) => s.toFixed(2)).join(' and ');
+  // the feet as they are in the picture: a low camera flattens both and a turn steepens one, so
+  // what each fault does alone need not be what the picture shows
+  const how = fit.measured.map((s) =>
+    Math.abs(s) < 0.5 - NEAR ? 'flat' : Math.abs(s) > 0.5 + NEAR ? 'steep' : null,
+  );
+  let feet = '';
+  if (how[0] && how[0] === how[1]) feet = `Both wall feet run too ${how[0]}.`;
+  else if (how[0] && how[1])
+    feet = `The ${SIDES[0]} wall's foot runs too ${how[0]} and the ${SIDES[1]} wall's too ${how[1]}.`;
+  else if (how[0] || how[1]) {
+    const i = how[0] ? 0 : 1;
+    feet = `The ${SIDES[i]} wall's foot runs too ${how[i]}; the ${SIDES[1 - i]} wall's is right.`;
+  }
+  const wanted = "Both wall feet must run parallel to the plinth's edges, as the block-out's do.";
+  const slopes = fit.measured.map((s) => s.toFixed(2)).join(' and ');
   return {
-    line: `camera off by ${off.by.toFixed(1)}°: ${parts.join(' and ')} (the wall feet slope ${feet}, the game's 0.50 and -0.50)`,
-    say: say.join(' '),
+    line: `camera off by ${off.by.toFixed(1)}°: ${parts.join(' and ')} (the wall feet slope ${slopes}, the game's 0.50 and -0.50)`,
+    say: [feet, ...say, wanted].filter(Boolean).join(' '),
+    was: `It was painted ${was.join(', and ')}. ${shown}`,
   };
 }
 
 /**
  * Check one decoded picture of a footprint at a rotation. `problems` fail the picture; `notes`
  * are for the person who reviews it; `fit` is how it is laid onto its footprint. A camera that
- * is off fails the picture, and `camera` then holds how far off it is and what to say in the next
- * attempt. With `camera: false` such a picture passes with a note instead: it is the closest of
- * its attempts, kept for the user to judge.
+ * is off fails the picture, and `camera` then holds how far off it is (`by`), what to say in the
+ * next attempt (`say`) and what was wrong, for when it is painted again later (`was`). With
+ * `camera: false` such a picture passes with a note instead, `camera` still given: it is the
+ * closest of its attempts, kept for the user to judge.
  */
 export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
   const fp = FOOTPRINTS[fpId];
@@ -171,8 +204,8 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
     problems.push('no building found in the picture');
     return { ok: false, problems };
   }
-  // both ground lines far from the game's: a wrong camera. One alone is more often clutter at
-  // the foot of that wall than a camera, so it is left to the reviewer.
+  // both ground lines far from the game's: not the game's view at all, and never kept. One
+  // alone, or both a little off, is a camera that is off: painted again, or kept as the closest.
   const far = (i) =>
     fit.sure[i] &&
     (Math.abs(fit.measured[i]) < LIMIT.slope[0] || Math.abs(fit.measured[i]) > LIMIT.slope[1]);
@@ -187,7 +220,7 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
   let camera = null;
   if (off?.off) {
     const words = cameraWords(fit, off);
-    camera = { by: off.by, say: words.say };
+    camera = { by: off.by, say: words.say, was: words.was };
     // a slope outside what the fit uses is corrected only as far as that
     const partly = fit.sure.some((sure, i) => sure && fit.measured[i] !== fit.slopes[i]);
     if (wanted) problems.push(words.line);
