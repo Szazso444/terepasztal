@@ -14,8 +14,10 @@
   "accepted": [
     "station"
   ],
+  "mark": 1791313742369,
+  "chat": "01a10d7a-313a-7262-a722-27dbdc2ecf8f",
   "counts": {
-    "pictures": 560,
+    "pictures": 548,
     "families": 27
   },
   "entries": [
@@ -261,12 +263,11 @@
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a4-r2.png",
       "status": "generated",
-      "attempts": 3,
-      "note": "kept with its camera off by 4.4° after 3 attempts: an earlier one was the closest",
-      "kept": 4.4,
+      "attempts": 2,
+      "note": "",
       "repaint": {
-        "by": 4.4,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 3.4,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -276,13 +277,8 @@
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a4-r3.png",
       "status": "generated",
-      "attempts": 3,
-      "note": "kept with its camera off by 2.2° after 3 attempts: an earlier one was the closest",
-      "kept": 2.2,
-      "repaint": {
-        "by": 2.2,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
+      "attempts": 2,
+      "note": ""
     },
     {
       "id": "depot-a5-r0",
@@ -319,12 +315,8 @@
       "rot": 2,
       "file": "assets/source/buildings-v2/depot/depot-a5-r2.png",
       "status": "generated",
-      "attempts": 3,
-      "note": "Earlier-self reference omitted portals; repainted with two open lower-right portals and no threshold rails.",
-      "repaint": {
-        "by": 3.1,
-        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
+      "attempts": 1,
+      "note": ""
     },
     {
       "id": "depot-a5-r3",
@@ -3460,126 +3452,6 @@
       "age": 2,
       "rot": 3,
       "file": "assets/source/buildings-v2/kiln/kiln-a2-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a3-r0",
-      "family": "kiln",
-      "age": 3,
-      "rot": 0,
-      "file": "assets/source/buildings-v2/kiln/kiln-a3-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a3-r1",
-      "family": "kiln",
-      "age": 3,
-      "rot": 1,
-      "file": "assets/source/buildings-v2/kiln/kiln-a3-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a3-r2",
-      "family": "kiln",
-      "age": 3,
-      "rot": 2,
-      "file": "assets/source/buildings-v2/kiln/kiln-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a3-r3",
-      "family": "kiln",
-      "age": 3,
-      "rot": 3,
-      "file": "assets/source/buildings-v2/kiln/kiln-a3-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a4-r0",
-      "family": "kiln",
-      "age": 4,
-      "rot": 0,
-      "file": "assets/source/buildings-v2/kiln/kiln-a4-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a4-r1",
-      "family": "kiln",
-      "age": 4,
-      "rot": 1,
-      "file": "assets/source/buildings-v2/kiln/kiln-a4-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a4-r2",
-      "family": "kiln",
-      "age": 4,
-      "rot": 2,
-      "file": "assets/source/buildings-v2/kiln/kiln-a4-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a4-r3",
-      "family": "kiln",
-      "age": 4,
-      "rot": 3,
-      "file": "assets/source/buildings-v2/kiln/kiln-a4-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a5-r0",
-      "family": "kiln",
-      "age": 5,
-      "rot": 0,
-      "file": "assets/source/buildings-v2/kiln/kiln-a5-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a5-r1",
-      "family": "kiln",
-      "age": 5,
-      "rot": 1,
-      "file": "assets/source/buildings-v2/kiln/kiln-a5-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a5-r2",
-      "family": "kiln",
-      "age": 5,
-      "rot": 2,
-      "file": "assets/source/buildings-v2/kiln/kiln-a5-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a5-r3",
-      "family": "kiln",
-      "age": 5,
-      "rot": 3,
-      "file": "assets/source/buildings-v2/kiln/kiln-a5-r3.png",
       "status": "pending",
       "attempts": 0,
       "note": ""

@@ -281,43 +281,43 @@
           true
         ],
         "measured": [
-          0.502,
-          -0.548
+          0.494,
+          -0.523
         ],
         "slopes": [
-          0.502,
-          -0.548
+          0.494,
+          -0.523
         ],
         "base": {
           "w": [
-            211,
-            708.4
+            283,
+            715.6
           ],
           "s": [
-            772.4,
-            990.1
+            768.6,
+            955.3
           ],
           "e": [
-            1337,
-            680.4
+            1258,
+            699.4
           ]
         },
-        "scale": 0.6411,
-        "vertical": 0.9523,
-        "shear": 0.0222,
-        "cx": 774,
-        "cy": 678.5,
+        "scale": 0.7404,
+        "vertical": 0.9837,
+        "shear": 0.0143,
+        "cx": 770.5,
+        "cy": 707,
         "box": {
-          "left": 396.1,
-          "top": 349.8,
-          "right": 1140.5,
-          "bottom": 935.3
+          "left": 400.4,
+          "top": 293.1,
+          "right": 1137.1,
+          "bottom": 937.3
         },
         "camera": {
-          "elevation": 31.6,
-          "turn": -1.3
+          "elevation": 30.5,
+          "turn": -0.8
         },
-        "area": 713256
+        "area": 536607
       }
     },
     "depot-a1-r2": {
@@ -929,9 +929,7 @@
     "depot-a4-r2": {
       "ok": true,
       "problems": [],
-      "notes": [
-        "camera off by 4.4°: the building is turned 4.4° towards its lower-right wall (the wall feet slope 0.61 and -0.45, the game's 0.50 and -0.50); kept, and corrected by the tools"
-      ],
+      "notes": [],
       "fit": {
         "method": "base",
         "sure": [
@@ -939,55 +937,49 @@
           true
         ],
         "measured": [
-          0.615,
-          -0.452
+          0.538,
+          -0.492
         ],
         "slopes": [
-          0.615,
-          -0.452
+          0.538,
+          -0.492
         ],
         "base": {
           "w": [
-            307,
-            657.3
+            317,
+            685.1
           ],
           "s": [
-            750.5,
-            930
+            787.4,
+            938
           ],
           "e": [
-            1228,
-            714.3
+            1256,
+            707.4
           ]
         },
-        "scale": 0.7838,
-        "vertical": 0.9377,
-        "shear": -0.0765,
-        "cx": 767.5,
-        "cy": 584.4,
+        "scale": 0.7688,
+        "vertical": 0.9712,
+        "shear": -0.0221,
+        "cx": 786.5,
+        "cy": 658.9,
         "box": {
           "left": 407,
-          "top": 379,
+          "top": 364.2,
           "right": 1129,
-          "bottom": 941.5
+          "bottom": 940.5
         },
         "camera": {
-          "elevation": 31.8,
-          "turn": 4.4
+          "elevation": 31,
+          "turn": 1.3
         },
-        "area": 437839
-      },
-      "camera": {
-        "by": 4.4,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 424765
       }
     },
     "depot-a4-r3": {
       "ok": true,
       "problems": [],
-      "notes": [
-        "camera off by 2.2°: the building is turned 2.2° towards its lower-right wall (the wall feet slope 0.56 and -0.48, the game's 0.50 and -0.50); kept, and corrected by the tools"
-      ],
+      "notes": [],
       "fit": {
         "method": "base",
         "sure": [
@@ -995,47 +987,43 @@
           true
         ],
         "measured": [
-          0.559,
-          -0.478
+          0.521,
+          -0.511
         ],
         "slopes": [
-          0.559,
-          -0.478
+          0.521,
+          -0.511
         ],
         "base": {
           "w": [
-            299,
-            660.5
+            308,
+            713.4
           ],
           "s": [
-            769.9,
-            923.8
+            750.1,
+            943.7
           ],
           "e": [
-            1221,
-            708.1
+            1255,
+            685.6
           ]
         },
-        "scale": 0.783,
-        "vertical": 0.9642,
-        "shear": -0.039,
-        "cx": 760,
-        "cy": 630.2,
+        "scale": 0.7623,
+        "vertical": 0.9688,
+        "shear": -0.0047,
+        "cx": 781.5,
+        "cy": 674,
         "box": {
           "left": 407,
-          "top": 378.9,
+          "top": 361.4,
           "right": 1129,
-          "bottom": 939.3
+          "bottom": 940
         },
         "camera": {
           "elevation": 31.1,
-          "turn": 2.2
+          "turn": 0.3
         },
-        "area": 414197
-      },
-      "camera": {
-        "by": 2.2,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 432165
       }
     },
     "depot-a5-r0": {
@@ -1149,43 +1137,43 @@
           true
         ],
         "measured": [
-          0.564,
-          -0.496
+          0.511,
+          -0.471
         ],
         "slopes": [
-          0.564,
-          -0.496
+          0.511,
+          -0.471
         ],
         "base": {
           "w": [
-            320,
-            716.9
+            274,
+            659.7
           ],
           "s": [
-            771.2,
-            971.4
+            827.4,
+            942.7
           ],
           "e": [
-            1298,
-            710.3
+            1294,
+            722.9
           ]
         },
-        "scale": 0.7382,
-        "vertical": 0.9436,
-        "shear": -0.0323,
-        "cx": 809,
-        "cy": 647.2,
+        "scale": 0.7078,
+        "vertical": 1.018,
+        "shear": -0.0206,
+        "cx": 784,
+        "cy": 687.6,
         "box": {
-          "left": 347.2,
-          "top": 372,
+          "left": 407,
+          "top": 363.3,
           "right": 1129,
-          "bottom": 942.3
+          "bottom": 940.8
         },
         "camera": {
-          "elevation": 31.9,
-          "turn": 1.9
+          "elevation": 29.4,
+          "turn": 1.2
         },
-        "area": 530995
+        "area": 477419
       }
     },
     "depot-a5-r3": {
