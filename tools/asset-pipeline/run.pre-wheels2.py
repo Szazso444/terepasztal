@@ -259,13 +259,8 @@ def main():
                 if wh:
                     def rel(p, f):
                         return round((f - p["from"]) / (p["to"] - p["from"]), 5)
-                    # rigid_f, trucks_f, from, to: the table's own shares of the length between the
-                    # buffer beams, by which the model's wheels are found
                     gear_info = [{"rigid": [rel(p, f) for f in p.get("rigid", [])],
                                   "trucks": [[rel(p, f) for f in t] for t in p.get("trucks", [])],
-                                  "rigid_f": list(p.get("rigid", [])),
-                                  "trucks_f": [list(t) for t in p.get("trucks", [])],
-                                  "from": p["from"], "to": p["to"],
                                   "wheels": wh.get(p["part"])} for p in gear_sorted]
                 log.info(f"[{aid}] {L} tiles in the game's segments {gear_parts}")
             if "blender" in stages and (args.force or not meta_path.exists()):

@@ -31,28 +31,6 @@ def camera_position(fov_deg):
     return np.array([0.0, -0.5 / math.tan(math.radians(fov_deg) / 2), 0.0])
 
 
-def warp(P, fov_deg, m):
-    """Takes the source camera's perspective out of raw-frame points: a share m of it (1 = all).
-    A reconstruction sits in the frame of a perspective camera, but the sources are drawn in parallel
-    projection, so what is farther from the camera comes out larger. Dividing by 1 + m * depth / D
-    (depth from the model's middle, D the camera's distance) is a projective map: straight edges stay
-    straight, and seen through a parallel camera the result is the picture again."""
-    if not m:
-        return P
-    D = 0.5 / math.tan(math.radians(fov_deg) / 2)
-    P = np.asarray(P, dtype=np.float64)
-    return P / (1.0 + m * P[..., 1:2] / D)
-
-
-def unwarp(P, fov_deg, m):
-    """The inverse of warp: warped points back in the frame the source camera projects."""
-    if not m:
-        return P
-    D = 0.5 / math.tan(math.radians(fov_deg) / 2)
-    P = np.asarray(P, dtype=np.float64)
-    return P / (1.0 - m * P[..., 1:2] / D)
-
-
 def splat(P, fov, res):
     u, v, d = project(P, fov, res)
     x, y = np.floor(u).astype(np.int64), np.floor(v).astype(np.int64)
@@ -458,7 +436,6 @@ class ExtraView:
 def seen_weight(view, P, N, cfg):
     """How fully the source camera sees each surface point (0..1), and its source colour."""
     res = view.res
-    P = unwarp(P, view.fov, getattr(view, "m", 0.0))  # the camera sees the model as reconstructed
     u, v, d = project(P, view.fov, res)
     x = np.clip(np.floor(u).astype(np.int64), 0, res - 1)
     y = np.clip(np.floor(v).astype(np.int64), 0, res - 1)
@@ -593,7 +570,7 @@ def window_mask(view, polys, cfg, name):
     t = view.tex
     img = np.repeat(polygon_mask(polys, view.res)[..., None], 3, 2)
     mv = SourceView(view.fov, view.zbuf, img)
-    mv.inner, mv.m = view.inner, getattr(view, "m", 0.0)
+    mv.inner = view.inner
     w, c = seen_weight(mv, t["P"], t["N"], cfg)
     val = c[:, 0] * (w > 0.2)
     if t.get("mirror") is not None:
@@ -692,7 +669,6 @@ class SourceView:
         self.res = zbuf.shape[0]
         self.inner, self.iou = None, None
         self.tex = None  # reproject's per-texel state, for fill_hidden
-        self.m = 0.0  # share of the camera's perspective taken out of the mesh (warp)
 
     def point(self, px, reach=6):
         """Raw-frame surface point under source pixel px = (x, y). A pixel on the outline (a tyre's
@@ -709,8 +685,7 @@ class SourceView:
         t = math.tan(math.radians(self.fov) / 2)
         f = self.res / (2 * t)
         u, v = px[0] + 0.5, px[1] + 0.5
-        return warp(np.array([(u - self.res / 2) * d / f, d - 0.5 / t, -(v - self.res / 2) * d / f]), self.fov,
-                    self.m)
+        return np.array([(u - self.res / 2) * d / f, d - 0.5 / t, -(v - self.res / 2) * d / f])
 
     def color(self, box):
         """Median source colour (sRGB 0..1) of box = [x0, y0, x1, y1]."""

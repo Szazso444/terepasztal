@@ -131,14 +131,6 @@ def texture_image(ob):
 _PIXELS = {}
 
 
-def image_pixels(img):
-    """An image's pixels as an array (rows from the bottom, RGBA 0..1), read once."""
-    if img.name not in _PIXELS:
-        w, h = img.size
-        _PIXELS[img.name] = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
-    return _PIXELS[img.name]
-
-
 def faces_colour(ob, pick, min_faces=30):
     """Median colour (sRGB 0..1) of the texture under the faces whose centre pick() accepts: what a
     part of the model looks like (its wheels), for the round ones that take its place. None when
@@ -192,8 +184,8 @@ def cull_backfaces(ob):
     piece back faces render transparent."""
     for slot in ob.material_slots:
         m = slot.material
-        if not (m and m.node_tree) or m is CAP["mat"]:
-            continue  # a cut's cap closes the piece: it shows from either side
+        if not (m and m.node_tree):
+            continue
         m2 = m.copy()
         m2.name = f"{m.name}_culled"
         nt = m2.node_tree
@@ -207,32 +199,6 @@ def cull_backfaces(ob):
         nt.links.new(geo.outputs["Backfacing"], mix.inputs["Fac"])
         nt.links.new(src, mix.inputs[1])
         nt.links.new(clear.outputs[0], mix.inputs[2])
-        nt.links.new(mix.outputs[0], out.inputs["Surface"])
-        slot.material = m2
-
-
-def dark_backfaces(ob, color=(0.05, 0.05, 0.055)):
-    """On a body that has been cut (parts ends, a truck's place, its wheels): whatever is seen from
-    behind is the model's inside, and renders dark and flat instead of with the far wall's texture."""
-    lin = srgb_to_linear(np.array(color))
-    for slot in ob.material_slots:
-        m = slot.material
-        if not (m and m.node_tree) or m is CAP["mat"]:
-            continue
-        m2 = m.copy()
-        m2.name = f"{m.name}_inside_dark"
-        nt = m2.node_tree
-        out = next(n for n in nt.nodes if n.type == "OUTPUT_MATERIAL")
-        if not out.inputs["Surface"].links:
-            continue
-        src = out.inputs["Surface"].links[0].from_socket
-        geo = nt.nodes.new("ShaderNodeNewGeometry")
-        dark = nt.nodes.new("ShaderNodeEmission")
-        dark.inputs["Color"].default_value = (float(lin[0]), float(lin[1]), float(lin[2]), 1.0)
-        mix = nt.nodes.new("ShaderNodeMixShader")
-        nt.links.new(geo.outputs["Backfacing"], mix.inputs["Fac"])
-        nt.links.new(src, mix.inputs[1])
-        nt.links.new(dark.outputs[0], mix.inputs[2])
         nt.links.new(mix.outputs[0], out.inputs["Surface"])
         slot.material = m2
 
@@ -497,11 +463,8 @@ def symmetrize(ob, y_center, keep_below):
         bmesh.ops.reverse_faces(bm, faces=bm.faces)
     geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
     bmesh.ops.bisect_plane(bm, geom=geom, dist=1e-6, plane_co=(0, 0, 0), plane_no=(0, 1, 0), clear_outer=True)
-    seen = set(bm.faces)
     bmesh.ops.mirror(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], matrix=Matrix.Identity(4),
                      merge_dist=1e-5, axis="Y")
-    # the copy is the seen half turned inside out: its faces are turned back, so both halves face outwards
-    bmesh.ops.reverse_faces(bm, faces=[f for f in bm.faces if f not in seen])
     if not keep_below:
         bmesh.ops.scale(bm, vec=(1.0, -1.0, 1.0), verts=bm.verts)
         bmesh.ops.reverse_faces(bm, faces=bm.faces)
@@ -512,41 +475,6 @@ def symmetrize(ob, y_center, keep_below):
     return before, width()
 
 
-CAP = {"mat": None}  # the material of the faces that close a cut (set by the stage)
-
-
-def cut_rim(dead):
-    """The edges round the faces a cut is about to delete (taken before they go)."""
-    rim = set()
-    for f in dead:
-        rim.update(f.edges)
-    return rim
-
-
-def cap_holes(bm, me, rim):
-    """Close what a cut left open with flat dark faces: a cut model shows its inside otherwise, with
-    the texture of its far wall, as soon as the piece next to it turns away (a truck on a curve, a
-    tender behind its engine). Only the cut's own rim is closed; the model's normals stay as they are
-    (the painted look shades by them)."""
-    mat = CAP["mat"]
-    if mat is None:
-        return 0
-    edges = [e for e in rim if e.is_valid and e.is_boundary]
-    if not edges:
-        return 0
-    faces = [f for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0).get("faces", []) if f.is_valid]
-    if not faces:
-        return 0
-    if me.materials.find(mat.name) < 0:
-        me.materials.append(mat)
-    idx = me.materials.find(mat.name)
-    tris = bmesh.ops.triangulate(bm, faces=faces).get("faces", [])
-    for f in tris:
-        f.material_index = idx
-        f.smooth = False
-    return len(tris)
-
-
 def keep_box(ob, x0, x1, z_top):
     """Keep only ob's faces whose centre lies between x0 and x1 and below z_top (all across)."""
     me = ob.data
@@ -554,9 +482,7 @@ def keep_box(ob, x0, x1, z_top):
     bm.from_mesh(me)
     dead = [f for f in bm.faces
             if not (x0 <= (c := f.calc_center_median()).x <= x1 and c.z < z_top)]
-    rim = cut_rim(dead)
     bmesh.ops.delete(bm, geom=dead, context="FACES")
-    cap_holes(bm, me, rim)
     bm.to_mesh(me)
     bm.free()
     if not me.polygons:
@@ -571,10 +497,7 @@ def cut_box(ob, x0, x1, z_top):
     bm.from_mesh(me)
     dead = [f for f in bm.faces
             if x0 <= (c := f.calc_center_median()).x <= x1 and c.z < z_top]
-    rim = cut_rim(dead)
     bmesh.ops.delete(bm, geom=dead, context="FACES")
-    if dead:
-        cap_holes(bm, me, rim)
     bm.to_mesh(me)
     bm.free()
     return len(dead)
@@ -597,10 +520,7 @@ def cut_wheels(ob, axles, y_inner, y_center=0.0, margin=1.15):
             if abs(c.x - ax["x"]) < r and c.z < ax["z"] + r:
                 dead.append(f)
                 break
-    rim = cut_rim(dead)
     bmesh.ops.delete(bm, geom=dead, context="FACES")
-    if dead:
-        cap_holes(bm, me, rim)
     bm.to_mesh(me)
     bm.free()
     return len(dead)
@@ -624,10 +544,7 @@ def cut_wheel_discs(ob, axles, y_lo, y_hi, y_center=0.0, margin=1.0):
             if (c.x - ax["x"]) ** 2 + (c.z - ax["z"]) ** 2 < r * r:
                 dead.append(f)
                 break
-    rim = cut_rim(dead)
     bmesh.ops.delete(bm, geom=dead, context="FACES")
-    if dead:
-        cap_holes(bm, me, rim)
     bm.to_mesh(me)
     bm.free()
     return len(dead)
@@ -753,10 +670,8 @@ def bogie(name, spec, tile_m, colors, shading):
             yp, yc, yr = side * Y(0.16), side * Y(0.24), side * Y(0.3)
             for px, pz in pins:
                 b.tube((px, pz), 0.07 * s, 0, min(yp, yc), max(yp, yc), "rod", n=12)
-            # one coupling rod through every pin, or one per pair of wheels (rods.pairs)
-            for ia, ib in rods.get("pairs") or [(0, len(pins) - 1)]:
-                (pa, za), (pb, zb2) = pins[ia], pins[ib]
-                b.rod((pa, yc, za), (pb, yc, zb2), (0.06 * lat, 0.13 * s), "rod")
+            (pa, za), (pb, zb2) = pins[0], pins[-1]
+            b.rod((pa, yc, za), (pb, yc, zb2), (0.06 * lat, 0.13 * s), "rod")
             xh = rods.get("crosshead")
             if xh:
                 # the cylinder stays with the body; the crosshead, slide bar and connecting rod swing here

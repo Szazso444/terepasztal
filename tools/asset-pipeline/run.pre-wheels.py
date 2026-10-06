@@ -154,10 +154,6 @@ def main():
                                                "width_k, rail_half_m, pitch_deg, yaw_deg, lift_m)")
     ap.add_argument("--annot", default="", help="folder of <id>.json marks on the source crop: windows (polygons), "
                                                  "smoke and headlamps (points), in source pixels")
-    ap.add_argument("--wheels", default="", help="JSON {id: {part: {rigid: {d, spokes, rods, frame}, trucks: "
-                                                  "[{d, spokes, frame}]}}}: real wheels of each part's axle "
-                                                  "groups (--gear). Vehicles named here get their trucks as "
-                                                  "sprites of their own and wheels that turn")
     ap.add_argument("--keep-gear", action="store_true",
                     help="keep the model's own running gear in the body sprite (landmarks cut_boxes, bogies, "
                          "baked and cut_wheels ignored), for a game that draws no bogies under it")
@@ -176,7 +172,6 @@ def main():
     fits = json.loads(Path(args.fit).read_text(encoding="utf-8")) if args.fit else {}
     lengths = {**{k: v["tiles"] for k, v in fits.items() if v.get("tiles")}, **lengths}
     gear = json.loads(Path(args.gear).read_text(encoding="utf-8")) if lengths else {}
-    wheels = json.loads(Path(args.wheels).read_text(encoding="utf-8")) if args.wheels else {}
     landmarks = json.loads((HERE / "landmarks.json").read_text(encoding="utf-8"))
     bogies = json.loads((HERE / "bogies.json").read_text(encoding="utf-8"))
     out = rel(args.out or cfg["paths"]["out_root"])
@@ -243,30 +238,15 @@ def main():
             for k in ("length_m", "width_m", "height_m"):
                 if k in fit_a:
                     a[k] = fit_a[k]
-            gear_parts, gear_info = None, None
+            gear_parts = None
             if aid in lengths:
                 if aid not in gear:
                     raise PipelineError(f"[{aid}] --lengths names it but {args.gear} has no gear for it")
                 L = lengths[aid]
                 a["size_tiles"], a["plan"] = L, None
                 # front to back; a part drawn back to front (a rear snout) is its namesake's sprite reversed
-                gear_sorted = sorted(gear[aid]["parts"], key=lambda p: -p["to"])
                 gear_parts = [[p["part"], round((p["to"] - p["from"]) * L, 4), not p.get("mirror", False)]
-                              for p in gear_sorted]
-                # --wheels: each part's axles (0 = the part's rear end, 1 = its front) and its real wheels,
-                # for running gear the game draws: trucks as sprites of their own, wheels that turn
-                wh = wheels.get(aid)
-                if wh:
-                    def rel(p, f):
-                        return round((f - p["from"]) / (p["to"] - p["from"]), 5)
-                    # rigid_f, trucks_f, from, to: the table's own shares of the length between the
-                    # buffer beams, by which the model's wheels are found
-                    gear_info = [{"rigid": [rel(p, f) for f in p.get("rigid", [])],
-                                  "trucks": [[rel(p, f) for f in t] for t in p.get("trucks", [])],
-                                  "rigid_f": list(p.get("rigid", [])),
-                                  "trucks_f": [list(t) for t in p.get("trucks", [])],
-                                  "from": p["from"], "to": p["to"],
-                                  "wheels": wh.get(p["part"])} for p in gear_sorted]
+                              for p in sorted(gear[aid]["parts"], key=lambda p: -p["to"])]
                 log.info(f"[{aid}] {L} tiles in the game's segments {gear_parts}")
             if "blender" in stages and (args.force or not meta_path.exists()):
                 if not parametric and not glb.exists():
@@ -274,7 +254,7 @@ def main():
                 job = {"asset": a, "glb": str(glb), "grid": cfg["grid"], "render": cfg["render"],
                        "align": cfg["align"], "class_cfg": cfg["classes"][a["category"]],
                        "meta_path": str(meta_path), "sprites_raw_dir": str(d["sprites_raw"]),
-                       "debug_dir": str(d["debug"]), "landmarks": lm_a, "gear_parts": gear_parts, "gear_info": gear_info, "fit": fit_a,
+                       "debug_dir": str(d["debug"]), "landmarks": lm_a, "gear_parts": gear_parts, "fit": fit_a,
                        "annot": (json.loads(p_ann.read_text(encoding="utf-8"))
                                  if args.annot and (p_ann := Path(args.annot) / f"{aid}.json").exists() else None),
                        "source_cfg": cfg.get("source", {})}

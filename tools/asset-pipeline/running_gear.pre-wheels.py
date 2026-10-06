@@ -94,80 +94,6 @@ def mask_material(name, image=None):
     return mat
 
 
-def holdout_material(name, culled=False):
-    """Hides what is behind it and renders as nothing: for a layer of its own (turning wheels) that
-    the body or a truck frame must still cover. culled: back faces let everything through, as they do
-    on a piece cut out of the model (cull_backfaces)."""
-    mat = bpy.data.materials.new(name)
-    mat.use_nodes = True
-    nt = mat.node_tree
-    nt.nodes.clear()
-    out = nt.nodes.new("ShaderNodeOutputMaterial")
-    hold = nt.nodes.new("ShaderNodeHoldout")
-    if culled:
-        geo = nt.nodes.new("ShaderNodeNewGeometry")
-        clear = nt.nodes.new("ShaderNodeBsdfTransparent")
-        mix = nt.nodes.new("ShaderNodeMixShader")
-        nt.links.new(geo.outputs["Backfacing"], mix.inputs["Fac"])
-        nt.links.new(hold.outputs[0], mix.inputs[1])
-        nt.links.new(clear.outputs[0], mix.inputs[2])
-        nt.links.new(mix.outputs[0], out.inputs["Surface"])
-    else:
-        nt.links.new(hold.outputs[0], out.inputs["Surface"])
-    return mat
-
-
-def texture_image(ob):
-    """The base colour image of ob's (painted) material, or None."""
-    for slot in ob.material_slots:
-        m = slot.material
-        if m and m.node_tree:
-            for n in m.node_tree.nodes:
-                if n.type == "TEX_IMAGE" and n.image is not None:
-                    return n.image
-    return None
-
-
-_PIXELS = {}
-
-
-def image_pixels(img):
-    """An image's pixels as an array (rows from the bottom, RGBA 0..1), read once."""
-    if img.name not in _PIXELS:
-        w, h = img.size
-        _PIXELS[img.name] = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
-    return _PIXELS[img.name]
-
-
-def faces_colour(ob, pick, min_faces=30):
-    """Median colour (sRGB 0..1) of the texture under the faces whose centre pick() accepts: what a
-    part of the model looks like (its wheels), for the round ones that take its place. None when
-    too few faces or no texture."""
-    me, img = ob.data, texture_image(ob)
-    uv = me.uv_layers.active
-    if img is None or uv is None:
-        return None
-    if img.name not in _PIXELS:
-        w, h = img.size
-        _PIXELS[img.name] = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
-    px = _PIXELS[img.name]
-    h, w = px.shape[:2]
-    cols = []
-    for poly in me.polygons:
-        if not pick(poly.center):
-            continue
-        u = v = 0.0
-        for li in poly.loop_indices:
-            q = uv.data[li].uv
-            u += q[0]
-            v += q[1]
-        n = len(poly.loop_indices)
-        cols.append(px[int(v / n * h) % h, int(u / n * w) % w, :3])
-    if len(cols) < min_faces:
-        return None
-    return np.median(np.array(cols, dtype=np.float64), axis=0)
-
-
 def repaint(obj, shading):
     """Swap every material of obj for the painted shading, keeping its base colour image or colour."""
     for slot in obj.material_slots:
@@ -192,8 +118,8 @@ def cull_backfaces(ob):
     piece back faces render transparent."""
     for slot in ob.material_slots:
         m = slot.material
-        if not (m and m.node_tree) or m is CAP["mat"]:
-            continue  # a cut's cap closes the piece: it shows from either side
+        if not (m and m.node_tree):
+            continue
         m2 = m.copy()
         m2.name = f"{m.name}_culled"
         nt = m2.node_tree
@@ -207,32 +133,6 @@ def cull_backfaces(ob):
         nt.links.new(geo.outputs["Backfacing"], mix.inputs["Fac"])
         nt.links.new(src, mix.inputs[1])
         nt.links.new(clear.outputs[0], mix.inputs[2])
-        nt.links.new(mix.outputs[0], out.inputs["Surface"])
-        slot.material = m2
-
-
-def dark_backfaces(ob, color=(0.05, 0.05, 0.055)):
-    """On a body that has been cut (parts ends, a truck's place, its wheels): whatever is seen from
-    behind is the model's inside, and renders dark and flat instead of with the far wall's texture."""
-    lin = srgb_to_linear(np.array(color))
-    for slot in ob.material_slots:
-        m = slot.material
-        if not (m and m.node_tree) or m is CAP["mat"]:
-            continue
-        m2 = m.copy()
-        m2.name = f"{m.name}_inside_dark"
-        nt = m2.node_tree
-        out = next(n for n in nt.nodes if n.type == "OUTPUT_MATERIAL")
-        if not out.inputs["Surface"].links:
-            continue
-        src = out.inputs["Surface"].links[0].from_socket
-        geo = nt.nodes.new("ShaderNodeNewGeometry")
-        dark = nt.nodes.new("ShaderNodeEmission")
-        dark.inputs["Color"].default_value = (float(lin[0]), float(lin[1]), float(lin[2]), 1.0)
-        mix = nt.nodes.new("ShaderNodeMixShader")
-        nt.links.new(geo.outputs["Backfacing"], mix.inputs["Fac"])
-        nt.links.new(src, mix.inputs[1])
-        nt.links.new(dark.outputs[0], mix.inputs[2])
         nt.links.new(mix.outputs[0], out.inputs["Surface"])
         slot.material = m2
 
@@ -352,12 +252,9 @@ class Builder:
 
 
 # ---------------- wheels ----------------
-def wheel(b, x, radius, y_tread, outward, w, spokes=0, crank=0.0, turn=0.0, balance=False):
+def wheel(b, x, radius, y_tread, outward, w, spokes=0, crank=0.0):
     """One wheel on the rail at (x, y_tread); outward = +1 on the +Y side. Spoked wheels are see-through
-    between their spokes; disc wheels are solid and carry four bosses, so a turning one shows.
-    crank > 0 adds a crank boss that far from the hub. turn (radians) is how far the wheel has
-    rolled towards +X: spokes, bosses and the crank go round by it. balance: a weight in the rim
-    opposite the crank (a coupled wheel)."""
+    between their spokes; disc wheels are solid. crank > 0 adds a crank boss that far from the hub."""
     zc = radius
     t = 0.16 * w["scale"]  # tread width
     y_in, y_out = y_tread - outward * t / 2, y_tread + outward * t / 2
@@ -373,28 +270,17 @@ def wheel(b, x, radius, y_tread, outward, w, spokes=0, crank=0.0, turn=0.0, bala
         b.tube((x, zc), rim_in, felloe, y0 + t * 0.1, y1 - t * 0.1, "wheel")
         hub = radius * 0.2
         for k in range(spokes):
-            a = 2 * math.pi * (k + 0.5) / spokes - turn
+            a = 2 * math.pi * (k + 0.5) / spokes
             r0, r1 = hub * 0.8, felloe * 1.02
             cx, cz = x + math.cos(a) * (r0 + r1) / 2, zc + math.sin(a) * (r0 + r1) / 2
             b.box((cx, face_y, cz), (r1 - r0, t * 0.45, radius * 0.13), "wheel", rot_y=-a)
         b.tube((x, zc), hub, 0, face_y - t * 0.3, face_y + t * 0.3, "hub")
-        if balance:
-            # the crescent between the spokes, opposite the crank pin (the pin is at angle -turn)
-            mid = math.pi - turn
-            ya, yb = face_y - t * 0.22, face_y + t * 0.22
-            b.tube((x, zc), felloe, felloe * 0.62, min(ya, yb), max(ya, yb), "wheel",
-                   arc=(mid - math.radians(34), mid + math.radians(34)))
     else:
         b.tube((x, zc), rim_in, 0, face_y - t * 0.2, face_y + t * 0.2, "wheel")
         b.tube((x, zc), radius * 0.22, 0, face_y - t * 0.3 + outward * t * 0.15,
                face_y + t * 0.3 + outward * t * 0.15, "hub")
-        for k in range(4):
-            a = math.pi / 4 + k * math.pi / 2 - turn
-            b.tube((x + math.cos(a) * radius * 0.52, zc + math.sin(a) * radius * 0.52), radius * 0.11, 0,
-                   face_y - t * 0.2 + outward * t * 0.1, face_y + t * 0.2 + outward * t * 0.1, "hub", n=10)
     if crank:
-        b.tube((x + crank * math.cos(-turn), zc + crank * math.sin(-turn)), radius * 0.12, 0,
-               face_y, face_y + outward * t * 0.6, "hub")
+        b.tube((x + crank, zc), radius * 0.12, 0, face_y, face_y + outward * t * 0.6, "hub")
 
 
 def half_gauge_m(tile_m, gauge_mm=None):
@@ -419,9 +305,9 @@ def wheelset(name, axles, tile_m, colors, shading, scale=1.0, gauge_mm=None):
     return b.finish()
 
 
-def skirts(name, items, tile_m, shading, gauge_half=None):
+def skirts(name, items, tile_m, shading):
     """Inboard frame plates, rigid with the body: [{x: [x0, x1], bottom, top, inset, color}] in final metres."""
-    g = gauge_half or half_gauge_m(tile_m)
+    g = half_gauge_m(tile_m)
     lat = g / REAL_HALF_RAILS
     b = Builder(name, {f"k{i}": np.array(it["color"]) / 255 for i, it in enumerate(items)}, shading)
     for i, it in enumerate(items):
@@ -497,11 +383,8 @@ def symmetrize(ob, y_center, keep_below):
         bmesh.ops.reverse_faces(bm, faces=bm.faces)
     geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
     bmesh.ops.bisect_plane(bm, geom=geom, dist=1e-6, plane_co=(0, 0, 0), plane_no=(0, 1, 0), clear_outer=True)
-    seen = set(bm.faces)
     bmesh.ops.mirror(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], matrix=Matrix.Identity(4),
                      merge_dist=1e-5, axis="Y")
-    # the copy is the seen half turned inside out: its faces are turned back, so both halves face outwards
-    bmesh.ops.reverse_faces(bm, faces=[f for f in bm.faces if f not in seen])
     if not keep_below:
         bmesh.ops.scale(bm, vec=(1.0, -1.0, 1.0), verts=bm.verts)
         bmesh.ops.reverse_faces(bm, faces=bm.faces)
@@ -512,41 +395,6 @@ def symmetrize(ob, y_center, keep_below):
     return before, width()
 
 
-CAP = {"mat": None}  # the material of the faces that close a cut (set by the stage)
-
-
-def cut_rim(dead):
-    """The edges round the faces a cut is about to delete (taken before they go)."""
-    rim = set()
-    for f in dead:
-        rim.update(f.edges)
-    return rim
-
-
-def cap_holes(bm, me, rim):
-    """Close what a cut left open with flat dark faces: a cut model shows its inside otherwise, with
-    the texture of its far wall, as soon as the piece next to it turns away (a truck on a curve, a
-    tender behind its engine). Only the cut's own rim is closed; the model's normals stay as they are
-    (the painted look shades by them)."""
-    mat = CAP["mat"]
-    if mat is None:
-        return 0
-    edges = [e for e in rim if e.is_valid and e.is_boundary]
-    if not edges:
-        return 0
-    faces = [f for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0).get("faces", []) if f.is_valid]
-    if not faces:
-        return 0
-    if me.materials.find(mat.name) < 0:
-        me.materials.append(mat)
-    idx = me.materials.find(mat.name)
-    tris = bmesh.ops.triangulate(bm, faces=faces).get("faces", [])
-    for f in tris:
-        f.material_index = idx
-        f.smooth = False
-    return len(tris)
-
-
 def keep_box(ob, x0, x1, z_top):
     """Keep only ob's faces whose centre lies between x0 and x1 and below z_top (all across)."""
     me = ob.data
@@ -554,9 +402,7 @@ def keep_box(ob, x0, x1, z_top):
     bm.from_mesh(me)
     dead = [f for f in bm.faces
             if not (x0 <= (c := f.calc_center_median()).x <= x1 and c.z < z_top)]
-    rim = cut_rim(dead)
     bmesh.ops.delete(bm, geom=dead, context="FACES")
-    cap_holes(bm, me, rim)
     bm.to_mesh(me)
     bm.free()
     if not me.polygons:
@@ -571,10 +417,7 @@ def cut_box(ob, x0, x1, z_top):
     bm.from_mesh(me)
     dead = [f for f in bm.faces
             if x0 <= (c := f.calc_center_median()).x <= x1 and c.z < z_top]
-    rim = cut_rim(dead)
     bmesh.ops.delete(bm, geom=dead, context="FACES")
-    if dead:
-        cap_holes(bm, me, rim)
     bm.to_mesh(me)
     bm.free()
     return len(dead)
@@ -597,37 +440,7 @@ def cut_wheels(ob, axles, y_inner, y_center=0.0, margin=1.15):
             if abs(c.x - ax["x"]) < r and c.z < ax["z"] + r:
                 dead.append(f)
                 break
-    rim = cut_rim(dead)
     bmesh.ops.delete(bm, geom=dead, context="FACES")
-    if dead:
-        cap_holes(bm, me, rim)
-    bm.to_mesh(me)
-    bm.free()
-    return len(dead)
-
-
-def cut_wheel_discs(ob, axles, y_lo, y_hi, y_center=0.0, margin=1.0):
-    """Delete the faces of ob's own wheels where a frame outside them is to stay: within each wheel's
-    circle (side view), what lies between y_lo and y_hi from the centre plane, the layer the wheels
-    are in. Frames, axle boxes and springs further out stay, and round wheels can show between them.
-    axles = [{x, z, d}] in ob's frame."""
-    me = ob.data
-    bm = bmesh.new()
-    bm.from_mesh(me)
-    dead = []
-    for f in bm.faces:
-        c = f.calc_center_median()
-        if not y_lo <= abs(c.y - y_center) <= y_hi:
-            continue
-        for ax in axles:
-            r = ax["d"] / 2 * margin
-            if (c.x - ax["x"]) ** 2 + (c.z - ax["z"]) ** 2 < r * r:
-                dead.append(f)
-                break
-    rim = cut_rim(dead)
-    bmesh.ops.delete(bm, geom=dead, context="FACES")
-    if dead:
-        cap_holes(bm, me, rim)
     bm.to_mesh(me)
     bm.free()
     return len(dead)
@@ -646,12 +459,7 @@ def bogie(name, spec, tile_m, colors, shading):
     gauge is. offset_m (final metres) draws the group that far ahead of its pivot."""
     s, sx = spec["scale"], spec["x_scale"]
     off = spec.get("offset_m", 0.0)
-    # gauge_half (final metres): the rails this group stands on, when not the standard gauge's
-    g = spec.get("gauge_half") or half_gauge_m(tile_m)
-    # turn (radians): how far the group's reference wheel has rolled towards +X. An axle's own
-    # "turn" factor makes it go round faster or slower (a smaller wheel), in whole symmetry steps
-    # per cycle so that the cycle closes.
-    turn = spec.get("turn", 0.0)
+    g = half_gauge_m(tile_m)
     lat = g / REAL_HALF_RAILS
     b = Builder(name, colors, shading)
 
@@ -666,16 +474,10 @@ def bogie(name, spec, tile_m, colors, shading):
     def D(ax):  # wheel diameter in the game frame: given (d_f) or real times scale
         return ax.get("d_f", ax.get("d", 0) * s)
 
-    rods_ = spec.get("rods")
-    th0 = math.radians(rods_.get("crank_deg", -40)) if rods_ else 0.0
     for ax in axles if spec.get("wheels", True) else []:
         r = D(ax) / 2
-        tw = turn * ax.get("turn", 1.0)
-        drv = bool(rods_ and ax.get("driver"))
         for side in (-1, 1):
-            # a coupled wheel is drawn turned so that its weight sits opposite the pin the rods hold
-            wheel(b, X(ax["x"]), r, side * g, side, w, spokes=ax.get("spokes", 0),
-                  turn=(tw - th0) if drv else tw, balance=drv and ax.get("spokes", 0) > 0)
+            wheel(b, X(ax["x"]), r, side * g, side, w, spokes=ax.get("spokes", 0))
         b.tube((X(ax["x"]), r), max(r * 0.12, 0.05), 0, -g, g, "hub", n=12)
 
     fr = spec.get("frame")
@@ -746,17 +548,15 @@ def bogie(name, spec, tile_m, colors, shading):
         # coupled wheels: crank pins at the same angle, a coupling rod through them, a connecting rod
         # from the crosshead behind the cylinder to one driver, the cylinder outside the frames
         drivers = [ax for ax in axles if ax.get("driver")]
-        th = math.radians(rods.get("crank_deg", -40)) - turn
+        th = math.radians(rods.get("crank_deg", -40))
         c = rods["crank"] * s
         pins = [(X(ax["x"]) + c * math.cos(th), D(ax) / 2 + c * math.sin(th)) for ax in drivers]
         for side in (-1, 1):
             yp, yc, yr = side * Y(0.16), side * Y(0.24), side * Y(0.3)
             for px, pz in pins:
                 b.tube((px, pz), 0.07 * s, 0, min(yp, yc), max(yp, yc), "rod", n=12)
-            # one coupling rod through every pin, or one per pair of wheels (rods.pairs)
-            for ia, ib in rods.get("pairs") or [(0, len(pins) - 1)]:
-                (pa, za), (pb, zb2) = pins[ia], pins[ib]
-                b.rod((pa, yc, za), (pb, yc, zb2), (0.06 * lat, 0.13 * s), "rod")
+            (pa, za), (pb, zb2) = pins[0], pins[-1]
+            b.rod((pa, yc, za), (pb, yc, zb2), (0.06 * lat, 0.13 * s), "rod")
             xh = rods.get("crosshead")
             if xh:
                 # the cylinder stays with the body; the crosshead, slide bar and connecting rod swing here

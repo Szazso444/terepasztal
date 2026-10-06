@@ -1714,5 +1714,679 @@
     }
    }
   ]
+ },
+ "bm50": {
+  "note": "BM-50 mine diesel, 2 axles hidden behind the frame (the image was corrected on 2026-09-30: the third wheel is gone): hub_px are the axle boxes, rim_px the tyre bottoms that show; d_m sets the size (estimated). The frame stays (inner_y > 1), the wheels are built inside it. Narrow gauge (600 mm at Kemence).",
+  "nose_px": [
+   880,
+   720
+  ],
+  "gauge_mm": 600,
+  "inner_y": 1.1,
+  "wheels": [
+   {
+    "name": "a1",
+    "hub_px": [
+     297,
+     558
+    ],
+    "rim_px": [
+     [
+      300,
+      611
+     ]
+    ],
+    "d_m": 0.55
+   },
+   {
+    "name": "a2",
+    "hub_px": [
+     512,
+     654
+    ],
+    "rim_px": [
+     [
+      520,
+      707
+     ]
+    ],
+    "d_m": 0.55
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    296,
+    604,
+    306,
+    610
+   ],
+   "wheel": [
+    284,
+    594,
+    292,
+    602
+   ],
+   "hub": [
+    288,
+    552,
+    300,
+    562
+   ]
+  }
+ },
+ "c50": {
+  "note": "C-50, 2 axles; the radiator-grille hood is the front. Narrow gauge (760 mm).",
+  "nose_px": [
+   870,
+   640
+  ],
+  "gauge_mm": 760,
+  "wheels": [
+   {
+    "name": "rear",
+    "hub_px": [
+     303,
+     658
+    ],
+    "rim_px": [
+     [
+      313,
+      699
+     ],
+     [
+      260,
+      640
+     ],
+     [
+      352,
+      665
+     ]
+    ]
+   },
+   {
+    "name": "front",
+    "hub_px": [
+     503,
+     742
+    ],
+    "rim_px": [
+     [
+      507,
+      786
+     ],
+     [
+      462,
+      705
+     ],
+     [
+      552,
+      748
+     ]
+    ]
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    308,
+    693,
+    318,
+    698
+   ],
+   "wheel": [
+    318,
+    668,
+    326,
+    676
+   ],
+   "hub": [
+    280,
+    632,
+    288,
+    640
+   ]
+  }
+ },
+ "mav490": {
+  "note": "MAV 490 0-8-0T, 4 coupled spoked wheels. Narrow gauge (760 mm).",
+  "nose_px": [
+   870,
+   640
+  ],
+  "gauge_mm": 760,
+  "wheels": [
+   {
+    "name": "d1",
+    "hub_px": [
+     278,
+     612
+    ],
+    "rim_px": [
+     [
+      240,
+      612
+     ],
+     [
+      315,
+      605
+     ],
+     [
+      280,
+      660
+     ]
+    ],
+    "spokes": 12
+   },
+   {
+    "name": "d2",
+    "hub_px": [
+     376,
+     646
+    ],
+    "rim_px": [
+     [
+      336,
+      645
+     ],
+     [
+      417,
+      650
+     ],
+     [
+      380,
+      710
+     ]
+    ],
+    "spokes": 12
+   },
+   {
+    "name": "d3",
+    "hub_px": [
+     472,
+     688
+    ],
+    "rim_px": [
+     [
+      431,
+      690
+     ],
+     [
+      514,
+      685
+     ],
+     [
+      470,
+      755
+     ]
+    ],
+    "spokes": 12
+   },
+   {
+    "name": "d4",
+    "hub_px": [
+     572,
+     738
+    ],
+    "rim_px": [
+     [
+      529,
+      740
+     ],
+     [
+      615,
+      735
+     ],
+     [
+      570,
+      800
+     ]
+    ],
+    "spokes": 12
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    276,
+    655,
+    284,
+    659
+   ],
+   "wheel": [
+    286,
+    620,
+    292,
+    628
+   ],
+   "hub": [
+    352,
+    652,
+    358,
+    658
+   ]
+  }
+ },
+ "mk45": {
+  "note": "MAV Mk45 B'B': two 2-axle bogies, built as 4 round axles (1-tile stock, no bogie sprites). Narrow gauge (760 mm).",
+  "nose_px": [
+   900,
+   640
+  ],
+  "gauge_mm": 760,
+  "wheels": [
+   {
+    "name": "a1",
+    "hub_px": [
+     158,
+     514
+    ],
+    "rim_px": [
+     [
+      170,
+      548
+     ],
+     [
+      140,
+      522
+     ],
+     [
+      188,
+      542
+     ]
+    ]
+   },
+   {
+    "name": "a2",
+    "hub_px": [
+     261,
+     570
+    ],
+    "rim_px": [
+     [
+      268,
+      598
+     ],
+     [
+      247,
+      580
+     ],
+     [
+      280,
+      593
+     ]
+    ]
+   },
+   {
+    "name": "b1",
+    "hub_px": [
+     580,
+     740
+    ],
+    "rim_px": [
+     [
+      597,
+      772
+     ],
+     [
+      563,
+      745
+     ],
+     [
+      617,
+      765
+     ]
+    ]
+   },
+   {
+    "name": "b2",
+    "hub_px": [
+     706,
+     807
+    ],
+    "rim_px": [
+     [
+      713,
+      837
+     ],
+     [
+      685,
+      810
+     ],
+     [
+      733,
+      830
+     ]
+    ]
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    166,
+    545,
+    174,
+    549
+   ],
+   "wheel": [
+    156,
+    534,
+    162,
+    540
+   ],
+   "hub": [
+    154,
+    508,
+    162,
+    516
+   ]
+  }
+ },
+ "mk48": {
+  "note": "MAV Mk48 B'B': two 2-axle bogies, built as 4 round axles (1-tile stock). The long hood is the front. Narrow gauge (760 mm).",
+  "nose_px": [
+   860,
+   650
+  ],
+  "gauge_mm": 760,
+  "wheels": [
+   {
+    "name": "a1",
+    "hub_px": [
+     170,
+     606
+    ],
+    "rim_px": [
+     [
+      186,
+      641
+     ],
+     [
+      150,
+      620
+     ],
+     [
+      201,
+      638
+     ]
+    ]
+   },
+   {
+    "name": "a2",
+    "hub_px": [
+     328,
+     676
+    ],
+    "rim_px": [
+     [
+      338,
+      712
+     ],
+     [
+      306,
+      688
+     ],
+     [
+      360,
+      706
+     ]
+    ]
+   },
+   {
+    "name": "b1",
+    "hub_px": [
+     578,
+     795
+    ],
+    "rim_px": [
+     [
+      592,
+      832
+     ],
+     [
+      560,
+      806
+     ],
+     [
+      607,
+      828
+     ]
+    ]
+   },
+   {
+    "name": "b2",
+    "hub_px": [
+     695,
+     847
+    ],
+    "rim_px": [
+     [
+      703,
+      880
+     ],
+     [
+      678,
+      860
+     ],
+     [
+      722,
+      878
+     ]
+    ]
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    188,
+    638,
+    196,
+    642
+   ],
+   "wheel": [
+    172,
+    620,
+    178,
+    626
+   ],
+   "hub": [
+    164,
+    592,
+    170,
+    598
+   ]
+  }
+ },
+ "muki": {
+  "note": "MD-40 P-2 'Muki', 2 axles under axle-box covers. Narrow gauge (600 mm at Kemence).",
+  "nose_px": [
+   870,
+   700
+  ],
+  "gauge_mm": 600,
+  "wheels": [
+   {
+    "name": "rear",
+    "hub_px": [
+     202,
+     693
+    ],
+    "rim_px": [
+     [
+      217,
+      745
+     ],
+     [
+      176,
+      712
+     ],
+     [
+      250,
+      735
+     ]
+    ]
+   },
+   {
+    "name": "front",
+    "hub_px": [
+     552,
+     832
+    ],
+    "rim_px": [
+     [
+      570,
+      885
+     ],
+     [
+      527,
+      850
+     ],
+     [
+      597,
+      878
+     ]
+    ]
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    214,
+    740,
+    224,
+    745
+   ],
+   "wheel": [
+    220,
+    726,
+    228,
+    733
+   ],
+   "hub": [
+    196,
+    688,
+    206,
+    698
+   ]
+  }
+ },
+ "rezet": {
+  "note": "Rezet (MAV 490,2003) 0-8-0T, 4 coupled red spoked wheels. Narrow gauge (760 mm).",
+  "nose_px": [
+   860,
+   620
+  ],
+  "gauge_mm": 760,
+  "wheels": [
+   {
+    "name": "d1",
+    "hub_px": [
+     245,
+     597
+    ],
+    "rim_px": [
+     [
+      222,
+      597
+     ],
+     [
+      290,
+      600
+     ],
+     [
+      262,
+      646
+     ]
+    ],
+    "spokes": 12
+   },
+   {
+    "name": "d2",
+    "hub_px": [
+     346,
+     642
+    ],
+    "rim_px": [
+     [
+      325,
+      645
+     ],
+     [
+      395,
+      648
+     ],
+     [
+      360,
+      697
+     ]
+    ],
+    "spokes": 12
+   },
+   {
+    "name": "d3",
+    "hub_px": [
+     450,
+     687
+    ],
+    "rim_px": [
+     [
+      428,
+      687
+     ],
+     [
+      499,
+      690
+     ],
+     [
+      465,
+      742
+     ]
+    ],
+    "spokes": 12
+   },
+   {
+    "name": "d4",
+    "hub_px": [
+     557,
+     737
+    ],
+    "rim_px": [
+     [
+      535,
+      737
+     ],
+     [
+      605,
+      741
+     ],
+     [
+      570,
+      790
+     ]
+    ],
+    "spokes": 12
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    261,
+    643,
+    269,
+    647
+   ],
+   "wheel": [
+    266,
+    612,
+    272,
+    618
+   ],
+   "hub": [
+    241,
+    592,
+    249,
+    600
+   ]
+  }
+ },
+ "koutetsujou": {
+  "note": "Koutetsujou (fictional, UR): the plough is the front. Its 4 x 3-axle bogies hide behind the armour skirts; no bogie sprites yet.",
+  "nose_px": [
+   900,
+   745
+  ]
  }
 }

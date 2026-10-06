@@ -15,6 +15,8 @@ const opt = {
   kind: 'loco',
   bogies: '',
   loop: 'yes',
+  // preview-only locos not in src/data (scene.js ?extra=): their frames stay in both looks
+  extra: '',
 };
 for (let i = 0; i < rest.length; i += 2) opt[rest[i].replace(/^--/, '')] = rest[i + 1];
 const out = `scratchpad/train-models/renders/${name}`;
@@ -27,7 +29,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(
-    `${baseURL('after')}/scratchpad/train-models/?locos=${opt.locos}&wagons=${opt.wagons}&cls=${opt.cls}`,
+    `${baseURL('after')}/scratchpad/train-models/?locos=${opt.locos}&wagons=${opt.wagons}&cls=${opt.cls}&extra=${opt.extra}`,
   );
   await page.waitForFunction(() => typeof window.qa?.advanceTo === 'function', null, {
     timeout: 120000,

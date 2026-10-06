@@ -19,11 +19,9 @@ import numpy as np
 from mathutils import Euler, Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Blender does not add the script's folder
-import body_square  # noqa: E402
 import game_rules  # noqa: E402
 import running_gear  # noqa: E402
 import source_texture  # noqa: E402
-import wheel_find  # noqa: E402
 
 
 def log(*a):
@@ -331,135 +329,21 @@ def support_line(P, max_deg=8.0, lo_frac=0.06, hi_frac=0.94, bins=64):
     return best[1], best[2], mid, best[3]
 
 
-def lower_outline(P, x_lo, x_hi, step=0.04):
-    """The underside of the points P between x_lo and x_hi: (x of each slice, its 1st percentile z)."""
-    n = max(8, int(round((x_hi - x_lo) / step)))
-    edges = np.linspace(x_lo, x_hi, n + 1)
-    inside = (P[:, 0] >= x_lo) & (P[:, 0] <= x_hi)
-    Q = P[inside]
-    idx = np.clip(np.digitize(Q[:, 0], edges) - 1, 0, n - 1)
-    z = np.full(n, np.nan)
-    for b in range(n):
-        zz = Q[idx == b, 2]
-        if len(zz) >= 12:
-            z[b] = np.percentile(zz, 1)
-    return (edges[:-1] + edges[1:]) / 2, z
-
-
-def find_axles(P, yc, zg, x_lo, x_hi, us, ds):
-    """Where the model has the wheels the gear table lists: near each expected axle (us: 0 = rear end
-    of the part, 1 = its front; ds: real diameters) the lowest stretch of the underside. Returns
-    [{x, z, y}]: the axle's place along, its wheels' bottom and how far its treads stand from the
-    centre plane; z and y are None where no wheel reaches down to within 0.3 m of the rail (hidden
-    behind a skirt, or not modelled) and x is then the table's."""
-    xs, zl = lower_outline(P, x_lo, x_hi)
-    out = []
-    for u, d in zip(us, ds):
-        xe = x_lo + u * (x_hi - x_lo)
-        m = (np.abs(xs - xe) <= max(0.3, 0.3 * d)) & np.isfinite(zl)
-        if not m.any() or zl[m].min() > zg + 0.3:
-            out.append({"x": float(xe), "z": None, "y": None})
-            continue
-        zmin = float(zl[m].min())
-        near = m & (zl <= zmin + 0.02)
-        xa = float(xs[near].mean())
-        sel = (np.abs(P[:, 0] - xa) < max(0.1, 0.12 * d)) & (P[:, 2] < zmin + 0.10)
-        ya = float(np.median(np.abs(P[sel, 1] - yc))) if sel.sum() >= 8 else None
-        out.append({"x": xa, "z": zmin, "y": ya})
-    return out
-
-
-def wheel_factor(cx, xs, ds):
-    """How much smaller than life the built wheels are: a body is compressed along the track, and its
-    wheels with it (they stay round), never so large that neighbours on one frame touch."""
-    k = min(1.0, max(0.55, cx))
-    order = np.argsort(xs)
-    for i, j in zip(order, order[1:]):
-        gap = cx * abs(xs[j] - xs[i])
-        k = min(k, 0.92 * gap / ((ds[i] + ds[j]) / 2))
-    return max(0.35, k)
-
-
-def wheel_cycle(ds_f, spokes, drivers, rods):
-    """The turning of a group of wheels drawn as one layer: (phases, the reference wheel's turn in
-    one cycle, each axle's share of it, metres of track per cycle). With rods the cycle is one turn of
-    the coupled wheels, in eight phases; without, one step of the reference wheel's symmetry (a spoke,
-    or a quarter turn of a disc with its four bosses), in four. Every other axle goes round by whole
-    steps of its own symmetry per cycle, the number nearest its true speed, so the cycle closes."""
-    sym = [sp if sp else 4 for sp in spokes]
-    ref = drivers[0] if (rods and drivers) else 0
-    if rods and drivers:
-        phases, total = 8, 2 * math.pi
-        share = []
-        for i, (d, n) in enumerate(zip(ds_f, sym)):
-            share.append(1.0 if i in drivers else max(1, round(n * ds_f[ref] / d)) / n)
-    else:
-        phases, total = 4, 2 * math.pi / sym[ref]
-        share = []
-        for d, n in zip(ds_f, sym):
-            m = max(1, round((n / sym[ref]) * (ds_f[ref] / d)))
-            share.append(m * sym[ref] / n)
-    return phases, total, share, total * ds_f[ref] / 2
-
-
-def wheel_colours(base, spec=None):
-    """The built running gear's colours from the wheel centre's (sRGB 0..1; None: dark grey). spec
-    (the wheels data of the group) may give "color", "tyre" and "rod" as 0..255 triples."""
-    spec = spec or {}
-
-    def rgb(key, default):
-        return np.array(spec[key], dtype=np.float64) / 255 if spec.get(key) else np.array(default, dtype=np.float64)
-    w = rgb("color", base if base is not None else (0.17, 0.18, 0.2))
-    return {"tyre": rgb("tyre", (0.36, 0.37, 0.39)), "wheel": w, "hub": np.clip(w * 0.75 + 0.12, 0, 1),
-            "rod": rgb("rod", (0.6, 0.6, 0.58)), "detail": np.array((0.16, 0.165, 0.18)),
-            "frame": np.array((0.12, 0.125, 0.14)), "spring": np.array((0.27, 0.28, 0.29)),
-            "splasher": np.array((0.12, 0.125, 0.14))}
-
-
-def rod_spec(rods, axles, drivers, k, cx):
-    """bogie()'s rods for coupled wheels: axles are the group's (final x, d_f), front to back; drivers
-    their indices. rods: True or {crank, connect, cylinders: front | rear | none | jackshaft,
-    crosshead: {dx, z}}. The small end stands ahead of the leading coupled wheel at axle height
-    (behind the last one for cylinders at the rear), or where crosshead puts it (real metres from
-    the driven axle, height over the rail); without cylinders only the coupling rod is drawn."""
-    r_ = rods if isinstance(rods, dict) else {}
-    dr = [axles[i] for i in drivers]
-    d_drv = dr[0]["d_f"]
-    con = int(r_.get("connect", 0 if len(dr) <= 2 else 1))
-    con = max(0, min(con, len(dr) - 1))
-    out = {"crank": float(r_.get("crank", 0.19 * d_drv / k)), "crank_deg": -35, "connect": con}
-    if r_.get("pairs"):
-        out["pairs"] = [list(pr_) for pr_ in r_["pairs"]]  # one coupling rod per pair of wheels
-    cyl = r_.get("cylinders", "front")
-    xh = r_.get("crosshead") or {}
-    if "dx" in xh:
-        out["crosshead"] = {"x": dr[con]["x"] + cx * float(xh["dx"]), "z_f": float(xh.get("z", d_drv / 2)),
-                            "bar": 0.45 * d_drv}
-    elif cyl == "front":
-        out["crosshead"] = {"x": dr[0]["x"] + 1.15 * d_drv, "z_f": d_drv / 2, "bar": 0.45 * d_drv}
-    elif cyl == "rear":
-        out["crosshead"] = {"x": dr[-1]["x"] - 1.15 * d_drv - 0.45 * d_drv, "z_f": d_drv / 2, "bar": 0.45 * d_drv}
-    return out
-
-
-def gear_shear(ob, xm, zg, slope, height, fade=None):
+def gear_shear(ob, xm, zg, slope, height):
     """Bring the wheels to a level rail without tilting the body: a reconstruction's wheels do not
     always run parallel to its body (the rear ones higher than the front, say), so levelling the whole
     model on its wheels would tilt the body, and levelling the body leaves wheels in the air. Such
     a model is a wedge: level along the roof, tilted along the wheels, and everything between (the
     footplate, the frames) tilted in proportion. So each point is slid up or down by what the wheel
     line is off at its place along the body: fully under 0.16 of the height above the wheels' own
-    line, less and less above, and not at all from 0.85 up. fade = (full below, none above) in metres
-    above the wheels' line takes the place of those two heights: a body squared up by its own lines
-    stays as it is from its sole up."""
+    line, less and less above, and not at all from 0.85 up."""
     me = ob.data
     co = np.empty(len(me.vertices) * 3)
     me.vertices.foreach_get("co", co)
     co = co.reshape(-1, 3)
     off = slope * (co[:, 0] - xm)
     h = co[:, 2] - (zg + off)
-    f_lo, f_hi = fade if fade else (0.16 * height, 0.85 * height)
-    w = np.clip((f_hi - h) / max(f_hi - f_lo, 1e-6), 0.0, 1.0)
+    w = np.clip((0.85 * height - h) / (0.69 * height), 0.0, 1.0)
     co[:, 2] -= off * w
     me.vertices.foreach_set("co", co.ravel())
     me.update()
@@ -493,197 +377,15 @@ def gauge_warp(ob, yc, zg, y_target, height, clamp=0.6):
     return y_w, d
 
 
-def _outline(pts):
-    """Convex outline of 2D points (monotone chain), counter-clockwise."""
-    pts = sorted(set((round(float(a), 4), round(float(b), 4)) for a, b in pts))
-    if len(pts) < 3:
-        return []
-
-    def half(seq):
-        h = []
-        for q in seq:
-            while len(h) >= 2 and (h[-1][0] - h[-2][0]) * (q[1] - h[-2][1]) - (h[-1][1] - h[-2][1]) * (q[0] - h[-2][0]) <= 0:
-                h.pop()
-            h.append(q)
-        return h
-    lower, upper = half(pts), half(reversed(pts))
-    return lower[:-1] + upper[:-1]
-
-
-def cut_rows(edges, z_min, step=0.05):
-    """A cut across a body, as the wall that closes it: [(z, y_lo, y_hi)] bottom to top from z_min, and
-    the cut's vertices that lie on the shell. The cut's edges fall into connected pieces; the shell is the
-    tall ones (half the cut's height above z_min or more). ([], []) when there is none."""
-    def key(v):
-        return (round(v.co.y, 3), round(v.co.z, 3))
-    parent = {}
-
-    def find(a):
-        while parent[a] != a:
-            parent[a] = parent[parent[a]]
-            a = parent[a]
-        return a
-    segs = []
-    for e in edges:
-        a, b = key(e.verts[0]), key(e.verts[1])
-        for k_ in (a, b):
-            parent.setdefault(k_, k_)
-        ra, rb = find(a), find(b)
-        if ra != rb:
-            parent[ra] = rb
-        segs.append((a, b, e.verts[0], e.verts[1]))
-    if not segs:
-        return [], []
-    z_top_all = max(max(a[1], b[1]) for a, b, _, _ in segs)
-    if z_top_all - z_min < 0.3:
-        return [], []
-    span = {}
-    for a, b, _, _ in segs:
-        r = find(a)
-        lo_, hi_ = span.get(r, (1e9, -1e9))
-        span[r] = (min(lo_, a[1], b[1]), max(hi_, a[1], b[1]))
-    tall = {r for r, (lo_, hi_) in span.items() if hi_ - max(lo_, z_min) >= 0.5 * (z_top_all - z_min)}
-    shell = [sg for sg in segs if find(sg[0]) in tall]
-    if not shell:
-        return [], []
-    z_top = max(max(a[1], b[1]) for a, b, _, _ in shell)
-    n = max(2, int(math.ceil((z_top - z_min) / step)) + 1)
-    zs = [z_min + (z_top - z_min) * j / (n - 1) for j in range(n)]
-    lo, hi = [None] * n, [None] * n
-
-    def put(j, y_):
-        lo[j] = y_ if lo[j] is None else min(lo[j], y_)
-        hi[j] = y_ if hi[j] is None else max(hi[j], y_)
-    dz = (z_top - z_min) / (n - 1)
-    for a, b, _, _ in shell:
-        z0, z1 = sorted((a[1], b[1]))
-        j0 = max(0, int(math.ceil((z0 - z_min) / dz - 1e-9)))
-        j1 = min(n - 1, int(math.floor((z1 - z_min) / dz + 1e-9)))
-        for j in range(j0, j1 + 1):
-            t = 0.5 if abs(b[1] - a[1]) < 1e-9 else (zs[j] - a[1]) / (b[1] - a[1])
-            put(j, a[0] + min(1.0, max(0.0, t)) * (b[0] - a[0]))
-        # a flat run (a roof's crown, a deck) belongs to the row it lies nearest
-        if z1 - z0 < dz:
-            j = min(n - 1, max(0, int(round(((z0 + z1) / 2 - z_min) / dz))))
-            put(j, a[0])
-            put(j, b[0])
-    rows = [(zs[j], lo[j], hi[j]) for j in range(n) if lo[j] is not None and hi[j] - lo[j] > 0.02]
-    verts = []
-    for a, b, va, vb in shell:
-        verts += [va, vb]
-    return (rows if len(rows) >= 2 else []), verts
-
-
-def wall_image(name, samples, box, size=(32, 48)):
-    """The picture an end wall wears: per height the colour the skin has there (samples: (y, z, rgb) on
-    the cut's outline, sRGB 0..1), left side to right side, a shade darker than the side it continues,
-    with a darker panel in the middle. box = (y0, y1, z0, z1) of the wall. None without samples."""
-    W, H = size
-    y0, y1, z0, z1 = box
-    if len(samples) < 8 or y1 - y0 < 0.3 or z1 - z0 < 0.3:
-        return None
-    ys = np.array([q[0] for q in samples])
-    zs = np.array([q[1] for q in samples])
-    cs = np.array([q[2] for q in samples], dtype=np.float64)
-    ym = (y0 + y1) / 2
-    rows = np.full((H, 2, 3), np.nan)
-    dz = max((z1 - z0) / H, 0.05)
-    for j in range(H):
-        zj = z0 + (j + 0.5) * (z1 - z0) / H
-        near = np.abs(zs - zj) <= dz
-        for k, side in enumerate((ys < ym, ys >= ym)):
-            m = near & side
-            if m.sum() >= 2:
-                rows[j, k] = np.median(cs[m], axis=0)
-    for k in (0, 1):  # a side without samples at a height takes the other side's, then its neighbours'
-        miss = np.isnan(rows[:, k, 0])
-        rows[miss, k] = rows[miss, 1 - k]
-    for k in (0, 1):
-        ok = ~np.isnan(rows[:, k, 0])
-        if not ok.any():
-            return None
-        idx = np.arange(H)
-        for c in range(3):
-            rows[~ok, k, c] = np.interp(idx[~ok], idx[ok], rows[ok, k, c])
-    t = np.linspace(0.0, 1.0, W)[None, :, None]
-    px = rows[:, None, 0, :] * (1 - t) + rows[:, None, 1, :] * t
-    px *= 0.84
-    # the panel in the middle, with a darker edge round it
-    j0, j1, i0, i1 = int(0.10 * H), int(0.80 * H), int(0.34 * W), int(0.66 * W)
-    px[j0:j1, i0:i1] *= 0.62
-    px[[j0 - 1, j1], i0 - 1:i1 + 1] *= 0.8
-    px[j0 - 1:j1 + 1, [i0 - 1, i1]] *= 0.8
-    img = bpy.data.images.new(name, W, H, alpha=False)
-    rgba = np.ones((H, W, 4), dtype=np.float32)
-    rgba[:, :, :3] = np.clip(px, 0.0, 1.0)
-    img.pixels = rgba.ravel()
-    img.pack()
-    return img
-
-
-def clip_mesh(ob, co, no, wall_from=None, paint=None):
-    """Delete ob's mesh on the +no side of the plane (object space) and cap the cut. wall_from (a cut
-    across the body, plane normal along x): a flat wall over the cut's whole outline above that height,
-    so the part is closed even where the model has surfaces inside or a ragged rim. paint (the painted
-    look's shading): the wall wears the skin's colours at each height (wall_image) instead of the cut's
-    dark."""
+def clip_mesh(ob, co, no):
+    """Delete ob's mesh on the +no side of the plane (object space) and cap the cut."""
     bm = bmesh.new()
     bm.from_mesh(ob.data)
     res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], dist=1e-5,
                                  plane_co=co, plane_no=no, clear_outer=True)
-    mat_w = running_gear.CAP["mat"]
-    if wall_from is not None and mat_w is not None:
-        rim = [v for v in res["geom_cut"] if isinstance(v, bmesh.types.BMVert) and v.is_valid]
-        cut_e = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_valid]
-        rows, shell_v = cut_rows(cut_e, wall_from)
-        if rows:
-            uv_l = bm.loops.layers.uv.active
-            img_b = running_gear.texture_image(ob) if (paint is not None and uv_l is not None) else None
-            wall_mat = mat_w
-            box = (min(r_[1] for r_ in rows), max(r_[2] for r_ in rows), rows[0][0], rows[-1][0])
-            if img_b is not None and box[1] - box[0] > 0.3 and box[3] - box[2] > 0.3:
-                # the shell's own colours where the cut meets it
-                px_b = running_gear.image_pixels(img_b)
-                hb, wb = px_b.shape[:2]
-                samples = []
-                for v in shell_v:
-                    if v.co.z < wall_from:
-                        continue
-                    for lp in v.link_loops:
-                        q = lp[uv_l].uv
-                        samples.append((v.co.y, v.co.z, px_b[int(q[1] * hb) % hb, int(q[0] * wb) % wb, :3]))
-                img_w = wall_image(f"wall_{ob.name}_{len(bpy.data.images)}", samples, box)
-                if img_w is not None:
-                    wall_mat = running_gear.shaded_material(img_w.name, paint, image=img_w)
-            # a hair outside the cut, over the faces that fill the rim's holes (dark, on the cut's plane);
-            # the plain dark wall a hair inside, as it was
-            xw = co[0] + (0.012 if wall_mat is not mat_w else -0.01) * (1 if no[0] > 0 else -1)
-            if ob.data.materials.find(wall_mat.name) < 0:
-                ob.data.materials.append(wall_mat)
-            m_idx = ob.data.materials.find(wall_mat.name)
-            ring = [(bm.verts.new((xw, r_[1], r_[0])), bm.verts.new((xw, r_[2], r_[0]))) for r_ in rows]
-            for (l0, h0), (l1, h1) in zip(ring, ring[1:]):
-                # facing out of the part: counter-clockwise seen from +x where the part ends towards +x
-                quad = [l0, h0, h1, l1] if no[0] > 0 else [l1, h1, h0, l0]
-                f_w = bm.faces.new(quad)
-                f_w.material_index = m_idx
-                f_w.smooth = False
-                if wall_mat is not mat_w and uv_l is not None:
-                    for lp in f_w.loops:
-                        lp[uv_l].uv = ((lp.vert.co.y - box[0]) / (box[1] - box[0]),
-                                       (lp.vert.co.z - box[2]) / (box[3] - box[2]))
     edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_valid and e.is_boundary]
     if edges:
-        faces = [f for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0).get("faces", []) if f.is_valid]
-        mat = running_gear.CAP["mat"]
-        if faces and mat is not None:
-            # the cut's own face: flat and dark, not the stretched texture a filled hole inherits
-            if ob.data.materials.find(mat.name) < 0:
-                ob.data.materials.append(mat)
-            idx = ob.data.materials.find(mat.name)
-            for f in bmesh.ops.triangulate(bm, faces=faces).get("faces", []):
-                f.material_index = idx
-                f.smooth = False
+        bmesh.ops.holes_fill(bm, edges=edges, sides=0)
     bm.to_mesh(ob.data)
     bm.free()
     if not ob.data.vertices:
@@ -850,13 +552,10 @@ def render_sets(job, renders, scene_objs, shadow, L, k_px, ss, res_x):
     cm = cam.matrix_world.to_3x3()
     right, up, back = cm.col[0], cm.col[1], cm.col[2]
     dir_list = game_rules.directions(ccfg["dirs"])
-    only_f = {int(q) for q in os.environ.get("TP_FACINGS", "").split(",") if q.strip()}
-    max_ph = int(os.environ.get("TP_PHASES", "0") or 0)
     sc = bpy.context.scene
     sc.camera = cam
     pad = int(r["pad_px"]) * res_x
     out, out_lit = [], []
-    holdouts = {False: running_gear.holdout_material("holdout"), True: running_gear.holdout_material("holdout_culled", True)}
     for rd in renders:
         part, ob, M, plo, phi = rd["part"], rd["ob"], rd["M"], rd["lo"], rd["hi"]
         extras = rd.get("extras", [])
@@ -888,13 +587,7 @@ def render_sets(job, renders, scene_objs, shadow, L, k_px, ss, res_x):
         fp = [Vector(c) for c in ((-fx, -fy, 0), (fx, -fy, 0), (fx, fy, 0), (-fx, fy, 0))]
         stem = f"{a['id']}_{part}" if part else a["id"]
         dirs, lit_files = [], []
-        wl = rd.get("wheels")
-        if wl and max_ph:
-            wl = dict(wl, phases=min(wl["phases"], max_ph), objs=wl["objs"][:max_ph])
-        wheel_files = [[] for _ in range(wl["phases"])] if wl else []
         for i, (yaw_d, facing) in enumerate(dir_list):
-            if only_f and facing not in only_f:
-                continue
             Rz4 = Matrix.Rotation(math.radians(yaw_d), 4, "Z")
             ob.matrix_world = Rz4 @ M
             for e, EM in extras:
@@ -915,24 +608,6 @@ def render_sets(job, renders, scene_objs, shadow, L, k_px, ss, res_x):
                     for sl, m in zip(o.material_slots, mats):
                         sl.material = m
                 lit_files.append(lit_path)
-            if wl:
-                # the wheels alone, one image per phase of their turning; the body (or the truck's
-                # frame) covers what it covers and renders as nothing
-                objs = [ob] + [e for e, _ in extras]
-                saved = [[sl.material for sl in o.material_slots] for o in objs]
-                for o in objs:
-                    for sl in o.material_slots:
-                        sl.material = holdouts[bool(rd.get("holdout_culled")) and o is ob]
-                for ph, wob in enumerate(wl["objs"]):
-                    wob.hide_render = False
-                    wob.matrix_world = Rz4.copy()
-                    wpath = f"{job['sprites_raw_dir']}/{stem}_w{ph}_d{i}.png"
-                    render_to(wpath)
-                    wob.hide_render = True
-                    wheel_files[ph].append(wpath)
-                for o, mats in zip(objs, saved):
-                    for sl, m in zip(o.material_slots, mats):
-                        sl.material = m
             R3 = Rz4.to_3x3()
             head = R3 @ Vector((1, 0, 0))
             hv = Vector((head.dot(right), -head.dot(up)))
@@ -950,18 +625,10 @@ def render_sets(job, renders, scene_objs, shadow, L, k_px, ss, res_x):
                             "final_dims_m": (phi - plo).round(3).tolist(),
                             "canvas_px": [W, H], "anchor_px": [ax, ay],
                             "dirs": [dict(d, file=f) for d, f in zip(dirs, lit_files)]})
-        for ph, files in enumerate(wheel_files):
-            out_lit.append({"part": f"{part or 'body'}@w{ph}", "tiles": rd["tiles"], "footprint_m": rd["footprint_m"],
-                            "compression": rd["comp"].round(4).tolist(),
-                            "final_dims_m": (phi - plo).round(3).tolist(),
-                            "canvas_px": [W, H], "anchor_px": [ax, ay],
-                            "dirs": [dict(d, file=f) for d, f in zip(dirs, files)]})
         out.append({"part": part, "tiles": rd["tiles"], "footprint_m": rd["footprint_m"], "gear": rd.get("gear"),
-                    "wheels": {"phases": wl["phases"], "cycle_m": wl["cycle_m"]} if wl else None,
                     "profile": rd.get("profile"), "anchors": rd.get("anchors"),
                     "compression": rd["comp"].round(4).tolist(),
                     "final_dims_m": (phi - plo).round(3).tolist(),
-                    "bounds_m": [np.asarray(plo).round(3).tolist(), np.asarray(phi).round(3).tolist()],
                     "canvas_px": [W, H], "anchor_px": [ax, ay], "dirs": dirs})
     return out + out_lit
 
@@ -1041,20 +708,6 @@ def main():
         P_src = surface_points(obj, 3000000)
         view = source_texture.fit_view(P_src, job["source"]["image"], job["source"]["mask"],
                                        job.get("source_cfg") or {})
-        m_persp = float((job.get("fit") or {}).get("deperspective") or 0.0)
-        if m_persp:
-            # the model standard: the camera's perspective out of the mesh, before anything is measured
-            obj.data.transform(obj.matrix_world)
-            obj.matrix_world = Matrix.Identity(4)
-            co_ = np.empty(len(obj.data.vertices) * 3)
-            obj.data.vertices.foreach_get("co", co_)
-            obj.data.vertices.foreach_set("co", source_texture.warp(co_.reshape(-1, 3), view.fov, m_persp).ravel())
-            obj.data.update()
-            view.m = m_persp
-            mw0 = obj.matrix_world.copy()
-            V, N, nv, nf = mesh_arrays(obj, al["sample_faces"])
-            P_src = surface_points(obj, 3000000)
-            log(f"perspective: {m_persp:.2f} of the source camera's (fov {view.fov:.1f} deg) taken out of the mesh")
     lm = job.get("landmarks") or {}
     if (lm.get("wheels") or lm.get("nose_px")) and not view:
         raise RuntimeError("landmarks need the source crop (models_raw/<id>.source.png): rerun the comfy stage")
@@ -1122,14 +775,6 @@ def main():
         wheel_geo = measure_wheels(wheels_raw, R)
         align_info["levelled_deg"] = round(math.degrees(tilt), 3)
     fitd = job.get("fit") or {}
-    std = cat == "vehicle" and bool(fitd.get("standard"))
-    if std:
-        running_gear.CAP["mat"] = running_gear.shaded_material("cut_cap", shading, color=np.array([0.05, 0.05, 0.055]))
-    # the gear table's axles as shares of the length between the buffer beams (run.py), all parts
-    gear_fr = [f_ for gi_ in (job.get("gear_info") or []) if gi_
-               for f_ in list(gi_.get("rigid_f", [])) + [q_ for t_ in gi_.get("trucks_f", []) for q_ in t_]]
-    wfit, std_axles = None, {}
-    sq_fix = None  # what squares a box body up (body_square), where one is squared up
     zrail_raw = None
     for key, rot in (("yaw_deg", rz), ("pitch_deg", ry), ("roll_deg", rx)):
         if fitd.get(key):  # set by hand where the automatic alignment is off
@@ -1140,92 +785,7 @@ def main():
         # its pose and its running gear is slid onto a level rail further down (gear_shear); a small
         # engine without that squaring up is turned as a whole until its wheels stand level.
         slope, z_mid, x_mid_raw, n_on = support_line(surface_points(obj, 300000) @ R.T)
-        wstance, w0 = None, None
-        if std and len(gear_fr) >= 2:
-            # the model standard: the vehicle stands on its wheels, and its wheels are told as wheels
-            # (the lowest bumps of the underside, in the gear table's order and spacing), not as
-            # whatever hangs lowest (a step or a guard iron tilts a search for the lowest line)
-            gear_pp = [{"from": gi_["from"], "to": gi_["to"],
-                        "fracs": list(gi_.get("rigid_f", [])) + [q_ for t_ in gi_.get("trucks_f", []) for q_ in t_]}
-                       for gi_ in job["gear_info"] if gi_]
-
-            def wheels_of(Rm):
-                Pw = surface_points(obj, 300000) @ Rm.T
-                Hw = float(np.percentile(Pw[:, 2], 99.5) - np.percentile(Pw[:, 2], 0.5))
-                best_ = None
-                # the nose may still be at -x here: the table read from the other end as well
-                for pp_ in (gear_pp, [{"from": 1 - q_["to"], "to": 1 - q_["from"], "fracs": [1 - f_ for f_ in q_["fracs"]]}
-                                      for q_ in gear_pp]):
-                    ft_ = wheel_find.fit_parts(Pw, pp_, float(Pw[:, 0].min()), float(Pw[:, 0].max()), Hw)
-                    if ft_ and (best_ is None or ft_["matched"] > best_["matched"]):
-                        best_ = ft_
-                return best_
-            def level_on_wheels(Rm, first):
-                # turn until the wheels' line is level: a turn can bring other wheels onto the line
-                cur, Rc = first, Rm
-                for _ in range(3):
-                    if not cur or abs(math.degrees(math.atan(cur["main"]["slope"]))) < 0.3:
-                        break
-                    cand = []
-                    for sign in (1.0, -1.0):
-                        R_try = ry(sign * math.atan(cur["main"]["slope"])) @ Rc
-                        w1 = wheels_of(R_try)
-                        if w1:
-                            cand.append((abs(w1["main"]["slope"]), sign, R_try, w1))
-                    if not cand:
-                        break
-                    cand.sort(key=lambda c_: c_[0])
-                    if cand[0][0] >= abs(cur["main"]["slope"]):
-                        break  # no turn makes it better
-                    _, _, Rc, cur = cand[0]
-                return Rc, cur
-
-            w0 = wheels_of(R)
-            if w0:
-                R, wstance = level_on_wheels(R, w0)
-        if wstance and view is not None:
-            # in yaw too: the found wheels' row on the seen side runs along the track (where a box body's
-            # two walls give a line, they decide instead, further down)
-            Pw = surface_points(obj, 300000) @ R.T
-            Hw = float(np.percentile(Pw[:, 2], 99.5) - np.percentile(Pw[:, 2], 0.5))
-            yc_w = float(np.mean(np.percentile(Pw[:, 1], [1, 99])))
-            side_w = -1.0 if float((R @ source_texture.camera_position(view.fov))[1]) < yc_w else 1.0
-            xs_w, ds_w = [], []
-            for x_, ok_ in zip(wstance["x"], wstance["found"]):
-                if not ok_:
-                    continue
-                zl_ = wstance["z_mid"] + wstance["slope"] * (x_ - wstance["x_mid"])
-                sel_ = (np.abs(Pw[:, 0] - x_) < 0.06 * Hw) & (Pw[:, 2] < zl_ + 0.06 * Hw) \
-                    & (side_w * (Pw[:, 1] - yc_w) > 0)
-                if sel_.sum() >= 40:
-                    xs_w.append(x_)
-                    ds_w.append(float(np.percentile(side_w * (Pw[sel_, 1] - yc_w), 90)))
-            if len(xs_w) >= 4 and max(xs_w) - min(xs_w) > 0.35 * float(Pw[:, 0].max() - Pw[:, 0].min()):
-                k_w, b_w = np.polyfit(xs_w, ds_w, 1)
-                scat = float(np.std(np.array(ds_w) - (k_w * np.array(xs_w) + b_w)))
-                yaw_w = math.atan(side_w * k_w)
-                align_info.update(wheel_row_yaw_deg=round(math.degrees(yaw_w), 3), wheel_row_wheels=len(xs_w))
-                if scat <= 0.015 * Hw and 1.0 <= abs(math.degrees(yaw_w)) <= 3.5:
-                    R_try = rz(-yaw_w) @ R
-                    w1 = wheels_of(R_try)
-                    if w1:
-                        R, wstance = level_on_wheels(R_try, w1)
-                        align_info.update(wheel_row_turned=True)
-                        log(f"stance: turned {math.degrees(-yaw_w):+.2f} deg about the vertical: the row of "
-                            f"{len(xs_w)} found wheels on the seen side now runs along the track")
-        if wstance:
-            # the rail: under the lowest wheels (the main body's line, or the line over all wheels where
-            # that one lies lower)
-            mn_ = wstance["main"]
-            z_all = wstance["z_mid"] + wstance["slope"] * (mn_["x_mid"] - wstance["x_mid"])
-            wheel_slope, zrail_raw, x_mid_raw = 0.0, min(mn_["z_mid"], z_all), mn_["x_mid"]
-            align_info.update(stance="wheels", stance_pitch_deg=round(math.degrees(math.atan(w0["main"]["slope"])), 3),
-                              stance_left_deg=round(math.degrees(math.atan(wstance["main"]["slope"])), 3),
-                              stance_wheels=wstance["matched"], stance_after_deg=0.0)
-            log(f"stance: turned {math.degrees(math.atan(w0['main']['slope'])):+.2f} deg onto its own wheels "
-                f"({wstance['matched']} of the table's {len(gear_fr)} axles found, "
-                f"{math.degrees(math.atan(wstance['main']['slope'])):+.2f} deg left)")
-        elif level == "body" and fitd.get("stance_mode", "shear") == "shear":
+        if level == "body" and fitd.get("stance_mode", "shear") == "shear":
             wheel_slope, zrail_raw = slope, z_mid
             align_info.update(stance="shear", stance_pitch_deg=round(math.degrees(math.atan(slope)), 3),
                               stance_wheels=n_on)
@@ -1243,41 +803,6 @@ def main():
                               stance_left_deg=round(math.degrees(math.atan(best[1])), 3), stance_wheels=best[4])
             log(f"stance: turned {math.degrees(math.atan(slope)):+.2f} deg to stand on its wheels "
                 f"({best[4]} slices on the rail, {math.degrees(math.atan(best[1])):+.2f} deg left to the gear slide)")
-        if std and fitd.get("box_body") and view is not None and zrail_raw is not None:
-            # a box body is squared up by its own long lines (walls, sole, roof): they run beside the
-            # rails, and a reconstruction's wheels do not always run parallel to its body. The turns go
-            # into R here; the taper and the rise are taken out of each part's mesh further down, and
-            # the running gear is slid onto the level rail under the body (gear_shear).
-            Pq = surface_points(obj, 600000) @ R.T
-            top_q = float(np.percentile(Pq[:, 2], 99.5))
-            s_q = float(fitd.get("roof_height_m") or a.get("height_m") or 4.2) / max(top_q - zrail_raw, 1e-6)
-            Pq *= s_q
-            yc_q = float(np.mean(np.percentile(Pq[:, 1], [1, 99])))
-            seen_q = -1 if float((R @ source_texture.camera_position(view.fov))[1]) * s_q < yc_q else 1
-            sq_fix, sq_before, sq_after = body_square.square(Pq, zrail_raw * s_q, yc_q, seen_q)
-            sq_fix["scale"] = s_q
-
-            def brief_(ln_):
-                return ", ".join(f"{k_} {ln_[k_]['deg']:+.2f}" if ln_[k_].get("ok") else f"{k_} --"
-                                 for k_ in ("roof", "sole", "wall+", "wall-"))
-            log(f"squared up: {sq_fix['why']}")
-            log(f"squared up: turned {sq_fix['yaw_deg']:+.2f} deg about the vertical, nose {sq_fix['pitch_deg']:+.2f} deg down; "
-                f"walls' taper {sq_fix['taper']:+.4f}, roof's rise {sq_fix['rise']:+.4f} out of the mesh; "
-                f"lines before: {brief_(sq_before)}; after: {brief_(sq_after)}")
-            if sq_fix["yaw_deg"] or sq_fix["pitch_deg"]:
-                ya_, pi_ = math.radians(-sq_fix["yaw_deg"]), math.radians(sq_fix["pitch_deg"])
-                Rz_ = np.array([[math.cos(ya_), -math.sin(ya_), 0], [math.sin(ya_), math.cos(ya_), 0], [0, 0, 1.0]])
-                Ry_ = np.array([[math.cos(pi_), 0, math.sin(pi_)], [0, 1.0, 0], [-math.sin(pi_), 0, math.cos(pi_)]])
-                R = Ry_ @ Rz_ @ R
-                # the rail under the wheels again: the model's own wheels now run off level by what the
-                # body was turned, and are slid onto the rail with the rest of the running gear
-                w_sq = wheels_of(R) if (len(gear_fr) >= 2) else None
-                if w_sq:
-                    mn_ = w_sq["main"]
-                    zrail_raw, x_mid_raw = mn_["z_mid"], mn_["x_mid"]
-            align_info.update(squared={k_: (round(v_, 5) if isinstance(v_, float) else v_) for k_, v_ in sq_fix.items()},
-                              lines_before={k_: sq_before[k_] for k_ in ("roof", "sole", "wall+", "wall-")},
-                              lines_after={k_: sq_after[k_] for k_ in ("roof", "sole", "wall+", "wall-")})
         wheel_geo = measure_wheels(wheels_raw, R)
     if view is not None:
         # the source's colours onto the texture, now that the vehicle's centre plane is known (the
@@ -1339,17 +864,13 @@ def main():
     else:
         ref = next(k_ for k_ in ("height_m", "length_m", "width_m") if a.get(k_))
         s = a[ref] / dims[{"height_m": 2, "length_m": 0, "width_m": 1}[ref]]
-    std = cat == "vehicle" and bool(fitd.get("standard"))
-    if std and fitd.get("uniform_k"):
-        s *= float(fitd["uniform_k"])  # smaller (or larger) than life as a whole, never along one axis
-        ref += f" x {float(fitd['uniform_k']):.3f}"
     real = dims * s
     # width from the body, not from a stray reconstructed blob: the 0.5th to 99.5th percentile across
     # of area-weighted surface points (a wheel is a lot of surface, a stray lump little)
     Ps = surface_points(obj, 200000) @ R.T
     body_w = float(np.subtract(*np.percentile(Ps[:, 1], [99.5, 0.5]))) * s
     width_fix = 1.0
-    if cat == "vehicle" and a.get("width_m") and ref != "width_m" and not std:
+    if cat == "vehicle" and a.get("width_m") and ref != "width_m":
         # an illustration is rarely drawn to scale across; the real width keeps the body in
         # proportion to the rails (gauge and width both go into the game at DRAWN_WIDTH)
         width_fix = a["width_m"] / body_w
@@ -1380,9 +901,7 @@ def main():
                 if a.get("size_tiles") else 1
             cx_all = min(1.0, ((a.get("size_tiles") or 1) * tile - n_parts * ccfg["coupler_gap_m"]) / real[0])
         wf = game_rules.DRAWN_WIDTH * width_fix * cx_all
-        if std:
-            wf = 1.0
-        elif cat == "vehicle" and fitd.get("width_k"):
+        if cat == "vehicle" and fitd.get("width_k"):
             wf = float(fitd["width_k"]) * width_fix  # the real width times this
         elif cat == "vehicle" and gear_parts:
             # at its own length a body is hardly compressed, and DRAWN_WIDTH on top of that reads as
@@ -1433,56 +952,9 @@ def main():
             log(f"split {split['mode']} at {cuts} m from the nose (plan guess {[round(e, 2) for e in expected]})")
         # a reconstruction may run a piece out past the vehicle's ends (buffers drawn out into a horn):
         # trim_front_m / trim_rear_m (real metres) cut it off before the parts are measured
-        if std and len(gear_fr) >= 2:
-            # the model's own wheels, in metres: where the built ones go, the rail, and where the parts end
-            H_fit = float(fitd.get("roof_height_m") or real[2])
-            wfit = wheel_find.fit_wheels(surface_points(obj, 400000) @ (s * R).T, gear_fr, float(lo_r[0]), float(hi_r[0]),
-                                         H_fit)
-            if wfit:
-                log(f"wheels: {wfit['matched']} of the table's {len(gear_fr)} axles found in the model; the buffer "
-                    f"beams stand {wfit['over_rear']:.2f} m (rear) and {wfit['over_front']:.2f} m (front) inside its ends; "
-                    f"the line they stand on runs {math.degrees(math.atan(wfit['slope'])):+.2f} deg")
-                if sq_fix is not None and abs(math.degrees(math.atan(wfit["slope"]))) >= 0.1:
-                    # a squared-up body: its running gear is slid onto the level rail under it
-                    wheel_slope, x_mid_raw = float(wfit["slope"]), float(wfit["x_mid"]) / s
-                gi_all = job["gear_info"]
-                if len(parts) > 1 and len(gi_all) == len(parts) and all(gi_all):
-                    sa_, sb_ = wfit["share"]
-                    # parts the table lets abut were not measured apart: the search's dip stands there
-                    new_cuts = [float(hi_r[0] - (sa_ * (gi_all[i]["from"] + gi_all[i + 1]["to"]) / 2 + sb_))
-                                if gi_all[i]["from"] - gi_all[i + 1]["to"] > 1e-6 else float(cuts[i])
-                                for i in range(len(parts) - 1)]
-                    if all(0.05 * real[0] < c_ < 0.95 * real[0] for c_ in new_cuts) \
-                            and all(b_ > a_ for a_, b_ in zip(new_cuts, new_cuts[1:])):
-                        log(f"split where the table's parts end, on the found wheels' spacing: "
-                            f"{[round(c_, 2) for c_ in new_cuts]} m from the nose (the search gave "
-                            f"{[round(c_, 2) for c_ in cuts]})")
-                        cuts = new_cuts
-                        split = {"mode": "wheels", "cuts_m": [round(c_, 3) for c_ in cuts]}
-            else:
-                warnings.append("wheels: the gear table's axles were not found in the model; its wheels go where "
-                                "the table has them")
         bounds = [float(lm.get("trim_front_m", 0.0))] + cuts + [real[0] - float(lm.get("trim_rear_m", 0.0))]
         if any(b1 <= b0 for b0, b1 in zip(bounds, bounds[1:])):
             raise RuntimeError(f"cuts {cuts} are not in order inside 0..{real[0]:.1f} m")
-        std_parts = None
-        if std:
-            # the model standard: nothing is stretched, so each part is as long as the model has it and
-            # the vehicle's length in tiles follows. A part drawn as its namesake's mirror is as long as
-            # the one that is rendered.
-            lens = [(b1 - b0 + ccfg["coupler_gap_m"]) / tile for b0, b1 in zip(bounds, bounds[1:])]
-            drawn = {p_[0]: lens[i] for i, p_ in enumerate(parts) if p_[2]}
-            lens = [lens[i] if p_[2] else drawn.get(p_[0], lens[i]) for i, p_ in enumerate(parts)]
-            given_tiles = size_tiles
-            parts = [(p_[0], round(float(l_), 4), p_[2]) for p_, l_ in zip(parts, lens)]
-            size_tiles = round(float(sum(lens)), 4)
-            acc_, std_parts = size_tiles, []
-            for p_ in parts:  # front to back; fractions run from the rear end (0) to the nose (1)
-                std_parts.append({"part": p_[0], "from": round((acc_ - p_[1]) / size_tiles, 4),
-                                  "to": round(acc_ / size_tiles, 4), "mirror": not p_[2]})
-                acc_ -= p_[1]
-            log(f"standard: {size_tiles} tiles from the model's own length (the table said {given_tiles}); "
-                f"parts {[(p_[0], p_[1]) for p_ in parts]}")
         # clip heights: one for every part, or one per rendered part (an engine above its drivers,
         # a tender above its own wheels)
         clips = list(a.get("clip_below_m") or [0.0])
@@ -1495,8 +967,6 @@ def main():
         yc, zg = (lo_r[1] + hi_r[1]) / 2, lo_r[2]
         if zrail_raw is not None:
             zg = zrail_raw * s  # the rail is under the wheels, not under the lowest stray point
-        if wfit:
-            zg = wfit["z_mid"]  # the line the model's own wheels stand on
         sym = cat == "vehicle" and view is not None and lm.get("symmetric", True)
         if sym:
             # the seen side is the one facing the source camera; the plane between the sides' outer
@@ -1510,22 +980,6 @@ def main():
         if wheels_real and lm.get("rail") != "lowest":
             zg = float(np.median([wr["z"] - wr["d"] / 2 for wr in wheels_real]))
         zg += float(fitd.get("lift_m") or 0.0) * -1.0  # by hand: raise the vehicle by this much
-        sq_warp, gear_fade = None, None
-        if sq_fix is not None:
-            k_sq = s / sq_fix["scale"]
-            fx_sq = dict(sq_fix)
-            for key_ in ("wall_at", "roof_at", "sole_z"):
-                if fx_sq.get(key_):
-                    fx_sq[key_] = fx_sq[key_] * k_sq
-            ln_sq = {"xm": float(lo_r[0] + hi_r[0]) / 2, "L": sq_fix["L"] * k_sq}
-            H_sq = float(fitd.get("roof_height_m") or real[2])
-            if fx_sq.get("sole_z", 0) > 0.2 * H_sq:
-                gear_fade = (0.16 * H_sq, fx_sq["sole_z"])
-            else:
-                gear_fade = (0.16 * H_sq, 0.30 * H_sq)
-            if fx_sq.get("taper") or fx_sq.get("rise"):
-                def sq_warp(V_):
-                    return body_square.warp(V_, fx_sq, ln_sq, yc, zg)
         lit_image = None
         ann = job.get("annot") or {}
         if cat == "vehicle" and view is not None and view.tex is not None and ann.get("windows"):
@@ -1539,8 +993,7 @@ def main():
             for kind in ("smoke", "headlamps"):
                 for px in ann.get(kind) or []:
                     try:
-                        pt_ = (s * R) @ view.point(px, reach=12)
-                        marks.setdefault(kind, []).append(sq_warp(np.array([pt_]))[0] if sq_warp else pt_)
+                        marks.setdefault(kind, []).append((s * R) @ view.point(px, reach=12))
                     except RuntimeError as e:
                         warnings.append(f"{kind} point {px} skipped ({e})")
         for wr in wheels_real:
@@ -1549,39 +1002,8 @@ def main():
                 # tyre's bottom show): it keeps its measured axle position and stands on the rail plane
                 wr["d"] = float(wr["w"]["d_m"])
                 wr["z"] = zg + wr["d"] / 2
-        if os.environ.get("TP_DUMP"):
-            # measuring only (train-sizes/distortion): the aligned model in real metres, untouched
-            Pd = surface_points(obj, 600000) @ (s * R).T
-            if sq_warp:
-                Pd = sq_warp(Pd)
-            if wheel_slope:
-                # as gear_shear slides the running gear onto the rail
-                H_d = float(fitd.get("roof_height_m") or real[2])
-                f_lo, f_hi = gear_fade if gear_fade else (0.16 * H_d, 0.85 * H_d)
-                off_d = wheel_slope * (Pd[:, 0] - x_mid_raw * s)
-                Pd[:, 2] -= off_d * np.clip((f_hi - (Pd[:, 2] - (zg + off_d))) / max(f_hi - f_lo, 1e-6), 0.0, 1.0)
-            me_ = obj.data
-            me_.calc_loop_triangles()
-            ti_ = np.empty(len(me_.loop_triangles) * 3, np.int32)
-            me_.loop_triangles.foreach_get("vertices", ti_)
-            vc_ = np.empty(len(me_.vertices) * 3)
-            me_.vertices.foreach_get("co", vc_)
-            mw_ = np.array(obj.matrix_world)
-            vc_ = vc_.reshape(-1, 3) @ mw_[:3, :3].T + mw_[:3, 3]
-            ti_ = ti_.reshape(-1, 3)
-            pick_ = np.random.default_rng(3).choice(len(ti_), min(len(ti_), 250000), replace=False)
-            Td = (vc_[ti_[pick_]] @ (s * R).T).astype(np.float32)
-            np.savez_compressed(os.path.join(os.environ["TP_DUMP"], a["id"] + ".npz"), P=Pd.astype(np.float32),
-                                zg=zg, yc=yc, s=s, real=real, hi=hi_r, lo=lo_r, bounds=np.array(bounds),
-                                wheel_slope=wheel_slope, x_mid=x_mid_raw * s, R=np.asarray(R), T=Td,
-                                fov=(view.fov if view is not None else 0.0),
-                                parts=np.array([str(p_[0]) for p_ in parts]),
-                                tiles=np.array([float(p_[1] or 0) for p_ in parts]))
-            log(f"dumped {a['id']} for measuring")
-            if os.environ.get("TP_DUMP_ONLY", "1") == "1":
-                return
         post_fix = None  # what the stance check finds left over, for every part
-        for part_i, ((part, L_tiles, rendered), d0, d1) in enumerate(zip(parts, bounds, bounds[1:])):
+        for (part, L_tiles, rendered), d0, d1 in zip(parts, bounds, bounds[1:]):
             if not rendered:
                 continue
             clip = next(clips)
@@ -1591,11 +1013,6 @@ def main():
             bpy.context.scene.collection.objects.link(ob)
             ob.data.transform(M_real)
             ob.matrix_world = Matrix.Identity(4)
-            if sq_warp:
-                co_sq = np.empty(len(ob.data.vertices) * 3)
-                ob.data.vertices.foreach_get("co", co_sq)
-                ob.data.vertices.foreach_set("co", sq_warp(co_sq.reshape(-1, 3)).ravel())
-                ob.data.update()
             if sym:
                 w0, w1 = running_gear.symmetrize(ob, yc, cam_y < yc)
                 # the width was measured before; the mirrored far side keeps it
@@ -1603,15 +1020,14 @@ def main():
                                   @ Matrix.Translation((0, -yc, 0)))
                 log(f"{part or 'body'}: far side rebuilt as the mirror of the seen side (width {w1 / w0 - 1:+.1%} "
                     f"before keeping the measured width)")
-            if cat == "vehicle" and fitd.get("rail_half_m") and fitd.get("gauge_warp", not std):
+            if cat == "vehicle" and fitd.get("rail_half_m") and fitd.get("gauge_warp", True):
                 gw = gauge_warp(ob, yc, zg, float(fitd["rail_half_m"]) / wf,
                                 float(fitd.get("roof_height_m") or real[2]))
                 if gw:
                     log(f"{part or 'body'}: wheels stood {gw[0] * wf:.2f} m from the centre line, rails are at "
                         f"{fitd['rail_half_m']:.2f} m: running gear moved {gw[1] * wf:+.2f} m across")
             if cat == "vehicle" and wheel_slope:
-                gear_shear(ob, x_mid_raw * s, zg, wheel_slope, float(fitd.get("roof_height_m") or real[2]),
-                           fade=gear_fade)
+                gear_shear(ob, x_mid_raw * s, zg, wheel_slope, float(fitd.get("roof_height_m") or real[2]))
             if cat == "vehicle" and zrail_raw is not None and "stance_after_deg" not in align_info:
                 # the check: the same search on the finished model must find a level rail at zg. The
                 # first search saw both sides of the raw model; the far side is now the seen side's
@@ -1632,78 +1048,16 @@ def main():
             if post_fix and post_fix[0]:
                 gear_shear(ob, post_fix[1], post_fix[2], post_fix[0], float(fitd.get("roof_height_m") or real[2]))
             x_hi, x_lo = hi_r[0] - d0, hi_r[0] - d1
-            # where this part's own body ends towards its neighbours: the table's part end on the found
-            # wheels' spacing, or half a joint's width from the cut where the table lets the parts abut
-            c_hi, c_lo = x_hi, x_lo
-            gi_t = (job.get("gear_info") or [None] * len(parts)) if (std and wfit) else None
-            if gi_t and len(gi_t) == len(parts) and all(gi_t):
-                sa_, sb_ = wfit["share"]
-                half_j = float(fitd.get("joint_gap_m", 0.6)) / 2
-                if part_i > 0:
-                    gap_ = gi_t[part_i - 1]["from"] - gi_t[part_i]["to"] > 1e-6
-                    c_hi = min(x_hi, sa_ * gi_t[part_i]["to"] + sb_) if gap_ else x_hi - half_j
-                if part_i < len(parts) - 1:
-                    gap_ = gi_t[part_i]["from"] - gi_t[part_i + 1]["to"] > 1e-6
-                    c_lo = max(x_lo, sa_ * gi_t[part_i]["from"] + sb_) if gap_ else x_lo + half_j
-                if c_hi - c_lo < 0.5 * (x_hi - x_lo):
-                    c_hi, c_lo = x_hi, x_lo  # the table's ends do not fit this model: the plain cut
-            wall_z = (zg + 0.22 * float(fitd.get("roof_height_m") or real[2])) if std else None
             if d0 > 0:
-                clip_mesh(ob, (c_hi, 0, 0), (1, 0, 0), wall_from=wall_z, paint=shading if std else None)
+                clip_mesh(ob, (x_hi, 0, 0), (1, 0, 0))
             if d1 < real[0]:
-                clip_mesh(ob, (c_lo, 0, 0), (-1, 0, 0), wall_from=wall_z, paint=shading if std else None)
-            gi_fix = None
-            gi0 = (job.get("gear_info") or [None] * len(parts))[part_i] if (std and wfit) else None
-            if gi0:
-                fr_all = list(gi0.get("rigid_f", [])) + [q_ for t_ in gi0.get("trucks_f", []) for q_ in t_]
-                place = dict(zip(gear_fr, wfit["x"]))
-                p_from, p_to = gi0["from"], gi0["to"]
-                if len(fr_all) >= 2 and all(p_from - 1e-6 <= f_ <= p_to + 1e-6 for f_ in fr_all):
-                    # each body stands on its own wheels: a reconstruction carries a tender a little higher
-                    # or lower than its engine, and the whole model's turn above was found on one body
-                    pf = wheel_find.fit_wheels(surface_points(ob, 250000),
-                                               [(f_ - p_from) / (p_to - p_from) for f_ in fr_all], x_lo, x_hi,
-                                               float(fitd.get("roof_height_m") or real[2]))
-                    n_glob = sum(1 for f_, ok_ in zip(gear_fr, wfit["found"]) if ok_ and f_ in fr_all)
-                    if pf and pf["matched"] >= max(2, n_glob) and abs(math.degrees(math.atan(pf["slope"]))) <= 3.0:
-                        ang, zl, xm_ = math.atan(pf["slope"]), pf["z_mid"], pf["x_mid"]
-                        if sq_fix is not None:
-                            # a squared-up body keeps its lines: only its running gear goes onto the rail
-                            gear_shear(ob, xm_, zl, pf["slope"], float(fitd.get("roof_height_m") or real[2]),
-                                       fade=gear_fade)
-                            ob.data.transform(Matrix.Translation((0, 0, zg - zl)))
-                            for f_, x_ in zip(fr_all, pf["x"]):
-                                place[f_] = x_
-                            log(f"{part or 'body'}: its running gear onto the rail ({pf['matched']} of {len(fr_all)} wheels "
-                                f"found): slid by {math.degrees(ang):+.2f} deg, the part moved {zg - zl:+.3f} m")
-                        else:
-                            ob.data.transform(Matrix.Translation((xm_, 0, zg)) @ Matrix.Rotation(ang, 4, "Y")
-                                              @ Matrix.Translation((-xm_, 0, -zl)))
-                            for f_, x_ in zip(fr_all, pf["x"]):
-                                place[f_] = xm_ + (x_ - xm_) / math.cos(ang)
-                            log(f"{part or 'body'}: stands on its own wheels ({pf['matched']} of {len(fr_all)} found): turned "
-                                f"{math.degrees(ang):+.2f} deg, moved {zg - zl:+.3f} m")
-
-                def u_of(f_):
-                    return round(float((place[f_] - x_lo) / (x_hi - x_lo)), 5)
-
-                gi_fix = dict(gi0, rigid=[u_of(f_) for f_ in gi0.get("rigid_f", [])],
-                              trucks=[[u_of(f_) for f_ in t_] for t_ in gi0.get("trucks_f", [])])
-                if std_parts:
-                    sp_ = std_parts[part_i]
-                    mid_ = (sp_["from"] + sp_["to"]) / 2 * size_tiles * tile
-
-                    def F_of(f_):  # share of the vehicle's whole length, as the game places it
-                        return round(float((mid_ + place[f_] - (x_hi + x_lo) / 2) / (size_tiles * tile)), 4)
-
-                    std_axles[part_i] = {"rigid": [F_of(f_) for f_ in gi0.get("rigid_f", [])],
-                                         "trucks": [[F_of(f_) for f_ in t_] for t_ in gi0.get("trucks_f", [])]}
+                clip_mesh(ob, (x_lo, 0, 0), (-1, 0, 0))
             if clip > 0:
                 clip_mesh(ob, (0, 0, zg + clip), (0, 0, -1))  # running gear the game draws itself
             length = d1 - d0
             if cat == "vehicle":
                 slot = L_tiles * tile - ccfg["coupler_gap_m"]
-                cx = 1.0 if std else slot / length
+                cx = slot / length
                 lo_c, hi_c = ccfg["compress_range"]
                 if not lo_c <= cx <= hi_c:
                     raise RuntimeError(f"{part or 'body'}: length factor {cx:.2f} outside {ccfg['compress_range']} "
@@ -1828,232 +1182,6 @@ def main():
                 scene_objs.append(wob)
                 gear = [{"x_m": round(ax["x"], 3), "d_m": round(ax["d"], 3), "spokes": ax["spokes"]} for ax in axles]
                 log(f"{part or 'body'}: cut {n_cut} faces of the model's wheels, built {len(axles)} axles {gear}")
-            body_wheels, built_trucks = None, []
-            gi = (job.get("gear_info") or [None] * len(parts))[part_i] if cat == "vehicle" else None
-            if gi_fix:
-                gi = gi_fix  # every axle where the model has it
-            if gi and gi.get("wheels"):
-                # ---- running gear the game draws (run.py --wheels). Each truck leaves the body and
-                # becomes a sprite set of its own, hung by the game at its place on the rail; wheels are
-                # built round on the game's rails and rendered as layers of their own, one per phase of
-                # their turning: under a truck's frame, or over the body they are fixed in.
-                wd = gi["wheels"]
-                g_fin = float(fitd.get("rail_half_m") or running_gear.half_gauge_m(tile))
-                y_model = g_fin / wf  # where the treads stand in the model's own frame (wf widens it)
-                Pp = surface_points(ob, 250000)
-                xmid_p = (x_hi + x_lo) / 2
-
-                def fin(x):
-                    return cx * (x - xmid_p)
-
-                def at(u):
-                    return x_lo + u * (x_hi - x_lo)
-
-                def per_axle(v, n, cast=float):
-                    return [cast(q) for q in (v if isinstance(v, list) else [v] * n)]
-
-                def build_layers(name, base_spec, ds_f, spokes, drivers, rods):
-                    phases, total, share, cycle = wheel_cycle(ds_f, spokes, drivers, rods)
-                    objs = []
-                    for ph in range(phases):
-                        spec = dict(base_spec)
-                        spec["turn"] = total * ph / phases
-                        spec["axles"] = [dict(ax_, turn=share[i]) for i, ax_ in enumerate(base_spec["axles"])]
-                        wob = running_gear.bogie(f"{name}_w{ph}", spec, tile, base_spec["colors"], shading)
-                        wob.hide_render = True
-                        scene_objs.append(wob)
-                        objs.append(wob)
-                    return {"objs": objs, "phases": phases, "cycle_m": round(float(cycle), 4)}
-
-                def clear_wheels(mesh_ob, xs, ds, inside):
-                    """The model's own wheels go: everything outside the frames (wheels that show), or
-                    only the layer the wheels are in (an outside frame stays). Returns the colour they
-                    had and how many faces went."""
-                    sel = [{"x": x, "z": zg + d_ / 2, "d": d_} for x, d_ in zip(xs, ds)]
-                    y_in = max(0.2, y_model - 0.14)
-                    y_out = 1e9 if inside else y_model + 0.1
-
-                    def is_wheel(c):
-                        return y_in <= abs(c.y - yc) <= y_out and any(
-                            (c.x - w_["x"]) ** 2 + (c.z - w_["z"]) ** 2 < (w_["d"] * 0.45) ** 2 for w_ in sel)
-                    col = running_gear.faces_colour(mesh_ob, is_wheel)
-                    if inside:
-                        n = running_gear.cut_wheels(mesh_ob, sel, y_in, y_center=yc, margin=1.08)
-                    else:
-                        n = running_gear.cut_wheel_discs(mesh_ob, sel, y_in, y_out, y_center=yc)
-                    return col, n
-
-                def group_spec(xs_fin, ds, spokes, drivers, rods, k, cols):
-                    """bogie() spec of a group of wheels, front to back, and what wheel_cycle needs."""
-                    order_ = sorted(range(len(xs_fin)), key=lambda i: -xs_fin[i])
-                    axles = [{"x": xs_fin[i], "d_f": k * ds[i], "spokes": spokes[i], "driver": i in drivers}
-                             for i in order_]
-                    drv_o = [j for j, i in enumerate(order_) if i in drivers]
-                    spec = {"scale": k, "x_scale": 1.0, "gauge_half": g_fin, "colors": cols, "axles": axles}
-                    if rods and drv_o:
-                        spec["rods"] = rod_spec(rods, axles, drv_o, k, cx)
-                    return spec, [a_["d_f"] for a_ in axles], [a_["spokes"] for a_ in axles], drv_o
-
-                # the model's own running gear where the game draws none (a truck the picture has and
-                # the gear table drops), and what hangs there instead (a fuel tank)
-                for cl in wd.get("clear", []):
-                    n_c = running_gear.cut_box(ob, at(cl["u"][0]), at(cl["u"][1]), zg + float(cl["top"]))
-                    log(f"{pname}: {n_c} faces of the model's own gear cleared at {cl['u']} below {cl['top']} m")
-                for ti_k, tk in enumerate(wd.get("tanks", [])):
-                    tb_ = running_gear.Builder(f"tank_{pname}_{ti_k}", {"tank": np.array(tk["color"]) / 255}, shading)
-                    r_t = float(tk["d"]) / 2
-                    tb_.barrel((0.0, float(tk.get("z", r_t + 0.25))), r_t, fin(at(tk["u"][0])), fin(at(tk["u"][1])),
-                               "tank", n=20)
-                    tob = tb_.finish()
-                    extras.append((tob, Matrix.Identity(4)))
-                    scene_objs.append(tob)
-                    log(f"{pname}: tank built at {tk['u']}, {tk['d']} m across")
-                # one factor for every wheel of the part: the smallest any of its groups needs
-                ks = []
-                tws_all = wd.get("trucks") or []
-                for ti_, us_ in enumerate(gi["trucks"]):
-                    if not tws_all:
-                        raise RuntimeError(f"{pname}: wheels data has no trucks, the gear table has {len(gi['trucks'])}")
-                    tw_ = tws_all[min(ti_, len(tws_all) - 1)]
-                    ks.append(wheel_factor(cx, [at(u) for u in us_], per_axle(tw_["d"], len(us_))))
-                if gi["rigid"]:
-                    if not wd.get("rigid"):
-                        raise RuntimeError(f"{pname}: wheels data has no rigid axles, the gear table has {len(gi['rigid'])}")
-                    ks.append(wheel_factor(cx, [at(u) for u in gi["rigid"]], per_axle(wd["rigid"]["d"], len(gi["rigid"]))))
-                k_part = float(wd.get("scale") or min(ks))
-                trucks_only = not gi["rigid"] and len(gi["trucks"]) >= 2
-                order = sorted(range(len(gi["trucks"])), key=lambda i: -float(np.mean(gi["trucks"][i])))
-                for ti, us in enumerate(gi["trucks"]):
-                    tw = tws_all[min(ti, len(tws_all) - 1)]
-                    n_ax = len(us)
-                    ds = per_axle(tw["d"], n_ax)
-                    spokes = per_axle(tw.get("spokes", 0), n_ax, int)
-                    d = max(ds)
-                    outside = tw.get("frame", "outside") == "outside"
-                    # an engine unit: wheels that show (cleared and built as on an inside frame), under
-                    # what the model has round them, which is rendered as the truck
-                    open_frame = tw.get("frame") == "open"
-                    rods = tw.get("rods")
-                    ax_m = find_axles(Pp, yc, zg, x_lo, x_hi, us, ds)
-                    xs_a = [m_["x"] for m_ in ax_m]
-                    reach = tw.get("reach_m") or [0.62 * d, 0.62 * d]
-                    x0, x1 = min(xs_a) - float(reach[0]), max(xs_a) + float(reach[1])
-                    if trucks_only and tw.get("end_gear", False):
-                        # a truck that carries the body's end with it (an engine unit with the pilot on its
-                        # frame); otherwise pilots, skirts and steps stay on the body the truck swivels under
-                        if ti == order[0]:
-                            x1 = x_hi + 0.01
-                        if ti == order[-1]:
-                            x0 = x_lo - 0.01
-                    x0, x1 = max(x0, x_lo - 0.01), min(x1, x_hi + 0.01)
-                    top = float(tw.get("top", (1.08 if outside else 0.92) * d))
-                    ch = ob.copy()
-                    ch.data = ob.data.copy()
-                    ch.name = f"truck_{pname}_{ti}"
-                    bpy.context.scene.collection.objects.link(ch)
-                    n_keep = running_gear.keep_box(ch, x0, x1, zg + top)
-                    n_cut = running_gear.cut_box(ob, x0, x1, zg + top)
-                    dyaw = dpitch = dz = 0.0
-                    ky = 1.0
-                    if outside and not std:
-                        # a truck taken from the model: squared up on its own axis (a turn the search
-                        # runs into its limit with is not a finding and is left out), then its own
-                        # wheels onto the rail and the gauge, as a whole
-                        co0 = np.empty(len(ch.data.vertices) * 3)
-                        ch.data.vertices.foreach_get("co", co0)
-                        dyaw, dpitch = running_gear.square_up(ch, (x0 + x1) / 2, zg, max_deg=4.0)
-                        if abs(dyaw) > 3.85 or abs(dpitch) > 3.85:
-                            ch.data.vertices.foreach_set("co", co0)
-                            ch.data.update()
-                            dyaw = dpitch = 0.0
-                        Pc = surface_points(ch, 60000)
-                        ax_c = find_axles(Pc, yc, zg, x0, x1, [(x - x0) / (x1 - x0) for x in xs_a], ds)
-                        zs = [m_["z"] for m_ in ax_c if m_["z"] is not None]
-                        ys = [m_["y"] for m_ in ax_c if m_["y"]]
-                        dz = float(np.clip(zg - float(np.mean(zs)), -0.25, 0.25)) if zs else 0.0
-                        ky = float(np.clip(y_model / np.median(ys), 0.9, 1.12)) if ys else 1.0
-                        ch.data.transform(Matrix.Translation((0, yc, dz)) @ Matrix.Diagonal((1, ky, 1, 1))
-                                          @ Matrix.Translation((0, -yc, 0)))
-                    base, n_w = clear_wheels(ch, xs_a, ds, not outside) if tw.get("clear", True) else (None, 0)
-                    running_gear.cull_backfaces(ch)
-                    k = k_part
-                    c_real = float(np.mean(xs_a))
-                    exp_fin = fin(at(float(np.mean(us))))
-                    # the sprite's origin is where the game hangs the truck: the table's place along the
-                    # part's whole slot (the body is drawn a coupler gap shorter than its slot). What the
-                    # model has there is drawn where the model has it, so it sits under its own cut.
-                    c_fin = (float(np.mean(us)) - 0.5) * L_tiles * tile
-                    cols = wheel_colours(base, tw)
-                    drivers = list(tw.get("drivers", range(n_ax))) if rods else []  # a truck may carry a plain axle too
-                    spec, ds_o, sp_o, drv_o = group_spec([fin(x) - c_fin for x in xs_a], ds, spokes, drivers, rods, k, cols)
-                    t_extras = []
-                    if not outside and not open_frame:
-                        fspec = {key: v for key, v in spec.items() if key != "rods"}
-                        fspec.update(wheels=False, frame={
-                            "type": "plate_inside", "x0": min(a_["x"] for a_ in spec["axles"]) - 0.42 * k * d,
-                            "x1": max(a_["x"] for a_ in spec["axles"]) + 0.42 * k * d,
-                            "bottom_f": 0.22 * k * d, "top_f": 0.66 * k * d, "inset": 0.3})
-                        fob = running_gear.bogie(f"truckframe_{pname}_{ti}", fspec, tile, cols, shading)
-                        t_extras.append((fob, Matrix.Identity(4)))
-                        scene_objs.append(fob)
-                    layers = build_layers(f"truck_{pname}_{ti}", spec, ds_o, sp_o, drv_o, bool(rods))
-                    scene_objs.append(ch)
-                    if outside or open_frame:
-                        t_ob, TM = ch, Matrix.Translation(Vector((-c_fin, 0, 0))) @ M
-                    else:
-                        # wheels that show stand in a frame built between them: what the model had
-                        # there (a lump under the cylinders) is left out
-                        ch.hide_render = True
-                        (t_ob, TM), t_extras = t_extras[0], []
-                    blo, bhi = local_bounds(t_ob, TM)
-                    for eob in [e for e, _ in t_extras] + layers["objs"][:1]:
-                        elo, ehi = local_bounds(eob, Matrix.Identity(4))
-                        blo, bhi = np.minimum(blo, elo), np.maximum(bhi, ehi)
-                    built_trucks.append({
-                        "part": f"{pname}-t{ti}", "ob": t_ob, "M": TM, "lo": blo, "hi": bhi, "comp": comp, "tiles": None,
-                        "extras": t_extras, "footprint_m": [float(bhi[0] - blo[0]), float(bhi[1] - blo[1])],
-                        "gear": [{"truck": ti, "centre_m": round(c_fin, 3), "model_off_m": round(fin(c_real) - exp_fin, 3),
-                                  "d_m": ds, "wheel_scale": round(k, 3),
-                                  "frame": "outside" if outside else "open" if open_frame else "inside"}],
-                        "wheels": layers, "holdout_culled": outside or open_frame})
-                    log(f"{pname}: truck {ti} ({n_ax} axles, {'outside' if outside else 'open' if open_frame else 'inside'} frames) keeps "
-                        f"{n_keep} faces of the model below {top:.2f} m ({n_cut} cut from the body, {n_w} of them its "
-                        f"wheels), squared up by yaw {dyaw:+.2f}, pitch {dpitch:+.2f} deg, moved {dz:+.3f} m onto the "
-                        f"rail, {ky:.2f}x across; the model has it {fin(c_real) - exp_fin:+.3f} m from the table's "
-                        f"place; wheels {[round(k * d_, 2) for d_ in ds]} m ({k:.2f} of life)"
-                        f"{', coupled with rods' if rods else ''}, {layers['phases']} phases")
-                if gi["rigid"]:
-                    rw = wd["rigid"]
-                    n_ax = len(gi["rigid"])
-                    ds = per_axle(rw["d"], n_ax)
-                    spokes = per_axle(rw.get("spokes", 0), n_ax, int)
-                    inside = rw.get("frame", "inside") == "inside"
-                    rods = rw.get("rods")
-                    drivers = list(rw.get("drivers", range(n_ax))) if rods else []
-                    ax_m = find_axles(Pp, yc, zg, x_lo, x_hi, gi["rigid"], ds)
-                    xs_a = [m_["x"] for m_ in ax_m]
-                    base, n_w = clear_wheels(ob, xs_a, ds, inside) if rw.get("clear", True) else (None, 0)
-                    k = k_part
-                    cols = wheel_colours(base, rw)
-                    spec, ds_o, sp_o, drv_o = group_spec([fin(x) for x in xs_a], ds, spokes, drivers, rods, k, cols)
-                    body_wheels = build_layers(f"wheels_{pname}", spec, ds_o, sp_o, drv_o, bool(rods and drv_o))
-                    if inside:
-                        # the frames between the wheels, so the cut does not show the model's inside
-                        x_a, x_b = min(a_["x"] for a_ in spec["axles"]), max(a_["x"] for a_ in spec["axles"])
-                        d_big = max(ds)
-                        sob = running_gear.skirts(f"skirt_{pname}", [{
-                            "x": [x_a - 0.5 * cx * d_big, x_b + 0.5 * cx * d_big], "bottom": 0.2 * k * d_big,
-                            "top": 0.96 * d_big, "inset": 0.3,
-                            "color": [int(v * 255) for v in cols["frame"]]}], tile, shading, gauge_half=g_fin)
-                        extras.append((sob, Matrix.Identity(4)))
-                        scene_objs.append(sob)
-                    gear = [{"x_m": round(float(a_["x"]), 3), "d_m": round(float(a_["d_f"]), 3), "spokes": a_["spokes"],
-                             "driver": bool(a_.get("driver"))} for a_ in spec["axles"]]
-                    log(f"{pname}: {n_ax} fixed axles ({'inside' if inside else 'outside'} frames, {n_w} faces of the "
-                        f"model's wheels cut) built round at {[g_['x_m'] for g_ in gear]} m, "
-                        f"{[g_['d_m'] for g_ in gear]} m ({k:.2f} of life), "
-                        f"{'coupled with rods, ' if rods and drv_o else ''}{body_wheels['phases']} phases, "
-                        f"{body_wheels['cycle_m']:.2f} m of track per cycle")
             plo, phi = local_bounds(ob, M)
             for eob, EM in extras:
                 elo, ehi = local_bounds(eob, EM)
@@ -2061,8 +1189,6 @@ def main():
             if footprint is None:
                 footprint = [float(phi[0] - plo[0]), float(phi[1] - plo[1])]
             scene_objs.append(ob)
-            if std and (len(parts) > 1 or built_trucks or body_wheels):
-                running_gear.dark_backfaces(ob)  # a cut body's inside shows dark through any opening
             profile = body_profile(ob, M)
             log(f"{pname}: profile (rear->front) top {profile['top']} m, width {profile['width']} m")
             anchors = {}
@@ -2076,13 +1202,6 @@ def main():
                             "tiles": tiles_p, "footprint_m": footprint, "extras": extras, "gear": gear,
                             "profile": profile, "anchors": anchors or None,
                             "lit": lit_mats[0] if lit_image else None, "dark": lit_mats[1] if lit_image else None})
-            if body_wheels:
-                renders[-1]["wheels"] = body_wheels
-                for wob in body_wheels["objs"][:1]:
-                    elo, ehi = local_bounds(wob, Matrix.Identity(4))
-                    renders[-1]["lo"] = np.minimum(renders[-1]["lo"], elo)
-                    renders[-1]["hi"] = np.maximum(renders[-1]["hi"], ehi)
-            renders.extend(built_trucks)
             piv = game_rules.pivots(a.get("plan") or "rigid", size_tiles, job.get("pivot_ratio"),
                                     job.get("bogies"), job.get("pivots")).get(pname, []) if cat == "vehicle" else []
             if train_bogies:
@@ -2247,11 +1366,6 @@ def main():
         "scale": round(float(s), 6), "scale_ref": ref, "compression": out[0]["compression"],
         "real_dims_m": real.round(3).tolist(), "final_dims_m": out[0]["final_dims_m"], "split": split,
         "width_fix": round(width_fix, 4),
-        "standard": ({"deperspective": float(fitd.get("deperspective") or 0.0),
-                      "uniform_k": float(fitd.get("uniform_k") or 1.0), "parts": std_parts,
-                      "axles": [std_axles.get(i_) for i_ in range(len(std_parts or []))],
-                      "wheels_found": ([int(wfit["matched"]), len(gear_fr)] if wfit else None)}
-                     if cat == "vehicle" and fitd.get("standard") else None),
         "px_per_m": round(k_px, 5), "supersample": ss, "resolution": res_x, "source": src_report,
         "anchor": "ground center of the footprint (a part's own centre), continuous px coords from top-left",
         "align": align_info, "warnings": warnings, "debug": debug, "debug_cams": debug_cams, "renders": out,

@@ -12,6 +12,9 @@ DATA = Path(__file__).resolve().parents[2] / "src" / "data"
 FACINGS = 48  # body.ts FACINGS, 7.5 degrees apart
 DRAWN_WIDTH = 1.3  # body.ts DRAWN_WIDTH: sprites are this much wider across than their length scale
 SIZE_TILES = {1: "small", 2: "medium", 3: "large"}  # body.ts SIZE_LEN
+# The planned size classes, Skiff (0.5) to Juggernaut (6) (locomotive-wheels-bogies-v4.xlsx, "Size classes").
+# body.ts has none of them beyond 1-3 yet, so only assets without a game_frame may use the others, drawn rigid.
+CLASS_SIZE_TILES = (0.5, 1, 2, 3, 4, 5, 6)
 # plans the game honours per size (body.ts vehicleSpec overrides any other to rigid)
 PLANS = {1: ("rigid",), 2: ("rigid", "tender"), 3: ("rigid", "garratt", "meyer")}
 GROUPS = ("terrain", "props", "track", "structures", "rolling", "wagons", "fx", "icons", "people")
@@ -56,6 +59,8 @@ def plan_parts(plan, size_tiles):
     model but not rendered.
     """
     L = size_tiles
+    if plan == "rigid" and L not in PLANS and L in CLASS_SIZE_TILES:
+        return [("body", L, True)]  # a planned size class, not in the game yet
     if plan not in PLANS.get(L, ()):
         raise ValueError(f"plan {plan!r} is not drawn at size {L}; size {L} takes {PLANS.get(L, ())}")
     if plan == "tender":

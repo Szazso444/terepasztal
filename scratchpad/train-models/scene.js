@@ -51,6 +51,22 @@ g.builder.free = true;
 for (let i = 0; i < g.regions.unlocked.length; i++) g.regions.own(i);
 g.world.rebuildFog();
 
+// preview-only locos that are not in src/data yet (?extra=c50,mk48): their pipeline sprites and a
+// stand-in definition from renders/preview/<id>.json (make_preview.py); nothing reaches the game's data
+for (const id of (params.get('extra') ?? '').split(',').filter(Boolean)) {
+  const res = await fetch(`./renders/preview/${id}.json`, { cache: 'no-cache' });
+  check(res.ok && res.headers.get('content-type')?.includes('json'), 'no preview atlas for ' + id);
+  const pv = await res.json();
+  const image = new Image();
+  await new Promise((ok, fail) => {
+    image.onload = ok;
+    image.onerror = () => fail(new Error('preview png missing: ' + id));
+    image.src = `./renders/preview/${id}.png?${Date.now()}`;
+  });
+  g.atlas.register({ image, frames: pv.frames, resolution: pv.resolution });
+  content.locomotives.push(pv.def);
+}
+
 // frames the rendered atlases supply, so they can be taken out for the current look
 const supplied = new Map();
 for (const group of ['rolling', 'wagons']) {

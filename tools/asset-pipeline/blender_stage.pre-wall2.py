@@ -510,70 +510,6 @@ def _outline(pts):
     return lower[:-1] + upper[:-1]
 
 
-def cut_rows(edges, z_min, step=0.05):
-    """A cut across a body, as the wall that closes it: [(z, y_lo, y_hi)] bottom to top from z_min, and
-    the cut's vertices that lie on the shell. The cut's edges fall into connected pieces; the shell is the
-    tall ones (half the cut's height above z_min or more). ([], []) when there is none."""
-    def key(v):
-        return (round(v.co.y, 3), round(v.co.z, 3))
-    parent = {}
-
-    def find(a):
-        while parent[a] != a:
-            parent[a] = parent[parent[a]]
-            a = parent[a]
-        return a
-    segs = []
-    for e in edges:
-        a, b = key(e.verts[0]), key(e.verts[1])
-        for k_ in (a, b):
-            parent.setdefault(k_, k_)
-        ra, rb = find(a), find(b)
-        if ra != rb:
-            parent[ra] = rb
-        segs.append((a, b, e.verts[0], e.verts[1]))
-    if not segs:
-        return [], []
-    z_top_all = max(max(a[1], b[1]) for a, b, _, _ in segs)
-    if z_top_all - z_min < 0.3:
-        return [], []
-    span = {}
-    for a, b, _, _ in segs:
-        r = find(a)
-        lo_, hi_ = span.get(r, (1e9, -1e9))
-        span[r] = (min(lo_, a[1], b[1]), max(hi_, a[1], b[1]))
-    tall = {r for r, (lo_, hi_) in span.items() if hi_ - max(lo_, z_min) >= 0.5 * (z_top_all - z_min)}
-    shell = [sg for sg in segs if find(sg[0]) in tall]
-    if not shell:
-        return [], []
-    z_top = max(max(a[1], b[1]) for a, b, _, _ in shell)
-    n = max(2, int(math.ceil((z_top - z_min) / step)) + 1)
-    zs = [z_min + (z_top - z_min) * j / (n - 1) for j in range(n)]
-    lo, hi = [None] * n, [None] * n
-
-    def put(j, y_):
-        lo[j] = y_ if lo[j] is None else min(lo[j], y_)
-        hi[j] = y_ if hi[j] is None else max(hi[j], y_)
-    dz = (z_top - z_min) / (n - 1)
-    for a, b, _, _ in shell:
-        z0, z1 = sorted((a[1], b[1]))
-        j0 = max(0, int(math.ceil((z0 - z_min) / dz - 1e-9)))
-        j1 = min(n - 1, int(math.floor((z1 - z_min) / dz + 1e-9)))
-        for j in range(j0, j1 + 1):
-            t = 0.5 if abs(b[1] - a[1]) < 1e-9 else (zs[j] - a[1]) / (b[1] - a[1])
-            put(j, a[0] + min(1.0, max(0.0, t)) * (b[0] - a[0]))
-        # a flat run (a roof's crown, a deck) belongs to the row it lies nearest
-        if z1 - z0 < dz:
-            j = min(n - 1, max(0, int(round(((z0 + z1) / 2 - z_min) / dz))))
-            put(j, a[0])
-            put(j, b[0])
-    rows = [(zs[j], lo[j], hi[j]) for j in range(n) if lo[j] is not None and hi[j] - lo[j] > 0.02]
-    verts = []
-    for a, b, va, vb in shell:
-        verts += [va, vb]
-    return (rows if len(rows) >= 2 else []), verts
-
-
 def wall_image(name, samples, box, size=(32, 48)):
     """The picture an end wall wears: per height the colour the skin has there (samples: (y, z, rgb) on
     the cut's outline, sRGB 0..1), left side to right side, a shade darker than the side it continues,
@@ -634,20 +570,27 @@ def clip_mesh(ob, co, no, wall_from=None, paint=None):
     mat_w = running_gear.CAP["mat"]
     if wall_from is not None and mat_w is not None:
         rim = [v for v in res["geom_cut"] if isinstance(v, bmesh.types.BMVert) and v.is_valid]
-        cut_e = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_valid]
-        rows, shell_v = cut_rows(cut_e, wall_from)
-        if rows:
+        hull = _outline([(v.co.y, v.co.z) for v in rim if v.co.z >= wall_from])
+        if len(hull) >= 3:
             uv_l = bm.loops.layers.uv.active
             img_b = running_gear.texture_image(ob) if (paint is not None and uv_l is not None) else None
-            wall_mat = mat_w
-            box = (min(r_[1] for r_ in rows), max(r_[2] for r_ in rows), rows[0][0], rows[-1][0])
-            if img_b is not None and box[1] - box[0] > 0.3 and box[3] - box[2] > 0.3:
-                # the shell's own colours where the cut meets it
+            wall_mat, box = mat_w, None
+            if img_b is not None:
                 px_b = running_gear.image_pixels(img_b)
                 hb, wb = px_b.shape[:2]
+                H_np = np.array(hull)
+                box = (float(H_np[:, 0].min()), float(H_np[:, 0].max()), float(H_np[:, 1].min()), float(H_np[:, 1].max()))
+                E0, E1 = H_np, np.roll(H_np, -1, axis=0)
+
+                def off_outline(y_, z_):
+                    d_ = E1 - E0
+                    t_ = np.clip(((y_ - E0[:, 0]) * d_[:, 0] + (z_ - E0[:, 1]) * d_[:, 1])
+                                 / np.maximum((d_ ** 2).sum(1), 1e-12), 0.0, 1.0)
+                    return float(np.min(np.hypot(y_ - (E0[:, 0] + t_ * d_[:, 0]), z_ - (E0[:, 1] + t_ * d_[:, 1]))))
                 samples = []
-                for v in shell_v:
-                    if v.co.z < wall_from:
+                for v in rim:
+                    # the outer skin only: a reconstruction has surfaces inside, with colours of their own
+                    if v.co.z < wall_from or off_outline(v.co.y, v.co.z) > 0.05:
                         continue
                     for lp in v.link_loops:
                         q = lp[uv_l].uv
@@ -660,18 +603,14 @@ def clip_mesh(ob, co, no, wall_from=None, paint=None):
             xw = co[0] + (0.012 if wall_mat is not mat_w else -0.01) * (1 if no[0] > 0 else -1)
             if ob.data.materials.find(wall_mat.name) < 0:
                 ob.data.materials.append(wall_mat)
-            m_idx = ob.data.materials.find(wall_mat.name)
-            ring = [(bm.verts.new((xw, r_[1], r_[0])), bm.verts.new((xw, r_[2], r_[0]))) for r_ in rows]
-            for (l0, h0), (l1, h1) in zip(ring, ring[1:]):
-                # facing out of the part: counter-clockwise seen from +x where the part ends towards +x
-                quad = [l0, h0, h1, l1] if no[0] > 0 else [l1, h1, h0, l0]
-                f_w = bm.faces.new(quad)
-                f_w.material_index = m_idx
-                f_w.smooth = False
-                if wall_mat is not mat_w and uv_l is not None:
-                    for lp in f_w.loops:
-                        lp[uv_l].uv = ((lp.vert.co.y - box[0]) / (box[1] - box[0]),
-                                       (lp.vert.co.z - box[2]) / (box[3] - box[2]))
+            # facing out of the part (the hull runs counter-clockwise seen from +x)
+            ring = hull if no[0] > 0 else hull[::-1]
+            f_w = bm.faces.new([bm.verts.new((xw, y_, z_)) for y_, z_ in ring])
+            f_w.material_index = ob.data.materials.find(wall_mat.name)
+            f_w.smooth = False
+            if wall_mat is not mat_w and uv_l is not None:
+                for lp in f_w.loops:
+                    lp[uv_l].uv = ((lp.vert.co.y - box[0]) / (box[1] - box[0]), (lp.vert.co.z - box[2]) / (box[3] - box[2]))
     edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_valid and e.is_boundary]
     if edges:
         faces = [f for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0).get("faces", []) if f.is_valid]

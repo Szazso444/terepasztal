@@ -131,14 +131,6 @@ def texture_image(ob):
 _PIXELS = {}
 
 
-def image_pixels(img):
-    """An image's pixels as an array (rows from the bottom, RGBA 0..1), read once."""
-    if img.name not in _PIXELS:
-        w, h = img.size
-        _PIXELS[img.name] = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
-    return _PIXELS[img.name]
-
-
 def faces_colour(ob, pick, min_faces=30):
     """Median colour (sRGB 0..1) of the texture under the faces whose centre pick() accepts: what a
     part of the model looks like (its wheels), for the round ones that take its place. None when
