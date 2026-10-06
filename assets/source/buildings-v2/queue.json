@@ -14,7 +14,7 @@
   "accepted": [
     "station"
   ],
-  "mark": 1791318233394,
+  "mark": 1791329965017,
   "chat": "01a10d7a-313a-7262-a722-27dbdc2ecf8f",
   "counts": {
     "pictures": 548,
@@ -352,9 +352,10 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.8° after 3 attempts",
+      "kept": 2.8,
       "repaint": {
         "by": 3.2,
         "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
@@ -376,12 +377,12 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a0-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
-        "by": 4.5,
-        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 3.6,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -400,8 +401,8 @@
       "age": 1,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a1-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 2.4,
@@ -414,8 +415,8 @@
       "age": 1,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a1-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 2.8,
@@ -428,12 +429,13 @@
       "age": 1,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a1-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.3° after 3 attempts",
+      "kept": 2.3,
       "repaint": {
-        "by": 7.5,
-        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 2.4,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -452,12 +454,12 @@
       "age": 2,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a2-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 3,
       "note": "",
       "repaint": {
-        "by": 7.2,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 2.1,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -476,8 +478,8 @@
       "age": 2,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a2-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 7.9,
@@ -490,8 +492,8 @@
       "age": 3,
       "rot": 0,
       "file": "assets/source/buildings-v2/station/station-a3-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
         "by": 2.7,
@@ -504,9 +506,10 @@
       "age": 3,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a3-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.4° after 3 attempts: an earlier one was the closest",
+      "kept": 3.4,
       "repaint": {
         "by": 3.4,
         "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
@@ -518,12 +521,13 @@
       "age": 3,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.4° after 3 attempts",
+      "kept": 3.4,
       "repaint": {
-        "by": 6.6,
-        "was": "It was painted turned, its lower-left wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 3.7,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -532,8 +536,8 @@
       "age": 3,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a3-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 7.8,
@@ -556,8 +560,8 @@
       "age": 4,
       "rot": 1,
       "file": "assets/source/buildings-v2/station/station-a4-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 8.2,
@@ -570,8 +574,8 @@
       "age": 4,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a4-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 7.6,
@@ -584,12 +588,12 @@
       "age": 4,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a4-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 3,
       "note": "",
       "repaint": {
-        "by": 9,
-        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 4.4,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -618,8 +622,8 @@
       "age": 5,
       "rot": 2,
       "file": "assets/source/buildings-v2/station/station-a5-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 5.9,
@@ -632,12 +636,12 @@
       "age": 5,
       "rot": 3,
       "file": "assets/source/buildings-v2/station/station-a5-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
-        "by": 8.4,
-        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 3.7,
+        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
