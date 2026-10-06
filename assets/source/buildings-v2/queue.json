@@ -14,7 +14,7 @@
   "accepted": [
     "station"
   ],
-  "mark": 1791313742369,
+  "mark": 1791318233394,
   "chat": "01a10d7a-313a-7262-a722-27dbdc2ecf8f",
   "counts": {
     "pictures": 548,
@@ -100,8 +100,12 @@
       "rot": 1,
       "file": "assets/source/buildings-v2/depot/depot-a1-r1.png",
       "status": "generated",
-      "attempts": 2,
-      "note": ""
+      "attempts": 3,
+      "note": "",
+      "repaint": {
+        "by": 2.5,
+        "was": "It was painted turned, its lower-left wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "depot-a1-r2",
@@ -277,7 +281,7 @@
       "rot": 3,
       "file": "assets/source/buildings-v2/depot/depot-a4-r3.png",
       "status": "generated",
-      "attempts": 2,
+      "attempts": 1,
       "note": ""
     },
     {
