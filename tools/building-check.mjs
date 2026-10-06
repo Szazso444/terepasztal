@@ -50,12 +50,14 @@ const LIMIT = {
    * is closed to the ground and the picture fails; less deep than `shallow`, it passes and is
    * said, for the eye. A share `spare` of the stretch may be shallower (a door post, a lamp),
    * and paint thinner than `thin` (and than three pixels), up a column, is a hairline or a
-   * speck that hides no rail. And how wide it is open `deep` or deeper: from `far` of the
-   * portal's width on that is said, and over `through` of it the portal is a hole through the
-   * building, nothing of the hall painted in it, and the picture fails. `through` is known for
-   * the depot alone: a narrow hall behind a wide portal shows a deep wedge of floor, and the
-   * narrow depot's limit waits for its first pictures. Measured on the first depot's pictures:
-   * see docs/art-direction/building-production.md
+   * speck that hides no rail. A closed portal is said to have paint before its wall only where
+   * the wall's foot ran `hang` or more before it: the corner of a true wall is a pixel or two
+   * off. And how wide it is open `deep` or deeper: from `far` of the portal's width on that is
+   * said, and over `through` of it the portal is a hole through the building, nothing of the
+   * hall painted in it, and the picture fails. `through` is known for the depot alone: a
+   * narrow hall behind a wide portal shows a deep wedge of floor, and the narrow depot's limit
+   * waits for its first pictures. Measured on the first depot's pictures: see
+   * docs/art-direction/building-production.md
    */
   ground: {
     window: 0.3,
@@ -63,6 +65,7 @@ const LIMIT = {
     shallow: 0.45,
     spare: 0.25,
     thin: 0.02,
+    hang: 0.05,
     deep: 1,
     far: 0.3,
     through: { t2x2: 0.5 },
@@ -429,7 +432,8 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
           const all = those(ground, (v) => v < limit.shallow);
           // closed only once the foot was taken where the near corner stands: what hides the
           // rails lies before the wall, not in the portal
-          const before = closed.every((i) => ground[i] + hang >= limit.closed);
+          const before =
+            hang >= limit.hang && closed.every((i) => ground[i] + hang >= limit.closed);
           problems.push(
             `the ${named(all)} ${are(all)} not open to the ground (over a stretch ${limit.window} of the portal's width the ground is open ${least(
               all,

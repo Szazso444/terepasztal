@@ -601,6 +601,14 @@ describe('building check', () => {
             expect(share, `aprons ${out} r${rot}`).toBeLessThan(0.12);
           }
       }
+      // and a portal just short of open is told of the portal, not of paint before the wall:
+      // the corner of a true wall is a pixel off, and that pixel is no foot run before it
+      if (rot === 0)
+        told(
+          checkPicture(picture('t2x2', rot, { ground: { deep: 0.295 } }), 't2x2', rot),
+          CLOSED.all,
+          'just short of open',
+        );
       // rails painted through the open ground are painted ground: the game lays its own
       const rails = picture('t2x2', rot, {
         after: (png) => {
