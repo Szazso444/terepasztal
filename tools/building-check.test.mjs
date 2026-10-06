@@ -261,8 +261,11 @@ describe('building check', () => {
     expect(flat.problems[0]).toMatch(/^not the game's view/);
   });
 
-  /** a straight wall on the lower left and a round bay on the lower right: one straight foot */
-  const bay = (slope) => {
+  /**
+   * a straight wall on the lower left and a round bay on the lower right: one straight foot.
+   * With `open`, the ground is open in the middle of the straight wall, as in a portal
+   */
+  const bay = (slope, open = false) => {
     const png = new PNG({ width: 1024, height: 1024 });
     const rise = 250 * slope;
     fillPoly(
@@ -284,6 +287,10 @@ describe('building check', () => {
       arc.filter(([x]) => x >= 511.5),
       [110, 80, 60],
     );
+    if (open) {
+      const at = (t, up) => [262 + 250 * t, 800 - rise + rise * t - up];
+      fillPoly(png, [at(0.3, 0), at(0.7, 0), at(0.7, 80), at(0.3, 80)], [0, 0, 0], 0);
+    }
     return png;
   };
 
@@ -365,32 +372,48 @@ describe('building check', () => {
     expect(checkPicture(picture('t2x2', 0), 't2x2', 0)).toMatchObject({ ok: true, problems: [] });
   });
 
-  const NUM = '-?\\d\\.\\d\\d?';
-  /** what the check asks for in a portal, whatever was wrong with it */
+  const NUM = '\\d\\.\\d\\d';
+  /**
+   * What the check asks for in a portal, whatever was wrong with it: the words that were tried
+   * on the generator and gave the hall's inner wall back, with the rails under it. The agent
+   * copies the tool's words into its prompts and sharpens them, so they say what to paint.
+   */
   const asked = (each) =>
-    `Inside ${each} paint the hall's inner wall, in shadow, and leave out only the floor: the ground inside the portal and before it stays unpainted, about a third of the portal's height up`;
-  const closedTo = (who, each) =>
+    `Inside ${each} paint the hall's inner wall, in shadow\\. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there\\.`;
+  const CAUSE = {
+    // something in the portal, or the portal itself
+    inside:
+      "a floor, a threshold, an apron, rails, a door leaf or a post stands where the game's rails run in, or the portal is too narrow\\.",
+    // paint along the wall's foot, before the wall
+    before:
+      "something is painted before the wall, along its foot, where the game's rails run in: an apron, a step, the leaves of open doors\\. The wall stands where the building's near corner is: keep its foot plain and straight from corner to corner\\.",
+  };
+  const closedTo = (who, each, cause = CAUSE.inside) =>
     new RegExp(
-      `^${who} not open to the ground \\(over a stretch 0\\.3 of the portal's width the ground is open ${NUM} of that width deep, and 0\\.3 is asked\\): a floor, a threshold, an apron, rails, a door leaf or a post stands where the game's rails run in, or the portal is too narrow\\. ${asked(each)}$`,
+      `^${who} not open to the ground \\(over a stretch 0\\.3 of the portal's width the ground is open ${NUM} of that width deep, and 0\\.3 is asked\\): ${cause} ${asked(each)}$`,
     );
   /** what the check says of portals closed to the ground: all of them, one of two, the only one */
   const CLOSED = {
-    all: closedTo('the portals are', 'each portal'),
-    left: closedTo('the left portal is', 'it'),
-    right: closedTo('the right portal is', 'it'),
-    only: closedTo('the portal is', 'it'),
+    all: closedTo('the portals are', 'each doorway'),
+    left: closedTo('the left portal is', 'each doorway'),
+    right: closedTo('the right portal is', 'each doorway'),
+    only: closedTo('the portal is', 'the doorway'),
+    before: closedTo('the portals are', 'each doorway', CAUSE.before),
   };
-  const throughTo = (who, each) =>
+  const throughTo = (who) =>
     new RegExp(
-      `^${who} seen right through \\(over ${NUM} of the portal's width\\): the inside of the hall is not painted\\. ${asked(each)}$`,
+      `^${who} seen right through \\(over ${NUM} of the portal's width\\): the inside of the hall is not painted\\. ${asked('each doorway')}$`,
     );
-  /** and of portals that are holes through the building */
+  /** and of a depot's portals that are holes through the building */
   const THROUGH = {
-    all: throughTo('the portals are', 'each portal'),
-    left: throughTo('the left portal is', 'it'),
-    right: throughTo('the right portal is', 'it'),
-    only: throughTo('the portal is', 'it'),
+    all: throughTo('the portals are'),
+    left: throughTo('the left portal is'),
+    right: throughTo('the right portal is'),
   };
+  const farThrough = (which, share) =>
+    new RegExp(
+      `^one sees far through the ${which} \\(over ${share} of the portal's width\\): see in the look picture that the hall's inner wall shows$`,
+    );
   /** the one thing a failed picture is told */
   const told = (r, words, label = '') => {
     expect(r.ok, label).toBe(false);
@@ -414,6 +437,8 @@ describe('building check', () => {
     ['t1x2', 0],
     ['t1x2', 1],
   ];
+  /** a camera 6.4 degrees too low: every height four fifths of what the game's camera draws */
+  const tooLow = ([x, y]) => [x, 760 + (y - 760) * 0.8];
 
   it("wants the ground inside a depot's portals left open, for the game's rails", () => {
     // the game lays its rails under the picture, through the portals. Four of the first depot's
@@ -428,21 +453,36 @@ describe('building check', () => {
         expect(share, `r${rot}`).toBeCloseTo(0.7, 1);
         expect(share, `r${rot}`).toBe(Math.round(share * 100) / 100);
       }
+      // and how far before the wall its fitted foot ran: nowhere, here
+      expect(open.hang, `r${rot}`).toBeLessThan(0.03);
       const floored = checkPicture(portals('t2x2', rot, wall, { floor: true }), 't2x2', rot);
       told(floored, CLOSED.all, `r${rot}`);
       for (const share of floored.ground) expect(Math.abs(share), `r${rot}`).toBeLessThan(0.03);
-      // it is no fault of the camera: a picture kept with its camera off is held to it as well
-      const low = { closed: true, map: ([x, y]) => [x, 760 + (y - 760) * 0.8] };
-      const kept = checkPicture(picture('t2x2', rot, low), 't2x2', rot, { camera: false });
-      told(kept, CLOSED.all, `r${rot}`);
-      expect(kept.notes[0], `r${rot}`).toMatch(/^camera off by 6\.\d°/);
+      // it is no fault of the camera: a picture kept with its camera off is held to it as well,
+      // and measured as the game will show it, its heights put right
+      const kept = (o) =>
+        checkPicture(picture('t2x2', rot, { ...o, map: tooLow }), 't2x2', rot, { camera: false });
+      told(kept({ closed: true }), CLOSED.all, `r${rot}`);
+      expect(kept({ closed: true }).notes[0], `r${rot}`).toMatch(/^camera off by 6\.\d°/);
+      expect(kept({}).ok, `r${rot}`).toBe(true);
+      for (const share of kept({}).ground) expect(share, `r${rot}`).toBeCloseTo(0.7, 1);
       // each portal has a track of its own: one of them closed fails the picture, and is named
-      for (const n of [0, 1])
+      for (const n of [0, 1]) {
+        const one = [n === 0, n === 1];
         told(
-          checkPicture(portals('t2x2', rot, wall, { floor: [n === 0, n === 1] }), 't2x2', rot),
+          checkPicture(portals('t2x2', rot, wall, { floor: one }), 't2x2', rot),
           CLOSED[sideOf(wall, n)],
           `r${rot} portal ${n}`,
         );
+        // with the other open only a little way in, both are named: a failed picture is made
+        // again, and what would have been a note is told with it
+        const shallow = [n === 0 ? {} : { deep: 0.36 }, n === 1 ? {} : { deep: 0.36 }];
+        told(
+          checkPicture(picture('t2x2', rot, { closed: one, ground: shallow }), 't2x2', rot),
+          CLOSED.all,
+          `r${rot} portal ${n} and a shallow one`,
+        );
+      }
     }
     // a depot with no portals at all fails the same way
     told(checkPicture(picture('t2x2', 0, { closed: true }), 't2x2', 0), CLOSED.all);
@@ -466,15 +506,17 @@ describe('building check', () => {
     expect(plain.ok).toBe(true);
     expect(plain).not.toHaveProperty('ground');
     expect(plain).not.toHaveProperty('through');
+    expect(plain).not.toHaveProperty('hang');
     // where the portals are in the wrong wall, that is the one thing said
     expect(checkPicture(portals('t2x2', 0, 0, { floor: true }), 't2x2', 0).problems).toEqual([
       'the portals are in the lower-left wall; they belong in the lower-right wall, where the block-out has them',
     ]);
-  });
+  }, 30000);
 
   it("measures a portal's open ground by the portal's own width: how deep, how wide", () => {
     // the limits, on both depots and both walls. Measured on the first depot's pictures: those
-    // whose rails did not show were open 0 to 0.18 of a portal's width, the others 0.48 and more
+    // whose rails did not show were open 0.18 of a portal's width at most, the others 0.50 and
+    // more
     for (const [fpId, rot] of DEPOTS) {
       const seen = (ground) => checkPicture(picture(fpId, rot, { ground }), fpId, rot);
       const [said, which] = fpId === 't2x2' ? [CLOSED.all, 'portals'] : [CLOSED.only, 'portal'];
@@ -509,8 +551,10 @@ describe('building check', () => {
         [-0.3, 0.2],
       ])
         expect(seen({ from, to }), `${at} ${from}`).toMatchObject(FINE);
-      // a threshold along the foot of the wall: the open ground behind it does not count
+      // a threshold along the foot of the wall: the open ground behind it does not count,
+      // however low the threshold is, so long as it is more than a hairline
       told(seen({ lift: 0.08 }), said, at);
+      told(seen({ lift: 0.045 }), said, at);
       // in a real hall the open ground is a wedge: the hall's inner wall stands on the floor
       // from the near door post inwards, so the ground is as deep as it is far from that post
       const hall = seen({ from: 0, to: 1, deep: 1, wedge: true });
@@ -519,7 +563,7 @@ describe('building check', () => {
       // so a portal half as wide as the block-out's is too narrow for the track
       told(seen({ from: 0.25, to: 0.75, deep: 0.5, wedge: true }), said, at);
     }
-  });
+  }, 30000);
 
   it('takes the lowest thing painted in a column: an apron, a rail, a gap in the building', () => {
     const fp = FOOTPRINTS.t2x2;
@@ -538,13 +582,24 @@ describe('building check', () => {
       // an apron before a portal hides the rails before they reach it
       const apron = picture('t2x2', rot, { after: (png) => slab(png, -0.5, 0.12) });
       told(checkPicture(apron, 't2x2', rot), first, `apron r${rot}`);
-      // a deep apron before each portal: its front edges run in one line, further than the
-      // wall's own foot shows, but the wall stands where the building's near corner is
-      for (const out of [0.15, 0.25, 0.4]) {
-        const aprons = picture('t2x2', rot, {
-          after: (png) => [-0.5, 0.5].forEach((at) => slab(png, at, out)),
-        });
-        told(checkPicture(aprons, 't2x2', rot), CLOSED.all, `aprons ${out} r${rot}`);
+      // an apron before each portal: their front edges run in one line, and the wall's foot,
+      // fitted to the lowest pixels, runs along it, so that the door posts stand above the
+      // "foot" like open ground. But the wall stands where the building's near corner is
+      for (const out of [0.2, 0.3, 0.4]) {
+        const aprons = checkPicture(
+          picture('t2x2', rot, { after: (png) => [-0.5, 0.5].forEach((at) => slab(png, at, out)) }),
+          't2x2',
+          rot,
+        );
+        told(aprons, CLOSED.before, `aprons ${out} r${rot}`);
+        // the foot is raised by as much as it ran before the wall, a few pixels short: an
+        // apron 0.2 tile out lies 0.4 of the portal's width before the wall in the picture
+        if (out === 0.2) expect(aprons.hang, `aprons ${out} r${rot}`).toBeCloseTo(0.32, 1);
+        if (out === 0.2)
+          for (const share of aprons.ground) {
+            expect(share, `aprons ${out} r${rot}`).toBeGreaterThan(0.04);
+            expect(share, `aprons ${out} r${rot}`).toBeLessThan(0.12);
+          }
       }
       // rails painted through the open ground are painted ground: the game lays its own
       const rails = picture('t2x2', rot, {
@@ -568,8 +623,35 @@ describe('building check', () => {
         },
       });
       told(checkPicture(gap, 't2x2', rot), CLOSED.all, `gap r${rot}`);
+      // a round turret on the near corner stands a little before both walls: the other wall's
+      // foot leaves its line there, but no foot hangs, and the portals read as they are
+      const near = project(fp, b.x1, b.y1, 0);
+      const turret = picture('t2x2', rot, {
+        after: (png) => {
+          const r = 0.1 * 32 * fp.scale;
+          const ring = (cy) =>
+            Array.from({ length: 40 }, (_, i) => [
+              near[0] + r * Math.cos((i / 40) * 2 * Math.PI),
+              cy + (r / 2) * Math.sin((i / 40) * 2 * Math.PI),
+            ]);
+          fillPoly(png, ring(near[1]), [200, 190, 160]);
+          fillPoly(
+            png,
+            [
+              [near[0] - r, near[1]],
+              [near[0] + r, near[1]],
+              [near[0] + r, near[1] - 200],
+              [near[0] - r, near[1] - 200],
+            ],
+            [200, 190, 160],
+          );
+        },
+      });
+      const turreted = checkPicture(turret, 't2x2', rot);
+      expect(turreted, `turret r${rot}`).toMatchObject({ ok: true, problems: [] });
+      for (const share of turreted.ground) expect(share, `turret r${rot}`).toBeCloseTo(0.7, 1);
     }
-  });
+  }, 30000);
 
   it('does not take a hairline or a speck for a floor', () => {
     // paint a pixel or two thick hides no rail: a line along the foot of the wall across the
@@ -582,28 +664,30 @@ describe('building check', () => {
         const o = (Math.round(y) * png.width + Math.round(x)) * 4;
         png.data.set([90, 80, 70, 255], o);
       };
-      const hairline = picture(fpId, rot, {
-        after: (png) => {
-          for (const o of sides) {
-            const [a, c] = o.pts.map(([x, y]) => [x, y + down]);
-            const [x0, x1] = [Math.min(a[0], c[0]), Math.max(a[0], c[0])];
-            for (let x = x0; x <= x1; x++)
-              dot(png, x, a[1] + ((c[1] - a[1]) * (x - a[0])) / (c[0] - a[0]) - 1);
-          }
-        },
-      });
-      expect(checkPicture(hairline, fpId, rot), `hairline ${fpId} r${rot}`).toMatchObject(FINE);
+      const footAt = (a, c, x) => a[1] + ((c[1] - a[1]) * (x - a[0])) / (c[0] - a[0]);
+      for (const thick of [1, 2]) {
+        const hairline = picture(fpId, rot, {
+          after: (png) => {
+            for (const o of sides) {
+              const [a, c] = o.pts.map(([x, y]) => [x, y + down]);
+              const [x0, x1] = [Math.min(a[0], c[0]), Math.max(a[0], c[0])];
+              for (let x = x0; x <= x1; x++)
+                for (let up = 1; up <= thick; up++) dot(png, x, footAt(a, c, x) - up);
+            }
+          },
+        });
+        expect(
+          checkPicture(hairline, fpId, rot),
+          `hairline ${thick} px ${fpId} r${rot}`,
+        ).toMatchObject(FINE);
+      }
       const specks = picture(fpId, rot, {
         after: (png) => {
           for (const o of sides) {
             const [a, c] = o.pts.map(([x, y]) => [x, y + down]);
             const [x0, x1] = [Math.min(a[0], c[0]), Math.max(a[0], c[0])];
             for (let x = x0 + 3; x <= x1; x += 3)
-              dot(
-                png,
-                x,
-                a[1] + ((c[1] - a[1]) * (x - a[0])) / (c[0] - a[0]) - 4 - (Math.round(x) % 4) * 6,
-              );
+              dot(png, x, footAt(a, c, x) - 4 - (Math.round(x) % 4) * 6);
           }
         },
       });
@@ -611,25 +695,22 @@ describe('building check', () => {
     }
   });
 
-  it('refuses a portal that is a hole right through the building', () => {
+  it('refuses a portal of the depot that is a hole right through the building', () => {
     // told to leave the ground "transparent from the foot of the wall upwards", the generator
     // emptied the whole portal: the rails showed, and the hall's inner walls were gone. The
     // user asked for those two pictures again. A portal is such a hole when the ground in it
     // is open a full portal's width deep over half the portal's width
-    for (const [fpId, rot] of DEPOTS) {
-      const seen = (ground) => checkPicture(picture(fpId, rot, { ground }), fpId, rot);
-      const [said, which] = fpId === 't2x2' ? [THROUGH.all, 'portals'] : [THROUGH.only, 'portal'];
-      const at = `${fpId} r${rot}`;
-      const far = new RegExp(
-        `^one sees far through the ${which} \\(over 0\\.[34]\\d? of the portal's width\\): see in the look picture that the hall's inner wall shows$`,
-      );
+    for (const rot of [0, 1]) {
+      const seen = (ground, o = {}) =>
+        checkPicture(picture('t2x2', rot, { ground, ...o }), 't2x2', rot, o.check);
+      const at = `t2x2 r${rot}`;
       const hole = seen({ deep: 1.6 });
-      told(hole, said, at);
+      told(hole, THROUGH.all, at);
       // how wide each portal is seen through, as a share of its width: recorded
       for (const share of hole.through) expect(share, at).toBeCloseTo(0.7, 1);
       for (const share of seen({}).through) expect(share, at).toBe(0);
       // the limits: seen through over more than half the portal's width it fails
-      told(seen({ from: 0.23, to: 0.77, deep: 1.6 }), said, at);
+      told(seen({ from: 0.23, to: 0.77, deep: 1.6 }), THROUGH.all, at);
       // over less it passes, and is said for the eye from three tenths on
       for (const [from, to] of [
         [0.27, 0.73],
@@ -638,29 +719,69 @@ describe('building check', () => {
         const r = seen({ from, to, deep: 1.6 });
         expect(r.ok, `${at} ${from}`).toBe(true);
         expect(r.notes, `${at} ${from}`).toHaveLength(1);
-        expect(r.notes[0], `${at} ${from}`).toMatch(far);
+        expect(r.notes[0], `${at} ${from}`).toMatch(farThrough('portals', '0\\.[34]\\d'));
       }
       expect(seen({ from: 0.37, to: 0.63, deep: 1.6 }), at).toMatchObject(FINE);
       // and a full portal's width deep: a little less is open ground, deep as it is
       expect(seen({ deep: 0.95 }), at).toMatchObject(FINE);
-      told(seen({ deep: 1.05 }), said, at);
+      told(seen({ deep: 1.05 }), THROUGH.all, at);
+      // as the game will show it: a picture from too low a camera has its heights put right
+      told(seen({ deep: 1.2 }, { map: tooLow, check: { camera: false } }), THROUGH.all, at);
       // a real hall's wedge of open ground is that deep at its far end only
       expect(seen({ from: 0, to: 1, deep: 1.2, wedge: true }), at).toMatchObject(FINE);
     }
-    // one of two is named
     for (const [rot, wall] of END_WALLS)
-      for (const n of [0, 1])
+      for (const n of [0, 1]) {
+        const one = (other) => [n === 0 ? { deep: 1.6 } : other, n === 1 ? { deep: 1.6 } : other];
+        // one of two is named
         told(
-          checkPicture(
-            picture('t2x2', rot, {
-              ground: [n === 0 ? { deep: 1.6 } : {}, n === 1 ? { deep: 1.6 } : {}],
-            }),
-            't2x2',
-            rot,
-          ),
+          checkPicture(picture('t2x2', rot, { ground: one({}) }), 't2x2', rot),
           THROUGH[sideOf(wall, n)],
           `r${rot} portal ${n}`,
         );
+        // with the other seen far through, both are: a failed picture is told all of it
+        told(
+          checkPicture(
+            picture('t2x2', rot, { ground: one({ from: 0.3, to: 0.7, deep: 1.6 }) }),
+            't2x2',
+            rot,
+          ),
+          THROUGH.all,
+          `r${rot} portal ${n} and one seen far through`,
+        );
+      }
+  }, 30000);
+
+  it("only says so of the narrow depot's portal, until its pictures have been measured", () => {
+    // the limit was found on the depot's pictures. A narrow hall behind a wide portal shows a
+    // deep wedge of floor that would read as a hole, so there the tool leaves it to the eye
+    for (const rot of [0, 1, 2, 3]) {
+      const hole = checkPicture(picture('t1x2', rot, { ground: { deep: 1.6 } }), 't1x2', rot);
+      expect(hole.ok, `r${rot}`).toBe(true);
+      expect(hole.problems, `r${rot}`).toEqual([]);
+      expect(hole.notes, `r${rot}`).toHaveLength(1);
+      expect(hole.notes[0], `r${rot}`).toMatch(farThrough('portal', '0\\.(6[89]|7\\d)'));
+      expect(hole.through[0], `r${rot}`).toBeCloseTo(0.7, 1);
+      // under three tenths of its width nothing is said, as for the depot
+      const slit = { from: 0.37, to: 0.63, deep: 1.6 };
+      expect(
+        checkPicture(picture('t1x2', rot, { ground: slit }), 't1x2', rot),
+        `r${rot}`,
+      ).toMatchObject(FINE);
+    }
+  });
+
+  it('hangs no foot from a wall that is round', () => {
+    // the narrow depot with its portal in the straight lower-left wall, and a round bay for its
+    // other wall. A round wall's lowest pixels leave any line long before the corner: that is
+    // no foot run before its wall, and the open portal reads as it is
+    for (const rot of [1, 3]) {
+      const r = checkPicture(bay(0.5, true), 't1x2', rot);
+      expect(r.fit.sure, `r${rot}`).toEqual([true, false]);
+      expect(r.problems, `r${rot}`).toEqual([]);
+      expect(r.ground[0], `r${rot}`).toBeGreaterThan(0.5);
+      expect(r.hang, `r${rot}`).toBe(0);
+    }
   });
 
   it('leaves the portal of a wall without a straight foot to the eye', () => {

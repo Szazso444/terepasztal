@@ -9,6 +9,7 @@ const prompt = readFileSync(`${ROOT}/PROMPT.md`, 'utf8');
 const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts;
 const ignored = readFileSync(`${ROOT}/.gitignore`, 'utf8');
 const production = readFileSync('docs/art-direction/building-production.md', 'utf8');
+const families = JSON.parse(readFileSync(`${ROOT}/families.json`, 'utf8'));
 
 describe('the guide for the artist agent', () => {
   it('names every building command, and package.json has them', () => {
@@ -107,7 +108,17 @@ describe('the guide for the artist agent', () => {
     // and only the ground: the inside of the hall shows in a portal, which is no hole
     expect(guide).toContain('seen right through');
     expect(guide).toMatch(/inner\s+wall,\s+in\s+shadow/);
-    expect(guide).toMatch(/a\s+third\s+of\s+the\s+portal's\s+height/);
+    // what is asked for in a portal is said in one way everywhere, the way that was tried on
+    // the generator: the agent copies the tools' words into its prompts, and sharpens them
+    const tried =
+      "Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there.";
+    const oneLine = (text) => text.replace(/\s+/g, ' ');
+    expect(oneLine(guide)).toContain(tried);
+    expect(readFileSync('tools/building-check.mjs', 'utf8')).toContain(tried);
+    for (const family of ['depot', 'depot_narrow'])
+      expect(families.families[family].keep, family).toContain(tried);
+    // of the narrow depot's portal a hole is only said, until its pictures have been measured
+    expect(guide).toMatch(/narrow\s+depot's\s+portal\s+this\s+is\s+only\s+said/);
     // the words that emptied whole portals are named as what not to ask for, and nowhere asked
     expect(guide).toMatch(/Do\s+not\s+ask\s+for\s+a\s+portal\s+that\s+is\s+transparent/);
     expect(guide).not.toMatch(/transparent\s+from\s+the\s+foot\s+of\s+the\s+wall/);
@@ -117,7 +128,7 @@ describe('the guide for the artist agent', () => {
     expect(guide).toMatch(/1\.3\s+times\s+its\s+footprint/);
     expect(production).toMatch(/open to the\s+ground/);
     expect(production).toMatch(/share\s+of\s+the\s+portal's\s+width/);
-    expect(production).toMatch(/`ground`,\s+`through`/);
+    expect(production).toMatch(/`ground`,\s+`through`,\s+`hang`/);
     expect(production).toMatch(/1\.3\s+times\s+its\s+footprint/);
     // a recorded picture found faulty is taken back, never put back with everything built on it
     expect(guide).toContain('set <id> pending');

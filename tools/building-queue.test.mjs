@@ -247,12 +247,19 @@ describe('building queue', () => {
     // and the hall's inner walls were gone: what is painted there is asked for by name
     for (const id of ['depot-a0-r0', 'depot-a3-r2', 'depot_narrow-a0-r1']) {
       const prompt = about(id).prompt;
-      expect(prompt, id).toMatch(/the inside of the hall shows, its inner wall in shadow/);
-      expect(prompt, id).toMatch(/only the floor is left out/);
-      expect(prompt, id).toMatch(/the game lays its own rails through/);
+      // in the words that were tried on the generator, and gave the inner walls back
+      expect(prompt, id).toMatch(
+        /the inside of the hall shows through it: inside (each|the) doorway paint the hall's inner wall, in shadow\./,
+      );
+      expect(prompt, id).toContain(
+        "Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there.",
+      );
+      expect(prompt, id).toContain(
+        'Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails.',
+      );
       expect(prompt, id).not.toMatch(/from the foot of the wall upwards/);
     }
-    expect(about('station-a0-r0').prompt).not.toMatch(/lays its own rails through/);
+    expect(about('station-a0-r0').prompt).not.toMatch(/doorway/);
   });
 
   it('says in every view of a depot which wall its portals are in', () => {

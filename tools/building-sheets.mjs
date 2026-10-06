@@ -47,8 +47,9 @@ export const SHEET = {
 /**
  * The game's track under a depot, in tiles from its middle line: where its rails run, and how
  * far it reaches to either side. The depot stands on regular track, which shows as wide as its
- * ballast; the narrow depot on narrow gauge, which has none and shows as wide as its sleepers
- * (src/art/trackIllustrated.ts; a test holds these to it).
+ * ballast (a high-speed line's is a little wider); the narrow depot on narrow gauge, which has
+ * none and shows as wide as its sleepers (src/art/trackIllustrated.ts; a test holds these to
+ * it).
  */
 export const TRACK = {
   t2x2: { rail: 0.16, bed: 0.29 },
