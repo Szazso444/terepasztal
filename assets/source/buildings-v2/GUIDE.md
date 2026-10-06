@@ -200,10 +200,11 @@ on its footprint as you painted it, with the footprint's edge in white, the line
 should stand on in pink, and in yellow the frames of the guide's openings: the front door, and a
 depot's portals. The frames show which wall the door and the portals belong to; where there is no
 door frame (`r1`, `r2`), no front door may show. Under a depot the game's rails are drawn in as
-well, through the portals: they must be seen to run into each portal, as they will in the game.
-A depot is laid out as large as the game draws it, 1.3 times its footprint: its walls stand on
-the pink line, outside the white edge, and the rails keep the game's size, so they lie where the
-game will have them.
+well, on their bed, at the game's own size, through the portals: the track must be seen to run
+into each portal, as it will in the game. The game's track is nearly as wide as a portal, so a
+rail may pass close to a door post, or under one: that is no fault. A family the game draws
+larger than its footprint is laid out that large (the depot, 1.3 times its footprint): its walls
+stand on the pink line, outside the white edge.
 That picture is the one to judge: you need not
 look at the raw result at all, and do not judge its background by eye. A viewer that ignores
 transparency shows the colour stored under the transparent pixels as a brown or green glow round
@@ -213,9 +214,11 @@ say: `set` refuses a picture with a shadow or a glow, and a picture it accepts h
 Then answer:
 
 - Is the front on the wall the prompt's View line names? In `r1` and `r2` no front door may show.
-- For a depot: are the portals in the wall the guide shows them in, and open down to the ground,
-  with no floor, threshold or apron painted in them or before them? The rails drawn into the look
-  picture must run into each portal, not stop at the wall.
+- For a depot: are the portals in the wall the guide shows them in? Does the inside of the hall
+  show through each of them, its inner wall in shadow, with the ground left open under it: no
+  floor, threshold or apron in the portal or before it? The track drawn into the look picture
+  must run into each portal, not stop at the wall; and a portal must not be a hole, with only
+  grass and track to be seen through it up to its lintel.
 - In `r1`, `r2`, `r3`: is it the same building as the `r0` reference (same walls, roof, colours,
   details), turned, and not a mirror image of it?
 - In a later age: is it still recognisably the same kind of building, with everything on the
@@ -246,13 +249,20 @@ wall has the portals and which is the plain back or the front, as the prompt's V
 them. The tool cannot tell a front from a back, so that is still yours to see.
 
 The game lays its own rails under a depot, through the portals, so the ground inside them stays
-empty. The tool measures how deep the ground is open inside each portal; whatever is painted
-lowest there counts: a floor, a threshold, an apron before the portal, rails. A picture whose
-portal is closed is refused with `not open to the ground` (said of the left or the right portal
-when it is one of two): make it again, saying in the edit that the ground inside each portal is
-transparent from the foot of the wall upwards, at least a third as deep as the portal is wide,
-with no floor, threshold, apron or rails painted there. A portal open only a little way in passes
-with a note: see in the look picture whether its rails run in.
+empty; and only the ground: through each portal the inside of the hall shows, its inner wall in
+shadow. The tool measures both, by the portal's own width. Whatever is painted lowest in a
+portal counts as ground painted over: a floor, a threshold, an apron before the portal, rails,
+a door leaf or a post in the way. A portal whose ground is open less than 0.3 of its width deep
+is refused with `not open to the ground`. A portal open a full width deep over half its width
+is a hole, with nothing of the hall in it, and is refused with `seen right through`. Either is
+said of the left or the right portal when it is one of two.
+
+Make such a picture again, and ask for what is wanted in the tool's own words: inside each
+portal the hall's inner wall, in shadow, and only the floor left out, the ground about a third
+of the portal's height up. Do not ask for a portal that is transparent, empty or open "from the
+foot upwards": told only what to leave out, the generator leaves the hall out as well, and the
+portal comes back a hole. A portal open only a little way in, or seen far through, passes with
+a note: judge it in the look picture.
 
 **The camera.** The tool measures every picture's camera from the feet of its two visible walls,
 and refuses a picture whose camera is more than 2° from the guide's: seen from too low or too

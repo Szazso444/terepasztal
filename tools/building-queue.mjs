@@ -41,7 +41,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { AGES, FOOTPRINTS, ROOT, loadInventory, pictureFile, pictures } from './building-kit.mjs';
-import { guideFile } from './building-guides.mjs';
+import { guideFile, openingsOf } from './building-guides.mjs';
 import { checkFile, pictureOf, resultLine, writeReport } from './building-check.mjs';
 import { FIT, fitPicture, normalisePicture } from './building-fit.mjs';
 
@@ -176,6 +176,20 @@ function referencesFor(f, age, rot, families) {
 }
 
 /**
+ * Which wall a depot's portals are in, in words for the prompt; nothing for a building without
+ * portals. A view painted from the front view copies the front view's portal wall unless the
+ * wall is named.
+ */
+function portalWords(fpId, rot) {
+  const portals = openingsOf(fpId, rot).filter((o) => o.kind === 'side');
+  if (!portals.length) return '';
+  const wall = ['LOWER-LEFT', 'LOWER-RIGHT'][portals[0].wall];
+  return portals.length > 1
+    ? ` The two train portals are in the ${wall} wall, where the block-out has its two large dark openings.`
+    : ` The train portal is in the ${wall} wall, where the block-out has its large dark opening.`;
+}
+
+/**
  * Everything needed to make one picture: where to save it, what to edit, what to attach, the
  * prompt. With `repaint` the picture is one that is painted again because its camera was off: it
  * is made from its own earlier self, and `note` says what was wrong with that.
@@ -203,7 +217,7 @@ export function describeEntry(id, inventory, families, { repaint = false, note =
     `This building in this age: ${d.ages[a.tag]}`,
     `Keep in every age: ${d.keep}.`,
     `Front: ${d.front}.`,
-    `View r${rot}: ${families.views[`r${rot}`]}`,
+    `View r${rot}: ${families.views[`r${rot}`]}${portalWords(f.footprint, rot)}`,
     ref.text,
     ...(repaint && note ? [`What was wrong with it: ${note}`] : []),
   ].join('\n\n');

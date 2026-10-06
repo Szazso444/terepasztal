@@ -44,6 +44,17 @@ export const SHEET = {
   rail: [58, 54, 50],
 };
 
+/**
+ * The game's track under a depot, in tiles from its middle line: where its rails run, and how
+ * far it reaches to either side. The depot stands on regular track, which shows as wide as its
+ * ballast; the narrow depot on narrow gauge, which has none and shows as wide as its sleepers
+ * (src/art/trackIllustrated.ts; a test holds these to it).
+ */
+export const TRACK = {
+  t2x2: { rail: 0.16, bed: 0.29 },
+  t1x2: { rail: 0.08, bed: 0.14 },
+};
+
 export function sheetFile(family) {
   return `${ROOT}/review/${family}.png`;
 }
@@ -179,9 +190,10 @@ function drawTracks(look, fp, fpId, rot, at) {
         rgb,
       );
     };
-    strip(0, 0.17, SHEET.bed);
-    strip(-0.11, 0.02, SHEET.rail);
-    strip(0.11, 0.02, SHEET.rail);
+    const track = TRACK[fpId];
+    strip(0, track.bed, SHEET.bed);
+    strip(-track.rail, 0.02, SHEET.rail);
+    strip(track.rail, 0.02, SHEET.rail);
   }
 }
 

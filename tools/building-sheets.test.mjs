@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 import {
   FOOTPRINTS,
@@ -12,6 +13,7 @@ import { blockOf, boxFaces, fillPoly, openingsOf } from './building-guides.mjs';
 import { buildQueue, loadFamilies, progress, setStatus } from './building-queue.mjs';
 import {
   SHEET,
+  TRACK,
   anglesFile,
   drawLook,
   drawSheet,
@@ -217,6 +219,50 @@ describe('building review sheets', () => {
       expect(seen(along), `narrow r${rot}`).toEqual(SHEET.bed);
       expect(seen(along.map((v) => -v)), `narrow r${rot}`).toEqual(SHEET.bed);
       expect(seen(across), `narrow r${rot}`).toEqual(SHEET.grass);
+    }
+  });
+
+  it("draws the game's own track: its gauge and its bed, for each depot", () => {
+    // the look had its rails 0.22 tile apart where the game's are 0.32: on a seventh of the
+    // first depot's portals it showed both rails clear of a door post the game runs one under
+    const game = readFileSync('src/art/trackIllustrated.ts', 'utf8');
+    const of = (cls) => {
+      const m = new RegExp(
+        `${cls}: \\{\\s*rail: ([\\d.]+),\\s*sleeper: ([\\d.]+),\\s*step: [\\d.]+,\\s*shoulder: ([\\d.]+),\\s*bed: (true|false)`,
+      ).exec(game);
+      return {
+        rail: Number(m[1]),
+        sleeper: Number(m[2]),
+        shoulder: Number(m[3]),
+        ballast: m[4] === 'true',
+      };
+    };
+    // the depot stands on regular track, which shows as wide as its ballast; the narrow depot on
+    // narrow gauge, which has none and shows as wide as its sleepers
+    const regular = of('regular'),
+      narrow = of('narrow');
+    expect(regular.ballast).toBe(true);
+    expect(TRACK.t2x2).toEqual({ rail: regular.rail, bed: regular.shoulder });
+    expect(narrow.ballast).toBe(false);
+    expect(TRACK.t1x2).toEqual({ rail: narrow.rail, bed: narrow.sleeper });
+    // and so it is drawn: across the track before the portal wall, from its middle outwards
+    for (const [fpId, lanes] of [
+      ['t2x2', [-0.5, 0.5]],
+      ['t1x2', [0]],
+    ]) {
+      const fp = FOOTPRINTS[fpId];
+      // r1: the portals are in the lower-left wall, and the track runs out of them along y
+      const look = drawLook(painted(fpId, 1), fpId, 1);
+      const seen = (x) => at(look, ...project(fp, x, 1.5).map((v) => v / 2));
+      const { rail, bed } = TRACK[fpId];
+      for (const lane of lanes) {
+        expect(seen(lane), `${fpId} ${lane}`).toEqual(SHEET.bed);
+        for (const side of [-1, 1]) {
+          expect(seen(lane + side * rail), `${fpId} ${lane}`).toEqual(SHEET.rail);
+          expect(seen(lane + side * (rail + 0.04)), `${fpId} ${lane}`).toEqual(SHEET.bed);
+          expect(seen(lane + side * (bed + 0.05)), `${fpId} ${lane}`).toEqual(SHEET.grass);
+        }
+      }
     }
   });
 

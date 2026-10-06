@@ -97,17 +97,31 @@ and shows it in a running build, as drawn or straightened.
   family with more than a quarter of its pictures kept further off, rejected or never made stops
   the work (`STOP`).
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
-  them on the other side, and in the game the rails would run into a wall. And open to the
-  ground: the game lays its rails under the picture, through the portals, so a floor or an apron
-  painted there hides them (four of the first depot's 24 pictures had one). The check takes the
-  lowest thing painted in each column of the portal wall and measures how deep the ground is
-  open above the wall's foot, over a stretch 0.3 of the portal wide, as a share of the portal's
-  width: under 0.3 the picture is refused, under 0.45 it passes with a note, and the shares are
-  kept in `report.json` (`ground`). The first depot's pictures whose rails did not show measured
-  0 to 0.18, the others 0.52 and more. The foot is the outermost line of the wall, so a floor
-  that ends behind open door leaves or deep plinths reads deeper than it is: the eye settles
-  that on the look picture, which lays a depot out 1.3 times its footprint, as the game draws
-  it, with the game's rails drawn in at their own size.
+  them on the other side, and in the game the rails would run into a wall. Every prompt of a
+  depot names the wall: a view painted from the front view copied the front view's wall at the
+  first attempt, two times in three, until it did.
+- The ground in a depot's portals, open to the ground: the game lays its rails under the
+  picture, through the portals, so a floor or an apron painted there hides them (four of the
+  first depot's 24 pictures had one). The check takes the lowest thing painted in each column
+  of the portal wall, a hairline or a speck apart, and measures how deep the ground is open
+  above the wall's foot, over the deepest stretch 0.3 of the portal wide, as a share of the
+  portal's width: under 0.3 the picture is refused, under 0.45 it passes with a note. The first
+  depot's pictures whose rails did not show measured 0.18 at most, the others 0.51 and more.
+  The foot is taken through the building's near corner, where the other wall's foot ends:
+  fitted to the lowest pixels alone it runs before the wall wherever paint lies in a line there
+  (an apron before each portal, the tips of open door leaves).
+- The inside of the hall in a depot's portals: told that the ground is "transparent from the
+  foot of the wall upwards", the generator emptied whole portals, and the user asked for the
+  hall's inner walls back. A portal open a full width deep over half its width or more is a
+  hole and is refused; from 0.3 of its width on it passes with a note. The two pictures the
+  user sent back measured 0.58 to 0.61, a third that was not sent back 0.39, the others 0.2 at
+  most. So the Keep lines and the tool's messages say what is painted in a portal (the hall's
+  inner wall, in shadow) and what is left out (only the floor): the agent copies the tool's
+  words into its prompts, and sharpens them.
+- Both shares are kept in `report.json` (`ground`, `through`). The look picture is where the
+  eye settles what the numbers leave open: it lays a depot out 1.3 times its footprint, as the
+  game draws it, with the game's track drawn in at its own gauge and width (the narrow depot's
+  on narrow gauge).
 - Which picture is taken: the agent names the file its image tool reported. `take` takes only a
   picture made after the last one was taken, recorded or given up (one mark in time in
   `queue.json`, moved forward only), and no picture of the image tool whose bytes are in the

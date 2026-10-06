@@ -104,11 +104,20 @@ describe('the guide for the artist agent', () => {
     // the ground inside a depot's portals stays empty: the game's rails run through them
     expect(guide).toContain('not open to the ground');
     expect(guide).toMatch(/rails\s+are\s+drawn\s+in/);
-    expect(guide).toMatch(/a\s+third\s+as\s+deep/);
+    // and only the ground: the inside of the hall shows in a portal, which is no hole
+    expect(guide).toContain('seen right through');
+    expect(guide).toMatch(/inner\s+wall,\s+in\s+shadow/);
+    expect(guide).toMatch(/a\s+third\s+of\s+the\s+portal's\s+height/);
+    // the words that emptied whole portals are named as what not to ask for, and nowhere asked
+    expect(guide).toMatch(/Do\s+not\s+ask\s+for\s+a\s+portal\s+that\s+is\s+transparent/);
+    expect(guide).not.toMatch(/transparent\s+from\s+the\s+foot\s+of\s+the\s+wall/);
+    // the game's track is nearly as wide as a portal: a rail at a door post is no fault
+    expect(guide).toMatch(/rail\s+may\s+pass\s+close\s+to\s+a\s+door\s+post/);
     // a depot is laid out as large as the game draws it, so the rails are where the game's are
     expect(guide).toMatch(/1\.3\s+times\s+its\s+footprint/);
     expect(production).toMatch(/open to the\s+ground/);
     expect(production).toMatch(/share\s+of\s+the\s+portal's\s+width/);
+    expect(production).toMatch(/`ground`,\s+`through`/);
     expect(production).toMatch(/1\.3\s+times\s+its\s+footprint/);
     // a recorded picture found faulty is taken back, never put back with everything built on it
     expect(guide).toContain('set <id> pending');
