@@ -24,6 +24,11 @@ export const DEFAULT_PIVOT = 0.7;
 /** a three-tile body keeps its bogies nearer the middle: less overhang swing on a curve */
 export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
+/**
+ * A truck with a longer half wheelbase than this (tiles) stands on the rail as a chord, not as a
+ * tangent: an engine unit under a boiler, four coupled axles and a pilot truck in one frame.
+ */
+export const LONG_TRUCK = 0.2;
 
 /** `rear`: the rear half of a hinged body (its front half is `body`) */
 export type PartKind =
@@ -58,6 +63,8 @@ export interface SegmentSpec {
   hidden?: boolean[];
   /** which of the part's trucks (its index in the gear table) each pivot is; -1: none, a fixed axle */
   truck?: number[];
+  /** half the wheelbase of each pivot's truck, tiles (0: unknown or a single axle) */
+  half?: number[];
   /**
    * Axles fixed in the frame (coupled drivers, a rigid tender's axles, small stock's baked axles):
    * distance behind the segment's front, front to rear. The frame stands on the rail at the first
@@ -346,6 +353,34 @@ export function poseSegment(
   const kinds = seg.kinds ? (back ? [...seg.kinds].reverse() : seg.kinds) : null;
   const hidden = seg.hidden ? (back ? [...seg.hidden].reverse() : seg.hidden) : null;
   const truck = seg.truck ? (back ? [...seg.truck].reverse() : seg.truck) : null;
+  const half = seg.half ? (back ? [...seg.half].reverse() : seg.half) : null;
+  /**
+   * Where a wheel group stands whose middle is at `arc`: on the rail there, along the rail. A long
+   * truck cannot follow a curve along its length: tangent at its middle its end axles run wide. It
+   * stands on the chord through the rail 0.7 of its half wheelbase either side of its middle
+   * instead, so its end axles and its middle ones are equally near the rail (a quarter as far off
+   * as the tangent's ends).
+   */
+  const stand = (arc: number, hw: number) => {
+    if (hw <= LONG_TRUCK) {
+      const P = pl.at(arc),
+        tg = pl.tangent(arc);
+      return { x: P.x, y: P.y, angle: Math.atan2(tg.y, tg.x) };
+    }
+    const q = hw * Math.SQRT1_2,
+      A = pl.at(arc + q),
+      B = pl.at(arc - q);
+    if (Math.hypot(A.x - B.x, A.y - B.y) < 1e-9) {
+      const tg = pl.tangent(arc);
+      return { x: A.x, y: A.y, angle: Math.atan2(tg.y, tg.x) };
+    }
+    return { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2, angle: Math.atan2(A.y - B.y, A.x - B.x) };
+  };
+  /** half the wheelbase of the truck whose pivot is `g` behind the segment's front (0: a fixed axle) */
+  const halfOf = (g: number) => {
+    const i = half ? t.findIndex((v) => Math.abs(v - g) < 1e-9) : -1;
+    return i >= 0 ? half![i] : 0;
+  };
   const rig = seg.rigid && seg.rigid.length >= 2 ? flip(seg.rigid) : null;
   const carry = seg.carry?.length ? flip(seg.carry) : null;
   // the frame's two supports: its end fixed axles (or their middle and a carrying unit), else its
@@ -377,8 +412,8 @@ export function poseSegment(
     const h = (span[1] - span[0]) / 2;
     let a = h;
     for (let k = 0; k < 8; k++) {
-      const P = pl.at(arcFront - mid + a);
-      const Q = pl.at(arcFront - mid - a);
+      const P = stand(arcFront - mid + a, halfOf(span[0]));
+      const Q = stand(arcFront - mid - a, halfOf(span[1]));
       const chord = Math.hypot(P.x - Q.x, P.y - Q.y);
       if (chord < 1e-9) break;
       a *= (2 * h) / chord;
@@ -390,7 +425,7 @@ export function poseSegment(
   if (pinned) {
     // the line that fits the rail points of all groups best: two groups are met exactly, more
     // share what a rigid body cannot follow of the curve
-    const pts = groups.map((g) => pl.at(arcOf(g)));
+    const pts = groups.map((g) => stand(arcOf(g), halfOf(g)));
     const n = pts.length;
     const mx = pts.reduce((a, p) => a + p.x, 0) / n;
     const my = pts.reduce((a, p) => a + p.y, 0) / n;
@@ -477,19 +512,18 @@ export function poseSegment(
   const bogies: BogiePose[] = [];
   for (let i = 0; i < t.length; i++) {
     const arc = arcOf(t[i]);
-    const P = pl.at(arc);
+    const P = stand(arc, half?.[i] ?? 0);
     const socket = L / 2 - t[i];
     const skx = cx + axx * socket;
     const sky = cy + axy * socket;
     const rx = P.x - skx;
     const ry = P.y - sky;
-    const tg = pl.tangent(arc);
     const along = rx * axx + ry * axy;
     const across = rx * nxx + ry * nxy;
     bogies.push({
       x: P.x,
       y: P.y,
-      angle: Math.atan2(tg.y, tg.x),
+      angle: P.angle,
       kind: kinds?.[i] ?? seg.bogie,
       foreAft: Math.abs(along),
       lateral: Math.abs(across),
@@ -618,37 +652,217 @@ export function screenAngle(angle: number) {
   const s = Math.sin(angle);
   return Math.atan2((c + s) * 0.5, c - s);
 }
+/** Screen pixels a height of one tile side spans (slope.ts UP_PX, terrainRelief's TILE_SIDE_PX). */
+export const UP_TILE_PX = (32 * Math.SQRT2 * Math.sqrt(3)) / 2;
+
 /**
- * The screen map that takes the sprite drawn for facing f to the exact heading: the drawn heading's
- * picture (its direction and its foreshortened length) goes to the true heading's, and the screen's
- * vertical stays where it is, so uprights stay upright while the body swings. Exact for the body's
- * centre plane; a point half a body-width to the side is off by a pixel at most. A heading that
- * runs up the screen has no screen x to shear about: there the sprite is turned instead (half the
- * difference, as before), and between the two the maps blend. PIXI matrix terms: x' = a·x + c·y,
- * y' = b·x + d·y.
+ * The box a drawn part fills, for swinging its picture between two facings: tiles from the part's
+ * anchor on the rail. `u0`..`u1` along the heading (rear end, front end), `w` half its width, `h`
+ * its height over the rail.
  */
-export function headingShear(
+export interface PartBox {
+  u0: number;
+  u1: number;
+  w: number;
+  h: number;
+}
+
+/** A swing mesh: six fans of seven points (each of the box's three seen faces in two halves). */
+export const SWING_FAN = 7;
+export const SWING_FANS = 6;
+export const SWING_VERTS = SWING_FANS * SWING_FAN;
+/**
+ * Sines of the angle between a face's two edges on the screen: below the first the face counts as
+ * seen edge on, from the second up it is swung as itself (fifteen and thirty degrees off its edge).
+ */
+export const SWING_EDGE_ON = [0.26, 0.5] as const;
+
+const polyA = new Float64Array(16),
+  polyB = new Float64Array(16);
+
+/** Keeps the part of a convex polygon (n points in `src`) where k·cross(e, p − j) ≥ 0. */
+function clipHalf(
+  src: Float64Array,
+  n: number,
+  dst: Float64Array,
+  jx: number,
+  jy: number,
+  ex: number,
+  ey: number,
+  k: number,
+) {
+  let m = 0;
+  for (let i = 0; i < n; i++) {
+    const ax = src[2 * i],
+      ay = src[2 * i + 1],
+      bx = src[2 * ((i + 1) % n)],
+      by = src[2 * ((i + 1) % n) + 1],
+      da = k * (ex * (ay - jy) - ey * (ax - jx)),
+      db = k * (ex * (by - jy) - ey * (bx - jx));
+    if (da >= 0) {
+      dst[2 * m] = ax;
+      dst[2 * m + 1] = ay;
+      m++;
+    }
+    if (da >= 0 !== db >= 0) {
+      const t = da / (da - db);
+      dst[2 * m] = ax + (bx - ax) * t;
+      dst[2 * m + 1] = ay + (by - ay) * t;
+      m++;
+    }
+  }
+  return m;
+}
+
+/**
+ * The picture of a part drawn for heading `drawn`, swung to the heading `angle` a few degrees off.
+ *
+ * A flat picture cannot be turned as a whole: turned on the screen its uprights lean, sheared along
+ * its length its width breathes with every degree. What turns is a box. A camera sees three faces of
+ * it (top, near side, near end), each flat, and each face's picture goes to the same face seen at
+ * the true heading by a map of its own: the side keeps its uprights, the top turns like a footprint,
+ * the end swings across. The three maps agree along the box's edges, so the picture does not tear,
+ * and each runs on past its face over what is drawn beyond it (a chimney, a buffer, the wheels).
+ *
+ * Each face fills the angle between two of the three edges that meet at the box's near top corner,
+ * and is drawn in two halves either side of that angle's middle line. A face seen nearly edge on
+ * (its two edges almost in one line) has next to no picture of its own, and its map would fling what
+ * is drawn beside the box far off: there the middle line stays as it is drawn, and the halves only
+ * follow the edges they share with the other faces (SWING_EDGE_ON).
+ *
+ * `rect` is the sprite as it is shown: left, top, right, bottom in pixels from its anchor (the rail
+ * point under the part). Writes `SWING_VERTS` points to `src` (where each is in the picture) and `dst`
+ * (where it is drawn), x and y interleaved: `SWING_FANS` fans of `SWING_FAN`, a fan's unused points
+ * repeating its last. Exact for every point of the box's three seen faces.
+ */
+export function swingMesh(
+  box: PartBox,
+  drawn: number,
   angle: number,
-  f: number,
-): { a: number; b: number; c: number; d: number } {
-  const af = facingAngle(f);
-  const fx = Math.cos(af) - Math.sin(af),
-    fy = (Math.cos(af) + Math.sin(af)) / 2,
-    tx = Math.cos(angle) - Math.sin(angle),
-    ty = (Math.cos(angle) + Math.sin(angle)) / 2,
-    share = Math.min(1, Math.max(0, (Math.abs(fx) - 0.25) / 0.5)),
-    th = residualRotation(angle, f) * ROTATION_SHARE,
-    rc = Math.cos(th),
-    rs = Math.sin(th);
-  if (!share) return { a: rc, b: rs, c: -rs, d: rc };
-  const sa = tx / fx,
-    sb = (ty - fy) / fx;
-  return {
-    a: rc + (sa - rc) * share,
-    b: rs + (sb - rs) * share,
-    c: -rs * (1 - share),
-    d: rc + (1 - rc) * share,
-  };
+  rect: readonly [number, number, number, number],
+  src: Float32Array,
+  dst: Float32Array,
+) {
+  const c0 = Math.cos(drawn),
+    s0 = Math.sin(drawn),
+    c1 = Math.cos(angle),
+    s1 = Math.sin(angle);
+  // the corner the three seen faces share: top, near end, near side (near: lower on the screen)
+  const un = c0 + s0 >= 0 ? box.u1 : box.u0,
+    uf = c0 + s0 >= 0 ? box.u0 : box.u1,
+    wn = c0 - s0 >= 0 ? box.w : -box.w,
+    du = uf - un,
+    up = box.h * UP_TILE_PX;
+  // where that corner is drawn, and where it belongs
+  const jx = 32 * (un * (c0 - s0) - wn * (s0 + c0)),
+    jy = 16 * (un * (c0 + s0) + wn * (c0 - s0)) - up,
+    kx = 32 * (un * (c1 - s1) - wn * (s1 + c1)),
+    ky = 16 * (un * (c1 + s1) + wn * (c1 - s1)) - up;
+  // the three edges from it: along the body to the far end, across to the far side, down to the rail;
+  // as drawn (x, y) and as they belong (x, y)
+  const E = [
+    [32 * du * (c0 - s0), 16 * du * (c0 + s0), 32 * du * (c1 - s1), 16 * du * (c1 + s1)],
+    [64 * wn * (s0 + c0), -32 * wn * (c0 - s0), 64 * wn * (s1 + c1), -32 * wn * (c1 - s1)],
+    [0, up, 0, up],
+  ];
+  // faces: top (far end, far side), near side (far end, down), near end (far side, down); each
+  // with the edge it does not touch
+  const FACES = [
+    [0, 1, 2],
+    [0, 2, 1],
+    [1, 2, 0],
+  ];
+  for (let face = 0; face < 3; face++) {
+    const e1 = E[FACES[face][0]],
+      e2 = E[FACES[face][1]],
+      e3 = E[FACES[face][2]],
+      l1 = Math.hypot(e1[0], e1[1]),
+      l2 = Math.hypot(e2[0], e2[1]),
+      turn = e1[0] * e2[1] - e1[1] * e2[0],
+      sine = l1 > 0 && l2 > 0 ? turn / (l1 * l2) : 0,
+      cosine = l1 > 0 && l2 > 0 ? (e1[0] * e2[0] + e1[1] * e2[1]) / (l1 * l2) : -1;
+    // the middle line of the face's angle, as long as the shorter edge; where the edges run in one
+    // line it stands square to them, away from the third edge
+    let mx = l1 > 0 && l2 > 0 ? e1[0] / l1 + e2[0] / l2 : 0,
+      my = l1 > 0 && l2 > 0 ? e1[1] / l1 + e2[1] / l2 : 0,
+      ml = Math.hypot(mx, my);
+    if (ml < 1e-4) {
+      mx = -e1[1];
+      my = e1[0];
+      if (mx * e3[0] + my * e3[1] > 0) {
+        mx = -mx;
+        my = -my;
+      }
+      ml = Math.hypot(mx, my);
+    }
+    const len = Math.max(1, Math.min(l1, l2));
+    mx = (mx / (ml || 1)) * len;
+    my = (my / (ml || 1)) * len;
+    // where the face's own map takes that line, and how far the face is trusted with it: fully when
+    // it is seen thirty degrees or more off its edge, not at all within fifteen
+    const trust =
+      cosine > 0
+        ? 1
+        : Math.min(
+            1,
+            Math.max(
+              0,
+              (Math.abs(sine) - SWING_EDGE_ON[0]) / (SWING_EDGE_ON[1] - SWING_EDGE_ON[0]),
+            ),
+          );
+    let nx = mx,
+      ny = my;
+    if (trust > 0) {
+      const a = (mx * e2[1] - my * e2[0]) / turn,
+        b = (e1[0] * my - e1[1] * mx) / turn;
+      nx = mx + trust * (a * e1[2] + b * e2[2] - mx);
+      ny = my + trust * (a * e1[3] + b * e2[3] - my);
+    }
+    for (let half = 0; half < 2; half++) {
+      // this half's two edges, as drawn and as they belong
+      const ax = half ? mx : e1[0],
+        ay = half ? my : e1[1],
+        bx = half ? e2[0] : mx,
+        by = half ? e2[1] : my,
+        ax1 = half ? nx : e1[2],
+        ay1 = half ? ny : e1[3],
+        bx1 = half ? e2[2] : nx,
+        by1 = half ? e2[3] : ny,
+        det = ax * by - ay * bx,
+        base = (face * 2 + half) * SWING_FAN * 2;
+      let n = 0;
+      if (Math.abs(det) > 1e-9) {
+        const k = det > 0 ? 1 : -1;
+        polyA[0] = rect[0];
+        polyA[1] = rect[1];
+        polyA[2] = rect[2];
+        polyA[3] = rect[1];
+        polyA[4] = rect[2];
+        polyA[5] = rect[3];
+        polyA[6] = rect[0];
+        polyA[7] = rect[3];
+        n = clipHalf(polyA, 4, polyB, jx, jy, ax, ay, k);
+        n = clipHalf(polyB, n, polyA, jx, jy, bx, by, -k);
+      }
+      for (let i = 0; i < SWING_FAN; i++) {
+        const at = base + 2 * i;
+        if (n < 3) {
+          // nothing of the picture lies here
+          src[at] = src[at + 1] = dst[at] = dst[at + 1] = 0;
+          continue;
+        }
+        const p = Math.min(i, n - 1),
+          qx = polyA[2 * p] - jx,
+          qy = polyA[2 * p + 1] - jy,
+          a = (qx * by - qy * bx) / det,
+          b = (ax * qy - ay * qx) / det;
+        src[at] = polyA[2 * p];
+        src[at + 1] = polyA[2 * p + 1];
+        dst[at] = kx + a * ax1 + b * bx1;
+        dst[at + 1] = ky + a * ay1 + b * by1;
+      }
+    }
+  }
 }
 /** Runtime rotation that turns the sprite drawn for facing f into the exact heading. */
 export function residualRotation(angle: number, f: number) {

@@ -82,6 +82,12 @@ export interface LocoDef {
    * of track per cycle.
    */
   wheels?: Record<string, { phases: number; cycle: number }>;
+  /**
+   * The box each of its sprite sets fills (`engine`, `engine-t0`, ...), tiles from the set's anchor on
+   * the rail: rear end, front end, half width, height. Its pictures are swung between two facings as
+   * that box (body.ts swingMesh).
+   */
+  boxes?: Record<string, [number, number, number, number]>;
   /** where smoke leaves it: the part, tiles ahead of that part's centre, pixels above the rail */
   smoke?: { part: PartKind; along: number; up: number }[];
   /** its headlamps: the part, tiles ahead of and to the left of that part's centre, pixels above the rail */
@@ -623,6 +629,7 @@ interface LocoFit {
   lamps?: { part: PartKind; along: number; across: number; up: number }[];
   trucks?: Record<string, number[]>;
   wheels?: Record<string, { phases: number; cycle: number }>;
+  boxes?: Record<string, [number, number, number, number]>;
 }
 function finalize(b: ContentBundle): ContentBundle {
   // each engine's own running gear and length, where both are measured
@@ -639,6 +646,7 @@ function finalize(b: ContentBundle): ContentBundle {
     d.lamps = f.lamps;
     d.truckSprites = f.trucks;
     d.wheels = f.wheels;
+    d.boxes = f.boxes;
   }
   for (const w of b.wagons)
     w.accepts = b.cargo.filter((c) => c.class === w.carries).map((c) => c.id);

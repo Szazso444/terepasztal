@@ -44,6 +44,7 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
     const trucks = (p.trucks ?? [])
       .map((axles, i) => ({
         at: behind(axles.reduce((a, b) => a + b, 0) / axles.length),
+        half: ((Math.max(...axles) - Math.min(...axles)) / 2) * L,
         kind: kindOf(axles.length),
         carries: p.carry?.includes(i) ?? false,
         src: i,
@@ -62,6 +63,7 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
       seg.at = trucks.map((t) => t.at);
       seg.kinds = trucks.map((t) => t.kind);
       seg.truck = trucks.map((t) => t.src);
+      seg.half = trucks.map((t) => t.half);
       seg.W = seg.at[seg.at.length - 1] - seg.at[0];
     }
     const carried = trucks.filter((x) => x.carries).map((x) => x.at);
@@ -70,12 +72,13 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
     else if (rigid.length === 1) {
       // one fixed axle: a truck that cannot swivel; carried like a pivot
       const all = [
-        ...trucks.map((t) => ({ at: t.at, src: t.src })),
-        { at: rigid[0], src: -1 },
+        ...trucks.map((t) => ({ at: t.at, src: t.src, half: t.half })),
+        { at: rigid[0], src: -1, half: 0 },
       ].sort((a, b) => a.at - b.at);
       seg.at = all.map((x) => x.at);
       seg.kinds = seg.at.map(() => 'bogie');
       seg.truck = all.map((x) => x.src);
+      seg.half = all.map((x) => x.half);
       seg.nb = seg.at.length;
     }
     if (p.hinge) {
@@ -84,6 +87,7 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
         at,
         kind: seg.kinds![i],
         src: seg.truck![i],
+        half: seg.half?.[i] ?? 0,
         hidden: false,
       }));
       const all = [
@@ -92,12 +96,14 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
           at: behind(p.hinge === 'front' ? p.to : p.from),
           kind: 'bogie' as BogieKind,
           src: -1,
+          half: 0,
           hidden: true,
         },
       ].sort((a, b) => a.at - b.at);
       seg.at = all.map((x) => x.at);
       seg.kinds = all.map((x) => x.kind);
       seg.truck = all.map((x) => x.src);
+      seg.half = all.map((x) => x.half);
       seg.hidden = all.map((x) => x.hidden);
       seg.nb = all.length;
       seg.W = seg.at[seg.at.length - 1] - seg.at[0];
@@ -108,6 +114,7 @@ export function gearSegments(gear: Gear, L: number): SegmentSpec[] {
       seg.kinds = ['bogie', 'bogie'];
       seg.hidden = [true, true];
       seg.truck = [-1, -1];
+      seg.half = [0, 0];
       seg.nb = 2;
       seg.W = len;
     }

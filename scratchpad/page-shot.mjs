@@ -13,7 +13,7 @@ await p.waitForLoadState('networkidle');
 await p.evaluate(() => Promise.all([...document.images].map((i) => { i.loading = 'eager'; return i.decode().catch(() => {}); })));
 const info = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, h: document.documentElement.scrollHeight }));
 console.log(JSON.stringify(info));
-for (const id of ['marks', 'lineups', 'motion', 'curves', 'turning', 'gauge', 'numbers', 'open']) {
+for (const id of ['turning', 'bigboy', 'cuts', 'square', 'front', 'gauge', 'lineups', 'motion', 'numbers', 'open']) {
   await p.evaluate((i) => document.getElementById(i).scrollIntoView(), id);
   await p.waitForTimeout(300);
   await p.screenshot({ path: `${out}/${id}-${W}${dark ? '-dark' : ''}.png` });

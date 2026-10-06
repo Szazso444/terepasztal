@@ -1,6 +1,7 @@
-import { Container, Sprite } from 'pixi.js';
-import { SurfaceAssets, windowSprite } from './surfaceAssets';
-import type { AtlasRegistry } from '../engine/atlas';
+import { Container } from 'pixi.js';
+import { SurfaceAssets } from './surfaceAssets';
+import { SwingSprite } from './swingSprite';
+import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
@@ -17,33 +18,58 @@ import { advanceSpin, spinPhase } from './wheelSpin';
 import { pitchOnRail, LEVEL_GROUND, type Ground } from './slope';
 import {
   facingOf,
+  facingAngle,
   DRAWN_FACINGS,
   mirrorFacing,
-  headingShear,
+  COUPLER_GAP,
+  type PartBox,
   type VehicleSpec,
   type VehiclePose,
 } from '../sim/body';
 
 interface VehicleSprites {
-  parts: Sprite[];
+  parts: SwingSprite[];
   undercarriage: Container;
-  bogies: Sprite[];
-  load: Sprite | null;
+  bogies: SwingSprite[];
+  load: SwingSprite | null;
   spec: VehicleSpec;
+}
+
+/** How a sprite was last placed: what a layer over it (its window light) is placed like. */
+interface Placed {
+  key: string;
+  frame: FrameInfo;
+  flip: boolean;
+  drawn: number;
+  angle: number;
+  box: PartBox;
+}
+
+/** The box of a drawn vehicle body that brings none of its own (drawn stock): about a wagon's. */
+function bodyBox(L: number, narrow: boolean, h = 0.42): PartBox {
+  const half = Math.max(0.1, (L - COUPLER_GAP) / 2);
+  return { u0: -half, u1: half, w: narrow ? 0.11 : 0.15, h };
+}
+/** The box of a drawn truck. */
+function truckBox(narrow: boolean): PartBox {
+  return { u0: -0.16, u1: 0.16, w: narrow ? 0.09 : 0.17, h: 0.12 };
+}
+function boxOf(b: [number, number, number, number] | undefined): PartBox | null {
+  return b ? { u0: b[0], u1: b[1], w: b[2], h: b[3] } : null;
 }
 
 /**
  * Depth-sorted rigid segments, with independently swivelling bogies beneath the raised decks
- * and cargo overlays above loaded wagons. Bodies use 48 facings; between two of them a sprite is
- * sheared along its own length to the exact heading (headingShear).
+ * and cargo overlays above loaded wagons. Bodies use 48 facings; between two of them a picture is
+ * swung to the exact heading as the box its part fills (swingMesh).
  */
 export class TrainRenderer {
   private surfaces = new SurfaceAssets();
-  private windowLights = new Map<Sprite, Sprite>();
+  private windowLights = new Map<SwingSprite, SwingSprite>();
   /** A body part's or a truck's layer of turning wheels, by the sprite that owns it. */
-  private wheelLayers = new Map<Sprite, Sprite>();
+  private wheelLayers = new Map<SwingSprite, SwingSprite>();
   /** How far through its cycle each wheel layer is (0..1), by the same owner. */
-  private spin = new Map<Sprite, number>();
+  private spin = new Map<SwingSprite, number>();
   /** The distance each train had run when it was last drawn. */
   private ran = new Map<number, number>();
   private night = 0;
@@ -73,9 +99,8 @@ export class TrainRenderer {
     layer.on('destroyed', () => this.surfaces.destroy());
   }
 
-  private make(): Sprite {
-    const s = new Sprite();
-    s.cullable = true;
+  private make(): SwingSprite {
+    const s = new SwingSprite();
     this.layer.addChild(s);
     return s;
   }
@@ -108,12 +133,11 @@ export class TrainRenderer {
         const undercarriage = new Container({ sortableChildren: true });
         this.layer.addChild(undercarriage);
 
-        const bogies: Sprite[] = [];
+        const bogies: SwingSprite[] = [];
         if (spec.drawBogies)
           for (const s of spec.segments)
-            for (let b = 0; b < s.nb; b++)
-              bogies.push(undercarriage.addChild(new Sprite({ cullable: true })));
-        let load: Sprite | null = null;
+            for (let b = 0; b < s.nb; b++) bogies.push(undercarriage.addChild(new SwingSprite()));
+        let load: SwingSprite | null = null;
         if (
           i >= train.locos.length &&
           loadKind(train.wagons[i - train.locos.length].def) !== 'none'
@@ -154,21 +178,21 @@ export class TrainRenderer {
    * a frame, so they never seem to stand or run backwards.
    */
   private turnWheels(
-    owner: Sprite,
+    owner: SwingSprite,
     parent: Container,
     stem: string,
     w: { phases: number; cycle: number } | undefined,
     rolled: number,
     angle: number,
-    place: (s: Sprite, frameFor: (f: number) => string) => void,
-  ): Sprite | null {
+    place: (s: SwingSprite, frameFor: (f: number) => string) => void,
+  ): SwingSprite | null {
     let ws = this.wheelLayers.get(owner) ?? null;
     if (!w || !this.atlas.has(`${stem}_w0_f0`)) {
       if (ws) ws.visible = false;
       return null;
     }
     if (!ws) {
-      ws = new Sprite({ cullable: true });
+      ws = new SwingSprite();
       parent.addChild(ws);
       this.wheelLayers.set(owner, ws);
     }
@@ -187,26 +211,25 @@ export class TrainRenderer {
     return ws;
   }
 
-  /** Place a sprite for a tile-space heading: pick the facing, mirror when needed, rotate the rest. */
+  /**
+   * Place a sprite for a tile-space heading: pick the facing, mirror when its twin is the drawn one,
+   * and swing the picture from the drawn facing to the exact heading as the box `box`.
+   */
   private pose(
-    s: Sprite,
+    s: SwingSprite,
     frameFor: (f: number) => string,
     x: number,
     y: number,
     angle: number,
     layer: number,
+    box: PartBox,
     ground = this.ground(x, y),
-  ) {
+  ): Placed {
     const f = facingOf(angle);
     const drawn = DRAWN_FACINGS.has(f);
     const key = frameFor(drawn ? f : mirrorFacing(f));
     const fr = this.atlas.get(key);
-    s.texture = fr.texture;
-    s.anchor.set(fr.anchorX, fr.anchorY);
-    // the sprite's own map: mirrored when its twin is the drawn one, then swung from the drawn
-    // facing to the exact heading
-    const m = headingShear(angle, f);
-    const flip = drawn ? 1 : -1;
+    s.show(fr, !drawn, box, facingAngle(f), angle);
     const wp = tileToWorld(x, y);
     // Each body part and bogie stands on the rail under it, pitched along its own heading only
     // (the rail is level across the track) and upright: its height does not change with the grade.
@@ -214,15 +237,10 @@ export class TrainRenderer {
       cos = Math.cos(angle),
       sin = Math.sin(angle),
       along = g.sgx * cos + g.sgy * sin;
-    pitchOnRail(s, snap(wp.x), snap(wp.y), g.dz, along, cos, sin, {
-      a: m.a * flip,
-      b: m.b * flip,
-      c: m.c,
-      d: m.d,
-    });
+    pitchOnRail(s, snap(wp.x), snap(wp.y), g.dz, along, cos, sin, UPRIGHT);
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
-    return key;
+    return { key, frame: fr, flip: !drawn, drawn: facingAngle(f), angle, box };
   }
 
   /**
@@ -301,17 +319,23 @@ export class TrainRenderer {
           const frameFor = isLoco
             ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
             : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
-          const styles = (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).bogieStyle;
-          const key = this.pose(
+          const vdef = isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def;
+          const styles = vdef.bogieStyle;
+          const narrowBody = vdef.gauge === 'narrow';
+          const box =
+            (isLoco ? boxOf(t.locos[i].def.boxes?.[seg.part]) : null) ?? bodyBox(seg.L, narrowBody);
+          const placed = this.pose(
             s,
             frameFor,
             x,
             y,
             shown,
             15,
+            box,
             this.bodyGround(seg, ps, alpha, x, y),
           );
-          const fr = this.atlas.get(key);
+          const key = placed.key;
+          const fr = placed.frame;
           // A rendered model brings its window panes as a frame of its own (`…_lit_f<n>`).
           // Procedural vehicle windows carry explicit amber palette pixels. Any other
           // illustrated replacement stays dark: never light a boiler.
@@ -321,12 +345,19 @@ export class TrainRenderer {
           if (lit || (!own && fr.texture.frame.width / fr.w === 1)) {
             let light = this.windowLights.get(s);
             if (!light) {
-              light = windowSprite();
+              light = new SwingSprite('emissive');
+              light.blendMode = 'add';
               this.layer.addChild(light);
               this.windowLights.set(s, light);
             }
-            light.texture = lit ? lit.texture : this.surfaces.window(key, fr, true);
-            light.anchor.set((lit ?? fr).anchorX, (lit ?? fr).anchorY);
+            // the panes' picture, swung exactly as the body under it
+            light.show(
+              lit ?? { ...fr, texture: this.surfaces.window(key, fr, true) },
+              placed.flip,
+              placed.box,
+              placed.drawn,
+              placed.angle,
+            );
             light.alpha = this.night * 0.9;
             light.position.copyFrom(s.position);
             light.scale.copyFrom(s.scale);
@@ -350,7 +381,7 @@ export class TrainRenderer {
               def.wheels?.[seg.part],
               seg.mirror ? -rolled : rolled,
               shown,
-              (w, frame) => this.pose(w, frame, x, y, shown, 15, ground),
+              (w, frame) => this.pose(w, frame, x, y, shown, 15, box, ground),
             );
             if (ws) ws.zIndex = s.zIndex + 0.005;
           }
@@ -379,14 +410,16 @@ export class TrainRenderer {
                 return;
               }
               const heading = ba + (back ? Math.PI : 0);
-              const narrow =
-                (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).gauge === 'narrow';
+              const narrow = narrowBody;
               // a rendered engine brings each of its trucks as a sprite set of its own
               const own =
                 isLoco && b.truck !== undefined && b.truck >= 0
                   ? `rolling/loco_${t.locos[i].def.id}_${seg.part}-t${b.truck}`
                   : null;
               const mine = own !== null && this.atlas.has(`${own}_f0`);
+              const tbox =
+                (mine ? boxOf(t.locos[i].def.boxes?.[`${seg.part}-t${b.truck}`]) : null) ??
+                truckBox(narrow);
               this.pose(
                 bs,
                 mine
@@ -396,6 +429,7 @@ export class TrainRenderer {
                 by,
                 heading,
                 14,
+                tbox,
               );
               bs.visible &&= s.visible;
               // always just under its own body: the depth key is by position, and a bogie
@@ -410,7 +444,7 @@ export class TrainRenderer {
                   t.locos[i].def.wheels?.[`${seg.part}-t${b.truck}`],
                   seg.mirror ? -rolled : rolled,
                   heading,
-                  (w, frame) => this.pose(w, frame, bx, by, heading, 14),
+                  (w, frame) => this.pose(w, frame, bx, by, heading, 14, tbox),
                 );
                 if (ws) ws.zIndex = bs.zIndex + 0.5;
               } else {
@@ -423,7 +457,15 @@ export class TrainRenderer {
             if (w.cargo && w.amount > 0.5) {
               const kind = loadKind(w.def, w.cargo);
               const thin = w.def.gauge === 'narrow';
-              this.pose(c.load, (f) => loadFrame(kind, f, thin), x, y, shown, 16);
+              this.pose(
+                c.load,
+                (f) => loadFrame(kind, f, thin),
+                x,
+                y,
+                shown,
+                16,
+                bodyBox(seg.L, thin, 0.6),
+              );
               const col =
                 (PAL as unknown as Record<string, RGB>)[cargoDef(w.cargo).color] ?? PAL.white;
               c.load.tint = hex(col);
@@ -442,6 +484,8 @@ export class TrainRenderer {
  * against each other while running.
  */
 const SNAP = 3;
+/** A swing sprite's own map on the rail: its mirroring and its swing are in its mesh already. */
+const UPRIGHT = { a: 1, b: 0, c: 0, d: 1 };
 function snap(v: number) {
   return Math.round(v * SNAP) / SNAP;
 }
