@@ -4,7 +4,7 @@
   "gates": [
     {
       "family": "depot",
-      "approved": false
+      "approved": true
     },
     {
       "family": "station",
