@@ -199,7 +199,9 @@ Look at the picture as `take` has written it, in `.look/<name>.png`
 on its footprint as you painted it, with the footprint's edge in white, the line its walls' feet
 should stand on in pink, and in yellow the frames of the guide's openings: the front door, and a
 depot's portals. The frames show which wall the door and the portals belong to; where there is no
-door frame (`r1`, `r2`), no front door may show. That picture is the one to judge: you need not
+door frame (`r1`, `r2`), no front door may show. Under a depot the game's rails are drawn in as
+well, through the portals: they must be seen to run into each portal, as they will in the game.
+That picture is the one to judge: you need not
 look at the raw result at all, and do not judge its background by eye. A viewer that ignores
 transparency shows the colour stored under the transparent pixels as a brown or green glow round
 the building; that glow is not in the picture. Whether the background is clean is the tool's to
@@ -208,7 +210,9 @@ say: `set` refuses a picture with a shadow or a glow, and a picture it accepts h
 Then answer:
 
 - Is the front on the wall the prompt's View line names? In `r1` and `r2` no front door may show.
-- For a depot: are the portals in the wall the guide shows them in, and open?
+- For a depot: are the portals in the wall the guide shows them in, and open down to the ground,
+  with no floor, threshold or apron painted in them or before them? The rails drawn into the look
+  picture must run into each portal, not stop at the wall.
 - In `r1`, `r2`, `r3`: is it the same building as the `r0` reference (same walls, roof, colours,
   details), turned, and not a mirror image of it?
 - In a later age: is it still recognisably the same kind of building, with everything on the
@@ -237,6 +241,12 @@ A view of the wrong rotation is refused with `the portals are in the lower-right
 in the lower-left wall, where the block-out has them`: make it again, saying in the edit which
 wall has the portals and which is the plain back or the front, as the prompt's View line names
 them. The tool cannot tell a front from a back, so that is still yours to see.
+
+The game lays its own rails under a depot, through the portals, so the ground inside them stays
+empty. A picture with a floor painted in the portals, or an apron before them, is refused with
+`the portals are not open to the ground`: make it again, saying in the edit that the ground inside
+each portal is transparent from the foot of the wall upwards, with no floor, threshold, apron or
+rails painted there.
 
 **The camera.** The tool measures every picture's camera from the feet of its two visible walls,
 and refuses a picture whose camera is more than 2° from the guide's: seen from too low or too

@@ -97,7 +97,10 @@ and shows it in a running build, as drawn or straightened.
   family with more than a quarter of its pictures kept further off, rejected or never made stops
   the work (`STOP`).
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
-  them on the other side, and in the game the rails would run into a wall.
+  them on the other side, and in the game the rails would run into a wall. And open to the
+  ground: the game lays its rails under the picture, through the portals, so a floor or an apron
+  painted there hides them (four of the first depot's 24 pictures had one). The look picture has
+  the rails drawn in.
 - Which picture is taken: the agent names the file its image tool reported. `take` takes only a
   picture made after the last one was taken, recorded or given up (one mark in time in
   `queue.json`, moved forward only), and no picture of the image tool whose bytes are in the

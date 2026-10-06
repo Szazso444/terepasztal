@@ -101,6 +101,10 @@ describe('the guide for the artist agent', () => {
     // which wall the door and the portals belong to is drawn in, and the portals are checked
     expect(guide).toMatch(/yellow/);
     expect(guide).toMatch(/the portals are in the/);
+    // the ground inside a depot's portals stays empty: the game's rails run through them
+    expect(guide).toContain('the portals are not open to the ground');
+    expect(guide).toMatch(/rails\s+are\s+drawn\s+in/);
+    expect(production).toMatch(/open to the\s+ground/);
     // a recorded picture found faulty is taken back, never put back with everything built on it
     expect(guide).toContain('set <id> pending');
     expect(guide).toContain('--yes');

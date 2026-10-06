@@ -19,11 +19,13 @@ import {
   FOOTPRINTS,
   ROOT,
   diamond,
+  footprintTiles,
   loadInventory,
   pictureFile,
+  project,
   wallBase,
 } from './building-kit.mjs';
-import { fillPoly, openingsOf, strokePoly } from './building-guides.mjs';
+import { blockOf, fillPoly, openingsOf, strokePoly } from './building-guides.mjs';
 import { FIT, cameraOff, fitGroup, fitPicture, normalisePicture } from './building-fit.mjs';
 import { buildQueue, loadFamilies, progress, readQueue } from './building-queue.mjs';
 import { readReport } from './building-check.mjs';
@@ -37,6 +39,9 @@ export const SHEET = {
   walls: [255, 60, 200],
   /** on a picture laid out for the eye: where the guide has the door and a depot's portals */
   openings: [255, 214, 64],
+  /** on a depot laid out for the eye: the game's track through the portals, its bed and its rails */
+  bed: [116, 106, 88],
+  rail: [58, 54, 50],
 };
 
 export function sheetFile(family) {
@@ -139,6 +144,53 @@ export function drawSheet(
  * ignores transparency shows the colour stored under a picture's transparent pixels as a glow
  * round the building, which is not in the picture. Null when the picture holds no building.
  */
+/**
+ * The game's track under a depot, drawn on the ground of a look picture before the building is
+ * laid on it: one track through each pair of portals, square to the portal wall and a little
+ * beyond the footprint at both ends. Where the ground inside a portal is left open the rails
+ * are seen to run in; a floor or an apron painted there hides them, as it does in the game.
+ */
+function drawTracks(look, fp, fpId, rot, at) {
+  const { w, h } = footprintTiles(fp, rot);
+  const z0 = blockOf(fpId, rot).z0;
+  for (const o of openingsOf(fpId, rot)) {
+    if (o.kind !== 'side') continue;
+    // the middle of the opening's foot, back in tiles (the guide has it on the plinth)
+    const mx = (o.pts[0][0] + o.pts[1][0]) / 2,
+      my = (o.pts[0][1] + o.pts[1][1]) / 2;
+    const u = (mx - fp.centre[0]) / (fp.scale * 32),
+      v = ((my - fp.centre[1]) / fp.scale + z0) / 16;
+    const x = (u + v) / 2,
+      y = (v - u) / 2;
+    // wall 0 runs along x, so its track runs along y; wall 1 the other way
+    const reach = (o.wall === 0 ? h : w) / 2 + 0.9;
+    const strip = (off, half, rgb) => {
+      const tiles =
+        o.wall === 0
+          ? [
+              [x + off - half, -reach],
+              [x + off + half, -reach],
+              [x + off + half, reach],
+              [x + off - half, reach],
+            ]
+          : [
+              [-reach, y + off - half],
+              [reach, y + off - half],
+              [reach, y + off + half],
+              [-reach, y + off + half],
+            ];
+      fillPoly(
+        look,
+        tiles.map(([tx, ty]) => at(project(fp, tx, ty, 0))),
+        rgb,
+      );
+    };
+    strip(0, 0.17, SHEET.bed);
+    strip(-0.11, 0.02, SHEET.rail);
+    strip(0.11, 0.02, SHEET.rail);
+  }
+}
+
 export function drawLook(png, fpId, rot, shrink = 2) {
   const fp = FOOTPRINTS[fpId];
   const fit = fitPicture(png, fpId, rot, { rectify: false });
@@ -155,6 +207,7 @@ export function drawLook(png, fpId, rot, shrink = 2) {
     b = wallBase(fp, rot);
   const at = ([x, y]) => [x / k, y / k];
   fillPoly(look, [d.n, d.e, d.s, d.w].map(at), SHEET.footprint);
+  drawTracks(look, fp, fpId, rot, at);
   paste(look, normalisePicture(png, fit, fpId, k), 0, 0);
   strokePoly(look, [d.n, d.e, d.s, d.w].map(at), SHEET.outline, 1.5);
   strokePoly(look, [b.n, b.e, b.s, b.w].map(at), SHEET.walls, 1.5);

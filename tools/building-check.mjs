@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, ROOT, loadInventory, pictures, wallBase } from './building-kit.mjs';
 import { FIT, cameraOff, fitPicture } from './building-fit.mjs';
-import { portalWall } from './building-guides.mjs';
+import { openingsOf, portalWall } from './building-guides.mjs';
 
 export const REPORT_FILE = `${ROOT}/report.json`;
 
@@ -43,6 +43,13 @@ const LIMIT = {
   portal: { share: 0.25, times: 1.5 },
   /** a pixel darker than this is an opening: a hall's inside, an open door, a window */
   dark: 70,
+  /**
+   * a portal is closed to the ground when more than this share of the ground just inside it is
+   * painted, in the most open of three windows across its middle. Measured on the first depot:
+   * the pictures whose rails did not show had 0.66 to 1 in every portal, the others at most 0.34
+   * in any
+   */
+  floor: 0.5,
 };
 
 /** Which picture a file is, from its name: `<family>-a<age>-r<rot>.png`. */
@@ -57,6 +64,47 @@ const SIDES = ['lower-left', 'lower-right'];
  * How much of the lower part of a wall is dark, from the wall's foot (`from` to `to`, picture px)
  * `up` px high: open portals with the hall behind them make a wall far darker than brick or stone.
  */
+/**
+ * Where a wall's portals are along its foot, as shares of its length: for each opening three
+ * windows across its middle, clear of the door posts. A portal is seldom painted just where the
+ * block-out has it, and a round one is narrow at the ground: the most open window speaks for
+ * it. `wall` is 0 for the lower-left wall, 1 for the lower-right.
+ */
+function portalWindows(fpId, rot, wall) {
+  const base = wallBase(FOOTPRINTS[fpId], rot);
+  const [from, to] = wall === 0 ? [base.w, base.s] : [base.s, base.e];
+  return openingsOf(fpId, rot)
+    .filter((o) => o.kind === 'side' && o.wall === wall)
+    .map((o) => {
+      const [a, b] = [o.pts[0], o.pts[1]]
+        .map((p) => (p[0] - from[0]) / (to[0] - from[0]))
+        .sort((x, y) => x - y);
+      return [0.2, 0.4, 0.6].map((t) => [a + (b - a) * t, a + (b - a) * (t + 0.2)]);
+    });
+}
+
+/**
+ * How much of the ground just inside a portal is painted: the share of opaque pixels in a low
+ * band above the wall's foot, from share `a` to share `b` of the wall. The game lays its rails
+ * there, under the picture, so a floor or an apron painted in the portal hides them.
+ */
+function groundShare(png, from, to, up, a, b) {
+  const steps = Math.round(Math.abs(to[0] - from[0]));
+  let seen = 0,
+    painted = 0;
+  for (let i = Math.round(steps * a); i <= steps * b; i++) {
+    const x = Math.round(from[0] + ((to[0] - from[0]) * i) / steps);
+    const foot = from[1] + ((to[1] - from[1]) * i) / steps;
+    for (let h = Math.round(up * 0.08); h < up * 0.3; h++) {
+      const y = Math.round(foot - h);
+      if (x < 0 || y < 0 || x >= png.width || y >= png.height) continue;
+      seen++;
+      if (png.data[(y * png.width + x) * 4 + 3] > FIT.alpha) painted++;
+    }
+  }
+  return seen ? painted / seen : 0;
+}
+
 function darkShare(png, from, to, up) {
   const steps = Math.round(Math.abs(to[0] - from[0]));
   let seen = 0,
@@ -248,6 +296,18 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
       problems.push(
         `the portals are in the ${SIDES[other]} wall; they belong in the ${SIDES[portals]} wall, where the block-out has them`,
       );
+    else {
+      // the ground inside the portals: the game lays its rails through each of them, under the
+      // picture
+      const [from, to] = portals === 0 ? [fit.base.w, fit.base.s] : [fit.base.s, fit.base.e];
+      const painted = portalWindows(fpId, rot, portals).map((windows) =>
+        Math.min(...windows.map(([a, b]) => groundShare(png, from, to, up, a, b))),
+      );
+      if (painted.some((share) => share > LIMIT.floor))
+        problems.push(
+          'the portals are not open to the ground: floor or wall is painted where the rails run in. Leave the ground inside each portal empty (transparent) from the foot of the wall upwards',
+        );
+    }
   }
   const base = wallBase(fp, rot);
   const foot = fit.base.e[0] - fit.base.w[0];

@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, loadInventory, pictureFile } from './building-kit.mjs';
-import { blockOf, boxFaces, fillPoly, guideFile } from './building-guides.mjs';
+import { blockOf, boxFaces, fillPoly, guideFile, openingsOf } from './building-guides.mjs';
 import { fitPicture } from './building-fit.mjs';
 import {
   accept,
@@ -238,6 +238,16 @@ describe('building queue', () => {
     expect(fam.views.r2).toMatch(
       /lower-left wall is the BACK.*; the lower-right wall is the left-hand side/,
     );
+  });
+
+  it("says of a depot that the ground inside its portals stays empty, for the game's rails", () => {
+    // the game lays its rails under the picture, through the portals: a floor painted there
+    // hides them. Four of the first depot's 24 pictures had one
+    for (const id of ['depot-a0-r0', 'depot-a3-r2', 'depot_narrow-a0-r1'])
+      expect(about(id).prompt, id).toMatch(
+        /the ground inside (each|the) portals? left empty and transparent.*the game lays its own rails through/,
+      );
+    expect(about('station-a0-r0').prompt).not.toMatch(/lays its own rails through/);
   });
 
   it('calls a building what its description calls it', () => {
@@ -1446,6 +1456,16 @@ describe('the queue tool on the command line', () => {
     const faces = boxFaces(fp, { ...blockOf(d.footprint, d.rot), z0: 0 });
     const shade = { top: [220, 210, 180], left: [160, 120, 90], right: [110, 80, 60] };
     for (const [name, pts] of Object.entries(faces)) fillPoly(png, pts.map(map), shade[name]);
+    // a depot's portals are open to the ground, between the door posts: the game's rails run in
+    // (the guide has its openings on the plinth; the painted block stands on the ground)
+    const down = fp.scale * blockOf(d.footprint, d.rot).z0;
+    const part = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+    for (const o of openingsOf(d.footprint, d.rot).filter((x) => x.kind === 'side')) {
+      const [a0, c0, cTop0, aTop0] = o.pts.map(([x, y]) => [x, y + down]);
+      const [a, c] = [part(a0, c0, 0.15), part(a0, c0, 0.85)];
+      const [aTop, cTop] = [part(aTop0, cTop0, 0.15), part(aTop0, cTop0, 0.85)];
+      fillPoly(png, [a, c, part(c, cTop, 0.4), part(a, aTop, 0.4)].map(map), [0, 0, 0], 0);
+    }
     const out = to ?? join(root, d.file);
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, PNG.sync.write(png));
