@@ -8,7 +8,11 @@ import { checkPicture, pictureOf, summarise } from './building-check.mjs';
  * A stand-in picture: the guide's block as a painted building. By default it stands on the ground
  * of its footprint; `block` takes another box, `map` moves every canvas point, `canvas` is the
  * size of the picture. A depot's portals are open to the ground, as the game needs them, unless
- * `closed` says otherwise (true, or one answer for each portal).
+ * `closed` says otherwise (true, or one answer for each portal). `ground` says how: the open
+ * ground runs along the portal's foot from `from` to `to` (shares of the portal's width, the
+ * door posts left standing), reaches `deep` above the foot and starts `lift` above it (both as
+ * shares of the portal's width); one answer for all portals, or one each. `after` paints over
+ * the finished picture.
  */
 function picture(fpId, rot, o = {}) {
   const fp = FOOTPRINTS[fpId];
@@ -30,13 +34,16 @@ function picture(fpId, rot, o = {}) {
     .filter((op) => op.kind === 'side')
     .forEach((op, i) => {
       if (o.closed === true || o.closed?.[i]) return;
-      // between the door posts: the middle of the opening, for the lower part of its height
+      const g = (Array.isArray(o.ground) ? o.ground[i] : o.ground) ?? {};
+      const { from = 0.15, to = 0.85, deep = 0.7, lift = 0 } = g;
       const part = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
-      const [a0, c0, cTop0, aTop0] = op.pts.map(([x, y]) => [x, y + down]);
-      const [a, c] = [part(a0, c0, 0.15), part(a0, c0, 0.85)];
-      const [aTop, cTop] = [part(aTop0, cTop0, 0.15), part(aTop0, cTop0, 0.85)];
-      fillPoly(png, [a, c, part(c, cTop, 0.4), part(a, aTop, 0.4)].map(map), [0, 0, 0], 0);
+      const [a0, c0] = op.pts.map(([x, y]) => [x, y + down]);
+      const wide = Math.abs(c0[0] - a0[0]);
+      const [a, c] = [part(a0, c0, from), part(a0, c0, to)];
+      const up = ([x, y], share) => [x, y - wide * share];
+      fillPoly(png, [up(a, lift), up(c, lift), up(c, deep), up(a, deep)].map(map), [0, 0, 0], 0);
     });
+  o.after?.(png, fp, map);
   return png;
 }
 /** Scale a picture's contents about a point and move them. */
@@ -356,64 +363,174 @@ describe('building check', () => {
     expect(checkPicture(picture('t2x2', 0), 't2x2', 0)).toMatchObject({ ok: true, problems: [] });
   });
 
+  const tail = (each) =>
+    `floor, rails or wall is painted where the game's rails run in. Leave the ground inside ${each} empty (transparent) from the foot of the wall upwards, at least a third as deep as the portal is wide`;
+  /** what the check says of portals closed to the ground: all of them, one of two, the only one */
+  const closedTo = {
+    all: `the portals are not open to the ground: ${tail('each portal')}`,
+    left: `the left portal is not open to the ground: ${tail('it')}`,
+    right: `the right portal is not open to the ground: ${tail('it')}`,
+    only: `the portal is not open to the ground: ${tail('it')}`,
+  };
+  /** r0 and r2 show a depot's end wall on the lower right, r1 and r3 on the lower left */
+  const END_WALLS = [
+    [0, 1],
+    [1, 0],
+    [2, 1],
+    [3, 0],
+  ];
+  /** where in the picture a wall's n-th opening of the guide is: the lower-right wall's run right to left */
+  const sideOf = (wall, n) => (wall === 0 ? ['left', 'right'] : ['right', 'left'])[n];
+
   it("wants the ground inside a depot's portals left open, for the game's rails", () => {
     // the game lays its rails under the picture, through the portals. Four of the first depot's
-    // pictures had a floor painted in the portals, or an apron before them, and the rails did
-    // not show running in
-    const closed =
-      'the portals are not open to the ground: floor or wall is painted where the rails run in. Leave the ground inside each portal empty (transparent) from the foot of the wall upwards';
-    for (const [rot, wall] of [
-      [0, 1],
-      [1, 0],
-      [2, 1],
-      [3, 0],
-    ]) {
-      expect(checkPicture(portals('t2x2', rot, wall), 't2x2', rot), `r${rot}`).toMatchObject({
-        ok: true,
-        problems: [],
-      });
+    // pictures had a floor painted in the portals, and the rails did not show running in
+    for (const [rot, wall] of END_WALLS) {
+      const open = checkPicture(portals('t2x2', rot, wall), 't2x2', rot);
+      expect(open, `r${rot}`).toMatchObject({ ok: true, problems: [], notes: [] });
+      // how deep the ground is open in each portal, as a share of the portal's width: recorded
+      expect(open.ground, `r${rot}`).toHaveLength(2);
+      for (const share of open.ground) expect(share, `r${rot}`).toBeCloseTo(0.7, 1);
       const floored = checkPicture(portals('t2x2', rot, wall, { floor: true }), 't2x2', rot);
       expect(floored.ok, `r${rot}`).toBe(false);
-      expect(floored.problems, `r${rot}`).toEqual([closed]);
+      expect(floored.problems, `r${rot}`).toEqual([closedTo.all]);
+      for (const share of floored.ground) expect(Math.abs(share), `r${rot}`).toBeLessThan(0.03);
       // it is no fault of the camera: a picture kept with its camera off is held to it as well
       expect(
         checkPicture(portals('t2x2', rot, wall, { floor: true }), 't2x2', rot, { camera: false })
           .problems,
-      ).toEqual([closed]);
-      // each portal has a track of its own: one of them closed is the same fault
-      for (const floor of [
-        [true, false],
-        [false, true],
-      ])
+      ).toEqual([closedTo.all]);
+      // each portal has a track of its own: one of them closed fails the picture, and is named
+      for (const n of [0, 1])
         expect(
-          checkPicture(portals('t2x2', rot, wall, { floor }), 't2x2', rot).problems,
-          `r${rot} ${floor}`,
-        ).toEqual([closed]);
+          checkPicture(portals('t2x2', rot, wall, { floor: [n === 0, n === 1] }), 't2x2', rot)
+            .problems,
+          `r${rot} portal ${n}`,
+        ).toEqual([closedTo[sideOf(wall, n)]]);
     }
     // a depot with no portals at all fails the same way
     expect(checkPicture(picture('t2x2', 0, { closed: true }), 't2x2', 0).problems).toEqual([
-      closed,
+      closedTo.all,
     ]);
     // drawn larger and off centre, the portals are found where the walls stand
     const big = { map: moved(1.5, FOOTPRINTS.t2x2.centre, [20, -20]) };
-    expect(checkPicture(picture('t2x2', 0, big), 't2x2', 0).ok).toBe(true);
+    expect(checkPicture(picture('t2x2', 0, big), 't2x2', 0)).toMatchObject({ ok: true, notes: [] });
     expect(checkPicture(picture('t2x2', 0, { ...big, closed: true }), 't2x2', 0).problems).toEqual([
-      closed,
+      closedTo.all,
     ]);
     // the narrow depot has one portal in each end wall
     for (const rot of [0, 1, 2, 3]) {
-      expect(checkPicture(picture('t1x2', rot), 't1x2', rot).ok, `narrow r${rot}`).toBe(true);
+      const narrow = checkPicture(picture('t1x2', rot), 't1x2', rot);
+      expect(narrow, `narrow r${rot}`).toMatchObject({ ok: true, problems: [], notes: [] });
+      expect(narrow.ground, `narrow r${rot}`).toHaveLength(1);
       expect(
         checkPicture(picture('t1x2', rot, { closed: true }), 't1x2', rot).problems,
         `narrow r${rot}`,
-      ).toEqual([closed]);
+      ).toEqual([closedTo.only]);
     }
     // a building without portals has no such ground
-    expect(checkPicture(picture('t1', 0, { closed: true }), 't1', 0).ok).toBe(true);
+    const plain = checkPicture(picture('t1', 0, { closed: true }), 't1', 0);
+    expect(plain.ok).toBe(true);
+    expect(plain).not.toHaveProperty('ground');
     // where the portals are in the wrong wall, that is the one thing said
     expect(checkPicture(portals('t2x2', 0, 0, { floor: true }), 't2x2', 0).problems).toEqual([
       'the portals are in the lower-left wall; they belong in the lower-right wall, where the block-out has them',
     ]);
+  });
+
+  it("measures a portal's open ground by the portal's own width: how deep, how wide", () => {
+    // the limits, on both depots and both walls. Measured on the first depot's pictures: those
+    // whose rails did not show were open 0 to 0.18 of a portal's width, the others 0.52 and more
+    for (const [fpId, rot] of [
+      ['t2x2', 0],
+      ['t2x2', 1],
+      ['t1x2', 0],
+      ['t1x2', 1],
+    ]) {
+      const seen = (ground) => checkPicture(picture(fpId, rot, { ground }), fpId, rot);
+      const [said, which] = fpId === 't2x2' ? [closedTo.all, 'portals'] : [closedTo.only, 'portal'];
+      const fine = { ok: true, problems: [], notes: [] };
+      // a floor painted a little way inside the portal hides the rails as well
+      expect(seen({ deep: 0.24 }).problems, `${fpId} r${rot}`).toEqual([said]);
+      // open a little deeper than the limit: passed, and said, for the eye to judge
+      const little = seen({ deep: 0.36 });
+      expect(little.ok, `${fpId} r${rot}`).toBe(true);
+      expect(little.notes, `${fpId} r${rot}`).toHaveLength(1);
+      expect(little.notes[0]).toMatch(
+        new RegExp(
+          `^the ground inside the ${which} is open only a little way in \\(0\\.3\\d of the portal's width\\): see in the look picture that the rails run in$`,
+        ),
+      );
+      // half the portal's width deep: nothing to say
+      expect(seen({ deep: 0.5 }), `${fpId} r${rot}`).toMatchObject(fine);
+      // a slit a fifth of the portal wide lets no track through; two fifths do
+      expect(seen({ from: 0.4, to: 0.6 }).problems, `${fpId} r${rot}`).toEqual([said]);
+      expect(seen({ from: 0.3, to: 0.7 }), `${fpId} r${rot}`).toMatchObject(fine);
+      // a portal is seldom painted just where the block-out has it: it is looked for in its own
+      // part of the wall
+      for (const [from, to] of [
+        [0.5, 1.2],
+        [-0.2, 0.5],
+      ])
+        expect(seen({ from, to }), `${fpId} r${rot} ${from}`).toMatchObject(fine);
+      // a threshold along the foot of the wall: the open ground behind it does not count
+      expect(seen({ lift: 0.08 }).problems, `${fpId} r${rot}`).toEqual([said]);
+    }
+  });
+
+  it('takes the lowest thing painted in a column: an apron, a rail, a gap in the building', () => {
+    const fp = FOOTPRINTS.t2x2;
+    for (const [rot, wall] of END_WALLS) {
+      const b = blockOf('t2x2', rot);
+      // a point on the ground: `along` the portal wall from its middle, `out` before it (tiles)
+      const on = (along, out) =>
+        wall === 0 ? project(fp, along, b.y1 + out, 0) : project(fp, b.x1 + out, along, 0);
+      const first = closedTo[sideOf(wall, 0)];
+      // an apron before a portal hides the rails before they reach it
+      const apron = picture('t2x2', rot, {
+        after: (png) =>
+          fillPoly(
+            png,
+            [on(-0.75, 0), on(-0.25, 0), on(-0.25, 0.12), on(-0.75, 0.12)],
+            [150, 150, 150],
+          ),
+      });
+      expect(checkPicture(apron, 't2x2', rot).problems, `apron r${rot}`).toEqual([first]);
+      // rails painted through the open ground are painted ground: the game lays its own
+      const rails = picture('t2x2', rot, {
+        after: (png) => {
+          for (const at of [-0.61, -0.39])
+            fillPoly(
+              png,
+              [on(at - 0.02, 0), on(at + 0.02, 0), on(at + 0.02, -0.6), on(at - 0.02, -0.6)],
+              [58, 54, 50],
+            );
+        },
+      });
+      expect(checkPicture(rails, 't2x2', rot).problems, `rails r${rot}`).toEqual([first]);
+      // a gap right through the building is no portal: an empty column is not open ground
+      const gap = picture('t2x2', rot, {
+        closed: true,
+        after: (png) => {
+          const x = Math.round(on(-0.5, 0)[0]);
+          for (let y = 0; y < png.height; y++)
+            for (let dx = -20; dx <= 20; dx++) png.data[(y * png.width + x + dx) * 4 + 3] = 0;
+        },
+      });
+      expect(checkPicture(gap, 't2x2', rot).problems, `gap r${rot}`).toEqual([closedTo.all]);
+    }
+  });
+
+  it('leaves the portal of a wall without a straight foot to the eye', () => {
+    // a narrow depot whose end wall is a round bay: there is no foot to measure the ground from
+    const r = checkPicture(bay(0.5), 't1x2', 0);
+    expect(r.ok).toBe(true);
+    expect(r.fit.sure).toEqual([true, false]);
+    expect(r.notes).toEqual([
+      'the ground inside the portal was not measured: the wall it is in has no straight foot',
+      'placed by its outline: no straight wall base was found',
+    ]);
+    expect(r).not.toHaveProperty('ground');
   });
 
   it('notes what a person should look at without failing the picture', () => {

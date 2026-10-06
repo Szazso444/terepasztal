@@ -99,8 +99,15 @@ and shows it in a running build, as drawn or straightened.
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
   them on the other side, and in the game the rails would run into a wall. And open to the
   ground: the game lays its rails under the picture, through the portals, so a floor or an apron
-  painted there hides them (four of the first depot's 24 pictures had one). The look picture has
-  the rails drawn in.
+  painted there hides them (four of the first depot's 24 pictures had one). The check takes the
+  lowest thing painted in each column of the portal wall and measures how deep the ground is
+  open above the wall's foot, over a stretch 0.3 of the portal wide, as a share of the portal's
+  width: under 0.3 the picture is refused, under 0.45 it passes with a note, and the shares are
+  kept in `report.json` (`ground`). The first depot's pictures whose rails did not show measured
+  0 to 0.18, the others 0.52 and more. The foot is the outermost line of the wall, so a floor
+  that ends behind open door leaves or deep plinths reads deeper than it is: the eye settles
+  that on the look picture, which lays a depot out 1.3 times its footprint, as the game draws
+  it, with the game's rails drawn in at their own size.
 - Which picture is taken: the agent names the file its image tool reported. `take` takes only a
   picture made after the last one was taken, recorded or given up (one mark in time in
   `queue.json`, moved forward only), and no picture of the image tool whose bytes are in the

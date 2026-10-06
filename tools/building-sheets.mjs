@@ -137,18 +137,12 @@ export function drawSheet(
 }
 
 /**
- * One picture for the eye: on grass, laid onto its footprint as it was painted, with the
- * footprint's edge, the line the walls' feet should stand on and the frames of the guide's
- * openings (the front door, a depot's portals) drawn over it. The camera is not corrected here,
- * so a foot that leaves its line shows, and so does a door or a portal in the wrong wall. The result is opaque: a viewer that
- * ignores transparency shows the colour stored under a picture's transparent pixels as a glow
- * round the building, which is not in the picture. Null when the picture holds no building.
- */
-/**
  * The game's track under a depot, drawn on the ground of a look picture before the building is
  * laid on it: one track through each pair of portals, square to the portal wall and a little
  * beyond the footprint at both ends. Where the ground inside a portal is left open the rails
  * are seen to run in; a floor or an apron painted there hides them, as it does in the game.
+ * The track is the game's own, through the middle of the footprint's tiles: it does not grow
+ * with a family that stands larger than its footprint.
  */
 function drawTracks(look, fp, fpId, rot, at) {
   const { w, h } = footprintTiles(fp, rot);
@@ -191,12 +185,26 @@ function drawTracks(look, fp, fpId, rot, at) {
   }
 }
 
-export function drawLook(png, fpId, rot, shrink = 2) {
+/**
+ * One picture for the eye: on grass, laid onto its footprint as it was painted, with the
+ * footprint's edge, the line the walls' feet should stand on and the frames of the guide's
+ * openings (the front door, a depot's portals) drawn over it. The camera is not corrected here,
+ * so a foot that leaves its line shows, and so does a door or a portal in the wrong wall.
+ * `size` is how large the game draws the family on its footprint (a depot 1.3 times): the
+ * building and its lines are that much larger, on a canvas that much larger so that nothing is
+ * cut off, while the footprint and a depot's track keep the game's size. So the rails are where
+ * the game has them. The result is opaque: a viewer that ignores transparency shows the colour
+ * stored under a picture's transparent pixels as a glow round the building, which is not in the
+ * picture. Null when the picture holds no building.
+ */
+export function drawLook(png, fpId, rot, { shrink = 2, size = 1 } = {}) {
   const fp = FOOTPRINTS[fpId];
   const fit = fitPicture(png, fpId, rot, { rectify: false });
   if (!fit) return null;
   const k = shrink;
-  const look = new PNG({ width: fp.canvas[0] / k, height: fp.canvas[1] / k });
+  // the footprint's canvas shrunk less is the same picture, larger
+  const pic = normalisePicture(png, fit, fpId, k / size);
+  const look = new PNG({ width: pic.width, height: pic.height });
   for (let i = 0; i < look.data.length; i += 4) {
     look.data[i] = SHEET.grass[0];
     look.data[i + 1] = SHEET.grass[1];
@@ -205,13 +213,19 @@ export function drawLook(png, fpId, rot, shrink = 2) {
   }
   const d = diamond(fp, rot),
     b = wallBase(fp, rot);
-  const at = ([x, y]) => [x / k, y / k];
-  fillPoly(look, [d.n, d.e, d.s, d.w].map(at), SHEET.footprint);
-  drawTracks(look, fp, fpId, rot, at);
-  paste(look, normalisePicture(png, fit, fpId, k), 0, 0);
-  strokePoly(look, [d.n, d.e, d.s, d.w].map(at), SHEET.outline, 1.5);
-  strokePoly(look, [b.n, b.e, b.s, b.w].map(at), SHEET.walls, 1.5);
-  for (const o of openingsOf(fpId, rot)) strokePoly(look, o.pts.map(at), SHEET.openings, 1.5);
+  // the ground keeps its size about the footprint's centre; the building's lines grow with it
+  const centre = [(fp.centre[0] * size) / k, (fp.centre[1] * size) / k];
+  const ground = ([x, y]) => [
+    centre[0] + (x - fp.centre[0]) / k,
+    centre[1] + (y - fp.centre[1]) / k,
+  ];
+  const built = ([x, y]) => [(x * size) / k, (y * size) / k];
+  fillPoly(look, [d.n, d.e, d.s, d.w].map(ground), SHEET.footprint);
+  drawTracks(look, fp, fpId, rot, ground);
+  paste(look, pic, 0, 0);
+  strokePoly(look, [d.n, d.e, d.s, d.w].map(ground), SHEET.outline, 1.5);
+  strokePoly(look, [b.n, b.e, b.s, b.w].map(built), SHEET.walls, 1.5);
+  for (const o of openingsOf(fpId, rot)) strokePoly(look, o.pts.map(built), SHEET.openings, 1.5);
   return look;
 }
 
@@ -338,15 +352,25 @@ ${sections.join('\n')}
 `;
 }
 
-/** Write one picture for the eye. Answers with the `file` written, or `why` there is none. */
-export function showPicture(file, inventory) {
+/** How large the game draws a family on its footprint: 1 unless families.json says otherwise. */
+export function sizeOf(families, family) {
+  return families.families[family]?.size ?? 1;
+}
+
+/**
+ * Write one picture for the eye, at the size the game draws its family. Answers with the `file`
+ * written, or `why` there is none.
+ */
+export function showPicture(file, inventory, families = loadFamilies()) {
   const p = lookedAt(file);
   const f = p && inventory.find((x) => x.family === p.family);
   if (!f) return { why: "not a building picture's name" };
   if (!existsSync(file)) return { why: 'no such file' };
   let shown;
   try {
-    shown = drawLook(PNG.sync.read(readFileSync(file)), f.footprint, p.rot);
+    shown = drawLook(PNG.sync.read(readFileSync(file)), f.footprint, p.rot, {
+      size: sizeOf(families, f.family),
+    });
   } catch (e) {
     return { why: e.message };
   }
@@ -387,7 +411,7 @@ function main(args) {
     if (only && f.family !== only) continue;
     const file = sheetFile(f.family);
     mkdirSync(dirname(file), { recursive: true });
-    const size = families.families[f.family]?.size ?? 1;
+    const size = sizeOf(families, f.family);
     writeFileSync(file, PNG.sync.write(drawSheet(f, load, problem, { size })));
     const lined = drawSheet(f, load, undefined, { outlines: true, shrink: 2, size });
     writeFileSync(anglesFile(f.family), PNG.sync.write(lined));

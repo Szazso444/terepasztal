@@ -1708,7 +1708,9 @@ describe('the queue tool on the command line', () => {
     const look = PNG.sync.read(
       readFileSync(at('assets/source/buildings-v2/.look/depot-a0-r0.png')),
     );
-    expect([look.width, look.height]).toEqual([768, 512]);
+    // at the size the game draws a depot, 1.3 times its footprint: the rails are where the
+    // game has them
+    expect([look.width, look.height]).toEqual([998, 666]);
     // putting a front view back takes everything built on it along: said first, done when told
     const before = readFileSync(file, 'utf8');
     const plan = run(root, 'redo', 'depot-a0-r0');
@@ -1843,7 +1845,10 @@ describe('the queue tool on the command line', () => {
     // under a date of its own: what is made from a picture is renewed by its date
     expect(statSync(at(file)).mtimeMs).toBeGreaterThan(statSync(first).mtimeMs);
     const look = at('assets/source/buildings-v2/.look/depot-a0-r0.png');
-    expect(PNG.sync.read(readFileSync(look)).data[3]).toBe(255);
+    const shown = PNG.sync.read(readFileSync(look));
+    expect(shown.data[3]).toBe(255);
+    // laid out as large as the game draws a depot
+    expect([shown.width, shown.height]).toEqual([998, 666]);
     // what was made up to now is new no longer: the list keeps the mark
     expect(list().mark).toBe(statSync(first).mtimeMs);
     // taking does not make a picture: it waits to be looked at and recorded

@@ -1164,7 +1164,7 @@ async function main(args) {
           `take does not understand "${odd}": it is node tools/building-queue.mjs take <id> [--from <folder or file>]`,
         );
       // the sheet tool reads this one: loaded here, and before anything is written
-      const { drawLook, lookFile } = await import('./building-sheets.mjs');
+      const { drawLook, lookFile, sizeOf } = await import('./building-sheets.mjs');
       const now = Date.now();
       const pick = choosePicture(queue, id, option('--from'), now);
       const e = pick.entry;
@@ -1180,7 +1180,9 @@ async function main(args) {
       let shown;
       try {
         const f = inventory.find((x) => x.family === e.family);
-        shown = drawLook(PNG.sync.read(pick.bytes), f.footprint, e.rot);
+        shown = drawLook(PNG.sync.read(pick.bytes), f.footprint, e.rot, {
+          size: sizeOf(families, e.family),
+        });
       } catch (error) {
         throw new Error(
           `${pick.source} cannot be read as a picture (${error.message}): ${nothing}`,
@@ -1286,7 +1288,7 @@ async function main(args) {
       writeReport({ [r.entry.id]: r.check });
       // shown for the eye: the closest by its camera is kept, which may not be the one meant
       const { showPicture } = await import('./building-sheets.mjs');
-      const shown = showPicture(r.entry.file, inventory);
+      const shown = showPicture(r.entry.file, inventory, families);
       console.log(resultLine(r.entry.id, r.check));
       if (shown.file) console.log(`look at:   ${shown.file}`);
       console.log(

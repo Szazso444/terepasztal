@@ -102,9 +102,14 @@ describe('the guide for the artist agent', () => {
     expect(guide).toMatch(/yellow/);
     expect(guide).toMatch(/the portals are in the/);
     // the ground inside a depot's portals stays empty: the game's rails run through them
-    expect(guide).toContain('the portals are not open to the ground');
+    expect(guide).toContain('not open to the ground');
     expect(guide).toMatch(/rails\s+are\s+drawn\s+in/);
+    expect(guide).toMatch(/a\s+third\s+as\s+deep/);
+    // a depot is laid out as large as the game draws it, so the rails are where the game's are
+    expect(guide).toMatch(/1\.3\s+times\s+its\s+footprint/);
     expect(production).toMatch(/open to the\s+ground/);
+    expect(production).toMatch(/share\s+of\s+the\s+portal's\s+width/);
+    expect(production).toMatch(/1\.3\s+times\s+its\s+footprint/);
     // a recorded picture found faulty is taken back, never put back with everything built on it
     expect(guide).toContain('set <id> pending');
     expect(guide).toContain('--yes');

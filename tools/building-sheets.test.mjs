@@ -206,6 +206,75 @@ describe('building review sheets', () => {
     expect(count(drawLook(painted('t1x2', 0), 't1x2', 0), SHEET.bed)).toBeGreaterThan(200);
     expect(count(drawLook(painted('t1', 0), 't1', 0), SHEET.bed)).toBe(0);
     expect(count(drawLook(painted('t1', 0), 't1', 0), SHEET.rail)).toBe(0);
+    // the narrow depot's one track runs the length of the hall, through both end walls
+    const narrow = FOOTPRINTS.t1x2;
+    for (const [rot, along, across] of [
+      [0, [1.5, 0], [0, 0.9]],
+      [1, [0, 1.5], [0.9, 0]],
+    ]) {
+      const look = drawLook(painted('t1x2', rot), 't1x2', rot);
+      const seen = ([x, y]) => at(look, ...project(narrow, x, y).map((v) => v / 2));
+      expect(seen(along), `narrow r${rot}`).toEqual(SHEET.bed);
+      expect(seen(along.map((v) => -v)), `narrow r${rot}`).toEqual(SHEET.bed);
+      expect(seen(across), `narrow r${rot}`).toEqual(SHEET.grass);
+    }
+  });
+
+  it('lays a depot out at the size the game gives it, the rails where the game has them', () => {
+    // the depot stands 1.3 times its footprint in the game, and the track does not grow with it.
+    // Laid out at the footprint's own size, pictures whose rails the game shows in the portals
+    // had them run onto the door posts
+    const fp = FOOTPRINTS.t2x2;
+    const size = 1.3;
+    for (const rot of [0, 1]) {
+      const sides = openingsOf('t2x2', rot).filter((o) => o.kind === 'side');
+      const wall = sides[0].wall;
+      const b = blockOf('t2x2', rot);
+      const down = fp.scale * b.z0;
+      const closed = painted('t2x2', rot);
+      const open = painted('t2x2', rot);
+      const part = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+      for (const o of sides) {
+        const [a0, c0, cTop0, aTop0] = o.pts.map(([x, y]) => [x, y + down]);
+        const [a, c] = [part(a0, c0, 0.1), part(a0, c0, 0.9)];
+        const [aTop, cTop] = [part(aTop0, cTop0, 0.1), part(aTop0, cTop0, 0.9)];
+        fillPoly(open, [a, c, part(c, cTop, 0.4), part(a, aTop, 0.4)], [0, 0, 0], 0);
+      }
+      const [lookClosed, lookOpen] = [closed, open].map((png) =>
+        drawLook(png, 't2x2', rot, { size }),
+      );
+      // the canvas grows with the building: nothing that fitted the footprint's canvas is cut off
+      expect([lookOpen.width, lookOpen.height], `r${rot}`).toEqual([998, 666]);
+      // the ground keeps its size about the footprint's centre; what belongs to the building is
+      // 1.3 times as large
+      const centre = fp.centre.map((v) => (v * size) / 2);
+      const ground = ([x, y]) => [
+        centre[0] + (x - fp.centre[0]) / 2,
+        centre[1] + (y - fp.centre[1]) / 2,
+      ];
+      const built = ([x, y]) => [(x * size) / 2, (y * size) / 2];
+      expect(at(lookOpen, ...ground(diamond(fp, rot).s)), `r${rot}`).toEqual(SHEET.outline);
+      expect(at(lookOpen, ...built(wallBase(fp, rot).s)), `r${rot}`).toEqual(SHEET.walls);
+      expect(at(lookOpen, ...built(project(fp, 0, 0, b.z1))), `r${rot}`).toEqual(SHADE.top);
+      for (const o of openingsOf('t2x2', rot))
+        expect(at(lookOpen, ...built(o.pts[3])), `r${rot}`).toEqual(SHEET.openings);
+      // a point on the ground: `along` the portal wall from its middle, `out` from the footprint's
+      // centre towards that wall (tiles)
+      const on = (along, out) =>
+        ground(wall === 0 ? project(fp, along, out) : project(fp, out, along));
+      const foot = (wall === 0 ? b.y1 : b.x1) * size;
+      // the game's tracks: through the middle of each of the footprint's two rows of tiles
+      for (const lane of [-0.5, 0.5])
+        for (const look of [lookClosed, lookOpen])
+          expect(at(look, ...on(lane, foot + 0.3)), `r${rot} lane ${lane}`).toEqual(SHEET.bed);
+      // and a track runs into its portal: a little inside the wall the ground shows through
+      // the open portal, and a wall or a floor painted there hides it
+      expect(at(lookClosed, ...on(0.5, foot - 0.3)), `r${rot}`).not.toEqual(SHEET.bed);
+      expect(at(lookOpen, ...on(0.5, foot - 0.3)), `r${rot}`).toEqual(SHEET.bed);
+    }
+    // a family the game draws at its footprint's own size is laid out as before
+    const plain = drawLook(painted('t1', 0), 't1', 0, { size: 1 });
+    expect([plain.width, plain.height]).toEqual([512, 512]);
   });
 
   it('knows which picture a file is, wherever it lies and whichever attempt it is', () => {
