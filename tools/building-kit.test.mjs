@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   AGES,
   ROTATIONS,
@@ -19,9 +22,9 @@ describe('building inventory', () => {
   const inv = loadInventory();
   const family = (f) => inv.find((x) => x.family === f);
 
-  it('counts 27 families and 560 pictures', () => {
+  it('counts 27 families and 548 pictures', () => {
     expect(inv).toHaveLength(27);
-    expect(pictures(inv)).toHaveLength(560);
+    expect(pictures(inv)).toHaveLength(548);
     expect(inv[0].family).toBe('depot');
     expect(inv[1].family).toBe('station');
     expect(inv.at(-1).family).toBe('fuel_stop');
@@ -34,6 +37,28 @@ describe('building inventory', () => {
     expect(family('copper_mine')).toMatchObject({ firstAge: 2, ages: 4, kind: 'station' });
     expect(family('water_tower')).toMatchObject({ firstAge: 0, ages: 1, upgradeable: false });
     expect(family('townhouse')).toMatchObject({ ages: 6, kind: 'house', upgradeable: true });
+  });
+
+  it('stops modernising a building of one period at its last age', () => {
+    // the charcoal kiln is upgraded up to the Electric age and keeps that model afterwards
+    expect(family('kiln')).toMatchObject({ firstAge: 0, lastAge: 2, ages: 3 });
+    expect(family('windmill')).toMatchObject({ firstAge: 0, lastAge: 5, ages: 6 });
+    expect(family('water_tower')).toMatchObject({ firstAge: 0, lastAge: 0, ages: 1 });
+    const kiln = pictures(inv).filter((p) => p.family === 'kiln');
+    expect(kiln.map((p) => p.age)).toEqual([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]);
+    // a last age is one of the game's ages, and not before the first
+    const root = mkdtempSync(join(tmpdir(), 'building-kit-'));
+    cpSync('src/data', join(root, 'src/data'), { recursive: true });
+    const file = join(root, 'src/data/buildings.json');
+    const last = (lastTier) => {
+      const data = JSON.parse(readFileSync(file, 'utf8'));
+      data.find((d) => d.id === 'refinery').lastTier = lastTier;
+      writeFileSync(file, JSON.stringify(data));
+      return loadInventory(root).find((f) => f.family === 'refinery');
+    };
+    expect(last(3)).toMatchObject({ firstAge: 1, lastAge: 3, ages: 3 });
+    expect(() => last(0)).toThrow(/refinery: its last age \(lastTier 0\) is before its first/);
+    expect(() => last(9)).toThrow(/refinery: there is no age 9/);
   });
 
   it('gives the mines their own family and the depots their footprints', () => {

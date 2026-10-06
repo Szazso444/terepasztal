@@ -1,7 +1,7 @@
 # Building pictures: how they are made
 
 The game's buildings are painted by an image-generating agent working from a list, one picture
-per building, age and view: 27 kinds of building, 560 pictures. This document is for whoever runs
+per building, age and view: 27 kinds of building, 548 pictures. This document is for whoever runs
 that work or has to run it again: what the parts are, how to start it, what the tools enforce,
 what the generator does wrong, and how to change the set. The artist agent has its own brief,
 `assets/source/buildings-v2/GUIDE.md`; the design and its reasons are in
@@ -42,8 +42,9 @@ document to what the tools do.
    and keeps what was recorded.
 2. Open an agent session on the repository and paste the block from `PROMPT.md`. The agent runs
    `node tools/building-queue.mjs next`, paints the picture as an edit of the block-out with the
-   references and the prompt `next` printed, takes it (`node tools/building-queue.mjs take <id>`
-   copies the file the image tool wrote and lays the picture on grass, as
+   references and the prompt `next` printed, takes it
+   (`node tools/building-queue.mjs take <id> --from <file>` writes the picture the image tool
+   reported to the picture's file and lays it on grass, as
    `node tools/building-sheets.mjs --picture <file>` does for any file), looks at it, and records
    it (`node tools/building-queue.mjs set <id> generated`). The tool refuses what fails the check.
 3. The depot and the station are gates: when one is finished `next` prints `GATE` and the agent
@@ -67,6 +68,9 @@ the checkout, and the way of working is in the guide and in what `next` prints.
 2. A picture the earlier session made but did not record shows in `status` as
    `on disk, but not recorded`. The new session looks at it and records it, or makes it again.
 3. A gate holds across sessions: the new session stops at `GATE` like the old one.
+4. Nothing about the image tool's folders has to be told. The new chat names the file its
+   image tool reports; its pictures are newer than the mark in the list, and what the old chat
+   left behind is older, or too old to be taken for a picture just made.
 
 On another machine the branch has to be pushed first. The earlier selves of pictures that wait to
 be painted again (`*.before.png`) are not committed, so there those pictures are made afresh.
@@ -93,7 +97,26 @@ and shows it in a running build, as drawn or straightened.
   family with more than a quarter of its pictures kept further off, rejected or never made stops
   the work (`STOP`).
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
-  them on the other side, and in the game the rails would run into a wall.
+  them on the other side, and in the game the rails would run into a wall. And open to the
+  ground: the game lays its rails under the picture, through the portals, so a floor or an apron
+  painted there hides them (four of the first depot's 24 pictures had one). The look picture has
+  the rails drawn in.
+- Which picture is taken: the agent names the file its image tool reported. `take` takes only a
+  picture made after the last one was taken, recorded or given up (one mark in time in
+  `queue.json`, moved forward only), and no picture of the image tool whose bytes are in the
+  list's folders already. So a generation that failed does not hand an earlier picture to the
+  next entry, whether the file is named or found. It does not guess between chats: a picture it
+  finds itself is taken only from the chat the last one came from (none before a picture was
+  taken by name), and where new pictures lie in another chat's folder or in more than one it
+  names them and takes none. What the tool keeps
+  of an entry (`<name>.before.png`, `<name>.rejected.png`) is had back by naming that file.
+- The count of attempts is the tool's: a picture taken and given up counts, the same picture
+  refused twice counts once, a number the agent gives can raise the count but not lower it, and
+  a picture taken back starts again with three.
+- A picture is not lost to one bad last attempt: `node tools/building-queue.mjs keep <id>` makes
+  the closest attempt the tool holds the picture, where the third attempt failed for another
+  reason than its camera. One session rejected a rear view whose second attempt had been right
+  but for 2.5° of camera, because the third had a door on the back wall again.
 - Size and place are not enforced. A generator fills its canvas, so every picture is measured
   and laid onto its footprint by the tools, and the four views of an age are brought to one size.
   A family can stand larger than its footprint (`size` in `families.json`; the depot has 1.3).
@@ -131,6 +154,10 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
 - A new building: it appears in the list once it is in the game's data. Give it an entry in
   `families.json` (`what`, `keep`, `front`, `base`, and a line for each of its ages); the queue
   tool names whatever is missing.
+- A building that is not modernised to the end: `lastTier` in the game's data, beside its
+  `tier`. The charcoal kiln has 2: it is upgraded up to the Electric age and keeps that model.
+  Take its later lines out of `families.json`; the next rebuild drops its later pictures from
+  the list.
 - A new age: `AGES` in `building-kit.mjs`, its style under `ages` in `families.json`, and a line
   in every family.
 - A new footprint: `FOOTPRINTS` in `building-kit.mjs`, its block and openings in
@@ -154,7 +181,9 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   one recorded picture again the command is `set <id> pending`.
 - Nothing painted is removed by the tools. A picture set aside is `<name>.rejected.png`, an
   earlier attempt `<name>.before.png`, and an older one under the same name is kept with a number.
-  None of these are committed.
+  None of these are committed. The one exception: `take` writes over a picture that lies under
+  the entry's name and was never recorded, one the agent looked at and gave up; where the image
+  tool made it, its file there remains.
 
 ## Not built yet
 

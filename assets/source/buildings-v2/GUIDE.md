@@ -1,7 +1,7 @@
 # Building pictures: the guide
 
 You are painting the buildings of an isometric railway game: 27 kinds of building, each in up to
-six ages and four views, 560 pictures in all. This guide tells you how to make them one by one on
+six ages and four views, 548 pictures in all. This guide tells you how to make them one by one on
 your own, how each is checked, and where to stop. Read it once, then work from the queue.
 
 ## 1. What the pictures are for
@@ -14,7 +14,8 @@ footprint, the same camera, the same building seen from four sides.
 ## 2. The rules every picture follows
 
 **Ages.** `a0` steam, `a1` diesel, `a2` electric, `a3` nuclear, `a4` magnetic, `a5` hyper. A
-building's first model is that of the age it appears in; some start at `a1` or `a2`. Every age
+building's first model is that of the age it appears in; some start at `a1` or `a2`, and a
+building of one period ends early (the charcoal kiln is upgraded up to `a2`). Every age
 stays inside the same pastoral world and palette: an upgrade modernises a building, it does not
 replace it with something from another game.
 
@@ -78,8 +79,9 @@ Everything is in `assets/source/buildings-v2/`.
   being painted again. The tool keeps its earlier self here and names it, straightened, as a
   reference (section 5). Do not edit, remove or commit these (nor a numbered
   `.before.1.png`, left from an earlier round).
-- `.look/<name>.png`: a picture as you should look at it (section 6), written by
-  `node tools/building-sheets.mjs --picture <file>`. Not committed.
+- `.look/<name>.png`: a picture as you should look at it (section 6), written by `take`
+  (`node tools/building-sheets.mjs --picture <file>` writes one for any other file). Not
+  committed.
 - `.fitted/<family>-a<age>-r<view>.png`: an earlier picture laid onto its footprint by the tool,
   at exactly the guide's camera, scale and place. `next` names these as references: a later
   picture copies the angles of what it is shown, so it is shown them straightened. Attach them as
@@ -92,10 +94,13 @@ Everything is in `assets/source/buildings-v2/`.
 The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`, `:fit`):
 
 - `node tools/building-queue.mjs next`: the next picture to make, with everything it needs.
-- `node tools/building-queue.mjs take <id>`: take the picture your image tool has just written. It
-  is copied to the picture's file as it is, and laid on grass for you to look at (sections 5, 6).
+- `node tools/building-queue.mjs take <id> --from <file>`: take the picture your image tool has
+  just made, by the file it reported. It is written to the picture's file as it is, and laid on
+  grass for you to look at (sections 5, 6).
 - `node tools/building-queue.mjs show <id>`: the same for any picture.
 - `node tools/building-queue.mjs set <id> <status> [--attempts n] [--note "text"]`: record a result.
+- `node tools/building-queue.mjs keep <id>`: where a picture would be given up, make the closest
+  attempt the tool holds the picture (section 7).
 - `node tools/building-queue.mjs status`: progress per family, the gates, and where the list and
   the disk disagree.
 - `node tools/building-queue.mjs recheck` or `recheck <family>`: look again at the pictures that
@@ -119,17 +124,19 @@ The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`
 Repeat until the queue tool tells you to stop:
 
 1. Run `node tools/building-queue.mjs next`. It answers with its exit code:
-   - exit code 0: a picture to make. It prints the picture's name, the file to save, the guide to
-     edit, the references to attach in order, and the prompt. A name followed by
-     `(to paint again: the same building)` is a picture that was made before with its camera off.
+   - exit code 0: a picture to make. It prints the picture's name and file, the guide to edit,
+     the references to attach in order, the prompt, and the command that takes the finished
+     picture. A name followed by `(to paint again: the same building)` is a picture that was made
+     before with its camera off.
    - exit code 2: `GATE`. A family the user wants to see is finished. Stop (section 8).
    - exit code 4: `STOP`. Too much of a family could not be made. Stop (section 8).
    - exit code 3: `DONE`. Nothing is left.
-2. Make the picture and take it with `node tools/building-queue.mjs take <id>` (section 5).
+2. Make the picture and take it with `node tools/building-queue.mjs take <id> --from <file>`
+   (section 5).
 3. Look at it yourself (section 6).
-4. Record it: `node tools/building-queue.mjs set <id> generated --attempts <how many tries>`.
-   The tool checks the picture first. If the check fails it prints why and records nothing: make
-   the picture again (section 7).
+4. Record it: `node tools/building-queue.mjs set <id> generated`. The tool checks the picture
+   first. If the check fails it prints why, the picture is not recorded as made, and the attempt
+   is counted: make the picture again (section 7).
 5. When `next` says a family is finished, close it (section 8).
 
 The queue hands pictures out in an order that matters: a building's front view of an age comes
@@ -144,13 +151,36 @@ first, then its three other views, then the next age. Each picture is built on o
    prompt's last paragraph says what each of the others is for.
 3. Paste the prompt exactly as printed.
 4. Ask for the size `next` printed and a transparent background.
-5. Take the result: `node tools/building-queue.mjs take <id>`. Your image tool has written the
-   picture to a file of its own (Codex keeps them in `$CODEX_HOME/generated_images/`, a folder for
-   each chat). `take` copies the newest picture there to the file name `next` printed, exactly as
-   it is, and writes the picture for you to look at (section 6). If your image tool keeps its
-   pictures somewhere else, or another chat is making pictures at the same time, name the folder
-   or the file: `--from <folder or file>`. Never pass a picture through the shell as text (base64,
-   in pieces): that takes a hundred commands where a copy takes one.
+5. Take the result: `node tools/building-queue.mjs take <id> --from <file>`, naming the file your
+   image tool reported. Do not save the picture yourself. (Codex keeps its pictures in
+   `$CODEX_HOME/generated_images/`, which is `~/.codex/generated_images/` when that is not set,
+   a folder for each chat.) Without `--from` the tool looks there itself for the newest picture
+   made in the last 15 minutes, since the last one was taken or recorded, in the chat the last
+   one came from. Either way it writes the picture to the picture's file exactly as it is, and
+   writes the picture for you to look at (section 6).
+   - `nothing new was made`, `was made before the last picture that was taken or recorded`,
+     `was taken before`, `was made ... minutes ago`, or `no picture in`: the generation failed,
+     or you have not made the picture yet, or you named an earlier file. Nothing is taken; make
+     the picture. A picture of the image tool is taken once: one you gave up is not had back by
+     naming it.
+   - `does not know your chat's folder yet`: the first picture of a list, or the first since the
+     tools were brought up to date. Name the file your image tool reported.
+   - `no new picture: this is the one that was taken before`: you asked again without making a
+     picture, and it shows you the one in hand.
+   - `more than one chat's folder`, or `another chat's folder`: other chats are making pictures
+     as well, or you have taken the work over from another chat. The tool does not guess: name
+     the file your image tool reported.
+   - `was refused by set`: the picture that lies there failed the check. Make it again.
+   - What the tool keeps of a picture (`<name>.before.png`, `<name>.rejected.png`) is had back by
+     naming that file with `--from`.
+   - If your image tool keeps its pictures somewhere else, name that folder with `--from`.
+
+   Look at what `take` shows you. If it is not the picture you asked for, your generation failed:
+   make the picture, and take again. Make one picture at a time: a picture made before the one in
+   hand was recorded is not taken afterwards.
+
+   Never pass a picture through the shell as text (base64, in pieces): that takes a hundred
+   commands where `take` needs one.
 
 **A picture to paint again.** Its second reference is the picture as it was, laid onto its
 footprint and straightened to the guide's camera, and the prompt's last lines say what was wrong
@@ -169,7 +199,9 @@ Look at the picture as `take` has written it, in `.look/<name>.png`
 on its footprint as you painted it, with the footprint's edge in white, the line its walls' feet
 should stand on in pink, and in yellow the frames of the guide's openings: the front door, and a
 depot's portals. The frames show which wall the door and the portals belong to; where there is no
-door frame (`r1`, `r2`), no front door may show. That picture is the one to judge: you need not
+door frame (`r1`, `r2`), no front door may show. Under a depot the game's rails are drawn in as
+well, through the portals: they must be seen to run into each portal, as they will in the game.
+That picture is the one to judge: you need not
 look at the raw result at all, and do not judge its background by eye. A viewer that ignores
 transparency shows the colour stored under the transparent pixels as a brown or green glow round
 the building; that glow is not in the picture. Whether the background is clean is the tool's to
@@ -178,7 +210,9 @@ say: `set` refuses a picture with a shadow or a glow, and a picture it accepts h
 Then answer:
 
 - Is the front on the wall the prompt's View line names? In `r1` and `r2` no front door may show.
-- For a depot: are the portals in the wall the guide shows them in, and open?
+- For a depot: are the portals in the wall the guide shows them in, and open down to the ground,
+  with no floor, threshold or apron painted in them or before them? The rails drawn into the look
+  picture must run into each portal, not stop at the wall.
 - In `r1`, `r2`, `r3`: is it the same building as the `r0` reference (same walls, roof, colours,
   details), turned, and not a mirror image of it?
 - In a later age: is it still recognisably the same kind of building, with everything on the
@@ -208,6 +242,12 @@ in the lower-left wall, where the block-out has them`: make it again, saying in 
 wall has the portals and which is the plain back or the front, as the prompt's View line names
 them. The tool cannot tell a front from a back, so that is still yours to see.
 
+The game lays its own rails under a depot, through the portals, so the ground inside them stays
+empty. A picture with a floor painted in the portals, or an apron before them, is refused with
+`the portals are not open to the ground`: make it again, saying in the edit that the ground inside
+each portal is transparent from the foot of the wall upwards, with no floor, threshold, apron or
+rails painted there.
+
 **The camera.** The tool measures every picture's camera from the feet of its two visible walls,
 and refuses a picture whose camera is more than 2° from the guide's: seen from too low or too
 high, or with the building turned so that one wall faces the viewer more than the other. That is
@@ -233,14 +273,30 @@ from that, straightened.
    kept, or the picture's earlier self. There is nothing for you to choose, and no picture is
    lost: the other attempts lie beside it as `<name>.before.1.png`, `.before.2.png`.
 
-The tool counts the attempts it refused, so the count is not lost when a session ends;
-`--attempts` is needed only where you made a picture again without recording it. A picture with
-any other fault is made again as before, and rejected after three attempts:
+The tool counts the attempts it refused and the pictures you took and gave up after looking, so
+the count is not lost when a session ends. `--attempts <n>` on `set` is only for attempts the
+tool never saw: it can raise the count, never lower it.
 
-After three attempts, record the picture with
-`node tools/building-queue.mjs set <id> rejected --attempts 3 --note "<what went wrong>"`, and go
-on. The tool sets the file aside as `<name>.rejected.png`. Nothing is ever built on a picture that
-failed: `next` skips the pictures that would have been, and says how many cannot be made.
+A picture with any other fault is made again as before. After three attempts, when none of them
+was right (see below), record the picture with
+`node tools/building-queue.mjs set <id> rejected --note "<what went wrong>"`, and go on. The tool
+sets the file aside as `<name>.rejected.png`. Nothing is ever built on a picture that failed:
+`next` skips the pictures that would have been, and says how many cannot be made.
+
+**Before you give a picture up.** If one of its attempts was right and was refused only for its
+camera, the tool still holds the closest such attempt as `<name>.before.png` (look at it with
+`node tools/building-sheets.mjs --picture <that file>`). Then the picture is not lost because the
+last attempt failed for another reason, a door on the back wall, say. Do not reject it:
+`node tools/building-queue.mjs keep <id>` makes the attempt the tool holds the picture, recorded
+as made and marked for the user with how far its camera is off, and sets the failed attempt
+aside. It works at the third attempt, and on a picture that was rejected already. The tool keeps
+the attempt whose camera was closest and shows it to you (`.look/<name>.png`): if that is not the
+attempt that was right, take the picture back (`set <id> pending`) and say so in your message.
+Reject a picture only when none of its attempts was right.
+
+If the earlier self you are given to paint from is itself wrong (the portals missing, the front
+where the back should be), say what is wrong in the edit, as for any fault; an attempt that puts
+it right is the one to keep.
 
 **A fault found after recording.** If you find a fault in a picture you have already recorded as
 `generated`, take it back with `node tools/building-queue.mjs set <id> pending` and make it again:

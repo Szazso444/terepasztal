@@ -160,6 +160,54 @@ describe('building review sheets', () => {
     expect(drawLook(new PNG({ width: 1024, height: 1024 }), 't1', 0)).toBeNull();
   });
 
+  it("draws the game's rails through a depot's portals, under the picture", () => {
+    // the game lays its track under a depot, through the portals. On grass alone a floor painted
+    // in a portal looks harmless; with the rails drawn in, they are seen to stop at it
+    const fp = FOOTPRINTS.t2x2;
+    for (const rot of [0, 1]) {
+      const sides = openingsOf('t2x2', rot).filter((o) => o.kind === 'side');
+      expect(sides).toHaveLength(2);
+      // the guide has its openings on the plinth; the painted block stands on the ground
+      const down = fp.scale * blockOf('t2x2', rot).z0;
+      const closed = painted('t2x2', rot);
+      const open = painted('t2x2', rot);
+      const part = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+      for (const o of sides) {
+        const [a0, c0, cTop0, aTop0] = o.pts.map(([x, y]) => [x, y + down]);
+        const [a, c] = [part(a0, c0, 0.1), part(a0, c0, 0.9)];
+        const [aTop, cTop] = [part(aTop0, cTop0, 0.1), part(aTop0, cTop0, 0.9)];
+        fillPoly(open, [a, c, part(c, cTop, 0.4), part(a, aTop, 0.4)], [0, 0, 0], 0);
+      }
+      const [lookClosed, lookOpen] = [closed, open].map((png) => drawLook(png, 't2x2', rot));
+      for (const o of sides) {
+        const mid = part(o.pts[0], o.pts[1], 0.5).map((v, i) => v + (i ? down : 0));
+        // the track runs square to the wall: into the hall is up and away from the wall. Far
+        // enough in to be clear of the yellow frame, which the guide has at the plinth's height
+        const step = fp.scale * 0.16;
+        const inward = o.wall === 0 ? [32 * step, -16 * step] : [-32 * step, -16 * step];
+        const inside = [mid[0] + inward[0], mid[1] + inward[1]];
+        const outside = [mid[0] - inward[0] * 3, mid[1] - inward[1] * 3];
+        // before the portal the track shows on the grass
+        for (const look of [lookClosed, lookOpen])
+          expect(at(look, outside[0] / 2, outside[1] / 2), `r${rot}`).toEqual(SHEET.bed);
+        // a wall or a floor painted in the portal hides it; the ground left open, it runs in
+        expect(at(lookClosed, inside[0] / 2, inside[1] / 2), `r${rot}`).not.toEqual(SHEET.bed);
+        expect(at(lookOpen, inside[0] / 2, inside[1] / 2), `r${rot}`).toEqual(SHEET.bed);
+      }
+    }
+    // the narrow depot has one track; a building without portals has none
+    const count = (look, rgb) => {
+      let n = 0;
+      for (let i = 0; i < look.data.length; i += 4)
+        if (look.data[i] === rgb[0] && look.data[i + 1] === rgb[1] && look.data[i + 2] === rgb[2])
+          n++;
+      return n;
+    };
+    expect(count(drawLook(painted('t1x2', 0), 't1x2', 0), SHEET.bed)).toBeGreaterThan(200);
+    expect(count(drawLook(painted('t1', 0), 't1', 0), SHEET.bed)).toBe(0);
+    expect(count(drawLook(painted('t1', 0), 't1', 0), SHEET.rail)).toBe(0);
+  });
+
   it('knows which picture a file is, wherever it lies and whichever attempt it is', () => {
     expect(lookedAt('assets/source/buildings-v2/depot/depot-a3-r2.png')).toEqual({
       family: 'depot',
@@ -265,7 +313,7 @@ describe('building review sheets', () => {
     expect(html).toContain('src="depot.png"');
     // a rejected picture is not a made one
     expect(html).toContain('2 of 24 made, 1 rejected');
-    expect(html).toContain('2 of 560 made');
+    expect(html).toContain('2 of 548 made');
     expect(html).not.toContain('3 of 24');
     expect(html).toContain('depot-a0-r1');
     expect(html).toContain('background is not transparent');
