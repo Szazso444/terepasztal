@@ -26,7 +26,7 @@
     "depot": {
       "what": "A two-track engine shed that trains run through: one hall, as wide as it is long, with a portal for each of its two tracks in both end walls.",
       "size": 1.3,
-      "keep": "two train portals side by side in each end wall, clearly open and tall enough for a locomotive, the ground inside the portals left empty and transparent from the foot of the wall upwards (no floor, threshold, apron or rails painted in them or before them: the game lays its own rails through them); one hall on a square footprint; a small crew door in the front wall",
+      "keep": "two train portals side by side in each end wall, clearly open and tall enough for a locomotive. Each portal is a doorway into the hall, and the inside of the hall shows through it: inside each doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: one hall on a square footprint; a small crew door in the front wall",
       "front": "the side wall with the crew door and windows; the tracks run through the hall parallel to it",
       "base": "assets/source/base-v1/depot.png",
       "ages": {
@@ -179,7 +179,7 @@
     },
     "depot_narrow": {
       "what": "A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.",
-      "keep": "one train portal in each end wall, clearly smaller than a main-line depot, the ground inside each portal left empty and transparent from the foot of the wall upwards (no floor, threshold, apron or rails painted in it or before it: the game lays its own rails through it); a small crew door in the front long wall",
+      "keep": "one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall",
       "front": "the long wall with the crew door; the track runs through the hall parallel to it",
       "base": null,
       "ages": {

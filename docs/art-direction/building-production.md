@@ -97,10 +97,43 @@ and shows it in a running build, as drawn or straightened.
   family with more than a quarter of its pictures kept further off, rejected or never made stops
   the work (`STOP`).
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
-  them on the other side, and in the game the rails would run into a wall. And open to the
-  ground: the game lays its rails under the picture, through the portals, so a floor or an apron
-  painted there hides them (four of the first depot's 24 pictures had one). The look picture has
-  the rails drawn in.
+  them on the other side, and in the game the rails would run into a wall. Every prompt of a
+  depot names the wall: a view painted from the front view copied the front view's wall at the
+  first attempt, two times in three, until it did.
+- The ground in a depot's portals, open to the ground: the game lays its rails under the
+  picture, through the portals, so a floor or an apron painted there hides them (four of the
+  first depot's 24 pictures had one). The check takes the lowest thing painted in each column
+  of the portal wall, a hairline or a speck apart, and measures how deep the ground is open
+  above the wall's foot, over the deepest stretch 0.3 of the portal wide, as a share of the
+  portal's width: under 0.3 the picture is refused, under 0.45 it passes with a note. The first
+  depot's pictures whose rails did not show measured 0.18 at most, the others 0.50 and more.
+  The foot is taken through the building's near corner, where the other wall's foot ends:
+  fitted to the lowest pixels alone it runs before the wall wherever paint lies in a line there
+  (an apron before each portal, the tips of open door leaves). Not where something stands at
+  that corner before the other wall's foot (a turret, a pier, a bush): there no foot hangs. A
+  near corner cut off by a quarter of a tile or more, or a step along the other wall that stops
+  short of the corner, still reads as a foot run before its wall: such a picture is refused
+  and told to keep its walls' feet plain and straight from corner to corner, which the prompt
+  asks of every building. Depths are the game's: the picture's, times what the fit stretches
+  its heights by to put its camera right.
+- The inside of the hall in a depot's portals: told that the ground is "transparent from the
+  foot of the wall upwards", the generator emptied whole portals, and the user asked for the
+  hall's inner walls back. A depot's portal open a full width deep over half its width or more
+  is a hole and is refused; from 0.3 of its width on it passes with a note. The two pictures
+  the user sent back measured 0.58 and 0.61 in their worse portal, a third that was not sent
+  back 0.35, the others 0.24 at most. The limit is the depot's own: a narrow hall behind a wide
+  portal shows a deep wedge of floor that reads the same, and a portal lower than it is wide
+  can be a hole and read none. So of the narrow depot's portal the tool only says it, in a
+  note, until its first pictures have been measured.
+- The words: the Keep lines, the check's messages and the guide say what is painted in a
+  portal (the hall's inner wall, in shadow) and what is left out (only the floor, below that
+  wall, up to about a third of the doorway's height), in one sentence that was tried on the
+  generator and gave two pictures out of two right. The agent copies the tools' words into its
+  prompts and sharpens them, so a test holds that sentence the same in all three places.
+- The shares are kept in `report.json` (`ground`, `through`, `hang`). The look picture is where
+  the eye settles what the numbers leave open: it lays a depot out 1.3 times its footprint, as
+  the game draws it, with the game's track drawn in at its own gauge and width (regular track
+  for the depot, narrow gauge for the narrow depot).
 - Which picture is taken: the agent names the file its image tool reported. `take` takes only a
   picture made after the last one was taken, recorded or given up (one mark in time in
   `queue.json`, moved forward only), and no picture of the image tool whose bytes are in the

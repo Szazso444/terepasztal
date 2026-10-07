@@ -240,14 +240,50 @@ describe('building queue', () => {
     );
   });
 
-  it("says of a depot that the ground inside its portals stays empty, for the game's rails", () => {
+  it("says of a depot what shows in its portals: the hall's inside, and open ground for the rails", () => {
     // the game lays its rails under the picture, through the portals: a floor painted there
-    // hides them. Four of the first depot's 24 pictures had one
-    for (const id of ['depot-a0-r0', 'depot-a3-r2', 'depot_narrow-a0-r1'])
-      expect(about(id).prompt, id).toMatch(
-        /the ground inside (each|the) portals? left empty and transparent.*the game lays its own rails through/,
+    // hides them (four of the first depot's 24 pictures had one). Told that the ground is
+    // "transparent from the foot of the wall upwards", the generator emptied the whole portal,
+    // and the hall's inner walls were gone: what is painted there is asked for by name
+    for (const id of ['depot-a0-r0', 'depot-a3-r2', 'depot_narrow-a0-r1']) {
+      const prompt = about(id).prompt;
+      // in the words that were tried on the generator, and gave the inner walls back
+      expect(prompt, id).toMatch(
+        /the inside of the hall shows through it: inside (each|the) doorway paint the hall's inner wall, in shadow\./,
       );
-    expect(about('station-a0-r0').prompt).not.toMatch(/lays its own rails through/);
+      expect(prompt, id).toContain(
+        "Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there.",
+      );
+      expect(prompt, id).toContain(
+        'Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails.',
+      );
+      expect(prompt, id).not.toMatch(/from the foot of the wall upwards/);
+    }
+    expect(about('station-a0-r0').prompt).not.toMatch(/doorway/);
+  });
+
+  it('says in every view of a depot which wall its portals are in', () => {
+    // a turned view painted from the front view copied the front view's portal wall at the
+    // first attempt, two times in three; with the wall named, it did not
+    const two = (wall) =>
+      `The two train portals are in the ${wall} wall, where the block-out has its two large dark openings.`;
+    expect(about('depot-a1-r0').prompt).toContain(two('LOWER-RIGHT'));
+    expect(about('depot-a1-r1').prompt).toContain(two('LOWER-LEFT'));
+    expect(about('depot-a4-r2').prompt).toContain(two('LOWER-RIGHT'));
+    expect(about('depot-a4-r3').prompt).toContain(two('LOWER-LEFT'));
+    // the narrow depot has one in each end wall
+    expect(about('depot_narrow-a0-r0').prompt).toContain(
+      'The train portal is in the LOWER-RIGHT wall, where the block-out has its large dark opening.',
+    );
+    expect(about('depot_narrow-a0-r3').prompt).toContain(
+      'The train portal is in the LOWER-LEFT wall, where the block-out has its large dark opening.',
+    );
+    // it belongs to the view: said with it, in one paragraph
+    expect(about('depot-a1-r1').prompt).toMatch(
+      /\nView r1: [^\n]*BACK[^\n]* The two train portals/,
+    );
+    // a building without portals is told nothing of them
+    expect(about('station-a0-r1').prompt).not.toMatch(/train portals? (is|are) in the/);
   });
 
   it('calls a building what its description calls it', () => {
@@ -1708,7 +1744,9 @@ describe('the queue tool on the command line', () => {
     const look = PNG.sync.read(
       readFileSync(at('assets/source/buildings-v2/.look/depot-a0-r0.png')),
     );
-    expect([look.width, look.height]).toEqual([768, 512]);
+    // at the size the game draws a depot, 1.3 times its footprint: the rails are where the
+    // game has them
+    expect([look.width, look.height]).toEqual([998, 666]);
     // putting a front view back takes everything built on it along: said first, done when told
     const before = readFileSync(file, 'utf8');
     const plan = run(root, 'redo', 'depot-a0-r0');
@@ -1788,7 +1826,11 @@ describe('the queue tool on the command line', () => {
     expect(existsSync(join(root, pictureFile('depot', 0, 0)))).toBe(true);
     // what was kept is shown, to be looked at: the closest by its camera may not be the one meant
     expect(back.out).toMatch(/^look at: +assets\/source\/buildings-v2\/\.look\/depot-a0-r0\.png$/m);
-    expect(existsSync(join(root, 'assets/source/buildings-v2/.look/depot-a0-r0.png'))).toBe(true);
+    const shownKept = PNG.sync.read(
+      readFileSync(join(root, 'assets/source/buildings-v2/.look/depot-a0-r0.png')),
+    );
+    // laid out as large as the game draws a depot, like every picture shown for the eye
+    expect([shownKept.width, shownKept.height]).toEqual([998, 666]);
     expect(run(root, 'status').out).toMatch(/depot +1\/24 made, 1 kept with the camera off/);
     expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
     // made now: nothing more to keep
@@ -1843,7 +1885,10 @@ describe('the queue tool on the command line', () => {
     // under a date of its own: what is made from a picture is renewed by its date
     expect(statSync(at(file)).mtimeMs).toBeGreaterThan(statSync(first).mtimeMs);
     const look = at('assets/source/buildings-v2/.look/depot-a0-r0.png');
-    expect(PNG.sync.read(readFileSync(look)).data[3]).toBe(255);
+    const shown = PNG.sync.read(readFileSync(look));
+    expect(shown.data[3]).toBe(255);
+    // laid out as large as the game draws a depot
+    expect([shown.width, shown.height]).toEqual([998, 666]);
     // what was made up to now is new no longer: the list keeps the mark
     expect(list().mark).toBe(statSync(first).mtimeMs);
     // taking does not make a picture: it waits to be looked at and recorded

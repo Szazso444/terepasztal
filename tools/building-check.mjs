@@ -44,12 +44,32 @@ const LIMIT = {
   /** a pixel darker than this is an opening: a hall's inside, an open door, a window */
   dark: 70,
   /**
-   * a portal is closed to the ground when more than this share of the ground just inside it is
-   * painted, in the most open of three windows across its middle. Measured on the first depot:
-   * the pictures whose rails did not show had 0.66 to 1 in every portal, the others at most 0.34
-   * in any
+   * the ground inside a depot's portal, measured by the portal's own width and as the game will
+   * show it, so that the limits hold for a depot of any size and a camera that is a little
+   * off. How deep it is open over a stretch `window` wide: less deep than `closed`, the portal
+   * is closed to the ground and the picture fails; less deep than `shallow`, it passes and is
+   * said, for the eye. A share `spare` of the stretch may be shallower (a door post, a lamp),
+   * and paint thinner than `thin` (and than three pixels), up a column, is a hairline or a
+   * speck that hides no rail. A closed portal is said to have paint before its wall only where
+   * the wall's foot ran `hang` or more before it: the corner of a true wall is a pixel or two
+   * off. And how wide it is open `deep` or deeper: from `far` of the portal's width on that is
+   * said, and over `through` of it the portal is a hole through the building, nothing of the
+   * hall painted in it, and the picture fails. `through` is known for the depot alone: a
+   * narrow hall behind a wide portal shows a deep wedge of floor, and the narrow depot's limit
+   * waits for its first pictures. Measured on the first depot's pictures: see
+   * docs/art-direction/building-production.md
    */
-  floor: 0.5,
+  ground: {
+    window: 0.3,
+    closed: 0.3,
+    shallow: 0.45,
+    spare: 0.25,
+    thin: 0.02,
+    hang: 0.05,
+    deep: 1,
+    far: 0.3,
+    through: { t2x2: 0.5 },
+  },
 };
 
 /** Which picture a file is, from its name: `<family>-a<age>-r<rot>.png`. */
@@ -60,51 +80,125 @@ export function pictureOf(path) {
 }
 
 const SIDES = ['lower-left', 'lower-right'];
+/** The lowest building pixel of a column that is no hairline: `from` is the lowest of all. */
+function lowestPaint(png, x, from, thin) {
+  const solid = (y) => png.data[(y * png.width + x) * 4 + 3] > FIT.alpha;
+  let y = from;
+  while (y >= 0) {
+    let run = 1;
+    while (run <= y && solid(y - run)) run++;
+    if (run >= thin) return y;
+    y -= run;
+    while (y >= 0 && !solid(y)) y--;
+  }
+  return -1;
+}
+
+/**
+ * How far before a wall its fitted foot runs, in picture px up a column. The foot is fitted to
+ * the lowest pixels of the wall's side of the picture, and paint that lies in a line before the
+ * wall takes it: an apron before each portal, the tips of open door leaves. The building's near
+ * corner tells. The other wall's foot ends there, and the two fitted feet meet further out, by
+ * as much as this one runs before its wall. Nothing where the other wall has no straight foot,
+ * and nothing where something stands at the corner, before the other wall's foot: a turret, a
+ * pier, a bush take that foot off its line as well, and no foot hangs there. (The other wall's
+ * lowest pixels stay near its line a little way past the corner, so the hang comes out a few
+ * pixels short: a true corner reads none.)
+ */
+function footHang(low, fit, wall) {
+  if (!fit.sure[1 - wall]) return 0;
+  const { w, s, e } = fit.base;
+  const outer = wall === 0 ? e : w;
+  const slope = (a, b) => (b[1] - a[1]) / (b[0] - a[0]);
+  const other = slope(outer, s);
+  const own = wall === 0 ? slope(w, s) : slope(s, e);
+  const tol = 2 * Math.max(3, Math.round((e[0] - w[0]) * 0.006));
+  // the last column, towards the near corner, whose lowest pixel is on the other wall's foot
+  const step = wall === 0 ? -1 : 1;
+  const before = (x) => (low[x] < 0 ? 0 : low[x] - (outer[1] + other * (x - outer[0])));
+  let last = null;
+  for (let x = Math.round(outer[0]); wall === 0 ? x >= s[0] : x <= s[0]; x += step)
+    if (low[x] >= 0 && Math.abs(before(x)) <= tol) last = x;
+  if (last === null) return 0;
+  for (let x = last + step; wall === 0 ? x >= s[0] : x <= s[0]; x += step)
+    if (before(x) > tol) return 0;
+  return Math.abs(s[0] - last) * (Math.abs(own) + Math.abs(other));
+}
+
+/**
+ * The ground inside each portal of a wall, left to right in the picture, as shares of the
+ * portal's width: `ground` is how deep it is open, `through` how wide the portal is seen right
+ * through; `hang` is how far before the wall its fitted foot ran (`footHang`), which the depths
+ * are measured without. Depths are the game's: the picture's, times what the fit stretches its
+ * heights by to put its camera right. The game lays its rails under the picture, through the portals, so whatever is
+ * painted lowest in a column hides them from there on: a floor, a threshold, an apron before
+ * the portal, a painted rail. `low` is the lowest building pixel of every column, `wall` 0 for
+ * the lower-left wall and 1 for the lower-right. A portal is seldom painted just where the
+ * block-out has it, so each is looked for in its own part of the wall, and the deepest stretch
+ * of the width the limits name speaks for it. A column with nothing in it is a gap beside the
+ * building, not open ground.
+ */
+function portalGround(png, low, fit, fpId, rot, wall) {
+  const base = wallBase(FOOTPRINTS[fpId], rot);
+  const [g0, g1] = wall === 0 ? [base.w, base.s] : [base.s, base.e];
+  // the block-out's portals, as shares of the wall's foot
+  const spans = openingsOf(fpId, rot)
+    .filter((o) => o.kind === 'side' && o.wall === wall)
+    .map((o) =>
+      [o.pts[0], o.pts[1]].map((p) => (p[0] - g0[0]) / (g1[0] - g0[0])).sort((x, y) => x - y),
+    )
+    .sort((p, q) => p[0] - q[0]);
+  const mid = ([a, b]) => (a + b) / 2;
+  const [from, to] = wall === 0 ? [fit.base.w, fit.base.s] : [fit.base.s, fit.base.e];
+  const dx = to[0] - from[0];
+  const rise = footHang(low, fit, wall);
+  const footAt = (x) => from[1] + ((to[1] - from[1]) * (x - from[0])) / dx - rise;
+  const limit = LIMIT.ground;
+  const ground = [],
+    through = [];
+  let hang = 0;
+  spans.forEach(([a, b], i) => {
+    // its own part of the wall: half its width to either side, or as far as the next portal's
+    const lo = Math.max(0, i ? (mid(spans[i - 1]) + mid(spans[i])) / 2 : a - (b - a) / 2);
+    const hi = Math.min(
+      1,
+      i < spans.length - 1 ? (mid(spans[i]) + mid(spans[i + 1])) / 2 : b + (b - a) / 2,
+    );
+    const width = (b - a) * dx;
+    const share = (px) => Math.round(((px * fit.vertical) / width) * 100) / 100 + 0;
+    const thin = Math.max(3, Math.round(limit.thin * width));
+    hang = share(rise);
+    const open = [];
+    const x0 = Math.max(0, Math.round(from[0] + lo * dx)),
+      x1 = Math.min(png.width - 1, Math.round(from[0] + hi * dx));
+    for (let x = x0; x <= x1; x++) {
+      const y = low[x] < 0 ? -1 : lowestPaint(png, x, low[x], thin);
+      open.push(y < 0 ? 0 : footAt(x) - y);
+    }
+    // how deep: the deepest stretch of the window's width, a few of its columns spared
+    const n = Math.min(open.length, Math.max(3, Math.round(limit.window * width)));
+    let best = n ? -Infinity : 0;
+    for (let at = 0; n && at + n <= open.length; at++) {
+      const part = open.slice(at, at + n).sort((u, v) => u - v);
+      best = Math.max(best, part[Math.floor((n - 1) * limit.spare)]);
+    }
+    ground.push(share(best));
+    // how wide: the widest run of columns open as deep as a hole through the building
+    let run = 0,
+      widest = 0;
+    for (const depth of open) {
+      run = depth * fit.vertical >= limit.deep * width ? run + 1 : 0;
+      widest = Math.max(widest, run);
+    }
+    through.push(Math.round((widest / width) * 100) / 100);
+  });
+  return { ground, through, hang };
+}
+
 /**
  * How much of the lower part of a wall is dark, from the wall's foot (`from` to `to`, picture px)
  * `up` px high: open portals with the hall behind them make a wall far darker than brick or stone.
  */
-/**
- * Where a wall's portals are along its foot, as shares of its length: for each opening three
- * windows across its middle, clear of the door posts. A portal is seldom painted just where the
- * block-out has it, and a round one is narrow at the ground: the most open window speaks for
- * it. `wall` is 0 for the lower-left wall, 1 for the lower-right.
- */
-function portalWindows(fpId, rot, wall) {
-  const base = wallBase(FOOTPRINTS[fpId], rot);
-  const [from, to] = wall === 0 ? [base.w, base.s] : [base.s, base.e];
-  return openingsOf(fpId, rot)
-    .filter((o) => o.kind === 'side' && o.wall === wall)
-    .map((o) => {
-      const [a, b] = [o.pts[0], o.pts[1]]
-        .map((p) => (p[0] - from[0]) / (to[0] - from[0]))
-        .sort((x, y) => x - y);
-      return [0.2, 0.4, 0.6].map((t) => [a + (b - a) * t, a + (b - a) * (t + 0.2)]);
-    });
-}
-
-/**
- * How much of the ground just inside a portal is painted: the share of opaque pixels in a low
- * band above the wall's foot, from share `a` to share `b` of the wall. The game lays its rails
- * there, under the picture, so a floor or an apron painted in the portal hides them.
- */
-function groundShare(png, from, to, up, a, b) {
-  const steps = Math.round(Math.abs(to[0] - from[0]));
-  let seen = 0,
-    painted = 0;
-  for (let i = Math.round(steps * a); i <= steps * b; i++) {
-    const x = Math.round(from[0] + ((to[0] - from[0]) * i) / steps);
-    const foot = from[1] + ((to[1] - from[1]) * i) / steps;
-    for (let h = Math.round(up * 0.08); h < up * 0.3; h++) {
-      const y = Math.round(foot - h);
-      if (x < 0 || y < 0 || x >= png.width || y >= png.height) continue;
-      seen++;
-      if (png.data[(y * png.width + x) * 4 + 3] > FIT.alpha) painted++;
-    }
-  }
-  return seen ? painted / seen : 0;
-}
-
 function darkShare(png, from, to, up) {
   const steps = Math.round(Math.abs(to[0] - from[0]));
   let seen = 0,
@@ -173,7 +267,9 @@ function cameraWords(fit, off) {
  * is off fails the picture, and `camera` then holds how far off it is (`by`) and what was wrong
  * with it (`was`), for the prompt when it is painted again. With `camera: false` such a picture
  * passes with a note instead, `camera` still given: it is the closest of its attempts, kept for
- * the user to judge.
+ * the user to judge. For a depot, `ground` is how deep the ground is open inside each portal and
+ * `through` how wide the portal is seen right through, left to right, and `hang` how far before
+ * the wall its fitted foot ran, all as shares of the portal's width (`portalGround`).
  */
 export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
   const fp = FOOTPRINTS[fpId];
@@ -285,6 +381,9 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
   // an end wall with two open portals is far darker at its foot than a front or a back wall, and
   // a view of the wrong rotation has that dark wall on the other side.
   const portals = portalWall(fpId, rot);
+  let ground = null,
+    through = null,
+    hang = null;
   if (portals !== null) {
     const up = (fit.base.e[0] - fit.base.w[0]) * 0.16;
     const dark = [
@@ -299,14 +398,73 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
     else {
       // the ground inside the portals: the game lays its rails through each of them, under the
       // picture
-      const [from, to] = portals === 0 ? [fit.base.w, fit.base.s] : [fit.base.s, fit.base.e];
-      const painted = portalWindows(fpId, rot, portals).map((windows) =>
-        Math.min(...windows.map(([a, b]) => groundShare(png, from, to, up, a, b))),
-      );
-      if (painted.some((share) => share > LIMIT.floor))
-        problems.push(
-          'the portals are not open to the ground: floor or wall is painted where the rails run in. Leave the ground inside each portal empty (transparent) from the foot of the wall upwards',
+      const several = openingsOf(fpId, rot).filter((o) => o.kind === 'side').length > 1;
+      // a foot that is no straight line is no measure of what lies above it
+      if (!fit.sure[portals])
+        notes.push(
+          `the ground inside the ${several ? 'portals' : 'portal'} was not measured: the wall ${
+            several ? 'they are' : 'it is'
+          } in has no straight foot`,
         );
+      else {
+        ({ ground, through, hang } = portalGround(png, low, fit, fpId, rot, portals));
+        const limit = LIMIT.ground;
+        const named = (list) =>
+          !several
+            ? 'portal'
+            : list.length > 1
+              ? 'portals'
+              : `${['left', 'right'][list[0]]} portal`;
+        const are = (list) => (list.length > 1 ? 'are' : 'is');
+        const those = (shares, test) => shares.flatMap((v, i) => (test(v) ? [i] : []));
+        const least = (list) => Math.max(0, Math.min(...list.map((i) => ground[i]))).toFixed(2);
+        const most = (list) => Math.max(...list.map((i) => through[i])).toFixed(2);
+        // what is wanted in a portal, said the same way whatever was wrong, in the words that
+        // were tried on the generator: told only what to leave out ("transparent from the foot
+        // upwards"), it left the hall's inside out as well. The agent copies these words
+        const asked = `Inside ${
+          several ? 'each doorway' : 'the doorway'
+        } paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there.`;
+        // a picture that fails is made again: it is told of every portal that is not as it
+        // should be, those that alone would only be noted too
+        const closed = those(ground, (v) => v < limit.closed);
+        if (closed.length) {
+          const all = those(ground, (v) => v < limit.shallow);
+          // closed only once the foot was taken where the near corner stands: what hides the
+          // rails lies before the wall, not in the portal
+          const before =
+            hang >= limit.hang && closed.every((i) => ground[i] + hang >= limit.closed);
+          problems.push(
+            `the ${named(all)} ${are(all)} not open to the ground (over a stretch ${limit.window} of the portal's width the ground is open ${least(
+              all,
+            )} of that width deep, and ${limit.closed} is asked): ${
+              before
+                ? "something is painted before the wall, along its foot, where the game's rails run in: an apron, a step, the leaves of open doors. The wall stands where the building's near corner is: keep its foot plain and straight from corner to corner."
+                : "a floor, a threshold, an apron, rails, a door leaf or a post stands where the game's rails run in, or the portal is too narrow."
+            } ${asked}`,
+          );
+        }
+        const seen = those(through, (v) => v >= limit.far);
+        if (seen.some((i) => through[i] >= (limit.through[fpId] ?? Infinity)))
+          problems.push(
+            `the ${named(seen)} ${are(seen)} seen right through (over ${most(
+              seen,
+            )} of the portal's width): the inside of the hall is not painted. ${asked}`,
+          );
+        else if (seen.length)
+          notes.push(
+            `one sees far through the ${named(seen)} (over ${most(
+              seen,
+            )} of the portal's width): see in the look picture that the hall's inner wall shows`,
+          );
+        const little = those(ground, (v) => v >= limit.closed && v < limit.shallow);
+        if (little.length && !closed.length)
+          notes.push(
+            `the ground inside the ${named(little)} is open only a little way in (${least(
+              little,
+            )} of the portal's width): see in the look picture that the rails run in`,
+          );
+      }
     }
   }
   const base = wallBase(fp, rot);
@@ -320,7 +478,14 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
     notes.push('placed by its outline: no straight wall base was found');
   if (fit.box.top < 0)
     notes.push(`taller than its canvas by ${Math.round(-fit.box.top)} px once on its footprint`);
-  return { ok: problems.length === 0, problems, notes, fit, ...(camera ? { camera } : {}) };
+  return {
+    ok: problems.length === 0,
+    problems,
+    notes,
+    fit,
+    ...(ground ? { ground, through, hang } : {}),
+    ...(camera ? { camera } : {}),
+  };
 }
 
 /** Check a file on disk. */

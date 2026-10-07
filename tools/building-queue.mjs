@@ -41,7 +41,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { AGES, FOOTPRINTS, ROOT, loadInventory, pictureFile, pictures } from './building-kit.mjs';
-import { guideFile } from './building-guides.mjs';
+import { guideFile, openingsOf } from './building-guides.mjs';
 import { checkFile, pictureOf, resultLine, writeReport } from './building-check.mjs';
 import { FIT, fitPicture, normalisePicture } from './building-fit.mjs';
 
@@ -176,6 +176,20 @@ function referencesFor(f, age, rot, families) {
 }
 
 /**
+ * Which wall a depot's portals are in, in words for the prompt; nothing for a building without
+ * portals. A view painted from the front view copies the front view's portal wall unless the
+ * wall is named.
+ */
+function portalWords(fpId, rot) {
+  const portals = openingsOf(fpId, rot).filter((o) => o.kind === 'side');
+  if (!portals.length) return '';
+  const wall = ['LOWER-LEFT', 'LOWER-RIGHT'][portals[0].wall];
+  return portals.length > 1
+    ? ` The two train portals are in the ${wall} wall, where the block-out has its two large dark openings.`
+    : ` The train portal is in the ${wall} wall, where the block-out has its large dark opening.`;
+}
+
+/**
  * Everything needed to make one picture: where to save it, what to edit, what to attach, the
  * prompt. With `repaint` the picture is one that is painted again because its camera was off: it
  * is made from its own earlier self, and `note` says what was wrong with that.
@@ -203,7 +217,7 @@ export function describeEntry(id, inventory, families, { repaint = false, note =
     `This building in this age: ${d.ages[a.tag]}`,
     `Keep in every age: ${d.keep}.`,
     `Front: ${d.front}.`,
-    `View r${rot}: ${families.views[`r${rot}`]}`,
+    `View r${rot}: ${families.views[`r${rot}`]}${portalWords(f.footprint, rot)}`,
     ref.text,
     ...(repaint && note ? [`What was wrong with it: ${note}`] : []),
   ].join('\n\n');
@@ -1164,7 +1178,7 @@ async function main(args) {
           `take does not understand "${odd}": it is node tools/building-queue.mjs take <id> [--from <folder or file>]`,
         );
       // the sheet tool reads this one: loaded here, and before anything is written
-      const { drawLook, lookFile } = await import('./building-sheets.mjs');
+      const { drawLook, lookFile, sizeOf } = await import('./building-sheets.mjs');
       const now = Date.now();
       const pick = choosePicture(queue, id, option('--from'), now);
       const e = pick.entry;
@@ -1180,7 +1194,9 @@ async function main(args) {
       let shown;
       try {
         const f = inventory.find((x) => x.family === e.family);
-        shown = drawLook(PNG.sync.read(pick.bytes), f.footprint, e.rot);
+        shown = drawLook(PNG.sync.read(pick.bytes), f.footprint, e.rot, {
+          size: sizeOf(families, e.family),
+        });
       } catch (error) {
         throw new Error(
           `${pick.source} cannot be read as a picture (${error.message}): ${nothing}`,
@@ -1286,7 +1302,7 @@ async function main(args) {
       writeReport({ [r.entry.id]: r.check });
       // shown for the eye: the closest by its camera is kept, which may not be the one meant
       const { showPicture } = await import('./building-sheets.mjs');
-      const shown = showPicture(r.entry.file, inventory);
+      const shown = showPicture(r.entry.file, inventory, families);
       console.log(resultLine(r.entry.id, r.check));
       if (shown.file) console.log(`look at:   ${shown.file}`);
       console.log(
