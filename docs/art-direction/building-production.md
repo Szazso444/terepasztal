@@ -188,9 +188,21 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   paragraph that says which wall comes from which reference and that the building is no larger
   (`references.behind` and `references.round` in `families.json`). Tried on the station's seven
   pictures: the three `r1` were right at the first attempt, the four `r2` copied both walls, and
-  the repeats that were needed were for the camera. The words in `families.json` are those that
-  were tried, with what was the station's own (its gables, its arched windows) taken out; the
-  first family painted with them is the one to look at.
+  the repeats that were needed were for the camera. The words in `families.json` are not quite
+  those that were tried, and the first family painted with them is the one to look at (on the
+  list as it stood, the last age of the lumber camp and then the quarry: the farm's and the
+  lumber camp's other pictures are painted again from their own earlier selves, which this does
+  not reach). What differs from the trial: the station's own words are out ("a low hall, one
+  tall storey under the same pitched roof" is "no taller, and with no storey more"; its gable
+  and arched windows are "the same shape under the roof, the same windows and doors"); the
+  sentence on the ridge, which is what put the pitched roofs back, is said for any building (a
+  ridge parallel to one wall in the front view is parallel to the other in `r1`, and runs the
+  same way across the picture in `r2`); the back is asked for as one straight wall only of a
+  building whose front is "the wall with ..." (`backWall`), and of a dome, a tank, a hopper or
+  an open shed only that it is plainer and no higher (`backOther`); and `r1` and `r3` are
+  attached laid onto their footprint, where in the trial they were attached as they came back.
+  An `r2` whose `r1` or `r3` was given up is painted from the front view alone, as before, so
+  that one picture given up does not cost a second.
 - The agent looks at pictures with a viewer that ignores transparency. It saw the colour stored
   under transparent pixels as a halo and rejected good pictures. It is given opaque pictures on
   grass to look at (`.look/`), and the tools decide about the background.

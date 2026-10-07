@@ -173,15 +173,34 @@ export function buildQueue(inventory, families, previous = null) {
  * they came out as another building (the station's r2 had a flat roof where its front views had
  * a pitched one), so each is made up once and copied after that: r1 makes up the back and takes
  * its other wall from r0, r3 makes up the left-hand side, and r2, which shows only those two
- * walls, is painted from r1 and r3 as well.
+ * walls, is painted from r1 and r3 as well. Those two are `optional`: where one of them was
+ * given up, r2 is painted `alone`, from the front view as before, so that one picture given up
+ * does not cost a second.
+ *
+ * Of a building with walls the back is asked for as one straight wall; a kiln's dome, a tank on
+ * its legs or a quarry's hopper has no such wall, and is not asked for one.
  */
-function referencesFor(f, age, rot, families) {
+function referencesFor(f, age, rot, families, alone = false) {
   const mood = age <= 2 ? MOOD_EARLY : MOOD_LATE;
   const text = families.references;
   const view = (r) => pictureFile(f.family, age, r);
-  if (rot === 2)
-    return { files: [STYLE_BOARD, view(0), view(1), view(3)], text: text.turn, more: text.round };
-  if (rot === 1) return { files: [STYLE_BOARD, view(0)], text: text.turn, more: text.behind };
+  if (rot === 2 && !alone)
+    return {
+      files: [STYLE_BOARD, view(0), view(1), view(3)],
+      optional: [view(1), view(3)],
+      text: text.turn,
+      more: text.round,
+    };
+  if (rot === 1) {
+    // a front that is "the wall with ..." is the front of a building with walls
+    const walled = /\bwall\b/.test(families.families[f.family].front);
+    const back = walled ? text.backWall : text.backOther;
+    return {
+      files: [STYLE_BOARD, view(0)],
+      text: text.turn,
+      more: text.behind.replace('{back}', back),
+    };
+  }
   if (rot > 0) return { files: [STYLE_BOARD, view(0)], text: text.turn };
   if (age > f.firstAge)
     return {
@@ -214,9 +233,15 @@ function portalWords(fpId, rot) {
 /**
  * Everything needed to make one picture: where to save it, what to edit, what to attach, the
  * prompt. With `repaint` the picture is one that is painted again because its camera was off: it
- * is made from its own earlier self, and `note` says what was wrong with that.
+ * is made from its own earlier self, and `note` says what was wrong with that. With `alone` a
+ * rear view is made from the front view only (a view it would copy a wall from was given up).
  */
-export function describeEntry(id, inventory, families, { repaint = false, note = '' } = {}) {
+export function describeEntry(
+  id,
+  inventory,
+  families,
+  { repaint = false, note = '', alone = false } = {},
+) {
   const m = /^(.+)-a(\d)-r(\d)$/.exec(id);
   const f = m && inventory.find((x) => x.family === m[1]);
   const age = m ? Number(m[2]) : -1;
@@ -228,7 +253,7 @@ export function describeEntry(id, inventory, families, { repaint = false, note =
   const before = beforeFile(pictureFile(f.family, age, rot));
   const ref = repaint
     ? { files: [STYLE_BOARD, before], text: families.references.repaint }
-    : referencesFor(f, age, rot, families);
+    : referencesFor(f, age, rot, families, alone);
   const position = f.upgradeable
     ? `${a.name} (model ${age - f.firstAge + 1} of ${f.ages} for this building)`
     : a.name;
@@ -256,6 +281,8 @@ export function describeEntry(id, inventory, families, { repaint = false, note =
     repaint,
     // what the picture is built on, and what the generator is shown of it
     sources: ref.files,
+    // those of them it can be made without, if they were given up
+    optional: ref.optional ?? [],
     references: ref.files.map((file) => {
       if (file === before) return beforeFile(fittedFile(id));
       const made = file.startsWith(`${ROOT}/`) ? pictureOf(file) : null;
@@ -282,7 +309,14 @@ const madeFrom = (e, exists) =>
  */
 export function describeQueued(queue, id, inventory, families, exists = existsSync) {
   const e = queue.entries.find((x) => x.id === id);
-  const d = describeEntry(id, inventory, families, madeFrom(e, exists));
+  const how = madeFrom(e, exists);
+  let d = describeEntry(id, inventory, families, how);
+  // a view it would copy a wall from was given up, or is gone: painted from the front view alone
+  const gone = (file) => {
+    const on = queue.entries.find((x) => x.file === file);
+    return !!on && (on.status === 'rejected' || (isMade(on) && !exists(on.file)));
+  };
+  if (d.optional.some(gone)) d = describeEntry(id, inventory, families, { ...how, alone: true });
   if (d.repaint)
     d.earlier = {
       file: beforeFile(e.file),
@@ -348,13 +382,16 @@ function standings(queue, inventory, families, exists) {
     else if (isMade(e)) s = exists(e.file) ? 'made' : 'lost';
     else {
       s = 'ready';
-      for (const file of describeEntry(e.id, inventory, families, madeFrom(e, exists)).sources) {
+      const d = describeEntry(e.id, inventory, families, madeFrom(e, exists));
+      for (const file of d.sources) {
         const on = byFile.get(file);
         if (!on) {
           if (!exists(file)) throw new Error(`${e.id} needs ${file}, which is not there`);
           continue;
         }
         const t = of(on);
+        // a view it would only copy a wall from: given up, the picture is made without it
+        if (d.optional.includes(file) && (t === 'rejected' || t === 'lost')) continue;
         if (t === 'rejected' || t === 'lost' || t === 'behind') {
           s = 'behind';
           break;
@@ -846,11 +883,14 @@ export function redoPlan(queue, inventory, families, target, exists = existsSync
   const { afresh, entries } = redoList(queue, inventory, families, target);
   const made = (e) => isMade(e) && exists(e.file);
   const repaint = (e) => e.status === 'pending' && !!e.repaint;
+  // nothing of it yet: not made, not given up, not tried, no picture in hand
+  const untouched = (e) =>
+    e.status === 'pending' && !e.repaint && !e.attempts && !e.taken && !exists(e.file);
   return {
     ids: entries.map((e) => e.id),
     made: entries.filter(made).length,
     repaint: entries.filter(repaint).length,
-    others: afresh ? entries.filter((e) => e.id !== target && (made(e) || repaint(e))).length : 0,
+    others: afresh ? entries.filter((e) => e.id !== target && !untouched(e)).length : 0,
   };
 }
 
@@ -1325,6 +1365,17 @@ async function main(args) {
             ? `; its file was set aside as ${r.aside.replace(/\.png$/, '.rejected.png')}`
             : ''),
       );
+      // taken back, and a rear view has a wall copied from it: that one is not put back with it
+      if (r.entry.status === 'pending' && r.aside)
+        for (const other of queue.entries)
+          if (
+            isMade(other) &&
+            describeEntry(other.id, inventory, families).optional.includes(r.entry.file)
+          )
+            console.log(
+              `note:      ${other.id} was painted from this picture and stays as it is. If the wall they share comes out differently, ` +
+                `take it back as well: node tools/building-queue.mjs set ${other.id} pending`,
+            );
       // given up, though an attempt of it was right but for its camera: said, not decided
       if (r.entry.status === 'rejected' && earlierSelf(r.entry, DISK))
         console.log(

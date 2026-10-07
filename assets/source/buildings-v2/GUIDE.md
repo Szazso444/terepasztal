@@ -146,9 +146,16 @@ from all three, then the next age. Each picture is built on pictures made before
 
 A building seen from behind (`r1`, `r2`) shows two walls its front view does not: the back and the
 left-hand side. `r1` makes up the back, `r3` the left-hand side, and `r2`, which shows only those
-two walls, copies them from `r1` and `r3`. So `r2` has four pictures to attach, and the prompts of
-`r1` and `r2` end with a paragraph on the building's size and on which wall comes from which
+two walls, copies them from `r1` and `r3`. So an `r2` has four pictures to attach, and the prompts
+of `r1` and `r2` end with a paragraph on the building's size and on which wall comes from which
 reference. Use them as printed, and add no wording of your own about size, roof or walls.
+
+Two kinds of picture are not painted this way, and `next` prints them accordingly:
+
+- A picture marked `(to paint again: the same building)` is painted from its own earlier self,
+  whichever view it is: two pictures to attach, and no such paragraph.
+- An `r2` whose `r1` or `r3` was given up is painted from the front view alone: two pictures to
+  attach, and no such paragraph.
 
 ## 5. Making one picture
 
@@ -231,11 +238,15 @@ Then answer:
   grass and track to be seen through it up to its lintel.
 - In `r1`, `r2`, `r3`: is it the same building as the `r0` reference (same walls, roof, colours,
   details), turned, and not a mirror image of it?
-- Seen from behind (`r1`, `r2`): is it still that building? No taller than in the front view and
-  with no storey more; the same form of roof; the side wall as the reference shows it; the back
-  one straight wall, plainer than the front; and nothing of the front (a canopy, a porch) on a
-  side where the front is not. In `r2` the back is the wall `r1` shows and the left-hand side the
-  wall `r3` shows. A picture that fails here is made again as printed, whatever its camera.
+- Seen from behind (`r1`, `r2`), where the prompt ends with the paragraph on size and walls: is
+  it still that building? No taller than in the front view and with no storey more; the same form
+  of roof, its ridge running the way that paragraph says; the side as the reference shows it; the
+  back as that paragraph asks for it (one straight wall only where it says so); and nothing of the
+  front (a canopy, a porch) on a side where the front is not. In an `r2` with four pictures
+  attached, the back is the one `r1` shows and the left-hand side the one `r3` shows. A picture
+  that fails here is made again as printed, whatever its camera.
+- A picture marked `(to paint again: the same building)`: is it the building of its earlier self,
+  wall for wall? That is all it is held to; it is not judged against `r1` or `r3`.
 - In a later age: is it still recognisably the same kind of building, with everything on the
   prompt's Keep line, in the materials of the new age?
 - Is the plinth gone, with nothing on the ground around the building?
@@ -256,6 +267,10 @@ lower-left wall"), and keep the rest of the prompt. Give a picture up to three a
 
 A picture's place and size in its file are never a reason to make it again: the tools take care of
 those. Its view is: a building seen from the front, from above or in perspective cannot be used.
+
+When you take back an `r1` or an `r3` that an `r2` was painted from, the tool names that `r2`. It
+stays as it is. If the new picture's back or left-hand side comes out differently, take the `r2`
+back as well, so that it is painted from the new one.
 
 **A depot's portals.** The tool also tells which of a depot's two visible walls has the portals.
 A view of the wrong rotation is refused with `the portals are in the lower-right wall; they belong
