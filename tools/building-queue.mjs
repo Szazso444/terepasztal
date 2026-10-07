@@ -177,8 +177,9 @@ export function buildQueue(inventory, families, previous = null) {
  * given up, r2 is painted `alone`, from the front view as before, so that one picture given up
  * does not cost a second.
  *
- * Of a building with walls the back is asked for as one straight wall; a kiln's dome, a tank on
- * its legs or a quarry's hopper has no such wall, and is not asked for one.
+ * Of a plain box of a building (`back: "wall"` in families.json) the back is asked for as one
+ * straight wall. A kiln's dome, a tank on its legs or a quarry's hopper has no such wall, and a
+ * farm's silo or a power plant's stack may stand at the back: those are not asked for one.
  */
 function referencesFor(f, age, rot, families, alone = false) {
   const mood = age <= 2 ? MOOD_EARLY : MOOD_LATE;
@@ -192,9 +193,7 @@ function referencesFor(f, age, rot, families, alone = false) {
       more: text.round,
     };
   if (rot === 1) {
-    // a front that is "the wall with ..." is the front of a building with walls
-    const walled = /\bwall\b/.test(families.families[f.family].front);
-    const back = walled ? text.backWall : text.backOther;
+    const back = families.families[f.family].back === 'wall' ? text.backWall : text.backOther;
     return {
       files: [STYLE_BOARD, view(0)],
       text: text.turn,
@@ -890,8 +889,33 @@ export function redoPlan(queue, inventory, families, target, exists = existsSync
     ids: entries.map((e) => e.id),
     made: entries.filter(made).length,
     repaint: entries.filter(repaint).length,
+    // given up, tried or in hand: their count of attempts would start again
+    tried: entries.filter((e) => !made(e) && !repaint(e) && !untouched(e)).length,
     others: afresh ? entries.filter((e) => e.id !== target && !untouched(e)).length : 0,
   };
+}
+
+/**
+ * The made rear views that share a wall with a picture: an r2 has its back from r1 and its
+ * left-hand side from r3 (or made them up itself, where that view had been given up). Put back,
+ * the picture may come out with another wall, and the rear view is not put back with it.
+ */
+function sharedWallNotes(queue, inventory, families, ids) {
+  const out = [];
+  for (const id of ids) {
+    const file = queue.entries.find((e) => e.id === id)?.file;
+    for (const other of queue.entries)
+      if (
+        isMade(other) &&
+        !ids.includes(other.id) &&
+        describeEntry(other.id, inventory, families).optional.includes(file)
+      )
+        out.push(
+          `note:      ${other.id} shares a wall with ${id} and stays as it is. If that wall comes out differently, ` +
+            `take it back as well: node tools/building-queue.mjs set ${other.id} pending`,
+        );
+  }
+  return out;
 }
 
 /**
@@ -1365,17 +1389,10 @@ async function main(args) {
             ? `; its file was set aside as ${r.aside.replace(/\.png$/, '.rejected.png')}`
             : ''),
       );
-      // taken back, and a rear view has a wall copied from it: that one is not put back with it
-      if (r.entry.status === 'pending' && r.aside)
-        for (const other of queue.entries)
-          if (
-            isMade(other) &&
-            describeEntry(other.id, inventory, families).optional.includes(r.entry.file)
-          )
-            console.log(
-              `note:      ${other.id} was painted from this picture and stays as it is. If the wall they share comes out differently, ` +
-                `take it back as well: node tools/building-queue.mjs set ${other.id} pending`,
-            );
+      // back in the queue, and a made rear view shares a wall with it: said, not decided
+      if (r.entry.status === 'pending')
+        for (const line of sharedWallNotes(queue, inventory, families, [r.entry.id]))
+          console.log(line);
       // given up, though an attempt of it was right but for its camera: said, not decided
       if (r.entry.status === 'rejected' && earlierSelf(r.entry, DISK))
         console.log(
@@ -1439,7 +1456,8 @@ async function main(args) {
         console.log(
           `redo ${rest[0]} would put ${plan.ids.length} pictures back, each to be made afresh: ${rest[0]} and the ${more} built on it. ` +
             `${count(plan.made, 'of them is made (its file would be set aside)', 'of them are made (their files would be set aside)')}, ` +
-            `${count(plan.repaint, 'is waiting to be painted again from its earlier self', 'are waiting to be painted again from their earlier selves')} (that would be lost). ` +
+            `${count(plan.repaint, 'is waiting to be painted again from its earlier self', 'are waiting to be painted again from their earlier selves')} (that would be lost)` +
+            `${plan.tried ? `, ${count(plan.tried, 'was tried or given up (its attempts would be counted from nothing again)', 'were tried or given up (their attempts would be counted from nothing again)')}` : ''}. ` +
             `Nothing was changed. This is for the user to ask for: if they asked for exactly this, run it again with --yes. ` +
             `To make one recorded picture again, take it back instead: node tools/building-queue.mjs set ${rest[0]} pending`,
         );
@@ -1450,6 +1468,7 @@ async function main(args) {
       console.log(
         `${ids.length} picture${ids.length === 1 ? '' : 's'} back in the queue${ids.length ? `: ${some(ids)}` : ''}`,
       );
+      for (const line of sharedWallNotes(queue, inventory, families, ids)) console.log(line);
       return 0;
     }
     case 'approve-pilot': {

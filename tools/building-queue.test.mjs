@@ -225,24 +225,13 @@ describe('building queue', () => {
     expect(backOther).not.toMatch(/straight wall/);
     const r1 = (f) => about(`${f.family}-a${f.firstAge}-r1`).prompt;
     const walled = inv.filter((f) => r1(f).includes(backWall)).map((f) => f.family);
-    // those whose front is "the wall with ...": the others have a side, a mouth, an open side
+    // the plain boxes, said family by family. Not a round mill tower, nor a building with a silo,
+    // a tank, a penstock or a stack that may stand behind it
     expect([...walled].sort()).toEqual(
-      [
-        'depot',
-        'depot_narrow',
-        'farm',
-        'hydro_plant',
-        'ironworks',
-        'power_plant',
-        'pump',
-        'station',
-        'town',
-        'townhouse',
-        'warehouse',
-        'windmill',
-        'wire_mill',
-      ].sort(),
+      ['depot', 'depot_narrow', 'station', 'town', 'townhouse', 'warehouse', 'wire_mill'].sort(),
     );
+    for (const f of ['windmill', 'farm', 'pump', 'power_plant', 'kiln', 'water_tower', 'quarry'])
+      expect(walled).not.toContain(f);
     for (const f of inv) expect(r1(f).includes(backWall)).not.toBe(r1(f).includes(backOther));
     expect(r1(inv.find((f) => f.family === 'kiln'))).not.toMatch(/straight wall/);
   });
@@ -1519,7 +1508,10 @@ describe('working through the queue', () => {
     const r2 = queue.entries.find((e) => e.id === 'station-a0-r2');
     files.delete(r2.file);
     Object.assign(r2, { status: 'rejected', attempts: 3 });
-    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists).others).toBe(1);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists)).toMatchObject({
+      tried: 1,
+      others: 1,
+    });
     Object.assign(r2, { status: 'pending', attempts: 2, taken: true });
     expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists).others).toBe(1);
     Object.assign(r2, { status: 'pending', attempts: 0, taken: false });
@@ -1557,7 +1549,7 @@ describe('working through the queue', () => {
     expect(plan.ids[0]).toBe('depot-a0-r0');
     expect(plan.ids.filter((id) => id.startsWith('depot_narrow-'))).toHaveLength(24);
     // 22 are made and would be set aside; 2 wait to be painted again and would be made afresh
-    expect(plan).toMatchObject({ made: 22, repaint: 2, others: 23 });
+    expect(plan).toMatchObject({ made: 22, repaint: 2, tried: 0, others: 23 });
     expect(queue.entries[1].status).toBe('generated');
     expect(queue.entries[0].repaint).toBeDefined();
     // a picture nothing is built on
@@ -1565,6 +1557,7 @@ describe('working through the queue', () => {
       ids: ['depot-a5-r2'],
       made: 1,
       repaint: 0,
+      tried: 0,
       others: 0,
     });
     // a view whose wall was copied into a rear view: that one goes with it
@@ -1572,6 +1565,7 @@ describe('working through the queue', () => {
       ids: ['depot-a5-r2', 'depot-a5-r3'],
       made: 2,
       repaint: 0,
+      tried: 0,
       others: 1,
     });
     // a family: its rejected pictures
@@ -2484,9 +2478,19 @@ syncBuiltinESMExports();
     const back = run(root, 'set', 'depot-a0-r1', 'pending');
     expect(back.code).toBe(0);
     expect(back.out).toMatch(
-      /^note: +depot-a0-r2 was painted from this picture and stays as it is\. If the wall they share comes out differently, take it back as well: node tools\/building-queue\.mjs set depot-a0-r2 pending$/m,
+      /^note: +depot-a0-r2 shares a wall with depot-a0-r1 and stays as it is\. If that wall comes out differently, take it back as well: node tools\/building-queue\.mjs set depot-a0-r2 pending$/m,
     );
-    // a picture nothing was copied from is taken back without a word
+    // a picture no rear view shares a wall with is taken back without a word
     expect(run(root, 'set', 'depot-a0-r2', 'pending').out).not.toMatch(/^note:/m);
+    // a view that was given up and is put back later: the rear view painted without it is named
+    // as well, for it made that wall up itself
+    expect(run(root, 'set', 'depot-a0-r1', 'rejected', '--attempts', '3').code).toBe(0);
+    paint(root, 'depot-a0-r2');
+    expect(run(root, 'set', 'depot-a0-r2', 'generated').code).toBe(0);
+    const again = run(root, 'redo', 'depot');
+    expect(again.out).toMatch(/1 picture back in the queue: depot-a0-r1/);
+    expect(again.out).toMatch(
+      /^note: +depot-a0-r2 shares a wall with depot-a0-r1 and stays as it is\./m,
+    );
   }, 60000);
 });

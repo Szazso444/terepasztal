@@ -198,8 +198,11 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   sentence on the ridge, which is what put the pitched roofs back, is said for any building (a
   ridge parallel to one wall in the front view is parallel to the other in `r1`, and runs the
   same way across the picture in `r2`); the back is asked for as one straight wall only of a
-  building whose front is "the wall with ..." (`backWall`), and of a dome, a tank, a hopper or
-  an open shed only that it is plainer and no higher (`backOther`); and `r1` and `r3` are
+  plain box of a building (`"back": "wall"` in its family: the depots, the station, the town
+  hall, the warehouse, the townhouse, the wire mill; `backWall`), and of a dome, a tank, a
+  hopper, an open shed, or a building with a silo or a stack that may stand behind it, only
+  that it is plainer and no higher (`backOther`, which no picture has been painted with yet);
+  and `r1` and `r3` are
   attached laid onto their footprint, where in the trial they were attached as they came back.
   An `r2` whose `r1` or `r3` was given up is painted from the front view alone, as before, so
   that one picture given up does not cost a second.
