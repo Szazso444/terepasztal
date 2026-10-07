@@ -13,11 +13,18 @@
  * whether the front is on the right wall and the style is right is for eyes to judge, on the
  * review sheets.
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { basename } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
-import { FOOTPRINTS, ROOT, loadInventory, pictures, wallBase } from './building-kit.mjs';
+import { isMain } from './is-main.mjs';
+import {
+  FOOTPRINTS,
+  ROOT,
+  loadInventory,
+  pictures,
+  wallBase,
+  writeWhole,
+} from './building-kit.mjs';
 import { FIT, cameraOff, fitPicture } from './building-fit.mjs';
 import { openingsOf, portalWall } from './building-guides.mjs';
 
@@ -514,7 +521,7 @@ export function readReport(root = '.') {
 /** Add results to the report on disk; `fresh` starts it anew. */
 export function writeReport(results, fresh = false) {
   const report = summarise(results, fresh ? null : readReport());
-  writeFileSync(REPORT_FILE, JSON.stringify(report, null, 2) + '\n');
+  writeWhole(REPORT_FILE, JSON.stringify(report, null, 2) + '\n');
   return report;
 }
 
@@ -586,5 +593,4 @@ function main(args) {
   return failed ? 1 : 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
-  process.exitCode = main(process.argv.slice(2));
+if (isMain(import.meta.url)) process.exitCode = main(process.argv.slice(2));

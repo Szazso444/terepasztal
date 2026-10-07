@@ -2,11 +2,46 @@
  * buildings, read from the game's own data files so the art work cannot drift from the game.
  * See docs/superpowers/specs/2026-10-02-building-eras-art-package-design.md.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** Where the pictures and their work list live. */
 export const ROOT = 'assets/source/buildings-v2';
+
+/**
+ * Write a file whole or not at all: under a name beside it first, then into its place. A write
+ * that a full disk cuts short then leaves the file as it was, where writing in place would leave
+ * half a list behind. Where the file cannot be replaced in one step (something has it open), it
+ * is written in place after all, as it used to be. The name beside it is the process's own, so
+ * that two tools writing at once do not take each other's copy; a copy that cannot be cleared
+ * away (a scanner holds it) is left, and never keeps the write from being tried. `io` stands in
+ * for the disk in the tests.
+ */
+export function writeWhole(file, data, io = {}) {
+  const write = io.writeFileSync ?? writeFileSync;
+  const rename = io.renameSync ?? renameSync;
+  const rm = io.rmSync ?? rmSync;
+  const part = `${file}.${process.pid}.part`;
+  const drop = () => {
+    try {
+      rm(part, { force: true });
+    } catch {
+      // held by another process: left where it is (git does not take *.part)
+    }
+  };
+  try {
+    write(part, data);
+  } catch (e) {
+    drop();
+    throw e;
+  }
+  try {
+    rename(part, file);
+  } catch {
+    drop();
+    write(file, data);
+  }
+}
 
 export const AGES = ['steam', 'diesel', 'electric', 'nuclear', 'magnetic', 'hyper'].map(
   (id, index) => ({ index, id, tag: `a${index}`, name: id[0].toUpperCase() + id.slice(1) }),

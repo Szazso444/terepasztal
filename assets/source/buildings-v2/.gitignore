@@ -14,3 +14,5 @@
 review/*-angles.png
 # a picture on its way through the shell as text, left behind by an agent that was interrupted
 *.b64
+# a list, a report or a reference on its way to disk, left behind by a tool that was stopped
+*.part

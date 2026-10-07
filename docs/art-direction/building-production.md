@@ -178,6 +178,34 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
 - It turns the wall with the interesting features towards the viewer.
 - Shown the front view at the block-out's own scale, it sometimes paints the front view again
   where another view was asked for.
+- A wall it is not shown, it makes up, and differently in every picture. Painted from the front
+  view alone, the station's rear views came out as other buildings: a flat or a lean-to roof
+  where the front views had a pitched one, a side wall without its gable, a back wall grander
+  than the front, the canopy on the side away from the track (7 of 24 pictures; the check sees
+  none of it, it measures camera and place). So each wall is made up once and copied after that:
+  `r1` takes its side wall from `r0` and makes up the back, `r3` makes up the left-hand side,
+  and `r2`, which shows only those two walls, is painted from `r1` and `r3` as well, with a
+  paragraph that says which wall comes from which reference and that the building is no larger
+  (`references.behind` and `references.round` in `families.json`). Tried on the station's seven
+  pictures: the three `r1` were right at the first attempt, the four `r2` copied both walls, and
+  the repeats that were needed were for the camera. The words in `families.json` are not quite
+  those that were tried, and the first family painted with them is the one to look at (on the
+  list as it stood, the last age of the lumber camp and then the quarry: the farm's and the
+  lumber camp's other pictures are painted again from their own earlier selves, which this does
+  not reach). What differs from the trial: the station's own words are out ("a low hall, one
+  tall storey under the same pitched roof" is "no taller, and with no storey more"; its gable
+  and arched windows are "the same shape under the roof, the same windows and doors"); the
+  sentence on the ridge, which is what put the pitched roofs back, is said for any building (a
+  ridge parallel to one wall in the front view is parallel to the other in `r1`, and runs the
+  same way across the picture in `r2`); the back is asked for as one straight wall only of a
+  plain box of a building (`"back": "wall"` in its family: the depots, the station, the town
+  hall, the warehouse, the townhouse, the wire mill; `backWall`), and of a dome, a tank, a
+  hopper, an open shed, or a building with a silo or a stack that may stand behind it, only
+  that it is plainer and no higher (`backOther`, which no picture has been painted with yet);
+  and `r1` and `r3` are
+  attached laid onto their footprint, where in the trial they were attached as they came back.
+  An `r2` whose `r1` or `r3` was given up is painted from the front view alone, as before, so
+  that one picture given up does not cost a second.
 - The agent looks at pictures with a viewer that ignores transparency. It saw the colour stored
   under transparent pixels as a halo and rejected good pictures. It is given opaque pictures on
   grass to look at (`.look/`), and the tools decide about the background.
@@ -210,13 +238,25 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   `git checkout <that commit> -- <the family folders> assets/source/buildings-v2/queue.json`
   and `recheck`.
 - `redo <id>` puts back a picture and every picture built on it, to be made afresh. For a first
-  front view that is the whole family. It says what it would undo and waits for `--yes`. To make
-  one recorded picture again the command is `set <id> pending`.
+  front view that is the whole family, for an `r1` or an `r3` the `r2` of its age. Where that
+  undoes other pictures it says what it would undo and waits for `--yes`. To make one recorded
+  picture again the command is `set <id> pending`.
 - Nothing painted is removed by the tools. A picture set aside is `<name>.rejected.png`, an
   earlier attempt `<name>.before.png`, and an older one under the same name is kept with a number.
   None of these are committed. The one exception: `take` writes over a picture that lies under
   the entry's name and was never recorded, one the agent looked at and gave up; where the image
   tool made it, its file there remains.
+- A full disk stopped a run once (`ENOSPC`), and left an empty fitted reference that was then
+  handed out. The list, the report and the fitted references are now written whole or not at all
+  (`writeWhole`), and a fitted reference that is not a whole picture is made again. `set` and
+  `keep` write the list last, so a command that fails for lack of space has not written half a
+  list and has, as a rule, not recorded the picture: make room, run `status`, and run it again.
+  Not covered, because the pictures are moved beside their place before the list is written: a
+  picture that `set` refuses for its camera (if the disk fills at the list, the attempt is not
+  counted and the picture is painted afresh, not from its earlier self), and `recheck` (it
+  writes the list first for that reason; if the disk fills at that write, the pictures it put
+  back are gone from their place while the list calls them made: `status` shows them as missing,
+  and each is put back by hand from its `.before.png`).
 
 ## Not built yet
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterAll, describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import {
   cpSync,
@@ -6,12 +6,15 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
+  rmSync,
   statSync,
   utimesSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, loadInventory, pictureFile } from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly, guideFile, openingsOf } from './building-guides.mjs';
@@ -130,7 +133,7 @@ describe('building queue', () => {
       MOOD_EARLY,
     ]);
     // another view: the same age's front view
-    expect(about('depot-a0-r2').sources).toEqual([STYLE_BOARD, pictureFile('depot', 0, 0)]);
+    expect(about('depot-a0-r1').sources).toEqual([STYLE_BOARD, pictureFile('depot', 0, 0)]);
     // a later age: the front view of the age before
     expect(about('depot-a3-r0').sources).toEqual([
       STYLE_BOARD,
@@ -149,7 +152,7 @@ describe('building queue', () => {
     // a picture comes back larger than its guide and with its ground lines a little off; a later
     // picture copies what it is shown, so it is shown the earlier one at the guide's camera
     expect(fittedFile('depot-a0-r0')).toBe('assets/source/buildings-v2/.fitted/depot-a0-r0.png');
-    expect(about('depot-a0-r2').references).toEqual([STYLE_BOARD, fittedFile('depot-a0-r0')]);
+    expect(about('depot-a0-r1').references).toEqual([STYLE_BOARD, fittedFile('depot-a0-r0')]);
     expect(about('depot-a3-r0').references).toEqual([
       STYLE_BOARD,
       fittedFile('depot-a2-r0'),
@@ -161,6 +164,76 @@ describe('building queue', () => {
     // and the prompt says what the generator is looking at
     expect(about('depot-a0-r2').prompt).toMatch(/exactly the block-out's camera and scale/);
     expect(about('depot-a3-r0').prompt).toMatch(/exactly the block-out's camera, scale and place/);
+  });
+
+  it('paints a rear view from the views that already show its walls', () => {
+    // seen from behind a building shows walls its front view does not. Made up anew for every
+    // picture they came out as another building: the station's r2 had a flat roof where its
+    // front views had a pitched one. So each wall is made up once and copied after that
+    const [r0, r1, r3] = [0, 1, 3].map((rot) => pictureFile('station', 3, rot));
+    // r1 and r3 from the front view, which shows one of their two walls
+    expect(about('station-a3-r1').sources).toEqual([STYLE_BOARD, r0]);
+    expect(about('station-a3-r3').sources).toEqual([STYLE_BOARD, r0]);
+    // r2 shows the back, which r1 has, and the left-hand side, which r3 has
+    expect(about('station-a3-r2').sources).toEqual([STYLE_BOARD, r0, r1, r3]);
+    expect(about('station-a3-r2').references).toEqual([
+      STYLE_BOARD,
+      fittedFile('station-a3-r0'),
+      fittedFile('station-a3-r1'),
+      fittedFile('station-a3-r3'),
+    ]);
+    // the words that were tried on the station follow the references' own, as a paragraph
+    const { turn, behind, backWall, backOther, round } = fam.references;
+    const ofStation = behind.replace('{back}', backWall);
+    expect(about('station-a3-r1').prompt.endsWith(`${turn}\n\n${ofStation}`)).toBe(true);
+    expect(about('station-a3-r1').prompt).not.toContain('{back}');
+    expect(about('station-a3-r2').prompt.endsWith(`${turn}\n\n${round}`)).toBe(true);
+    expect(about('station-a3-r3').prompt.endsWith(turn)).toBe(true);
+    expect(about('station-a3-r0').prompt).not.toContain('exactly as large');
+    expect(behind).toMatch(/exactly as large as there/);
+    expect(behind).toMatch(
+      /The lower-left wall is the reference's lower-right wall, copied as it stands there/,
+    );
+    // which way the roof's ridge runs in the turned picture: the sentence that put the pitched
+    // roofs back, said so that it holds for any building
+    expect(behind).toMatch(
+      /a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round/,
+    );
+    expect(round).toMatch(/a ridge runs the same way across the picture as in the front view/);
+    expect(round).toMatch(
+      /The third reference is this same building in view r1: its lower-right wall is the BACK, and that wall is the lower-left wall of this picture\./,
+    );
+    expect(round).toMatch(
+      /The fourth reference is this same building in view r3: its lower-left wall is the left-hand side, and that wall is the lower-right wall of this picture\./,
+    );
+    expect(round).toMatch(/exactly as large as in the references/);
+    // they are for every family: nothing of one building's roof or windows is in them
+    for (const words of [behind, backWall, backOther, round])
+      expect(words).not.toMatch(/gable|arched|pitched|hall|canopy/);
+    // a picture painted again for its camera is shown its own earlier self, and no other view
+    expect(describeEntry('station-a3-r2', inv, fam, { repaint: true }).sources).toHaveLength(2);
+  });
+
+  it('asks for a straight back wall only of a building that has walls', () => {
+    // a kiln's dome, a water tank on its legs, a quarry's hopper: a wall from corner to corner
+    // would wall them in, or have a right picture failed for the lack of one
+    const { backWall, backOther } = fam.references;
+    expect(backWall).toMatch(
+      /The lower-right wall is the back: one straight wall from corner to corner/,
+    );
+    expect(backOther).toMatch(/The lower-right side is the back/);
+    expect(backOther).not.toMatch(/straight wall/);
+    const r1 = (f) => about(`${f.family}-a${f.firstAge}-r1`).prompt;
+    const walled = inv.filter((f) => r1(f).includes(backWall)).map((f) => f.family);
+    // the plain boxes, said family by family. Not a round mill tower, nor a building with a silo,
+    // a tank, a penstock or a stack that may stand behind it
+    expect([...walled].sort()).toEqual(
+      ['depot', 'depot_narrow', 'station', 'town', 'townhouse', 'warehouse', 'wire_mill'].sort(),
+    );
+    for (const f of ['windmill', 'farm', 'pump', 'power_plant', 'kiln', 'water_tower', 'quarry'])
+      expect(walled).not.toContain(f);
+    for (const f of inv) expect(r1(f).includes(backWall)).not.toBe(r1(f).includes(backOther));
+    expect(r1(inv.find((f) => f.family === 'kiln'))).not.toMatch(/straight wall/);
   });
 
   it('shows a picture that is painted again its own earlier self, straightened', () => {
@@ -371,7 +444,53 @@ describe('working through the queue', () => {
     const queue = fresh();
     expect(next(queue, new Set())).toMatchObject({ kind: 'picture', id: 'depot-a0-r0' });
     const files = made(queue, 2);
+    // r2 is painted from r1 and r3: r3 comes before it
+    expect(next(queue, files)).toMatchObject({ id: 'depot-a0-r3' });
+    queue.entries[3].status = 'generated';
+    files.add(queue.entries[3].file);
     expect(next(queue, files)).toMatchObject({ id: 'depot-a0-r2' });
+  });
+
+  it('paints a rear view from the front view alone when a view it would copy was given up', () => {
+    // one picture given up must not cost a second: a family of four would stop for it
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    for (const id of ['station-a0-r0', 'station-a0-r1']) {
+      const e = queue.entries.find((x) => x.id === id);
+      e.status = 'generated';
+      files.add(e.file);
+    }
+    // while r3 is still to come, r2 waits for it
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'station-a0-r3' });
+    setStatus(queue, 'station-a0-r3', 'rejected', {
+      attempts: 3,
+      note: 'the front on the wrong wall',
+    });
+    expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'station-a0-r2', behind: [] });
+    // as it was painted before there was anything to copy: the front view, and no more words
+    const alone = describeQueued(queue, 'station-a0-r2', inv, fam, onDisk(files));
+    expect(alone.sources).toEqual([STYLE_BOARD, pictureFile('station', 0, 0)]);
+    expect(alone.prompt.endsWith(fam.references.turn)).toBe(true);
+    // the same when the view it would copy is recorded as made and its file is gone
+    const lost = fresh(true);
+    const there = made(lost, 28);
+    lost.entries[26].status = 'pending';
+    there.delete(lost.entries[26].file);
+    there.delete(pictureFile('station', 0, 1));
+    expect(describeQueued(lost, 'station-a0-r2', inv, fam, onDisk(there)).sources).toHaveLength(2);
+    // a water tower has four pictures: one given up is a quarter of them, and the work goes on
+    const tower = fresh(true);
+    const all = made(
+      tower,
+      tower.entries.map((e) => e.family).filter((f) => f !== 'water_tower'),
+    );
+    const t = (rot) => tower.entries.find((e) => e.id === `water_tower-a0-r${rot}`);
+    for (const rot of [0, 1]) {
+      t(rot).status = 'generated';
+      all.add(t(rot).file);
+    }
+    setStatus(tower, t(3).id, 'rejected', { attempts: 3 });
+    expect(next(tower, all)).toMatchObject({ kind: 'picture', id: 'water_tower-a0-r2' });
   });
 
   it('stops after the depot and again after the station until each is approved', () => {
@@ -1363,6 +1482,42 @@ describe('working through the queue', () => {
     ).toBeNull();
   });
 
+  it('puts a rear view back with the view its wall was copied from, whichever comes first in the list', () => {
+    const queue = structuredClone(q);
+    const files = new Set();
+    for (const e of queue.entries.slice(0, 28)) {
+      e.status = 'generated';
+      files.add(e.file);
+    }
+    const exists = (f) => !f.startsWith('assets/source/buildings-v2/') || files.has(f);
+    // r3 stands after r2 in the list, and r2 is built on it all the same
+    expect(redoPlan(queue, inv, fam, 'station-a0-r3', exists).ids).toEqual([
+      'station-a0-r2',
+      'station-a0-r3',
+    ]);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists).ids).toEqual([
+      'station-a0-r1',
+      'station-a0-r2',
+    ]);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r2', exists).ids).toEqual(['station-a0-r2']);
+    // and it is asked about, wherever the picture named stands among those put back
+    expect(redoPlan(queue, inv, fam, 'station-a0-r3', exists).others).toBe(1);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists).others).toBe(1);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r2', exists).others).toBe(0);
+    // a rear view that was given up, or is in hand, has something to lose as well
+    const r2 = queue.entries.find((e) => e.id === 'station-a0-r2');
+    files.delete(r2.file);
+    Object.assign(r2, { status: 'rejected', attempts: 3 });
+    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists)).toMatchObject({
+      tried: 1,
+      others: 1,
+    });
+    Object.assign(r2, { status: 'pending', attempts: 2, taken: true });
+    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists).others).toBe(1);
+    Object.assign(r2, { status: 'pending', attempts: 0, taken: false });
+    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists).others).toBe(0);
+  });
+
   it('puts a picture and everything built on it back in the queue', () => {
     const queue = fresh(true);
     const files = made(queue, 24);
@@ -1394,14 +1549,24 @@ describe('working through the queue', () => {
     expect(plan.ids[0]).toBe('depot-a0-r0');
     expect(plan.ids.filter((id) => id.startsWith('depot_narrow-'))).toHaveLength(24);
     // 22 are made and would be set aside; 2 wait to be painted again and would be made afresh
-    expect(plan).toMatchObject({ made: 22, repaint: 2 });
+    expect(plan).toMatchObject({ made: 22, repaint: 2, tried: 0, others: 23 });
     expect(queue.entries[1].status).toBe('generated');
     expect(queue.entries[0].repaint).toBeDefined();
     // a picture nothing is built on
-    expect(redoPlan(queue, inv, fam, 'depot-a5-r3', onDisk(files))).toEqual({
-      ids: ['depot-a5-r3'],
+    expect(redoPlan(queue, inv, fam, 'depot-a5-r2', onDisk(files))).toEqual({
+      ids: ['depot-a5-r2'],
       made: 1,
       repaint: 0,
+      tried: 0,
+      others: 0,
+    });
+    // a view whose wall was copied into a rear view: that one goes with it
+    expect(redoPlan(queue, inv, fam, 'depot-a5-r3', onDisk(files))).toEqual({
+      ids: ['depot-a5-r2', 'depot-a5-r3'],
+      made: 2,
+      repaint: 0,
+      tried: 0,
+      others: 1,
     });
     // a family: its rejected pictures
     setStatus(queue, 'depot-a5-r3', 'rejected', { attempts: 3 });
@@ -1455,8 +1620,13 @@ describe('working through the queue', () => {
 describe('the queue tool on the command line', () => {
   const tool = resolve('tools/building-queue.mjs');
   /** a copy of what the tool reads, in a folder of its own */
+  const sandboxes = [];
+  afterAll(() => {
+    for (const dir of sandboxes) rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
+  });
   const sandbox = () => {
     const root = mkdtempSync(join(tmpdir(), 'building-queue-'));
+    sandboxes.push(root);
     cpSync('src/data', join(root, 'src/data'), { recursive: true });
     mkdirSync(join(root, 'assets/source/buildings-v2'), { recursive: true });
     cpSync(
@@ -1484,6 +1654,36 @@ describe('the queue tool on the command line', () => {
     }
   };
   const at_ = (root, file) => join(root, file);
+  /**
+   * The tool with the disk full at one file: a write to a path that has `at` in it makes the
+   * file, empty, and fails as a full disk does. Every other write goes through.
+   */
+  const full = (root, at, ...args) => {
+    const preload = join(root, 'full-disk.mjs');
+    writeFileSync(
+      preload,
+      `import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
+const write = fs.writeFileSync;
+fs.writeFileSync = (file, ...rest) => {
+  if (!String(file).includes(process.env.FULL_DISK_AT)) return write(file, ...rest);
+  write(file, '');
+  throw Object.assign(new Error('ENOSPC: no space left on device, write'), { code: 'ENOSPC' });
+};
+syncBuiltinESMExports();
+`,
+    );
+    try {
+      const env = { ...process.env, CODEX_HOME: join(root, 'codex'), FULL_DISK_AT: at };
+      const argv = ['--import', pathToFileURL(preload).href, tool, ...args];
+      return {
+        code: 0,
+        out: execFileSync(process.execPath, argv, { cwd: root, encoding: 'utf8', env }),
+      };
+    } catch (e) {
+      return { code: e.status, out: `${e.stdout}${e.stderr}` };
+    }
+  };
   /** a painted depot, as the generator returns it; `map` moves every point of it */
   const paint = (root, id, map = (p) => p, to = null) => {
     const d = about(id);
@@ -1586,8 +1786,11 @@ describe('the queue tool on the command line', () => {
     const status = run(root, 'status');
     expect(status.out).toMatch(/depot +1\/24 made, 1 rejected/);
     expect(status.out).toMatch(/gate "depot": not approved yet/);
-    // redo it, and the list offers it again
-    expect(run(root, 'redo', 'depot-a0-r1').out).toMatch(/1 picture back in the queue/);
+    // redo it, and the list offers it again. The rear view built on it is not made yet, so
+    // nothing is undone and nothing is asked
+    expect(run(root, 'redo', 'depot-a0-r1').out).toMatch(
+      /2 pictures back in the queue: depot-a0-r1, depot-a0-r2/,
+    );
     expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
   }, 60000);
 
@@ -1697,7 +1900,7 @@ describe('the queue tool on the command line', () => {
     expect(run(root, 'set', 'depot-a0-r1', 'generated').out).toMatch(
       /depot-a0-r1: generated, 1 attempt$/m,
     );
-    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r2$/m);
+    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r3$/m);
     // put back a second time: its first self is not lost, it is kept under a number
     paint(root, 'depot-a0-r1', low);
     expect(run(root, 'recheck').out).toMatch(/: 1 back in the queue/);
@@ -2175,5 +2378,119 @@ describe('the queue tool on the command line', () => {
     const after = run(root);
     expect(after.out).toMatch(/548 pictures, 27 families/);
     expect(after.out).not.toMatch(/no longer in it/);
+  }, 60000);
+
+  it('lays a reference onto its footprint again when the one on disk is not a whole picture', () => {
+    // a write that a full disk cut short left an empty file, newer than its picture: it was
+    // handed out as the reference, and the generator was shown nothing
+    const root = sandbox();
+    run(root);
+    paint(root, 'depot-a0-r0');
+    expect(run(root, 'set', 'depot-a0-r0', 'generated').code).toBe(0);
+    const fitted = join(root, fittedFile('depot-a0-r0'));
+    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
+    const whole = readFileSync(fitted);
+    for (const cut of [Buffer.alloc(0), whole.subarray(0, whole.length >> 1)]) {
+      writeFileSync(fitted, cut);
+      const again = run(root, 'next');
+      expect(again.code).toBe(0);
+      expect(again.out).toMatch(
+        /^ +2\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r0\.png$/m,
+      );
+      expect(readFileSync(fitted).equals(whole)).toBe(true);
+    }
+    // and a whole one is left alone
+    const stamp = statSync(fitted).mtimeMs;
+    run(root, 'next');
+    expect(statSync(fitted).mtimeMs).toBe(stamp);
+  }, 60000);
+
+  it('on a full disk says what to do, keeps the list whole, and writes it last', () => {
+    const root = sandbox();
+    run(root);
+    paint(root, 'depot-a0-r0');
+    const file = join(root, 'assets/source/buildings-v2/queue.json');
+    const before = readFileSync(file, 'utf8');
+    // the disk fills as the list is written: the list on disk is the one from before
+    const atList = full(root, 'queue.json', 'set', 'depot-a0-r0', 'generated');
+    expect(atList.code).toBe(1);
+    expect(atList.out).toMatch(/ENOSPC/);
+    expect(atList.out).toMatch(
+      /The disk is full\. Stop and tell the user how much is free; do not delete anything to make room\./,
+    );
+    // and, as the guide does, to run the same command again: `next` would hand the picture out anew
+    expect(atList.out).toMatch(
+      /run `node tools\/building-queue\.mjs status`, then the same command again/,
+    );
+    expect(atList.out).not.toMatch(/status`, then `next`/);
+    expect(readFileSync(file, 'utf8')).toBe(before);
+    // as the report is written: the list comes after it, so nothing is recorded yet
+    const atReport = full(root, 'report.json', 'set', 'depot-a0-r0', 'generated');
+    expect(atReport.code).toBe(1);
+    expect(readFileSync(file, 'utf8')).toBe(before);
+    // with room again the same command records the picture, and counts it once
+    const ok = run(root, 'set', 'depot-a0-r0', 'generated');
+    expect(ok.code).toBe(0);
+    expect(ok.out).toMatch(/depot-a0-r0: generated, 1 attempt/);
+    expect(readdirSync(dirname(file)).filter((f) => f.endsWith('.part'))).toEqual([]);
+  }, 60000);
+
+  it('on a full disk at the report, a recheck has still recorded what it put back', () => {
+    // `recheck` moves the pictures aside before it writes anything, so the list follows at once:
+    // with the report first, a full disk there left pictures gone and the list saying made
+    const root = sandbox();
+    run(root);
+    paint(root, 'depot-a0-r0', ([x, y]) => [x, 760 + (y - 760) * 0.8]);
+    const file = join(root, 'assets/source/buildings-v2/queue.json');
+    const queue = JSON.parse(readFileSync(file, 'utf8'));
+    Object.assign(queue.entries[0], { status: 'generated', attempts: 1 });
+    writeFileSync(file, JSON.stringify(queue, null, 2) + '\n');
+    const cut = full(root, 'report.json', 'recheck');
+    expect(cut.code).toBe(1);
+    expect(cut.out).toMatch(/ENOSPC/);
+    expect(existsSync(join(root, beforeFile(pictureFile('depot', 0, 0))))).toBe(true);
+    const status = run(root, 'status');
+    expect(status.out).toMatch(/1 to paint again/);
+    expect(status.out).not.toMatch(/missing/);
+    expect(run(root, 'next').out).toMatch(
+      /^picture: +depot-a0-r0 \(to paint again: the same building\)$/m,
+    );
+  }, 60000);
+
+  it('hands a rear view out with the views it copies, and says so when one of them is taken back', () => {
+    const root = sandbox();
+    run(root);
+    for (const id of ['depot-a0-r0', 'depot-a0-r1', 'depot-a0-r3']) {
+      paint(root, id);
+      expect(run(root, 'set', id, 'generated').code).toBe(0);
+    }
+    const r2 = run(root, 'next');
+    expect(r2.out).toMatch(/^picture: +depot-a0-r2$/m);
+    expect(r2.out).toMatch(/^ +2\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r0\.png$/m);
+    expect(r2.out).toMatch(/^ +3\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r1\.png$/m);
+    expect(r2.out).toMatch(/^ +4\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r3\.png$/m);
+    expect(r2.out).toContain(fam.references.round);
+    for (const view of ['r0', 'r1', 'r3'])
+      expect(existsSync(join(root, fittedFile(`depot-a0-${view}`)))).toBe(true);
+    paint(root, 'depot-a0-r2');
+    expect(run(root, 'set', 'depot-a0-r2', 'generated').code).toBe(0);
+    // r1 is taken back: r2 has its back wall from it, and stays as it is unless it is taken back
+    const back = run(root, 'set', 'depot-a0-r1', 'pending');
+    expect(back.code).toBe(0);
+    expect(back.out).toMatch(
+      /^note: +depot-a0-r2 shares a wall with depot-a0-r1 and stays as it is\. If that wall comes out differently, take it back as well: node tools\/building-queue\.mjs set depot-a0-r2 pending$/m,
+    );
+    // a picture no rear view shares a wall with is taken back without a word
+    expect(run(root, 'set', 'depot-a0-r2', 'pending').out).not.toMatch(/^note:/m);
+    // a view that was given up and is put back later: the rear view painted without it is named
+    // as well, for it made that wall up itself
+    expect(run(root, 'set', 'depot-a0-r1', 'rejected', '--attempts', '3').code).toBe(0);
+    paint(root, 'depot-a0-r2');
+    expect(run(root, 'set', 'depot-a0-r2', 'generated').code).toBe(0);
+    const again = run(root, 'redo', 'depot');
+    expect(again.out).toMatch(/1 picture back in the queue: depot-a0-r1/);
+    expect(again.out).toMatch(
+      /^note: +depot-a0-r2 shares a wall with depot-a0-r1 and stays as it is\./m,
+    );
   }, 60000);
 });

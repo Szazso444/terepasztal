@@ -3,6 +3,10 @@
   "references": {
     "base": "References: the first is the style board. The second is this building as it is in the game today: take its materials, details and character from it, but not its angle or its footprint; the block-out sets those.",
     "turn": "References: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.",
+    "behind": "About the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. {back} The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.",
+    "backWall": "The lower-right wall is the back: one straight wall from corner to corner, as high as the lower-left wall and plainer than it, with the same base and the same trim.",
+    "backOther": "The lower-right side is the back: built as the reference shows the building built, no higher than the lower-left side, and plainer than it.",
+    "round": "About the two extra references, the size and the roof. The third reference is this same building in view r1: its lower-right wall is the BACK, and that wall is the lower-left wall of this picture. The fourth reference is this same building in view r3: its lower-left wall is the left-hand side, and that wall is the lower-right wall of this picture. Copy both walls as they stand in those references: the same height, the same shape under the roof, the same windows and doors. The building is exactly as large as in the references: no taller, and with no storey more. The roof is the one all the references show, seen from behind: the same form, its eaves as low as in the references, and a ridge runs the same way across the picture as in the front view. It carries what the references show on the roof, at the same places.",
     "next": "References: the first is the style board. The second is this building in the age before, laid onto its footprint at exactly the block-out's camera, scale and place: keep its footprint, its place on it and everything listed under Keep, with the new walls on the same ground lines; it may grow taller or more substantial where its age says so. Rebuild it in the materials and forms of this age. It must read as the same building, modernised.",
     "sibling": "References: the first is the style board. The second is the main-line depot of the same age, laid onto its own footprint: match its materials and details. This shed is smaller, with one portal in each end wall.",
     "repaint": "References: the first is the style board. The second is this very picture as it was painted before, laid onto its footprint and straightened to exactly the block-out's camera, scale and place. Paint the SAME building again, wall for wall and detail for detail, with its wall feet on the lines they run along in this reference. Straightening has stretched or squashed it a little: keep its wall feet exactly, and give everything above them natural proportions again.",
@@ -28,6 +32,7 @@
       "size": 1.3,
       "keep": "two train portals side by side in each end wall, clearly open and tall enough for a locomotive. Each portal is a doorway into the hall, and the inside of the hall shows through it: inside each doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: one hall on a square footprint; a small crew door in the front wall",
       "front": "the side wall with the crew door and windows; the tracks run through the hall parallel to it",
+      "back": "wall",
       "base": "assets/source/base-v1/depot.png",
       "ages": {
         "a0": "A timber-and-brick engine shed: brick walls on a cream stone base, round-arched portals with evergreen timber doors folded open, a slate roof with smoke vents along the ridge.",
@@ -42,6 +47,7 @@
       "what": "A small passenger station building.",
       "keep": "a platform canopy along the whole front, a main door under it, waiting-room windows, a clock; no sign with lettering",
       "front": "the wall with the canopy and the main door; the platform and the track lie in front of it",
+      "back": "wall",
       "base": "assets/source/base-v1/station.png",
       "ages": {
         "a0": "A small cream-stone station with a slate roof, a timber platform canopy on cast-iron posts, evergreen doors and a round clock in the gable.",
@@ -113,6 +119,7 @@
       "what": "A civic town hall. It has no platform and no passenger canopy.",
       "keep": "a civic front with a central clock gable or small tower, a formal main door, symmetrical windows",
       "front": "the wall with the main door and the clock",
+      "back": "wall",
       "base": "assets/source/base-v1/townhouse-civic.png",
       "ages": {
         "a0": "A small town hall in cream limestone and warm brick with a central clock gable, a slate roof and evergreen double doors.",
@@ -127,6 +134,7 @@
       "what": "A railway warehouse.",
       "keep": "broad loading doors and a short loading canopy on the front, a plain storage hall, a few stacked crates against the wall",
       "front": "the wall with the loading doors and the canopy",
+      "back": "wall",
       "base": "assets/source/base-v1/warehouse.png",
       "ages": {
         "a0": "A brick warehouse with a slate roof, wide evergreen loading doors and a small timber canopy.",
@@ -181,6 +189,7 @@
       "what": "A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.",
       "keep": "one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall",
       "front": "the long wall with the crew door; the track runs through the hall parallel to it",
+      "back": "wall",
       "base": null,
       "ages": {
         "a0": "A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.",
@@ -338,6 +347,7 @@
       "what": "A wire mill.",
       "keep": "a roller hall with a drawbench, large copper wire reels",
       "front": "the wall with the reels and the canopy",
+      "back": "wall",
       "base": "assets/source/base-v1/works-full-wire-mill.png",
       "ages": {
         "a2": "A dressed-stone roller hall with a glazed strip, copper wire reels and a drawbench beneath a glass-and-iron canopy.",
@@ -350,6 +360,7 @@
       "what": "A house where people live.",
       "keep": "a front door, residential windows, a domestic roof; it grows taller with the ages but stays on its one tile",
       "front": "the wall with the front door",
+      "back": "wall",
       "base": "assets/source/base-v1/house-cottage.png",
       "ages": {
         "a0": "A cottage in cream stone and warm brick with a slate roof, a chimney and an evergreen front door.",

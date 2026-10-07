@@ -38,9 +38,17 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
-import { AGES, FOOTPRINTS, ROOT, loadInventory, pictureFile, pictures } from './building-kit.mjs';
+import { isMain } from './is-main.mjs';
+import {
+  AGES,
+  FOOTPRINTS,
+  ROOT,
+  loadInventory,
+  pictureFile,
+  pictures,
+  writeWhole,
+} from './building-kit.mjs';
 import { guideFile, openingsOf } from './building-guides.mjs';
 import { checkFile, pictureOf, resultLine, writeReport } from './building-check.mjs';
 import { FIT, fitPicture, normalisePicture } from './building-fit.mjs';
@@ -156,11 +164,43 @@ export function buildQueue(inventory, families, previous = null) {
   };
 }
 
-/** The pictures a new picture is made from, and the sentence that says what each is for. */
-function referencesFor(f, age, rot, families) {
+/**
+ * The pictures a new picture is made from, and the sentence that says what each is for; `more`
+ * is a paragraph of its own after it.
+ *
+ * A turned view is painted from the front view of its age. Seen from behind, a building shows
+ * walls the front view does not: the back and the left-hand side. Made up anew for every picture
+ * they came out as another building (the station's r2 had a flat roof where its front views had
+ * a pitched one), so each is made up once and copied after that: r1 makes up the back and takes
+ * its other wall from r0, r3 makes up the left-hand side, and r2, which shows only those two
+ * walls, is painted from r1 and r3 as well. Those two are `optional`: where one of them was
+ * given up, r2 is painted `alone`, from the front view as before, so that one picture given up
+ * does not cost a second.
+ *
+ * Of a plain box of a building (`back: "wall"` in families.json) the back is asked for as one
+ * straight wall. A kiln's dome, a tank on its legs or a quarry's hopper has no such wall, and a
+ * farm's silo or a power plant's stack may stand at the back: those are not asked for one.
+ */
+function referencesFor(f, age, rot, families, alone = false) {
   const mood = age <= 2 ? MOOD_EARLY : MOOD_LATE;
   const text = families.references;
-  if (rot > 0) return { files: [STYLE_BOARD, pictureFile(f.family, age, 0)], text: text.turn };
+  const view = (r) => pictureFile(f.family, age, r);
+  if (rot === 2 && !alone)
+    return {
+      files: [STYLE_BOARD, view(0), view(1), view(3)],
+      optional: [view(1), view(3)],
+      text: text.turn,
+      more: text.round,
+    };
+  if (rot === 1) {
+    const back = families.families[f.family].back === 'wall' ? text.backWall : text.backOther;
+    return {
+      files: [STYLE_BOARD, view(0)],
+      text: text.turn,
+      more: text.behind.replace('{back}', back),
+    };
+  }
+  if (rot > 0) return { files: [STYLE_BOARD, view(0)], text: text.turn };
   if (age > f.firstAge)
     return {
       files: [STYLE_BOARD, pictureFile(f.family, age - 1, 0), mood],
@@ -192,9 +232,15 @@ function portalWords(fpId, rot) {
 /**
  * Everything needed to make one picture: where to save it, what to edit, what to attach, the
  * prompt. With `repaint` the picture is one that is painted again because its camera was off: it
- * is made from its own earlier self, and `note` says what was wrong with that.
+ * is made from its own earlier self, and `note` says what was wrong with that. With `alone` a
+ * rear view is made from the front view only (a view it would copy a wall from was given up).
  */
-export function describeEntry(id, inventory, families, { repaint = false, note = '' } = {}) {
+export function describeEntry(
+  id,
+  inventory,
+  families,
+  { repaint = false, note = '', alone = false } = {},
+) {
   const m = /^(.+)-a(\d)-r(\d)$/.exec(id);
   const f = m && inventory.find((x) => x.family === m[1]);
   const age = m ? Number(m[2]) : -1;
@@ -206,7 +252,7 @@ export function describeEntry(id, inventory, families, { repaint = false, note =
   const before = beforeFile(pictureFile(f.family, age, rot));
   const ref = repaint
     ? { files: [STYLE_BOARD, before], text: families.references.repaint }
-    : referencesFor(f, age, rot, families);
+    : referencesFor(f, age, rot, families, alone);
   const position = f.upgradeable
     ? `${a.name} (model ${age - f.firstAge + 1} of ${f.ages} for this building)`
     : a.name;
@@ -219,6 +265,7 @@ export function describeEntry(id, inventory, families, { repaint = false, note =
     `Front: ${d.front}.`,
     `View r${rot}: ${families.views[`r${rot}`]}${portalWords(f.footprint, rot)}`,
     ref.text,
+    ...(ref.more ? [ref.more] : []),
     ...(repaint && note ? [`What was wrong with it: ${note}`] : []),
   ].join('\n\n');
   return {
@@ -233,6 +280,8 @@ export function describeEntry(id, inventory, families, { repaint = false, note =
     repaint,
     // what the picture is built on, and what the generator is shown of it
     sources: ref.files,
+    // those of them it can be made without, if they were given up
+    optional: ref.optional ?? [],
     references: ref.files.map((file) => {
       if (file === before) return beforeFile(fittedFile(id));
       const made = file.startsWith(`${ROOT}/`) ? pictureOf(file) : null;
@@ -259,7 +308,14 @@ const madeFrom = (e, exists) =>
  */
 export function describeQueued(queue, id, inventory, families, exists = existsSync) {
   const e = queue.entries.find((x) => x.id === id);
-  const d = describeEntry(id, inventory, families, madeFrom(e, exists));
+  const how = madeFrom(e, exists);
+  let d = describeEntry(id, inventory, families, how);
+  // a view it would copy a wall from was given up, or is gone: painted from the front view alone
+  const gone = (file) => {
+    const on = queue.entries.find((x) => x.file === file);
+    return !!on && (on.status === 'rejected' || (isMade(on) && !exists(on.file)));
+  };
+  if (d.optional.some(gone)) d = describeEntry(id, inventory, families, { ...how, alone: true });
   if (d.repaint)
     d.earlier = {
       file: beforeFile(e.file),
@@ -274,10 +330,21 @@ export function describeQueued(queue, id, inventory, families, exists = existsSy
  * is.
  */
 export function fittedReferences(d, inventory) {
+  // a write that was cut short (a full disk) leaves a file that is newer than its picture and
+  // is no picture: that one is made again, not handed out
+  const whole = (file) => {
+    try {
+      PNG.sync.read(readFileSync(file));
+      return true;
+    } catch {
+      return false;
+    }
+  };
   return d.references.map((file, i) => {
     const raw = d.sources[i];
     if (file === raw || !existsSync(raw)) return file;
-    if (existsSync(file) && statSync(file).mtimeMs >= statSync(raw).mtimeMs) return file;
+    if (existsSync(file) && statSync(file).mtimeMs >= statSync(raw).mtimeMs && whole(file))
+      return file;
     // a picture's earlier self is laid down as the picture itself would be
     const of = pictureOf(raw.replace(/\.before\.png$/, '.png'));
     const footprint = inventory.find((f) => f.family === of.family).footprint;
@@ -291,7 +358,7 @@ export function fittedReferences(d, inventory) {
     const fit = fitPicture(png, footprint, of.rot, { fully: true });
     if (!fit) return raw;
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, PNG.sync.write(normalisePicture(png, fit, footprint)));
+    writeWhole(file, PNG.sync.write(normalisePicture(png, fit, footprint)));
     return file;
   });
 }
@@ -314,13 +381,16 @@ function standings(queue, inventory, families, exists) {
     else if (isMade(e)) s = exists(e.file) ? 'made' : 'lost';
     else {
       s = 'ready';
-      for (const file of describeEntry(e.id, inventory, families, madeFrom(e, exists)).sources) {
+      const d = describeEntry(e.id, inventory, families, madeFrom(e, exists));
+      for (const file of d.sources) {
         const on = byFile.get(file);
         if (!on) {
           if (!exists(file)) throw new Error(`${e.id} needs ${file}, which is not there`);
           continue;
         }
         const t = of(on);
+        // a view it would only copy a wall from: given up, the picture is made without it
+        if (d.optional.includes(file) && (t === 'rejected' || t === 'lost')) continue;
         if (t === 'rejected' || t === 'lost' || t === 'behind') {
           s = 'behind';
           break;
@@ -785,30 +855,67 @@ function redoList(queue, inventory, families, target) {
   const first = queue.entries.find((e) => e.id === target);
   if (!first) throw new Error(`no picture or family is called ${target}`);
   const again = new Set([first.file]);
-  // the list is in working order, so a picture always comes after the one it is built on
-  const entries = queue.entries.filter((e) => {
-    const built =
-      e === first ||
-      describeEntry(e.id, inventory, families).sources.some((file) => again.has(file));
-    if (built) again.add(e.file);
-    return built;
-  });
-  return { afresh: true, entries };
+  // round and round until nothing more is found: a picture can stand in the list before one it
+  // is built on (r2 is painted from r3)
+  for (let found = true; found;) {
+    found = false;
+    for (const e of queue.entries)
+      if (
+        !again.has(e.file) &&
+        describeEntry(e.id, inventory, families).sources.some((file) => again.has(file))
+      ) {
+        again.add(e.file);
+        found = true;
+      }
+  }
+  return { afresh: true, entries: queue.entries.filter((e) => again.has(e.file)) };
 }
 
 /**
  * What `redo` would undo, before it is done: the pictures it puts back, how many of them are made
  * (their files would be set aside) and how many wait to be painted again from their earlier
  * selves (they would be made afresh instead). A front view of a family's first age takes the
- * whole family with it.
+ * whole family with it. `others` counts what would be undone besides the picture that was named:
+ * that is what the user is asked about first.
  */
 export function redoPlan(queue, inventory, families, target, exists = existsSync) {
-  const { entries } = redoList(queue, inventory, families, target);
+  const { afresh, entries } = redoList(queue, inventory, families, target);
+  const made = (e) => isMade(e) && exists(e.file);
+  const repaint = (e) => e.status === 'pending' && !!e.repaint;
+  // nothing of it yet: not made, not given up, not tried, no picture in hand
+  const untouched = (e) =>
+    e.status === 'pending' && !e.repaint && !e.attempts && !e.taken && !exists(e.file);
   return {
     ids: entries.map((e) => e.id),
-    made: entries.filter((e) => isMade(e) && exists(e.file)).length,
-    repaint: entries.filter((e) => e.status === 'pending' && e.repaint).length,
+    made: entries.filter(made).length,
+    repaint: entries.filter(repaint).length,
+    // given up, tried or in hand: their count of attempts would start again
+    tried: entries.filter((e) => !made(e) && !repaint(e) && !untouched(e)).length,
+    others: afresh ? entries.filter((e) => e.id !== target && !untouched(e)).length : 0,
   };
+}
+
+/**
+ * The made rear views that share a wall with a picture: an r2 has its back from r1 and its
+ * left-hand side from r3 (or made them up itself, where that view had been given up). Put back,
+ * the picture may come out with another wall, and the rear view is not put back with it.
+ */
+function sharedWallNotes(queue, inventory, families, ids) {
+  const out = [];
+  for (const id of ids) {
+    const file = queue.entries.find((e) => e.id === id)?.file;
+    for (const other of queue.entries)
+      if (
+        isMade(other) &&
+        !ids.includes(other.id) &&
+        describeEntry(other.id, inventory, families).optional.includes(file)
+      )
+        out.push(
+          `note:      ${other.id} shares a wall with ${id} and stays as it is. If that wall comes out differently, ` +
+            `take it back as well: node tools/building-queue.mjs set ${other.id} pending`,
+        );
+  }
+  return out;
 }
 
 /**
@@ -1055,7 +1162,7 @@ export function readQueue(root = '.') {
 /** pictures of the list as it was read that are no longer in it (an age that was dropped) */
 let dropped = [];
 function writeQueue(queue) {
-  writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2) + '\n');
+  writeWhole(QUEUE_FILE, JSON.stringify(queue, null, 2) + '\n');
   if (!dropped.length) return;
   // said once, by whichever command writes the list first: after that they are gone from it
   const made = dropped.filter(isMade).length;
@@ -1270,11 +1377,11 @@ async function main(args) {
         if (e.refused) writeQueue(queue);
         throw e;
       }
+      // the list last: if a write fails (a full disk), the picture is not recorded yet and the
+      // same command records it when it is run again
+      if (r.check) writeReport({ [r.entry.id]: r.check });
       writeQueue(queue);
-      if (r.check) {
-        writeReport({ [r.entry.id]: r.check });
-        console.log(resultLine(r.entry.id, r.check));
-      }
+      if (r.check) console.log(resultLine(r.entry.id, r.check));
       console.log(
         `${r.entry.id}: ${r.entry.status}, ${r.entry.attempts} attempt${r.entry.attempts === 1 ? '' : 's'}` +
           (r.entry.kept ? ` (${r.entry.note})` : '') +
@@ -1282,6 +1389,10 @@ async function main(args) {
             ? `; its file was set aside as ${r.aside.replace(/\.png$/, '.rejected.png')}`
             : ''),
       );
+      // back in the queue, and a made rear view shares a wall with it: said, not decided
+      if (r.entry.status === 'pending')
+        for (const line of sharedWallNotes(queue, inventory, families, [r.entry.id]))
+          console.log(line);
       // given up, though an attempt of it was right but for its camera: said, not decided
       if (r.entry.status === 'rejected' && earlierSelf(r.entry, DISK))
         console.log(
@@ -1298,8 +1409,8 @@ async function main(args) {
       const r = keepEarlier(queue, inventory, rest[0], {
         attempts: attempts === undefined ? undefined : Number(attempts),
       });
-      writeQueue(queue);
       writeReport({ [r.entry.id]: r.check });
+      writeQueue(queue);
       // shown for the eye: the closest by its camera is kept, which may not be the one meant
       const { showPicture } = await import('./building-sheets.mjs');
       const shown = showPicture(r.entry.file, inventory, families);
@@ -1315,6 +1426,8 @@ async function main(args) {
     }
     case 'recheck': {
       const r = recheck(queue, inventory, rest[0] ?? null);
+      // the list first here: the pictures put back are moved aside already, and a list that
+      // still called them made would have them lost. A report that is behind does no harm
       writeQueue(queue);
       if (r.checked) writeReport(r.results);
       console.log(
@@ -1336,13 +1449,15 @@ async function main(args) {
     case 'redo': {
       const plan = redoPlan(queue, inventory, families, rest[0]);
       const more = plan.ids.length - 1;
-      // more than the picture named: said first, and done only when the user has asked for it
-      if (more > 0 && plan.ids[0] === rest[0] && !rest.includes('--yes')) {
+      // it would undo more than the picture named: said first, and done only when the user has
+      // asked for it. (A picture built on it that is not made yet loses nothing.)
+      if (plan.others > 0 && !rest.includes('--yes')) {
         const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
         console.log(
           `redo ${rest[0]} would put ${plan.ids.length} pictures back, each to be made afresh: ${rest[0]} and the ${more} built on it. ` +
             `${count(plan.made, 'of them is made (its file would be set aside)', 'of them are made (their files would be set aside)')}, ` +
-            `${count(plan.repaint, 'is waiting to be painted again from its earlier self', 'are waiting to be painted again from their earlier selves')} (that would be lost). ` +
+            `${count(plan.repaint, 'is waiting to be painted again from its earlier self', 'are waiting to be painted again from their earlier selves')} (that would be lost)` +
+            `${plan.tried ? `, ${count(plan.tried, 'was tried or given up (its attempts would be counted from nothing again)', 'were tried or given up (their attempts would be counted from nothing again)')}` : ''}. ` +
             `Nothing was changed. This is for the user to ask for: if they asked for exactly this, run it again with --yes. ` +
             `To make one recorded picture again, take it back instead: node tools/building-queue.mjs set ${rest[0]} pending`,
         );
@@ -1353,6 +1468,7 @@ async function main(args) {
       console.log(
         `${ids.length} picture${ids.length === 1 ? '' : 's'} back in the queue${ids.length ? `: ${some(ids)}` : ''}`,
       );
+      for (const line of sharedWallNotes(queue, inventory, families, ids)) console.log(line);
       return 0;
     }
     case 'approve-pilot': {
@@ -1390,13 +1506,20 @@ async function main(args) {
 }
 
 // not awaited here: `take` loads the sheet tool, which reads this module and waits for it
-if (process.argv[1] === fileURLToPath(import.meta.url))
+if (isMain(import.meta.url))
   main(process.argv.slice(2)).then(
     (code) => {
       process.exitCode = code;
     },
     (e) => {
       console.error(e.message);
+      // said here, where the agent reads it, and not only in the guide
+      if (e.code === 'ENOSPC')
+        console.error(
+          'The disk is full. Stop and tell the user how much is free; do not delete anything to make room. ' +
+            'When there is room again, run `node tools/building-queue.mjs status`, then the same command again; ' +
+            'if it then says that the picture is recorded already, or that its file is not there, go on with `next`.',
+        );
       process.exitCode = 1;
     },
   );

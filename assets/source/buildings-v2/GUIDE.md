@@ -108,8 +108,9 @@ The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`
   the same building. Only when the user asks.
 - `node tools/building-queue.mjs redo <id>` or `redo <family>`: put pictures back in the queue.
   `redo <id>` puts back that picture and every picture built on it, each to be made afresh: for a
-  first front view that is the whole family. It says what it would undo and waits for `--yes`.
-  Only when the user asks for exactly that. To make one picture again, see section 7.
+  first front view that is the whole family, for an `r1` or an `r3` the `r2` of its age. Where
+  that undoes other pictures it says what it would undo and waits for `--yes`. Only when the user
+  asks for exactly that. To make one picture again, see section 7.
 - `node tools/building-queue.mjs accept <family>` and
   `node tools/building-queue.mjs approve-pilot`: the user's decisions. Run them only when the user
   says so.
@@ -139,16 +140,31 @@ Repeat until the queue tool tells you to stop:
    is counted: make the picture again (section 7).
 5. When `next` says a family is finished, close it (section 8).
 
-The queue hands pictures out in an order that matters: a building's front view of an age comes
-first, then its three other views, then the next age. Each picture is built on one made before it.
+The queue hands pictures out in an order that matters: a building's front view of an age (`r0`)
+comes first, then `r1` and `r3`, each painted from that front view, then `r2`, which is painted
+from all three, then the next age. Each picture is built on pictures made before it.
+
+A building seen from behind (`r1`, `r2`) shows two walls its front view does not: the back and the
+left-hand side. `r1` makes up the back, `r3` the left-hand side, and `r2`, which shows only those
+two walls, copies them from `r1` and `r3`. So an `r2` has four pictures to attach, and the prompts
+of `r1` and `r2` end with a paragraph on the building's size and on which wall comes from which
+reference. Use them as printed, and add no wording of your own about size, roof or walls.
+
+Two kinds of picture are not painted this way, and `next` prints them accordingly:
+
+- A picture marked `(to paint again: the same building)` is painted from its own earlier self,
+  whichever view it is: two pictures to attach, and no such paragraph.
+- An `r2` whose `r1` or `r3` was given up is painted from the front view alone: two pictures to
+  attach, and no such paragraph.
 
 ## 5. Making one picture
 
 1. Start an image **edit**, not a new image. The image you edit is the guide: a grey block on a
    grey plinth. The plinth is the footprint; the block shows the camera, and its dark openings
    show which wall has the front door (or a depot's portals).
-2. Attach the references in the order `next` lists them. The first is always the style board. The
-   prompt's last paragraph says what each of the others is for.
+2. Attach the references in the order `next` lists them, all of them. The first is always the
+   style board. The end of the prompt, from "References:" on, says what each of the others is
+   for.
 3. Paste the prompt exactly as printed.
 4. Ask for the size `next` printed and a transparent background.
 5. Take the result: `node tools/building-queue.mjs take <id> --from <file>`, naming the file your
@@ -222,6 +238,16 @@ Then answer:
   grass and track to be seen through it up to its lintel.
 - In `r1`, `r2`, `r3`: is it the same building as the `r0` reference (same walls, roof, colours,
   details), turned, and not a mirror image of it?
+- Seen from behind (`r1`, `r2`), where the prompt ends with the paragraph on size and walls: is
+  it still that building? No taller than in the front view and with no storey more; the same form
+  of roof, its ridge running the way that paragraph says; the side as the reference shows it; the
+  back as that paragraph asks for it (one straight wall only where it says so); and nothing of the
+  front (a canopy, a porch) on a side where the front is not. In an `r2` with four pictures
+  attached, the back is the one `r1` shows and the left-hand side the one `r3` shows. A picture
+  that fails here is made again as printed, whatever its camera.
+- A picture marked `(to paint again: the same building)`: is it the building of its earlier self,
+  wall for wall? As to its walls, size and roof that is all it is held to: it is not judged
+  against `r1` or `r3`. The other questions here apply to it as to any picture.
 - In a later age: is it still recognisably the same kind of building, with everything on the
   prompt's Keep line, in the materials of the new age?
 - Is the plinth gone, with nothing on the ground around the building?
@@ -242,6 +268,10 @@ lower-left wall"), and keep the rest of the prompt. Give a picture up to three a
 
 A picture's place and size in its file are never a reason to make it again: the tools take care of
 those. Its view is: a building seen from the front, from above or in perspective cannot be used.
+
+When an `r1` or an `r3` goes back in the queue while the `r2` of its age is made, the tool names
+that `r2`: the two share a wall. The `r2` stays as it is. If the new picture's back or left-hand
+side comes out differently, take the `r2` back as well, so that it is painted from the new one.
 
 **A depot's portals.** The tool also tells which of a depot's two visible walls has the portals.
 A view of the wrong rotation is refused with `the portals are in the lower-right wall; they belong
@@ -383,6 +413,12 @@ stash pictures: a commit is the one safe place for work in hand.
 `node tools/building-queue.mjs status`, then `next`. `status` lists every place where the list and
 the disk disagree. A picture saved on disk but not recorded counts as not made: look at it and
 record it with `set <id> generated` (the tool checks it), or make it again (`take` replaces it).
+
+If a command fails for lack of disk space (`ENOSPC`, or git's "No space left on device"), stop and
+tell the user how much is free. Do not delete anything to make room. The list and the report are
+written whole or not at all, so nothing that was recorded is lost. When there is room again, run
+`status`, then the command again. If it then says that the picture is recorded already, or that
+its file is not there, the first run got that far: go on with `next`.
 
 This is also how another session takes the work over. A new chat, on another account or after
 this one has run out, is started with the block in `PROMPT.md` and needs nothing from the chat
