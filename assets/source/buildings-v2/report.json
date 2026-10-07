@@ -1749,43 +1749,43 @@
           true
         ],
         "measured": [
-          0.48,
-          -0.525
+          0.541,
+          -0.496
         ],
         "slopes": [
-          0.48,
-          -0.525
+          0.541,
+          -0.496
         ],
         "base": {
           "w": [
-            163,
-            990.1
+            264,
+            948.6
           ],
           "s": [
-            652.6,
-            1225
+            697,
+            1182.9
           ],
           "e": [
-            1098,
-            991.1
+            1038,
+            1013.7
           ]
         },
-        "scale": 0.4819,
-        "vertical": 0.995,
-        "shear": 0.0226,
-        "cx": 630.5,
-        "cy": 999.9,
+        "scale": 0.5821,
+        "vertical": 0.9642,
+        "shear": -0.0217,
+        "cx": 651,
+        "cy": 931.9,
         "box": {
-          "left": 284.8,
-          "top": 368.8,
-          "right": 740.2,
-          "bottom": 944.2
+          "left": 281.5,
+          "top": 444.2,
+          "right": 744.8,
+          "bottom": 945.2
         },
         "camera": {
-          "elevation": 30.1,
-          "turn": -1.3
+          "elevation": 31.2,
+          "turn": 1.2
         },
-        "area": 684750
+        "area": 412383
       }
     },
     "station-a2-r3": {
@@ -1891,9 +1891,7 @@
     "station-a3-r1": {
       "ok": true,
       "problems": [],
-      "notes": [
-        "camera off by 3.4°: the building is turned 3.4° towards its lower-right wall (the wall feet slope 0.57 and -0.45, the game's 0.50 and -0.50); kept, and corrected by the tools"
-      ],
+      "notes": [],
       "fit": {
         "method": "base",
         "sure": [
@@ -1901,55 +1899,49 @@
           true
         ],
         "measured": [
-          0.573,
-          -0.452
+          0.537,
+          -0.48
         ],
         "slopes": [
-          0.573,
-          -0.452
+          0.537,
+          -0.48
         ],
         "base": {
           "w": [
-            46,
-            986.1
+            207,
+            963.1
           ],
           "s": [
-            454.5,
-            1220.2
+            539.4,
+            1141.5
           ],
           "e": [
-            1183,
-            890.6
+            1067,
+            888.3
           ]
         },
-        "scale": 0.3963,
-        "vertical": 0.9751,
-        "shear": -0.0588,
-        "cx": 614.5,
-        "cy": 878.8,
+        "scale": 0.5239,
+        "vertical": 0.9834,
+        "shear": -0.028,
+        "cx": 637,
+        "cy": 892.5,
         "box": {
-          "left": 286.3,
-          "top": 502,
-          "right": 746.8,
-          "bottom": 946.6
+          "left": 259.5,
+          "top": 536.7,
+          "right": 758.2,
+          "bottom": 948.9
         },
         "camera": {
-          "elevation": 30.6,
-          "turn": 3.4
+          "elevation": 30.5,
+          "turn": 1.6
         },
-        "area": 784917
-      },
-      "camera": {
-        "by": 3.4,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 430787
       }
     },
     "station-a3-r2": {
       "ok": true,
       "problems": [],
-      "notes": [
-        "camera off by 3.4°: it looks down from 32.2° where the game looks down from 30° and the building is turned 3.4° towards its lower-left wall (the wall feet slope 0.47 and -0.60, the game's 0.50 and -0.50); kept, and corrected by the tools"
-      ],
+      "notes": [],
       "fit": {
         "method": "base",
         "sure": [
@@ -1957,47 +1949,43 @@
           true
         ],
         "measured": [
-          0.474,
-          -0.601
+          0.538,
+          -0.5
         ],
         "slopes": [
-          0.474,
-          -0.601
+          0.538,
+          -0.5
         ],
         "base": {
           "w": [
-            193,
-            877.2
+            203,
+            850.3
           ],
           "s": [
-            717.4,
-            1125.8
+            781,
+            1161.2
           ],
           "e": [
-            998,
-            957.3
+            1186,
+            958.7
           ]
         },
-        "scale": 0.5597,
-        "vertical": 0.9306,
-        "shear": 0.0588,
-        "cx": 595.5,
-        "cy": 888.7,
+        "scale": 0.4584,
+        "vertical": 0.9635,
+        "shear": -0.0182,
+        "cx": 694.5,
+        "cy": 858.9,
         "box": {
-          "left": 286.7,
-          "top": 514.5,
-          "right": 774.2,
-          "bottom": 951.6
+          "left": 260.6,
+          "top": 524,
+          "right": 737.7,
+          "bottom": 948.7
         },
         "camera": {
-          "elevation": 32.2,
-          "turn": -3.4
+          "elevation": 31.2,
+          "turn": 1
         },
-        "area": 401695
-      },
-      "camera": {
-        "by": 3.4,
-        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-left wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 589542
       }
     },
     "station-a3-r3": {
@@ -2111,49 +2099,51 @@
           true
         ],
         "measured": [
-          0.563,
-          -0.499
+          0.531,
+          -0.476
         ],
         "slopes": [
-          0.563,
-          -0.499
+          0.531,
+          -0.476
         ],
         "base": {
           "w": [
-            212,
-            940.2
+            217,
+            994.7
           ],
           "s": [
-            645.7,
-            1184.2
+            555.2,
+            1174.4
           ],
           "e": [
-            1055,
-            980.1
+            1075,
+            927.3
           ]
         },
-        "scale": 0.5345,
-        "vertical": 0.9422,
-        "shear": -0.0302,
-        "cx": 633.5,
-        "cy": 885.5,
+        "scale": 0.5251,
+        "vertical": 0.9931,
+        "shear": -0.0278,
+        "cx": 646,
+        "cy": 936.4,
         "box": {
-          "left": 286.7,
-          "top": 521.8,
-          "right": 754.4,
-          "bottom": 945.6
+          "left": 264.1,
+          "top": 513,
+          "right": 737.8,
+          "bottom": 947.2
         },
         "camera": {
-          "elevation": 32,
-          "turn": 1.7
+          "elevation": 30.2,
+          "turn": 1.6
         },
-        "area": 448943
+        "area": 449684
       }
     },
     "station-a4-r2": {
       "ok": true,
       "problems": [],
-      "notes": [],
+      "notes": [
+        "camera off by 2.5°: it looks down from 32.5° where the game looks down from 30° (the wall feet slope 0.55 and -0.53, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
       "fit": {
         "method": "base",
         "sure": [
@@ -2161,43 +2151,47 @@
           true
         ],
         "measured": [
-          0.512,
-          -0.527
+          0.546,
+          -0.528
         ],
         "slopes": [
-          0.512,
-          -0.527
+          0.546,
+          -0.528
         ],
         "base": {
           "w": [
-            205,
-            898.4
+            190,
+            898.6
           ],
           "s": [
-            633.6,
-            1118
+            731.8,
+            1194.5
           ],
           "e": [
-            1106,
-            868.9
+            1110,
+            994.7
           ]
         },
-        "scale": 0.5001,
-        "vertical": 0.962,
-        "shear": 0.0072,
-        "cx": 655.5,
-        "cy": 854.8,
+        "scale": 0.4897,
+        "vertical": 0.9306,
+        "shear": -0.0083,
+        "cx": 650,
+        "cy": 875.6,
         "box": {
-          "left": 285.7,
-          "top": 543,
-          "right": 748.3,
-          "bottom": 946.6
+          "left": 286.7,
+          "top": 556.2,
+          "right": 749.5,
+          "bottom": 945.8
         },
         "camera": {
-          "elevation": 31.3,
-          "turn": -0.4
+          "elevation": 32.5,
+          "turn": 0.5
         },
-        "area": 455310
+        "area": 466788
+      },
+      "camera": {
+        "by": 2.5,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     "station-a4-r3": {
@@ -2311,43 +2305,43 @@
           true
         ],
         "measured": [
-          0.489,
-          -0.503
+          0.484,
+          -0.536
         ],
         "slopes": [
-          0.489,
-          -0.503
+          0.484,
+          -0.536
         ],
         "base": {
           "w": [
-            60,
-            977.9
+            250,
+            940.7
           ],
           "s": [
-            562.3,
-            1223.4
+            589,
+            1104.8
           ],
           "e": [
-            1201,
-            902
+            1034,
+            866.1
           ]
         },
-        "scale": 0.3949,
-        "vertical": 1.0083,
-        "shear": 0.0073,
-        "cx": 630.5,
-        "cy": 952.4,
+        "scale": 0.5747,
+        "vertical": 0.9802,
+        "shear": 0.0258,
+        "cx": 642,
+        "cy": 902,
         "box": {
           "left": 286.7,
-          "top": 477.6,
-          "right": 737.3,
+          "top": 497.8,
+          "right": 740.7,
           "bottom": 946.5
         },
         "camera": {
-          "elevation": 29.7,
-          "turn": -0.4
+          "elevation": 30.6,
+          "turn": -1.5
         },
-        "area": 813725
+        "area": 396955
       }
     },
     "station-a5-r2": {
@@ -2361,43 +2355,43 @@
           true
         ],
         "measured": [
-          0.517,
-          -0.536
+          0.524,
+          -0.504
         ],
         "slopes": [
-          0.517,
-          -0.536
+          0.524,
+          -0.504
         ],
         "base": {
           "w": [
-            281,
-            951
+            242,
+            871.7
           ],
           "s": [
-            666.2,
-            1150.1
+            686.9,
+            1105
           ],
           "e": [
-            1003,
-            969.7
+            1030,
+            932.1
           ]
         },
-        "scale": 0.624,
-        "vertical": 0.95,
-        "shear": 0.0089,
-        "cx": 642,
-        "cy": 918,
+        "scale": 0.5718,
+        "vertical": 0.9722,
+        "shear": -0.0098,
+        "cx": 636,
+        "cy": 870.5,
         "box": {
-          "left": 263,
-          "top": 432.7,
-          "right": 760.4,
-          "bottom": 949.2
+          "left": 286.1,
+          "top": 504.6,
+          "right": 737.3,
+          "bottom": 946.3
         },
         "camera": {
-          "elevation": 31.8,
-          "turn": -0.5
+          "elevation": 30.9,
+          "turn": 0.6
         },
-        "area": 394302
+        "area": 387088
       }
     },
     "station-a5-r3": {
