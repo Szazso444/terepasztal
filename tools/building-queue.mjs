@@ -1334,8 +1334,10 @@ async function main(args) {
     }
     case 'recheck': {
       const r = recheck(queue, inventory, rest[0] ?? null);
-      if (r.checked) writeReport(r.results);
+      // the list first here: the pictures put back are moved aside already, and a list that
+      // still called them made would have them lost. A report that is behind does no harm
       writeQueue(queue);
+      if (r.checked) writeReport(r.results);
       console.log(
         `${r.checked} made picture${r.checked === 1 ? '' : 's'} checked: ${r.back.length} back in the queue, to be painted again as the same building (camera further than ${FIT.camera}° from the game's)`,
       );
@@ -1420,7 +1422,8 @@ if (isMain(import.meta.url))
       if (e.code === 'ENOSPC')
         console.error(
           'The disk is full. Stop and tell the user how much is free; do not delete anything to make room. ' +
-            'What was recorded is whole. When there is room again, run `node tools/building-queue.mjs status`, then `next`.',
+            'When there is room again, run `node tools/building-queue.mjs status`, then the same command again; ' +
+            'if it then says that the picture is recorded already, or that its file is not there, go on with `next`.',
         );
       process.exitCode = 1;
     },

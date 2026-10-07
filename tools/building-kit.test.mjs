@@ -27,7 +27,7 @@ const tempFolder = (prefix) => {
   return dir;
 };
 afterAll(() => {
-  for (const dir of temp) rmSync(dir, { recursive: true, force: true });
+  for (const dir of temp) rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
 });
 
 describe('building inventory', () => {

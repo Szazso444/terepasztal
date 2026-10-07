@@ -1460,7 +1460,7 @@ describe('the queue tool on the command line', () => {
   /** a copy of what the tool reads, in a folder of its own */
   const sandboxes = [];
   afterAll(() => {
-    for (const dir of sandboxes) rmSync(dir, { recursive: true, force: true });
+    for (const dir of sandboxes) rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
   });
   const sandbox = () => {
     const root = mkdtempSync(join(tmpdir(), 'building-queue-'));
@@ -2253,6 +2253,11 @@ syncBuiltinESMExports();
     expect(atList.out).toMatch(
       /The disk is full\. Stop and tell the user how much is free; do not delete anything to make room\./,
     );
+    // and, as the guide does, to run the same command again: `next` would hand the picture out anew
+    expect(atList.out).toMatch(
+      /run `node tools\/building-queue\.mjs status`, then the same command again/,
+    );
+    expect(atList.out).not.toMatch(/status`, then `next`/);
     expect(readFileSync(file, 'utf8')).toBe(before);
     // as the report is written: the list comes after it, so nothing is recorded yet
     const atReport = full(root, 'report.json', 'set', 'depot-a0-r0', 'generated');
@@ -2263,5 +2268,27 @@ syncBuiltinESMExports();
     expect(ok.code).toBe(0);
     expect(ok.out).toMatch(/depot-a0-r0: generated, 1 attempt/);
     expect(readdirSync(dirname(file)).filter((f) => f.endsWith('.part'))).toEqual([]);
+  }, 60000);
+
+  it('on a full disk at the report, a recheck has still recorded what it put back', () => {
+    // `recheck` moves the pictures aside before it writes anything, so the list follows at once:
+    // with the report first, a full disk there left pictures gone and the list saying made
+    const root = sandbox();
+    run(root);
+    paint(root, 'depot-a0-r0', ([x, y]) => [x, 760 + (y - 760) * 0.8]);
+    const file = join(root, 'assets/source/buildings-v2/queue.json');
+    const queue = JSON.parse(readFileSync(file, 'utf8'));
+    Object.assign(queue.entries[0], { status: 'generated', attempts: 1 });
+    writeFileSync(file, JSON.stringify(queue, null, 2) + '\n');
+    const cut = full(root, 'report.json', 'recheck');
+    expect(cut.code).toBe(1);
+    expect(cut.out).toMatch(/ENOSPC/);
+    expect(existsSync(join(root, beforeFile(pictureFile('depot', 0, 0))))).toBe(true);
+    const status = run(root, 'status');
+    expect(status.out).toMatch(/1 to paint again/);
+    expect(status.out).not.toMatch(/missing/);
+    expect(run(root, 'next').out).toMatch(
+      /^picture: +depot-a0-r0 \(to paint again: the same building\)$/m,
+    );
   }, 60000);
 });
