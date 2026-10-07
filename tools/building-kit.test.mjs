@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { cpSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { afterAll, describe, it, expect } from 'vitest';
+import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -18,6 +18,17 @@ import {
   wallBase,
   writeWhole,
 } from './building-kit.mjs';
+
+/** the folders these tests make under the temp directory, removed when they are done */
+const temp = [];
+const tempFolder = (prefix) => {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  temp.push(dir);
+  return dir;
+};
+afterAll(() => {
+  for (const dir of temp) rmSync(dir, { recursive: true, force: true });
+});
 
 describe('building inventory', () => {
   const inv = loadInventory();
@@ -48,7 +59,7 @@ describe('building inventory', () => {
     const kiln = pictures(inv).filter((p) => p.family === 'kiln');
     expect(kiln.map((p) => p.age)).toEqual([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]);
     // a last age is one of the game's ages, and not before the first
-    const root = mkdtempSync(join(tmpdir(), 'building-kit-'));
+    const root = tempFolder('building-kit-');
     cpSync('src/data', join(root, 'src/data'), { recursive: true });
     const file = join(root, 'src/data/buildings.json');
     const last = (lastTier) => {
@@ -182,7 +193,7 @@ describe('building conventions', () => {
 });
 
 describe('writing a file whole', () => {
-  const folder = () => mkdtempSync(join(tmpdir(), 'write-whole-'));
+  const folder = () => tempFolder('write-whole-');
   const fails = (code, what) => () => {
     throw Object.assign(new Error(`${code}: ${what}`), { code });
   };
@@ -216,5 +227,61 @@ describe('writing a file whole', () => {
     writeWhole(file, 'new\n', { renameSync: fails('EPERM', 'operation not permitted, rename') });
     expect(readFileSync(file, 'utf8')).toBe('new\n');
     expect(readdirSync(dir)).toEqual(['list.json']);
+  });
+
+  it('still writes in place when the name beside the file cannot be cleared away', () => {
+    // a scanner holds the fresh copy: neither the rename nor the clean-up goes through
+    const dir = folder();
+    const file = join(dir, 'list.json');
+    writeFileSync(file, 'old\n');
+    const held = fails('EPERM', 'operation not permitted, unlink');
+    writeWhole(file, 'new\n', {
+      renameSync: fails('EBUSY', 'resource busy, rename'),
+      rmSync: held,
+    });
+    expect(readFileSync(file, 'utf8')).toBe('new\n');
+  });
+
+  it('reports the full disk, not the clean-up, when both fail', () => {
+    const dir = folder();
+    const file = join(dir, 'list.json');
+    writeFileSync(file, 'old\n');
+    const io = {
+      writeFileSync: fails('ENOSPC', 'no space left on device, write'),
+      rmSync: fails('EPERM', 'operation not permitted, unlink'),
+    };
+    expect(() => writeWhole(file, 'new\n', io)).toThrow(/ENOSPC/);
+    expect(readFileSync(file, 'utf8')).toBe('old\n');
+  });
+
+  it('is loud when the write in place fails too', () => {
+    const dir = folder();
+    const file = join(dir, 'list.json');
+    writeFileSync(file, 'old\n');
+    let n = 0;
+    const io = {
+      // the copy beside the file is written, the file itself cannot be
+      writeFileSync: (to, data) =>
+        n++ ? fails('EBUSY', 'resource busy, open')() : writeFileSync(to, data),
+      renameSync: fails('EPERM', 'operation not permitted, rename'),
+    };
+    expect(() => writeWhole(file, 'new\n', io)).toThrow(/EBUSY/);
+    expect(readFileSync(file, 'utf8')).toBe('old\n');
+    expect(readdirSync(dir)).toEqual(['list.json']);
+  });
+
+  it('gives each process a name of its own beside the file', () => {
+    // two tools writing at once must not take each other's copy
+    const dir = folder();
+    const file = join(dir, 'list.json');
+    const seen = [];
+    const io = {
+      writeFileSync: (to, data) => {
+        seen.push(to);
+        writeFileSync(to, data);
+      },
+    };
+    writeWhole(file, 'new\n', io);
+    expect(seen).toEqual([`${file}.${process.pid}.part`]);
   });
 });

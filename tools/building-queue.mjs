@@ -1289,11 +1289,11 @@ async function main(args) {
         if (e.refused) writeQueue(queue);
         throw e;
       }
+      // the list last: if a write fails (a full disk), the picture is not recorded yet and the
+      // same command records it when it is run again
+      if (r.check) writeReport({ [r.entry.id]: r.check });
       writeQueue(queue);
-      if (r.check) {
-        writeReport({ [r.entry.id]: r.check });
-        console.log(resultLine(r.entry.id, r.check));
-      }
+      if (r.check) console.log(resultLine(r.entry.id, r.check));
       console.log(
         `${r.entry.id}: ${r.entry.status}, ${r.entry.attempts} attempt${r.entry.attempts === 1 ? '' : 's'}` +
           (r.entry.kept ? ` (${r.entry.note})` : '') +
@@ -1317,8 +1317,8 @@ async function main(args) {
       const r = keepEarlier(queue, inventory, rest[0], {
         attempts: attempts === undefined ? undefined : Number(attempts),
       });
-      writeQueue(queue);
       writeReport({ [r.entry.id]: r.check });
+      writeQueue(queue);
       // shown for the eye: the closest by its camera is kept, which may not be the one meant
       const { showPicture } = await import('./building-sheets.mjs');
       const shown = showPicture(r.entry.file, inventory, families);
@@ -1334,8 +1334,8 @@ async function main(args) {
     }
     case 'recheck': {
       const r = recheck(queue, inventory, rest[0] ?? null);
-      writeQueue(queue);
       if (r.checked) writeReport(r.results);
+      writeQueue(queue);
       console.log(
         `${r.checked} made picture${r.checked === 1 ? '' : 's'} checked: ${r.back.length} back in the queue, to be painted again as the same building (camera further than ${FIT.camera}° from the game's)`,
       );
@@ -1416,6 +1416,12 @@ if (isMain(import.meta.url))
     },
     (e) => {
       console.error(e.message);
+      // said here, where the agent reads it, and not only in the guide
+      if (e.code === 'ENOSPC')
+        console.error(
+          'The disk is full. Stop and tell the user how much is free; do not delete anything to make room. ' +
+            'What was recorded is whole. When there is room again, run `node tools/building-queue.mjs status`, then `next`.',
+        );
       process.exitCode = 1;
     },
   );

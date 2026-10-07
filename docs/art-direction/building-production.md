@@ -219,8 +219,12 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   tool made it, its file there remains.
 - A full disk stopped a run once (`ENOSPC`), and left an empty fitted reference that was then
   handed out. The list, the report and the fitted references are now written whole or not at all
-  (`writeWhole`), and a fitted reference that is not a whole picture is made again. A command
-  that fails for lack of space has recorded nothing: make room and run it again.
+  (`writeWhole`), and a fitted reference that is not a whole picture is made again. `set`, `keep`
+  and `recheck` write the list last, so a command that fails for lack of space has not written
+  half a list and has, as a rule, not recorded the picture: make room, run `status`, and run it
+  again. Not covered: a picture refused for its camera is moved beside its place before the list
+  is written, so if the disk fills at that write the attempt is not counted and the picture is
+  painted afresh, not from its earlier self.
 
 ## Not built yet
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterAll, describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import {
   cpSync,
@@ -6,12 +6,15 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
+  rmSync,
   statSync,
   utimesSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, loadInventory, pictureFile } from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly, guideFile, openingsOf } from './building-guides.mjs';
@@ -1455,8 +1458,13 @@ describe('working through the queue', () => {
 describe('the queue tool on the command line', () => {
   const tool = resolve('tools/building-queue.mjs');
   /** a copy of what the tool reads, in a folder of its own */
+  const sandboxes = [];
+  afterAll(() => {
+    for (const dir of sandboxes) rmSync(dir, { recursive: true, force: true });
+  });
   const sandbox = () => {
     const root = mkdtempSync(join(tmpdir(), 'building-queue-'));
+    sandboxes.push(root);
     cpSync('src/data', join(root, 'src/data'), { recursive: true });
     mkdirSync(join(root, 'assets/source/buildings-v2'), { recursive: true });
     cpSync(
@@ -1484,6 +1492,36 @@ describe('the queue tool on the command line', () => {
     }
   };
   const at_ = (root, file) => join(root, file);
+  /**
+   * The tool with the disk full at one file: a write to a path that has `at` in it makes the
+   * file, empty, and fails as a full disk does. Every other write goes through.
+   */
+  const full = (root, at, ...args) => {
+    const preload = join(root, 'full-disk.mjs');
+    writeFileSync(
+      preload,
+      `import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
+const write = fs.writeFileSync;
+fs.writeFileSync = (file, ...rest) => {
+  if (!String(file).includes(process.env.FULL_DISK_AT)) return write(file, ...rest);
+  write(file, '');
+  throw Object.assign(new Error('ENOSPC: no space left on device, write'), { code: 'ENOSPC' });
+};
+syncBuiltinESMExports();
+`,
+    );
+    try {
+      const env = { ...process.env, CODEX_HOME: join(root, 'codex'), FULL_DISK_AT: at };
+      const argv = ['--import', pathToFileURL(preload).href, tool, ...args];
+      return {
+        code: 0,
+        out: execFileSync(process.execPath, argv, { cwd: root, encoding: 'utf8', env }),
+      };
+    } catch (e) {
+      return { code: e.status, out: `${e.stdout}${e.stderr}` };
+    }
+  };
   /** a painted depot, as the generator returns it; `map` moves every point of it */
   const paint = (root, id, map = (p) => p, to = null) => {
     const d = about(id);
@@ -2200,5 +2238,30 @@ describe('the queue tool on the command line', () => {
     const stamp = statSync(fitted).mtimeMs;
     run(root, 'next');
     expect(statSync(fitted).mtimeMs).toBe(stamp);
+  }, 60000);
+
+  it('on a full disk says what to do, keeps the list whole, and writes it last', () => {
+    const root = sandbox();
+    run(root);
+    paint(root, 'depot-a0-r0');
+    const file = join(root, 'assets/source/buildings-v2/queue.json');
+    const before = readFileSync(file, 'utf8');
+    // the disk fills as the list is written: the list on disk is the one from before
+    const atList = full(root, 'queue.json', 'set', 'depot-a0-r0', 'generated');
+    expect(atList.code).toBe(1);
+    expect(atList.out).toMatch(/ENOSPC/);
+    expect(atList.out).toMatch(
+      /The disk is full\. Stop and tell the user how much is free; do not delete anything to make room\./,
+    );
+    expect(readFileSync(file, 'utf8')).toBe(before);
+    // as the report is written: the list comes after it, so nothing is recorded yet
+    const atReport = full(root, 'report.json', 'set', 'depot-a0-r0', 'generated');
+    expect(atReport.code).toBe(1);
+    expect(readFileSync(file, 'utf8')).toBe(before);
+    // with room again the same command records the picture, and counts it once
+    const ok = run(root, 'set', 'depot-a0-r0', 'generated');
+    expect(ok.code).toBe(0);
+    expect(ok.out).toMatch(/depot-a0-r0: generated, 1 attempt/);
+    expect(readdirSync(dirname(file)).filter((f) => f.endsWith('.part'))).toEqual([]);
   }, 60000);
 });
