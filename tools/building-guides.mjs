@@ -7,8 +7,8 @@
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { isMain } from './is-main.mjs';
 import {
   FOOTPRINTS,
   ROOT,
@@ -218,7 +218,7 @@ export function writeGuides(root = '.') {
   return out;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const files = writeGuides(process.argv[2] ?? '.');
   console.log(`${files.length} guides in ${dirname(files[0])}`);
 }

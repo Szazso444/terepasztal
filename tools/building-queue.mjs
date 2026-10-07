@@ -38,8 +38,8 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { isMain } from './is-main.mjs';
 import { AGES, FOOTPRINTS, ROOT, loadInventory, pictureFile, pictures } from './building-kit.mjs';
 import { guideFile, openingsOf } from './building-guides.mjs';
 import { checkFile, pictureOf, resultLine, writeReport } from './building-check.mjs';
@@ -1390,7 +1390,7 @@ async function main(args) {
 }
 
 // not awaited here: `take` loads the sheet tool, which reads this module and waits for it
-if (process.argv[1] === fileURLToPath(import.meta.url))
+if (isMain(import.meta.url))
   main(process.argv.slice(2)).then(
     (code) => {
       process.exitCode = code;

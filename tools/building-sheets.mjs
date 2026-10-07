@@ -12,8 +12,8 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { isMain } from './is-main.mjs';
 import {
   AGES,
   FOOTPRINTS,
@@ -441,7 +441,7 @@ function main(args) {
   return 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   try {
     process.exitCode = main(process.argv.slice(2));
   } catch (e) {

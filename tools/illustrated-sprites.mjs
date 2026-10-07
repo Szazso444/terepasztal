@@ -3,10 +3,10 @@
  * Uses pngjs (existing dev dependency); no model call or runtime dependency.
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { PNG } from 'pngjs';
+import { isMain } from './is-main.mjs';
 import { smoothPng } from './pixel-art.mjs';
 
 const DENSITY = 4;
@@ -408,5 +408,4 @@ export function build(output = 'public/assets') {
   return report;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
-  build(process.argv[2]);
+if (isMain(import.meta.url)) build(process.argv[2]);

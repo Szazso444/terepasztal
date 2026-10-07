@@ -15,8 +15,8 @@
  * and it is painted again (`cameraOff`).
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { isMain } from './is-main.mjs';
 import { FOOTPRINTS, loadInventory, pictureFile, wallBase } from './building-kit.mjs';
 
 export const FIT = {
@@ -404,5 +404,4 @@ function main(ids) {
   return bad ? 1 : 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
-  process.exitCode = main(process.argv.slice(2));
+if (isMain(import.meta.url)) process.exitCode = main(process.argv.slice(2));

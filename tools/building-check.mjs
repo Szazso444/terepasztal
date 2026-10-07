@@ -15,8 +15,8 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { isMain } from './is-main.mjs';
 import { FOOTPRINTS, ROOT, loadInventory, pictures, wallBase } from './building-kit.mjs';
 import { FIT, cameraOff, fitPicture } from './building-fit.mjs';
 import { openingsOf, portalWall } from './building-guides.mjs';
@@ -586,5 +586,4 @@ function main(args) {
   return failed ? 1 : 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
-  process.exitCode = main(process.argv.slice(2));
+if (isMain(import.meta.url)) process.exitCode = main(process.argv.slice(2));
