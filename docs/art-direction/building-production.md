@@ -178,6 +178,19 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
 - It turns the wall with the interesting features towards the viewer.
 - Shown the front view at the block-out's own scale, it sometimes paints the front view again
   where another view was asked for.
+- A wall it is not shown, it makes up, and differently in every picture. Painted from the front
+  view alone, the station's rear views came out as other buildings: a flat or a lean-to roof
+  where the front views had a pitched one, a side wall without its gable, a back wall grander
+  than the front, the canopy on the side away from the track (7 of 24 pictures; the check sees
+  none of it, it measures camera and place). So each wall is made up once and copied after that:
+  `r1` takes its side wall from `r0` and makes up the back, `r3` makes up the left-hand side,
+  and `r2`, which shows only those two walls, is painted from `r1` and `r3` as well, with a
+  paragraph that says which wall comes from which reference and that the building is no larger
+  (`references.behind` and `references.round` in `families.json`). Tried on the station's seven
+  pictures: the three `r1` were right at the first attempt, the four `r2` copied both walls, and
+  the repeats that were needed were for the camera. The words in `families.json` are those that
+  were tried, with what was the station's own (its gables, its arched windows) taken out; the
+  first family painted with them is the one to look at.
 - The agent looks at pictures with a viewer that ignores transparency. It saw the colour stored
   under transparent pixels as a halo and rejected good pictures. It is given opaque pictures on
   grass to look at (`.look/`), and the tools decide about the background.
@@ -210,8 +223,9 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   `git checkout <that commit> -- <the family folders> assets/source/buildings-v2/queue.json`
   and `recheck`.
 - `redo <id>` puts back a picture and every picture built on it, to be made afresh. For a first
-  front view that is the whole family. It says what it would undo and waits for `--yes`. To make
-  one recorded picture again the command is `set <id> pending`.
+  front view that is the whole family, for an `r1` or an `r3` the `r2` of its age. Where that
+  undoes other pictures it says what it would undo and waits for `--yes`. To make one recorded
+  picture again the command is `set <id> pending`.
 - Nothing painted is removed by the tools. A picture set aside is `<name>.rejected.png`, an
   earlier attempt `<name>.before.png`, and an older one under the same name is kept with a number.
   None of these are committed. The one exception: `take` writes over a picture that lies under

@@ -133,7 +133,7 @@ describe('building queue', () => {
       MOOD_EARLY,
     ]);
     // another view: the same age's front view
-    expect(about('depot-a0-r2').sources).toEqual([STYLE_BOARD, pictureFile('depot', 0, 0)]);
+    expect(about('depot-a0-r1').sources).toEqual([STYLE_BOARD, pictureFile('depot', 0, 0)]);
     // a later age: the front view of the age before
     expect(about('depot-a3-r0').sources).toEqual([
       STYLE_BOARD,
@@ -152,7 +152,7 @@ describe('building queue', () => {
     // a picture comes back larger than its guide and with its ground lines a little off; a later
     // picture copies what it is shown, so it is shown the earlier one at the guide's camera
     expect(fittedFile('depot-a0-r0')).toBe('assets/source/buildings-v2/.fitted/depot-a0-r0.png');
-    expect(about('depot-a0-r2').references).toEqual([STYLE_BOARD, fittedFile('depot-a0-r0')]);
+    expect(about('depot-a0-r1').references).toEqual([STYLE_BOARD, fittedFile('depot-a0-r0')]);
     expect(about('depot-a3-r0').references).toEqual([
       STYLE_BOARD,
       fittedFile('depot-a2-r0'),
@@ -164,6 +164,49 @@ describe('building queue', () => {
     // and the prompt says what the generator is looking at
     expect(about('depot-a0-r2').prompt).toMatch(/exactly the block-out's camera and scale/);
     expect(about('depot-a3-r0').prompt).toMatch(/exactly the block-out's camera, scale and place/);
+  });
+
+  it('paints a rear view from the views that already show its walls', () => {
+    // seen from behind a building shows walls its front view does not. Made up anew for every
+    // picture they came out as another building: the station's r2 had a flat roof where its
+    // front views had a pitched one. So each wall is made up once and copied after that
+    const [r0, r1, r3] = [0, 1, 3].map((rot) => pictureFile('station', 3, rot));
+    // r1 and r3 from the front view, which shows one of their two walls
+    expect(about('station-a3-r1').sources).toEqual([STYLE_BOARD, r0]);
+    expect(about('station-a3-r3').sources).toEqual([STYLE_BOARD, r0]);
+    // r2 shows the back, which r1 has, and the left-hand side, which r3 has
+    expect(about('station-a3-r2').sources).toEqual([STYLE_BOARD, r0, r1, r3]);
+    expect(about('station-a3-r2').references).toEqual([
+      STYLE_BOARD,
+      fittedFile('station-a3-r0'),
+      fittedFile('station-a3-r1'),
+      fittedFile('station-a3-r3'),
+    ]);
+    // the words that were tried on the station follow the references' own, as a paragraph
+    const { turn, behind, round } = fam.references;
+    expect(about('station-a3-r1').prompt.endsWith(`${turn}\n\n${behind}`)).toBe(true);
+    expect(about('station-a3-r2').prompt.endsWith(`${turn}\n\n${round}`)).toBe(true);
+    expect(about('station-a3-r3').prompt.endsWith(turn)).toBe(true);
+    expect(about('station-a3-r0').prompt).not.toContain('exactly as large');
+    expect(behind).toMatch(/exactly as large as there/);
+    expect(behind).toMatch(
+      /The lower-left wall is the reference's lower-right wall, copied as it stands there/,
+    );
+    expect(behind).toMatch(
+      /The lower-right wall is the back: one straight wall from corner to corner/,
+    );
+    expect(round).toMatch(
+      /The third reference is this same building in view r1: its lower-right wall is the BACK, and that wall is the lower-left wall of this picture\./,
+    );
+    expect(round).toMatch(
+      /The fourth reference is this same building in view r3: its lower-left wall is the left-hand side, and that wall is the lower-right wall of this picture\./,
+    );
+    expect(round).toMatch(/exactly as large as in the references/);
+    // they are for every family: nothing of one building's roof or windows is in them
+    for (const words of [behind, round])
+      expect(words).not.toMatch(/gable|arched|pitched|hall|canopy/);
+    // a picture painted again for its camera is shown its own earlier self, and no other view
+    expect(describeEntry('station-a3-r2', inv, fam, { repaint: true }).sources).toHaveLength(2);
   });
 
   it('shows a picture that is painted again its own earlier self, straightened', () => {
@@ -374,7 +417,29 @@ describe('working through the queue', () => {
     const queue = fresh();
     expect(next(queue, new Set())).toMatchObject({ kind: 'picture', id: 'depot-a0-r0' });
     const files = made(queue, 2);
+    // r2 is painted from r1 and r3: r3 comes before it
+    expect(next(queue, files)).toMatchObject({ id: 'depot-a0-r3' });
+    queue.entries[3].status = 'generated';
+    files.add(queue.entries[3].file);
     expect(next(queue, files)).toMatchObject({ id: 'depot-a0-r2' });
+  });
+
+  it('holds a rear view back when a view it is painted from was given up', () => {
+    const queue = fresh(true);
+    const files = made(queue, 24);
+    for (const id of ['station-a0-r0', 'station-a0-r1']) {
+      const e = queue.entries.find((x) => x.id === id);
+      e.status = 'generated';
+      files.add(e.file);
+    }
+    // r3 was given up: r2 would have to make its left-hand side up again
+    setStatus(queue, 'station-a0-r3', 'rejected', {
+      attempts: 3,
+      note: 'the front on the wrong wall',
+    });
+    const n = next(queue, files);
+    expect(n.behind).toEqual(['station-a0-r2']);
+    expect(n).toMatchObject({ kind: 'picture', id: 'station-a1-r0' });
   });
 
   it('stops after the depot and again after the station until each is approved', () => {
@@ -1366,6 +1431,30 @@ describe('working through the queue', () => {
     ).toBeNull();
   });
 
+  it('puts a rear view back with the view its wall was copied from, whichever comes first in the list', () => {
+    const queue = structuredClone(q);
+    const files = new Set();
+    for (const e of queue.entries.slice(0, 28)) {
+      e.status = 'generated';
+      files.add(e.file);
+    }
+    const exists = (f) => !f.startsWith('assets/source/buildings-v2/') || files.has(f);
+    // r3 stands after r2 in the list, and r2 is built on it all the same
+    expect(redoPlan(queue, inv, fam, 'station-a0-r3', exists).ids).toEqual([
+      'station-a0-r2',
+      'station-a0-r3',
+    ]);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists).ids).toEqual([
+      'station-a0-r1',
+      'station-a0-r2',
+    ]);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r2', exists).ids).toEqual(['station-a0-r2']);
+    // and it is asked about, wherever the picture named stands among those put back
+    expect(redoPlan(queue, inv, fam, 'station-a0-r3', exists).others).toBe(1);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r1', exists).others).toBe(1);
+    expect(redoPlan(queue, inv, fam, 'station-a0-r2', exists).others).toBe(0);
+  });
+
   it('puts a picture and everything built on it back in the queue', () => {
     const queue = fresh(true);
     const files = made(queue, 24);
@@ -1397,14 +1486,22 @@ describe('working through the queue', () => {
     expect(plan.ids[0]).toBe('depot-a0-r0');
     expect(plan.ids.filter((id) => id.startsWith('depot_narrow-'))).toHaveLength(24);
     // 22 are made and would be set aside; 2 wait to be painted again and would be made afresh
-    expect(plan).toMatchObject({ made: 22, repaint: 2 });
+    expect(plan).toMatchObject({ made: 22, repaint: 2, others: 23 });
     expect(queue.entries[1].status).toBe('generated');
     expect(queue.entries[0].repaint).toBeDefined();
     // a picture nothing is built on
-    expect(redoPlan(queue, inv, fam, 'depot-a5-r3', onDisk(files))).toEqual({
-      ids: ['depot-a5-r3'],
+    expect(redoPlan(queue, inv, fam, 'depot-a5-r2', onDisk(files))).toEqual({
+      ids: ['depot-a5-r2'],
       made: 1,
       repaint: 0,
+      others: 0,
+    });
+    // a view whose wall was copied into a rear view: that one goes with it
+    expect(redoPlan(queue, inv, fam, 'depot-a5-r3', onDisk(files))).toEqual({
+      ids: ['depot-a5-r2', 'depot-a5-r3'],
+      made: 2,
+      repaint: 0,
+      others: 1,
     });
     // a family: its rejected pictures
     setStatus(queue, 'depot-a5-r3', 'rejected', { attempts: 3 });
@@ -1624,8 +1721,11 @@ syncBuiltinESMExports();
     const status = run(root, 'status');
     expect(status.out).toMatch(/depot +1\/24 made, 1 rejected/);
     expect(status.out).toMatch(/gate "depot": not approved yet/);
-    // redo it, and the list offers it again
-    expect(run(root, 'redo', 'depot-a0-r1').out).toMatch(/1 picture back in the queue/);
+    // redo it, and the list offers it again. The rear view built on it is not made yet, so
+    // nothing is undone and nothing is asked
+    expect(run(root, 'redo', 'depot-a0-r1').out).toMatch(
+      /2 pictures back in the queue: depot-a0-r1, depot-a0-r2/,
+    );
     expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
   }, 60000);
 
@@ -1735,7 +1835,7 @@ syncBuiltinESMExports();
     expect(run(root, 'set', 'depot-a0-r1', 'generated').out).toMatch(
       /depot-a0-r1: generated, 1 attempt$/m,
     );
-    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r2$/m);
+    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r3$/m);
     // put back a second time: its first self is not lost, it is kept under a number
     paint(root, 'depot-a0-r1', low);
     expect(run(root, 'recheck').out).toMatch(/: 1 back in the queue/);

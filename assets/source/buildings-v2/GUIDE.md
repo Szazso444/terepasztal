@@ -108,8 +108,9 @@ The tools (also as `npm run art:buildings:guides`, `:queue`, `:check`, `:sheets`
   the same building. Only when the user asks.
 - `node tools/building-queue.mjs redo <id>` or `redo <family>`: put pictures back in the queue.
   `redo <id>` puts back that picture and every picture built on it, each to be made afresh: for a
-  first front view that is the whole family. It says what it would undo and waits for `--yes`.
-  Only when the user asks for exactly that. To make one picture again, see section 7.
+  first front view that is the whole family, for an `r1` or an `r3` the `r2` of its age. Where
+  that undoes other pictures it says what it would undo and waits for `--yes`. Only when the user
+  asks for exactly that. To make one picture again, see section 7.
 - `node tools/building-queue.mjs accept <family>` and
   `node tools/building-queue.mjs approve-pilot`: the user's decisions. Run them only when the user
   says so.
@@ -139,16 +140,24 @@ Repeat until the queue tool tells you to stop:
    is counted: make the picture again (section 7).
 5. When `next` says a family is finished, close it (section 8).
 
-The queue hands pictures out in an order that matters: a building's front view of an age comes
-first, then its three other views, then the next age. Each picture is built on one made before it.
+The queue hands pictures out in an order that matters: a building's front view of an age (`r0`)
+comes first, then `r1` and `r3`, each painted from that front view, then `r2`, which is painted
+from all three, then the next age. Each picture is built on pictures made before it.
+
+A building seen from behind (`r1`, `r2`) shows two walls its front view does not: the back and the
+left-hand side. `r1` makes up the back, `r3` the left-hand side, and `r2`, which shows only those
+two walls, copies them from `r1` and `r3`. So `r2` has four pictures to attach, and the prompts of
+`r1` and `r2` end with a paragraph on the building's size and on which wall comes from which
+reference. Use them as printed, and add no wording of your own about size, roof or walls.
 
 ## 5. Making one picture
 
 1. Start an image **edit**, not a new image. The image you edit is the guide: a grey block on a
    grey plinth. The plinth is the footprint; the block shows the camera, and its dark openings
    show which wall has the front door (or a depot's portals).
-2. Attach the references in the order `next` lists them. The first is always the style board. The
-   prompt's last paragraph says what each of the others is for.
+2. Attach the references in the order `next` lists them, all of them. The first is always the
+   style board. The end of the prompt, from "References:" on, says what each of the others is
+   for.
 3. Paste the prompt exactly as printed.
 4. Ask for the size `next` printed and a transparent background.
 5. Take the result: `node tools/building-queue.mjs take <id> --from <file>`, naming the file your
@@ -222,6 +231,11 @@ Then answer:
   grass and track to be seen through it up to its lintel.
 - In `r1`, `r2`, `r3`: is it the same building as the `r0` reference (same walls, roof, colours,
   details), turned, and not a mirror image of it?
+- Seen from behind (`r1`, `r2`): is it still that building? No taller than in the front view and
+  with no storey more; the same form of roof; the side wall as the reference shows it; the back
+  one straight wall, plainer than the front; and nothing of the front (a canopy, a porch) on a
+  side where the front is not. In `r2` the back is the wall `r1` shows and the left-hand side the
+  wall `r3` shows. A picture that fails here is made again as printed, whatever its camera.
 - In a later age: is it still recognisably the same kind of building, with everything on the
   prompt's Keep line, in the materials of the new age?
 - Is the plinth gone, with nothing on the ground around the building?

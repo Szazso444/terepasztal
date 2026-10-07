@@ -164,11 +164,25 @@ export function buildQueue(inventory, families, previous = null) {
   };
 }
 
-/** The pictures a new picture is made from, and the sentence that says what each is for. */
+/**
+ * The pictures a new picture is made from, and the sentence that says what each is for; `more`
+ * is a paragraph of its own after it.
+ *
+ * A turned view is painted from the front view of its age. Seen from behind, a building shows
+ * walls the front view does not: the back and the left-hand side. Made up anew for every picture
+ * they came out as another building (the station's r2 had a flat roof where its front views had
+ * a pitched one), so each is made up once and copied after that: r1 makes up the back and takes
+ * its other wall from r0, r3 makes up the left-hand side, and r2, which shows only those two
+ * walls, is painted from r1 and r3 as well.
+ */
 function referencesFor(f, age, rot, families) {
   const mood = age <= 2 ? MOOD_EARLY : MOOD_LATE;
   const text = families.references;
-  if (rot > 0) return { files: [STYLE_BOARD, pictureFile(f.family, age, 0)], text: text.turn };
+  const view = (r) => pictureFile(f.family, age, r);
+  if (rot === 2)
+    return { files: [STYLE_BOARD, view(0), view(1), view(3)], text: text.turn, more: text.round };
+  if (rot === 1) return { files: [STYLE_BOARD, view(0)], text: text.turn, more: text.behind };
+  if (rot > 0) return { files: [STYLE_BOARD, view(0)], text: text.turn };
   if (age > f.firstAge)
     return {
       files: [STYLE_BOARD, pictureFile(f.family, age - 1, 0), mood],
@@ -227,6 +241,7 @@ export function describeEntry(id, inventory, families, { repaint = false, note =
     `Front: ${d.front}.`,
     `View r${rot}: ${families.views[`r${rot}`]}${portalWords(f.footprint, rot)}`,
     ref.text,
+    ...(ref.more ? [ref.more] : []),
     ...(repaint && note ? [`What was wrong with it: ${note}`] : []),
   ].join('\n\n');
   return {
@@ -804,29 +819,38 @@ function redoList(queue, inventory, families, target) {
   const first = queue.entries.find((e) => e.id === target);
   if (!first) throw new Error(`no picture or family is called ${target}`);
   const again = new Set([first.file]);
-  // the list is in working order, so a picture always comes after the one it is built on
-  const entries = queue.entries.filter((e) => {
-    const built =
-      e === first ||
-      describeEntry(e.id, inventory, families).sources.some((file) => again.has(file));
-    if (built) again.add(e.file);
-    return built;
-  });
-  return { afresh: true, entries };
+  // round and round until nothing more is found: a picture can stand in the list before one it
+  // is built on (r2 is painted from r3)
+  for (let found = true; found;) {
+    found = false;
+    for (const e of queue.entries)
+      if (
+        !again.has(e.file) &&
+        describeEntry(e.id, inventory, families).sources.some((file) => again.has(file))
+      ) {
+        again.add(e.file);
+        found = true;
+      }
+  }
+  return { afresh: true, entries: queue.entries.filter((e) => again.has(e.file)) };
 }
 
 /**
  * What `redo` would undo, before it is done: the pictures it puts back, how many of them are made
  * (their files would be set aside) and how many wait to be painted again from their earlier
  * selves (they would be made afresh instead). A front view of a family's first age takes the
- * whole family with it.
+ * whole family with it. `others` counts what would be undone besides the picture that was named:
+ * that is what the user is asked about first.
  */
 export function redoPlan(queue, inventory, families, target, exists = existsSync) {
-  const { entries } = redoList(queue, inventory, families, target);
+  const { afresh, entries } = redoList(queue, inventory, families, target);
+  const made = (e) => isMade(e) && exists(e.file);
+  const repaint = (e) => e.status === 'pending' && !!e.repaint;
   return {
     ids: entries.map((e) => e.id),
-    made: entries.filter((e) => isMade(e) && exists(e.file)).length,
-    repaint: entries.filter((e) => e.status === 'pending' && e.repaint).length,
+    made: entries.filter(made).length,
+    repaint: entries.filter(repaint).length,
+    others: afresh ? entries.filter((e) => e.id !== target && (made(e) || repaint(e))).length : 0,
   };
 }
 
@@ -1357,8 +1381,9 @@ async function main(args) {
     case 'redo': {
       const plan = redoPlan(queue, inventory, families, rest[0]);
       const more = plan.ids.length - 1;
-      // more than the picture named: said first, and done only when the user has asked for it
-      if (more > 0 && plan.ids[0] === rest[0] && !rest.includes('--yes')) {
+      // it would undo more than the picture named: said first, and done only when the user has
+      // asked for it. (A picture built on it that is not made yet loses nothing.)
+      if (plan.others > 0 && !rest.includes('--yes')) {
         const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
         console.log(
           `redo ${rest[0]} would put ${plan.ids.length} pictures back, each to be made afresh: ${rest[0]} and the ${more} built on it. ` +
