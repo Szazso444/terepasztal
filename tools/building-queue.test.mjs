@@ -2176,4 +2176,29 @@ describe('the queue tool on the command line', () => {
     expect(after.out).toMatch(/548 pictures, 27 families/);
     expect(after.out).not.toMatch(/no longer in it/);
   }, 60000);
+
+  it('lays a reference onto its footprint again when the one on disk is not a whole picture', () => {
+    // a write that a full disk cut short left an empty file, newer than its picture: it was
+    // handed out as the reference, and the generator was shown nothing
+    const root = sandbox();
+    run(root);
+    paint(root, 'depot-a0-r0');
+    expect(run(root, 'set', 'depot-a0-r0', 'generated').code).toBe(0);
+    const fitted = join(root, fittedFile('depot-a0-r0'));
+    expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
+    const whole = readFileSync(fitted);
+    for (const cut of [Buffer.alloc(0), whole.subarray(0, whole.length >> 1)]) {
+      writeFileSync(fitted, cut);
+      const again = run(root, 'next');
+      expect(again.code).toBe(0);
+      expect(again.out).toMatch(
+        /^ +2\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r0\.png$/m,
+      );
+      expect(readFileSync(fitted).equals(whole)).toBe(true);
+    }
+    // and a whole one is left alone
+    const stamp = statSync(fitted).mtimeMs;
+    run(root, 'next');
+    expect(statSync(fitted).mtimeMs).toBe(stamp);
+  }, 60000);
 });

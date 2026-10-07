@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -16,6 +16,7 @@ import {
   frameKey,
   WALL_INSET,
   wallBase,
+  writeWhole,
 } from './building-kit.mjs';
 
 describe('building inventory', () => {
@@ -177,5 +178,43 @@ describe('building conventions', () => {
         expect(d.e[0]).toBeLessThanOrEqual(fp.canvas[0] - 64);
         expect(d.s[1]).toBeLessThanOrEqual(fp.canvas[1] - 24);
       }
+  });
+});
+
+describe('writing a file whole', () => {
+  const folder = () => mkdtempSync(join(tmpdir(), 'write-whole-'));
+  const fails = (code, what) => () => {
+    throw Object.assign(new Error(`${code}: ${what}`), { code });
+  };
+
+  it('writes the file and leaves nothing beside it', () => {
+    const dir = folder();
+    writeWhole(join(dir, 'list.json'), 'new\n');
+    expect(readFileSync(join(dir, 'list.json'), 'utf8')).toBe('new\n');
+    expect(readdirSync(dir)).toEqual(['list.json']);
+  });
+
+  it('leaves the file as it was when the write is cut short', () => {
+    // a full disk: some of the bytes land, then the write fails
+    const dir = folder();
+    const file = join(dir, 'list.json');
+    writeFileSync(file, 'old\n');
+    const cut = (to, data) => {
+      writeFileSync(to, String(data).slice(0, 2));
+      fails('ENOSPC', 'no space left on device, write')();
+    };
+    expect(() => writeWhole(file, 'new and longer\n', { writeFileSync: cut })).toThrow(/ENOSPC/);
+    expect(readFileSync(file, 'utf8')).toBe('old\n');
+    expect(readdirSync(dir)).toEqual(['list.json']);
+  });
+
+  it('writes in place where the file cannot be replaced in one step', () => {
+    // something has the file open: the rename is refused, the write itself is not
+    const dir = folder();
+    const file = join(dir, 'list.json');
+    writeFileSync(file, 'old\n');
+    writeWhole(file, 'new\n', { renameSync: fails('EPERM', 'operation not permitted, rename') });
+    expect(readFileSync(file, 'utf8')).toBe('new\n');
+    expect(readdirSync(dir)).toEqual(['list.json']);
   });
 });

@@ -384,6 +384,10 @@ stash pictures: a commit is the one safe place for work in hand.
 the disk disagree. A picture saved on disk but not recorded counts as not made: look at it and
 record it with `set <id> generated` (the tool checks it), or make it again (`take` replaces it).
 
+If a command fails for lack of disk space (`ENOSPC`), stop and tell the user how much is free. Do
+not delete anything to make room. The list and the report are written whole or not at all, so
+nothing that was recorded is lost: when there is room again, run the command again.
+
 This is also how another session takes the work over. A new chat, on another account or after
 this one has run out, is started with the block in `PROMPT.md` and needs nothing from the chat
 before it: everything a session has to know is in this guide and in what `next` prints. Go by

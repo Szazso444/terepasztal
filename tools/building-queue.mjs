@@ -40,7 +40,15 @@ import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { PNG } from 'pngjs';
 import { isMain } from './is-main.mjs';
-import { AGES, FOOTPRINTS, ROOT, loadInventory, pictureFile, pictures } from './building-kit.mjs';
+import {
+  AGES,
+  FOOTPRINTS,
+  ROOT,
+  loadInventory,
+  pictureFile,
+  pictures,
+  writeWhole,
+} from './building-kit.mjs';
 import { guideFile, openingsOf } from './building-guides.mjs';
 import { checkFile, pictureOf, resultLine, writeReport } from './building-check.mjs';
 import { FIT, fitPicture, normalisePicture } from './building-fit.mjs';
@@ -274,10 +282,21 @@ export function describeQueued(queue, id, inventory, families, exists = existsSy
  * is.
  */
 export function fittedReferences(d, inventory) {
+  // a write that was cut short (a full disk) leaves a file that is newer than its picture and
+  // is no picture: that one is made again, not handed out
+  const whole = (file) => {
+    try {
+      PNG.sync.read(readFileSync(file));
+      return true;
+    } catch {
+      return false;
+    }
+  };
   return d.references.map((file, i) => {
     const raw = d.sources[i];
     if (file === raw || !existsSync(raw)) return file;
-    if (existsSync(file) && statSync(file).mtimeMs >= statSync(raw).mtimeMs) return file;
+    if (existsSync(file) && statSync(file).mtimeMs >= statSync(raw).mtimeMs && whole(file))
+      return file;
     // a picture's earlier self is laid down as the picture itself would be
     const of = pictureOf(raw.replace(/\.before\.png$/, '.png'));
     const footprint = inventory.find((f) => f.family === of.family).footprint;
@@ -291,7 +310,7 @@ export function fittedReferences(d, inventory) {
     const fit = fitPicture(png, footprint, of.rot, { fully: true });
     if (!fit) return raw;
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, PNG.sync.write(normalisePicture(png, fit, footprint)));
+    writeWhole(file, PNG.sync.write(normalisePicture(png, fit, footprint)));
     return file;
   });
 }
@@ -1055,7 +1074,7 @@ export function readQueue(root = '.') {
 /** pictures of the list as it was read that are no longer in it (an age that was dropped) */
 let dropped = [];
 function writeQueue(queue) {
-  writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2) + '\n');
+  writeWhole(QUEUE_FILE, JSON.stringify(queue, null, 2) + '\n');
   if (!dropped.length) return;
   // said once, by whichever command writes the list first: after that they are gone from it
   const made = dropped.filter(isMade).length;
