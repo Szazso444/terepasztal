@@ -8,7 +8,7 @@
     },
     {
       "family": "station",
-      "approved": false
+      "approved": true
     }
   ],
   "accepted": [
