@@ -113,7 +113,7 @@ describe('a tool on the command line', () => {
     expect(run(join(link, 'tool.mjs'), tmpdir())).toBe('ran\n');
   });
 
-  it('runs once where its name is typed in another case and it is imported back under its own', () => {
+  it('runs once where its name is typed in another case and it is imported back under its own', (ctx) => {
     // as the queue tool is by the sheet tool it loads: under the other spelling node holds a
     // second copy of the module, and that copy is not the command
     const { real } = linked({
@@ -121,7 +121,7 @@ describe('a tool on the command line', () => {
       other: `import './tool.mjs';\n`,
     });
     // only where file names are matched whatever their case (Windows, macOS)
-    if (!existsSync(join(real, 'TOOL.mjs'))) return;
+    if (!existsSync(join(real, 'TOOL.mjs'))) ctx.skip();
     expect(run('TOOL.mjs', real)).toBe('ran\n');
   });
 });
