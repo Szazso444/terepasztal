@@ -205,16 +205,25 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   line, which says that nothing of the front is in the picture, and the family's `keep` line,
   which asks for the open side and the stacks "in every age". The quarry, the first family
   painted wholly this way, made it plain: of the first nine attempts at its rear views seven
-  had the hopper's discharge side on a visible wall, and two pictures were given up. Each of
-  those seven is a reference repeated: an `r1` that is the front view again, an `r2` that is
-  `r3` again. Two causes, both put right in the tools since, neither tried on a picture yet.
-  One: the agent sent the printed prompt unchanged on every attempt. The guide asked it to say
-  what was wrong, and in two other places to use the prompt "as printed", and a hand-over text
-  of mine had said "add no paragraph of your own about size, roof or walls"; it followed
-  those. The guide now says it one way, and `next` and `show` print a reminder from the second
-  attempt on. Two: the prompt of a rear view now ends with a paragraph of its own
-  (`references.away`, `references.awayRound`) that names the family's `front`, says which wall
-  it has in each reference that shows it, and that the reference is not to be repeated.
+  had the hopper's discharge side on a visible wall, and two pictures were given up (a third,
+  an `r2` painted alone, soon after). Six of those seven are a reference painted again, each
+  time the last picture attached: an `r1` that is the front view again, an `r2` that is `r3`
+  again; the seventh is half turned. Two things were changed in the tools for it, neither
+  tried on a picture yet, so neither is known to be the cause. One: the agent had sent the
+  printed prompt unchanged on every attempt (its call adds only the output size and which
+  picture is which), and the word "Correction" is nowhere in its record. The guide asked it to
+  say what was wrong, and in two other places to use the prompt "as printed", and a hand-over
+  text of mine had said "add no paragraph of your own about size, roof or walls"; it followed
+  those. The same words did not always bring the same picture (of eight unchanged second and
+  third attempts in the record three came out right), and every first attempt at these rear
+  views failed before a correction was possible. The guide now says it one way, and the tool
+  says it where the agent reads between two attempts: under every picture `take` takes, and
+  in `next` and `show` from the second attempt on. Two: the prompt of a rear view now ends
+  with a paragraph of its own (`references.away`, `references.awayRound`) that names the
+  family's front wall (its `front` up to the first semicolon: a windmill's sails and the track
+  beside a station are not on that wall, and show from behind), says which wall it is in each
+  reference that shows it, and that the reference is not to be painted again. Not tried: to
+  attach `r3` before `r1` for an `r2`, so that the last picture attached shows no front.
   What differs from the trial: the station's own words are out ("a low hall, one
   tall storey under the same pitched roof" is "no taller, and with no storey more"; its gable
   and arched windows are "the same shape under the roof, the same windows and doors"); the

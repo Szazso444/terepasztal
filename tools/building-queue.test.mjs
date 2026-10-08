@@ -216,20 +216,22 @@ describe('building queue', () => {
 
   it('tells a rear view not to repeat a reference, and names the front that is out of sight', () => {
     // the quarry's first rear views came back as copies of a reference, the hopper's discharge
-    // side on a visible wall: four of six attempts at an r1 repeated the front view, three of
-    // three at an r2 repeated r3. The View line says that nothing of the front is in the picture,
-    // but not what the front is, nor that the reference shows it. So the prompt of a rear view
-    // ends with the family's own front, the wall it has in each reference that shows it, and
-    // that the reference is not to be repeated
+    // side on a visible wall: three of six attempts at an r1 were the front view again and a
+    // fourth was half turned, three of three at an r2 were r3 again. The View line says that
+    // nothing of the front is in the picture, but not what the front is, nor that the reference
+    // shows it. So the prompt of a rear view ends with the family's own front, the wall it has
+    // in each reference that shows it, and that the reference is not to be painted again
     const { turn, behind, backOther, round, away, awayRound } = fam.references;
     const front = fam.families.quarry.front;
     expect(front).toBe('the side where the hopper discharges');
-    expect(away).toMatch(/^Do not repeat the reference as it stands\./);
-    expect(away).toMatch(/There the lower-left wall is the front: \{front\}\./);
-    expect(awayRound).toMatch(/^Do not repeat a reference as it stands\./);
+    // "as it stands" is what the paragraph before says of the walls that are to be copied
+    expect(away).toMatch(/^Do not paint the reference again\./);
+    expect(away).toMatch(/There, in view r0, the lower-left wall is the front: \{front\}\./);
+    expect(awayRound).toMatch(/^Do not paint a reference again\./);
     expect(awayRound).toMatch(
-      /The front \(\{front\}\) is the lower-left wall of the second reference and the lower-right wall of the fourth\./,
+      /The front \(\{front\}\) is the lower-left wall of the second reference, view r0, and the lower-right wall of the fourth, view r3\./,
     );
+    for (const words of [away, awayRound]) expect(words).not.toMatch(/as it stands/);
     for (const words of [away, awayRound])
       expect(words).toMatch(
         /In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them\.$/,
@@ -251,17 +253,27 @@ describe('building queue', () => {
     // not said where the front is in the picture, nor to a picture painted again from its own
     // earlier self, which is to be repeated
     for (const id of ['quarry-a0-r0', 'quarry-a0-r3', 'quarry-a1-r0'])
-      expect(about(id).prompt).not.toMatch(/Do not repeat/);
+      expect(about(id).prompt).not.toMatch(/Do not paint (the|a) reference again/);
     for (const id of ['quarry-a0-r1', 'quarry-a0-r2'])
-      expect(describeEntry(id, inv, fam, { repaint: true }).prompt).not.toMatch(/Do not repeat/);
+      expect(describeEntry(id, inv, fam, { repaint: true }).prompt).not.toMatch(
+        /Do not paint (the|a) reference again/,
+      );
     // every family's own front, whatever it is called
     for (const f of inv)
       for (const rot of [1, 2]) {
         const last = about(`${f.family}-a${f.firstAge}-r${rot}`).prompt.split('\n\n').at(-1);
-        expect(last).toMatch(/^Do not repeat (the|a) reference as it stands\./);
-        expect(last).toContain(fam.families[f.family].front);
+        expect(last).toMatch(/^Do not paint (the|a) reference again\./);
+        expect(last).toContain(fam.families[f.family].front.split(';')[0]);
         expect(last).not.toContain('{front}');
+        expect(last).not.toContain(';');
       }
+    // only the wall is named: what a family's front says after it is not on the front wall, and
+    // may well show from behind (a windmill's sails, the track beside a station)
+    expect(fam.families.windmill.front).toBe('the wall with the door; the sails face the front');
+    const mill = about('windmill-a0-r1').prompt.split('\n\n').at(-1);
+    expect(mill).toContain('the lower-left wall is the front: the wall with the door.');
+    expect(mill).not.toMatch(/sails/);
+    expect(about('depot_narrow-a0-r2').prompt.split('\n\n').at(-1)).not.toMatch(/track/);
   });
 
   it('asks for a straight back wall only of a building that has walls', () => {
@@ -522,9 +534,8 @@ describe('working through the queue', () => {
     const alone = describeQueued(queue, 'station-a0-r2', inv, fam, onDisk(files));
     expect(alone.sources).toEqual([STYLE_BOARD, pictureFile('station', 0, 0)]);
     const { turn, away } = fam.references;
-    expect(
-      alone.prompt.endsWith(`${turn}\n\n${away.replace('{front}', fam.families.station.front)}`),
-    ).toBe(true);
+    const front = fam.families.station.front.split(';')[0];
+    expect(alone.prompt.endsWith(`${turn}\n\n${away.replace('{front}', front)}`)).toBe(true);
     expect(alone.prompt).not.toMatch(/exactly as large/);
     // the same when the view it would copy is recorded as made and its file is gone
     const lost = fresh(true);
@@ -1870,10 +1881,10 @@ syncBuiltinESMExports();
     const second = run(root, 'next');
     expect(second.out).toMatch(/^picture: +depot-a0-r0 \(to paint again: the same building\)$/m);
     expect(second.out).toMatch(/^attempts so far: 1$/m);
-    // a later attempt is not: three attempts sent with the same words came back as the same
-    // picture three times (the quarry's rear views), so the tool asks for the words itself
+    // a later attempt is not: the quarry's rear views were sent three times with the same words
+    // and given up, so the tool asks for the words itself
     expect(second.out).toMatch(
-      /^attempts so far: 1\n +if the last attempt failed for what it shows, not for its camera: add a paragraph after the prompt\n +that begins "Correction:" and says what was wrong and where it belongs in this view\.\n +The same words sent again give the same picture again \(guide, section 7\)\.$/m,
+      /^attempts so far: 1\n +if the last attempt failed for what it shows, not for its camera: add a paragraph after the prompt\n +that begins "Correction:" and says what was wrong and where it belongs in this view\.\n +The same words sent again are likely to bring the same fault again \(guide, section 7\)\.$/m,
     );
     expect(second.out).toMatch(
       /^ +2\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r0\.before\.png$/m,
@@ -1892,6 +1903,10 @@ syncBuiltinESMExports();
     );
     expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(true);
     expect(run(root, 'status').out).toMatch(/depot +1\/24 made, 1 kept with the camera off/);
+    // a picture that is made has no next attempt to be reminded of
+    const done = run(root, 'show', 'depot-a0-r0').out;
+    expect(done).toMatch(/^attempts so far: 3/m);
+    expect(done).not.toMatch(/Correction/);
     // the check of a family knows a kept picture: it passes, with its camera named
     const family = (() => {
       try {
@@ -2144,6 +2159,11 @@ syncBuiltinESMExports();
     expect(ok.out).toMatch(/^saved as: +assets\/source\/buildings-v2\/depot\/depot-a0-r0\.png$/m);
     expect(ok.out).toMatch(/^look at: +assets\/source\/buildings-v2\/\.look\/depot-a0-r0\.png$/m);
     expect(ok.out).toMatch(/^then: +node tools\/building-queue\.mjs set depot-a0-r0 generated$/m);
+    // and what to do if it is not right, said here: between two attempts the agent runs `take`
+    // and nothing else, so this is the one place it reads before it makes the picture again
+    expect(ok.out).toMatch(
+      /^or: +if it fails on looking \(guide, section 6\), make it again: the printed prompt, and after it a paragraph\n +that begins "Correction:" and says what was wrong and where it belongs in this view\.\n +The same words sent again are likely to bring the same fault again\.$/m,
+    );
     expect(ok.out).not.toMatch(/^note:/m);
     expect(readFileSync(at(file)).equals(readFileSync(first))).toBe(true);
     expect(existsSync(first)).toBe(true);

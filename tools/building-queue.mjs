@@ -182,15 +182,20 @@ export function buildQueue(inventory, families, previous = null) {
  * farm's silo or a power plant's stack may stand at the back: those are not asked for one.
  *
  * A rear view's references show the front it does not: r0 on its lower-left wall, r3 on its
- * lower-right. Shown them, the generator repeated them (the quarry's hopper came back on a
- * visible wall in seven attempts of nine), so the last paragraph of a rear view's prompt names
- * the family's own front, the wall it has in the references, and that it is out of sight here.
+ * lower-right. Shown them, the generator painted them again (the quarry's hopper came back on a
+ * visible wall in seven attempts of nine, six of them a reference over again), so the last
+ * paragraph of a rear view's prompt names the family's own front, the wall it has in the
+ * references, and that it is out of sight here. Whether that turns the building is not known
+ * yet: no picture has been painted with it.
  */
 function referencesFor(f, age, rot, families, alone = false) {
   const mood = age <= 2 ? MOOD_EARLY : MOOD_LATE;
   const text = families.references;
   const view = (r) => pictureFile(f.family, age, r);
-  const away = (words) => words.replace('{front}', families.families[f.family].front);
+  // the front wall only: what a family's `front` says after a semicolon is not on that wall
+  // and may show from behind (a windmill's sails, the track beside a station)
+  const away = (words) =>
+    words.replace('{front}', families.families[f.family].front.split(';')[0].trim());
   if (rot === 2 && !alone)
     return {
       files: [STYLE_BOARD, view(0), view(1), view(3)],
@@ -1200,12 +1205,12 @@ function printEntry(d, entry) {
         : []),
       // what was wrong with a picture that is painted again is in its prompt
       `attempts so far: ${entry.attempts}${entry.note && !d.repaint ? ` (${entry.note})` : ''}`,
-      // sent again as printed, a prompt gives the same picture again
-      ...(entry.attempts > 0
+      // sent again as printed, a prompt is likely to bring the same fault again
+      ...(entry.attempts > 0 && entry.status === 'pending'
         ? [
             '  if the last attempt failed for what it shows, not for its camera: add a paragraph after the prompt',
             '  that begins "Correction:" and says what was wrong and where it belongs in this view.',
-            '  The same words sent again give the same picture again (guide, section 7).',
+            '  The same words sent again are likely to bring the same fault again (guide, section 7).',
           ]
         : []),
       '',
@@ -1366,6 +1371,11 @@ async function main(args) {
         `${pick.again ? 'it is:     ' : 'saved as:  '}${e.file}`,
         `look at:   ${look}`,
         `then:      node tools/building-queue.mjs set ${e.id} generated`,
+        // between two attempts at a picture the agent runs `take` and nothing else: what a
+        // second attempt needs is said where it is read
+        'or:        if it fails on looking (guide, section 6), make it again: the printed prompt, and after it a paragraph',
+        '           that begins "Correction:" and says what was wrong and where it belongs in this view.',
+        '           The same words sent again are likely to bring the same fault again.',
       );
       if (turn && turn !== e.id) lines.push(`note:      \`next\` hands out ${turn}, not ${e.id}`);
       console.log(lines.join('\n'));

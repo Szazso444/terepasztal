@@ -242,11 +242,13 @@ describe('the guide for the artist agent', () => {
 
 describe('the guide on an attempt that failed', () => {
   it('has it answered in words, not sent again as printed', () => {
-    // the quarry's rear views: three attempts sent with the same words came back as the same
-    // picture three times. The guide asked for what was wrong to be said, and in two other
-    // places for the prompt to be used "as printed", which is what was done
+    // the quarry's rear views were sent three times with the same words and given up. The
+    // guide asked for what was wrong to be said, and in two other places for the prompt to be
+    // used "as printed", which is what was done
     expect(guide).toMatch(/begins "Correction:"/);
-    expect(guide).toMatch(/The same words sent again give the same picture again/);
+    expect(guide).toMatch(/The same words sent again are likely to bring the same fault again/);
+    // a rear view is judged for a repeated reference whatever its prompt ends with
+    expect(guide).not.toMatch(/where the prompt ends with the paragraph on size and walls/);
     expect(guide).not.toMatch(/made again as printed/);
     expect(guide).not.toMatch(/add no wording of your own/);
   });

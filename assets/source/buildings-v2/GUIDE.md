@@ -155,9 +155,9 @@ the printed prompt is not enough: say what was wrong after it (section 7).
 Two kinds of picture are not painted this way, and `next` prints them accordingly:
 
 - A picture marked `(to paint again: the same building)` is painted from its own earlier self,
-  whichever view it is: two pictures to attach, and no such paragraph.
+  whichever view it is: two pictures to attach, and neither paragraph.
 - An `r2` whose `r1` or `r3` was given up is painted from the front view alone: two pictures to
-  attach, and no such paragraph.
+  attach, and only the paragraph that names the front.
 
 ## 5. Making one picture
 
@@ -241,16 +241,19 @@ Then answer:
   grass and track to be seen through it up to its lintel.
 - In `r1`, `r2`, `r3`: is it the same building as the `r0` reference (same walls, roof, colours,
   details), turned, and not a mirror image of it?
-- Seen from behind (`r1`, `r2`), where the prompt ends with the paragraph on size and walls: is
-  it still that building? No taller than in the front view and with no storey more; the same form
-  of roof, its ridge running the way that paragraph says; the side as the reference shows it; the
-  back as that paragraph asks for it (one straight wall only where it says so); and nothing of the
-  front (a canopy, a porch, the open side of a shed, the side where a hopper discharges) on a
-  side where the front is not. A rear view that is a reference repeated, the front where the
-  reference has it, is the commonest fault here. In an `r2` with four pictures attached, the
-  back is the one `r1` shows and the left-hand side the one `r3` shows. A picture that fails
-  here is made again from the printed prompt, whatever its camera, with what was wrong said
-  after it (section 7).
+- Seen from behind (`r1`, `r2`), any picture that is not marked `(to paint again: the same
+building)`: is the front out of sight? Nothing of it (a canopy, a porch, the open side of a
+  shed, the side where a hopper discharges) is on a visible wall. A rear view that is a
+  reference painted again, the front where the reference has it, is the commonest fault of
+  these views.
+- Seen from behind, where the prompt has the paragraph on size and walls ("About the building's
+  size and roof", "About the two extra references"): is it still that building? No taller than
+  in the front view and with no storey more; the same form of roof, its ridge running the way
+  that paragraph says; the side as the reference shows it; the back as that paragraph asks for
+  it (one straight wall only where it says so). In an `r2` with four pictures attached, the
+  back is the one `r1` shows and the left-hand side the one `r3` shows.
+- A picture that fails either of these two is made again from the printed prompt, whatever its
+  camera, with what was wrong said after it (section 7).
 - A picture marked `(to paint again: the same building)`: is it the building of its earlier self,
   wall for wall? As to its walls, size and roof that is all it is held to: it is not judged
   against `r1` or `r3`. The other questions here apply to it as to any picture.
@@ -274,8 +277,8 @@ after it that begins "Correction:" and names what the failed attempt showed and 
 belongs in this view ("Correction: the last attempt repeated the reference as it stands, with
 the door on the lower-left wall. In this view the door is on the far side and does not show.").
 Never send the printed prompt alone a second time for a picture that failed for what it shows.
-The same words sent again give the same picture again: three attempts without a correction are
-one attempt made three times. `next` and `show` remind you of this from the second attempt on.
+The same words sent again are likely to bring the same fault again. `take` says so under every
+picture it takes, and `next` and `show` from the second attempt on.
 If the next attempt fails too, add a second paragraph and keep the first. Give a picture up to
 three attempts.
 
@@ -374,7 +377,9 @@ it right is the one to keep.
 **A fault found after recording.** If you find a fault in a picture you have already recorded as
 `generated`, take it back with `node tools/building-queue.mjs set <id> pending` and make it again:
 the tool sets the faulty file aside, and `next` hands the picture out the way it was being made.
-Do not use `redo` for this.
+Its count of attempts starts again, so nothing reminds you: say what the fault was after the
+printed prompt, as for a second attempt. The same holds for a picture that was given up and is
+put back with `redo <family>`. Do not use `redo` for a fault found after recording.
 
 ## 8. Gates, stops and commits
 
