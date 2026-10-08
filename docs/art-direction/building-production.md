@@ -192,7 +192,20 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   those that were tried, and the first family painted with them is the one to look at (on the
   list as it stood, the last age of the lumber camp and then the quarry: the farm's and the
   lumber camp's other pictures are painted again from their own earlier selves, which this does
-  not reach). What differs from the trial: the station's own words are out ("a low hall, one
+  not reach). The lumber camp's last age has been looked at since, in the game: its four views
+  are one building, the back and the left-hand side the same in the views that share them,
+  where the camp's five earlier ages turn from a compact mill at the front into a long low shed
+  behind. Its two rear views took three attempts each. Of the `r1`, the first had an open
+  loading bay on the back; the second was right, 9° off the camera, and is the one kept; the
+  third, a repaint of the second for its camera, has the back closed and the loading bay on the
+  side wall. Of the `r2`, the first had the ridge the wrong way, the second the loading bay on
+  the side wall, and the third was right. So the open front turned up on three different walls
+  under three different prompts (`behind`, the repaint's words, `round`), as it had in the
+  camp's earlier ages before these paragraphs existed. What the three prompts share is the View
+  line, which says that nothing of the front is in the picture, and the family's `keep` line,
+  which asks for the open side and the stacks "in every age". Untried: naming the family's own
+  `front` in the View lines of `r1` and `r2` as what faces away with all that stands in it.
+  What differs from the trial: the station's own words are out ("a low hall, one
   tall storey under the same pitched roof" is "no taller, and with no storey more"; its gable
   and arched windows are "the same shape under the roof, the same windows and doors"); the
   sentence on the ridge, which is what put the pitched roofs back, is said for any building (a
@@ -201,7 +214,13 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   plain box of a building (`"back": "wall"` in its family: the depots, the station, the town
   hall, the warehouse, the townhouse, the wire mill; `backWall`), and of a dome, a tank, a
   hopper, an open shed, or a building with a silo or a stack that may stand behind it, only
-  that it is plainer and no higher (`backOther`, which no picture has been painted with yet);
+  that it is plainer and no higher (`backOther`: so far the two first attempts at the lumber
+  camp's last `r1`, one with an open back and one with a closed wall, which says little either
+  way). Both sentences give the back's height by the side wall ("as high as", "no higher
+  than"), which comes from the station, whose ridge runs along its back: where the front is
+  under a gable, as the lumber camp's is in its first five ages, the back is a gable end and
+  rises above the side wall. To put right when those words are next touched ("as high at its
+  corners as");
   and `r1` and `r3` are
   attached laid onto their footprint, where in the trial they were attached as they came back.
   An `r2` whose `r1` or `r3` was given up is painted from the front view alone, as before, so
