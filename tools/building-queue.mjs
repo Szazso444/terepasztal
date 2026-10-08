@@ -166,7 +166,7 @@ export function buildQueue(inventory, families, previous = null) {
 
 /**
  * The pictures a new picture is made from, and the sentence that says what each is for; `more`
- * is a paragraph of its own after it.
+ * is what follows it, in paragraphs of its own.
  *
  * A turned view is painted from the front view of its age. Seen from behind, a building shows
  * walls the front view does not: the back and the left-hand side. Made up anew for every picture
@@ -180,26 +180,34 @@ export function buildQueue(inventory, families, previous = null) {
  * Of a plain box of a building (`back: "wall"` in families.json) the back is asked for as one
  * straight wall. A kiln's dome, a tank on its legs or a quarry's hopper has no such wall, and a
  * farm's silo or a power plant's stack may stand at the back: those are not asked for one.
+ *
+ * A rear view's references show the front it does not: r0 on its lower-left wall, r3 on its
+ * lower-right. Shown them, the generator repeated them (the quarry's hopper came back on a
+ * visible wall in seven attempts of nine), so the last paragraph of a rear view's prompt names
+ * the family's own front, the wall it has in the references, and that it is out of sight here.
  */
 function referencesFor(f, age, rot, families, alone = false) {
   const mood = age <= 2 ? MOOD_EARLY : MOOD_LATE;
   const text = families.references;
   const view = (r) => pictureFile(f.family, age, r);
+  const away = (words) => words.replace('{front}', families.families[f.family].front);
   if (rot === 2 && !alone)
     return {
       files: [STYLE_BOARD, view(0), view(1), view(3)],
       optional: [view(1), view(3)],
       text: text.turn,
-      more: text.round,
+      more: [text.round, away(text.awayRound)].join('\n\n'),
     };
   if (rot === 1) {
     const back = families.families[f.family].back === 'wall' ? text.backWall : text.backOther;
     return {
       files: [STYLE_BOARD, view(0)],
       text: text.turn,
-      more: text.behind.replace('{back}', back),
+      more: [text.behind.replace('{back}', back), away(text.away)].join('\n\n'),
     };
   }
+  // an r2 painted alone is shown the front view only, as an r1 is
+  if (rot === 2) return { files: [STYLE_BOARD, view(0)], text: text.turn, more: away(text.away) };
   if (rot > 0) return { files: [STYLE_BOARD, view(0)], text: text.turn };
   if (age > f.firstAge)
     return {
@@ -1192,6 +1200,14 @@ function printEntry(d, entry) {
         : []),
       // what was wrong with a picture that is painted again is in its prompt
       `attempts so far: ${entry.attempts}${entry.note && !d.repaint ? ` (${entry.note})` : ''}`,
+      // sent again as printed, a prompt gives the same picture again
+      ...(entry.attempts > 0
+        ? [
+            '  if the last attempt failed for what it shows, not for its camera: add a paragraph after the prompt',
+            '  that begins "Correction:" and says what was wrong and where it belongs in this view.',
+            '  The same words sent again give the same picture again (guide, section 7).',
+          ]
+        : []),
       '',
       '----- prompt -----',
       d.prompt,

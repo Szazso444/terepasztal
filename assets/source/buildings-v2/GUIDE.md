@@ -148,7 +148,9 @@ A building seen from behind (`r1`, `r2`) shows two walls its front view does not
 left-hand side. `r1` makes up the back, `r3` the left-hand side, and `r2`, which shows only those
 two walls, copies them from `r1` and `r3`. So an `r2` has four pictures to attach, and the prompts
 of `r1` and `r2` end with a paragraph on the building's size and on which wall comes from which
-reference. Use them as printed, and add no wording of your own about size, roof or walls.
+reference, and with one that names the front and says that a reference which shows it is not to
+be repeated. Send a first attempt as printed. After an attempt that failed for what it shows,
+the printed prompt is not enough: say what was wrong after it (section 7).
 
 Two kinds of picture are not painted this way, and `next` prints them accordingly:
 
@@ -165,7 +167,8 @@ Two kinds of picture are not painted this way, and `next` prints them accordingl
 2. Attach the references in the order `next` lists them, all of them. The first is always the
    style board. The end of the prompt, from "References:" on, says what each of the others is
    for.
-3. Paste the prompt exactly as printed.
+3. Paste the prompt exactly as printed. On a second or third attempt at a picture that failed for
+   what it shows, add your correction after it (section 7).
 4. Ask for the size `next` printed and a transparent background.
 5. Take the result: `node tools/building-queue.mjs take <id> --from <file>`, naming the file your
    image tool reported. Do not save the picture yourself. (Codex keeps its pictures in
@@ -242,9 +245,12 @@ Then answer:
   it still that building? No taller than in the front view and with no storey more; the same form
   of roof, its ridge running the way that paragraph says; the side as the reference shows it; the
   back as that paragraph asks for it (one straight wall only where it says so); and nothing of the
-  front (a canopy, a porch) on a side where the front is not. In an `r2` with four pictures
-  attached, the back is the one `r1` shows and the left-hand side the one `r3` shows. A picture
-  that fails here is made again as printed, whatever its camera.
+  front (a canopy, a porch, the open side of a shed, the side where a hopper discharges) on a
+  side where the front is not. A rear view that is a reference repeated, the front where the
+  reference has it, is the commonest fault here. In an `r2` with four pictures attached, the
+  back is the one `r1` shows and the left-hand side the one `r3` shows. A picture that fails
+  here is made again from the printed prompt, whatever its camera, with what was wrong said
+  after it (section 7).
 - A picture marked `(to paint again: the same building)`: is it the building of its earlier self,
   wall for wall? As to its walls, size and roof that is all it is held to: it is not judged
   against `r1` or `r3`. The other questions here apply to it as to any picture.
@@ -263,8 +269,18 @@ If any answer is no, the picture has failed even when the check passes.
 
 ## 7. When a picture fails
 
-Make it again. Say in the edit what was wrong ("the door is on the wrong wall: it belongs on the
-lower-left wall"), and keep the rest of the prompt. Give a picture up to three attempts.
+Make it again, and say what was wrong. Keep the printed prompt whole and add one short paragraph
+after it that begins "Correction:" and names what the failed attempt showed and where that
+belongs in this view ("Correction: the last attempt repeated the reference as it stands, with
+the door on the lower-left wall. In this view the door is on the far side and does not show.").
+Never send the printed prompt alone a second time for a picture that failed for what it shows.
+The same words sent again give the same picture again: three attempts without a correction are
+one attempt made three times. `next` and `show` remind you of this from the second attempt on.
+If the next attempt fails too, add a second paragraph and keep the first. Give a picture up to
+three attempts.
+
+An attempt that failed only for its camera needs no words from you: the tool changes the prompt
+and the reference for it (section 5).
 
 A picture's place and size in its file are never a reason to make it again: the tools take care of
 those. Its view is: a building seen from the front, from above or in perspective cannot be used.

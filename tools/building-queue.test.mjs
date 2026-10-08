@@ -183,11 +183,11 @@ describe('building queue', () => {
       fittedFile('station-a3-r3'),
     ]);
     // the words that were tried on the station follow the references' own, as a paragraph
-    const { turn, behind, backWall, backOther, round } = fam.references;
+    const { turn, behind, backWall, backOther, round, away, awayRound } = fam.references;
     const ofStation = behind.replace('{back}', backWall);
-    expect(about('station-a3-r1').prompt.endsWith(`${turn}\n\n${ofStation}`)).toBe(true);
+    expect(about('station-a3-r1').prompt).toContain(`${turn}\n\n${ofStation}\n\n`);
     expect(about('station-a3-r1').prompt).not.toContain('{back}');
-    expect(about('station-a3-r2').prompt.endsWith(`${turn}\n\n${round}`)).toBe(true);
+    expect(about('station-a3-r2').prompt).toContain(`${turn}\n\n${round}\n\n`);
     expect(about('station-a3-r3').prompt.endsWith(turn)).toBe(true);
     expect(about('station-a3-r0').prompt).not.toContain('exactly as large');
     expect(behind).toMatch(/exactly as large as there/);
@@ -208,10 +208,60 @@ describe('building queue', () => {
     );
     expect(round).toMatch(/exactly as large as in the references/);
     // they are for every family: nothing of one building's roof or windows is in them
-    for (const words of [behind, backWall, backOther, round])
+    for (const words of [behind, backWall, backOther, round, away, awayRound])
       expect(words).not.toMatch(/gable|arched|pitched|hall|canopy/);
     // a picture painted again for its camera is shown its own earlier self, and no other view
     expect(describeEntry('station-a3-r2', inv, fam, { repaint: true }).sources).toHaveLength(2);
+  });
+
+  it('tells a rear view not to repeat a reference, and names the front that is out of sight', () => {
+    // the quarry's first rear views came back as copies of a reference, the hopper's discharge
+    // side on a visible wall: four of six attempts at an r1 repeated the front view, three of
+    // three at an r2 repeated r3. The View line says that nothing of the front is in the picture,
+    // but not what the front is, nor that the reference shows it. So the prompt of a rear view
+    // ends with the family's own front, the wall it has in each reference that shows it, and
+    // that the reference is not to be repeated
+    const { turn, behind, backOther, round, away, awayRound } = fam.references;
+    const front = fam.families.quarry.front;
+    expect(front).toBe('the side where the hopper discharges');
+    expect(away).toMatch(/^Do not repeat the reference as it stands\./);
+    expect(away).toMatch(/There the lower-left wall is the front: \{front\}\./);
+    expect(awayRound).toMatch(/^Do not repeat a reference as it stands\./);
+    expect(awayRound).toMatch(
+      /The front \(\{front\}\) is the lower-left wall of the second reference and the lower-right wall of the fourth\./,
+    );
+    for (const words of [away, awayRound])
+      expect(words).toMatch(
+        /In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them\.$/,
+      );
+    const r1 = about('quarry-a0-r1').prompt;
+    const r2 = about('quarry-a0-r2').prompt;
+    expect(
+      r1.endsWith(
+        `${turn}\n\n${behind.replace('{back}', backOther)}\n\n${away.replace('{front}', front)}`,
+      ),
+    ).toBe(true);
+    expect(r2.endsWith(`${turn}\n\n${round}\n\n${awayRound.replace('{front}', front)}`)).toBe(true);
+    // an r2 painted from the front view alone is shown the front where an r1 is shown it
+    expect(
+      describeEntry('quarry-a0-r2', inv, fam, { alone: true }).prompt.endsWith(
+        `${turn}\n\n${away.replace('{front}', front)}`,
+      ),
+    ).toBe(true);
+    // not said where the front is in the picture, nor to a picture painted again from its own
+    // earlier self, which is to be repeated
+    for (const id of ['quarry-a0-r0', 'quarry-a0-r3', 'quarry-a1-r0'])
+      expect(about(id).prompt).not.toMatch(/Do not repeat/);
+    for (const id of ['quarry-a0-r1', 'quarry-a0-r2'])
+      expect(describeEntry(id, inv, fam, { repaint: true }).prompt).not.toMatch(/Do not repeat/);
+    // every family's own front, whatever it is called
+    for (const f of inv)
+      for (const rot of [1, 2]) {
+        const last = about(`${f.family}-a${f.firstAge}-r${rot}`).prompt.split('\n\n').at(-1);
+        expect(last).toMatch(/^Do not repeat (the|a) reference as it stands\./);
+        expect(last).toContain(fam.families[f.family].front);
+        expect(last).not.toContain('{front}');
+      }
   });
 
   it('asks for a straight back wall only of a building that has walls', () => {
@@ -467,10 +517,15 @@ describe('working through the queue', () => {
       note: 'the front on the wrong wall',
     });
     expect(next(queue, files)).toMatchObject({ kind: 'picture', id: 'station-a0-r2', behind: [] });
-    // as it was painted before there was anything to copy: the front view, and no more words
+    // as it was painted before there was anything to copy: the front view, and of the words
+    // only that the front it shows is out of sight
     const alone = describeQueued(queue, 'station-a0-r2', inv, fam, onDisk(files));
     expect(alone.sources).toEqual([STYLE_BOARD, pictureFile('station', 0, 0)]);
-    expect(alone.prompt.endsWith(fam.references.turn)).toBe(true);
+    const { turn, away } = fam.references;
+    expect(
+      alone.prompt.endsWith(`${turn}\n\n${away.replace('{front}', fam.families.station.front)}`),
+    ).toBe(true);
+    expect(alone.prompt).not.toMatch(/exactly as large/);
     // the same when the view it would copy is recorded as made and its file is gone
     const lost = fresh(true);
     const there = made(lost, 28);
@@ -1800,6 +1855,8 @@ syncBuiltinESMExports();
     const at = (file) => join(root, file);
     // a depot seen from too low: its wall feet at 0.4, which is 23.6 degrees
     const low = ([x, y]) => [x, 760 + (y - 760) * 0.8];
+    // a first attempt is sent as printed
+    expect(run(root, 'show', 'depot-a0-r0').out).not.toMatch(/Correction/);
     paint(root, 'depot-a0-r0', low);
     const no = run(root, 'set', 'depot-a0-r0', 'generated');
     expect(no.code).toBe(1);
@@ -1813,6 +1870,11 @@ syncBuiltinESMExports();
     const second = run(root, 'next');
     expect(second.out).toMatch(/^picture: +depot-a0-r0 \(to paint again: the same building\)$/m);
     expect(second.out).toMatch(/^attempts so far: 1$/m);
+    // a later attempt is not: three attempts sent with the same words came back as the same
+    // picture three times (the quarry's rear views), so the tool asks for the words itself
+    expect(second.out).toMatch(
+      /^attempts so far: 1\n +if the last attempt failed for what it shows, not for its camera: add a paragraph after the prompt\n +that begins "Correction:" and says what was wrong and where it belongs in this view\.\n +The same words sent again give the same picture again \(guide, section 7\)\.$/m,
+    );
     expect(second.out).toMatch(
       /^ +2\. assets\/source\/buildings-v2\/\.fitted\/depot-a0-r0\.before\.png$/m,
     );

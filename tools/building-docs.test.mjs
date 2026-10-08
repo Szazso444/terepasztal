@@ -239,3 +239,15 @@ describe('the guide for the artist agent', () => {
     expect(prompt).not.toMatch(/delete it/i);
   });
 });
+
+describe('the guide on an attempt that failed', () => {
+  it('has it answered in words, not sent again as printed', () => {
+    // the quarry's rear views: three attempts sent with the same words came back as the same
+    // picture three times. The guide asked for what was wrong to be said, and in two other
+    // places for the prompt to be used "as printed", which is what was done
+    expect(guide).toMatch(/begins "Correction:"/);
+    expect(guide).toMatch(/The same words sent again give the same picture again/);
+    expect(guide).not.toMatch(/made again as printed/);
+    expect(guide).not.toMatch(/add no wording of your own/);
+  });
+});
