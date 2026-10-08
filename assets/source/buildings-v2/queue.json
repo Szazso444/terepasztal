@@ -14,7 +14,7 @@
   "accepted": [
     "station"
   ],
-  "mark": 1791418499610,
+  "mark": 1791483929439,
   "chat": "01a10d7a-313a-7262-a722-27dbdc2ecf8f",
   "counts": {
     "pictures": 548,
@@ -955,11 +955,11 @@
       "status": "generated",
       "attempts": 3,
       "note": "kept with its camera off by 2.3° after 3 attempts: an earlier one was the closest",
+      "kept": 2.3,
       "repaint": {
         "by": 2.3,
         "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      },
-      "kept": 2.3
+      }
     },
     {
       "id": "lumber-a0-r0",
@@ -967,11 +967,12 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/lumber/lumber-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 4.2° after 3 attempts: an earlier one was the closest",
+      "kept": 4.2,
       "repaint": {
-        "by": 12,
+        "by": 4.2,
         "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
@@ -981,9 +982,10 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/lumber/lumber-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.4° after 3 attempts",
+      "kept": 2.4,
       "repaint": {
         "by": 6.6,
         "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
@@ -995,8 +997,8 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/lumber/lumber-a0-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
         "by": 3,
@@ -1019,8 +1021,8 @@
       "age": 1,
       "rot": 0,
       "file": "assets/source/buildings-v2/lumber/lumber-a1-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": "",
       "repaint": {
         "by": 11.1,
@@ -1033,12 +1035,13 @@
       "age": 1,
       "rot": 1,
       "file": "assets/source/buildings-v2/lumber/lumber-a1-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 5.2° after 3 attempts: the closest the tool held",
+      "kept": 5.2,
       "repaint": {
-        "by": 6.1,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 5.2,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -1047,12 +1050,13 @@
       "age": 1,
       "rot": 2,
       "file": "assets/source/buildings-v2/lumber/lumber-a1-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 4.1° after 3 attempts: the closest the tool held",
+      "kept": 4.1,
       "repaint": {
-        "by": 8,
-        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 4.1,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -1061,11 +1065,12 @@
       "age": 1,
       "rot": 3,
       "file": "assets/source/buildings-v2/lumber/lumber-a1-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.9° after 3 attempts: an earlier one was the closest",
+      "kept": 3.9,
       "repaint": {
-        "by": 9.6,
+        "by": 3.9,
         "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
@@ -1075,8 +1080,8 @@
       "age": 2,
       "rot": 0,
       "file": "assets/source/buildings-v2/lumber/lumber-a2-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
         "by": 14,
@@ -1089,9 +1094,10 @@
       "age": 2,
       "rot": 1,
       "file": "assets/source/buildings-v2/lumber/lumber-a2-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 4.8° after 3 attempts: the closest the tool held",
+      "kept": 4.8,
       "repaint": {
         "by": 4.8,
         "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
@@ -1103,12 +1109,13 @@
       "age": 2,
       "rot": 2,
       "file": "assets/source/buildings-v2/lumber/lumber-a2-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.5° after 3 attempts: the closest the tool held",
+      "kept": 2.5,
       "repaint": {
-        "by": 4.8,
-        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 2.5,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -1117,11 +1124,12 @@
       "age": 2,
       "rot": 3,
       "file": "assets/source/buildings-v2/lumber/lumber-a2-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 4.7° after 3 attempts: the closest the tool held",
+      "kept": 4.7,
       "repaint": {
-        "by": 9.8,
+        "by": 4.7,
         "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
@@ -1131,8 +1139,8 @@
       "age": 3,
       "rot": 0,
       "file": "assets/source/buildings-v2/lumber/lumber-a3-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": "",
       "repaint": {
         "by": 10,
@@ -1145,12 +1153,13 @@
       "age": 3,
       "rot": 1,
       "file": "assets/source/buildings-v2/lumber/lumber-a3-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.1° after 3 attempts: the closest the tool held",
+      "kept": 2.1,
       "repaint": {
-        "by": 2.9,
-        "was": "It was painted from too low a camera, so too little of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 2.1,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -1159,11 +1168,12 @@
       "age": 3,
       "rot": 2,
       "file": "assets/source/buildings-v2/lumber/lumber-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.4° after 3 attempts: the closest the tool held",
+      "kept": 3.4,
       "repaint": {
-        "by": 5.4,
+        "by": 3.4,
         "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
@@ -1173,11 +1183,12 @@
       "age": 3,
       "rot": 3,
       "file": "assets/source/buildings-v2/lumber/lumber-a3-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.2° after 3 attempts: the closest the tool held",
+      "kept": 3.2,
       "repaint": {
-        "by": 7.5,
+        "by": 3.2,
         "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
@@ -1207,11 +1218,12 @@
       "age": 4,
       "rot": 2,
       "file": "assets/source/buildings-v2/lumber/lumber-a4-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "",
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 6.4° after 3 attempts: the closest the tool held",
+      "kept": 6.4,
       "repaint": {
-        "by": 11.1,
+        "by": 6.4,
         "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
@@ -1221,9 +1233,13 @@
       "age": 4,
       "rot": 3,
       "file": "assets/source/buildings-v2/lumber/lumber-a4-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 2,
+      "note": "",
+      "repaint": {
+        "by": 5.3,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "lumber-a5-r0",
@@ -1231,9 +1247,13 @@
       "age": 5,
       "rot": 0,
       "file": "assets/source/buildings-v2/lumber/lumber-a5-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 2,
+      "note": "",
+      "repaint": {
+        "by": 2.7,
+        "was": "It was painted from too low a camera, so too little of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "lumber-a5-r1",
@@ -1241,9 +1261,14 @@
       "age": 5,
       "rot": 1,
       "file": "assets/source/buildings-v2/lumber/lumber-a5-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 9.1° after 3 attempts: the closest the tool held",
+      "kept": 9.1,
+      "repaint": {
+        "by": 9.1,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "lumber-a5-r2",
@@ -1251,8 +1276,8 @@
       "age": 5,
       "rot": 2,
       "file": "assets/source/buildings-v2/lumber/lumber-a5-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 3,
       "note": ""
     },
     {
@@ -1261,9 +1286,13 @@
       "age": 5,
       "rot": 3,
       "file": "assets/source/buildings-v2/lumber/lumber-a5-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 2,
+      "note": "",
+      "repaint": {
+        "by": 5.1,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a0-r0",
