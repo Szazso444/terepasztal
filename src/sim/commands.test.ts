@@ -8,22 +8,26 @@ import { Rng } from '../engine/rng';
 import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
-import { Station } from './stations';
+import { Station, resetStationIds } from './stations';
 import { Train, defaultStop, resetTrainIds } from './trains';
 import { Fleet } from './fleet';
-import { TradeDesk, BUY_MUL, SELL_MUL } from './trade';
-import { cargoDef } from './cargo';
+import { TradeDesk, BUY_MUL, SELL_MUL, DRIFTING } from './trade';
+import { CARGO, cargoDef } from './cargo';
+import { setSupplyMode, inSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { rules, DEFAULT_RULES } from './rules';
 import { Inventory } from '../gacha/inventory';
-import { Gacha, BANNERS, PULL_COST } from '../gacha/gacha';
-import { locoDef, wagonDef } from '../gacha/items';
+import { Gacha, BANNERS, PULL_COST, type PullResult } from '../gacha/gacha';
+import { locoDef, wagonDef, type Item } from '../gacha/items';
 import { Commands, STATION_NAME_MAX } from './commands';
 import { STR } from '../strings';
+import { forAll, shrinkArray } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
+  setSupplyMode(DEFAULT_SUPPLY);
   resetTrainIds();
+  resetStationIds();
 });
 
 const ROW = 30;
@@ -333,6 +337,28 @@ describe('renameStation', () => {
     });
     expect(gone.name).toBe('Gone');
   });
+
+  it('keeps any name trimmed and cut to its length, and refuses a blank one', () => {
+    const chars = ['a', 'Z', 'ő', 'Ű', ' ', '\t', '-', '7', '🚂'];
+    forAll(
+      (rng) => Array.from({ length: rng.int(0, 40) }, () => rng.pick(chars)).join(''),
+      (name) => {
+        const w = world();
+        const s = station(w, 'quarry', 40);
+        s.name = 'Old Quarry';
+        const r = w.commands.renameStation(s, name);
+        if (!name.trim()) {
+          expect(r.ok).toBe(false);
+          expect(s.name).toBe('Old Quarry');
+          return;
+        }
+        expect(r).toEqual({ ok: true });
+        expect(s.name).toBe(name.trim().slice(0, STATION_NAME_MAX));
+        expect(s.name.length).toBeLessThanOrEqual(STATION_NAME_MAX);
+        expect(s.name.trim()).not.toBe('');
+      },
+    );
+  });
 });
 
 describe('turnSignal', () => {
@@ -467,6 +493,19 @@ describe('spotBuy', () => {
     expect(w.economy.money).toBe(buy - 0.01);
   });
 
+  it('buys one unit fewer when the division rounds up past what the money covers', () => {
+    const w = world();
+    const { buy } = w.trade.spotQuote('stone');
+    // a hair under 19 units' price, as float sums leave money: money / buy still comes to 19
+    const money = 19 * buy - 2 ** -45;
+    expect(Math.floor(money / buy)).toBe(19);
+    expect(19 * buy).toBeGreaterThan(money);
+    w.economy.money = money;
+    expect(w.commands.spotBuy('stone', 100, 1000)).toEqual({ ok: true });
+    expect(w.stock.get('stone')).toBe(18);
+    expect(w.economy.money).toBe(money - 18 * buy);
+  });
+
   it('refuses what the market does not trade and quantities under one', () => {
     const w = world();
     w.economy.money = 10000;
@@ -550,5 +589,370 @@ describe('pull', () => {
     expect(w.economy.tickets).toBe(before.tickets);
     expect(w.inventory.items.length).toBe(before.items);
     expect(JSON.stringify(w.gacha.toJSON())).toBe(before.gacha);
+  });
+});
+
+// ------------------------------------------------------------ properties
+
+/** Every good the commands may be asked about: all cargo, power, and an id nothing defines. */
+const GOODS = [...CARGO.map((c) => c.id), 'power', 'unobtainium'];
+/** What the market screen lists: cargo of the running production chain, people excepted. */
+const listed = (id: string) =>
+  CARGO.some((c) => c.id === id && c.class !== 'people' && inSupplyMode(c));
+/** The market screen's spot price per unit, rounded to the cent. */
+function quote(id: string, fuelMul: number, side: 'buy' | 'sell') {
+  const drift = DRIFTING.includes(id) ? fuelMul : 1;
+  const mul = side === 'buy' ? BUY_MUL : SELL_MUL;
+  return Math.round(cargoDef(id).price * mul * rules.spotPriceMul * drift * 100) / 100;
+}
+
+type EconomyOp =
+  | { kind: 'buy'; id: string; n: number; cap: number }
+  | { kind: 'sell'; id: string; n: number }
+  | { kind: 'pull'; banner: number; count: 1 | 10; rotation: number }
+  | { kind: 'fit'; item: number };
+interface LedgerCase {
+  full: boolean;
+  money: number;
+  tickets: number;
+  spotPriceMul: number;
+  fuelMul: number;
+  inCabCost: number;
+  stock: [string, number][];
+  ops: EconomyOp[];
+}
+/** What a panel may hand a command: its own 10 and 100, any count, fractions and nonsense. */
+function amount(rng: Rng) {
+  switch (rng.int(0, 5)) {
+    case 0:
+      return 10;
+    case 1:
+      return 100;
+    case 2:
+      return rng.int(1, 150);
+    case 3:
+      return rng.range(0, 20);
+    case 4:
+      return rng.pick([0, -5, NaN]);
+    default:
+      return 1;
+  }
+}
+function economyOp(rng: Rng): EconomyOp {
+  switch (rng.int(0, 3)) {
+    case 0: {
+      const cap = [1000, rng.int(0, 400), rng.range(0, 400), NaN, 0][rng.int(0, 4)];
+      return { kind: 'buy', id: rng.pick(GOODS), n: amount(rng), cap };
+    }
+    case 1:
+      return { kind: 'sell', id: rng.pick(GOODS), n: amount(rng) };
+    case 2:
+      return {
+        kind: 'pull',
+        banner: rng.int(0, BANNERS.length - 1),
+        count: rng.chance(0.5) ? 1 : 10,
+        rotation: rng.int(0, 3),
+      };
+    default:
+      return { kind: 'fit', item: rng.int(0, 4) };
+  }
+}
+function ledgerCase(rng: Rng): LedgerCase {
+  const m = rng.int(0, 4);
+  return {
+    full: rng.chance(0.3),
+    money: [0, rng.int(0, 300), rng.range(0, 5000), rng.range(0, 60000), -rng.range(0, 200)][m],
+    tickets: rng.int(0, 25),
+    spotPriceMul: rng.chance(0.15) ? 0 : Math.round(rng.range(0.1, 5) * 10) / 10,
+    fuelMul: rng.range(0.6, 1.4),
+    // the In-cab signalling fit-out slider: 0 to 50 000 in steps of 500
+    inCabCost: rng.int(0, 100) * 500,
+    stock: GOODS.filter(() => rng.chance(0.5)).map((id): [string, number] => [
+      id,
+      rng.chance(0.5) ? rng.int(0, 300) : rng.range(0, 300),
+    ]),
+    ops: Array.from({ length: rng.int(1, 30) }, () => economyOp(rng)),
+  };
+}
+/** Plainer stand-ins for one command: stone, one unit, a round cap. */
+function* shrinkOp(op: EconomyOp): Iterable<EconomyOp> {
+  if (op.kind === 'buy' || op.kind === 'sell') {
+    if (op.id !== 'stone') yield { ...op, id: 'stone' };
+    if (op.n !== 1) yield { ...op, n: 1 };
+  }
+  if (op.kind === 'buy' && op.cap !== 1000) yield { ...op, cap: 1000 };
+}
+function* shrinkLedger(c: LedgerCase): Iterable<LedgerCase> {
+  for (const ops of shrinkArray(c.ops, shrinkOp)) if (ops.length) yield { ...c, ops };
+  for (const stock of shrinkArray(c.stock)) yield { ...c, stock };
+  for (const money of [0, Math.sign(c.money), Math.trunc(c.money)])
+    if (money !== c.money) yield { ...c, money };
+  if (c.full) yield { ...c, full: false };
+  if (c.fuelMul !== 1) yield { ...c, fuelMul: 1 };
+  if (c.tickets !== 0) yield { ...c, tickets: 0 };
+  if (c.inCabCost !== 0) yield { ...c, inCabCost: 0 };
+}
+/** Pull results as the player sees them. */
+const shown = (rs: PullResult[]) =>
+  rs.map((r) => ({
+    defId: r.defId,
+    rarity: r.rarity,
+    featured: r.featured,
+    forced: r.forced,
+    duplicate: r.duplicate,
+  }));
+
+/**
+ * Run a case's commands against the books kept by hand: every command is refused, changing
+ * nothing, or moves money, tickets, stock and fittings by exactly its quoted amount; nothing ends
+ * below zero that did not start there. Returns the economy's own warnings posted on the way.
+ */
+function keepBooks(c: LedgerCase) {
+  setSupplyMode(c.full ? 'full' : 'simple');
+  rules.spotPriceMul = c.spotPriceMul;
+  rules.inCabCost = c.inCabCost;
+  const w = world();
+  w.trade.fuelMul = c.fuelMul;
+  w.economy.money = c.money;
+  w.economy.tickets = c.tickets;
+  for (const [id, v] of c.stock) w.stock.amounts.set(id, v);
+  // a plain locomotive, one built with in-cab signalling, a wagon, a locomotive the player
+  // does not own and a second plain one
+  const items: Item[] = [
+    w.inventory.add('f7', 0),
+    w.inventory.add('tgv', 0),
+    w.inventory.add('flatbed', 0),
+    new Inventory().add('f7', 0),
+    w.inventory.add('f7', 0),
+  ];
+  // the slow obvious model: the books kept by hand, and a twin gacha on the same seed
+  const twinInventory = new Inventory();
+  for (const id of ['f7', 'tgv', 'flatbed', 'f7']) twinInventory.add(id, 0);
+  const twin = new Gacha(new Rng(7), twinInventory);
+  const books = {
+    money: c.money,
+    tickets: c.tickets,
+    earned: 0,
+    stock: new Map(w.stock.amounts),
+    fitted: items.map((i) => !!i.inCab),
+    owned: w.inventory.items.length,
+  };
+  const posted = vi.fn();
+  w.economy.onMessage = posted;
+
+  for (const [i, op] of c.ops.entries()) {
+    const at = `op ${i} (${op.kind})`;
+    const wasMoney = w.economy.money;
+    let want: { ok: boolean; message?: string };
+    let result: { ok: boolean; message?: string };
+    if (op.kind === 'buy') {
+      const have = books.stock.get(op.id) ?? 0;
+      const room = Math.floor(Math.max(0, op.cap - have));
+      if (!listed(op.id) || !(Math.floor(op.n) >= 1)) want = { ok: false };
+      else if (!(room >= 1)) want = { ok: false, message: STR.market.full };
+      else {
+        const price = quote(op.id, c.fuelMul, 'buy');
+        const most = Math.min(Math.floor(op.n), room);
+        // the largest count the money pays for, counted up one at a time
+        let qty = 0;
+        while (qty < most && (qty + 1) * price <= books.money) qty++;
+        if (qty < 1) want = { ok: false, message: STR.roster.noMoney };
+        else {
+          want = { ok: true };
+          books.money -= qty * price;
+          books.stock.set(op.id, have + qty);
+        }
+      }
+      result = w.commands.spotBuy(op.id, op.n, op.cap);
+    } else if (op.kind === 'sell') {
+      const have = books.stock.get(op.id) ?? 0;
+      const qty = Math.min(Math.floor(op.n), Math.floor(have));
+      if (!listed(op.id) || !(qty >= 1)) want = { ok: false };
+      else {
+        want = { ok: true };
+        const v = qty * quote(op.id, c.fuelMul, 'sell');
+        books.money += v;
+        if (v > 0) books.earned += v;
+        books.stock.set(op.id, have - qty);
+      }
+      result = w.commands.spotSell(op.id, op.n);
+    } else if (op.kind === 'pull') {
+      const banner = BANNERS[op.banner];
+      const cost = PULL_COST * op.count;
+      if (books.tickets < cost) want = { ok: false, message: STR.gacha.noTickets };
+      else {
+        want = { ok: true };
+        books.tickets -= cost;
+        books.owned += op.count;
+      }
+      const r = w.commands.pull(banner, op.count, i, op.rotation);
+      result = r;
+      if (want.ok && r.ok)
+        expect(shown(r.results), at).toEqual(shown(twin.pull(banner, op.count, i, op.rotation)));
+    } else {
+      const item = items[op.item];
+      const def = item.kind === 'loco' ? locoDef(item.defId) : null;
+      const owned = w.inventory.items.includes(item);
+      if (!def || !owned || books.fitted[op.item] || def.inCab) want = { ok: false };
+      else if (books.money < rules.inCabCost) want = { ok: false, message: STR.roster.noMoney };
+      else {
+        want = { ok: true };
+        books.money -= rules.inCabCost;
+        books.fitted[op.item] = true;
+      }
+      result = w.commands.fitInCab(item);
+    }
+
+    expect(result.ok, at).toBe(want.ok);
+    if (!result.ok) {
+      expect(result.message, at).toBeTruthy();
+      if (want.message) expect(result.message, at).toBe(want.message);
+    }
+    expect(w.economy.money, `${at}: money`).toBe(books.money);
+    expect(w.economy.earned, `${at}: earned`).toBe(books.earned);
+    expect(w.economy.tickets, `${at}: tickets`).toBe(books.tickets);
+    expect(new Map(w.stock.amounts), `${at}: stock`).toEqual(books.stock);
+    expect(
+      items.map((it) => !!it.inCab),
+      `${at}: fittings`,
+    ).toEqual(books.fitted);
+    expect(w.inventory.items.length, `${at}: items owned`).toBe(books.owned);
+    expect(w.gacha.toJSON(), `${at}: gacha`).toEqual(twin.toJSON());
+    if (wasMoney >= 0) expect(w.economy.money, `${at}: money`).toBeGreaterThanOrEqual(0);
+    expect(w.economy.tickets, `${at}: tickets`).toBeGreaterThanOrEqual(0);
+    for (const [id, v] of w.stock.amounts) expect(v, `${at}: ${id}`).toBeGreaterThanOrEqual(0);
+  }
+  return posted;
+}
+
+describe('economy commands', () => {
+  it('move money, tickets, stock and fittings only by the quoted amounts, never below zero', () => {
+    forAll(ledgerCase, (c) => void keepBooks(c), { shrink: shrinkLedger });
+  });
+
+  it('say why they refuse themselves, without the economy posting its own warning too', () => {
+    forAll(ledgerCase, (c) => expect(keepBooks(c)).not.toHaveBeenCalled(), {
+      shrink: shrinkLedger,
+    });
+  });
+
+  it('a buy then a sell of what was bought costs exactly the spread and leaves the stock', () => {
+    forAll(
+      (rng) => ({
+        full: rng.chance(0.3),
+        spotPriceMul: Math.round(rng.range(0, 5) * 10) / 10,
+        fuelMul: rng.range(0.6, 1.4),
+        pick: rng.next(),
+        n: rng.int(1, 150),
+        money: rng.range(0, 20000),
+        stock: rng.range(0, 200),
+      }),
+      (c) => {
+        setSupplyMode(c.full ? 'full' : 'simple');
+        rules.spotPriceMul = c.spotPriceMul;
+        const ids = GOODS.filter(listed);
+        const id = ids[Math.floor(c.pick * ids.length)];
+        const w = world();
+        w.trade.fuelMul = c.fuelMul;
+        w.economy.money = c.money;
+        w.stock.amounts.set(id, c.stock);
+        const { buy, sell } = w.trade.spotQuote(id);
+        if (!w.commands.spotBuy(id, c.n, 1000).ok) return;
+        const qty = w.stock.get(id) - c.stock;
+        expect(Number.isInteger(qty) && qty >= 1 && qty <= c.n, `bought ${qty}`).toBe(true);
+        expect(w.commands.spotSell(id, qty)).toEqual({ ok: true });
+        expect(w.stock.get(id)).toBe(c.stock);
+        expect(w.economy.money - c.money).toBeCloseTo(qty * (sell - buy), 6);
+        expect(w.economy.money).toBeLessThanOrEqual(c.money + 1e-9);
+      },
+    );
+  });
+});
+
+// ------------------------------------------------------------ contract jobs and the program
+
+/**
+ * A production train whose own program is one stop nowhere near the rails takes up a contract
+ * from a stocked quarry to a warehouse, as a train with nowhere to go does.
+ */
+function onContract() {
+  const w = world();
+  const quarry = station(w, 'quarry', 40),
+    warehouse = station(w, 'warehouse', 70),
+    home = deadStation(w, 60);
+  quarry.storage.set('stone', 40);
+  const t = train(w, 20);
+  t.mode = 'production';
+  t.schedule = [defaultStop(home.id)];
+  t.addJob({
+    contractId: 1,
+    name: 'stone',
+    originId: quarry.id,
+    destId: warehouse.id,
+    cargo: 'stone',
+  });
+  let now = 0;
+  const until = (done: () => boolean, seconds: number) => {
+    for (let i = 0; i < seconds / GDT && !done(); i++) w.fleet.tick(GDT, (now += GDT));
+    return done();
+  };
+  expect(until(() => t.job !== null && t.state === 'moving', 10)).toBe(true);
+  return { w, t, quarry, warehouse, home, until };
+}
+
+describe('setTrainMode after a contract job closes', () => {
+  it('refuses schedule at the platform where the job ended, its own program having one stop', () => {
+    const { w, t, warehouse, until } = onContract();
+    expect(until(() => t.atStation === warehouse && t.state === 'loading', 200)).toBe(true);
+    // the delivery closed the contract (ContractDispatch.release) with the train still there
+    t.dropJob(1);
+    expect(w.commands.setTrainMode(t, 'schedule')).toEqual({
+      ok: false,
+      message: STR.fleet.needTwoStops,
+    });
+    expect(t.mode).toBe('production');
+  });
+
+  it('refuses schedule under way, its own program having one stop', () => {
+    const { w, t } = onContract();
+    // the contract ended while the train was on its way to it
+    t.dropJob(1);
+    expect(w.commands.setTrainMode(t, 'schedule')).toEqual({
+      ok: false,
+      message: STR.fleet.needTwoStops,
+    });
+    expect(t.mode).toBe('production');
+  });
+
+  it('switched to production under way, heads for its pick instead of its dead stop', () => {
+    const { w, t, quarry, until } = onContract();
+    t.dropJob(1);
+    expect(w.commands.setTrainMode(t, 'production')).toEqual({ ok: true });
+    expect(target(t)).toBe(quarry.id);
+    until(() => t.atStation === quarry, 120);
+    expect(t.state).not.toBe('noRoute');
+    expect(t.atStation).toBe(quarry);
+  });
+});
+
+describe('setSchedule during a contract job', () => {
+  it('leaves the train on the stops given once the job is over', () => {
+    const { w, t, until } = onContract();
+    const a = station(w, 'farm', 10),
+      b = station(w, 'farm', 85);
+    const job = t.schedule;
+    const r = w.commands.setSchedule(t, [defaultStop(a.id), defaultStop(b.id)]);
+    if (!r.ok) {
+      // a refusal is an answer too, as long as it changed nothing
+      expect(t.mode).toBe('production');
+      expect(t.schedule).toBe(job);
+      expect(t.job?.contractId).toBe(1);
+      return;
+    }
+    // the contract closes
+    t.dropJob(1);
+    expect(until(() => !t.toJSON().suspended, 120)).toBe(true);
+    expect(t.mode).toBe('schedule');
+    expect(t.route).toEqual([a.id, b.id]);
   });
 });
