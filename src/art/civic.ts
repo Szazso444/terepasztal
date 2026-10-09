@@ -176,9 +176,12 @@ export function upgradedWorks(base: PixelBuf, level: number) {
     roof: PAL.roofSlate,
     seed: level * 11,
   });
-  const bay = P(0.29, 0.31);
-  b.rect(bay.x - 3, bay.y - Math.round(annexH * 0.7), 7, Math.round(annexH * 0.7), PAL.outline);
-  b.rect(bay.x - 2, bay.y - Math.round(annexH * 0.7) + 1, 5, 2, PAL.iron[0]);
+  // the loading bay opens on the annex's +y face, the front: seen from behind it is a back wall
+  if (frontShown()) {
+    const bay = P(0.29, 0.31);
+    b.rect(bay.x - 3, bay.y - Math.round(annexH * 0.7), 7, Math.round(annexH * 0.7), PAL.outline);
+    b.rect(bay.x - 2, bay.y - Math.round(annexH * 0.7) + 1, 5, 2, PAL.iron[0]);
+  }
   // covered conveyor from the annex towards the main building, on short iron legs
   const c0 = P(0.18, 0.16, annexH - 2);
   const c1 = P(-0.02, 0.06, annexH + 2);

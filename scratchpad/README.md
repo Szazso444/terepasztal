@@ -223,5 +223,5 @@ node scratchpad/atlas-frame-hashes.mjs after.json before.json    # sizes, anchor
 `atlas-frame-hashes.mjs` runs every group's generator three times in the game and records each
 frame's size, anchor and pixel hash (`atlas-frames.mjs` lists only the running game's sizes and
 anchors); given an earlier table it lists the frames that went missing, moved or changed pixels.
-Against `develop` before the placeholders: 3,462 frames, none missing, moved or repainted, 288
+Against `develop` before the placeholders: 3,465 frames, none missing, moved or repainted, 288
 added (structures 686 to 974 frames, canvas 2048x1024 to 2048x2048).
