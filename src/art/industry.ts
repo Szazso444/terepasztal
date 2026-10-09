@@ -857,7 +857,7 @@ function quarry(level: number): PixelBuf {
       side: PAL.iron,
       seed: 61,
     });
-    opening(b, -0.24, 0.21, -0.1, 0.21, 0, 9, PAL.outline);
+    if (frontShown()) opening(b, -0.24, 0.21, -0.1, 0.21, 0, 9, PAL.outline);
     bar(b, -0.02, 0.1, 18, 0.22, 0.18, 12, PAL.iron[3]);
     bar(b, -0.02, 0.1, 17, 0.22, 0.18, 11, PAL.iron[2]);
     post(b, 0.12, 0.14, 12, PAL.iron[2], 0, 1);
@@ -1003,9 +1003,11 @@ function warehouse(level: number): PixelBuf {
     gnd.push(patchRect(-0.1, -0.1, 0.66, 0.5, concrete(81), 81, 255, 0.05));
     gnd.push(shadowRect(-0.14, -0.14, 0.5, 0.34), shadowEllipse(0.24, 0.28, 0.14, 50));
     flatShed(b, -0.14, -0.14, 0.5, 0.34, 13, CONCRETE, 83);
-    opening(b, -0.22, 0.03, -0.08, 0.03, 0, 10, PAL.outline);
-    const l = proj(OX, GY, -0.15, 0.03, 10);
-    b.rect(rx(l) - 4, ry(l), 9, 1, PAL.amberDark);
+    if (frontShown()) {
+      opening(b, -0.22, 0.03, -0.08, 0.03, 0, 10, PAL.outline);
+      const l = proj(OX, GY, -0.15, 0.03, 10);
+      b.rect(rx(l) - 4, ry(l), 9, 1, PAL.amberDark);
+    }
     crates(
       b,
       [
@@ -1018,10 +1020,12 @@ function warehouse(level: number): PixelBuf {
     gnd.push(patchRect(-0.05, -0.1, 0.8, 0.56, concrete(81), 81, 255, 0.05));
     gnd.push(shadowRect(-0.1, -0.14, 0.66, 0.4), shadowEllipse(0.26, 0.28, 0.18, 50));
     flatShed(b, -0.1, -0.14, 0.66, 0.4, 17, CONCRETE, 85);
-    for (const dx of [-0.32, -0.06]) opening(b, dx, 0.06, dx + 0.14, 0.06, 0, 13, PAL.outline);
-    for (const dx of [-0.32, -0.06]) {
-      const l = proj(OX, GY, dx + 0.07, 0.06, 13);
-      b.rect(rx(l) - 4, ry(l), 9, 1, PAL.amberDark);
+    if (frontShown()) {
+      for (const dx of [-0.32, -0.06]) opening(b, dx, 0.06, dx + 0.14, 0.06, 0, 13, PAL.outline);
+      for (const dx of [-0.32, -0.06]) {
+        const l = proj(OX, GY, dx + 0.07, 0.06, 13);
+        b.rect(rx(l) - 4, ry(l), 9, 1, PAL.amberDark);
+      }
     }
     facade(b, -0.1, -0.14, 0.4, [0.2], null, 4);
     crates(
@@ -1045,7 +1049,7 @@ function warehouse(level: number): PixelBuf {
       const l = proj(OX, GY, 0.09, cy, 13);
       b.rect(rx(l) - 4, ry(l), 9, 1, PAL.amberDark);
     }
-    opening(b, -0.38, 0.24, -0.26, 0.24, 0, 13, PAL.outline);
+    if (frontShown()) opening(b, -0.38, 0.24, -0.26, 0.24, 0, 13, PAL.outline);
     // gantry crane spanning the loading bay along the +x edge
     for (const ly of [-0.42, 0.42]) {
       post(b, 0.32, ly, 30, PAL.iron[2]);
