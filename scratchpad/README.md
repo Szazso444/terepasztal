@@ -210,15 +210,17 @@ asserts every packed rectangle and anchor is valid, and captures a representativ
 Until the building eras art package is in the game, the structures generator draws each
 building's other rotations as turns of today's picture (`src/art/structures.ts`,
 `src/art/view.ts`): r1 from behind and mirrored, r2 from behind (no door, canopy or platform
-furniture), r3 mirrored; depots turn half way round instead. [structure-turns.png](structure-turns.png) shows every one,
-r0 to r3, on its footprint with its anchor marked.
+furniture), r3 mirrored; depots turn half way round instead.
+[structure-turns.png](structure-turns.png) shows every one, r0 to r3, on its footprint with its
+anchor marked.
 
 ```sh
-node scratchpad/structure-turns.mjs                         # the review sheet
-node scratchpad/atlas-frames.mjs after.json before.json    # frames, sizes, anchors, pixels, timing
+node scratchpad/structure-turns.mjs                              # the review sheet
+node scratchpad/atlas-frame-hashes.mjs after.json before.json    # sizes, anchors, pixels, timing
 ```
 
-`atlas-frames.mjs` runs every group's generator three times in the game and records each frame's
-size, anchor and pixel hash; given an earlier table it lists the frames that went missing, moved
-or changed pixels. Against `develop` before the placeholders: 3,462 frames, none missing, moved
-or repainted, 288 added (structures 686 to 974 frames, canvas 2048x1024 to 2048x2048).
+`atlas-frame-hashes.mjs` runs every group's generator three times in the game and records each
+frame's size, anchor and pixel hash (`atlas-frames.mjs` lists only the running game's sizes and
+anchors); given an earlier table it lists the frames that went missing, moved or changed pixels.
+Against `develop` before the placeholders: 3,462 frames, none missing, moved or repainted, 288
+added (structures 686 to 974 frames, canvas 2048x1024 to 2048x2048).

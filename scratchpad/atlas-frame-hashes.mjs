@@ -2,7 +2,8 @@
 // (three runs), and each frame's size, anchor and a hash of its pixels. Given an earlier table,
 // prints which of its frames went missing, moved (size or anchor) or changed pixels, and the
 // frames added since.
-// usage: node scratchpad/atlas-frames.mjs <out.json> [earlier.json]   (BASE_URL picks the server)
+// usage: node scratchpad/atlas-frame-hashes.mjs <out.json> [earlier.json]
+//        (BASE_URL picks the server)
 import { launch, openGame } from './runtime.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 
