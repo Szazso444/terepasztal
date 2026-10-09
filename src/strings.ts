@@ -849,6 +849,7 @@ export const STR = {
       json: 'That text is not save data.',
       notSave: 'That is not a Terepasztal save.',
       damaged: 'That save is damaged and was not loaded. Your game is unchanged.',
+      storage: 'Could not store that save (storage full or blocked). Your game is unchanged.',
     },
     /** `refund` is the text of `saves.refund`; with nothing refunded its sentence is left out. */
     pruned: (list: string, refund: string) =>
