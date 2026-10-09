@@ -1,3 +1,6 @@
+/** The tab is hidden. Outside a browser (tests) there is no document and nothing is hidden. */
+const tabHidden = () => typeof document !== 'undefined' && document.hidden;
+
 /** Quiet continuous weather beds, sparse birds by day and crickets after dusk. */
 export class Ambience {
   private ctx: AudioContext | null = null;
@@ -6,18 +9,19 @@ export class Ambience {
   private rain: GainNode | null = null;
   private nextCall = 0;
   private volume = 0;
-  constructor() {
-    document.addEventListener('visibilitychange', () => {
-      if (this.ctx && this.master)
-        this.master.gain.setTargetAtTime(
-          document.hidden ? 0 : this.volume,
-          this.ctx.currentTime,
-          0.15,
-        );
-    });
-  }
   private init(ctx: AudioContext) {
     this.ctx = ctx;
+    // muting a hidden tab only matters once the beds exist, so the listener is added here, once,
+    // rather than at import
+    if (typeof document !== 'undefined')
+      document.addEventListener('visibilitychange', () => {
+        if (this.ctx && this.master)
+          this.master.gain.setTargetAtTime(
+            tabHidden() ? 0 : this.volume,
+            this.ctx.currentTime,
+            0.15,
+          );
+      });
     this.master = ctx.createGain();
     this.master.gain.value = 0;
     this.master.connect(ctx.destination);
@@ -47,10 +51,10 @@ export class Ambience {
     if (!this.ctx) this.init(ctx);
     this.volume = volume;
     const now = ctx.currentTime;
-    this.master!.gain.setTargetAtTime(document.hidden ? 0 : volume, now, 0.2);
+    this.master!.gain.setTargetAtTime(tabHidden() ? 0 : volume, now, 0.2);
     this.wind!.gain.setTargetAtTime(0.035 + 0.012 * Math.sin(now * 0.14), now, 1.2);
     this.rain!.gain.setTargetAtTime(rain * 0.24, now, 1.5);
-    if (document.hidden || volume <= 0 || now < this.nextCall || rain > 0.35) return;
+    if (tabHidden() || volume <= 0 || now < this.nextCall || rain > 0.35) return;
     this.nextCall = now + (night > 0.5 ? 5 : 9) + Math.random() * 12;
     for (let i = 0; i < (night > 0.5 ? 3 : 2); i++) {
       const start = now + i * 0.16,

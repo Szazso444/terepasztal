@@ -38,6 +38,7 @@ class AudioBus {
   ambient = 0.35;
   private ambience = new Ambience();
   updateAmbience(rain: number, night: number) {
+    this.listen();
     if (!this.unlocked) return;
     const ctx = this.synth.ensure();
     if (ctx) this.ambience.update(ctx, this.master * this.ambient, rain, night);
@@ -53,8 +54,15 @@ class AudioBus {
   private musicStatus: 'probing' | 'ready' | 'missing' = 'probing';
   /** Throttle identical events so bursts (drag-laying) do not stack. */
   private lastPlayed = new Map<string, number>();
+  private listening = false;
 
-  constructor() {
+  /**
+   * Unlock on the first user gesture. The listeners are added by the first call that needs
+   * them (the boot's applyMusic) rather than at import, so the module loads without a window.
+   */
+  private listen() {
+    if (this.listening || typeof window === 'undefined') return;
+    this.listening = true;
     const unlock = () => this.unlock();
     window.addEventListener('pointerdown', unlock, { passive: true });
     window.addEventListener('keydown', unlock);
@@ -106,6 +114,7 @@ class AudioBus {
 
   /** Start, stop or re-level the music for the current master and music volumes. */
   applyMusic() {
+    this.listen();
     if (!this.unlocked) return;
     const v = Math.min(1, this.master * this.music);
     if (this.musicStatus !== 'missing') {
@@ -133,9 +142,11 @@ class AudioBus {
     } else this.synth.setMusicVolume(0);
   }
 
-  private probe(name: string): FileState {
+  /** The event's sound file, or null outside a browser (no `Audio`), where the synth plays it. */
+  private probe(name: string): FileState | null {
     let f = this.files.get(name);
     if (f) return f;
+    if (typeof Audio === 'undefined') return null;
     const el = new Audio(`/assets/audio/${name}.ogg`);
     f = { el, status: 'probing' };
     el.addEventListener('canplaythrough', () => (f!.status = 'ready'), { once: true });
@@ -146,6 +157,7 @@ class AudioBus {
   }
 
   play(name: SoundEvent) {
+    this.listen();
     if (this.debugLog) console.debug(`[sfx] ${name}`);
     const vol = this.master * this.sfx;
     if (vol <= 0) return;
@@ -154,7 +166,7 @@ class AudioBus {
     if (now - last < 45) return;
     this.lastPlayed.set(name, now);
     const f = this.probe(name);
-    if (f.status === 'ready') {
+    if (f?.status === 'ready') {
       try {
         const inst = f.el.cloneNode() as HTMLAudioElement;
         inst.volume = Math.min(1, vol);
