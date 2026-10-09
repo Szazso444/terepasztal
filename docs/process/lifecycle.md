@@ -117,11 +117,21 @@ Core opens the pull request into `develop` from the template, with `Closes #<iss
 build, formatting and the scope check (`.github/workflows/scope.yml`). A pull request that needs to
 cross roles carries `scope:cross`, which only Core sets and which the description has to justify.
 
+**Gate files** are the ones that decide what passes or what agents may do: `AGENTS.md`, `CLAUDE.md`,
+`.claude/**`, `.github/**`, `tools/agents/**`, the dependency and tool configs and the map
+generation goldens (the `gate` list in `tools/agents/ownership.json`). A pull request that changes
+one needs the `gate:approved` label, added by the author in person after review. The scope check
+reads the label's history and does not count it when an app added it, so an agent acting with
+the author's account cannot approve itself; a new push removes the label. The check runs from
+`develop`'s own copy of the workflow and the scripts, so a pull request cannot change the check
+that judges it.
+
 ### 8. Merge into `develop` (Core)
 
 Core merges when all of these hold:
 
-- CI is green on the head commit;
+- CI is green on the head commit, the scope check included (so gate files carry the author's
+  `gate:approved`);
 - the QA verdict on the head commit is `approve`;
 - Verification's tests exist and pass, where the task required them;
 - no open question and no `needs:decision` label.

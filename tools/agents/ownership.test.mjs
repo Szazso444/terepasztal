@@ -4,6 +4,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
+  GATE_LABEL,
+  gateApproved,
+  gatePaths,
   globToRegExp,
   loadOwnership,
   mayWrite,
@@ -107,13 +110,75 @@ describe('agent files', () => {
   }
 });
 
+describe('gate', () => {
+  it('names approvers and only patterns that match tracked files', () => {
+    expect(ownership.gateApprovers.length).toBeGreaterThan(0);
+    for (const pattern of ownership.gate) {
+      const re = globToRegExp(pattern);
+      expect(
+        tracked.some((p) => re.test(p)),
+        `${pattern} matches nothing`,
+      ).toBe(true);
+    }
+  });
+
+  it('covers the files that decide what passes', () => {
+    const gated = gatePaths(
+      [
+        'tools/agents/scope.mjs',
+        '.github/workflows/scope.yml',
+        '.claude/agents/qa.md',
+        'AGENTS.md',
+        'src/world/mapgen.test.ts',
+        'src/world/pathfinding.ts',
+        'CORE.md',
+      ],
+      ownership,
+    );
+    expect(gated).toEqual([
+      'tools/agents/scope.mjs',
+      '.github/workflows/scope.yml',
+      '.claude/agents/qa.md',
+      'AGENTS.md',
+      'src/world/mapgen.test.ts',
+    ]);
+  });
+
+  const approver = ownership.gateApprovers[0];
+  const added = (login, app) => ({
+    event: 'labeled',
+    label: { name: GATE_LABEL },
+    actor: { login },
+    performed_via_github_app: app ? { slug: app } : null,
+  });
+
+  it('counts the label only when an approver added it in person', () => {
+    const labels = [GATE_LABEL];
+    expect(gateApproved({ labels, events: [added(approver)] }, ownership)).toBe(true);
+    expect(gateApproved({ labels, events: [added(approver, 'claude')] }, ownership)).toBe(false);
+    expect(gateApproved({ labels, events: [added('someone-else')] }, ownership)).toBe(false);
+    expect(gateApproved({ labels: [], events: [added(approver)] }, ownership)).toBe(false);
+  });
+
+  it('judges by the last time the label was added', () => {
+    const labels = [GATE_LABEL];
+    const events = [
+      added(approver),
+      { event: 'unlabeled', label: { name: GATE_LABEL } },
+      added(approver, 'claude'),
+    ];
+    expect(gateApproved({ labels, events }, ownership)).toBe(false);
+  });
+});
+
 describe('labels', () => {
   const labels = JSON.parse(readFileSync(join(root, '.github', 'labels.json'), 'utf8')).map(
     (l) => l.name,
   );
 
-  it('have an agent label for every role', () => {
+  it('have an agent label for every role, and the gate label', () => {
     for (const role of ownership.roles) expect(labels).toContain(`agent:${role}`);
+    expect(labels).toContain(GATE_LABEL);
   });
 
   it('are unique', () => {

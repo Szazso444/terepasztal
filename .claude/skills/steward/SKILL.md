@@ -15,6 +15,9 @@ description: Repository conventions for driving a terepasztal pull request to me
 - **Scope check red.** The change touches a path its role does not own
   (`node tools/agents/scope.mjs check --role <role>`). Split the change by owner; `scope:cross`
   is for a reason written in the description, set by Core only.
+- **Scope check red on gate files.** The change touches a gate file and the author has not
+  added `gate:approved` in person. Ask the author; never add the label, and do not try to route
+  around it. A push withdraws the approval, so push before asking, not after.
 - **Ownership test red** (`tools/agents/ownership.test.mjs`). A new file has no owner or two:
   add it to exactly one role in `tools/agents/ownership.json`. An agent file's `## Scope` must list
   exactly its role's patterns.

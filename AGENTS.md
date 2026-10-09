@@ -25,6 +25,8 @@ agent can follow):
 
 - `tools/agents/ownership.json` maps every tracked path to exactly one role; CI fails a pull
   request into `develop` that changes a path outside its role (`node tools/agents/scope.mjs`).
+  Gate files (these rules, `.claude`, `.github`, `tools/agents`, dependency and tool configs, map
+  generation goldens) change only with the author's own `gate:approved` label; no agent sets it.
 - `docs/process/lifecycle.md` is the order of work, the gates and the branch model: `main` is
   released, `develop` is where work is integrated and validated, and every task is its own
   `<role>/<issue>-<slug>` branch in its own worktree. Core merges into `develop`; only the author
