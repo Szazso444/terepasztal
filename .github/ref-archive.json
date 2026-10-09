@@ -1,0 +1,44 @@
+{
+  "tags": [
+    { "tag": "archive/art/rear-views-v1", "sha": "5d8ad397a630d61b187fa4aa2b994a3059758be1" },
+    {
+      "tag": "archive/buildings/ages-upgrading",
+      "sha": "6f02c30a03d50f7c8f0ae80ee3d9f3201cd81466"
+    },
+    { "tag": "archive/buildings/art-package", "sha": "688e20a641afb20ff1e5602f4d45c632645610ea" },
+    {
+      "tag": "archive/claude/charming-ramanujan-i16mhm",
+      "sha": "edc1d9a8d25705d3ce17a766a398fe1fd8595c7c"
+    },
+    {
+      "tag": "archive/claude/nifty-bohr-vu1pko",
+      "sha": "201f7ed6c434ea613d3d3b1bf4d8d30bab8b9da0"
+    },
+    {
+      "tag": "archive/claude/quirky-ride-ovv7uq",
+      "sha": "55544df93e57ad3ac5b7965c5f85904d4ac90c8c"
+    },
+    {
+      "tag": "archive/claude/retire-adler-john-bull",
+      "sha": "2a9d6fad93bf5abdcb3a2d48cff1f49a106e11a0"
+    },
+    {
+      "tag": "archive/claude/train-slope-pitch",
+      "sha": "4ae3045e73c9740be2687922a348546d930526dd"
+    },
+    { "tag": "archive/local/train-models", "sha": "48d828b0c66ade836f0bfeffe90d3ecb846acc12" },
+    { "tag": "archive/locomotive-render-v1", "sha": "2c7e0fc8650f92d9a75cb93c1a890c7418c462a8" },
+    { "tag": "v0.1.0", "sha": "83a4c6843f66da862c30b3d4ae9db1b2e519f567" }
+  ],
+  "deleteMergedBranches": [
+    "claude/isometric-train-game-k6rk1a",
+    "claude/modest-shannon-d9ik1e",
+    "claude/nifty-bohr-vu1pko",
+    "claude/peaceful-lamport-82qoqd",
+    "claude/youthful-hawking-2gejks",
+    "codex/illustrated-sprite-quality",
+    "rails/narrow-gauge",
+    "ui/track-toolbar",
+    "v0.1.0"
+  ]
+}

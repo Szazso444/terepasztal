@@ -1,0 +1,88 @@
+{
+  "roles": [
+    "core",
+    "engine",
+    "world",
+    "gameplay",
+    "rendering",
+    "uiux",
+    "art",
+    "qa",
+    "verification"
+  ],
+  "owners": {
+    "core": [
+      "AGENTS.md",
+      "CLAUDE.md",
+      "CORE.md",
+      "README.md",
+      "CHANGELOG.md",
+      "MILESTONES.md",
+      "LICENSE",
+      ".gitignore",
+      ".mcp.json",
+      ".claude/**",
+      ".codex/**",
+      ".github/**",
+      "docs/process/**",
+      "docs/superpowers/**",
+      "docs/archived-work.md",
+      "docs/live-loop.md",
+      "docs/phase-decisions.md",
+      "docs/phase-spec-review.md",
+      "tools/agents/**",
+      "scratchpad/**"
+    ],
+    "engine": [
+      "src/engine/**",
+      "src/main.ts",
+      "src/game.ts",
+      "src/intent.ts",
+      "public/assets/audio/**",
+      "package.json",
+      "package-lock.json",
+      "tsconfig.json",
+      "vite.config.ts",
+      "vitest.config.ts",
+      "eslint.config.js",
+      ".prettierrc",
+      "tools/traffic-dev.ts"
+    ],
+    "world": ["src/world/**", "docs/rail-inclines.md"],
+    "gameplay": [
+      "src/sim/**",
+      "src/data/**",
+      "src/gacha/**",
+      "docs/traffic-current.md",
+      "docs/bogie-model.md",
+      "docs/img/bogie-model.*",
+      "docs/railway-guide.md"
+    ],
+    "rendering": ["src/render/**"],
+    "uiux": ["src/ui/**", "src/editor/**", "src/strings.ts", "src/strings.test.ts", "index.html"],
+    "art": [
+      "src/art/**",
+      "tools/*.mjs",
+      "tools/asset-pipeline/**",
+      "tools/video-sprites/**",
+      "art-src/**",
+      "assets/**",
+      "public/assets/*.{png,json}",
+      "docs/art-direction/**",
+      "docs/mcp-setup.md"
+    ],
+    "qa": [],
+    "verification": ["src/testing/**"]
+  },
+  "grants": {
+    "engine": ["src/strings.ts"],
+    "gameplay": ["src/strings.ts"],
+    "art": ["src/render/bridgeKit.json", "scratchpad/**"],
+    "verification": [
+      "src/**/*.test.ts",
+      "tools/**/*.test.mjs",
+      "scratchpad/**",
+      "docs/process/verification.md"
+    ]
+  }
+}
