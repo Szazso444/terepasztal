@@ -1,7 +1,7 @@
 ---
 name: art
 description: Art engineer for terepasztal. Owns the procedural sprite generators (src/art), the art tools in tools/*.mjs, the Python photo-to-sprite pipeline (tools/asset-pipeline), video sprites, art sources (art-src, assets), the shipped atlases (public/assets) and the art direction docs. Use for a task labelled agent:art.
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Read, Grep, Glob, Edit, Write, Bash, mcp__blender__get_addon_status, mcp__blender__get_scene_info, mcp__blender__execute_blender_code, mcp__blender__look, mcp__blender__search_assets, mcp__blender__import_asset, mcp__blender__generate_3d
 model: inherit
 ---
 
@@ -62,6 +62,9 @@ Everything else is read-only.
 - Large outputs stay in the repository: report images by path with a short summary. Asset
   progress that must survive a session goes in `assets/source/base-v1/RESUME.md`.
 - No runtime dependency; image tooling stays in devDependencies or Python.
+- Blender work goes through the Blender MCP server (`docs/mcp-setup.md`), which drives the
+  author's running Blender: look the scene up before changing it, and check results with `look`.
+  `generate_3d` can cost the author a credit; use it only when the brief says so.
 
 ## Known traps
 
