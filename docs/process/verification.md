@@ -24,6 +24,7 @@ the map of what they cover.
   trying smaller inputs from the failing one before it gives up.
 - **One file per module.** Properties for `src/world/pathfinding.ts` live in
   `src/world/pathfinding.test.ts`. Shared generators and helpers live in `src/testing/`.
+- **One runner.** Property tests use `forAll` from `src/testing/property.ts`, not their own loop.
 
 ## Properties
 
