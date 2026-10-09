@@ -7,7 +7,7 @@ import { content } from '../data/content';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 
-vi.mock('../engine/audio', () => ({ sfx: { play: vi.fn() } }));
+vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 function line(end = 14) {
   const track = new TrackGraph(24, 24);
