@@ -28,6 +28,15 @@ export interface Building {
   /** why the last tick did not run (empty when running) */
   reason?: 'inputs' | 'full' | '';
 }
+/** A building as a save holds it (v4); the level came later, and a save without one means 1. */
+export type BuildingJSON = [x: number, y: number, id: string, acc: number, level?: number];
+export function buildingToJSON(b: Building): BuildingJSON {
+  return [b.x, b.y, b.id, b.acc, b.level ?? 1];
+}
+/** A saved building, idle until its first tick says otherwise. */
+export function buildingFromJSON([x, y, id, acc, level]: BuildingJSON): Building {
+  return { id, x, y, acc: acc ?? 0, level: level ?? 1, active: false, rate: 0 };
+}
 /** Which primary input is short, if any. */
 export function missingInput(def: BuildingDef, stock: Stockpile): string | null {
   for (const [k, v] of Object.entries(def.recipe.in)) if (stock.get(k) < v) return k;

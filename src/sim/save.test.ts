@@ -1,20 +1,38 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   SAVE_VERSION,
   SAVE_MIN_VERSION,
+  SAVE_KEY,
+  SETTINGS_KEY,
+  SLOTS_KEY,
   MIGRATIONS,
   KNOWN_SAVE_KEYS,
   DEFAULT_SETTINGS,
   migrate,
+  buildSave,
+  readSaveText,
   parseSave,
+  readSave,
+  writeSave,
+  importSave,
+  listSlots,
+  writeSlot,
+  readSlot,
+  hasSlot,
+  continueMeta,
   migrateSettings,
   contractPolicyFor,
   uniformContractPolicy,
   convertOneTileRegular,
   CONTRACT_RARITIES,
   type SaveGame,
+  type SaveParts,
+  type SaveRefusal,
   type Settings,
 } from './save';
+import { buildingFromJSON, buildingToJSON, type Building } from './buildings';
+import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
+import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
 /** The oldest shape the chain still accepts, with nothing optional filled in. */
@@ -36,6 +54,44 @@ function oldestSave(): SaveGame {
   };
 }
 
+/**
+ * Every part a save of the current build is written from, each one set. Typed as `SaveParts`, so
+ * a new part fails the typecheck here until the fixture carries it too.
+ */
+function fullParts(): SaveParts {
+  return {
+    seed: 777,
+    clock: { time: 1234.5, speedIndex: 2 },
+    economy: { money: 12345, tickets: 3, tier: 2, granted: [0, 1, 2], earned: 9000 },
+    track: [
+      [4, 8, 'straight', 1, 'regular', 'regular'],
+      [12, 8, 'crossing', 0, 'narrow', 'high_speed'],
+    ],
+    stations: [{ id: 1, defId: 'town', name: 'Alder', x: 3, y: 3, level: 1, storage: {}, rot: 0 }],
+    trains: [{ id: 1 }],
+    contracts: { contracts: [], rng: 42 },
+    inventory: { items: [], nextUid: 1 },
+    gacha: { pity: 0 },
+    camera: { x: 10, y: 20, zoomIndex: 3 },
+    lastDay: 42,
+    decor: [[5, 6, 'signal', 1]],
+    wires: [[4, 8, 'electric']],
+    weather: { kind: 'clear', intensity: 0, nextChangeAt: 5, rng: 9 },
+    world: { kind: 'generated', seed: 777, params: { ...DEFAULT_MAP_PARAMS } },
+    rules: { contractOfferCount: 1 },
+    stockpile: { amounts: { food: 600 }, famine: false },
+    buildings: [[7, 7, 'sawmill', 0.5, 2]],
+    regions: [true, false],
+    seasonOffset: 1,
+    towns: [{ id: 1, name: 'Alder', stationId: 1, custom: false, color: 0 }],
+    trade: { nextAt: 0, driftDay: 0 },
+    crafting: { recipes: [], stats: { unlocks: 0, crafts: 0, failures: 0 } },
+    houses: { list: [], arrivals: [], visited: [] },
+    supply: 'simple',
+    people: { rng: 31337 },
+  };
+}
+
 describe('the migration registry', () => {
   it('has a step for every version the chain has to cross', () => {
     // Adding a save format version means adding a step here; without one, `migrate` skips the
@@ -52,8 +108,12 @@ describe('the migration registry', () => {
     for (const m of MIGRATIONS) expect(m.note.trim().length).toBeGreaterThan(0);
   });
 
-  it('lists every field of a current save as known', () => {
-    for (const key of Object.keys(oldestSave())) expect(KNOWN_SAVE_KEYS.has(key)).toBe(true);
+  it('knows every field a save is written with, and every field the migration leaves', () => {
+    // A field written but not known is copied into the extras on load and written back twice.
+    for (const key of Object.keys(buildSave(fullParts())))
+      expect(KNOWN_SAVE_KEYS.has(key), key).toBe(true);
+    for (const key of Object.keys(migrate(oldestSave())))
+      expect(KNOWN_SAVE_KEYS.has(key), key).toBe(true);
   });
 
   it('knows exactly the fields SaveGame declares', () => {
@@ -384,8 +444,345 @@ describe('parseSave', () => {
     expect(parseSave('{"seed":"nope"}')).toBeNull();
   });
 
-  it('throws on text that is not JSON at all, for the caller to catch', () => {
-    expect(() => parseSave('{oops')).toThrow();
+  it('refuses text that is not JSON at all, without throwing', () => {
+    expect(parseSave('{oops')).toBeNull();
+    expect(parseSave('')).toBeNull();
+  });
+
+  it('refuses a save that lacks what every version has', () => {
+    expect(parseSave('{"seed":1,"version":13}')).toBeNull();
+  });
+});
+
+describe('buildSave', () => {
+  it('writes every part, then the current version and the time it is given', () => {
+    const parts = fullParts();
+    const j = buildSave(parts, {}, 1700000000123);
+    expect(j).toEqual({ ...parts, version: SAVE_VERSION, savedAt: 1700000000123 });
+  });
+
+  it('carries the fields the loaded file had and this build does not know', () => {
+    const j = buildSave(fullParts(), { somethingNewer: { a: 1 } });
+    expect(j.somethingNewer).toEqual({ a: 1 });
+    expect(Object.keys(j)[0]).toBe('somethingNewer');
+  });
+
+  it('never writes settings, load notes or a stale stamp, even when handed them', () => {
+    const j = buildSave(
+      fullParts(),
+      {
+        settings: { ...DEFAULT_SETTINGS, music: 0 },
+        loadedFrom: 3,
+        migrationNotes: ['v3→v4: x'],
+        version: 2,
+        savedAt: 1,
+        seed: 5,
+      },
+      99,
+    );
+    for (const key of ['settings', 'loadedFrom', 'migrationNotes'])
+      expect(key in j, key).toBe(false);
+    expect(j.version).toBe(SAVE_VERSION);
+    expect(j.savedAt).toBe(99);
+    expect(j.seed).toBe(fullParts().seed);
+  });
+
+  it('writes a save that reads back as it was written', () => {
+    const j = buildSave(fullParts());
+    const read = readSaveText(JSON.stringify(j));
+    expect(read).toEqual({ save: j });
+  });
+});
+
+/** The fields every version since v1 holds and the loader checks, as paths into the save. */
+const CORE_PATHS: { path: string[]; kind: 'number' | 'array' }[] = [
+  ...[
+    ['clock', 'time'],
+    ['clock', 'speedIndex'],
+    ['economy', 'money'],
+    ['economy', 'tickets'],
+    ['economy', 'tier'],
+    ['camera', 'x'],
+    ['camera', 'y'],
+    ['camera', 'zoomIndex'],
+    ['lastDay'],
+  ].map((path) => ({ path, kind: 'number' as const })),
+  ...[['track'], ['stations'], ['trains']].map((path) => ({ path, kind: 'array' as const })),
+];
+/** A copy of `save` with the field at `path` replaced (or taken out, for `undefined`). */
+function withField(save: object, path: string[], value: unknown): Record<string, unknown> {
+  const copy = JSON.parse(JSON.stringify(save)) as Record<string, unknown>;
+  let at = copy;
+  for (const key of path.slice(0, -1)) at = at[key] as Record<string, unknown>;
+  const last = path[path.length - 1];
+  if (value === undefined) delete at[last];
+  else at[last] = value;
+  return copy;
+}
+
+describe('readSaveText', () => {
+  it('reads a save of every version the chain accepts', () => {
+    for (let version = SAVE_MIN_VERSION; version <= SAVE_VERSION; version++) {
+      const read = readSaveText(JSON.stringify({ ...oldestSave(), version }));
+      expect('save' in read && read.save.version, `v${version}`).toBe(SAVE_VERSION);
+    }
+  });
+
+  it('refuses text that is not JSON', () => {
+    for (const raw of ['{oops', '', 'undefined', '{"seed":1,'])
+      expect(readSaveText(raw), raw).toEqual({ error: 'json' });
+  });
+
+  it('refuses JSON that is not a save', () => {
+    for (const raw of ['null', '5', '"text"', '[]', '[{"seed":1}]', '{}', '{"seed":"1"}'])
+      expect(readSaveText(raw), raw).toEqual({ error: 'notSave' });
+  });
+
+  it('refuses a seed and a version alone as damaged, whatever the version', () => {
+    expect(readSaveText('{"seed":1,"version":13}')).toEqual({ error: 'damaged' });
+    expect(readSaveText('{"seed":1,"version":99}')).toEqual({ error: 'damaged' });
+    expect(readSaveText('{"seed":1}')).toEqual({ error: 'damaged' });
+  });
+
+  it('refuses a save with any one field every version has taken out or retyped', () => {
+    for (const valid of [oldestSave(), buildSave(fullParts())]) {
+      expect('save' in readSaveText(JSON.stringify(valid))).toBe(true);
+      for (const { path, kind } of CORE_PATHS) {
+        const wrong = kind === 'number' ? ['1', null, [], {}, true] : [{}, '[]', 0, null];
+        for (const value of [undefined, ...wrong]) {
+          const raw = JSON.stringify(withField(valid, path, value));
+          expect(readSaveText(raw), `${path.join('.')} = ${JSON.stringify(value)}`).toEqual({
+            error: 'damaged',
+          });
+        }
+      }
+      for (const block of ['clock', 'economy', 'camera'])
+        for (const value of [undefined, null, 5, [], 'x'])
+          expect(readSaveText(JSON.stringify(withField(valid, [block], value))), block).toEqual({
+            error: 'damaged',
+          });
+    }
+  });
+
+  it('reads the save inside a diagnostics bundle', () => {
+    const save = buildSave(fullParts());
+    const bundle = {
+      diagnostics: 1,
+      saveVersion: SAVE_VERSION,
+      at: '2026-10-09T12:00:00.000Z',
+      traffic: { sections: [] },
+      save,
+    };
+    expect(readSaveText(JSON.stringify(bundle))).toEqual({ save });
+    expect(parseSave(JSON.stringify(bundle))).toEqual(save);
+    // a bundle carrying a damaged save is refused the same as the save alone
+    expect(readSaveText(JSON.stringify({ ...bundle, save: { seed: 1 } }))).toEqual({
+      error: 'damaged',
+    });
+  });
+
+  it('refuses a save a migration step cannot read instead of throwing', () => {
+    // v11 to v12 reads each station's storage; no version ever wrote a station without one
+    const raw = JSON.stringify({ ...oldestSave(), version: 11, stations: [{ defId: 'town' }] });
+    expect(readSaveText(raw)).toEqual({ error: 'damaged' });
+  });
+
+  it('counts up from the oldest version when the version is no count at all', () => {
+    for (const version of [-1e15, 0, 2.5, '13', null]) {
+      const read = readSaveText(JSON.stringify({ ...oldestSave(), version }));
+      expect('save' in read && read.save.loadedFrom, String(version)).toBe(SAVE_MIN_VERSION);
+    }
+  });
+});
+
+describe('works buildings in a save', () => {
+  it('come back as they were saved, idle until their first tick', () => {
+    const b: Building = { id: 'sawmill', x: 4, y: 9, acc: 0.25, level: 3, active: true, rate: 2 };
+    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3]);
+    expect(buildingFromJSON(buildingToJSON(b))).toEqual({
+      ...b,
+      active: false,
+      rate: 0,
+    });
+  });
+
+  it('take level 1 where the save has none', () => {
+    expect(buildingFromJSON([1, 2, 'mill', 0])).toEqual({
+      id: 'mill',
+      x: 1,
+      y: 2,
+      acc: 0,
+      level: 1,
+      active: false,
+      rate: 0,
+    });
+    expect(buildingToJSON({ id: 'mill', x: 1, y: 2, acc: 0, active: false, rate: 0 })).toEqual([
+      1,
+      2,
+      'mill',
+      0,
+      1,
+    ]);
+  });
+});
+
+/** An in-memory `localStorage` that counts its writes, so a test can see nothing was written. */
+class MemoryStorage {
+  items = new Map<string, string>();
+  writes = 0;
+  getItem(k: string) {
+    return this.items.has(k) ? this.items.get(k)! : null;
+  }
+  setItem(k: string, v: string) {
+    this.writes++;
+    this.items.set(k, String(v));
+  }
+  removeItem(k: string) {
+    this.writes++;
+    this.items.delete(k);
+  }
+}
+
+describe('storage', () => {
+  let store: MemoryStorage;
+  beforeEach(() => {
+    store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const playerSettings = JSON.stringify({ ...DEFAULT_SETTINGS, music: 0.7 });
+  const refused = ['{oops', 'null', '{}', '{"seed":1,"version":13}', '{"seed":1,"version":99}'];
+
+  it('imports nothing from a refused text', () => {
+    store.items.set(SAVE_KEY, JSON.stringify(buildSave(fullParts())));
+    store.items.set(SETTINGS_KEY, playerSettings);
+    const before = new Map(store.items);
+    for (const raw of refused) {
+      const r = importSave(raw);
+      expect(r.ok, raw).toBe(false);
+    }
+    expect(importSave('{oops')).toEqual({ ok: false, error: 'json' });
+    expect(importSave('[]')).toEqual({ ok: false, error: 'notSave' });
+    expect(importSave('{"seed":1,"version":13}')).toEqual({ ok: false, error: 'damaged' });
+    expect(store.writes).toBe(0);
+    expect(store.items).toEqual(before);
+  });
+
+  it("stores an imported save and leaves the player's settings alone", () => {
+    store.items.set(SETTINGS_KEY, playerSettings);
+    const save = { ...buildSave(fullParts()), settings: { ...DEFAULT_SETTINGS, music: 0 } };
+    const r = importSave(JSON.stringify(save));
+    expect(r.ok).toBe(true);
+    expect(JSON.parse(store.items.get(SAVE_KEY)!)).toEqual(save);
+    expect(store.items.get(SETTINGS_KEY)).toBe(playerSettings);
+    // with no settings stored, the import does not store any either
+    store.items.delete(SETTINGS_KEY);
+    expect(importSave(JSON.stringify(save)).ok).toBe(true);
+    expect(store.items.has(SETTINGS_KEY)).toBe(false);
+  });
+
+  it('stores the save inside an imported diagnostics bundle', () => {
+    const save = buildSave(fullParts());
+    const r = importSave(JSON.stringify({ diagnostics: 1, saveVersion: SAVE_VERSION, save }));
+    expect(r).toEqual({ ok: true, save });
+    expect(JSON.parse(store.items.get(SAVE_KEY)!)).toEqual(save);
+  });
+
+  it('reads no game from a refused stored save, and leaves it stored', () => {
+    for (const raw of refused) {
+      store.items.set(SAVE_KEY, raw);
+      expect(readSave(), raw).toBeNull();
+      expect(continueMeta(), raw).toBeNull();
+      expect(store.items.get(SAVE_KEY)).toBe(raw);
+    }
+    expect(store.writes).toBe(0);
+  });
+
+  it('describes the save Continue loads by day, age and money', () => {
+    expect(continueMeta()).toBeNull();
+    writeSave(buildSave(fullParts(), {}, 5000));
+    expect(continueMeta()).toEqual({
+      name: '',
+      savedAt: 5000,
+      version: SAVE_VERSION,
+      seed: 777,
+      day: 42,
+      age: 2,
+      money: 12345,
+    });
+  });
+
+  it('lists named saves by day, age and money, newest first', () => {
+    writeSlot('first', buildSave({ ...fullParts(), lastDay: 3 }, {}, 1000));
+    writeSlot('second', buildSave(fullParts(), {}, 2000));
+    expect(listSlots()).toEqual([
+      {
+        name: 'second',
+        savedAt: 2000,
+        version: SAVE_VERSION,
+        seed: 777,
+        day: 42,
+        age: 2,
+        money: 12345,
+      },
+      {
+        name: 'first',
+        savedAt: 1000,
+        version: SAVE_VERSION,
+        seed: 777,
+        day: 3,
+        age: 2,
+        money: 12345,
+      },
+    ]);
+  });
+
+  it('reads an old file the way it loads: the tier it had is the age it became', () => {
+    const v8 = {
+      ...oldestSave(),
+      version: 8,
+      economy: { money: 50, tickets: 0, tier: 7, granted: [] },
+    };
+    store.items.set(SLOTS_KEY, JSON.stringify({ old: JSON.stringify(v8) }));
+    expect(listSlots()[0]).toMatchObject({ name: 'old', version: 8, age: 2, money: 50 });
+    expect(readSlot('old')?.economy.tier).toBe(2);
+  });
+
+  it('lists a damaged named save so it can be deleted, with 0 for what it lacks', () => {
+    store.items.set(
+      SLOTS_KEY,
+      JSON.stringify({ broken: '{"seed":5,"economy":{"money":7}}', junk: '{oops', none: '[]' }),
+    );
+    expect(listSlots()).toEqual([
+      { name: 'broken', savedAt: 0, version: 0, seed: 5, day: 0, age: 0, money: 7 },
+    ]);
+    expect(readSlot('broken')).toBeNull();
+    expect(readSlot('junk')).toBeNull();
+  });
+
+  it('copes with a slot store that is not a table of saves', () => {
+    for (const raw of ['null', '[]', '5', '{oops']) {
+      store.items.set(SLOTS_KEY, raw);
+      expect(listSlots(), raw).toEqual([]);
+      expect(hasSlot('x'), raw).toBe(false);
+      expect(readSlot('x'), raw).toBeNull();
+    }
+  });
+
+  it('tells whether a named save would be replaced', () => {
+    expect(hasSlot('My game')).toBe(false);
+    writeSlot('  My game  ', buildSave(fullParts()));
+    expect(hasSlot('My game')).toBe(true);
+    expect(hasSlot(' My game ')).toBe(true);
+    expect(hasSlot('Other')).toBe(false);
+    expect(hasSlot('toString')).toBe(false);
+    const long = 'x'.repeat(31) + ' tail';
+    writeSlot(long, buildSave(fullParts()));
+    expect(hasSlot(long)).toBe(true);
+    for (const { name } of listSlots()) expect(hasSlot(name), name).toBe(true);
   });
 });
 
@@ -496,5 +893,675 @@ describe('v12 to v13', () => {
       [1, 1, 'curve', 2, 'narrow', undefined],
       [2, 1, 'straight', 0, undefined, undefined],
     ]);
+  });
+});
+
+// ------------------------------------------------------------------ properties over every file
+
+/** Stand-ins of the wrong type where a file must hold a number, a list or a block. */
+const NOT_NUMBERS: unknown[] = ['1', '', null, true, false, [], [1], {}, { n: 1 }];
+const NOT_LISTS: unknown[] = [{}, { 0: 1, length: 1 }, '[]', '', 0, 3, null, true];
+const NOT_BLOCKS: unknown[] = [null, 0, 'x', true, [], [1, 2, 3], {}];
+/** What makes a file a save (its seed) and what the loader holds every version to. */
+const V1_CHECKED = new Set([
+  'seed',
+  'clock',
+  'economy',
+  'camera',
+  'track',
+  'stations',
+  'trains',
+  'lastDay',
+]);
+/** Versions no build wrote that a file could still hold. */
+const ODD_VERSIONS: unknown[] = [0, -3, 2.5, '13', null, true];
+const TRACK_KINDS = ['straight', 'curve', 'switch', 'crossing', 'bridge', 'transition'];
+const TRACK_CLASSES = ['regular', 'high_speed', 'narrow'];
+
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+/** A value as it reads back from JSON: a list's undefined items become null. */
+const asStored = (v: unknown): unknown => JSON.parse(JSON.stringify(v));
+/** The version a file is migrated from: its own when the chain can count up from it, else v1. */
+const fromVersion = (v: unknown) =>
+  typeof v === 'number' && Number.isInteger(v) && v >= SAVE_MIN_VERSION ? v : SAVE_MIN_VERSION;
+
+/** A number where a file keeps one: zero, whole, negative, fractional or past 2^32. */
+function anyNumber(rng: Rng): number {
+  switch (rng.int(0, 4)) {
+    case 0:
+      return 0;
+    case 1:
+      return rng.int(1, 500);
+    case 2:
+      return -rng.int(1, 500);
+    case 3:
+      return rng.range(-1e6, 1e6);
+    default:
+      return rng.int(0, 2 ** 31) * 4096;
+  }
+}
+
+/**
+ * A file some build could have written: every v1 field well formed, deeper data included so no
+ * migration step trips on it; each later field there or not; a version from the oldest to a newer
+ * build's, none at all, or one no build wrote.
+ */
+function genFile(rng: Rng): Record<string, unknown> {
+  const list = <T>(max: number, item: (i: number) => T) =>
+    Array.from({ length: rng.int(0, max) }, (_, i) => item(i));
+  const tile = () => rng.int(0, 63);
+  const file: Record<string, unknown> = {
+    seed: anyNumber(rng),
+    savedAt: rng.int(0, 2 ** 41),
+    clock: { time: Math.abs(anyNumber(rng)), speedIndex: rng.int(0, 4) },
+    economy: {
+      money: anyNumber(rng),
+      tickets: rng.int(0, 50),
+      tier: rng.int(0, 9),
+      granted: list(3, (i) => i),
+    },
+    track: list(4, () => {
+      const t: unknown[] = [tile(), tile(), rng.pick(TRACK_KINDS), rng.int(0, 7)];
+      if (rng.chance(0.5)) t.push(rng.pick(TRACK_CLASSES));
+      return t;
+    }),
+    stations: list(3, (i) => ({
+      id: i + 1,
+      defId: rng.pick(['town', 'farm', 'mine']),
+      name: rng.pick(['Town Station 2', 'Alder']),
+      x: tile(),
+      y: tile(),
+      level: rng.int(1, 3),
+      storage: { passengers: rng.int(0, 40), wheat: rng.int(0, 40) },
+    })),
+    trains: list(3, (i) => ({ id: i + 1 })),
+    contracts: {
+      contracts: list(3, (i) => ({
+        id: i + 1,
+        cargo: rng.pick(['passengers', 'wood']),
+        status: rng.pick(['offer', 'active', 'done']),
+      })),
+    },
+    inventory: {
+      items: list(3, (i) => ({ uid: i + 1, defId: rng.pick(['rocket', 'mine_tub', 'mallard']) })),
+      nextUid: 4,
+    },
+    gacha: {},
+    camera: { x: anyNumber(rng), y: anyNumber(rng), zoomIndex: rng.int(0, 5) },
+    lastDay: rng.int(0, 5000),
+  };
+  const v = rng.next();
+  if (v < 0.75) file.version = rng.int(SAVE_MIN_VERSION, SAVE_VERSION);
+  else if (v < 0.85) file.version = SAVE_VERSION + rng.int(1, 4);
+  else if (v < 0.95) file.version = rng.pick(ODD_VERSIONS);
+  // else no version at all, which reads as the oldest
+  const later: Record<string, () => unknown> = {
+    decor: () => list(3, () => [tile(), tile(), rng.pick(['signal', 'townhouse']), rng.int(0, 3)]),
+    wires: () => list(2, () => [tile(), tile(), 'electric']),
+    weather: () => ({ kind: 'clear', intensity: 0, nextChangeAt: 5, rng: rng.int(0, 1e9) }),
+    world: () => ({ kind: 'generated', seed: rng.int(0, 1e9), params: { ...DEFAULT_MAP_PARAMS } }),
+    rules: () =>
+      rng.pick([
+        {},
+        { contractRefreshDays: 1.5, contractOfferCount: 3 },
+        { contractRefreshDays: 6 },
+      ]),
+    stockpile: () => ({ amounts: { wheat: rng.int(0, 300), coal: rng.int(0, 99) }, famine: false }),
+    buildings: () =>
+      list(2, () => [
+        tile(),
+        tile(),
+        rng.pick(['sawmill', 'bridge_wood']),
+        rng.next(),
+        rng.int(1, 4),
+      ]),
+    regions: () => list(4, () => rng.chance(0.5)),
+    seasonOffset: () => rng.int(0, 3),
+    towns: () =>
+      list(2, (i) => ({ id: i + 1, name: 'Alder', stationId: i + 1, custom: false, color: 0 })),
+    trade: () => ({ nextAt: rng.int(0, 99), driftDay: rng.int(0, 99) }),
+    crafting: () => ({ recipes: ['rocket'], stats: { unlocks: 0, crafts: 0, failures: 0 } }),
+    houses: () => ({ list: [], arrivals: [], visited: [] }),
+    supply: () => rng.pick(['simple', 'full']),
+    people: () => ({ rng: rng.int(0, 0xffffffff) }),
+    settings: () => ({ ...DEFAULT_SETTINGS, music: rng.next() }),
+    somethingNewer: () => ({ a: rng.int(0, 9) }),
+  };
+  for (const [key, make] of Object.entries(later)) if (rng.chance(0.5)) file[key] = make();
+  return file;
+}
+
+/** Smaller files that stay whole: later fields dropped, lists emptied, no steps to cross. */
+function* shrinkFile(file: Record<string, unknown>): Iterable<Record<string, unknown>> {
+  // the version only ever moves to the current one, or dropping it and setting it would cycle
+  for (const key of Object.keys(file))
+    if (!V1_CHECKED.has(key) && key !== 'version')
+      yield Object.fromEntries(Object.entries(file).filter(([k]) => k !== key));
+  for (const key of ['track', 'stations', 'trains'])
+    if ((file[key] as unknown[]).length > 0) yield { ...file, [key]: [] };
+  if (file.version !== SAVE_VERSION) yield { ...file, version: SAVE_VERSION };
+}
+
+/** One change to a file: the field at `path` set to `to`, or taken out when there is no `to`. */
+interface Edit {
+  path: string[];
+  to?: unknown;
+}
+/** A copy of `file` with `edit` made; unchanged when the path runs through something else. */
+function edited(file: unknown, edit: Edit): unknown {
+  const copy = asStored(file);
+  let at = copy;
+  for (const key of edit.path.slice(0, -1)) at = isObject(at) ? at[key] : undefined;
+  if (!isObject(at)) return copy;
+  const last = edit.path[edit.path.length - 1];
+  if ('to' in edit) at[last] = edit.to;
+  else delete at[last];
+  return copy;
+}
+/** One field every version has, taken out or given a value of another type. */
+function genCoreEdit(rng: Rng): Edit {
+  if (rng.chance(0.2)) {
+    const path = [rng.pick(['clock', 'economy', 'camera'])];
+    return rng.chance(0.25) ? { path } : { path, to: rng.pick(NOT_BLOCKS) };
+  }
+  const { path, kind } = rng.pick(CORE_PATHS);
+  if (rng.chance(0.25)) return { path };
+  return { path, to: rng.pick(kind === 'number' ? NOT_NUMBERS : NOT_LISTS) };
+}
+
+/** A diagnostics bundle as the game exports it, carrying `save`. */
+const bundled = (save: unknown) => ({
+  diagnostics: 1,
+  saveVersion: SAVE_VERSION,
+  at: '2026-10-09T12:00:00.000Z',
+  traffic: { sections: [] },
+  save,
+});
+
+/**
+ * What a text is by the rules of issue #78, written from the issue and apart from the loader: not
+ * JSON; not a save (no object with a numeric seed, once a diagnostics bundle is opened); damaged
+ * (a field every version since v1 has is missing or of another type); else a save.
+ */
+function verdictOf(raw: string): SaveRefusal | 'save' {
+  let j: unknown;
+  try {
+    j = JSON.parse(raw);
+  } catch {
+    return 'json';
+  }
+  if (isObject(j) && j.diagnostics === 1 && isObject(j.save)) j = j.save;
+  if (!isObject(j) || typeof j.seed !== 'number') return 'notSave';
+  const numbers = (block: unknown, keys: string[]) =>
+    isObject(block) && keys.every((k) => typeof block[k] === 'number');
+  const whole =
+    numbers(j.clock, ['time', 'speedIndex']) &&
+    numbers(j.economy, ['money', 'tickets', 'tier']) &&
+    numbers(j.camera, ['x', 'y', 'zoomIndex']) &&
+    Array.isArray(j.track) &&
+    Array.isArray(j.stations) &&
+    Array.isArray(j.trains) &&
+    typeof j.lastDay === 'number';
+  return whole ? 'save' : 'damaged';
+}
+/** The file in a text the way `verdictOf` finds it; only for a text it finds a file in. */
+function fileIn(raw: string): Record<string, unknown> {
+  let j = JSON.parse(raw) as unknown;
+  if (isObject(j) && j.diagnostics === 1 && isObject(j.save)) j = j.save;
+  return j as Record<string, unknown>;
+}
+
+/** A text for the loader: a JSON value, cut short at `cut` when it is set. */
+interface TextCase {
+  value: unknown;
+  cut?: number;
+}
+const textOf = ({ value, cut }: TextCase) => {
+  const raw = JSON.stringify(value);
+  return cut === undefined ? raw : raw.slice(0, cut);
+};
+/** Any JSON value a save text could hold: files whole or damaged, other JSON, and bundles of each. */
+function genValue(rng: Rng, depth = 0): unknown {
+  switch (rng.int(0, depth > 0 ? 3 : 4)) {
+    case 0:
+      return genFile(rng);
+    case 1: {
+      // a file with a field or two taken out or retyped, its seed among them
+      let file: unknown = genFile(rng);
+      for (let n = rng.int(1, 2); n > 0; n--) {
+        const r = rng.next();
+        const edit: Edit =
+          r < 0.4
+            ? genCoreEdit(rng)
+            : r < 0.8
+              ? { path: [rng.pick(Object.keys(file as object))] }
+              : { path: ['seed'], to: rng.pick(['1', null, [], {}]) };
+        file = edited(file, edit);
+      }
+      return file;
+    }
+    case 2: {
+      // what a broken writer could leave of a file
+      const file = genFile(rng);
+      return Object.fromEntries(Object.entries(file).filter(() => rng.chance(0.7)));
+    }
+    case 3:
+      return rng.pick([null, 0, 7, -1, 'text', '', true, [], {}, [genFile(rng)], { seed: 4 }]);
+    default: {
+      const save = genValue(rng, depth + 1);
+      const r = rng.next();
+      if (r < 0.7) return bundled(save);
+      // something that only looks like a bundle
+      if (r < 0.85) return { ...bundled(save), diagnostics: rng.pick(['1', 2, true, 0]) };
+      // a file that carries a bundle's fields beside its own
+      return { ...genFile(rng), diagnostics: 1, save: rng.pick([save, 5, null, []]) };
+    }
+  }
+}
+function genTextCase(rng: Rng): TextCase {
+  const value = genValue(rng);
+  if (!rng.chance(0.1)) return { value };
+  return { value, cut: rng.int(0, JSON.stringify(value).length - 1) };
+}
+/** Fewer top-level fields, or shorter top-level lists; never anything deeper, so it stays sound. */
+function* shrinkTop(v: unknown): Iterable<unknown> {
+  if (Array.isArray(v)) yield* shrinkArray(v);
+  if (!isObject(v)) return;
+  for (const key of Object.keys(v))
+    yield Object.fromEntries(Object.entries(v).filter(([k]) => k !== key));
+  for (const [key, x] of Object.entries(v))
+    if (Array.isArray(x)) for (const shorter of shrinkArray(x)) yield { ...v, [key]: shorter };
+  if (typeof v.version === 'number' && v.version !== SAVE_VERSION)
+    yield { ...v, version: SAVE_VERSION };
+}
+/** The whole text first, then smaller values, inside a bundle's save too. */
+function* shrinkTextCase(c: TextCase): Iterable<TextCase> {
+  if (c.cut !== undefined) yield { value: c.value };
+  for (const value of shrinkTop(c.value)) yield { ...c, value };
+  if (isObject(c.value) && isObject(c.value.save))
+    for (const save of shrinkTop(c.value.save)) yield { ...c, value: { ...c.value, save } };
+}
+
+describe('a file with one field every version has taken out or retyped', () => {
+  it('is refused as damaged, while the whole file loads with what that field held', () => {
+    // The loader must hold every version to the same v1 fields, before any step fills anything
+    // in, and a bundle must not let a damaged save past it.
+    forAll(
+      (rng) => ({ file: genFile(rng), edit: genCoreEdit(rng), inBundle: rng.chance(0.3) }),
+      ({ file, edit, inBundle }) => {
+        const text = (f: unknown) => JSON.stringify(inBundle ? bundled(f) : f);
+        const whole = readSaveText(text(file));
+        if (!('save' in whole)) throw new Error(`the whole file was refused as ${whole.error}`);
+        const { save } = whole;
+        const from = fromVersion(file.version);
+        const economy = file.economy as SaveGame['economy'];
+        expect(save.version).toBe(Math.max(from, SAVE_VERSION));
+        expect(save.seed).toBe(file.seed);
+        expect(save.clock).toEqual(file.clock);
+        expect(save.camera).toEqual(file.camera);
+        expect(save.lastDay).toBe(file.lastDay);
+        // before v9 the tier was a reputation tier, and becomes the age it reached (at most 2)
+        expect(save.economy).toMatchObject({
+          money: economy.money,
+          tickets: economy.tickets,
+          tier: from < 9 ? Math.min(2, economy.tier) : economy.tier,
+        });
+        for (const key of ['track', 'stations', 'trains'] as const)
+          expect(save[key], key).toHaveLength((file[key] as unknown[]).length);
+
+        expect(readSaveText(text(edited(file, edit)))).toEqual({ error: 'damaged' });
+      },
+      {
+        shrink: function* (c) {
+          if (c.inBundle) yield { ...c, inBundle: false };
+          for (const file of shrinkFile(c.file)) yield { ...c, file };
+        },
+      },
+    );
+  });
+});
+
+describe('readSaveText, for any text', () => {
+  it('refuses exactly what the rules refuse, for the reason they give, and loads the rest', () => {
+    // The oracle is the issue's own list of reasons. The loader may be neither stricter (a file
+    // missing only later fields loads) nor looser (a seed with no clock is damaged).
+    forAll(
+      genTextCase,
+      (c) => {
+        const raw = textOf(c);
+        const read = readSaveText(raw);
+        const verdict = verdictOf(raw);
+        expect('save' in read ? 'save' : read.error).toBe(verdict);
+        expect(parseSave(raw) === null).toBe(verdict !== 'save');
+      },
+      { shrink: shrinkTextCase },
+    );
+  });
+
+  it('brings a save it takes through every step to this version, and invents no field', () => {
+    // A version the chain cannot count up from would skip every step ("defaults apply") or never
+    // end; a step that writes a field the build does not know would carry it forever.
+    forAll(
+      genTextCase,
+      (c) => {
+        const raw = textOf(c);
+        const read = readSaveText(raw);
+        if (!('save' in read)) return;
+        const { save } = read;
+        const file = fileIn(raw);
+        const from = fromVersion(file.version);
+        expect(save.version).toBe(Math.max(from, SAVE_VERSION));
+        expect(save.loadedFrom).toBe(from === SAVE_VERSION ? undefined : from);
+        if (from < SAVE_VERSION) {
+          expect(save.migrationNotes).toHaveLength(SAVE_VERSION - from);
+          save.migrationNotes!.forEach((note, i) =>
+            expect(note.startsWith(`v${from + i}→v${from + i + 1}: `), note).toBe(true),
+          );
+        }
+        for (const key of Object.keys(save))
+          expect(KNOWN_SAVE_KEYS.has(key) || key in file, key).toBe(true);
+        // written back as it was read, it reads the same
+        const again = readSaveText(JSON.stringify(save));
+        expect('save' in again && asStored(again.save)).toEqual(asStored(save));
+      },
+      { shrink: shrinkTextCase },
+    );
+  });
+
+  it('reads a diagnostics bundle exactly as the save it carries', () => {
+    forAll(
+      (rng) => genValue(rng, 1),
+      (value) => {
+        const inBundle = readSaveText(JSON.stringify(bundled(value)));
+        if (!isObject(value)) expect(inBundle).toEqual({ error: 'notSave' });
+        else expect(inBundle).toEqual(readSaveText(JSON.stringify(value)));
+      },
+      { shrink: shrinkTop },
+    );
+  });
+});
+
+/** Parts a game could save: a generated file's fields over the full fixture's. */
+function genParts(rng: Rng): SaveParts {
+  const file = genFile(rng);
+  const parts = fullParts() as unknown as Record<string, unknown>;
+  for (const key of Object.keys(parts)) if (key in file) parts[key] = file[key];
+  return parts as unknown as SaveParts;
+}
+const FULL_PARTS = JSON.stringify(fullParts());
+const EXTRA_NAMES = ['somethingNewer', 'modData', 'zz', '7', 'Seed', 'settingsV2'];
+/** What a loaded file could hand back to be written: known names and unknown ones, any value. */
+function genExtra(rng: Rng): Record<string, unknown> {
+  const extra: Record<string, unknown> = {};
+  for (let n = rng.int(0, 6); n > 0; n--) {
+    const key = rng.chance(0.5) ? rng.pick([...KNOWN_SAVE_KEYS]) : rng.pick(EXTRA_NAMES);
+    extra[key] = rng.pick([rng.int(0, 9), 'x', null, { a: 1 }, [1, 2], { ...DEFAULT_SETTINGS }]);
+  }
+  return extra;
+}
+
+describe('buildSave, for any parts and extras', () => {
+  it('writes the unknown extras, then every part, then the stamps, and nothing else', () => {
+    // Every key written is known or was unknown in the loaded file; a known name in the extras
+    // (settings, the load notes, a stale stamp) is never written over the parts or beside them.
+    forAll(
+      (rng) => ({ parts: genParts(rng), extra: genExtra(rng), now: rng.int(0, 2 ** 41) }),
+      ({ parts, extra, now }) => {
+        const j = buildSave(parts, extra, now);
+        const unknown = Object.keys(extra).filter((k) => !KNOWN_SAVE_KEYS.has(k));
+        expect(Object.keys(j)).toEqual([...unknown, ...Object.keys(parts), 'version', 'savedAt']);
+        for (const key of Object.keys(j))
+          expect(KNOWN_SAVE_KEYS.has(key) || unknown.includes(key), key).toBe(true);
+        for (const key of Object.keys(parts) as (keyof SaveParts)[])
+          expect(j[key], key).toBe(parts[key]);
+        for (const key of unknown) expect(j[key], key).toBe(extra[key]);
+        expect(j.version).toBe(SAVE_VERSION);
+        expect(j.savedAt).toBe(now);
+        expect(readSaveText(JSON.stringify(j))).toEqual({ save: asStored(j) });
+      },
+      {
+        shrink: function* (c) {
+          if (JSON.stringify(c.parts) !== FULL_PARTS) yield { ...c, parts: fullParts() };
+          for (const key of Object.keys(c.extra))
+            yield {
+              ...c,
+              extra: Object.fromEntries(Object.entries(c.extra).filter(([k]) => k !== key)),
+            };
+        },
+        format: (c) =>
+          JSON.stringify({
+            ...c,
+            parts: JSON.stringify(c.parts) === FULL_PARTS ? 'fullParts()' : c.parts,
+          }),
+      },
+    );
+  });
+});
+
+const NAME_CHARS = ['a', 'b', 'Z', ' ', ' ', '\t', ' ', 'é', '😀'];
+/** A slot name a player could type: short or around the 32-character cut, spaces anywhere. */
+function genName(rng: Rng): string {
+  if (rng.chance(0.15))
+    return rng.pick(['toString', 'constructor', 'hasOwnProperty', 'valueOf', '']);
+  const length = rng.chance(0.5) ? rng.int(0, 6) : rng.int(28, 40);
+  return Array.from({ length }, () => rng.pick(NAME_CHARS)).join('');
+}
+/** A name close to `name`: padded, run on, upper-cased or cut. */
+function variantOf(rng: Rng, name: string): string {
+  switch (rng.int(0, 3)) {
+    case 0:
+      return ' '.repeat(rng.int(0, 2)) + name + '\t'.repeat(rng.int(0, 2));
+    case 1:
+      return name + genName(rng);
+    case 2:
+      return name.toUpperCase();
+    default:
+      return name.slice(0, rng.int(0, name.length));
+  }
+}
+function* shrinkName(name: string): Iterable<string> {
+  for (const chars of shrinkArray(name.split(''))) yield chars.join('');
+}
+/** A slot table as storage could hold it: names to texts of any kind, or not a table at all. */
+function genSlotsText(rng: Rng): string {
+  if (rng.chance(0.15)) return rng.pick(['null', '[]', '5', '"x"', '{oops', '']);
+  const table: Record<string, unknown> = {};
+  for (let n = rng.int(0, 4); n > 0; n--)
+    table[genName(rng)] = rng.chance(0.9) ? textOf(genTextCase(rng)) : rng.pick([5, null, {}, []]);
+  return JSON.stringify(table);
+}
+/** What storage could hold: a stored game, the settings and a slot table, each there or not. */
+function genStored(rng: Rng): Record<string, string> {
+  const items: Record<string, string> = {};
+  if (rng.chance(0.6)) items[SAVE_KEY] = textOf(genTextCase(rng));
+  if (rng.chance(0.6))
+    items[SETTINGS_KEY] = rng.pick([
+      JSON.stringify({ ...DEFAULT_SETTINGS, music: 0.7 }),
+      '{"music":0}',
+      '{oops',
+      'null',
+    ]);
+  if (rng.chance(0.7)) items[SLOTS_KEY] = genSlotsText(rng);
+  if (rng.chance(0.2)) items['terepasztal.levels'] = '[]';
+  return items;
+}
+/** Smaller stored texts: the JSON in `raw` shrunk as a loader's text is, when it is JSON. */
+function* shrinkStoredText(raw: string): Iterable<string> {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  for (const c of shrinkTextCase({ value })) yield textOf(c);
+}
+/** Fewer stored keys, then fewer named saves, then smaller texts in the slots and the game. */
+function* shrinkStored(items: Record<string, string>): Iterable<Record<string, string>> {
+  for (const key of Object.keys(items))
+    yield Object.fromEntries(Object.entries(items).filter(([k]) => k !== key));
+  const table = slotTable(items[SLOTS_KEY]);
+  for (const name of Object.keys(table)) {
+    const fewer = Object.fromEntries(Object.entries(table).filter(([k]) => k !== name));
+    yield { ...items, [SLOTS_KEY]: JSON.stringify(fewer) };
+  }
+  for (const [name, text] of Object.entries(table))
+    if (typeof text === 'string')
+      for (const smaller of shrinkStoredText(text))
+        yield { ...items, [SLOTS_KEY]: JSON.stringify({ ...table, [name]: smaller }) };
+  if (items[SAVE_KEY] !== undefined)
+    for (const smaller of shrinkStoredText(items[SAVE_KEY]))
+      yield { ...items, [SAVE_KEY]: smaller };
+}
+/** The slot table in a stored text, read apart from the module: a JSON object, else none. */
+function slotTable(raw: string | undefined): Record<string, unknown> {
+  try {
+    const t: unknown = JSON.parse(raw ?? '{}');
+    return isObject(t) ? t : {};
+  } catch {
+    return {};
+  }
+}
+/** What a list shows of a stored text: its stamps as written, the rest read from `s`, 0 if absent. */
+function shownAs(name: string, raw: string, s: Record<string, unknown>) {
+  const file = fileIn(raw);
+  const n = (v: unknown) => (typeof v === 'number' ? v : 0);
+  const economy = isObject(s.economy) ? s.economy : {};
+  return {
+    name,
+    savedAt: n(file.savedAt),
+    version: n(file.version),
+    seed: file.seed,
+    day: n(s.lastDay),
+    age: n(economy.tier),
+    money: n(economy.money),
+  };
+}
+
+describe('storage, from any state it is in', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+  /** A fresh in-memory localStorage holding `items`, in place of the real one. */
+  function stubStorage(items: Record<string, string>) {
+    const store = new MemoryStorage();
+    for (const [k, v] of Object.entries(items)) store.items.set(k, v);
+    vi.stubGlobal('localStorage', store);
+    return store;
+  }
+
+  it('imports a text only when it is taken, in one write, and never touches the settings', () => {
+    forAll(
+      (rng) => ({ items: genStored(rng), text: genTextCase(rng) }),
+      ({ items, text }) => {
+        const raw = textOf(text);
+        const store = stubStorage(items);
+        const before = new Map(store.items);
+        const read = readSaveText(raw);
+        const r = importSave(raw);
+        if ('error' in read) {
+          expect(r).toEqual({ ok: false, error: read.error });
+          expect(store.writes).toBe(0);
+          expect(store.items).toEqual(before);
+          return;
+        }
+        expect(r).toEqual({ ok: true, save: read.save });
+        expect(store.writes).toBe(1);
+        // the settings, the slots and the rest are as they were, there or not
+        const others = (m: Map<string, string>) => [...m].filter(([k]) => k !== SAVE_KEY);
+        expect(others(store.items)).toEqual(others(before));
+        expect(JSON.parse(store.items.get(SAVE_KEY)!)).toEqual(asStored(read.save));
+        // Continue now loads the imported game and describes it
+        expect(asStored(readSave())).toEqual(asStored(read.save));
+        expect(continueMeta()).toMatchObject({
+          seed: read.save.seed,
+          day: read.save.lastDay,
+          age: read.save.economy.tier,
+          money: read.save.economy.money,
+        });
+      },
+      {
+        shrink: function* (c) {
+          for (const text of shrinkTextCase(c.text)) yield { ...c, text };
+          for (const items of shrinkStored(c.items)) yield { ...c, items };
+        },
+      },
+    );
+  });
+
+  it('reads without writing, and Continue and the slot list show exactly what loads', () => {
+    // Continue is offered exactly when there is a game to load; a slot that loads is listed by
+    // what loading gives (an old tier as its age), a damaged one by what it holds, 0 for the rest.
+    forAll(
+      (rng) => ({ items: genStored(rng), probe: genName(rng) }),
+      ({ items, probe }) => {
+        const store = stubStorage(items);
+        const before = new Map(store.items);
+
+        const game = readSave();
+        const meta = continueMeta();
+        const stored = items[SAVE_KEY];
+        expect(game === null).toBe(stored === undefined || verdictOf(stored) !== 'save');
+        expect(meta === null).toBe(game === null);
+        if (game) expect(meta).toEqual(shownAs('', stored, game));
+
+        const listed = listSlots();
+        let shown = 0;
+        for (const [name, text] of Object.entries(slotTable(items[SLOTS_KEY]))) {
+          const verdict = typeof text === 'string' ? verdictOf(text) : 'notSave';
+          const slot = readSlot(name);
+          const metas = listed.filter((m) => m.name === name);
+          expect(slot === null, name).toBe(verdict !== 'save');
+          if (verdict === 'notSave' || verdict === 'json') expect(metas, name).toEqual([]);
+          else {
+            shown++;
+            const s = slot ?? fileIn(text as string);
+            expect(metas, name).toEqual([shownAs(name, text as string, s)]);
+          }
+        }
+        expect(listed).toHaveLength(shown);
+        for (let i = 1; i < listed.length; i++)
+          expect(listed[i - 1].savedAt).toBeGreaterThanOrEqual(listed[i].savedAt);
+
+        hasSlot(probe);
+        readSlot(probe);
+        expect(store.writes).toBe(0);
+        expect(store.items).toEqual(before);
+      },
+      {
+        shrink: function* (c) {
+          for (const items of shrinkStored(c.items)) yield { ...c, items };
+          for (const probe of shrinkName(c.probe)) yield { ...c, probe };
+        },
+      },
+    );
+  });
+
+  it('finds a named save exactly when writing that name would replace one', () => {
+    const save = buildSave(fullParts(), {}, 1);
+    forAll(
+      (rng) => {
+        const names = Array.from({ length: rng.int(0, 4) }, () => genName(rng));
+        const near = names.length > 0 && rng.chance(0.6);
+        return { names, query: near ? variantOf(rng, rng.pick(names)) : genName(rng) };
+      },
+      ({ names, query }) => {
+        const store = stubStorage({});
+        for (const name of names) writeSlot(name, save);
+        const count = () => Object.keys(slotTable(store.items.get(SLOTS_KEY))).length;
+        const before = count();
+        const found = hasSlot(query);
+        writeSlot(query, save);
+        expect(found).toBe(count() === before);
+        expect(hasSlot(query)).toBe(true);
+        for (const { name } of listSlots()) expect(hasSlot(name), name).toBe(true);
+      },
+      {
+        shrink: function* (c) {
+          for (const names of shrinkArray(c.names, shrinkName)) yield { ...c, names };
+          for (const query of shrinkName(c.query)) yield { ...c, query };
+        },
+      },
+    );
   });
 });
