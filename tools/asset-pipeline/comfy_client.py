@@ -166,7 +166,17 @@ def prepare_graph(base, image_value, prefix, ccfg):
         if nid not in g:
             raise ComfyError(f"comfy.set: node {nid} not in workflow")
         _set_input(g, nid, name, value)
+    # the image the model was conditioned on and its mask, named by their node titles: the blender
+    # stage projects that exact crop back onto the mesh (Pixal3D meshes sit in its camera frame)
+    for nid in source_nodes(g).values():
+        _set_input(g, nid, "filename_prefix", f"{prefix}_{g[nid]['_meta']['title']}")
     return g, save_id
+
+
+def source_nodes(graph):
+    """{"source" | "mask": node id} of the SaveImage nodes titled so; a workflow may have neither."""
+    return {v["_meta"]["title"]: k for k, v in graph.items()
+            if v["class_type"] == "SaveImage" and v.get("_meta", {}).get("title") in ("source", "mask")}
 
 
 def find_model_file(outputs, save_id):
@@ -198,7 +208,15 @@ def run_asset(comfy, base_graph, asset_id, image_path: Path, dest: Path, ccfg):
     comfy.log(f"[{asset_id}] queued prompt {pid}")
     t0 = time.time()
     entry = comfy.wait(pid)
-    info = find_model_file(entry.get("outputs", {}), save_id)
+    outputs = entry.get("outputs", {})
+    info = find_model_file(outputs, save_id)
     comfy.download(info, dest)
+    for kind, nid in source_nodes(graph).items():
+        images = outputs.get(nid, {}).get("images") or []
+        if not images:
+            raise ComfyError(f"[{asset_id}] the {kind} node {nid} saved no image")
+        comfy.download(images[0], dest.with_suffix(f".{kind}.png"))
+    dest.with_suffix(".prompt.json").write_text(json.dumps({"prompt_id": pid, "graph": graph}, indent=1),
+                                                encoding="utf-8")
     comfy.log(f"[{asset_id}] 3D done in {time.time() - t0:.0f}s -> {dest}")
     return dest

@@ -120,6 +120,32 @@ describe('pack-atlas', () => {
     expect(f).toMatchObject({ w: 64, h: 64, ax: 32, ay: 48 });
   });
 
+  it('carries the resolution of the frames from the source table', () => {
+    const hi = join(dir, 'hi');
+    mkdirSync(hi, { recursive: true });
+    writeFileSync(join(hi, 'atlas.json'), JSON.stringify({ partial: true, resolution: 4 }));
+    writeFileSync(join(hi, 'one.png'), readFileSync(join(src(), 'wide.png')));
+    run('wagons', '--src', hi, '--out', out(), '--prefix', 'rolling/');
+    expect(readAtlas('wagons')).toMatchObject({
+      resolution: 4,
+      partial: true,
+      frames: { 'rolling/one': {} },
+    });
+    run('rolling', '--src', src(), '--out', out());
+    expect(readAtlas('rolling').resolution).toBeUndefined();
+  });
+
+  it('refuses a resolution the game would not load', () => {
+    // src/engine/atlas.ts drops a file whose resolution is outside 1..8, and the generator draws instead
+    for (const resolution of [0, 9, 'x']) {
+      const bad = join(dir, `bad-${resolution}`);
+      mkdirSync(bad, { recursive: true });
+      writeFileSync(join(bad, 'atlas.json'), JSON.stringify({ resolution }));
+      writeFileSync(join(bad, 'one.png'), readFileSync(join(src(), 'wide.png')));
+      expect(() => run('bad', '--src', bad, '--out', out())).toThrow();
+    }
+  });
+
   it('marks the table partial only when the source asks for it', () => {
     run('rolling', '--src', src(), '--out', out());
     expect(readAtlas('rolling').partial).toBeUndefined();

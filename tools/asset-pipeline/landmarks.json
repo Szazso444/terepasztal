@@ -1,0 +1,1718 @@
+{
+ "_doc": "Measured on the source crop the model was conditioned on (models_raw/<id>.source.png, 1024 px), pixel coords (x right, y down). wheels: name, hub_px (hub or axle box centre), rim_px (tyre edge points); back-projected onto the mesh for axle positions and diameters. nose_px: a pixel on the nose (+X). scale: a real distance between two named wheels sets the scale instead of height_m. level: 'wheels' levels the chassis on the measured wheel bottoms, 'body' (default above one tile) on the body itself (narrowest yaw, principal axis in side view). rail: 'lowest' puts the rail plane at the mesh's lowest point instead of under the wheels. color_px: boxes [x0, y0, x1, y1] whose median colour paints built wheels (small stock). inner_y: share of the half width inside which the model survives when its wheels are cut. Final-frame entries (metres from the part's centre, + towards the nose; heights above the rail): cut_boxes remove the model's running gear below top; cut_wheels remove named wheels outboard of inner_y; baked builds running gear rigid with the body sprite (a bogies.json-style spec, axles may name a measured wheel); bogies are the train's own bogie sprites, rolling/bogie_<style>_f<f>: bogie index of the part hangs at its pivot, which src/data pivots put where the image has the truck (the log prints them; at = 'image' draws it away from its pivot with bogieDraw instead), built from a spec or taken from the model's own truck (mesh box, squared up); attach boxes move end gear from the body onto that bogie, so it turns with it (pilots, couplers, steps of a rigid body on two or more trucks). symmetric (default true) rebuilds the side the source hides as the mirror of the seen one. detaper: parts whose box body is made equally wide along its length (the source's perspective leaves the near end wider).",
+ "rocket": {
+  "scale": {
+   "between": [
+    "rear",
+    "front"
+   ],
+   "m": 2.16,
+   "note": "Rocket wheelbase 7 ft 1 in"
+  },
+  "nose_px": [
+   958,
+   782
+  ],
+  "wheels": [
+   {
+    "name": "rear",
+    "hub_px": [
+     152,
+     588
+    ],
+    "rim_px": [
+     [
+      82,
+      590
+     ],
+     [
+      135,
+      448
+     ],
+     [
+      185,
+      729
+     ]
+    ],
+    "spokes": 12
+   },
+   {
+    "name": "front",
+    "hub_px": [
+     580,
+     835
+    ],
+    "rim_px": [
+     [
+      513,
+      840
+     ],
+     [
+      565,
+      723
+     ],
+     [
+      615,
+      954
+     ]
+    ],
+    "spokes": 12
+   }
+  ],
+  "color_px": {
+   "tyre": [
+    90,
+    604,
+    95,
+    616
+   ],
+   "wheel": [
+    100,
+    604,
+    106,
+    616
+   ],
+   "hub": [
+    574,
+    830,
+    582,
+    838
+   ]
+  },
+  "inner_y": 0.72,
+  "level": "wheels"
+ },
+ "flying_scotsman": {
+  "nose_px": [
+   958,
+   722
+  ],
+  "wheels": [
+   {
+    "name": "l1",
+    "hub_px": [
+     745,
+     745
+    ],
+    "rim_px": [
+     [
+      729,
+      743
+     ],
+     [
+      750,
+      773
+     ]
+    ]
+   },
+   {
+    "name": "l2",
+    "hub_px": [
+     814,
+     777
+    ],
+    "rim_px": [
+     [
+      800,
+      777
+     ],
+     [
+      818,
+      807
+     ]
+    ]
+   },
+   {
+    "name": "d1",
+    "hub_px": [
+     460,
+     585
+    ],
+    "rim_px": [
+     [
+      421,
+      585
+     ],
+     [
+      470,
+      638
+     ]
+    ]
+   },
+   {
+    "name": "d2",
+    "hub_px": [
+     563,
+     634
+    ],
+    "rim_px": [
+     [
+      527,
+      632
+     ],
+     [
+      563,
+      568
+     ],
+     [
+      566,
+      700
+     ]
+    ]
+   },
+   {
+    "name": "d3",
+    "hub_px": [
+     672,
+     689
+    ],
+    "rim_px": [
+     [
+      675,
+      731
+     ]
+    ]
+   },
+   {
+    "name": "tr",
+    "hub_px": [
+     334,
+     554
+    ],
+    "rim_px": [
+     [
+      347,
+      582
+     ]
+    ]
+   },
+   {
+    "name": "t1",
+    "hub_px": [
+     110,
+     445
+    ],
+    "rim_px": [
+     [
+      117,
+      475
+     ]
+    ]
+   },
+   {
+    "name": "t2",
+    "hub_px": [
+     169,
+     472
+    ],
+    "rim_px": [
+     [
+      180,
+      505
+     ]
+    ]
+   },
+   {
+    "name": "t3",
+    "hub_px": [
+     232,
+     504
+    ],
+    "rim_px": [
+     [
+      245,
+      535
+     ]
+    ]
+   }
+  ],
+  "cut_boxes": [
+   {
+    "part": "engine",
+    "x": [
+     -3.9,
+     -2.35
+    ],
+    "top": 1.55,
+    "note": "trailing axle under the cab: its own bogie sprite"
+   },
+   {
+    "part": "engine",
+    "x": [
+     -2.35,
+     1.85
+    ],
+    "top": 1.97,
+    "note": "the model's coupled wheels, rods and frames up to the running plate: rebuilt round, with frames, and baked into the body"
+   },
+   {
+    "part": "engine",
+    "x": [
+     1.4,
+     3.3
+    ],
+    "top": 0.8,
+    "note": "leading bogie, below the cylinders: its own bogie sprite"
+   },
+   {
+    "part": "tender",
+    "x": [
+     -2.5,
+     2.5
+    ],
+    "top": 0.78,
+    "note": "the tender's wheels below its outside frame; rebuilt round"
+   }
+  ],
+  "baked": [
+   {
+    "part": "engine",
+    "note": "coupled wheels are rigid in the frame: drawn with the body, so they stay under their splashers on every curve. 2.03 m drivers x 0.61 clear each other at the compressed spacing",
+    "spec": {
+     "scale": 0.61,
+     "colors": {
+      "tyre": [
+       150,
+       146,
+       135
+      ],
+      "wheel": [
+       52,
+       82,
+       56
+      ],
+      "hub": [
+       60,
+       64,
+       62
+      ],
+      "rod": [
+       176,
+       170,
+       156
+      ],
+      "detail": [
+       46,
+       49,
+       49
+      ],
+      "frame": [
+       30,
+       32,
+       34
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ],
+      "splasher": [
+       60,
+       82,
+       57
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "d3",
+       "d": 2.03,
+       "spokes": 20,
+       "driver": true
+      },
+      {
+       "wheel": "d2",
+       "d": 2.03,
+       "spokes": 20,
+       "driver": true
+      },
+      {
+       "wheel": "d1",
+       "d": 2.03,
+       "spokes": 20,
+       "driver": true
+      }
+     ],
+     "boxes": {
+      "w": 0.3,
+      "h": 0.36,
+      "out": 0.08
+     },
+     "rods": {
+      "crank": 0.33,
+      "crank_deg": -35,
+      "connect": 1,
+      "crosshead": {
+       "x": 1.75,
+       "z_f": 1.15,
+       "bar": 0.8
+      }
+     },
+     "splashers": {
+      "out": 0.3,
+      "gap": 0.05,
+      "thick": 0.06
+     }
+    }
+   },
+   {
+    "part": "tender",
+    "note": "a rigid six-wheel tender: its axles are drawn with the tender body",
+    "spec": {
+     "scale": 1.0,
+     "colors": {
+      "tyre": [
+       150,
+       146,
+       135
+      ],
+      "wheel": [
+       52,
+       82,
+       56
+      ],
+      "hub": [
+       60,
+       64,
+       62
+      ],
+      "rod": [
+       176,
+       170,
+       156
+      ],
+      "detail": [
+       46,
+       49,
+       49
+      ],
+      "frame": [
+       30,
+       32,
+       34
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "t3",
+       "d": 1.27,
+       "spokes": 12
+      },
+      {
+       "wheel": "t2",
+       "d": 1.27,
+       "spokes": 12
+      },
+      {
+       "wheel": "t1",
+       "d": 1.27,
+       "spokes": 12
+      }
+     ]
+    }
+   }
+  ],
+  "bogies": [
+   {
+    "style": "flying_scotsman_leading",
+    "part": "engine",
+    "index": 0,
+    "centre": [
+     "l1",
+     "l2"
+    ],
+    "spec": {
+     "scale": 0.61,
+     "colors": {
+      "tyre": [
+       150,
+       146,
+       135
+      ],
+      "wheel": [
+       52,
+       82,
+       56
+      ],
+      "hub": [
+       60,
+       64,
+       62
+      ],
+      "rod": [
+       176,
+       170,
+       156
+      ],
+      "detail": [
+       46,
+       49,
+       49
+      ],
+      "frame": [
+       30,
+       32,
+       34
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "l2",
+       "d": 0.97,
+       "spokes": 10
+      },
+      {
+       "wheel": "l1",
+       "d": 0.97,
+       "spokes": 10
+      }
+     ],
+     "frame": {
+      "type": "plate_inside",
+      "x0": -0.85,
+      "x1": 0.85,
+      "bottom_f": 0.18,
+      "top_f": 0.62,
+      "inset": 0.3,
+      "cross": [
+       0.0
+      ]
+     },
+     "boxes": {
+      "w": 0.36,
+      "h": 0.4,
+      "out": 0.12
+     },
+     "springs": {
+      "leaf": [
+       [
+        0.4125,
+        0.95,
+        0.8
+       ],
+       [
+        -0.4125,
+        0.95,
+        0.8
+       ]
+      ],
+      "out": 0.12
+     }
+    }
+   },
+   {
+    "style": "flying_scotsman_trailing",
+    "part": "engine",
+    "index": 1,
+    "centre": [
+     "tr"
+    ],
+    "spec": {
+     "scale": 0.61,
+     "colors": {
+      "tyre": [
+       150,
+       146,
+       135
+      ],
+      "wheel": [
+       52,
+       82,
+       56
+      ],
+      "hub": [
+       60,
+       64,
+       62
+      ],
+      "rod": [
+       176,
+       170,
+       156
+      ],
+      "detail": [
+       46,
+       49,
+       49
+      ],
+      "frame": [
+       30,
+       32,
+       34
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "tr",
+       "d": 1.12,
+       "spokes": 12
+      }
+     ],
+     "frame": {
+      "type": "plate_inside",
+      "x0": -0.55,
+      "x1": 0.55,
+      "bottom_f": 0.2,
+      "top_f": 0.6,
+      "inset": 0.3,
+      "cross": [
+       0.0
+      ]
+     },
+     "boxes": {
+      "w": 0.34,
+      "h": 0.36,
+      "out": 0.12
+     }
+    }
+   }
+  ],
+  "skirts": [
+   {
+    "part": "engine",
+    "x": [
+     -2.35,
+     1.85
+    ],
+    "bottom": 1.0,
+    "top": 1.99,
+    "inset": 0.3,
+    "color": [
+     30,
+     32,
+     34
+    ],
+    "note": "the frames between the wheels up to the running plate, rigid with the body",
+    "valance": {
+     "height": 0.24,
+     "out": 0.4,
+     "color": [
+      58,
+      86,
+      58
+     ]
+    }
+   }
+  ]
+ },
+ "sd40": {
+  "nose_px": [
+   955,
+   760
+  ],
+  "wheels": [
+   {
+    "name": "r1",
+    "hub_px": [
+     115,
+     480
+    ],
+    "rim_px": [
+     [
+      117,
+      500
+     ]
+    ]
+   },
+   {
+    "name": "r2",
+    "hub_px": [
+     177,
+     510
+    ],
+    "rim_px": [
+     [
+      182,
+      527
+     ]
+    ]
+   },
+   {
+    "name": "r3",
+    "hub_px": [
+     247,
+     537
+    ],
+    "rim_px": [
+     [
+      252,
+      557
+     ]
+    ]
+   },
+   {
+    "name": "f1",
+    "hub_px": [
+     575,
+     687
+    ],
+    "rim_px": [
+     [
+      580,
+      705
+     ]
+    ]
+   },
+   {
+    "name": "f2",
+    "hub_px": [
+     645,
+     717
+    ],
+    "rim_px": [
+     [
+      655,
+      737
+     ]
+    ]
+   },
+   {
+    "name": "f3",
+    "hub_px": [
+     717,
+     750
+    ],
+    "rim_px": [
+     [
+      727,
+      770
+     ]
+    ]
+   }
+  ],
+  "rail": "lowest",
+  "cut_boxes": [
+   {
+    "part": "body",
+    "x": [
+     -7.5,
+     -2.8
+    ],
+    "top": 1.1,
+    "note": "the model's rear truck: its own bogie sprite"
+   },
+   {
+    "part": "body",
+    "x": [
+     2.8,
+     7.2
+    ],
+    "top": 1.1,
+    "note": "the model's front truck: its own bogie sprite"
+   }
+  ],
+  "detaper": [
+   "body"
+  ],
+  "bogies": [
+   {
+    "style": "sd40_front",
+    "part": "body",
+    "index": 0,
+    "centre": [
+     "f1",
+     "f2",
+     "f3"
+    ],
+    "mesh": {
+     "x": [
+      2.8,
+      7.2
+     ],
+     "top": 1.1
+    },
+    "attach": [
+     {
+      "x": [
+       7.2,
+       9.6
+      ],
+      "top": 1.2,
+      "note": "pilot, plough, coupler and end steps, below the walkway"
+     }
+    ]
+   },
+   {
+    "style": "sd40_rear",
+    "part": "body",
+    "index": 1,
+    "centre": [
+     "r1",
+     "r2",
+     "r3"
+    ],
+    "mesh": {
+     "x": [
+      -7.5,
+      -2.8
+     ],
+     "top": 1.1
+    },
+    "attach": [
+     {
+      "x": [
+       -9.6,
+       -7.5
+      ],
+      "top": 1.2,
+      "note": "rear pilot, coupler and end steps"
+     }
+    ]
+   }
+  ]
+ },
+ "f7": {
+  "nose_px": [
+   930,
+   780
+  ],
+  "rail": "lowest",
+  "wheels": [
+   {
+    "name": "r1",
+    "hub_px": [
+     121,
+     509
+    ],
+    "rim_px": [
+     [
+      150,
+      542
+     ]
+    ]
+   },
+   {
+    "name": "r2",
+    "hub_px": [
+     237,
+     560
+    ],
+    "rim_px": [
+     [
+      260,
+      592
+     ]
+    ]
+   },
+   {
+    "name": "f1",
+    "hub_px": [
+     557,
+     697
+    ],
+    "rim_px": [
+     [
+      585,
+      735
+     ]
+    ]
+   },
+   {
+    "name": "f2",
+    "hub_px": [
+     700,
+     760
+    ],
+    "rim_px": [
+     [
+      727,
+      800
+     ]
+    ]
+   }
+  ],
+  "cut_boxes": [
+   {
+    "part": "body",
+    "x": [
+     -5.2,
+     -1.95
+    ],
+    "top": 1.3,
+    "note": "the model's rear truck: its own bogie sprite"
+   },
+   {
+    "part": "body",
+    "x": [
+     1.7,
+     4.75
+    ],
+    "top": 1.3,
+    "note": "the model's front truck: its own bogie sprite"
+   }
+  ],
+  "bogies": [
+   {
+    "style": "f7_front",
+    "part": "body",
+    "index": 0,
+    "centre": [
+     "f1",
+     "f2"
+    ],
+    "mesh": {
+     "x": [
+      1.7,
+      4.75
+     ],
+     "top": 1.3
+    },
+    "attach": [
+     {
+      "x": [
+       4.75,
+       6.4
+      ],
+      "top": 1.3,
+      "note": "pilot, snowplow and coupler, below the anticlimber"
+     }
+    ],
+    "model": "f7_truck"
+   },
+   {
+    "style": "f7_rear",
+    "part": "body",
+    "index": 1,
+    "centre": [
+     "r1",
+     "r2"
+    ],
+    "mesh": {
+     "x": [
+      -5.2,
+      -1.95
+     ],
+     "top": 1.3
+    },
+    "model": "f7_truck",
+    "note": "no rear end gear: the reconstruction has no separate rear coupler or steps, only the end wall, which stays on the body"
+   }
+  ],
+  "detaper": [
+   "body"
+  ]
+ },
+ "black_five": {
+  "nose_px": [
+   850,
+   600
+  ],
+  "wheels": [
+   {
+    "name": "l2",
+    "hub_px": [
+     778,
+     757
+    ],
+    "rim_px": [
+     [
+      783,
+      793
+     ],
+     [
+      755,
+      753
+     ]
+    ]
+   },
+   {
+    "name": "d1",
+    "hub_px": [
+     425,
+     588
+    ],
+    "rim_px": [
+     [
+      390,
+      590
+     ],
+     [
+      437,
+      630
+     ]
+    ]
+   },
+   {
+    "name": "d2",
+    "hub_px": [
+     505,
+     617
+    ],
+    "rim_px": [
+     [
+      479,
+      602
+     ],
+     [
+      518,
+      668
+     ]
+    ]
+   },
+   {
+    "name": "d3",
+    "hub_px": [
+     603,
+     670
+    ],
+    "rim_px": [
+     [
+      562,
+      663
+     ],
+     [
+      607,
+      712
+     ]
+    ]
+   },
+   {
+    "name": "t1",
+    "hub_px": [
+     107,
+     450
+    ],
+    "rim_px": [
+     [
+      122,
+      488
+     ]
+    ]
+   },
+   {
+    "name": "t2",
+    "hub_px": [
+     172,
+     483
+    ],
+    "rim_px": [
+     [
+      183,
+      518
+     ]
+    ]
+   },
+   {
+    "name": "t3",
+    "hub_px": [
+     247,
+     517
+    ],
+    "rim_px": [
+     [
+      260,
+      553
+     ]
+    ]
+   }
+  ],
+  "trim_front_m": 0.8,
+  "cut_boxes": [
+   {
+    "part": "engine",
+    "x": [
+     -2.93,
+     1.25
+    ],
+    "top": 1.9,
+    "note": "the model's coupled wheels, rods and frames below the running plate: rebuilt round and baked into the body"
+   },
+   {
+    "part": "engine",
+    "x": [
+     1.25,
+     3.2
+    ],
+    "top": 0.85,
+    "note": "leading bogie, below the cylinders: its own bogie sprite"
+   },
+   {
+    "part": "tender",
+    "x": [
+     -2.2,
+     2.2
+    ],
+    "top": 0.85,
+    "note": "the tender's wheels below its frame; rebuilt round"
+   }
+  ],
+  "skirts": [
+   {
+    "part": "engine",
+    "x": [
+     -2.93,
+     1.25
+    ],
+    "bottom": 0.95,
+    "top": 1.9,
+    "inset": 0.3,
+    "color": [
+     30,
+     32,
+     36
+    ],
+    "note": "the frames between the wheels up to the running plate, rigid with the body"
+   }
+  ],
+  "baked": [
+   {
+    "part": "engine",
+    "note": "coupled wheels are rigid in the frame: drawn with the body",
+    "spec": {
+     "scale": 0.7,
+     "colors": {
+      "tyre": [
+       120,
+       124,
+       128
+      ],
+      "wheel": [
+       42,
+       46,
+       52
+      ],
+      "hub": [
+       60,
+       64,
+       68
+      ],
+      "rod": [
+       200,
+       186,
+       150
+      ],
+      "detail": [
+       40,
+       42,
+       46
+      ],
+      "frame": [
+       30,
+       32,
+       36
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "d3",
+       "d": 1.83,
+       "spokes": 18,
+       "driver": true
+      },
+      {
+       "wheel": "d2",
+       "d": 1.83,
+       "spokes": 18,
+       "driver": true
+      },
+      {
+       "wheel": "d1",
+       "d": 1.83,
+       "spokes": 18,
+       "driver": true
+      }
+     ],
+     "boxes": {
+      "w": 0.3,
+      "h": 0.36,
+      "out": 0.08
+     },
+     "rods": {
+      "crank": 0.33,
+      "crank_deg": -35,
+      "connect": 1,
+      "crosshead": {
+       "x": 1.15,
+       "z_f": 1.15,
+       "bar": 0.8
+      }
+     }
+    }
+   },
+   {
+    "part": "tender",
+    "note": "a rigid six-wheel tender: its axles are drawn with the tender body",
+    "spec": {
+     "scale": 0.83,
+     "colors": {
+      "tyre": [
+       120,
+       124,
+       128
+      ],
+      "wheel": [
+       42,
+       46,
+       52
+      ],
+      "hub": [
+       60,
+       64,
+       68
+      ],
+      "rod": [
+       200,
+       186,
+       150
+      ],
+      "detail": [
+       40,
+       42,
+       46
+      ],
+      "frame": [
+       30,
+       32,
+       36
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "t3",
+       "d": 1.14,
+       "spokes": 12
+      },
+      {
+       "wheel": "t2",
+       "d": 1.14,
+       "spokes": 12
+      },
+      {
+       "wheel": "t1",
+       "d": 1.14,
+       "spokes": 12
+      }
+     ]
+    }
+   }
+  ],
+  "bogies": [
+   {
+    "style": "black_five_leading",
+    "part": "engine",
+    "index": 0,
+    "centre": 2.034,
+    "note": "l1 hides behind the cylinders in the source: placed between d3 and l2 as the image spaces them",
+    "spec": {
+     "scale": 0.7,
+     "colors": {
+      "tyre": [
+       120,
+       124,
+       128
+      ],
+      "wheel": [
+       42,
+       46,
+       52
+      ],
+      "hub": [
+       60,
+       64,
+       68
+      ],
+      "rod": [
+       200,
+       186,
+       150
+      ],
+      "detail": [
+       40,
+       42,
+       46
+      ],
+      "frame": [
+       30,
+       32,
+       36
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "x": 0.531,
+       "d": 1.0,
+       "spokes": 10
+      },
+      {
+       "x": -0.531,
+       "d": 1.0,
+       "spokes": 10
+      }
+     ],
+     "frame": {
+      "type": "plate_inside",
+      "x0": -0.85,
+      "x1": 0.85,
+      "bottom_f": 0.18,
+      "top_f": 0.62,
+      "inset": 0.3,
+      "cross": [
+       0.0
+      ]
+     },
+     "boxes": {
+      "w": 0.36,
+      "h": 0.4,
+      "out": 0.12
+     },
+     "springs": {
+      "leaf": [
+       [
+        0.4125,
+        0.95,
+        0.8
+       ],
+       [
+        -0.4125,
+        0.95,
+        0.8
+       ]
+      ],
+      "out": 0.12
+     }
+    }
+   }
+  ]
+ },
+ "nine_f": {
+  "nose_px": [
+   855,
+   610
+  ],
+  "wheels": [
+   {
+    "name": "p1",
+    "hub_px": [
+     805,
+     760
+    ],
+    "rim_px": [
+     [
+      807,
+      793
+     ],
+     [
+      781,
+      757
+     ]
+    ]
+   },
+   {
+    "name": "d1",
+    "hub_px": [
+     407,
+     570
+    ],
+    "rim_px": [
+     [
+      376,
+      570
+     ],
+     [
+      410,
+      602
+     ]
+    ]
+   },
+   {
+    "name": "d2",
+    "hub_px": [
+     480,
+     590
+    ],
+    "rim_px": [
+     [
+      451,
+      587
+     ],
+     [
+      483,
+      639
+     ]
+    ]
+   },
+   {
+    "name": "d3",
+    "hub_px": [
+     552,
+     623
+    ],
+    "rim_px": [
+     [
+      557,
+      673
+     ]
+    ]
+   },
+   {
+    "name": "d4",
+    "hub_px": [
+     627,
+     653
+    ],
+    "rim_px": [
+     [
+      630,
+      700
+     ]
+    ]
+   },
+   {
+    "name": "d5",
+    "hub_px": [
+     695,
+     710
+    ],
+    "rim_px": [
+     [
+      697,
+      740
+     ]
+    ]
+   },
+   {
+    "name": "t1",
+    "hub_px": [
+     105,
+     445
+    ],
+    "rim_px": [
+     [
+      110,
+      459
+     ]
+    ]
+   },
+   {
+    "name": "t2",
+    "hub_px": [
+     178,
+     482
+    ],
+    "rim_px": [
+     [
+      183,
+      495
+     ]
+    ]
+   },
+   {
+    "name": "t3",
+    "hub_px": [
+     267,
+     527
+    ],
+    "rim_px": [
+     [
+      272,
+      542
+     ]
+    ]
+   }
+  ],
+  "trim_front_m": 0.4,
+  "cut_boxes": [
+   {
+    "part": "engine",
+    "x": [
+     -3.33,
+     2.55
+    ],
+    "top": 1.9,
+    "note": "the model's five coupled axles, rods and frames below the running plate: rebuilt round and baked"
+   },
+   {
+    "part": "engine",
+    "x": [
+     2.55,
+     3.6
+    ],
+    "top": 0.75,
+    "note": "pony truck, below the cylinders: its own bogie sprite"
+   },
+   {
+    "part": "tender",
+    "x": [
+     -2.2,
+     2.3
+    ],
+    "top": 0.85,
+    "note": "the tender's wheels below its frame; rebuilt round"
+   }
+  ],
+  "skirts": [
+   {
+    "part": "engine",
+    "x": [
+     -3.33,
+     2.55
+    ],
+    "bottom": 0.8,
+    "top": 1.9,
+    "inset": 0.3,
+    "color": [
+     30,
+     32,
+     36
+    ],
+    "note": "the frames between the wheels up to the running plate, rigid with the body"
+   }
+  ],
+  "baked": [
+   {
+    "part": "engine",
+    "note": "five coupled axles, rigid in the frame: drawn with the body",
+    "spec": {
+     "scale": 0.7,
+     "colors": {
+      "tyre": [
+       120,
+       124,
+       128
+      ],
+      "wheel": [
+       42,
+       46,
+       52
+      ],
+      "hub": [
+       60,
+       64,
+       68
+      ],
+      "rod": [
+       200,
+       186,
+       150
+      ],
+      "detail": [
+       40,
+       42,
+       46
+      ],
+      "frame": [
+       30,
+       32,
+       36
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "d5",
+       "d": 1.52,
+       "spokes": 14,
+       "driver": true
+      },
+      {
+       "wheel": "d4",
+       "d": 1.52,
+       "spokes": 14,
+       "driver": true
+      },
+      {
+       "wheel": "d3",
+       "d": 1.52,
+       "spokes": 14,
+       "driver": true
+      },
+      {
+       "wheel": "d2",
+       "d": 1.52,
+       "spokes": 14,
+       "driver": true
+      },
+      {
+       "wheel": "d1",
+       "d": 1.52,
+       "spokes": 14,
+       "driver": true
+      }
+     ],
+     "boxes": {
+      "w": 0.3,
+      "h": 0.34,
+      "out": 0.08
+     },
+     "rods": {
+      "crank": 0.3,
+      "crank_deg": -35,
+      "connect": 2,
+      "crosshead": {
+       "x": 2.35,
+       "z_f": 1.2,
+       "bar": 0.8
+      }
+     }
+    }
+   },
+   {
+    "part": "tender",
+    "note": "a rigid six-wheel tender: its axles are drawn with the tender body",
+    "spec": {
+     "scale": 0.68,
+     "colors": {
+      "tyre": [
+       120,
+       124,
+       128
+      ],
+      "wheel": [
+       42,
+       46,
+       52
+      ],
+      "hub": [
+       60,
+       64,
+       68
+      ],
+      "rod": [
+       200,
+       186,
+       150
+      ],
+      "detail": [
+       40,
+       42,
+       46
+      ],
+      "frame": [
+       30,
+       32,
+       36
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "t3",
+       "d": 1.0,
+       "spokes": 12
+      },
+      {
+       "wheel": "t2",
+       "d": 1.0,
+       "spokes": 12
+      },
+      {
+       "wheel": "t1",
+       "d": 1.0,
+       "spokes": 12
+      }
+     ]
+    }
+   }
+  ],
+  "bogies": [
+   {
+    "style": "nine_f_pony",
+    "part": "engine",
+    "index": 0,
+    "centre": [
+     "p1"
+    ],
+    "spec": {
+     "scale": 0.7,
+     "colors": {
+      "tyre": [
+       120,
+       124,
+       128
+      ],
+      "wheel": [
+       42,
+       46,
+       52
+      ],
+      "hub": [
+       60,
+       64,
+       68
+      ],
+      "rod": [
+       200,
+       186,
+       150
+      ],
+      "detail": [
+       40,
+       42,
+       46
+      ],
+      "frame": [
+       30,
+       32,
+       36
+      ],
+      "spring": [
+       70,
+       72,
+       74
+      ]
+     },
+     "axles": [
+      {
+       "wheel": "p1",
+       "d": 0.91,
+       "spokes": 10
+      }
+     ],
+     "frame": {
+      "type": "plate_inside",
+      "x0": -0.5,
+      "x1": 0.5,
+      "bottom_f": 0.2,
+      "top_f": 0.6,
+      "inset": 0.3,
+      "cross": [
+       0.0
+      ]
+     },
+     "boxes": {
+      "w": 0.34,
+      "h": 0.38,
+      "out": 0.1
+     }
+    }
+   }
+  ]
+ }
+}

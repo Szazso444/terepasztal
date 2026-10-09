@@ -5,6 +5,7 @@ game_rules.test.mjs holds this file to body.ts, so a change there fails the test
 """
 
 import json
+import math
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[2] / "src" / "data"
@@ -64,3 +65,56 @@ def plan_parts(plan, size_tiles):
     if plan == "meyer":
         return [("frame", L, True)]
     return [("body", L, True)]
+
+
+def grid_metre(g):
+    """tile_m from the game's human scale when [grid] metre = "human": a person of human_m metres
+    stands human_px logical pixels tall (src/render/assetScale.ts), and at elevation e a vertical
+    metre spans cos(e) * tile_px / (tile_m * sqrt 2) pixels."""
+    if g.get("metre") == "human":
+        g["tile_m"] = (g["tile_px"] * math.cos(math.radians(g["elevation_deg"])) * g["human_m"]
+                       / (g["human_px"] * math.sqrt(2)))
+    return g["tile_m"]
+
+
+def pivots(plan, size_tiles, pivot_ratio=None, bogies=None, explicit=None):
+    """body.ts vehicleSpec pivots: {part: [bogie positions in tiles from the part's centre, front
+    first]} for the first segment of each part (a Garratt's rear engine is its front one reversed).
+    `explicit` is the definition's own `pivots` (per part), which wins where it gives every bogie."""
+    out = _pivots(plan, size_tiles, pivot_ratio, bogies)
+    for part, xs in (explicit or {}).items():
+        if part in out and len(xs) == len(out[part]):
+            out[part] = list(xs)
+    return out
+
+
+def _pivots(plan, size_tiles, pivot_ratio=None, bogies=None):
+    L = size_tiles
+    pr = pivot_ratio if pivot_ratio is not None else (0.58 if L == 3 else 0.7)
+
+    def spread(W, nb):
+        return [W / 2 - W / (nb - 1) * i for i in range(nb)]
+
+    if plan == "tender":
+        le = 1.25
+        return {"engine": spread(pr * le, 2), "tender": spread(0.66 * (L - le), 2)}
+    if plan == "garratt":
+        le = 0.8
+        lc = L - 2 * le
+        return {"engine": spread(pr * le, 2), "cradle": spread(max(pr, 0.94) * lc, 2)}
+    if plan == "meyer":
+        ratio = max(0.5, min(0.75, pivot_ratio if pivot_ratio is not None else 0.6))
+        return {"frame": spread(ratio * L, 2)}
+    return {"body": spread(pr * L, bogies or (3 if L == 3 else 2))}
+
+
+def prototype(game_frame):
+    """The src/data definition a game_frame names (rolling/loco_<id>_... or rolling/wagon_<id>_...), or None."""
+    import re
+    m = re.fullmatch(r"rolling/(loco|wagon)_([a-z0-9_]+?)_(?:\{part\}_)?f\{f\}", game_frame or "")
+    if not m:
+        return None
+    file = "locomotives.json" if m.group(1) == "loco" else "wagons.json"
+    rows = json.loads((DATA / file).read_text(encoding="utf-8"))
+    rows = rows if isinstance(rows, list) else next(iter(rows.values()))
+    return next((d for d in rows if d["id"] == m.group(2)), None)

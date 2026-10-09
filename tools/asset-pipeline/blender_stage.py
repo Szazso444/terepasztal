@@ -11,14 +11,17 @@ import math
 import os
 import sys
 import time
+from pathlib import Path
 
 import bpy
 import bmesh  # after bpy: the bpy module from pip only finds bmesh once bpy is loaded
 import numpy as np
-from mathutils import Matrix, Vector
+from mathutils import Euler, Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Blender does not add the script's folder
 import game_rules  # noqa: E402
+import running_gear  # noqa: E402
+import source_texture  # noqa: E402
 
 
 def log(*a):
@@ -70,6 +73,106 @@ def manhattan_align(N, pitch_rng, roll_rng):
     return best, float(s.max())
 
 
+def measure_wheels(wheels_raw, R):
+    """[(landmark, hub centre, radius)] in the rotated frame, raw units: the radius is the mean
+    distance in the wheel's plane (XZ) from the hub to the measured tyre edge points."""
+    out = []
+    for w, hub, rims in wheels_raw:
+        hc = R @ hub
+        rad = float(np.mean([math.hypot(*(R @ q - hc)[[0, 2]]) for q in rims]))
+        out.append((w, hc, rad))
+    return out
+
+
+def refine_axes(P, R, max_deg=6.0):
+    """Turn R so the body runs exactly along X and level. Manhattan alignment lands within a few
+    degrees; a vehicle off by even 2 degrees sits visibly askew on straight rails. Yaw: the turn that
+    makes the body narrowest across (its long sides then run along X). Pitch: the principal axis of
+    the body in side view. Only the body band is used (30-85% of the height): wheels, chimneys and
+    domes do not steer it. Returns the new R and the two corrections in degrees."""
+    def band(Q):
+        z0, z1 = np.percentile(Q[:, 2], [2, 98])
+        return Q[(Q[:, 2] > z0 + 0.3 * (z1 - z0)) & (Q[:, 2] < z0 + 0.85 * (z1 - z0))]
+
+    B = band(P @ R.T)
+
+    def width(th):
+        y = math.sin(th) * B[:, 0] + math.cos(th) * B[:, 1]  # y after rz(th)
+        return float(np.subtract(*np.percentile(y, [98, 2])))
+
+    ths = np.radians(np.arange(-max_deg, max_deg + 1e-9, 0.1))
+    th = float(ths[int(np.argmin([width(t) for t in ths]))])
+    fine = np.radians(np.arange(-0.1, 0.1001, 0.01)) + th
+    th = float(fine[int(np.argmin([width(t) for t in fine]))])
+    R = rz(th) @ R
+    B = band(P @ R.T)
+    XZ = B[:, [0, 2]] - B[:, [0, 2]].mean(0)
+    w, v = np.linalg.eigh(np.cov(XZ.T))
+    ax = v[:, int(np.argmax(w))]
+    ax = ax if ax[0] > 0 else -ax
+    tilt = math.atan2(ax[1], ax[0])
+    if abs(tilt) > math.radians(max_deg):
+        tilt = 0.0  # a body taller than it is long is not levelled by its axis
+    R = ry(tilt) @ R
+    return R, math.degrees(th), math.degrees(tilt)
+
+
+def detaper(ob, x_lo, x_hi, yc, zg, slices=12):
+    """Make a box body equally wide and tall along its length. A reconstruction keeps a little of its
+    source's perspective: one end comes out wider and the roof slopes, so the body's edges are not
+    parallel to the rails. Fits the body band's width and roof height over the middle 70% of the
+    length and scales so both fits are level. Returns the width and height changes it removed (m)."""
+    me = ob.data
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    V = co.reshape(-1, 3)
+    ztop = np.percentile(V[:, 2], 99)
+    band = V[V[:, 2] > zg + 0.45 * (ztop - zg)]
+    L = x_hi - x_lo
+    edges = np.linspace(x_lo + 0.15 * L, x_hi - 0.15 * L, slices + 1)
+    xs, ws = [], []
+    for a_, b_ in zip(edges, edges[1:]):
+        S = band[(band[:, 0] >= a_) & (band[:, 0] < b_)]
+        if len(S) > 50:
+            xs.append((a_ + b_) / 2)
+            ws.append(np.subtract(*np.percentile(S[:, 1] - yc, [97, 3])))
+    if len(xs) < 4:
+        return 0.0, 0.0
+    k, b = np.polyfit(xs, ws, 1)
+    w_mid = k * (x_lo + x_hi) / 2 + b
+    scale = w_mid / np.maximum(k * V[:, 0] + b, 1e-6)
+    V[:, 1] = yc + (V[:, 1] - yc) * scale
+    # the roof the same way: heights scale about the rail, so the running gear stays where it is
+    xr, hs = [], []
+    for a_, b_ in zip(edges, edges[1:]):
+        S = band[(band[:, 0] >= a_) & (band[:, 0] < b_)]
+        if len(S) > 50:
+            xr.append((a_ + b_) / 2)
+            hs.append(np.percentile(S[:, 2], 97) - zg)
+    kz, bz = np.polyfit(xr, hs, 1)
+    h_mid = kz * (x_lo + x_hi) / 2 + bz
+    V[:, 2] = zg + (V[:, 2] - zg) * h_mid / np.maximum(kz * V[:, 0] + bz, 1e-6)
+    me.vertices.foreach_set("co", V.ravel())
+    me.update()
+    return float(k * L), float(kz * L)
+
+
+def body_profile(ob, M, n=6):
+    """Roof height (97th percentile) and body width (3rd-97th) in n slices from the rear to the nose,
+    final frame: a reconstruction that tapers towards the source's far end shows up here."""
+    co = np.empty(len(ob.data.vertices) * 3)
+    ob.data.vertices.foreach_get("co", co)
+    m = np.array(M)
+    V = co.reshape(-1, 3) @ m[:3, :3].T + m[:3, 3]
+    edges = np.linspace(V[:, 0].min(), V[:, 0].max(), n + 1)
+    top, width = [], []
+    for a_, b_ in zip(edges, edges[1:]):
+        S = V[(V[:, 0] >= a_) & (V[:, 0] < b_) & (V[:, 2] > 0.35 * V[:, 2].max())]
+        top.append(round(float(np.percentile(S[:, 2], 97)), 2) if len(S) else None)
+        width.append(round(float(np.subtract(*np.percentile(S[:, 1], [97, 3]))), 2) if len(S) else None)
+    return {"top": top, "width": width}
+
+
 def to4(m3):
     m = Matrix.Identity(4)
     for i in range(3):
@@ -98,6 +201,55 @@ def import_mesh(path):
         if o is not obj:
             bpy.data.objects.remove(o)
     return obj
+
+
+def load_part(spec, R, cfg, shading, painted):
+    """A piece reconstructed from an image of its own (a truck, REAR-VIEWS.md): imported beside the
+    vehicle, painted with its own image's colours, turned into the vehicle's aligned frame with the
+    vehicle's rotation (its image was drawn from the same camera, front to the lower right) and its
+    hidden side rebuilt as the mirror of the seen one. Unscaled; fit_part places it."""
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=spec["glb"])
+    new = [o for o in bpy.data.objects if o not in before]
+    meshes = [o for o in new if o.type == "MESH"]
+    if not meshes:
+        raise RuntimeError(f"no mesh in {spec['glb']}")
+    if len(meshes) > 1:
+        with bpy.context.temp_override(active_object=meshes[0], selected_editable_objects=meshes,
+                                       selected_objects=meshes):
+            bpy.ops.object.join()
+    pm = next(o for o in bpy.data.objects if o in set(meshes))
+    mw = pm.matrix_world.copy()
+    pm.parent = None
+    pm.matrix_world = mw
+    for o in new:
+        if o is not pm and o.name in bpy.data.objects:
+            bpy.data.objects.remove(o)
+    view = source_texture.fit_view(surface_points(pm, 1500000), spec["source"]["image"], spec["source"]["mask"], cfg)
+    source_texture.reproject(pm, view, spec["source"]["texture"], cfg, mirror=R)
+    if painted:
+        running_gear.repaint(pm, shading)
+    pm.data.transform(to4(np.asarray(R)) @ pm.matrix_world)
+    pm.matrix_world = Matrix.Identity(4)
+    Pa = surface_points(pm, 100000)
+    yc = float(np.mean(np.percentile(Pa[:, 1], [1, 99])))
+    cam_y = float((np.asarray(R) @ source_texture.camera_position(view.fov))[1])
+    running_gear.symmetrize(pm, yc, cam_y < yc)
+    return pm
+
+
+def fit_part(pm, target, zg):
+    """Scale and place a part onto the piece of the vehicle's own model it replaces: its length (and
+    height with it) and width to the target's, centred on it, standing on the rail plane zg."""
+    A, B = surface_points(target, 100000), surface_points(pm, 100000)
+    ta, tb = np.percentile(A, [2, 98], axis=0), np.percentile(B, [2, 98], axis=0)
+    s = (ta[1, 0] - ta[0, 0]) / (tb[1, 0] - tb[0, 0])
+    sy = (ta[1, 1] - ta[0, 1]) / (tb[1, 1] - tb[0, 1])
+    bottom = float(np.percentile(B[:, 2], 0.5))
+    pm.data.transform(Matrix.Translation(Vector((ta.mean(0)[0], ta.mean(0)[1], zg)))
+                      @ Matrix.Diagonal((s, sy, s, 1.0))
+                      @ Matrix.Translation(Vector((-tb.mean(0)[0], -tb.mean(0)[1], -bottom))))
+    return s, sy
 
 
 def surface_points(obj, n, seed=1):
@@ -299,11 +451,140 @@ def debug_view(items, cam, view, path, res):
     sc.camera = cam
     sc.render.resolution_x = sc.render.resolution_y = res
     render_to(path)
+    return {"center": [round(float(v), 4) for v in ctr], "size": round(float(size * 1.15), 4), "res": res,
+            "view": view}
+
+
+def render_sets(job, renders, scene_objs, shadow, L, k_px, ss, res_x):
+    """Render every sprite set in every direction from the fixed game camera. A set is one object
+    (plus its extras, e.g. built wheels) at matrix M; its canvas fits all directions and the anchor is
+    the projection of the set's origin. Returns the per-set render records for the meta JSON."""
+    a, g, r, ccfg = job["asset"], job["grid"], job["render"], job["class_cfg"]
+    cat = a["category"]
+    cam = make_camera("game_cam")
+    cam.rotation_euler = (math.radians(90 - g["elevation_deg"]), 0, math.radians(g["azimuth_deg"]))
+    bpy.context.view_layer.update()
+    cm = cam.matrix_world.to_3x3()
+    right, up, back = cm.col[0], cm.col[1], cm.col[2]
+    dir_list = game_rules.directions(ccfg["dirs"])
+    sc = bpy.context.scene
+    sc.camera = cam
+    pad = int(r["pad_px"]) * res_x
+    out = []
+    for rd in renders:
+        part, ob, M, plo, phi = rd["part"], rd["ob"], rd["M"], rd["lo"], rd["hi"]
+        extras = rd.get("extras", [])
+        show_only(scene_objs, [ob] + [e for e, _ in extras])
+        box = [Vector((x, y, z)) for x in (plo[0], phi[0]) for y in (plo[1], phi[1]) for z in (0.0, phi[2])]
+        if shadow:
+            box += [p - (p.z / L.z) * L for p in box if p.z > 0]
+        pts = []
+        for yaw_d, _ in dir_list:
+            Rz_ = Matrix.Rotation(math.radians(yaw_d), 3, "Z")
+            pts += [Rz_ @ p for p in box]
+        pr = [p.dot(right) for p in pts]
+        pu = [p.dot(up) for p in pts]
+        W = math.ceil((max(pr) - min(pr)) * k_px) + 2 * pad
+        H = math.ceil((max(pu) - min(pu)) * k_px) + 2 * pad
+        W += W % 2
+        H += H % 2
+        ax = pad + math.ceil(-min(pr) * k_px)
+        ay = pad + math.ceil(max(pu) * k_px)
+        cr, cu = (W / 2 - ax) / k_px, (ay - H / 2) / k_px
+        cam.location = right * cr + up * cu + back * 1000
+        cam.data.ortho_scale = max(W, H) / k_px
+        sc.render.resolution_x, sc.render.resolution_y = W * ss, H * ss
+
+        def to_px(p):
+            return [round(ax + p.dot(right) * k_px, 3), round(ay - p.dot(up) * k_px, 3)]
+
+        fx, fy = rd["footprint_m"][0] / 2, rd["footprint_m"][1] / 2
+        fp = [Vector(c) for c in ((-fx, -fy, 0), (fx, -fy, 0), (fx, fy, 0), (-fx, fy, 0))]
+        stem = f"{a['id']}_{part}" if part else a["id"]
+        dirs = []
+        for i, (yaw_d, facing) in enumerate(dir_list):
+            Rz4 = Matrix.Rotation(math.radians(yaw_d), 4, "Z")
+            ob.matrix_world = Rz4 @ M
+            for e, EM in extras:
+                e.matrix_world = Rz4 @ EM
+            path = f"{job['sprites_raw_dir']}/{stem}_d{i}.png"
+            tr = time.time()
+            render_to(path)
+            R3 = Rz4.to_3x3()
+            head = R3 @ Vector((1, 0, 0))
+            hv = Vector((head.dot(right), -head.dot(up)))
+            hv.normalize()
+            t_ = rd["tiles"]
+            rot_tiles = t_[::-1] if cat == "building" and round(yaw_d / 90) % 2 else t_
+            dirs.append({"index": i, "yaw_deg": yaw_d, "facing": facing, "file": path,
+                         "screen_heading": [round(hv.x, 4), round(hv.y, 4)],
+                         "tiles": rot_tiles,
+                         "footprint_px": [to_px(R3 @ c) for c in fp]})
+            log(f"{part or 'dir'} {i} ({yaw_d:.0f} deg) rendered in {time.time() - tr:.1f}s")
+        out.append({"part": part, "tiles": rd["tiles"], "footprint_m": rd["footprint_m"], "gear": rd.get("gear"),
+                    "profile": rd.get("profile"),
+                    "compression": rd["comp"].round(4).tolist(),
+                    "final_dims_m": (phi - plo).round(3).tolist(),
+                    "canvas_px": [W, H], "anchor_px": [ax, ay], "dirs": dirs})
+    return out
+
+
+def painted_shading(g, r):
+    """Painted shading: the colour times ambient + light * max(0, N.L), L fixed to the game camera."""
+    cam_rot = Euler((math.radians(90 - g["elevation_deg"]), 0, math.radians(g["azimuth_deg"]))).to_matrix()
+    light = cam_rot @ Vector(r.get("light_cam", (-0.5, 0.7, 0.5)))
+    light.normalize()
+    return {"light_world": tuple(light), "ambient": r.get("ambient_level", 1.0), "light": r.get("light_level", 0.0)}
+
+
+def parametric_bogie(job):
+    """A bogie built from its spec (bogies.json) instead of a reconstruction: no image, no alignment;
+    the group is already in the game frame with its pivot at the origin."""
+    a, g, r, ccfg = job["asset"], job["grid"], job["render"], job["class_cfg"]
+    t0 = time.time()
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    spec = job["bogie"]
+    tile = g["tile_m"]
+    shading = painted_shading(g, r)
+    colors = {k: np.array(v, dtype=np.float64) / 255 for k, v in spec["colors"].items()}
+    bob = running_gear.bogie(a["id"], spec, tile, colors, shading)
+    M = Matrix.Identity(4)
+    plo, phi = local_bounds(bob, M)
+    res_x = int(r.get("resolution", 1))
+    k_px = g["tile_px"] / (tile * math.sqrt(2)) * res_x
+    ss = int(r["supersample"])
+    setup_render(r, 64, 64)
+    L = add_sun(r)
+    shadow = False
+    debug, debug_cams = {}, {}
+    if r["debug_views"]:
+        dcam = make_camera("debug_cam")
+        for name, view in (("front", "front"), ("side", "side"), ("top", "top")):
+            path = f"{job['debug_dir']}/{a['id']}_{name}.png"
+            debug_cams[name] = debug_view([(bob, M)], dcam, view, path, r["debug_res"])
+            debug[name] = path
+    renders = [{"part": None, "ob": bob, "M": M, "lo": plo, "hi": phi, "comp": np.ones(3), "tiles": None,
+                "footprint_m": [float(phi[0] - plo[0]), float(phi[1] - plo[1])]}]
+    out = render_sets(job, renders, [bob], shadow, L, k_px, ss, res_x)
+    meta = {
+        "id": a["id"], "category": "bogie", "plan": None, "tiles": None, "footprint_m": renders[0]["footprint_m"],
+        "scale": 1.0, "scale_ref": "parametric (bogies.json)", "compression": out[0]["compression"],
+        "real_dims_m": None, "final_dims_m": out[0]["final_dims_m"], "split": None, "width_fix": 1.0,
+        "px_per_m": round(k_px, 5), "supersample": ss, "resolution": res_x, "source": None, "spec": spec,
+        "anchor": "the pivot the game hangs the bogie at, on the rail; continuous px coords from top-left",
+        "align": {"mode": "parametric"}, "warnings": [], "debug": debug, "debug_cams": debug_cams, "renders": out,
+        "seconds": round(time.time() - t0, 1),
+    }
+    with open(job["meta_path"], "w", encoding="utf-8") as fh:
+        json.dump(meta, fh, indent=2)
+    log(f"done {a['id']} (parametric) in {meta['seconds']}s -> {job['meta_path']}")
 
 
 # ---------------- main ----------------
 def main():
     job = json.load(open(sys.argv[sys.argv.index("--") + 1], encoding="utf-8"))
+    if job.get("bogie"):
+        return parametric_bogie(job)
     a, g, r, al = job["asset"], job["grid"], job["render"], job["align"]
     ccfg = job["class_cfg"]
     cat = a["category"]
@@ -314,6 +595,29 @@ def main():
     mw0 = obj.matrix_world.copy()
     V, N, nv, nf = mesh_arrays(obj, al["sample_faces"])
     log(f"{a['id']}: {nv} verts, {nf} faces, import {time.time() - t0:.1f}s")
+
+    shading = painted_shading(g, r)
+
+    # 0. the source's own colours onto the mesh, and the measured landmarks off it
+    src_report, view = None, None
+    if job.get("source"):
+        P_src = surface_points(obj, 3000000)
+        view = source_texture.fit_view(P_src, job["source"]["image"], job["source"]["mask"],
+                                       job.get("source_cfg") or {})
+    lm = job.get("landmarks") or {}
+    if (lm.get("wheels") or lm.get("nose_px")) and not view:
+        raise RuntimeError("landmarks need the source crop (models_raw/<id>.source.png): rerun the comfy stage")
+    wheels_raw = []
+    for w in lm.get("wheels", []):
+        rims = []
+        for q in w["rim_px"]:
+            try:
+                rims.append(view.point(q, reach=10))
+            except RuntimeError as e:  # the reconstruction may not reach the outline there
+                warnings.append(f"wheel {w['name']}: rim point {q} skipped ({e})")
+        if not rims:
+            raise RuntimeError(f"wheel {w['name']}: no rim point lies on the mesh")
+        wheels_raw.append((w, view.point(w["hub_px"]), rims))
 
     # 1. upright + axis alignment
     align_info = {"mode": a["align"]}
@@ -340,20 +644,95 @@ def main():
             cands.append((abs(total), k))
     k = min(cands)[1]
     R = rz(math.radians(a["yaw_offset_deg"] or 0.0)) @ rz(math.radians(90 * k)) @ R
+    if lm.get("nose_px"):
+        # a measured point on the nose decides which end is the front
+        nose = R @ view.point(lm["nose_px"])
+        if nose[0] < float(np.median(V @ R.T, axis=0)[0]):
+            R = rz(math.pi) @ R
+            align_info["nose_turned"] = True
+    wheel_geo = measure_wheels(wheels_raw, R)
+    level = lm.get("level") or ("wheels" if (a.get("size_tiles") or 1) == 1 else "body")
+    if cat == "vehicle" and level == "body":
+        R, dyaw, dpitch = refine_axes(surface_points(obj, 300000), R)
+        align_info.update(refined_yaw_deg=round(dyaw, 3), refined_pitch_deg=round(dpitch, 3))
+        log(f"refined: yaw {dyaw:+.2f} deg, pitch {dpitch:+.2f} deg (body band)")
+        wheel_geo = measure_wheels(wheels_raw, R)
+    elif len(wheel_geo) >= 2:
+        # level the chassis: the wheel bottoms of the source on one line (a reconstruction tilts)
+        xs = np.array([hc[0] for _, hc, _ in wheel_geo])
+        zb = np.array([hc[2] - rad for _, hc, rad in wheel_geo])
+        fit = np.polyfit(xs, zb, 1)
+        res = np.abs(zb - np.polyval(fit, xs))
+        keep = res <= max(3 * np.median(res), 1e-9)  # one badly measured wheel must not tilt the rest
+        if keep.sum() >= 2:
+            fit = np.polyfit(xs[keep], zb[keep], 1)
+        tilt = math.atan(fit[0])
+        R = ry(tilt) @ R
+        wheel_geo = measure_wheels(wheels_raw, R)
+        align_info["levelled_deg"] = round(math.degrees(tilt), 3)
+    if view is not None:
+        # the source's colours onto the texture, now that the vehicle's centre plane is known (the
+        # side the source camera never saw takes its mirror twin's colours)
+        extras = []
+        # a rear view is the source's camera turned 180 degrees round the vehicle (REAR-VIEWS.md)
+        cam = R @ (source_texture.camera_position(view.fov) - (P_src.min(0) + P_src.max(0)) / 2)
+        rear_az = math.atan2(cam[1], cam[0]) + math.pi
+        for vp in job.get("views", []):
+            # more images of the same vehicle (a rear three-quarter view): their cameras are fitted to
+            # the aligned mesh's silhouette, and they colour what the source cannot see
+            try:
+                extras.append(source_texture.ExtraView(
+                    vp, P_src, R, view.fov, job.get("source_cfg") or {},
+                    debug_path=f"{job['debug_dir']}/{a['id']}_view{len(extras) + 1}.png",
+                    expect_az=rear_az if Path(vp).stem.endswith("-rear") else None))
+            except RuntimeError as e:
+                warnings.append(f"extra view skipped: {e}")
+        src_report = source_texture.reproject(obj, view, job["source"]["texture"], job.get("source_cfg") or {},
+                                              mirror=R if (cat == "vehicle" and lm.get("mirror", True)) else None,
+                                              extras=extras)
+    if r.get("shading") == "painted":
+        running_gear.repaint(obj, shading)
+    part_models = {pid: load_part(spec, R, job.get("source_cfg") or {}, shading, r.get("shading") == "painted")
+                   for pid, spec in (job.get("parts") or {}).items()}
+    for pid, pm in part_models.items():
+        pm.hide_render = True
+        log(f"part {pid}: reconstructed from its own image, painted and mirrored")
     V2 = V @ R.T
     lo, hi = V2.min(0), V2.max(0)
     dims = hi - lo
 
     # 3. real-world scale
-    if cat in ("vehicle", "bogie"):
+    if cat in ("vehicle", "bogie") and lm.get("scale") and len(wheel_geo) >= 2:
+        # a real dimension between two measured wheels (a coupled or truck wheelbase) sets the scale
+        by = {w["name"]: hc for w, hc, _ in wheel_geo}
+        w0, w1 = lm["scale"]["between"]
+        s = lm["scale"]["m"] / abs(by[w0][0] - by[w1][0])
+        ref = f"{w0}-{w1} = {lm['scale']['m']} m"
+    elif cat == "vehicle" and a.get("height_m"):
+        # the prototype's height over the rail: the dimension a person is measured against, and one
+        # an illustration keeps better than its compressed lengths
+        rail = float(np.median([hc[2] - rad for _, hc, rad in wheel_geo])) if wheel_geo else lo[2]
+        s = a["height_m"] / (hi[2] - rail)
+        ref = "height_m"
+    elif cat in ("vehicle", "bogie"):
         s = a["length_m"] / dims[0]
         ref = "length_m"
     else:
         ref = next(k_ for k_ in ("height_m", "length_m", "width_m") if a.get(k_))
         s = a[ref] / dims[{"height_m": 2, "length_m": 0, "width_m": 1}[ref]]
     real = dims * s
+    # width from the body, not from a stray reconstructed blob: the 0.5th to 99.5th percentile across
+    # of area-weighted surface points (a wheel is a lot of surface, a stray lump little)
+    Ps = surface_points(obj, 200000) @ R.T
+    body_w = float(np.subtract(*np.percentile(Ps[:, 1], [99.5, 0.5]))) * s
+    width_fix = 1.0
+    if cat == "vehicle" and a.get("width_m") and ref != "width_m":
+        # an illustration is rarely drawn to scale across; the real width keeps the body in
+        # proportion to the rails (gauge and width both go into the game at DRAWN_WIDTH)
+        width_fix = a["width_m"] / body_w
+        real[1] = real[1] * width_fix
     for key, i in (("length_m", 0), ("width_m", 1), ("height_m", 2)):
-        if a.get(key) and key != ref:
+        if a.get(key) and key != ref and not (key == "width_m" and width_fix != 1.0):
             err = real[i] / a[key] - 1
             if abs(err) > ccfg["max_dim_error"]:
                 warnings.append(f"{key}: model {real[i]:.2f} m vs spec {a[key]} m ({err:+.0%})")
@@ -366,7 +745,14 @@ def main():
     renders = []
     split = None
     if cat in ("vehicle", "bogie"):
-        wf = game_rules.DRAWN_WIDTH  # the game draws rolling stock wider than long, so do we
+        # body.ts: stock is drawn DRAWN_WIDTH wider than its LENGTH scale. A compressed body is narrowed
+        # with its length, so the image's proportions survive; a short one is never widened by a stretch
+        cx_all = 1.0
+        if cat == "vehicle" and ccfg.get("width_follows_length", True):
+            n_parts = sum(1 for p in game_rules.plan_parts(a.get("plan") or "rigid", a.get("size_tiles") or 1) if p[2]) \
+                if a.get("size_tiles") else 1
+            cx_all = min(1.0, ((a.get("size_tiles") or 1) * tile - n_parts * ccfg["coupler_gap_m"]) / real[0])
+        wf = game_rules.DRAWN_WIDTH * width_fix * cx_all
         if cat == "vehicle":
             size_tiles = a.get("size_tiles") or max(1, round(real[0] / tile))
             if size_tiles not in game_rules.SIZE_TILES:
@@ -390,7 +776,7 @@ def main():
             P = surface_points(obj, 200000) @ (s * R).T
             cuts, score = find_cuts(P, hi_r[0], real[0], expected, 0.12 * real[0])
             split = {"mode": "auto", "cuts_m": cuts, "expected_m": [round(e, 2) for e in expected]}
-            if a["yaw_offset_deg"] is None:
+            if a["yaw_offset_deg"] is None and not lm.get("nose_px"):
                 # the photo cannot tell nose from tail; an engine + tender can: its joints are where
                 # the plan puts them from one end only. Turn round when the other end fits better.
                 Pf = P * np.array([-1.0, -1.0, 1.0])
@@ -407,7 +793,9 @@ def main():
             cuts = []
         if split:
             log(f"split {split['mode']} at {cuts} m from the nose (plan guess {[round(e, 2) for e in expected]})")
-        bounds = [0.0] + cuts + [real[0]]
+        # a reconstruction may run a piece out past the vehicle's ends (buffers drawn out into a horn):
+        # trim_front_m / trim_rear_m (real metres) cut it off before the parts are measured
+        bounds = [float(lm.get("trim_front_m", 0.0))] + cuts + [real[0] - float(lm.get("trim_rear_m", 0.0))]
         if any(b1 <= b0 for b0, b1 in zip(bounds, bounds[1:])):
             raise RuntimeError(f"cuts {cuts} are not in order inside 0..{real[0]:.1f} m")
         # clip heights: one for every part, or one per rendered part (an engine above its drivers,
@@ -420,6 +808,18 @@ def main():
             raise RuntimeError(f"clip_below_m has {len(clips)} heights; {n_rendered} parts are rendered")
         clips = iter(clips)
         yc, zg = (lo_r[1] + hi_r[1]) / 2, lo_r[2]
+        sym = cat == "vehicle" and view is not None and lm.get("symmetric", True)
+        if sym:
+            # the seen side is the one facing the source camera; the plane between the sides' outer
+            # surfaces is the vehicle's centre plane, and the track's centre line
+            Pa = surface_points(obj, 200000) @ (s * R).T
+            yc = float(np.mean(np.percentile(Pa[:, 1], [1, 99])))
+            cam_y = float(((s * R) @ source_texture.camera_position(view.fov))[1])
+            log(f"symmetric: the {'-Y' if cam_y < yc else '+Y'} side is seen; centre plane y = {yc:+.3f} m")
+        # measured wheels: the vehicle stands on them, so their bottoms are the rail plane
+        wheels_real = [{"w": w, "x": hc[0] * s, "z": hc[2] * s, "d": 2 * rad * s} for w, hc, rad in wheel_geo]
+        if wheels_real and lm.get("rail") != "lowest":
+            zg = float(np.median([wr["z"] - wr["d"] / 2 for wr in wheels_real]))
         for (part, L_tiles, rendered), d0, d1 in zip(parts, bounds, bounds[1:]):
             if not rendered:
                 continue
@@ -430,6 +830,13 @@ def main():
             bpy.context.scene.collection.objects.link(ob)
             ob.data.transform(M_real)
             ob.matrix_world = Matrix.Identity(4)
+            if sym:
+                w0, w1 = running_gear.symmetrize(ob, yc, cam_y < yc)
+                # the width was measured before; the mirrored far side keeps it
+                ob.data.transform(Matrix.Translation((0, yc, 0)) @ Matrix.Diagonal((1, w0 / w1, 1, 1))
+                                  @ Matrix.Translation((0, -yc, 0)))
+                log(f"{part or 'body'}: far side rebuilt as the mirror of the seen side (width {w1 / w0 - 1:+.1%} "
+                    f"before keeping the measured width)")
             x_hi, x_lo = hi_r[0] - d0, hi_r[0] - d1
             if d0 > 0:
                 clip_mesh(ob, (x_hi, 0, 0), (1, 0, 0))
@@ -445,6 +852,11 @@ def main():
                 if not lo_c <= cx <= hi_c:
                     raise RuntimeError(f"{part or 'body'}: length factor {cx:.2f} outside {ccfg['compress_range']} "
                                        f"({length:.1f} m into {L_tiles} tiles). Change size_tiles, length_m or split_m.")
+                if cx > ccfg.get("stretch_max", hi_c):
+                    # a short prototype is stretched only so far; it then stands shorter than its slot
+                    warnings.append(f"{part or 'body'}: {length:.1f} m would stretch {cx:.2f}x into {L_tiles} "
+                                    f"tile(s); kept at {ccfg['stretch_max']}x, {length * ccfg['stretch_max']:.1f} m")
+                    cx = ccfg["stretch_max"]
                 tiles_p, footprint = [L_tiles, 1], [L_tiles * tile, tile]
             else:
                 cx = a.get("length_factor") or ccfg["length_factor"]  # its vehicles' compression
@@ -456,12 +868,187 @@ def main():
                 # the game hangs a bogie at its pivot; a steam driver set sits ahead of the rear
                 # pivot, so draw it that far forward of its anchor (metres, after compression)
                 M = Matrix.Translation(Vector((a["anchor_offset_m"], 0, 0))) @ M
+            extras, gear = [], []
+            pname = part or "body"
+            if pname in lm.get("detaper", []):
+                dw, dh = detaper(ob, x_lo, x_hi, yc, zg)
+                log(f"{pname}: de-tapered, removed {dw:+.2f} m of width and {dh:+.2f} m of roof height change "
+                    f"along the body")
+            xmid = (x_hi + x_lo) / 2
+            final_x = {wr["w"]["name"]: cx * (wr["x"] - xmid) for wr in wheels_real if x_lo <= wr["x"] <= x_hi}
+            train_bogies = [tb for tb in lm.get("bogies", []) if tb["part"] == pname]
+            chunks, attached, own = {}, {}, {}
+            for tb in train_bogies:
+                if tb.get("mesh"):
+                    ch = ob.copy()
+                    ch.data = ob.data.copy()
+                    ch.name = f"bogie_{tb['style']}"
+                    bpy.context.scene.collection.objects.link(ch)
+                    xs_ = [xf / cx + xmid for xf in tb["mesh"]["x"]]
+                    n_keep = running_gear.keep_box(ch, min(xs_), max(xs_), zg + tb["mesh"]["top"])
+                    dyaw, dpitch = running_gear.square_up(ch, (min(xs_) + max(xs_)) / 2, zg)
+                    running_gear.cull_backfaces(ch)
+                    chunks[tb["style"]] = own[tb["style"]] = ch
+                    log(f"{pname}: bogie {tb['style']} keeps {n_keep} faces of the model's own truck, "
+                        f"squared up by yaw {dyaw:+.2f}, pitch {dpitch:+.2f} deg")
+                    if tb.get("model"):
+                        # a truck reconstructed from its own image takes the place of the model's own
+                        src_pm = part_models[tb["model"]]
+                        pm = src_pm.copy()
+                        pm.data = src_pm.data.copy()
+                        pm.name = f"bogie_{tb['style']}_part"
+                        pm.hide_render = False
+                        bpy.context.scene.collection.objects.link(pm)
+                        sx, sy = fit_part(pm, ch, zg)
+                        ch.hide_render = True  # replaced; kept only to mark its texels
+                        dyaw, dpitch = running_gear.square_up(pm, (min(xs_) + max(xs_)) / 2, zg)
+                        chunks[tb["style"]] = pm
+                        log(f"{pname}: bogie {tb['style']} from part {tb['model']} (scaled {sx:.3f} along, "
+                            f"{sy:.3f} across, squared up by yaw {dyaw:+.2f}, pitch {dpitch:+.2f} deg)")
+                for at in tb.get("attach", []):
+                    # end gear the prototype hangs on this bogie (a Crocodile's or GG1's frame ends):
+                    # it leaves the body and turns with the bogie, kept where it is relative to the pivot
+                    ch2 = ob.copy()
+                    ch2.data = ob.data.copy()
+                    ch2.name = f"attach_{tb['style']}"
+                    bpy.context.scene.collection.objects.link(ch2)
+                    xs2 = [xf / cx + xmid for xf in at["x"]]
+                    running_gear.keep_box(ch2, min(xs2), max(xs2), zg + at["top"])
+                    running_gear.cull_backfaces(ch2)
+                    attached.setdefault(tb["style"], []).append(ch2)
+                    n_at = running_gear.cut_box(ob, min(xs2), max(xs2), zg + at["top"])
+                    log(f"{pname}: {n_at} faces of end gear go with bogie {tb['style']} ({at.get('note', '')})")
+            if view is not None and view.tex is not None and (own or attached):
+                # hidden texels of each piece that turns with a truck take that piece's own seen colours
+                pieces = list(own.values()) + [c_ for cs in attached.values() for c_ in cs]
+                source_texture.fill_hidden(view, [source_texture.uv_cover(c_, view.tex["size"]) for c_ in pieces])
+                log(f"{pname}: hidden texels refilled per piece ({len(pieces)} pieces apart from the body)")
+            for cw in [c_ for c_ in lm.get("cut_wheels", []) if c_["part"] == pname]:
+                # coupled wheels baked into the body replace the model's own: outboard of the frames only
+                half_w = (hi_r[1] - lo_r[1]) / 2
+                sel = [wr for wr in wheels_real if wr["w"]["name"] in cw["wheels"]]
+                n_cw = running_gear.cut_wheels(ob, sel, cw.get("inner_y", 0.45) * half_w, y_center=yc,
+                                               margin=cw.get("margin", 1.05))
+                log(f"{pname}: cut {n_cw} faces of the model's wheels {cw['wheels']}")
+            for bk in [b_ for b_ in lm.get("baked", []) if b_["part"] == pname]:
+                # running gear rigid with the body (coupled wheels, rods): part of the body sprite
+                spec = dict(bk["spec"])
+                spec["axles"] = [dict(ax_, x=final_x[ax_["wheel"]]) if "wheel" in ax_ else ax_ for ax_ in spec["axles"]]
+                colors = {k: np.array(v, dtype=np.float64) / 255 for k, v in spec["colors"].items()}
+                bob = running_gear.bogie(f"baked_{pname}", {"x_scale": 1.0, "offset_m": 0.0, **spec}, tile, colors,
+                                         shading)
+                extras.append((bob, Matrix.Identity(4)))
+                scene_objs.append(bob)
+                log(f"{pname}: baked {len(spec['axles'])} axles into the body")
+            for cb in [c_ for c_ in lm.get("cut_boxes", []) if c_["part"] == (part or "body")]:
+                # the model's own running gear, which the game draws as bogie sprites beneath the body
+                xs_ = [xf / cx + (x_hi + x_lo) / 2 for xf in cb["x"]]
+                n_box = running_gear.cut_box(ob, min(xs_), max(xs_), zg + cb["top"])
+                log(f"{part or 'body'}: cut {n_box} faces in x {cb['x']} m below {cb['top']} m ({cb.get('note', '')})")
+            skirts = [sk for sk in lm.get("skirts", []) if sk["part"] == (part or "body")]
+            if skirts:
+                sob = running_gear.skirts(f"skirt_{part or 'body'}", skirts, tile, shading)
+                extras.append((sob, Matrix.Identity(4)))
+                scene_objs.append(sob)
+            mine = [wr for wr in wheels_real if x_lo <= wr["x"] <= x_hi]
+            if mine and cat == "vehicle" and size_tiles > 1:
+                # the game draws this part's running gear as bogie sprites; record where the source
+                # has its wheels (final frame) for sizing and placing them
+                gear = [{"name": wr["w"]["name"], "x_m": round(cx * (wr["x"] - (x_hi + x_lo) / 2), 3),
+                         "x_real_m": round(wr["x"] - (x_hi + x_lo) / 2, 3), "d_m": round(wr["d"], 3)}
+                        for wr in mine]
+                log(f"{part}: measured wheels {gear}")
+            elif mine:
+                # the model's own wheels go; round ones take their place on the game's rails
+                half_w = (hi_r[1] - lo_r[1]) / 2
+                n_cut = running_gear.cut_wheels(ob, mine, lm.get("inner_y", 0.7) * half_w, y_center=yc)
+                colors = {k: view.color(box) for k, box in lm["color_px"].items()}
+                axles = [{"x": cx * (wr["x"] - (x_hi + x_lo) / 2), "d": wr["d"], "spokes": wr["w"].get("spokes", 0)}
+                         for wr in mine]
+                wob = running_gear.wheelset(f"wheels_{part or 'body'}", axles, tile, colors, shading)
+                extras.append((wob, Matrix.Identity(4)))
+                scene_objs.append(wob)
+                gear = [{"x_m": round(ax["x"], 3), "d_m": round(ax["d"], 3), "spokes": ax["spokes"]} for ax in axles]
+                log(f"{part or 'body'}: cut {n_cut} faces of the model's wheels, built {len(axles)} axles {gear}")
             plo, phi = local_bounds(ob, M)
+            for eob, EM in extras:
+                elo, ehi = local_bounds(eob, EM)
+                plo, phi = np.minimum(plo, elo), np.maximum(phi, ehi)
             if footprint is None:
                 footprint = [float(phi[0] - plo[0]), float(phi[1] - plo[1])]
             scene_objs.append(ob)
+            profile = body_profile(ob, M)
+            log(f"{pname}: profile (rear->front) top {profile['top']} m, width {profile['width']} m")
             renders.append({"part": part, "ob": ob, "M": M, "lo": plo, "hi": phi, "comp": comp,
-                            "tiles": tiles_p, "footprint_m": footprint})
+                            "tiles": tiles_p, "footprint_m": footprint, "extras": extras, "gear": gear,
+                            "profile": profile})
+            piv = game_rules.pivots(a.get("plan") or "rigid", size_tiles, job.get("pivot_ratio"),
+                                    job.get("bogies"), job.get("pivots")).get(pname, []) if cat == "vehicle" else []
+            if train_bogies:
+                # where the source has this part's trucks, and a steam frame's coupled wheelbase:
+                # src/data pivots / coupled put the game's pivots there
+                img = {tb["index"]: (float(np.mean([final_x[n] for n in tb["centre"]])) if isinstance(tb["centre"], list)
+                                     else float(tb["centre"])) / tile for tb in train_bogies}
+                log(f"{pname}: pivots in the image {[round(img[i], 3) for i in sorted(img)]} tiles from the part's "
+                    f"centre; the game's {[round(v, 3) for v in piv]}")
+                for i, v in img.items():
+                    if i < len(piv) and abs(v - piv[i]) > 0.02:
+                        warnings.append(f"{pname}: bogie {i} is {v - piv[i]:+.3f} tiles from its pivot; set src/data "
+                                        f"pivots.{pname} to the image's truck centres")
+                drv = [n for bk in lm.get("baked", []) if bk["part"] == pname for ax_ in bk["spec"]["axles"]
+                       if ax_.get("driver") and (n := ax_.get("wheel")) in final_x]
+                if drv:
+                    log(f"{pname}: coupled wheelbase centred {np.mean([final_x[n] for n in drv]) / tile:+.3f} tiles "
+                        f"from the part's centre (src/data coupled.{pname})")
+            for tb in train_bogies:
+                # the game hangs bogie `index` of this part at its pivot; the sprite is drawn where the
+                # source has the truck, bogieDraw tiles along the track from there (src/data)
+                c = (float(np.mean([final_x[n] for n in tb["centre"]])) if isinstance(tb["centre"], list)
+                     else float(tb["centre"]))
+                pivot_m = piv[tb["index"]] * tile
+                # where the sprite is drawn: at its pivot (the game's own mechanism, bogieDraw 0) or,
+                # with at = "image", where the source has the group (bogieDraw = that offset)
+                draw_img = (c - pivot_m) / tile
+                draw = draw_img if tb.get("at", "pivot") == "image" else 0.0
+                T_ = Matrix.Translation(Vector((-c, 0, 0)))
+                b_extras = []
+                if tb["style"] in chunks:
+                    bob, BM = chunks[tb["style"]], T_ @ M
+                else:
+                    spec = dict(tb["spec"])
+                    spec["axles"] = [dict(ax_, x=final_x[ax_["wheel"]] - c) if "wheel" in ax_ else ax_
+                                     for ax_ in spec["axles"]]
+                    colors = {k: np.array(v, dtype=np.float64) / 255 for k, v in spec["colors"].items()}
+                    bob = running_gear.bogie(f"bogie_{tb['style']}", {"x_scale": 1.0, "offset_m": 0.0, **spec},
+                                             tile, colors, shading)
+                    BM = Matrix.Identity(4)
+                if tb.get("wheels"):
+                    # round wheels on the rails under a truck taken from the model
+                    ws = dict(tb["wheels"])
+                    ws["axles"] = [dict(ax_, x=final_x[ax_["wheel"]] - c) if "wheel" in ax_ else ax_
+                                   for ax_ in ws["axles"]]
+                    wcol = {k: np.array(v, dtype=np.float64) / 255 for k, v in ws["colors"].items()}
+                    wob = running_gear.bogie(f"wheels_{tb['style']}", {"x_scale": 1.0, "offset_m": 0.0, **ws},
+                                             tile, wcol, shading)
+                    b_extras.append((wob, Matrix.Identity(4)))
+                    scene_objs.append(wob)
+                for ch2 in attached.get(tb["style"], []):
+                    # relative to the pivot the sprite is drawn at, not to the truck's own centre
+                    b_extras.append((ch2, Matrix.Translation(Vector((-(pivot_m + draw * tile), 0, 0))) @ M))
+                    scene_objs.append(ch2)
+                blo, bhi = local_bounds(bob, BM)
+                for eob, EM in b_extras:
+                    elo, ehi = local_bounds(eob, EM)
+                    blo, bhi = np.minimum(blo, elo), np.maximum(bhi, ehi)
+                scene_objs.append(bob)
+                renders.append({"part": f"bogie-{tb['style']}", "ob": bob, "M": BM, "lo": blo, "hi": bhi,
+                                "comp": comp, "tiles": None, "extras": b_extras,
+                                "footprint_m": [float(bhi[0] - blo[0]), float(bhi[1] - blo[1])],
+                                "gear": [{"style": tb["style"], "pivot_tiles": round(piv[tb["index"]], 4),
+                                          "centre_m": round(c, 3), "draw_tiles": round(draw, 4),
+                                          "image_offset_tiles": round(draw_img, 4)}]})
+                log(f"{pname}: bogie {tb['style']} centred {c:+.3f} m in the image, pivot {pivot_m:+.3f} m -> "
+                    f"bogieDraw {draw:+.4f} tiles ({'at the image position' if draw else 'at its pivot'})")
             log(f"{part or cat}: {length:.2f} m, compression {comp.round(3).tolist()}, "
                 f"final dims {(phi - plo).round(2).tolist()} m")
         tiles = [size_tiles, 1] if size_tiles else None
@@ -508,35 +1095,42 @@ def main():
     log(f"scale {s:.4f} ({ref}), tiles {tiles}, {len(renders)} sprite set(s)")
 
     # 5. scene
-    if r["force_dielectric"]:
+    if r["force_dielectric"] and r.get("shading") != "painted":
         force_dielectric()
-    k_px = g["tile_px"] / (tile * math.sqrt(2))
+    res_x = int(r.get("resolution", 1))  # texels per logical game pixel (the atlas JSON's resolution)
+    k_px = g["tile_px"] / (tile * math.sqrt(2)) * res_x
     ss = int(r["supersample"])
     setup_render(r, 64, 64)
     L = add_sun(r)
-    ground = add_shadow_catcher() if (r["shadow"] and r["engine"] == "CYCLES") else None
+    shadow = ccfg.get("shadow", r["shadow"])
+    ground = add_shadow_catcher() if (shadow and r["engine"] == "CYCLES") else None
 
     # debug previews (raw pose vs aligned; the parts side by side when the model was cut)
-    debug = {}
+    debug, debug_cams = {}, {}
     if r["debug_views"]:
         if ground:
             ground.hide_render = True
         dcam = make_camera("debug_cam")
         views = [("raw_front", [(obj, mw0.copy())], "front"), ("aligned_front", [(obj, M_view)], "front"),
                  ("aligned_side", [(obj, M_view)], "side"), ("aligned_top", [(obj, M_view)], "top")]
-        if len(renders) > 1 or (renders[0]["ob"] is not obj):
+        if len(renders) > 1 or (renders[0]["ob"] is not obj) or renders[0].get("extras"):
             laid, x = [], 0.0
             for rd in renders:  # nose part on the right, as the front view shows the model
-                laid.append((rd["ob"], Matrix.Translation(Vector((-x - rd["hi"][0], 0, 0))) @ rd["M"]))
+                T_ = Matrix.Translation(Vector((-x - rd["hi"][0], 0, 0)))
+                laid.append((rd["ob"], T_ @ rd["M"]))
+                laid += [(e, T_ @ EM) for e, EM in rd.get("extras", [])]
                 x += rd["hi"][0] - rd["lo"][0] + 1.0
             views.append(("parts_front", laid, "front"))
+            gear_only = [(e, EM) for rd in renders for e, EM in rd.get("extras", [])]
+            if gear_only:
+                views.append(("gear_front", gear_only, "front"))
         samples = bpy.context.scene.cycles.samples if r["engine"] == "CYCLES" else None
         if samples:
             bpy.context.scene.cycles.samples = 8
         for name, items, view in views:
             show_only(scene_objs, [ob for ob, _ in items])
             p = f"{job['debug_dir']}/{a['id']}_{name}.png"
-            debug_view(items, dcam, view, p, r["debug_res"])
+            debug_cams[name] = debug_view(items, dcam, view, p, r["debug_res"] * (2 if name.startswith("parts") else 1))
             debug[name] = p
         if samples:
             bpy.context.scene.cycles.samples = samples
@@ -544,76 +1138,17 @@ def main():
             ground.hide_render = False
 
     # 6. fixed game camera; per sprite set a canvas sized for all directions (+ shadow)
-    cam = make_camera("game_cam")
-    cam.rotation_euler = (math.radians(90 - g["elevation_deg"]), 0, math.radians(g["azimuth_deg"]))
-    bpy.context.view_layer.update()
-    cm = cam.matrix_world.to_3x3()
-    right, up, back = cm.col[0], cm.col[1], cm.col[2]
-    dir_list = game_rules.directions(ccfg["dirs"])
-    sc = bpy.context.scene
-    sc.camera = cam
-    pad = int(r["pad_px"])
-    out = []
-    for rd in renders:
-        part, ob, M, plo, phi = rd["part"], rd["ob"], rd["M"], rd["lo"], rd["hi"]
-        show_only(scene_objs, [ob])
-        box = [Vector((x, y, z)) for x in (plo[0], phi[0]) for y in (plo[1], phi[1]) for z in (0.0, phi[2])]
-        if r["shadow"]:
-            box += [p - (p.z / L.z) * L for p in box if p.z > 0]
-        pts = []
-        for yaw_d, _ in dir_list:
-            Rz_ = Matrix.Rotation(math.radians(yaw_d), 3, "Z")
-            pts += [Rz_ @ p for p in box]
-        pr = [p.dot(right) for p in pts]
-        pu = [p.dot(up) for p in pts]
-        W = math.ceil((max(pr) - min(pr)) * k_px) + 2 * pad
-        H = math.ceil((max(pu) - min(pu)) * k_px) + 2 * pad
-        W += W % 2
-        H += H % 2
-        ax = pad + math.ceil(-min(pr) * k_px)
-        ay = pad + math.ceil(max(pu) * k_px)
-        cr, cu = (W / 2 - ax) / k_px, (ay - H / 2) / k_px
-        cam.location = right * cr + up * cu + back * 1000
-        cam.data.ortho_scale = max(W, H) / k_px
-        sc.render.resolution_x, sc.render.resolution_y = W * ss, H * ss
-
-        def to_px(p):
-            return [round(ax + p.dot(right) * k_px, 3), round(ay - p.dot(up) * k_px, 3)]
-
-        fx, fy = rd["footprint_m"][0] / 2, rd["footprint_m"][1] / 2
-        fp = [Vector(c) for c in ((-fx, -fy, 0), (fx, -fy, 0), (fx, fy, 0), (-fx, fy, 0))]
-        stem = f"{a['id']}_{part}" if part else a["id"]
-        dirs = []
-        for i, (yaw_d, facing) in enumerate(dir_list):
-            Rz4 = Matrix.Rotation(math.radians(yaw_d), 4, "Z")
-            ob.matrix_world = Rz4 @ M
-            path = f"{job['sprites_raw_dir']}/{stem}_d{i}.png"
-            tr = time.time()
-            render_to(path)
-            R3 = Rz4.to_3x3()
-            head = R3 @ Vector((1, 0, 0))
-            hv = Vector((head.dot(right), -head.dot(up)))
-            hv.normalize()
-            t_ = rd["tiles"]
-            rot_tiles = t_[::-1] if cat == "building" and round(yaw_d / 90) % 2 else t_
-            dirs.append({"index": i, "yaw_deg": yaw_d, "facing": facing, "file": path,
-                         "screen_heading": [round(hv.x, 4), round(hv.y, 4)],
-                         "tiles": rot_tiles,
-                         "footprint_px": [to_px(R3 @ c) for c in fp]})
-            log(f"{part or 'dir'} {i} ({yaw_d:.0f} deg) rendered in {time.time() - tr:.1f}s")
-        out.append({"part": part, "tiles": rd["tiles"], "footprint_m": rd["footprint_m"],
-                    "compression": rd["comp"].round(4).tolist(),
-                    "final_dims_m": (phi - plo).round(3).tolist(),
-                    "canvas_px": [W, H], "anchor_px": [ax, ay], "dirs": dirs})
+    out = render_sets(job, renders, scene_objs, shadow, L, k_px, ss, res_x)
 
     meta = {
         "id": a["id"], "category": cat, "plan": a.get("plan") or ("rigid" if cat == "vehicle" else None),
         "tiles": tiles, "footprint_m": footprint_m,
         "scale": round(float(s), 6), "scale_ref": ref, "compression": out[0]["compression"],
         "real_dims_m": real.round(3).tolist(), "final_dims_m": out[0]["final_dims_m"], "split": split,
-        "px_per_m": round(k_px, 5), "supersample": ss,
+        "width_fix": round(width_fix, 4),
+        "px_per_m": round(k_px, 5), "supersample": ss, "resolution": res_x, "source": src_report,
         "anchor": "ground center of the footprint (a part's own centre), continuous px coords from top-left",
-        "align": align_info, "warnings": warnings, "debug": debug, "renders": out,
+        "align": align_info, "warnings": warnings, "debug": debug, "debug_cams": debug_cams, "renders": out,
         "seconds": round(time.time() - t0, 1),
     }
     with open(job["meta_path"], "w", encoding="utf-8") as fh:

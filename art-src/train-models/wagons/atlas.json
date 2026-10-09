@@ -1,0 +1,1006 @@
+{
+  "frames": {
+    "rolling/bogie_black_five_leading_f0": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f1": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f13": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f14": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f15": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f16": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f17": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f18": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f19": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f2": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f20": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f21": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f22": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f23": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f24": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f25": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f26": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f27": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f28": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f29": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f3": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f30": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f4": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f5": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_black_five_leading_f6": {
+      "ax": 62,
+      "ay": 58,
+      "asset": "black_five"
+    },
+    "rolling/bogie_f7_front_f0": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f1": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f13": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f14": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f15": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f16": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f17": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f18": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f19": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f2": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f20": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f21": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f22": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f23": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f24": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f25": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f26": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f27": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f28": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f29": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f3": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f30": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f4": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f5": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_front_f6": {
+      "ax": 111,
+      "ay": 102,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f0": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f1": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f13": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f14": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f15": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f16": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f17": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f18": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f19": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f2": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f20": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f21": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f22": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f23": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f24": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f25": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f26": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f27": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f28": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f29": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f3": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f30": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f4": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f5": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_f7_rear_f6": {
+      "ax": 87,
+      "ay": 84,
+      "asset": "f7"
+    },
+    "rolling/bogie_flying_scotsman_leading_f0": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f1": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f13": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f14": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f15": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f16": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f17": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f18": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f19": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f2": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f20": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f21": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f22": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f23": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f24": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f25": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f26": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f27": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f28": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f29": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f3": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f30": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f4": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f5": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_leading_f6": {
+      "ax": 61,
+      "ay": 55,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f0": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f1": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f13": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f14": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f15": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f16": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f17": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f18": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f19": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f2": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f20": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f21": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f22": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f23": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f24": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f25": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f26": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f27": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f28": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f29": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f3": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f30": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f4": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f5": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_flying_scotsman_trailing_f6": {
+      "ax": 57,
+      "ay": 54,
+      "asset": "flying_scotsman"
+    },
+    "rolling/bogie_nine_f_pony_f0": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f1": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f13": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f14": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f15": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f16": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f17": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f18": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f19": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f2": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f20": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f21": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f22": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f23": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f24": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f25": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f26": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f27": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f28": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f29": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f3": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f30": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f4": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f5": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_nine_f_pony_f6": {
+      "ax": 56,
+      "ay": 52,
+      "asset": "nine_f"
+    },
+    "rolling/bogie_sd40_front_f0": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f1": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f13": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f14": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f15": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f16": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f17": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f18": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f19": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f2": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f20": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f21": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f22": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f23": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f24": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f25": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f26": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f27": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f28": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f29": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f3": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f30": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f4": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f5": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_front_f6": {
+      "ax": 150,
+      "ay": 117,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f0": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f1": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f13": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f14": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f15": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f16": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f17": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f18": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f19": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f2": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f20": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f21": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f22": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f23": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f24": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f25": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f26": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f27": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f28": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f29": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f3": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f30": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f4": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f5": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    },
+    "rolling/bogie_sd40_rear_f6": {
+      "ax": 138,
+      "ay": 115,
+      "asset": "sd40"
+    }
+  },
+  "partial": true,
+  "resolution": 4
+}

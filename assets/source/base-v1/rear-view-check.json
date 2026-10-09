@@ -1,0 +1,312 @@
+{
+ "assets/source/base-v1/loco-f7-rear.png": {
+  "id": "f7",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-f7-truck.png": {
+  "id": "f7",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-sd40-rear.png": {
+  "id": "sd40",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (3.1%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-flying-scotsman-rear.png": {
+  "id": "flying_scotsman",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (1.3%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-black-five-rear.png": {
+  "id": "black_five",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (3.4%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-nine-f-rear.png": {
+  "id": "nine_f",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-mav424-rear.png": {
+  "id": "mav424",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (1.9%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-k4s-rear.png": {
+  "id": "k4s",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (2.2%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-drg01-rear.png": {
+  "id": "drg01",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (2.5%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-daylight-rear.png": {
+  "id": "daylight",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (1.3%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-rocket-rear.png": {
+  "id": "rocket",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-adler-rear.png": {
+  "id": "adler",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-john-bull-rear.png": {
+  "id": "john_bull",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-general-rear.png": {
+  "id": "general",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (3.6%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-jupiter-rear.png": {
+  "id": "jupiter",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-mav375-rear.png": {
+  "id": "mav375",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-j94-rear.png": {
+  "id": "j94",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-crocodile-rear.png": {
+  "id": "crocodile",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (3.3%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-sw1-rear.png": {
+  "id": "sw1",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-sw1-truck.png": {
+  "id": "sw1",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-class08-rear.png": {
+  "id": "class08",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-m62-rear.png": {
+  "id": "m62",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-m62-truck.png": {
+  "id": "m62",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-deltic-truck.png": {
+  "id": "deltic",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-dda40x-rear.png": {
+  "id": "dda40x",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (2.7%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-dda40x-truck.png": {
+  "id": "dda40x",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-kando-v40-rear.png": {
+  "id": "kando_v40",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (1.1%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-v63-rear.png": {
+  "id": "v63",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-v63-truck.png": {
+  "id": "v63",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-taurus-rear.png": {
+  "id": "taurus",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-taurus-truck.png": {
+  "id": "taurus",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-re460-rear.png": {
+  "id": "re460",
+  "kind": "rear",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-re460-truck.png": {
+  "id": "re460",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-gg1-rear.png": {
+  "id": "gg1",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (1.5%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-gg1-truck.png": {
+  "id": "gg1",
+  "kind": "truck",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (2.2%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-gg1-truck2.png": {
+  "id": "gg1",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-tgv-rear.png": {
+  "id": "tgv",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (2.6%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-tgv-truck.png": {
+  "id": "tgv",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ },
+ "assets/source/base-v1/loco-ice1-rear.png": {
+  "id": "ice1",
+  "kind": "rear",
+  "verdict": "WARN",
+  "fail": [],
+  "warn": [
+   "tight margin (3.0%); the studio images keep about 12%"
+  ]
+ },
+ "assets/source/base-v1/loco-ice1-truck.png": {
+  "id": "ice1",
+  "kind": "truck",
+  "verdict": "PASS",
+  "fail": [],
+  "warn": []
+ }
+}

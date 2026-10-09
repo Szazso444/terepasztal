@@ -14,6 +14,8 @@ Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, til
 ## Run
 - `python run.py` : all assets in `assets.csv`, stages comfy -> blender -> post -> game. Stops at the first error, exit code 1.
 - `python run.py --only id1,id2 --stages blender,post,game --force` : redo selected stages.
+- `--out DIR` writes outside the repo (keep GLBs out of git; the roster lives in `G:/DEV/Terepasztal/pipeline-out`),
+  `--comfy-url URL` and `--blender EXE` override `pipeline.toml` for one run.
 - Finished stages are skipped on rerun (raw GLB / meta JSON exist) unless `--force`.
 - Requirements: Python 3.11+, `pip install pillow numpy`, Blender 4.2+ (tested 5.0), ComfyUI Desktop running with the API
   workflow, Node (the game stage runs `tools/pack-atlas.mjs`).
@@ -32,6 +34,11 @@ Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, til
 | `postprocess.py` | premultiplied box downsample, optional hard alpha / palette, atlas + JSON, preview sheet |
 | `game_rules.py` | the game's facings, sizes, body plans, `DRAWN_WIDTH` and atlas groups; `game_rules.test.mjs` holds it to `src/sim/body.ts` |
 | `export_game.py` | game stage: sprites -> `art-src/<group>/` frames + anchors, then `tools/pack-atlas.mjs` -> `public/assets/<group>.png\|json` |
+| `source_texture.py` | puts the source image's own colours back on a Pixal3D mesh (see Source colours) |
+| `landmarks.json` | per asset, measured on its source crop: wheels, nose, scale dimension, cut boxes, skirts, rail plane |
+| `running_gear.py` | round wheels, parametric bogies, body skirts and the painted shading every render uses |
+| `bogies.json` | the parametric bogie styles (`image = parametric` rows): axles, frames, springs, rods, colours |
+| `debug_grid.py` | a metre grid over a vehicle's `parts_front` debug view, for measuring cut heights |
 
 Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>.json`, `sprites_raw/`, `sprites/<id>/<id>[_<part>]_d<i>.png`, `atlas/<id>.png|json`, `previews/<id>.png`, `debug/`, `logs/run_*.log`, `logs/<id>_blender.log`, `reports/summary.json`. The game stage writes outside it, into the repo:
 `art-src/<group>/<frame>.png` + `atlas.json`, and `public/assets/<group>.png|json`.
@@ -85,6 +92,104 @@ Outputs under `assets_out/`: `models_raw/<id>.glb`, `jobs/<id>.json`, `meta/<id>
 - Buildings: height real, footprint compressed uniformly and snapped to whole tiles (`footprint_factor`, `footprint_range`, `fill`).
   With `size_tiles` the footprint is fixed at N x N (game stations 1x1, depots 2x2), allowed down to `sized_footprint_range`,
   and height is compressed by footprint factor ^ `sized_height_exponent` so a crushed footprint does not stand as a tower.
+
+## Source colours
+A Pixal3D mesh sits in the camera frame of the crop it was conditioned on (camera at -Y, object in a unit cube,
+perspective with MoGe's field of view; ComfyUI `comfy/ldm/trellis2/model.py`). The workflow saves that crop and its mask
+next to the GLB (`models_raw/<id>.source.png`, `.mask.png`, via the SaveImage nodes titled `source` and `mask`). The
+blender stage fits the field of view to the mask (silhouette IoU, must reach `source.min_iou`), gives every texel the
+camera sees the source's colour, and maps the generated colours of the hidden texels through a colour transfer fitted on
+the seen ones. The generated texture drifts (the Rocket's yellow went olive); this puts the approved art back.
+
+`rear_view_prompts.py` writes `assets/source/base-v1/rear-view-prompts.json`: for each locomotive, the prompt that
+made its studio image turned into a rear three-quarter view (same camera, locomotive turned 180 degrees), with its
+edge cases, and for diesel and electric trucks a prompt for the truck on its own. `check_rear_views.py` checks the generated images
+(transparency, framing, not flipped or redrawn); `assets/source/base-v1/REAR-VIEWS.md` is the brief for the image agent
+and `REAR-VIEWS-CODEX.txt` the one prompt that starts it.
+
+More images of the same vehicle colour what the source cannot see: `landmarks` `views` (paths from this folder) or
+`<image>-rear.png` next to the source image, e.g. a rear three-quarter view on a transparent background. Each one's
+camera is found by fitting the aligned mesh's outline to its alpha (azimuth, elevation, roll, scale, offset;
+`source.extra_min_iou`, default 0.8, else skipped with a warning; `debug/<id>_view<n>.png` shows the image beside the
+fitted mesh, front green to rear blue). A box-like vehicle has nearly the same outline from either end, so a
+`-rear.png` view is searched only within 60 degrees of the source camera turned 180 degrees round the vehicle. Its colour levels are matched to the source's on the surface both see. Texels then take,
+in turn: the source, the extra views, the mirror twins of both, and finally (`source.hidden = "nearest"`, the default)
+the colours of the nearest seen surface. A truck, pilot or other piece cut out to turn with a truck refills its hidden
+texels from its own seen faces only, so a truck's top stays dark instead of taking the body side's red.
+
+## Scale, measured
+- One metre for every asset: `[grid] metre = "human"` makes a `human_m` person `human_px` logical pixels tall
+  (`src/render/assetScale.ts`), a 6.23 m tile. At that metre the real rail-centre spacing times `DRAWN_WIDTH` is the game's
+  0.32-tile gauge; `game_rules.test.mjs` holds both.
+- Illustrations are not drawn to scale in every direction, so each axis has its own anchor: `height_m` (height over the
+  rail) sets the scale, `width_m` sets the width (a robust body width, then times `DRAWN_WIDTH`), and the game slot sets
+  the length. A landmark `scale` (a real distance between two measured wheels, e.g. the Rocket's 2.16 m wheelbase)
+  replaces `height_m` where the height is unknown. A short prototype is stretched at most `stretch_max` into its slot.
+- `landmarks.json` holds pixel measurements on the source crop: wheel hubs and tyre edges (back-projected onto the mesh
+  for axle positions and diameters), a nose pixel (which end is +X). The chassis is levelled on the wheel bottoms and the
+  rail plane put under them (or at the mesh's lowest point, `rail = "lowest"`).
+
+## Alignment, proportions, symmetry
+- Medium and large bodies are aligned on themselves after the Manhattan pass (`level = "body"`, the default above
+  one tile): the yaw that makes the body band narrowest, and the pitch of its principal axis in side view. `detaper`
+  (per part in `landmarks.json`) makes a box body equally wide and tall along its length: a reconstruction keeps a
+  little of its source's perspective, which would leave the body's edges out of parallel with the rails.
+  `edge_check.py <out> <id>` measures the roof edge against the rails in every side view.
+- Width follows the length scale (`classes.vehicle.width_follows_length`): a body compressed along the track is
+  narrowed by the same factor before `DRAWN_WIDTH`, as `body.ts` defines it, so the image's proportions survive.
+  A short vehicle is never widened by its stretch.
+- Rolling stock is left-right symmetric: a texel the source camera cannot see takes the source colour of its mirror
+  twin across the centre plane when the camera sees that (`landmarks` `mirror: false` turns it off). The hidden side's
+  shape is rebuilt the same way: each part is cut at the centre plane between its sides and the seen half mirrored
+  across, sharing its texture, then kept at the measured width (`symmetric: false` turns it off). A single-view
+  reconstruction guesses the far side; trucks came out as blobs without wheels.
+- `trim_front_m` / `trim_rear_m` (real metres) cut off what a reconstruction runs out past a vehicle's ends (the Black
+  Five's buffers came out as a horn) before the parts are measured.
+
+## Running gear
+- Reconstructed wheels come out uneven, soft and off gauge; none reach the game. Small stock (1 tile, no bogie sprites)
+  gets round wheels built at the measured axles, diameters and colours, treads on the rails (+-0.16 tile), bottoms on the
+  rail plane; the model's own wheels are cut away (`inner_y`).
+- Medium and large stock: `cut_boxes` remove the model's running gear (x from the part's centre, below `top`), since the
+  game draws bogie sprites beneath the body and a body sprite always covers them. `skirts` put dark inboard frame plates
+  back into the body where the cut left daylight above smaller built wheels: they stay rigid with the body.
+- Per-train bogies (`bogies` in `landmarks.json`) are rendered in the vehicle's own run as extra sprite sets (part
+  `bogie-<style>`, exported as `rolling/bogie_<style>_f<f>`): from a spec (round wheels at measured axles) or from the
+  model's own truck (`mesh` box, source-coloured, squared up to the rails, back faces transparent), optionally with
+  built `wheels`. They hang at their pivot; the log prints where the image has each part's trucks and warns when the
+  game's pivot is more than 0.02 tile away: `pivots` in `src/data` puts the game's pivots there (`docs/bogie-model.md`
+  rule 7). `attach` boxes move end gear (pilots, couplers, steps of a rigid body on two or more trucks) from the body
+  onto its truck, so it turns with it. `baked` running gear (a steam engine's coupled wheels and rods, a rigid tender's
+  axles) is built into the body sprite instead; the log gives the coupled wheelbase's centre for `coupled` in
+  `src/data` (rule 8).
+- A truck drawn on its own (`loco-<name>-truck.png`, REAR-VIEWS.md) is a `category = part` row (`f7_truck`):
+  reconstructed by the comfy stage only, then used in its vehicle's run where a bogie names it (`model`). It is painted
+  from its own image, its hidden side mirrored, turned with the vehicle's rotation (same camera, front to the lower
+  right), squared up, and scaled and placed onto the model's own truck (`mesh` box), which it replaces.
+- Bogies with `image = parametric` are built from `bogies.json` in the game frame, pivot at the origin: steam coupled
+  wheels shrink until they clear each other at the measured, compressed spacing; diesel trucks keep near-real wheels at
+  the source's spacing so they end inside the body. Colours come from boxes on the source crops. A group drawn far ahead
+  of its pivot (`offset_m`, the Pacific's drivers) swings with that pivot on tight curves, so it carries no frames.
+
+## Shading and resolution
+`render.shading = "painted"`: emission of the texture's own colour times `ambient_level + light_level * max(0, N.L)`,
+with L fixed to the camera (upper left), so every facing is lit from the same side and the source's painted shading is
+not lit twice. `render.resolution = 4` renders 4 texels per logical pixel, as the illustrated atlases; the atlas JSON
+carries `"resolution"` (one per group, `tools/pack-atlas.mjs` copies it from `art-src/<group>/atlas.json`).
+
+## In-game review
+The pilot's review tools stayed on the branch `local/train-models` (`scratchpad/train-models/`): `capture.mjs` (loop
+with switch, curves, reversal, a 48-heading sheet per vehicle, bogie sheets on their rails, new against the current
+procedural look at the same pose; `--cls high_speed` lays a high-speed loop for large stock), `hills.mjs` (a consist
+standing on a climb) and `build_review.py <out> <pilot>` (a review page).
+
+## Pilot frames waiting for the game
+`art-src/train-models/rolling/` and `art-src/train-models/wagons/` hold pilot 5's export (Rocket, Flying Scotsman, Black
+Five, 9F, F7, SD40-2 and their own bogies; 25 facings, resolution 4). They are not packed: the steam engines and the
+diesels stand on the `pivots` and `coupled` that `src/data` and `src/sim/body.ts` do not have yet, the Rocket is drawn on
+standard gauge while the game's Rocket is narrow, and `art-src/rolling` packs the Mk48 at resolution 1 (one atlas file
+has one resolution). The game stage still exports into `art-src/<group>/` and refuses a group that holds frames of
+another resolution, so a run cannot shrink the Mk48. `assets/source/base-v1/RESUME.md` has the state per locomotive.
 
 ## Game frames
 - `game_frame` in `assets.csv` is the frame key the asset replaces; empty = the asset stays out of the game.

@@ -93,7 +93,10 @@ def frames_for(asset: dict, info: dict):
     if asset["category"] in ("vehicle", "bogie"):
         if any(f.get("facing") is None for f in frames):
             raise GameExportError(f'rendered without game facings; set classes.{asset["category"]}.dirs = "game"')
-        return [(template.replace("{part}", f["part"] or "").replace("{f}", str(f["facing"])), f) for f in frames]
+        # a vehicle's own bogies (part "bogie-<style>") are the styles its bogieStyle names
+        return [((f"rolling/bogie_{f['part'][6:]}_f{f['facing']}" if (f["part"] or "").startswith("bogie-")
+                  else template.replace("{part}", f["part"] or "").replace("{f}", str(f["facing"]))), f)
+                for f in frames]
     if "{r}" in template:
         by_dir = {f["dir"]: f for f in frames}
         if 0 not in by_dir or 1 not in by_dir or by_dir[1]["yaw_deg"] != 90:
@@ -114,11 +117,21 @@ def export_asset(asset: dict, info: dict, art_src: Path):
             raise GameExportError(f"group {group} mixes prefixes {groups[group]} and {prefix}")
     for group in groups:
         release(art_src / group, aid)
+    res = int(info.get("resolution") or 1)
     for name, fr in pairs:
         group, prefix = group_of(name)
         folder = art_src / group
         folder.mkdir(parents=True, exist_ok=True)
         meta = read_meta(folder)
+        # one resolution per group: the atlas JSON has a single "resolution" for all its frames. Frames
+        # another tool wrote may have no entry of their own (the Mk48's video frames use the folder's
+        # `anchor`), so every PNG this asset does not own counts
+        mine = {n[len(prefix):] for n, f in meta["frames"].items() if f.get("asset") == aid}
+        others = sorted(p.stem for p in folder.glob("*.png") if p.stem not in mine)
+        if others and meta.get("resolution", 1) != res:
+            raise GameExportError(f"group {group} holds {meta.get('resolution', 1)}x frames ({others[0]}); "
+                                  f"{aid} was rendered at {res}x (render.resolution)")
+        meta["resolution"] = res
         owner = meta["frames"].get(name, {}).get("asset")
         if owner and owner != aid:
             raise GameExportError(f"frame {name} already belongs to asset {owner}")
@@ -157,7 +170,8 @@ def pack(groups: dict, gcfg: dict, repo: Path, log):
     """Run the game's packer once per touched group; fails loudly like every other stage."""
     for group, prefix in sorted(groups.items()):
         cmd = [gcfg.get("node", "node"), "tools/pack-atlas.mjs", group, "--prefix", prefix,
-               "--src", str(Path(gcfg["art_src"]) / group), "--out", gcfg["out"]]
+               "--src", str(Path(gcfg["art_src"]) / group), "--out", gcfg["out"],
+               "--max", str(gcfg.get("max_px", 4096))]
         proc = subprocess.run(cmd, cwd=repo, capture_output=True, text=True)
         for line in (proc.stdout + proc.stderr).splitlines():
             log(f"[pack] {line}")

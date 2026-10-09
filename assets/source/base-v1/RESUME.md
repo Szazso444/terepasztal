@@ -1,5 +1,28 @@
 # Asset generation checkpoint
 
+## Train models in develop (issue #153, 2026-10-09; latest)
+
+The pilot's sources and tools came over from `local/train-models` (pilot 5, 48d828b; it contains
+`art/rear-views-v1` and `locomotive-render-v1`), without `scratchpad/train-models/**` (review pages and
+captures stay on that branch). Nothing reaches the game yet: `public/assets/rolling.*` is still the Mk48 only.
+
+- Frames: `art-src/train-models/rolling/` (Rocket body, Flying Scotsman, Black Five and 9F engine + tender,
+  F7 and SD40-2 bodies) and `art-src/train-models/wagons/` (their own bogies: FS leading and trailing,
+  Black Five leading, 9F pony, F7 and SD40-2 front and rear trucks), 25 drawn facings each, per-frame anchors,
+  `resolution` 4. They stay out of `art-src/rolling` because that folder packs the Mk48 at resolution 1 and one
+  atlas file has one resolution. The pipeline's game stage still exports into `art-src/<group>`; while
+  `art-src/rolling` holds the Mk48 it stops with an error instead of relabelling those frames (`export_game.py`).
+- Sources: the 40 accepted rear views and truck studies, the five rejected ones, `REAR-VIEWS.md`, the prompts
+  and checks, `LARGE-FILES.md` (meshes stay on the Drive).
+- Not in develop: the building sources from the Drive (a29abfb), and the pilot's game-side changes
+  (`pivots`, `coupled`, `bogieDraw` in `src/sim/body.ts` and `src/data`, SD40-2 large, the renderer's
+  `drawAngle`). Those belong to Gameplay and Rendering.
+- Before the frames can be packed: Gameplay's `pivots` / `coupled` and the data rows for the five locomotives,
+  a narrow-gauge Rocket re-render (develop made the Rocket narrow on 2026-10-01; the pilot drew it on standard
+  gauge), the user's verdict on pilot 5 and on the steam trucks swinging clear of the frame on curves, and a
+  home for resolution-4 frames beside the resolution-1 Mk48 (a group of their own, the Mk48 scaled up, or
+  several sheets per group). No running gear animates: wheels and rods are baked into still frames.
+
 ## Bridge kit v1 — 2026-09-27 (source kit complete)
 
 Working on `claude/charming-ramanujan-i16mhm` in the isolated worktree
@@ -24,7 +47,7 @@ tests use bundled Python via `PYTHON`. Prettier passes with `--end-of-line auto`
 the unqualified check reports this checkout's existing CRLF line endings.
 
 
-## LOCKED hill style (2026-09-27; latest)
+## LOCKED hill style (2026-09-27)
 
 Terraces, 1/4-side levels, rock banks, rim light: DEFAULT_RELIEF in
 src/render/terrainRelief.ts = { step: TILE_SIDE_PX/4, maxRise: 1, faces: true,
@@ -32,6 +55,106 @@ shape: 'terraces', bank: 0.5, rims: true }. Do not change without the user.
 Next: rock only on steep/stacked banks, peak-to-rock blend, rails on terraces
 (ramps spread across tiles, no collapse), grade speed (-50% up, +20% down),
 elevation on hover, train climb renders at 1/4 vs 1/8.
+
+## Train models pilot 5 (2026-09-27)
+
+Codex generated the rear views (PR 22, merged into local/train-models): 40 accepted of 45, rejected the Big
+Boy, Garratt, Deltic and Mallard rear views and the SD40-2 truck. Pilot 5 paints the five pilot locomotives'
+rear ends from them (fit azimuth constrained to the turned camera: 3 of 5 first fitted end-for-end; colour
+levels matched per channel, a per-texel lookup had turned the F7's roof fans red) and rebuilds the F7's
+trucks from `loco-f7-truck.png` (part `f7_truck`). The F7's rear end gear was dropped: the reconstruction
+has only a wall there. Open: q5 questions, and the steam all-axles fit (front trucks swinging clear).
+
+## Train models pilot 4 (2026-09-27)
+
+User on pilot 3: FS still wrong ("real solutions"); F7 looked better in pilot 2 (trucks where the image has
+them), end gear hidden or not turning, a missing wheel, hidden parts plain brown (offered more pictures);
+new rule: end gear on the front/rear trucks for rigid bodies with 2+ bogies; show more steam engines;
+roster waits until decisions are locked and the user says go; atlas: several sheets per group is okay.
+Pilot 4: https://claude.ai/artifact/P41Rqnkro7PNP2eEAo1wQN (verdicts collection; local
+`G:/DEV/Terepasztal/renders/train-models-pilot-4/`, source `scratchpad/train-models/review-4/`).
+
+- Sim: `pivots` (per part, the image's truck centres) and `coupled` (steam frame stands on its coupled
+  wheels) in src/data; verdicts re-measured, unchanged for all five (docs/bogie-model.md rules 7-10).
+- FS: frame on its coupled wheels, leading bogie + trailing axle sprites (pilot-2 sprites); Black Five and
+  9F built the same way (new landmarks, CSV rows, per-train leading bogie / pony truck).
+- F7/SD40: trucks at the image's positions, whole pilot/coupler/steps attached to the trucks.
+- Pipeline: symmetric rebuild of the hidden side, nearest-seen fill per piece, transparent back faces on
+  cut pieces, extra views (`<image>-rear.png`, tested on a synthetic F7 rear view: IoU 0.948), end trims.
+- Asked the user for rear three-quarter images (F7, SD40, FS, Black Five, 9F).
+- After lock-in and the user's go: roster batches; several atlas sheets per group when needed.
+- User on pilot 4 (2026-09-27): steam wheels good; the leading bogie / pony truck detaches sideways from the
+  body on curves (all steam engines, e.g. 9F). Measured: 0.19-0.25 tile off the frame on the 0.5-tile curve.
+  Proposed fix (not built): fit the frame to all its axles (weighted least squares, trucks weight ~1): trucks
+  0.09-0.12 off the frame, coupled wheels 0.06-0.11 off the rail. Snapshot branch `locomotive-render-v1`
+  (89e0d66). Rear-view prompts: https://claude.ai/artifact/Biat29EKyAgEUAiXcBv3H9
+  (`tools/asset-pipeline/rear_view_prompts.py`).
+
+## Train models pilot 3 (2026-09-26)
+
+User on pilot 2: F7 model and body angles good; F7 drifted off the track at the switch exit (conform to
+the pivot mechanism); bogies must be parallel to the rails too; FS drivers belong where the user drew
+(under the boiler, on the rail); end gear per prototype (research); SD40-2 = large, 2 trucks,
+high-speed only. Pilot 3: https://claude.ai/artifact/5m1ujki1p7B8S2qRERbqNL (verdicts collection;
+local `G:/DEV/Terepasztal/renders/train-models-pilot-3/`, source `scratchpad/train-models/review-3/`).
+
+- F7: trucks back at the sim pivots (no bogieDraw), truck meshes squared up (<=1.1 deg), pilot/coupler on
+  the body per research; variant B (gear on trucks) captured for comparison (`renders/f7b`).
+- FS: drivers bogie on the rear pivot slot drawn +0.42 tiles on the rail (bogieDraw); leading at pivot;
+  trailing axle, splashers, frames with the body.
+- SD40-2: src/data size large, plan rigid, bogies 2; own trucks at the 0.58 pivots; high-speed loop in
+  the fixture (in-cab fitted). The end-gear research was dropped in pilot 4 (user rule instead).
+- Next: user's verdicts; then roster batches (diesels/electrics first).
+
+## Train models pilot 2 (2026-09-26)
+
+User feedback on pilot 1: Rocket approved (concept), colour and overall size approved. Asked for: FS
+drivers that follow the body; bogies closer to the centre with room for pilots; SD40-2 is a 3-tile
+body, so use the F7 as the medium diesel; features like snowplows rendered; per-train bogies;
+image proportions (bodies looked too wide); bodies parallel to the rails. Pilot 2:
+https://claude.ai/artifact/7mt9mZ5qTDivSGC1PPs2tQ (verdicts in its `verdicts` collection;
+local `G:/DEV/Terepasztal/renders/train-models-pilot-2/`, source `scratchpad/train-models/review-2/`).
+
+- Alignment: body-based yaw/pitch refinement plus `detaper`; F7 roof within 1.15 deg of the rails in
+  15 side views (0.2 deg in the user's straight shot). Width follows the length compression.
+- FS: coupled wheels, rods, splashers and frames baked into the engine body (rigid); leading bogie and
+  trailing axle are per-train bogies; tender axles baked (`tender: "none"`). Data: bogieStyle/bogieDraw.
+- F7: per-train trucks cut from its own model (source colours), drawn 0.18/0.13 tiles in from the pivots
+  via the new cosmetic `bogieDraw` (src/sim/body.ts, tested); pilot/snowplow kept on the body.
+- Hidden sides take their mirror twin's source colours. Shared pilot-1 bogie frames and the SD40 were
+  removed from the atlases (other locos keep their procedural bogies).
+- Open: SD40-2 to large + 2 trucks (data change, bars it from regular track); user's cut-off note
+  "EMD F7 is a good candidate, but yo..."; atlas budget; pilots on bogie vs body (answered: follow
+  the prototype, pending confirmation).
+
+## Train models pilot: Rocket, Flying Scotsman, SD40, bogies (2026-09-26)
+
+Branch `local/train-models` (worktree `C:/Users/Zso/terepasztal-local`, from PR #20's head). Pipeline
+outputs (GLBs, meta, sprites) live in `G:/DEV/Terepasztal/pipeline-out` (`run.py --out`); large files
+are listed in `assets/source/LARGE-FILES.md`. Review page: https://claude.ai/artifact/1CpkMXBqFyD1g4QmcQLrhN
+(local copy `G:/DEV/Terepasztal/renders/train-models-pilot/`, source `scratchpad/train-models/review/`).
+Its verdict buttons save to the artifact's `verdicts` collection: read them before continuing.
+
+- Fixed the POC's three failures. Colour: the Pixal3D mesh is pixel-aligned with its conditioning
+  crop, so `source_texture.py` projects the source back onto every seen texel and colour-transfers the
+  rest (Rocket mean-colour dE 3.7 vs the POC's 6.8; FS 0.3, SD40 0.9, F7 2.3). Wheels: measured on the
+  source (`landmarks.json`), rebuilt round on the rails (+-0.16 tile) for small stock; medium stock
+  gets `cut_boxes` + parametric bogies (`bogies.json`). Scale: one human metre (11 px = 1.75 m ->
+  6.23 m tile); height from `height_m`, width from `width_m` x DRAWN_WIDTH, length from the slot.
+- In game (`scratchpad/train-models/capture.mjs`, `hills.mjs`): straight, switch, curves, reversal,
+  all 48 headings, bogie sheets, hill climb; new vs current at the same pose. 0 page errors, reversal
+  shift 0. Packed as partial overrides at resolution 4: `public/assets/rolling.*` (125 frames, incl.
+  F7 as an extra), `wagons.*` (5 bogie styles x 25). The PR is a draft until the user approves.
+- Open decisions (on the review page): keep the human metre (small next to procedural wagons);
+  Pacific drivers swing with the rear pivot on tight curves vs rigid with the body; atlas budget for
+  the full roster (multi-sheet groups vs 2x); parametric bogies vs studio images.
+- Blocked: decor art needs an image generator (ComfyUI here has only the 3D models; the originals came
+  from a hosted tool); hill art waits for the hill shape decision.
+- Drive housekeeping: `Images/` had no loose file missing from `organized/` (all 153 were duplicates,
+  now in `_duplicates/`); buildings moved to `organized/buildings/`; moves in
+  `organized/moves-2026-09-26.json`. 67 building sources copied into the repo with manifests.
+- Next after approval: remaining 28 locomotives, 20 wagons and 20 bogie styles in batches; each needs
+  landmarks (wheels, nose, cut boxes) measured on its crop - `debug_grid.py` gives the metre grid.
 
 ## Hills 1/4, rails on slopes, scatter (2026-09-26)
 
