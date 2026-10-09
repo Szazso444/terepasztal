@@ -14,6 +14,13 @@ npm run lint
 Every pull request runs typecheck, lint, tests, build and a formatting check
 (`.github/workflows/ci.yml`).
 
+## Development
+
+Work is done by a team of role agents (Core, Engine, World, Gameplay, Rendering, UI/UX, Art, QA,
+Verification) on task branches that merge into `develop`; `main` gets releases. `AGENTS.md` is the
+entry point for anyone changing the code, `docs/process/lifecycle.md` the process, and `CORE.md`
+the current state and decisions.
+
 ## Versions
 
 See `CHANGELOG.md` for what each version and pull request added; releases are tagged `vX.Y.Z`.

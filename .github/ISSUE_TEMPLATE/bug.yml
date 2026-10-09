@@ -1,6 +1,6 @@
 name: Bug
 description: A reproducible defect, with the log and what fixed looks like.
-labels: ["type:bug", "status:triage"]
+labels: ['type:bug', 'status:triage']
 body:
   - type: textarea
     id: summary

@@ -2,6 +2,11 @@
 
 Speak a prompt, watch the change land in the running game, no branch and no pull request.
 
+> Since the agent organisation (`docs/process/lifecycle.md`), the live loop is how a person works
+> inside one task: on its `<role>/<issue>-<slug>` branch, in its worktree, committing as often as
+> below. What it produces still reaches `develop` through a pull request and the same gates as
+> any agent's work; nothing is committed straight to `develop` or `main`.
+
 ## The one decision that makes it work
 
 **Run Claude Code on your own machine, in the repo folder.** Two of your three requirements come

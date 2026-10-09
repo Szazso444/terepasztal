@@ -1,6 +1,6 @@
 name: Task
 description: One role, one branch, one pull request. Filed by Core when it splits work.
-labels: ["type:task", "status:triage"]
+labels: ['type:task', 'status:triage']
 body:
   - type: dropdown
     id: role
@@ -45,7 +45,7 @@ body:
     attributes:
       label: Verification tests required
       description: Mandatory when the task touches pathfinding, collisions, track geometry, traffic, save migrations, RNG, map generation, economy sums or rigid bodies.
-      options: ["yes", "no"]
+      options: ['yes', 'no']
     validations:
       required: true
   - type: textarea

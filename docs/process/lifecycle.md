@@ -15,6 +15,10 @@ reads the section for its own step, not the whole file.
 - A task branch starts from the current `develop` and lives in its own git worktree under
   `.claude/worktrees/<role>-<issue>-<slug>` (ignored by git), so parallel tasks never share a
   working copy: `git worktree add -b <role>/<issue>-<slug> .claude/worktrees/<role>-<issue>-<slug> origin/develop`.
+  A worktree there resolves the repository's `node_modules`, so the gate runs without a fresh
+  install unless the task changes `package.json`.
+- An agent that finishes with a branch commits and then runs `git switch --detach`, so the next
+  agent (Verification, QA, a fix round) can check the branch out in its own worktree.
 - An agent is bound to its role, never to a branch. The same role can run several tasks at once,
   each on its own branch and worktree. No branch is kept per role.
 - Hosted sessions that can push only one assigned branch (`claude/...`) still follow the model:
@@ -83,16 +87,20 @@ It returns the result report (`docs/process/context.md`). It stops and reports i
 guessing when the brief is ambiguous, when the change needs a file another role owns, or when a
 golden test (map generation hashes, art frame counts) fails.
 
-### 5. Verify (QA and Verification, in parallel)
+### 5. Verify (Verification, then QA)
 
-- **QA** reviews the diff against the issue's acceptance criteria, `AGENTS.md`'s rules and the
-  role's scope. It runs the gate itself; a report that says "tests pass" is a claim, not evidence.
-  It never edits. It returns a verdict: `approve` or `changes` with findings, each with
-  `file:line`, the concrete failure and the expected behaviour.
-- **Verification** adds or runs the deterministic tests the task requires (`docs/process/verification.md`).
-  A property that fails is a finding with its seed and the smallest failing case.
+- **Verification**, when the task requires it, adds the deterministic tests the task needs to the
+  task branch (`docs/process/verification.md`), in test files of the task's own role. A shared
+  helper in `src/testing/` is its own Verification task, merged first. A property that fails is a
+  finding with its seed and the smallest failing case, and goes to the fix loop before QA.
+- **QA** then reviews the head of the branch, tests included, against the issue's acceptance
+  criteria, `AGENTS.md`'s rules and the role's scope. It runs the gate itself; a report that says
+  "tests pass" is a claim, not evidence. It never edits. It returns a verdict: `approve` or
+  `changes` with findings, each with `file:line`, the concrete failure and the expected
+  behaviour.
 
 Nothing a role reports is accepted on its own word. Only the verdicts and a green gate move a task.
+Independent tasks are verified in parallel with each other.
 
 ### 6. Fix loop (Core)
 

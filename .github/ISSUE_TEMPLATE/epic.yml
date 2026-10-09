@@ -1,6 +1,6 @@
 name: Epic
 description: A feature large enough for a spec. Core splits it into tasks after the author approves.
-labels: ["type:epic", "status:triage", "needs:decision"]
+labels: ['type:epic', 'status:triage', 'needs:decision']
 body:
   - type: textarea
     id: goal

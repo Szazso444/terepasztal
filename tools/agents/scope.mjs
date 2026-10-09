@@ -153,7 +153,9 @@ function main(argv) {
     const outside = outOfScope(role, paths, ownership);
     console.log(`scope: ${paths.length} changed path(s) checked as ${role}`);
     if (!outside.length) return 0;
-    const lines = outside.map((p) => `  ${p}  (owner: ${ownersOf(p, ownership).join(', ') || 'none'})`);
+    const lines = outside.map(
+      (p) => `  ${p}  (owner: ${ownersOf(p, ownership).join(', ') || 'none'})`,
+    );
     if (cross) {
       console.log(`scope:cross — outside ${role}'s scope, accepted by label:\n${lines.join('\n')}`);
       return 0;
@@ -163,7 +165,9 @@ function main(argv) {
     return 1;
   }
 
-  console.error('usage: scope.mjs owner <path>... | list --role <r> | check (--role <r> [--base <ref>] [--cross] | --event <file>)');
+  console.error(
+    'usage: scope.mjs owner <path>... | list --role <r> | check (--role <r> [--base <ref>] [--cross] | --event <file>)',
+  );
   return 2;
 }
 
