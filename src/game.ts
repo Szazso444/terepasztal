@@ -2,7 +2,7 @@ import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
-import { GameLoop } from './engine/loop';
+import { GameLoop, type LoopPhase } from './engine/loop';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
@@ -986,6 +986,7 @@ export class Game implements UiHost {
       SIM_HZ,
       (dt) => this.update(dt),
       (a, dt) => this.render(a, dt),
+      (err, phase) => this.frameError(err, phase),
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
@@ -2025,7 +2026,28 @@ export class Game implements UiHost {
   }
 
   // ---------------------------------------------------------------- frame
+  /** messages of loop errors already toasted this session */
+  private readonly frameErrors = new Set<string>();
+  /**
+   * A loop callback threw and the loop carried on: log it with its stack every time, and toast each
+   * distinct message once, so an error repeating every frame does not flood the screen.
+   */
+  private frameError(err: unknown, phase: LoopPhase) {
+    console.error(`[loop] ${phase} threw; the game keeps running`, err);
+    const message = err instanceof Error ? err.message : String(err);
+    if (this.frameErrors.has(message)) return;
+    this.frameErrors.add(message);
+    this.toasts.push(STR.debug.frameError(message), 'warn');
+  }
   private render(alpha: number, dt: number) {
+    try {
+      this.drawFrame(alpha, dt);
+    } finally {
+      // input is read once per frame: a frame that throws must not replay its keys and clicks
+      this.input.endFrame();
+    }
+  }
+  private drawFrame(alpha: number, dt: number) {
     this.camera.viewW = this.app.screen.width;
     this.camera.viewH = this.app.screen.height;
     this.handleInput(dt);
@@ -2120,7 +2142,6 @@ export class Game implements UiHost {
     this.updateTrainSide(dt);
     this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
-    this.input.endFrame();
   }
 
   private minimapMarks() {
