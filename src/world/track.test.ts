@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Dir, opposite, DIR_DX, DIR_DY } from '../engine/iso';
 import { unitDef, unitIconPaths, unitRailPaths } from './trackGeom';
+import { findPath, walkBack, type PathSegment } from './pathfinding';
 import {
   TrackGraph,
   TRACK_KINDS,
@@ -18,6 +19,7 @@ import {
   classesJoin,
   TRACK_ITEMS,
   itemKey,
+  type TrackClass,
 } from './track';
 
 /** A line of E–W straights of one class along row `y`, from x0 to x1 inclusive. */
@@ -476,5 +478,92 @@ describe('transition', () => {
     // the piece is drawn wide from its first link end and high speed towards its second
     for (const d of [Dir.N, Dir.E, Dir.S, Dir.W])
       expect(pieceLinks('transition', transitionRot(d))[0][1]).toBe(d);
+  });
+});
+
+describe('pathfinding at class joints', () => {
+  /** A column of N–S straights (rotation 0) of one class along x, from y0 to y1 inclusive. */
+  function column(g: TrackGraph, x: number, y0: number, y1: number, cls: TrackClass) {
+    for (let y = y0; y <= y1; y++) g.place(x, y, 'straight', 0, cls);
+  }
+  /** Regular straights at (2,1..4), then `beyond` at (2,5..9); a transition at (2,5) if asked. */
+  function joint(beyond: 'narrow' | 'high_speed', transition = false) {
+    const g = new TrackGraph(6, 12);
+    column(g, 2, 1, 4, 'regular');
+    column(g, 2, 5, 9, beyond);
+    if (transition) g.place(2, 5, 'transition', transitionRot(Dir.S));
+    return g;
+  }
+  // entering (2,1) through its north edge heads south, towards +y
+  const start = { x: 2, y: 1, in: Dir.N };
+  const at = (tx: number, ty: number) => (x: number, y: number) => x === tx && y === ty;
+  const admitAll = () => true;
+  /** Every step of the path leaves its tile where connected() joins it to the next one. */
+  function joinedThroughout(g: TrackGraph, path: PathSegment[]) {
+    for (let i = 0; i + 1 < path.length; i++) {
+      const s = path[i];
+      expect(g.connected(s.x, s.y, s.out), `step ${i} at ${s.x},${s.y}`).toBe(true);
+      expect(path[i + 1]).toMatchObject({ x: s.x + DIR_DX[s.out], y: s.y + DIR_DY[s.out] });
+    }
+  }
+
+  it('finds no route across a regular-to-narrow joint', () => {
+    const g = joint('narrow');
+    expect(g.connected(2, 4, Dir.S)).toBe(false);
+    expect(findPath(g, start, at(2, 9))).toBeNull();
+    expect(findPath(g, start, at(2, 9), undefined, undefined, admitAll)).toBeNull();
+    // the regular side alone still routes: the null comes from the joint
+    expect(findPath(g, start, at(2, 4))).toHaveLength(4);
+  });
+
+  it('finds no route across a regular-to-high-speed joint without a transition', () => {
+    const g = joint('high_speed');
+    expect(g.connected(2, 4, Dir.S)).toBe(false);
+    expect(findPath(g, start, at(2, 9))).toBeNull();
+    expect(findPath(g, start, at(2, 9), undefined, undefined, admitAll)).toBeNull();
+    expect(findPath(g, start, at(2, 4))).toHaveLength(4);
+  });
+
+  it('routes from regular to high speed through a transition', () => {
+    const g = joint('high_speed', true);
+    for (const access of [undefined, admitAll]) {
+      const path = findPath(g, start, at(2, 9), undefined, undefined, access);
+      expect(path).not.toBeNull();
+      expect(path!.map((s) => s.y)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      joinedThroughout(g, path!);
+    }
+  });
+
+  it('still runs both lines of a mixed crossing, each on its own class', () => {
+    const g = new TrackGraph(12, 12);
+    // rotation 0: narrow runs north-south, regular east-west
+    g.place(5, 5, 'crossing', 0, 'narrow', 'regular');
+    column(g, 5, 2, 4, 'narrow');
+    column(g, 5, 6, 8, 'narrow');
+    for (const x of [2, 3, 4, 6, 7, 8]) g.place(x, 5, 'straight', 1, 'regular');
+    const ns = findPath(g, { x: 5, y: 2, in: Dir.N }, at(5, 8));
+    expect(ns?.map((s) => s.y)).toEqual([2, 3, 4, 5, 6, 7, 8]);
+    joinedThroughout(g, ns!);
+    const ew = findPath(g, { x: 2, y: 5, in: Dir.W }, at(8, 5));
+    expect(ew?.map((s) => s.x)).toEqual([2, 3, 4, 5, 6, 7, 8]);
+    joinedThroughout(g, ew!);
+  });
+
+  it('walks back no further than a regular-to-narrow joint', () => {
+    const g = joint('narrow');
+    // standing at (2,7) having entered from the north: behind lie (2,6), (2,5), then the joint
+    const back = walkBack(g, 2, 7, Dir.N, 10);
+    expect(back.map((s) => [s.x, s.y])).toEqual([
+      [2, 5],
+      [2, 6],
+    ]);
+    for (const s of back) expect(s.y).toBeGreaterThanOrEqual(5);
+  });
+
+  it('walks back through a transition to the end of the regular track', () => {
+    const g = joint('high_speed', true);
+    const back = walkBack(g, 2, 7, Dir.N, 10);
+    expect(back.map((s) => s.y)).toEqual([1, 2, 3, 4, 5, 6]);
+    joinedThroughout(g, [...back, { x: 2, y: 7, in: Dir.N, out: Dir.S }]);
   });
 });

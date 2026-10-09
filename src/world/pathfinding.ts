@@ -14,6 +14,8 @@ export interface PathSegment {
 /**
  * Dijkstra over (tile, entryEdge) states. A state means "inside tile, having entered through
  * that edge". Trains cannot reverse mid-tile, so this naturally handles switches and curves.
+ * A step leaves a tile only where `TrackGraph.connected` joins it to the next, so a path never
+ * crosses a class or gauge break that has no transition piece.
  * Returns the segment list starting at the start tile, or null.
  */
 export function findPath(
@@ -50,7 +52,8 @@ export function findPath(
       const nx = x + DIR_DX[out];
       const ny = y + DIR_DY[out];
       const nin = opposite(out);
-      if (!track.opensTo(nx, ny, nin)) continue;
+      // the neighbour must open back and its class must join ours (no gauge or class break)
+      if (!track.connected(x, y, out)) continue;
       if (avoid && avoid(nx, ny)) continue;
       if (access && !access(track.get(nx, ny)!, nin)) continue;
       const piece = track.get(x, y)!;
@@ -98,7 +101,10 @@ export function findPath(
   return segs;
 }
 
-/** Walk backwards from a tile/heading to collect the tiles behind a spawn point. */
+/**
+ * Walk backwards from a tile/heading to collect the tiles behind a spawn point. The walk stops
+ * where the track ends or at a joint `TrackGraph.connected` refuses (a class or gauge break).
+ */
 export function walkBack(
   track: TrackGraph,
   x: number,
@@ -115,7 +121,7 @@ export function walkBack(
     const px = cx + DIR_DX[cin];
     const py = cy + DIR_DY[cin];
     const pOut = opposite(cin);
-    if (!track.opensTo(px, py, pOut)) break;
+    if (!track.connected(cx, cy, cin)) break;
     const exits = track.exits(px, py, pOut);
     if (!exits.length) break;
     const pIn = exits.find((e) => e === opposite(pOut)) ?? exits[0];
