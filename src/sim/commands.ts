@@ -125,7 +125,10 @@ export class Commands {
     let qty = Math.min(want, room, buy > 0 ? Math.floor(this.economy.money / buy) : Infinity);
     // the division may round up past what the money covers
     if (qty >= 1 && qty * buy > this.economy.money) qty--;
-    if (!(qty >= 1) || !this.economy.spend(qty * buy)) return refuse(STR.roster.noMoney);
+    // checked first: a refused spend would also post the economy's own warning (money below
+    // zero refuses even goods quoted at nothing)
+    if (!(qty >= 1) || !this.economy.canAfford(qty * buy)) return refuse(STR.roster.noMoney);
+    this.economy.spend(qty * buy);
     this.stock.add(cargoId, qty, cap);
     return done();
   }
