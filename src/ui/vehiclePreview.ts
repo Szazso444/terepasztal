@@ -3,28 +3,27 @@ import { itemDef, itemKind, type LocoDef, type WagonDef } from '../gacha/items';
 import { BOGIE_AXLES, vehicleSpec } from '../sim/body';
 import { runsOn } from '../sim/compat';
 import { el, btn } from './dom';
+import { STR } from '../strings';
 import { frameForItem, spriteDataUrl } from './spritePreview';
 
 export function vehicleProperties(id: string): string[] {
   const d = itemDef(id),
     s = vehicleSpec(d);
-  const base = [
-    `${s.size} · ${s.L} tile${s.L === 1 ? '' : 's'} · ${s.plan}`,
-    `${d.weight} t empty`,
-  ];
+  const V = STR.vehicle;
+  const base = [V.body(s.size, s.L, s.plan), V.weight(d.weight)];
   if (itemKind(id) === 'loco') {
     const l = d as LocoDef;
     base.push(
-      `${l.type} · ${l.speed.toFixed(2)} tiles/s · ${l.power} t haul`,
+      V.loco(l.type, l.speed, l.power),
       s.drawBogies
-        ? `${s.segments.map((p) => `${p.nb} × ${BOGIE_AXLES[p.bogie] * 2} wheels`).join(' + ')}`
-        : '2 axles · 4 wheels',
+        ? s.segments.map((p) => V.bogie(p.nb, BOGIE_AXLES[p.bogie] * 2)).join(' + ')
+        : V.axles,
     );
-    if (l.fuelCap) base.push(`Fuel ${l.fuelCap} · ${l.fuelPerTile} per tile`);
-    if (l.waterCap) base.push(`Water ${l.waterCap} · ${l.waterPerTile} per tile`);
+    if (l.fuelCap) base.push(V.fuel(l.fuelCap, l.fuelPerTile));
+    if (l.waterCap) base.push(V.water(l.waterCap, l.waterPerTile));
   } else {
     const w = d as WagonDef;
-    base.push(`${w.carries} · ${w.capacity} units`, (w.accepts ?? []).join(', '));
+    base.push(V.wagon(w.carries, w.capacity), (w.accepts ?? []).join(', '));
   }
   base.push(runsOn(d));
   return base;
@@ -43,7 +42,7 @@ export function showVehiclePreview(atlas: AtlasRegistry, id: string): () => void
     min: '0',
     max: '47',
     value: '0',
-    'aria-label': 'Viewing angle',
+    'aria-label': STR.vehicle.angle,
   }) as HTMLInputElement;
   const paint = () => {
     img.src = spriteDataUrl(atlas, frameForItem(id, facing), 3) ?? '';
@@ -62,16 +61,16 @@ export function showVehiclePreview(atlas: AtlasRegistry, id: string): () => void
   };
   document.addEventListener('keydown', key);
   const toggle = btn(
-    'Pause rotation',
+    STR.vehicle.pause,
     () => {
       spin = !spin;
-      toggle.textContent = spin ? 'Pause rotation' : 'Rotate';
+      toggle.textContent = spin ? STR.vehicle.pause : STR.vehicle.rotate;
     },
     'small',
   );
   slider.oninput = () => {
     spin = false;
-    toggle.textContent = 'Rotate';
+    toggle.textContent = STR.vehicle.rotate;
     facing = +slider.value;
     paint();
   };
@@ -79,7 +78,7 @@ export function showVehiclePreview(atlas: AtlasRegistry, id: string): () => void
   img.onpointerdown = (e) => {
     dragX = e.clientX;
     spin = false;
-    toggle.textContent = 'Rotate';
+    toggle.textContent = STR.vehicle.rotate;
     img.setPointerCapture(e.pointerId);
   };
   img.onpointermove = (e) => {
@@ -102,7 +101,7 @@ export function showVehiclePreview(atlas: AtlasRegistry, id: string): () => void
       el(
         'div',
         { class: 'panel-body' },
-        el('div', { class: 'dim', text: 'Rotating isometric preview · drag to turn' }),
+        el('div', { class: 'dim', text: STR.vehicle.hint }),
         slider,
         toggle,
         ...vehicleProperties(id).map((text) => el('div', { class: 'kv', text })),

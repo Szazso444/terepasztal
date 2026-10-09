@@ -101,9 +101,7 @@ export class ResourceBar {
     if (info) body.append(el('div', { class: 'bi-desc', text: info }));
     body.append(row(STR.res.have, `${Math.floor(st.get(id))} / ${this.cap(id)}`));
     if (stats) {
-      body.append(
-        el('div', { class: 'dim', text: 'Last 7 days; history starts when this game is loaded.' }),
-      );
+      body.append(el('div', { class: 'dim', text: STR.res.historyNote }));
       body.append(row(STR.res.producedDay, stats.produced.toFixed(1)));
       body.append(row(STR.res.consumedDay, stats.consumed.toFixed(1)));
       const net = stats.produced - stats.consumed;
@@ -130,7 +128,7 @@ export class ResourceBar {
       v.classList.toggle('red', net < -0.01);
       v.classList.toggle('good', net > 0.01);
       v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= c);
-      root.title = `${net >= 0 ? '+' : ''}${net.toFixed(1)} net in the last 7 days`;
+      root.title = STR.res.netTitle(`${net >= 0 ? '+' : ''}${net.toFixed(1)}`);
     }
     const p = `${stock.population}`;
     if (this.pop.textContent !== p) this.pop.textContent = p;

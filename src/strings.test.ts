@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import ts from 'typescript';
 import { describe, it, expect } from 'vitest';
 import { STR } from './strings';
 import { RULE_META } from './sim/rules';
@@ -75,5 +77,128 @@ describe('what the upgrade tool tells the player', () => {
   it('lists the track keys among the controls', () => {
     for (const key of ['Q / E', 'U', 'Shift+U', '1-5'])
       expect(STR.settings.controlsText).toContain(key);
+  });
+});
+
+/** Attributes and properties whose value the player reads. */
+const SHOWN = new Set(['text', 'title', 'placeholder', 'aria-label', 'textContent']);
+/** A literal that reads as English: a capital letter, then a lowercase one. */
+const ENGLISH = /^[A-Z][a-z]/;
+
+function literalText(node: ts.Node): string | null {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  if (ts.isTemplateExpression(node)) return node.head.text;
+  return null;
+}
+
+/** The literals an expression can show: through parentheses, conditionals, fallbacks and `+`. */
+function shownLiterals(e: ts.Expression, out: ts.Expression[] = []): ts.Expression[] {
+  if (ts.isParenthesizedExpression(e) || ts.isAsExpression(e)) shownLiterals(e.expression, out);
+  else if (ts.isConditionalExpression(e)) {
+    shownLiterals(e.whenTrue, out);
+    shownLiterals(e.whenFalse, out);
+  } else if (
+    ts.isBinaryExpression(e) &&
+    [
+      ts.SyntaxKind.QuestionQuestionToken,
+      ts.SyntaxKind.BarBarToken,
+      ts.SyntaxKind.PlusToken,
+    ].includes(e.operatorToken.kind)
+  ) {
+    shownLiterals(e.left, out);
+    shownLiterals(e.right, out);
+  } else if (literalText(e) !== null) out.push(e);
+  return out;
+}
+
+function nameOf(name: ts.Node): string {
+  return ts.isIdentifier(name) || ts.isStringLiteral(name) ? name.text : '';
+}
+
+/**
+ * `file:line: text` for every English literal a panel hands the player directly: the text, title,
+ * placeholder or aria-label it sets, the label of `btn()`, a child of `el()`, or a toast.
+ */
+function hardcodedText(file: string, source: string): string[] {
+  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+  const found: string[] = [];
+  const check = (e: ts.Expression | undefined) => {
+    if (!e) return;
+    for (const lit of shownLiterals(e)) {
+      const text = literalText(lit)!;
+      if (!ENGLISH.test(text)) continue;
+      const line = sf.getLineAndCharacterOfPosition(lit.getStart(sf)).line + 1;
+      found.push(`${file}:${line}: ${text.split('\n')[0]}`);
+    }
+  };
+  const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      const fn = ts.isIdentifier(callee)
+        ? callee.text
+        : ts.isPropertyAccessExpression(callee)
+          ? callee.name.text
+          : '';
+      if (fn === 'btn' || fn === 'toast') check(node.arguments[0]);
+      else if (fn === 'el') node.arguments.slice(2).forEach(check);
+      else if (
+        fn === 'push' &&
+        ts.isPropertyAccessExpression(callee) &&
+        /toasts$/i.test(callee.expression.getText(sf))
+      )
+        check(node.arguments[0]);
+    } else if (
+      (ts.isPropertyAssignment(node) || ts.isPropertyDeclaration(node)) &&
+      SHOWN.has(nameOf(node.name))
+    )
+      check(node.initializer);
+    else if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isPropertyAccessExpression(node.left) &&
+      SHOWN.has(node.left.name.text)
+    )
+      check(node.right);
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+describe('text the panels show', () => {
+  const dir = new URL('./ui/', import.meta.url);
+  const files = readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
+
+  it('comes from STR in every src/ui file', () => {
+    expect(files).toContain('dom.ts');
+    const found = files.flatMap((f) =>
+      hardcodedText(`src/ui/${f}`, readFileSync(new URL(f, dir), 'utf8')),
+    );
+    expect(found, 'move these into src/strings.ts').toEqual([]);
+  });
+
+  it('catches a hardcoded label, child, attribute or toast, and leaves classes and keys alone', () => {
+    const panel = [
+      "btn('Foo', () => {});",
+      "el('div', {}, 'Foo bar');",
+      "el('div', { class: 'k', text: on ? 'Shown' : `Hidden ${n}` });",
+      "input.placeholder = 'Type here';",
+      "this.toast('Done', 'good');",
+      "el('div', { class: 'Panel title', id: 'Root' }, STR.title, '×');",
+      "if (inp.wasPressed('Escape')) close();",
+      "btn('x', close, 'small');",
+    ].join('\n');
+    expect(hardcodedText('panel.ts', panel)).toEqual([
+      'panel.ts:1: Foo',
+      'panel.ts:2: Foo bar',
+      'panel.ts:3: Shown',
+      'panel.ts:3: Hidden ',
+      'panel.ts:4: Type here',
+      'panel.ts:5: Done',
+    ]);
+  });
+
+  it('names a direction for every signal rotation', () => {
+    expect(STR.signals.directions).toHaveLength(4);
   });
 });

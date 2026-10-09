@@ -45,12 +45,10 @@ export class TownPanel {
       el('div', {
         class: 'sub',
         text:
-          hs.growthPerDay > 0
-            ? T.growth(Math.round(hs.growthPerDay * 70) / 10)
-            : 'Growth stops at available housing capacity; food is required',
+          hs.growthPerDay > 0 ? T.growth(Math.round(hs.growthPerDay * 70) / 10) : T.growthCapped,
       }),
     );
-    out.push(el('div', { class: 'sub', text: 'Build or upgrade Houses to increase capacity' }));
+    out.push(el('div', { class: 'sub', text: T.capacityHint }));
     return out;
   }
   render(force = false) {

@@ -108,7 +108,7 @@ export class BuildInfo {
     const costs = el('div', { class: 'bi-cost' });
     const cost = item.costNow ? item.costNow() : item.cost;
     const entries = Object.entries(cost).filter(([, v]) => v > 0);
-    if (!entries.length) costs.append(el('span', { class: 'dim', text: 'free' }));
+    if (!entries.length) costs.append(el('span', { class: 'dim', text: STR.build.free }));
     for (const [k, v] of entries) {
       const have = this.stock.get(k);
       costs.append(

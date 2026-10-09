@@ -1,4 +1,5 @@
 import { el, btn } from './dom';
+import { STR } from '../strings';
 
 /** Small centred dialog asking for a name; resolves with the text or null when dismissed. */
 export class NamePrompt {
@@ -8,8 +9,8 @@ export class NamePrompt {
   private hint = el('div', { class: 'dim' });
   private input = el('input', { type: 'text', maxlength: '20' }) as HTMLInputElement;
   private resolve: ((v: string | null) => void) | null = null;
-  private ok = btn('OK', () => {}, 'accent');
-  private cancel = btn('Keep', () => {}, 'small');
+  private ok = btn(STR.prompt.ok, () => {}, 'accent');
+  private cancel = btn(STR.prompt.keep, () => {}, 'small');
 
   constructor() {
     const ok = this.ok;
@@ -65,8 +66,8 @@ export class NamePrompt {
     return new Promise((res) => (this.resolve = (v) => res(v !== null)));
   }
   private okLabel(yesNo: boolean) {
-    this.ok.textContent = yesNo ? 'Yes' : 'OK';
-    this.cancel.textContent = yesNo ? 'No' : 'Keep';
+    this.ok.textContent = yesNo ? STR.prompt.yes : STR.prompt.ok;
+    this.cancel.textContent = yesNo ? STR.prompt.no : STR.prompt.keep;
   }
   private finish(v: string | null) {
     this.input.style.display = '';
