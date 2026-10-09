@@ -252,6 +252,8 @@ export const STR = {
       'On track within six tiles of a powered substation to be live. R does nothing here.',
   },
   building: {
+    title: (name: string, level: number) => `${name} · Level ${level}`,
+    upgrade: (cost: string) => `Upgrade · ${cost}`,
     recipe: 'Recipe',
     rate: 'Current rate',
     maxRate: 'Full rate',
@@ -264,6 +266,12 @@ export const STR = {
     full: 'Stopped: stockpile full',
     starved: (n: string) => `Waiting for ${n}`,
     or: 'or',
+    bridgeCapacity: 'Bridge capacity',
+    /** "half speed" is `BRIDGE_SLOW_FACTOR` in src/sim/bridges.ts; reword it if that changes. */
+    bridgeLimit: (capacity: number, slowAbove: number) =>
+      `${capacity} t · half speed above ${slowAbove} t`,
+    bridgeHint:
+      'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
   },
   notice: {
     title: 'Notices',
