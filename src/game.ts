@@ -33,7 +33,7 @@ import { climbAxes, railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
-import { GameClock } from './sim/time';
+import { GameClock, SIM_STEP } from './sim/time';
 import { Hud } from './ui/hud';
 import { Minimap } from './ui/minimap';
 import { DebugPanel } from './ui/debug';
@@ -173,7 +173,8 @@ function startStock(): Record<string, number> {
   };
 }
 
-const SIM_HZ = 20;
+/** Loop ticks per real second: one tick runs `clock.speed` steps of SIM_STEP game seconds. */
+const SIM_HZ = 1 / SIM_STEP;
 const EDGE_MARGIN = 14;
 const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
@@ -1985,8 +1986,10 @@ export class Game {
         this.save(true);
       }
     }
-    const gdt = this.clock.advance(dt);
-    if (gdt > 0) {
+    // Poses the renderer interpolates from: once per loop tick, paused ticks included, so the
+    // interpolation spans every step this tick runs.
+    this.fleet.beginFrame();
+    this.clock.run((gdt) => {
       this.stock.population = this.houses.residentsTotal();
       this.stock.workforce = this.builder.crewTotal() + this.fleet.crewTotal();
       this.stock.tick(gdt);
@@ -2019,7 +2022,7 @@ export class Game {
         this.builder.plantCount(),
         this.builder.depotCount(),
       );
-      if (this.settings.weather) this.weather.tick(this.clock.time, this.clock.day, dt);
+      if (this.settings.weather) this.weather.tick(this.clock.time, this.clock.day, gdt);
       this.applySeason();
       const wf =
         (this.settings.weather ? this.weather.speedFactor() : 1) * (this.stock.famine ? 0.7 : 1);
@@ -2039,7 +2042,7 @@ export class Game {
         }
         this.contracts.completedToday = 0;
       }
-    }
+    });
   }
 
   /** Debug aid requested for testing: money plus a full stockpile. */
