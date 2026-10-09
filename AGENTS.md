@@ -155,8 +155,11 @@ them) have sprites: the renderer mirrors a drawn facing to cover its partner, an
 Bodies are rigid and never change length (`src/sim/body.ts`). These constants are a contract
 between Gameplay, Rendering and Art: changing one changes atlas frame counts.
 
-Track classes derive everything from `n`: curve radius `n - 0.5`, curve and switch footprint
-`n x n`, cost `n x 1.5` above regular. Classes only join through a transition piece.
+Track classes derive their geometry from `n` (`CLASS_N`: regular 2, high speed 2, narrow 1): curve
+radius `n - 0.5`, curve and switch footprint `n x n`. Cost is a multiplier on the piece's base
+cost: regular 1, high speed `n x 1.5`, narrow 0.6 (`classCostMul`). Regular and high speed join only
+through a transition piece; narrow is another gauge and joins only narrow (a mixed crossing lets a
+narrow line cross a wide one without joining it).
 
 ## Tests
 
