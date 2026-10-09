@@ -295,7 +295,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     }
     sfx(sc ? 'ui.open' : 'ui.close');
   };
-  const trainScreen = new TrainScreen(d.fleet, d.builder, d.stock, d.atlas, toast);
+  const trainScreen = new TrainScreen(d.fleet, d.builder, d.stock, d.commands, d.atlas, toast);
   trainScreen.onLocate = (t) => host.focusTrain(t);
   const trainDetails = (t: Train) => {
     trainScreen.open(t);
@@ -309,6 +309,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     toast,
     d.trade,
     () => d.clock.time,
+    d.commands,
   );
   d.trade.onSettled = (lines) =>
     d.toasts.push(
@@ -368,6 +369,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const gachaScreen = new GachaScreen(
     d.gacha,
     d.economy,
+    d.commands,
     () => d.clock.time,
     toast,
     d.atlas,
@@ -382,7 +384,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     toast,
     d.atlas,
   );
-  const rosterScreen = new RosterScreen(d.inventory, d.fleet, d.atlas, toast);
+  const rosterScreen = new RosterScreen(d.inventory, d.fleet, d.commands, d.atlas, toast);
   const contractsScreen = new ContractsScreen(d.contracts, d.builder, d.clock, toast);
   contractsScreen.trainName = (id) => d.fleet.byId(id)?.name ?? null;
   contractsScreen.autoAccept = {
@@ -391,11 +393,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       d.settings.contractPolicy = uniformContractPolicy(v ? 'accept' : 'prompt');
       host.applySettings();
     },
-  };
-  rosterScreen.spendMoney = (amount) => {
-    if (d.economy.money < amount) return false;
-    d.economy.money -= amount;
-    return true;
   };
   const contractsSide = new ContractsSide(d.contracts, d.builder, d.clock);
   contractsSide.onOpenBoard = () => d.screens.toggle(contractsScreen);
@@ -451,13 +448,13 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.stock,
     () => d.build.selectedBuilding && d.build.selectBuilding(null),
   );
-  const decorPanel = new DecorPanel(d.builder, d.power, () => {
+  const decorPanel = new DecorPanel(d.builder, d.power, d.commands, toast, () => {
     if (d.build.selectedDecor) d.build.selectDecor(null);
   });
   decorPanel.houses = d.houses;
   decorPanel.onSignalGuide = showSignalGuide;
   decorPanel.onSignalBlock = (dec) => host.highlightSignalBlock(dec);
-  const trainSide = new TrainSide(d.builder, d.atlas);
+  const trainSide = new TrainSide(d.builder, d.atlas, d.commands, toast);
   const noticePanel = new NoticePanel();
   noticePanel.onFocus = (n) => host.focusNotice(n);
   const advisor = new Advisor(d.settings.advisor === false);
@@ -493,6 +490,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.clock,
     d.towns,
     (t) => host.renameTown(t),
+    d.commands,
+    toast,
   );
   const townPanel = new TownPanel(d.towns, d.houses);
   townPanel.onGo = (t) => {
