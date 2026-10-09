@@ -1,4 +1,7 @@
-/** Money, tickets and the current age (steam / diesel / electric), reached through goals. */
+/**
+ * Money, tickets and the current age (steam / diesel / electric / nuclear / magnetic / hyper),
+ * reached through goals.
+ */
 import { LAST_AGE, goalsMet, type AgeSnapshot } from './ages';
 
 export class Economy {
@@ -6,7 +9,10 @@ export class Economy {
   tickets = 3;
   /** money taken in over the whole game (contracts, spot sales, fares); one of the age goals */
   earned = 0;
-  /** index of the current age: 0 steam, 1 diesel, 2 electric. Never drops. */
+  /**
+   * index of the current age: 0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper
+   * (`AGE_DEFS`). Never drops. Contracts read it through `railAge`, which stops at electric.
+   */
   tier = 0;
   /** the high-speed rail quest is done: the fast track may be built */
   hsUnlocked = false;

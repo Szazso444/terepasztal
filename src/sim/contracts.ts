@@ -7,6 +7,7 @@ import type { Economy } from './economy';
 import { cargoDef } from './cargo';
 import type { DeliveryEvent } from './trains';
 import { CONTRACT_RARITIES, type ContractRarity } from './save';
+import { railAge } from './ages';
 
 export type { ContractTemplate, ContractRarityDef };
 export type { ContractRarity };
@@ -129,7 +130,8 @@ export class ContractBoard {
   generate(now: number, force = false): Contract | null {
     const pairs = this.pairs();
     if (!pairs.length) return null;
-    const tier = this.economy.tier;
+    // the ages after electric bring no contracts of their own: they ask and pay as electric does
+    const tier = railAge(this.economy.tier);
     const templates = TEMPLATES.filter((t) => t.minTier <= tier);
     const totalW = templates.reduce((a, t) => a + t.weight, 0);
     let r = this.rng.next() * totalW;
