@@ -2,7 +2,7 @@ import { el, btn } from './dom';
 import { STR } from '../strings';
 import { TOWN_COLORS, type Town, type TownRegistry } from '../sim/towns';
 import type { HouseRegistry } from '../sim/houses';
-import { cargoDef } from '../sim/cargo';
+import { formatRates } from './townRates';
 
 /**
  * Left-hand list of towns, shown with the survey overview: colour, name, population, housing and
@@ -25,13 +25,6 @@ export class TownPanel {
   show(v: boolean) {
     this.root.style.display = v ? '' : 'none';
     if (v) this.render(true);
-  }
-  private fmt(rec: Record<string, number>) {
-    const parts = Object.entries(rec)
-      .filter(([, v]) => v >= 0.5)
-      .sort((a, b) => b[1] - a[1])
-      .map(([k, v]) => `${Math.round(v)} ${cargoDef(k).name.toLowerCase()}`);
-    return parts.length ? parts.join(', ') : '-';
   }
   /** Housing, growth and when the town builds next. */
   private housingLines(t: Town): HTMLElement[] {
@@ -95,11 +88,11 @@ export class TownPanel {
         ...this.housingLines(t),
         el('div', {
           class: 'sub',
-          text: `${STR.town.makes}: ${this.fmt(this.towns.production(t, m))}`,
+          text: `${STR.town.makes}: ${formatRates(this.towns.production(t, m))}`,
         }),
         el('div', {
           class: 'sub',
-          text: `${STR.town.uses}: ${this.fmt(this.towns.consumption(t, m))}`,
+          text: `${STR.town.uses}: ${formatRates(this.towns.consumption(t, m))}`,
         }),
         el(
           'div',
