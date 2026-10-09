@@ -288,50 +288,82 @@ describe('a train whose contract closes while it has no route to the job', () =>
    * cannot reach the job's origin stands in `noRoute` and has no next stop: once the contract
    * closes, the closed job's stops must not keep it there.
    */
+  function closedInNoRoute(mode: RouteMode) {
+    const w = world();
+    const put = (kind: Kind, x: number, y = ROW - 1) => {
+      const s = new Station(kind, x, y);
+      w.builder.stations.push(s);
+      return s;
+    };
+    const quarry = put('quarry', 40),
+      farm = put('farm', 70),
+      warehouse = put('warehouse', 80),
+      // the contract's origin: no rail reaches it
+      origin = put('quarry', 60, ROW + 20);
+    stockUp(quarry);
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    t.wagons = [
+      { uid: 2, def: wagonDef('wood_hopper'), level: 1, cargo: null, amount: 0, origin: null },
+    ];
+    t.spawnAt(w.track, 20, ROW, Dir.W);
+    t.oil = t.oilCap;
+    t.mode = mode;
+    t.schedule =
+      mode === 'schedule'
+        ? [defaultStop(quarry.id), defaultStop(farm.id)]
+        : [defaultStop(quarry.id)];
+    t.addJob({
+      contractId: 1,
+      name: 'stone',
+      originId: origin.id,
+      destId: warehouse.id,
+      cargo: 'stone',
+    });
+    w.fleet.trains.push(t);
+    let now = 0;
+    const run = (seconds: number) => {
+      for (let i = 0; i < seconds / GDT; i++) w.fleet.tick(GDT, (now += GDT));
+    };
+    run(5);
+    expect(t.job?.contractId).toBe(1);
+    expect(t.state).toBe('noRoute');
+    const own = t.program;
+    t.dropJob(1);
+    /** Back on its own program, no longer on the closed job's stops, and not stuck there. */
+    const expectBack = (tr: Train) => {
+      expect(tr.toJSON().suspended, 'its program still set aside').toBeNull();
+      expect(tr.route, 'still on the closed job').not.toEqual([origin.id, warehouse.id]);
+      if (mode === 'schedule') expect(tr.schedule).toEqual(own);
+      expect(tr.state).not.toBe('noRoute');
+    };
+    return { w, t, own, run, expectBack };
+  }
   MODES.forEach((mode) =>
     it(`goes back to its program (${mode})`, () => {
-      const w = world();
-      const put = (kind: Kind, x: number, y = ROW - 1) => {
-        const s = new Station(kind, x, y);
-        w.builder.stations.push(s);
-        return s;
-      };
-      const quarry = put('quarry', 40),
-        farm = put('farm', 70),
-        warehouse = put('warehouse', 80),
-        // the contract's origin: no rail reaches it
-        origin = put('quarry', 60, ROW + 20);
-      stockUp(quarry);
-      const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
-      t.wagons = [
-        { uid: 2, def: wagonDef('wood_hopper'), level: 1, cargo: null, amount: 0, origin: null },
-      ];
-      t.spawnAt(w.track, 20, ROW, Dir.W);
-      t.oil = t.oilCap;
-      t.mode = mode;
-      t.schedule =
-        mode === 'schedule'
-          ? [defaultStop(quarry.id), defaultStop(farm.id)]
-          : [defaultStop(quarry.id)];
-      t.addJob({
-        contractId: 1,
-        name: 'stone',
-        originId: origin.id,
-        destId: warehouse.id,
-        cargo: 'stone',
-      });
-      w.fleet.trains.push(t);
-      let now = 0;
-      for (let i = 0; i < 5 / GDT; i++) w.fleet.tick(GDT, (now += GDT));
-      expect(t.job?.contractId).toBe(1);
-      expect(t.state).toBe('noRoute');
-      const own = t.program;
-      t.dropJob(1);
-      for (let i = 0; i < 10 / GDT; i++) w.fleet.tick(GDT, (now += GDT));
-      expect(t.toJSON().suspended, 'its program still set aside').toBeNull();
-      expect(t.route, 'still on the closed job').not.toEqual([origin.id, warehouse.id]);
+      const { t, own, run, expectBack } = closedInNoRoute(mode);
+      run(10);
+      expectBack(t);
       if (mode === 'schedule') expect(t.schedule).toBe(own);
-      expect(t.state).not.toBe('noRoute');
+    }),
+  );
+  MODES.forEach((mode) =>
+    it(`goes back on the next tick, as under way (${mode})`, () => {
+      const { t, run, expectBack } = closedInNoRoute(mode);
+      run(GDT);
+      expectBack(t);
+    }),
+  );
+  MODES.forEach((mode) =>
+    it(`goes back after a reload that falls between the close and the next tick (${mode})`, () => {
+      const { w, t, run, expectBack } = closedInNoRoute(mode);
+      // the save keeps the set-aside program, not the pending hand-back; a loaded train stands
+      // without a route
+      const back = Train.fromJSON(JSON.parse(JSON.stringify(t.toJSON())), w.track);
+      w.fleet.trains[w.fleet.trains.indexOf(t)] = back;
+      expect(back.job).toBeNull();
+      expect(back.toJSON().suspended).not.toBeNull();
+      run(10);
+      expectBack(back);
     }),
   );
 });
