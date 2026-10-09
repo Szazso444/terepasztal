@@ -333,7 +333,15 @@ interface Scene {
   /** steps, from 0, in whose fleet.tick a contract is offered, accepted and delivered in full */
   deliveries: number[];
   steps: number;
+  /**
+   * the player takes each offer on as it comes (Auto-accept for every rarity), on land that
+   * supports `TAKEN_AT_ONCE` contracts; otherwise offers wait on the board, as by default
+   */
+  takeOffers: boolean;
 }
+
+/** Contracts a refresh took on at once when every offer was accepted by default. */
+const TAKEN_AT_ONCE = 6;
 
 const BUILDINGS = ['windmill', 'kiln', 'grinder'] as const;
 
@@ -375,6 +383,7 @@ function genScene(rng: Rng, steps: [number, number] = [100, 700]): Scene {
     tradeIn: rng.chance(0.5) ? Math.round(rng.range(0, 3 * day) * 100) / 100 : null,
     deliveries,
     steps: n,
+    takeOffers: rng.chance(0.6),
   };
 }
 
@@ -385,7 +394,15 @@ function* shrinkScene(s: Scene): Iterable<Scene> {
   for (const houses of shrinkArray(s.houses)) yield { ...s, houses };
   for (const deliveries of shrinkArray(s.deliveries)) yield { ...s, deliveries };
   for (const buildings of shrinkArray(s.buildings)) yield { ...s, buildings };
-  for (const k of ['train', 'ageUp', 'farm', 'second', 'famine', 'staleLastDay'] as const)
+  for (const k of [
+    'train',
+    'ageUp',
+    'farm',
+    'second',
+    'famine',
+    'staleLastDay',
+    'takeOffers',
+  ] as const)
     if (s[k]) yield { ...s, [k]: false };
   if (s.tradeIn !== null) yield { ...s, tradeIn: null };
   if (s.completedToday) yield { ...s, completedToday: 0 };
@@ -466,6 +483,15 @@ function stage(s: Scene): Staged {
   if (s.tradeIn !== null)
     w.trade.load({ deals: { stone: 5, wood: -3 }, nextAt: w.clock.time + s.tradeIn });
   w.contracts.completedToday = s.completedToday;
+  if (s.takeOffers) {
+    rules.contractOfferCount = TAKEN_AT_ONCE;
+    const answer = w.contracts.onEvent;
+    w.contracts.onEvent = (e) => {
+      answer?.(e);
+      if (e.kind === 'offered' && e.contract.status === 'offer')
+        w.contracts.accept(e.contract, w.clock.time);
+    };
+  }
 
   const log: string[] = [];
   let season: Season | null = null;
@@ -500,12 +526,18 @@ function stage(s: Scene): Staged {
 }
 
 /**
- * A contract offered and accepted at once (DEFAULT_SETTINGS accepts every rarity) and delivered
- * in full through fleet.onDelivery, as a train unloading at its destination would.
+ * A contract delivered in full through fleet.onDelivery, as a train unloading at its destination
+ * would: one offered and accepted at once (by the player, as an offer waits for them by default),
+ * or the active one due first when the land holds no more contracts.
  */
 function deliverContract(w: SimWorld) {
-  const c = w.contracts.generate(w.clock.time, true);
-  if (!c || c.status !== 'active') return;
+  const fresh = w.contracts.generate(w.clock.time, true);
+  if (fresh?.status === 'offer') w.contracts.accept(fresh, w.clock.time);
+  const c =
+    fresh?.status === 'active'
+      ? fresh
+      : w.contracts.active.sort((a, b) => a.expires - b.expires || a.id - b.id)[0];
+  if (!c) return;
   const dest = w.builder.stationById(c.destId);
   if (!dest) return;
   const train = undefined as unknown as Train; // the board does not read it

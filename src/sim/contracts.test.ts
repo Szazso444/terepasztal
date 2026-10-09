@@ -9,18 +9,29 @@ import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds } from './stations';
 import { rules, DEFAULT_RULES, daySeconds } from './rules';
-import { ContractBoard, type Contract } from './contracts';
+import { ContractBoard, contractLimit, type Contract } from './contracts';
+import {
+  CONTRACT_RARITIES,
+  DEFAULT_SETTINGS,
+  contractPolicyFor,
+  uniformContractPolicy,
+  type Settings,
+} from './save';
 import type { DeliveryEvent } from './trains';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
-/** Three producers and two towns along one line: several cargo routes to draw offers from. */
+/**
+ * Three producers and two towns along one line: several cargo routes to draw offers from. The
+ * map is three chunks by three; the player owns the start chunk.
+ */
 function world() {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
     economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, new Stockpile());
+  const regions = new RegionState(map);
+  const builder = new Builder(map, regions, track, economy, new Stockpile());
   builder.free = true;
   for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
   for (const [x, id] of [
@@ -31,7 +42,7 @@ function world() {
     [80, 'town'],
   ] as const)
     expect(builder.placeStation(x, 31, id)).not.toBeNull();
-  return { builder, economy };
+  return { builder, economy, regions };
 }
 
 const SEED = 0x5eed;
@@ -111,6 +122,115 @@ describe('ContractBoard randomness', () => {
     b.load(old as ReturnType<ContractBoard['toJSON']>);
     expect(b.toJSON().rng).toBe(new Rng(SEED).state);
     expect(b.contracts).toEqual(a.contracts);
+  });
+});
+
+// ------------------------------------------------------------------ how many contracts
+
+/** Own chunks, in index order, until `n` are owned. */
+function ownChunks(regions: RegionState, n: number) {
+  for (let i = 0; regions.ownedCount() < n && i < regions.unlocked.length; i++) regions.own(i);
+  expect(regions.ownedCount()).toBe(n);
+}
+
+/** Answer each new offer as the game does, by the settings' policy for its rarity. */
+function answerOffers(board: ContractBoard, settings: Settings, now: () => number) {
+  board.onEvent = (e) => {
+    if (e.kind !== 'offered') return;
+    const policy = contractPolicyFor(settings, e.contract.rarity);
+    if (policy === 'accept') board.accept(e.contract, now());
+    else if (policy === 'deny') board.decline(e.contract);
+  };
+}
+
+describe('contracts and the land the player owns', () => {
+  const OWNED = [1, 2, 4, 9];
+
+  it('supports one contract on the start chunk, one more for every two chunks bought, up to the cap', () => {
+    expect(OWNED.map((n) => contractLimit(n))).toEqual([1, 1, 2, 5]);
+    for (let n = 1; n <= 400; n++) {
+      const at = contractLimit(n);
+      expect(at, `${n} chunks`).toBeGreaterThanOrEqual(contractLimit(n - 1));
+      expect(at, `${n} chunks`).toBeLessThanOrEqual(rules.contractOfferMax);
+    }
+    expect(contractLimit(400)).toBe(rules.contractOfferMax);
+  });
+
+  it('follows the tuning: the start number, the share per chunk rounded down, and the cap', () => {
+    const tuned = { ...DEFAULT_RULES, contractOfferCount: 2, contractOffersPerChunk: 0.1 };
+    expect(contractLimit(1, tuned)).toBe(2);
+    expect(contractLimit(10, tuned)).toBe(2);
+    expect(contractLimit(11, tuned)).toBe(3);
+    expect(contractLimit(9, { ...tuned, contractOffersPerChunk: 0 })).toBe(2);
+    expect(contractLimit(9, { ...tuned, contractOffersPerChunk: 1, contractOfferMax: 4 })).toBe(4);
+    // a cap below the start number is still a cap
+    expect(contractLimit(1, { ...tuned, contractOfferMax: 1 })).toBe(1);
+  });
+
+  it('keeps as many offers open as the land supports', () => {
+    for (const owned of OWNED) {
+      resetStationIds(1);
+      const { builder, economy, regions } = world();
+      ownChunks(regions, owned);
+      const board = new ContractBoard(new Rng(SEED), builder, economy);
+      expect(board.limit(), `${owned} chunks`).toBe(contractLimit(owned));
+      board.tick(NOW);
+      expect(board.offers.length, `${owned} chunks`).toBe(board.limit());
+      // a refresh later the board is still at the number, not past it
+      board.tick(NOW + rules.contractRefreshDays * daySeconds());
+      expect(board.offers.length, `${owned} chunks, a refresh later`).toBe(board.limit());
+    }
+  });
+
+  it('leaves a new offer on the board under the default settings', () => {
+    const { builder, economy } = world();
+    const board = new ContractBoard(new Rng(SEED), builder, economy);
+    answerOffers(board, DEFAULT_SETTINGS, () => NOW);
+    for (const r of CONTRACT_RARITIES)
+      expect(contractPolicyFor(DEFAULT_SETTINGS, r)).toBe('prompt');
+    board.tick(NOW);
+    expect(board.offers.length).toBe(1);
+    expect(board.active).toEqual([]);
+    expect(board.offers[0].acceptedAt).toBe(0);
+  });
+
+  it('refuses an active contract past what the land supports, and takes it once land is bought', () => {
+    const { builder, economy, regions } = world();
+    const board = new ContractBoard(new Rng(SEED), builder, economy);
+    const [a, b, c] = draw(board, 3, true) as Contract[];
+    expect(board.accept(a, NOW)).toBe(true);
+    expect(board.activeFull()).toBe(true);
+    expect(board.accept(b, NOW)).toBe(false);
+    expect(b.status).toBe('offer');
+    expect(b.acceptedAt).toBe(0);
+    ownChunks(regions, 3);
+    expect(board.activeFull()).toBe(false);
+    expect(board.accept(b, NOW)).toBe(true);
+    expect(board.accept(c, NOW)).toBe(false);
+    // a contract that ends frees its place
+    expect(board.cancel(a)).toBe(true);
+    expect(board.accept(c, NOW)).toBe(true);
+    expect(board.active.length).toBe(board.limit());
+  });
+
+  it('takes on no more than the land supports with every rarity on auto-accept', () => {
+    for (const owned of OWNED) {
+      resetStationIds(1);
+      const { builder, economy, regions } = world();
+      ownChunks(regions, owned);
+      const board = new ContractBoard(new Rng(SEED), builder, economy);
+      const settings = { ...DEFAULT_SETTINGS, contractPolicy: uniformContractPolicy('accept') };
+      let now = NOW;
+      answerOffers(board, settings, () => now);
+      for (let k = 0; k < 4; k++, now += rules.contractRefreshDays * daySeconds()) {
+        board.tick(now);
+        const label = `${owned} chunks, refresh ${k}`;
+        // the first refresh fills the land's places; later ones refill what ended
+        if (k === 0) expect(board.active.length, label).toBe(board.limit());
+        else expect(board.active.length, label).toBeLessThanOrEqual(board.limit());
+        expect(board.offers.length, label).toBeLessThanOrEqual(board.limit());
+      }
+    }
   });
 });
 

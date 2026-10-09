@@ -21,8 +21,11 @@ import {
   hasSlot,
   continueMeta,
   migrateSettings,
+  readSettings,
+  writeSettings,
   contractPolicyFor,
   uniformContractPolicy,
+  CONTRACT_POLICY_VERSION,
   convertOneTileRegular,
   CONTRACT_RARITIES,
   type SaveGame,
@@ -1078,30 +1081,69 @@ describe('storage', () => {
 });
 
 describe('settings', () => {
-  it('turns the retired auto-accept switch into a per-rarity policy', () => {
-    const on: Partial<Settings> = { autoContracts: true };
+  const prompt = uniformContractPolicy('prompt');
+  const accept = uniformContractPolicy('accept');
+
+  it('ships defaults that leave every offer waiting for the player', () => {
+    for (const r of CONTRACT_RARITIES)
+      expect(contractPolicyFor(DEFAULT_SETTINGS, r)).toBe('prompt');
+    // and fresh defaults, once stored, are not moved again
+    const fresh = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)) as Partial<Settings>;
+    expect(migrateSettings(fresh)).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('moves settings stored under the old default to the new one', () => {
+    const old: Partial<Settings>[] = [
+      { music: 0.3 },
+      { autoContracts: true },
+      { contractPolicy: accept },
+      // a missing entry read as accept under the old default
+      { contractPolicy: { common: 'accept' } as Settings['contractPolicy'] },
+      { contractPolicy: null as unknown as Settings['contractPolicy'] },
+    ];
+    for (const s of old) {
+      const label = JSON.stringify(s);
+      const m = migrateSettings(s);
+      expect(m.contractPolicy, label).toEqual(prompt);
+      expect(m.contractPolicyVersion, label).toBe(CONTRACT_POLICY_VERSION);
+      expect(m.autoContracts, label).toBeUndefined();
+    }
+    expect(migrateSettings({ music: 0.3 }).music).toBe(0.3);
+  });
+
+  it('keeps a policy chosen under the old default, filling what it left out with accept', () => {
     const off: Partial<Settings> = { autoContracts: false };
-    expect(migrateSettings(on).contractPolicy).toEqual(uniformContractPolicy('accept'));
-    expect(migrateSettings(off).contractPolicy).toEqual(uniformContractPolicy('prompt'));
-    expect(on.autoContracts).toBeUndefined();
+    expect(migrateSettings(off).contractPolicy).toEqual(prompt);
+    expect(
+      migrateSettings({ autoContracts: true, contractPolicy: uniformContractPolicy('deny') }),
+    ).toEqual({
+      contractPolicy: uniformContractPolicy('deny'),
+      contractPolicyVersion: CONTRACT_POLICY_VERSION,
+    });
+    const mixed = { ...accept, legendary: 'prompt' as const };
+    expect(migrateSettings({ contractPolicy: { ...mixed } }).contractPolicy).toEqual(mixed);
+    const partial = { epic: 'deny' } as Settings['contractPolicy'];
+    expect(migrateSettings({ contractPolicy: partial }).contractPolicy).toEqual({
+      ...accept,
+      epic: 'deny',
+    });
   });
 
-  it('leaves a policy the player already has', () => {
-    const policy = uniformContractPolicy('deny');
-    const s = migrateSettings({ autoContracts: true, contractPolicy: policy });
-    expect(s.contractPolicy).toBe(policy);
-    expect(s.autoContracts).toBeUndefined();
+  it('moves the old default once: accept chosen afterwards stays', () => {
+    const moved = migrateSettings({ contractPolicy: uniformContractPolicy('accept') });
+    expect(moved.contractPolicy).toEqual(prompt);
+    const chosen = JSON.parse(JSON.stringify({ ...moved, contractPolicy: accept })) as Settings;
+    for (let n = 0; n < 3; n++) expect(migrateSettings(chosen).contractPolicy).toEqual(accept);
+    // so does a version a later build wrote
+    const later = { contractPolicy: accept, contractPolicyVersion: CONTRACT_POLICY_VERSION + 1 };
+    expect(migrateSettings(later).contractPolicy).toEqual(accept);
   });
 
-  it('adds no policy where there was no switch either', () => {
-    const blank: Partial<Settings> = {};
-    expect(migrateSettings(blank).contractPolicy).toBeUndefined();
-  });
-
-  it('falls back per rarity for settings written before the policy existed', () => {
+  it('reads a rarity the policy leaves out as the default, whatever the retired switch says', () => {
     const old = { ...DEFAULT_SETTINGS, contractPolicy: undefined } as Settings;
     for (const r of CONTRACT_RARITIES) {
-      expect(contractPolicyFor(old, r)).toBe('accept');
+      expect(contractPolicyFor(old, r)).toBe('prompt');
+      expect(contractPolicyFor({ ...old, autoContracts: true }, r)).toBe('prompt');
       expect(contractPolicyFor({ ...old, autoContracts: false }, r)).toBe('prompt');
     }
   });
@@ -1114,9 +1156,49 @@ describe('settings', () => {
     ).toBe('prompt');
   });
 
-  it('ships defaults that accept everything', () => {
-    for (const r of CONTRACT_RARITIES)
-      expect(contractPolicyFor(DEFAULT_SETTINGS, r)).toBe('accept');
+  describe('in storage', () => {
+    let store: MemoryStorage;
+    beforeEach(() => {
+      store = new MemoryStorage();
+      vi.stubGlobal('localStorage', store);
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('moves stored settings once, and keeps accept chosen after the move', () => {
+      // as a build before the change stored them: every rarity accepted, no version
+      const { contractPolicyVersion: _v, ...before } = {
+        ...DEFAULT_SETTINGS,
+        contractPolicy: accept,
+      };
+      void _v;
+      store.items.set(SETTINGS_KEY, JSON.stringify({ ...before, music: 0.2 }));
+      const read = readSettings();
+      expect(read.contractPolicy).toEqual(prompt);
+      expect(read.music).toBe(0.2);
+      for (const r of CONTRACT_RARITIES) expect(contractPolicyFor(read, r)).toBe('prompt');
+      writeSettings(read);
+      expect(readSettings().contractPolicy).toEqual(prompt);
+      // the player turns auto-accept back on
+      writeSettings({ ...read, contractPolicy: accept });
+      expect(readSettings().contractPolicy).toEqual(accept);
+      expect(readSettings().contractPolicy).toEqual(accept);
+    });
+
+    it('hands out settings that share no policy with the defaults', () => {
+      const a = readSettings();
+      a.contractPolicy!.common = 'accept';
+      expect(DEFAULT_SETTINGS.contractPolicy).toEqual(prompt);
+      expect(readSettings().contractPolicy).toEqual(prompt);
+      // stored since the move, with no policy of its own: the default's is merged in
+      const since = { music: 0, contractPolicyVersion: CONTRACT_POLICY_VERSION };
+      store.items.set(SETTINGS_KEY, JSON.stringify(since));
+      const b = readSettings();
+      expect(b.contractPolicy).toEqual(prompt);
+      b.contractPolicy!.rare = 'deny';
+      expect(DEFAULT_SETTINGS.contractPolicy).toEqual(prompt);
+    });
   });
 });
 
