@@ -5,8 +5,9 @@ name: Scope
 # Gate files (the map's `gate` list) also need the gate:approved label, added by the author in
 # person; a new push withdraws it.
 #
-# pull_request_target runs develop's own copy of this workflow and of tools/agents, so a pull
-# request cannot change the check that judges it. The pull request is fetched as data for
+# pull_request_target runs the default branch's (main's) copy of this workflow and checks out
+# main's tools/agents, so a pull request cannot change the check that judges it; a change to the
+# gate takes effect when it is released into main. The pull request is fetched as data for
 # `git diff` only. Never install, build or run anything from the pull request in this workflow.
 
 on:

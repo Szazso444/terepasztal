@@ -123,8 +123,9 @@ generation goldens (the `gate` list in `tools/agents/ownership.json`). A pull re
 one needs the `gate:approved` label, added by the author in person after review. The scope check
 reads the label's history and does not count it when an app added it, so an agent acting with
 the author's account cannot approve itself; a new push removes the label. The check runs from
-`develop`'s own copy of the workflow and the scripts, so a pull request cannot change the check
-that judges it.
+`main`'s copy of the workflow and the scripts (GitHub takes `pull_request_target` workflows from
+the default branch), so a pull request cannot change the check that judges it, and a change to
+the gate takes effect only once it is released into `main`.
 
 ### 8. Merge into `develop` (Core)
 
