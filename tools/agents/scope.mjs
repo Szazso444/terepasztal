@@ -3,12 +3,15 @@
 //
 //   node tools/agents/scope.mjs owner <path>...          the owning role of each path
 //   node tools/agents/scope.mjs list --role <role>       the patterns a role may write
-//   node tools/agents/scope.mjs check --role <role> [--base <ref>] [--cross]
-//   node tools/agents/scope.mjs check --event <github event json>
+//   node tools/agents/scope.mjs check --role <role> [--base <ref>] [--head <ref>] [--cross]
+//   node tools/agents/scope.mjs check --event <github event json> --head <ref>
 //
-// `check` diffs <base>...HEAD (default origin/develop) and fails when a changed path is neither
-// owned by nor granted to the role. With --cross, or the `scope:cross` label on the pull request,
-// it lists those paths and passes. The map is tools/agents/ownership.json.
+// `check` diffs <base>...<head> (default origin/develop...HEAD) and fails when a changed path is
+// neither owned by nor granted to the role. With --cross, or the `scope:cross` label on the pull
+// request, it lists those paths and passes. A changed gate path (the `gate` list) also needs the
+// `gate:approved` label, added in person by one of `gateApprovers`, never through an app; with
+// --event the label's history is read from the GitHub API (GITHUB_TOKEN). The map is
+// tools/agents/ownership.json.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -16,6 +19,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+export const GATE_LABEL = 'gate:approved';
 
 export function loadOwnership(file = join(here, 'ownership.json')) {
   return JSON.parse(readFileSync(file, 'utf8'));
@@ -92,12 +97,49 @@ export function outOfScope(role, paths, ownership) {
   return paths.filter((p) => !mayWrite(role, p, ownership));
 }
 
+/** Changed paths that are gate files: they decide what passes, or what agents may do. */
+export function gatePaths(paths, ownership) {
+  const rules = (ownership.gate ?? []).map(globToRegExp);
+  return paths.filter((p) => rules.some((re) => re.test(p)));
+}
+
+/**
+ * The gate is approved when the `gate:approved` label is on the pull request now and the last
+ * time it was added, an approver added it in person: an event performed through a GitHub App
+ * (an agent acting with the author's account) does not count.
+ */
+export function gateApproved({ labels, events }, ownership) {
+  if (!labels.includes(GATE_LABEL)) return false;
+  const adds = events.filter((e) => e.event === 'labeled' && e.label?.name === GATE_LABEL);
+  const last = adds[adds.length - 1];
+  if (!last || last.performed_via_github_app) return false;
+  return (ownership.gateApprovers ?? []).includes(last.actor?.login);
+}
+
+async function githubApi(path) {
+  const root = process.env.GITHUB_API_URL ?? 'https://api.github.com';
+  const headers = { accept: 'application/vnd.github+json' };
+  if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const res = await fetch(`${root}${path}`, { headers });
+  if (!res.ok) throw new Error(`GitHub API ${path}: ${res.status}`);
+  return res.json();
+}
+
+async function allPages(path) {
+  const out = [];
+  for (let page = 1; ; page++) {
+    const batch = await githubApi(`${path}?per_page=100&page=${page}`);
+    out.push(...batch);
+    if (batch.length < 100) return out;
+  }
+}
+
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
 }
 
-function changedPaths(base) {
-  const out = git(['diff', '--name-only', '--no-renames', `${base}...HEAD`]);
+function changedPaths(base, head) {
+  const out = git(['diff', '--name-only', '--no-renames', `${base}...${head}`]);
   return out ? out.split('\n') : [];
 }
 
@@ -106,7 +148,7 @@ function arg(argv, name) {
   return i >= 0 ? argv[i + 1] : undefined;
 }
 
-function main(argv) {
+async function main(argv) {
   const ownership = loadOwnership();
   const [cmd, ...rest] = argv;
 
@@ -130,7 +172,9 @@ function main(argv) {
   if (cmd === 'check') {
     let role = arg(rest, '--role');
     let base = arg(rest, '--base') ?? 'origin/develop';
+    const head = arg(rest, '--head') ?? 'HEAD';
     let cross = rest.includes('--cross');
+    let approval = null;
     const eventFile = arg(rest, '--event');
     if (eventFile) {
       const pr = JSON.parse(readFileSync(eventFile, 'utf8')).pull_request;
@@ -138,7 +182,13 @@ function main(argv) {
         console.log(`scope: base is ${pr.base.ref}, not develop; nothing to check`);
         return 0;
       }
-      const labels = pr.labels.map((l) => l.name);
+      if (pr.head.ref === 'main' && pr.head.repo?.full_name === pr.base.repo.full_name) {
+        console.log('scope: main merged back into develop; it passed the release gate already');
+        return 0;
+      }
+      const issue = `/repos/${pr.base.repo.full_name}/issues/${pr.number}`;
+      // labels as they are now, not as the event saw them: an earlier step may have removed one
+      const labels = (await allPages(`${issue}/labels`)).map((l) => l.name);
       const found = roleOfPullRequest({ labels, headRef: pr.head.ref }, ownership);
       if (found.error) {
         console.error(`scope: ${found.error}`);
@@ -147,30 +197,63 @@ function main(argv) {
       role = found.role;
       base = `origin/${pr.base.ref}`;
       cross = labels.includes('scope:cross');
+      approval = async () =>
+        gateApproved({ labels, events: await allPages(`${issue}/events`) }, ownership);
     }
     if (!ownership.roles.includes(role)) throw new Error(`unknown role ${role}`);
-    const paths = changedPaths(base);
-    const outside = outOfScope(role, paths, ownership);
+    const paths = changedPaths(base, head);
     console.log(`scope: ${paths.length} changed path(s) checked as ${role}`);
-    if (!outside.length) return 0;
-    const lines = outside.map(
-      (p) => `  ${p}  (owner: ${ownersOf(p, ownership).join(', ') || 'none'})`,
-    );
-    if (cross) {
-      console.log(`scope:cross — outside ${role}'s scope, accepted by label:\n${lines.join('\n')}`);
-      return 0;
+    let failed = false;
+
+    const outside = outOfScope(role, paths, ownership);
+    if (outside.length) {
+      const lines = outside.map(
+        (p) => `  ${p}  (owner: ${ownersOf(p, ownership).join(', ') || 'none'})`,
+      );
+      if (cross) {
+        console.log(
+          `scope:cross — outside ${role}'s scope, accepted by label:\n${lines.join('\n')}`,
+        );
+      } else {
+        console.error(`scope: outside ${role}'s scope:\n${lines.join('\n')}`);
+        console.error('Split the change by owner, or ask Core for scope:cross.');
+        failed = true;
+      }
     }
-    console.error(`scope: outside ${role}'s scope:\n${lines.join('\n')}`);
-    console.error('Split the change by owner, or ask Core for scope:cross.');
-    return 1;
+
+    const gated = gatePaths(paths, ownership);
+    if (gated.length) {
+      const lines = gated.map((p) => `  ${p}`).join('\n');
+      const who = (ownership.gateApprovers ?? []).join(', ');
+      if (!approval) {
+        console.log(
+          `scope: gate files changed; the pull request will need ${GATE_LABEL} from ${who}:\n${lines}`,
+        );
+      } else if (await approval()) {
+        console.log(`scope: gate files changed, approved in person by ${who}:\n${lines}`);
+      } else {
+        console.error(`scope: gate files changed and not approved:\n${lines}`);
+        console.error(
+          `${who} adds the ${GATE_LABEL} label in person after review; a new push withdraws it.`,
+        );
+        failed = true;
+      }
+    }
+    return failed ? 1 : 0;
   }
 
   console.error(
-    'usage: scope.mjs owner <path>... | list --role <r> | check (--role <r> [--base <ref>] [--cross] | --event <file>)',
+    'usage: scope.mjs owner <path>... | list --role <r> | check (--role <r> [--base <ref>] [--cross] | --event <file>) [--head <ref>]',
   );
   return 2;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  process.exit(main(process.argv.slice(2)));
+  main(process.argv.slice(2)).then(
+    (code) => process.exit(code),
+    (err) => {
+      console.error(`scope: ${err.message}`);
+      process.exit(2);
+    },
+  );
 }

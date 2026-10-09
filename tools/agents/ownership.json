@@ -84,5 +84,20 @@
       "scratchpad/**",
       "docs/process/verification.md"
     ]
-  }
+  },
+  "gateApprovers": ["Szazso444"],
+  "gate": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".claude/**",
+    ".github/**",
+    "tools/agents/**",
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json",
+    "vitest.config.ts",
+    "eslint.config.js",
+    ".prettierrc",
+    "src/world/mapgen.test.ts"
+  ]
 }

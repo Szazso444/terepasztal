@@ -1,6 +1,7 @@
 Closes #
 
-**Role:** agent:<role> — one label; `scope:cross` only with a reason below.
+**Role:** agent:<role> — one label; `scope:cross` only with a reason below. Gate files changed?
+They wait for the author's `gate:approved`.
 
 ## Outcome
 
