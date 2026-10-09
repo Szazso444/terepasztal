@@ -953,6 +953,35 @@ describe('storage', () => {
     expect(JSON.parse(store.items.get(SAVE_KEY)!)).toEqual(save);
   });
 
+  it('refuses an import storage will not keep, and Continue still loads the game it held', () => {
+    // storage that is full or blocked throws on every write and keeps what it held
+    store.setItem = () => {
+      store.writes++;
+      throw new Error('QuotaExceededError');
+    };
+    const held = JSON.stringify(buildSave({ ...fullParts(), lastDay: 3 }, {}, 1000));
+    store.items.set(SAVE_KEY, held);
+    store.items.set(SETTINGS_KEY, playerSettings);
+    const before = new Map(store.items);
+    const save = buildSave(fullParts(), {}, 2000);
+    const taken = [
+      JSON.stringify(save),
+      JSON.stringify({ diagnostics: 1, saveVersion: SAVE_VERSION, save }),
+    ];
+    for (const raw of taken) {
+      expect(importSave(raw), raw).toEqual({ ok: false, error: 'storage' });
+    }
+    expect(store.writes).toBe(taken.length);
+    // a refused text is refused for what it is; storage is not asked
+    for (const raw of refused) {
+      const read = readSaveText(raw);
+      expect(importSave(raw), raw).toEqual({ ok: false, error: 'error' in read ? read.error : '' });
+    }
+    expect(store.writes).toBe(taken.length);
+    expect(store.items).toEqual(before);
+    expect(readSave()?.lastDay).toBe(3);
+  });
+
   it('reads no game from a refused stored save, and leaves it stored', () => {
     for (const raw of refused) {
       store.items.set(SAVE_KEY, raw);
