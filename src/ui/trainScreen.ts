@@ -1,8 +1,9 @@
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
-import { serviceLocoType, type Train } from '../sim/trains';
+import { serviceLocoType, type StopPlan, type Train } from '../sim/trains';
 import type { Fleet } from '../sim/fleet';
+import type { Commands, CommandResult } from '../sim/commands';
 import type { Builder } from '../sim/build';
 import type { Stockpile } from '../sim/stockpile';
 import { cargoDef, cargoName } from '../sim/cargo';
@@ -22,17 +23,18 @@ export class TrainScreen implements Screen {
   train: Train | null = null;
   onLocate: ((t: Train) => void) | null = null;
   private scheduleEditor: ScheduleEditor;
+  /** the stops the editor works on: a copy of the train's own program, handed back on each edit */
+  private stops: StopPlan[] = [];
 
   constructor(
     private readonly fleet: Fleet,
     private readonly builder: Builder,
     private readonly stock: Stockpile,
+    private readonly commands: Commands,
     private readonly atlas: AtlasRegistry,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
   ) {
-    this.scheduleEditor = new ScheduleEditor(builder, () => {
-      if (this.train) this.fleet.setSchedule(this.train, this.train.schedule);
-    });
+    this.scheduleEditor = new ScheduleEditor(builder, () => this.applyStops());
     this.root.append(
       el(
         'div',
@@ -58,6 +60,31 @@ export class TrainScreen implements Screen {
   }
   refresh() {
     this.render();
+  }
+
+  /** Say why a command was refused; true when it went through. */
+  private accepted(r: CommandResult) {
+    if (!r.ok) this.toast(r.message, 'warn');
+    return r.ok;
+  }
+
+  /** The stop being run, when the train runs its own program rather than a contract job. */
+  private currentStop(t: Train) {
+    return t.program === t.schedule ? t.routeIndex % Math.max(1, t.schedule.length) : -1;
+  }
+
+  /**
+   * Hand the edited stops to the train as its own program, which it then follows on schedule
+   * (`Commands.setSchedule`). A refused list (fewer than two stops) leaves the train as it was, and
+   * the editor shows the train's stops again.
+   */
+  private applyStops() {
+    const t = this.train;
+    if (!t) return;
+    if (this.accepted(this.commands.setSchedule(t, this.stops.map(copyStop)))) return;
+    // the same array the editor holds, so its own redraw shows the train's stops
+    this.stops.splice(0, this.stops.length, ...t.program.map(copyStop));
+    this.scheduleEditor.render(this.stops, this.currentStop(t));
   }
 
   private bar(label: string, value: number, max: number, cls = '') {
@@ -229,7 +256,7 @@ export class TrainScreen implements Screen {
           btn(
             STR.train.mode[m],
             () => {
-              t.mode = m;
+              this.accepted(this.commands.setTrainMode(t, m));
               this.render();
             },
             `small ${t.mode === m ? 'active' : ''}`,
@@ -247,7 +274,7 @@ export class TrainScreen implements Screen {
           btn(
             STR.train.coal,
             () => {
-              t.fuelPreference = 'coal';
+              this.accepted(this.commands.setFuelPreference(t, 'coal'));
               this.render();
             },
             `small ${t.fuelPreference === 'coal' ? 'active' : ''}`,
@@ -255,7 +282,7 @@ export class TrainScreen implements Screen {
           btn(
             STR.train.wood,
             () => {
-              t.fuelPreference = 'wood';
+              this.accepted(this.commands.setFuelPreference(t, 'wood'));
               this.render();
             },
             `small ${t.fuelPreference === 'wood' ? 'active' : ''}`,
@@ -330,7 +357,9 @@ export class TrainScreen implements Screen {
     };
     r.append(tripBlock(STR.train.lastLoop, t.lastTrip), tripBlock(STR.train.currentLoop, t.trip));
     r.append(el('div', { class: 'col-title', text: STR.depot.stops }));
-    this.scheduleEditor.render(t.schedule, t.routeIndex % Math.max(1, t.schedule.length));
+    // the train's own program, also while a contract job runs its two stops
+    this.stops = t.program.map(copyStop);
+    this.scheduleEditor.render(this.stops, this.currentStop(t));
     r.append(
       this.scheduleEditor.root,
       el('div', { class: 'dim', text: STR.depot.scheduleLiveHint }),
@@ -361,4 +390,9 @@ export class TrainScreen implements Screen {
       btn(STR.depot.locate, () => this.onLocate?.(t), 'small'),
     );
   }
+}
+
+/** A stop of its own, so an edit never reaches a stop the train holds. */
+function copyStop(s: StopPlan): StopPlan {
+  return { ...s };
 }

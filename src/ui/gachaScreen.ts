@@ -12,6 +12,7 @@ import {
 } from '../gacha/gacha';
 import { RARITIES, itemDef, dupesNeeded, LEVEL_CAP } from '../gacha/items';
 import type { Economy } from '../sim/economy';
+import type { Commands } from '../sim/commands';
 import { sfx } from '../engine/audio';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
@@ -39,6 +40,7 @@ export class GachaScreen implements Screen {
   constructor(
     private readonly gacha: Gacha,
     private readonly economy: Economy,
+    private readonly commands: Commands,
     private readonly now: () => number,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
     private readonly atlas: AtlasRegistry,
@@ -187,16 +189,14 @@ export class GachaScreen implements Screen {
   }
 
   private doPull(n: 1 | 10) {
-    const cost = PULL_COST * n;
-    if (this.economy.tickets < cost) {
-      this.toast(STR.gacha.noTickets, 'warn');
+    const rot = this.shownRot >= 0 ? this.shownRot : rotationIndex(this.day());
+    const done = this.commands.pull(this.banner, n, this.now(), rot);
+    if (!done.ok) {
+      this.toast(done.message, 'warn');
       return;
     }
-    this.economy.tickets -= cost;
     sfx('gacha.pull');
-    const rot = this.shownRot >= 0 ? this.shownRot : rotationIndex(this.day());
-    const results = this.gacha.pull(this.banner, n, this.now(), rot);
-    this.reveal(results);
+    this.reveal(done.results);
   }
 
   private reveal(results: PullResult[]) {
