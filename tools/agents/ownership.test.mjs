@@ -1,10 +1,19 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   GATE_LABEL,
+  changedPaths,
   gateApproved,
   gatePaths,
   globToRegExp,
@@ -17,8 +26,8 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ownership = loadOwnership();
-const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' })
-  .split('\n')
+const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
+  .split('\0')
   .filter(Boolean);
 
 /** The backticked patterns listed under an agent file's `## Scope` heading. */
@@ -183,6 +192,24 @@ describe('labels', () => {
 
   it('are unique', () => {
     expect(new Set(labels).size).toBe(labels.length);
+  });
+});
+
+describe('changedPaths', () => {
+  it('reads names git would quote, so a non-ASCII path is judged by its real name', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'scope-'));
+    const run = (...a) => execFileSync('git', a, { cwd: repo, encoding: 'utf8' });
+    run('init', '-q', '-b', 'base');
+    run('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'base');
+    run('switch', '-q', '-c', 'task');
+    mkdirSync(join(repo, 'src', 'world'), { recursive: true });
+    writeFileSync(join(repo, 'src', 'world', 'vasút.ts'), '');
+    writeFileSync(join(repo, 'a "b".md'), '');
+    run('add', '-A');
+    run('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'task');
+    const paths = changedPaths('base', 'HEAD', repo).sort();
+    expect(paths).toEqual(['a "b".md', 'src/world/vasút.ts']);
+    expect(ownersOf('src/world/vasút.ts', ownership)).toEqual(['world']);
   });
 });
 

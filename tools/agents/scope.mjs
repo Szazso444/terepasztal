@@ -134,13 +134,14 @@ async function allPages(path) {
   }
 }
 
-function git(args) {
-  return execFileSync('git', args, { encoding: 'utf8' }).trim();
-}
-
-function changedPaths(base, head) {
-  const out = git(['diff', '--name-only', '--no-renames', `${base}...${head}`]);
-  return out ? out.split('\n') : [];
+/** Changed paths, NUL-separated so git prints non-ASCII and odd names verbatim, not quoted. */
+export function changedPaths(base, head, cwd) {
+  return execFileSync('git', ['diff', '--name-only', '--no-renames', '-z', `${base}...${head}`], {
+    cwd,
+    encoding: 'utf8',
+  })
+    .split('\0')
+    .filter(Boolean);
 }
 
 function arg(argv, name) {

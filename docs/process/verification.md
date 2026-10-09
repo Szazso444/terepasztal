@@ -9,9 +9,10 @@ the map of what they cover.
 - **Deterministic.** No `Math.random`, no wall clock, no timers, no network. Random cases come from
   `Rng` (`src/engine/rng.ts`) with a fixed seed list; a test that explores seeds prints the seed of
   any failure in its message so the case can be replayed alone.
-- **Node only.** Tests run under vitest with no DOM and no Pixi. A module that imports Pixi is
-  tested through the pure functions it is built on; if there are none, the finding is that the
-  logic should be pulled out, which is a task for the owning role.
+- **Node only.** Tests run under vitest with no DOM, canvas or renderer. `pixi.js` imports under
+  Node and its scene-graph classes construct, but logic is best tested through the pure functions
+  it is built on; if there are none, the finding is that the logic should be pulled out, which is
+  a task for the owning role.
 - **Invariants, not snapshots.** A test states a property that must hold for every input of a
   class (a path never reverses mid-tile; a migration chain reaches the current version from every
   older one). Golden values are for outputs whose exact bits are the contract, such as map
@@ -35,7 +36,7 @@ where the test is still to be written. Verification keeps this table current.
 | Save format | every older version migrates to `SAVE_VERSION`; each step only fills defaults; unknown keys survive | `src/sim/save.test.ts` |
 | Map generation | terrain, biome and variant planes are bit-identical for a seed | `src/world/mapgen.test.ts` |
 | RNG | the same seed gives the same stream; `state` resumes it | `src/engine/rng.test.ts` |
-| Pathfinding | a returned path is legal at every step (entry edge to exit edge through the piece), never reverses mid-tile, and is no longer than any other legal path | — |
+| Pathfinding | on single-class narrow and regular layouts, a returned path is legal at every step (from the start state, entry edge to exit edge through each piece, to a target), never reverses mid-tile, costs exactly an exhaustive search's minimum, is null exactly when no path exists, and honours avoid and access | `src/world/pathfinding.test.ts` |
 | Track geometry | one-tile links run from edge midpoint to edge midpoint and reverse exactly, and the closed-form length is the limit of the sampled one; every multi-tile unit's member links join end to start across tile borders, and each route enters and leaves by the edge midpoints the one-tile piece of its rotation uses, at its closed-form length; radius is `n - 0.5` and the footprint is `n x n`, for every class `n` | `src/world/trackGeom.test.ts`, `src/world/track.test.ts` |
 | Rigid bodies | car length is constant along any path, curves included | `src/sim/body.test.ts` |
 | Traffic sections | two trains never hold the same section | `src/sim/traffic.test.ts` |
