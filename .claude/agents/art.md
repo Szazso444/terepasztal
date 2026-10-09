@@ -76,7 +76,9 @@ Everything else is read-only.
   fails it.
 - The building package uses 6 ages and 4 rotations, the game asks for `_r${rot % 2}` and
   `src/data/ages.json` has 3 ages. Do not resolve this inside an unrelated task.
-- `docs/mcp-setup.md` section 6 predates `resolution` and `partial`.
+- `docs/mcp-setup.md` section 6.2 predates `resolution`: it leaves the field out and says frames are
+  always sampled `nearest`, which is wrong above `resolution` 1. Section 6.1 still says
+  `public/assets/` does not exist. `partial` is documented correctly in 6.6.
 
 ## Stop and ask
 

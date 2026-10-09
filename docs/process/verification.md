@@ -9,9 +9,10 @@ the map of what they cover.
 - **Deterministic.** No `Math.random`, no wall clock, no timers, no network. Random cases come from
   `Rng` (`src/engine/rng.ts`) with a fixed seed list; a test that explores seeds prints the seed of
   any failure in its message so the case can be replayed alone.
-- **Node only.** Tests run under vitest with no DOM and no Pixi. A module that imports Pixi is
-  tested through the pure functions it is built on; if there are none, the finding is that the
-  logic should be pulled out, which is a task for the owning role.
+- **Node only.** Tests run under vitest with no DOM, canvas or renderer. `pixi.js` imports under
+  Node and its scene-graph classes construct, but logic is best tested through the pure functions
+  it is built on; if there are none, the finding is that the logic should be pulled out, which is
+  a task for the owning role.
 - **Invariants, not snapshots.** A test states a property that must hold for every input of a
   class (a path never reverses mid-tile; a migration chain reaches the current version from every
   older one). Golden values are for outputs whose exact bits are the contract, such as map

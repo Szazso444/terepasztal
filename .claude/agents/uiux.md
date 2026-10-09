@@ -31,7 +31,7 @@ Everything else is read-only.
 3. `src/intent.ts` (boot intents only) and the boot part of `src/main.ts`
 4. `src/game.ts`, the panel construction and callbacks region and the keymap (read-only)
 5. The public method signatures of the simulation object the panel calls (`Builder` in
-   `src/sim/build.ts`, `Fleet`, `Trade`, `Economy`), signatures only
+   `src/sim/build.ts`, `Fleet`, `TradeDesk` in `src/sim/trade.ts`, `Economy`), signatures only
 6. Only for build tools: `src/ui/toolbar.ts` (`Tool`, `ToolItem`), `src/ui/trackGroups.ts`,
    `src/ui/buildController.ts`, `docs/superpowers/specs/2026-10-02-track-toolbar-design.md`
 7. Only for visual changes: the tokens at the top of `src/ui/style.css` and the semantic-colour

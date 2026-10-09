@@ -13,7 +13,7 @@ name: Scope
 on:
   pull_request_target:
     branches: [develop]
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
 
 permissions:
   contents: read

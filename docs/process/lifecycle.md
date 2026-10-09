@@ -23,7 +23,9 @@ reads the section for its own step, not the whole file.
   each on its own branch and worktree. No branch is kept per role.
 - Hosted sessions that can push only one assigned branch (`claude/...`) still follow the model:
   the pull request carries the `agent:<role>` label and `Closes #<issue>`, which is what the
-  scope check and the merge gate read.
+  scope check and the merge gate read. When Core recreates a task branch through the GitHub API
+  (`create_branch`, `push_files`), the pushed commit has a new hash, so before opening the pull
+  request it checks that its tree equals the tree QA approved (`git rev-parse <sha>^{tree}`).
 - A merged task branch is deleted. Work that never merged is not deleted: it is tagged
   `archive/<branch>` and recorded in `docs/archived-work.md` (see `.github/ref-archive.json`).
 
@@ -31,7 +33,7 @@ reads the section for its own step, not the whole file.
 
 An issue carries exactly one `status:` label. Core moves it.
 
-`status:triage` → `status:ready` → `status:in-progress` → `status:in-review` → closed by the merge,
+`status:triage` → `status:ready` → `status:in-progress` → `status:in-review` → closed by Core after the merge,
 with `status:blocked` reachable from any of them. `needs:decision` is added whenever the next step
 waits on the author.
 
@@ -85,7 +87,7 @@ npm run typecheck && npm run lint && npm test && npx vite build \
 
 It returns the result report (`docs/process/context.md`). It stops and reports instead of
 guessing when the brief is ambiguous, when the change needs a file another role owns, or when a
-golden test (map generation hashes, art frame counts) fails.
+golden test (map generation hashes) fails.
 
 ### 5. Verify (Verification, then QA)
 
@@ -118,11 +120,13 @@ build, formatting and the scope check (`.github/workflows/scope.yml`). A pull re
 cross roles carries `scope:cross`, which only Core sets and which the description has to justify.
 
 **Gate files** are the ones that decide what passes or what agents may do: `AGENTS.md`, `CLAUDE.md`,
-`.claude/**`, `.github/**`, `tools/agents/**`, the dependency and tool configs and the map
-generation goldens (the `gate` list in `tools/agents/ownership.json`). A pull request that changes
-one needs the `gate:approved` label, added by the author in person after review. The scope check
-reads the label's history and does not count it when an app added it, so an agent acting with
-the author's account cannot approve itself; a new push removes the label. The check runs from
+`.claude/**`, `.codex/**`, `.mcp.json`, `.github/**`, `tools/agents/**`, the dependency and tool
+configs and the map generation goldens (the `gate` list in `tools/agents/ownership.json`). A pull
+request that changes one needs the `gate:approved` label, added by the author in person after
+review; a new push removes the label. The scope check reads the label's history and does not
+count it when a GitHub App added it, which is how hosted agent sessions act. A label added with
+the author's own credentials (the `gh` login, a personal token) cannot be told from the author's
+own, so a local agent using them must never touch the label: the check cannot stop it. The check runs from
 `main`'s copy of the workflow and the scripts (GitHub takes `pull_request_target` workflows from
 the default branch), so a pull request cannot change the check that judges it, and a change to
 the gate takes effect only once it is released into `main`.
@@ -133,12 +137,16 @@ Core merges when all of these hold:
 
 - CI is green on the head commit, the scope check included (so gate files carry the author's
   `gate:approved`);
-- the QA verdict on the head commit is `approve`;
+- the QA verdict is `approve` on the head commit, or on a commit with the identical tree;
 - Verification's tests exist and pass, where the task required them;
-- no open question and no `needs:decision` label.
+- every note for Core has been read and accepted, sent back as a finding, or turned into a
+  question for the author;
+- no question for the author is open and no `needs:decision` label is set.
 
 Merge with a merge commit titled `Merge <branch>: <one-line outcome>` (the existing history's
-style), then delete the branch. A red `develop` is the top priority: Core reverts the merge that
+style), then delete the branch, close the issue and remove its `status:` label. GitHub acts on
+`Closes #n` only for pull requests into the default branch (`main`), so a merge into `develop`
+links the issue but does not close it. A red `develop` is the top priority: Core reverts the merge that
 broke it (a revert pull request, never a force push) or lands a fix within the same session.
 
 ### 9. Release into `main` (the author)

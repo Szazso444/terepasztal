@@ -15,6 +15,9 @@ Last audit: 2026-10-09, on `develop` at `cef6d11`.
   owner. The scope check runs from `main`'s copy of `.github/workflows/scope.yml` and needs the
   author's own `gate:approved` for gate files. Tasks run on `<role>/<issue>-<slug>` branches into
   `develop`; the author releases `develop` into `main`.
+- **The organisation reviewed itself.** QA checked the organisation's own files through four
+  lenses. A skeptic then re-checked every finding: 36 held, 23 were refuted. The pull request that
+  brings this file fixes all 36.
 - **First delivery through the process.** #35, the seeded property runner in `src/testing`, went
   through issue, role agent in its own worktree, QA, pull request (#38) and merge. #36
   (pathfinding properties) and #37 (track geometry properties) are in progress.
@@ -141,7 +144,7 @@ would do the fix. "decide" means the author decides first.
 | A17 | medium | Train.fromJSON always sets state 'noRoute' with stateTime 10 (trains.ts:2455-2456). path, holding and blockedTime are not saved. | Save speed, state/stateTime, the station the train stands at, holding, blockedTime and yieldCount in Train.toJSON. | decide |
 | A18 | medium | Two of the three points hold on this branch. docs/traffic-current.md (2026-09-11) describes the design from before recovery and signals, and its line numbers are wrong. docs/bogie-model.md:39-40 says large models are barred… | Either rewrite docs/traffic-current.md around the current traffic.ts, recovery.ts and signals.ts, or mark it historical at the top. | — |
 | A22 | medium | ContractBoard.toJSON leaves out the RNG state, while Gacha, Crafting and Weather store theirs. | Add rng: this.rng.state to ContractBoard.toJSON and restore it in load when it is a number, the way Crafting.load does, leaving old saves on the reseeded stream. | decide |
-| A23 | medium | reputationMul and tradeCycleDays are in Rules and DEFAULT_RULES but not in RULE_META, so sanitize resets them to their defaults on every setRules and readRules. | Either delete tradeCycleDays and reputationMul from Rules and drop the j.rules.tradeCycleDays write, or wire tradeCycleDays into Trade.cycleSeconds and add it to RULE_META; the author picks which. | decide |
+| A23 | medium | reputationMul and tradeCycleDays are in Rules and DEFAULT_RULES but not in RULE_META, so sanitize resets them to their defaults on every setRules and readRules. | Either delete tradeCycleDays and reputationMul from Rules and drop the j.rules.tradeCycleDays write, or wire tradeCycleDays into TradeDesk.cycleSeconds and add it to RULE_META; the author picks which. | decide |
 | A26 | medium | The no-op steps are from:4, 5, 6 and 7, not 9: the from:9 step fills crafting recipes. | Have the author decide whether the rule or the code is right. | decide |
 | A27 | medium | stationDef, buildingDef, locoDef and wagonDef throw on an unknown id. | Filter unknown ids in Inventory.load the way Crafting.load does, and have applySave skip or refund stations, buildings and train vehicles whose def no longer exists, with a migration note; the author decides between dropping… | decide |
 | A28 | medium | parseSave checks only that seed is a number and then migrates. importSave writes the result over the real save and reloads. | Make parseSave return null unless the required v1 fields (clock, economy, track, stations, trains, camera and lastDay) have the right types, so importSave refuses before writeSave and readSave ignores a corrupt stored save. | — |

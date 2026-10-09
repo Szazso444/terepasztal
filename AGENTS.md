@@ -25,14 +25,16 @@ agent can follow):
 
 - `tools/agents/ownership.json` maps every tracked path to exactly one role; CI fails a pull
   request into `develop` that changes a path outside its role (`node tools/agents/scope.mjs`).
-  Gate files (these rules, `.claude`, `.github`, `tools/agents`, dependency and tool configs, map
-  generation goldens) change only with the author's own `gate:approved` label; no agent sets it.
+  Gate files (these rules, `.claude`, `.codex`, `.mcp.json`, `.github`, `tools/agents`, dependency
+  and tool configs, map generation goldens) change only with the author's own `gate:approved`
+  label; no agent sets it.
 - `docs/process/lifecycle.md` is the order of work, the gates and the branch model: `main` is
   released, `develop` is where work is integrated and validated, and every task is its own
   `<role>/<issue>-<slug>` branch in its own worktree. Core merges into `develop`; only the author
   merges into `main`.
-- `docs/process/context.md` is what each agent is given and hands back. Read your own role file
-  and your task brief; do not read other roles' files or other tasks.
+- `docs/process/context.md` is what each agent is given and hands back. Read your own role file,
+  your task brief and what that file's table gives your role; a domain role does not read other
+  roles' files or other tasks.
 - Work is tracked as GitHub issues. Nothing an agent reports is accepted on its word: QA and CI
   check it, and a failure that persists becomes an issue with its log and acceptance criteria.
 - When anything is unclear or contradicts this file, a spec or an earlier decision, ask the author
@@ -92,9 +94,11 @@ shadows that touch each object's base. Semantic colours stay brighter than any s
 Changing a generator means re-running `scratchpad/art-sheets.mjs` and checking frame counts and
 anchors did not move.
 
-**Music is a file, effects are synthesized.** `public/assets/audio/music/pastoral-pulse.mp3`
-loops through `src/engine/audio.ts`; if it is missing the synth loop takes over. Volume sliders
-live in both menus and the settings screen and travel with the settings, not the save.
+**Music is files, effects are synthesized.** Music is the playlist in `src/engine/musicPlaylist.ts`
+(`public/assets/audio/music/*.mp3`): Pastoral Pulse plays first, then the variations in shuffled
+rounds. A track that fails is skipped, and the synth loop takes over only when every file has
+failed. Volume sliders live in both menus and the settings screen and travel with the settings,
+not the save.
 
 **A new save format version needs a migration step.** Bumping `SAVE_VERSION` in `src/sim/save.ts`
 means adding an entry to `MIGRATIONS` with `from` set to the version before it, and adding any new
@@ -131,7 +135,8 @@ the name — lower means more forest, which is what its slider says.
 
 **Large artifacts stay in the repository.** Report generated images and other large outputs by
 path with a short text summary; never paste images, base64 or long logs into a report. Keep tool
-output bounded.
+output bounded. When resuming from an earlier session's history, extract its text only, never its
+images or attachments.
 
 ## Geometry
 
@@ -149,8 +154,10 @@ Track classes derive everything from `n`: curve radius `n - 0.5`, curve and swit
 
 ## Tests
 
-`src/**/*.test.ts` and `tools/**/*.test.mjs`, run under Node with no DOM. Anything that imports
-Pixi or touches the DOM at import time needs a browser; simulation modules that import
+`src/**/*.test.ts` and `tools/**/*.test.mjs`, run under Node with no DOM. Anything that touches
+the DOM, a canvas or a WebGL context at import time needs a browser; `pixi.js` itself imports under
+Node and its `Matrix`, `Container`, `Sprite` and `Graphics` construct there, but an `Application`,
+a renderer or `Text` does not. Simulation modules that import
 `src/engine/audio.ts` are tested with it mocked (`src/sim/expansion.test.ts` shows the fixture).
 Tests stay on what runs headless: save migrations, geometry, the track graph, traffic sections,
 map generation, RNG, the build rules.

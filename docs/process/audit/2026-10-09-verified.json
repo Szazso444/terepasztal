@@ -293,9 +293,9 @@
     "verdict": "confirmed",
     "owner": "gameplay",
     "needsAuthorDecision": true,
-    "statement": "reputationMul and tradeCycleDays are in Rules and DEFAULT_RULES but not in RULE_META, so sanitize resets them to their defaults on every setRules and readRules. Nothing reads tradeCycleDays: Trade.cycleSeconds() uses weekSeconds(). The migration write is dead, and it also overwrites any value an old save held. Correction: the write is in the from:11 step (v11 to v12), not v10 to v11. reputationMul is already marked @deprecated with no effect, so its reset is harmless.",
+    "statement": "reputationMul and tradeCycleDays are in Rules and DEFAULT_RULES but not in RULE_META, so sanitize resets them to their defaults on every setRules and readRules. Nothing reads tradeCycleDays: TradeDesk.cycleSeconds() uses weekSeconds(). The migration write is dead, and it also overwrites any value an old save held. Correction: the write is in the from:11 step (v11 to v12), not v10 to v11. reputationMul is already marked @deprecated with no effect, so its reset is harmless.",
     "evidence": "src/sim/rules.ts:28,58 (fields), 96,117 (defaults), 411-420 (sanitize copies only RULE_META keys); src/sim/save.ts:276-283 (from:11 sets j.rules.tradeCycleDays = 7); src/sim/trade.ts:68-70 (cycleSeconds returns weekSeconds()). The only grep hits for tradeCycleDays are rules.ts, save.ts and save.test.ts. Probe m45.probe.test.ts: keys missing from RULE_META are ['reputationMul','tradeCycleDays']; setRules({tradeCycleDays:14, reputationMul:3}) leaves 7 and 1; migrating a v11 save with tradeCycleDays:30 gives 7.",
-    "proposedFix": "Either delete tradeCycleDays and reputationMul from Rules and drop the j.rules.tradeCycleDays write, or wire tradeCycleDays into Trade.cycleSeconds and add it to RULE_META; the author picks which.",
+    "proposedFix": "Either delete tradeCycleDays and reputationMul from Rules and drop the j.rules.tradeCycleDays write, or wire tradeCycleDays into TradeDesk.cycleSeconds and add it to RULE_META; the author picks which.",
     "acceptance": "A test asserts every key of DEFAULT_RULES appears in RULE_META, or in an explicit non-tunable allowlist that sanitize preserves, so setRules({k: v}) round-trips. Today it fails on reputationMul and tradeCycleDays."
   },
   {
