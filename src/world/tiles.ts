@@ -85,3 +85,10 @@ export function terrainAt(map: GameMap, x: number, y: number): Terrain {
 export function regionOf(map: GameMap, x: number, y: number) {
   return Math.floor(y / map.regionSize) * map.regionsX + Math.floor(x / map.regionSize);
 }
+/**
+ * The chunk a game starts in: the middle of the grid, the one nearer the origin when the count is
+ * even. Growing the map by a ring on every side keeps it on the same world tiles.
+ */
+export function startRegion(map: GameMap) {
+  return { rx: Math.floor((map.regionsX - 1) / 2), ry: Math.floor((map.regionsY - 1) / 2) };
+}
