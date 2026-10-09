@@ -9,7 +9,7 @@ import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, setRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
-import { ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
+import { ageDef, ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
 import { rulesDiffer } from './sim/rules';
 import { contentIsCustom } from './data/content';
@@ -430,6 +430,7 @@ export class Game {
       this.toolbar.refresh();
     }
     this.stock.beginFlowHistory();
+    audio.setAge(ageDef(this.economy.tier).id);
   }
 
   /** Place a level's pre-built content into a fresh world (no economy). */
@@ -1148,6 +1149,7 @@ export class Game {
     this.stock.beginFlowHistory();
     this.restoringWorld = false;
     this.refreshBridges();
+    audio.setAge(ageDef(this.economy.tier).id);
   }
 
   newGame(seedText: string, supply: SupplyMode = 'simple') {
@@ -1581,6 +1583,7 @@ export class Game {
     this.toasts.push(text, 'good');
     this.notices?.push({ key: `age:${tier}`, kind: 'info', text, target: null }, 120);
     sfx('tier.up');
+    audio.setAge(ageDef(tier).id);
   }
   /** Biome multiplier on a station's output. */
   private biomeProduction(s: Station) {

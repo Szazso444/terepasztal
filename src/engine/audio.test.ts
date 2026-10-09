@@ -77,7 +77,14 @@ class FakeAudio {
   }
 }
 
+/** Fire the listeners a fake element registered for an event. */
+function fire(el: FakeAudio, type: string) {
+  for (const [t, fn] of el.addEventListener.mock.calls as [string, Listener][])
+    if (t === type) fn();
+}
+
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.resetModules();
@@ -142,6 +149,51 @@ describe('audio in a browser', () => {
       expect(FakeAudio.made[0].play).toHaveBeenCalled();
     },
   );
+
+  it("plays the age's set: selected before the gesture, faded out when the set changes", async () => {
+    const win = target();
+    const { ctx } = fakeContext();
+    vi.stubGlobal('window', {
+      addEventListener: win.addEventListener,
+      AudioContext: function () {
+        return ctx;
+      },
+    });
+    vi.stubGlobal('Audio', FakeAudio);
+    vi.useFakeTimers();
+    vi.resetModules();
+    const sets = await import('./musicPlaylist');
+    const fresh = await import('./audio');
+    const steam = ['/assets/audio/music/steam/a.mp3', '/assets/audio/music/steam/b.mp3'];
+    const diesel = ['/assets/audio/music/diesel/a.mp3'];
+    sets.AGE_MUSIC.steam = steam;
+    sets.AGE_MUSIC.diesel = diesel;
+    const srcs = () => FakeAudio.made.map((el) => el.src);
+
+    fresh.audio.applyMusic(); // what boot does
+    fresh.audio.setAge('steam'); // what applySave does
+    expect(FakeAudio.made).toHaveLength(0);
+    win.fire('pointerdown');
+    expect(srcs()).toEqual([steam[0]]);
+    fresh.audio.setAge('steam');
+    expect(srcs()).toEqual([steam[0]]);
+
+    fresh.audio.setAge('diesel');
+    expect(srcs()).toEqual([steam[0], diesel[0]]);
+    expect(FakeAudio.made[1].play).toHaveBeenCalled();
+    const old = FakeAudio.made[0];
+    expect(old.pause).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(2000);
+    expect(old.pause).toHaveBeenCalled();
+    expect(old.volume).toBeLessThan(fresh.audio.master * fresh.audio.music);
+
+    // the old track's events no longer move the music on
+    fire(old, 'ended');
+    expect(srcs()).toHaveLength(2);
+    // every diesel file fails: the default set takes over at its first track
+    fire(FakeAudio.made[1], 'error');
+    expect(srcs()).toEqual([steam[0], diesel[0], sets.MUSIC_TRACKS[0]]);
+  });
 
   it('mutes the ambience while the tab is hidden, with one visibility listener', () => {
     const doc = { hidden: false, ...target() };
