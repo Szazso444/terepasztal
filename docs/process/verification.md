@@ -35,7 +35,7 @@ where the test is still to be written. Verification keeps this table current.
 | Save format | every older version migrates to `SAVE_VERSION`; each step only fills defaults; unknown keys survive | `src/sim/save.test.ts` |
 | Map generation | terrain, biome and variant planes are bit-identical for a seed | `src/world/mapgen.test.ts` |
 | RNG | the same seed gives the same stream; `state` resumes it | `src/engine/rng.test.ts` |
-| Pathfinding | a returned path is legal at every step (entry edge to exit edge through the piece), never reverses mid-tile, and is no longer than any other legal path | — |
+| Pathfinding | on single-class narrow and regular layouts, a returned path is legal at every step (from the start state, entry edge to exit edge through each piece, to a target), never reverses mid-tile, costs exactly an exhaustive search's minimum, is null exactly when no path exists, and honours avoid and access | `src/world/pathfinding.test.ts` |
 | Track geometry | curve radius `n - 0.5`, footprint `n x n`, cost `n x 1.5` above regular, for every class `n` | — |
 | Rigid bodies | car length is constant along any path, curves included | `src/sim/body.test.ts` |
 | Traffic sections | two trains never hold the same section | `src/sim/traffic.test.ts` |
