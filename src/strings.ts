@@ -1182,6 +1182,8 @@ export const STR = {
       `Not founded yet: needs ${[house ? 'a House' : '', wh ? 'a warehouse' : ''].filter(Boolean).join(' and ')} within 7 tiles`,
     makes: 'Makes / week',
     uses: 'Uses / week',
+    /** power among what a town makes or uses, lowercase like the cargo names beside it */
+    power: 'power',
     go: 'Go',
     rename: 'Rename',
     namePrompt: 'Name the town',
