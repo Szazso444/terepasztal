@@ -3,6 +3,7 @@ import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Train } from '../sim/trains';
 import type { Builder } from '../sim/build';
+import type { Commands } from '../sim/commands';
 import { levelMul } from '../gacha/items';
 import { daySeconds } from '../sim/rules';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -33,6 +34,8 @@ export class TrainSide {
   constructor(
     private readonly builder: Builder,
     private readonly atlas: AtlasRegistry,
+    private readonly commands: Commands,
+    private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
   ) {
     this.root.append(
       el('div', { class: 'panel-title' }, this.titleText, this.count, this.refuelButton),
@@ -199,7 +202,8 @@ export class TrainSide {
           btn(
             STR.train[k],
             () => {
-              t.fuelPreference = k;
+              const done = this.commands.setFuelPreference(t, k);
+              if (!done.ok) this.toast(done.message, 'warn');
               this.lastKey = '';
             },
             `tiny ${t.fuelPreference === k ? 'active' : ''}`,

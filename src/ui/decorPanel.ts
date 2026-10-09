@@ -1,6 +1,7 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder, Decor } from '../sim/build';
+import type { Commands } from '../sim/commands';
 import { decorDef } from '../sim/build';
 import type { PowerGrid } from '../sim/power';
 import type { House, HouseRegistry } from '../sim/houses';
@@ -20,6 +21,8 @@ export class DecorPanel {
   constructor(
     private readonly builder: Builder,
     private readonly power: PowerGrid,
+    private readonly commands: Commands,
+    private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
     private readonly onClose: () => void,
   ) {
     this.root = el(
@@ -117,9 +120,9 @@ export class DecorPanel {
         btn(
           STR.signals.rotate,
           () => {
-            d.rot = (d.rot + 1) % 4;
-            this.builder.onDecorChanged?.(d, false);
-            this.onSignalBlock?.(d);
+            const done = this.commands.turnSignal(d);
+            if (done.ok) this.onSignalBlock?.(d);
+            else this.toast(done.message, 'warn');
             this.render();
           },
           'small',

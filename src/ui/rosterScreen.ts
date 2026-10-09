@@ -15,6 +15,7 @@ import {
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
 import type { Fleet } from '../sim/fleet';
+import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
 
@@ -33,12 +34,11 @@ export class RosterScreen implements Screen {
   private sort: SortKey = 'rarity';
   private freeOnly = false;
   private size: string = 'all';
-  /** pay for a fit-out; returns false when short of money (set by the game) */
-  spendMoney: ((amount: number) => boolean) | null = null;
 
   constructor(
     private readonly inventory: Inventory,
     private readonly fleet: Fleet,
+    private readonly commands: Commands,
     private readonly atlas: AtlasRegistry,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void = () => {},
   ) {
@@ -199,15 +199,14 @@ export class RosterScreen implements Screen {
       lvl.append(up);
     }
     // in-cab signalling: the one hard requirement of high-speed track, fitted for money
-    if (it.kind === 'loco' && !it.inCab && !locoDef(it.defId).inCab && this.spendMoney) {
+    if (it.kind === 'loco' && !it.inCab && !locoDef(it.defId).inCab) {
       const fit = btn(
         STR.roster.fitInCab(rules.inCabCost),
         () => {
-          if (this.spendMoney!(rules.inCabCost)) {
-            it.inCab = true;
-            this.toast(STR.roster.fitted(d.name), 'good');
-            this.render();
-          } else this.toast(STR.roster.noMoney, 'warn');
+          const done = this.commands.fitInCab(it);
+          if (!done.ok) return this.toast(done.message, 'warn');
+          this.toast(STR.roster.fitted(d.name), 'good');
+          this.render();
         },
         'tiny',
       );
