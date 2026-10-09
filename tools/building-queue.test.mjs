@@ -101,14 +101,16 @@ describe('building queue', () => {
   });
 
   it('stops when a family has no description', () => {
-    const { depot: _depot, ...rest } = fam.families;
+    const rest = { ...fam.families };
+    delete rest.depot;
     expect(() => buildQueue(inv, { ...fam, families: rest })).toThrow(/depot/);
     const extra = { ...fam.families, lighthouse: fam.families.depot };
     expect(() => buildQueue(inv, { ...fam, families: extra })).toThrow(/lighthouse/);
   });
 
   it("stops when a description names no line for one of the family's ages", () => {
-    const { a3: _a3, ...ages } = fam.families.refinery.ages;
+    const ages = { ...fam.families.refinery.ages };
+    delete ages.a3;
     const families = { ...fam.families, refinery: { ...fam.families.refinery, ages } };
     expect(() => buildQueue(inv, { ...fam, families })).toThrow(/refinery.*a3/);
   });
