@@ -27,6 +27,7 @@ node scratchpad/art-scene.mjs after            # builds a village, bridge and tr
 node scratchpad/art-compare.mjs                # stacks the before/after scene shots
 node scratchpad/verify-audio.mjs               # track loads, loops, and the sliders drive it
 node scratchpad/art-sheets.mjs after           # contact sheets per atlas group
+node scratchpad/atlas-frames.mjs after         # every frame's size and anchor (diff <a> <b>)
 node scratchpad/art-world-shots.mjs after      # play, close, far, night, overview, panels
 node scratchpad/verify-assets.mjs art-after    # frame counts, atlas bounds, generation time
 node scratchpad/verify-curves.mjs art-after    # compatibility verdicts
