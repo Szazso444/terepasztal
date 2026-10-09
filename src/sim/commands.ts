@@ -65,11 +65,14 @@ export class Commands {
   setTrainMode(t: Train, mode: RouteMode): CommandResult {
     return this.fleet.setMode(t, mode);
   }
-  /** Give a train a stop list to follow to the letter: at least two stops. */
+  /**
+   * Give a train a stop list to follow to the letter: at least two stops. A train working a
+   * contract finishes the job first, then runs the new stops from the first (`Train.setProgram`).
+   */
   setSchedule(t: Train, stops: readonly StopPlan[]): CommandResult {
     if (stops.length < 2) return refuse(STR.fleet.needTwoStops);
     t.mode = 'schedule';
-    this.fleet.setSchedule(t, [...stops]);
+    t.setProgram([...stops]);
     return done();
   }
   /** Which solid fuel a steam train takes first. */

@@ -935,24 +935,85 @@ describe('setTrainMode after a contract job closes', () => {
   });
 });
 
-describe('setSchedule during a contract job', () => {
-  it('leaves the train on the stops given once the job is over', () => {
-    const { w, t, until } = onContract();
-    const a = station(w, 'farm', 10),
-      b = station(w, 'farm', 85);
-    const job = t.schedule;
-    const r = w.commands.setSchedule(t, [defaultStop(a.id), defaultStop(b.id)]);
-    if (!r.ok) {
-      // a refusal is an answer too, as long as it changed nothing
-      expect(t.mode).toBe('production');
-      expect(t.schedule).toBe(job);
-      expect(t.job?.contractId).toBe(1);
-      return;
-    }
-    // the contract closes
+/** The train runs its own program again: nothing is set aside for a contract any more. */
+const onProgram = (t: Train) => t.program === t.schedule;
+
+describe('a roaming train whose contract closes under way', () => {
+  it('chooses again rather than head for the stop it had before the job', () => {
+    const { t, quarry, home, until } = onContract();
     t.dropJob(1);
-    expect(until(() => !t.toJSON().suspended, 120)).toBe(true);
+    // the next fleet tick takes the program up again
+    expect(until(() => onProgram(t), 1)).toBe(true);
+    expect(t.mode).toBe('production');
+    expect(target(t)).toBe(quarry.id);
+    expect(target(t)).not.toBe(home.id);
+    expect(t.state).toBe('moving');
+    until(() => t.atStation === quarry, 120);
+    expect(t.atStation).toBe(quarry);
+  });
+
+  it('with no way to its stop, marks the stop bad and waits to choose again', () => {
+    const { w, t, home, until } = onContract();
+    // a contract train picks nothing of its own: it is left with the dead stop it had
+    expect(w.commands.setTrainMode(t, 'contract')).toEqual({ ok: true });
+    expect(t.job?.contractId).toBe(1);
+    t.dropJob(1);
+    expect(until(() => onProgram(t), 1)).toBe(true);
+    expect(target(t)).toBe(home.id);
+    expect(t.state).toBe('idle');
+    expect(t.isBadTarget(home.id, w.fleet.clockTime)).toBe(true);
+  });
+});
+
+/** Three stations away from the job's two, for a schedule given while the train works it. */
+function program(w: World) {
+  return [
+    defaultStop(station(w, 'farm', 10).id),
+    defaultStop(station(w, 'farm', 85).id),
+    defaultStop(station(w, 'farm', 55).id),
+  ];
+}
+
+describe('setSchedule during a contract job', () => {
+  it('lets the job finish first, then runs the stops given from the first', () => {
+    const { w, t, quarry, warehouse, until } = onContract();
+    const stops = program(w);
+    const job = t.schedule;
+    expect(w.commands.setSchedule(t, stops)).toEqual({ ok: true });
     expect(t.mode).toBe('schedule');
-    expect(t.route).toEqual([a.id, b.id]);
+    // the job keeps its two stops
+    expect(t.job?.contractId).toBe(1);
+    expect(t.schedule).toBe(job);
+    expect(t.route).toEqual([quarry.id, warehouse.id]);
+    expect(t.program).toEqual(stops);
+    // the contract closes under way
+    t.dropJob(1);
+    expect(until(() => onProgram(t), 1)).toBe(true);
+    expect(t.route).toEqual(stops.map((s) => s.stationId));
+    expect(target(t)).toBe(stops[0].stationId);
+  });
+
+  it('starts the stops given from the first when the job ends at a platform', () => {
+    const { w, t, warehouse, until } = onContract();
+    const stops = program(w);
+    expect(w.commands.setSchedule(t, stops)).toEqual({ ok: true });
+    expect(until(() => t.atStation === warehouse && t.state === 'loading', 200)).toBe(true);
+    // the delivery closed the contract with the train still at the platform
+    t.dropJob(1);
+    expect(until(() => onProgram(t), 120)).toBe(true);
+    expect(t.job).toBeNull();
+    expect(t.mode).toBe('schedule');
+    expect(t.route).toEqual(stops.map((s) => s.stationId));
+    expect(target(t)).toBe(stops[0].stationId);
+  });
+
+  it('takes the stops given at once when no job runs, as recording a route does', () => {
+    const w = world();
+    const stops = program(w);
+    const t = train(w, 20);
+    t.mode = 'production';
+    expect(w.commands.setSchedule(t, stops)).toEqual({ ok: true });
+    expect(t.schedule).toEqual(stops);
+    expect(onProgram(t)).toBe(true);
   });
 });

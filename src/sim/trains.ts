@@ -597,6 +597,26 @@ export class Train {
     this.job = null;
     if (this.state === 'moving' && !this.holding) this.resumePending = true;
   }
+  /**
+   * The train's own program: the one set aside while a contract job runs, or after the job closed
+   * until the train takes it up again; else the schedule it runs.
+   */
+  get program(): readonly StopPlan[] {
+    return this.suspended?.schedule ?? this.schedule;
+  }
+  /**
+   * Give the train a new program of its own. While one is set aside, the new one takes its place
+   * and starts at its first stop once the train goes back to it; otherwise the train runs it now,
+   * at the same index where it can.
+   */
+  setProgram(schedule: StopPlan[]) {
+    if (this.suspended) {
+      this.suspended = { schedule, routeIndex: Math.max(0, schedule.length - 1) };
+      return;
+    }
+    this.schedule = schedule;
+    this.routeIndex = Math.min(this.routeIndex, Math.max(0, schedule.length - 1));
+  }
   /** Set the program aside and take up the next queued contract as a two-stop schedule. */
   private startJob() {
     const j = this.jobs.shift();
@@ -1439,7 +1459,16 @@ export class Train {
       this.resumePending = false;
       if (!this.job && this.suspended && this.state === 'moving' && !this.holding) {
         if (this.jobs.length) this.startJob();
-        else this.resumeProgram(true);
+        else {
+          this.resumeProgram(true);
+          // a roaming train chooses again rather than head for the stop it had before the job;
+          // with nothing worth picking it keeps that stop
+          const next = this.dynamic ? ctx.chooseNext(this) : null;
+          if (next !== null) {
+            this.schedule = [defaultStop(next)];
+            this.routeIndex = 0;
+          }
+        }
         const wasReversed = this.reversed;
         if (this.dispatch(ctx.track, ctx.builder, ctx.map)) {
           if (!this.path) {
@@ -1447,6 +1476,11 @@ export class Train {
             this.pathCum = [];
             this.onPathReady(ctx);
           } else if (wasReversed !== this.reversed) this.updatePoses();
+        } else if (this.dynamic && !this.job) {
+          // as at a platform: remember the stop it could not reach, wait and choose again
+          this.badTargets.set(this.route[this.routeIndex % this.route.length], ctx.now + 240);
+          this.lastMessage = 'no track to the chosen stop';
+          this.setState('idle');
         } else this.setState('noRoute');
         return;
       }

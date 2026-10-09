@@ -503,27 +503,18 @@ export class Fleet {
    * or stopped for fuel, power or weight goes when that wait ends. With nothing worth picking, a
    * train without a route idles and asks again, as a roaming train does. A contract job keeps its
    * two stops: the new mode takes over when the train goes back to its own program. The program
-   * `schedule` checks is the one the train goes back to, also after a job closed and before the
-   * train has taken its program up again.
+   * `schedule` checks is the one the train goes back to (`Train.program`), also after a job
+   * closed and before the train has taken its program up again.
    */
   setMode(t: Train, mode: RouteMode): { ok: true } | { ok: false; message: string } {
     if (mode === 'schedule') {
-      if (this.programStops(t).length < 2) return { ok: false, message: STR.fleet.needTwoStops };
+      if (t.program.length < 2) return { ok: false, message: STR.fleet.needTwoStops };
       t.mode = mode;
       return { ok: true };
     }
     t.mode = mode;
     if (!t.job) this.replan(t);
     return { ok: true };
-  }
-  /**
-   * The stops a train runs as its own program: the ones set aside while a contract job runs, and
-   * after the job closed until the train takes them up again (at its next stop, or on the next
-   * tick when the job closed under way).
-   */
-  private programStops(t: Train): StopPlan[] {
-    // the train keeps the set-aside program to itself; its saved shape is the public view of it
-    return t.toJSON().suspended?.schedule ?? t.schedule;
   }
   /** Point a roaming train at the stop it would pick now (see `setMode`). */
   private replan(t: Train) {
