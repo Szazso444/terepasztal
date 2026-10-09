@@ -138,9 +138,15 @@ light, broad colour clusters and selective contours. Sound effects are synthesiz
 Audio synthesizer in `src/engine/synth.ts`. Nothing is taken from other games. Sprites and
 individual sound effects can be overridden file by file (see below).
 
-Music is the looping track in `public/assets/audio/music`. Remove it and the synthesized ambient
-loop in `src/engine/synth.ts` takes over, so a build without the file still has music. Music and
-effects volume are on sliders in the title screen, the pause menu and the settings screen.
+Music is one melody, Pastoral Pulse, arranged differently for each age. The default set is the
+original and three variations in `public/assets/audio/music`; each of the six ages can have its
+own set in `public/assets/audio/music/<age id>/`, and none has one yet, so every age plays the
+default. A set opens on its first track and then plays all its tracks in shuffled rounds; entering
+an age with a different set fades the current track out and starts that set. If every file of an
+age's set fails to play, the default set takes over, and if those fail too, the synthesized
+ambient loop in `src/engine/synth.ts` plays, so a build without any music file still has music.
+Music and effects volume are on sliders in the title screen, the pause menu and the settings
+screen.
 
 ## Replacing placeholder art
 
@@ -151,8 +157,11 @@ and generated procedurally otherwise. The JSON is
 pixels from the frame's top-left. Frame names are listed by the generators in `src/art`.
 
 Drop `public/assets/audio/<event>.ogg` (event names in `src/engine/audio.ts`) to replace a
-synthesized sound. The music track is `public/assets/audio/music/pastoral-pulse.mp3`; the path is
-`MUSIC_TRACK` in `src/engine/audio.ts`.
+synthesized sound. Music files are listed by path in `src/engine/musicPlaylist.ts`: `MUSIC_TRACKS`
+is the default set and `AGE_MUSIC` holds each age's set, keyed by the age ids in
+`src/data/ages.json`. To give an age its own music, put the files in
+`public/assets/audio/music/<age id>/` and list them under that age as
+`/assets/audio/music/<age id>/<file>.mp3`; the first one listed plays first.
 
 ## Modelling tools
 

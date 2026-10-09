@@ -98,11 +98,16 @@ shadows that touch each object's base. Semantic colours stay brighter than any s
 Changing a generator means re-running `scratchpad/art-sheets.mjs` and checking frame counts and
 anchors did not move.
 
-**Music is files, effects are synthesized.** Music is the playlist in `src/engine/musicPlaylist.ts`
-(`public/assets/audio/music/*.mp3`): Pastoral Pulse plays first, then the variations in shuffled
-rounds. A track that fails is skipped, and the synth loop takes over only when every file has
-failed. Volume sliders live in both menus and the settings screen and travel with the settings,
-not the save.
+**Music is files, effects are synthesized.** Music is one melody, Pastoral Pulse, in a track set
+per age. `src/engine/musicPlaylist.ts` lists every file by path: `AGE_MUSIC` has a set for each of
+the six ages in `src/data/ages.json`, with its files in `public/assets/audio/music/<age id>/`
+(all six are empty for now), and `MUSIC_TRACKS` is the default set, Pastoral Pulse and its three
+variations in `public/assets/audio/music/*.mp3`. A set plays its first track, then all its tracks
+in shuffled rounds. When the player enters an age (a new game, a load, an age-up) and its set
+differs, the current track fades out and the new set starts. An empty set plays `MUSIC_TRACKS`. A
+file that fails is skipped for the rest of the session; when every file of the age's set has
+failed `MUSIC_TRACKS` plays, and the synth loop takes over only when those have failed too. Volume
+sliders live in both menus and the settings screen and travel with the settings, not the save.
 
 **A new save format version needs a migration step.** Bumping `SAVE_VERSION` in `src/sim/save.ts`
 means adding an entry to `MIGRATIONS` with `from` set to the version before it, and adding any new
