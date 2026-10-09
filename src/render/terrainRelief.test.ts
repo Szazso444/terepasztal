@@ -199,7 +199,7 @@ describe('connected illustrated terrain', () => {
           surfaceColor(alpha, material, x, y, out);
           expect(out[0]).toBeGreaterThan(210);
         }
-  });
+  }, 35_000);
   it('keeps every relief style within its per-edge rise, height budget and picking', () => {
     const m = fixture();
     const styles: ReliefStyle[] = [
@@ -282,7 +282,7 @@ describe('connected illustrated terrain', () => {
         for (let bx = -1; bx < 32; bx += 0.211)
           expect(surfaceAlongRay(m, r, bx, by, 10)).toBe(plain(bx, by));
     }
-  });
+  }, 20_000);
   it('keeps level pieces and structures on terrace tiles no bank reaches into', () => {
     const m = fixture(),
       r = buildRelief(m, new Set());

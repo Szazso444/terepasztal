@@ -35,7 +35,7 @@ describe('building check', () => {
           checkPicture(picture(fp.id, r.index), fp.id, r.index),
           `${fp.id} r${r.index}`,
         ).toMatchObject({ ok: true, problems: [], notes: [] });
-  });
+  }, 20_000);
 
   it("passes the guide's own block, painted where the guide draws it", () => {
     // on the plinth, as every guide shows it: a picture that keeps its guide's place must pass

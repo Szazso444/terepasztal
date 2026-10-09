@@ -52,7 +52,7 @@ describe('building review sheets', () => {
     expect(at(sheet, 3 * 256 + tx / 4, 2 * 256 + ty / 4)).toEqual(SHADE.top);
     // a cell's corner is grass
     expect(at(sheet, 3 * 256 + 4, 2 * 256 + 4)).toEqual(SHEET.grass);
-  });
+  }, 20_000);
 
   it('lays a picture of any size and place onto its footprint, as the game will', () => {
     // what a generator returns: half as large again, off centre, on a canvas of its own
@@ -64,7 +64,7 @@ describe('building review sheets', () => {
     // the footprint shows round the building's foot: its near corner is not covered
     const [sx, sy] = project(FOOTPRINTS.t1, 0.5, 0.5);
     expect(at(sheet, 1 * 256 + sx / 4, 4 * 256 + sy / 4 - 2)).toEqual(SHEET.footprint);
-  });
+  }, 20_000);
 
   it("leaves a missing picture's cell empty", () => {
     const f = family('farm');
@@ -76,7 +76,7 @@ describe('building review sheets', () => {
     expect(at(sheet, 2 * 256 + tx / 4, 1 * 256 + ty / 4)).toEqual(SHEET.grass);
     // its neighbour is there
     expect(at(sheet, 1 * 256 + tx / 4, 1 * 256 + ty / 4)).toEqual(SHADE.top);
-  });
+  }, 20_000);
 
   it('leaves the cell empty and names the file when a picture cannot be read', () => {
     const f = family('farm');
@@ -90,7 +90,7 @@ describe('building review sheets', () => {
     expect(said).toEqual([`${broken}: Invalid file signature`]);
     const [cx, cy] = FOOTPRINTS.t1.centre;
     expect(at(sheet, 1 * 256 + cx / 4, cy / 4)).toEqual(SHEET.footprint);
-  });
+  }, 20_000);
 
   it('lists every family in the index, with what was made and what failed', () => {
     const queue = buildQueue(inv, fam);

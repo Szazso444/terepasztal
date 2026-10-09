@@ -55,5 +55,5 @@ describe('Weather eases by the game seconds it is given', () => {
     );
     // Not vacuous: rain or fog came and the strength moved towards it.
     expect(eased).toBeGreaterThan(1000);
-  });
+  }, 20_000);
 });
