@@ -5,6 +5,7 @@ import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
 import { lineSpeedCap, approachCap } from './lineSpeed';
 import { consistAccess, consistGauge, pieceClassFor, type ConsistAccess } from './compat';
 import { collectorCeiling, type SupplyKind } from './catenary';
+import { BRIDGE_SLOW_FACTOR, slowsOnBridge } from './bridges';
 import type { Signals } from './signals';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
 import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
@@ -311,6 +312,11 @@ export interface TickCtx {
   biomeAt: (x: number, y: number) => { speedMul: number; waterUseMul: number };
   /** speed multiplier for crossing a segment: slower climbing a hill, faster coming down */
   gradeAt?: (seg: PathSegment) => number;
+  /**
+   * The fleet captured the render poses at the start of this loop tick (`Fleet.beginFrame`), so a
+   * tick leaves prevPoses alone and the renderer interpolates across every step of the loop tick.
+   */
+  framed?: boolean;
 }
 
 export interface RetreatPlan {
@@ -583,13 +589,35 @@ export class Train {
   }
   /**
    * Drop a contract from the queue, or close the one being worked: the train falls back to its
-   * program at the next stop, or right away when it is under way.
+   * program at the next stop, or right away when it is under way or stands with no route to the
+   * job (which has no next stop).
    */
   dropJob(contractId: number) {
     this.jobs = this.jobs.filter((j) => j.contractId !== contractId);
     if (this.job?.contractId !== contractId) return;
     this.job = null;
-    if (this.state === 'moving' && !this.holding) this.resumePending = true;
+    if ((this.state === 'moving' && !this.holding) || this.state === 'noRoute')
+      this.resumePending = true;
+  }
+  /**
+   * The train's own program: the one set aside while a contract job runs, or after the job closed
+   * until the train takes it up again; else the schedule it runs.
+   */
+  get program(): readonly StopPlan[] {
+    return this.suspended?.schedule ?? this.schedule;
+  }
+  /**
+   * Give the train a new program of its own. While one is set aside, the new one takes its place
+   * and starts at its first stop once the train goes back to it; otherwise the train runs it now,
+   * at the same index where it can.
+   */
+  setProgram(schedule: StopPlan[]) {
+    if (this.suspended) {
+      this.suspended = { schedule, routeIndex: Math.max(0, schedule.length - 1) };
+      return;
+    }
+    this.schedule = schedule;
+    this.routeIndex = Math.min(this.routeIndex, Math.max(0, schedule.length - 1));
   }
   /** Set the program aside and take up the next queued contract as a two-stop schedule. */
   private startJob() {
@@ -617,6 +645,40 @@ export class Train {
     const n = Math.max(1, s.schedule.length);
     this.routeIndex = advance ? (s.routeIndex + 1) % n : s.routeIndex % n;
     this.lastMessage = 'back on the regular run';
+  }
+  /**
+   * The job closed with the train away from its stops: under way, or standing with no route to
+   * them. It takes up the next queued contract, or goes back to its program at the stop after the
+   * one it left for the job, a roaming train choosing again (with nothing worth picking it keeps
+   * the stop it had). A roaming train with no way to its stop marks it bad and waits, as at a
+   * platform; anything else with no way stands without a route and retries.
+   */
+  private resumeAway(ctx: TickCtx) {
+    if (this.jobs.length) this.startJob();
+    else {
+      this.resumeProgram(true);
+      const next = this.dynamic ? ctx.chooseNext(this) : null;
+      if (next !== null) {
+        this.schedule = [defaultStop(next)];
+        this.routeIndex = 0;
+      }
+    }
+    const moving = this.state === 'moving';
+    const wasReversed = this.reversed;
+    if (this.dispatch(ctx.track, ctx.builder, ctx.map)) {
+      if (!moving) {
+        if (!this.planFuelDetour(ctx)) this.onPathReady(ctx);
+      } else if (!this.path) {
+        this.pathPts = [];
+        this.pathCum = [];
+        this.onPathReady(ctx);
+      } else if (wasReversed !== this.reversed) this.updatePoses();
+    } else if (this.dynamic && !this.job) {
+      this.badTargets.set(this.route[this.routeIndex % this.route.length], ctx.now + 240);
+      this.lastMessage = 'no track to the chosen stop';
+      this.setState('idle');
+    } else if (moving) this.setState('noRoute');
+    else this.stateTime = 0;
   }
   /** Any of the job's cargo aboard, taken on at its origin. */
   private hasJobCargo() {
@@ -886,16 +948,16 @@ export class Train {
   get eco() {
     return this.tankFraction < ECO_BELOW;
   }
-  /** Pushing the consist backwards is slow; a heavy train is slower still. */
   /** The whole consist is on the bridge until its rear leaves it. */
   bridgeSpeed(track: TrackGraph) {
     let factor = 1;
     for (const k of this.occupancyKeys(track.w)) {
       const cap = track.get(k % track.w, Math.floor(k / track.w))?.bridgeCapacity;
-      if (cap && this.mass > cap * 0.8) factor = Math.min(factor, 0.5);
+      if (cap && slowsOnBridge(this.mass, cap)) factor = Math.min(factor, BRIDGE_SLOW_FACTOR);
     }
     return factor;
   }
+  /** Pushing the consist backwards is slow; a heavy train is slower still. */
   get reverseFactor() {
     const load = this.power > 0 ? Math.min(1, this.weight / this.power) : 1;
     return 0.7 - 0.35 * load;
@@ -1111,8 +1173,7 @@ export class Train {
     this.pathPos = 0;
     this.path = null;
     this.updatePoses();
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
-    this.prevVehiclePoses = this.vehiclePoses;
+    this.capturePoses();
     return true;
   }
 
@@ -1138,6 +1199,11 @@ export class Train {
     this.speed = 0;
     this.path = null;
     this.updatePoses();
+    this.capturePoses();
+  }
+
+  /** Take the current poses as the ones the renderer interpolates from. */
+  capturePoses() {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
     this.prevVehiclePoses = this.vehiclePoses;
   }
@@ -1311,8 +1377,7 @@ export class Train {
     this.trailCum = next.cum;
     this.reversed = !this.reversed;
     this.updatePoses();
-    this.prevVehiclePoses = this.vehiclePoses;
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.capturePoses();
   }
 
   private setPath(path: PathSegment[], map: GameMap, track: TrackGraph) {
@@ -1422,24 +1487,18 @@ export class Train {
   // ------------------------------------------------------------ tick
   /** Advance by in-game seconds. */
   tick(gdt: number, ctx: TickCtx) {
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
-    this.prevVehiclePoses = this.vehiclePoses;
+    if (!ctx.framed) this.capturePoses();
     this.stateTime += gdt;
     this.refreshModes(ctx);
     if (this.resumePending) {
-      // the contract closed under way: head for the program's next stop instead
+      // the contract closed under way or with no route to it: head for the program's next stop
       this.resumePending = false;
-      if (!this.job && this.suspended && this.state === 'moving' && !this.holding) {
-        if (this.jobs.length) this.startJob();
-        else this.resumeProgram(true);
-        const wasReversed = this.reversed;
-        if (this.dispatch(ctx.track, ctx.builder, ctx.map)) {
-          if (!this.path) {
-            this.pathPts = [];
-            this.pathCum = [];
-            this.onPathReady(ctx);
-          } else if (wasReversed !== this.reversed) this.updatePoses();
-        } else this.setState('noRoute');
+      if (
+        !this.job &&
+        this.suspended &&
+        ((this.state === 'moving' && !this.holding) || this.state === 'noRoute')
+      ) {
+        this.resumeAway(ctx);
         return;
       }
     }
@@ -1532,6 +1591,12 @@ export class Train {
           const head = this.headTile;
           if (this.state === 'stranded' && head && !ctx.track.has(head.x, head.y)) {
             this.stateTime = 0;
+            break;
+          }
+          // a contract closed while the train stood here (or before a reload): never retry its
+          // stops, go back to the program
+          if (!this.job && this.suspended) {
+            this.resumeAway(ctx);
             break;
           }
           // a train with nowhere to go takes up a queued contract right away
@@ -1758,8 +1823,8 @@ export class Train {
       if (d < 0) continue;
       if (d > 2 + (this.speed * this.speed) / (2 * DECEL)) break;
       const limit = ctx.track.get(s.x, s.y)?.bridgeCapacity;
-      if (limit && this.mass > limit * 0.8) {
-        const crossing = (vmax / bridgeFactor) * 0.5;
+      if (limit && slowsOnBridge(this.mass, limit)) {
+        const crossing = (vmax / bridgeFactor) * BRIDGE_SLOW_FACTOR;
         cap = Math.min(cap, Math.sqrt(crossing * crossing + 2 * DECEL * Math.max(0, d - 0.25)));
       }
     }

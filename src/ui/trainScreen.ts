@@ -147,7 +147,7 @@ export class TrainScreen implements Screen {
           { style: 'flex:1' },
           el('div', {
             class: `name rarity-${lo.def.rarity}`,
-            text: `${lo.def.name} Lv${lo.level}`,
+            text: STR.train.locoLevel(lo.def.name, lo.level),
           }),
           el('div', {
             class: 'sub',

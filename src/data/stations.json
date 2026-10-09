@@ -1,13 +1,12 @@
 {
   "levels": {
-    "capacity": [60, 120, 200, 320, 500],
-    "loadRate": [4, 6, 9, 13, 18],
-    "platforms": [1, 1, 2, 2, 3],
-    "production": [30, 50, 80, 120, 170],
-    "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6],
-    "spriteByLevel": [1, 2, 3, 4, 5],
-    "maxLevelByTier": [3, 4, 5],
-    "crew": [2, 3, 5, 8, 12]
+    "capacity": [60, 120, 200, 320, 500, 750],
+    "loadRate": [4, 6, 9, 13, 18, 24],
+    "platforms": [1, 1, 2, 2, 3, 3],
+    "production": [30, 50, 80, 120, 170, 230],
+    "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6, 3.6],
+    "spriteByLevel": [1, 2, 3, 4, 5, 5],
+    "crew": [2, 3, 5, 8, 12, 16]
   },
   "defs": [
     {

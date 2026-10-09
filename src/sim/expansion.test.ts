@@ -13,7 +13,7 @@ import { Station } from './stations';
 import { Train, type TickCtx } from './trains';
 import { Fleet } from './fleet';
 import { Inventory } from '../gacha/inventory';
-import { bridgeSpan, bridgeCapacity } from './bridges';
+import { bridgeSpan, bridgeCapacity, BRIDGE_SLOW_FACTOR, BRIDGE_SLOW_SHARE } from './bridges';
 import { Signals } from './signals';
 import { tickBuildings, buildingRecipe, type Building } from './buildings';
 import { HouseRegistry } from './houses';
@@ -98,7 +98,15 @@ describe('weekly food economy and housing', () => {
     expect(h.residents).toBe(20);
     expect(h.level).toBe(1);
     expect(houses.houses.size).toBe(1);
+    // the player pays for the second level, which the Diesel age opens
+    w.builder.free = false;
+    w.stock.add('wood', 60);
+    w.stock.add('stone', 40);
+    const wood = w.stock.get('wood');
+    expect(houses.upgrade(h)).toBe(false);
+    w.economy.setAge(1);
     expect(houses.upgrade(h)).toBe(true);
+    expect(w.stock.get('wood')).toBe(wood - 60);
     houses.tick(daySeconds() * 100, daySeconds() * 200);
     expect(h.residents).toBe(60);
     expect(h.level).toBe(2);
@@ -178,10 +186,10 @@ describe('bridges, reversing and refuelling', () => {
       t = train();
     t.spawnAt(w.track, 40, 30, Dir.W);
     const p = w.track.get(39, 30)!;
-    p.bridgeCapacity = t.mass / 0.8;
+    p.bridgeCapacity = t.mass / BRIDGE_SLOW_SHARE;
     expect(t.bridgeSpeed(w.track)).toBe(1);
-    p.bridgeCapacity = t.mass / 0.81;
-    expect(t.bridgeSpeed(w.track)).toBe(0.5);
+    p.bridgeCapacity = t.mass / (BRIDGE_SLOW_SHARE + 0.01);
+    expect(t.bridgeSpeed(w.track)).toBe(BRIDGE_SLOW_FACTOR);
     p.bridgeCapacity = t.mass - 1;
     expect(
       findPath(w.track, { x: 35, y: 30, in: Dir.W }, (x) => x === 45, 10000, undefined, t.canUse),
@@ -230,7 +238,7 @@ describe('bridges, reversing and refuelling', () => {
     const w = world(),
       t = train();
     t.spawnAt(w.track, 40, 30, Dir.W);
-    w.track.get(40, 30)!.bridgeCapacity = t.mass / 0.81;
+    w.track.get(40, 30)!.bridgeCapacity = t.mass / (BRIDGE_SLOW_SHARE + 0.01);
     const st = new Station('quarry', 80, 29);
     w.builder.stations.push(st);
     t.route = [st.id];
@@ -242,7 +250,7 @@ describe('bridges, reversing and refuelling', () => {
     t.onPathReady(ctx);
     t.tick(0.05, ctx);
     expect(t.speed).toBeGreaterThan(0);
-    expect(t.speed).toBeLessThanOrEqual(t.maxSpeed * t.loadFactor * 0.5 + 1e-6);
+    expect(t.speed).toBeLessThanOrEqual(t.maxSpeed * t.loadFactor * BRIDGE_SLOW_FACTOR + 1e-6);
   });
   it('refuels a selected group atomically at twice the materials', () => {
     const w = world(),

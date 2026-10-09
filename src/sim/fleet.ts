@@ -495,6 +495,67 @@ export class Fleet {
     t.routeIndex = Math.min(t.routeIndex, Math.max(0, schedule.length - 1));
   }
 
+  /**
+   * Switch a train's routing mode. `schedule` keeps the stops the train runs and is refused with
+   * fewer than two, the mode left as it was. A roaming mode re-plans the train the way `create`
+   * does: the stop it would pick becomes a one-stop schedule. A train standing without a route,
+   * idling or running a plain leg heads there at once; one at a platform, in a yield, backing off
+   * or stopped for fuel, power or weight goes when that wait ends. With nothing worth picking, a
+   * train without a route idles and asks again, as a roaming train does. A contract job keeps its
+   * two stops: the new mode takes over when the train goes back to its own program. The program
+   * `schedule` checks is the one the train goes back to (`Train.program`), also after a job
+   * closed and before the train has taken its program up again.
+   */
+  setMode(t: Train, mode: RouteMode): { ok: true } | { ok: false; message: string } {
+    if (mode === 'schedule') {
+      if (t.program.length < 2) return { ok: false, message: STR.fleet.needTwoStops };
+      t.mode = mode;
+      return { ok: true };
+    }
+    t.mode = mode;
+    if (!t.job) this.replan(t);
+    return { ok: true };
+  }
+  /** Point a roaming train at the stop it would pick now (see `setMode`). */
+  private replan(t: Train) {
+    const next = this.chooseNext(t);
+    if (next === null) {
+      // rather than retry a dead stop, wait and choose again later
+      if (t.state === 'noRoute') this.idle(t);
+      return;
+    }
+    const was = { schedule: t.schedule, routeIndex: t.routeIndex };
+    t.schedule = [defaultStop(next)];
+    t.routeIndex = 0;
+    // the train's own logic heads for the new stop once the platform work, yield or back-off ends
+    if (t.state === 'loading' || t.state === 'waiting' || t.state === 'yielding' || t.holding)
+      return;
+    // an idle train may stand on a platform: it leaves it when it sets off
+    const st = t.atStation;
+    st?.occupants.delete(t.id);
+    t.atStation = null;
+    if (t.dispatch(this.track, this.builder, this.map)) {
+      // stopped for fuel, power or weight: it rolls onto the new path when that clears
+      if (t.state === 'moving' || t.state === 'noRoute' || t.state === 'idle')
+        t.onPathReady(this.ctx(this.clockTime, 1));
+      return;
+    }
+    // no way there from where it stands
+    t.atStation = st;
+    st?.occupants.add(t.id);
+    if (t.state === 'noRoute') this.idle(t);
+    else if (t.state !== 'idle') {
+      // under way or stopped on the line: carry on with what it was doing and choose at the stop
+      t.schedule = was.schedule;
+      t.routeIndex = was.routeIndex;
+    }
+  }
+  /** A roaming train with nowhere to go waits where it stands and chooses again shortly. */
+  private idle(t: Train) {
+    t.state = 'idle';
+    t.stateTime = 0;
+  }
+
   /** Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents return to the stockpile. */
   recall(t: Train): number {
     t.recall();
@@ -585,6 +646,7 @@ export class Fleet {
         return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
       },
       gradeAt: (s) => railGrade(this.railBeds, this.map.w, s.x, s.y, s.in, s.out),
+      framed: this.framed,
     };
   }
   /** tile key -> train id for the next stretch of every moving train's path */
@@ -875,6 +937,18 @@ export class Fleet {
   waitingAt: (stationId: number) => number = () => 0;
   /** fired once each time a train pulls into a station (passing through does not count) */
   onArrive: ((t: Train, s: Station) => void) | null = null;
+
+  /** set by the first `beginFrame`: from then on the loop tick, not each step, captures poses */
+  private framed = false;
+  /**
+   * Call once per loop tick, before its simulation steps: every train's poses become the ones the
+   * renderer interpolates from, and until the next call no `tick` overwrites them, so the
+   * interpolation spans all the steps the loop tick runs. Without it each `tick` captures them.
+   */
+  beginFrame() {
+    this.framed = true;
+    for (const t of this.trains) t.capturePoses();
+  }
 
   tick(gdt: number, now: number, speedFactor = 1) {
     this.clockTime = now;

@@ -223,7 +223,7 @@ export class RosterScreen implements Screen {
         { class: 'rcard-head' },
         el('span', { class: `rarity-${d.rarity}`, text: d.rarity }),
         el('span', { class: 'name', text: d.name }),
-        el('span', { class: 'num', text: `Lv ${it.level}` }),
+        el('span', { class: 'num', text: STR.roster.lv(it.level) }),
       ),
       el(
         'div',

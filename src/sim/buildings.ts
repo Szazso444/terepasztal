@@ -1,6 +1,7 @@
 import { content, type BuildingDef, type Cost } from '../data/content';
 import type { Stockpile } from './stockpile';
 import { rules, weekSeconds } from './rules';
+import { MAX_LEVEL } from './levels';
 
 export type { BuildingDef };
 export const BUILDING_DEFS: BuildingDef[] = content.buildings;
@@ -17,7 +18,7 @@ export interface Building {
   y: number;
   /** fraction of a batch accumulated */
   acc: number;
-  /** Player-paid upgrade, 1..4. Older saves default to 1. */
+  /** Player-paid upgrade, 1..`worksMaxLevel`. Older saves default to 1. */
   level?: number;
   /** running in the last tick */
   active: boolean;
@@ -27,6 +28,15 @@ export interface Building {
   made?: Record<string, number>;
   /** why the last tick did not run (empty when running) */
   reason?: 'inputs' | 'full' | '';
+}
+/** A building as a save holds it (v4); the level came later, and a save without one means 1. */
+export type BuildingJSON = [x: number, y: number, id: string, acc: number, level?: number];
+export function buildingToJSON(b: Building): BuildingJSON {
+  return [b.x, b.y, b.id, b.acc, b.level ?? 1];
+}
+/** A saved building, idle until its first tick says otherwise. */
+export function buildingFromJSON([x, y, id, acc, level]: BuildingJSON): Building {
+  return { id, x, y, acc: acc ?? 0, level: level ?? 1, active: false, rate: 0 };
 }
 /** Which primary input is short, if any. */
 export function missingInput(def: BuildingDef, stock: Stockpile): string | null {
@@ -91,9 +101,16 @@ export function tickBuildings(
   }
 }
 
-export const WORKS_MAX_LEVEL = 4;
+/** Bridges are strengthened, not rebuilt: they keep their own four levels, whatever the age. */
+export const BRIDGE_MAX_LEVEL = 4;
+/** The highest level with a picture of its own (`_lv4`); the levels above it draw that one. */
+export const WORKS_TOP_PICTURE = 4;
+/** The highest level a building reaches: four for a bridge, `MAX_LEVEL` for works. */
+export function worksMaxLevel(b: Building) {
+  return buildingDef(b.id).bridge ? BRIDGE_MAX_LEVEL : MAX_LEVEL;
+}
 export function buildingLevel(b: Building) {
-  return Math.min(WORKS_MAX_LEVEL, Math.max(1, b.level ?? 1));
+  return Math.min(worksMaxLevel(b), Math.max(1, b.level ?? 1));
 }
 export function buildingRate(b: Building) {
   return buildingDef(b.id).perWeek * (1 + (buildingLevel(b) - 1) * 0.5);
@@ -103,7 +120,7 @@ export function buildingRecipe(b: Building) {
   return b.id === 'windmill' ? { in: r.in, out: { food: 5 + 2 * (buildingLevel(b) - 1) } } : r;
 }
 export function buildingUpgradeCost(b: Building): Cost | null {
-  if (buildingLevel(b) >= WORKS_MAX_LEVEL) return null;
+  if (buildingLevel(b) >= worksMaxLevel(b)) return null;
   return Object.fromEntries(
     Object.entries(buildingDef(b.id).cost).map(([k, v]) => [
       k,
@@ -111,6 +128,8 @@ export function buildingUpgradeCost(b: Building): Cost | null {
     ]),
   );
 }
+/** Atlas frame of a building: its level's picture, or the highest there is for the levels above. */
 export function buildingFrame(b: Building) {
-  return 'structures/' + b.id + (buildingLevel(b) > 1 ? '_lv' + buildingLevel(b) : '');
+  const l = Math.min(buildingLevel(b), WORKS_TOP_PICTURE);
+  return 'structures/' + b.id + (l > 1 ? '_lv' + l : '');
 }

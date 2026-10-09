@@ -229,7 +229,7 @@ export class SettingsScreen implements Screen {
           { class: 'kv' },
           el('span', {
             class: 'k',
-            text: `${sl.name} · day ${sl.day} · v${sl.version} · ${new Date(sl.savedAt).toLocaleString()}`,
+            text: `${sl.name} · ${STR.settings.slotMeta(sl.day, sl.version)} · ${new Date(sl.savedAt).toLocaleString()}`,
           }),
           el(
             'span',

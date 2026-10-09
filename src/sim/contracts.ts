@@ -7,6 +7,7 @@ import type { Economy } from './economy';
 import { cargoDef } from './cargo';
 import type { DeliveryEvent } from './trains';
 import { CONTRACT_RARITIES, type ContractRarity } from './save';
+import { railAge } from './ages';
 
 export type { ContractTemplate, ContractRarityDef };
 export type { ContractRarity };
@@ -129,7 +130,8 @@ export class ContractBoard {
   generate(now: number, force = false): Contract | null {
     const pairs = this.pairs();
     if (!pairs.length) return null;
-    const tier = this.economy.tier;
+    // the ages after electric bring no contracts of their own: they ask and pay as electric does
+    const tier = railAge(this.economy.tier);
     const templates = TEMPLATES.filter((t) => t.minTier <= tier);
     const totalW = templates.reduce((a, t) => a + t.weight, 0);
     let r = this.rng.next() * totalW;
@@ -302,9 +304,11 @@ export class ContractBoard {
       nextRefresh: this.nextRefresh,
       stats: this.stats,
       completedToday: this.completedToday,
+      /** offer generator state; a save without it stays on the stream seeded from the map */
+      rng: this.rng.state,
     };
   }
-  load(j: ReturnType<ContractBoard['toJSON']>) {
+  load(j: Omit<ReturnType<ContractBoard['toJSON']>, 'rng'> & { rng?: unknown }) {
     this.contracts = j.contracts.map((c) => ({
       ...c,
       rarity: CONTRACT_RARITIES.includes(c.rarity) ? c.rarity : 'common',
@@ -314,5 +318,6 @@ export class ContractBoard {
     this.nextRefresh = j.nextRefresh;
     this.stats = j.stats;
     this.completedToday = j.completedToday;
+    if (typeof j.rng === 'number') this.rng.state = j.rng;
   }
 }

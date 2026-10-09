@@ -4,6 +4,18 @@ import type { Builder } from './build';
 import { Dir, opposite } from '../engine/iso';
 
 export type BridgeMaterial = 'wood' | 'stone';
+/**
+ * Share of a bridge's capacity a consist may weigh and still cross at full speed. Anything
+ * heavier (strictly above `capacity * BRIDGE_SLOW_SHARE`) slows to `BRIDGE_SLOW_FACTOR`, both
+ * under the span and on the approach to it. Above the capacity itself the bridge is closed.
+ */
+export const BRIDGE_SLOW_SHARE = 0.8;
+/** Speed multiplier for a consist heavier than `BRIDGE_SLOW_SHARE` of a bridge's capacity. */
+export const BRIDGE_SLOW_FACTOR = 0.5;
+/** Whether a consist of `mass` tonnes crosses a bridge of `capacity` tonnes at the slow factor. */
+export function slowsOnBridge(mass: number, capacity: number): boolean {
+  return mass > capacity * BRIDGE_SLOW_SHARE;
+}
 export function bridgeCapacity(b: Building): number | null {
   const base = buildingDef(b.id).bridge?.capacity;
   return base ? base * (1 + (buildingLevel(b) - 1) * 0.25) : null;

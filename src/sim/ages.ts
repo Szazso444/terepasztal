@@ -1,8 +1,14 @@
 /**
- * Ages. The game moves from the Steam Age through the Diesel Age to the Electric Age; each age
- * unlocks when every goal listed for it in `src/data/ages.json` is met. `economy.tier` holds the
- * index of the current age (0 steam, 1 diesel, 2 electric) and gates works, stations, decor,
- * station levels, contract templates and gacha banners through their `tier` fields.
+ * Ages. The game moves through six ages: Steam, Diesel, Electric, Nuclear, Magnetic and Hyper;
+ * each age unlocks when every goal listed for it in `src/data/ages.json` is met. `economy.tier`
+ * holds the index of the current age (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic,
+ * 5 hyper) and gates works, stations, decor, contract templates and gacha banners through their
+ * `tier` fields. Stations, works and houses also gain one level per age from the age they appear
+ * in (`levelCap` in src/sim/levels.ts).
+ *
+ * For now an age after Electric only raises the level cap of buildings: no rolling stock,
+ * contract, recipe or banner belongs to one. Code that picks amounts or payouts by the age number
+ * reads it through `railAge`, which stops at Electric.
  */
 import agesJson from '../data/ages.json';
 
@@ -34,6 +40,13 @@ export interface AgeStatus {
 export const AGE_DEFS: AgeDef[] = agesJson as AgeDef[];
 export const AGE_COUNT = AGE_DEFS.length;
 export const LAST_AGE = AGE_COUNT - 1;
+/** Ages that bring their own rolling stock, contracts and land: steam, diesel and electric. */
+export const RAIL_AGES = 3;
+
+/** The age as trains, contracts and land see it: the ages after Electric count as Electric. */
+export function railAge(tier: number): number {
+  return Math.min(tier, RAIL_AGES - 1);
+}
 
 export function ageDef(index: number): AgeDef {
   return AGE_DEFS[Math.max(0, Math.min(LAST_AGE, index))];

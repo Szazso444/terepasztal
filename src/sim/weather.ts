@@ -55,7 +55,11 @@ export class Weather {
   private nextChangeAt = 0;
   constructor(readonly rng: Rng) {}
 
-  tick(now: number, day: number, realDt: number) {
+  /**
+   * `dt` is game seconds, so the eased strength, and the train speed it feeds, follow game time
+   * the same way at every game speed.
+   */
+  tick(now: number, day: number, dt: number) {
     if (now >= this.nextChangeAt) {
       const s = seasonOf(day);
       const r = this.rng.next();
@@ -74,7 +78,7 @@ export class Weather {
       this.nextChangeAt = now + (0.25 + this.rng.next() * 1.0) * daySeconds();
     }
     // ease the visible strength towards the target
-    this.visible += (this.intensity - this.visible) * Math.min(1, realDt * 0.6);
+    this.visible += (this.intensity - this.visible) * Math.min(1, dt * 0.6);
   }
   /** Train speed multiplier from the weather. */
   speedFactor() {

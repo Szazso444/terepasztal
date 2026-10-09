@@ -1,5 +1,5 @@
 {
-  "capacity": [20, 60, 140, 300],
+  "capacity": [20, 60, 140, 300, 520, 800],
   "startResidents": 8,
   "constructionDays": 2,
   "growthDays": 0.5,
@@ -17,6 +17,14 @@
     {
       "stone": 260,
       "iron": 90
+    },
+    {
+      "stone": 420,
+      "iron": 180
+    },
+    {
+      "stone": 640,
+      "iron": 320
     }
   ],
   "spawnAt": 0.8,

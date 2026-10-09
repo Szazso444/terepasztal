@@ -208,7 +208,7 @@ export class MainMenu {
             el('div', { class: 'name', text: lv.name }),
             el('div', {
               class: 'sub',
-              text: `${lv.w}x${lv.h} · ${lv.stations.length} stations · ${new Date(lv.updatedAt).toLocaleDateString()}`,
+              text: `${lv.w}x${lv.h} · ${STR.menu.levelStations(lv.stations.length)} · ${new Date(lv.updatedAt).toLocaleDateString()}`,
             }),
             lv.description
               ? el('div', { class: 'sub dim', text: lv.description.slice(0, 80) })
