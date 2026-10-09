@@ -1,10 +1,16 @@
-/** Age names by index (0 steam, 1 diesel, 2 electric); ids match `src/data/ages.json`. */
+/**
+ * Age names by index (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper); ids match
+ * `src/data/ages.json`.
+ */
 const AGE_NAMES: Record<string, string> = {
   steam: 'Steam Age',
   diesel: 'Diesel Age',
   electric: 'Electric Age',
+  nuclear: 'Nuclear Age',
+  magnetic: 'Magnetic Age',
+  hyper: 'Hyper Age',
 };
-const AGE_ORDER = ['steam', 'diesel', 'electric'];
+export const AGE_ORDER = ['steam', 'diesel', 'electric', 'nuclear', 'magnetic', 'hyper'];
 function ageLabel(t: number) {
   return AGE_NAMES[AGE_ORDER[t]] ?? `age ${t}`;
 }
@@ -28,6 +34,7 @@ export const STR = {
     dayToggleHint: 'Toggle the day and night cycle',
     ageUp: (t: number) =>
       `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
+    signalGuide: 'Signals?',
   },
   ages: {
     title: 'Ages',
@@ -89,6 +96,29 @@ export const STR = {
     dead: 'Dead: no power plant on this network',
     signal: 'Red while the guarded tile is occupied',
   },
+  signals: {
+    /** compass words by rotation: 0 north, 1 east, 2 south, 3 west */
+    directions: ['north', 'east', 'south', 'west'] as readonly string[],
+    blockHint:
+      'Guards the track ahead until the next same-direction signal. Select to highlight the block.',
+    governs: (dir: string) => `Governs trains travelling ${dir}`,
+    governsTravel: (dir: string) => `Governs travel ${dir}`,
+    rotate: 'Rotate direction',
+    guideButton: 'Semaphore guide',
+    guideTitle: 'Semaphores and track blocks',
+    guidePlace:
+      'Place semaphores on the rails from Utility. Press R before placement, or use Rotate direction after selecting a post. The direction shown in the selection panel is the direction of travel it governs.',
+    guideDiagram:
+      '→ A  ═════ protected block ═════  → B  ═════ next block ═════  → C\n       one train at a time                  another train may follow',
+    guideAspects:
+      'Red / horizontal arm: stop before entering the protected block. Yellow: this block is clear, but the next is occupied. Green / raised arm: both are clear. A block ends at the next signal facing the same travel direction.',
+    guideFence:
+      'Fence a stretch by putting posts at its entry and exit. Leave at least your longest train plus one tile between posts. Select a signal to highlight its protected stretch. Posts work in Automatic mode as soon as you place them; unsignalled track still uses traffic reservations.',
+    guideJunction:
+      'Before a junction, put the entry signal on its approach and exit signals beyond each branch, leaving room for a complete train. Junction reservations still require a clear exit, so a green signal alone cannot force a train into a blocked crossing.',
+    guideSingleLine:
+      'On a two-way single line, put signals on both approaches to a passing loop, facing into the shared line. Keep the loop long enough for the entire train. Token working in Settings allows one train per shared plain section. Signals regulate entry; they cannot create a missing siding.',
+  },
   hints: {
     camera: 'WASD / arrows / middle-drag: pan   wheel: zoom   M: overview   `: debug',
   },
@@ -102,6 +132,7 @@ export const STR = {
     nextAge: 'Next age',
     giveResources: '+200 resources',
     spawnContract: 'Spawn contract',
+    offer: (name: string) => `Offer: ${name}`,
     depthOverlay: 'Depth-sort overlay',
     zoom: 'Zoom',
     camera: 'Camera',
@@ -162,10 +193,13 @@ export const STR = {
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelCap: 'Level cap for the current age',
+    levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
+    upgradingNow: 'Already being upgraded',
     cost: (v: string) => `Cost ${v}`,
     harvest: (n: number, cargo: string, f: number) =>
       `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
     refund: (v: string) => `Refund ${v}`,
+    free: 'free',
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
   },
@@ -188,9 +222,11 @@ export const STR = {
     cycleHint: '1-9 or Tab: switch item · Esc: close',
     typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
     bridges: 'Bridges',
+    bridgeDesc: (capacity: number, flavor: string) => `${capacity} t capacity. ${flavor}`,
     place: {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
+      bridgePlatform: 'On water. Lay track on the platform after building it.',
       station: 'On a buildable tile with track touching one side; that track becomes the platform.',
       depot:
         'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
@@ -272,6 +308,16 @@ export const STR = {
       `${capacity} t · half speed above ${slowAbove} t`,
     bridgeHint:
       'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
+  },
+  upgrade: {
+    /** `hours` is rounded up to a whole hour; with none left the time is not shown. */
+    button: (level: number, cost: string, hours: number) =>
+      `Upgrade to level ${level} · ${cost}${hours > 0 ? ` · ${Math.ceil(hours)} h` : ''}`,
+    /** Rounded up and never "0 h left": an upgrade still running has at least an hour to go. */
+    running: (level: number, hours: number) =>
+      `Upgrading to level ${level} · ${Math.max(1, Math.ceil(hours))} h left`,
+    closed: 'Closed while it is upgraded',
+    done: (name: string, level: number) => `${name} is now level ${level}`,
   },
   notice: {
     title: 'Notices',
@@ -364,6 +410,11 @@ export const STR = {
     hoverHint: 'Hover a train to trace its path',
     onContract: (n: string, dest: string) => `on contract: ${n} → ${dest}`,
     queuedContracts: (n: number) => `+${n} queued`,
+    refuelAll: 'Refuel all · 2×',
+    refuelAllHint: 'Fill every train at twice the resource cost',
+    refuelViewHint: 'Fill trains in view at twice the resource cost',
+    refuelled: 'Trains refuelled to full at twice the resource cost',
+    refuelShort: 'Not enough fuel and water to fill this group; no resources spent',
   },
   depot: {
     title: 'Depot',
@@ -594,6 +645,36 @@ export const STR = {
     stats: (recipes: number, crafts: number, failures: number) =>
       `${recipes} recipes · ${crafts} built · ${failures} failed`,
     resources: 'Stockpile',
+    filterLabel: 'Vehicle type',
+    filter: {
+      all: 'All railcraft',
+      steam: 'Steam',
+      diesel: 'Diesel',
+      electric: 'Electric',
+      bulk: 'Bulk wagons',
+      mineral: 'Mineral wagons',
+      liquid: 'Tank wagons',
+      people: 'Passenger coaches',
+    } as Record<string, string>,
+    search: 'Find model…',
+    searchLabel: 'Find model',
+    inspect: 'Inspect 3D',
+  },
+  vehicle: {
+    body: (size: string, tiles: number, plan: string) =>
+      `${size} · ${tiles} tile${tiles === 1 ? '' : 's'} · ${plan}`,
+    weight: (t: number) => `${t} t empty`,
+    loco: (type: string, speed: number, haul: number) =>
+      `${type} · ${speed.toFixed(2)} tiles/s · ${haul} t haul`,
+    bogie: (bogies: number, wheels: number) => `${bogies} × ${wheels} wheels`,
+    axles: '2 axles · 4 wheels',
+    fuel: (cap: number, perTile?: number) => `Fuel ${cap} · ${perTile} per tile`,
+    water: (cap: number, perTile?: number) => `Water ${cap} · ${perTile} per tile`,
+    wagon: (carries: string, units: number) => `${carries} · ${units} units`,
+    angle: 'Viewing angle',
+    pause: 'Pause rotation',
+    rotate: 'Rotate',
+    hint: 'Rotating isometric preview · drag to turn',
   },
   roster: {
     help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, which high-speed track requires. Trains are put together in the Depot.',
@@ -626,6 +707,7 @@ export const STR = {
     count: (n: number) => `${n} items`,
     empty: 'Nothing matches.',
     copies: (n: number) => `${n} copies`,
+    lv: (l: number) => `Lv ${l}`,
     levelUp: 'Level up',
     levelUpHint: 'Consumes one spare unassigned copy of this model',
     leveled: (name: string, level: number) => `${name} is now Lv ${level}`,
@@ -702,6 +784,7 @@ export const STR = {
     loadSlot: 'Load',
     deleteSlot: 'Delete',
     noSlots: 'No named saves yet. Type a name and press Save as.',
+    slotMeta: (day: number, version: number) => `day ${day} · v${version}`,
     slotSaved: (n: string) => `Saved as "${n}"`,
     saveAsTitle: 'Save game as',
     saveAsHint: 'Name for this save. An existing save with the same name is replaced.',
@@ -739,6 +822,44 @@ export const STR = {
     noSave: 'No save found',
     badSave: 'Save data unreadable',
   },
+  saves: {
+    autosave: 'Autosave',
+    detail: (day: number, age: string, money: string) => `Day ${day} · ${age} · ${money}`,
+    /** How long ago a save was written, from milliseconds; whole units, rounded down. */
+    ago: (ms: number) => {
+      if (!(ms >= 60_000)) return 'just now';
+      const min = Math.floor(ms / 60_000);
+      if (min < 60) return `${min} min ago`;
+      const h = Math.floor(min / 60);
+      if (h < 24) return `${h} h ago`;
+      const d = Math.floor(h / 24);
+      return `${d} day${d === 1 ? '' : 's'} ago`;
+    },
+    saved: (ago: string) => `saved ${ago}`,
+    autosaveStatus: (on: boolean, ago: string | null) =>
+      !on
+        ? 'Autosave off'
+        : ago
+          ? `Autosave on · last saved ${ago}`
+          : 'Autosave on · not saved yet',
+    confirmOverwrite: (n: string) => `A save named "${n}" already exists. Replace it?`,
+    olderFormat: (v: number) => `format v${v}, upgraded on load`,
+    newerFormat: (v: number) => `format v${v}, from a newer game`,
+    refused: {
+      json: 'That text is not save data.',
+      notSave: 'That is not a Terepasztal save.',
+      damaged: 'That save is damaged and was not loaded. Your game is unchanged.',
+    },
+    /** `refund` is the text of `saves.refund`; with nothing refunded its sentence is left out. */
+    pruned: (list: string, refund: string) =>
+      `This save held things the game no longer has. Removed: ${list}.${refund ? ` Refunded ${refund}.` : ''}`,
+    /** Money and tickets given back; `money` is already formatted, empty when none. */
+    refund: (money: string, tickets: number) => {
+      const t = `${tickets} ticket${tickets === 1 ? '' : 's'}`;
+      if (tickets <= 0) return money;
+      return money ? `${money} and ${t}` : t;
+    },
+  },
   menu: {
     tagline: 'Rails, contracts and the luck of the draw',
     continue: 'Continue',
@@ -748,6 +869,7 @@ export const STR = {
     modified: '(modified)',
     levels: 'Levels',
     noLevels: 'No saved levels yet. Create one below or import a level.',
+    levelStations: (n: number) => `${n} stations`,
     play: 'Play',
     edit: 'Edit',
     delete: 'Delete',
@@ -777,6 +899,12 @@ export const STR = {
       full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
     } as Record<string, string>,
   },
+  prompt: {
+    ok: 'OK',
+    keep: 'Keep',
+    yes: 'Yes',
+    no: 'No',
+  },
   editor: {
     terrainDesc: 'Paint this terrain. Anything built on the tile is cleared.',
     title: 'Level editor',
@@ -784,7 +912,7 @@ export const STR = {
     size: 'Size',
     description: 'Description shown in the level list',
     start: 'Player start',
-    startTier: 'Start age (0 steam, 1 diesel, 2 electric)',
+    startTier: 'Start age (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper)',
     brush: 'Terrain brush',
     brushHint:
       'Pick a terrain in the toolbar, drag to paint. Painting clears anything built on the tile.',
@@ -810,6 +938,20 @@ export const STR = {
     newGameOnly: 'new map',
     note: 'Changes apply immediately and are stored with the save. Map values apply to the next generated map.',
     reset: 'Reset to defaults',
+    scope:
+      'Changes apply to the game in play and are saved with it. Each change also becomes your starting point for new games; loading a saved game never changes it.',
+    presets: 'Presets',
+    presetName: 'Preset name',
+    savePreset: 'Save as preset',
+    loadPreset: 'Load',
+    deletePreset: 'Delete',
+    noPresets: 'No presets yet. Save the current rules under a name to keep them.',
+    confirmOverwritePreset: (n: string) => `A preset named "${n}" already exists. Replace it?`,
+    confirmDeletePreset: (n: string) => `Delete the preset "${n}"?`,
+    presetSaved: (n: string) => `Preset "${n}" saved`,
+    presetSaveFailed: (n: string) => `Could not save the preset "${n}" (storage full or blocked)`,
+    presetLoaded: (n: string) => `Preset "${n}" loaded`,
+    presetDeleted: (n: string) => `Preset "${n}" deleted`,
   },
   content: {
     title: 'Content editor',
@@ -828,6 +970,12 @@ export const STR = {
     } as Record<string, string>,
     customActive: 'Custom content active',
     shipped: 'Shipped content',
+    /** tooltip of a tab whose table this session loaded from a stored edit */
+    customTab: 'Runs on your stored edit of this table',
+    setAsideTitle: 'Stored edits not applied this session. Apply or Reset removes them.',
+    setAsideStale: (tab: string) => `${tab}: the shipped table changed after this edit was made`,
+    setAsideInvalid: (tab: string, problems: string) =>
+      problems ? `${tab}: the edit is invalid (${problems})` : `${tab}: the edit is invalid`,
     levels: 'Level table',
     entries: 'Entries',
     config: 'Configuration',
@@ -864,6 +1012,7 @@ export const STR = {
     mass: 'Mass',
     acceleration: 'Acceleration',
     pulling: (n: number) => `${n} pulling`,
+    locoLevel: (name: string, level: number) => `${name} Lv${level}`,
     standby: 'Standby',
     engage: 'Engage',
     perTile: 'Use per tile',
@@ -938,6 +1087,8 @@ export const STR = {
     producedDay: 'Received / last week',
     consumedDay: 'Spent / last week',
     netDay: 'Net / last week',
+    historyNote: 'Last 7 days; history starts when this game is loaded.',
+    netTitle: (net: string) => `${net} net in the last 7 days`,
     info: {
       water: 'From Water Pumps. Steam engines drink it; the refinery and power plant use it.',
       wheat: 'From farms. A Windmill turns each wheat into at least 5 food.',
@@ -1041,6 +1192,8 @@ export const STR = {
       `Housing: ${res} / ${cap}${building ? ` (+${building} under construction)` : ''}`,
     growth: (perWeek: number) => `Growth: +${perWeek} people / week`,
     noGrowth: 'Growth: none (no food)',
+    growthCapped: 'Growth stops at available housing capacity; food is required',
+    capacityHint: 'Build or upgrade Houses to increase capacity',
     nextHouse: (at: number, mul: number) =>
       `Next house at ${at} residents${mul > 1 ? ` (traffic ×${mul})` : ''}`,
     fullHousing: 'Housing full; build or upgrade Houses to provide room',
@@ -1061,6 +1214,7 @@ export const STR = {
     growthIn: (days: number) => `in ${days} day${days === 1 ? '' : 's'}`,
     growthNoFood: 'no food, nobody moves in',
     full: 'full',
+    makeRoom: 'Upgrade this House to make room for more residents',
     autoUpgrade: (days: number) => `Upgrade to provide more homes (construction: ${days} days)`,
     upgrade: (l: number, cost: string) => `Enlarge to level ${l} (${cost})`,
     maxed: 'Largest house',

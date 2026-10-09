@@ -1,6 +1,7 @@
 import { PixelBuf } from './pixels';
 import { PAL, shade, type RGB } from './palette';
 import { drawPrism, drawCylinder, proj } from './iso3d';
+import { frontShown } from './view';
 
 export const CIVIC_OX = 48,
   CIVIC_OY = 164;
@@ -63,13 +64,35 @@ export function residence(level: number) {
         b.line(p.x - 1, p.y + 1, p.x + 2, p.y + 1, PAL.stone[0]);
       }
   const door = proj(CIVIC_OX, CIVIC_OY, 0, 0.26, 4);
-  b.rect(door.x - 2, door.y - 9, 4, 9, PAL.iron[2]);
+  if (frontShown()) b.rect(door.x - 2, door.y - 9, 4, 9, PAL.iron[2]);
   b.outline(PAL.outline, 170);
   return b;
 }
 export function windmill(level = 1) {
   const b = new PixelBuf(96, 184),
     h = 30 + level * 6;
+  // the sails turn on the front; seen from behind, their hub is on the far face, drawn before the
+  // tower and its cap so that they hide it and only the blades show around them
+  const p = proj(CIVIC_OX, CIVIC_OY, 0, frontShown() ? 0.26 : -0.26, h - 4);
+  const sails = () => {
+    for (let i = 0; i < 4; i++) {
+      const a = Math.PI / 4 + (i * Math.PI) / 2;
+      const dx = Math.cos(a),
+        dy = Math.sin(a),
+        r = 25 + level;
+      b.line(p.x, p.y, p.x + dx * r, p.y + dy * r, PAL.timber[2]);
+      for (let q = 8; q < r; q++)
+        b.line(
+          p.x + dx * q,
+          p.y + dy * q,
+          p.x + dx * q - dy * 5,
+          p.y + dy * q + dx * 5,
+          level > 2 ? PAL.white : PAL.sand[0],
+        );
+    }
+    b.rect(p.x - 2, p.y - 2, 4, 4, PAL.brass);
+  };
+  if (!frontShown()) sails();
   drawCylinder(
     b,
     CIVIC_OX,
@@ -99,25 +122,9 @@ export function windmill(level = 1) {
     roof: PAL.roof,
     seed: 8,
   });
-  const p = proj(CIVIC_OX, CIVIC_OY, 0, 0.26, h - 4);
-  for (let i = 0; i < 4; i++) {
-    const a = Math.PI / 4 + (i * Math.PI) / 2;
-    const dx = Math.cos(a),
-      dy = Math.sin(a),
-      r = 25 + level;
-    b.line(p.x, p.y, p.x + dx * r, p.y + dy * r, PAL.timber[2]);
-    for (let q = 8; q < r; q++)
-      b.line(
-        p.x + dx * q,
-        p.y + dy * q,
-        p.x + dx * q - dy * 5,
-        p.y + dy * q + dx * 5,
-        level > 2 ? PAL.white : PAL.sand[0],
-      );
-  }
-  b.rect(p.x - 2, p.y - 2, 4, 4, PAL.brass);
+  if (frontShown()) sails();
   const d = proj(CIVIC_OX, CIVIC_OY, 0, 0.25, 0);
-  b.rect(d.x - 2, d.y - 10, 5, 10, PAL.trunkDark);
+  if (frontShown()) b.rect(d.x - 2, d.y - 10, 5, 10, PAL.trunkDark);
   // flour sacks beside the door: the mill's product, stacked higher as it is upgraded
   const sackC: RGB[] = [
     [214, 202, 174],
@@ -170,9 +177,12 @@ export function upgradedWorks(base: PixelBuf, level: number) {
     roof: PAL.roofSlate,
     seed: level * 11,
   });
-  const bay = P(0.29, 0.31);
-  b.rect(bay.x - 3, bay.y - Math.round(annexH * 0.7), 7, Math.round(annexH * 0.7), PAL.outline);
-  b.rect(bay.x - 2, bay.y - Math.round(annexH * 0.7) + 1, 5, 2, PAL.iron[0]);
+  // the loading bay opens on the annex's +y face, the front: seen from behind it is a back wall
+  if (frontShown()) {
+    const bay = P(0.29, 0.31);
+    b.rect(bay.x - 3, bay.y - Math.round(annexH * 0.7), 7, Math.round(annexH * 0.7), PAL.outline);
+    b.rect(bay.x - 2, bay.y - Math.round(annexH * 0.7) + 1, 5, 2, PAL.iron[0]);
+  }
   // covered conveyor from the annex towards the main building, on short iron legs
   const c0 = P(0.18, 0.16, annexH - 2);
   const c1 = P(-0.02, 0.06, annexH + 2);

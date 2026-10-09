@@ -65,7 +65,7 @@ export class DecorPanel {
     if (days !== null) out.push(`${H.growth}: ${H.growthIn(Math.max(1, Math.ceil(days)))}`);
     else if (h.residents >= cap) {
       out.push(`${H.growth}: ${H.full}`);
-      if (h.level < houses.maxLevel) out.push('Upgrade this House to make room for more residents');
+      if (h.level < houses.maxLevel) out.push(H.makeRoom);
     } else out.push(`${H.growth}: ${H.growthNoFood}`);
     return out;
   }
@@ -92,10 +92,7 @@ export class DecorPanel {
     }
     if (def.power) out.push(power.isPowered(d.x, d.y) ? STR.decorInfo.live : STR.decorInfo.dead);
     if (d.id === 'signal')
-      out.push(
-        'Guards the track ahead until the next same-direction signal. Select to highlight the block.',
-        `Governs trains travelling ${['north', 'east', 'south', 'west'][d.rot]}`,
-      );
+      out.push(STR.signals.blockHint, STR.signals.governs(STR.signals.directions[d.rot]));
     if (def.crew) out.push(`${STR.building.crew}: ${def.crew}`);
     const h = def.residents && houses ? houses.at(d.x, d.y) : undefined;
     if (h && houses) out.push(...DecorPanel.houseLines(h, houses));
@@ -118,7 +115,7 @@ export class DecorPanel {
     if (d.id === 'signal')
       b.append(
         btn(
-          'Rotate direction',
+          STR.signals.rotate,
           () => {
             d.rot = (d.rot + 1) % 4;
             this.builder.onDecorChanged?.(d, false);
@@ -127,7 +124,7 @@ export class DecorPanel {
           },
           'small',
         ),
-        btn('Semaphore guide', () => this.onSignalGuide?.(), 'small'),
+        btn(STR.signals.guideButton, () => this.onSignalGuide?.(), 'small'),
       );
     const houses = this.houses;
     const h = def.residents && houses ? houses.at(d.x, d.y) : undefined;

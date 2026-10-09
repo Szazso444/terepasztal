@@ -20,6 +20,18 @@ import { sfx } from '../engine/audio';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
 
+/** Recipe list filters, in menu order: everything, a locomotive type or what a wagon carries. */
+const RECIPE_FILTERS = [
+  'all',
+  'steam',
+  'diesel',
+  'electric',
+  'bulk',
+  'mineral',
+  'liquid',
+  'people',
+] as const;
+
 /**
  * Two-step workshop: pay money to draw recipe cards and keep one, then spend stockpile
  * resources to build instances of known recipes.
@@ -287,18 +299,9 @@ export class CraftingScreen implements Screen {
     const c = this.recipeCol;
     c.innerHTML = '';
     const filters = el('div', { class: 'row craft-filters' });
-    const select = el('select', { 'aria-label': 'Vehicle type' }) as HTMLSelectElement;
-    for (const [v, name] of [
-      ['all', 'All railcraft'],
-      ['steam', 'Steam'],
-      ['diesel', 'Diesel'],
-      ['electric', 'Electric'],
-      ['bulk', 'Bulk wagons'],
-      ['mineral', 'Mineral wagons'],
-      ['liquid', 'Tank wagons'],
-      ['people', 'Passenger coaches'],
-    ])
-      select.append(el('option', { value: v, text: name }));
+    const select = el('select', { 'aria-label': STR.craft.filterLabel }) as HTMLSelectElement;
+    for (const v of RECIPE_FILTERS)
+      select.append(el('option', { value: v, text: STR.craft.filter[v] }));
     select.value = this.filter;
     select.onchange = () => {
       this.filter = select.value;
@@ -306,9 +309,9 @@ export class CraftingScreen implements Screen {
     };
     const search = el('input', {
       type: 'search',
-      placeholder: 'Find model…',
+      placeholder: STR.craft.search,
       value: this.search,
-      'aria-label': 'Find model',
+      'aria-label': STR.craft.searchLabel,
     }) as HTMLInputElement;
     search.oninput = () => {
       this.search = search.value;
@@ -368,7 +371,7 @@ export class CraftingScreen implements Screen {
         short ? el('div', { class: 'sub short', text: STR.craft.missing(fmtCost(missing)) }) : null,
       ),
       btn(
-        'Inspect 3D',
+        STR.craft.inspect,
         () => {
           this.previewClose?.();
           this.previewClose = showVehiclePreview(this.atlas, id);

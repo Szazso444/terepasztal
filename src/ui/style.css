@@ -1407,6 +1407,21 @@ body.editor #train-side {
 .tuning-label {
   font-size: 12px;
 }
+.tuning-wide {
+  grid-column: 1 / -1;
+}
+.tuning-status {
+  min-height: 15px;
+  margin: 4px 0 2px;
+}
+.tuning-presets {
+  max-height: 132px;
+  overflow-y: auto;
+}
+.tuning-presets .kv {
+  align-items: center;
+  gap: 8px;
+}
 .tag {
   font-size: 9px;
   text-transform: uppercase;
@@ -1416,6 +1431,22 @@ body.editor #train-side {
 }
 
 /* ---- content editor ---- */
+.btn.content-tab.custom::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--cyan);
+  vertical-align: 1px;
+}
+.content-aside {
+  font-size: 11px;
+}
+.content-aside:empty {
+  display: none;
+}
 .content-list {
   display: flex;
   flex-direction: column;

@@ -8,6 +8,8 @@ import type { TownJSON } from './towns';
 import type { HousesJSON } from './houses';
 import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
+import type { PeopleJSON } from './people';
+import type { BuildingJSON } from './buildings';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -31,9 +33,12 @@ export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
 export const SETTINGS_KEY = 'terepasztal.settings';
 
-export interface SaveGame {
-  version: number;
-  savedAt: number;
+/**
+ * Everything a save holds besides its version and time stamp: what `buildSave` writes. Every
+ * field is required, so a save cannot be written with one left out, and `KNOWN_SAVE_KEYS` is
+ * built from the same names. A file read back may lack the fields added after v1 (`SaveGame`).
+ */
+export interface SaveParts {
   seed: number;
   clock: { time: number; speedIndex: number };
   /** v9: `tier` is the age index; `earned` the lifetime income (reputation dropped) */
@@ -56,35 +61,62 @@ export interface SaveGame {
   camera: { x: number; y: number; zoomIndex: number };
   lastDay: number;
   /** v2: signals and water towers [x, y, id, rot] */
-  decor?: [number, number, string, number][];
+  decor: [number, number, string, number][];
   /** v9: electrified track [x, y, kind] */
-  wires?: [number, number, string][];
+  wires: [number, number, string][];
   /** v2: weather generator state */
-  weather?: unknown;
+  weather: unknown;
   /** v3: how the map was built */
-  world?: WorldSpec;
+  world: WorldSpec;
   /** v3: the rules the game was played with */
-  rules?: Partial<Rules>;
+  rules: Partial<Rules>;
   /** v4: global resources */
-  stockpile?: unknown;
-  /** v4: processing buildings [x, y, id, acc] */
-  buildings?: [number, number, string, number, number?][];
+  stockpile: unknown;
+  /** v4: processing buildings, as `buildingToJSON` writes them */
+  buildings: BuildingJSON[];
   /** v5: owned chunks */
-  regions?: boolean[];
+  regions: boolean[];
   /** v6: season of day 1 (0 spring .. 3 winter) */
-  seasonOffset?: number;
+  seasonOffset: number;
   /** v7: towns (names, colours) keyed by their town station */
-  towns?: TownJSON[];
-  /** v8: player settings travel with an exported save */
-  settings?: Settings;
+  towns: TownJSON[];
   /** v8: standing trade deals */
-  trade?: unknown;
+  trade: unknown;
   /** v10: known crafting recipes, craft statistics and an unfinished recipe draw */
-  crafting?: unknown;
+  crafting: unknown;
   /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
-  houses?: HousesJSON;
+  houses: HousesJSON;
   /** v9: production-chain mode the game was started with */
-  supply?: SupplyMode;
+  supply: SupplyMode;
+  /**
+   * The walkers' random stream (no format version of its own): a file without it seeds them from
+   * the map. The persons themselves are not saved and start over on load.
+   */
+  people: PeopleJSON;
+}
+/** The fields every format version since v1 has; the others arrived later and may be missing. */
+type SaveCore =
+  | 'seed'
+  | 'clock'
+  | 'economy'
+  | 'track'
+  | 'stations'
+  | 'trains'
+  | 'contracts'
+  | 'inventory'
+  | 'gacha'
+  | 'camera'
+  | 'lastDay';
+
+/** A save as read from a file of any version: `SaveParts`, the later fields optional. */
+export interface SaveGame extends Pick<SaveParts, SaveCore>, Partial<Omit<SaveParts, SaveCore>> {
+  version: number;
+  savedAt: number;
+  /**
+   * v8 to v13: player settings travelled with a save. Retired, as they travel with the settings
+   * alone: never read, never written, and an old file's copy goes on its next save.
+   */
+  settings?: Settings;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -319,47 +351,142 @@ export const MIGRATIONS: Migration[] = [
     },
   },
 ];
-/** Fields the current build reads; everything else is carried through untouched. */
-export const KNOWN_SAVE_KEYS = new Set<string>([
-  'version',
-  'savedAt',
-  'seed',
-  'clock',
-  'economy',
-  'track',
-  'stations',
-  'trains',
-  'contracts',
-  'inventory',
-  'gacha',
-  'camera',
-  'lastDay',
-  'decor',
-  'weather',
-  'world',
-  'rules',
-  'stockpile',
-  'buildings',
-  'regions',
-  'seasonOffset',
-  'towns',
-  'settings',
-  'wires',
-  'trade',
-  'crafting',
-  'houses',
-  'supply',
-  'loadedFrom',
-  'migrationNotes',
+/** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */
+const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
+  seed: true,
+  clock: true,
+  economy: true,
+  track: true,
+  stations: true,
+  trains: true,
+  contracts: true,
+  inventory: true,
+  gacha: true,
+  camera: true,
+  lastDay: true,
+  decor: true,
+  wires: true,
+  weather: true,
+  world: true,
+  rules: true,
+  stockpile: true,
+  buildings: true,
+  regions: true,
+  seasonOffset: true,
+  towns: true,
+  trade: true,
+  crafting: true,
+  houses: true,
+  supply: true,
+  people: true,
+};
+/** The names a type declares, without the `string` and `number` of an index signature. */
+type DeclaredKey<T> = keyof {
+  [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K];
+};
+/** The rest of what `SaveGame` declares: the stamps, the retired settings and the load notes. */
+const SAVE_OWN_KEYS: Record<Exclude<DeclaredKey<SaveGame>, keyof SaveParts>, true> = {
+  version: true,
+  savedAt: true,
+  settings: true,
+  loadedFrom: true,
+  migrationNotes: true,
+};
+/**
+ * Fields the current build knows; everything else is carried through untouched. The retired
+ * `settings` is known too, so an old file's copy is dropped on the next save instead of carried.
+ */
+export const KNOWN_SAVE_KEYS: ReadonlySet<string> = new Set([
+  ...Object.keys(SAVE_PART_KEYS),
+  ...Object.keys(SAVE_OWN_KEYS),
 ]);
 
-/** Parse and migrate a save text. Never refuses on version: older saves are upgraded step by step, newer ones are loaded as they are with a warning. */
-export function parseSave(raw: string): SaveGame | null {
-  const j = JSON.parse(raw) as SaveGame;
-  if (!j || typeof j !== 'object' || typeof j.seed !== 'number') return null;
-  if (typeof j.version !== 'number') j.version = SAVE_MIN_VERSION;
-  return migrate(j);
+/**
+ * A save of the current format: the fields of the loaded file this build does not know
+ * (`extra`), then the parts, then the version and time stamp. A known name in `extra` is left
+ * out, so neither the retired settings nor the load notes are written back.
+ */
+export function buildSave(
+  parts: SaveParts,
+  extra: Record<string, unknown> = {},
+  now = Date.now(),
+): SaveGame {
+  const unknown = Object.fromEntries(
+    Object.entries(extra).filter(([k]) => !KNOWN_SAVE_KEYS.has(k)),
+  );
+  return { ...unknown, ...parts, version: SAVE_VERSION, savedAt: now };
 }
+
+/**
+ * Why a text was not taken as a save: it is not JSON, it is JSON but no save (no numeric seed),
+ * or it is a save without something every version since v1 holds.
+ */
+export type SaveRefusal = 'json' | 'notSave' | 'damaged';
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+/** The numbers inside the blocks every version since v1 has, checked before migrating. */
+const CORE_NUMBERS: Record<string, readonly string[]> = {
+  clock: ['time', 'speedIndex'],
+  economy: ['money', 'tickets', 'tier'],
+  camera: ['x', 'y', 'zoomIndex'],
+};
+/** The lists every version since v1 has. */
+const CORE_LISTS = ['track', 'stations', 'trains'];
+/** Does a parsed file hold what every version since v1 holds, with the types it was written as? */
+function holdsCore(j: Record<string, unknown>) {
+  for (const [block, fields] of Object.entries(CORE_NUMBERS)) {
+    const b = j[block];
+    if (!isRecord(b) || fields.some((f) => typeof b[f] !== 'number')) return false;
+  }
+  return CORE_LISTS.every((k) => Array.isArray(j[k])) && typeof j.lastDay === 'number';
+}
+/** The save object in a text: a diagnostics bundle gives the save it carries. */
+function openSave(
+  raw: string,
+): { file: Record<string, unknown> & { seed: number } } | { error: 'json' | 'notSave' } {
+  let j: unknown;
+  try {
+    j = JSON.parse(raw);
+  } catch {
+    return { error: 'json' };
+  }
+  if (isRecord(j) && j.diagnostics === 1 && isRecord(j.save)) j = j.save;
+  if (!isRecord(j) || typeof j.seed !== 'number') return { error: 'notSave' };
+  return { file: j as Record<string, unknown> & { seed: number } };
+}
+/** A file that holds every v1 field, migrated to the current version; null when it does not. */
+function settle(file: Record<string, unknown>): SaveGame | null {
+  if (!holdsCore(file)) return null;
+  const j = file as SaveGame;
+  // no version, or none the chain can count up from, is the oldest
+  if (!Number.isInteger(j.version) || j.version < SAVE_MIN_VERSION) j.version = SAVE_MIN_VERSION;
+  try {
+    return migrate(j);
+  } catch {
+    // a step met something deeper in the file that no version wrote
+    return null;
+  }
+}
+
+/**
+ * Read a save text: an exported save, a stored one or a diagnostics bundle. Never refuses on
+ * version: older saves are upgraded step by step, newer ones are loaded as they are with a
+ * warning. Text that is not a whole save is refused, with the reason.
+ */
+export function readSaveText(raw: string): { save: SaveGame } | { error: SaveRefusal } {
+  const opened = openSave(raw);
+  if ('error' in opened) return opened;
+  const save = settle(opened.file);
+  return save ? { save } : { error: 'damaged' };
+}
+/** Parse and migrate a save text; null for anything `readSaveText` refuses. */
+export function parseSave(raw: string): SaveGame | null {
+  const read = readSaveText(raw);
+  return 'save' in read ? read.save : null;
+}
+/** The stored game Continue loads; null when there is none or it is refused (it stays stored). */
 export function readSave(): SaveGame | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -368,6 +495,19 @@ export function readSave(): SaveGame | null {
   } catch {
     return null;
   }
+}
+/**
+ * Store a save text the player brought (an export or a diagnostics bundle) as the game Continue
+ * loads. A refused text stores nothing. The player's settings are never touched: the copy that
+ * files from v8 to v13 carry is not applied.
+ */
+export function importSave(
+  raw: string,
+): { ok: true; save: SaveGame } | { ok: false; error: SaveRefusal } {
+  const read = readSaveText(raw);
+  if ('error' in read) return { ok: false, error: read.error };
+  writeSave(read.save);
+  return { ok: true, save: read.save };
 }
 /** Run the migration chain from the save's version to the current one; records where it came from. */
 export function migrate(j: SaveGame): SaveGame {
@@ -426,20 +566,70 @@ export function writeSettings(s: Settings) {
 
 // ------------------------------------------------------------------ named slots
 export const SLOTS_KEY = 'terepasztal.slots';
+/** What a list of saves shows of one; a field the file lacks reads 0. */
 export interface SlotMeta {
+  /** the slot's name; '' for the save Continue loads */
   name: string;
   savedAt: number;
+  /** the format version the file was written in */
   version: number;
   seed: number;
   day: number;
+  /** the age reached (`economy.tier`) */
+  age: number;
+  money: number;
 }
 function readSlots(): Record<string, string> {
   try {
     const raw = localStorage.getItem(SLOTS_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    const slots: unknown = raw ? JSON.parse(raw) : {};
+    return isRecord(slots) ? (slots as Record<string, string>) : {};
   } catch {
     return {};
   }
+}
+/** The name a slot is stored under: trimmed, at most 32 characters. */
+function slotName(name: string) {
+  return name.trim().slice(0, 32).trimEnd();
+}
+const numberOr0 = (v: unknown) => (typeof v === 'number' ? v : 0);
+/**
+ * What a stored text shows in a list, or null when it holds no save. A whole save is described
+ * after migrating, so an old file's tier reads as the age it became; a damaged one as it stands,
+ * unless `whole` asks for whole saves only.
+ */
+function describeSave(name: string, raw: unknown, whole: boolean): SlotMeta | null {
+  if (typeof raw !== 'string') return null;
+  const opened = openSave(raw);
+  if ('error' in opened) return null;
+  const { file } = opened;
+  const version = numberOr0(file.version);
+  const savedAt = numberOr0(file.savedAt);
+  const save = settle(file);
+  if (!save && whole) return null;
+  const s: Record<string, unknown> = save ?? file;
+  const economy = isRecord(s.economy) ? s.economy : {};
+  return {
+    name,
+    savedAt,
+    version,
+    seed: file.seed,
+    day: numberOr0(s.lastDay),
+    age: numberOr0(economy.tier),
+    money: numberOr0(economy.money),
+  };
+}
+/** The save Continue loads, described like a slot (name ''); null when Continue has none to load. */
+export function continueMeta(): SlotMeta | null {
+  try {
+    return describeSave('', localStorage.getItem(SAVE_KEY), true);
+  } catch {
+    return null;
+  }
+}
+/** Is there a named save that `writeSlot(name, ...)` would replace? */
+export function hasSlot(name: string): boolean {
+  return Object.prototype.hasOwnProperty.call(readSlots(), slotName(name));
 }
 function writeSlots(slots: Record<string, string>) {
   try {
@@ -449,38 +639,27 @@ function writeSlots(slots: Record<string, string>) {
     return false;
   }
 }
-/** Named saves, newest first. */
+/**
+ * Named saves, newest first. A damaged one is listed too, so it can be deleted (loading it is
+ * refused); text that holds no save at all is skipped.
+ */
 export function listSlots(): SlotMeta[] {
   const out: SlotMeta[] = [];
   for (const [name, raw] of Object.entries(readSlots())) {
-    try {
-      const j = JSON.parse(raw) as SaveGame;
-      out.push({
-        name,
-        savedAt: j.savedAt ?? 0,
-        version: j.version ?? 0,
-        seed: j.seed,
-        day: j.lastDay ?? 0,
-      });
-    } catch {
-      /* skip a broken slot */
-    }
+    const meta = describeSave(name, raw, false);
+    if (meta) out.push(meta);
   }
   return out.sort((a, b) => b.savedAt - a.savedAt);
 }
 export function writeSlot(name: string, s: SaveGame) {
   const slots = readSlots();
-  slots[name.trim().slice(0, 32)] = JSON.stringify(s);
+  slots[slotName(name)] = JSON.stringify(s);
   return writeSlots(slots);
 }
+/** A named save, migrated; null when there is none by that name or it is refused. */
 export function readSlot(name: string): SaveGame | null {
-  const raw = readSlots()[name];
-  if (!raw) return null;
-  try {
-    return parseSave(raw);
-  } catch {
-    return null;
-  }
+  const raw: unknown = readSlots()[name];
+  return typeof raw === 'string' ? parseSave(raw) : null;
 }
 export function deleteSlot(name: string) {
   const slots = readSlots();
