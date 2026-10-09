@@ -15,6 +15,7 @@ import {
   type SaveGame,
   type Settings,
 } from './save';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
 /** The oldest shape the chain still accepts, with nothing optional filled in. */
 function oldestSave(): SaveGame {
@@ -53,6 +54,109 @@ describe('the migration registry', () => {
 
   it('lists every field of a current save as known', () => {
     for (const key of Object.keys(oldestSave())) expect(KNOWN_SAVE_KEYS.has(key)).toBe(true);
+  });
+
+  it('knows exactly the fields SaveGame declares', () => {
+    // A field read on load but missing from KNOWN_SAVE_KEYS is also copied into the extras and
+    // written back twice; a known key nobody declares hides an unknown field from the extras.
+    expect([...KNOWN_SAVE_KEYS].sort()).toEqual(Object.keys(DECLARED).sort());
+  });
+});
+
+/** SaveGame's declared fields, without the index signature that carries unknown ones. */
+type Declared<T> = {
+  [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K];
+};
+/**
+ * Every field SaveGame declares, once. Declaring a field without listing it here, or listing one
+ * SaveGame does not declare, fails the typecheck; the test above holds KNOWN_SAVE_KEYS to it.
+ */
+const DECLARED: Record<keyof Declared<SaveGame>, true> = {
+  version: true,
+  savedAt: true,
+  seed: true,
+  clock: true,
+  economy: true,
+  track: true,
+  stations: true,
+  trains: true,
+  contracts: true,
+  inventory: true,
+  gacha: true,
+  camera: true,
+  lastDay: true,
+  decor: true,
+  wires: true,
+  weather: true,
+  world: true,
+  rules: true,
+  stockpile: true,
+  buildings: true,
+  regions: true,
+  seasonOffset: true,
+  towns: true,
+  settings: true,
+  trade: true,
+  crafting: true,
+  houses: true,
+  supply: true,
+  people: true,
+  loadedFrom: true,
+  migrationNotes: true,
+};
+
+describe("the walkers' stream", () => {
+  it('comes through the migration from every version, and is never made up', () => {
+    // absent means "seed it from the map": no step may fill in a stream of its own
+    forAll(
+      (rng) => ({
+        version: rng.int(SAVE_MIN_VERSION, SAVE_VERSION),
+        rng: rng.chance(0.75) ? rng.int(0, 0xffffffff) : null,
+      }),
+      ({ version, rng }) => {
+        const save: SaveGame = { ...oldestSave(), version };
+        if (rng !== null) save.people = { rng };
+        const j = parseSave(JSON.stringify(save));
+        expect(j?.version).toBe(SAVE_VERSION);
+        if (rng === null) expect(j && 'people' in j).toBe(false);
+        else expect(j?.people).toEqual({ rng });
+      },
+    );
+  });
+});
+
+describe("the contract board's stream", () => {
+  it('comes through the migration from every version, and is never made up', () => {
+    // absent means "the board's reseeded stream": no step may drop the saved one or make one up
+    forAll(
+      (rng) => ({
+        version: rng.int(SAVE_MIN_VERSION, SAVE_VERSION),
+        rng: rng.chance(0.75) ? rng.int(0, 0xffffffff) : null,
+        // the steps that rewrite the board's contracts have something to rewrite
+        contracts: Array.from({ length: rng.int(0, 4) }, (_, i) => ({
+          id: i + 1,
+          cargo: rng.pick(['passengers', 'wood', 'grain']),
+          status: rng.pick(['offer', 'active', 'done', 'expired']),
+        })),
+      }),
+      ({ version, rng, contracts }) => {
+        const board: Record<string, unknown> = { contracts, nextRefresh: 0 };
+        if (rng !== null) board.rng = rng;
+        const j = parseSave(JSON.stringify({ ...oldestSave(), version, contracts: board }));
+        expect(j?.version).toBe(SAVE_VERSION);
+        const after = j?.contracts as Record<string, unknown> | undefined;
+        expect((after?.contracts as unknown[] | undefined)?.length).toBe(contracts.length);
+        if (rng === null) expect(after && 'rng' in after).toBe(false);
+        else expect(after?.rng).toBe(rng);
+      },
+      {
+        // fewer contracts, then a newer version: fewer steps to cross
+        shrink: function* (c) {
+          for (const contracts of shrinkArray(c.contracts)) yield { ...c, contracts };
+          for (const version of shrinkInt(c.version, SAVE_VERSION)) yield { ...c, version };
+        },
+      },
+    );
   });
 });
 

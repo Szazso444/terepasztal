@@ -302,9 +302,11 @@ export class ContractBoard {
       nextRefresh: this.nextRefresh,
       stats: this.stats,
       completedToday: this.completedToday,
+      /** offer generator state; a save without it stays on the stream seeded from the map */
+      rng: this.rng.state,
     };
   }
-  load(j: ReturnType<ContractBoard['toJSON']>) {
+  load(j: Omit<ReturnType<ContractBoard['toJSON']>, 'rng'> & { rng?: unknown }) {
     this.contracts = j.contracts.map((c) => ({
       ...c,
       rarity: CONTRACT_RARITIES.includes(c.rarity) ? c.rarity : 'common',
@@ -314,5 +316,6 @@ export class ContractBoard {
     this.nextRefresh = j.nextRefresh;
     this.stats = j.stats;
     this.completedToday = j.completedToday;
+    if (typeof j.rng === 'number') this.rng.state = j.rng;
   }
 }
