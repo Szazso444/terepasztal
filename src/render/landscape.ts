@@ -29,6 +29,41 @@ const WORKERS = Math.max(
   1,
   Math.min(6, (typeof navigator === 'undefined' ? 2 : navigator.hardwareConcurrency || 2) - 1),
 );
+/** Fresh worker pools started after a failure before the landscape turns off for the session. */
+const RESTARTS = 1;
+/** How the landscape starts its paint workers. The game uses the browser's; tests pass stubs. */
+export type PainterPool = {
+  /** Workers in one pool. */
+  size: number;
+  spawn(): Worker;
+  /** Address of the packed surface sheet each worker loads before it paints. */
+  sheet(): string;
+};
+const BROWSER_PAINTERS: PainterPool = {
+  size: WORKERS,
+  spawn: () => new Worker(new URL('./landscape.worker.ts', import.meta.url), { type: 'module' }),
+  sheet: () =>
+    new URL(`${import.meta.env.BASE_URL}assets/terrain-surfaces.png`, location.href).href,
+};
+/**
+ * Loading until the first pool has its surface sheet, then active: painted chunks show and the
+ * per-tile fallback ground covers only the unpainted ones. Failed is final for the session and
+ * carries the last error; the fallback ground then covers everything.
+ */
+export type LandscapeStatus =
+  { readonly state: 'loading' | 'active' } | { readonly state: 'failed'; readonly reason: string };
+/** The fields of a worker's error event, where the browser gives them. */
+type WorkerError = Partial<Pick<ErrorEvent, 'message' | 'filename' | 'lineno' | 'colno' | 'error'>>;
+/**
+ * A worker error event as one line: message, then file, line and column. A module worker whose
+ * script cannot load fires a bare event with none of them.
+ */
+export function workerErrorText(event: WorkerError): string {
+  const what = event.message || 'a paint worker failed without a message (did its script load?)';
+  return event.filename
+    ? `${what} (${event.filename}:${event.lineno ?? 0}:${event.colno ?? 0})`
+    : what;
+}
 type Job = { id: string; scale: number; version: number };
 type Slot = { worker: Worker; loaded: boolean; job: Job | null };
 type Chunk = {
@@ -67,8 +102,10 @@ export class Landscape {
   private invalid = false;
   private heightsDirty = false;
   private statusChanged = false;
-  failed = false;
-  active = false;
+  private current: LandscapeStatus = { state: 'loading' };
+  private watchers = new Set<(status: LandscapeStatus) => void>();
+  /** Worker pools started so far. */
+  private starts = 0;
   paintCount = 0;
   paintMilliseconds = 0;
   sharpPaintCount = 0;
@@ -80,32 +117,12 @@ export class Landscape {
     private readonly flat: ReadonlySet<number>,
     /** Rail profile of each straight track tile; its bed follows the line (terrainRelief.ts). */
     private readonly rails: ReadonlyMap<number, RailBed> = new Map(),
+    private readonly painters: PainterPool = BROWSER_PAINTERS,
   ) {
     this.relief = buildRelief(map, flat, undefined, rails);
-    try {
-      for (let i = 0; i < WORKERS; i++) {
-        const slot: Slot = {
-          worker: new Worker(new URL('./landscape.worker.ts', import.meta.url), {
-            type: 'module',
-          }),
-          loaded: false,
-          job: null,
-        };
-        slot.worker.onerror = () => this.fail();
-        slot.worker.onmessage = ({ data }) => this.receive(slot, data);
-        this.slots.push(slot);
-      }
-      for (const { worker } of this.slots)
-        worker.postMessage({
-          url: new URL(`${import.meta.env.BASE_URL}assets/terrain-surfaces.png`, location.href)
-            .href,
-        });
-      this.sync();
-    } catch {
-      this.fail();
-    }
     this.root.on('destroyed', () => {
-      for (const { worker } of this.slots) worker.terminate();
+      this.stop();
+      this.watchers.clear();
       for (const c of this.chunks.values()) {
         if (c.base !== Texture.EMPTY) c.base.destroy(true);
         c.sharp?.destroy(true);
@@ -114,12 +131,82 @@ export class Landscape {
       this.pending.clear();
       this.sharpPending.clear();
     });
+    this.start();
+  }
+  get status(): LandscapeStatus {
+    return this.current;
+  }
+  /** Painted chunks show; the fallback ground covers only the unpainted ones. */
+  get active() {
+    return this.current.state === 'active';
+  }
+  /** Off for the rest of the session: the fallback ground covers everything. */
+  get failed() {
+    return this.current.state === 'failed';
+  }
+  /** Calls `listener` with the current status at once and again on every change; returns the stop. */
+  watchStatus(listener: (status: LandscapeStatus) => void) {
+    this.watchers.add(listener);
+    listener(this.current);
+    return () => void this.watchers.delete(listener);
+  }
+  private setStatus(status: LandscapeStatus) {
+    this.current = status;
+    for (const listener of [...this.watchers]) listener(status);
+  }
+  /**
+   * Starts a pool of paint workers. Each loads the surface sheet, then takes the map; chunks still
+   * pending, and the ones the last pool was painting, go to it once it has loaded.
+   */
+  private start() {
+    this.starts++;
+    this.loaded = false;
+    this.slots = [];
+    try {
+      for (let i = 0; i < this.painters.size; i++) {
+        const slot: Slot = { worker: this.painters.spawn(), loaded: false, job: null };
+        slot.worker.onerror = (event: WorkerError) =>
+          this.crash(slot, workerErrorText(event), event.error);
+        slot.worker.onmessage = ({ data }) => this.receive(slot, data);
+        this.slots.push(slot);
+      }
+      const url = this.painters.sheet();
+      for (const { worker } of this.slots) worker.postMessage({ url });
+      this.sync();
+    } catch (error) {
+      this.crash(null, `the paint workers did not start: ${String(error)}`, error);
+    }
+  }
+  private stop() {
+    for (const { worker } of this.slots) worker.terminate();
+    this.slots = [];
+    this.loaded = false;
+  }
+  /**
+   * A worker of the current pool failed (`slot` null: the pool did not start). The whole pool is
+   * replaced up to RESTARTS times; the next failure turns the landscape off. A pool's later errors,
+   * such as every worker failing to load the same sheet, are one failure.
+   */
+  private crash(slot: Slot | null, reason: string, detail?: unknown) {
+    if (this.root.destroyed || this.failed || (slot && !this.slots.includes(slot))) return;
+    console.error(`Landscape: ${reason}`, ...(detail === undefined ? [] : [detail]));
+    this.stop();
+    if (this.starts <= RESTARTS) {
+      console.warn('Landscape: restarting the paint workers');
+      // Close-view copies handed to the old pool are asked for again on the next focus.
+      this.focusKey = '';
+      this.start();
+      return;
+    }
+    console.error('Landscape: the paint workers failed again; the per-tile ground stands in');
+    this.fail(reason);
   }
   /** A worker's reply: its surface sheet is loaded, or a chunk paint is done. */
   private receive(
     slot: Slot,
     data: {
       error?: string;
+      stack?: string;
       loaded?: boolean;
       id: string;
       version: number;
@@ -134,10 +221,10 @@ export class Landscape {
       ms: number;
     },
   ) {
-    if (this.root.destroyed) return;
+    // A replaced pool's last messages are dropped.
+    if (this.root.destroyed || !this.slots.includes(slot)) return;
     if (data.error) {
-      console.warn(data.error);
-      this.fail();
+      this.crash(slot, `a paint worker reported: ${data.error}`, data.stack);
       return;
     }
     if (data.loaded) {
@@ -213,13 +300,10 @@ export class Landscape {
     this.pending.delete(data.id);
     this.pump();
   }
-  private fail() {
-    this.failed = true;
-    this.active = false;
+  private fail(reason: string) {
+    this.setStatus({ state: 'failed', reason });
     this.root.visible = false;
     this.statusChanged = true;
-    for (const { worker } of this.slots) worker.terminate();
-    for (const slot of this.slots) slot.job = null;
     this.pending.clear();
     this.sharpPending.clear();
   }
@@ -413,7 +497,7 @@ export class Landscape {
     }
     // Painted chunks show as they arrive; the fallback ground covers only the unpainted ones.
     if (!this.active && this.loaded) {
-      this.active = true;
+      this.setStatus({ state: 'active' });
       changed = true;
     }
     return changed;

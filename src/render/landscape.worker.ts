@@ -243,7 +243,11 @@ self.onmessage = async (event: MessageEvent) => {
       { transfer: [output.buffer, grass.buffer] },
     );
   } catch (error) {
-    self.postMessage({ error: String(error) });
+    // The stack goes separately: Firefox's does not repeat the message.
+    self.postMessage({
+      error: String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
   }
 };
 /** 2×2 box reduction of the packed surface sheet. */
