@@ -1886,6 +1886,19 @@ const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
   blockedTime: 0,
   yieldCount: 0,
 };
+/**
+ * Values a file may already hold in a field the step from v13 fills, none of them the step's
+ * default: unknown fields are carried through, and a step only fills what is absent.
+ */
+const RESUME_HELD: Readonly<Record<string, readonly unknown[]>> = {
+  state: ['moving', 'loading', 'waiting', 'idle'],
+  stateTime: [0, 3.5],
+  speed: [0.7, 1.4],
+  station: [1, 7],
+  holding: [true],
+  blockedTime: [2.5],
+  yieldCount: [1, 3],
+};
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
 /** A tier a file could hold: whole ones past the Electric Age too, and values no build wrote. */
@@ -1899,6 +1912,8 @@ interface OldTrain {
   mode?: unknown;
   dynamic?: boolean;
   battery?: number;
+  /** some of the fields the step from v13 fills, already held (RESUME_HELD) */
+  held?: Record<string, unknown>;
 }
 function genOldTrain(rng: Rng): OldTrain {
   const t: OldTrain = {};
@@ -1906,14 +1921,23 @@ function genOldTrain(rng: Rng): OldTrain {
   if (mode !== undefined) t.mode = mode;
   if (rng.chance(0.5)) t.dynamic = rng.chance(0.5);
   if (rng.chance(0.6)) t.battery = rng.pick([0, rng.int(1, 60), rng.range(0, 60), 90]);
+  if (rng.chance(0.3)) {
+    t.held = {};
+    for (const [key, values] of Object.entries(RESUME_HELD))
+      if (rng.chance(0.5)) t.held[key] = rng.pick(values);
+  }
   return t;
 }
-/** `base` (a saved train) with the old train's mode, flag and battery, and no tanks unless `tanks`. */
+/**
+ * `base` (a saved train) with the old train's mode, flag, battery and held fields, and no tanks
+ * unless `tanks`.
+ */
 function withOld(base: object, t: OldTrain, tanks = true): Record<string, unknown> {
   const train = asStored(base) as Record<string, unknown> & { tanks?: Record<string, unknown> };
   delete train.mode;
   if ('mode' in t) train.mode = t.mode;
   if ('dynamic' in t) train.dynamic = t.dynamic;
+  if (t.held) Object.assign(train, t.held);
   if (!tanks) delete train.tanks;
   else {
     train.tanks = train.tanks ?? { coal: 0, oil: 0, water: 0 };
