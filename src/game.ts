@@ -9,16 +9,12 @@ import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
-import { ageDef, ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
+import { ageDef, LAST_AGE, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
-import { rulesDiffer, readRules } from './sim/rules';
-import { contentIsCustom } from './data/content';
-import { MainMenu, PauseMenu } from './ui/menu';
 import { Editor } from './editor/editor';
 import { EditorPanel } from './ui/editorPanel';
 import {
-  listLevels,
-  deleteLevel,
+  deleteLevel as dropLevel,
   saveLevel,
   isLevel,
   type LevelData as LevelRecord,
@@ -34,30 +30,20 @@ import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
 import { GameClock, SIM_STEP } from './sim/time';
-import { Hud } from './ui/hud';
-import { Minimap } from './ui/minimap';
-import { DebugPanel } from './ui/debug';
 import { Tooltip } from './ui/tooltip';
-import { el } from './ui/dom';
 import { STR } from './strings';
 import { TrackGraph } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
-import { Toolbar, type Tool } from './ui/toolbar';
-import { StationPanel } from './ui/stationPanel';
 import { BuildController } from './ui/buildController';
 import { Toasts } from './ui/toast';
 import { Inventory } from './gacha/inventory';
 import { Fleet } from './sim/fleet';
 import { TrainRenderer } from './render/trainRenderer';
 import { ScreenManager } from './ui/modal';
-import { DepotScreen } from './ui/depot';
-import { btn } from './ui/dom';
 import type { Train } from './sim/trains';
 import { defaultStop as defaultStopFor } from './sim/trains';
 import { ContractBoard } from './sim/contracts';
-import { ContractsScreen } from './ui/contractsScreen';
-import { ContractsSide } from './ui/contractsSide';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
 import {
@@ -75,49 +61,38 @@ import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
 import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
-import { SettingsScreen } from './ui/settingsScreen';
-import { TuningScreen } from './ui/tuningScreen';
-import { ContentScreen } from './ui/contentScreen';
 import {
   SAVE_VERSION,
   buildSave,
-  importSave,
+  importSave as importSaveText,
   readSave,
   writeSave,
   clearSave,
-  listSlots,
   writeSlot,
   readSlot,
-  deleteSlot,
+  deleteSlot as dropSlot,
   KNOWN_SAVE_KEYS,
   readSettings,
   writeSettings,
   contractPolicyFor,
-  uniformContractPolicy,
-  CONTRACT_RARITIES,
   convertOneTileRegular,
   type SaveGame,
+  type SaveRefusal,
   type Settings,
 } from './sim/save';
 import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
 import { Station, resetStationIds, stationFootprint } from './sim/stations';
-import { scaleCost as scaleCostOf } from './sim/stockpile';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
-import { TownPanel } from './ui/townPanel';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
 import { footprintOf, pieceFrame } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
-import { GachaScreen } from './ui/gachaScreen';
-import { RosterScreen } from './ui/rosterScreen';
 import { Crafting } from './gacha/crafting';
-import { CraftingScreen } from './ui/craftingScreen';
 import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
-import { showSignalGuide } from './ui/signalGuide';
 import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
 import {
@@ -128,22 +103,15 @@ import {
   type Building,
 } from './sim/buildings';
 import { PowerGrid } from './sim/power';
-import { TrainScreen } from './ui/trainScreen';
-import { MarketScreen } from './ui/marketScreen';
-import { ResourceBar } from './ui/resourceBar';
 import { BuildingPanel } from './ui/buildingPanel';
-import { TrainSide } from './ui/trainSide';
-import { BuildInfo } from './ui/buildInfo';
 import { Floaters } from './render/floaters';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
-import { NoticePanel } from './ui/noticePanel';
-import { Advisor, type Tip } from './ui/advisor';
-import { resourceStats } from './sim/stats';
+import type { Tip } from './ui/advisor';
 import { locoFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
-import { buildCompatTable, withoutInCab } from './sim/compat';
+import { buildCompatTable } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
 import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
@@ -153,6 +121,9 @@ import { expandSave, ownsBorderChunk } from './sim/expand';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 import { SimStep, startStock, ageSnapshot as ageSnapshotOf } from './sim/step';
+import { Commands } from './sim/commands';
+import { createPlayUi, confirmReplaceSave, type PlayUi, type UiHost } from './ui/panels';
+import { handlePlayKeys } from './ui/keymap';
 
 /** Loop ticks per real second: one tick runs `clock.speed` steps of SIM_STEP game seconds. */
 const SIM_HZ = 1 / SIM_STEP;
@@ -160,8 +131,11 @@ const EDGE_MARGIN = 14;
 const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
 
-/** Top-level orchestrator: owns renderer, camera, sim clock, UI and the RTS/overview state machine. */
-export class Game {
+/**
+ * Top-level orchestrator: owns renderer, camera, sim clock and the RTS/overview state machine. The
+ * panels, menus and hotkeys are src/ui's (`createPlayUi`, `handlePlayKeys`); the game is their host.
+ */
+export class Game implements UiHost {
   app!: Application;
   atlas = new AtlasRegistry();
   /** The sound bus, reachable from `window.game` for the debug panel and the art/audio scripts. */
@@ -182,54 +156,42 @@ export class Game {
   regions!: RegionState;
   world!: WorldRenderer;
   overview!: OverviewRenderer;
-  hud!: Hud;
-  minimap!: Minimap;
-  debug!: DebugPanel;
   tooltip = new Tooltip();
   loop!: GameLoop;
   seed: number;
   economy = new Economy();
   track!: TrackGraph;
   builder!: Builder;
-  toolbar!: Toolbar;
-  stationPanel!: StationPanel;
   build!: BuildController;
   toasts = new Toasts();
   inventory = new Inventory();
   fleet!: Fleet;
   trainRenderer!: TrainRenderer;
   screens = new ScreenManager();
-  depot!: DepotScreen;
   contracts!: ContractBoard;
   /** hands accepted contracts to trains */
   contractJobs!: ContractDispatcher;
-  contractsScreen!: ContractsScreen;
-  contractsSide!: ContractsSide;
   gacha!: Gacha;
-  gachaScreen!: GachaScreen;
-  rosterScreen!: RosterScreen;
   crafting!: Crafting;
-  craftingScreen!: CraftingScreen;
   stock = new Stockpile();
   power!: PowerGrid;
-  trainScreen!: TrainScreen;
-  marketScreen!: MarketScreen;
-  resourceBar!: ResourceBar;
-  buildingPanel!: BuildingPanel;
-  decorPanel!: DecorPanel;
   houses!: HouseRegistry;
   /** overview: train picked with a click, and a route being recorded for it */
   private ovSelected: number | null = null;
   private recording: { trainId: number; stops: number[] } | null = null;
-  trainSide!: TrainSide;
-  buildInfo!: BuildInfo;
+  /** a route is being recorded for the train picked in the overview */
+  get recordingRoute() {
+    return this.recording !== null;
+  }
+  /** the train picked in the overview */
+  get overviewTrainId() {
+    return this.ovSelected;
+  }
   floaters!: Floaters;
   powerLines!: PowerLines;
   notices = new Notices();
   people!: PeopleSim;
   peopleRenderer!: PeopleRenderer;
-  noticePanel!: NoticePanel;
-  advisor!: Advisor;
   private noticeTimer = 0;
   private noticeMarkers = new Set<string>();
   private lastFailedContract = '';
@@ -241,16 +203,14 @@ export class Game {
   private pathHighlight: { x: number; y: number }[][] = [];
   private pathTimer = 0;
   settings: Settings = readSettings();
-  settingsScreen!: SettingsScreen;
-  tuningScreen!: TuningScreen;
-  contentScreen!: ContentScreen;
   dayNight = new DayNight();
   glows!: Glows;
   smoke!: Smoke;
   private autosaveTimer = 0;
   /** the stored save was just replaced and the page is reloading into it: do not save over it */
   private keepStoredSave = false;
-  private savedAt: number | null = null;
+  /** when the stored game was last written, for the settings screen */
+  savedAt: number | null = null;
   weather!: Weather;
   groundLights!: GroundLights;
   rain!: Rain;
@@ -267,7 +227,6 @@ export class Game {
   private cursor!: Sprite;
   private hoverTile = { x: -1, y: -1 };
   private uiRoot: HTMLElement;
-  private overviewBanner!: HTMLElement;
   private depthOverlay = false;
   private overviewSource: OverviewSource = {
     trackTiles: () => this.trackTilesForOverview(),
@@ -353,18 +312,105 @@ export class Game {
   readonly spec: WorldSpec;
   /** play = normal game; editor = level editor (free building, paused clock) */
   mode: 'play' | 'editor' = 'play';
-  mainMenu!: MainMenu;
-  pauseMenu!: PauseMenu;
   editor: Editor | null = null;
   editorPanel: EditorPanel | null = null;
   towns!: TownRegistry;
   readonly trade = new TradeDesk();
-  private townPanel!: TownPanel;
   private namePrompt = new NamePrompt();
   private paused = false;
   private menuPausedSpeed = 0;
+  /** The panels, screens, menus and hotkeys of the game (src/ui/panels.ts), built in `init`. */
+  ui!: PlayUi;
+  /** What the panels change trains, stations, signals, trade and pulls through; one per game. */
+  commands!: Commands;
+  /** The title or the pause menu is up. */
   get menuOpen() {
-    return this.mainMenu.visible || this.pauseMenu.visible;
+    return this.ui.menuOpen;
+  }
+
+  // ---------------------------------------------------------------- the play UI's parts
+  // The panels belong to `ui`; these are the names the game has always had them under, which
+  // `window.game` and the browser scripts in scratchpad/ read.
+  get hud() {
+    return this.ui.hud;
+  }
+  get minimap() {
+    return this.ui.minimap;
+  }
+  get debug() {
+    return this.ui.debug;
+  }
+  get toolbar() {
+    return this.ui.toolbar;
+  }
+  get stationPanel() {
+    return this.ui.stationPanel;
+  }
+  get depot() {
+    return this.ui.depot;
+  }
+  get trainScreen() {
+    return this.ui.trainScreen;
+  }
+  get marketScreen() {
+    return this.ui.marketScreen;
+  }
+  get resourceBar() {
+    return this.ui.resourceBar;
+  }
+  get tuningScreen() {
+    return this.ui.tuningScreen;
+  }
+  get contentScreen() {
+    return this.ui.contentScreen;
+  }
+  get settingsScreen() {
+    return this.ui.settingsScreen;
+  }
+  get gachaScreen() {
+    return this.ui.gachaScreen;
+  }
+  get craftingScreen() {
+    return this.ui.craftingScreen;
+  }
+  get rosterScreen() {
+    return this.ui.rosterScreen;
+  }
+  get contractsScreen() {
+    return this.ui.contractsScreen;
+  }
+  get contractsSide() {
+    return this.ui.contractsSide;
+  }
+  get buildingPanel() {
+    return this.ui.buildingPanel;
+  }
+  get decorPanel() {
+    return this.ui.decorPanel;
+  }
+  get trainSide() {
+    return this.ui.trainSide;
+  }
+  get buildInfo() {
+    return this.ui.buildInfo;
+  }
+  get noticePanel() {
+    return this.ui.noticePanel;
+  }
+  get advisor() {
+    return this.ui.advisor;
+  }
+  get mainMenu() {
+    return this.ui.mainMenu;
+  }
+  get pauseMenu() {
+    return this.ui.pauseMenu;
+  }
+  private get townPanel() {
+    return this.ui.townPanel;
+  }
+  private get overviewBanner() {
+    return this.ui.overviewBanner;
   }
 
   constructor(spec: WorldSpec, supply?: SupplyMode) {
@@ -454,82 +500,27 @@ export class Game {
   }
 
   // ---------------------------------------------------------------- menus
-  private pauseGame() {
+  /** Stop the clock while a menu is up, remembering its speed. */
+  pauseGame() {
     if (this.paused) return;
     this.paused = true;
     this.menuPausedSpeed = this.clock.speedIndex;
     this.clock.setSpeed(0);
   }
-  private resumeGame() {
+  /** The clock runs again at the speed it had (in a game; the editor stays stopped). */
+  resumeGame() {
     if (!this.paused) return;
     this.paused = false;
     if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed);
   }
   openMainMenu() {
-    this.pauseGame();
-    this.screens.close();
-    this.pauseMenu.hide();
-    this.build.setTool({ kind: 'none' });
-    this.mainMenu.show(!!readSave(), listLevels(), {
-      // the tuning a new game starts from, not the loaded game's own
-      rules: rulesDiffer(readRules()).length > 0,
-      content: contentIsCustom(),
-    });
+    this.ui.openMainMenu();
   }
   openPauseMenu() {
-    if (this.mainMenu.visible) return;
-    this.pauseGame();
-    this.screens.close();
-    this.pauseMenu.show({ testing: !!testingLevel(), editor: this.mode === 'editor' });
+    this.ui.openPauseMenu();
   }
   closeMenus() {
-    this.pauseMenu.hide();
-    this.mainMenu.hide();
-    this.resumeGame();
-  }
-  private confirmReplaceSave() {
-    return !readSave() || confirm(STR.menu.confirmReplace);
-  }
-  /** Named-save actions shared by the menus and the settings screen. */
-  private slotActions() {
-    return {
-      slots: () => listSlots(),
-      loadSlot: (name: string) => {
-        const j = readSlot(name);
-        if (!j) {
-          this.toasts.push(STR.settings.noSave, 'warn');
-          return;
-        }
-        if (this.mode === 'play' && !this.mainMenu.visible && !confirm(STR.menu.confirmLoad(name)))
-          return;
-        writeSave(j);
-        location.hash = `seed=${j.seed}`;
-        location.reload();
-      },
-      deleteSlot: (name: string) => {
-        deleteSlot(name);
-        this.toasts.push(STR.settings.slotDeleted(name), 'info');
-      },
-    };
-  }
-  saveSlot(name: string) {
-    const ok = writeSlot(name, this.snapshot());
-    this.toasts.push(
-      ok ? STR.settings.slotSaved(name) : STR.settings.saveFailed,
-      ok ? 'good' : 'warn',
-    );
-    return ok;
-  }
-  /** "Save as..." from the pause menu: asks for a name in the in-game dialog. */
-  private async promptSaveAs() {
-    const fallback = `${STR.menu.day(this.sim.lastDay)} · ${this.seed}`;
-    const name = await this.namePrompt.ask(
-      STR.settings.saveAsTitle,
-      STR.settings.saveAsHint,
-      fallback,
-    );
-    if (!name) return;
-    if (this.saveSlot(name.slice(0, 32))) this.closeMenus();
+    this.ui.closeMenus();
   }
   /** Save plus traffic log for bug reports. */
   diagnostics() {
@@ -545,84 +536,112 @@ export class Game {
     const t = text.trim();
     return t ? (/^\d+$/.test(t) ? Number(t) : hashSeed(t)) : Math.floor(Math.random() * 2 ** 31);
   }
-  /** Music and effects volume for the menus: same settings the Settings screen edits. */
-  private audioActions() {
-    return {
-      volume: (key: 'music' | 'sfx') => this.settings[key],
-      setVolume: (key: 'music' | 'sfx', v: number) => {
-        this.settings[key] = v;
-        this.applySettings();
-      },
-    };
+
+  // ---------------------------------------------------------------- storage and reloads
+  /** Store the settings without applying them. */
+  saveSettings() {
+    writeSettings(this.settings);
   }
-  private buildMenus() {
-    this.mainMenu = new MainMenu({
-      ...this.slotActions(),
-      ...this.audioActions(),
-      continue: () => this.closeMenus(),
-      newGame: (seed, supply) => {
-        if (this.confirmReplaceSave()) this.newGame(seed, supply);
-      },
-      playLevel: (id) => {
-        if (!this.confirmReplaceSave()) return;
-        clearSave();
-        setTestingLevel(null);
-        setIntentAndReload({ action: 'play', levelId: id });
-      },
-      editLevel: (id) => setIntentAndReload({ action: 'edit', levelId: id }),
-      newLevel: (size, generated, seedText) =>
-        setIntentAndReload({
-          action: 'edit',
-          levelId: null,
-          blank: !generated,
-          size,
-          seed: this.parseSeed(seedText),
-        }),
-      deleteLevel: (id) => {
-        deleteLevel(id);
-        this.openMainMenu();
-      },
-      importLevel: (json) => {
-        try {
-          const l = JSON.parse(json) as LevelRecord;
-          if (!isLevel(l)) return false;
-          saveLevel(l);
-          this.openMainMenu();
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      exportLevel: (id) => JSON.stringify(listLevels().find((l) => l.id === id) ?? null),
-      tuning: () => this.screens.open(this.tuningScreen),
-      content: () => this.screens.open(this.contentScreen),
-      settings: () => this.screens.open(this.settingsScreen),
+  /** Store the game under a name and say so; false when storage refused it. */
+  saveSlot(name: string) {
+    const ok = writeSlot(name, this.snapshot());
+    this.toasts.push(
+      ok ? STR.settings.slotSaved(name) : STR.settings.saveFailed,
+      ok ? 'good' : 'warn',
+    );
+    return ok;
+  }
+  /** Make a named save the stored game and reload into it; false when there is none. */
+  loadSlot(name: string) {
+    const j = readSlot(name);
+    if (!j) return false;
+    writeSave(j);
+    this.reloadIntoStoredSave(j.seed);
+    return true;
+  }
+  deleteSlot(name: string) {
+    dropSlot(name);
+  }
+  /** Reload into the stored game; false when there is none. */
+  loadSave() {
+    const j = readSave();
+    if (!j) return false;
+    this.reloadIntoStoredSave(j.seed);
+    return true;
+  }
+  /** The game as save text. */
+  exportSave() {
+    return JSON.stringify(this.snapshot());
+  }
+  /**
+   * Store a save text the player brought and reload into it; a refused text changes nothing. The
+   * player's settings never come from a save.
+   */
+  importSave(json: string): { ok: true } | { ok: false; error: SaveRefusal } {
+    const read = importSaveText(json);
+    if (!read.ok) return read;
+    this.reloadIntoStoredSave(read.save.seed);
+    return { ok: true };
+  }
+  /**
+   * The stored save was just replaced: reload into it. The running game must not save over it on
+   * its way out, neither in the unload handler nor in a frame of the minute autosave that runs
+   * while the page reloads.
+   */
+  private reloadIntoStoredSave(seed: number) {
+    this.keepStoredSave = true;
+    this.loop.stop();
+    location.hash = `seed=${seed}`;
+    location.reload();
+  }
+  /** Clear the stored game and play a level. */
+  playLevel(id: string) {
+    clearSave();
+    setTestingLevel(null);
+    setIntentAndReload({ action: 'play', levelId: id });
+  }
+  editLevel(id: string) {
+    setIntentAndReload({ action: 'edit', levelId: id });
+  }
+  /** Open the editor on a new level, blank or generated from a seed text. */
+  newLevel(size: number, generated: boolean, seedText: string) {
+    setIntentAndReload({
+      action: 'edit',
+      levelId: null,
+      blank: !generated,
+      size,
+      seed: this.parseSeed(seedText),
     });
-    this.pauseMenu = new PauseMenu({
-      ...this.slotActions(),
-      ...this.audioActions(),
-      resume: () => this.closeMenus(),
-      save: () => {
-        this.save();
-        this.closeMenus();
-      },
-      saveAs: () => void this.promptSaveAs(),
-      settings: () => this.screens.open(this.settingsScreen),
-      tuning: () => this.screens.open(this.tuningScreen),
-      content: () => this.screens.open(this.contentScreen),
-      backToEditor: () => {
-        const id = testingLevel();
-        setTestingLevel(null);
-        if (id) setIntentAndReload({ action: 'edit', levelId: id });
-      },
-      mainMenu: () => {
-        if (this.mode === 'editor') {
-          if (!this.editor?.dirty || confirm(STR.editor.unsaved))
-            setIntentAndReload({ action: 'menu' });
-        } else this.openMainMenu();
-      },
-    });
-    this.hud.onMenu = () => (this.menuOpen ? this.closeMenus() : this.openPauseMenu());
+  }
+  deleteLevel(id: string) {
+    dropLevel(id);
+  }
+  /** Store a level from its text; false when the text is not a level. */
+  importLevel(json: string) {
+    try {
+      const l = JSON.parse(json) as LevelRecord;
+      if (!isLevel(l)) return false;
+      saveLevel(l);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  /** Leave a play-test for the editor on the level being tested. */
+  backToEditor() {
+    const id = testingLevel();
+    setTestingLevel(null);
+    if (id) setIntentAndReload({ action: 'edit', levelId: id });
+  }
+  reloadToMenu() {
+    setIntentAndReload({ action: 'menu' });
+  }
+  /** The debug panel's Regenerate: reload with its seed text in the address (`#seed=`). */
+  regenerate(seedText: string) {
+    const v = seedText.trim();
+    const seed = /^\d+$/.test(v) ? Number(v) : hashSeed(v);
+    location.hash = `seed=${seed}`;
+    location.reload();
   }
 
   // ---------------------------------------------------------------- editor
@@ -656,7 +675,7 @@ export class Game {
         }
       },
       playTest: () => {
-        if (!this.confirmReplaceSave()) return;
+        if (!confirmReplaceSave()) return;
         if (!editor.save()) {
           this.toasts.push(STR.editor.saveFailed, 'warn');
           return;
@@ -919,26 +938,49 @@ export class Game {
     this.build = new BuildController(this.input, this.builder, this.world, () =>
       this.tileUnderMouse(),
     );
-    this.buildUi();
-    this.build.onSelect = (s) => {
-      if (s) this.selectFieldTrain(null);
-      if (s) this.stationPanel.open(s);
-      else if (this.stationPanel.station) this.stationPanel.close();
-    };
-    this.build.onSelectBuilding = (b) =>
-      b ? this.buildingPanel.open(b) : this.buildingPanel.building && this.buildingPanel.close();
-    this.build.onSelectDecor = (d) =>
-      d ? this.decorPanel.open(d) : this.decorPanel.decor && this.decorPanel.close();
+    this.commands = new Commands({
+      fleet: this.fleet,
+      builder: this.builder,
+      economy: this.economy,
+      stock: this.stock,
+      trade: this.trade,
+      gacha: this.gacha,
+      inventory: this.inventory,
+    });
+    // every panel, screen and menu, wired to this game; it also sets the build controller's
+    // selection and status callbacks
+    this.ui = createPlayUi(this, {
+      clock: this.clock,
+      economy: this.economy,
+      stock: this.stock,
+      inventory: this.inventory,
+      fleet: this.fleet,
+      builder: this.builder,
+      contracts: this.contracts,
+      gacha: this.gacha,
+      crafting: this.crafting,
+      trade: this.trade,
+      towns: this.towns,
+      houses: this.houses,
+      power: this.power,
+      notices: this.notices,
+      atlas: this.atlas,
+      map: this.map,
+      regions: this.regions,
+      camera: this.camera,
+      settings: this.settings,
+      toasts: this.toasts,
+      screens: this.screens,
+      namePrompt: this.namePrompt,
+      commands: this.commands,
+      build: this.build,
+      tooltip: this.tooltip,
+      uiRoot: this.uiRoot,
+    });
     this.fleet.waitingAt = (id) => this.people.waitingAt(id).length;
     this.fleet.contractDest = (cargo, origin) => {
       const c = this.contracts.active.find((k) => k.cargo === cargo && k.originId === origin);
       return c ? c.destId : null;
-    };
-    this.build.onStatus = (t) => this.toolbar.setStatus(t);
-    this.build.barredTrains = () => withoutInCab(this.fleet.trains);
-    this.build.onToolChanged = (t) => {
-      this.toolbar.setActive(t);
-      this.buildInfo.show(this.toolbar.item(t));
     };
     this.loop = new GameLoop(
       SIM_HZ,
@@ -947,7 +989,7 @@ export class Game {
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
-      if (this.settings.autosave && this.mode === 'play' && !this.keepStoredSave) this.save(true);
+      if (this.settings.autosave && this.mode === 'play') this.save(true);
     });
   }
 
@@ -961,7 +1003,7 @@ export class Game {
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
     if (this.world) this.applySeason();
-    if (this.hud) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
+    if (this.ui) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
     if (this.fleet) this.fleet.signals.level = this.settings.signalling ?? 'auto';
   }
 
@@ -1004,7 +1046,12 @@ export class Game {
     );
   }
 
+  /**
+   * Store the game; says so unless `silent`; false when storage refused it. Nothing is written
+   * while the page reloads into a save just stored (`reloadIntoStoredSave`).
+   */
   save(silent = false) {
+    if (this.keepStoredSave) return false;
     const snap = this.snapshot();
     const ok = writeSave(snap);
     if (ok) this.savedAt = snap.savedAt;
@@ -1157,7 +1204,7 @@ export class Game {
     this.railsDirty = true;
     this.builder.refreshBridgeCapacity(x, y);
     this.refreshBridges();
-    this.depot?.onTrackChanged();
+    this.ui?.depot.onTrackChanged();
     const p = this.track.get(x, y);
     const t = terrainAt(this.map, x, y);
     if (p) {
@@ -1413,7 +1460,7 @@ export class Game {
     }
   }
   /** Re-tint the world and adjust production when the season changes. */
-  private applySeason(force = false) {
+  applySeason(force = false) {
     const s = this.settings.weather ? seasonOf(this.clock.day) : 'spring';
     if (s === this.season && !force) return;
     this.season = s;
@@ -1495,7 +1542,7 @@ export class Game {
   /** warning text for the settings screen while a converted save is in play */
   deprecatedSave: string | null = null;
   /** Ask for a town's name; `fresh` marks a just-placed station (the default name is offered). */
-  private async renameTown(t: Town, fresh = false) {
+  async renameTown(t: Town, fresh = false) {
     const n = await this.namePrompt.ask(STR.town.namePrompt, STR.town.nameHint, t.name);
     if (n && n !== t.name) {
       this.towns.rename(t, n);
@@ -1624,340 +1671,22 @@ export class Game {
     return out;
   }
 
-  private buildUi() {
-    this.hud = new Hud(this.clock, () => ageStatus(this.economy.tier, this.ageSnapshot()));
-    this.depot = new DepotScreen(
-      this.inventory,
-      this.fleet,
-      this.builder,
-      (m, k) => this.toasts.push(m, k),
-      this.atlas,
-    );
-    this.depot.onFocusTrain = (t) => this.focusTrain(t);
-    this.depot.onFocusDepot = (d, gate) => {
-      // peek at the shed behind the dimmed screen and mark the gate the train would take
-      const p = tileToWorld(d.cx + 0.5, d.cy + 0.5);
-      this.camera.zoomIndex = 2;
-      this.camera.zoom = ZOOM_STEPS[2];
-      this.camera.centerOn(p.x, p.y);
-      this.setView(0);
-      this.spawnMarkTimer = gate ? 6 : 0;
-      if (gate) {
-        const sp = this.world.setStructure('spawn-preview', gate.x, gate.y, 'terrain/ghost_ok', 30);
-        sp.alpha = 0.9;
-      } else this.world.removeStructure('spawn-preview');
-      this.screens.root.classList.add('peek');
-    };
-    this.screens.onChange = (sc) => {
-      if (sc) this.build.setTool({ kind: 'none' });
-      if (!sc) {
-        this.screens.root.classList.remove('peek');
-        this.world.removeStructure('spawn-preview');
-      }
-      sfx(sc ? 'ui.open' : 'ui.close');
-    };
-    this.trainScreen = new TrainScreen(this.fleet, this.builder, this.stock, this.atlas, (m, k) =>
-      this.toasts.push(m, k),
-    );
-    this.trainScreen.onLocate = (t) => this.focusTrain(t);
-    this.depot.onDetails = (t) => {
-      this.trainScreen.open(t);
-      this.screens.open(this.trainScreen);
-    };
-    this.marketScreen = new MarketScreen(
-      this.stock,
-      this.economy,
-      (id) => this.stockCap(id),
-      (m, k) => this.toasts.push(m, k),
-      this.trade,
-      () => this.clock.time,
-    );
-    this.trade.onSettled = (lines) =>
-      this.toasts.push(
-        STR.market.settled(
-          lines
-            .map(
-              (l) =>
-                `${l.units > 0 ? '+' : ''}${l.units} ${cargoDef(l.resource).name.toLowerCase()} (${fmtMoney(l.money)})`,
-            )
-            .join(', '),
-        ),
-        'info',
-      );
-    this.resourceBar = new ResourceBar(this.atlas, () => {
-      if (this.mode === 'play' && !this.menuOpen) this.screens.toggle(this.marketScreen);
-    });
-    this.resourceBar.right.append(this.hud.funds);
-    this.resourceBar.stats = () => resourceStats(this.stock, RESOURCE_IDS);
-    this.tuningScreen = new TuningScreen(() => {
-      this.applySeason(true);
-      this.toolbar.refresh();
-    });
-    this.contentScreen = new ContentScreen(() => {
-      if (this.mode === 'play' && !this.menuOpen) this.save(true);
-      setIntentAndReload({ action: 'menu' });
-    });
-    this.settingsScreen = new SettingsScreen(
-      this.settings,
-      () => this.applySettings(),
-      {
-        save: () => this.save(),
-        load: () => {
-          const j = readSave();
-          if (!j) {
-            this.toasts.push(STR.settings.noSave, 'warn');
-            return;
-          }
-          location.hash = `seed=${j.seed}`;
-          location.reload();
-        },
-        newGame: (seed) => this.newGame(seed, supplyMode()),
-        exportSave: () => JSON.stringify(this.snapshot()),
-        exportDiagnostics: () => this.diagnostics(),
-        saveAs: (name) => this.saveSlot(name),
-        ...this.slotActions(),
-        // a refused text changes nothing; the player's settings never come from a save
-        importSave: (json) => {
-          const read = importSave(json);
-          if (!read.ok) {
-            this.toasts.push(STR.saves.refused[read.error], 'warn');
-            return false;
-          }
-          // the running game must not autosave over the import on its way out: neither the
-          // unload handler nor a frame of the minute autosave that runs while the page reloads
-          this.keepStoredSave = true;
-          this.loop.stop();
-          location.hash = `seed=${read.save.seed}`;
-          location.reload();
-          return true;
-        },
-      },
-      () => ({
-        seed: this.seed,
-        savedAt: this.savedAt,
-        version: `v${SAVE_VERSION}`,
-        warning: this.deprecatedSave,
-      }),
-    );
-    this.gachaScreen = new GachaScreen(
-      this.gacha,
-      this.economy,
-      () => this.clock.time,
-      (m, k) => this.toasts.push(m, k),
-      this.atlas,
-      () => this.clock.day,
-    );
-    this.craftingScreen = new CraftingScreen(
-      this.crafting,
-      this.economy,
-      this.stock,
-      this.inventory,
-      () => this.clock.time,
-      (m, k) => this.toasts.push(m, k),
-      this.atlas,
-    );
-    this.rosterScreen = new RosterScreen(this.inventory, this.fleet, this.atlas, (m, k) =>
-      this.toasts.push(m, k),
-    );
-    this.contractsScreen = new ContractsScreen(this.contracts, this.builder, this.clock, (m, k) =>
-      this.toasts.push(m, k),
-    );
-    this.contractsScreen.trainName = (id) => this.fleet.byId(id)?.name ?? null;
-    this.contractsScreen.autoAccept = {
-      get: () => CONTRACT_RARITIES.every((r) => contractPolicyFor(this.settings, r) === 'accept'),
-      set: (v) => {
-        this.settings.contractPolicy = uniformContractPolicy(v ? 'accept' : 'prompt');
-        this.applySettings();
-      },
-    };
-    this.rosterScreen.spendMoney = (amount) => {
-      if (this.economy.money < amount) return false;
-      this.economy.money -= amount;
-      return true;
-    };
-    this.contractsSide = new ContractsSide(this.contracts, this.builder, this.clock);
-    this.contractsSide.onOpenBoard = () => this.screens.toggle(this.contractsScreen);
-    this.hud.actions.append(
-      btn(STR.topbar.depot, () => this.screens.toggle(this.depot), 'small'),
-      btn(STR.topbar.contracts, () => this.screens.toggle(this.contractsScreen), 'small'),
-      btn(STR.topbar.craft, () => this.screens.toggle(this.craftingScreen), 'small'),
-      btn(STR.topbar.roster, () => this.screens.toggle(this.rosterScreen), 'small'),
-      btn(STR.topbar.market, () => this.screens.toggle(this.marketScreen), 'small'),
-      btn(STR.topbar.cheat, () => this.cheat(), 'small cheat'),
-      btn(STR.topbar.settings, () => this.screens.toggle(this.settingsScreen), 'small'),
-    );
-
-    this.minimap = new Minimap(this.map, this.regions, this.camera, (wx, wy) =>
-      this.camera.centerOn(wx, wy),
-    );
-    this.debug = new DebugPanel(this.seed, {
-      giveMoney: () => (this.economy.money += 10000),
-      giveTickets: () => (this.economy.tickets += 10),
-      nextAge: () => this.economy.setAge(this.economy.tier + 1),
-      giveResources: () => {
-        for (const id of RESOURCE_IDS) this.stock.add(id, 200, this.stockCap(id));
-      },
-      spawnContract: () => {
-        const c = this.contracts.generate(this.clock.time, true);
-        this.toasts.push(c ? `Offer: ${c.name}` : STR.contracts.needStations, c ? 'info' : 'warn');
-      },
-      toggleDepth: () => {
-        this.depthOverlay = !this.depthOverlay;
-        this.applyDepthOverlay();
-        return this.depthOverlay;
-      },
-      regenerate: () => {
-        const v = this.debug.seedValue.trim();
-        const seed = /^\d+$/.test(v) ? Number(v) : hashSeed(v);
-        location.hash = `seed=${seed}`;
-        location.reload();
-      },
-    });
-    this.overviewBanner = el('div', {
-      id: 'overview-banner',
-      class: 'panel',
-      text: STR.overview.hint,
-    });
-    this.toolbar = new Toolbar(
-      (t: Tool) => this.build.setTool(t),
-      () => (this.mode === 'editor' ? 99 : this.economy.tier),
-      this.atlas,
-    );
-    this.toolbar.onHover = (it) =>
-      this.buildInfo.show(it ?? this.toolbar.item(this.toolbar.active));
-    // the next one of a kind costs more: show the live price on the cards
-    for (const c of this.toolbar.categories)
-      for (const it of c.items) {
-        const tool = it.tool;
-        if (tool.kind === 'station' || tool.kind === 'decor' || tool.kind === 'building') {
-          const id = tool.defId;
-          it.costNow = () =>
-            scaleCostOf(
-              it.cost,
-              tool.kind === 'station' && id === 'depot' ? 1 : this.builder.kindMul(id),
-            );
-        }
-      }
-    this.toolbar.refresh();
-    this.buildingPanel = new BuildingPanel(
-      this.builder,
-      this.stock,
-      () => this.build.selectedBuilding && this.build.selectBuilding(null),
-    );
-    this.decorPanel = new DecorPanel(this.builder, this.power, () => {
-      if (this.build.selectedDecor) this.build.selectDecor(null);
-    });
-    this.decorPanel.houses = this.houses;
-    this.decorPanel.onSignalGuide = showSignalGuide;
-    this.decorPanel.onSignalBlock = (d) => {
-      for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0xffffff);
-      this.signalHighlight = [];
-      if (d) {
-        const post = this.fleet.signals.postAt(d.x, d.y);
-        if (post) this.signalHighlight = this.fleet.signals.blockBeyond(post).tiles;
-      }
-      for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0x7cd7e8);
-    };
-    this.trainSide = new TrainSide(this.builder, this.atlas);
-    this.noticePanel = new NoticePanel();
-    this.noticePanel.onFocus = (n) => this.focusNotice(n);
-    this.advisor = new Advisor(this.settings.advisor === false);
-    this.advisor.onSilence = (v) => {
-      this.settings.advisor = !v;
-      writeSettings(this.settings);
-    };
-    this.hud.rightActions.append(this.advisor.button, btn('Signals?', showSignalGuide, 'small'));
-    this.hud.onToggleWeather = () => {
-      this.settings.weather = !this.settings.weather;
-      this.applySettings();
-    };
-    this.hud.onToggleDay = () => {
-      this.settings.dayNight = !this.settings.dayNight;
-      this.applySettings();
-    };
-    this.trainSide.onRefuel = (trains) => {
-      const ok = this.fleet.refuelAll(trains);
-      this.toasts.push(
-        ok
-          ? 'Trains refuelled to full at twice the resource cost'
-          : 'Not enough fuel and water to fill this group; no resources spent',
-        ok ? 'good' : 'warn',
-      );
-      this.trainSide.update(trains, this.viewTarget === 1, true);
-    };
-    this.trainSide.onDetails = (t) => {
-      this.trainScreen.open(t);
-      this.screens.open(this.trainScreen);
-    };
-    this.trainSide.onLocate = (t) => this.focusTrain(t);
-    this.trainSide.onHover = (t) => this.setHoverTrain(t);
-    this.buildInfo = new BuildInfo(this.atlas, this.stock, this.builder);
-    this.buildInfo.onTrainDetails = (t) => {
-      this.trainScreen.open(t);
-      this.screens.open(this.trainScreen);
-    };
-    this.buildInfo.onTrainLocate = (t) => this.focusTrain(t);
-    this.buildInfo.onTrainClose = () => this.selectFieldTrain(null);
-    this.stationPanel = new StationPanel(
-      this.builder,
-      () => this.build.selected && this.build.select(null),
-      this.contracts,
-      this.clock,
-      this.towns,
-      (t) => this.renameTown(t),
-    );
-    this.townPanel = new TownPanel(this.towns, this.houses);
-    this.townPanel.onGo = (t) => {
-      const st = this.towns.station(t);
-      if (st) this.returnToRts(st.x, st.y);
-    };
-    this.townPanel.onRename = (t) => this.renameTown(t);
-    this.towns.onChanged = () => {
-      if (this.stationPanel.station) this.stationPanel.render();
-      this.depot.refresh();
-    };
-    this.build.onTownPlaced = (st) => {
-      const t = this.towns.found(st);
-      this.renameTown(t, true);
-    };
-    this.buildMenus();
-    this.uiRoot.append(
-      this.mainMenu.root,
-      this.pauseMenu.root,
-      this.screens.root,
-      this.advisor.root,
-      el(
-        'div',
-        { id: 'right-col' },
-        this.noticePanel.root,
-        this.contractsSide.root,
-        this.trainSide.root,
-        this.buildInfo.root,
-      ),
-      el('div', { class: 'vignette' }),
-      this.hud.root,
-      this.resourceBar.root,
-      this.minimap.root,
-      this.debug.root,
-      this.overviewBanner,
-      this.townPanel.root,
-      this.namePrompt.root,
-      el('div', { id: 'hint', text: STR.hints.camera }),
-      this.toolbar.root,
-      this.stationPanel.root,
-      this.buildingPanel.root,
-      this.decorPanel.root,
-      this.toasts.root,
-      this.tooltip.root,
-    );
-  }
-
   setOverviewSource(src: OverviewSource) {
     this.overviewSource = src;
     (this.overview as unknown as { source: OverviewSource }).source = src;
   }
 
   private signalHighlight: { x: number; y: number }[] = [];
+  /** Tint the block a signal guards; null clears it. */
+  highlightSignalBlock(d: Decor | null) {
+    for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0xffffff);
+    this.signalHighlight = [];
+    if (d) {
+      const post = this.fleet.signals.postAt(d.x, d.y);
+      if (post) this.signalHighlight = this.fleet.signals.blockBeyond(post).tiles;
+    }
+    for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0x7cd7e8);
+  }
   private refreshCity() {
     this.world.setCity(
       cityTiles(this.map, this.houses.houses.values(), (x, y) => !!this.towns.townAt(x, y)),
@@ -2035,7 +1764,7 @@ export class Game {
     const p = t?.poses[0];
     return p ? { x: p.x, y: p.y } : null;
   }
-  private focusNotice(n: Notice) {
+  focusNotice(n: Notice) {
     const p = this.noticePos(n);
     if (!p) return;
     if (n.target?.kind === 'train') {
@@ -2198,7 +1927,7 @@ export class Game {
       }
     }
   }
-  private setHoverTrain(t: Train | null) {
+  setHoverTrain(t: Train | null) {
     this.hoverTrain = t;
     this.pathTimer = 1;
     if (!t) this.applyPathHighlight([]);
@@ -2272,6 +2001,27 @@ export class Game {
     if (!p) return;
     this.screens.close();
     this.returnToRts(p.x, p.y);
+  }
+  /** Look at a depot behind the dimmed screen and mark the gate a train would leave by. */
+  peekDepot(depot: Station, gate: { x: number; y: number } | null) {
+    const p = tileToWorld(depot.cx + 0.5, depot.cy + 0.5);
+    this.camera.zoomIndex = 2;
+    this.camera.zoom = ZOOM_STEPS[2];
+    this.camera.centerOn(p.x, p.y);
+    this.setView(0);
+    this.spawnMarkTimer = gate ? 6 : 0;
+    if (gate) {
+      const sp = this.world.setStructure('spawn-preview', gate.x, gate.y, 'terrain/ghost_ok', 30);
+      sp.alpha = 0.9;
+    } else this.world.removeStructure('spawn-preview');
+  }
+  /** Take down the gate mark `peekDepot` put up. */
+  endDepotPeek() {
+    this.world.removeStructure('spawn-preview');
+  }
+  /** The camera over a world point (the minimap). */
+  centerCamera(wx: number, wy: number) {
+    this.camera.centerOn(wx, wy);
   }
 
   // ---------------------------------------------------------------- frame
@@ -2423,60 +2173,9 @@ export class Game {
 
   private handleInput(dt: number) {
     const inp = this.input;
-    if (inp.wasPressed('Backquote')) this.debug.toggle();
-    if (this.menuOpen) {
-      if (inp.wasPressed('Escape') && this.screens.current) this.screens.close();
-      else if (inp.wasPressed('Escape') && this.pauseMenu.visible) this.closeMenus();
-      return;
-    }
-    if (
-      inp.wasPressed('Escape') &&
-      !this.screens.current &&
-      this.build.tool.kind === 'none' &&
-      !this.build.selected &&
-      this.viewTarget === 0
-    ) {
-      this.openPauseMenu();
-      return;
-    }
-    if (this.mode === 'play' && inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
-    if (this.mode === 'play' && inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
-    if (this.mode === 'play' && inp.wasPressed('KeyG')) this.screens.toggle(this.craftingScreen);
-    if (this.mode === 'play' && inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
-    if (this.mode === 'play' && inp.wasPressed('KeyK')) this.screens.toggle(this.marketScreen);
-    if (inp.wasPressed('Escape') && this.screens.current) {
-      this.screens.close();
-      return;
-    }
-    if (inp.wasPressed('KeyM')) this.toggleOverview();
-    if (inp.wasPressed('Tab') && this.toolbar.open && this.viewTarget === 0)
-      this.toolbar.cycle(inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? -1 : 1);
-    // U / Shift+U: the tools that upgrade wide track to high speed and downgrade it
-    if (inp.wasPressed('KeyU') && this.viewTarget === 0 && !this.screens.current)
-      this.toolbar.toggleReclass(
-        inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? 'regular' : 'high_speed',
-      );
-    // Q / E: the previous and the next type of the open category (track by gauge)
-    if (this.toolbar.open && this.viewTarget === 0) {
-      if (inp.wasPressed('KeyQ')) this.toolbar.cycleGroup(-1);
-      if (inp.wasPressed('KeyE')) this.toolbar.cycleGroup(1);
-    }
-    if (inp.wasPressed('Escape') && this.viewTarget === 1) {
-      if (this.recording) this.cancelRecording();
-      else if (this.ovSelected !== null) {
-        this.ovSelected = null;
-        this.setHoverTrain(null);
-        this.updateOverviewBanner();
-      } else this.setView(0);
-    }
-    if (inp.wasPressed('Space')) this.clock.togglePause();
-    const catOpen = this.toolbar.open !== null && this.viewTarget === 0;
-    for (let d = 1; d <= 9; d++)
-      if (inp.wasPressed(`Digit${d}`)) {
-        if (catOpen) this.toolbar.selectIndex(d - 1);
-        else if (d <= 3) this.clock.setSpeed(d);
-      }
-    void catOpen;
+    // the hotkeys (src/ui/keymap.ts); the camera stays still over a menu, and on a frame where
+    // Escape opened or closed something
+    if (handlePlayKeys(inp, this.ui.keys)) return;
 
     // wheel zoom (also crosses the RTS/overview threshold)
     if (inp.wheelDelta !== 0) {
@@ -2543,8 +2242,6 @@ export class Game {
         STR.overview.chunkLines(fmtMoney(this.regions.price(hoverChunk))),
       );
     else this.tooltip.hide();
-    if (inp.wasPressed('KeyR')) this.toggleRecording();
-    if (this.recording && inp.wasPressed('Enter')) this.finishRecording();
     for (const c of inp.clicks) {
       if (c.button !== 0) continue;
       const p = this.overview.pick(...this.overviewLocalTuple(c.x, c.y));
@@ -2578,7 +2275,7 @@ export class Game {
     }
   }
   /** R in the overview: start recording stops for the selected train, or finish. */
-  private toggleRecording() {
+  toggleRecording() {
     if (this.recording) {
       this.finishRecording();
       return;
@@ -2588,22 +2285,33 @@ export class Game {
     this.recording = { trainId: t.id, stops: [] };
     this.updateOverviewBanner();
   }
-  private finishRecording() {
+  /**
+   * Give the train the recorded stops, each with the plan it already had for that station. A
+   * train on a contract job finishes the job first (`Commands.setSchedule`).
+   */
+  finishRecording() {
     const rec = this.recording;
     this.recording = null;
     const t = rec ? this.fleet.byId(rec.trainId) : null;
-    if (rec && t && rec.stops.length >= 2) {
+    if (rec && t) {
       const stops = rec.stops.map(
-        (id) => t.schedule.find((s) => s.stationId === id) ?? defaultStopFor(id),
+        (id) => t.program.find((s) => s.stationId === id) ?? defaultStopFor(id),
       );
-      t.mode = 'schedule';
-      this.fleet.setSchedule(t, stops);
-      this.toasts.push(STR.overview.recorded(t.name, stops.length), 'good');
+      const done = this.commands.setSchedule(t, stops);
+      if (done.ok) this.toasts.push(STR.overview.recorded(t.name, stops.length), 'good');
+      else this.toasts.push(done.message, 'warn');
     } else if (rec) this.toasts.push(STR.depot.needTwoStops, 'warn');
     this.updateOverviewBanner();
   }
-  private cancelRecording() {
+  /** Drop the recording; the train keeps its schedule. */
+  cancelRecording() {
     this.recording = null;
+    this.updateOverviewBanner();
+  }
+  /** Forget the train picked in the overview. */
+  dropOverviewTrain() {
+    this.ovSelected = null;
+    this.setHoverTrain(null);
     this.updateOverviewBanner();
   }
   private updateOverviewBanner() {
@@ -2743,6 +2451,12 @@ export class Game {
       const p = this.world.surfacePoint(t.x, t.y);
       this.cursor.position.set(p.x, p.y);
     }
+  }
+  /** Colour every sprite by its depth key; returns whether the overlay is now on. */
+  toggleDepth() {
+    this.depthOverlay = !this.depthOverlay;
+    this.applyDepthOverlay();
+    return this.depthOverlay;
   }
   private applyDepthOverlay() {
     for (const ch of this.world.objects.children) {
