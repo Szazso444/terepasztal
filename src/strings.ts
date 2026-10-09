@@ -896,6 +896,12 @@ export const STR = {
     } as Record<string, string>,
     customActive: 'Custom content active',
     shipped: 'Shipped content',
+    /** tooltip of a tab whose table this session loaded from a stored edit */
+    customTab: 'Runs on your stored edit of this table',
+    setAsideTitle: 'Stored edits not applied this session. Apply or Reset removes them.',
+    setAsideStale: (tab: string) => `${tab}: the shipped table changed after this edit was made`,
+    setAsideInvalid: (tab: string, problems: string) =>
+      problems ? `${tab}: the edit is invalid (${problems})` : `${tab}: the edit is invalid`,
     levels: 'Level table',
     entries: 'Entries',
     config: 'Configuration',

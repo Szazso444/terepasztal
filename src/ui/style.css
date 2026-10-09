@@ -1416,6 +1416,22 @@ body.editor #train-side {
 }
 
 /* ---- content editor ---- */
+.btn.content-tab.custom::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--cyan);
+  vertical-align: 1px;
+}
+.content-aside {
+  font-size: 11px;
+}
+.content-aside:empty {
+  display: none;
+}
 .content-list {
   display: flex;
   flex-direction: column;

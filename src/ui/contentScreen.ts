@@ -1,14 +1,17 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
+import { problemSummary, setAsideLines } from './contentReport';
 import {
   content,
   DEFAULT_CONTENT,
   CONTENT_KEYS,
   validateContent,
+  changedTables,
   writeContentOverrides,
   clearContentOverrides,
   contentIsCustom,
+  contentOverrideReport,
   type ContentBundle,
   type ContentKey,
 } from '../data/content';
@@ -20,9 +23,11 @@ function clone<T>(v: T): T {
 }
 
 /**
- * In-client content editor. Works on a copy of the live bundle; "Apply" stores it as the override
- * set and reloads so every module reads the new tables. Forms are generated from the shape of the
- * shipped entries, so new fields in the JSON show up automatically.
+ * In-client content editor. Works on a copy of the live bundle; "Apply" stores the tables that
+ * differ from the shipped ones as the override set and reloads so every module reads the new
+ * tables. Tabs running on a stored table are marked, and stored tables the load set aside are
+ * listed with the reason. Forms are generated from the shape of the shipped entries, so new fields
+ * in the JSON show up automatically.
  */
 export class ContentScreen implements Screen {
   readonly id = 'content';
@@ -32,14 +37,18 @@ export class ContentScreen implements Screen {
     class: 'col-foot',
     style: 'border:none;padding:0 0 6px 0;flex-wrap:wrap',
   });
+  /** stored tables the load set aside, one line each; empty (and hidden) when there are none */
+  private aside = el('div', { class: 'content-aside' });
   private body = el('div', { class: 'col-body' });
   private foot = el('div', { class: 'col-foot' });
   private problems = el('div', { class: 'sub red', style: 'flex:1' });
   private draft: ContentBundle = clone(content);
   private tab: ContentKey = 'locomotives';
+  /** what became of the stored tables at load; fixed for the session */
+  private readonly report = contentOverrideReport();
 
   constructor(private readonly onReload: () => void) {
-    this.root.append(this.tabs, el('div', { class: 'col' }, this.body, this.foot));
+    this.root.append(this.tabs, this.aside, el('div', { class: 'col' }, this.body, this.foot));
   }
   onOpen() {
     this.draft = clone(content);
@@ -49,17 +58,19 @@ export class ContentScreen implements Screen {
   private render() {
     const t = this.tabs;
     t.innerHTML = '';
-    for (const k of CONTENT_KEYS)
-      t.append(
-        btn(
-          STR.content.tabs[k],
-          () => {
-            this.tab = k;
-            this.render();
-          },
-          `small ${this.tab === k ? 'active' : ''}`,
-        ),
+    for (const k of CONTENT_KEYS) {
+      const custom = this.report.applied.includes(k);
+      const tab = btn(
+        STR.content.tabs[k],
+        () => {
+          this.tab = k;
+          this.render();
+        },
+        `small content-tab ${this.tab === k ? 'active' : ''} ${custom ? 'custom' : ''}`,
       );
+      if (custom) tab.title = STR.content.customTab;
+      t.append(tab);
+    }
     t.append(
       el('span', { style: 'flex:1' }),
       el('span', {
@@ -67,6 +78,7 @@ export class ContentScreen implements Screen {
         text: contentIsCustom() ? STR.content.customActive : STR.content.shipped,
       }),
     );
+    this.renderAside();
     const b = this.body;
     b.innerHTML = '';
     switch (this.tab) {
@@ -177,6 +189,23 @@ export class ContentScreen implements Screen {
         break;
     }
     this.renderFoot();
+  }
+
+  private renderAside() {
+    const a = this.aside;
+    a.innerHTML = '';
+    const lines = setAsideLines(this.report);
+    if (!lines.length) return;
+    a.append(el('div', { class: 'dim', text: STR.content.setAsideTitle }));
+    for (const line of lines)
+      a.append(
+        el(
+          'div',
+          { class: `tip ${line.kind}` },
+          el('span', { class: 'dot' }),
+          el('span', { text: line.text }),
+        ),
+      );
   }
 
   /** Editable field for one value; the default entry supplies the type. */
@@ -316,9 +345,7 @@ export class ContentScreen implements Screen {
 
   private validate(): string[] {
     const problems = validateContent(this.draft);
-    this.problems.textContent = problems.length
-      ? problems.slice(0, 4).join(' · ') + (problems.length > 4 ? ` (+${problems.length - 4})` : '')
-      : '';
+    this.problems.textContent = problemSummary(problems, 4);
     return problems;
   }
 
@@ -365,7 +392,11 @@ export class ContentScreen implements Screen {
         () => {
           const problems = this.validate();
           if (problems.length) return;
-          if (writeContentOverrides(this.draft)) this.onReload();
+          const changed = changedTables(this.draft);
+          if (!Object.keys(changed).length) {
+            clearContentOverrides();
+            this.onReload();
+          } else if (writeContentOverrides(changed)) this.onReload();
         },
         'accent',
       ),
