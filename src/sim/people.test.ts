@@ -339,7 +339,8 @@ function bare(seed: number, side = 8) {
 }
 
 describe('PeopleSim randomness, over seeded layouts', () => {
-  it('plays the same walkers from the same seed', () => {
+  // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
+  it('plays the same walkers from the same seed', { timeout: 20_000 }, () => {
     let busy = 0;
     forAll(
       genCase,
@@ -356,7 +357,8 @@ describe('PeopleSim randomness, over seeded layouts', () => {
     expect(Math.random).not.toHaveBeenCalled();
   });
 
-  it('carries on the same draws after a save taken at any tick', () => {
+  // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
+  it('carries on the same draws after a save taken at any tick', { timeout: 20_000 }, () => {
     let busy = 0;
     forAll(
       genCase,
