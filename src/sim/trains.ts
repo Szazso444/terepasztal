@@ -312,6 +312,11 @@ export interface TickCtx {
   biomeAt: (x: number, y: number) => { speedMul: number; waterUseMul: number };
   /** speed multiplier for crossing a segment: slower climbing a hill, faster coming down */
   gradeAt?: (seg: PathSegment) => number;
+  /**
+   * The fleet captured the render poses at the start of this loop tick (`Fleet.beginFrame`), so a
+   * tick leaves prevPoses alone and the renderer interpolates across every step of the loop tick.
+   */
+  framed?: boolean;
 }
 
 export interface RetreatPlan {
@@ -1112,8 +1117,7 @@ export class Train {
     this.pathPos = 0;
     this.path = null;
     this.updatePoses();
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
-    this.prevVehiclePoses = this.vehiclePoses;
+    this.capturePoses();
     return true;
   }
 
@@ -1139,6 +1143,11 @@ export class Train {
     this.speed = 0;
     this.path = null;
     this.updatePoses();
+    this.capturePoses();
+  }
+
+  /** Take the current poses as the ones the renderer interpolates from. */
+  capturePoses() {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
     this.prevVehiclePoses = this.vehiclePoses;
   }
@@ -1312,8 +1321,7 @@ export class Train {
     this.trailCum = next.cum;
     this.reversed = !this.reversed;
     this.updatePoses();
-    this.prevVehiclePoses = this.vehiclePoses;
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.capturePoses();
   }
 
   private setPath(path: PathSegment[], map: GameMap, track: TrackGraph) {
@@ -1423,8 +1431,7 @@ export class Train {
   // ------------------------------------------------------------ tick
   /** Advance by in-game seconds. */
   tick(gdt: number, ctx: TickCtx) {
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
-    this.prevVehiclePoses = this.vehiclePoses;
+    if (!ctx.framed) this.capturePoses();
     this.stateTime += gdt;
     this.refreshModes(ctx);
     if (this.resumePending) {
