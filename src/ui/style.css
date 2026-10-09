@@ -1407,6 +1407,21 @@ body.editor #train-side {
 .tuning-label {
   font-size: 12px;
 }
+.tuning-wide {
+  grid-column: 1 / -1;
+}
+.tuning-status {
+  min-height: 15px;
+  margin: 4px 0 2px;
+}
+.tuning-presets {
+  max-height: 132px;
+  overflow-y: auto;
+}
+.tuning-presets .kv {
+  align-items: center;
+  gap: 8px;
+}
 .tag {
   font-size: 9px;
   text-transform: uppercase;

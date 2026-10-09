@@ -162,6 +162,29 @@ describe('what the save list shows', () => {
   });
 });
 
+describe('what the tuning presets say', () => {
+  const t = STR.tuning;
+  const messages = [
+    t.confirmOverwritePreset,
+    t.confirmDeletePreset,
+    t.presetSaved,
+    t.presetSaveFailed,
+    t.presetLoaded,
+    t.presetDeleted,
+  ];
+
+  it('names the preset in every question and status, and tells them apart', () => {
+    for (const m of messages) expect(m('Hilly 2')).toContain('Hilly 2');
+    expect(new Set(messages.map((m) => m('Hilly 2'))).size).toBe(messages.length);
+  });
+
+  it('labels the block, the input and every button', () => {
+    const labels = [t.presets, t.presetName, t.savePreset, t.loadPreset, t.deletePreset];
+    for (const s of [...labels, t.noPresets, t.scope]) expect(s.trim()).not.toBe('');
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+});
+
 /** Attributes and properties whose value the player reads. */
 const SHOWN = new Set(['text', 'title', 'placeholder', 'aria-label', 'textContent']);
 /** A literal that reads as English: a capital letter, then a lowercase one. */
