@@ -117,6 +117,12 @@ describe('building conventions', () => {
     expect(ROTATIONS.map((r) => r.front)).toEqual(['S', 'W', 'N', 'E']);
   });
 
+  it("has the game's ages, in the game's order", () => {
+    // a picture's age, a building's `tier` and its `lastTier` all index the game's own list
+    const game = JSON.parse(readFileSync('src/data/ages.json', 'utf8'));
+    expect(AGES.map((a) => a.id)).toEqual(game.map((a) => a.id));
+  });
+
   it('names the wall roles for each rotation', () => {
     // the lower-left wall is the S wall, the lower-right wall the E wall
     const seen = ROTATIONS.map((r) => [wallRole('S', r.index), wallRole('E', r.index)]);
