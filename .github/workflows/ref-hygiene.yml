@@ -52,10 +52,15 @@ jobs:
               echo "branch $branch already gone"
               continue
             fi
-            if ! git merge-base --is-ancestor "refs/remotes/origin/$branch" refs/remotes/origin/main; then
+            tip=$(git rev-parse "refs/remotes/origin/$branch")
+            if ! git merge-base --is-ancestor "$tip" refs/remotes/origin/main; then
               echo "::error::$branch has commits that are not in main; not deleting it"
               exit 1
             fi
-            git push origin --delete "refs/heads/$branch"
+            # Leased to the tip just checked, so a push in between is never deleted with it.
+            if ! git push --force-with-lease="refs/heads/$branch:$tip" origin ":refs/heads/$branch"; then
+              echo "::error::$branch moved since it was checked against main; not deleting it"
+              exit 1
+            fi
             echo "deleted $branch"
           done
