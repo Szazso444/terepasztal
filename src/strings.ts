@@ -1,10 +1,16 @@
-/** Age names by index (0 steam, 1 diesel, 2 electric); ids match `src/data/ages.json`. */
+/**
+ * Age names by index (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper); ids match
+ * `src/data/ages.json`.
+ */
 const AGE_NAMES: Record<string, string> = {
   steam: 'Steam Age',
   diesel: 'Diesel Age',
   electric: 'Electric Age',
+  nuclear: 'Nuclear Age',
+  magnetic: 'Magnetic Age',
+  hyper: 'Hyper Age',
 };
-const AGE_ORDER = ['steam', 'diesel', 'electric'];
+export const AGE_ORDER = ['steam', 'diesel', 'electric', 'nuclear', 'magnetic', 'hyper'];
 function ageLabel(t: number) {
   return AGE_NAMES[AGE_ORDER[t]] ?? `age ${t}`;
 }
@@ -28,6 +34,7 @@ export const STR = {
     dayToggleHint: 'Toggle the day and night cycle',
     ageUp: (t: number) =>
       `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
+    signalGuide: 'Signals?',
   },
   ages: {
     title: 'Ages',
@@ -125,6 +132,7 @@ export const STR = {
     nextAge: 'Next age',
     giveResources: '+200 resources',
     spawnContract: 'Spawn contract',
+    offer: (name: string) => `Offer: ${name}`,
     depthOverlay: 'Depth-sort overlay',
     zoom: 'Zoom',
     camera: 'Camera',
@@ -185,6 +193,8 @@ export const STR = {
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelCap: 'Level cap for the current age',
+    levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
+    upgradingNow: 'Already being upgraded',
     cost: (v: string) => `Cost ${v}`,
     harvest: (n: number, cargo: string, f: number) =>
       `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
@@ -299,6 +309,16 @@ export const STR = {
     bridgeHint:
       'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
   },
+  upgrade: {
+    /** `hours` is rounded up to a whole hour; with none left the time is not shown. */
+    button: (level: number, cost: string, hours: number) =>
+      `Upgrade to level ${level} · ${cost}${hours > 0 ? ` · ${Math.ceil(hours)} h` : ''}`,
+    /** Rounded up and never "0 h left": an upgrade still running has at least an hour to go. */
+    running: (level: number, hours: number) =>
+      `Upgrading to level ${level} · ${Math.max(1, Math.ceil(hours))} h left`,
+    closed: 'Closed while it is upgraded',
+    done: (name: string, level: number) => `${name} is now level ${level}`,
+  },
   notice: {
     title: 'Notices',
     none: 'All quiet.',
@@ -393,6 +413,8 @@ export const STR = {
     refuelAll: 'Refuel all · 2×',
     refuelAllHint: 'Fill every train at twice the resource cost',
     refuelViewHint: 'Fill trains in view at twice the resource cost',
+    refuelled: 'Trains refuelled to full at twice the resource cost',
+    refuelShort: 'Not enough fuel and water to fill this group; no resources spent',
   },
   depot: {
     title: 'Depot',
@@ -800,6 +822,44 @@ export const STR = {
     noSave: 'No save found',
     badSave: 'Save data unreadable',
   },
+  saves: {
+    autosave: 'Autosave',
+    detail: (day: number, age: string, money: string) => `Day ${day} · ${age} · ${money}`,
+    /** How long ago a save was written, from milliseconds; whole units, rounded down. */
+    ago: (ms: number) => {
+      if (!(ms >= 60_000)) return 'just now';
+      const min = Math.floor(ms / 60_000);
+      if (min < 60) return `${min} min ago`;
+      const h = Math.floor(min / 60);
+      if (h < 24) return `${h} h ago`;
+      const d = Math.floor(h / 24);
+      return `${d} day${d === 1 ? '' : 's'} ago`;
+    },
+    saved: (ago: string) => `saved ${ago}`,
+    autosaveStatus: (on: boolean, ago: string | null) =>
+      !on
+        ? 'Autosave off'
+        : ago
+          ? `Autosave on · last saved ${ago}`
+          : 'Autosave on · not saved yet',
+    confirmOverwrite: (n: string) => `A save named "${n}" already exists. Replace it?`,
+    olderFormat: (v: number) => `format v${v}, upgraded on load`,
+    newerFormat: (v: number) => `format v${v}, from a newer game`,
+    refused: {
+      json: 'That text is not save data.',
+      notSave: 'That is not a Terepasztal save.',
+      damaged: 'That save is damaged and was not loaded. Your game is unchanged.',
+    },
+    /** `refund` is the text of `saves.refund`; with nothing refunded its sentence is left out. */
+    pruned: (list: string, refund: string) =>
+      `This save held things the game no longer has. Removed: ${list}.${refund ? ` Refunded ${refund}.` : ''}`,
+    /** Money and tickets given back; `money` is already formatted, empty when none. */
+    refund: (money: string, tickets: number) => {
+      const t = `${tickets} ticket${tickets === 1 ? '' : 's'}`;
+      if (tickets <= 0) return money;
+      return money ? `${money} and ${t}` : t;
+    },
+  },
   menu: {
     tagline: 'Rails, contracts and the luck of the draw',
     continue: 'Continue',
@@ -852,7 +912,7 @@ export const STR = {
     size: 'Size',
     description: 'Description shown in the level list',
     start: 'Player start',
-    startTier: 'Start age (0 steam, 1 diesel, 2 electric)',
+    startTier: 'Start age (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper)',
     brush: 'Terrain brush',
     brushHint:
       'Pick a terrain in the toolbar, drag to paint. Painting clears anything built on the tile.',
@@ -878,6 +938,19 @@ export const STR = {
     newGameOnly: 'new map',
     note: 'Changes apply immediately and are stored with the save. Map values apply to the next generated map.',
     reset: 'Reset to defaults',
+    scope:
+      'Changes apply to the game in play and are saved with it. Each change also becomes your starting point for new games; loading a saved game never changes it.',
+    presets: 'Presets',
+    presetName: 'Preset name',
+    savePreset: 'Save as preset',
+    loadPreset: 'Load',
+    deletePreset: 'Delete',
+    noPresets: 'No presets yet. Save the current rules under a name to keep them.',
+    confirmOverwritePreset: (n: string) => `A preset named "${n}" already exists. Replace it?`,
+    confirmDeletePreset: (n: string) => `Delete the preset "${n}"?`,
+    presetSaved: (n: string) => `Preset "${n}" saved`,
+    presetLoaded: (n: string) => `Preset "${n}" loaded`,
+    presetDeleted: (n: string) => `Preset "${n}" deleted`,
   },
   content: {
     title: 'Content editor',
