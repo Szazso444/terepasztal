@@ -46,4 +46,4 @@ jobs:
       - name: Formatting
         id: format
         if: ${{ !cancelled() }}
-        run: npx prettier --check "src/**/*.{ts,json,css}" index.html
+        run: npm run format:check

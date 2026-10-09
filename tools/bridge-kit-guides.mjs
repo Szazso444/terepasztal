@@ -31,10 +31,7 @@ const TOP = [222, 222, 222],
   LINE = [40, 40, 40];
 
 /** Tile offset (x, y) at height z (game px) to canvas px. */
-const at = (x, y, z) => [
-  CENTRE.x + SCALE * (x - y) * 32,
-  CENTRE.y + SCALE * ((x + y) * 16 - z),
-];
+const at = (x, y, z) => [CENTRE.x + SCALE * (x - y) * 32, CENTRE.y + SCALE * ((x + y) * 16 - z)];
 
 function canvas() {
   return new PNG({ width: SIZE, height: SIZE });
@@ -54,7 +51,11 @@ function fill(png, pts, rgb, alpha = 255) {
     }
     xs.sort((a, b) => a - b);
     for (let k = 0; k + 1 < xs.length; k += 2)
-      for (let x = Math.max(0, Math.ceil(xs[k] - 0.5)); x <= Math.min(SIZE - 1, xs[k + 1] - 0.5); x++) {
+      for (
+        let x = Math.max(0, Math.ceil(xs[k] - 0.5));
+        x <= Math.min(SIZE - 1, xs[k + 1] - 0.5);
+        x++
+      ) {
         const o = (y * SIZE + x) * 4;
         png.data[o] = rgb[0];
         png.data[o + 1] = rgb[1];

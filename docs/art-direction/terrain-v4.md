@@ -19,16 +19,16 @@ and the existing connected railway fixture. Terrain/biome/variant hashes are unc
 
 ## Suggested detail budget
 
-| Surface | Detail | Treatment |
-| --- | --- | --- |
-| Grass | Medium (recommended) | Visible clusters, directional blades, small colour changes and quiet gaps. |
-| Forest floor | Medium-high | Dark leaf litter, roots and grass islands; keep contrast below tree silhouettes. |
-| Sand/desert | Low | Fine grains, occasional stones; no large repeating dune stamp. |
-| Water | Low-medium | Broad colour, sparse directional ripples; shoreline carries most detail. |
-| Taiga | Medium | Short cool grass, needles and pale soil patches, matching existing trees. |
-| Swamp | Medium | Irregular damp soil/grass islands; reeds supply vertical detail. |
-| Rock | High locally | Readable facets and cracks concentrated in outcrops, quieter gaps. |
-| Hills/mountains | Medium ground, high rock | Grass follows the slope; silhouette, ridge and exposed rock express height. |
+| Surface         | Detail                   | Treatment                                                                        |
+| --------------- | ------------------------ | -------------------------------------------------------------------------------- |
+| Grass           | Medium (recommended)     | Visible clusters, directional blades, small colour changes and quiet gaps.       |
+| Forest floor    | Medium-high              | Dark leaf litter, roots and grass islands; keep contrast below tree silhouettes. |
+| Sand/desert     | Low                      | Fine grains, occasional stones; no large repeating dune stamp.                   |
+| Water           | Low-medium               | Broad colour, sparse directional ripples; shoreline carries most detail.         |
+| Taiga           | Medium                   | Short cool grass, needles and pale soil patches, matching existing trees.        |
+| Swamp           | Medium                   | Irregular damp soil/grass islands; reeds supply vertical detail.                 |
+| Rock            | High locally             | Readable facets and cracks concentrated in outcrops, quieter gaps.               |
+| Hills/mountains | Medium ground, high rock | Grass follows the slope; silhouette, ridge and exposed rock express height.      |
 
 The three screenshots use 48%, 78% and 100% source-texture contribution and roughly
 5, 8 and 10 tuft clusters per tile. These are preview art controls, not player settings

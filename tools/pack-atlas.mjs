@@ -30,10 +30,20 @@ import { PNG } from 'pngjs';
 function parseArgs(argv) {
   const [group, ...rest] = argv;
   if (!group || group.startsWith('--')) {
-    console.error('usage: node tools/pack-atlas.mjs <group> [--src DIR] [--out DIR] [--prefix P] [--max N] [--pad N] [--no-trim]');
+    console.error(
+      'usage: node tools/pack-atlas.mjs <group> [--src DIR] [--out DIR] [--prefix P] [--max N] [--pad N] [--no-trim]',
+    );
     process.exit(2);
   }
-  const opts = { group, src: `art-src/${group}`, out: 'public/assets', prefix: `${group}/`, max: 1024, pad: 1, trim: true };
+  const opts = {
+    group,
+    src: `art-src/${group}`,
+    out: 'public/assets',
+    prefix: `${group}/`,
+    max: 1024,
+    pad: 1,
+    trim: true,
+  };
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     if (a === '--no-trim') opts.trim = false;
@@ -106,7 +116,9 @@ function main() {
 
   const metaPath = join(src, 'atlas.json');
   const meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, 'utf8')) : {};
-  const files = readdirSync(src).filter((f) => f.toLowerCase().endsWith('.png')).sort();
+  const files = readdirSync(src)
+    .filter((f) => f.toLowerCase().endsWith('.png'))
+    .sort();
   if (!files.length) throw new Error(`no PNG frames in ${opts.src}`);
 
   const items = [];
@@ -139,7 +151,11 @@ function main() {
   const jsonPath = join(resolve(opts.out), `${opts.group}.json`);
   writeFileSync(pngPath, PNG.sync.write(sheet));
   // Sorted keys so a re-pack of unchanged art produces an unchanged file.
-  const ordered = Object.fromEntries(Object.keys(frames).sort().map((k) => [k, frames[k]]));
+  const ordered = Object.fromEntries(
+    Object.keys(frames)
+      .sort()
+      .map((k) => [k, frames[k]]),
+  );
   const table = meta.partial === true ? { partial: true, frames: ordered } : { frames: ordered };
   writeFileSync(jsonPath, `${JSON.stringify(table, null, 2)}\n`);
 

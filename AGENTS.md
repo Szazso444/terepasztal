@@ -11,17 +11,17 @@ The project is run like a product team in which agents hold the roles. Nine role
 `.claude/agents/<role>.md` (the frontmatter is Claude Code's; the body is plain instructions any
 agent can follow):
 
-| Role | Owns | Does |
-| --- | --- | --- |
-| Core | process, instructions, `CORE.md`, `.github`, repository hygiene | turns a request into tasks, delegates, gates, merges into `develop`, audits |
-| Engine | `src/engine`, `src/main.ts`, `src/game.ts`, `src/intent.ts`, build config | loop, camera, input, iso math, atlas loader, audio, RNG, the integration hub |
-| World | `src/world` | map generation, tiles, regions, elevation, levels, track graph and geometry, pathfinding |
-| Gameplay | `src/sim`, `src/data`, `src/gacha` | simulation, trains and traffic, economy, content, tuning, save format |
-| Rendering | `src/render` | world, trains, overview and effects renderers |
-| UI/UX | `src/ui`, `src/editor`, `src/strings.ts`, `index.html` | panels, screens, editor, every player-facing string |
-| Art | `src/art`, art tools, `assets`, `public/assets`, art direction | sprite generators, the asset pipeline, atlases |
-| QA | nothing; read-only | reviews each change against its issue and these rules |
-| Verification | `src/testing`, write access to every test file | deterministic tests for the math and logic |
+| Role         | Owns                                                                      | Does                                                                                     |
+| ------------ | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Core         | process, instructions, `CORE.md`, `.github`, repository hygiene           | turns a request into tasks, delegates, gates, merges into `develop`, audits              |
+| Engine       | `src/engine`, `src/main.ts`, `src/game.ts`, `src/intent.ts`, build config | loop, camera, input, iso math, atlas loader, audio, RNG, the integration hub             |
+| World        | `src/world`                                                               | map generation, tiles, regions, elevation, levels, track graph and geometry, pathfinding |
+| Gameplay     | `src/sim`, `src/data`, `src/gacha`                                        | simulation, trains and traffic, economy, content, tuning, save format                    |
+| Rendering    | `src/render`                                                              | world, trains, overview and effects renderers                                            |
+| UI/UX        | `src/ui`, `src/editor`, `src/strings.ts`, `index.html`                    | panels, screens, editor, every player-facing string                                      |
+| Art          | `src/art`, art tools, `assets`, `public/assets`, art direction            | sprite generators, the asset pipeline, atlases                                           |
+| QA           | nothing; read-only                                                        | reviews each change against its issue and these rules                                    |
+| Verification | `src/testing`, write access to every test file                            | deterministic tests for the math and logic                                               |
 
 - `tools/agents/ownership.json` maps every tracked path to exactly one role; CI fails a pull
   request into `develop` that changes a path outside its role (`node tools/agents/scope.mjs`).
@@ -39,21 +39,25 @@ agent can follow):
   check it, and a failure that persists becomes an issue with its log and acceptance criteria.
 - When anything is unclear or contradicts this file, a spec or an earlier decision, ask the author
   before acting, with the options and a recommendation. Do not resolve it by guessing.
+- Agents never push to `main` or `develop` and never merge into `main`. The author's own work may
+  go straight to `develop`; an agent working with the author's account still opens a pull request.
+  `.githooks/pre-push` refuses an agent's push to either branch (the session hooks turn it on with
+  `git config core.hooksPath .githooks`), and Claude Code's settings deny it too.
 
 ## Commands
 
 ```
 npm run dev        # http://localhost:5173
 npm test           # vitest, once (npm run test:watch to stay in it)
-npm run typecheck  # tsc --noEmit
-npm run lint       # eslint src
+npm run typecheck  # tsc over src, then tsconfig.node.json over the build configs and tools/*.ts
+npm run lint       # eslint over src, tools and the build configs
 npm run build      # typecheck + production bundle
-npm run format     # prettier over src and index.html
+npm run format     # prettier over src, tools, the docs and the agent files (format:check to check)
 node tools/agents/scope.mjs check --role <role>   # changed paths stay in the role's scope
 ```
 
-CI runs typecheck, lint, tests, build and `prettier --check` on every pull request and on pushes
-to `develop` and `main`, plus the scope check on pull requests into `develop`. Run them before
+CI runs typecheck, lint, tests, build and `npm run format:check` on every pull request and on
+pushes to `develop` and `main`, plus the scope check on pull requests into `develop`. Run them before
 pushing; the formatting gate in particular fails on code that was never formatted.
 
 The dev server carries the running game across its own reloads (`src/engine/devsession.ts`), so an
@@ -120,8 +124,10 @@ the generator instead of replacing it, and `resolution` (1 to 8) is texels per w
 (`src/engine/atlas.ts`). `tools/pack-atlas.mjs` writes it; `docs/mcp-setup.md` section 6 has the
 camera, facing and anchor rules for producing the frames in Blender.
 
-**User-facing text lives in `src/strings.ts`.** It is kept flat so a translation table can mirror
-it. Do not hardcode a string in a panel or in the simulation.
+**User-facing text lives in `src/strings.ts`.** The game is in English only, for now. Strings are
+kept flat so a translation table can mirror them later. Do not hardcode a string in a panel or in
+the simulation. The one exception is tuning: each rule's English label, group and hint live in
+`RULE_META` in `src/sim/rules.ts`, next to its range.
 
 **Content is data.** Locomotives, wagons, cargo, stations, contracts, decor, buildings, crafting
 and gacha are JSON in `src/data`, and the in-client content editor can override any table from
@@ -172,5 +178,5 @@ standard for deterministic tests is `docs/process/verification.md`; the ownershi
 - TypeScript strict, ESM, Prettier (`singleQuote`, `printWidth` 100, trailing commas). Match the
   surrounding code's naming, comment density and idiom.
 - Commit subjects are `Area: outcome` in plain words (`Pathfinding: ties break toward the
-  straight leg`); one logical change per commit.
+straight leg`); one logical change per commit.
 - Docs say what is true now. A doc that no longer matches the code is a bug in the doc.

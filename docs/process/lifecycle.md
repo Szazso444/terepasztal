@@ -6,11 +6,11 @@ reads the section for its own step, not the whole file.
 
 ## Branches
 
-| Branch | Purpose | Who writes | Who merges into it |
-| --- | --- | --- | --- |
-| `main` | released game | nobody directly | the author, from `develop` |
-| `develop` | integration; every task lands here first and is validated here | nobody directly | Core, through a pull request |
-| `<role>/<issue>-<slug>` | one task, one role, one pull request | the role's agent | — |
+| Branch                  | Purpose                                                        | Who writes       | Who merges into it           |
+| ----------------------- | -------------------------------------------------------------- | ---------------- | ---------------------------- |
+| `main`                  | released game                                                  | nobody directly  | the author, from `develop`   |
+| `develop`               | integration; every task lands here first and is validated here | nobody directly  | Core, through a pull request |
+| `<role>/<issue>-<slug>` | one task, one role, one pull request                           | the role's agent | —                            |
 
 - A task branch starts from the current `develop` and lives in its own git worktree under
   `.claude/worktrees/<role>-<issue>-<slug>` (ignored by git), so parallel tasks never share a

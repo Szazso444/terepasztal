@@ -2,10 +2,11 @@
 
 Speak a prompt, watch the change land in the running game, no branch and no pull request.
 
-> Since the agent organisation (`docs/process/lifecycle.md`), the live loop is how a person works
-> inside one task: on its `<role>/<issue>-<slug>` branch, in its worktree, committing as often as
-> below. What it produces still reaches `develop` through a pull request and the same gates as
-> any agent's work; nothing is committed straight to `develop` or `main`.
+> Since the agent organisation (`docs/process/lifecycle.md`), the live loop is the author's own
+> path: the author may commit and push their own work straight to `develop`. An agent never uses
+> it, even one running under the author's account: its work goes through a task branch and a pull
+> request, and `.githooks/pre-push` refuses an agent's push to `develop` or `main`. Only the author
+> releases into `main`.
 
 ## The one decision that makes it work
 

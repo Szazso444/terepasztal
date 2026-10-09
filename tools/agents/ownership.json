@@ -31,7 +31,8 @@
       "docs/phase-decisions.md",
       "docs/phase-spec-review.md",
       "tools/agents/**",
-      "scratchpad/**"
+      "scratchpad/**",
+      ".githooks/**"
     ],
     "engine": [
       "src/engine/**",
@@ -46,7 +47,8 @@
       "vitest.config.ts",
       "eslint.config.js",
       ".prettierrc",
-      "tools/traffic-dev.ts"
+      "tools/traffic-dev.ts",
+      "tsconfig.node.json"
     ],
     "world": ["src/world/**", "docs/rail-inclines.md"],
     "gameplay": [
@@ -100,6 +102,8 @@
     "vitest.config.ts",
     "eslint.config.js",
     ".prettierrc",
-    "src/world/mapgen.test.ts"
+    "src/world/mapgen.test.ts",
+    ".githooks/**",
+    "tsconfig.node.json"
   ]
 }

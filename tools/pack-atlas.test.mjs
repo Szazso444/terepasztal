@@ -29,7 +29,9 @@ function frame(name, w, h, box, rgb) {
 const run = (...args) => execFileSync(process.execPath, [script, ...args], { encoding: 'utf8' });
 const readAtlas = (group) => JSON.parse(readFileSync(join(out(), `${group}.json`), 'utf8'));
 const readSheet = (group) => PNG.sync.read(readFileSync(join(out(), `${group}.png`)));
-const pixel = (png, x, y) => [...png.data.subarray((y * png.width + x) * 4, (y * png.width + x) * 4 + 4)];
+const pixel = (png, x, y) => [
+  ...png.data.subarray((y * png.width + x) * 4, (y * png.width + x) * 4 + 4),
+];
 
 beforeAll(() => {
   dir = mkdtempSync(join(tmpdir(), 'pack-atlas-'));
@@ -96,8 +98,7 @@ describe('pack-atlas', () => {
       for (let j = i + 1; j < list.length; j++) {
         const a = list[i];
         const b = list[j];
-        const apart =
-          a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+        const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
         expect(apart).toBe(true);
       }
   });
@@ -127,7 +128,10 @@ describe('pack-atlas', () => {
     writeFileSync(join(partial, 'atlas.json'), JSON.stringify({ partial: true }));
     writeFileSync(join(partial, 'one.png'), readFileSync(join(src(), 'wide.png')));
     run('structures', '--src', partial, '--out', out());
-    expect(readAtlas('structures')).toMatchObject({ partial: true, frames: { 'structures/one': {} } });
+    expect(readAtlas('structures')).toMatchObject({
+      partial: true,
+      frames: { 'structures/one': {} },
+    });
   });
 
   it('re-packs unchanged art to the same bytes', () => {

@@ -24,6 +24,7 @@ You write only these paths (`tools/agents/ownership.json`):
 - `package.json`
 - `package-lock.json`
 - `tsconfig.json`
+- `tsconfig.node.json`
 - `vite.config.ts`
 - `vitest.config.ts`
 - `eslint.config.js`

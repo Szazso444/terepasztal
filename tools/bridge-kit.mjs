@@ -94,7 +94,11 @@ function buildV2(dir) {
     if (/-(deck|pad)/.test(name)) [anchor, geo] = [at(0, 0, 0), { thickness: KIT.deck }];
     else if (/-rail-/.test(name)) [anchor, geo] = [at(0, 0, 0), { height: KIT.parapet[material] }];
     else if (/-(arch|truss|brace)-/.test(name)) {
-      const height = name.includes('arch') ? KIT.arch : name.includes('truss') ? KIT.truss : KIT.brace;
+      const height = name.includes('arch')
+        ? KIT.arch
+        : name.includes('truss')
+          ? KIT.truss
+          : KIT.brace;
       anchor = at(0, 0, -KIT.deck - height);
       geo = name.includes('brace') ? { height, along: 1 } : { height };
     } else {
