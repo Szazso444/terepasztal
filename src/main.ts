@@ -11,6 +11,13 @@ import { Terrain } from './world/tiles';
 import type { SupplyMode } from './sim/supply';
 import { armDevReload, takeDevSession, reportDevTraffic } from './engine/devsession';
 
+declare global {
+  interface Window {
+    /** The running game, for the debug panel and the browser scripts in `scratchpad/`. */
+    game: Game;
+  }
+}
+
 function paramsFromRules(size = rules.mapSize): MapGenParams {
   return {
     w: size,
@@ -113,7 +120,7 @@ async function boot() {
   }
 
   const game = new Game(spec, supply);
-  (window as unknown as { game: Game }).game = game;
+  window.game = game;
   await game.init();
   if (start === 'editor' && level) game.enterEditor(level);
   else if (save) game.applySave(save);

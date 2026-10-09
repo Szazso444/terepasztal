@@ -1,4 +1,4 @@
-import { bridgeCapacity } from '../sim/bridges';
+import { bridgeCapacity, BRIDGE_SLOW_SHARE } from '../sim/bridges';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder } from '../sim/build';
@@ -75,7 +75,7 @@ export class BuildingPanel {
       return;
     }
     const def = buildingDef(b.id);
-    this.title.textContent = `${def.name} · Level ${buildingLevel(b)}`;
+    this.title.textContent = STR.building.title(def.name, buildingLevel(b));
     const body = this.body;
     body.innerHTML = '';
     const row = (k: string, v: string, cls = '') =>
@@ -87,11 +87,12 @@ export class BuildingPanel {
       );
     const st = BuildingPanel.status(b, this.stock);
     body.append(el('div', { class: 'flavor', text: def.flavor }));
-    if (def.bridge)
+    const capacity = bridgeCapacity(b);
+    if (capacity !== null)
       body.append(
         row(
-          'Bridge capacity',
-          `${bridgeCapacity(b)} t · half speed above ${Math.round(bridgeCapacity(b)! * 0.8)} t`,
+          STR.building.bridgeCapacity,
+          STR.building.bridgeLimit(capacity, Math.round(capacity * BRIDGE_SLOW_SHARE)),
         ),
       );
     if (!def.bridge) {
@@ -108,17 +109,12 @@ export class BuildingPanel {
       for (const k of Object.keys(def.recipe.out))
         body.append(row(STR.building.inStock(cargoName(k)), String(Math.floor(this.stock.get(k)))));
     } else {
-      body.append(
-        el('p', {
-          class: 'dim',
-          text: 'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
-        }),
-      );
+      body.append(el('p', { class: 'dim', text: STR.building.bridgeHint }));
     }
     const cost = buildingUpgradeCost(b);
     if (cost) {
       const upgrade = btn(
-        `Upgrade · ${fmtCost(cost)}`,
+        STR.building.upgrade(fmtCost(cost)),
         () => {
           this.builder.upgradeBuilding(b);
           this.render();
