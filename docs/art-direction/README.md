@@ -11,8 +11,12 @@ into refined electrical infrastructure while its countryside and town identity r
 
 Prepared against repository commit `5b66cbd`. This is a proposed visual implementation guide,
 not a gameplay change or an instruction to replace the existing simulation. The current game
-has Steam, Diesel and Electric ages; high-speed is a later electric visual stage. Nuclear,
-maglev and hyperloop are future concepts, not existing asset requirements.
+has Steam, Diesel and Electric ages; high-speed is a later electric visual stage. For buildings,
+the current decision is
+[the building eras art package](../superpowers/specs/2026-10-02-building-eras-art-package-design.md):
+six ages (Nuclear, Magnetic and Hyper after Electric) and four rotations per building (audit
+A46). Until its pictures are in the game, the structures generator draws each building's other
+rotations as placeholder turns of today's picture (`_r1` to `_r3`, `src/art/structures.ts`).
 
 ## How to use this pack
 
