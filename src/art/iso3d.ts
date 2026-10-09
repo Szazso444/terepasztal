@@ -2,6 +2,7 @@ import { HALF_W, HALF_H } from '../engine/iso';
 import { hash2 } from '../engine/rng';
 import { mix, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
+import { lightX } from './view';
 
 export interface P2 {
   x: number;
@@ -43,6 +44,8 @@ export function fillPoly(b: PixelBuf, pts: P2[], color: (x: number, y: number) =
 
 /** Light direction in tile space (unit-ish). Faces whose normal points this way are brightest. */
 const LIGHT = { x: -0.6, y: -0.8 };
+/** The same light seen in a mirror: tile x and y trade places when screen x flips. */
+const MIRRORED_LIGHT = { x: LIGHT.y, y: LIGHT.x };
 /** Viewer direction: faces with normal . VIEW > 0 are visible. */
 const VIEW = { x: 1, y: 1 };
 
@@ -73,6 +76,8 @@ export interface PrismOpts {
 /** Draw a box (or a pitched-roof box) aligned to an arbitrary tile-space heading. */
 export function drawPrism(b: PixelBuf, o: PrismOpts) {
   const z0 = o.z0 ?? 0;
+  const mirror = lightX() < 0;
+  const L = mirror ? MIRRORED_LIGHT : LIGHT;
   const seed = o.seed ?? 1;
   const ca = Math.cos(o.angle);
   const sa = Math.sin(o.angle);
@@ -106,7 +111,7 @@ export function drawPrism(b: PixelBuf, o: PrismOpts) {
     ny /= nl;
     const vis = nx * VIEW.x + ny * VIEW.y;
     if (vis <= 0.01) continue;
-    const light = 0.62 + 0.38 * Math.max(0, (nx * LIGHT.x + ny * LIGHT.y + 1) / 2);
+    const light = 0.62 + 0.38 * Math.max(0, (nx * L.x + ny * L.y + 1) / 2);
     const pts = [
       proj(o.ox, o.oy, p.x, p.y, z0),
       proj(o.ox, o.oy, q.x, q.y, z0),
@@ -162,7 +167,7 @@ export function drawPrism(b: PixelBuf, o: PrismOpts) {
       // normal of the slope in tile space is the outward side normal
       const nx = si === 0 ? -sa : sa;
       const ny = si === 0 ? ca : -ca;
-      const light = 0.7 + 0.3 * Math.max(0, (nx * LIGHT.x + ny * LIGHT.y + 1) / 2);
+      const light = 0.7 + 0.3 * Math.max(0, (nx * L.x + ny * L.y + 1) / 2);
       const colours = r.map((c) => shade(mix(r[0], c, 0.22), light));
       const seams = r.map((c) => shade(mix(r[0], c, 0.22), light * 0.94));
       fillPoly(b, pts, (x, y) => {
@@ -184,7 +189,10 @@ export function drawPrism(b: PixelBuf, o: PrismOpts) {
     for (let i = 0; i < pts.length; i++) {
       const a = pts[i];
       const c = pts[(i + 1) % pts.length];
-      const lit = corners[i].x + corners[(i + 1) % 4].x < o.cx * 2;
+      // the upper-left edge: the -x edge, or the -y one in a picture drawn for a mirror
+      const lit = mirror
+        ? corners[i].y + corners[(i + 1) % 4].y < o.cy * 2
+        : corners[i].x + corners[(i + 1) % 4].x < o.cx * 2;
       b.line(a.x, a.y, c.x, c.y, shade(o.top[0], lit ? 1.14 : 0.84));
     }
   }
@@ -212,7 +220,7 @@ export function drawCylinder(
     const nx = (x + 0.5 - c.x) / rx;
     if (Math.abs(nx) > 1) continue;
     const dy = Math.sqrt(1 - nx * nx) * ry;
-    const light = 0.55 + 0.45 * (1 - (nx + 1) / 2) * (0.7 + 0.3 * hash2(x, seed, seed));
+    const light = 0.55 + 0.45 * (1 - (lightX() * nx + 1) / 2) * (0.7 + 0.3 * hash2(x, seed, seed));
     for (let y = Math.floor(c.y - h + dy); y <= Math.ceil(c.y + dy); y++) {
       const n = hash2(x >> 1, y >> 1, seed);
       const idx = Math.min(side.length - 1, Math.floor(n * side.length));
