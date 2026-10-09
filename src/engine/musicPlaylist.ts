@@ -21,6 +21,9 @@ export const AGE_MUSIC: Record<string, readonly string[]> = {
   steam: [],
   diesel: [],
   electric: [],
+  nuclear: [],
+  magnetic: [],
+  hyper: [],
 };
 
 /** The set an age plays: its own when it lists files, `MUSIC_TRACKS` otherwise. */

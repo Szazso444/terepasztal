@@ -63,6 +63,15 @@ describe('music by age', () => {
     expect(musicForAge('toString')).toBe(MUSIC_TRACKS);
   });
 
+  it('lists nuclear, magnetic and hyper, which play the default set while they list no files', () => {
+    for (const id of ['nuclear', 'magnetic', 'hyper']) {
+      expect(Object.hasOwn(AGE_MUSIC, id), id).toBe(true);
+      const own = AGE_MUSIC[id];
+      expect(musicForAge(id)).toBe(own.length ? own : MUSIC_TRACKS);
+      expect(musicForAge(id, { ...AGE_MUSIC, [id]: [] })).toBe(MUSIC_TRACKS);
+    }
+  });
+
   it("keeps every age's files in its own directory, and every listed file exists", () => {
     for (const [id, set] of Object.entries(AGE_MUSIC))
       for (const file of set) expect(file.startsWith(`/assets/audio/music/${id}/`)).toBe(true);
