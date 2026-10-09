@@ -142,6 +142,9 @@ export const STR = {
     junctions: 'Junctions',
     tile: 'Tile',
     regenerate: 'New map (seed)',
+    /** toast for an error the game loop caught; shown once per distinct message */
+    frameError: (message: string) =>
+      `Something went wrong: ${message}. The game keeps running; the browser console has details.`,
   },
   traffic: {
     pullingAside: 'Pulling aside on a reserved escape route',
