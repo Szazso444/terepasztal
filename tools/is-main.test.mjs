@@ -129,11 +129,13 @@ describe('a tool on the command line', () => {
 describe('the tools', () => {
   it('leave it to isMain whether they were started as the command', () => {
     // a tool that looks at process.argv[1] itself is a tool that can get this wrong again. The two
-    // bridge tools ask only how the typed path ends, which a link does not change
+    // bridge tools ask only how the typed path ends, which a link does not change. tools/agents
+    // holds the organisation's scope check: not a picture tool, and a gate file of its own
     const allowed = ['is-main.mjs', 'bridge-kit.mjs', 'bridge-kit-guides.mjs'];
     const tools = readdirSync('tools', { recursive: true })
       .map((f) => String(f).replaceAll('\\', '/'))
       .filter((f) => f.endsWith('.mjs') && !f.endsWith('.test.mjs'))
+      .filter((f) => !f.startsWith('agents/'))
       .filter((f) => !allowed.includes(f));
     expect(tools.length).toBeGreaterThan(5);
     const offenders = tools.filter((f) =>
