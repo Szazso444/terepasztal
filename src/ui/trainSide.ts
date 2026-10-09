@@ -22,7 +22,11 @@ export class TrainSide {
   onLocate: ((t: Train) => void) | null = null;
   onRefuel: ((trains: Train[]) => void) | null = null;
   private shownTrains: Train[] = [];
-  private refuelButton = btn('Refuel all · 2×', () => this.onRefuel?.(this.shownTrains), 'small');
+  private refuelButton = btn(
+    STR.trainSide.refuelAll,
+    () => this.onRefuel?.(this.shownTrains),
+    'small',
+  );
   private lastKey = '';
   private hovered: Train | null = null;
 
@@ -71,9 +75,7 @@ export class TrainSide {
   update(trains: Train[], all: boolean, force = false) {
     this.shownTrains = trains.slice();
     this.refuelButton.disabled = !trains.length;
-    this.refuelButton.title = all
-      ? 'Fill every train at twice the resource cost'
-      : 'Fill trains in view at twice the resource cost';
+    this.refuelButton.title = all ? STR.trainSide.refuelAllHint : STR.trainSide.refuelViewHint;
     const key =
       (all ? 'A' : 'V') +
       trains

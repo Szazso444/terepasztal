@@ -89,6 +89,29 @@ export const STR = {
     dead: 'Dead: no power plant on this network',
     signal: 'Red while the guarded tile is occupied',
   },
+  signals: {
+    /** compass words by rotation: 0 north, 1 east, 2 south, 3 west */
+    directions: ['north', 'east', 'south', 'west'] as readonly string[],
+    blockHint:
+      'Guards the track ahead until the next same-direction signal. Select to highlight the block.',
+    governs: (dir: string) => `Governs trains travelling ${dir}`,
+    governsTravel: (dir: string) => `Governs travel ${dir}`,
+    rotate: 'Rotate direction',
+    guideButton: 'Semaphore guide',
+    guideTitle: 'Semaphores and track blocks',
+    guidePlace:
+      'Place semaphores on the rails from Utility. Press R before placement, or use Rotate direction after selecting a post. The direction shown in the selection panel is the direction of travel it governs.',
+    guideDiagram:
+      '→ A  ═════ protected block ═════  → B  ═════ next block ═════  → C\n       one train at a time                  another train may follow',
+    guideAspects:
+      'Red / horizontal arm: stop before entering the protected block. Yellow: this block is clear, but the next is occupied. Green / raised arm: both are clear. A block ends at the next signal facing the same travel direction.',
+    guideFence:
+      'Fence a stretch by putting posts at its entry and exit. Leave at least your longest train plus one tile between posts. Select a signal to highlight its protected stretch. Posts work in Automatic mode as soon as you place them; unsignalled track still uses traffic reservations.',
+    guideJunction:
+      'Before a junction, put the entry signal on its approach and exit signals beyond each branch, leaving room for a complete train. Junction reservations still require a clear exit, so a green signal alone cannot force a train into a blocked crossing.',
+    guideSingleLine:
+      'On a two-way single line, put signals on both approaches to a passing loop, facing into the shared line. Keep the loop long enough for the entire train. Token working in Settings allows one train per shared plain section. Signals regulate entry; they cannot create a missing siding.',
+  },
   hints: {
     camera: 'WASD / arrows / middle-drag: pan   wheel: zoom   M: overview   `: debug',
   },
@@ -166,6 +189,7 @@ export const STR = {
     harvest: (n: number, cargo: string, f: number) =>
       `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
     refund: (v: string) => `Refund ${v}`,
+    free: 'free',
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
   },
@@ -188,9 +212,11 @@ export const STR = {
     cycleHint: '1-9 or Tab: switch item · Esc: close',
     typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
     bridges: 'Bridges',
+    bridgeDesc: (capacity: number, flavor: string) => `${capacity} t capacity. ${flavor}`,
     place: {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
+      bridgePlatform: 'On water. Lay track on the platform after building it.',
       station: 'On a buildable tile with track touching one side; that track becomes the platform.',
       depot:
         'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
@@ -364,6 +390,9 @@ export const STR = {
     hoverHint: 'Hover a train to trace its path',
     onContract: (n: string, dest: string) => `on contract: ${n} → ${dest}`,
     queuedContracts: (n: number) => `+${n} queued`,
+    refuelAll: 'Refuel all · 2×',
+    refuelAllHint: 'Fill every train at twice the resource cost',
+    refuelViewHint: 'Fill trains in view at twice the resource cost',
   },
   depot: {
     title: 'Depot',
@@ -594,6 +623,36 @@ export const STR = {
     stats: (recipes: number, crafts: number, failures: number) =>
       `${recipes} recipes · ${crafts} built · ${failures} failed`,
     resources: 'Stockpile',
+    filterLabel: 'Vehicle type',
+    filter: {
+      all: 'All railcraft',
+      steam: 'Steam',
+      diesel: 'Diesel',
+      electric: 'Electric',
+      bulk: 'Bulk wagons',
+      mineral: 'Mineral wagons',
+      liquid: 'Tank wagons',
+      people: 'Passenger coaches',
+    } as Record<string, string>,
+    search: 'Find model…',
+    searchLabel: 'Find model',
+    inspect: 'Inspect 3D',
+  },
+  vehicle: {
+    body: (size: string, tiles: number, plan: string) =>
+      `${size} · ${tiles} tile${tiles === 1 ? '' : 's'} · ${plan}`,
+    weight: (t: number) => `${t} t empty`,
+    loco: (type: string, speed: number, haul: number) =>
+      `${type} · ${speed.toFixed(2)} tiles/s · ${haul} t haul`,
+    bogie: (bogies: number, wheels: number) => `${bogies} × ${wheels} wheels`,
+    axles: '2 axles · 4 wheels',
+    fuel: (cap: number, perTile?: number) => `Fuel ${cap} · ${perTile} per tile`,
+    water: (cap: number, perTile?: number) => `Water ${cap} · ${perTile} per tile`,
+    wagon: (carries: string, units: number) => `${carries} · ${units} units`,
+    angle: 'Viewing angle',
+    pause: 'Pause rotation',
+    rotate: 'Rotate',
+    hint: 'Rotating isometric preview · drag to turn',
   },
   roster: {
     help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, which high-speed track requires. Trains are put together in the Depot.',
@@ -626,6 +685,7 @@ export const STR = {
     count: (n: number) => `${n} items`,
     empty: 'Nothing matches.',
     copies: (n: number) => `${n} copies`,
+    lv: (l: number) => `Lv ${l}`,
     levelUp: 'Level up',
     levelUpHint: 'Consumes one spare unassigned copy of this model',
     leveled: (name: string, level: number) => `${name} is now Lv ${level}`,
@@ -702,6 +762,7 @@ export const STR = {
     loadSlot: 'Load',
     deleteSlot: 'Delete',
     noSlots: 'No named saves yet. Type a name and press Save as.',
+    slotMeta: (day: number, version: number) => `day ${day} · v${version}`,
     slotSaved: (n: string) => `Saved as "${n}"`,
     saveAsTitle: 'Save game as',
     saveAsHint: 'Name for this save. An existing save with the same name is replaced.',
@@ -748,6 +809,7 @@ export const STR = {
     modified: '(modified)',
     levels: 'Levels',
     noLevels: 'No saved levels yet. Create one below or import a level.',
+    levelStations: (n: number) => `${n} stations`,
     play: 'Play',
     edit: 'Edit',
     delete: 'Delete',
@@ -776,6 +838,12 @@ export const STR = {
         'Kiln, grinder and refinery make coal, iron and oil from the stockpile; diesels burn oil; warehouses top up fuel from the stockpile.',
       full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
     } as Record<string, string>,
+  },
+  prompt: {
+    ok: 'OK',
+    keep: 'Keep',
+    yes: 'Yes',
+    no: 'No',
   },
   editor: {
     terrainDesc: 'Paint this terrain. Anything built on the tile is cleared.',
@@ -864,6 +932,7 @@ export const STR = {
     mass: 'Mass',
     acceleration: 'Acceleration',
     pulling: (n: number) => `${n} pulling`,
+    locoLevel: (name: string, level: number) => `${name} Lv${level}`,
     standby: 'Standby',
     engage: 'Engage',
     perTile: 'Use per tile',
@@ -938,6 +1007,8 @@ export const STR = {
     producedDay: 'Received / last week',
     consumedDay: 'Spent / last week',
     netDay: 'Net / last week',
+    historyNote: 'Last 7 days; history starts when this game is loaded.',
+    netTitle: (net: string) => `${net} net in the last 7 days`,
     info: {
       water: 'From Water Pumps. Steam engines drink it; the refinery and power plant use it.',
       wheat: 'From farms. A Windmill turns each wheat into at least 5 food.',
@@ -1041,6 +1112,8 @@ export const STR = {
       `Housing: ${res} / ${cap}${building ? ` (+${building} under construction)` : ''}`,
     growth: (perWeek: number) => `Growth: +${perWeek} people / week`,
     noGrowth: 'Growth: none (no food)',
+    growthCapped: 'Growth stops at available housing capacity; food is required',
+    capacityHint: 'Build or upgrade Houses to increase capacity',
     nextHouse: (at: number, mul: number) =>
       `Next house at ${at} residents${mul > 1 ? ` (traffic ×${mul})` : ''}`,
     fullHousing: 'Housing full; build or upgrade Houses to provide room',
@@ -1061,6 +1134,7 @@ export const STR = {
     growthIn: (days: number) => `in ${days} day${days === 1 ? '' : 's'}`,
     growthNoFood: 'no food, nobody moves in',
     full: 'full',
+    makeRoom: 'Upgrade this House to make room for more residents',
     autoUpgrade: (days: number) => `Upgrade to provide more homes (construction: ${days} days)`,
     upgrade: (l: number, cost: string) => `Enlarge to level ${l} (${cost})`,
     maxed: 'Largest house',
