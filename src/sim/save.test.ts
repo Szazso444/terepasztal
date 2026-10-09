@@ -36,6 +36,7 @@ import { TradeDesk } from './trade';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap } from '../world/mapgen';
 import { levelFromMap, mapFromLevel } from '../world/level';
 import { RegionState } from '../world/regions';
+import type { GameMap } from '../world/tiles';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
@@ -336,8 +337,64 @@ describe('v4 to v5', () => {
     seed: 77,
     params: { ...DEFAULT_MAP_PARAMS, w, h },
   });
+  /** The map `generatedWorld(w, h)` builds. */
+  const generatedMap = (w: number, h: number) => generateMap(77, { ...DEFAULT_MAP_PARAMS, w, h });
 
-  it('owns only the chunk map generation starts in, on the grid the world builds', () => {
+  /** A v4 file of `world` whose economy stored `tier`, or no tier at all. */
+  const v4 = (world: WorldSpec, tier?: unknown): SaveGame => {
+    const economy: Record<string, unknown> = { money: 1000, tickets: 0, granted: [] };
+    if (tier !== undefined) economy.tier = tier;
+    return { ...oldestSave(), version: 4, world, economy: economy as SaveGame['economy'] };
+  };
+  /**
+   * The chunks the load code owned in a file without `regions`, on the map the world builds: the
+   * start chunk (`new RegionState(map, 0)`), then `applyTier` with the tier reached.
+   */
+  const ownedOnLoad = (map: GameMap, tier: number) => {
+    const regions = new RegionState(map, 0);
+    regions.applyTier(tier);
+    return regions.unlocked;
+  };
+
+  it('owns what the load code gave the tier, on the default map', () => {
+    const world = generatedWorld(DEFAULT_MAP_PARAMS.w, DEFAULT_MAP_PARAMS.h);
+    const map = generatedMap(DEFAULT_MAP_PARAMS.w, DEFAULT_MAP_PARAMS.h);
+    const one = migrate(v4(world, 1)).regions!;
+    expect(one).toEqual(ownedOnLoad(map, 1));
+    expect(one.filter((owned) => owned)).toHaveLength(9);
+    const zero = migrate(v4(world, 0)).regions!;
+    expect(zero).toEqual(ownedOnLoad(map, 0));
+    expect(zero).toEqual([false, false, false, false, true, false, false, false, false]);
+  });
+
+  it('owns the rings of the tier the file stored, before the step from v8 caps it', () => {
+    // On a grid with a middle chunk, regionTierMap's rings are whole chunks from the start, so
+    // the load code's result holds for every tier, the ones past the Electric Age included.
+    for (const [w, h] of [
+      [96, 96],
+      [160, 160],
+      [224, 96],
+      [32, 224],
+    ]) {
+      const world = generatedWorld(w, h);
+      const map = generatedMap(w, h);
+      for (const tier of [0, 1, 2, 3, 4])
+        expect(migrate(v4(world, tier)).regions, `${w}×${h} tier ${tier}`).toEqual(
+          ownedOnLoad(map, tier),
+        );
+    }
+  });
+
+  it('reads a missing or unusable tier as 0', () => {
+    const world = generatedWorld(160, 160);
+    const startOnly = ownedOnLoad(generatedMap(160, 160), 0);
+    for (const tier of [undefined, -2, Number.NaN, '3', null])
+      expect(migrate(v4(world, tier)).regions, String(tier)).toEqual(startOnly);
+    const noEconomy = { ...v4(world), economy: undefined } as unknown as SaveGame;
+    expect(runStep(4, noEconomy).regions).toEqual(startOnly);
+  });
+
+  it('owns only the chunk map generation starts in at tier 0, on the grid the world builds', () => {
     for (const world of [
       generatedWorld(96, 96),
       generatedWorld(160, 64),

@@ -234,16 +234,31 @@ function worldSize(world: unknown): { w: number; h: number } {
     h: dim(isRecord(size) ? size.h : undefined, DEFAULT_MAP_PARAMS.h),
   };
 }
+/** The tier a file stored, uncapped (the step from v8 caps it later): 0 when absent. */
+function storedTier(economy: unknown): number {
+  const tier = isRecord(economy) ? economy.tier : undefined;
+  return typeof tier === 'number' && tier > 0 ? tier : 0;
+}
 /**
- * Chunk ownership before chunks were bought: one entry per chunk of the map the world builds
- * (`emptyMap`'s grid), and only the chunk map generation starts in owned.
+ * Chunk ownership before chunks were bought, as the load code rebuilt it from the tier reached:
+ * one entry per chunk of the map the world builds (`emptyMap`'s grid), owned when it lies within
+ * `tier` rings of the chunk map generation starts in. A chunk's ring is its Chebyshev distance
+ * from the start chunk in whole chunks, `regionTierMap`'s rule, so tier 0 owns the start chunk
+ * alone.
  */
-function startChunkOnly(world: unknown): boolean[] {
+function chunksWithinTier(world: unknown, tier: number): boolean[] {
   const { w, h } = worldSize(world);
   const regionsX = Math.max(1, Math.ceil(w / CHUNK_TILES));
   const regionsY = Math.max(1, Math.ceil(h / CHUNK_TILES));
-  const start = Math.floor((regionsY - 1) / 2) * regionsX + Math.floor((regionsX - 1) / 2);
-  return Array.from({ length: regionsX * regionsY }, (_, i) => i === start);
+  const startX = Math.floor((regionsX - 1) / 2);
+  const startY = Math.floor((regionsY - 1) / 2);
+  return Array.from({ length: regionsX * regionsY }, (_, i) => {
+    const ring = Math.max(
+      Math.abs((i % regionsX) - startX),
+      Math.abs(Math.floor(i / regionsX) - startY),
+    );
+    return ring <= tier;
+  });
 }
 /**
  * The names route modes had when a train's `mode` arrived, and the names they have now. A train
@@ -289,8 +304,8 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 4,
-    note: 'owned chunks reduced to the start chunk',
-    run: (j) => (j.regions = j.regions ?? startChunkOnly(j.world)),
+    note: 'owned chunks rebuilt from the tier reached: every chunk within that many rings of the start chunk',
+    run: (j) => (j.regions = j.regions ?? chunksWithinTier(j.world, storedTier(j.economy))),
   },
   {
     from: 5,
