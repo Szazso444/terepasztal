@@ -1,7 +1,10 @@
 /**
  * Content store. Every data table ships as JSON in this folder; the in-client content editor can
- * replace any table with an edited copy stored in localStorage. Overrides are applied once, here,
- * at module load so every consumer sees one consistent bundle for the session. Editing content
+ * replace any table with an edited copy stored in localStorage. Each stored table carries a stamp
+ * of the shipped table it was made from and applies only while that table is unchanged, so an
+ * override never masks a later shipped change. A stale or malformed table is set aside with a
+ * console warning and the shipped one loads in its place. Overrides are applied once, here, at
+ * module load so every consumer sees one consistent bundle for the session. Editing content
  * therefore takes effect on the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
@@ -385,45 +388,161 @@ export const CONTENT_KEYS: ContentKey[] = [
 ];
 
 export const CONTENT_KEY = 'terepasztal.content';
+/** Shape of the stored overrides: `{ format, tables: { <key>: { stamp, data } } }`. */
+const CONTENT_FORMAT = 2;
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
 }
 
+function isObj(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
 /**
- * Pristine copy of the shipped data. The full production-chain mode ships as a second data set
- * (`*_full.json`, every entry marked `supply: "full"`) appended to the plain tables.
+ * Each table as its JSON files compose it, before anything is derived from it. The full
+ * production-chain mode ships as a second data set (`*_full.json`, every entry marked
+ * `supply: "full"`) appended to the plain tables.
  */
-export const DEFAULT_CONTENT: ContentBundle = {
-  locomotives: clone(locoJson) as unknown as LocoDef[],
-  wagons: clone(wagonJson) as unknown as WagonDef[],
-  cargo: clone([...cargoJson, ...cargoFullJson]) as unknown as CargoDef[],
-  stations: {
-    levels: clone(stationJson.levels) as unknown as StationLevels,
-    defs: clone([...stationJson.defs, ...stationFullJson]) as unknown as StationDef[],
-  },
-  contracts: clone(contractJson) as ContractConfig,
-  decor: clone(decorJson) as unknown as DecorDef[],
-  buildings: clone([...buildingJson, ...buildingFullJson]) as unknown as BuildingDef[],
-  gacha: clone(gachaJson) as GachaConfig,
-  track: clone(trackJson) as unknown as TrackConfig,
-  crafting: clone(craftingJson) as unknown as CraftingConfig,
-  houses: clone(houseJson) as unknown as HouseConfig,
+const SHIPPED: Record<ContentKey, () => unknown> = {
+  locomotives: () => locoJson,
+  wagons: () => wagonJson,
+  cargo: () => [...cargoJson, ...cargoFullJson],
+  stations: () => ({
+    levels: stationJson.levels,
+    defs: [...stationJson.defs, ...stationFullJson],
+  }),
+  contracts: () => contractJson,
+  decor: () => decorJson,
+  buildings: () => [...buildingJson, ...buildingFullJson],
+  gacha: () => gachaJson,
+  track: () => trackJson,
+  crafting: () => craftingJson,
+  houses: () => houseJson,
 };
 
-export function readContentOverrides(): Partial<ContentBundle> | null {
+/** Pristine copy of the shipped data; the wagon accept lists are filled in at load, below. */
+export const DEFAULT_CONTENT = Object.fromEntries(
+  CONTENT_KEYS.map((k) => [k, clone(SHIPPED[k]())]),
+) as unknown as ContentBundle;
+
+/** JSON with every object's keys sorted, so equal data always reads the same. */
+function canonical(v: unknown): string {
+  const sortKeys = (_k: string, x: unknown) => {
+    if (!isObj(x)) return x;
+    const keys = Object.keys(x).sort();
+    return Object.fromEntries(keys.map((k) => [k, x[k]]));
+  };
+  return JSON.stringify(v, sortKeys) ?? 'undefined';
+}
+
+/** 32-bit FNV-1a over the string's code units, as eight hex digits. */
+function fnv1a(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16).padStart(8, '0');
+}
+
+/** A table without the fields `finalize` derives at load (wagon accept lists). */
+function withoutDerived(key: ContentKey, data: unknown): unknown {
+  if (key !== 'wagons' || !Array.isArray(data)) return data;
+  return data.map((w: unknown) => {
+    if (!isObj(w)) return w;
+    const rest = { ...w };
+    delete rest.accepts;
+    return rest;
+  });
+}
+
+/** Stamps of the shipped tables, taken from the JSON files themselves, never from a live bundle. */
+const STAMP = Object.fromEntries(
+  CONTENT_KEYS.map((k) => [k, fnv1a(canonical(SHIPPED[k]()))]),
+) as Record<ContentKey, string>;
+/** The shipped tables in the form edited tables are compared against. */
+const SHIPPED_PLAIN = Object.fromEntries(
+  CONTENT_KEYS.map((k) => [k, canonical(withoutDerived(k, SHIPPED[k]()))]),
+) as Record<ContentKey, string>;
+
+/**
+ * Stamp of a shipped table: a hash of it as its JSON files compose it. An override is stored with
+ * the stamp of the table it was made from and applies only while the shipped table still has it,
+ * so an override never masks a later change to the shipped data.
+ */
+export function contentStamp(key: ContentKey): string {
+  return STAMP[key];
+}
+
+function sameAsShipped(key: ContentKey, data: unknown) {
+  return canonical(withoutDerived(key, data)) === SHIPPED_PLAIN[key];
+}
+
+/** The tables of `b` that differ from the shipped ones (derived fields aside). */
+export function changedTables(b: ContentBundle): Partial<ContentBundle> {
+  const out: Partial<Record<ContentKey, unknown>> = {};
+  for (const k of CONTENT_KEYS) if (b[k] !== undefined && !sameAsShipped(k, b[k])) out[k] = b[k];
+  return out as Partial<ContentBundle>;
+}
+
+/** What became of the stored overrides when the content loaded. */
+export interface ContentOverrideReport {
+  /** stored tables this session runs on */
+  applied: ContentKey[];
+  /**
+   * stored tables this session ignores: `stale` when the shipped table changed since the override
+   * was made (or the override predates stamps), `invalid` when it is malformed or fails validation
+   */
+  setAside: { key: ContentKey; reason: 'stale' | 'invalid'; problems: string[] }[];
+}
+
+function readStored(): string | null {
   try {
-    const raw = localStorage.getItem(CONTENT_KEY);
-    if (!raw) return null;
-    const j = JSON.parse(raw) as Partial<ContentBundle>;
-    return j && typeof j === 'object' ? j : null;
+    return localStorage.getItem(CONTENT_KEY);
   } catch {
     return null;
   }
 }
-export function writeContentOverrides(bundle: Partial<ContentBundle>) {
+function parseStored(raw: string | null): Record<string, unknown> | null {
+  if (!raw) return null;
   try {
-    localStorage.setItem(CONTENT_KEY, JSON.stringify(bundle));
+    const j: unknown = JSON.parse(raw);
+    return isObj(j) ? j : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The tables the editor stored, applied or not (`contentOverrideReport` says which applied). */
+export function readContentOverrides(): Partial<ContentBundle> | null {
+  const s = parseStored(readStored());
+  if (!s) return null;
+  const legacy = s.format === undefined;
+  const tables = legacy ? s : isObj(s.tables) ? s.tables : {};
+  const out: Partial<Record<ContentKey, unknown>> = {};
+  for (const k of CONTENT_KEYS) {
+    const e = tables[k];
+    const data = legacy ? e : isObj(e) ? e.data : undefined;
+    if (data !== undefined) out[k] = data;
+  }
+  return Object.keys(out).length ? (out as Partial<ContentBundle>) : null;
+}
+/**
+ * Store edited tables, each with the stamp of the shipped table it was made from. Tables equal to
+ * the shipped ones are left out, and the stored set is replaced as a whole: a table not given is
+ * no longer overridden. Takes effect on the next load.
+ */
+export function writeContentOverrides(tables: Partial<ContentBundle>) {
+  const stored: Partial<Record<ContentKey, { stamp: string; data: unknown }>> = {};
+  for (const k of CONTENT_KEYS) {
+    const data = tables[k];
+    if (data !== undefined && !sameAsShipped(k, data)) stored[k] = { stamp: STAMP[k], data };
+  }
+  try {
+    if (Object.keys(stored).length)
+      localStorage.setItem(CONTENT_KEY, JSON.stringify({ format: CONTENT_FORMAT, tables: stored }));
+    else localStorage.removeItem(CONTENT_KEY);
     return true;
   } catch {
     return false;
@@ -437,91 +556,213 @@ export function clearContentOverrides() {
   }
 }
 
-/** Problems that would break the game if this bundle were applied. Empty means valid. */
-export function validateContent(b: ContentBundle): string[] {
-  const out: string[] = [];
-  const ids = (list: { id: string }[], what: string) => {
-    const seen = new Set<string>();
-    for (const x of list) {
-      if (!x.id || !/^[a-z0-9_]+$/.test(x.id)) out.push(`${what}: bad id "${x.id}"`);
-      if (seen.has(x.id)) out.push(`${what}: duplicate id "${x.id}"`);
-      seen.add(x.id);
+const ID = /^[a-z0-9_]+$/;
+const CARGO_CLASSES: string[] = ['liquid', 'mineral', 'bulk', 'people'];
+const LOCO_TYPES: string[] = ['steam', 'diesel', 'electric'];
+/** station level tables with one value per level */
+const PER_LEVEL = [
+  'capacity',
+  'loadRate',
+  'platforms',
+  'production',
+  'upgradeCostMul',
+  'spriteByLevel',
+  'crew',
+] as const;
+const STATION_LEVELS = 5;
+const RARITY_NUMBERS = ['weight', 'rewardMul', 'ticketMul', 'amountMul', 'deadlineMul'] as const;
+
+function isCost(c: unknown) {
+  return isObj(c) && Object.values(c).every((v) => typeof v === 'number' && v >= 0);
+}
+/** The entries of a list table; a problem when it is not a list of objects. */
+function rows<T>(v: unknown, what: string, out: string[]): T[] {
+  if (!Array.isArray(v)) {
+    out.push(`${what}: must be a list`);
+    return [];
+  }
+  const ok = v.filter(isObj);
+  if (ok.length < v.length) out.push(`${what}: every entry must be an object`);
+  return ok as T[];
+}
+function checkIds(list: { id: unknown }[], what: string, out: string[]) {
+  const seen = new Set<unknown>();
+  for (const x of list) {
+    if (typeof x.id !== 'string' || !ID.test(x.id)) out.push(`${what}: bad id "${String(x.id)}"`);
+    if (seen.has(x.id)) out.push(`${what}: duplicate id "${String(x.id)}"`);
+    seen.add(x.id);
+  }
+}
+/** Ids a list table offers the tables that refer to it (none when it is malformed). */
+function idSet(v: unknown) {
+  const out = new Set<string>();
+  if (Array.isArray(v)) for (const x of v) if (isObj(x) && typeof x.id === 'string') out.add(x.id);
+  return out;
+}
+
+interface Refs {
+  cargo: Set<string>;
+  locos: Set<string>;
+  wagons: Set<string>;
+}
+/**
+ * One table's checks. They take the table as unknown data and never assume its shape. A problem
+ * about a reference belongs to the table that holds it, and tables refer only to tables before
+ * them in `CONTENT_KEYS`.
+ */
+type Check = (t: unknown, ref: Refs, out: string[]) => void;
+
+const CHECKS: Record<ContentKey, Check> = {
+  locomotives(t, _ref, out) {
+    const locos = rows<LocoDef>(t, 'locomotives', out);
+    checkIds(locos, 'locomotive', out);
+    for (const l of locos) {
+      if (!LOCO_TYPES.includes(l.type)) out.push(`locomotive ${l.id}: bad type "${l.type}"`);
+      if (l.type !== 'electric' && !(l.fuelCap && l.fuelPerTile))
+        out.push(`locomotive ${l.id}: needs fuelCap and fuelPerTile`);
+      if (l.type === 'steam' && !(l.waterCap && l.waterPerTile))
+        out.push(`locomotive ${l.id}: needs waterCap and waterPerTile`);
+      if (l.type === 'electric' && !l.powerPerTile)
+        out.push(`locomotive ${l.id}: needs powerPerTile`);
     }
-    return seen;
-  };
-  const cargo = ids(b.cargo, 'cargo');
-  const locos = ids(b.locomotives, 'locomotive');
-  const wagons = ids(b.wagons, 'wagon');
-  ids(b.stations.defs, 'station');
-  ids(b.decor, 'decor');
-  ids(b.contracts.templates, 'contract template');
-  for (const w of b.wagons)
-    if (!['liquid', 'mineral', 'bulk', 'people'].includes(w.carries))
-      out.push(`wagon ${w.id}: bad class "${w.carries}"`);
-  ids(b.buildings, 'building');
-  const isCost = (c: unknown) =>
-    !!c &&
-    typeof c === 'object' &&
-    Object.values(c as Cost).every((v) => typeof v === 'number' && v >= 0);
-  for (const s of b.stations.defs)
-    if (!isCost(s.cost)) out.push(`station ${s.id}: cost must be a resource map`);
-  for (const d of b.decor)
-    if (!isCost(d.cost)) out.push(`decor ${d.id}: cost must be a resource map`);
-  for (const bd of b.buildings) {
-    if (!Number.isFinite(bd.perWeek) || bd.perWeek < 0)
-      out.push(`building ${bd.id}: perWeek must be non-negative`);
-    if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
-    for (const k of Object.keys(bd.recipe.in))
-      if (!cargo.has(k)) out.push(`building ${bd.id}: unknown input "${k}"`);
-    for (const k of Object.keys(bd.recipe.out))
-      if (!cargo.has(k) && k !== 'power') out.push(`building ${bd.id}: unknown output "${k}"`);
-  }
-  for (const [k, p] of Object.entries(b.track.pieces))
-    if (!isCost(p.cost)) out.push(`track ${k}: cost must be a resource map`);
-  for (const l of b.locomotives) {
-    if (!['steam', 'diesel', 'electric'].includes(l.type))
-      out.push(`locomotive ${l.id}: bad type "${l.type}"`);
-    if (l.type !== 'electric' && !(l.fuelCap && l.fuelPerTile))
-      out.push(`locomotive ${l.id}: needs fuelCap and fuelPerTile`);
-    if (l.type === 'steam' && !(l.waterCap && l.waterPerTile))
-      out.push(`locomotive ${l.id}: needs waterCap and waterPerTile`);
-    if (l.type === 'electric' && !l.powerPerTile)
-      out.push(`locomotive ${l.id}: needs powerPerTile`);
-  }
-  for (const s of b.stations.defs) {
-    for (const c of s.accepts) if (!cargo.has(c)) out.push(`station ${s.id}: unknown cargo "${c}"`);
-    for (const p of s.produces)
-      if (!cargo.has(p.cargo)) out.push(`station ${s.id}: unknown cargo "${p.cargo}"`);
-  }
-  for (const bn of b.gacha.banners) {
-    if (!bn.pool.length) out.push(`banner ${bn.id}: empty pool`);
-    for (const id of bn.pool)
-      if (!locos.has(id) && !wagons.has(id)) out.push(`banner ${bn.id}: unknown item "${id}"`);
-  }
-  if (!b.locomotives.some((l) => l.starter)) out.push('no starter locomotive');
-  if (!b.wagons.some((w) => w.starter)) out.push('no starter wagon');
-  const lv = b.stations.levels;
-  for (const k of [
-    'capacity',
-    'loadRate',
-    'platforms',
-    'production',
-    'upgradeCostMul',
-    'spriteByLevel',
-  ] as const)
-    if (!Array.isArray(lv[k]) || lv[k].length !== 5)
-      out.push(`station levels: ${k} needs 5 values`);
-  const rateSum = Object.values(b.gacha.rates).reduce((a, v) => a + v, 0);
-  if (Math.abs(rateSum - 1) > 0.01)
-    out.push(`gacha rates sum to ${rateSum.toFixed(2)}, expected 1`);
-  for (const k of Object.keys(DEFAULT_CONTENT.track.pieces))
-    if (!b.track.pieces[k]) out.push(`track: missing piece "${k}"`);
-  const cr = b.crafting;
-  const kinds: CraftKind[] = ['loco', 'wagon'];
-  const sizes: VehicleSize[] = ['small', 'medium', 'large'];
-  const craftRarities: CraftRarity[] = ['N', 'R', 'SR', 'SSR', 'L'];
-  if (!cr || typeof cr !== 'object') out.push('crafting: missing configuration');
-  else {
+    if (!locos.some((l) => l.starter)) out.push('no starter locomotive');
+  },
+  wagons(t, _ref, out) {
+    const wagons = rows<WagonDef>(t, 'wagons', out);
+    checkIds(wagons, 'wagon', out);
+    for (const w of wagons)
+      if (!CARGO_CLASSES.includes(w.carries)) out.push(`wagon ${w.id}: bad class "${w.carries}"`);
+    if (!wagons.some((w) => w.starter)) out.push('no starter wagon');
+  },
+  cargo(t, _ref, out) {
+    checkIds(rows<CargoDef>(t, 'cargo', out), 'cargo', out);
+  },
+  stations(t, ref, out) {
+    if (!isObj(t)) {
+      out.push('stations: needs levels and defs');
+      return;
+    }
+    const defs = rows<StationDef>(t.defs, 'stations', out);
+    checkIds(defs, 'station', out);
+    for (const s of defs) {
+      if (!isCost(s.cost)) out.push(`station ${s.id}: cost must be a resource map`);
+      if (!Array.isArray(s.accepts)) out.push(`station ${s.id}: accepts must be a list`);
+      else
+        for (const c of s.accepts)
+          if (!ref.cargo.has(c)) out.push(`station ${s.id}: unknown cargo "${c}"`);
+      if (!Array.isArray(s.produces)) out.push(`station ${s.id}: produces must be a list`);
+      else
+        for (const p of s.produces as unknown[]) {
+          const c = isObj(p) ? p.cargo : undefined;
+          if (typeof c !== 'string' || !ref.cargo.has(c))
+            out.push(`station ${s.id}: unknown cargo "${String(c)}"`);
+        }
+    }
+    const lv = t.levels;
+    if (!isObj(lv)) {
+      out.push('station levels: missing');
+      return;
+    }
+    for (const k of PER_LEVEL) {
+      const v = lv[k];
+      if (
+        !Array.isArray(v) ||
+        v.length !== STATION_LEVELS ||
+        v.some((x) => typeof x !== 'number' || !Number.isFinite(x))
+      )
+        out.push(`station levels: ${k} needs ${STATION_LEVELS} values`);
+    }
+    const caps = lv.maxLevelByTier;
+    if (
+      !Array.isArray(caps) ||
+      !caps.length ||
+      caps.some((x) => !Number.isInteger(x) || x < 1 || x > STATION_LEVELS)
+    )
+      out.push(`station levels: maxLevelByTier needs a level from 1 to ${STATION_LEVELS} per age`);
+  },
+  contracts(t, _ref, out) {
+    if (!isObj(t)) {
+      out.push('contracts: missing configuration');
+      return;
+    }
+    checkIds(
+      rows<ContractTemplate>(t.templates, 'contract templates', out),
+      'contract template',
+      out,
+    );
+    const rarities = rows<ContractRarityDef>(t.rarities, 'contract rarities', out);
+    checkIds(rarities, 'contract rarity', out);
+    for (const r of rarities)
+      for (const k of RARITY_NUMBERS)
+        if (!(typeof r[k] === 'number' && r[k] >= 0))
+          out.push(`contract rarity ${r.id}: ${k} must be >= 0`);
+  },
+  decor(t, _ref, out) {
+    const decor = rows<DecorDef>(t, 'decor', out);
+    checkIds(decor, 'decor', out);
+    for (const d of decor)
+      if (!isCost(d.cost)) out.push(`decor ${d.id}: cost must be a resource map`);
+  },
+  buildings(t, ref, out) {
+    const list = rows<BuildingDef>(t, 'buildings', out);
+    checkIds(list, 'building', out);
+    for (const bd of list) {
+      if (!Number.isFinite(bd.perWeek) || bd.perWeek < 0)
+        out.push(`building ${bd.id}: perWeek must be non-negative`);
+      if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
+      const r: unknown = bd.recipe;
+      if (!isObj(r) || !isObj(r.in) || !isObj(r.out)) {
+        out.push(`building ${bd.id}: recipe needs in and out`);
+        continue;
+      }
+      for (const k of Object.keys(r.in))
+        if (!ref.cargo.has(k)) out.push(`building ${bd.id}: unknown input "${k}"`);
+      for (const k of Object.keys(r.out))
+        if (!ref.cargo.has(k) && k !== 'power')
+          out.push(`building ${bd.id}: unknown output "${k}"`);
+    }
+  },
+  gacha(t, ref, out) {
+    if (!isObj(t)) {
+      out.push('gacha: missing configuration');
+      return;
+    }
+    for (const bn of rows<Banner>(t.banners, 'gacha banners', out)) {
+      if (!Array.isArray(bn.pool) || !bn.pool.length) out.push(`banner ${bn.id}: empty pool`);
+      else
+        for (const id of bn.pool)
+          if (!ref.locos.has(id) && !ref.wagons.has(id))
+            out.push(`banner ${bn.id}: unknown item "${id}"`);
+    }
+    const rates = isObj(t.rates) ? Object.values(t.rates) : null;
+    if (!rates || rates.some((v) => typeof v !== 'number'))
+      out.push('gacha: rates must be numbers');
+    else {
+      const rateSum = (rates as number[]).reduce((a, v) => a + v, 0);
+      if (!(Math.abs(rateSum - 1) <= 0.01))
+        out.push(`gacha rates sum to ${rateSum.toFixed(2)}, expected 1`);
+    }
+  },
+  track(t, _ref, out) {
+    const pieces = isObj(t) ? t.pieces : undefined;
+    if (!isObj(pieces)) {
+      out.push('track: missing pieces');
+      return;
+    }
+    for (const [k, p] of Object.entries(pieces))
+      if (!isObj(p) || !isCost(p.cost)) out.push(`track ${k}: cost must be a resource map`);
+    for (const k of Object.keys(trackJson.pieces))
+      if (!pieces[k]) out.push(`track: missing piece "${k}"`);
+  },
+  crafting(t, ref, out) {
+    if (!isObj(t)) {
+      out.push('crafting: missing configuration');
+      return;
+    }
+    const cr = t as unknown as CraftingConfig;
+    const kinds: CraftKind[] = ['loco', 'wagon'];
+    const sizes: VehicleSize[] = ['small', 'medium', 'large'];
+    const craftRarities: CraftRarity[] = ['N', 'R', 'SR', 'SSR', 'L'];
     for (const k of kinds) {
       const prices = cr.unlockPrice?.[k];
       if (!Array.isArray(prices) || prices.length < 3 || prices.some((p) => !(p >= 0)))
@@ -542,41 +783,178 @@ export function validateContent(b: ContentBundle): string[] {
     if (!(cr.failRefund >= 0 && cr.failRefund <= 1))
       out.push('crafting: failRefund must be between 0 and 1');
     if (!isCost(cr.ownedRefund)) out.push('crafting: ownedRefund must be a resource map');
-    for (const k of Object.keys(cr.ownedRefund ?? {}))
-      if (!cargo.has(k)) out.push(`crafting: unknown refund resource "${k}"`);
-  }
-  const hc = b.houses;
-  if (
-    !hc ||
-    !Array.isArray(hc.capacity) ||
-    !hc.capacity.length ||
-    hc.capacity.some((v) => !(v > 0))
-  )
-    out.push('houses: capacity needs one positive value per level');
-  else if (!Array.isArray(hc.upgradeCost) || hc.upgradeCost.length < hc.capacity.length - 1)
-    out.push('houses: upgradeCost needs one entry per level above the first');
-  else {
-    for (const c of hc.upgradeCost)
-      if (!isCost(c)) out.push('houses: upgradeCost must be resource maps');
-    for (const k of ['constructionDays', 'growthDays', 'autoUpgradeDays'] as const)
-      if (!(hc[k] > 0)) out.push(`houses: ${k} must be positive`);
-  }
-  return out;
+    else
+      for (const k of Object.keys(cr.ownedRefund))
+        if (!ref.cargo.has(k)) out.push(`crafting: unknown refund resource "${k}"`);
+  },
+  houses(t, _ref, out) {
+    const hc = t as HouseConfig;
+    if (
+      !isObj(hc) ||
+      !Array.isArray(hc.capacity) ||
+      !hc.capacity.length ||
+      hc.capacity.some((v) => !(v > 0))
+    )
+      out.push('houses: capacity needs one positive value per level');
+    else if (!Array.isArray(hc.upgradeCost) || hc.upgradeCost.length < hc.capacity.length - 1)
+      out.push('houses: upgradeCost needs one entry per level above the first');
+    else {
+      for (const c of hc.upgradeCost)
+        if (!isCost(c)) out.push('houses: upgradeCost must be resource maps');
+      for (const k of ['constructionDays', 'growthDays', 'autoUpgradeDays'] as const)
+        if (!(hc[k] > 0)) out.push(`houses: ${k} must be positive`);
+    }
+  },
+};
+
+function failure(e: unknown) {
+  return e instanceof Error ? e.message : String(e);
 }
 
-function buildContent(): ContentBundle {
-  const base = clone(DEFAULT_CONTENT);
-  const o = readContentOverrides();
-  if (!o) return base;
-  const merged: ContentBundle = { ...base };
-  for (const k of CONTENT_KEYS)
-    if (o[k] !== undefined) (merged as unknown as Record<string, unknown>)[k] = o[k];
-  const problems = validateContent(merged);
-  if (problems.length) {
-    console.warn('[content] stored overrides rejected:', problems);
-    return base;
+/** Problems per table; a check that throws becomes a problem of its own table. */
+function tableProblems(b: ContentBundle): Map<ContentKey, string[]> {
+  const ref: Refs = {
+    cargo: idSet(b.cargo),
+    locos: idSet(b.locomotives),
+    wagons: idSet(b.wagons),
+  };
+  const found = new Map<ContentKey, string[]>();
+  for (const k of CONTENT_KEYS) {
+    const out: string[] = [];
+    try {
+      CHECKS[k](b[k], ref, out);
+    } catch (e) {
+      out.push(`${k}: check failed (${failure(e)})`);
+    }
+    if (out.length) found.set(k, out);
   }
-  return merged;
+  return found;
+}
+
+/**
+ * Problems that would break the game if this bundle were applied. Empty means valid. Never
+ * throws: a table of the wrong shape is reported, not dereferenced.
+ */
+export function validateContent(b: ContentBundle): string[] {
+  try {
+    if (!isObj(b)) return ['content: not a bundle'];
+    return [...tableProblems(b).values()].flat();
+  } catch (e) {
+    return [`content: check failed (${failure(e)})`];
+  }
+}
+
+type SetAsideEntry = ContentOverrideReport['setAside'][number];
+
+/**
+ * The shipped bundle with every stored table that may apply: one stamped with the current shipped
+ * table, that validates together with the others. Everything else is set aside, with a warning,
+ * and stays in storage until the editor next writes or resets.
+ */
+function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport } {
+  const base = clone(DEFAULT_CONTENT);
+  const report: ContentOverrideReport = { applied: [], setAside: [] };
+  const raw = readStored();
+  if (!raw) return { bundle: base, report };
+  const stored = parseStored(raw);
+  if (!stored) {
+    console.warn('[content] stored overrides are unreadable; the shipped tables load');
+    return { bundle: base, report };
+  }
+
+  const notes = new Map<ContentKey, string>();
+  const setAside = (
+    key: ContentKey,
+    reason: SetAsideEntry['reason'],
+    problems: string[],
+    why: string,
+  ) => {
+    report.setAside.push({ key, reason, problems });
+    notes.set(key, why);
+  };
+  const candidates = new Map<ContentKey, unknown>();
+  if (stored.format === undefined) {
+    for (const k of CONTENT_KEYS)
+      if (stored[k] !== undefined)
+        setAside(k, 'stale', [], 'stored in the old whole-bundle format, without a stamp');
+  } else if (stored.format !== CONTENT_FORMAT) {
+    const tables = isObj(stored.tables) ? stored.tables : {};
+    const problem = `unknown storage format ${JSON.stringify(stored.format)}`;
+    for (const k of CONTENT_KEYS)
+      if (tables[k] !== undefined) setAside(k, 'invalid', [problem], problem);
+    if (!report.setAside.length)
+      console.warn(
+        `[content] stored overrides are unreadable (${problem}); the shipped tables load`,
+      );
+  } else if (!isObj(stored.tables)) {
+    console.warn('[content] stored overrides hold no tables; the shipped tables load');
+  } else {
+    for (const k of CONTENT_KEYS) {
+      const e = stored.tables[k];
+      if (e === undefined) continue;
+      if (!isObj(e) || typeof e.stamp !== 'string' || e.data === undefined) {
+        const problem = `${k}: stored entry needs a stamp and data`;
+        setAside(k, 'invalid', [problem], problem);
+      } else if (e.stamp !== STAMP[k])
+        setAside(k, 'stale', [], `made for shipped table ${e.stamp}, which is now ${STAMP[k]}`);
+      else candidates.set(k, e.data);
+    }
+  }
+
+  const order = (keys: ContentKey[]) => CONTENT_KEYS.filter((k) => keys.includes(k));
+  const problemsWith = (keys: ContentKey[]) => {
+    const b: Record<string, unknown> = { ...base };
+    for (const k of keys) b[k] = candidates.get(k);
+    return tableProblems(b as unknown as ContentBundle);
+  };
+  let applied = [...candidates.keys()];
+  const invalid = new Map<ContentKey, string[]>();
+  while (applied.length) {
+    const found = problemsWith(applied);
+    if (!found.size) break;
+    // The first stored table with problems of its own: tables refer only to earlier ones, so a
+    // broken table is caught before the tables that refer to it.
+    let culprit = applied.find((k) => found.has(k));
+    let problems = culprit ? found.get(culprit)! : [];
+    if (!culprit) {
+      // The problems sit in shipped tables: blame the stored table whose absence leaves fewest.
+      const all = [...found.values()].flat();
+      let fewest = Infinity;
+      for (const k of applied) {
+        const rest = [...problemsWith(applied.filter((x) => x !== k)).values()].flat();
+        if (rest.length >= fewest) continue;
+        fewest = rest.length;
+        culprit = k;
+        problems = all.filter((p) => !rest.includes(p));
+      }
+      if (!problems.length) problems = all;
+    }
+    invalid.set(culprit!, problems);
+    applied = applied.filter((k) => k !== culprit);
+  }
+  // Give back every table that was caught only through another one.
+  let gaveBack = true;
+  while (gaveBack) {
+    gaveBack = false;
+    for (const k of order([...invalid.keys()])) {
+      if (problemsWith([...applied, k]).size) continue;
+      applied = order([...applied, k]);
+      invalid.delete(k);
+      gaveBack = true;
+    }
+  }
+  for (const [k, problems] of invalid) setAside(k, 'invalid', problems, 'fails validation');
+
+  report.applied = order(applied);
+  for (const k of report.applied)
+    (base as unknown as Record<string, unknown>)[k] = candidates.get(k);
+  report.setAside.sort((a, b) => CONTENT_KEYS.indexOf(a.key) - CONTENT_KEYS.indexOf(b.key));
+  for (const s of report.setAside)
+    console.warn(
+      `[content] stored "${s.key}" override set aside (${s.reason}): ${notes.get(s.key)}`,
+      ...(s.problems.length ? [s.problems] : []),
+    );
+  return { bundle: base, report };
 }
 
 /** Fill derived fields (wagon accept lists from cargo classes). */
@@ -586,9 +964,16 @@ function finalize(b: ContentBundle): ContentBundle {
   return b;
 }
 
+const loaded = buildContent();
 /** The live bundle every module reads from. */
-export const content: ContentBundle = finalize(buildContent());
+export const content: ContentBundle = finalize(loaded.bundle);
 finalize(DEFAULT_CONTENT);
+
+/** What became of the stored overrides at load: which tables apply, which were set aside and why. */
+export function contentOverrideReport(): ContentOverrideReport {
+  return clone(loaded.report);
+}
+/** True when this session runs on at least one stored table. */
 export function contentIsCustom() {
-  return readContentOverrides() !== null;
+  return loaded.report.applied.length > 0;
 }
