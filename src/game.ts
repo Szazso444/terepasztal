@@ -7,11 +7,11 @@ import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
-import { rules, setRules, daySeconds } from './sim/rules';
+import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
 import { ageDef, ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
-import { rulesDiffer } from './sim/rules';
+import { rulesDiffer, readRules } from './sim/rules';
 import { contentIsCustom } from './data/content';
 import { MainMenu, PauseMenu } from './ui/menu';
 import { Editor } from './editor/editor';
@@ -80,8 +80,9 @@ import { TuningScreen } from './ui/tuningScreen';
 import { ContentScreen } from './ui/contentScreen';
 import {
   SAVE_VERSION,
+  buildSave,
+  importSave,
   readSave,
-  parseSave,
   writeSave,
   clearSave,
   listSlots,
@@ -89,7 +90,6 @@ import {
   readSlot,
   deleteSlot,
   KNOWN_SAVE_KEYS,
-  DEFAULT_SETTINGS,
   readSettings,
   writeSettings,
   contractPolicyFor,
@@ -99,6 +99,7 @@ import {
   type SaveGame,
   type Settings,
 } from './sim/save';
+import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
 import { Station, resetStationIds, stationFootprint } from './sim/stations';
 import { scaleCost as scaleCostOf } from './sim/stockpile';
@@ -119,7 +120,14 @@ import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
 import { showSignalGuide } from './ui/signalGuide';
 import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
-import { tickBuildings, buildingDef, buildingFrame, type Building } from './sim/buildings';
+import {
+  tickBuildings,
+  buildingDef,
+  buildingFrame,
+  buildingFromJSON,
+  buildingToJSON,
+  type Building,
+} from './sim/buildings';
 import { PowerGrid } from './sim/power';
 import { TrainScreen } from './ui/trainScreen';
 import { MarketScreen } from './ui/marketScreen';
@@ -490,7 +498,8 @@ export class Game {
     this.pauseMenu.hide();
     this.build.setTool({ kind: 'none' });
     this.mainMenu.show(!!readSave(), listLevels(), {
-      rules: rulesDiffer().length > 0,
+      // the tuning a new game starts from, not the loaded game's own
+      rules: rulesDiffer(readRules()).length > 0,
       content: contentIsCustom(),
     });
   }
@@ -989,45 +998,37 @@ export class Game {
     const track: SaveGame['track'] = [];
     for (const t of this.track.anchors())
       track.push([t.x, t.y, t.piece.kind, t.piece.rot, t.piece.cls, t.piece.cls2]);
-    return {
-      ...this.saveExtra,
-      version: SAVE_VERSION,
-      savedAt: Date.now(),
-      seed: this.seed,
-      clock: { time: this.clock.time, speedIndex: this.clock.speedIndex },
-      economy: this.economy.toJSON(),
-      track,
-      stations: this.builder.stations.map((st) => st.toJSON()),
-      trains: this.fleet.trains.map((t) => t.toJSON()),
-      contracts: this.contracts.toJSON(),
-      trade: this.trade.toJSON(),
-      inventory: this.inventory.toJSON(),
-      gacha: this.gacha.toJSON(),
-      crafting: this.crafting.toJSON(),
-      camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
-      lastDay: this.lastDay,
-      decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
-      weather: this.weather.toJSON(),
-
-      world: this.spec,
-      supply: supplyMode(),
-      rules: { ...rules },
-      stockpile: this.stock.toJSON(),
-      regions: this.regions.toJSON(),
-      seasonOffset: getSeasonOffset(),
-      towns: this.towns.toJSON(),
-      settings: { ...this.settings },
-      buildings: [...this.builder.buildings.values()].map((b) => [
-        b.x,
-        b.y,
-        b.id,
-        b.acc,
-        b.level ?? 1,
-      ]),
-      wires: this.catenary.toJSON(),
-      houses: this.houses.toJSON(),
-      people: this.people.toJSON(),
-    };
+    return buildSave(
+      {
+        seed: this.seed,
+        clock: { time: this.clock.time, speedIndex: this.clock.speedIndex },
+        economy: this.economy.toJSON(),
+        track,
+        stations: this.builder.stations.map((st) => st.toJSON()),
+        trains: this.fleet.trains.map((t) => t.toJSON()),
+        contracts: this.contracts.toJSON(),
+        trade: this.trade.toJSON(),
+        inventory: this.inventory.toJSON(),
+        gacha: this.gacha.toJSON(),
+        crafting: this.crafting.toJSON(),
+        camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
+        lastDay: this.lastDay,
+        decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
+        weather: this.weather.toJSON(),
+        world: this.spec,
+        supply: supplyMode(),
+        rules: { ...rules },
+        stockpile: this.stock.toJSON(),
+        regions: this.regions.toJSON(),
+        seasonOffset: getSeasonOffset(),
+        towns: this.towns.toJSON(),
+        buildings: [...this.builder.buildings.values()].map(buildingToJSON),
+        wires: this.catenary.toJSON(),
+        houses: this.houses.toJSON(),
+        people: this.people.toJSON(),
+      },
+      this.saveExtra,
+    );
   }
 
   save(silent = false) {
@@ -1072,20 +1073,23 @@ export class Game {
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    // content the game no longer defines goes first, before anything looks it up
+    const pruned = pruneUnknownContent(j);
     this.restoringWorld = true;
     this.saveExtra = {};
     for (const [k, v] of Object.entries(j)) if (!KNOWN_SAVE_KEYS.has(k)) this.saveExtra[k] = v;
     if (j.loadedFrom !== undefined) this.warnDeprecated(j);
-    if (j.rules) setRules(j.rules);
+    if (pruned.dropped.length) this.warnPruned(pruned);
+    // the game's own tuning, for this session only: the stored tuning stays as it was
+    applyGameRules(j.rules);
     setSupplyMode(j.supply);
-    setSeasonOffset(j.seasonOffset ?? 0);
+    if (j.seasonOffset !== undefined) setSeasonOffset(j.seasonOffset);
     this.clock.time = j.clock.time;
     this.clock.setSpeed(j.clock.speedIndex);
     this.economy.load(j.economy);
     this.lastDay = j.lastDay;
     this.savedAt = j.savedAt;
     if (j.regions) this.regions.load(j.regions);
-    else this.regions.applyTier(this.economy.tier);
     this.world.rebuildFog();
     this.fixBuiltTiles(j);
     this.overview.rebuildRegions();
@@ -1127,9 +1131,9 @@ export class Game {
       this.onDecorChanged(d, false);
     }
     this.houses.load(j.houses);
-    for (const [x, y, id, acc, level] of j.buildings ?? []) {
-      const b: Building = { id, x, y, acc: acc ?? 0, level: level ?? 1, active: false, rate: 0 };
-      this.builder.buildings.set(y * this.map.w + x, b);
+    for (const bj of j.buildings ?? []) {
+      const b = buildingFromJSON(bj);
+      this.builder.buildings.set(b.y * this.map.w + b.x, b);
       this.onBuildingChanged(b, false);
     }
     if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
@@ -1478,7 +1482,7 @@ export class Game {
           id,
           s.x + 1,
           s.y + 1,
-          `structures/${s.def.art}_r${s.rot % 2}${s.level > 1 ? '_lv' + s.level : ''}`,
+          `structures/${s.def.art}_r${s.rot % 2}${s.spriteLevel > 1 ? '_lv' + s.spriteLevel : ''}`,
           20,
           -HALF_H_PX,
         );
@@ -1505,6 +1509,15 @@ export class Game {
     this.deprecatedSave = text;
     this.toasts.push(newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from), 'warn');
     this.notices.push({ key: 'save:deprecated', kind: 'warn', text, target: null }, 180);
+  }
+  /** A save named content the game no longer has: say what went and what was refunded. */
+  private warnPruned(report: PruneReport) {
+    const list = report.dropped.map((d) => `${d.id} ×${d.count}`).join(', ');
+    // `saves.refund` takes the money already formatted, and empty when none was refunded
+    const money = report.money ? fmtMoney(report.money) : '';
+    const text = STR.saves.pruned(list, STR.saves.refund(money, report.tickets));
+    this.toasts.push(text, 'warn');
+    this.notices.push({ key: 'save:pruned', kind: 'warn', text, target: null }, 180);
   }
   /** warning text for the settings screen while a converted save is in play */
   deprecatedSave: string | null = null;
@@ -1730,19 +1743,16 @@ export class Game {
         exportDiagnostics: () => this.diagnostics(),
         saveAs: (name) => this.saveSlot(name),
         ...this.slotActions(),
+        // a refused text changes nothing; the player's settings never come from a save
         importSave: (json) => {
-          try {
-            const j = parseSave(json);
-            if (!j) throw new Error('bad');
-            if (j.settings) writeSettings({ ...DEFAULT_SETTINGS, ...j.settings });
-            writeSave(j);
-            location.hash = `seed=${j.seed}`;
-            location.reload();
-            return true;
-          } catch {
-            this.toasts.push(STR.settings.badSave, 'warn');
+          const read = importSave(json);
+          if (!read.ok) {
+            this.toasts.push(STR.saves.refused[read.error], 'warn');
             return false;
           }
+          location.hash = `seed=${read.save.seed}`;
+          location.reload();
+          return true;
         },
       },
       () => ({

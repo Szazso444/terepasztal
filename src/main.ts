@@ -3,7 +3,7 @@ import { STR } from './strings';
 import { el } from './ui/dom';
 import { readSave, clearSave, writeSave, type WorldSpec } from './sim/save';
 import { expandSave, ownsBorderChunk } from './sim/expand';
-import { rules } from './sim/rules';
+import { rules, rulesFrom } from './sim/rules';
 import { takeIntent, setTestingLevel, type Intent } from './intent';
 import { getLevel, levelFromMap, saveLevel, type LevelData } from './world/level';
 import { generateMap, emptyMap, type MapGenParams } from './world/mapgen';
@@ -99,12 +99,14 @@ async function boot() {
     // a generated world grows a ring of chunks whenever an owned chunk touches its edge (old
     // saves from the fixed-grid days come through here too)
     if (save && spec.kind === 'generated') {
+      // the size the save's own tuning asks for, not the stored tuning a new game starts from
+      const mapSize = rulesFrom(save.rules).mapSize;
       let grown = false;
       let guard = 0;
       let gp = spec.params;
       while (
         guard++ < 8 &&
-        (gp.w < rules.mapSize || (save.regions && ownsBorderChunk(save.regions, gp.w, gp.h)))
+        (gp.w < mapSize || (save.regions && ownsBorderChunk(save.regions, gp.w, gp.h)))
       ) {
         expandSave(save, 1);
         if (save.world?.kind !== 'generated') break;
