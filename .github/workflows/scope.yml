@@ -1,0 +1,30 @@
+name: Scope
+
+# A pull request into develop works as one role, named by its agent:<role> label or its <role>/
+# branch prefix, and changes only what that role owns or is granted (tools/agents/ownership.json).
+# Runs again when labels change, since the label decides the role.
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: scope-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Changed paths stay in the role's scope
+        run: node tools/agents/scope.mjs check --event "$GITHUB_EVENT_PATH"

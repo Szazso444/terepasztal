@@ -1,0 +1,60 @@
+name: Task
+description: One role, one branch, one pull request. Filed by Core when it splits work.
+labels: ["type:task", "status:triage"]
+body:
+  - type: dropdown
+    id: role
+    attributes:
+      label: Role
+      description: The one role that owns every file this task changes (tools/agents/ownership.json).
+      options: [core, engine, world, gameplay, rendering, uiux, art, verification]
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: The outcome in one or two sentences, not the steps.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Each one checkable by a command or a test.
+      placeholder: |
+        - [ ] `npm test` passes, including <test> which pins <invariant>
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context pack
+      description: The paths the agent reads, and why. Nothing else is in its context.
+      placeholder: |
+        - src/world/pathfinding.ts — the search under test
+    validations:
+      required: true
+  - type: textarea
+    id: seams
+    attributes:
+      label: Seams it must not break
+      description: Symbols other roles depend on.
+  - type: dropdown
+    id: verification
+    attributes:
+      label: Verification tests required
+      description: Mandatory when the task touches pathfinding, collisions, track geometry, traffic, save migrations, RNG, map generation, economy sums or rigid bodies.
+      options: ["yes", "no"]
+    validations:
+      required: true
+  - type: textarea
+    id: deps
+    attributes:
+      label: Blocked by
+      description: Issues that must merge first, as `Blocked by #n`. Empty means it can start now.
+  - type: textarea
+    id: out
+    attributes:
+      label: Out of scope
+      description: What to leave alone and report instead.

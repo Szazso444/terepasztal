@@ -1,0 +1,34 @@
+name: Epic
+description: A feature large enough for a spec. Core splits it into tasks after the author approves.
+labels: ["type:epic", "status:triage", "needs:decision"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What the player or the project gets.
+    validations:
+      required: true
+  - type: textarea
+    id: nongoals
+    attributes:
+      label: Non-goals
+  - type: input
+    id: spec
+    attributes:
+      label: Spec
+      description: docs/superpowers/specs/<date>-<topic>-design.md
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: textarea
+    id: roles
+    attributes:
+      label: Roles involved
+  - type: textarea
+    id: questions
+    attributes:
+      label: Open questions for the author

@@ -1,0 +1,51 @@
+name: Bug
+description: A reproducible defect, with the log and what fixed looks like.
+labels: ["type:bug", "status:triage"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What is wrong
+      description: One sentence.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: The exact command, seed, save or steps. A failing test is the best reproduction.
+      placeholder: |
+        npx vitest run src/world/pathfinding.test.ts -t "never reverses"   # seed 1337
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: The failing part of the output, not the whole run.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkable. Include the regression test that will pin it.
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Found on
+      description: Branch and commit, and the pull request or task if it came from one.
+  - type: dropdown
+    id: role
+    attributes:
+      label: Owning role
+      options: [unknown, core, engine, world, gameplay, rendering, uiux, art, verification]

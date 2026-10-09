@@ -1,0 +1,61 @@
+name: Ref hygiene
+
+# Applies .github/ref-archive.json: creates each tag at its commit (never moves an existing one)
+# and deletes each listed branch, but only when its tip is already contained in main. A branch
+# whose work is not in main is never deleted here; archive it with a tag instead.
+
+on:
+  push:
+    branches: [develop, main]
+    paths: [.github/ref-archive.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ref-hygiene
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tags
+        run: |
+          git fetch --tags --force origin
+          jq -c '.tags[]' .github/ref-archive.json | while read -r entry; do
+            tag=$(jq -r .tag <<<"$entry")
+            sha=$(jq -r .sha <<<"$entry")
+            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+              have=$(git rev-parse "refs/tags/$tag^{commit}")
+              if [ "$have" != "$sha" ]; then
+                echo "::error::tag $tag exists at $have, manifest says $sha; not moving it"
+                exit 1
+              fi
+              echo "tag $tag already at $sha"
+              continue
+            fi
+            git cat-file -e "$sha^{commit}" || { echo "::error::commit $sha for $tag is not in the repository"; exit 1; }
+            git push origin "$sha:refs/tags/$tag"
+            echo "tagged $tag at $sha"
+          done
+
+      - name: Merged branches
+        run: |
+          jq -r '.deleteMergedBranches[]' .github/ref-archive.json | while read -r branch; do
+            if ! git rev-parse -q --verify "refs/remotes/origin/$branch" >/dev/null; then
+              echo "branch $branch already gone"
+              continue
+            fi
+            if ! git merge-base --is-ancestor "refs/remotes/origin/$branch" refs/remotes/origin/main; then
+              echo "::error::$branch has commits that are not in main; not deleting it"
+              exit 1
+            fi
+            git push origin --delete "refs/heads/$branch"
+            echo "deleted $branch"
+          done
