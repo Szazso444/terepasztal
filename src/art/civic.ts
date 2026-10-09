@@ -71,8 +71,9 @@ export function residence(level: number) {
 export function windmill(level = 1) {
   const b = new PixelBuf(96, 184),
     h = 30 + level * 6;
-  // the sails turn on the front; seen from behind, the tower and its cap hide their hub
-  const p = proj(CIVIC_OX, CIVIC_OY, 0, 0.26, h - 4);
+  // the sails turn on the front; seen from behind, their hub is on the far face, drawn before the
+  // tower and its cap so that they hide it and only the blades show around them
+  const p = proj(CIVIC_OX, CIVIC_OY, 0, frontShown() ? 0.26 : -0.26, h - 4);
   const sails = () => {
     for (let i = 0; i < 4; i++) {
       const a = Math.PI / 4 + (i * Math.PI) / 2;
