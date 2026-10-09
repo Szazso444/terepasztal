@@ -949,6 +949,7 @@ export const STR = {
     confirmOverwritePreset: (n: string) => `A preset named "${n}" already exists. Replace it?`,
     confirmDeletePreset: (n: string) => `Delete the preset "${n}"?`,
     presetSaved: (n: string) => `Preset "${n}" saved`,
+    presetSaveFailed: (n: string) => `Could not save the preset "${n}" (storage full or blocked)`,
     presetLoaded: (n: string) => `Preset "${n}" loaded`,
     presetDeleted: (n: string) => `Preset "${n}" deleted`,
   },
