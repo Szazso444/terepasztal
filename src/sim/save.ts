@@ -17,7 +17,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -323,8 +323,12 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 7,
-    note: 'trade desk opened empty: no standing deals, fuel at its base price',
-    run: (j) => (j.trade = j.trade ?? { deals: {}, nextAt: 0, fuelMul: 1, driftDay: 0 }),
+    // the route modes were renamed while saves were v7, so a v7 file may still hold the old names
+    note: 'trade desk opened empty: no standing deals, fuel at its base price; routing modes mapped to the new names',
+    run: (j) => {
+      j.trade = j.trade ?? { deals: {}, nextAt: 0, fuelMul: 1, driftDay: 0 };
+      for (const t of j.trains) if (isRecord(t)) t.mode = routeMode(t);
+    },
   },
   {
     from: 8,
@@ -423,6 +427,22 @@ export const MIGRATIONS: Migration[] = [
     run: (j) => {
       j.track = convertOneTileRegular(j.track);
       grantStarters(j, V13_STARTERS);
+    },
+  },
+  {
+    from: 13,
+    note: 'trains stand without a route and look for one, as every load left them before; from now on a save keeps what each train was doing',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        t.state = t.state ?? 'noRoute';
+        t.stateTime = t.stateTime ?? 10;
+        t.speed = t.speed ?? 0;
+        t.station = t.station ?? null;
+        t.holding = t.holding ?? false;
+        t.blockedTime = t.blockedTime ?? 0;
+        t.yieldCount = t.yieldCount ?? 0;
+      }
     },
   },
 ];

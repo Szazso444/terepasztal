@@ -53,6 +53,8 @@ interface TrainSave {
   routeIndex: number;
   suspended?: { schedule: StopPlan[]; routeIndex: number } | null;
   detour?: number | null;
+  /** v14: the station it stands at */
+  station?: number | null;
   jobs?: TrainJob[];
   job?: TrainJob | null;
   jobPhase?: 'origin' | 'dest';
@@ -176,9 +178,10 @@ function stockpileAmounts(j: SaveGame): Record<string, number> | null {
 }
 
 /**
- * Take dropped stations out of a train's schedules and jobs. The index keeps pointing at the stop
- * the train was heading for, or the next one left; a job whose contract was cancelled ends, and
- * the program it set aside resumes the way `Train.resumeProgram` does.
+ * Take dropped stations out of a train's schedules and jobs, and out from under it. The index
+ * keeps pointing at the stop the train was heading for, or the next one left; a job whose
+ * contract was cancelled ends, and the program it set aside resumes the way
+ * `Train.resumeProgram` does.
  */
 function forgetStations(t: TrainSave, gone: Set<number>, cancelled: Set<number>) {
   const prune = (p: { schedule: StopPlan[]; routeIndex: number }) => {
@@ -190,6 +193,8 @@ function forgetStations(t: TrainSave, gone: Set<number>, cancelled: Set<number>)
   prune(t);
   if (t.suspended) prune(t.suspended);
   if (typeof t.detour === 'number' && gone.has(t.detour)) t.detour = null;
+  // standing at a station that went, it stands nowhere and looks for a route on load
+  if (typeof t.station === 'number' && gone.has(t.station)) t.station = null;
   const lapsed = (job: TrainJob) =>
     cancelled.has(job.contractId) || gone.has(job.originId) || gone.has(job.destId);
   if (t.jobs?.some(lapsed)) t.jobs = t.jobs.filter((job) => !lapsed(job));

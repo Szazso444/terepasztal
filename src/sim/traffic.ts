@@ -234,6 +234,9 @@ export class Traffic {
   }
   /** Recompute claims before any train moves; occupied track always wins over future claims. */
   assign(trains: Train[], now: number) {
+    // Trains loaded from a save take their platforms and plan their paths before anything is
+    // claimed, every one of them before any train moves.
+    for (const t of trains) t.resumeAfterLoad(this.builder, now);
     this.maintainRecoveries(trains, now);
     if (this.track.version !== this.trackVersion) {
       this.rebuildSections();

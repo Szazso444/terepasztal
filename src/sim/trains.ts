@@ -578,6 +578,11 @@ export class Train {
   private suspended: { schedule: StopPlan[]; routeIndex: number } | null = null;
   /** a job was closed under a moving train: re-route to the resumed program on the next tick */
   private resumePending = false;
+  /**
+   * Set by `fromJSON` until `resumeAfterLoad` runs: the id of the station the train stood at when
+   * saved, which a train cannot look up before it meets the builder.
+   */
+  private loaded: { station: number | null } | null = null;
   /** Queue a contract; it starts once the current leg is done. */
   addJob(j: TrainJob) {
     if (
@@ -1488,6 +1493,9 @@ export class Train {
   /** Advance by in-game seconds. */
   tick(gdt: number, ctx: TickCtx) {
     if (!ctx.framed) this.capturePoses();
+    // the fleet's traffic control resumes every loaded train before any of them ticks; a train
+    // ticked on its own does it here
+    this.resumeAfterLoad(ctx.builder, ctx.now);
     this.stateTime += gdt;
     this.refreshModes(ctx);
     if (this.resumePending) {
@@ -2404,6 +2412,73 @@ export class Train {
     this.atStation = null;
   }
 
+  /**
+   * After a load, once, before the train's first tick: it stands at the station it was saved at
+   * again (among the station's occupants unless it waits for a platform), and a train under way
+   * plans its path again from where its head stands, keeping its speed. The fleet's traffic
+   * control calls this for every train before any claim is made or any train moves, so loaded
+   * trains find each other on the platforms and their paths are claimed from the first tick.
+   * What the save does not hold is settled as play would settle it: a train backing off for
+   * another (its escape was reserved, not saved) stops and plans again, a contract that closed
+   * under it (the hand-back was pending, not saved) hands the program back on the first tick, and
+   * a train whose station or way is gone stands without a route and looks for one at once.
+   */
+  resumeAfterLoad(builder: Builder, now: number) {
+    const loaded = this.loaded;
+    if (!loaded) return;
+    this.loaded = null;
+    if (this.holding) this.cancelRetreat(now);
+    if (this.state === 'loading' || this.state === 'waiting' || this.state === 'idle') {
+      const st = loaded.station === null ? undefined : builder.stationById(loaded.station);
+      if (st) {
+        this.atStation = st;
+        if (this.state !== 'waiting') st.occupants.add(this.id);
+      } else if (this.state !== 'idle') this.standAfterLoad();
+    }
+    if (
+      !this.job &&
+      this.suspended &&
+      ((this.state === 'moving' && !this.holding) || this.state === 'noRoute')
+    )
+      this.resumePending = true;
+    else if (this.state === 'moving' && !this.path && !this.replanAfterLoad(builder))
+      this.standAfterLoad();
+  }
+  /**
+   * The path of a loaded train under way, planned again from its head to the stop it was bound
+   * for (a refuelling detour's station first) at the speed it had. The head may already stand on
+   * the stop's platform tile, short of the middle where it halts. False when the stop or every
+   * way there is gone.
+   */
+  private replanAfterLoad(builder: Builder): boolean {
+    const track = builder.track;
+    const head = this.trail[this.trail.length - 1]?.seg;
+    if (!head || !this.route.length) return false;
+    const target = builder.stationById(
+      this.detour ?? this.route[this.routeIndex % this.route.length],
+    );
+    const keys = new Set(
+      (target ? builder.platformTiles(target) : []).map((p) => p.y * track.w + p.x),
+    );
+    if (!keys.size) return false;
+    const isTarget = (x: number, y: number) => keys.has(y * track.w + x);
+    const path = isTarget(head.x, head.y)
+      ? [{ ...head }]
+      : this.pathTo(track, { x: head.x, y: head.y, in: head.in }, isTarget);
+    if (!path) return false;
+    const speed = this.speed;
+    this.setPath(path, builder.map, track);
+    this.trackVersion = track.version;
+    this.speed = speed;
+    return true;
+  }
+  /** Nothing to carry on with after a load: stand without a route and look for one at once. */
+  private standAfterLoad() {
+    this.speed = 0;
+    this.setState('noRoute');
+    this.stateTime = 10;
+  }
+
   toJSON() {
     const head = this.trail[this.trail.length - 1];
     return {
@@ -2444,6 +2519,15 @@ export class Train {
       jobPhase: this.jobPhase,
       suspended: this.suspended,
       distance: this.distance,
+      // v14: what the train was doing, so it carries on after a load; only its path is planned again
+      state: this.state,
+      stateTime: this.stateTime,
+      speed: this.speed,
+      // the station it stands at: loading, waiting for a platform, or idle there
+      station: this.atStation?.id ?? null,
+      holding: this.holding,
+      blockedTime: this.blockedTime,
+      yieldCount: this.yieldCount,
       head: head
         ? { x: head.seg.x, y: head.seg.y, in: head.seg.in, reversed: this.reversed }
         : null,
@@ -2491,21 +2575,12 @@ export class Train {
           routeIndex: j.suspended.routeIndex,
         }
       : null;
-    const legacy: Record<string, RouteMode> = {
-      fixed: 'schedule',
-      dynamic: 'production',
-      collect: 'collection',
-    };
-    const m = j.mode as string | undefined;
-    t.mode = m
-      ? (legacy[m] ?? (DYNAMIC_MODES.includes(m as RouteMode) ? (m as RouteMode) : 'schedule'))
-      : (j as { dynamic?: boolean }).dynamic
-        ? 'production'
-        : 'schedule';
+    // the migration steps map the old mode names and fill the battery
+    t.mode = DYNAMIC_MODES.includes(j.mode) ? j.mode : 'schedule';
     t.coal = j.tanks.coal;
     t.oil = j.tanks.oil;
     t.water = j.tanks.water;
-    t.battery = Math.min(t.batteryCap, j.tanks.battery ?? 0);
+    t.battery = Math.min(t.batteryCap, j.tanks.battery);
     t.fuelKind = j.tanks.kind;
     t.fuelPreference = j.tanks.pref;
     t.oilKind = j.tanks.oilKind === 'diesel' ? 'diesel' : 'oil';
@@ -2517,8 +2592,15 @@ export class Train {
     } else if (j.head) {
       t.spawnAt(track, j.head.x, j.head.y, j.head.in as Dir);
     }
-    t.state = 'noRoute';
-    t.stateTime = 10;
+    // placing the consist stopped it: the speed it had comes after
+    t.state = j.state;
+    t.stateTime = j.stateTime;
+    t.speed = j.speed;
+    t.holding = j.holding;
+    t.blockedTime = j.blockedTime;
+    t.yieldCount = j.yieldCount;
+    // the station and the path wait for the builder (`resumeAfterLoad`)
+    t.loaded = { station: j.station };
     if (t.consistProblem) t.lastMessage = t.consistProblem;
     return t;
   }
