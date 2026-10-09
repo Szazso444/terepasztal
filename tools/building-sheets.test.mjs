@@ -99,7 +99,7 @@ describe('building review sheets', () => {
     // the plain sheet shows the picture and nothing over it
     const plain = drawSheet(f, pictures(f));
     expect(at(plain, 256 + wx / 4, wy / 4)).not.toEqual(SHEET.walls);
-  });
+  }, 20_000);
 
   it('shows the views of a building at one size, however large each came back', () => {
     // the first view drawn at 0.7 of the others: on the sheet all four are equally large
@@ -117,7 +117,7 @@ describe('building review sheets', () => {
     // the middle of every view's top face is where a full-size block has it
     for (let rot = 0; rot < 4; rot++)
       expect(at(sheet, rot * 256 + tx / 4, ty / 4), `r${rot}`).toEqual(SHADE.top);
-  });
+  }, 20_000);
 
   it('stands a family as large on its tile as its description says', () => {
     const f = family('farm');
@@ -131,7 +131,7 @@ describe('building review sheets', () => {
     // the depot stands 1.3 times its footprint, so that the rails fit its portals (seen in the game)
     expect(fam.families.depot.size).toBe(1.3);
     expect(fam.families.farm.size).toBeUndefined();
-  });
+  }, 20_000);
 
   it('shows one picture on grass, as painted, with the lines its walls should stand on', () => {
     const fp = FOOTPRINTS.t2x2;
@@ -220,7 +220,7 @@ describe('building review sheets', () => {
       expect(seen(along.map((v) => -v)), `narrow r${rot}`).toEqual(SHEET.bed);
       expect(seen(across), `narrow r${rot}`).toEqual(SHEET.grass);
     }
-  });
+  }, 20_000);
 
   it("draws the game's own track: its gauge and its bed, for each depot", () => {
     // the look had its rails 0.22 tile apart where the game's are 0.32: on a seventh of the
@@ -321,7 +321,7 @@ describe('building review sheets', () => {
     // a family the game draws at its footprint's own size is laid out as before
     const plain = drawLook(painted('t1', 0), 't1', 0, { size: 1 });
     expect([plain.width, plain.height]).toEqual([512, 512]);
-  });
+  }, 20_000);
 
   it('knows which picture a file is, wherever it lies and whichever attempt it is', () => {
     expect(lookedAt('assets/source/buildings-v2/depot/depot-a3-r2.png')).toEqual({

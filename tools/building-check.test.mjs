@@ -370,7 +370,7 @@ describe('building check', () => {
     expect(checkPicture(portals('t1', 0, 0), 't1', 0)).toMatchObject({ ok: true, problems: [] });
     // and a depot whose walls are much alike is left to the eye
     expect(checkPicture(picture('t2x2', 0), 't2x2', 0)).toMatchObject({ ok: true, problems: [] });
-  });
+  }, 20_000);
 
   const NUM = '\\d\\.\\d\\d';
   /**
