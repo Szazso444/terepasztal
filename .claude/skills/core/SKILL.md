@@ -61,6 +61,8 @@ Do not accept "tests pass" from the implementer; QA's re-run and CI are the evid
 - Open the pull request into `develop` from `.github/pull_request_template.md`: `Closes #n`,
   label `agent:<role>`, the QA verdict, the verification evidence. `scope:cross` only with a
   written reason.
+- A pull request that changes gate files waits for the author's `gate:approved` (lifecycle
+  step 7). Tell the author it is waiting and what it changes; never add the label yourself.
 - Merge when CI is green on the head commit, QA approved that commit, required tests exist and
   pass, and nothing waits on the author. Merge commit titled `Merge <branch>: <outcome>`; delete
   the branch.

@@ -2,15 +2,25 @@ name: Scope
 
 # A pull request into develop works as one role, named by its agent:<role> label or its <role>/
 # branch prefix, and changes only what that role owns or is granted (tools/agents/ownership.json).
-# Runs again when labels change, since the label decides the role.
+# Gate files (the map's `gate` list) also need the gate:approved label, added by the author in
+# person; a new push withdraws it.
+#
+# pull_request_target runs develop's own copy of this workflow and of tools/agents, so a pull
+# request cannot change the check that judges it. The pull request is fetched as data for
+# `git diff` only. Never install, build or run anything from the pull request in this workflow.
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [develop]
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
 concurrency:
-  group: scope-${{ github.ref }}
+  group: scope-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -19,12 +29,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Changed paths stay in the role's scope
-        run: node tools/agents/scope.mjs check --event "$GITHUB_EVENT_PATH"
+      - name: Fetch the pull request as data
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: git fetch --no-tags origin "+refs/pull/$PR/head:refs/remotes/pr/head"
+
+      - name: A new push withdraws the gate approval
+        if: github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'gate:approved')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label gate:approved
+
+      - name: Changed paths stay in the role's scope; gate files need the author
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node tools/agents/scope.mjs check --event "$GITHUB_EVENT_PATH" --head refs/remotes/pr/head

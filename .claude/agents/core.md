@@ -78,3 +78,6 @@ Proposed issues stay in `CORE.md` until the author approves them.
 - A task cannot be given to exactly one role.
 - A change would alter generated worlds, existing saves, or atlas frame counts.
 - Anything would delete work that is not already in `main`.
+
+Never add `gate:approved` or remove it: it is the author's approval of a gate-file change, and the
+scope check rejects it when an agent adds it.

@@ -59,21 +59,41 @@
     "color": "d73a4a",
     "description": "Reproducible defect with logs and acceptance criteria"
   },
-  { "name": "type:test", "color": "0e8a16", "description": "Adds or fixes tests only" },
-  { "name": "type:docs", "color": "0075ca", "description": "Documentation only" },
-  { "name": "type:chore", "color": "ededed", "description": "Tooling, CI, repository hygiene" },
+  {
+    "name": "type:test",
+    "color": "0e8a16",
+    "description": "Adds or fixes tests only"
+  },
+  {
+    "name": "type:docs",
+    "color": "0075ca",
+    "description": "Documentation only"
+  },
+  {
+    "name": "type:chore",
+    "color": "ededed",
+    "description": "Tooling, CI, repository hygiene"
+  },
   {
     "name": "type:triage",
     "color": "f9d0c4",
     "description": "Decide what happens to existing work"
   },
-  { "name": "status:triage", "color": "fef2c0", "description": "New; Core has not classified it" },
+  {
+    "name": "status:triage",
+    "color": "fef2c0",
+    "description": "New; Core has not classified it"
+  },
   {
     "name": "status:ready",
     "color": "c2e0c6",
     "description": "Meets the definition of ready; can start"
   },
-  { "name": "status:in-progress", "color": "0052cc", "description": "An agent is working on it" },
+  {
+    "name": "status:in-progress",
+    "color": "0052cc",
+    "description": "An agent is working on it"
+  },
   {
     "name": "status:in-review",
     "color": "5319e7",
@@ -84,18 +104,39 @@
     "color": "000000",
     "description": "Waiting on another issue or a failure that needs its own fix"
   },
-  { "name": "needs:decision", "color": "e99695", "description": "Waits on the author" },
+  {
+    "name": "needs:decision",
+    "color": "e99695",
+    "description": "Waits on the author"
+  },
   {
     "name": "scope:cross",
     "color": "ff7619",
     "description": "Pull request allowed to cross role scope; set by Core only"
   },
   {
+    "name": "gate:approved",
+    "color": "0e8a16",
+    "description": "The author approved this pull request's gate-file changes; set in person by the author only"
+  },
+  {
     "name": "priority:p0",
     "color": "b60205",
     "description": "Breaks develop or main; drop everything"
   },
-  { "name": "priority:p1", "color": "d93f0b", "description": "Next up" },
-  { "name": "priority:p2", "color": "fbca04", "description": "Planned" },
-  { "name": "priority:p3", "color": "ededed", "description": "Some day" }
+  {
+    "name": "priority:p1",
+    "color": "d93f0b",
+    "description": "Next up"
+  },
+  {
+    "name": "priority:p2",
+    "color": "fbca04",
+    "description": "Planned"
+  },
+  {
+    "name": "priority:p3",
+    "color": "ededed",
+    "description": "Some day"
+  }
 ]
