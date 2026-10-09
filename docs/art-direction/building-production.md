@@ -257,8 +257,9 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   `tier`. The charcoal kiln has 2: it is upgraded up to the Electric age and keeps that model.
   Take its later lines out of `families.json`; the next rebuild drops its later pictures from
   the list.
-- A new age: `AGES` in `building-kit.mjs`, its style under `ages` in `families.json`, and a line
-  in every family.
+- A new age: it comes from the game's `src/data/ages.json`, and `AGES` in `building-kit.mjs`
+  follows it (a test holds the two to one list); then its style under `ages` in `families.json`,
+  and a line in every family.
 - A new footprint: `FOOTPRINTS` in `building-kit.mjs`, its block and openings in
   `building-guides.mjs`, then redraw the guides.
 - The prompts: only in `families.json`. `shared` is the same for every picture; `references`
