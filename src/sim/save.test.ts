@@ -29,11 +29,25 @@ import {
   type SaveParts,
   type SaveRefusal,
   type Settings,
+  type WorldSpec,
 } from './save';
 import { buildingFromJSON, buildingToJSON, type Building } from './buildings';
-import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
+import { TradeDesk } from './trade';
+import { Train, DYNAMIC_MODES, resetTrainIds } from './trains';
+import { Station, resetStationIds, type StationJSON } from './stations';
+import { Economy } from './economy';
+import { rules, DEFAULT_RULES } from './rules';
+import { locoDef, wagonDef } from '../gacha/items';
+import { DEFAULT_MAP_PARAMS, emptyMap, generateMap } from '../world/mapgen';
+import { levelFromMap, mapFromLevel } from '../world/level';
+import { RegionState } from '../world/regions';
+import { TrackGraph } from '../world/track';
+import type { GameMap } from '../world/tiles';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+
+// trains.ts plays sounds; the load-code oracles below build trains under Node
+vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 /** The oldest shape the chain still accepts, with nothing optional filled in. */
 function oldestSave(): SaveGame {
@@ -106,6 +120,52 @@ describe('the migration registry', () => {
 
   it('describes what each step fills in', () => {
     for (const m of MIGRATIONS) expect(m.note.trim().length).toBeGreaterThan(0);
+  });
+
+  it('has no step that leaves the file as it found it', () => {
+    // An empty step tells the player a default was filled in and leaves the load code to keep
+    // the promise. Each step meets a file of its own version with nothing optional in it, and
+    // the old offer defaults the step to v11 rewrites.
+    for (const m of MIGRATIONS) {
+      const file: SaveGame = {
+        ...oldestSave(),
+        version: m.from,
+        rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
+      };
+      const before = asStored(file);
+      m.run(file);
+      expect.soft(asStored(file), `the step from v${m.from}`).not.toEqual(before);
+    }
+  });
+
+  it('fills every field a step promises, from whichever version the file starts at', () => {
+    const list = (v: unknown) => Array.isArray(v);
+    const block = (v: unknown) => isObject(v);
+    /** The step that fills each field a file may lack, and what the field holds after it. */
+    const filled: [from: number, key: keyof SaveParts, holds: (v: unknown) => boolean][] = [
+      [1, 'decor', list],
+      [2, 'world', block],
+      [3, 'buildings', list],
+      [4, 'regions', (v) => list(v) && (v as unknown[]).every((o) => typeof o === 'boolean')],
+      [5, 'seasonOffset', (v) => typeof v === 'number'],
+      [6, 'towns', list],
+      [7, 'trade', block],
+      [8, 'houses', block],
+      [8, 'supply', (v) => typeof v === 'string'],
+      [9, 'crafting', block],
+    ];
+    for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
+      const j = migrate({ ...oldestSave(), version });
+      for (const [from, key, holds] of filled)
+        if (from >= version) expect(holds(j[key]), `from v${version}: ${key}`).toBe(true);
+    }
+  });
+
+  it('says which defaults are applied on load, where the world they need is built', () => {
+    const note = (from: number) => MIGRATIONS.find((m) => m.from === from)!.note;
+    expect(note(6)).toMatch(/depot placed at the start \(applied on load\)/);
+    expect(note(8)).toMatch(/catenary strung over rails the poles powered \(applied on load\)/);
+    expect(note(9)).toMatch(/locomotive modes set by the default rule \([^)]*applied on load\)/);
   });
 
   it('knows every field a save is written with, and every field the migration leaves', () => {
@@ -231,6 +291,11 @@ describe('migrate', () => {
     expect(j.decor).toEqual([]);
     expect(j.buildings).toEqual([]);
     expect(j.world).toEqual({ kind: 'generated', seed: 12345, params: expect.any(Object) });
+    expect(j.regions).toEqual(expect.any(Array));
+    expect(j.regions!.filter((owned) => owned === true)).toHaveLength(1);
+    expect(j.seasonOffset).toBe(0);
+    expect(j.towns).toEqual([]);
+    expect(j.trade).toEqual(expect.any(Object));
     expect(j.supply).toBe('simple');
   });
 
@@ -260,6 +325,185 @@ describe('migrate', () => {
     const j = migrate({ ...oldestSave(), somethingNewer: { a: 1, b: [2, 3] } });
     expect(j.somethingNewer).toEqual({ a: 1, b: [2, 3] });
     expect(KNOWN_SAVE_KEYS.has('somethingNewer')).toBe(false);
+  });
+});
+
+/** The step from `from` alone, run on `file`. */
+function runStep(from: number, file: SaveGame): SaveGame {
+  MIGRATIONS.find((m) => m.from === from)!.run(file);
+  return file;
+}
+
+describe('v4 to v5', () => {
+  /** A level of `w` by `h` tiles, as the editor saves one. */
+  const levelWorld = (w: number, h: number): WorldSpec => ({
+    kind: 'level',
+    seed: 5,
+    level: levelFromMap(emptyMap(5, w, h), 'Test', 'test'),
+  });
+  const generatedWorld = (w: number, h: number): WorldSpec => ({
+    kind: 'generated',
+    seed: 77,
+    params: { ...DEFAULT_MAP_PARAMS, w, h },
+  });
+  /** The map `generatedWorld(w, h)` builds. */
+  const generatedMap = (w: number, h: number) => generateMap(77, { ...DEFAULT_MAP_PARAMS, w, h });
+
+  /** A v4 file of `world` whose economy stored `tier`, or no tier at all. */
+  const v4 = (world: WorldSpec, tier?: unknown): SaveGame => {
+    const economy: Record<string, unknown> = { money: 1000, tickets: 0, granted: [] };
+    if (tier !== undefined) economy.tier = tier;
+    return { ...oldestSave(), version: 4, world, economy: economy as SaveGame['economy'] };
+  };
+  /**
+   * The chunks the load code owned in a file without `regions`, on the map the world builds: the
+   * start chunk (`new RegionState(map, 0)`), then `applyTier` with the tier reached.
+   */
+  const ownedOnLoad = (map: GameMap, tier: number) => {
+    const regions = new RegionState(map, 0);
+    regions.applyTier(tier);
+    return regions.unlocked;
+  };
+
+  it('owns what the load code gave the tier, on the default map', () => {
+    const world = generatedWorld(DEFAULT_MAP_PARAMS.w, DEFAULT_MAP_PARAMS.h);
+    const map = generatedMap(DEFAULT_MAP_PARAMS.w, DEFAULT_MAP_PARAMS.h);
+    const one = migrate(v4(world, 1)).regions!;
+    expect(one).toEqual(ownedOnLoad(map, 1));
+    expect(one.filter((owned) => owned)).toHaveLength(9);
+    const zero = migrate(v4(world, 0)).regions!;
+    expect(zero).toEqual(ownedOnLoad(map, 0));
+    expect(zero).toEqual([false, false, false, false, true, false, false, false, false]);
+  });
+
+  it('owns the rings of the tier the file stored, before the step from v8 caps it', () => {
+    // On a grid with a middle chunk, regionTierMap's rings are whole chunks from the start, so
+    // the load code's result holds for every tier, the ones past the Electric Age included.
+    for (const [w, h] of [
+      [96, 96],
+      [160, 160],
+      [224, 96],
+      [32, 224],
+    ]) {
+      const world = generatedWorld(w, h);
+      const map = generatedMap(w, h);
+      for (const tier of [0, 1, 2, 3, 4])
+        expect(migrate(v4(world, tier)).regions, `${w}×${h} tier ${tier}`).toEqual(
+          ownedOnLoad(map, tier),
+        );
+    }
+  });
+
+  it('reads a missing or unusable tier as 0', () => {
+    const world = generatedWorld(160, 160);
+    const startOnly = ownedOnLoad(generatedMap(160, 160), 0);
+    for (const tier of [undefined, -2, Number.NaN, '3', null])
+      expect(migrate(v4(world, tier)).regions, String(tier)).toEqual(startOnly);
+    const noEconomy = { ...v4(world), economy: undefined } as unknown as SaveGame;
+    expect(runStep(4, noEconomy).regions).toEqual(startOnly);
+  });
+
+  it('owns only the chunk map generation starts in at tier 0, on the grid the world builds', () => {
+    for (const world of [
+      generatedWorld(96, 96),
+      generatedWorld(160, 64),
+      generatedWorld(20, 300),
+      levelWorld(100, 70),
+      levelWorld(20, 20),
+    ]) {
+      const j = migrate({ ...oldestSave(), version: 4, world });
+      const map =
+        world.kind === 'level' ? mapFromLevel(world.level) : generateMap(77, world.params);
+      const label = `${map.w}×${map.h}`;
+      // the game builds this map and loads the chunks into it: a list of another length is ignored
+      const regions = new RegionState(map);
+      regions.load(j.regions!);
+      expect(regions.unlocked, label).toEqual(j.regions);
+      expect(regions.ownedCount(), label).toBe(1);
+      const startX = (Math.floor((map.regionsX - 1) / 2) + 0.5) * map.regionSize;
+      const startY = (Math.floor((map.regionsY - 1) / 2) + 0.5) * map.regionSize;
+      expect(regions.isTileUnlocked(startX, startY), label).toBe(true);
+    }
+  });
+
+  it('keeps the chunks a save already owns', () => {
+    const regions = [false, true, true, false];
+    expect(runStep(4, { ...oldestSave(), version: 4, regions }).regions).toBe(regions);
+  });
+});
+
+describe('v5 to v6', () => {
+  it('starts day 1 in spring, unless the save says otherwise', () => {
+    expect(runStep(5, { ...oldestSave(), version: 5 }).seasonOffset).toBe(0);
+    expect(runStep(5, { ...oldestSave(), version: 5, seasonOffset: 2 }).seasonOffset).toBe(2);
+  });
+});
+
+describe('v6 to v7', () => {
+  const station = (id: number, rot?: number) => ({
+    id,
+    defId: 'farm',
+    name: `Farm ${id}`,
+    x: id,
+    y: id,
+    level: 1,
+    storage: {},
+    ...(rot === undefined ? {} : { rot }),
+  });
+
+  it('maps route modes to their new names the way a train loads them', () => {
+    const j = migrate({
+      ...oldestSave(),
+      version: 6,
+      trains: [
+        { id: 1, mode: 'fixed' },
+        { id: 2, mode: 'collect' },
+        { id: 3, dynamic: true },
+        { id: 4, mode: 'dynamic' },
+        { id: 5 },
+        { id: 6, dynamic: false },
+        // the mode wins over the flag, as it does on load
+        { id: 7, mode: 'fixed', dynamic: true },
+        // a mode under its new name stays
+        { id: 8, mode: 'transport' },
+      ],
+    });
+    expect((j.trains as { mode: unknown }[]).map((t) => t.mode)).toEqual([
+      'schedule',
+      'collection',
+      'production',
+      'production',
+      'schedule',
+      'schedule',
+      'schedule',
+      'transport',
+    ]);
+  });
+
+  it('turns stations to orientation 0 where they have none, and starts towns empty', () => {
+    const j = migrate({ ...oldestSave(), version: 6, stations: [station(1), station(2, 1)] });
+    expect(j.stations.map((s) => s.rot)).toEqual([0, 1]);
+    expect(j.towns).toEqual([]);
+    const towns = [{ id: 1, name: 'Alder', stationId: 1, custom: false, color: 0 }];
+    expect(runStep(6, { ...oldestSave(), version: 6, towns }).towns).toBe(towns);
+  });
+});
+
+describe('v7 to v8', () => {
+  it('opens the trade desk a fresh game saves, the one a file without a desk loads as', () => {
+    const j = runStep(7, { ...oldestSave(), version: 7 });
+    expect(j.trade).toEqual(new TradeDesk().toJSON());
+    const filled = new TradeDesk();
+    filled.load(j.trade as Parameters<TradeDesk['load']>[0]);
+    const missing = new TradeDesk();
+    missing.load(undefined);
+    expect(filled.toJSON()).toEqual(missing.toJSON());
+  });
+
+  it('keeps a desk the save already has, and no longer speaks of settings', () => {
+    const trade = { deals: { coal: 5 }, nextAt: 10, fuelMul: 1.2, driftDay: 3 };
+    expect(runStep(7, { ...oldestSave(), version: 7, trade }).trade).toBe(trade);
+    expect(MIGRATIONS.find((m) => m.from === 7)!.note).not.toMatch(/setting/i);
   });
 });
 
@@ -342,6 +586,24 @@ describe('v9 to v10', () => {
     const crafting = { recipes: ['mallard'], stats: { unlocks: 4, crafts: 9, failures: 2 } };
     const j = migrate({ ...oldestSave(), version: 9, crafting });
     expect(j.crafting).toBe(crafting);
+  });
+
+  it('starts battery carts empty, and makes up no tanks for a train without them', () => {
+    const trains = () => [
+      { id: 1, tanks: { coal: 5, oil: 0, water: 3 } },
+      { id: 2, tanks: { coal: 0, oil: 0, water: 0, battery: 4 } },
+      { id: 3 },
+    ];
+    const crafting = { recipes: [], stats: { unlocks: 0, crafts: 0, failures: 0 } };
+    // with crafting in the file as well, which the rest of the step leaves alone
+    for (const extra of [{}, { crafting }]) {
+      const j = runStep(9, { ...oldestSave(), version: 9, trains: trains(), ...extra });
+      expect(j.trains).toEqual([
+        { id: 1, tanks: { coal: 5, oil: 0, water: 3, battery: 0 } },
+        { id: 2, tanks: { coal: 0, oil: 0, water: 0, battery: 4 } },
+        { id: 3 },
+      ]);
+    }
   });
 });
 
@@ -1560,6 +1822,396 @@ describe('storage, from any state it is in', () => {
         shrink: function* (c) {
           for (const names of shrinkArray(c.names, shrinkName)) yield { ...c, names };
           for (const query of shrinkName(c.query)) yield { ...c, query };
+        },
+      },
+    );
+  });
+});
+
+// ------------------------------------------------------------------ the defaults the steps fill
+
+/** Every route mode a train has today. */
+const ROUTE_MODES: readonly unknown[] = ['schedule', ...DYNAMIC_MODES];
+/** The names route modes had before v7. */
+const OLD_MODE_NAMES: readonly unknown[] = ['fixed', 'dynamic', 'collect'];
+/** Modes no build wrote: the step keeps them, and the load code turns them into a schedule. */
+const ODD_MODES: readonly unknown[] = ['bogus', 7];
+/** What a train's mode could be in a file: none, an old name, today's, and values no build wrote. */
+const MODE_VALUES: unknown[] = [
+  undefined,
+  null,
+  '',
+  ...OLD_MODE_NAMES,
+  ...ROUTE_MODES,
+  ...ODD_MODES,
+];
+/** A station's turn in a file: none, one of the four, or null. */
+const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
+/** A tier a file could hold: whole ones past the Electric Age too, and values no build wrote. */
+const TIER_VALUES: unknown[] = [undefined, null, '3', -2, Number.NaN, 1.5, 0, 1, 2, 3, 4, 6, 9];
+
+/** The tier a v4 file stored, uncapped: a number above 0, else 0 (the rule for the v4 step). */
+const tierStored = (tier: unknown) => (typeof tier === 'number' && tier > 0 ? tier : 0);
+
+/** A train's mode, battery and the flag older trains had instead of a mode, as a file holds them. */
+interface OldTrain {
+  mode?: unknown;
+  dynamic?: boolean;
+  battery?: number;
+}
+function genOldTrain(rng: Rng): OldTrain {
+  const t: OldTrain = {};
+  const mode = rng.pick(MODE_VALUES);
+  if (mode !== undefined) t.mode = mode;
+  if (rng.chance(0.5)) t.dynamic = rng.chance(0.5);
+  if (rng.chance(0.6)) t.battery = rng.pick([0, rng.int(1, 60), rng.range(0, 60), 90]);
+  return t;
+}
+/** `base` (a saved train) with the old train's mode, flag and battery, and no tanks unless `tanks`. */
+function withOld(base: object, t: OldTrain, tanks = true): Record<string, unknown> {
+  const train = asStored(base) as Record<string, unknown> & { tanks?: Record<string, unknown> };
+  delete train.mode;
+  if ('mode' in t) train.mode = t.mode;
+  if ('dynamic' in t) train.dynamic = t.dynamic;
+  if (!tanks) delete train.tanks;
+  else {
+    train.tanks = train.tanks ?? { coal: 0, oil: 0, water: 0 };
+    delete train.tanks.battery;
+    if ('battery' in t) train.tanks.battery = t.battery;
+  }
+  return train;
+}
+/** An electric as the game saves it, with a battery cart, so the battery it loads with shows. */
+function savedTrain(): Record<string, unknown> {
+  const t = new Train([{ uid: 1, level: 1, def: locoDef('kando_v40') }], undefined, 1);
+  t.wagons = [
+    { uid: 2, def: wagonDef('battery_cart'), level: 1, cargo: null, amount: 0, origin: null },
+  ];
+  return asStored(t.toJSON()) as Record<string, unknown>;
+}
+type TrainJSON = ReturnType<Train['toJSON']>;
+
+/** A station of `defId` with `rot` as its turn, or none. */
+function stationOf(defId: string, rot: unknown, i = 0): StationJSON {
+  const s: Record<string, unknown> = { id: i + 1, defId, name: `S ${i}`, x: i, y: i, level: 1 };
+  s.storage = {};
+  if (rot !== undefined) s.rot = rot;
+  return s as unknown as StationJSON;
+}
+
+/** A level of `w` by `h` tiles as the editor saves one, stamped at 0 so nothing reads the clock. */
+function levelWorldOf(w: number, h: number, seed = 5): WorldSpec {
+  const level = {
+    ...levelFromMap(emptyMap(seed, w, h), 'Test', 'test'),
+    createdAt: 0,
+    updatedAt: 0,
+  };
+  return { kind: 'level', seed, level };
+}
+const generatedWorldOf = (w: number, h: number, seed = 77): WorldSpec => ({
+  kind: 'generated',
+  seed,
+  params: { ...DEFAULT_MAP_PARAMS, w, h },
+});
+/** A world of any size: generated, or a level no larger than a v4 build drew. */
+function genWorld(rng: Rng): WorldSpec {
+  const side = (max: number) => (rng.chance(0.5) ? 32 * rng.int(1, max / 32) : rng.int(1, max));
+  if (rng.chance(0.75)) return generatedWorldOf(side(416), side(416), rng.int(0, 1e6));
+  return levelWorldOf(side(160), side(160), rng.int(0, 1e6));
+}
+/**
+ * The chunk grid of the map the game builds for `world`: a level's own map, and for a generated
+ * world `emptyMap` of its size, which is how `generateMap` lays its grid (terrain is not needed).
+ */
+function gridOf(world: WorldSpec | undefined, seed: number): GameMap {
+  if (world?.kind === 'level') return mapFromLevel(world.level);
+  const p = { ...DEFAULT_MAP_PARAMS, ...world?.params };
+  return emptyMap(world?.seed ?? seed, p.w, p.h);
+}
+/**
+ * The chunks `tier` owns, found by growing rather than by measuring: the chunk holding the middle
+ * of the start basin (`generateMap`'s start), then once per whole tier every chunk touching an
+ * owned one, corners included.
+ */
+function ownedByGrowth(map: GameMap, tier: number): boolean[] {
+  const regions = new RegionState(map);
+  const rs = map.regionSize;
+  const start = regions.regionIndex(
+    (Math.floor((map.regionsX - 1) / 2) + 0.5) * rs,
+    (Math.floor((map.regionsY - 1) / 2) + 0.5) * rs,
+  );
+  let owned = new Array<boolean>(map.regionsX * map.regionsY).fill(false);
+  owned[start] = true;
+  for (let ring = 1; ring <= tier && owned.includes(false); ring++) {
+    const next = [...owned];
+    owned.forEach((o, i) => {
+      if (o) for (const n of regions.neighbours(i)) next[n] = true;
+    });
+    owned = next;
+  }
+  return owned;
+}
+/** A v4 file of `world` whose economy stored `tier`, or no tier at all. */
+function v4File(world: WorldSpec, tier: unknown): SaveGame {
+  const economy: Record<string, unknown> = { money: 1000, tickets: 0, granted: [] };
+  if (tier !== undefined) economy.tier = tier;
+  return { ...oldestSave(), version: 4, world, economy: economy as SaveGame['economy'] };
+}
+/** What a trade desk holds once it has loaded `trade`. */
+function deskOf(trade: unknown) {
+  const desk = new TradeDesk();
+  desk.load(trade as Parameters<TradeDesk['load']>[0]);
+  return desk.toJSON();
+}
+
+/**
+ * A file of any version whose trains and stations have the shapes old builds wrote (old mode
+ * names, the flag, no battery, no turn) and whose world is of any size.
+ */
+function genOldFile(rng: Rng): Record<string, unknown> {
+  const file = genFile(rng);
+  file.version = rng.int(SAVE_MIN_VERSION, SAVE_VERSION);
+  file.trains = (file.trains as unknown[]).map((_, i) =>
+    withOld({ id: i + 1 }, genOldTrain(rng), rng.chance(0.8)),
+  );
+  for (const s of file.stations as Record<string, unknown>[]) {
+    const rot = rng.pick(ROT_VALUES);
+    if (rot !== undefined) s.rot = rot;
+  }
+  if (rng.chance(0.5)) file.world = genWorld(rng);
+  return file;
+}
+/** Smaller old files: fewer fields and items, as `shrinkFile`, then shorter train and station lists. */
+function* shrinkOldFile(file: Record<string, unknown>): Iterable<Record<string, unknown>> {
+  yield* shrinkFile(file);
+  for (const key of ['trains', 'stations'])
+    for (const shorter of shrinkArray(file[key] as unknown[])) yield { ...file, [key]: shorter };
+}
+
+/** The fields each step fills, taken out of a copy of `file`; the rest is what the step must keep. */
+function withoutFilled(from: number, file: unknown): unknown {
+  const copy = asStored(file) as Record<string, unknown>;
+  const trains = (copy.trains as unknown[]).filter(isObject);
+  const top: Record<number, string[]> = {
+    1: ['decor'],
+    2: ['world'],
+    3: ['buildings'],
+    4: ['regions'],
+    5: ['seasonOffset'],
+    6: ['towns'],
+    7: ['trade'],
+    9: ['crafting'],
+  };
+  for (const key of top[from] ?? []) delete copy[key];
+  if (from === 6) {
+    for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.rot;
+    for (const t of trains) delete t.mode;
+  }
+  if (from === 9) for (const t of trains) if (isObject(t.tanks)) delete t.tanks.battery;
+  return copy;
+}
+
+describe('the defaults the steps fill', () => {
+  beforeEach(() => {
+    resetTrainIds(1);
+    resetStationIds(1);
+    Object.assign(rules, DEFAULT_RULES);
+  });
+
+  it('load every train and station as they loaded before a step filled them', () => {
+    // Before the steps filled them, no step touched a train or a station: Train.fromJSON mapped
+    // the old route modes and filled the battery, Station.fromJSON the turn. Moving the defaults
+    // into the steps may not change what loads, and a v6 train or station already holds what
+    // loads, so the fallbacks in the load code are no longer needed for it. The shapes are few,
+    // so every one is tried from every version, each failure naming the one train or station.
+    const track = new TrackGraph(8, 8);
+    const base = savedTrain();
+    const trains: OldTrain[] = [];
+    for (const mode of MODE_VALUES)
+      for (const dynamic of [undefined, true, false])
+        for (const battery of [undefined, 0, 45, 90]) {
+          const t: OldTrain = {};
+          if (mode !== undefined) t.mode = mode;
+          if (dynamic !== undefined) t.dynamic = dynamic;
+          if (battery !== undefined) t.battery = battery;
+          trains.push(t);
+        }
+    const stations = ROT_VALUES.flatMap((rot) =>
+      ['farm', 'town', 'depot', 'lumber'].map((defId) => ({ defId, rot })),
+    );
+    for (let version = SAVE_MIN_VERSION; version <= SAVE_VERSION; version++) {
+      const file: SaveGame = {
+        ...oldestSave(),
+        version,
+        trains: trains.map((t) => withOld(base, t)),
+        stations: stations.map((s, i) => stationOf(s.defId, s.rot, i)),
+      };
+      const before = asStored(file) as SaveGame;
+      const j = migrate(file);
+      j.trains.forEach((after, i) => {
+        const label = `v${version} train ${JSON.stringify(trains[i])}`;
+        const was = Train.fromJSON(asStored(before.trains[i]) as TrainJSON, track);
+        const now = Train.fromJSON(asStored(after) as TrainJSON, track);
+        expect(now.mode, `${label}: the mode it loads with`).toBe(was.mode);
+        expect(now.battery, `${label}: the battery it loads with`).toBe(was.battery);
+        const stored = after as { mode?: unknown; tanks: { battery?: unknown } };
+        if (version <= 6 && !ODD_MODES.includes(trains[i].mode))
+          expect(stored.mode, `${label}: the mode the file now holds`).toBe(was.mode);
+        if (version <= 9) expect(typeof stored.tanks.battery, label).toBe('number');
+      });
+      j.stations.forEach((after, i) => {
+        const label = `v${version} station ${JSON.stringify(stations[i])}`;
+        const was = Station.fromJSON(asStored(before.stations[i]) as StationJSON);
+        expect(Station.fromJSON(asStored(after) as StationJSON).rot, label).toBe(was.rot);
+        if (version <= 6) expect(after.rot, `${label}: the turn the file holds`).toBe(was.rot);
+      });
+    }
+    // the battery comparison means something only when the train can hold a charge
+    expect(
+      Train.fromJSON(asStored(withOld(base, { battery: 45 })) as TrainJSON, track).battery,
+    ).toBe(45);
+  });
+
+  it('bring a file of any version to this one with every default present, and keep what it had', () => {
+    // Each field a step fills: kept where the file has it, the step's default where the file is
+    // older than the step, and left out where the file is newer (only its own steps run).
+    forAll(
+      genOldFile,
+      (file) => {
+        const before = asStored(file) as Record<string, unknown>;
+        const from = fromVersion(before.version);
+        const read = readSaveText(JSON.stringify(file));
+        if (!('save' in read)) throw new Error(`the file was refused as ${read.error}`);
+        const save = read.save;
+        expect(save.version).toBe(SAVE_VERSION);
+        /** The field as the file had it, or as the step from `step` fills it, or still absent. */
+        const field = (key: string, step: number, filled: (v: unknown) => void) => {
+          if (key in before) expect(asStored(save[key]), key).toEqual(before[key]);
+          else if (from <= step) filled(save[key]);
+          else expect(key in save, `${key} from v${from}`).toBe(false);
+        };
+        const tier = tierStored((before.economy as Record<string, unknown>).tier);
+        const owned = ownedByGrowth(gridOf(save.world, save.seed), tier);
+        field('regions', 4, (v) => expect(v, 'regions').toEqual(owned));
+        field('seasonOffset', 5, (v) => expect(v, 'seasonOffset').toBe(0));
+        field('towns', 6, (v) => expect(v, 'towns').toEqual([]));
+        // the step to v12 restarts a desk's cycle: the rest of a desk the file had is kept
+        const besideCycle = (desk: unknown) =>
+          Object.entries(desk as object).filter(([k]) => k !== 'nextAt' && k !== 'driftDay');
+        if ('trade' in before)
+          expect(besideCycle(save.trade), 'trade').toEqual(besideCycle(before.trade));
+        else field('trade', 7, (v) => expect(deskOf(v), 'trade').toEqual(deskOf(undefined)));
+
+        const stations = before.stations as Record<string, unknown>[];
+        save.stations.forEach((s, i) => {
+          const was = stations[i].rot;
+          const rot = 'rot' in s ? s.rot : 'absent';
+          if (from <= 6) expect(rot, `station ${i}`).toBe(was ?? 0);
+          else expect(rot, `station ${i}`).toBe('rot' in stations[i] ? was : 'absent');
+        });
+        const trains = before.trains as Record<string, unknown>[];
+        (save.trains as Record<string, unknown>[]).forEach((t, i) => {
+          const was = trains[i];
+          const mode = 'mode' in t ? t.mode : 'absent';
+          const wasMode = 'mode' in was ? was.mode : 'absent';
+          if (from > 6 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
+            expect(mode, `train ${i}: mode`).toBe(wasMode);
+          else expect(ROUTE_MODES, `train ${i}: mode`).toContain(mode);
+          expect(isObject(t.tanks), `train ${i}: tanks`).toBe(isObject(was.tanks));
+          if (!isObject(t.tanks) || !isObject(was.tanks)) return;
+          const battery = 'battery' in t.tanks ? t.tanks.battery : 'absent';
+          const wasBattery = 'battery' in was.tanks ? was.tanks.battery : 'absent';
+          if (from <= 9 && wasBattery === 'absent') expect(battery, `train ${i}: battery`).toBe(0);
+          else expect(battery, `train ${i}: battery`).toBe(wasBattery);
+        });
+
+        // migrating again changes nothing: written back, the save reads as it was
+        const again = readSaveText(JSON.stringify(save));
+        expect('save' in again && asStored(again.save), 'read back').toEqual(asStored(save));
+      },
+      { shrink: shrinkOldFile },
+    );
+  });
+
+  it('have each step fill only its own fields, and change nothing the second time', () => {
+    // A step that only fills defaults leaves every other field alone, and finds nothing left to
+    // fill when it runs again; a step that rewrote a value it should keep would not.
+    forAll(
+      (rng) => {
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9]);
+        const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
+        return { from, file };
+      },
+      ({ from, file }) => {
+        const once = asStored(runStep(from, asStored(file) as SaveGame));
+        const twice = asStored(runStep(from, asStored(once) as SaveGame));
+        expect(twice, `the step from v${from}, run again`).toEqual(once);
+        expect(withoutFilled(from, once), `the step from v${from}, beside its own fields`).toEqual(
+          withoutFilled(from, file),
+        );
+      },
+      {
+        shrink: function* (c) {
+          for (const file of shrinkOldFile(c.file))
+            if (file.version === c.from) yield { ...c, file };
+        },
+      },
+    );
+  });
+
+  it('own, on every map a v4 build made, what the load code owned for the tier the file stored', () => {
+    // v4 builds made square maps of 32 to 160 tiles in steps of 32 (`rules.mapSize`), generated or
+    // drawn as a level, so a v4 file meets rings 0 to 2 only. Before the step filled the chunks,
+    // applySave built `new RegionState(map, 0)` and called `applyTier` with the tier the economy
+    // loaded. That is the oracle on odd grids, for every file the loader takes (a tier that is no
+    // number is refused before any step runs); on even grids regionTierMap rounds the start chunk
+    // away (issue #58), and there the step owns the start chunk's rings, as on every grid.
+    for (const size of [32, 64, 96, 128, 160])
+      for (const world of [generatedWorldOf(size, size), levelWorldOf(size, size)]) {
+        const map =
+          world.kind === 'level' ? mapFromLevel(world.level) : generateMap(77, world.params);
+        for (const tier of TIER_VALUES) {
+          const label = `${world.kind} ${size}×${size}, tier ${String(tier)}`;
+          const j = migrate(v4File(world, tier));
+          expect(j.regions, label).toEqual(ownedByGrowth(map, tierStored(tier)));
+          const regions = new RegionState(map);
+          regions.load(j.regions!);
+          expect(regions.unlocked, `${label}: the list the map takes`).toEqual(j.regions);
+          const read = readSaveText(JSON.stringify(v4File(world, tier)));
+          expect('save' in read, `${label}: loads`).toBe(typeof tier === 'number' && !isNaN(tier));
+          if (!('save' in read) || map.regionsX % 2 === 0) continue;
+          expect(read.save.regions, `${label}: as read`).toEqual(j.regions);
+          const economy = new Economy();
+          economy.load(read.save.economy);
+          const onLoad = new RegionState(map, 0);
+          onLoad.applyTier(economy.tier);
+          expect(j.regions, `${label}: what applySave owned`).toEqual(onLoad.unlocked);
+        }
+      }
+  });
+
+  it('own the start chunk and the rings of the stored tier, on a world of any size', () => {
+    // Past the sizes v4 builds made, the step follows its own rule: the tier the file stored,
+    // uncapped, in whole Chebyshev rings around the chunk map generation starts in, on the grid
+    // of the map the world builds, so the map takes the list on load.
+    forAll(
+      (rng) => ({ world: genWorld(rng), tier: rng.pick(TIER_VALUES) }),
+      ({ world, tier }) => {
+        const j = migrate(v4File(world, tier));
+        const map = gridOf(world, 0);
+        expect(j.regions).toEqual(ownedByGrowth(map, tierStored(tier)));
+        const regions = new RegionState(map);
+        regions.load(j.regions!);
+        expect(regions.unlocked, 'the list the map takes').toEqual(j.regions);
+      },
+      {
+        shrink: function* (c) {
+          if (typeof c.tier === 'number' && Number.isInteger(c.tier))
+            for (const tier of shrinkInt(c.tier)) yield { ...c, tier };
+          if (c.world.kind !== 'generated') return;
+          const { w, h } = c.world.params;
+          for (const n of shrinkInt(w, 32)) yield { ...c, world: generatedWorldOf(n, h) };
+          for (const n of shrinkInt(h, 32)) yield { ...c, world: generatedWorldOf(w, n) };
         },
       },
     );
