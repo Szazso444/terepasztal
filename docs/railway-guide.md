@@ -8,16 +8,23 @@ passenger cargo. Build a separate **Station**, connected to track, for passenger
 run coaches between Stations with Dynamic — Transport or a schedule. Passenger production
 depends on finished housing within seven tiles of the Station.
 
-Houses hold 20, 60, 140 and 300 residents at levels 1–4. Select a completed House and use
-**Enlarge** to pay for the next level. Its appearance progresses from house to apartments,
-high-rise and skyscraper. Residents fill available homes while food is available; the game
-does not construct free housing or grant free upgrades. A sliding 6×6 area with at least 200
-town residents gains city paving and roads. These are cosmetic and do not replace rails.
+Stations, works and houses gain one level per age, from the age they first appear in: nothing
+can be upgraded in the Steam Age, a Farm Halt reaches level 2 in the Diesel Age and level 6 in
+the Hyper Age, and a Refinery of the Diesel Age reaches level 5 at most. A building that already
+stands above its age's level, from an old save or a level file, keeps its level and is offered
+the next one when that age comes. Bridges keep their own four levels in every age.
+
+Houses hold 20, 60, 140, 300, 520 and 800 residents at levels 1–6. Select a completed House
+and use **Enlarge** to pay for the next level. Its appearance progresses from house to
+apartments, high-rise and skyscraper; levels 5 and 6 keep the skyscraper. Residents fill
+available homes while food is available; the game does not construct free housing or grant free
+upgrades. A sliding 6×6 area with at least 200 town residents gains city paving and roads.
+These are cosmetic and do not replace rails.
 
 Bring wheat from a Farm Halt to a Depot, then build a **Windmill** from Works. Its base recipe
-is one wheat to five food, at up to 60 batches per week. Levels 2–4 improve that ratio to 7,
-9 and 11 food; each upgrade also increases throughput by half the base rate. Residents and
-crews each use one food per week at default tuning. Food can also be bought on the Market.
+is one wheat to five food, at up to 60 batches per week. Levels 2–6 improve that ratio to 7,
+9, 11, 13 and 15 food; each upgrade also increases throughput by half the base rate. Residents
+and crews each use one food per week at default tuning. Food can also be bought on the Market.
 Refineries now need two stone per batch, alongside their previous inputs.
 
 Production, consumption and market deals use seven-day weeks. Production and upkeep flow

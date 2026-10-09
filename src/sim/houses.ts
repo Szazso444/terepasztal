@@ -1,5 +1,5 @@
 import type { Builder, Decor, PlacementCheck } from './build';
-import { decorDef } from './build';
+import { decorDef, levelLocked } from './build';
 import type { Town, TownRegistry } from './towns';
 import type { Stockpile } from './stockpile';
 import { scaleCost } from './stockpile';
@@ -11,6 +11,10 @@ import { sfx } from '../engine/audio';
 
 /** Decor id of the townhouse (its tile, cost and toolbar slot stay with the decor system). */
 export const HOUSE_ID = 'townhouse';
+/** The highest level with a picture of its own (`townhouse_4`); the levels above draw that one. */
+export const HOUSE_TOP_PICTURE = 4;
+/** Houses belong to the first age: their levels open one per age from the Steam age. */
+const HOUSE_FIRST_AGE = 0;
 
 /** A townhouse: the decor piece on its tile plus the people in it and how far it is built. */
 export interface House {
@@ -129,11 +133,12 @@ export class HouseRegistry {
     if (this.finished(h)) return 3;
     return Math.min(2, Math.floor(h.progress * 3)) as HouseStage;
   }
-  /** Atlas frame of a house at its current stage and level. */
+  /** Atlas frame of a house at its stage and level (above the highest picture, that one). */
   frame(h: House) {
     const s = this.stage(h);
     if (s < 3) return `structures/${HOUSE_ID}_s${s}`;
-    return h.level > 1 ? `structures/${HOUSE_ID}_${h.level}` : `structures/${HOUSE_ID}`;
+    const l = Math.min(h.level, HOUSE_TOP_PICTURE);
+    return l > 1 ? `structures/${HOUSE_ID}_${l}` : `structures/${HOUSE_ID}`;
   }
   /** Frame for any decor piece: houses by stage and level, everything else by id. */
   frameFor(d: Decor) {
@@ -164,11 +169,15 @@ export class HouseRegistry {
     const c = this.cfg.upgradeCost[h.level - 1] ?? {};
     return this.builder.free ? {} : scaleCost(c, rules.buildCostMul);
   }
+  /** Whether the player may pay for the next level: built, opened by the age, affordable. */
   canUpgrade(h: House): PlacementCheck {
     const cost = this.upgradeCost(h);
     if (!cost) return { ok: false, cost: {}, reason: STR.house.maxed };
     if (!this.finished(h)) return { ok: false, cost, reason: STR.house.building };
-    if (!this.builder.free && !this.stock.canAfford(cost)) {
+    if (this.builder.free) return { ok: true, cost };
+    const locked = levelLocked(HOUSE_FIRST_AGE, h.level + 1, this.builder.economy.tier);
+    if (locked) return { ok: false, cost, reason: locked };
+    if (!this.stock.canAfford(cost)) {
       const miss = this.stock.missing(cost);
       return {
         ok: false,

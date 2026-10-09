@@ -16,14 +16,9 @@ import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
 import { content, type DecorDef, type Cost, type Gauge } from '../data/content';
 import { rules } from './rules';
-import {
-  Station,
-  terrainFactorAt,
-  stationDef,
-  stationFootprint,
-  maxLevelForTier,
-  MAX_LEVEL,
-} from './stations';
+import { Station, terrainFactorAt, stationDef, stationFootprint, MAX_LEVEL } from './stations';
+import { ageOfLevel, levelCap } from './levels';
+import { ageDef, LAST_AGE } from './ages';
 import type { Economy } from './economy';
 import { Stockpile, scaleCost } from './stockpile';
 import {
@@ -75,6 +70,17 @@ export interface PlacementCheck {
   ok: boolean;
   cost: Cost;
   reason?: string;
+}
+
+/**
+ * Why the age keeps a building that appears in `firstAge` from rising to `level`, or null when it
+ * may: the level opens in a later age, named in full, or no age ever opens it.
+ */
+export function levelLocked(firstAge: number, level: number, age: number): string | null {
+  if (level <= levelCap(firstAge, age)) return null;
+  const opens = ageOfLevel(firstAge, level);
+  if (opens > LAST_AGE) return STR.station.maxed;
+  return STR.build.levelOpens(level, STR.ages.name[ageDef(opens).id]);
 }
 
 /** Placement rules, resource costs and refunds for track, stations, decor and buildings. */
@@ -241,10 +247,25 @@ export class Builder {
     for (const d of this.decor.values()) if (decorDef(d.id).residents) n++;
     return n;
   }
+  /**
+   * Whether a works or bridge may rise a level: works one level per age from the age they appear
+   * in, bridges to their four levels in any age. The editor ignores the age.
+   */
+  canUpgradeBuilding(b: Building): PlacementCheck {
+    const cost = buildingUpgradeCost(b);
+    if (!cost) return { ok: false, cost: {}, reason: STR.station.maxed };
+    if (this.free) return { ok: true, cost: {} };
+    const def = buildingDef(b.id);
+    const locked = def.bridge
+      ? null
+      : levelLocked(def.tier, buildingLevel(b) + 1, this.economy.tier);
+    if (locked) return { ok: false, cost, reason: locked };
+    return this.affordable(cost);
+  }
   upgradeBuilding(b: Building) {
     if (this.buildingAt(b.x, b.y) !== b) return false;
-    const cost = buildingUpgradeCost(b);
-    if (!cost || !this.pay(this.free ? {} : cost)) return false;
+    const c = this.canUpgradeBuilding(b);
+    if (!c.ok || !this.pay(c.cost)) return false;
     b.level = buildingLevel(b) + 1;
     if (buildingDef(b.id).bridge) {
       this.refreshBridgeCapacity(b.x, b.y);
@@ -570,11 +591,12 @@ export class Builder {
     this.onStationChanged?.(s, true);
     return true;
   }
+  /** Whether a station may rise a level: one level per age from the age it appears in. */
   canUpgrade(s: Station): PlacementCheck {
     if (s.level >= MAX_LEVEL) return { ok: false, cost: {}, reason: STR.station.maxed };
     if (this.free) return { ok: true, cost: {} };
-    if (s.level >= maxLevelForTier(this.economy.tier))
-      return { ok: false, cost: s.upgradeCost(), reason: STR.build.levelCap };
+    const locked = levelLocked(s.firstAge, s.level + 1, this.economy.tier);
+    if (locked) return { ok: false, cost: s.upgradeCost(), reason: locked };
     return this.affordable(s.upgradeCost());
   }
   /** Editor only: lower a station's level. */

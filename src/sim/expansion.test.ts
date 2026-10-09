@@ -98,7 +98,15 @@ describe('weekly food economy and housing', () => {
     expect(h.residents).toBe(20);
     expect(h.level).toBe(1);
     expect(houses.houses.size).toBe(1);
+    // the player pays for the second level, which the Diesel age opens
+    w.builder.free = false;
+    w.stock.add('wood', 60);
+    w.stock.add('stone', 40);
+    const wood = w.stock.get('wood');
+    expect(houses.upgrade(h)).toBe(false);
+    w.economy.setAge(1);
     expect(houses.upgrade(h)).toBe(true);
+    expect(w.stock.get('wood')).toBe(wood - 60);
     houses.tick(daySeconds() * 100, daySeconds() * 200);
     expect(h.residents).toBe(60);
     expect(h.level).toBe(2);
