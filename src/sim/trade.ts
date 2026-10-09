@@ -51,6 +51,15 @@ export class TradeDesk {
   priceMul(resource: string) {
     return this.drifts(resource) ? this.fuelMul : 1;
   }
+  /** One-off spot prices per unit, rounded to the cent: what the market shows and trades at. */
+  spotQuote(resource: string): { buy: number; sell: number } {
+    const price = cargoDef(resource).price;
+    const drift = this.priceMul(resource);
+    return {
+      buy: Math.round(price * BUY_MUL * rules.spotPriceMul * drift * 100) / 100,
+      sell: Math.round(price * SELL_MUL * rules.spotPriceMul * drift * 100) / 100,
+    };
+  }
   buyPrice(resource: string) {
     return (
       cargoDef(resource).price * BUY_MUL * DEAL_BONUS * rules.spotPriceMul * this.priceMul(resource)
