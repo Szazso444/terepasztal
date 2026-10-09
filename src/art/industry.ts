@@ -3,6 +3,7 @@ import { PixelBuf } from './pixels';
 import { drawPrism, drawCylinder, proj, fillPoly, type P2 } from './iso3d';
 import { hash2 } from '../engine/rng';
 import { HALF_W, HALF_H } from '../engine/iso';
+import { frontShown, lightX } from './view';
 
 /** Shared sprite frame for one-tile structures (same as `structures.ts`). */
 export const W = 96;
@@ -333,7 +334,7 @@ export function chimney(
   b.set(rx(t), ry(t) - 1, PAL.iron[3]);
 }
 
-/** Door and a row of windows on the +y face. */
+/** Door and a row of windows on the +y face; the door only while the front is shown. */
 export function facade(
   b: PixelBuf,
   cx: number,
@@ -348,7 +349,7 @@ export function facade(
     b.rect(rx(w) - 1, ry(w) - 12, 3, 4, PAL.amberDark);
     b.set(rx(w), ry(w) - 11, PAL.amber);
   }
-  if (doorX !== null) {
+  if (doorX !== null && frontShown()) {
     const d = proj(OX, GY, cx + doorX, cy + wid / 2, z);
     b.rect(rx(d) - 1, ry(d) - 9, 3, 8, PAL.trunkDark);
   }
@@ -417,7 +418,7 @@ export function heap(
       const top = c.y - h * (1 - Math.abs(nx)) - dy;
       if (y < top || y > c.y + dy) continue;
       const n = hash2(x >> 1, y >> 1, seed);
-      const light = 0.75 + 0.35 * (1 - (nx + 1) / 2) + (y < top + 2 ? 0.15 : 0);
+      const light = 0.75 + 0.35 * (1 - (lightX() * nx + 1) / 2) + (y < top + 2 ? 0.15 : 0);
       b.set(x, y, shade(pick(shades, n), light));
     }
 }
@@ -673,11 +674,13 @@ function farm(level: number): PixelBuf {
   house(b, bx, by, bl, bw, bh, BARN, PAL.roofSlate, 33 + level);
   gnd.push(shadowRect(bx, by, bl, bw));
   // big barn door with cross bracing on the +y face, hayloft hatch above
-  opening(b, bx - 0.07, by + bw / 2, bx + 0.07, by + bw / 2, 0, bh - 4, PAL.trunkDark);
-  const d0 = proj(OX, GY, bx - 0.07, by + bw / 2, 0);
-  const d1 = proj(OX, GY, bx + 0.07, by + bw / 2, 0);
-  b.line(rx(d0), ry(d0) - 1, rx(d1), ry(d1) - (bh - 4), PAL.timber[1]);
-  b.line(rx(d0), ry(d0) - (bh - 4), rx(d1), ry(d1) - 1, PAL.timber[1]);
+  if (frontShown()) {
+    opening(b, bx - 0.07, by + bw / 2, bx + 0.07, by + bw / 2, 0, bh - 4, PAL.trunkDark);
+    const d0 = proj(OX, GY, bx - 0.07, by + bw / 2, 0);
+    const d1 = proj(OX, GY, bx + 0.07, by + bw / 2, 0);
+    b.line(rx(d0), ry(d0) - 1, rx(d1), ry(d1) - (bh - 4), PAL.timber[1]);
+    b.line(rx(d0), ry(d0) - (bh - 4), rx(d1), ry(d1) - 1, PAL.timber[1]);
+  }
   facade(b, bx, by, bw, [bx > 0 ? 0 : bl * 0.32], null, 2);
   if (level === 1) {
     heap(b, -0.26, 0.24, 0.1, 6, WHEATC, 34);
@@ -745,19 +748,21 @@ function lumber(level: number): PixelBuf {
     gnd.push(shadowRect(0.12, 0.08, 0.34, 0.2));
     // big open sawing bay on the +y face with the blade glinting inside
     const fy = sy + sw / 2;
-    opening(b, sx - 0.16, fy, sx + 0.1, fy, 0, sh - 3, (x, y) =>
-      shade(pick(PAL.timber, hash2(x >> 1, y, 48)), 0.35),
-    );
-    const bl = proj(OX, GY, sx - 0.02, fy, 5);
-    for (let a = 0; a < 12; a++) {
-      const ang = (a / 12) * Math.PI * 2;
-      b.set(
-        rx(bl) + Math.round(Math.cos(ang) * 3),
-        ry(bl) + Math.round(Math.sin(ang) * 4),
-        STEEL[1],
+    if (frontShown()) {
+      opening(b, sx - 0.16, fy, sx + 0.1, fy, 0, sh - 3, (x, y) =>
+        shade(pick(PAL.timber, hash2(x >> 1, y, 48)), 0.35),
       );
+      const bl = proj(OX, GY, sx - 0.02, fy, 5);
+      for (let a = 0; a < 12; a++) {
+        const ang = (a / 12) * Math.PI * 2;
+        b.set(
+          rx(bl) + Math.round(Math.cos(ang) * 3),
+          ry(bl) + Math.round(Math.sin(ang) * 4),
+          STEEL[1],
+        );
+      }
+      b.set(rx(bl), ry(bl), PAL.iron[2]);
     }
-    b.set(rx(bl), ry(bl), PAL.iron[2]);
     facade(b, sx, sy, sw, [sl * 0.36], null);
     logStack(b, 0.2, -0.22, 0.4, 3, 49);
     logStack(b, 0.12, 0.08, 0.34, 2, 50);
@@ -1094,7 +1099,7 @@ function kiln(): PixelBuf {
     const w = Math.round(prx * Math.sqrt(Math.max(0, 1 - (d / (dome + 1)) ** 2)));
     for (let x = -w; x <= w; x++) {
       const n = hash2(x >> 1, d >> 1, 93);
-      const light = 0.78 + 0.03 * d + 0.18 * (1 - (x / prx + 1) / 2);
+      const light = 0.78 + 0.03 * d + 0.18 * (1 - ((lightX() * x) / prx + 1) / 2);
       b.set(rx(t) + x, ry(t) - d, shade(pick(BRICK, n), light));
     }
   }
@@ -1105,13 +1110,15 @@ function kiln(): PixelBuf {
   b.set(rx(t) - 3, ry(t) - dome - 4, PAL.stone[2]);
   b.set(rx(t) - 5, ry(t) - dome - 6, PAL.stone[1]);
   // glowing mouth on the front
-  const c = proj(OX, GY, kx, ky, 0);
-  const mx = rx(c);
-  const my = ry(c) + Math.round(kr * 16) - 1;
-  b.rect(mx - 3, my - 7, 7, 7, PAL.outline);
-  b.rect(mx - 2, my - 6, 5, 5, PAL.amberDark);
-  b.rect(mx - 1, my - 5, 3, 3, PAL.amber);
-  b.set(mx, my - 4, PAL.white);
+  if (frontShown()) {
+    const c = proj(OX, GY, kx, ky, 0);
+    const mx = rx(c);
+    const my = ry(c) + Math.round(kr * 16) - 1;
+    b.rect(mx - 3, my - 7, 7, 7, PAL.outline);
+    b.rect(mx - 2, my - 6, 5, 5, PAL.amberDark);
+    b.rect(mx - 1, my - 5, 3, 3, PAL.amber);
+    b.set(mx, my - 4, PAL.white);
+  }
   logStack(b, 0.26, 0.2, 0.3, 2, 94);
   heap(b, -0.32, 0.3, 0.1, 5, COAL, 95);
   b.outline(PAL.outline, 170);
@@ -1254,7 +1261,7 @@ function powerPlant(): PixelBuf {
     b.set(rx(w), ry(w) - 17, PAL.amberDark);
     b.set(rx(w), ry(w) - 14, PAL.amber);
   }
-  opening(b, hx + 0.19, hy + 0.21, hx + 0.27, hy + 0.21, 0, 12, PAL.outline);
+  if (frontShown()) opening(b, hx + 0.19, hy + 0.21, hx + 0.27, hy + 0.21, 0, 12, PAL.outline);
   // clerestory strip on the roof
   drawPrism(b, {
     ox: OX,
@@ -1543,7 +1550,7 @@ function wireMill(): PixelBuf {
       seed: 173,
     });
   }
-  opening(b, hx + 0.1, hy + 0.17, hx + 0.22, hy + 0.17, 0, 11, PAL.outline);
+  if (frontShown()) opening(b, hx + 0.1, hy + 0.17, hx + 0.22, hy + 0.17, 0, 11, PAL.outline);
   chimney(b, hx - 0.22, hy - 0.1, 16, 10, 0.04);
   // coils of drawn wire on the loading pad
   for (const [cx, cy] of [
