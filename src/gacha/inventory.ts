@@ -63,8 +63,11 @@ export class Inventory {
   toJSON() {
     return { items: this.items, nextUid: this.nextUid };
   }
+  /** Copies of models the content no longer defines are left out, like unknown recipes. */
   load(j: ReturnType<Inventory['toJSON']>) {
-    this.items = j.items;
+    const known = (id: unknown) =>
+      typeof id === 'string' && (LOCOS.some((l) => l.id === id) || WAGONS.some((w) => w.id === id));
+    this.items = j.items.filter((i) => known(i.defId));
     this.nextUid = j.nextUid;
   }
 }
