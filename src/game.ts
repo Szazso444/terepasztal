@@ -1025,6 +1025,7 @@ export class Game {
       ]),
       wires: this.catenary.toJSON(),
       houses: this.houses.toJSON(),
+      people: this.people.toJSON(),
     };
   }
 
@@ -1137,6 +1138,8 @@ export class Game {
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
     if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);
+    // without a saved stream the walkers keep the one seeded from the map
+    if (j.people) this.people.load(j.people);
 
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
     this.applySeason(true);
