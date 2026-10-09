@@ -248,6 +248,8 @@ export class Game {
   glows!: Glows;
   smoke!: Smoke;
   private autosaveTimer = 0;
+  /** the stored save was just replaced and the page is reloading into it: do not save over it */
+  private keepStoredSave = false;
   private savedAt: number | null = null;
   weather!: Weather;
   groundLights!: GroundLights;
@@ -945,7 +947,7 @@ export class Game {
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
-      if (this.settings.autosave && this.mode === 'play') this.save(true);
+      if (this.settings.autosave && this.mode === 'play' && !this.keepStoredSave) this.save(true);
     });
   }
 
@@ -1721,6 +1723,10 @@ export class Game {
             this.toasts.push(STR.saves.refused[read.error], 'warn');
             return false;
           }
+          // the running game must not autosave over the import on its way out: neither the
+          // unload handler nor a frame of the minute autosave that runs while the page reloads
+          this.keepStoredSave = true;
+          this.loop.stop();
           location.hash = `seed=${read.save.seed}`;
           location.reload();
           return true;
