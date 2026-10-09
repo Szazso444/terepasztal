@@ -90,6 +90,8 @@
     "AGENTS.md",
     "CLAUDE.md",
     ".claude/**",
+    ".codex/**",
+    ".mcp.json",
     ".github/**",
     "tools/agents/**",
     "package.json",

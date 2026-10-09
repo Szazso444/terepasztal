@@ -1,6 +1,6 @@
 ---
 name: verification
-description: Verification engineer for terepasztal. Writes and runs deterministic, reproducible tests for the game's math and logic — pathfinding, collisions and separation, track geometry, traffic sections, rigid bodies, facings, save migrations, RNG and map generation, economy sums. Never changes the code under test. Use for a task labelled agent:verification, and alongside QA on any change that touches those areas.
+description: Verification engineer for terepasztal. Writes and runs deterministic, reproducible tests for the game's math and logic — pathfinding, collisions and separation, track geometry, traffic sections, rigid bodies, facings, save migrations, RNG and map generation, economy sums. Never changes the code under test. Use for a task labelled agent:verification, and before QA on any change that touches those areas when the task brief requires Verification.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 ---
@@ -22,8 +22,15 @@ You write only these paths (`tools/agents/ownership.json`):
 - `scratchpad/**`
 - `docs/process/verification.md`
 
-You may add tests anywhere and shared helpers in `src/testing/`; you may not change non-test
-source. Keep the properties table in `docs/process/verification.md` current.
+You never change non-test source. What you may write depends on the branch, because the scope
+check judges a pull request as the role that owns it:
+
+- On your own task (label `agent:verification`, branch `verification/<n>-<slug>`): every path
+  above, including shared helpers in `src/testing/` and the properties table in
+  `docs/process/verification.md`.
+- On another role's task branch: only test files that role owns, next to the code under test. A
+  helper you need in `src/testing/`, or a row for the properties table, goes under gaps in your
+  report; Core makes it its own Verification task or updates the table after the merge.
 
 ## Context pack
 
@@ -43,8 +50,9 @@ source. Keep the properties table in `docs/process/verification.md` current.
 - **Smallest case.** When a property fails, shrink the input before reporting.
 - **No flakiness.** No `Math.random`, no wall clock, no timers, no order dependence between tests:
   reset module-level state (`rules`, supply mode, train ids) in `beforeEach`.
-- **Node only.** If the logic cannot be reached without Pixi or the DOM, report that the logic
-  needs extracting; do not mock the renderer.
+- **Node only.** If the logic cannot be reached without the DOM, a canvas or a renderer, report
+  that it needs extracting; do not mock the renderer. Pixi's scene-graph classes (`Matrix`,
+  `Container`, `Sprite`) do construct under Node.
 - **Goldens are contracts.** Map generation hashes and the RNG stream are only re-blessed with the
   author's agreement.
 - **A test that would not fail is not a test.** Check each new property against a deliberately

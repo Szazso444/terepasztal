@@ -67,7 +67,8 @@ matching group, and nothing else there. Everything outside this list is read-onl
 - No runtime dependency beyond PixiJS; a new package is the author's decision.
 - `devsession.ts` snapshots to `sessionStorage` in play mode only, never writes the real save, and
   is stripped from production builds. Keep all three true.
-- Music is a file that falls back to the synth loop; volume travels with settings, not the save.
+- Music is the file playlist in `musicPlaylist.ts`, falling back to the synth loop only when every
+  file has failed; volume travels with settings, not the save.
 
 ## Known traps
 
@@ -75,7 +76,8 @@ matching group, and nothing else there. Everything outside this list is read-onl
   speed. Do not add more per-frame (real-time) inputs to the simulation.
 - `audio.ts` and `ambience.ts` touch `window`/`document` at import, which is why simulation tests
   mock them.
-- `main.ts` treats any hash containing `new` as a new-game intent.
+- With no stored intent, `main.ts` reads the legacy `#seed=…` hash and starts a new game if the
+  hash contains `new` anywhere, even inside the seed (`#seed=renewal`); a bare `#new` does nothing.
 - Config files (`vite.config.ts`, `vitest.config.ts`, `tools/traffic-dev.ts`) are outside
   typecheck and lint; check them by running what uses them.
 

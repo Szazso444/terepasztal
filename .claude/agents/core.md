@@ -63,7 +63,8 @@ Return a plan, not code:
 
 Splitting rules: a change to a shared contract lands first in the owning role with the old
 behaviour kept, then the consumers move, then the old path is removed. A golden test (map
-generation hashes, art frame counts) never changes inside an ordinary task.
+generation hashes) never changes inside an ordinary task; art frame counts and anchors are checked
+by re-running `scratchpad/art-sheets.mjs` until a headless test exists (CORE.md, A44).
 
 ## Auditing
 
@@ -79,5 +80,6 @@ Proposed issues stay in `CORE.md` until the author approves them.
 - A change would alter generated worlds, existing saves, or atlas frame counts.
 - Anything would delete work that is not already in `main`.
 
-Never add `gate:approved` or remove it: it is the author's approval of a gate-file change, and the
-scope check rejects it when an agent adds it.
+Never add `gate:approved` or remove it: it is the author's approval of a gate-file change. The
+scope check rejects it when a GitHub App adds it; with the author's own credentials it cannot
+tell, so the rule rests on you.

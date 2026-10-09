@@ -50,11 +50,12 @@ Out of scope: <what to leave alone even if it looks wrong; report it instead>
 ```
 Issue: #<n>
 Branch / commit: <branch> @ <sha>
-Outcome: done | partial | blocked
+Outcome: done | partial | blocked   (done: every criterion met; blocked: stopped for a reason in your role file's Stop and ask or lifecycle step 4; partial: anything else left unfinished, with the reason)
 Changed: <path> — <one line each>
 Gate: typecheck <ok|fail> · lint <ok|fail> · test <passed/total> · build <ok|fail> · prettier <ok|fail> · scope <ok|fail>
 Tests added: <file — invariant it pins>
-Open questions: <for the author or Core; none if none>
+Questions for the author: <product or rule decisions only the author can make; these stop the task>
+Notes for Core: <choices made inside the brief that Core should confirm; these do not stop it>
 Found out of scope: <problems noticed in files the role does not own>
 ```
 
