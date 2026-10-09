@@ -382,6 +382,17 @@ const RECIPES: Record<string, (sc: Scene) => (() => void) | void> = {
     sc.t.dropJob(1);
     expect(sc.t.job).toBeNull();
   },
+  jobClosedStranded(sc) {
+    startJob(sc);
+    // the rail under the head is taken up, and the contract closes with the train off the rails
+    const h = head(sc);
+    sc.w.track.remove(h.x, h.y);
+    sc.ticks(1);
+    expect(sc.t.state).toBe('stranded');
+    sc.t.dropJob(1);
+    expect(sc.t.job).toBeNull();
+    return () => void sc.w.track.place(h.x, h.y, 'straight', 1);
+  },
 };
 /** A train whose own program goes nowhere takes up a contract from the quarry to the warehouse. */
 function startJob(sc: Scene) {
@@ -427,7 +438,7 @@ function expectOwnPlatformOnly(sc: Scene) {
  * schedule the train can run. A schedule train has at least two stops, now and once any contract
  * job hands the train back its program; a roaming train heads for what it would pick; and once
  * the cause of any stop clears, the train reaches a station or, roaming with nothing to fetch,
- * waits to choose again.
+ * waits to choose again, any contract job that closed having handed its program back by then.
  */
 function switchFrom(
   recipe: string,
@@ -501,6 +512,7 @@ function switchFrom(
       (arrived() || (t.dynamic ? t.state === 'idle' : !runnable() && t.state === 'noRoute')),
     HORIZON,
   );
+  expect(settled(), 'a closed contract job still holds its program aside').toBe(true);
   if (t.mode === 'schedule') {
     expect(programOf(t).length, 'a schedule train runs a one-stop program').toBeGreaterThanOrEqual(
       2,

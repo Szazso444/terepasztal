@@ -1020,9 +1020,12 @@ describe('setSchedule during a contract job', () => {
 
 // ------------------------------------------------------------ setSchedule from every job state
 
-/** Where the train's contract job stands when the player sets the route; `none`: no job at all. */
-type Moment = 'none' | 'toOrigin' | 'atOrigin' | 'toDest' | 'atDest';
-const MOMENTS: Moment[] = ['none', 'toOrigin', 'atOrigin', 'toDest', 'atDest'];
+/**
+ * Where the train's contract job stands when the player sets the route; `none`: no job at all;
+ * `noRoute`: the first contract's origin is off the rails and the train stands with no route to it.
+ */
+type Moment = 'none' | 'toOrigin' | 'atOrigin' | 'toDest' | 'atDest' | 'noRoute';
+const MOMENTS: Moment[] = ['none', 'toOrigin', 'atOrigin', 'toDest', 'atDest', 'noRoute'];
 const MODES: RouteMode[] = ['schedule', 'production', 'collection', 'transport', 'contract'];
 const OTHER_KINDS = ['farm', 'warehouse', 'quarry', 'station'];
 interface Rerouting {
@@ -1118,21 +1121,25 @@ function reroute(c: Rerouting): 'unreached' | 'none' | 'aside' {
   } else {
     // a train with no route takes up the queued contract
     t.schedule = [stopOf(-1)];
+    // for `noRoute`, the first contract's origin: off the rails as well
+    const offRails = c.moment === 'noRoute' ? deadStation(w, 75) : null;
     const job = (contractId: number) => ({
       contractId,
       name: 'stone',
-      originId: sites[0].id,
+      originId: (contractId === 1 && offRails ? offRails : sites[0]).id,
       destId: sites[1].id,
       cargo: 'stone',
     });
     t.addJob(job(1));
     if (c.second) t.addJob(job(2));
-    const phase = c.moment === 'toOrigin' || c.moment === 'atOrigin' ? 'origin' : 'dest';
+    const phase = c.moment === 'toDest' || c.moment === 'atDest' ? 'dest' : 'origin';
     const platform = c.moment === 'atOrigin' ? sites[0] : c.moment === 'atDest' ? sites[1] : null;
+    const state = c.moment === 'noRoute' ? 'noRoute' : platform ? 'loading' : 'moving';
     const there = () =>
       t.job?.contractId === 1 &&
       t.jobPhase === phase &&
-      (platform ? t.state === 'loading' && t.atStation === platform : t.state === 'moving');
+      t.state === state &&
+      (!platform || t.atStation === platform);
     if (!until(there, 300)) return 'unreached';
     for (let i = 0; i < c.wait && there(); i++) tick();
     if (!there()) return 'unreached';
@@ -1219,10 +1226,21 @@ describe('setSchedule from every contract job state', () => {
     { timeout: 120_000 },
     () => {
       const seen = { unreached: 0, none: 0, aside: 0 };
-      forAll(rerouting, (c) => void seen[reroute(c)]++, { shrink: shrinkRerouting });
+      const aside = Object.fromEntries(MOMENTS.map((m) => [m, 0])) as Record<Moment, number>;
+      forAll(
+        rerouting,
+        (c) => {
+          const r = reroute(c);
+          seen[r]++;
+          if (r === 'aside') aside[c.moment]++;
+        },
+        { shrink: shrinkRerouting },
+      );
       // most cases do set the route during or right after a job
       expect(seen.aside).toBeGreaterThanOrEqual(SEEDS.length * 0.5);
       expect(seen.none).toBeGreaterThanOrEqual(SEEDS.length * 0.1);
+      // a job standing with no route to its origin among them
+      expect(aside.noRoute).toBeGreaterThanOrEqual(SEEDS.length * 0.1);
     },
   );
 });
