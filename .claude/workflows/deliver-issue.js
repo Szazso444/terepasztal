@@ -84,7 +84,17 @@ const REPORT = {
     },
     gate: { type: 'string', description: 'each gate command and its result' },
     testsAdded: { type: 'array', items: { type: 'string' } },
-    openQuestions: { type: 'array', items: { type: 'string' } },
+    questionsForAuthor: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'product or rule decisions only the author can make; any entry stops the task',
+    },
+    notesForCore: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'choices made inside the brief that Core should confirm; they do not stop the gate',
+    },
     outOfScope: { type: 'array', items: { type: 'string' } },
   },
   required: [
@@ -94,7 +104,8 @@ const REPORT = {
     'changed',
     'gate',
     'testsAdded',
-    'openQuestions',
+    'questionsForAuthor',
+    'notesForCore',
     'outOfScope',
   ],
 };
@@ -242,7 +253,9 @@ async function gateLoop(t, first) {
         reason: 'agent returned nothing',
         round,
       };
-    if (report.outcome === 'blocked' || report.openQuestions.length) {
+    // Only the author's decisions stop a task; choices inside the brief go on to the gate and
+    // come back to Core with the result.
+    if (report.outcome === 'blocked' || report.questionsForAuthor.length) {
       return { task: t.key, issue: t.issue, branch: branchOf(t), status: 'blocked', report, round };
     }
     verified = t.verification
