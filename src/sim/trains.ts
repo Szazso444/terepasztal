@@ -5,6 +5,7 @@ import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
 import { lineSpeedCap, approachCap } from './lineSpeed';
 import { consistAccess, consistGauge, pieceClassFor, type ConsistAccess } from './compat';
 import { collectorCeiling, type SupplyKind } from './catenary';
+import { BRIDGE_SLOW_FACTOR, slowsOnBridge } from './bridges';
 import type { Signals } from './signals';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
 import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
@@ -311,6 +312,11 @@ export interface TickCtx {
   biomeAt: (x: number, y: number) => { speedMul: number; waterUseMul: number };
   /** speed multiplier for crossing a segment: slower climbing a hill, faster coming down */
   gradeAt?: (seg: PathSegment) => number;
+  /**
+   * The fleet captured the render poses at the start of this loop tick (`Fleet.beginFrame`), so a
+   * tick leaves prevPoses alone and the renderer interpolates across every step of the loop tick.
+   */
+  framed?: boolean;
 }
 
 export interface RetreatPlan {
@@ -886,16 +892,16 @@ export class Train {
   get eco() {
     return this.tankFraction < ECO_BELOW;
   }
-  /** Pushing the consist backwards is slow; a heavy train is slower still. */
   /** The whole consist is on the bridge until its rear leaves it. */
   bridgeSpeed(track: TrackGraph) {
     let factor = 1;
     for (const k of this.occupancyKeys(track.w)) {
       const cap = track.get(k % track.w, Math.floor(k / track.w))?.bridgeCapacity;
-      if (cap && this.mass > cap * 0.8) factor = Math.min(factor, 0.5);
+      if (cap && slowsOnBridge(this.mass, cap)) factor = Math.min(factor, BRIDGE_SLOW_FACTOR);
     }
     return factor;
   }
+  /** Pushing the consist backwards is slow; a heavy train is slower still. */
   get reverseFactor() {
     const load = this.power > 0 ? Math.min(1, this.weight / this.power) : 1;
     return 0.7 - 0.35 * load;
@@ -1111,8 +1117,7 @@ export class Train {
     this.pathPos = 0;
     this.path = null;
     this.updatePoses();
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
-    this.prevVehiclePoses = this.vehiclePoses;
+    this.capturePoses();
     return true;
   }
 
@@ -1138,6 +1143,11 @@ export class Train {
     this.speed = 0;
     this.path = null;
     this.updatePoses();
+    this.capturePoses();
+  }
+
+  /** Take the current poses as the ones the renderer interpolates from. */
+  capturePoses() {
     this.prevPoses = this.poses.map((p) => ({ ...p }));
     this.prevVehiclePoses = this.vehiclePoses;
   }
@@ -1311,8 +1321,7 @@ export class Train {
     this.trailCum = next.cum;
     this.reversed = !this.reversed;
     this.updatePoses();
-    this.prevVehiclePoses = this.vehiclePoses;
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
+    this.capturePoses();
   }
 
   private setPath(path: PathSegment[], map: GameMap, track: TrackGraph) {
@@ -1422,8 +1431,7 @@ export class Train {
   // ------------------------------------------------------------ tick
   /** Advance by in-game seconds. */
   tick(gdt: number, ctx: TickCtx) {
-    this.prevPoses = this.poses.map((p) => ({ ...p }));
-    this.prevVehiclePoses = this.vehiclePoses;
+    if (!ctx.framed) this.capturePoses();
     this.stateTime += gdt;
     this.refreshModes(ctx);
     if (this.resumePending) {
@@ -1758,8 +1766,8 @@ export class Train {
       if (d < 0) continue;
       if (d > 2 + (this.speed * this.speed) / (2 * DECEL)) break;
       const limit = ctx.track.get(s.x, s.y)?.bridgeCapacity;
-      if (limit && this.mass > limit * 0.8) {
-        const crossing = (vmax / bridgeFactor) * 0.5;
+      if (limit && slowsOnBridge(this.mass, limit)) {
+        const crossing = (vmax / bridgeFactor) * BRIDGE_SLOW_FACTOR;
         cap = Math.min(cap, Math.sqrt(crossing * crossing + 2 * DECEL * Math.max(0, d - 0.25)));
       }
     }
