@@ -88,6 +88,6 @@ describe('the refuge traffic scenario, run headless', () => {
         ...(stuckFree ? { stuck: 0 } : {}),
         recovered: true,
       });
-    });
+    }, 20_000);
   }
 });

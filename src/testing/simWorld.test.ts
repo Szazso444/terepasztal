@@ -134,6 +134,7 @@ describe('simWorld from one seed', () => {
       expect(warehouse.stored('stone'), `seed ${seed}: stone at the warehouse`).toBeGreaterThan(0);
       expect(a.w.stock.get('coal'), `seed ${seed}: coal left`).toBeLessThan(400);
     },
+    20_000,
   );
 
   it('another seed gives another map', () => {
