@@ -8,6 +8,7 @@ import type { TownJSON } from './towns';
 import type { HousesJSON } from './houses';
 import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
+import type { PeopleJSON } from './people';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -85,6 +86,11 @@ export interface SaveGame {
   houses?: HousesJSON;
   /** v9: production-chain mode the game was started with */
   supply?: SupplyMode;
+  /**
+   * The walkers' random stream (optional, no version of its own): absent means seeded from the
+   * map. The persons themselves are not saved and start over on load.
+   */
+  people?: PeopleJSON;
   /** set on load when the file was written by another format version (not persisted) */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
@@ -349,6 +355,7 @@ export const KNOWN_SAVE_KEYS = new Set<string>([
   'crafting',
   'houses',
   'supply',
+  'people',
   'loadedFrom',
   'migrationNotes',
 ]);

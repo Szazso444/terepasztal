@@ -3,6 +3,7 @@ import type { Builder } from './build';
 import type { Station } from './stations';
 import { decorDef } from './build';
 import { buildingDef } from './buildings';
+import { Rng } from '../engine/rng';
 
 export interface Place {
   x: number;
@@ -38,6 +39,13 @@ const STATION_REACH = 14;
 /** day fraction window when people are outside */
 const WAKE = 0.27;
 const SLEEP = 0.85;
+/** mixed into the map seed so the walkers draw their own stream */
+const PEOPLE_SEED = 0x9e091e;
+
+/** What a save keeps of the walkers: their random stream. The persons start over on load. */
+export interface PeopleJSON {
+  rng: number;
+}
 
 export function walkable(map: GameMap, x: number, y: number) {
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
@@ -98,17 +106,33 @@ export function findWalk(
 export class PeopleSim {
   persons: Person[] = [];
   private nextId = 1;
-  private rnd = Math.random;
+  private readonly rng: Rng;
   private gatherTerrain: Record<string, Terrain | null> = {
     farm: Terrain.Grass,
     lumber: Terrain.Forest,
     quarry: Terrain.Hill,
     pump: Terrain.Water,
   };
+  /** Without `rng` the walkers draw from a stream seeded by the map. */
   constructor(
     readonly map: GameMap,
     private readonly builder: Builder,
-  ) {}
+    rng?: Rng,
+  ) {
+    this.rng = rng ?? new Rng(map.seed ^ PEOPLE_SEED);
+  }
+  private rnd() {
+    return this.rng.next();
+  }
+
+  toJSON(): PeopleJSON {
+    return { rng: this.rng.state };
+  }
+  /** Resume a saved stream; anything without one keeps the stream seeded from the map. */
+  load(j: unknown) {
+    const rng = (j as Partial<PeopleJSON> | null | undefined)?.rng;
+    if (typeof rng === 'number') this.rng.state = rng;
+  }
 
   places(): Place[] {
     const out: Place[] = [];
