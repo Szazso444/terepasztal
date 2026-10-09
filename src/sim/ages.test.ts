@@ -5,13 +5,18 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { Rng } from '../engine/rng';
 import { STR } from '../strings';
-import { SEEDS } from '../testing/property';
+import { SEEDS, forAll } from '../testing/property';
+import agesJson from '../data/ages.json';
 import {
   AGE_DEFS,
   AGE_COUNT,
+  GOAL_KINDS,
   LAST_AGE,
   RAIL_AGES,
   ageDef,
+  ageProblems,
+  ageStatus,
+  goalsMet,
   railAge,
   type AgeSnapshot,
 } from './ages';
@@ -36,6 +41,7 @@ const AT_ELECTRIC: AgeSnapshot = {
   earned: 100000,
   substations: 0,
   wires: 0,
+  chunks: 1,
 };
 
 /** An economy that has just entered the Electric Age, with the age-up hook recorded. */
@@ -93,7 +99,14 @@ describe('the six ages', () => {
     expect(e.tickets).toBe(tickets + 15);
 
     // the last age has nowhere further to go
-    e.advanceAge({ depots: 1e9, population: 1e9, earned: 1e12, substations: 1e9, wires: 1e9 });
+    e.advanceAge({
+      depots: 1e9,
+      population: 1e9,
+      earned: 1e12,
+      substations: 1e9,
+      wires: 1e9,
+      chunks: 1e9,
+    });
     expect(e.tier).toBe(LAST_AGE);
     expect(e.tickets).toBe(tickets + 15);
     expect(entered).toEqual([3, 4, 5]);
@@ -119,6 +132,137 @@ describe('the six ages', () => {
     back.setAge(LAST_AGE);
     back.advanceAge({ ...AT_ELECTRIC, substations: 1, earned: 500000 });
     expect(back.tickets).toBe(tickets);
+  });
+});
+
+/** A new game's numbers: one depot, nobody housed, nothing earned, the start chunk. */
+const NEW_GAME: AgeSnapshot = {
+  depots: 1,
+  population: 0,
+  earned: 0,
+  substations: 0,
+  wires: 0,
+  chunks: 1,
+};
+
+/** The age a Steam-age economy reaches on one check of a new game's numbers changed by `s`. */
+function ageAfter(s: Partial<AgeSnapshot>) {
+  const e = new Economy();
+  e.advanceAge({ ...NEW_GAME, ...s });
+  return e.tier;
+}
+
+describe('the diesel goal', () => {
+  it('opens the Diesel age at two depots and either 100 residents or nine owned chunks', () => {
+    expect(ageAfter({ depots: 2, population: 100 }), '2 depots, 100 residents').toBe(1);
+    expect(ageAfter({ depots: 2, chunks: 9 }), '2 depots, 9 chunks').toBe(1);
+    expect(ageAfter({ depots: 2, population: 100, chunks: 9 }), 'both alternatives').toBe(1);
+  });
+
+  it('keeps the Steam age with one depot, or short of both alternatives', () => {
+    expect(ageAfter({ depots: 1, population: 100, chunks: 9 }), '1 depot').toBe(0);
+    expect(ageAfter({ depots: 1, population: 1e6, chunks: 1e3 }), '1 depot, far past').toBe(0);
+    expect(ageAfter({ depots: 2, population: 99, chunks: 8 }), '99 residents, 8 chunks').toBe(0);
+    expect(ageAfter({ depots: 1e3, population: 99, chunks: 8 }), 'any depots, short').toBe(0);
+  });
+
+  it('opens exactly when the depots and one alternative are met, around every threshold', () => {
+    for (const depots of [0, 1, 2, 3])
+      for (const population of [0, 99, 100, 1000])
+        for (const chunks of [1, 8, 9, 16]) {
+          const opens = depots >= 2 && (population >= 100 || chunks >= 9);
+          expect(
+            ageAfter({ depots, population, chunks }),
+            `${depots} ${population} ${chunks}`,
+          ).toBe(opens ? 1 : 0);
+        }
+  });
+
+  it('shows the depots and both alternatives with their progress on the age card', () => {
+    const diesel = ageStatus(0, { ...NEW_GAME, depots: 2, population: 40, chunks: 9 })[1];
+    expect(diesel.goals).toEqual([
+      { kind: 'depots', target: 2, current: 2, done: true },
+      { kind: 'population', target: 100, current: 40, done: false, anyOf: 1 },
+      { kind: 'chunks', target: 9, current: 9, done: true, anyOf: 1 },
+    ]);
+    for (const g of diesel.goals) expect(STR.ages.goal[g.kind], g.kind).toBeTruthy();
+  });
+
+  it('leaves a save past the Diesel age where it is, and moves a Steam save up on its next check', () => {
+    for (let tier = 1; tier <= LAST_AGE; tier++) {
+      const e = new Economy();
+      e.setAge(tier);
+      const back = new Economy();
+      back.load(JSON.parse(JSON.stringify(e.toJSON())));
+      back.advanceAge(NEW_GAME);
+      expect(back.tier, `a save in age ${tier}`).toBe(tier);
+    }
+    const steam = new Economy();
+    steam.load(JSON.parse(JSON.stringify(new Economy().toJSON())));
+    expect(steam.tier).toBe(0);
+    steam.advanceAge({ ...NEW_GAME, depots: 2, chunks: 9 });
+    expect(steam.tier).toBe(1);
+  });
+});
+
+describe('the age card and the age check', () => {
+  it('agree: an age opens exactly when each goal of its own and one alternative of each group is done', () => {
+    forAll(
+      (rng): AgeSnapshot => ({
+        depots: rng.int(0, 4),
+        population: rng.pick([0, 99, 100, 999, 1000, 5000]),
+        earned: rng.pick([0, 99999, 100000, 150000, 500000]),
+        substations: rng.int(0, 2),
+        wires: rng.int(0, 50),
+        chunks: rng.int(1, 16),
+      }),
+      (s) => {
+        for (const a of ageStatus(0, s)) {
+          const groups = new Map<number, boolean>();
+          let own = true;
+          for (const g of a.goals) {
+            expect(g.done, `${a.id} ${g.kind}`).toBe(g.current >= g.target);
+            if (g.anyOf === undefined) own &&= g.done;
+            else groups.set(g.anyOf, (groups.get(g.anyOf) ?? false) || g.done);
+          }
+          const met = own && [...groups.values()].every(Boolean);
+          expect(goalsMet(a.index, s), a.id).toBe(met);
+        }
+      },
+    );
+  });
+});
+
+describe('the ages table', () => {
+  it('is well formed, and every goal kind has a label', () => {
+    expect(ageProblems(agesJson)).toEqual([]);
+    expect(ageProblems(AGE_DEFS)).toEqual([]);
+    for (const k of GOAL_KINDS) expect(STR.ages.goal[k], k).toBeTruthy();
+  });
+
+  it('reports a goal no snapshot can measure and a group that can never be met', () => {
+    const steam = { id: 'steam', goals: [] };
+    const bad = (goals: unknown[]) => ageProblems([steam, { id: 'diesel', goals }]);
+    expect(bad([{ kind: 'depots', target: 2 }])).toEqual([]);
+    expect(bad([{ anyOf: [{ kind: 'chunks', target: 9 }] }])).toEqual([]);
+    expect(bad([{ kind: 'trains', target: 2 }])).toHaveLength(1);
+    expect(bad([{ kind: 'depots', target: -1 }])).toHaveLength(1);
+    expect(bad([{ kind: 'depots' }])).toHaveLength(1);
+    expect(bad([{ anyOf: [] }])).toHaveLength(1);
+    expect(bad([{ anyOf: {} }])).toHaveLength(1);
+    expect(bad([{ anyOf: [{ anyOf: [{ kind: 'depots', target: 2 }] }] }])).toHaveLength(2);
+    expect(
+      bad([
+        {
+          anyOf: [
+            { kind: 'depots', target: 2 },
+            { kind: 'chunk', target: 9 },
+          ],
+        },
+      ]),
+    ).toEqual(['age diesel goal 0 anyOf 1: unknown kind "chunk"']);
+    expect(ageProblems({})).toHaveLength(1);
+    expect(ageProblems([{ goals: [] }, { id: 'x' }])).toHaveLength(2);
   });
 });
 
