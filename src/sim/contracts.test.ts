@@ -83,6 +83,24 @@ describe('ContractBoard randomness', () => {
     }
   });
 
+  it('resumes a stream saved millions of draws in', () => {
+    // Rng(0x5eed)'s state once outgrew exact float addition at draw 4,917,759, and from there a
+    // saved stream resumed differently from the live one; this board is saved past that point.
+    const { builder, economy } = world();
+    const rng = new Rng(SEED);
+    for (let i = 0; i < 4_917_800; i++) rng.next();
+    const a = new ContractBoard(rng, builder, economy);
+    draw(a, 5, true);
+    const save = saved(a) as ReturnType<ContractBoard['toJSON']>;
+    expect(isU32(save.rng)).toBe(true);
+    const b = new ContractBoard(new Rng(SEED), builder, economy);
+    b.load(save);
+    const fromA = draw(a, 10, true);
+    expect(fromA.every((c) => c !== null)).toBe(true);
+    expect(draw(b, 10, true)).toEqual(fromA);
+    expect(saveText(b)).toBe(saveText(a));
+  });
+
   it('keeps the reseeded stream for a save written before the board kept its state', () => {
     const { builder, economy } = world();
     const a = new ContractBoard(new Rng(SEED), builder, economy);
@@ -217,15 +235,9 @@ function act(d: Desk, op: Op): string {
 }
 const run = (d: Desk, ops: readonly Op[]) => ops.map((op) => act(d, op));
 
-/**
- * The board's save as text. Rng.state is not kept to 32 bits (src/engine/rng.ts), so a live
- * stream and the same stream restored from a save name it with numbers 2^32 apart: compare the
- * stream itself, its low 32 bits.
- */
-function saveText(board: ContractBoard) {
-  const j = board.toJSON();
-  return JSON.stringify({ ...j, rng: j.rng >>> 0 });
-}
+/** The board's save as text, its stream state as it is: a live and a restored board name it alike. */
+const saveText = (board: ContractBoard) => JSON.stringify(board.toJSON());
+const isU32 = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < 2 ** 32;
 
 /** Throws at the first op where two runs part. */
 function sameRun(what: string, want: string[], got: string[], from: number, ops: readonly Op[]) {
@@ -294,6 +306,32 @@ describe('ContractBoard randomness, over seeded boards', () => {
       { shrink: shrinkBoard },
     );
     expect(resumed).toBeGreaterThan(SEEDS.length / 4);
+  });
+
+  it('saves its stream as a 32-bit integer after any op, and loads it back unchanged', () => {
+    let moved = 0;
+    forAll(
+      genBoard,
+      (c) => {
+        const builder = line(c);
+        const a = desk(builder, c, c.stream);
+        const b = desk(builder, c, (c.stream ^ 0x5a5a5a5a) >>> 0);
+        c.ops.forEach((op, i) => {
+          act(a, op);
+          const save = JSON.parse(saveText(a.board)) as ReturnType<ContractBoard['toJSON']>;
+          if (!isU32(save.rng))
+            throw new Error(
+              `after op ${i} (${JSON.stringify(op)}) the stream saved as ${save.rng}`,
+            );
+          b.board.load(save);
+          expect(b.board.toJSON().rng).toBe(save.rng);
+        });
+        if (a.board.toJSON().rng !== new Rng(c.stream).state) moved++;
+      },
+      { shrink: shrinkBoard },
+    );
+    // the boards drew: most streams moved from where they were seeded
+    expect(moved).toBeGreaterThan(SEEDS.length / 2);
   });
 
   it('keeps its own stream when a save has no number for it', () => {

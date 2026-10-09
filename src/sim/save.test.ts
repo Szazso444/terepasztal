@@ -15,7 +15,7 @@ import {
   type SaveGame,
   type Settings,
 } from './save';
-import { forAll } from '../testing/property';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
 /** The oldest shape the chain still accepts, with nothing optional filled in. */
 function oldestSave(): SaveGame {
@@ -120,6 +120,41 @@ describe("the walkers' stream", () => {
         expect(j?.version).toBe(SAVE_VERSION);
         if (rng === null) expect(j && 'people' in j).toBe(false);
         else expect(j?.people).toEqual({ rng });
+      },
+    );
+  });
+});
+
+describe("the contract board's stream", () => {
+  it('comes through the migration from every version, and is never made up', () => {
+    // absent means "the board's reseeded stream": no step may drop the saved one or make one up
+    forAll(
+      (rng) => ({
+        version: rng.int(SAVE_MIN_VERSION, SAVE_VERSION),
+        rng: rng.chance(0.75) ? rng.int(0, 0xffffffff) : null,
+        // the steps that rewrite the board's contracts have something to rewrite
+        contracts: Array.from({ length: rng.int(0, 4) }, (_, i) => ({
+          id: i + 1,
+          cargo: rng.pick(['passengers', 'wood', 'grain']),
+          status: rng.pick(['offer', 'active', 'done', 'expired']),
+        })),
+      }),
+      ({ version, rng, contracts }) => {
+        const board: Record<string, unknown> = { contracts, nextRefresh: 0 };
+        if (rng !== null) board.rng = rng;
+        const j = parseSave(JSON.stringify({ ...oldestSave(), version, contracts: board }));
+        expect(j?.version).toBe(SAVE_VERSION);
+        const after = j?.contracts as Record<string, unknown> | undefined;
+        expect((after?.contracts as unknown[] | undefined)?.length).toBe(contracts.length);
+        if (rng === null) expect(after && 'rng' in after).toBe(false);
+        else expect(after?.rng).toBe(rng);
+      },
+      {
+        // fewer contracts, then a newer version: fewer steps to cross
+        shrink: function* (c) {
+          for (const contracts of shrinkArray(c.contracts)) yield { ...c, contracts };
+          for (const version of shrinkInt(c.version, SAVE_VERSION)) yield { ...c, version };
+        },
       },
     );
   });

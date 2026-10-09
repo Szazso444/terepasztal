@@ -9,7 +9,7 @@ import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds, type Station } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
-import { PeopleSim } from './people';
+import { PeopleSim, type PeopleJSON } from './people';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -45,6 +45,7 @@ function run(people: PeopleSim, station: Station, ticks: number) {
   return trace;
 }
 const waitingCounts = (trace: string[]) => trace.map((t) => Number(t.split('|')[0]));
+const isU32 = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < 2 ** 32;
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -116,6 +117,25 @@ describe('PeopleSim randomness', () => {
     // a fresh sim with no persons, on the original's stream, is what a load restores
     a.persons.length = 0;
     expect(run(a, station, 250)).toEqual(t1);
+  });
+
+  it('resumes a stream saved millions of draws in', () => {
+    // Rng(0x5eed)'s state once outgrew exact float addition at draw 4,917,759, and from there a
+    // saved stream resumed differently from the live one; these walkers are saved past that point.
+    const { map, builder, station } = world();
+    const rng = new Rng(0x5eed);
+    for (let i = 0; i < 4_917_800; i++) rng.next();
+    const a = new PeopleSim(map, builder, rng);
+    run(a, station, 100);
+    const save = JSON.parse(JSON.stringify(a.toJSON())) as PeopleJSON;
+    expect(isU32(save.rng)).toBe(true);
+    const b = new PeopleSim(map, builder, new Rng(1));
+    b.load(save);
+    b.persons = structuredClone(a.persons);
+    const want = run(a, station, 200);
+    expect(run(b, station, 200)).toEqual(want);
+    expect(Math.max(...waitingCounts(want))).toBeGreaterThan(0);
+    expect(b.toJSON()).toEqual(a.toJSON());
   });
 
   it('keeps the seeded stream when a save carries none', () => {
@@ -397,6 +417,37 @@ describe('PeopleSim randomness, over seeded layouts', () => {
     expect(busy).toBeGreaterThan(SEEDS.length / 4);
     expect(Math.random).not.toHaveBeenCalled();
   });
+
+  // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
+  it(
+    'saves its stream as a 32-bit integer at any tick, and loads it back unchanged',
+    { timeout: 20_000 },
+    () => {
+      let moved = 0;
+      forAll(
+        genCase,
+        (c) => {
+          const f = layout(c);
+          const a = sim(f, c);
+          const b = elsewhere(f, c);
+          const seeded = a.toJSON().rng;
+          for (let t = 0; t < c.ticks; t++) {
+            play(a, f, c, t, t + 1);
+            const save = JSON.parse(JSON.stringify(a.toJSON())) as PeopleJSON;
+            if (!isU32(save.rng))
+              throw new Error(`after tick ${t} the stream saved as ${save.rng}`);
+            b.load(save);
+            expect(b.toJSON()).toEqual(save);
+          }
+          if (a.toJSON().rng !== seeded) moved++;
+        },
+        { shrink: shrinkCase },
+      );
+      // the walkers drew: most streams moved from where they were seeded
+      expect(moved).toBeGreaterThan(SEEDS.length / 2);
+      expect(Math.random).not.toHaveBeenCalled();
+    },
+  );
 
   it('seeds its own stream from the map seed alone', () => {
     const firstDraws = (people: PeopleSim) => {
