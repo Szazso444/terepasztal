@@ -58,8 +58,10 @@ const V14_FIELDS = [
   'speed',
   'station',
   'holding',
+  'retreat',
   'blockedTime',
   'yieldCount',
+  'badTargets',
 ] as const;
 
 interface World {
@@ -315,7 +317,8 @@ describe('two trains at a one-platform station, loaded', () => {
 });
 
 describe('a train backing off for another when saved', () => {
-  it('stops and plans again: its escape was reserved, and reservations are not saved', () => {
+  // with its escape saved it runs on along it: see the traffic scenarios below
+  it('stops and plans again when the save holds no escape for it', () => {
     const c = control();
     const i = savesIn('moving')[60];
     const j = JSON.parse(c.texts[i]) as { trains: TrainJSON[] };
@@ -366,8 +369,10 @@ describe('a v13 save', () => {
         speed: 0,
         station: null,
         holding: false,
+        retreat: null,
         blockedTime: 0,
         yieldCount: 0,
+        badTargets: [],
       });
       const t = Train.fromJSON(
         JSON.parse(JSON.stringify(stored)) as TrainJSON,
@@ -533,8 +538,9 @@ const sameDoing = (a: Doing, b: Doing) =>
  * Run the layout to its save, AFTER seconds on, and again from the save through toJSON, JSON and
  * fromJSON into a fresh fleet on the same track: every car of the loaded train within TOLERANCE
  * of the control's, doing what the control does, with its cargo and fuel, having arrived where
- * it arrived. A save rounds trail points to a thousandth of a tile, which may move an arrival by
- * a tick, so what the train does may match the control's a tick either side.
+ * it arrived. The path planned again measures its arcs from another start, which in floating
+ * point may move an arrival by a tick, so what the train does may match the control's a tick
+ * either side.
  */
 function carriesOnFrom(c: Layout, carryFleetMemory = false) {
   const w = layoutScene(c);
@@ -572,9 +578,10 @@ const LAYOUT_SEEDS = SEEDS.slice(0, 50);
 const LAYOUT_SHRINK = 40;
 /**
  * Seeds past SEEDS at which a sweep of seeds 101 to 700 found the schedule property failing; they
- * stay in its list. At 242 and 561 an arrival lands a tick late because the save rounds trail
- * points to a thousandth of a tile, and the departure after it follows a tick late; at 631 the
- * train stands on a switch when saved (see 'a load moves no car').
+ * stay in its list. At 242 and 561 an arrival landed a tick late while the save rounded trail
+ * points to a thousandth of a tile, and the departure after it followed a tick late; at 631 the
+ * train stood on a switch when saved and the path planned again took the other route through it
+ * (see 'a load moves no car').
  */
 const SCHEDULE_FOUND = [242, 561, 631];
 
@@ -613,9 +620,9 @@ describe('a load moves no car', () => {
     'one tick after a load, every car stands where the uninterrupted run has it',
     { timeout: 300_000 },
     () => {
-      // The save keeps each car's place to a thousandth of a tile; a load that plans the path
-      // again along another line than the one the train stands on shows here as a jump. Each
-      // case loads 240 times, so it runs on fewer seeds.
+      // The save keeps each car's place as it was; a load that plans the path again along
+      // another line than the one the train stands on (the other route through a switch) shows
+      // here as a jump. Each case loads 240 times, so it runs on fewer seeds.
       roamingRules();
       forAll(
         (rng) => ({ ...layout(rng, ['schedule', ...ROAMING]), tick: 0 }),
@@ -870,4 +877,42 @@ describe('the traffic scenarios with a round trip mid-run', () => {
       );
     },
   );
+
+  it('keeps a train backing off on its escape, reserved again for it', { timeout: 120_000 }, () => {
+    // Every save of the uninterrupted runs after which a train was backing off on a reserved
+    // escape and still was a tick later: loaded, that tick on it still backs off along the same
+    // escape, which the traffic control holds for the same group, and stands where the control
+    // has it.
+    let saves = 0;
+    TRAFFIC.forEach((c) => {
+      const ctl = trafficControl(c);
+      for (let tick = 0; tick + 1 < ctl.texts.length; tick++) {
+        const before = JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[] };
+        const after = JSON.parse(ctl.texts[tick + 1]) as { trains: TrainJSON[] };
+        const backing = before.trains.filter(
+          (j) => j.holding && after.trains.find((a) => a.id === j.id)?.holding,
+        );
+        if (!backing.length) continue;
+        saves++;
+        const fleet = trafficLoaded(ctl, tick);
+        fleet.tick(SCENARIO_GDT, (tick + 1) / SCENARIO_TICK_RATE);
+        for (const j of backing) {
+          const why = `${caseName(c)}, #${j.id} in the save after tick ${tick}`;
+          const t = fleet.trains.find((x) => x.id === j.id)!;
+          const want = Train.fromJSON(
+            after.trains.find((a) => a.id === j.id)!,
+            ctl.track,
+          );
+          expect({ state: t.state, holding: t.holding }, why).toEqual({
+            state: 'moving',
+            holding: true,
+          });
+          expect(fleet.traffic.recoveries.active.get(t.id)?.group, why).toEqual(j.retreat!.group);
+          expect(apart(want.poses, t.poses), why).toBeLessThan(TOLERANCE);
+        }
+      }
+    });
+    // the runs back off often enough for this to say something
+    expect(saves).toBeGreaterThan(50);
+  });
 });

@@ -356,6 +356,8 @@ interface TrainSpec {
   detour: number | null;
   /** the station it stands at, or null */
   station: number | null;
+  /** stations it ruled out, roaming */
+  ruledOut: number[];
 }
 interface SaveSpec {
   /** station `i` gets id `i + 1` */
@@ -412,6 +414,7 @@ function genSpec(rng: Rng, removed = true): SaveSpec {
       queue: contracts.length ? list(2, contractAt) : [],
       detour: stations.length && rng.chance(0.25) ? stationId() : null,
       station: stations.length && rng.chance(0.25) ? stationId() : null,
+      ruledOut: stations.length && rng.chance(0.3) ? list(3, stationId) : [],
     };
   });
   const spares = list(4, () => (rng.chance(0.5) ? id('loco') : id('wagon')));
@@ -479,6 +482,7 @@ function* shrinkTrain(t: TrainSpec): Iterable<TrainSpec> {
   for (const queue of shrinkArray(t.queue)) yield { ...t, queue };
   if (t.detour !== null) yield { ...t, detour: null };
   if (t.station !== null) yield { ...t, station: null };
+  for (const ruledOut of shrinkArray(t.ruledOut)) yield { ...t, ruledOut };
 }
 
 /** The shipped tables, minus the ids the spec declares unknown; each slot reads its own table. */
@@ -572,6 +576,7 @@ function buildSave(spec: SaveSpec): SaveGame {
     });
     j.detour = ts.detour !== null && exists(ts.detour) ? ts.detour : null;
     j.station = ts.station !== null && exists(ts.station) ? ts.station : null;
+    j.badTargets = [...new Set(ts.ruledOut.filter(exists))].map((id, k) => [id, 60 * (k + 1)]);
     return j;
   });
   for (const defId of spec.spares)
@@ -687,6 +692,7 @@ describe('pruneUnknownContent over random saves', () => {
           suspended: null,
           detour: null,
           station: null,
+          badTargets: null,
           jobs: null,
           job: null,
           jobPhase: null,
@@ -822,6 +828,7 @@ describe('pruneUnknownContent over random saves', () => {
           expect(t.station, where).toBe(
             b.station !== null && gone.has(b.station) ? null : b.station,
           );
+          expect(t.badTargets, where).toEqual(b.badTargets.filter(([id]) => !gone.has(id)));
           if (b.job && lapsed(b.job)) {
             // its contract went: the job ends and the program it set aside resumes
             expect(t.job, where).toBeNull();

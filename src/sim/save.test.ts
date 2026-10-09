@@ -1875,7 +1875,8 @@ const MODE_VALUES: unknown[] = [
 ];
 /**
  * The fields the step from v13 gives every train, with what a load before v14 left in them: it
- * stands without a route, at no station, and looks for one on its first tick.
+ * stands without a route, at no station, with no escape to back off along and no stop ruled out,
+ * and looks for one on its first tick.
  */
 const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
   state: 'noRoute',
@@ -1883,8 +1884,10 @@ const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
   speed: 0,
   station: null,
   holding: false,
+  retreat: null,
   blockedTime: 0,
   yieldCount: 0,
+  badTargets: [],
 };
 /**
  * Values a file may already hold in a field the step from v13 fills, none of them the step's
@@ -1896,8 +1899,16 @@ const RESUME_HELD: Readonly<Record<string, readonly unknown[]>> = {
   speed: [0.7, 1.4],
   station: [1, 7],
   holding: [true],
+  retreat: [{ path: [{ x: 3, y: 4, in: 0, out: 2 }], group: [1, 2] }],
   blockedTime: [2.5],
   yieldCount: [1, 3],
+  badTargets: [
+    [[2, 240]],
+    [
+      [1, 60.5],
+      [4, 300],
+    ],
+  ],
 };
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
