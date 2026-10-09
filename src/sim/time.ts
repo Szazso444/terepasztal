@@ -3,6 +3,12 @@ import { daySeconds } from './rules';
 /** In-game clock. One day = 4 real minutes at 1x by default (tunable). */
 export const DAY_SECONDS = 240;
 export const SPEEDS = [0, 1, 2, 3] as const;
+/**
+ * Game seconds per simulation step. The game loop runs at 1 / SIM_STEP Hz, and at speed s each
+ * loop tick runs s of these steps (`GameClock.run`), so every speed sees the same steps and the
+ * same outcomes.
+ */
+export const SIM_STEP = 0.05;
 
 export class GameClock {
   /** elapsed in-game seconds */
@@ -41,6 +47,19 @@ export class GameClock {
     const dt = realDt * this.speed;
     this.time += dt;
     return dt;
+  }
+  /**
+   * One loop tick on the fixed-step path: `speed` steps of SIM_STEP game seconds (none when
+   * paused). Each adds SIM_STEP to `time`, then calls `step(SIM_STEP)`. Returns the game seconds
+   * run.
+   */
+  run(step: (gdt: number) => void): number {
+    const steps = this.speed;
+    for (let i = 0; i < steps; i++) {
+      this.time += SIM_STEP;
+      step(SIM_STEP);
+    }
+    return steps * SIM_STEP;
   }
   formatClock() {
     return `${String(this.hour).padStart(2, '0')}:${String(this.minute).padStart(2, '0')}`;

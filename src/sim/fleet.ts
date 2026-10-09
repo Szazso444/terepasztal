@@ -585,6 +585,7 @@ export class Fleet {
         return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
       },
       gradeAt: (s) => railGrade(this.railBeds, this.map.w, s.x, s.y, s.in, s.out),
+      framed: this.framed,
     };
   }
   /** tile key -> train id for the next stretch of every moving train's path */
@@ -875,6 +876,18 @@ export class Fleet {
   waitingAt: (stationId: number) => number = () => 0;
   /** fired once each time a train pulls into a station (passing through does not count) */
   onArrive: ((t: Train, s: Station) => void) | null = null;
+
+  /** set by the first `beginFrame`: from then on the loop tick, not each step, captures poses */
+  private framed = false;
+  /**
+   * Call once per loop tick, before its simulation steps: every train's poses become the ones the
+   * renderer interpolates from, and until the next call no `tick` overwrites them, so the
+   * interpolation spans all the steps the loop tick runs. Without it each `tick` captures them.
+   */
+  beginFrame() {
+    this.framed = true;
+    for (const t of this.trains) t.capturePoses();
+  }
 
   tick(gdt: number, now: number, speedFactor = 1) {
     this.clockTime = now;
