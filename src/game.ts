@@ -108,7 +108,7 @@ import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
 import { TownPanel } from './ui/townPanel';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
-import { footprintOf, pieceFrame, pieceCost, type TrackKind } from './world/track';
+import { footprintOf, pieceFrame } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
@@ -121,7 +121,6 @@ import { showSignalGuide } from './ui/signalGuide';
 import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
 import {
-  tickBuildings,
   buildingDef,
   buildingFrame,
   buildingFromJSON,
@@ -153,33 +152,7 @@ import { PeopleSim } from './sim/people';
 import { expandSave, ownsBorderChunk } from './sim/expand';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
-
-/**
- * Starting stockpile for a brand-new game, before `rules.startStock` scaling. Wood, stone and
- * iron are derived from the track cost matrix (spec §16): about fifty straights, a handful of
- * curves and a switch, plus the crafting of one locomotive and four wagons, and are multiplied
- * by `rules.startingResourceScale`.
- */
-function startStock(): Record<string, number> {
-  const piece = (kind: TrackKind, n: number) => {
-    const c = pieceCost(kind, 'regular');
-    return { wood: (c.wood ?? 0) * n, stone: (c.stone ?? 0) * n, iron: (c.iron ?? 0) * n };
-  };
-  const parts = [piece('straight', 50), piece('curve', 6), piece('switch', 1)];
-  // crafting one locomotive and four wagons (see src/data/crafting.json when present)
-  const craft = { wood: 40, stone: 10, iron: 30 };
-  const sum = (k: 'wood' | 'stone' | 'iron') => parts.reduce((a, p) => a + p[k], 0) + craft[k];
-  const s = rules.startingResourceScale;
-  return {
-    wood: Math.round(sum('wood') * s),
-    stone: Math.round(sum('stone') * s),
-    iron: Math.round(sum('iron') * s),
-    water: 600,
-    wheat: 300,
-    food: 600,
-    coal: 240,
-  };
-}
+import { SimStep, startStock, ageSnapshot as ageSnapshotOf } from './sim/step';
 
 /** Loop ticks per real second: one tick runs `clock.speed` steps of SIM_STEP game seconds. */
 const SIM_HZ = 1 / SIM_STEP;
@@ -196,6 +169,15 @@ export class Game {
   input!: Input;
   camera = new Camera();
   clock = new GameClock();
+  /**
+   * One simulation step over this game's domains (src/sim/step.ts), read at each run so it can be
+   * built before init. Its `lastDay` travels with the save.
+   */
+  readonly sim = new SimStep(this, {
+    refreshCity: () => this.refreshCity(),
+    season: () => this.applySeason(),
+    dailyTicket: () => this.toasts.push(STR.contracts.dailyTicket, 'good'),
+  });
   map!: GameMap;
   regions!: RegionState;
   world!: WorldRenderer;
@@ -258,7 +240,6 @@ export class Game {
   private spawnMarkTimer = 0;
   private pathHighlight: { x: number; y: number }[][] = [];
   private pathTimer = 0;
-  private lastDay = 1;
   settings: Settings = readSettings();
   settingsScreen!: SettingsScreen;
   tuningScreen!: TuningScreen;
@@ -397,18 +378,8 @@ export class Game {
   }
   /** The live numbers the age goals are measured against. */
   ageSnapshot(): AgeSnapshot {
-    let wires = 0;
-    for (const e of this.catenary.entries()) if (this.catenary.isLive(e.x, e.y)) wires++;
-    return {
-      depots: this.builder.depotsOf('regular').length,
-      population: this.stock.population,
-      earned: this.economy.earned,
-      substations: this.catenary.substations.filter((s) => s.powered).length,
-      wires,
-    };
+    return ageSnapshotOf(this);
   }
-  /** game time of the next age-goal check (once per in-game hour) */
-  private nextAgeCheck = 0;
 
   /** Starting economy for a brand-new game, from the rules (or a level's start block). */
   startFresh(start?: LevelData['start']) {
@@ -549,7 +520,7 @@ export class Game {
   }
   /** "Save as..." from the pause menu: asks for a name in the in-game dialog. */
   private async promptSaveAs() {
-    const fallback = `${STR.menu.day(this.lastDay)} · ${this.seed}`;
+    const fallback = `${STR.menu.day(this.sim.lastDay)} · ${this.seed}`;
     const name = await this.namePrompt.ask(
       STR.settings.saveAsTitle,
       STR.settings.saveAsHint,
@@ -1012,7 +983,7 @@ export class Game {
         gacha: this.gacha.toJSON(),
         crafting: this.crafting.toJSON(),
         camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
-        lastDay: this.lastDay,
+        lastDay: this.sim.lastDay,
         decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
         weather: this.weather.toJSON(),
         world: this.spec,
@@ -1087,7 +1058,7 @@ export class Game {
     this.clock.time = j.clock.time;
     this.clock.setSpeed(j.clock.speedIndex);
     this.economy.load(j.economy);
-    this.lastDay = j.lastDay;
+    this.sim.lastDay = j.lastDay;
     this.savedAt = j.savedAt;
     if (j.regions) this.regions.load(j.regions);
     this.world.rebuildFog();
@@ -1981,7 +1952,6 @@ export class Game {
   }
 
   private signalHighlight: { x: number; y: number }[] = [];
-  private nextCityCheck = 0;
   private refreshCity() {
     this.world.setCity(
       cityTiles(this.map, this.houses.houses.values(), (x, y) => !!this.towns.townAt(x, y)),
@@ -1999,60 +1969,13 @@ export class Game {
     // Poses the renderer interpolates from: once per loop tick, paused ticks included, so the
     // interpolation spans every step this tick runs.
     this.fleet.beginFrame();
-    this.clock.run((gdt) => {
-      this.stock.population = this.houses.residentsTotal();
-      this.stock.workforce = this.builder.crewTotal() + this.fleet.crewTotal();
-      this.stock.tick(gdt);
-      this.houses.tick(gdt, this.clock.time, this.mode === 'play');
-      if (this.clock.time >= this.nextCityCheck) {
-        this.nextCityCheck = this.clock.time + 10;
-        this.refreshCity();
-      }
-      if (this.mode === 'play')
-        this.people.tick(
-          gdt,
-          this.builder.crewTotal() + this.houses.residentsTotal(),
-          this.clock.dayFraction,
-        );
-      const famineMul = this.stock.famine ? 0.5 : 1;
-      for (const s of this.builder.stations) {
-        if (s.def.id === 'station')
-          s.passengerPopulation = [...this.houses.houses.values()]
-            .filter(
-              (h) => h.progress >= 1 && Math.max(Math.abs(h.x - s.x), Math.abs(h.y - s.y)) <= 7,
-            )
-            .reduce((n, h) => n + h.residents, 0);
-        s.tick(gdt * famineMul);
-      }
-      tickBuildings(
-        this.builder.buildings.values(),
-        this.stock,
-        gdt,
-        this.stock.famine,
-        this.builder.plantCount(),
-        this.builder.depotCount(),
-      );
-      if (this.settings.weather) this.weather.tick(this.clock.time, this.clock.day, gdt);
-      this.applySeason();
-      const wf =
-        (this.settings.weather ? this.weather.speedFactor() : 1) * (this.stock.famine ? 0.7 : 1);
-      this.fleet.tick(gdt, this.clock.time, wf);
-      this.contracts.tick(this.clock.time);
-      this.trade.tick(this.clock.time, this.stock, this.economy, (id) => this.stockCap(id));
-      if (this.mode === 'play' && this.clock.time >= this.nextAgeCheck) {
-        this.nextAgeCheck = this.clock.time + daySeconds() / 24;
-        const snap = this.ageSnapshot();
-        this.economy.advanceAge(snap);
-      }
-      if (this.clock.day !== this.lastDay) {
-        this.lastDay = this.clock.day;
-        if (this.contracts.completedToday > 0) {
-          this.economy.tickets += 1;
-          this.toasts.push(STR.contracts.dailyTicket, 'good');
-        }
-        this.contracts.completedToday = 0;
-      }
-    });
+    this.clock.run((gdt) =>
+      this.sim.run(gdt, {
+        mode: this.mode,
+        weather: this.settings.weather,
+        stockCap: (id) => this.stockCap(id),
+      }),
+    );
   }
 
   /** Debug aid requested for testing: money plus a full stockpile. */
