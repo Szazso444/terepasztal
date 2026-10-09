@@ -5,11 +5,13 @@ import { weekSeconds } from './rules';
 import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import { rules } from './rules';
 import { cargoDef } from './cargo';
+import { MAX_LEVEL } from './levels';
 
 export type { StationDef };
+export { MAX_LEVEL };
 export const STATION_DEFS: StationDef[] = content.stations.defs;
+/** Per-level tables, one value for each level 1..MAX_LEVEL. */
 export const LEVELS = content.stations.levels;
-export const MAX_LEVEL = 5;
 
 export function stationDef(id: string): StationDef {
   const d = STATION_DEFS.find((s) => s.id === id);
@@ -29,11 +31,6 @@ export function stationFootprint(defId: string, x: number, y: number, rot: numbe
   for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) out.push({ x: x + dx, y: y + dy });
   return out;
 }
-/** Station level cap in an age (`maxLevelByTier` is indexed by age: steam, diesel, electric). */
-export function maxLevelForTier(tier: number) {
-  return LEVELS.maxLevelByTier[Math.min(tier, LEVELS.maxLevelByTier.length - 1)];
-}
-
 export interface StationJSON {
   id: number;
   defId: string;
@@ -107,6 +104,10 @@ export class Station {
   fuelSupply = false;
   get crew() {
     return LEVELS.crew[this.level - 1];
+  }
+  /** the age the station appears in: its levels open one per age from there (`levelCap`) */
+  get firstAge() {
+    return this.def.tier ?? 0;
   }
   get refuelsFuel() {
     return !!this.def.fuel || this.fuelSupply;
@@ -242,6 +243,7 @@ export class Station {
     const rate = LEVELS.production[this.level - 1] * rules.productionMul * this.terrainFactor;
     return this.def.id === 'station' ? Math.min(rate, this.passengerPopulation * 0.4) : rate;
   }
+  /** Picture of the level (`spriteByLevel`): levels above the highest picture repeat it. */
   get spriteLevel() {
     return LEVELS.spriteByLevel[this.level - 1];
   }
@@ -344,7 +346,7 @@ export class Station {
   }
   static fromLevel(j: LevelStation): Station {
     const s = new Station(j.defId, j.x, j.y, j.name || undefined);
-    s.level = Math.max(1, Math.min(5, j.level));
+    s.level = Math.max(1, Math.min(MAX_LEVEL, j.level));
     s.rot = j.rot ?? 0;
     return s;
   }

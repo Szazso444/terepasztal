@@ -23,6 +23,7 @@ import stationFullJson from './stations_full.json';
 import buildingFullJson from './buildings_full.json';
 import type { SupplyMode } from '../sim/supply';
 import type { PartKind } from '../sim/body';
+import { MAX_LEVEL } from '../sim/levels';
 export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
@@ -193,14 +194,20 @@ export interface BuildingDef {
   /** taps the pole grid and makes electrified track within `radius` live, passing `throughput` units per second */
   substation?: { radius: number; throughput: number };
 }
+/**
+ * Station tables with one value per level, levels 1 to `MAX_LEVEL` (src/sim/levels.ts). How
+ * far a station may rise in an age is a rule, not data: one level per age from the age it appears
+ * in (`levelCap`).
+ */
 export interface StationLevels {
   capacity: number[];
   loadRate: number[];
   platforms: number[];
   production: number[];
+  /** share of the station's build cost that lifts it to this level (the first is never paid) */
   upgradeCostMul: number[];
+  /** the picture each level draws: levels above today's highest picture repeat it */
   spriteByLevel: number[];
-  maxLevelByTier: number[];
   crew: number[];
 }
 export interface ContractTemplate {
@@ -266,7 +273,7 @@ export interface DecorDef {
 }
 /** Townhouse growth rules: capacity per level, how fast people arrive, when towns build more. */
 export interface HouseConfig {
-  /** residents a house holds at level 1, 2, 3 */
+  /** residents a house holds at each level, from level 1 */
   capacity: number[];
   /** people who move in the day a house is finished */
   startResidents: number;
@@ -276,7 +283,7 @@ export interface HouseConfig {
   growthDays: number;
   /** days a full house waits before it grows a storey on its own */
   autoUpgradeDays: number;
-  /** what the player pays to lift a house to level 2, 3 */
+  /** what the player pays to lift a house to each level, from level 2 */
   upgradeCost: Cost[];
   /** a town builds a new house once residents reach this share of its housing */
   spawnAt: number;
@@ -569,7 +576,6 @@ const PER_LEVEL = [
   'spriteByLevel',
   'crew',
 ] as const;
-const STATION_LEVELS = 5;
 const RARITY_NUMBERS = ['weight', 'rewardMul', 'ticketMul', 'amountMul', 'deadlineMul'] as const;
 
 function isCost(c: unknown) {
@@ -667,18 +673,11 @@ const CHECKS: Record<ContentKey, Check> = {
       const v = lv[k];
       if (
         !Array.isArray(v) ||
-        v.length !== STATION_LEVELS ||
+        v.length !== MAX_LEVEL ||
         v.some((x) => typeof x !== 'number' || !Number.isFinite(x))
       )
-        out.push(`station levels: ${k} needs ${STATION_LEVELS} values`);
+        out.push(`station levels: ${k} needs ${MAX_LEVEL} values`);
     }
-    const caps = lv.maxLevelByTier;
-    if (
-      !Array.isArray(caps) ||
-      !caps.length ||
-      caps.some((x) => !Number.isInteger(x) || x < 1 || x > STATION_LEVELS)
-    )
-      out.push(`station levels: maxLevelByTier needs a level from 1 to ${STATION_LEVELS} per age`);
   },
   contracts(t, _ref, out) {
     if (!isObj(t)) {

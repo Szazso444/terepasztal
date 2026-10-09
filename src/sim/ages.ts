@@ -2,8 +2,9 @@
  * Ages. The game moves through six ages: Steam, Diesel, Electric, Nuclear, Magnetic and Hyper;
  * each age unlocks when every goal listed for it in `src/data/ages.json` is met. `economy.tier`
  * holds the index of the current age (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic,
- * 5 hyper) and gates works, stations, decor, station levels, contract templates and gacha banners
- * through their `tier` fields.
+ * 5 hyper) and gates works, stations, decor, contract templates and gacha banners through their
+ * `tier` fields. Stations, works and houses also gain one level per age from the age they appear
+ * in (`levelCap` in src/sim/levels.ts).
  *
  * For now an age after Electric only raises the level cap of buildings: no rolling stock,
  * contract, recipe or banner belongs to one. Code that picks amounts or payouts by the age number

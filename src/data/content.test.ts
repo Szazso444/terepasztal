@@ -149,7 +149,7 @@ describe('validateContent', () => {
       (b) => ((b.stations.defs[0] as unknown as Table).accepts = null),
       (b) => ((b.stations.defs[0] as unknown as Table).produces = [null]),
       (b) => ((b.stations as unknown as Table).levels = null),
-      (b) => (b.stations.levels.maxLevelByTier = []),
+      (b) => (b.stations.levels.capacity = b.stations.levels.capacity.slice(0, -1)),
       (b) => ((b.buildings[0] as unknown as Table).recipe = null),
       (b) => ((b.buildings[0].recipe as unknown as Table).in = 'coal'),
       (b) => ((b.gacha.banners[0] as unknown as Table).pool = null),
