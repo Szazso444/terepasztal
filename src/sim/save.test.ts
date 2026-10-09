@@ -29,9 +29,13 @@ import {
   type SaveParts,
   type SaveRefusal,
   type Settings,
+  type WorldSpec,
 } from './save';
 import { buildingFromJSON, buildingToJSON, type Building } from './buildings';
-import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
+import { TradeDesk } from './trade';
+import { DEFAULT_MAP_PARAMS, emptyMap, generateMap } from '../world/mapgen';
+import { levelFromMap, mapFromLevel } from '../world/level';
+import { RegionState } from '../world/regions';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
@@ -106,6 +110,52 @@ describe('the migration registry', () => {
 
   it('describes what each step fills in', () => {
     for (const m of MIGRATIONS) expect(m.note.trim().length).toBeGreaterThan(0);
+  });
+
+  it('has no step that leaves the file as it found it', () => {
+    // An empty step tells the player a default was filled in and leaves the load code to keep
+    // the promise. Each step meets a file of its own version with nothing optional in it, and
+    // the old offer defaults the step to v11 rewrites.
+    for (const m of MIGRATIONS) {
+      const file: SaveGame = {
+        ...oldestSave(),
+        version: m.from,
+        rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
+      };
+      const before = asStored(file);
+      m.run(file);
+      expect.soft(asStored(file), `the step from v${m.from}`).not.toEqual(before);
+    }
+  });
+
+  it('fills every field a step promises, from whichever version the file starts at', () => {
+    const list = (v: unknown) => Array.isArray(v);
+    const block = (v: unknown) => isObject(v);
+    /** The step that fills each field a file may lack, and what the field holds after it. */
+    const filled: [from: number, key: keyof SaveParts, holds: (v: unknown) => boolean][] = [
+      [1, 'decor', list],
+      [2, 'world', block],
+      [3, 'buildings', list],
+      [4, 'regions', (v) => list(v) && (v as unknown[]).every((o) => typeof o === 'boolean')],
+      [5, 'seasonOffset', (v) => typeof v === 'number'],
+      [6, 'towns', list],
+      [7, 'trade', block],
+      [8, 'houses', block],
+      [8, 'supply', (v) => typeof v === 'string'],
+      [9, 'crafting', block],
+    ];
+    for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
+      const j = migrate({ ...oldestSave(), version });
+      for (const [from, key, holds] of filled)
+        if (from >= version) expect(holds(j[key]), `from v${version}: ${key}`).toBe(true);
+    }
+  });
+
+  it('says which defaults are applied on load, where the world they need is built', () => {
+    const note = (from: number) => MIGRATIONS.find((m) => m.from === from)!.note;
+    expect(note(6)).toMatch(/depot placed at the start \(applied on load\)/);
+    expect(note(8)).toMatch(/catenary strung over rails the poles powered \(applied on load\)/);
+    expect(note(9)).toMatch(/locomotive modes set by the default rule \([^)]*applied on load\)/);
   });
 
   it('knows every field a save is written with, and every field the migration leaves', () => {
@@ -231,6 +281,11 @@ describe('migrate', () => {
     expect(j.decor).toEqual([]);
     expect(j.buildings).toEqual([]);
     expect(j.world).toEqual({ kind: 'generated', seed: 12345, params: expect.any(Object) });
+    expect(j.regions).toEqual(expect.any(Array));
+    expect(j.regions!.filter((owned) => owned === true)).toHaveLength(1);
+    expect(j.seasonOffset).toBe(0);
+    expect(j.towns).toEqual([]);
+    expect(j.trade).toEqual(expect.any(Object));
     expect(j.supply).toBe('simple');
   });
 
@@ -260,6 +315,129 @@ describe('migrate', () => {
     const j = migrate({ ...oldestSave(), somethingNewer: { a: 1, b: [2, 3] } });
     expect(j.somethingNewer).toEqual({ a: 1, b: [2, 3] });
     expect(KNOWN_SAVE_KEYS.has('somethingNewer')).toBe(false);
+  });
+});
+
+/** The step from `from` alone, run on `file`. */
+function runStep(from: number, file: SaveGame): SaveGame {
+  MIGRATIONS.find((m) => m.from === from)!.run(file);
+  return file;
+}
+
+describe('v4 to v5', () => {
+  /** A level of `w` by `h` tiles, as the editor saves one. */
+  const levelWorld = (w: number, h: number): WorldSpec => ({
+    kind: 'level',
+    seed: 5,
+    level: levelFromMap(emptyMap(5, w, h), 'Test', 'test'),
+  });
+  const generatedWorld = (w: number, h: number): WorldSpec => ({
+    kind: 'generated',
+    seed: 77,
+    params: { ...DEFAULT_MAP_PARAMS, w, h },
+  });
+
+  it('owns only the chunk map generation starts in, on the grid the world builds', () => {
+    for (const world of [
+      generatedWorld(96, 96),
+      generatedWorld(160, 64),
+      generatedWorld(20, 300),
+      levelWorld(100, 70),
+      levelWorld(20, 20),
+    ]) {
+      const j = migrate({ ...oldestSave(), version: 4, world });
+      const map =
+        world.kind === 'level' ? mapFromLevel(world.level) : generateMap(77, world.params);
+      const label = `${map.w}×${map.h}`;
+      // the game builds this map and loads the chunks into it: a list of another length is ignored
+      const regions = new RegionState(map);
+      regions.load(j.regions!);
+      expect(regions.unlocked, label).toEqual(j.regions);
+      expect(regions.ownedCount(), label).toBe(1);
+      const startX = (Math.floor((map.regionsX - 1) / 2) + 0.5) * map.regionSize;
+      const startY = (Math.floor((map.regionsY - 1) / 2) + 0.5) * map.regionSize;
+      expect(regions.isTileUnlocked(startX, startY), label).toBe(true);
+    }
+  });
+
+  it('keeps the chunks a save already owns', () => {
+    const regions = [false, true, true, false];
+    expect(runStep(4, { ...oldestSave(), version: 4, regions }).regions).toBe(regions);
+  });
+});
+
+describe('v5 to v6', () => {
+  it('starts day 1 in spring, unless the save says otherwise', () => {
+    expect(runStep(5, { ...oldestSave(), version: 5 }).seasonOffset).toBe(0);
+    expect(runStep(5, { ...oldestSave(), version: 5, seasonOffset: 2 }).seasonOffset).toBe(2);
+  });
+});
+
+describe('v6 to v7', () => {
+  const station = (id: number, rot?: number) => ({
+    id,
+    defId: 'farm',
+    name: `Farm ${id}`,
+    x: id,
+    y: id,
+    level: 1,
+    storage: {},
+    ...(rot === undefined ? {} : { rot }),
+  });
+
+  it('maps route modes to their new names the way a train loads them', () => {
+    const j = migrate({
+      ...oldestSave(),
+      version: 6,
+      trains: [
+        { id: 1, mode: 'fixed' },
+        { id: 2, mode: 'collect' },
+        { id: 3, dynamic: true },
+        { id: 4, mode: 'dynamic' },
+        { id: 5 },
+        { id: 6, dynamic: false },
+        // the mode wins over the flag, as it does on load
+        { id: 7, mode: 'fixed', dynamic: true },
+        // a mode under its new name stays
+        { id: 8, mode: 'transport' },
+      ],
+    });
+    expect((j.trains as { mode: unknown }[]).map((t) => t.mode)).toEqual([
+      'schedule',
+      'collection',
+      'production',
+      'production',
+      'schedule',
+      'schedule',
+      'schedule',
+      'transport',
+    ]);
+  });
+
+  it('turns stations to orientation 0 where they have none, and starts towns empty', () => {
+    const j = migrate({ ...oldestSave(), version: 6, stations: [station(1), station(2, 1)] });
+    expect(j.stations.map((s) => s.rot)).toEqual([0, 1]);
+    expect(j.towns).toEqual([]);
+    const towns = [{ id: 1, name: 'Alder', stationId: 1, custom: false, color: 0 }];
+    expect(runStep(6, { ...oldestSave(), version: 6, towns }).towns).toBe(towns);
+  });
+});
+
+describe('v7 to v8', () => {
+  it('opens the trade desk a fresh game saves, the one a file without a desk loads as', () => {
+    const j = runStep(7, { ...oldestSave(), version: 7 });
+    expect(j.trade).toEqual(new TradeDesk().toJSON());
+    const filled = new TradeDesk();
+    filled.load(j.trade as Parameters<TradeDesk['load']>[0]);
+    const missing = new TradeDesk();
+    missing.load(undefined);
+    expect(filled.toJSON()).toEqual(missing.toJSON());
+  });
+
+  it('keeps a desk the save already has, and no longer speaks of settings', () => {
+    const trade = { deals: { coal: 5 }, nextAt: 10, fuelMul: 1.2, driftDay: 3 };
+    expect(runStep(7, { ...oldestSave(), version: 7, trade }).trade).toBe(trade);
+    expect(MIGRATIONS.find((m) => m.from === 7)!.note).not.toMatch(/setting/i);
   });
 });
 
@@ -342,6 +520,24 @@ describe('v9 to v10', () => {
     const crafting = { recipes: ['mallard'], stats: { unlocks: 4, crafts: 9, failures: 2 } };
     const j = migrate({ ...oldestSave(), version: 9, crafting });
     expect(j.crafting).toBe(crafting);
+  });
+
+  it('starts battery carts empty, and makes up no tanks for a train without them', () => {
+    const trains = () => [
+      { id: 1, tanks: { coal: 5, oil: 0, water: 3 } },
+      { id: 2, tanks: { coal: 0, oil: 0, water: 0, battery: 4 } },
+      { id: 3 },
+    ];
+    const crafting = { recipes: [], stats: { unlocks: 0, crafts: 0, failures: 0 } };
+    // with crafting in the file as well, which the rest of the step leaves alone
+    for (const extra of [{}, { crafting }]) {
+      const j = runStep(9, { ...oldestSave(), version: 9, trains: trains(), ...extra });
+      expect(j.trains).toEqual([
+        { id: 1, tanks: { coal: 5, oil: 0, water: 3, battery: 0 } },
+        { id: 2, tanks: { coal: 0, oil: 0, water: 0, battery: 4 } },
+        { id: 3 },
+      ]);
+    }
   });
 });
 

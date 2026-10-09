@@ -10,6 +10,7 @@ import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
 import type { BuildingJSON } from './buildings';
+import { CHUNK_TILES } from './expand';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -222,6 +223,45 @@ function grantStarters(j: SaveGame, models: typeof V13_STARTERS) {
   inv.nextUid = uid;
 }
 
+/** The map size a world description builds, read the way map generation and levels read it. */
+function worldSize(world: unknown): { w: number; h: number } {
+  const spec = isRecord(world) ? world : {};
+  const size = spec.kind === 'level' ? spec.level : spec.params;
+  const dim = (v: unknown, fallback: number) =>
+    typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : fallback;
+  return {
+    w: dim(isRecord(size) ? size.w : undefined, DEFAULT_MAP_PARAMS.w),
+    h: dim(isRecord(size) ? size.h : undefined, DEFAULT_MAP_PARAMS.h),
+  };
+}
+/**
+ * Chunk ownership before chunks were bought: one entry per chunk of the map the world builds
+ * (`emptyMap`'s grid), and only the chunk map generation starts in owned.
+ */
+function startChunkOnly(world: unknown): boolean[] {
+  const { w, h } = worldSize(world);
+  const regionsX = Math.max(1, Math.ceil(w / CHUNK_TILES));
+  const regionsY = Math.max(1, Math.ceil(h / CHUNK_TILES));
+  const start = Math.floor((regionsY - 1) / 2) * regionsX + Math.floor((regionsX - 1) / 2);
+  return Array.from({ length: regionsX * regionsY }, (_, i) => i === start);
+}
+/**
+ * The names route modes had when a train's `mode` arrived, and the names they have now. A train
+ * older than its `mode` has only the `dynamic` flag.
+ */
+const OLD_ROUTE_MODES = new Map([
+  ['fixed', 'schedule'],
+  ['dynamic', 'production'],
+  ['collect', 'collection'],
+]);
+/** A train's route mode under its current name: an old name mapped, a missing one from the flag. */
+function routeMode(train: Record<string, unknown>): unknown {
+  const m = train.mode;
+  if (typeof m === 'string' && OLD_ROUTE_MODES.has(m)) return OLD_ROUTE_MODES.get(m);
+  if (!m) return train.dynamic ? 'production' : 'schedule';
+  return m;
+}
+
 /**
  * Registry of version-to-version upgrades, run in order. Each step only knows the shape it
  * upgrades from; adding a format version means adding one entry here.
@@ -247,17 +287,33 @@ export const MIGRATIONS: Migration[] = [
     note: 'works buildings list started empty',
     run: (j) => (j.buildings = j.buildings ?? []),
   },
-  { from: 4, note: 'owned chunks reduced to the start chunk', run: () => {} },
-  { from: 5, note: 'season of day 1 set to spring', run: () => {} },
+  {
+    from: 4,
+    note: 'owned chunks reduced to the start chunk',
+    run: (j) => (j.regions = j.regions ?? startChunkOnly(j.world)),
+  },
+  {
+    from: 5,
+    note: 'season of day 1 set to spring',
+    run: (j) => (j.seasonOffset = j.seasonOffset ?? 0),
+  },
   {
     from: 6,
-    note: 'towns started empty, station orientation 0, routing modes mapped to the new names, a depot placed at the start',
-    run: () => {},
+    note: 'towns started empty, station orientation 0, routing modes mapped to the new names, a depot placed at the start (applied on load)',
+    run: (j) => {
+      j.towns = j.towns ?? [];
+      for (const s of j.stations) if (isRecord(s)) s.rot = s.rot ?? 0;
+      for (const t of j.trains) if (isRecord(t)) t.mode = routeMode(t);
+    },
   },
-  { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
+  {
+    from: 7,
+    note: 'trade desk opened empty: no standing deals, fuel at its base price',
+    run: (j) => (j.trade = j.trade ?? { deals: {}, nextAt: 0, fuelMul: 1, driftDay: 0 }),
+  },
   {
     from: 8,
-    note: 'every track piece counted as wide track; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple; contracts rated Common with no train assigned; the auto-accept switch became a per-rarity policy',
+    note: 'every track piece counted as wide track; catenary strung over rails the poles powered (applied on load); townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple; contracts rated Common with no train assigned; the auto-accept switch became a per-rarity policy',
     run: (j) => {
       const book = j.contracts as { contracts?: Record<string, unknown>[] } | undefined;
       for (const c of book?.contracts ?? []) {
@@ -283,8 +339,12 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 9,
-    note: 'crafting recipes granted for every model already in the inventory; locomotive modes set by the default rule (the first unit leads, units of its control class run in multiple, the rest double-headed); battery carts start empty',
+    note: 'crafting recipes granted for every model already in the inventory; locomotive modes set by the default rule (the first unit leads, units of its control class run in multiple, the rest double-headed; applied on load); battery carts start empty',
     run: (j) => {
+      for (const t of j.trains) {
+        const tanks = isRecord(t) ? t.tanks : undefined;
+        if (isRecord(tanks)) tanks.battery = tanks.battery ?? 0;
+      }
       if (j.crafting) return;
       const inv = j.inventory as { items?: { defId?: unknown }[] } | undefined;
       const recipes = new Set<string>();
