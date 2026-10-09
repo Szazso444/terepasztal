@@ -359,20 +359,17 @@ concept is loaded by the game. Further civic/industry image generation failed wi
 See [concept-prompts.md](concept-prompts.md) for the prompt specifications used for the two
 new sheets and a description of the three previously approved boards reused here.
 
-
 ## Production cozy landscape and scale contract
 
 See [cozy-v3.md](cozy-v3.md) for the integrated terrain, contact edges, tree variants,
 window lighting and music. It records the shared human/door scale, the explicitly
 estimated equipment families, and the checks required when adding illustrated art.
 
-
 ## Terrain v4 correction (current)
 
 See [terrain-v4.md](terrain-v4.md): v3 ground and hill relief have been rolled back.
 The comparison gallery proposes textured material edges and connected illustrated
 hill families. Music, scale, foliage and cozy effects from v3 remain.
-
 
 ## Approved terrain integrated in production
 

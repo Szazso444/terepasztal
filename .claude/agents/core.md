@@ -27,6 +27,7 @@ You write only these paths (`tools/agents/ownership.json`):
 - `.mcp.json`
 - `.claude/**`
 - `.codex/**`
+- `.githooks/**`
 - `.github/**`
 - `docs/process/**`
 - `docs/superpowers/**`

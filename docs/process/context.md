@@ -7,12 +7,12 @@ hands back.
 
 ## What an agent reads
 
-| Reader | Always | Only when the brief names it | Never |
-| --- | --- | --- | --- |
-| Core | `AGENTS.md`, `CORE.md`, `docs/process/*`, the issue tree | specs, plans, any file | — |
-| A domain role | `AGENTS.md`, its own `.claude/agents/<role>.md`, the task brief | files in its context pack, a spec section | `CORE.md`, other roles' agent files, other tasks, the chat that produced the brief |
-| QA | `AGENTS.md`, `.claude/agents/qa.md`, the brief, the diff | the role file of the role under review | the implementer's reasoning beyond its report |
-| Verification | `AGENTS.md`, `.claude/agents/verification.md`, `docs/process/verification.md`, the brief | the module under test and its seams | the implementer's reasoning beyond its report |
+| Reader        | Always                                                                                   | Only when the brief names it              | Never                                                                              |
+| ------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| Core          | `AGENTS.md`, `CORE.md`, `docs/process/*`, the issue tree                                 | specs, plans, any file                    | —                                                                                  |
+| A domain role | `AGENTS.md`, its own `.claude/agents/<role>.md`, the task brief                          | files in its context pack, a spec section | `CORE.md`, other roles' agent files, other tasks, the chat that produced the brief |
+| QA            | `AGENTS.md`, `.claude/agents/qa.md`, the brief, the diff                                 | the role file of the role under review    | the implementer's reasoning beyond its report                                      |
+| Verification  | `AGENTS.md`, `.claude/agents/verification.md`, `docs/process/verification.md`, the brief | the module under test and its seams       | the implementer's reasoning beyond its report                                      |
 
 Long histories (`CHANGELOG.md`, `MILESTONES.md`, `docs/phase-decisions.md`, `docs/archived-work.md`)
 are in no default pack. A brief cites the section it needs.

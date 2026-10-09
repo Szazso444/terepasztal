@@ -34,12 +34,12 @@ A crossing on a climb holds both lines level at its centre, so the two rails mee
 
 ## Tile types along a line
 
-| Type | Where | Rail |
-| --- | --- | --- |
-| Smooth | a level change on neither edge | level, unchanged from before |
-| Incline transition / decline transition | a level change on one or both edges | bends slightly (vertical curve) |
-| Incline / decline | a level tile between two transitions of one staircase | straight grade, no bend |
-| Bridge | a bridge platform under the rail | carries the higher abutment's level across the dip |
+| Type                                    | Where                                                 | Rail                                               |
+| --------------------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
+| Smooth                                  | a level change on neither edge                        | level, unchanged from before                       |
+| Incline transition / decline transition | a level change on one or both edges                   | bends slightly (vertical curve)                    |
+| Incline / decline                       | a level tile between two transitions of one staircase | straight grade, no bend                            |
+| Bridge                                  | a bridge platform under the rail                      | carries the higher abutment's level across the dip |
 
 A run of transitions and inclines climbs from the level before it to the level after it: a
 vertical curve over the first and last tile, a constant grade between. A crest or dip inside a run
