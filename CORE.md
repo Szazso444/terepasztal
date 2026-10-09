@@ -60,7 +60,7 @@ Each one blocks the findings listed with it. The audit tables below mark them `d
    `connected()` refuses. Should it refuse, which may strand trains in existing saves?
 3. **Game speed changes outcomes** (A03, A16). Sub-stepping makes 1x and 3x identical but changes
    current trajectories. Accept the change?
-4. **Settings and tuning in saves** (A24 and the settings seam). Loading a save rewrites global
+4. **Settings and tuning in saves** (A24, A67). Loading a save rewrites global
    tuning, and exported saves carry player settings, against `AGENTS.md`'s rule. Which is meant?
 5. **Migration rule versus code** (A26). Old steps 4–7 rely on load code, and steps 11–12
    rewrite values. Loosen the rule, or move the defaults into the steps?
@@ -70,8 +70,18 @@ Each one blocks the findings listed with it. The audit tables below mark them `d
    (A40). Wanted?
 8. **Building ages and rotations** (A46): 6 ages × 4 rotations in the art package against 3 ages
    × 2 in the game. Decided through #30 and #29.
-9. **The live loop** (`docs/live-loop.md`). It now says a person's live work happens on a task
+9. **The live loop** (`docs/live-loop.md`, A50). It now says a person's live work happens on a task
    branch and reaches `develop` by pull request. Confirm, or keep a direct path for your own work?
+10. **Tuning labels and the strings rule** (A69). `RULE_META` holds English labels and hints, as
+    the tuning rule requires, but the strings rule says every player-facing string lives in
+    `src/strings.ts`. Which rule wins for tuning labels?
+11. **Repository weight** (A55). `.git` is about 830 MB, 582 tracked images, and `scratchpad/`
+    holds 146 MB of evidence. Move the scratchpad evidence out, ignore future evidence images,
+    adopt Git LFS, or leave it?
+12. **Machine-specific tooling** (A54). `.codex/hooks.json` holds a `C:\Users\...` path, and the
+    Codex hook never runs under Codex. Fix it, or keep it as your local setting?
+13. **Gates beyond `src`** (A57). Lint, typecheck and formatting skip `tools/`, the configs and
+    the docs. Extend them? This is a gate change.
 
 ## Audit
 
@@ -81,10 +91,10 @@ about behaviour:
 
 | Verdict | Count |
 | --- | --- |
-| confirmed | 31 |
-| partly true, restated as it holds | 16 |
-| refuted, dropped | 1 |
-| still being checked (art tools, tests and CI, cross-domain seams) | 25 |
+| confirmed | 47 |
+| partly true, restated as it holds | 23 |
+| refuted, dropped | 3 |
+| merged as duplicates | 4 |
 
 The full evidence (file:line, commands and outputs, acceptance criteria) is in
 `docs/process/audit/2026-10-09-verified.json` under the IDs below. The owner is the role that
@@ -104,6 +114,11 @@ would do the fix. "decide" means the author decides first.
 | A34 | medium | Nothing enforces import direction between source areas. eslint.config.js has no no-restricted-imports or import-boundary rule, package.json has no dependency-cruiser or madge, and scope.mjs checks which paths changed, not… | Move biomeShade out of src/ui/minimap.ts into src/render or src/art, then add a no-restricted-imports rule that forbids src/{engine,world,sim,gacha,data,render} from importing ../ui or ../editor; eslint.config.js is a gate… | decide |
 | A37 | medium | It is true that no command layer sits between the UI and sim. game.ts hands live Fleet, Builder, Stockpile, Economy and Train references to the panels, and the panels call their methods or write fields directly. | Ask the author whether a sim-side command module is wanted. | decide |
 | A40 | medium | src/game.ts (2874 lines) is the UI composition root and holds most of the keymap, plus a few hardcoded strings. ownership.json assigns it to Engine. 'Any UI change must edit it' is overstated, since a change inside one panel… | Move panel construction and wiring, and the play keymap, into UI/UX-owned modules (e.g. src/ui/panels.ts, src/ui/keymap.ts). game.ts would call them through one narrow interface that passes the domain objects once. | decide |
+| A57 | medium | The gates cover src only. | Widen the gates in one gate-approved change: tsconfig (or a tsconfig.node.json) includes the root *.config.ts and tools/*.ts, eslint gets a node-globals block for tools/**/*.mjs and is run on src and tools, and the CI prettier… | decide |
+| A61 | medium | The only tick order is Game.update, and game.ts cannot be imported in Node. | Move the gdt>0 body of Game.update into a DOM-free sim step module, for example src/sim/step.ts, that takes the domain objects. | — |
+| A65 | medium | World growth does span boot (main.ts:94-109), chunk purchase (game.ts:1608-1618: expandSave, writeSave, setIntentAndReload) and expand.ts. | Move the cold-load growth loop into src/sim/expand.ts as one tested function, and share one paramsFromRules and one parseSeedText helper between main.ts and game.ts. | — |
+| A67 | medium | Since v8 the save carries the full settings object, volumes included (save.ts:78-79, snapshot at game.ts:1017). | Decide which settings belong to the save. | decide |
+| A68 | medium | diagnostics() (game.ts:551-559) wraps the snapshot as {diagnostics, saveVersion, at, traffic, save}. 'Copy diagnostics' writes it into the same textarea that Import reads from (settingsScreen.ts:312-324). importSave… | In importSave (or parseSave), unwrap `j.save` when the parsed object has `diagnostics === 1`, before validating the seed. | — |
 
 ### World
 
@@ -133,6 +148,9 @@ would do the fix. "decide" means the author decides first.
 | A31 | medium | The duplication is real. | Add one helper to src/sim/body.ts, next to DRAWN_FACINGS and mirrorFacing, that returns {facing, flip} for an angle and the bogie style index for (k, n, back), and call it from trainRenderer, previewLayers and game.ts. | — |
 | A38 | medium | trainScreen.ts writes t.mode directly and skips the immediate re-plan that Fleet.create does. | Add Fleet.setMode(t, mode). | decide |
 | A39 | medium | The bridge slow-down threshold, mass above 0.8 of bridge capacity, is written as a bare 0.8 in three places with no shared constant. | Export the threshold and the half-speed factor as constants from src/sim/bridges.ts. | — |
+| A59 | medium | The weather eases its visible strength by real seconds, and that strength scales train vmax through speedFactor. | Base the sim's speed factor on game time: pass gdt to weather.tick (game.ts:2016), or have speedFactor ease by game seconds and keep the real-dt easing for the renderer only. | — |
+| A64 | medium | PeopleSim draws every decision from Math.random (people.ts:101), including the 8% of outings that walk to a station and become 'waiting' (people.ts:261-300). | Give PeopleSim a constructor RNG parameter and have game.ts:823 pass a seeded `new Rng(this.seed ^ K)`, so `rnd` stops defaulting to Math.random. | — |
+| A66 | medium | There are ten terepasztal.* storage keys in six files, not nine: six in localStorage (save, settings, slots, rules, levels, content) and four in sessionStorage (intent, testing, editorDraft, dev-reload). | Store a version number in terepasztal.rules and run the value remaps in readRules only when the stored object has no version. | decide |
 
 ### Rendering
 
@@ -157,6 +175,8 @@ would do the fix. "decide" means the author decides first.
 | A33 | medium | Both passages are out of date, but only one would mislead. phase-decisions.md:176-177 names the removed src/render/vehicleVisual.ts, and lines 181-191 describe bogie masks. | Put a line at the top of terrain-v4.md saying it is superseded by terrain-production.md and that Landscape is live, and remove '(current)' from README.md:366; | — |
 | A46 | medium | The facts hold. building-kit has 6 AGES and 4 ROTATIONS keyed structures/<f>_a<age>_r<rot>. | Update art-direction README:13-15 to point at the 2026-10-02 spec as the current decision on ages and rotations. | decide |
 | A47 | medium | docs/mcp-setup.md §6 is out of date with the runtime. §6.1 says public/assets 'does not exist yet' (it holds 7 groups) and lists groups without bridges. §6.2 says textures are sampled with nearest and not to upscale, but… | Rewrite mcp-setup §6.1-6.2 for today's contract (existing public/assets, bridges group, partial, resolution with linear sampling) and fix the README:3 link to scratchpad/illustrated/README.md. | — |
+| A71 | medium | tools/asset-pipeline/game_rules.test.mjs imports src/sim/body and src/engine/iso (lines 5-13) and runs python3 at line 32. vitest.config.ts includes tools/**/*.test.mjs, so npm test needs a Python interpreter, and a change to… | Skip the suite with a visible warning when no Python interpreter is found outside CI, and keep it required in CI (CI runs on ubuntu-latest, which has python3). | decide |
+| A72 | medium | tools/bridge-kit.mjs:179 writes src/render/bridgeKit.json with JSON.stringify(...,null,2), and ci.yml runs prettier --check on src/**/*.json. | Pass the geometry through prettier.format (already a devDependency) with the repo config before writing it, so any future shape still passes the gate. | — |
 
 ### Verification
 
@@ -168,14 +188,26 @@ would do the fix. "decide" means the author decides first.
 | A19 | medium | The facing and draw-width contract (FACINGS, DRAWN_FACINGS, DRAWN_WIDTH, mirrorFacing, residualRotation, ROTATION_SHARE) lives in src/sim/body.ts and art, render, ui and game import it. | Add a test that every rolling/*_f<N> key in a shipped public/assets/*.json atlas has N in DRAWN_FACINGS, and that each model present covers all of DRAWN_FACINGS. | — |
 | A44 | medium | AGENTS.md (imported by CLAUDE.md) requires re-running scratchpad/art-sheets.mjs and checking that frame counts and anchors did not move. | Add a headless vitest that snapshots each generator group's frame keys and anchors, so counts and anchors are checked automatically. | decide |
 | A45 | medium | tools/building-kit.test.mjs hard-codes 27 families and 560 pictures, but loadInventory derives both from src/data (stations, stations_full, buildings, buildings_full, decor). | Assert the invariant: family count equals the qualifying src/data entries, and pictures equals the sum of ages times 4 rotations. | — |
+| A63 | medium | The test named 'lists every field of a current save as known' only checks the 13 keys of oldestSave(). | Also assert that every key of migrate(oldestSave()) and of a fully populated current-version save fixture is in KNOWN_SAVE_KEYS. | — |
 
 ### Core
 
 | ID | Sev. | Finding | Proposed fix | Author |
 | --- | --- | --- | --- | --- |
 | A15 | high | trains.ts is 2460 lines and puts consist physics, routing, fuel, loading, contract jobs, retreat/recovery and save in one file, mostly inside one Train class. | Add a planning rule to lifecycle.md step 3 and the core skill: two tasks that write the same file (in practice src/sim/trains.ts or fleet.ts) are never ready together, and the later one is marked Blocked by the earlier. | — |
+| A50 | high | docs/live-loop.md still contradicts the gated lifecycle: line 3 says 'no branch and no pull request', and lines 89-99 ('What replaces the pull request', 'dropping the PR cycle', 'main still gets the gate') describe a no-PR… | Rewrite live-loop.md line 3 and the 'What replaces the pull request' section to say what the note at lines 5-8 says: a person commits locally on the task branch, and the work reaches develop through a PR. | — |
+| A51 | high | Most of the sprawl has been cleaned up. | Delete verification/35-property-helper now that it is merged. | decide |
 | A05 | medium | On main and on origin/develop, ci.yml runs on push to main only, plus pull_request. | Merge this branch's ci.yml (push on main and develop) into develop and keep pull_request as the CI gate for agent branches. | — |
 | A48 | medium | Three old art branches are unmerged and 67 commits behind main, with very large diffs from their merge base: art/rear-views-v1 (14 ahead, 1144 files), local/train-models (15 ahead, 1337 files) and locomotive-render-v1 (13… | Ask the author whether each old art branch is superseded or should be salvaged, then archive (tag and delete) the superseded ones. | decide |
+| A52 | medium | The claimed tags now exist: the API returns 11 tags (10 archive/* and v0.1.0, matching .github/ref-archive.json), and the v0.1.0 branch is deleted. | Either add v0.2.0-v0.8.0 to ref-archive.json at each version's last commit as listed in the CHANGELOG, or reword README.md:26 and CHANGELOG.md:5 to say only v0.1.0 is tagged. | decide |
+| A53 | medium | README.md Controls, README.md:58 and CHANGELOG.md disagree with the code. | Rewrite the README Controls table and line 58 to match the hotkeys in game.ts (K market, M overview, Tab/Shift+Tab tool, Q/E type, U/Shift+U reclass, 1-9 piece). | — |
+| A54 | medium | Machine-specific paths and tooling are tracked. .codex/hooks.json:8 hardcodes 'C:\Users\Zso\terepasztal\...'. | Make .codex/hooks.json use a repo-relative command and gate the Codex hook on a Codex variable (or drop it). | decide |
+| A55 | medium | The repository carries large binary history. .git is about 834 MB (an 831 MiB pack). 582 image files are tracked (403 png, 178 jpg, 1 svg; the claim said 585), with no .gitattributes and no LFS. scratchpad/ is 146 MB in 462… | Add a root `.ignore` listing scratchpad/ and assets/source/ so ripgrep-based agent search skips the evidence without moving files. | decide |
+| A56 | medium | The docs overlap and supersede each other. | Make README's Layout a pointer to AGENTS.md, make MILESTONES point to CHANGELOG instead of restating it, and have the author either add current-phase-spec.md or mark the phase docs historical. | decide |
+| A69 | medium | AGENTS.md:128-129 says tuning lives in rules.ts with its label, range and hint, and RULE_META (rules.ts:124 onward) holds the English label, group and hint. | Have the author choose: either RULE_META carries STR keys (labels move into strings.ts) or RULE_META is a written exception. | decide |
+
+Merged as duplicates: A58 (= A08), A60 (= A22), A62 (= A05), A70 (= A06). Refuted and dropped: A43, A49, A73.
+
 
 ## Test gaps
 
@@ -206,6 +238,8 @@ its owner, in this order:
 
 1. **Determinism and safety nets**
    - A14: port the traffic scenario into a Node test;
+   - A64: draw people's decisions from a seeded RNG (they steer dispatch);
+   - A63: make the known-save-keys test check what `snapshot()` writes;
    - A28: reject malformed imports before they overwrite the save;
    - A20: catch a malformed content override at boot;
    - A04: audio import without side effects;
@@ -220,6 +254,7 @@ its owner, in this order:
    - A44: frame counts and anchors checked headless (only declaring Playwright needs a decision);
    - A45: building-kit counts derived from data.
 4. **Docs**
+   - A53: README controls, layout and changelog behind the code;
    - A18: stale traffic and bogie docs;
    - A33: stale terrain doc;
    - A07, A47: `mcp-setup.md` section 6.
