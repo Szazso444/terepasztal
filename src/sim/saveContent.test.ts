@@ -1,23 +1,35 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Dir } from '../engine/iso';
+import type { Rng } from '../engine/rng';
+import { forAll, shrinkArray } from '../testing/property';
 import { TrackGraph } from '../world/track';
 import { content } from '../data/content';
-import { locoDef, wagonDef } from '../gacha/items';
+import { LOCOS, WAGONS, itemDef, locoDef, wagonDef } from '../gacha/items';
 import { Inventory } from '../gacha/inventory';
-import { Station, type StationJSON } from './stations';
-import { buildingDef } from './buildings';
-import { Train, defaultStop, resetTrainIds, type TrainJob } from './trains';
-import type { SaveGame } from './save';
+import { STATION_DEFS, Station, stationDef, type StationJSON } from './stations';
+import { BUILDING_DEFS, buildingDef } from './buildings';
+import { decorDef } from './build';
+import { CARGO } from './cargo';
+import { RESOURCE_IDS } from './stockpile';
+import { rules, DEFAULT_RULES } from './rules';
+import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
+import { Train, defaultStop, jobStop, resetTrainIds, type StopPlan, type TrainJob } from './trains';
+import { SAVE_VERSION, type SaveGame } from './save';
 import {
   pruneUnknownContent,
   LIVE_CONTENT,
   UNKNOWN_BUILD_REFUND,
   UNKNOWN_ITEM_REFUND,
   type KnownContent,
+  type PruneReport,
 } from './saveContent';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
-beforeEach(() => resetTrainIds(1));
+beforeEach(() => {
+  resetTrainIds(1);
+  Object.assign(rules, DEFAULT_RULES);
+  setSupplyMode(DEFAULT_SUPPLY);
+});
 
 type TrainJSON = ReturnType<Train['toJSON']>;
 type ItemJSON = ReturnType<Inventory['toJSON']>['items'][number];
@@ -292,5 +304,591 @@ describe('Inventory.load', () => {
     inv.load({ items: [item(1, 'puffer', null), item(2, 'adler', null)], nextUid: 3 });
     expect(inv.items.map((i) => i.defId)).toEqual(['adler']);
     expect(inv.count('puffer')).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------- properties over random saves
+//
+// For a random save and a random share of the shipped ids declared unknown through KnownContent:
+// every id left is known, the refund is the per-kind counts times the rates, goods are moved and
+// not lost, nothing points at what went, a second run finds nothing, and a save with nothing
+// unknown is left as it was. A case is a compact spec the save is built from, so forAll can shrink
+// it and every shrunk save stays whole.
+
+/** Ids of each table the game ships. */
+const SHIPPED = {
+  station: STATION_DEFS.map((d) => d.id),
+  works: BUILDING_DEFS.map((d) => d.id),
+  decor: content.decor.map((d) => d.id),
+  loco: LOCOS.map((d) => d.id),
+  wagon: WAGONS.map((d) => d.id),
+};
+/** Ids no table defines: content an update removed. They are always unknown. */
+const NEVER = {
+  station: ['mill', 'old_halt'],
+  works: ['gone', 'old_works'],
+  decor: ['gone_decor'],
+  loco: ['puffer', 'old_tank'],
+  wagon: ['gone_wagon', 'old_coach'],
+};
+const LOCO_IDS = new Set([...SHIPPED.loco, ...NEVER.loco]);
+/** What a store or a wagon may hold: every cargo, passengers included, and one the game dropped. */
+const GOODS = [...CARGO.map((c) => c.id), 'gone_cargo'];
+const EMPTY: PruneReport = { dropped: [], money: 0, tickets: 0 };
+
+interface WagonSpec {
+  defId: string;
+  cargo: string | null;
+  amount: number;
+}
+interface TrainSpec {
+  /** at least one */
+  locos: string[];
+  wagons: WagonSpec[];
+  /** station ids of the standing program, and the index of the stop it is bound for */
+  program: number[];
+  at: number;
+  /** index into the spec's contracts of the one being worked, its program set aside; or null */
+  job: number | null;
+  phase: 'origin' | 'dest';
+  /** indices of the spec's contracts queued after it */
+  queue: number[];
+  detour: number | null;
+}
+interface SaveSpec {
+  /** station `i` gets id `i + 1` */
+  stations: { defId: string; storage: [string, number][] }[];
+  /** [origin, destination] station ids; contract `i` gets id `i + 1` */
+  contracts: [number, number][];
+  /** train `i` gets id `i + 1`; each vehicle is also its inventory copy, as the fleet keeps them */
+  trains: TrainSpec[];
+  /** copies waiting in the depot */
+  spares: string[];
+  works: string[];
+  decor: string[];
+  /** null: the save has no stockpile */
+  stock: [string, number][] | null;
+  /** shipped ids declared unknown, per predicate */
+  unknown: { station: string[]; works: string[]; decor: string[]; vehicle: string[] };
+}
+
+type ContractJSON = ReturnType<typeof contract>;
+const trainsOf = (j: SaveGame) => j.trains as TrainJSON[];
+const itemsOf = (j: SaveGame) => (j.inventory as { items: ItemJSON[] }).items;
+const contractsOf = (j: SaveGame) => (j.contracts as { contracts: ContractJSON[] }).contracts;
+const stockOf = (j: SaveGame) =>
+  (j.stockpile as { amounts: Record<string, number> } | undefined)?.amounts;
+const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
+
+function genSpec(rng: Rng, removed = true): SaveSpec {
+  const id = (kind: keyof typeof SHIPPED) =>
+    removed && rng.chance(0.15) ? rng.pick(NEVER[kind]) : rng.pick(SHIPPED[kind]);
+  // now and then a slot names a model of the other table, as if the content had moved it
+  const slot = (kind: 'loco' | 'wagon') =>
+    removed && rng.chance(0.05) ? rng.pick(SHIPPED[kind === 'loco' ? 'wagon' : 'loco']) : id(kind);
+  const list = <T>(max: number, f: () => T): T[] => Array.from({ length: rng.int(0, max) }, f);
+  const goods = (max: number) =>
+    list(max, (): [string, number] => [rng.pick(GOODS), rng.int(1, 60)]);
+  const stations = list(6, () => ({ defId: id('station'), storage: goods(3) }));
+  const stationId = () => rng.int(1, stations.length);
+  const contracts = stations.length
+    ? list(5, (): [number, number] => [stationId(), stationId()])
+    : [];
+  const contractAt = () => rng.int(0, contracts.length - 1);
+  const trains = list(5, (): TrainSpec => {
+    const program = stations.length ? list(5, stationId) : [];
+    return {
+      locos: Array.from({ length: rng.int(1, 3) }, () => slot('loco')),
+      wagons: list(4, () => {
+        const cargo = rng.chance(0.3) ? null : rng.pick(GOODS);
+        return { defId: slot('wagon'), cargo, amount: cargo ? rng.int(1, 40) : 0 };
+      }),
+      program,
+      at: program.length ? rng.int(0, program.length - 1) : 0,
+      job: contracts.length && rng.chance(0.4) ? contractAt() : null,
+      phase: rng.chance(0.5) ? 'origin' : 'dest',
+      queue: contracts.length ? list(2, contractAt) : [],
+      detour: stations.length && rng.chance(0.25) ? stationId() : null,
+    };
+  });
+  const spares = list(4, () => (rng.chance(0.5) ? id('loco') : id('wagon')));
+  const works = list(4, () => id('works'));
+  const decor = list(4, () => id('decor'));
+  const stock = rng.chance(0.1)
+    ? null
+    : list(4, (): [string, number] => [rng.pick(RESOURCE_IDS), rng.int(0, 200)]);
+  // none of the shipped ids, a few, some or most of them
+  const share = rng.pick([0, 0.1, 0.3, 0.7]);
+  const some = (ids: string[]) => ids.filter(() => rng.chance(share));
+  const unknown = {
+    station: some(SHIPPED.station),
+    works: some(SHIPPED.works),
+    decor: some(SHIPPED.decor),
+    vehicle: some([...SHIPPED.loco, ...SHIPPED.wagon]),
+  };
+  return { stations, contracts, trains, spares, works, decor, stock, unknown };
+}
+
+/** A save made only of shipped content, with only ids it does not use declared unknown. */
+function genClean(rng: Rng): SaveSpec {
+  const spec = genSpec(rng, false);
+  const used = new Set([
+    ...spec.stations.map((s) => s.defId),
+    ...spec.trains.flatMap((t) => [...t.locos, ...t.wagons.map((w) => w.defId)]),
+    ...spec.spares,
+    ...spec.works,
+    ...spec.decor,
+  ]);
+  const unused = (ids: string[]) => ids.filter((x) => !used.has(x));
+  const u = spec.unknown;
+  return {
+    ...spec,
+    unknown: {
+      station: unused(u.station),
+      works: unused(u.works),
+      decor: unused(u.decor),
+      vehicle: unused(u.vehicle),
+    },
+  };
+}
+
+/** Smaller specs: fewer of anything, simpler trains. A reference that loses its target goes. */
+function* shrinkSpec(spec: SaveSpec): Iterable<SaveSpec> {
+  for (const trains of shrinkArray(spec.trains, shrinkTrain)) yield { ...spec, trains };
+  const emptied = (s: SaveSpec['stations'][number]) =>
+    s.storage.length ? [{ ...s, storage: [] }] : [];
+  for (const stations of shrinkArray(spec.stations, emptied)) yield { ...spec, stations };
+  for (const contracts of shrinkArray(spec.contracts)) yield { ...spec, contracts };
+  for (const spares of shrinkArray(spec.spares)) yield { ...spec, spares };
+  for (const works of shrinkArray(spec.works)) yield { ...spec, works };
+  for (const decor of shrinkArray(spec.decor)) yield { ...spec, decor };
+  if (spec.stock) for (const stock of shrinkArray(spec.stock)) yield { ...spec, stock };
+  for (const kind of ['station', 'works', 'decor', 'vehicle'] as const)
+    for (const ids of shrinkArray(spec.unknown[kind]))
+      yield { ...spec, unknown: { ...spec.unknown, [kind]: ids } };
+}
+function* shrinkTrain(t: TrainSpec): Iterable<TrainSpec> {
+  for (const wagons of shrinkArray(t.wagons)) yield { ...t, wagons };
+  for (const locos of shrinkArray(t.locos)) if (locos.length) yield { ...t, locos };
+  for (const program of shrinkArray(t.program)) yield { ...t, program };
+  if (t.at) yield { ...t, at: 0 };
+  if (t.job !== null) yield { ...t, job: null };
+  for (const queue of shrinkArray(t.queue)) yield { ...t, queue };
+  if (t.detour !== null) yield { ...t, detour: null };
+}
+
+/** The shipped tables, minus the ids the spec declares unknown; each slot reads its own table. */
+function knownFor(u: SaveSpec['unknown']): KnownContent {
+  const off = {
+    station: new Set(u.station),
+    works: new Set(u.works),
+    decor: new Set(u.decor),
+    vehicle: new Set(u.vehicle),
+  };
+  return {
+    station: (id) => SHIPPED.station.includes(id) && !off.station.has(id),
+    works: (id) => SHIPPED.works.includes(id) && !off.works.has(id),
+    decor: (id) => SHIPPED.decor.includes(id) && !off.decor.has(id),
+    vehicle: (id, kind) =>
+      !off.vehicle.has(id) &&
+      ((kind !== 'wagon' && SHIPPED.loco.includes(id)) ||
+        (kind !== 'loco' && SHIPPED.wagon.includes(id))),
+  };
+}
+
+/** A saved train as `Train.toJSON` writes it, standing nowhere, its vehicles named as given. */
+function savedTrain(
+  id: number,
+  locos: { uid: number; defId: string }[],
+  wagons: (WagonSpec & { uid: number })[],
+): TrainJSON {
+  // built from shipped models, then renamed to what the save says
+  const t = new Train(
+    locos.map((l) => ({
+      uid: l.uid,
+      level: 1,
+      def: locoDef(SHIPPED.loco.includes(l.defId) ? l.defId : 'adler'),
+    })),
+    undefined,
+    id,
+  );
+  t.wagons = wagons.map((w) => ({
+    uid: w.uid,
+    def: wagonDef(SHIPPED.wagon.includes(w.defId) ? w.defId : 'flatbed'),
+    level: 1,
+    cargo: w.cargo,
+    amount: w.amount,
+    origin: null,
+  }));
+  const j = clone(t.toJSON());
+  j.locos.forEach((l, k) => (l.defId = locos[k].defId));
+  j.wagons.forEach((w, k) => (w.defId = wagons[k].defId));
+  return j;
+}
+const jobOf = (c: ContractJSON): TrainJob => ({
+  contractId: c.id,
+  name: `contract ${c.id}`,
+  originId: c.originId,
+  destId: c.destId,
+  cargo: c.cargo,
+});
+
+/** The save a spec describes, as `JSON.parse` hands it to the load. */
+function buildSave(spec: SaveSpec): SaveGame {
+  const exists = (id: number) => id >= 1 && id <= spec.stations.length;
+  const contracts = spec.contracts.flatMap(([o, d], i) =>
+    exists(o) && exists(d) ? [contract(i + 1, o, d)] : [],
+  );
+  const contractAt = (i: number) => contracts.find((c) => c.id === i + 1);
+  const items: ItemJSON[] = [];
+  let uid = 1;
+  const trains = spec.trains.map((ts, i) => {
+    const id = i + 1;
+    const locos = ts.locos.map((defId) => ({ uid: uid++, defId }));
+    const wagons = ts.wagons.map((w) => ({ ...w, uid: uid++ }));
+    for (const l of locos) items.push(item(l.uid, l.defId, id, 'loco'));
+    for (const w of wagons) items.push(item(w.uid, w.defId, id, 'wagon'));
+    const j = savedTrain(id, locos, wagons);
+    const program = ts.program.filter(exists).map(defaultStop);
+    const at = program.length ? ts.at % program.length : 0;
+    const job = ts.job === null ? undefined : contractAt(ts.job);
+    if (job) {
+      j.suspended = { schedule: program, routeIndex: at };
+      j.job = jobOf(job);
+      j.jobPhase = ts.phase;
+      j.schedule = [jobStop(job.originId, 'origin'), jobStop(job.destId, 'dest')];
+      j.routeIndex = ts.phase === 'dest' ? 1 : 0;
+    } else {
+      j.schedule = program;
+      j.routeIndex = at;
+    }
+    j.jobs = ts.queue.flatMap((q) => {
+      const c = contractAt(q);
+      return c ? [jobOf(c)] : [];
+    });
+    j.detour = ts.detour !== null && exists(ts.detour) ? ts.detour : null;
+    return j;
+  });
+  for (const defId of spec.spares)
+    items.push(item(uid++, defId, null, LOCO_IDS.has(defId) ? 'loco' : 'wagon'));
+  const save: SaveGame = {
+    version: SAVE_VERSION,
+    savedAt: 0,
+    seed: 7,
+    clock: { time: 0, speedIndex: 1 },
+    economy: { money: 1000, tickets: 3, tier: 0, granted: [], earned: 0 },
+    track: [],
+    stations: spec.stations.map((s, i) => station(i + 1, s.defId, Object.fromEntries(s.storage))),
+    trains,
+    contracts: {
+      contracts,
+      nextId: spec.contracts.length + 1,
+      nextRefresh: 0,
+      stats: { completed: 0, failed: 0 },
+      completedToday: 0,
+    },
+    inventory: { items, nextUid: uid },
+    gacha: {},
+    camera: { x: 0, y: 0, zoomIndex: 2 },
+    lastDay: 0,
+    decor: spec.decor.map((id, i) => [i, 8, id, 0]),
+    buildings: spec.works.map((id, i) => [i * 3, 10, id, 0, 1]),
+  };
+  if (spec.stock) save.stockpile = { amounts: Object.fromEntries(spec.stock), famine: false };
+  return clone(save);
+}
+
+/** Build the spec's save, keep a copy of it as it was, and prune it with the spec's content. */
+function pruned(spec: SaveSpec) {
+  const j = buildSave(spec);
+  const before = clone(j);
+  const known = knownFor(spec.unknown);
+  const report = pruneUnknownContent(j, known);
+  return { j, before, known, report };
+}
+
+/**
+ * A program after pruning: the stops left, in order, bound for the stop it was heading for or,
+ * when that one went, the next one left (found the slow way: walk on, wrapping at the end).
+ */
+function expectProgram(
+  after: { schedule: StopPlan[]; routeIndex: number } | null,
+  before: { schedule: StopPlan[]; routeIndex: number },
+  gone: Set<number>,
+  where: string,
+) {
+  const left = before.schedule.map((s, i) => ({ s, i })).filter(({ s }) => !gone.has(s.stationId));
+  expect(after?.schedule, where).toEqual(left.map(({ s }) => s));
+  let want = 0;
+  for (let k = 0; k < before.schedule.length; k++) {
+    const at = left.findIndex((l) => l.i === (before.routeIndex + k) % before.schedule.length);
+    if (at >= 0) {
+      want = at;
+      break;
+    }
+  }
+  expect(after?.routeIndex, `${where}: routeIndex`).toBe(want);
+}
+
+describe('pruneUnknownContent over random saves', () => {
+  const bySpec = { shrink: shrinkSpec };
+
+  it('leaves only ids the content defines, so every lookup of the save succeeds', () => {
+    const track = new TrackGraph(8, 8);
+    forAll(
+      genSpec,
+      (spec) => {
+        const { j, known } = pruned(spec);
+        for (const s of j.stations) expect(known.station(s.defId), s.defId).toBe(true);
+        for (const [, , id] of j.buildings!) expect(known.works(id), id).toBe(true);
+        for (const [, , id] of j.decor!) expect(known.decor(id), id).toBe(true);
+        for (const t of trainsOf(j)) {
+          expect(t.locos.length, `train ${t.id} has a locomotive`).toBeGreaterThan(0);
+          for (const l of t.locos) expect(known.vehicle(l.defId, 'loco'), l.defId).toBe(true);
+          for (const w of t.wagons) expect(known.vehicle(w.defId, 'wagon'), w.defId).toBe(true);
+        }
+        for (const it of itemsOf(j)) expect(known.vehicle(it.defId), it.defId).toBe(true);
+        // the game's own lookups, each of which throws on an id it does not know
+        for (const s of j.stations) Station.fromJSON(s);
+        for (const t of trainsOf(j)) Train.fromJSON(t, track);
+        for (const [, , id] of j.buildings!) buildingDef(id);
+        for (const [, , id] of j.decor!) decorDef(id);
+        const inv = new Inventory();
+        inv.load(j.inventory as ReturnType<Inventory['toJSON']>);
+        expect(inv.items, 'Inventory.load keeps every copy left').toEqual(itemsOf(j));
+        for (const it of inv.items) itemDef(it.defId);
+      },
+      bySpec,
+    );
+  });
+
+  it('drops exactly what is unknown and the trains left with no locomotive; the rest stays', () => {
+    forAll(
+      genSpec,
+      (spec) => {
+        const { j, before, known } = pruned(spec);
+        expect(j.stations).toEqual(before.stations.filter((s) => known.station(s.defId)));
+        expect(j.buildings).toEqual(before.buildings!.filter(([, , id]) => known.works(id)));
+        expect(j.decor).toEqual(before.decor!.filter(([, , id]) => known.decor(id)));
+        const pulled = trainsOf(before).filter((t) =>
+          t.locos.some((l) => known.vehicle(l.defId, 'loco')),
+        );
+        expect(trainsOf(j).map((t) => t.id)).toEqual(pulled.map((t) => t.id));
+        // what a train is made of; its stops and jobs are the unhooking property's
+        const body = (t: TrainJSON) => ({
+          ...t,
+          schedule: null,
+          routeIndex: null,
+          suspended: null,
+          detour: null,
+          jobs: null,
+          job: null,
+          jobPhase: null,
+        });
+        trainsOf(j).forEach((t, k) => {
+          const b = pulled[k];
+          expect(body(t), `train ${t.id}`).toStrictEqual(
+            body({
+              ...b,
+              locos: b.locos.filter((l) => known.vehicle(l.defId, 'loco')),
+              wagons: b.wagons.filter((w) => known.vehicle(w.defId, 'wagon')),
+            }),
+          );
+        });
+        // inventory copies stay as they were but for which train they serve
+        const copy = (i: ItemJSON) => ({ ...i, assigned: null });
+        expect(itemsOf(j).map(copy)).toStrictEqual(
+          itemsOf(before)
+            .filter((i) => known.vehicle(i.defId))
+            .map(copy),
+        );
+        // and nothing else in the save moves
+        const outside = (s: SaveGame) => ({
+          ...s,
+          stations: null,
+          trains: null,
+          decor: null,
+          buildings: null,
+          stockpile: null,
+          economy: { ...s.economy, money: null, tickets: null },
+          contracts: { ...(s.contracts as object), contracts: null },
+          inventory: { ...(s.inventory as object), items: null },
+        });
+        expect(outside(j)).toStrictEqual(outside(before));
+      },
+      bySpec,
+    );
+  });
+
+  it('reports each dropped id with its count, refunded per kind at the stated rates', () => {
+    forAll(
+      genSpec,
+      (spec) => {
+        const { j, before, known, report } = pruned(spec);
+        const want = new Map<string, number>();
+        const add = (kind: string, id: string) =>
+          want.set(`${kind} ${id}`, (want.get(`${kind} ${id}`) ?? 0) + 1);
+        for (const s of before.stations) if (!known.station(s.defId)) add('station', s.defId);
+        for (const [, , id] of before.buildings!) if (!known.works(id)) add('works', id);
+        for (const [, , id] of before.decor!) if (!known.decor(id)) add('decor', id);
+        const inService = new Set<number>();
+        for (const t of trainsOf(before)) {
+          const slots = [
+            ...t.locos.map((v) => ({ v, kind: 'loco' as const })),
+            ...t.wagons.map((v) => ({ v, kind: 'wagon' as const })),
+          ];
+          for (const { v, kind } of slots)
+            if (!known.vehicle(v.defId, kind)) {
+              add('vehicle', v.defId);
+              inService.add(v.uid);
+            }
+        }
+        // a vehicle in a train is also its inventory copy: one copy, one refund
+        for (const it of itemsOf(before))
+          if (!known.vehicle(it.defId) && !inService.has(it.uid)) add('item', it.defId);
+
+        const got = new Map(report.dropped.map((d) => [`${d.kind} ${d.id}`, d.count]));
+        expect(got.size, 'one entry per kind and id').toBe(report.dropped.length);
+        expect(got).toEqual(want);
+        const count = (...kinds: string[]) =>
+          report.dropped.filter((d) => kinds.includes(d.kind)).reduce((n, d) => n + d.count, 0);
+        expect(report.money).toBe(count('station', 'works', 'decor') * UNKNOWN_BUILD_REFUND);
+        expect(report.tickets).toBe(count('vehicle', 'item') * UNKNOWN_ITEM_REFUND);
+        expect(j.economy.money).toBe(before.economy.money + report.money);
+        expect(j.economy.tickets).toBe(before.economy.tickets + report.tickets);
+      },
+      bySpec,
+    );
+  });
+
+  it('moves the storable goods of what went into the stockpile, so none are made or lost', () => {
+    forAll(
+      genSpec,
+      (spec) => {
+        const { j, before } = pruned(spec);
+        const stock = stockOf(j);
+        if (!stock) {
+          expect(j.stockpile, 'no stockpile is made up').toBeUndefined();
+          return;
+        }
+        const held = (s: SaveGame) => {
+          const n: Record<string, number> = {};
+          const add = (cargo: string | null, amount: number) => {
+            if (cargo && RESOURCE_IDS.includes(cargo)) n[cargo] = (n[cargo] ?? 0) + amount;
+          };
+          for (const [c, a] of Object.entries(stockOf(s)!)) add(c, a);
+          for (const st of s.stations) for (const [c, a] of Object.entries(st.storage)) add(c, a);
+          for (const t of trainsOf(s)) for (const w of t.wagons) add(w.cargo, w.amount);
+          return n;
+        };
+        expect(held(j)).toEqual(held(before));
+        // passengers and cargo the game dropped are never stockpiled
+        for (const c of Object.keys(stock))
+          expect(c in stockOf(before)! || RESOURCE_IDS.includes(c), c).toBe(true);
+      },
+      bySpec,
+    );
+  });
+
+  it('leaves no contract, stop, job or inventory copy pointing at what went', () => {
+    forAll(
+      genSpec,
+      (spec) => {
+        const { j, before, known } = pruned(spec);
+        const gone = new Set(
+          before.stations.filter((s) => !known.station(s.defId)).map((s) => s.id),
+        );
+        const touches = (c: { originId: number; destId: number }) =>
+          gone.has(c.originId) || gone.has(c.destId);
+        const cancelled = new Set(
+          contractsOf(before)
+            .filter(touches)
+            .map((c) => c.id),
+        );
+        expect(contractsOf(j)).toEqual(contractsOf(before).filter((c) => !cancelled.has(c.id)));
+        const lapsed = (job: TrainJob) => cancelled.has(job.contractId) || touches(job);
+        const was = new Map(trainsOf(before).map((t) => [t.id, t]));
+        for (const t of trainsOf(j)) {
+          const b = was.get(t.id)!;
+          const where = `train ${t.id}`;
+          expect(t.jobs, where).toEqual(b.jobs.filter((job) => !lapsed(job)));
+          expect(t.detour, where).toBe(b.detour !== null && gone.has(b.detour) ? null : b.detour);
+          if (b.job && lapsed(b.job)) {
+            // its contract went: the job ends and the program it set aside resumes
+            expect(t.job, where).toBeNull();
+            expect(t.jobPhase, where).toBe('origin');
+            expect(t.suspended, where).toBeNull();
+            expectProgram(t, b.suspended ?? b, gone, `${where} resumed`);
+          } else {
+            expect(t.job, where).toEqual(b.job);
+            expect(t.jobPhase, where).toBe(b.jobPhase);
+            expectProgram(t, b, gone, where);
+            if (b.suspended) expectProgram(t.suspended, b.suspended, gone, `${where} set aside`);
+            else expect(t.suspended, where).toBeNull();
+          }
+        }
+        // the fleet and the inventory still agree on which copy runs in which train
+        const running = new Map<number, number>();
+        for (const t of trainsOf(j))
+          for (const v of [...t.locos, ...t.wagons]) running.set(v.uid, t.id);
+        const assigned = new Map<number, number>();
+        for (const i of itemsOf(j)) if (i.assigned !== null) assigned.set(i.uid, i.assigned);
+        expect(assigned).toEqual(running);
+      },
+      bySpec,
+    );
+  });
+
+  it('finds nothing on a second run and changes nothing', () => {
+    forAll(
+      genSpec,
+      (spec) => {
+        const { j, known } = pruned(spec);
+        const once = clone(j);
+        expect(pruneUnknownContent(j, known)).toStrictEqual(EMPTY);
+        expect(j).toStrictEqual(once);
+      },
+      bySpec,
+    );
+  });
+
+  it('leaves a save with nothing unknown in it exactly as it was', () => {
+    forAll(
+      genClean,
+      (spec) => {
+        const j = buildSave(spec);
+        const before = clone(j);
+        expect(pruneUnknownContent(j, knownFor(spec.unknown))).toStrictEqual(EMPTY);
+        expect(j).toStrictEqual(before);
+        // and with the live content, which ships every id the save uses
+        expect(pruneUnknownContent(j)).toStrictEqual(EMPTY);
+        expect(j).toStrictEqual(before);
+      },
+      bySpec,
+    );
+  });
+});
+
+describe('LIVE_CONTENT', () => {
+  it('agrees with the lookup each predicate guards, for every id of every table', () => {
+    const finds = (lookup: (id: string) => unknown, id: string) => {
+      try {
+        lookup(id);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    for (const id of [...Object.values(SHIPPED), ...Object.values(NEVER)].flat()) {
+      expect(LIVE_CONTENT.station(id), `station ${id}`).toBe(finds(stationDef, id));
+      expect(LIVE_CONTENT.works(id), `works ${id}`).toBe(finds(buildingDef, id));
+      expect(LIVE_CONTENT.decor(id), `decor ${id}`).toBe(finds(decorDef, id));
+      // a locomotive slot is read with locoDef, a wagon slot with wagonDef, an item with either
+      expect(LIVE_CONTENT.vehicle(id, 'loco'), `loco ${id}`).toBe(finds(locoDef, id));
+      expect(LIVE_CONTENT.vehicle(id, 'wagon'), `wagon ${id}`).toBe(finds(wagonDef, id));
+      expect(LIVE_CONTENT.vehicle(id), `vehicle ${id}`).toBe(
+        finds(locoDef, id) || finds(wagonDef, id),
+      );
+    }
   });
 });
