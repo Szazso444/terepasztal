@@ -394,6 +394,6 @@ The rejected alternatives and zoom comparisons are kept in
 
 ## Buildings by age and rotation (in production)
 
-[building-production.md](building-production.md) describes how the 560 building pictures are
+[building-production.md](building-production.md) describes how the 548 building pictures are
 made: the tools, the artist agent's brief, what the check enforces, what the image generator
 does wrong, and how to run the work again or extend it.
