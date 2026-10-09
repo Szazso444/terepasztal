@@ -19,6 +19,7 @@ import type { ContractBoard } from './contracts';
 import type { TradeDesk } from './trade';
 import type { Economy } from './economy';
 import type { Catenary } from './catenary';
+import type { RegionState } from '../world/regions';
 
 /** Production multiplier of every station while the crews starve (`Stockpile.famine`). */
 export const FAMINE_PRODUCTION_MUL = 0.5;
@@ -86,10 +87,15 @@ export interface StepDomains {
   readonly trade: TradeDesk;
   readonly economy: Economy;
   readonly catenary: Catenary;
+  /** chunk ownership, read by the age goals only */
+  readonly regions: RegionState;
 }
 
 /** The domains the age goals are measured in. */
-export type AgeDomains = Pick<StepDomains, 'builder' | 'stock' | 'economy' | 'catenary'>;
+export type AgeDomains = Pick<
+  StepDomains,
+  'builder' | 'stock' | 'economy' | 'catenary' | 'regions'
+>;
 
 /** The live numbers the age goals are measured against. */
 export function ageSnapshot(d: AgeDomains): AgeSnapshot {
@@ -101,6 +107,7 @@ export function ageSnapshot(d: AgeDomains): AgeSnapshot {
     earned: d.economy.earned,
     substations: d.catenary.substations.filter((s) => s.powered).length,
     wires,
+    chunks: d.regions.ownedCount(),
   };
 }
 

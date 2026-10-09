@@ -8,11 +8,19 @@
     "goals": [
       {
         "kind": "depots",
-        "target": 3
+        "target": 2
       },
       {
-        "kind": "population",
-        "target": 1000
+        "anyOf": [
+          {
+            "kind": "population",
+            "target": 100
+          },
+          {
+            "kind": "chunks",
+            "target": 9
+          }
+        ]
       }
     ]
   },

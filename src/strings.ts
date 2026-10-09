@@ -49,6 +49,7 @@ export const STR = {
       earned: 'Earned in total',
       substations: 'Powered substations',
       wires: 'Live electrified tiles',
+      chunks: 'Owned chunks',
     } as Record<string, string>,
     hint: 'An age begins once every goal listed for it is met (checked every hour).',
   },
