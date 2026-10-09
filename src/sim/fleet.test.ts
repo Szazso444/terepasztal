@@ -364,6 +364,24 @@ const RECIPES: Record<string, (sc: Scene) => (() => void) | void> = {
     sc.t.dropJob(1);
     expect(sc.t.job).toBeNull();
   },
+  jobClosedNoRoute(sc) {
+    // a contract from a station no rail reaches: the train takes it up and finds no route
+    while (sc.dead.length < 2) sc.addDead();
+    sc.t.schedule = program(sc, ahead(sc));
+    sc.t.addJob({
+      contractId: 1,
+      name: 'stone',
+      originId: sc.dead[0].id,
+      destId: sc.sites[1].id,
+      cargo: 'stone',
+    });
+    expect(sc.until(() => sc.t.job !== null, 10)).toBe(true);
+    sc.ticks(sc.c.wait);
+    expect(sc.t.state).toBe('noRoute');
+    // the contract closes with the train still unable to get to it
+    sc.t.dropJob(1);
+    expect(sc.t.job).toBeNull();
+  },
 };
 /** A train whose own program goes nowhere takes up a contract from the quarry to the warehouse. */
 function startJob(sc: Scene) {

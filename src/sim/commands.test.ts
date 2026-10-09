@@ -9,7 +9,7 @@ import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
-import { Train, defaultStop, resetTrainIds } from './trains';
+import { Train, defaultStop, resetTrainIds, type RouteMode } from './trains';
 import { Fleet } from './fleet';
 import { TradeDesk, BUY_MUL, SELL_MUL, DRIFTING } from './trade';
 import { CARGO, cargoDef } from './cargo';
@@ -20,7 +20,7 @@ import { Gacha, BANNERS, PULL_COST, type PullResult } from '../gacha/gacha';
 import { locoDef, wagonDef, type Item } from '../gacha/items';
 import { Commands, STATION_NAME_MAX } from './commands';
 import { STR } from '../strings';
-import { forAll, shrinkArray } from '../testing/property';
+import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -1016,4 +1016,213 @@ describe('setSchedule during a contract job', () => {
     expect(t.schedule).toEqual(stops);
     expect(onProgram(t)).toBe(true);
   });
+});
+
+// ------------------------------------------------------------ setSchedule from every job state
+
+/** Where the train's contract job stands when the player sets the route; `none`: no job at all. */
+type Moment = 'none' | 'toOrigin' | 'atOrigin' | 'toDest' | 'atDest';
+const MOMENTS: Moment[] = ['none', 'toOrigin', 'atOrigin', 'toDest', 'atDest'];
+const MODES: RouteMode[] = ['schedule', 'production', 'collection', 'transport', 'contract'];
+const OTHER_KINDS = ['farm', 'warehouse', 'quarry', 'station'];
+interface Rerouting {
+  /** the train's mode before */
+  from: RouteMode;
+  /**
+   * stations on the line: the first a stocked quarry, the contract's origin; the second a
+   * warehouse, its destination
+   */
+  sites: { kind: string; x: number }[];
+  trainX: number;
+  moment: Moment;
+  /** the contract closed at that moment, before the route is set and before the train is back */
+  closed: boolean;
+  /** a second contract waits behind the first */
+  second: boolean;
+  /** fleet ticks spent at the moment before the route is set, and on each contract before it ends */
+  wait: number;
+  /** the route set: sites by index, -1 for a station off the rails; no stop twice in a row */
+  stops: number[];
+  /** for `none`: the program the train runs, sites by index, and the stop it is bound for */
+  own: number[];
+  ownIndex: number;
+}
+/** No stop follows itself, also round the end of the list. */
+const cyclicDistinct = (xs: number[]) => xs.every((x, i) => x !== xs[(i + 1) % xs.length]);
+function stopList(rng: Rng, sites: number, len: number) {
+  let xs: number[] = [];
+  do xs = Array.from({ length: len }, () => (rng.chance(0.1) ? -1 : rng.int(0, sites - 1)));
+  while (!cyclicDistinct(xs));
+  return xs;
+}
+function rerouting(rng: Rng): Rerouting {
+  const slots = rng.shuffle(Array.from({ length: 13 }, (_, i) => 8 + 6 * i));
+  const n = rng.int(2, 5);
+  const own = Array.from({ length: rng.int(1, 3) }, () => rng.int(0, n - 1));
+  return {
+    from: rng.pick(MODES),
+    sites: slots.slice(0, n).map((x, i) => ({
+      kind: i === 0 ? 'quarry' : i === 1 ? 'warehouse' : rng.pick(OTHER_KINDS),
+      x,
+    })),
+    trainX: rng.int(10, 84),
+    moment: rng.pick(MOMENTS),
+    closed: rng.chance(0.4),
+    second: rng.chance(0.3),
+    wait: rng.int(0, 40),
+    stops: stopList(rng, n, rng.int(2, 4)),
+    own,
+    ownIndex: rng.int(0, own.length - 1),
+  };
+}
+function* shrinkRerouting(c: Rerouting): Iterable<Rerouting> {
+  if (c.second) yield { ...c, second: false };
+  if (c.closed) yield { ...c, closed: false };
+  for (const wait of shrinkInt(c.wait)) yield { ...c, wait };
+  for (const stops of shrinkArray(c.stops))
+    if (stops.length >= 2 && cyclicDistinct(stops)) yield { ...c, stops };
+  const used = Math.max(1, ...c.stops, ...(c.moment === 'none' ? c.own : []));
+  if (c.sites.length - 1 > used) yield { ...c, sites: c.sites.slice(0, used + 1) };
+  if (c.from !== 'schedule') yield { ...c, from: 'schedule' };
+}
+
+/**
+ * Set the route `c.stops` with the train where `c.moment` puts it, then let the contracts close.
+ * The command takes the route: with no job in force at once, as recording a route does; during a
+ * job, or after it closed with the train not yet back on its program, the job keeps its two stops
+ * and the route waits in place of the program set aside. Back on its program the train runs the
+ * route from its first stop, in order. Returns whether the job moment was reached and a program
+ * was set aside, for the coverage count.
+ */
+function reroute(c: Rerouting): 'unreached' | 'none' | 'aside' {
+  const w = world();
+  const sites = c.sites.map((s) => station(w, s.kind, s.x));
+  sites[0].storage.set('stone', 40);
+  const dead = deadStation(w, 60);
+  const stopOf = (i: number) => defaultStop(i < 0 ? dead.id : sites[i].id);
+  const t = train(w, c.trainX);
+  t.mode = c.from;
+  let now = 0;
+  const tick = () => w.fleet.tick(GDT, (now += GDT));
+  const until = (done: () => boolean, seconds: number, each = () => {}) => {
+    for (let i = 0; i < seconds / GDT && !done(); i++) {
+      tick();
+      each();
+    }
+    return done();
+  };
+  if (c.moment === 'none') {
+    t.schedule = c.own.map(stopOf);
+    t.routeIndex = c.ownIndex;
+    for (let i = 0; i < c.wait; i++) tick();
+  } else {
+    // a train with no route takes up the queued contract
+    t.schedule = [stopOf(-1)];
+    const job = (contractId: number) => ({
+      contractId,
+      name: 'stone',
+      originId: sites[0].id,
+      destId: sites[1].id,
+      cargo: 'stone',
+    });
+    t.addJob(job(1));
+    if (c.second) t.addJob(job(2));
+    const phase = c.moment === 'toOrigin' || c.moment === 'atOrigin' ? 'origin' : 'dest';
+    const platform = c.moment === 'atOrigin' ? sites[0] : c.moment === 'atDest' ? sites[1] : null;
+    const there = () =>
+      t.job?.contractId === 1 &&
+      t.jobPhase === phase &&
+      (platform ? t.state === 'loading' && t.atStation === platform : t.state === 'moving');
+    if (!until(there, 300)) return 'unreached';
+    for (let i = 0; i < c.wait && there(); i++) tick();
+    if (!there()) return 'unreached';
+    if (c.closed) t.dropJob(1);
+  }
+
+  const aside = t.toJSON().suspended !== null;
+  expect(aside, 'a program set aside').toBe(c.moment !== 'none');
+  const before = {
+    job: t.job,
+    schedule: t.schedule,
+    stops: structuredClone(t.schedule),
+    routeIndex: t.routeIndex,
+    jobPhase: t.jobPhase,
+  };
+  const stops = c.stops.map(stopOf);
+  const ids = stops.map((s) => s.stationId);
+  expect(w.commands.setSchedule(t, stops)).toEqual({ ok: true });
+  expect(t.mode).toBe('schedule');
+  expect(t.program).toEqual(stops);
+  if (!aside) {
+    // as recording a route does: schedule mode, and Fleet.setSchedule
+    expect(t.schedule).toEqual(stops);
+    expect(t.routeIndex).toBe(Math.min(before.routeIndex, stops.length - 1));
+    return 'none';
+  }
+  // the job runs on with its own two stops
+  expect(t.job).toBe(before.job);
+  expect(t.schedule).toBe(before.schedule);
+  expect(t.schedule).toEqual(before.stops);
+  expect(t.routeIndex).toBe(before.routeIndex);
+  expect(t.jobPhase).toBe(before.jobPhase);
+
+  const check = () => {
+    const at = `${now.toFixed(2)} s`;
+    expect(t.mode, `${at}: mode`).toBe('schedule');
+    expect(
+      t.program.map((s) => s.stationId),
+      `${at}: program`,
+    ).toEqual(ids);
+    if (t.job) expect(t.route, `${at}: job stops`).toEqual([t.job.originId, t.job.destId]);
+  };
+  // each contract still open runs a while, then closes
+  const open = [...(c.closed ? [] : [1]), ...(c.second ? [2] : [])];
+  for (const id of open) {
+    expect(
+      until(() => t.job?.contractId === id, 300, check),
+      `contract ${id} worked`,
+    ).toBe(true);
+    for (let i = 0; i < c.wait; i++) {
+      tick();
+      check();
+    }
+    t.dropJob(id);
+  }
+  const back = () => !t.job && !t.toJSON().suspended;
+  expect(until(back, 300, check), 'back on its program').toBe(true);
+
+  // the route given, from its first stop
+  expect(t.schedule).toEqual(stops);
+  expect(target(t), 'first stop after the job').toBe(ids[0]);
+  const first = w.builder.stationById(ids[0])!;
+  const under = new Set(t.occupancyKeys(w.track.w));
+  // a platform under the cars, not the head, is one no path reaches from where the train stands
+  const blocked =
+    first === dead ||
+    (t.atStation !== first &&
+      w.builder.platformTiles(first).some((p) => under.has(p.y * w.track.w + p.x)));
+  const visited = [target(t)];
+  let reached = t.atStation === first;
+  for (let i = 0; i < 120 / GDT; i++) {
+    tick();
+    if (target(t) !== visited.at(-1)) visited.push(target(t));
+    if (t.atStation === first) reached = true;
+  }
+  expect(visited, 'stops headed for, in turn').toEqual(visited.map((_, k) => ids[k % ids.length]));
+  if (!blocked) expect(reached, `first stop never reached; ${t.state}`).toBe(true);
+  return 'aside';
+}
+
+describe('setSchedule from every contract job state', () => {
+  it(
+    'lets a job finish first, then runs the stops given from the first',
+    { timeout: 120_000 },
+    () => {
+      const seen = { unreached: 0, none: 0, aside: 0 };
+      forAll(rerouting, (c) => void seen[reroute(c)]++, { shrink: shrinkRerouting });
+      // most cases do set the route during or right after a job
+      expect(seen.aside).toBeGreaterThanOrEqual(SEEDS.length * 0.5);
+      expect(seen.none).toBeGreaterThanOrEqual(SEEDS.length * 0.1);
+    },
+  );
 });
