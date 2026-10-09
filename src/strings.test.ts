@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, it, expect } from 'vitest';
-import { STR } from './strings';
+import { AGE_ORDER, STR } from './strings';
+import { AGE_DEFS } from './sim/ages';
 import { RULE_META } from './sim/rules';
 import { runsOn, withoutInCab } from './sim/compat';
 import { content } from './data/content';
@@ -77,6 +78,87 @@ describe('what the upgrade tool tells the player', () => {
   it('lists the track keys among the controls', () => {
     for (const key of ['Q / E', 'U', 'Shift+U', '1-5'])
       expect(STR.settings.controlsText).toContain(key);
+  });
+});
+
+describe('the ages the player reads about', () => {
+  it('names every age in order, in the order the age data lists them', () => {
+    expect(AGE_ORDER).toHaveLength(6);
+    for (const id of AGE_ORDER) expect(STR.ages.name[id], id).toBeTruthy();
+    // the data may list fewer ages than there are names, never different ones
+    AGE_DEFS.forEach((a, i) => expect(a.id).toBe(AGE_ORDER[i]));
+  });
+
+  it('labels each age by its index, the editor included', () => {
+    for (let t = 0; t < AGE_ORDER.length; t++)
+      expect(STR.hud.ageUp(t)).toContain(STR.ages.name[AGE_ORDER[t]]);
+    expect(STR.hud.ageUp(3)).toContain('Nuclear Age');
+    for (const [t, id] of AGE_ORDER.entries()) expect(STR.editor.startTier).toContain(`${t} ${id}`);
+  });
+});
+
+describe('what an upgrade shows', () => {
+  const cost = '60 wood, 40 stone';
+
+  it('rounds the time up on the button and leaves it out with none', () => {
+    expect(STR.upgrade.button(3, cost, 9)).toContain(cost);
+    expect(STR.upgrade.button(3, cost, 9)).toMatch(/\b3\b.*· 9 h$/);
+    expect(STR.upgrade.button(3, cost, 8.2)).toBe(STR.upgrade.button(3, cost, 9));
+    expect(STR.upgrade.button(3, cost, 0)).toMatch(new RegExp(`\\b3\\b.*${cost}$`));
+  });
+
+  it('never says no time is left while it runs', () => {
+    expect(STR.upgrade.running(3, 3.2)).toBe(STR.upgrade.running(3, 4));
+    expect(STR.upgrade.running(3, 3.2)).toContain('4 h left');
+    expect(STR.upgrade.running(3, 0.2)).toContain('1 h left');
+    expect(STR.upgrade.running(3, 0)).toContain('1 h left');
+  });
+});
+
+describe('what the save list shows', () => {
+  const sec = 1000;
+  const min = 60 * sec;
+  const hour = 60 * min;
+  const day = 24 * hour;
+
+  it('says how long ago in whole units, rounded down', () => {
+    expect(STR.saves.ago(0)).toBe(STR.saves.ago(59 * sec));
+    expect(STR.saves.ago(0)).not.toMatch(/\d/);
+    expect(STR.saves.ago(61 * sec)).toMatch(/^1 min\b/);
+    expect(STR.saves.ago(59 * min)).toMatch(/^59 min\b/);
+    expect(STR.saves.ago(2 * hour)).toMatch(/^2 h\b/);
+    expect(STR.saves.ago(1 * day)).toMatch(/^1 day\b/);
+    expect(STR.saves.ago(3 * day)).toMatch(/^3 days\b/);
+    // a clock that moved backwards is still "just now", not a negative count
+    expect(STR.saves.ago(-5 * min)).toBe(STR.saves.ago(0));
+  });
+
+  it('names what was refunded and leaves out what was not', () => {
+    const money = '$1,200';
+    expect(STR.saves.refund(money, 2)).toMatch(/^\$1,200 .*\b2 tickets$/);
+    expect(STR.saves.refund(money, 1)).toMatch(/^\$1,200 .*\b1 ticket$/);
+    expect(STR.saves.refund(money, 0)).toBe(money);
+    expect(STR.saves.refund('', 2)).toBe('2 tickets');
+    expect(STR.saves.refund('', 1)).toBe('1 ticket');
+    expect(STR.saves.refund('', 0)).toBe('');
+  });
+
+  it('says what was removed and what came back, without an empty refund', () => {
+    const refund = STR.saves.refund('$50', 1);
+    expect(STR.saves.pruned('Old loco', refund)).toContain('Old loco');
+    expect(STR.saves.pruned('Old loco', refund)).toContain(refund);
+    expect(STR.saves.pruned('Old loco', '')).not.toMatch(/Refunded/);
+  });
+
+  it('tells the three autosave states apart', () => {
+    const states = [
+      STR.saves.autosaveStatus(true, STR.saves.ago(2 * min)),
+      STR.saves.autosaveStatus(true, null),
+      STR.saves.autosaveStatus(false, null),
+    ];
+    expect(new Set(states).size).toBe(3);
+    expect(states[0]).toContain(STR.saves.ago(2 * min));
+    expect(STR.saves.autosaveStatus(false, 'x')).toBe(states[2]);
   });
 });
 
