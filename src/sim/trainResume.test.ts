@@ -13,7 +13,7 @@ import { Station, resetStationIds, type StationJSON } from './stations';
 import { Train, defaultStop, resetTrainIds, type RouteMode, type TrainState } from './trains';
 import { Fleet } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
-import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
+import { setSupplyMode, DEFAULT_SUPPLY, dieselFuelId } from './supply';
 import { migrate, SAVE_VERSION, type SaveGame } from './save';
 import { expandSave, CHUNK_TILES } from './expand';
 import { Inventory } from '../gacha/inventory';
@@ -30,12 +30,13 @@ import {
 
 // Trains carry on after a load (issue #81). A train saved while moving or loading, taken through
 // toJSON, JSON and fromJSON into a fresh fleet on the same track, runs on as the uninterrupted
-// control does; only its path is planned again. A v13 save's trains stand without a route, as
-// every load left them before. Further down: the same held at any tick of generated lines, a load
-// that moves no car, a save made between a load and the first tick, and the traffic scenarios
-// with a round trip mid-run: no shared tile or deadlock, a train backing off kept on its escape
-// and only on one it can still run, a yielding train kept waiting as long as it would have, and a
-// world grown around the save carrying on as the save.
+// control does; only its path is planned again. A v13 save's trains stand without a route, as every
+// load left them before. Further down: the same held at any tick of generated lines, some with a
+// fuel and water stop the train runs low by, a load that moves no car, a save made between a load
+// and the first tick, and the traffic scenarios with a round trip mid-run: no shared tile or
+// deadlock, a train backing off kept on its escape and only on one it can still run, a yielding
+// train kept waiting as long as it would have, no train asked to back off again before its last
+// back-off has run out, and a world grown around the save carrying on as the save.
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -130,7 +131,7 @@ function saved(w: World): string {
 }
 
 /**
- * The world a load builds from `text`: the same map and track, the stations, stockpile and
+ * The world a load builds from `text`: the same map, track and decor, the stations, stockpile and
  * economy read back, and the trains through `Train.fromJSON` into a fresh fleet.
  */
 function loaded(w: World, text: string, edit?: (j: { stations: StationJSON[] }) => void): World {
@@ -148,6 +149,7 @@ function loaded(w: World, text: string, edit?: (j: { stations: StationJSON[] }) 
   const builder = new Builder(w.map, w.regions, w.track, economy, stock);
   builder.free = true;
   for (const s of j.stations) builder.stations.push(Station.fromJSON(s));
+  for (const [key, d] of w.builder.decor) builder.decor.set(key, { ...d });
   const { map, track, regions } = w;
   const back = { map, track, regions, stock, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(back);
@@ -433,6 +435,11 @@ interface Layout {
   fuel: number;
   /** the save follows this tick (0-based) of the run */
   tick: number;
+  /**
+   * the column of a coaling stage, with a water tower east of it, two rows south of the line, and
+   * coal, fuel and water in the stockpile for them to hand out; none when absent
+   */
+  service?: number;
 }
 
 function layout(rng: Rng, modes: readonly RouteMode[]): Layout {
@@ -494,6 +501,16 @@ function layoutScene(c: Layout): World {
   };
   const sites = c.sites.map((s) => put(s.kind, s.x, ROW - 1, s.stocked));
   if (c.siding !== null) sites.splice(1, 0, put('warehouse', c.siding + 1, ROW + 6, true));
+  if (c.service !== undefined) {
+    // two rows off the line they serve its tiles two columns either side; an even column stands
+    // clear of every siding, and the tower east of it too
+    for (const [id, x] of [
+      ['fuel_stop', c.service],
+      ['water_tower', c.service + 1],
+    ] as const)
+      builder.decor.set((ROW + 2) * map.w + x, { id, x, y: ROW + 2, rot: 0 });
+    for (const id of ['coal', dieselFuelId(), 'water']) stock.add(id, 1000);
+  }
   const w = { map, track, regions, stock, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(w);
   const t = new Train([{ uid: 1, level: 1, def: locoDef(c.loco) }]);
@@ -591,6 +608,24 @@ const LAYOUT_SHRINK = 40;
  */
 const SCHEDULE_FOUND = [242, 561, 631];
 
+/**
+ * Tanks a train starts with on a line with a service: low enough that it heads for the service at
+ * once, or a hair above the share (0.4) under which it looks for one, so it does within seconds.
+ */
+const SERVICE_FUEL = [0.2, 0.3, 0.401, 0.405, 0.41];
+/** Game seconds of a run with a service the save moments are drawn from: its first fuel stop. */
+const SERVICE_SPAN = 60;
+/** A generated line with a service by it, the train's tanks running low, saved early on. */
+function serviceLayout(rng: Rng): Layout {
+  const c = layout(rng, ['schedule', ...ROAMING]);
+  return {
+    ...c,
+    fuel: rng.pick(SERVICE_FUEL),
+    service: rng.pick(SLOTS),
+    tick: rng.int(0, SERVICE_SPAN / GDT - 1),
+  };
+}
+
 describe('a single train saved at any tick of a generated line', () => {
   it('carries on as if never saved on a schedule', { timeout: 300_000 }, () => {
     forAll(
@@ -612,6 +647,22 @@ describe('a single train saved at any tick of a generated line', () => {
       { shrink: shrinkLayout, shrinkBudget: LAYOUT_SHRINK, seeds: LAYOUT_SEEDS },
     );
   });
+
+  it(
+    'carries on as if never saved with its tanks running low by a fuel and water stop',
+    { timeout: 300_000 },
+    () => {
+      // A train under way looks for a service every five seconds and heads there before its stop
+      // once a tank is under 0.4 full; saved between two looks or on its way there, it carries on
+      // as the uninterrupted run does.
+      roamingRules();
+      forAll(serviceLayout, (c) => carriesOnFrom(c, true), {
+        shrink: shrinkLayout,
+        shrinkBudget: LAYOUT_SHRINK,
+        seeds: LAYOUT_SEEDS,
+      });
+    },
+  );
 });
 
 /**
@@ -992,6 +1043,52 @@ describe('the traffic scenarios with a round trip mid-run', () => {
       }
       // the runs yield often enough for this to say something
       expect(yielding).toBeGreaterThan(1000);
+    },
+  );
+
+  it(
+    'asks a train loaded before its last back-off has run out to back off only once it has',
+    { timeout: 120_000 },
+    () => {
+      // Every save of the uninterrupted runs after which the control asks a train to back off on
+      // the next tick, loaded and run that tick: as saved, the same train is asked; with that
+      // train's back-off made to run out just after the tick, 4 s or 30 s after it (`yieldUntil`,
+      // what a cancelled escape and a new one leave), it is not, whatever it was doing.
+      let picks = 0;
+      const doing = new Set<TrainState>();
+      for (const c of TRAFFIC) {
+        const ctl = trafficControl(c);
+        for (let tick = 0; tick + 1 < ctl.texts.length; tick++) {
+          const was = (JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[] }).trains;
+          const now = (tick + 1) / SCENARIO_TICK_RATE;
+          for (const j of (JSON.parse(ctl.texts[tick + 1]) as { trains: TrainJSON[] }).trains) {
+            const saved = was.find((x) => x.id === j.id)!;
+            if (j.yieldCount <= saved.yieldCount) continue;
+            picks++;
+            doing.add(saved.state);
+            const why = `${caseName(c)}, #${j.id} (${saved.state}) in the save after tick ${tick}`;
+            for (const ahead of [null, 1e-3, 4, 30]) {
+              const text = JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[] };
+              if (ahead !== null) text.trains.find((x) => x.id === j.id)!.yieldUntil = now + ahead;
+              const fleet = trafficLoaded({ ...ctl, texts: [JSON.stringify(text)] }, 0);
+              fleet.tick(SCENARIO_GDT, now);
+              const t = fleet.trains.find((x) => x.id === j.id)!;
+              expect(
+                { yieldCount: t.yieldCount, holding: t.holding },
+                ahead === null ? why : `${why}, its back-off running out ${ahead} s after the tick`,
+              ).toEqual(
+                ahead === null
+                  ? { yieldCount: j.yieldCount, holding: true }
+                  : { yieldCount: saved.yieldCount, holding: false },
+              );
+            }
+          }
+        }
+      }
+      // every run asks some train to back off, and not only trains already yielding: a load that
+      // kept the time for a yielding train alone would let the fleet ask one under way again
+      expect(picks).toBeGreaterThanOrEqual(TRAFFIC.length);
+      expect([...doing].filter((s) => s !== 'yielding')).not.toEqual([]);
     },
   );
 
