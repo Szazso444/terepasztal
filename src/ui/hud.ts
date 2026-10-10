@@ -1,7 +1,7 @@
 import { el, btn, fmtMoney, fmtInt } from './dom';
 import { STR } from '../strings';
 import type { GameClock } from '../sim/time';
-import type { AgeStatus, GoalKind } from '../sim/ages';
+import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
 
 export interface HudModel {
   money: number;
@@ -13,6 +13,20 @@ export interface HudModel {
 /** Display name of an age by data id. */
 export function ageName(id: string) {
   return STR.ages.name[id] ?? id;
+}
+
+/**
+ * An age's goals as the card lists them: a plain goal on its own, the alternatives of one `anyOf`
+ * group together (`ageStatus` lists them one after another, each carrying the group's index).
+ */
+function goalRows(goals: GoalStatus[]): GoalStatus[][] {
+  const rows: GoalStatus[][] = [];
+  for (const g of goals) {
+    const last = rows[rows.length - 1];
+    if (g.anyOf !== undefined && last && last[0].anyOf === g.anyOf) last.push(g);
+    else rows.push([g]);
+  }
+  return rows;
 }
 
 /**
@@ -102,14 +116,29 @@ export class Hud {
     );
   }
 
-  /** high-speed quest progress (set by the game) */
-  /** The age card: every age with its goals as progress bars. */
+  /**
+   * The age card: every age with its goals as progress bars. The alternatives of a group sit
+   * indented under a "One of these" heading, which says so once one of them is met.
+   */
   private renderAges() {
     const c = this.ageCard;
     c.innerHTML = '';
     const body = el('div', { class: 'panel-body' });
     const fmt = (kind: GoalKind, v: number) =>
       kind === 'earned' ? fmtMoney(Math.floor(v)) : fmtInt(Math.floor(v));
+    const bar = (g: GoalStatus) => {
+      // a target of 0 is met from the start
+      const pct = g.target > 0 ? Math.max(0, Math.min(100, (g.current / g.target) * 100)) : 100;
+      return el(
+        'div',
+        { class: 'bar' },
+        el('div', { class: `bar-fill ${g.done ? 'good' : ''}`, style: `width:${pct}%` }),
+        el('div', {
+          class: 'bar-label',
+          text: `${STR.ages.goal[g.kind]}: ${fmt(g.kind, g.current)} / ${fmt(g.kind, g.target)}`,
+        }),
+      );
+    };
     for (const a of this.ages()) {
       const state = a.current ? STR.ages.current : a.unlocked ? STR.ages.reached : STR.ages.locked;
       body.append(
@@ -124,18 +153,19 @@ export class Hud {
         body.append(el('div', { class: 'sub dim', text: STR.ages.start }));
         continue;
       }
-      for (const g of a.goals) {
-        const pct = Math.max(0, Math.min(100, (g.current / g.target) * 100));
+      for (const row of goalRows(a.goals)) {
+        // a group of one is a plain goal
+        if (row.length === 1) {
+          body.append(bar(row[0]));
+          continue;
+        }
+        const met = row.some((g) => g.done);
         body.append(
-          el(
-            'div',
-            { class: 'bar' },
-            el('div', { class: `bar-fill ${g.done ? 'good' : ''}`, style: `width:${pct}%` }),
-            el('div', {
-              class: 'bar-label',
-              text: `${STR.ages.goal[g.kind]}: ${fmt(g.kind, g.current)} / ${fmt(g.kind, g.target)}`,
-            }),
-          ),
+          el('div', {
+            class: met ? 'cyan' : 'dim',
+            text: met ? STR.ages.anyOfMet : STR.ages.anyOf,
+          }),
+          el('div', { style: 'margin-left:10px' }, ...row.map(bar)),
         );
       }
     }

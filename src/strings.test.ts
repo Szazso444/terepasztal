@@ -95,6 +95,14 @@ describe('the ages the player reads about', () => {
     expect(STR.hud.ageUp(3)).toContain('Nuclear Age');
     for (const [t, id] of AGE_ORDER.entries()) expect(STR.editor.startTier).toContain(`${t} ${id}`);
   });
+
+  it('heads a group of alternatives, says when it is met, and the hint names the heading', () => {
+    const heading = STR.ages.anyOf.replace(/:\s*$/, '');
+    expect(heading.trim()).not.toBe('');
+    expect(STR.ages.anyOfMet).not.toBe(STR.ages.anyOf);
+    // the hint explains the heading the card shows, so a rewording of one must reach the other
+    expect(STR.ages.hint).toContain(heading);
+  });
 });
 
 describe('what an upgrade shows', () => {
