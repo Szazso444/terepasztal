@@ -211,15 +211,18 @@ describe('simWorld wiring', () => {
     return { w, quarry, town };
   }
 
-  it('accepts every contract offer, as the default settings do, and routes its cargo', () => {
+  it('leaves an offer for the player, as the default settings do, and routes it once accepted', () => {
     const { w, quarry, town } = served();
     w.contracts.tick(0);
-    expect(w.contracts.offers).toEqual([]);
-    expect(w.contracts.active.length).toBeGreaterThan(0);
-    for (const c of w.contracts.active) {
-      expect([c.originId, c.destId, c.cargo]).toEqual([quarry.id, town.id, 'stone']);
-      expect(w.fleet.contractDest!(c.cargo, c.originId)).toBe(c.destId);
-    }
+    // the start chunk alone supports one offer, and nothing is taken on without the player
+    expect(w.builder.regions.ownedCount()).toBe(1);
+    expect(w.contracts.offers.length).toBe(1);
+    expect(w.contracts.active).toEqual([]);
+    const [c] = w.contracts.offers;
+    expect(w.contracts.accept(c, w.clock.time)).toBe(true);
+    expect(w.contracts.active).toEqual([c]);
+    expect([c.originId, c.destId, c.cargo]).toEqual([quarry.id, town.id, 'stone']);
+    expect(w.fleet.contractDest!(c.cargo, c.originId)).toBe(c.destId);
   });
 
   it('keeps the fleet, houses, power and rail beds in step with what the builder places', () => {

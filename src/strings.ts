@@ -562,12 +562,14 @@ export const STR = {
     failed: 'Deadline missed',
     expired: 'Expired',
     accepted: (n: string) => `${n} accepted`,
+    activeFull: (n: number) =>
+      `Your land supports ${n} active contract${n === 1 ? '' : 's'}. Finish one or buy land to take on more.`,
     completed: (n: string, pay: string) => `${n} delivered: ${pay}`,
     failedMsg: (n: string, fine: string) => `${n} failed: fined ${fine}`,
     autoOn: 'Auto-accept: on',
     autoOff: 'Auto-accept: off',
     autoHint:
-      'On: every offer is accepted as it comes. Off: offers wait here for you. Finer control per rarity is in Settings.',
+      'On: offers are accepted as they come, while your land has room for another active contract; the rest wait here. Off: offers wait here for you. Finer control per rarity is in Settings.',
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
     offersBadge: (n: number) => `${n} new`,
     sideEmpty: 'No active contracts.',
@@ -782,7 +784,7 @@ export const STR = {
     lastSave: 'Last save',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
-      'Auto-accept takes the offer at once; Ask leaves it on the board; Auto-deny drops it (free).',
+      'Auto-accept takes the offer at once while your land has room for another active contract, and otherwise leaves it on the board; Ask leaves it on the board; Auto-deny drops it (free).',
     policy: { accept: 'Auto-accept', prompt: 'Ask', deny: 'Auto-deny' } as Record<string, string>,
     slots: 'Named saves',
     slotName: 'Save name',
