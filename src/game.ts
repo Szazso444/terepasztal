@@ -57,6 +57,7 @@ import {
   type Season,
 } from './sim/weather';
 import { decorOffset, type Decor } from './sim/build';
+import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
 import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
@@ -114,7 +115,7 @@ import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
 import type { Tip } from './ui/advisor';
-import { locoFrame } from './art/frames';
+import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
 import { buildCompatTable } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
@@ -494,7 +495,7 @@ export class Game implements UiHost {
     }
     for (const [x, y, id, rot] of level.decor) {
       if (!inBounds(this.map, x, y)) continue;
-      const d: Decor = { id, x, y, rot };
+      const d: Decor = { id, x, y, rot: wrapRotation(rot) };
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
@@ -793,8 +794,15 @@ export class Game implements UiHost {
     this.houses = new HouseRegistry(this.builder, this.towns, this.stock);
     this.towns.residentsAt = (x, y) => this.houses.residentsAt(x, y);
     this.houses.onMessage = (m, k) => this.toasts.push(m, k);
+    // a house is turned the way its decor piece was placed
     this.houses.onChanged = (h) =>
-      this.world.setStructure(`decor:${h.x},${h.y}`, h.x, h.y, this.houses.frame(h), 20);
+      this.world.setStructure(
+        `decor:${h.x},${h.y}`,
+        h.x,
+        h.y,
+        structureFrame(this.atlas, this.houses.frame(h), this.builder.decorAt(h.x, h.y)?.rot ?? 0),
+        20,
+      );
     this.builder.onIndustryPlaced = (x, y) => this.houses.industryPlaced(x, y);
     this.power = new PowerGrid(this.map);
     this.catenary = new Catenary(this.map);
@@ -1184,7 +1192,7 @@ export class Game implements UiHost {
     }
     this.contractJobs.reconcile();
     for (const [x, y, id, rot] of j.decor ?? []) {
-      const d: Decor = { id, x, y, rot };
+      const d: Decor = { id, x, y, rot: wrapRotation(rot) };
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
@@ -1286,7 +1294,8 @@ export class Game implements UiHost {
       const t = terrainAt(this.map, d.x, d.y);
       if (t === Terrain.Hill) this.world.setFlattened(d.x, d.y, true);
       this.world.removeProps(d.x, d.y);
-      this.world.setStructure(id, d.x, d.y, this.houses?.frameFor(d) ?? `structures/${d.id}`, 20);
+      const key = this.houses?.frameFor(d) ?? `structures/${d.id}`;
+      this.world.setStructure(id, d.x, d.y, structureFrame(this.atlas, key, d.rot), 20);
     }
   }
   private onStationOrphaned(s: Station, orphaned: boolean) {
@@ -1428,7 +1437,12 @@ export class Game implements UiHost {
     } else {
       if (t === Terrain.Hill) this.world.setFlattened(b.x, b.y, true);
       this.world.removeProps(b.x, b.y);
-      this.world.setStructure(id, b.x, b.y, buildingFrame(b));
+      this.world.setStructure(
+        id,
+        b.x,
+        b.y,
+        structureFrame(this.atlas, buildingFrame(b), b.rot ?? 0),
+      );
     }
     if (buildingDef(b.id).power || buildingDef(b.id).substation) this.rebuildPower();
   }
@@ -1552,7 +1566,7 @@ export class Game implements UiHost {
           id,
           front.x,
           front.y,
-          `structures/${s.def.art}_r${s.rot % 2}`,
+          structureFrame(this.atlas, `structures/${s.def.art}_r${s.rot % 2}`, s.rot),
           20,
           off.y,
           off.x,
@@ -1563,7 +1577,11 @@ export class Game implements UiHost {
           id,
           s.x + 1,
           s.y + 1,
-          `structures/${s.def.art}_r${s.rot % 2}${s.spriteLevel > 1 ? '_lv' + s.spriteLevel : ''}`,
+          structureFrame(
+            this.atlas,
+            `structures/${s.def.art}_r${s.rot % 2}${s.spriteLevel > 1 ? '_lv' + s.spriteLevel : ''}`,
+            s.rot,
+          ),
           20,
           -HALF_H_PX,
         );
@@ -1573,7 +1591,11 @@ export class Game implements UiHost {
           id,
           s.x,
           s.y,
-          this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+          structureFrame(
+            this.atlas,
+            this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+            s.rot,
+          ),
         );
       }
       if (this.stationPanel.station === s) this.stationPanel.render();
@@ -2206,7 +2228,12 @@ export class Game implements UiHost {
   }
 
   private updateRtsTooltip() {
-    if (this.viewTarget !== 0 || this.input.overUi) return;
+    if (this.viewTarget !== 0) return;
+    // over a panel the field's tooltip goes, rather than staying where the pointer left the map
+    if (this.input.overUi) {
+      this.tooltip.hide();
+      return;
+    }
     const st = this.build.hoverStation;
     const bld = this.build.hoverBuilding;
     const ht = this.fieldHover;
