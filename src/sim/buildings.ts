@@ -50,12 +50,17 @@ export type BuildingJSON = [
 export function buildingToJSON(b: Building): BuildingJSON {
   return [b.x, b.y, b.id, b.acc, b.level ?? 1, workToJSON(b.work)];
 }
-/** A saved building, idle until its first tick says otherwise. */
+/**
+ * A saved building, idle until its first tick says otherwise. Its work is kept only where the game
+ * could have started it: on a building it knows, towards the next level and at most the top one.
+ */
 export function buildingFromJSON([x, y, id, acc, level, work]: BuildingJSON): Building {
   const lv = level ?? 1;
   const b: Building = { id, x, y, acc: acc ?? 0, level: lv, active: false, rate: 0 };
-  const w = workFromJSON(work, lv);
-  if (w) b.work = w;
+  if (BUILDING_DEFS.some((d) => d.id === id)) {
+    const w = workFromJSON(work, buildingLevel(b), worksMaxLevel(b));
+    if (w) b.work = w;
+  }
   return b;
 }
 /** Which primary input is short, if any. */

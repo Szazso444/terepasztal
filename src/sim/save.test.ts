@@ -34,7 +34,14 @@ import {
   type Settings,
   type WorldSpec,
 } from './save';
-import { buildingFromJSON, buildingToJSON, type Building, type BuildingJSON } from './buildings';
+import {
+  BRIDGE_MAX_LEVEL,
+  buildingFromJSON,
+  buildingToJSON,
+  type Building,
+  type BuildingJSON,
+} from './buildings';
+import { MAX_LEVEL } from './levels';
 import type { Work } from './upgrade';
 import type { HousesJSON } from './houses';
 import { simWorld } from '../testing/simWorld';
@@ -922,7 +929,7 @@ describe('works buildings in a save', () => {
 
   it('carry the upgrade under way, and drop one that is no upgrade to the next level', () => {
     const work = { to: 3, left: 40, total: 90 };
-    const b: Building = { id: 'sawmill', x: 4, y: 9, acc: 0, level: 2, active: false, rate: 0 };
+    const b: Building = { id: 'kiln', x: 4, y: 9, acc: 0, level: 2, active: false, rate: 0 };
     b.work = { ...work };
     const j = asStored(buildingToJSON(b)) as BuildingJSON;
     expect(j[5]).toEqual(work);
@@ -937,13 +944,24 @@ describe('works buildings in a save', () => {
       null,
     ])
       expect(
-        buildingFromJSON([4, 9, 'sawmill', 0, 2, odd as Work]).work,
+        buildingFromJSON([4, 9, 'kiln', 0, 2, odd as Work]).work,
         JSON.stringify(odd),
       ).toBeUndefined();
     // time left beyond the work's time is the whole time
-    expect(buildingFromJSON([4, 9, 'sawmill', 0, 2, { ...work, left: 500 }]).work).toEqual({
+    expect(buildingFromJSON([4, 9, 'kiln', 0, 2, { ...work, left: 500 }]).work).toEqual({
       ...work,
       left: 90,
+    });
+    // a work past the building's top level, or on a building the game does not know, is none
+    const past = (id: string, level: number) =>
+      buildingFromJSON([4, 9, id, 0, level, { to: level + 1, left: 0, total: 1 }]).work;
+    expect(past('substation', MAX_LEVEL), 'works at the top').toBeUndefined();
+    expect(past('bridge_wood', BRIDGE_MAX_LEVEL), 'bridge at its top').toBeUndefined();
+    expect(past('sawmill', 2), 'unknown building').toBeUndefined();
+    expect(past('bridge_wood', BRIDGE_MAX_LEVEL - 1), 'bridge below its top').toEqual({
+      to: BRIDGE_MAX_LEVEL,
+      left: 0,
+      total: 1,
     });
   });
 });
