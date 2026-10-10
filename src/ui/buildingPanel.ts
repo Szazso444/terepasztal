@@ -7,13 +7,14 @@ import {
   buildingRecipe,
   buildingRate,
   buildingLevel,
-  buildingUpgradeCost,
   missingInput,
   type Building,
 } from '../sim/buildings';
 import type { Stockpile } from '../sim/stockpile';
 import { fmtCost } from '../sim/stockpile';
 import { cargoName } from '../sim/cargo';
+import { upgradeView } from './upgradeView';
+import { upgradeRow } from './upgradeRow';
 
 /** Side panel for a selected processing building: recipe, state and lifetime output. */
 export class BuildingPanel {
@@ -54,6 +55,7 @@ export class BuildingPanel {
   /** One-line status used by the panel and the hover tooltip. */
   static status(b: Building, stock: Stockpile): { text: string; cls: string } {
     const def = buildingDef(b.id);
+    if (b.work) return { text: STR.upgrade.closed, cls: 'amber' };
     if (b.reason === 'full') return { text: STR.building.full, cls: 'amber' };
     if (b.reason === 'inputs') {
       const m = missingInput(def, stock);
@@ -111,19 +113,18 @@ export class BuildingPanel {
     } else {
       body.append(el('p', { class: 'dim', text: STR.building.bridgeHint }));
     }
-    const cost = buildingUpgradeCost(b);
-    if (cost) {
-      const upgrade = btn(
-        STR.building.upgrade(fmtCost(cost)),
-        () => {
-          this.builder.upgradeBuilding(b);
-          this.render();
-        },
-        'accent',
-      );
-      upgrade.disabled = !this.builder.free && !this.stock.canAfford(cost);
-      body.append(upgrade);
-    }
+    const view = upgradeView({
+      check: this.builder.canUpgradeBuilding(b),
+      level: buildingLevel(b),
+      work: b.work,
+      instant: this.builder.free,
+    });
+    body.append(
+      upgradeRow(view, () => {
+        this.builder.upgradeBuilding(b);
+        this.render();
+      }),
+    );
     body.append(
       el(
         'div',

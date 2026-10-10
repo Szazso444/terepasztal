@@ -5,7 +5,8 @@ import type { Commands } from '../sim/commands';
 import { decorDef } from '../sim/build';
 import type { PowerGrid } from '../sim/power';
 import type { House, HouseRegistry } from '../sim/houses';
-import { fmtCost } from '../sim/stockpile';
+import { upgradeView } from './upgradeView';
+import { upgradeRow } from './upgradeRow';
 
 /** Side panel for a selected service or utility (water tower, coaling stage, signal, pole, townhouse). */
 export class DecorPanel {
@@ -51,7 +52,7 @@ export class DecorPanel {
     this.onClose();
   }
 
-  /** Townhouse lines: level, people, construction or growth. */
+  /** Townhouse lines: level, people, construction, growth, or closed while it is upgraded. */
   static houseLines(h: House, houses: HouseRegistry): string[] {
     const out: string[] = [];
     const H = STR.house;
@@ -64,6 +65,11 @@ export class DecorPanel {
       return out;
     }
     out.push(`${H.level(h.level)}, ${H.residents.toLowerCase()} ${h.residents} / ${cap}`);
+    // nobody moves in while it is upgraded; the people it has stay
+    if (h.work) {
+      out.push(STR.upgrade.closed);
+      return out;
+    }
     const days = houses.growthDaysLeft(h);
     if (days !== null) out.push(`${H.growth}: ${H.growthIn(Math.max(1, Math.ceil(days)))}`);
     else if (h.residents >= cap) {
@@ -147,23 +153,21 @@ export class DecorPanel {
           }),
         ),
       );
-      if (h.level < houses.maxLevel) {
-        const c = houses.canUpgrade(h);
-        const label = STR.house.upgrade(h.level + 1, fmtCost(c.cost));
-        const up = btn(
-          label,
-          () => {
-            houses.upgrade(h);
-            this.render();
-          },
-          'small',
-        );
-        if (!c.ok) {
-          up.disabled = true;
-          up.title = c.reason ?? '';
-        }
-        b.append(el('div', { class: 'row' }, up));
-      }
+      const view = upgradeView({
+        check: houses.canUpgrade(h),
+        level: h.level,
+        work: h.work,
+        instant: this.builder.free,
+      });
+      const up = upgradeRow(
+        view,
+        () => {
+          houses.upgrade(h);
+          this.render();
+        },
+        'small',
+      );
+      b.append(view.kind === 'work' ? up : el('div', { class: 'row' }, up));
     }
     b.append(
       el(
