@@ -88,6 +88,14 @@ describe('rulesFrom', () => {
       expect(m.DEFAULT_RULES[k], k).toBeLessThanOrEqual(meta!.max);
     }
   });
+
+  it('names the cap in the hint of the start-chunk offers, so a start value above it is explained', async () => {
+    const m = await load();
+    const start = m.RULE_META.find((x) => x.key === 'contractOfferCount');
+    const cap = m.RULE_META.find((x) => x.key === 'contractOfferMax');
+    expect(cap?.label).toBeTruthy();
+    expect(start?.hint).toContain(cap!.label);
+  });
 });
 
 describe('a loaded game keeps its rules to itself', () => {
