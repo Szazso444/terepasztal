@@ -358,7 +358,7 @@ describe('semaphore boundaries and growing worlds', () => {
       ]),
     ).toBe('red');
   });
-  it('shifts bridge levels, houses, wires, track classes and car trails together during expansion', () => {
+  it('shifts bridge levels, houses, wires, track classes, car trails and escapes together during expansion', () => {
     const save = {
       world: { kind: 'generated', seed: 4242, params: { w: 96, h: 96 } },
       track: [[20, 20, 'straight', 1, 'high_speed']],
@@ -371,7 +371,19 @@ describe('semaphore boundaries and growing worlds', () => {
         arrivals: [],
         visited: [],
       },
-      trains: [{ head: { x: 20, y: 20 }, trail: [[20, 20, 20, 20, 3, 1]] }],
+      trains: [
+        {
+          head: { x: 20, y: 20 },
+          trail: [[20, 20, 20, 20, 3, 1, 1]],
+          retreat: {
+            path: [
+              { x: 20, y: 20, in: 3, out: 1, route: 1 },
+              { x: 21, y: 20, in: 3, out: 1 },
+            ],
+            group: [7],
+          },
+        },
+      ],
       regions: Array(9).fill(true),
       camera: { x: 12, y: 14, zoomIndex: 2 },
       clock: { time: 500, speedIndex: 2 },
@@ -381,6 +393,19 @@ describe('semaphore boundaries and growing worlds', () => {
     expect(grown.buildings?.[0]).toEqual([52, 52, 'bridge_stone', 0.5, 3]);
     expect(grown.houses?.list[0]).toMatchObject({ x: 57, y: 57, residents: 100 });
     expect(grown.wires?.[0]).toEqual([52, 52, 'catenary']);
+    // a trail point keeps the route it lies on, and a train backing off keeps its escape
+    const t = grown.trains[0] as unknown as {
+      trail: number[][];
+      retreat: { path: unknown[]; group: number[] };
+    };
+    expect(t.trail[0]).toEqual([52, 52, 52, 52, 3, 1, 1]);
+    expect(t.retreat).toEqual({
+      path: [
+        { x: 52, y: 52, in: 3, out: 1, route: 1 },
+        { x: 53, y: 52, in: 3, out: 1 },
+      ],
+      group: [7],
+    });
     expect(grown.clock.speedIndex).toBe(2);
   });
 });

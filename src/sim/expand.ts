@@ -42,6 +42,7 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
   for (const t of save.trains as {
     head?: { x: number; y: number } | null;
     trail?: number[][];
+    retreat?: { path: { x: number; y: number }[] } | null;
   }[]) {
     if (t.head) {
       t.head.x += d;
@@ -49,6 +50,11 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
     }
     if (t.trail)
       t.trail = t.trail.map(([x, y, sx, sy, ...rest]) => [x + d, y + d, sx + d, sy + d, ...rest]);
+    // the escape a train backing off runs along
+    for (const s of t.retreat?.path ?? []) {
+      s.x += d;
+      s.y += d;
+    }
   }
   if (save.regions) {
     const owned = new Array<boolean>(newRX * Math.ceil(p.h / CHUNK_TILES)).fill(false);
