@@ -172,6 +172,76 @@ describe('upgrading and downgrading track', () => {
     }
   });
 
+  /** Every report the builder makes of a relaid stroke, each with the classes found on its tiles then. */
+  function reports(builder: Builder, track: TrackGraph) {
+    const got: { tiles: string[]; target: string; found: string[] }[] = [];
+    builder.onReclassed = (tiles, target) =>
+      got.push({
+        tiles: tiles.map((t) => `${t.x},${t.y}`).sort(),
+        target,
+        found: tiles.map((t) => track.get(t.x, t.y)?.cls ?? 'none'),
+      });
+    return got;
+  }
+  /** The anchors a stroke's plan relays, as `x,y`, sorted. */
+  const anchors = (changes: { x: number; y: number }[]) =>
+    changes.map((c) => `${c.x},${c.y}`).sort();
+
+  it('reports the pieces an upgrade relaid, once and after relaying them', () => {
+    const { builder, track, run } = world();
+    // a curve covers four tiles and is one piece: its anchor is what is reported
+    track.place(20, 20, 'curve', 0, 'regular');
+    for (const stroke of [run, [{ x: 20, y: 20 }]]) {
+      const planned = anchors(builder.checkReclass(stroke, 'high_speed').changes);
+      expect(planned.length).toBeGreaterThan(0);
+      const got = reports(builder, track);
+      expect(builder.reclassTrack(stroke, 'high_speed')).toBe(true);
+      expect(got).toHaveLength(1);
+      expect(got[0].tiles).toEqual(planned);
+      expect(got[0].target).toBe('high_speed');
+      expect(got[0].found.every((cls) => cls === 'high_speed')).toBe(true);
+    }
+  });
+
+  it('reports a part stroke with the transition it laid', () => {
+    const { builder, track, run } = world();
+    const stroke = run.slice(0, 2);
+    const plan = builder.checkReclass(stroke, 'high_speed').changes;
+    expect(plan.some((c) => c.kind === 'transition')).toBe(true);
+    const got = reports(builder, track);
+    expect(builder.reclassTrack(stroke, 'high_speed')).toBe(true);
+    expect(got.map((r) => r.tiles)).toEqual([anchors(plan)]);
+    // each reported anchor holds the piece the plan laid there
+    for (const c of plan)
+      expect(track.get(c.x, c.y)).toMatchObject({ kind: c.kind, rot: c.rot, cls: c.cls });
+  });
+
+  it('reports a downgrade with its target', () => {
+    const { builder, track, run } = world();
+    builder.reclassTrack(run, 'high_speed');
+    const planned = anchors(builder.checkReclass(run, 'regular').changes);
+    const got = reports(builder, track);
+    expect(builder.reclassTrack(run, 'regular')).toBe(true);
+    expect(got).toHaveLength(1);
+    expect(got[0]).toMatchObject({ tiles: planned, target: 'regular' });
+    expect(got[0].found.every((cls) => cls === 'regular')).toBe(true);
+  });
+
+  it('reports nothing for a stroke that changes nothing', () => {
+    const { builder, track, stock, run } = world();
+    const got = reports(builder, track);
+    // track already of the class, narrow track, bare ground
+    expect(builder.reclassTrack(run, 'regular')).toBe(false);
+    track.place(5, 20, 'straight', 1, 'narrow');
+    expect(builder.reclassTrack([{ x: 5, y: 20 }], 'high_speed')).toBe(false);
+    expect(builder.reclassTrack([{ x: 30, y: 30 }], 'high_speed')).toBe(false);
+    // an upgrade that cannot be paid for
+    stock.amounts.set('iron', 3);
+    expect(builder.reclassTrack(run, 'high_speed')).toBe(false);
+    for (const t of run) expect(track.get(t.x, t.y)!.cls).toBe('regular');
+    expect(got).toEqual([]);
+  });
+
   it('says why nothing can be converted', () => {
     const { builder, track } = world();
     track.place(5, 20, 'straight', 1, 'narrow');
