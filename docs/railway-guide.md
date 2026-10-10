@@ -87,6 +87,12 @@ The debug traffic panel shows blocking groups and active escape owners. Recovery
 one escape route per conflicting group, and can first move a queue that obstructs another
 train's retreat. If no reachable siding fits the full train, add a longer loop or another route.
 
+A roaming train with nothing worth hauling waits where it stopped without keeping the station's
+platform. When another train needs the track it stands on, it moves aside, into a siding when
+one is free, and waits there until there is work. A short dead-end siding off each busy line
+gives idle trains somewhere to go; without one, the train note says it is in the way with
+nowhere to move aside.
+
 ## Bridges
 
 From **Track**, build Wooden Bridge or Stone Bridge platforms on water. Then lay ordinary

@@ -1691,6 +1691,8 @@ export class Train {
   }
   private setState(s: TrainState) {
     if (s !== 'moving') this.clearHold();
+    // the way an idle train wants aside is its own (`wantAside`): never a later yield's way on
+    if (s !== this.state && (s === 'idle' || this.state === 'idle')) this.wantKeys = null;
     this.state = s;
     this.stateTime = 0;
     if (s === 'noRoute' && this.consistProblem) this.lastMessage = this.consistProblem;
@@ -1707,8 +1709,6 @@ export class Train {
     this.path = null;
     this.pathPts = [];
     this.pathCum = [];
-    // asking again where it stands keeps the way aside the fleet found for it (`wantAside`)
-    if (this.state !== 'idle') this.wantKeys = null;
     this.speed = 0;
     if (note !== undefined) this.lastMessage = note;
     this.setState('idle');
@@ -2392,12 +2392,7 @@ export class Train {
    * the way may cross the trains of the group: the way it would take were they to back off. Null
    * when there is nowhere to go.
    */
-  planAside(
-    ctx: TickCtx,
-    group: number[],
-    spots: AsideSpots,
-    through = false,
-  ): RetreatPlan | null {
+  planAside(ctx: TickCtx, group: number[], spots: AsideSpots, through = false): RetreatPlan | null {
     if (this.state !== 'idle' || this.holding || !this.trail.length) return null;
     const members = [...new Set([this.id, ...group])];
     const past = through ? new Set(group) : undefined;
@@ -2431,7 +2426,8 @@ export class Train {
   ): RetreatPlan | null {
     const w = ctx.track.w;
     const standing = through
-      ? (x: number, y: number) => ctx.occupants(x, y).some((id) => id !== this.id && !through.has(id))
+      ? (x: number, y: number) =>
+          ctx.occupants(x, y).some((id) => id !== this.id && !through.has(id))
       : (x: number, y: number) => ctx.occupied(x, y, this.id);
     const avoid = (x: number, y: number) => {
       if (standing(x, y) || ctx.recoveryOwner(x, y, this.id) !== null) return true;
