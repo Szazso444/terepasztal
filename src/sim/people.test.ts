@@ -4,14 +4,23 @@ import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { Rng } from '../engine/rng';
-import { Builder } from './build';
+import { Builder, decorDef } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
-import { resetStationIds, type Station } from './stations';
+import { Station, resetStationIds } from './stations';
+import { buildingDef, type Building } from './buildings';
 import { rules, DEFAULT_RULES } from './rules';
-import { PeopleSim, findWalk, type PeopleJSON } from './people';
+import {
+  PeopleSim,
+  findWalk,
+  type PeopleJSON,
+  type Person,
+  type PersonState,
+  type Place,
+} from './people';
 import { startWork } from './upgrade';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
+import { simWorld, line, station as placeStation } from '../testing/simWorld';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -531,6 +540,507 @@ describe('PeopleSim randomness, over seeded layouts', () => {
         const people = new PeopleSim(map, builder);
         people.load(save);
         expect(people.toJSON()).toEqual(seeded);
+      },
+    );
+  });
+});
+
+// ------------------------------------------------------------------ homes that close
+
+/** The key `places()` gives a station, a works and a decor place. */
+const stationKey = (s: { id: number }) => `s${s.id}`;
+const worksKey = (b: { x: number; y: number }) => `b${b.x},${b.y}`;
+const decorKey = (d: { x: number; y: number }) => `d${d.x},${d.y}`;
+const keysOf = (people: PeopleSim) => people.places().map((p) => p.key);
+
+/** Close a station or works for an upgrade to its next level, or open it again. */
+function setClosed(x: Station | Building, closed: boolean) {
+  if (x instanceof Station) x.work = closed ? startWork(x.level + 1) : null;
+  else if (closed) x.work = startWork(2)!;
+  else delete x.work;
+}
+
+/** The rule's oracle: of the places, the first listed of those nearest (x, y) by |dx| + |dy|. */
+function nearestOf(places: readonly Place[], x: number, y: number): Place | undefined {
+  const dist = (pl: Place) => Math.abs(pl.x - x) + Math.abs(pl.y - y);
+  const least = Math.min(...places.map(dist));
+  return places.find((pl) => dist(pl) === least);
+}
+
+/** Every walker's state, to tell afterwards who set out on a walk in a tick. */
+const statesOf = (people: PeopleSim) => new Map(people.persons.map((p) => [p, p.state]));
+/** The walkers who set out to gather in the last tick, given their states before it. */
+const setOutToGather = (people: PeopleSim, before: Map<Person, PersonState>) =>
+  people.persons.filter((p) => p.state === 'gather' && before.get(p) !== 'gather');
+
+/** Before tick `at`, a station or works (by index, modulo their count) closes, opens or goes. */
+interface Shut {
+  at: number;
+  what: 'station' | 'works';
+  index: number;
+  act: 'close' | 'open' | 'remove';
+}
+type DecorKind = 'water_tower' | 'fuel_stop' | 'townhouse' | 'power_line';
+const DECOR_KINDS: readonly DecorKind[] = ['water_tower', 'fuel_stop', 'townhouse', 'power_line'];
+/** A seeded layout with a depot, decor, and stations and works closing, opening and going. */
+interface ShutCase extends Case {
+  /** a depot standing apart, low on the map at this column, or none */
+  depot: number | null;
+  /** service stops and houses, which are places, and power poles, which are not */
+  decor: { x: number; y: number; id: DecorKind }[];
+  shuts: Shut[];
+  /** for `places()` alone: which stations and works are closed, in the order they stand */
+  closed: boolean[];
+}
+
+function genShutCase(rng: Rng): ShutCase {
+  const c = genCase(rng);
+  return {
+    ...c,
+    depot: rng.chance(0.6) ? rng.int(2, SIZE - 4) : null,
+    decor: Array.from({ length: rng.int(0, 4) }, () => ({
+      x: rng.int(1, SIZE - 2),
+      y: LINE + (rng.chance(0.5) ? -1 : 1) * rng.int(2, 9),
+      id: rng.pick(DECOR_KINDS),
+    })),
+    shuts: Array.from({ length: rng.int(1, 6) }, () => ({
+      at: rng.int(0, c.ticks - 1),
+      what: rng.chance(0.6) ? ('station' as const) : ('works' as const),
+      index: rng.int(0, 5),
+      act: rng.pick(['close', 'close', 'close', 'open', 'remove'] as const),
+    })),
+    closed: Array.from({ length: 12 }, () => rng.chance(0.5)),
+  };
+}
+
+/** Fewer closings, decor and no depot, then the layout itself smaller (`shrinkCase`). */
+function* shrinkShutCase(c: ShutCase): Iterable<ShutCase> {
+  for (const shuts of shrinkArray(c.shuts)) yield { ...c, shuts };
+  for (const decor of shrinkArray(c.decor)) yield { ...c, decor };
+  if (c.depot !== null) yield { ...c, depot: null };
+  for (const smaller of shrinkCase(c))
+    yield { ...c, ...smaller, shuts: c.shuts.filter((s) => s.at < smaller.ticks) };
+}
+
+/** The case's layout with its depot and decor. */
+function shutLayout(c: ShutCase) {
+  const f = layout(c);
+  if (c.depot !== null) f.builder.stations.push(new Station('depot', c.depot, SIZE - 3));
+  for (const d of c.decor) f.builder.spawnDecor(d.x, d.y, d.id, 0);
+  return f;
+}
+
+/** Every station and works, in the order they stand. */
+const sites = (f: Layout): (Station | Building)[] => [
+  ...f.builder.stations,
+  ...f.builder.buildings.values(),
+];
+
+function applyShut(f: Layout, s: Shut) {
+  const list = s.what === 'station' ? f.builder.stations : [...f.builder.buildings.values()];
+  const x = list[s.index % Math.max(1, list.length)];
+  if (!x) return;
+  if (s.act === 'remove') {
+    if (x instanceof Station) f.builder.removeStation(x);
+    else f.builder.removeBuilding(x.x, x.y);
+  } else setClosed(x, s.act === 'close');
+}
+
+/**
+ * Plays the case with its closings, checking every tick: a walker whose home is not among the
+ * places has, after the tick, the first listed of the open places nearest to where it stood;
+ * while any place is open every walker lives at one and there are as many as the population; a
+ * walk out to gather starts at the walker's own open home; and with no place open the walkers
+ * stay as they are. Returns how many walkers were re-homed.
+ */
+function playShut(people: PeopleSim, f: Layout, c: ShutCase) {
+  let moved = 0;
+  const regular = () => people.persons.filter((p) => !p.transient);
+  for (let t = 0; t < c.ticks; t++) {
+    for (const s of c.shuts) if (s.at === t) applyShut(f, s);
+    for (const k of c.calls) {
+      const st = f.stations[k.station % f.stations.length];
+      if (k.at !== t || !st) continue;
+      if (k.boards) people.board(st, k.n);
+      else people.alight(st, k.n);
+    }
+    const places = people.places();
+    const open = new Set(places.map((p) => p.key));
+    const want = new Map<Person, { home: Place; from: string }>();
+    for (const p of regular())
+      if (places.length && !open.has(p.home))
+        want.set(p, { home: nearestOf(places, p.x, p.y)!, from: `${p.home} at ${p.x},${p.y}` });
+    const before = statesOf(people);
+    const still = structuredClone(regular());
+    people.tick(c.gdt, c.population, (c.day0 + t * c.dayStep) % 1);
+    const at = `tick ${t}`;
+    if (!places.length) {
+      expect(regular(), `${at}: no place open`).toEqual(still);
+      continue;
+    }
+    for (const [p, { home, from }] of want) {
+      if (p.home !== home.key)
+        throw new Error(`${at}: walker ${p.id} of ${from} went to ${p.home}, not ${home.key}`);
+      moved++;
+    }
+    expect(regular().length, at).toBe(c.population);
+    const homeless = regular().find((p) => !open.has(p.home));
+    if (homeless) throw new Error(`${at}: walker ${homeless.id} lives at ${homeless.home}`);
+    for (const p of setOutToGather(people, before)) {
+      const home = places.find((pl) => pl.key === p.home);
+      if (!home || p.path[0].x !== home.x || p.path[0].y !== home.y)
+        throw new Error(`${at}: walker ${p.id} of ${p.home} set out to gather from elsewhere`);
+    }
+  }
+  return moved;
+}
+
+describe('PeopleSim.places(), over seeded layouts', () => {
+  it('lists exactly the open stations and works and the decor with crew or residents', () => {
+    let closed = 0,
+      depots = 0,
+      decor = 0;
+    forAll(
+      genShutCase,
+      (c) => {
+        const f = shutLayout(c);
+        const people = new PeopleSim(f.map, f.builder, new Rng(1));
+        const all = sites(f);
+        all.forEach((x, i) => setClosed(x, c.closed[i % c.closed.length]));
+        const keys = keysOf(people);
+        const want = [
+          ...f.builder.stations.filter((s) => !s.closed).map(stationKey),
+          ...[...f.builder.buildings.values()]
+            .filter((b) => !b.work && buildingDef(b.id).crew > 0)
+            .map(worksKey),
+          ...[...f.builder.decor.values()]
+            .filter((d) => decorDef(d.id).crew > 0 || !!decorDef(d.id).residents)
+            .map(decorKey),
+        ];
+        expect([...keys].sort()).toEqual([...want].sort());
+        expect(new Set(keys).size, 'listed twice').toBe(keys.length);
+        for (const s of f.builder.stations) expect(keys.includes(stationKey(s))).toBe(!s.closed);
+        for (const b of f.builder.buildings.values())
+          if (b.work) expect(keys).not.toContain(worksKey(b));
+        // each where it stands
+        const things = [...f.builder.buildings.values(), ...f.builder.decor.values()];
+        for (const pl of people.places()) {
+          const at =
+            f.builder.stations.find((s) => stationKey(s) === pl.key) ??
+            things.find((x) => worksKey(x) === pl.key || decorKey(x) === pl.key);
+          expect(at && [at.x, at.y], pl.key).toEqual([pl.x, pl.y]);
+        }
+        closed += all.filter((x) => (x instanceof Station ? x.closed : !!x.work)).length;
+        if (f.builder.stations.some((s) => s.def.depot && !s.closed)) depots++;
+        if (want.some((k) => k.startsWith('d'))) decor++;
+      },
+      { shrink: shrinkShutCase },
+    );
+    // the layouts are worth checking: things closed, an open depot and decor places in many
+    expect(closed).toBeGreaterThan(SEEDS.length);
+    expect(depots).toBeGreaterThan(SEEDS.length / 5);
+    expect(decor).toBeGreaterThan(SEEDS.length / 5);
+  });
+
+  // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
+  it(
+    'gives a walker whose home closed or went the nearest open place, leaving nobody homeless',
+    { timeout: 20_000 },
+    () => {
+      let moved = 0;
+      forAll(
+        genShutCase,
+        (c) => {
+          const f = shutLayout(c);
+          moved += playShut(sim(f, c), f, c);
+        },
+        { shrink: shrinkShutCase },
+      );
+      // the property is worth checking: walkers lost their homes in many layouts
+      expect(moved).toBeGreaterThan(SEEDS.length);
+      expect(Math.random).not.toHaveBeenCalled();
+    },
+  );
+});
+
+// ------------------------------------------------------------------ a home closing, case by case
+
+/** The ground each resource station's walkers go out to gather. */
+const GATHER_GROUND: Record<string, Terrain> = {
+  farm: Terrain.Grass,
+  lumber: Terrain.Forest,
+  quarry: Terrain.Hill,
+  pump: Terrain.Water,
+};
+
+/** A grass map of the seed with straight track along row `row`, and a builder that builds free. */
+function flat(seed: number, w: number, h: number, row: number) {
+  const map = emptyMap(seed, w, h, Terrain.Grass);
+  const track = new TrackGraph(w, h);
+  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  builder.free = true;
+  for (let x = 2; x < w - 2; x++) track.place(x, row, 'straight', 1);
+  return { map, builder };
+}
+
+/**
+ * The walkers' first tick, after which everyone lives at the place under `key` at (x, y) and is
+ * inside it, as if it had been each one's first home.
+ */
+function moveIn(people: PeopleSim, key: string, at: { x: number; y: number }) {
+  people.tick(DT, POPULATION, MIDDAY);
+  expect(keysOf(people)).toContain(key);
+  for (const p of people.persons) {
+    expect(p.state).toBe('inside');
+    Object.assign(p, { home: key, x: at.x, y: at.y });
+  }
+}
+
+describe('walkers and a station closed for its upgrade', () => {
+  // each case runs a thousand ticks or so; the margin keeps a loaded CI runner green
+  it(
+    'neither live at it nor set out from it to gather, and do again once it opens',
+    { timeout: 20_000 },
+    () => {
+      forAll(
+        (rng) => ({
+          kind: rng.pick(RESOURCE_KINDS),
+          mapSeed: rng.int(0, 0x7fffffff),
+          stream: rng.int(0, 0xffffffff),
+          settle: rng.int(0, 120),
+        }),
+        (c) => {
+          // a resource station above a patch of its ground, a windmill and a passenger station
+          const { map, builder } = flat(c.mapSeed, 48, 48, 20);
+          for (let y = 24; y < 28; y++)
+            for (let x = 10; x < 19; x++) map.terrain[y * 48 + x] = GATHER_GROUND[c.kind];
+          const site = builder.placeStation(14, 21, c.kind)!;
+          const mill = builder.placeBuilding(24, 24, 'windmill')!;
+          const town = builder.placeStation(30, 21, 'station')!;
+          expect([site, mill, town].every(Boolean)).toBe(true);
+          const key = stationKey(site);
+          const people = new PeopleSim(map, builder, new Rng(c.stream));
+          moveIn(people, key, site);
+          // the day goes on: some step out to idle by the door or to gather
+          for (let i = 0; i < c.settle; i++) people.tick(DT, POPULATION, MIDDAY);
+          const lived = people.persons.filter((p) => p.home === key);
+
+          setClosed(site, true);
+          const places = people.places();
+          expect(places.map((p) => p.key)).not.toContain(key);
+          const want = lived.map((p) => nearestOf(places, p.x, p.y)!.key);
+          people.tick(DT, POPULATION, MIDDAY);
+          expect(lived.map((p) => p.home)).toEqual(want);
+          for (let i = 0; i < 400; i++) {
+            const before = statesOf(people);
+            people.tick(DT, POPULATION, MIDDAY);
+            const lives = people.persons.find((p) => p.home === key);
+            if (lives) throw new Error(`tick ${i}: walker ${lives.id} lives at the closed station`);
+            const out = setOutToGather(people, before).find(
+              (p) => p.path[0].x === site.x && p.path[0].y === site.y,
+            );
+            if (out) throw new Error(`tick ${i}: walker ${out.id} set out from it to gather`);
+          }
+
+          // the work done, it is a place again, and walkers newly homed there go gathering
+          setClosed(site, false);
+          expect(keysOf(people)).toContain(key);
+          const old = new Set(people.persons);
+          let gathered = false;
+          for (let i = 0; i < 600 && !gathered; i++) {
+            const before = statesOf(people);
+            people.tick(DT, 3 * POPULATION, MIDDAY);
+            gathered = setOutToGather(people, before).some(
+              (p) =>
+                !old.has(p) && p.home === key && p.path[0].x === site.x && p.path[0].y === site.y,
+            );
+          }
+          expect(gathered, 'nobody newly homed there went gathering').toBe(true);
+        },
+      );
+    },
+  );
+
+  it('turns a walker on its way home to it where it stands, for the nearest open place', () => {
+    forAll(
+      (rng) => ({
+        x: rng.int(18, 42) + rng.pick([0, 0.25, 0.5, 0.75]),
+        y: rng.int(37, 46) + rng.pick([0, 0.4]),
+        stream: rng.int(0, 0xffffffff),
+      }),
+      (c) => {
+        const { map, builder, station } = world();
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        people.tick(DT, 1, MIDDAY);
+        const [p] = people.persons;
+        const from = { x: Math.round(c.x), y: Math.round(c.y) };
+        const path = findWalk(map, from, station)!;
+        Object.assign(p, {
+          home: stationKey(station),
+          state: 'return',
+          path,
+          step: 0,
+          x: c.x,
+          y: c.y,
+          timer: 0,
+        });
+        setClosed(station, true);
+        const home = nearestOf(people.places(), c.x, c.y)!;
+        people.tick(DT, 1, MIDDAY);
+        expect(p.state).toBe('return');
+        expect(p.home).toBe(home.key);
+        expect(p.path[0]).toEqual(from);
+        expect(p.path.at(-1)).toEqual({ x: home.x, y: home.y });
+      },
+    );
+  });
+});
+
+describe('walkers and a house being upgraded', () => {
+  it('keep living there: only a station or works under upgrade stops being a home', () => {
+    const w = simWorld({ terrain: 'grass', size: 64 });
+    line(w, 2, 30, 40);
+    const town = placeStation(w, 'station', 20, 31);
+    w.builder.free = true;
+    const mill = w.builder.placeBuilding(26, 34, 'windmill')!;
+    expect(w.builder.spawnDecor(20, 25, 'townhouse', 0)).not.toBeNull();
+    w.builder.free = false;
+    w.houses.finishAll();
+    const house = w.houses.at(20, 25)!;
+    const key = decorKey(house);
+    const people = new PeopleSim(w.map, w.builder, new Rng(5));
+    moveIn(people, key, house);
+    const ids = people.persons.map((p) => p.id);
+
+    // with the station and works open to go to, the walkers stay
+    house.work = startWork(2)!;
+    expect(keysOf(people)).toEqual([stationKey(town), worksKey(mill), key]);
+    for (let i = 0; i < 400; i++) {
+      people.tick(DT, POPULATION, MIDDAY);
+      const regular = people.persons.filter((p) => !p.transient);
+      expect(
+        regular.map((p) => [p.id, p.home]),
+        `tick ${i}`,
+      ).toEqual(ids.map((id) => [id, key]));
+    }
+    expect(house.work).toBeDefined();
+    // the station and works being upgraded too leave the list; the house stays on it
+    setClosed(town, true);
+    setClosed(mill, true);
+    expect(keysOf(people)).toEqual([key]);
+  });
+});
+
+describe('re-homing a walker whose home closed', () => {
+  const STATES: readonly PersonState[] = [
+    'inside',
+    'idle',
+    'walk',
+    'gather',
+    'toStation',
+    'waiting',
+    'return',
+  ];
+
+  it('draws no random number, whatever the walker is doing', () => {
+    forAll(
+      (rng) => ({
+        state: rng.pick(STATES),
+        closes: rng.pick(['station', 'works'] as const),
+        stream: rng.int(0, 0xffffffff),
+        x: rng.int(4, 12),
+        y: rng.int(38, 46),
+      }),
+      (c) => {
+        const { map, builder, station } = world();
+        const mill = builder.buildingAt(27, 34)!;
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        people.tick(DT, 1, MIDDAY);
+        const [p] = people.persons;
+        // far from the end of a long walk to its home, every timer far from running out
+        const home = c.closes === 'station' ? station : mill;
+        Object.assign(p, {
+          home: c.closes === 'station' ? stationKey(station) : worksKey(mill),
+          state: c.state,
+          path: findWalk(map, { x: c.x, y: c.y }, home)!,
+          step: 0,
+          x: c.x,
+          y: c.y,
+          timer: 1000,
+          stationId: station.id,
+        });
+        setClosed(home, true);
+        const want = nearestOf(people.places(), c.x, c.y)!;
+        const stream = people.toJSON().rng;
+        people.tick(DT, 1, MIDDAY);
+        expect(people.toJSON().rng, 'the stream moved').toBe(stream);
+        expect(people.persons).toEqual([p]);
+        expect(p.home).toBe(want.key);
+      },
+    );
+  });
+
+  // each case runs a few hundred ticks; the margin keeps a loaded CI runner green
+  it('keeps it local: never the open place 30 or more tiles off', { timeout: 20_000 }, () => {
+    forAll(
+      (rng) => ({
+        far: rng.int(30, 44),
+        closes: rng.pick(['station', 'works'] as const),
+        mapSeed: rng.int(0, 0x7fffffff),
+        stream: rng.int(0, 0xffffffff),
+        settle: rng.int(0, 200),
+      }),
+      (c) => {
+        // the place that closes, a kiln a few tiles off and a passenger station far along the line
+        const { map, builder } = flat(c.mapSeed, 64, 40, 20);
+        const gone =
+          c.closes === 'station'
+            ? builder.placeStation(8, 21, 'farm')!
+            : builder.placeBuilding(8, 24, 'windmill')!;
+        const near = builder.placeBuilding(12, 24, 'kiln')!;
+        const far = builder.placeStation(8 + c.far, 21, 'station')!;
+        expect([gone, near, far].every(Boolean)).toBe(true);
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        moveIn(people, gone instanceof Station ? stationKey(gone) : worksKey(gone), gone);
+        for (let i = 0; i < c.settle; i++) people.tick(DT, POPULATION, MIDDAY);
+        const displaced = [...people.persons];
+
+        setClosed(gone, true);
+        const farKey = stationKey(far);
+        for (let i = 0; i < 400; i++) {
+          people.tick(DT, POPULATION, MIDDAY);
+          for (const p of displaced) {
+            const end = p.path.at(-1);
+            if (p.home === farKey || (end && end.x === far.x && end.y === far.y))
+              throw new Error(
+                `tick ${i}: walker ${p.id} ${p.state} home ${p.home}, bound for the far station`,
+              );
+          }
+        }
+      },
+    );
+  });
+
+  it('leaves the walkers as they are when no place is open', () => {
+    forAll(
+      (rng) => ({
+        mapSeed: rng.int(0, 0x7fffffff),
+        stream: rng.int(0, 0xffffffff),
+        population: rng.int(1, 30),
+        settle: rng.int(1, 200),
+      }),
+      (c) => {
+        const { map, builder } = flat(c.mapSeed, 32, 32, 16);
+        const only = builder.placeStation(14, 17, 'farm')!;
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        for (let i = 0; i < c.settle; i++) people.tick(DT, c.population, MIDDAY);
+        setClosed(only, true);
+        expect(people.places()).toEqual([]);
+        const before = structuredClone(people.persons);
+        const stream = people.toJSON().rng;
+        for (let i = 0; i < 50; i++) people.tick(DT, c.population, MIDDAY);
+        expect(people.persons).toEqual(before);
+        expect(people.toJSON().rng).toBe(stream);
       },
     );
   });
