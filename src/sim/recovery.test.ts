@@ -20,6 +20,7 @@ import {
   statesReaching,
 } from './recovery';
 import { Train, defaultStop, type TickCtx } from './trains';
+import { consistLength, vehicleSpec } from './body';
 import type { Station } from './stations';
 import { content } from '../data/content';
 import { emptyMap } from '../world/mapgen';
@@ -697,7 +698,8 @@ function layMain(c: Pick<RetreatCase, 'end' | 'sidings' | 'mine'>) {
 
 /** The private Train member the refuge search starts from when the train backs off rear first. */
 interface Reversible {
-  reversedTrail(): { trail: { seg: PathSegment }[] };
+  /** the trail from the head back to the rear end, `cum` the distance of each point from the head */
+  reversedTrail(): { trail: { seg: PathSegment }[]; cum: number[] };
 }
 
 /** The station the train is bound for, and the one an idle train stood at. */
@@ -1080,7 +1082,7 @@ function layRear(track: RearCase['track']) {
   return layMain({ end: track.end, sidings: track.narrow ? [] : track.sidings, mine });
 }
 
-function rearTrain(c: RearCase) {
+function rearTrain(c: Pick<RearCase, 'locos' | 'wagons'>) {
   const loco = (id: string) => content.locomotives.find((d) => d.id === id)!;
   const car = (id: string) => content.wagons.find((d) => d.id === id)!;
   const t = new Train(
@@ -1101,10 +1103,10 @@ function rearTrain(c: RearCase) {
 
 /**
  * The case laid out with the train stood there, the tiles it stands along (as `spawnAt` lays the
- * cars: `walkBack`'s tiles behind the head, then the head's) and the tile its reversed trail starts
- * on. Null unless it stands as at the end of a way to a refuge: on its own gauge, on plain 1×1
- * track (no switch or crossing, no tile of a larger unit) that runs on half a tile or more behind
- * its rear end.
+ * cars: `walkBack`'s tiles behind the head, then the head's) and the tile it sets off from
+ * reversing (`setOff`). Null unless it stands as at the end of a way to a refuge: on its own
+ * gauge, on plain 1×1 track (no switch or crossing, no tile of a larger unit) that runs on half a
+ * tile or more behind its rear end.
  */
 function rearSetUp(c: RearCase) {
   const g = layRear(c.track);
@@ -1121,8 +1123,34 @@ function rearSetUp(c: RearCase) {
     plain += g.segLength(s.x, s.y, s.in, s.out);
   }
   if (plain < there.length + 0.5) return null;
-  const rear = (there as unknown as Reversible).reversedTrail().trail.at(-1)!.seg;
+  const rear = setOff(there);
   return { g, path, rear, r: path.findIndex((s) => s.x === rear.x && s.y === rear.y) };
+}
+
+/** The private trail a train stands along, rear to head, with the distance to each point. */
+interface Laid {
+  trail: { seg: PathSegment }[];
+  trailCum: number[];
+}
+
+/**
+ * The tile a train sets off from reversing: where its reversed trail starts, as `dispatch` sets
+ * off. A rear end exactly on a tile edge stands on the tile beyond it, the rule `onwardTest`
+ * states; the trail's distances cannot settle that last bit, because they carry the rounding of
+ * every chord laid beyond the edge. Behind a straight stretch with curves beyond it, a rear end on
+ * the edge can come out 1e-15 short of it, and such a train sets off from the nearer tile, which
+ * `onwardTest` does not count: there it misses a way on the train has, and never claims one.
+ */
+function setOff(t: Train) {
+  const { trail, trailCum } = t as unknown as Laid;
+  const total = trailCum[trailCum.length - 1];
+  for (let i = 1; i < trail.length; i++) {
+    const [beyond, nearer] = [trail[i - 1].seg, trail[i].seg];
+    const edge = total - trailCum[i];
+    if ((beyond.x !== nearer.x || beyond.y !== nearer.y) && Math.abs(edge - t.length) < 1e-9)
+      return beyond;
+  }
+  return (t as unknown as Reversible).reversedTrail().trail.at(-1)!.seg;
 }
 
 function rearCase(rng: Rng): RearCase {
@@ -1233,10 +1261,141 @@ function wind(steps: readonly [number, number, Dir, Dir][]): Lay[] {
   });
 }
 
+/**
+ * A narrow line that winds without turning back: every tile runs on or turns between two headings
+ * at right angles (east and north, say), so it never meets itself, and at a high turn share it is
+ * nearly all curves, along which the trail's chords fall short of the arcs. `ends` holds each
+ * tile's entry and exit edges.
+ */
+function stairs(rng: Rng, size: number) {
+  const a = rng.pick(DIRS);
+  const b = rng.pick(DIRS.filter((d) => d !== a && d !== opposite(a)));
+  const turn = rng.pick([0.3, 0.6, 0.9, 1]);
+  // from the corner the two headings lead away from, one tile a step, so it stays on the grid
+  let x = DIR_DX[a] + DIR_DX[b] > 0 ? 0 : size - 1;
+  let y = DIR_DY[a] + DIR_DY[b] > 0 ? 0 : size - 1;
+  let heading = rng.pick([a, b]);
+  let entry = opposite(heading);
+  const steps: [number, number, Dir, Dir][] = [];
+  for (let n = rng.int(12, size - 1); n > 0; n--) {
+    const out = rng.chance(turn) ? (heading === a ? b : a) : heading;
+    steps.push([x, y, entry, out]);
+    x += DIR_DX[out];
+    y += DIR_DY[out];
+    entry = opposite(out);
+    heading = out;
+  }
+  return { lays: wind(steps), ends: steps.map(([, , i, o]) => [i, o] as const) };
+}
+
+/**
+ * Narrow consists of `locos` and up to 30 wagons, mine tubs and `other`s, one mix per count, with
+ * their lengths summed as `Train.length` sums them.
+ */
+const mixes = new Map<string, { wagons: string[]; length: number }[]>();
+function narrowMixes(locos: string[], other: string) {
+  const key = `${locos.join()}|${other}`;
+  let list = mixes.get(key);
+  if (!list) {
+    const car = (id: string) =>
+      vehicleSpec(
+        (content.locomotives.find((d) => d.id === id) ?? content.wagons.find((d) => d.id === id))!,
+      ).L;
+    list = [];
+    for (let tubs = 0; tubs <= 30; tubs++)
+      for (let n = 0; tubs + n <= 30; n++) {
+        const wagons = [...Array<string>(tubs).fill('mine_tub'), ...Array<string>(n).fill(other)];
+        list.push({ wagons, length: consistLength([...locos, ...wagons].map(car)) });
+      }
+    mixes.set(key, list);
+  }
+  return list;
+}
+
+/**
+ * How far back from the head's centre each tile edge lies along the trail the cars stand on, as
+ * `spawnAt` lays it (where the reversed trail of a train longer than the track passes from one
+ * tile to the next), and how many curves the trail crosses from the head to it.
+ */
+function trailEdges(g: TrackGraph, head: State, tiles: number) {
+  // the trail does not depend on the stock: the fewest cars that reach past the end of the line
+  const long = content.wagons.reduce((a, b) => (vehicleSpec(b).L > vehicleSpec(a).L ? b : a));
+  const cars = Math.ceil((tiles + 2) / vehicleSpec(long).L);
+  const probe = rearTrain({
+    locos: [content.locomotives[0].id],
+    wagons: Array<string>(cars).fill(long.id),
+  });
+  if (!probe.spawnAt(g, head.x, head.y, head.in)) return [];
+  const { trail, cum } = (probe as unknown as Reversible).reversedTrail();
+  const edges: { at: number; curves: number }[] = [];
+  let curves = 0;
+  for (let i = 1; i < trail.length; i++) {
+    const [p, q] = [trail[i - 1].seg, trail[i].seg];
+    if (p.x === q.x && p.y === q.y) continue;
+    if (g.get(p.x, p.y)?.kind === 'curve') curves++;
+    edges.push({ at: cum[i - 1], curves });
+  }
+  return edges;
+}
+
+/** How close to a tile edge `edgeCase` puts the rear end, either side of it. */
+const HAIR = 0.01;
+
+/**
+ * A narrow train on a winding line (`stairs`) with its rear end within HAIR of a tile edge along
+ * the trail: just short of it, on it, or just past it. That is the boundary `onwardTest` must put
+ * on the right side, where a measure a thousandth of a tile out per curve picks the wrong tile.
+ * `seen` collects which side of the edge each case lies on, and whether curves lead up to it.
+ */
+function edgeCase(rng: Rng, seen?: Set<string>): RearCase {
+  const stock = STOCK(true);
+  const others = stock.wagons.filter((id) => id !== 'mine_tub');
+  for (;;) {
+    const size = 40;
+    const { lays, ends } = stairs(rng, size);
+    // facing on along the line or back along it, with three tiles or more behind the head
+    const back = rng.chance(0.5);
+    const at = back ? rng.int(0, lays.length - 4) : rng.int(3, lays.length - 1);
+    const [entry, exit] = ends[at];
+    const head = { x: lays[at].x, y: lays[at].y, in: back ? exit : entry };
+    const track = { kind: 'snake' as const, size, lays };
+    const locos = Array.from({ length: rng.chance(0.2) ? 2 : 1 }, () => rng.pick(stock.locos));
+    const edges = trailEdges(layRear(track), head, back ? lays.length - 1 - at : at);
+    const near = narrowMixes(locos, others.length ? rng.pick(others) : 'mine_tub').filter((m) =>
+      edges.some((e) => Math.abs(m.length - e.at) <= HAIR),
+    );
+    while (near.length) {
+      const [m] = near.splice(rng.int(0, near.length - 1), 1);
+      const c = { track, head, locos, wagons: m.wagons };
+      const length = rearTrain(c).length;
+      const edge = edges.find((e) => Math.abs(length - e.at) <= HAIR);
+      if (!edge || !rearSetUp(c)) continue;
+      const off = length - edge.at;
+      const side = Math.abs(off) < 1e-9 ? 'on' : off < 0 ? 'short of' : 'past';
+      seen?.add(`${side} an edge${edge.curves ? ' after a curve' : ''}`);
+      return c;
+    }
+  }
+}
+
 describe("the tile a refuge's way on is counted from, rear first", () => {
   it('is the one the train sets off from reversing, for any stock, on curves and on a tile edge', () => {
     forAll(rearCase, rearHolds, { seeds: MANY_SEEDS, shrink: shrinkRear });
   });
+
+  const SLOW = { timeout: 60_000 };
+  it(
+    'is the one the train sets off from with its rear end a hair either side of an edge, on curves',
+    SLOW,
+    () => {
+      const seen = new Set<string>();
+      forAll((rng) => edgeCase(rng, seen), rearHolds, { seeds: MANY_SEEDS, shrink: shrinkRear });
+      // the cases reach the edge from both sides, past curves where the measure differs from arcs
+      expect([...seen]).toEqual(
+        expect.arrayContaining(['short of an edge after a curve', 'past an edge after a curve']),
+      );
+    },
+  );
 
   it('is the one a mine train sets off from where its cars stand along the chords of curves', () => {
     // a Muki, seven tubs and a box wagon, 7.1 tiles, its head on the curve at (7,7) with six curves
