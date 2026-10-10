@@ -131,6 +131,12 @@ describe('a grown map', () => {
     expect(overlapDiff(generateMap(SEED, { w, h: w }), grown(SEED, w))).toEqual(SAME);
   });
 
+  // In these two worlds a river runs just outside the 32x32 map, never entering it, and still
+  // decides a tile on its edge: generation must carve it although no tile of it is the map's.
+  it.each([175, 182])('keeps the edge a river just outside it shaped (seed %i)', (seed) => {
+    expect(overlapDiff(generateMap(seed, { w: 32, h: 32 }), grown(seed, 32))).toEqual(SAME);
+  });
+
   it('keeps every old tile, oil fields and start seeps included, in the full production chain', () => {
     setSupplyMode('full');
     try {
@@ -295,6 +301,18 @@ function pairMaps(c: Pair) {
   }
 }
 
+/** Whether two tiles' props have the same text; field by field first, so text is rarely built. */
+const sameProps = (a: PropInstance[] | undefined, b: PropInstance[] | undefined) =>
+  a === b ||
+  (a !== undefined &&
+    b !== undefined &&
+    a.length === b.length &&
+    a.every(
+      (p, k) =>
+        p.kind === b[k].kind && p.variant === b[k].variant && p.ox === b[k].ox && p.oy === b[k].oy,
+    )) ||
+  propText(a) === propText(b);
+
 /** The first tile of `small`, in tile order, that differs from `big`; null when none does. */
 function firstDifference(small: GameMap, big: GameMap): string | null {
   const dx = small.originX - big.originX;
@@ -303,6 +321,13 @@ function firstDifference(small: GameMap, big: GameMap): string | null {
     for (let x = 0; x < small.w; x++) {
       const i = y * small.w + x;
       const j = (y + dy) * big.w + x + dx;
+      if (
+        small.terrain[i] === big.terrain[j] &&
+        small.biome[i] === big.biome[j] &&
+        small.variant[i] === big.variant[j] &&
+        sameProps(small.props.get(i), big.props.get(j))
+      )
+        continue;
       const planes: [string, string, string][] = [
         ['terrain', String(small.terrain[i]), String(big.terrain[j])],
         ['biome', String(small.biome[i]), String(big.biome[j])],
@@ -339,6 +364,8 @@ describe('generation in world space', () => {
     expect(cases.some((c) => c.ox % CHUNK !== 0 && c.oy % CHUNK !== 0)).toBe(true);
   });
 
+  // 32 maps up to 288 tiles a side: about 4 s at a load average of 40 on 4 cores, and a failure
+  // shrinks through up to 60 more pairs, so the timeout leaves room for both on a busier machine
   it('gives two maps with one seed, params and start chunk the same tiles where they overlap', () => {
     let oil = 0;
     forAll(
@@ -353,7 +380,7 @@ describe('generation in world space', () => {
     );
     // the full chain's own passes (oil fields, start seeps) ran in some case
     expect(oil).toBeGreaterThan(0);
-  });
+  }, 60_000);
 });
 
 describe('emptyMap', () => {
