@@ -3,6 +3,7 @@ import { emptyMap } from '../world/mapgen';
 import { Terrain, type GameMap } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
+import type { PathSegment } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
@@ -14,6 +15,7 @@ import { Fleet } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { migrate, SAVE_VERSION, type SaveGame } from './save';
+import { expandSave, CHUNK_TILES } from './expand';
 import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
 import { SEEDS, forAll, shrinkArray, shrinkInt } from '../testing/property';
@@ -31,7 +33,8 @@ import {
 // control does; only its path is planned again. A v13 save's trains stand without a route, as
 // every load left them before. Further down: the same held at any tick of generated lines, a load
 // that moves no car, a save made between a load and the first tick, and the traffic scenarios
-// with a round trip mid-run.
+// with a round trip mid-run: no shared tile or deadlock, a train backing off kept on its escape
+// and only on one it can still run, and a world grown around the save carrying on as the save.
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -742,6 +745,16 @@ function runTraffic(fleet: Fleet, w: number, from: number, after?: () => void): 
   return { shared, overlaps, deadlocks, left, end: tick - 1 };
 }
 
+/** The escapes the traffic control holds for trains backing off: by train, group and tile keys. */
+type Escapes = Map<number, { group: number[]; tiles: Set<number> }>;
+const escapesOf = (fleet: Fleet): Escapes =>
+  new Map(
+    [...fleet.traffic.recoveries.active].map(([id, plan]) => [
+      id,
+      { group: [...plan.group], tiles: new Set(plan.tiles) },
+    ]),
+  );
+
 /** The uninterrupted run of a case, with a save after every tick. */
 interface TrafficControl {
   map: GameMap;
@@ -751,8 +764,12 @@ interface TrafficControl {
   texts: string[];
   /** what each train was doing after each tick */
   doing: string[];
+  /** the escapes reserved after each tick */
+  escapes: Escapes[];
   /** ticks after which some train was held up, yielding or backing off for another */
   busy: number[];
+  /** ticks after which some train was backing off on a reserved escape */
+  backing: number[];
 }
 const trafficControls = new Map<TrafficCase, TrafficControl>();
 function trafficControl(c: TrafficCase): TrafficControl {
@@ -761,7 +778,9 @@ function trafficControl(c: TrafficCase): TrafficControl {
   const sc = trafficWithStops(c);
   const texts: string[] = [];
   const doing: string[] = [];
+  const escapes: Escapes[] = [];
   const busy: number[] = [];
+  const backing: number[] = [];
   const run = runTraffic(sc.fleet, sc.track.w, 0, () => {
     const trains = sc.fleet.trains;
     texts.push(
@@ -771,10 +790,12 @@ function trafficControl(c: TrafficCase): TrafficControl {
       }),
     );
     doing.push(trains.map((t) => `#${t.id} ${t.state}${t.holding ? ' holding' : ''}`).join(', '));
+    escapes.push(escapesOf(sc.fleet));
     if (trains.some((t) => t.holding || t.state === 'yielding' || t.blockedTime > 0))
       busy.push(texts.length - 1);
+    if (trains.some((t) => t.holding)) backing.push(texts.length - 1);
   });
-  const control = { map: sc.map, track: sc.track, run, texts, doing, busy };
+  const control = { map: sc.map, track: sc.track, run, texts, doing, escapes, busy, backing };
   trafficControls.set(c, control);
   return control;
 }
@@ -880,39 +901,257 @@ describe('the traffic scenarios with a round trip mid-run', () => {
 
   it('keeps a train backing off on its escape, reserved again for it', { timeout: 120_000 }, () => {
     // Every save of the uninterrupted runs after which a train was backing off on a reserved
-    // escape and still was a tick later: loaded, that tick on it still backs off along the same
-    // escape, which the traffic control holds for the same group, and stands where the control
-    // has it.
+    // escape, loaded and run a tick on: every train of the fleet stands where the control has it,
+    // doing the same, and the traffic control holds escapes for the trains and groups the
+    // control's does. Each covers every tile its train still runs on, and no tile the control's
+    // does not: the control's may still hold the tile its train is leaving, which the rest of the
+    // escape the save holds no longer has.
     let saves = 0;
-    TRAFFIC.forEach((c) => {
+    for (const c of TRAFFIC) {
       const ctl = trafficControl(c);
-      for (let tick = 0; tick + 1 < ctl.texts.length; tick++) {
-        const before = JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[] };
-        const after = JSON.parse(ctl.texts[tick + 1]) as { trains: TrainJSON[] };
-        const backing = before.trains.filter(
-          (j) => j.holding && after.trains.find((a) => a.id === j.id)?.holding,
-        );
-        if (!backing.length) continue;
+      for (const tick of ctl.backing) {
+        if (tick + 1 >= ctl.texts.length) continue;
         saves++;
         const fleet = trafficLoaded(ctl, tick);
         fleet.tick(SCENARIO_GDT, (tick + 1) / SCENARIO_TICK_RATE);
-        for (const j of backing) {
-          const why = `${caseName(c)}, #${j.id} in the save after tick ${tick}`;
+        const why = `${caseName(c)}, the save after tick ${tick}`;
+        // trains the control took out of the run on this tick are not compared
+        for (const j of (JSON.parse(ctl.texts[tick + 1]) as { trains: TrainJSON[] }).trains) {
           const t = fleet.trains.find((x) => x.id === j.id)!;
-          const want = Train.fromJSON(
-            after.trains.find((a) => a.id === j.id)!,
-            ctl.track,
-          );
-          expect({ state: t.state, holding: t.holding }, why).toEqual({
-            state: 'moving',
-            holding: true,
+          expect({ state: t.state, holding: t.holding }, `${why}: #${j.id}`).toEqual({
+            state: j.state,
+            holding: j.holding,
           });
-          expect(fleet.traffic.recoveries.active.get(t.id)?.group, why).toEqual(j.retreat!.group);
-          expect(apart(want.poses, t.poses), why).toBeLessThan(TOLERANCE);
+          const want = Train.fromJSON(j, ctl.track).poses;
+          expect(apart(want, t.poses), `${why}: #${j.id}'s tiles from the control`).toBeLessThan(
+            TOLERANCE,
+          );
+        }
+        const want = ctl.escapes[tick + 1];
+        const got = escapesOf(fleet);
+        expect([...got.keys()].sort(), `${why}: trains with an escape`).toEqual(
+          [...want.keys()].sort(),
+        );
+        for (const [id, { group, tiles }] of got) {
+          const control = want.get(id)!;
+          expect(group, `${why}: #${id}'s group`).toEqual(control.group);
+          const t = fleet.trains.find((x) => x.id === id)!;
+          const ahead = t.pathAhead().map((p) => p.y * ctl.track.w + p.x);
+          expect(
+            ahead.filter((key) => !tiles.has(key)),
+            `${why}: tiles ahead of #${id} its escape does not hold`,
+          ).toEqual([]);
+          expect(
+            [...tiles].filter((key) => !control.tiles.has(key)),
+            `${why}: tiles #${id}'s escape holds and the control's does not`,
+          ).toEqual([]);
         }
       }
-    });
+    }
     // the runs back off often enough for this to say something
-    expect(saves).toBeGreaterThan(50);
+    expect(saves).toBeGreaterThan(1000);
   });
+
+  it(
+    'a save made after a load, before the first tick, is the save loaded',
+    { timeout: 120_000 },
+    () => {
+      // As for the single trains above, here for every train of every save of the uninterrupted
+      // runs, those backing off on an escape among them.
+      let escapes = 0;
+      for (const c of TRAFFIC) {
+        const ctl = trafficControl(c);
+        ctl.texts.forEach((text, tick) => {
+          for (const j of (JSON.parse(text) as { trains: TrainJSON[] }).trains) {
+            if (j.retreat) escapes++;
+            const was = JSON.stringify(j);
+            const again = Train.fromJSON(JSON.parse(was) as TrainJSON, ctl.track).toJSON();
+            if (JSON.stringify(again) !== was)
+              expect(
+                JSON.parse(JSON.stringify(again)),
+                `${caseName(c)}, #${j.id} in the save after tick ${tick}`,
+              ).toEqual(j);
+          }
+        });
+      }
+      expect(escapes).toBeGreaterThan(1000);
+    },
+  );
+
+  it(
+    'stops a train whose saved escape can no longer be reserved, and holds none for it',
+    { timeout: 120_000 },
+    () => {
+      // A saved escape is run again only from where its train stands, over track still there,
+      // with no other train on it. A save edited so it is not loads with the train stopped a
+      // tick on, looking for its way again, and no escape held for it.
+      forAll(
+        (rng): EscapeEdit => {
+          const at = rng.int(0, TRAFFIC.length - 1);
+          const ctl = trafficControl(TRAFFIC[at]);
+          const tick = rng.pick(ctl.backing);
+          const saved = JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[] };
+          const id = rng.pick(saved.trains.filter((j) => j.holding)).id;
+          return { at, tick, id, edit: rng.pick(ESCAPE_EDITS) };
+        },
+        ({ at, tick, id, edit }) => {
+          const ctl = trafficControl(TRAFFIC[at]);
+          const j = JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[]; stations: unknown[] };
+          const train = j.trains.find((t) => t.id === id)!;
+          const others = j.trains.filter((t) => t.id !== id);
+          const path = editEscape(edit, train.retreat!.path, others, ctl.track);
+          if (!path) return;
+          train.retreat!.path = path;
+          const fleet = trafficLoaded({ ...ctl, texts: [JSON.stringify(j)] }, 0);
+          fleet.tick(SCENARIO_GDT, (tick + 1) / SCENARIO_TICK_RATE);
+          const t = fleet.trains.find((x) => x.id === id)!;
+          expect({
+            state: t.state,
+            holding: t.holding,
+            speed: t.speed,
+            escape: fleet.traffic.recoveries.active.has(id),
+          }).toEqual({ state: 'yielding', holding: false, speed: 0, escape: false });
+        },
+        {
+          shrink: function* (e) {
+            // an earlier save of the case in which the same train backs off
+            const ctl = trafficControl(TRAFFIC[e.at]);
+            for (const tick of ctl.backing)
+              if (tick < e.tick && ctl.texts[tick].includes(`"id":${e.id},`)) {
+                const j = JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[] };
+                if (j.trains.find((t) => t.id === e.id)?.holding) yield { ...e, tick };
+              }
+          },
+          format: (e) =>
+            `${caseName(TRAFFIC[e.at])}, #${e.id}'s escape ${e.edit} in the save after tick ${e.tick}`,
+          shrinkBudget: 20,
+        },
+      );
+    },
+  );
+
+  it(
+    'carries on in a world grown around the save as in the world it grew from, moved with it',
+    { timeout: 300_000 },
+    () => {
+      // A generated world grows by a ring of chunks around a save (expandSave), and every tile
+      // coordinate the save holds moves by the ring, a train's escape among them. Loaded onto the
+      // track moved with it, a tick and two seconds on, every train stands where it stands loaded
+      // into the world it grew from, moved by the ring, doing the same.
+      forAll(
+        trafficSave,
+        ({ at, tick }) => {
+          const ctl = trafficControl(TRAFFIC[at]);
+          const plain = trafficLoaded(ctl, tick);
+          const grown = grownLoaded(ctl, tick);
+          for (let k = tick + 1; k <= tick + 40; k++) {
+            plain.tick(SCENARIO_GDT, k / SCENARIO_TICK_RATE);
+            grown.tick(SCENARIO_GDT, k / SCENARIO_TICK_RATE);
+            if (k !== tick + 1 && k !== tick + 40) continue;
+            for (const t of grown.trains) {
+              const why = `#${t.id}, ${k - tick} ticks after the load`;
+              const p = plain.trains.find((x) => x.id === t.id)!;
+              expect({ state: t.state, holding: t.holding }, why).toEqual({
+                state: p.state,
+                holding: p.holding,
+              });
+              const moved = p.poses.map((q) => ({ x: q.x + CHUNK_TILES, y: q.y + CHUNK_TILES }));
+              expect(apart(moved, t.poses), `${why}: tiles apart`).toBeLessThan(TOLERANCE);
+            }
+          }
+        },
+        {
+          shrink: shrinkTrafficSave,
+          format: formatTrafficSave,
+          seeds: SEEDS.slice(0, 40),
+          shrinkBudget: 20,
+        },
+      );
+    },
+  );
 });
+
+/** A way a saved escape can no longer be run (see `editEscape`). */
+const ESCAPE_EDITS = [
+  'starting past its head',
+  'running under another train',
+  'running off the track',
+] as const;
+interface EscapeEdit {
+  /** the case, by its index in TRAFFIC */
+  at: number;
+  /** the save after this tick of its uninterrupted run */
+  tick: number;
+  /** the train backing off in it */
+  id: number;
+  edit: (typeof ESCAPE_EDITS)[number];
+}
+/**
+ * The rest of an escape as the save holds it, edited: its first two tiles dropped, so it starts
+ * past the head; or a tile under another train's head car added; or a tile without track added.
+ * Null when the escape is too short or there is no other train.
+ */
+function editEscape(
+  edit: EscapeEdit['edit'],
+  path: PathSegment[],
+  others: TrainJSON[],
+  track: TrackGraph,
+): PathSegment[] | null {
+  const last = path[path.length - 1];
+  switch (edit) {
+    case 'starting past its head':
+      return path.length > 2 ? path.slice(2) : null;
+    case 'running under another train': {
+      const other = others[0];
+      if (!other) return null;
+      const [, , x, y, entry, exit] = other.trail[other.trail.length - 1];
+      return [...path, { x, y, in: entry as Dir, out: exit as Dir }];
+    }
+    case 'running off the track': {
+      const off = { ...last, y: last.y - 5 };
+      expect(track.has(off.x, off.y)).toBe(false);
+      return [...path, off];
+    }
+  }
+}
+
+/**
+ * The control's save after `tick` in a world grown by one ring of chunks around it, as the game
+ * grows one: through expandSave, its track laid and stations and trains loaded as a load does.
+ */
+function grownLoaded(c: TrafficControl, tick: number): Fleet {
+  const j = JSON.parse(c.texts[tick]) as { trains: TrainJSON[]; stations: StationJSON[] };
+  const save = expandSave(
+    {
+      version: SAVE_VERSION,
+      world: { kind: 'generated', seed: 4242, params: { w: c.track.w, h: c.track.h } },
+      track: [...c.track.anchors()].map(({ x, y, piece: p }) => [
+        x,
+        y,
+        p.kind,
+        p.rot,
+        p.cls,
+        p.cls2,
+      ]),
+      stations: j.stations,
+      trains: j.trains,
+      camera: { x: 0, y: 0, zoomIndex: 2 },
+    } as unknown as SaveGame,
+    1,
+  );
+  const w = c.track.w + 2 * CHUNK_TILES;
+  const h = c.track.h + 2 * CHUNK_TILES;
+  const map = emptyMap(4242, w, h, Terrain.Grass);
+  const track = new TrackGraph(w, h);
+  for (const [x, y, kind, rot, cls, cls2] of save.track)
+    track.place(x, y, kind, rot, cls ?? 'regular', cls2);
+  track.refreshSwitchForms();
+  const stock = new Stockpile();
+  const economy = new Economy();
+  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  builder.free = true;
+  for (const s of save.stations) builder.stations.push(Station.fromJSON(s));
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  for (const t of save.trains as TrainJSON[]) fleet.trains.push(Train.fromJSON(t, track));
+  return fleet;
+}
