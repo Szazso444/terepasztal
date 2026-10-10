@@ -222,6 +222,20 @@ function bump(rec: Record<string, number>, k: string, v: number) {
   rec[k] = (rec[k] ?? 0) + v;
 }
 
+/**
+ * How much trail a train lays crossing `seg`, up to the tile's centre with `head` (where a head
+ * stops): the chords between the geometry points that `spawnAt` and `setPath` lay. A curve's chords
+ * fall a little short of its arc (`segLength`), so the cars stand by these, not by the arcs.
+ */
+function trailLength(track: TrackGraph, seg: PathSegment, head = false) {
+  const pts = track.segGeom(seg.x, seg.y, seg.in, seg.out, seg.route).pts;
+  const upto = head ? Math.floor(pts.length / 2) + 1 : pts.length;
+  let sum = 0;
+  for (let i = 1; i < upto; i++)
+    sum += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  return sum;
+}
+
 export interface WagonSlot {
   uid: number;
   def: WagonDef;
@@ -2451,14 +2465,14 @@ export class Train {
       // the head stops at the last tile's centre: on through it, head first
       const last = path[path.length - 1];
       if (on(last.x, last.y, last.in)) return true;
-      // or rear first, from the tile the rear stands on, `length` back along the way: looking
-      // back from the head would count a stop under the cars, which the rear runs away from.
-      // A rear end on a tile edge stands on the tile beyond it, the one `reversedTrail` sets off
-      // from; the slack absorbs rounding in the car lengths and couplers
+      // or rear first, from the tile the rear stands on, `length` back along the trail the way
+      // lays (`trailLength`): looking back from the head would count a stop under the cars,
+      // which the rear runs away from. A rear end on a tile edge stands on the tile beyond it,
+      // the one `reversedTrail` sets off from; the slack absorbs rounding in the car lengths
       let behind = 0;
       for (let i = path.length - 1; i >= 0; i--) {
         const s = path[i];
-        behind += ctx.track.segLength(s.x, s.y, s.in, s.out) / (i === path.length - 1 ? 2 : 1);
+        behind += trailLength(ctx.track, s, i === path.length - 1);
         if (behind > length + 1e-6 || i === 0) return on(s.x, s.y, s.out);
       }
       return false;
