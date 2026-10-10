@@ -14,6 +14,7 @@ import {
   bogieStyleOf,
 } from '../art/frames';
 import { pitchOnRail, LEVEL_GROUND, type Ground } from './slope';
+import { PhaseCounter, WheelRolls, phaseIndex, phaseKey } from './runningGear';
 import {
   facingOf,
   DRAWN_FACINGS,
@@ -52,6 +53,9 @@ export class TrainRenderer {
   hideAt: ((x: number, y: number) => boolean) | null = null;
   private hoverSince = 0;
   private clock = 0;
+  /** wheel-phase frames per still frame, and each train's wheel roll (`runningGear.ts`) */
+  private readonly phases: PhaseCounter;
+  private readonly rolls = new WheelRolls();
   setHover(id: number | null) {
     if (id === this.hoverId) return;
     this.hoverId = id;
@@ -63,6 +67,7 @@ export class TrainRenderer {
     /** The surface under a tile position; trains climb hills on it. Level when absent. */
     private readonly ground: (x: number, y: number) => Ground = () => LEVEL_GROUND,
   ) {
+    this.phases = new PhaseCounter(atlas);
     layer.on('destroyed', () => this.surfaces.destroy());
   }
 
@@ -130,9 +135,14 @@ export class TrainRenderer {
   remove(trainId: number) {
     for (const c of this.cars.get(trainId) ?? []) this.destroyCar(c);
     this.cars.delete(trainId);
+    this.rolls.drop(trainId);
   }
 
-  /** Place a sprite for a tile-space heading: pick the facing, mirror when needed, rotate the rest. */
+  /**
+   * Place a sprite for a tile-space heading: pick the facing, mirror when needed, rotate the rest.
+   * With a wheel `roll` (tiles, signed by the part's own nose) it shows the still frame's wheel
+   * phase for it, when the atlas has phases. Returns the still frame's key either way.
+   */
   private pose(
     s: Sprite,
     frameFor: (f: number) => string,
@@ -140,12 +150,15 @@ export class TrainRenderer {
     y: number,
     angle: number,
     layer: number,
+    roll?: number,
     ground = this.ground(x, y),
   ) {
     const f = facingOf(angle);
     const drawn = DRAWN_FACINGS.has(f);
     const key = frameFor(drawn ? f : mirrorFacing(f));
-    const fr = this.atlas.get(key);
+    const fr = this.atlas.get(
+      roll === undefined ? key : phaseKey(key, phaseIndex(roll, this.phases.count(key))),
+    );
     s.texture = fr.texture;
     s.anchor.set(fr.anchorX, fr.anchorY);
     s.scale.set(drawn ? 1 : -1, 1);
@@ -214,6 +227,8 @@ export class TrainRenderer {
         tint = mix(0xffffff, 0x9be8ff, pulse);
       } else if (t.id === this.selectedId) tint = 0xc8f0ff;
       const flip = t.reversed ? Math.PI : 0;
+      // the wheels turn with the distance run, backwards while the train runs tail first
+      const roll = this.rolls.advance(t.id, t.distance, t.reversed);
       for (let i = 0; i < list.length; i++) {
         const cur: VehiclePose | undefined = t.vehiclePoses[i];
         if (!cur) continue;
@@ -235,6 +250,8 @@ export class TrainRenderer {
             ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
             : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
           const styles = (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).bogieStyle;
+          // a segment drawn back to front turns its gear the other way, and so do its bogies
+          const partRoll = roll === undefined ? undefined : seg.mirror ? -roll : roll;
           const key = this.pose(
             s,
             frameFor,
@@ -242,6 +259,7 @@ export class TrainRenderer {
             y,
             shown,
             15,
+            partRoll,
             this.bodyGround(seg, ps, alpha, x, y),
           );
           const fr = this.atlas.get(key);
@@ -298,6 +316,7 @@ export class TrainRenderer {
                 by,
                 heading,
                 14,
+                partRoll,
               );
               bs.visible &&= s.visible;
               // always just under its own body: the depth key is by position, and a bogie
