@@ -2452,12 +2452,14 @@ export class Train {
       const last = path[path.length - 1];
       if (on(last.x, last.y, last.in)) return true;
       // or rear first, from the tile the rear stands on, `length` back along the way: looking
-      // back from the head would count a stop under the cars, which the rear runs away from
+      // back from the head would count a stop under the cars, which the rear runs away from.
+      // A rear end on a tile edge stands on the tile beyond it, the one `reversedTrail` sets off
+      // from; the slack absorbs rounding in the car lengths and couplers
       let behind = 0;
       for (let i = path.length - 1; i >= 0; i--) {
         const s = path[i];
         behind += ctx.track.segLength(s.x, s.y, s.in, s.out) / (i === path.length - 1 ? 2 : 1);
-        if (behind >= length || i === 0) return on(s.x, s.y, s.out);
+        if (behind > length + 1e-6 || i === 0) return on(s.x, s.y, s.out);
       }
       return false;
     };
