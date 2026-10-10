@@ -35,10 +35,28 @@ import { PAL, type RGB } from '../art/palette';
 import BRIDGE_KIT_JSON from './bridgeKit.json';
 import {
   bridgeTileMeshes,
+  destroyBridgeParts,
   prepareSurface,
+  WATERLINE,
   type BridgeSurfaces,
-  type BridgeTile,
 } from './bridgeMeshes';
+import { bridgeJoins, bridgePlan, deckSamples, type BridgeSite } from './bridgeLayout';
+
+export type BridgeStyle = 'textured' | 'kit' | 'procedural';
+/** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
+export type TexturedBridge = Omit<BridgeSite, 'deck'> & {
+  /** Over water: supports stand in it, and the deck never sinks below the waterline's. */
+  water: boolean;
+  /** The bridge's upgrade level. */
+  level: number;
+};
+
+/**
+ * Tile offsets at which a textured bridge tile notices the ground under it and in front of it
+ * (toward +x +y, as far as bridgeMeshes.ts looks for ground hiding its supports).
+ */
+const GROUND_AT = [-0.45, 0, 0.45, 0.55, 1, 1.5, 1.95],
+  GROUND_SAMPLES = GROUND_AT.flatMap((a) => GROUND_AT.map((b) => [a, b]));
 
 /** Measured kit geometry in world px (tools/bridge-kit.mjs). */
 const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
@@ -810,20 +828,33 @@ export class WorldRenderer {
       }
     }
   }
-  /** The illustrated bridge kit is packed (tools/bridge-kit.mjs); else the procedural spans. */
-  get bridgeKit() {
-    return this.bridgeStyle === 'kit' && this.atlas.has('bridgekit/stone-deck-x');
-  }
   /**
-   * Preview: how bridges draw. `kit` the illustrated kit pieces, `procedural` the generated
-   * spans, `textured` the procedural shapes wearing the kit's surfaces (bridgeMeshes.ts).
+   * How bridges draw: `textured` the procedural shapes wearing the kit's surfaces
+   * (bridgeMeshes.ts), merged with their neighbours into wide bridges; `kit` the illustrated kit
+   * pieces; `procedural` the generated spans. Setting it redraws the bridges (onBridgeStyle).
    */
-  bridgeStyle: 'kit' | 'procedural' | 'textured' = 'kit';
+  get bridgeStyle() {
+    return this.style;
+  }
+  set bridgeStyle(style: BridgeStyle) {
+    if (style === this.style) return;
+    this.style = style;
+    this.onBridgeStyle();
+  }
+  private style: BridgeStyle = 'textured';
+  /** Called when the bridge style changes; the game redraws its bridges. */
+  onBridgeStyle: () => void = () => {};
+  /** The style bridges draw in: the chosen one, or the next whose assets are there. */
+  get bridgeMode(): BridgeStyle {
+    if (this.style === 'textured' && this.bridgeSurfaces) return 'textured';
+    if (this.style !== 'procedural' && this.atlas.has('bridgekit/stone-deck-x')) return 'kit';
+    return 'procedural';
+  }
   private bridgeSurfaces: BridgeSurfaces | null = null;
-  /** Loads the kit's repeating surfaces (public/assets/bridge-surfaces). */
+  /** Loads the kit's repeating surfaces (public/assets/bridge-surface-*.png). */
   async loadBridgeSurfaces() {
     if (this.bridgeSurfaces) return true;
-    const base = `${import.meta.env.BASE_URL}assets/bridge-surfaces/`;
+    const base = `${import.meta.env.BASE_URL}assets/bridge-surface-`;
     try {
       const [stoneTop, stoneWall, woodTop, woodGrain] = await Promise.all(
         ['stone-top', 'stone-wall', 'wood-top', 'wood-grain'].map((n) =>
@@ -837,27 +868,79 @@ export class WorldRenderer {
       return false;
     }
   }
-  get texturedBridges() {
-    return this.bridgeStyle === 'textured' && !!this.bridgeSurfaces;
+  private texturedParts = new Map<number, { key: string; under: Container; near: Container }>();
+  /**
+   * Every bridge tile in the textured style (none in the others): supports, deck and far
+   * parapets under the trains, near parapets over them. Tiles merge with their neighbours
+   * (bridgeLayout.ts); a tile whose parts did not change keeps its meshes.
+   */
+  setTexturedBridges(tiles: readonly TexturedBridge[]) {
+    const surfaces = this.bridgeMode === 'textured' ? this.bridgeSurfaces : null,
+      sites = surfaces
+        ? tiles.map((t) => ({ ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water) }))
+        : [],
+      joins = bridgeJoins(sites, this.map.w),
+      ground = (tx: number, ty: number) => this.bridgeGround(tx, ty),
+      keep = new Set<number>();
+    for (const site of sites) {
+      const k = idx(this.map, site.x, site.y),
+        j = joins.get(k)!,
+        // Everything the meshes depend on, to a tenth of a pixel: the ground is sampled under
+        // the tile and in front of it, where it can hide the tile's faces.
+        key = JSON.stringify([
+          site.material,
+          site.axis,
+          site.water,
+          site.level,
+          site.open,
+          j,
+          site.deck.map((z) => Math.round(z * 10)),
+          GROUND_SAMPLES.map(([dx, dy]) => Math.round(ground(site.x + dx, site.y + dy) * 10)),
+        ]);
+      keep.add(k);
+      const old = this.texturedParts.get(k);
+      if (old?.key === key) continue;
+      if (old) for (const c of [old.under, old.near]) destroyBridgeParts(c);
+      const parts = bridgeTileMeshes(
+        { ...site, ground },
+        bridgePlan(site, j, site.water),
+        surfaces!,
+      );
+      parts.under.zIndex = site.x + site.y;
+      parts.near.zIndex = depthKey(site.x, site.y, 35);
+      this.piers.addChild(parts.under);
+      this.objects.addChild(parts.near);
+      this.texturedParts.set(k, { key, ...parts });
+    }
+    for (const [k, old] of this.texturedParts)
+      if (!keep.has(k)) {
+        for (const c of [old.under, old.near]) destroyBridgeParts(c);
+        this.texturedParts.delete(k);
+      }
   }
-  private texturedParts = new Map<number, { under: Container; near: Container }>();
-  /** A textured bridge tile (or none): supports and deck under the trains, near parapet over. */
-  setBridgeTextured(x: number, y: number, tile: Omit<BridgeTile, 'x' | 'y' | 'ground'> | null) {
-    const k = idx(this.map, x, y),
-      old = this.texturedParts.get(k);
-    old?.under.destroy({ children: true });
-    old?.near.destroy({ children: true });
-    this.texturedParts.delete(k);
-    if (!tile || !this.bridgeSurfaces) return;
-    const parts = bridgeTileMeshes(
-      { ...tile, x, y, ground: (tx, ty) => -this.elevationOf(tx, ty) },
-      this.bridgeSurfaces,
-    );
-    parts.under.zIndex = x + y;
-    parts.near.zIndex = depthKey(x, y, 35);
-    this.piers.addChild(parts.under);
-    this.objects.addChild(parts.near);
-    this.texturedParts.set(k, parts);
+  /**
+   * A bridge deck's top (the rail level) in world px up at DECK_SAMPLES along its axis; one level
+   * for a pad. Over water it never sinks below the waterline's deck.
+   */
+  private deckProfile(x: number, y: number, axis: 0 | 1 | null, water: boolean): number[] {
+    const tile = this.railBeds.get(idx(this.map, x, y)),
+      dir = axis === 1 ? 'x' : 'y',
+      bed = tile?.axis === dir ? tile : tile?.cross?.axis === dir ? tile.cross : undefined,
+      floor = (z: number) => (water ? Math.max(0, z) : z);
+    if (axis === null || !bed || this.landscape.failed) return [floor(-this.railAt(x, y).dz)];
+    return deckSamples(bed, axis === 1 ? x : y, this.levelPx).map(floor);
+  }
+  /** Ground under a bridge, world px up: the terrain, or over water the waterline. */
+  private bridgeGround(tx: number, ty: number) {
+    const x = Math.round(tx),
+      y = Math.round(ty),
+      water =
+        x >= 0 &&
+        y >= 0 &&
+        x < this.map.w &&
+        y < this.map.h &&
+        this.map.terrain[idx(this.map, x, y)] === Terrain.Water;
+    return water ? WATERLINE : -this.elevationOf(tx, ty);
   }
   private kitParts = new Map<number, Container>();
   /**

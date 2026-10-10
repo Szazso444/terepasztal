@@ -1,7 +1,8 @@
 /** Repeating bridge surfaces from the illustrated kit: the painted faces of the kit pieces,
  * flattened back to rectangles, so the procedural bridge shapes can wear the kit's stone and
  * timber. node tools/bridge-surfaces.mjs [sourceDir] [outDir]
- * Writes stone-top, stone-wall, wood-top and wood-grain PNGs (power-of-two sizes, repeating).
+ * Writes bridge-surface-{stone-top,stone-wall,wood-top,wood-grain}.png (power-of-two sizes,
+ * repeating), which src/render/worldRenderer.ts loads for the textured bridges.
  * Uses pngjs (dev dependency) only.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -9,7 +10,7 @@ import { join } from 'node:path';
 import { PNG } from 'pngjs';
 
 const SOURCE = process.argv[2] ?? 'assets/source/bridges-v1',
-  OUT = process.argv[3] ?? 'public/assets/bridge-surfaces';
+  OUT = process.argv[3] ?? 'public/assets';
 
 const read = (name) => PNG.sync.read(readFileSync(join(SOURCE, `${name}.png`)));
 function sample(p, x, y, out) {
@@ -149,7 +150,8 @@ function mortarRows(p) {
 }
 
 mkdirSync(OUT, { recursive: true });
-const write = (name, png) => writeFileSync(join(OUT, `${name}.png`), PNG.sync.write(png));
+const write = (name, png) =>
+  writeFileSync(join(OUT, `bridge-surface-${name}.png`), PNG.sync.write(png));
 // Dressed flags and deck planks: one repeat covers one tile.
 write('stone-top', resize(slabTop('stone-pad', 512), 128, 128));
 write('wood-top', resize(slabTop('wood-pad', 512), 128, 128));

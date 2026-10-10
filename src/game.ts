@@ -27,7 +27,7 @@ import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './wor
 import { levelAt } from './world/elevation';
 import { climbAxes, railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
-import { WorldRenderer } from './render/worldRenderer';
+import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
 import { GameClock, SIM_STEP } from './sim/time';
 import { Tooltip } from './ui/tooltip';
@@ -59,7 +59,7 @@ import {
 import { decorOffset, type Decor } from './sim/build';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
-import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
+import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import {
   SAVE_VERSION,
@@ -883,6 +883,8 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    await this.world.loadBridgeSurfaces();
+    this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
       !!(
         this.builder.stationAt(x, y) ||
@@ -1193,17 +1195,10 @@ export class Game implements UiHost {
   // ---------------------------------------------------------------- world edits
   /** Rail profiles need recomputing: a track piece or a bridge changed. */
   private railsDirty = false;
-  /** Preview: deck levels set per bridge tile (stacked platforms), by tile index. */
-  readonly bridgeDecks = new Map<number, number>();
   /** Every straight line conforms to its neighbours: inclines, transitions, bridge decks. */
   private refreshRails() {
     this.railsDirty = false;
-    const beds = railProfile(
-      this.map,
-      this.track,
-      (x, y) => !!this.builder.bridgeAt(x, y),
-      (x, y) => this.bridgeDecks.get(y * this.map.w + x),
-    );
+    const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
     this.fleet.railBeds = beds;
     if (this.world.setRailBeds(beds)) this.refreshBridges();
   }
@@ -1272,6 +1267,8 @@ export class Game implements UiHost {
   private restoringWorld = false;
   private refreshBridges() {
     if (this.restoringWorld) return;
+    const mode = this.world.bridgeMode,
+      textured: TexturedBridge[] = [];
     for (const b of this.builder.buildings.values())
       if (buildingDef(b.id).bridge) {
         const s = bridgeSpan(this.builder, b);
@@ -1293,21 +1290,27 @@ export class Game implements UiHost {
               ? `structures/landspan_${s.material}_${s.axis}`
               : `structures/landpad_${s.material}`;
         const id = 'bridge:' + b.x + ',' + b.y;
-        if (this.world.texturedBridges) {
-          // Procedural shapes in the kit's surfaces: one set of meshes per tile.
-          this.world.setPlatform(b.x, b.y, null);
+        if (mode === 'textured') {
+          // Meshes for every tile at once, so side-by-side bridges merge (setTexturedBridges).
+          for (const layer of [0, 1]) this.world.setPlatform(b.x, b.y, null, layer);
           this.world.removeStructure(id);
+          this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
           this.world.setBridgePiers(b.x, b.y, null);
           this.world.setBridgeKit(b.x, b.y, null);
-          this.world.setBridgeTextured(b.x, b.y, {
+          // A member of a wide curve or switch, or a crossing, stands on a square pad.
+          const span = !piece || (!piece.unit && climbAxes(piece.links).length === 1);
+          textured.push({
+            x: b.x,
+            y: b.y,
             material: s.material,
-            axis: straight ? (s.axis as 0 | 1) : null,
-            // A stacked deck over water rises above the waterline like any other.
-            deck: water ? Math.max(0, -this.world.railAt(b.x, b.y).dz) : deck,
+            axis: span ? (s.axis as 0 | 1) : null,
+            open: DIRS.map((d) => !!piece?.links.some((l) => l.includes(d))),
             water,
+            level: b.level ?? 1,
           });
-        } else if (this.world.bridgeKit) {
-          this.world.setBridgeTextured(b.x, b.y, null);
+          continue;
+        }
+        if (mode === 'kit') {
           // The illustrated kit: deck or pad, near railing, and the parts under the deck.
           const dir = s.axis ? 'x' : 'y';
           this.world.setPlatform(
@@ -1330,7 +1333,6 @@ export class Game implements UiHost {
             water,
           );
         } else {
-          this.world.setBridgeTextured(b.x, b.y, null);
           this.world.setPlatform(
             b.x,
             b.y,
@@ -1363,6 +1365,7 @@ export class Game implements UiHost {
           this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36, dy);
         else this.world.removeStructure(detailId);
       }
+    this.world.setTexturedBridges(textured);
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
@@ -1377,7 +1380,6 @@ export class Game implements UiHost {
         this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
         this.world.setBridgePiers(b.x, b.y, null);
         this.world.setBridgeKit(b.x, b.y, null);
-        this.world.setBridgeTextured(b.x, b.y, null);
       }
       this.refreshBridges();
       return;
