@@ -779,7 +779,6 @@ export const STR = {
     controls: 'Controls',
     controlsText:
       'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Track: 1-5 piece, Q / E type · U upgrade track, Shift+U downgrade · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
-    lastSave: 'Last save',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
       'Auto-accept takes the offer at once; Ask leaves it on the board; Auto-deny drops it (free).',
@@ -790,7 +789,6 @@ export const STR = {
     loadSlot: 'Load',
     deleteSlot: 'Delete',
     noSlots: 'No named saves yet. Type a name and press Save as.',
-    slotMeta: (day: number, version: number) => `day ${day} · v${version}`,
     slotSaved: (n: string) => `Saved as "${n}"`,
     saveAsTitle: 'Save game as',
     saveAsHint: 'Name for this save. An existing save with the same name is replaced.',
@@ -842,6 +840,11 @@ export const STR = {
       return `${d} day${d === 1 ? '' : 's'} ago`;
     },
     saved: (ago: string) => `saved ${ago}`,
+    /**
+     * Continue over a game being played goes back to that game, not to a save; `ago` is when it
+     * was last stored, null when it has not been.
+     */
+    inProgress: (ago: string | null) => (ago ? `in progress · last saved ${ago}` : 'in progress'),
     autosaveStatus: (on: boolean, ago: string | null) =>
       !on
         ? 'Autosave off'

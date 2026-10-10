@@ -10,7 +10,10 @@ import { fmtMoney } from './dom';
 export interface SlotText {
   /** day, age and money */
   detail: string;
-  /** how long ago it was written; null when the file does not say */
+  /**
+   * how long ago it was written, null when the file does not say; for the game being played, that
+   * it is in progress and when it was last stored
+   */
   saved: string | null;
   /** the date and time it was written, for the title of the `saved` line */
   savedAt: string | null;
@@ -39,6 +42,22 @@ export function slotText(meta: SlotMeta, now: number): SlotText {
     saved: known ? STR.saves.saved(STR.saves.ago(now - meta.savedAt)) : null,
     savedAt: known ? new Date(meta.savedAt).toLocaleString() : null,
     format: formatNote(meta.version),
+  };
+}
+
+/**
+ * What Continue says when the title screen was opened over a game being played: Continue goes back
+ * to that game, so its lines are the game's own now (`meta` describes it like a save, with
+ * `savedAt` 0 when it has not been stored), never the older stored save's.
+ */
+export function liveText(meta: SlotMeta, now: number): SlotText {
+  const known = meta.savedAt > 0;
+  return {
+    detail: STR.saves.detail(meta.day, ageName(meta.age), fmtMoney(meta.money)),
+    saved: STR.saves.inProgress(known ? STR.saves.ago(now - meta.savedAt) : null),
+    savedAt: known ? new Date(meta.savedAt).toLocaleString() : null,
+    // the game in memory has no file; it is written in this build's format
+    format: null,
   };
 }
 
