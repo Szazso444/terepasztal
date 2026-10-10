@@ -32,11 +32,13 @@ import {
 // toJSON, JSON and fromJSON into a fresh fleet on the same track, runs on as the uninterrupted
 // control does; only its path is planned again. A v13 save's trains stand without a route, as every
 // load left them before. Further down: the same held at any tick of generated lines, some with a
-// fuel and water stop the train runs low by, a load that moves no car, a save made between a load
-// and the first tick, and the traffic scenarios with a round trip mid-run: no shared tile or
-// deadlock, a train backing off kept on its escape and only on one it can still run, a yielding
-// train kept waiting as long as it would have, no train asked to back off again before its last
-// back-off has run out, and a world grown around the save carrying on as the save.
+// fuel and water stop the train runs low by, a train heading for a service it can no longer reach
+// dropping it for its stop, a load that moves no car or changes where it is bound or how fast, a
+// save made between a load and the first tick, and the traffic scenarios with a round trip
+// mid-run: no shared tile or deadlock, a train backing off kept on its escape and only on one it
+// can still run, a yielding train kept waiting as long as it would have, no train asked to back
+// off again before its last back-off has run out, and a world grown around the save carrying on
+// as the save.
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -714,6 +716,120 @@ describe('a single train saved at any tick of a generated line', () => {
   });
 });
 
+/** A generated line with a service, and which of the saves made on the way there to take. */
+interface ServiceSave {
+  layout: Layout;
+  /** share of the way through the run's saves heading for the service, 0 to under 1 */
+  at: number;
+}
+const serviceSave = (rng: Rng): ServiceSave => ({ layout: serviceLayout(rng), at: rng.next() });
+/** Fewer stations, no siding, the diesel, then an earlier save; the tanks stay as low. */
+function* shrinkServiceSave(s: ServiceSave): Iterable<ServiceSave> {
+  for (const layout of shrinkLayout(s.layout))
+    if (layout.tick === s.layout.tick && layout.fuel === s.layout.fuel) yield { ...s, layout };
+  for (const at of [0, s.at / 2]) if (at < s.at) yield { ...s, at };
+}
+/**
+ * The run of the layout over SERVICE_SPAN, and the save after `at` of the way through its ticks
+ * after which the train heads for a fuel or water service; none when it never does.
+ */
+function serviceSaveOf(s: ServiceSave): { world: World; tick: number; text: string } | null {
+  const world = layoutScene(s.layout);
+  const saves: { tick: number; text: string }[] = [];
+  for (let i = 0; i < SERVICE_SPAN / GDT; i++) {
+    step(world, timeOf(i));
+    if (world.fleet.trains[0].toJSON().serviceStop) saves.push({ tick: i, text: saved(world) });
+  }
+  if (!saves.length) return null;
+  return { world, ...saves[Math.floor(s.at * saves.length)] };
+}
+/**
+ * Seeds the service-save properties run, and how many of them must head for a service within
+ * SERVICE_SPAN, so the properties are not met by cases that never do (37 of the 40 do).
+ */
+const SERVICE_SEEDS = SEEDS.slice(0, 40);
+const SERVICE_HEADING = 30;
+
+describe('a train heading for a fuel or water service when saved', () => {
+  it(
+    'drops a service it can no longer reach and carries on as a load with no service does',
+    { timeout: 300_000 },
+    () => {
+      // A load plans the path again to the service the train heads for; where there is no way to
+      // it any more, the train drops it for its stop as dispatch drops it. Loaded with the
+      // service on a tile without track, it does tick for tick what it does loaded with none: it
+      // keeps its speed for the stop, and looks for a service again when its next look is due.
+      roamingRules();
+      let heading = 0;
+      forAll(
+        serviceSave,
+        (s) => {
+          const found = serviceSaveOf(s);
+          if (!found) return;
+          heading++;
+          const { world, tick, text } = found;
+          const withService = (serviceStop: TrainJSON['serviceStop']) => {
+            const j = JSON.parse(text) as { trains: TrainJSON[] };
+            j.trains[0].serviceStop = serviceStop;
+            return loaded(world, JSON.stringify(j));
+          };
+          const was = (JSON.parse(text) as { trains: TrainJSON[] }).trains[0].serviceStop!;
+          const off = { ...was, y: ROW - 6 };
+          expect(world.track.has(off.x, off.y), 'track on the moved service tile').toBe(false);
+          const gone = withService(off);
+          const none = withService(null);
+          const end = tick + AFTER / GDT;
+          for (let k = tick + 1; k <= end; k++) {
+            step(gone, timeOf(k));
+            step(none, timeOf(k));
+            if (k !== tick + 1 && k !== end) continue;
+            const why = `${k - tick} ticks after the load`;
+            const a = gone.fleet.trains[0];
+            const b = none.fleet.trains[0];
+            expect({ state: a.state, speed: a.speed }, why).toEqual({
+              state: b.state,
+              speed: b.speed,
+            });
+            expect(JSON.parse(JSON.stringify(a.toJSON())), why).toEqual(
+              JSON.parse(JSON.stringify(b.toJSON())),
+            );
+          }
+        },
+        {
+          shrink: shrinkServiceSave,
+          shrinkBudget: 20,
+          seeds: SERVICE_SEEDS,
+          format: (s) => `${JSON.stringify(s)}, the save heading for the service`,
+        },
+      );
+      expect(heading, 'cases saved heading for a service').toBeGreaterThanOrEqual(SERVICE_HEADING);
+    },
+  );
+
+  it('saved again before the first tick, is the save that was loaded', { timeout: 300_000 }, () => {
+    // The service it heads for, what that hands out, and when it next looks for one survive a
+    // load and a save with no tick between them.
+    roamingRules();
+    let heading = 0;
+    forAll(
+      serviceSave,
+      (s) => {
+        const found = serviceSaveOf(s);
+        if (!found) return;
+        heading++;
+        const was = (JSON.parse(found.text) as { trains: TrainJSON[] }).trains[0];
+        const back = Train.fromJSON(
+          JSON.parse(JSON.stringify(was)) as TrainJSON,
+          found.world.track,
+        );
+        expect(JSON.parse(JSON.stringify(back.toJSON()))).toEqual(was);
+      },
+      { shrink: shrinkServiceSave, shrinkBudget: 20, seeds: SERVICE_SEEDS },
+    );
+    expect(heading, 'cases saved heading for a service').toBeGreaterThanOrEqual(SERVICE_HEADING);
+  });
+});
+
 /**
  * Game seconds of a generated run swept for loads, and the ticks between two of them: a quarter
  * of a second, under half a tile at full speed, so no tile of a 2×2 switch is passed unsaved.
@@ -732,29 +848,71 @@ describe('a load moves no car', () => {
       roamingRules();
       forAll(
         (rng) => ({ ...layout(rng, ['schedule', ...ROAMING]), tick: 0 }),
-        (c) => {
-          const w = layoutScene(c);
-          let pending: { back: World; after: number } | null = null;
-          for (let i = 0; i < SWEEP_SPAN / GDT; i++) {
-            step(w, timeOf(i));
-            if (pending) {
-              const gap = apart(w.fleet.trains[0].poses, pending.back.fleet.trains[0].poses);
-              const why = `tiles from the control a tick after loading the save after tick ${pending.after}`;
-              expect(gap, why).toBeLessThan(TOLERANCE);
-              pending = null;
-            }
-            if (i % SWEEP_EVERY) continue;
-            const back = loaded(w, saved(w));
-            for (const [id, at] of lastServed(w.fleet)) lastServed(back.fleet).set(id, at);
-            step(back, timeOf(i + 1));
-            pending = { back, after: i };
-          }
-        },
+        (c) =>
+          eachLoad(c, (ctl, back, after) => {
+            const gap = apart(ctl.poses, back.poses);
+            const why = `tiles from the control a tick after loading the save after tick ${after}`;
+            expect(gap, why).toBeLessThan(TOLERANCE);
+          }),
         { shrink: shrinkLayout, shrinkBudget: 20, seeds: SEEDS.slice(0, 30) },
       );
     },
   );
+
+  it(
+    'one tick after a load on the way to a service, the train runs on to the same tile at the same speed',
+    { timeout: 300_000 },
+    () => {
+      // The run of a line with a service while the tanks run low, loaded every quarter second:
+      // a load that planned the path to the stop instead of the service, or to both, or stood
+      // the train for a tick, shows here as another end to its way or another speed.
+      roamingRules();
+      let heading = 0;
+      forAll(
+        (rng) => ({ ...serviceLayout(rng), tick: 0 }),
+        (c) =>
+          eachLoad(c, (ctl, back, after) => {
+            const why = `a tick after loading the save after tick ${after}`;
+            expect(apart(ctl.poses, back.poses), `tiles from the control ${why}`).toBeLessThan(
+              TOLERANCE,
+            );
+            expect(wayOf(back), why).toEqual(wayOf(ctl));
+            expect(back.speed, `speed ${why}`).toBeCloseTo(ctl.speed, 6);
+            if (ctl.toJSON().serviceStop) heading++;
+          }),
+        { shrink: shrinkLayout, shrinkBudget: 20, seeds: SEEDS.slice(0, 30) },
+      );
+      // 3 216 of the 7 200 loads find the control heading for a service a tick on
+      expect(heading, 'loads heading for a service').toBeGreaterThan(2000);
+    },
+  );
 });
+
+/**
+ * Run the layout SWEEP_SPAN seconds, loading a save every SWEEP_EVERY ticks into a fresh fleet on
+ * the same track, and hand `check` the control's train and the loaded one a tick after each load.
+ */
+function eachLoad(c: Layout, check: (ctl: Train, back: Train, after: number) => void) {
+  const w = layoutScene(c);
+  let pending: { back: World; after: number } | null = null;
+  for (let i = 0; i < SWEEP_SPAN / GDT; i++) {
+    step(w, timeOf(i));
+    if (pending) {
+      check(w.fleet.trains[0], pending.back.fleet.trains[0], pending.after);
+      pending = null;
+    }
+    if (i % SWEEP_EVERY) continue;
+    const back = loaded(w, saved(w));
+    for (const [id, at] of lastServed(w.fleet)) lastServed(back.fleet).set(id, at);
+    step(back, timeOf(i + 1));
+    pending = { back, after: i };
+  }
+}
+/** What a train is doing and the tile its way ends on. */
+const wayOf = (t: Train) => {
+  const end = t.pathAhead().at(-1);
+  return { state: t.state, end: end ? { x: end.x, y: end.y } : null };
+};
 
 describe('a save made after a load, before the first tick', () => {
   it('is the save that was loaded', { timeout: 120_000 }, () => {
