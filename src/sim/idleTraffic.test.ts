@@ -2,9 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Dir } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import type { TrackKind } from '../world/track';
+import { findPath, type PathSegment } from '../world/pathfinding';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import { sharedTiles } from '../testing/trafficScenario';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { blockingGroups } from './recovery';
 import { Train, defaultStop, resetTrainIds, type RouteMode, type StopPlan } from './trains';
 import { resetStationIds, type Station } from './stations';
 import { locoDef, wagonDef } from '../gacha/items';
@@ -418,6 +420,16 @@ interface GenSiding {
   /** tiles of dead-end track */
   len: number;
 }
+/**
+ * A passing loop south of the main line: a switch block on x and x + 1 with its throat facing
+ * west, `len` tiles of loop track along ROW + 1, and a switch block with its throat facing east
+ * after them. The builder lays both switches in their parallel form, so a train heading either
+ * way runs into the loop without reversing and out of it at the other end.
+ */
+interface GenLoop {
+  x: number;
+  len: number;
+}
 type StopName = 'west' | 'quarry' | 'east';
 /** A scheduled train on the main line with its head at x, heading east. */
 interface GenCaller {
@@ -435,6 +447,7 @@ interface GenLine {
   end: number;
   quarry: number;
   sidings: GenSiding[];
+  loops: GenLoop[];
   idleWagons: number;
   westIdle: number;
   callers: GenCaller[];
@@ -450,25 +463,37 @@ const atEnd = (l: GenLine) => l.quarry === l.end;
 type Span = [number, number];
 const meets = (a: Span, b: Span, gap = 0) => a[0] <= b[1] + gap && b[0] <= a[1] + gap;
 const blockOf = (s: GenSiding): Span => [s.x, s.x + 1];
+/** The main-line columns a loop's two switch blocks and its loop track take. */
+const loopSpan = (o: GenLoop): Span => [o.x, o.x + o.len + 3];
+/** Where track leaves the main line: every siding's switch block and every loop. */
+const turnouts = (l: GenLine): Span[] => [...l.sidings.map(blockOf), ...l.loops.map(loopSpan)];
+/** Every switch block on the main line. */
+const switchBlocks = (l: GenLine): Span[] => [
+  ...l.sidings.map(blockOf),
+  ...l.loops.flatMap((o): Span[] => [
+    [o.x, o.x + 1],
+    [o.x + o.len + 2, o.x + o.len + 3],
+  ]),
+];
 const platformsOf = (l: GenLine) => (atEnd(l) ? [WEST, l.quarry] : [WEST, l.quarry, l.end]);
 const quarryIdleSpan = (l: GenLine): Span => [l.quarry - tilesOf(l.idleWagons) + 1, l.quarry];
 const westIdleSpan = (l: GenLine): Span => [WEST, WEST + tilesOf(l.westIdle) - 1];
 const callerSpan = (c: GenCaller): Span => [c.x - tilesOf(c.wagons) + 1, c.x];
 const idleSpans = (l: GenLine) => [quarryIdleSpan(l), ...(l.westIdle ? [westIdleSpan(l)] : [])];
 
-/** Track the builder can lay and the idle trains can stand on: switch blocks clear of both. */
+/** Track the builder can lay and the idle trains can stand on: turnouts clear of both. */
 function validTrack(l: GenLine): boolean {
   if (l.end < 40 || l.end > 58) return false;
   if (!atEnd(l) && (l.quarry < 22 || l.quarry > l.end - 10)) return false;
-  for (const s of l.sidings) {
-    const b = blockOf(s);
-    if (b[0] < 8 || b[1] > l.end - 2 || s.len < 1) return false;
+  if (l.sidings.some((s) => s.len < 1) || l.loops.some((o) => o.len < 1)) return false;
+  const spans = turnouts(l);
+  for (const b of spans) {
+    if (b[0] < 8 || b[1] > l.end - 2) return false;
     if (platformsOf(l).some((p) => meets(b, [p, p], 1))) return false;
     if (idleSpans(l).some((t) => meets(b, t, 1))) return false;
   }
-  for (let i = 0; i < l.sidings.length; i++)
-    for (let j = i + 1; j < l.sidings.length; j++)
-      if (meets(blockOf(l.sidings[i]), blockOf(l.sidings[j]), 2)) return false;
+  for (let i = 0; i < spans.length; i++)
+    for (let j = i + 1; j < spans.length; j++) if (meets(spans[i], spans[j], 2)) return false;
   return true;
 }
 /** A valid track with at least one caller, each on plain main line clear of every other train. */
@@ -478,7 +503,7 @@ function valid(l: GenLine): boolean {
   for (const c of l.callers) {
     const span = callerSpan(c);
     if (span[0] < 6 || span[1] > l.end - 1 || c.stops.length < 2) return false;
-    if (l.sidings.some((s) => meets(span, blockOf(s)))) return false;
+    if (turnouts(l).some((b) => meets(span, b))) return false;
     if (platformsOf(l).some((p) => meets(span, [p, p]))) return false;
     if (taken.some((t) => meets(span, t, 1))) return false;
     if (c.stops.includes('east') && atEnd(l)) return false;
@@ -519,8 +544,9 @@ function addCaller(rng: Rng, l: GenLine, xs: [number, number]): boolean {
 
 /**
  * Any line: none to two sidings, each facing either way and possibly too short to hold a train,
- * one caller anywhere on the line, and sometimes a second idle train at the west end. One caller
- * only, so every pair of trains has an idle one in it.
+ * sometimes a passing loop, possibly too short too, one caller anywhere on the line, and sometimes
+ * a second idle train at the west end. One caller only, so every pair of trains has an idle one
+ * in it.
  */
 function anyLine(rng: Rng): GenLine {
   for (;;) {
@@ -529,6 +555,7 @@ function anyLine(rng: Rng): GenLine {
       end,
       quarry: rng.chance(0.5) ? end : rng.int(22, end - 10),
       sidings: [],
+      loops: [],
       idleWagons: rng.int(1, 2),
       westIdle: rng.chance(0.3) ? rng.int(1, 2) : 0,
       callers: [],
@@ -537,6 +564,10 @@ function anyLine(rng: Rng): GenLine {
     for (let n = rng.int(0, 2), i = 0; l.sidings.length < n && i < 40; i++) {
       const s = { x: rng.int(8, end - 3), east: rng.chance(0.5), len: rng.int(3, 8) };
       if (validTrack({ ...l, sidings: [...l.sidings, s] })) l.sidings.push(s);
+    }
+    for (let i = 0, n = rng.chance(0.4) ? 1 : 0; l.loops.length < n && i < 40; i++) {
+      const o = { x: rng.int(8, end - 6), len: rng.int(2, 9) };
+      if (validTrack({ ...l, loops: [o] })) l.loops.push(o);
     }
     if (addCaller(rng, l, [8, end - 1]) && valid(l)) return l;
   }
@@ -551,6 +582,7 @@ function anyLine(rng: Rng): GenLine {
  */
 function hasWayAside(l: GenLine): boolean {
   if (!valid(l) || l.sidings.length !== 1 || l.callers.length !== 1 || l.westIdle) return false;
+  if (l.loops.length) return false;
   const [s] = l.sidings;
   const [c] = l.callers;
   const idle = quarryIdleSpan(l);
@@ -577,6 +609,7 @@ function clearLine(rng: Rng): GenLine {
       end,
       quarry,
       sidings: [{ x: rng.int(lo, hi), east: !ahead, len }],
+      loops: [],
       idleWagons,
       westIdle: 0,
       callers: [],
@@ -592,12 +625,65 @@ function clearLine(rng: Rng): GenLine {
 }
 
 /**
- * Smaller lines that are still `ok` (valid by default): fewer sidings and callers, fewer wagons,
- * shorter sidings.
+ * The idle train at the quarry has a passing loop to pull into and the caller cannot shut it in:
+ * one loop, long enough for the idle train, between the caller and the idle train or past the
+ * quarry of a through station; one caller, west of both.
+ */
+function hasLoopAside(l: GenLine): boolean {
+  if (!valid(l) || l.loops.length !== 1 || l.sidings.length || l.callers.length !== 1) return false;
+  if (l.westIdle) return false;
+  const [o] = l.loops;
+  const [c] = l.callers;
+  const idle = quarryIdleSpan(l);
+  const span = loopSpan(o);
+  if (o.len < tilesOf(l.idleWagons) + 2 || callerSpan(c)[1] > Math.min(span[0], idle[0]) - 2)
+    return false;
+  return span[1] <= idle[0] - 2 || (!atEnd(l) && span[0] >= l.quarry + 2);
+}
+
+/** A line on which the idle train has a passing loop to pull into (`hasLoopAside`). */
+function loopLine(rng: Rng): GenLine {
+  for (;;) {
+    const end = rng.int(40, 58);
+    const quarry = rng.chance(0.5) ? end : rng.int(22, end - 10);
+    const idleWagons = rng.int(1, 2);
+    const len = tilesOf(idleWagons) + rng.int(2, 5);
+    const ahead = quarry < end && rng.chance(0.5);
+    const [lo, hi] = ahead
+      ? [quarry + 2, end - len - 5]
+      : [WEST + 8, quarry - tilesOf(idleWagons) - len - 4];
+    if (lo > hi) continue;
+    const l: GenLine = {
+      end,
+      quarry,
+      sidings: [],
+      loops: [{ x: rng.int(lo, hi), len }],
+      idleWagons,
+      westIdle: 0,
+      callers: [],
+    };
+    if (!validTrack(l)) continue;
+    const before = Math.min(loopSpan(l.loops[0])[0], quarryIdleSpan(l)[0]) - 2;
+    for (let i = 0; i < 40 && !l.callers.length; i++) {
+      const c = { x: rng.int(8, before), wagons: rng.int(1, 2), stops: stopsFor(rng, l) };
+      if (hasLoopAside({ ...l, callers: [c] })) l.callers.push(c);
+    }
+    if (l.callers.length) return l;
+  }
+}
+
+/**
+ * Smaller lines that are still `ok` (valid by default): fewer sidings, loops and callers, fewer
+ * wagons, shorter sidings and loops.
  */
 function* shrinkLine(l: GenLine, ok = valid): Iterable<GenLine> {
   const out: GenLine[] = [];
   for (const sidings of shrinkArray(l.sidings)) out.push({ ...l, sidings });
+  for (const loops of shrinkArray(l.loops)) out.push({ ...l, loops });
+  l.loops.forEach((o, i) => {
+    for (const len of shrinkInt(o.len, 1))
+      out.push({ ...l, loops: l.loops.map((d, j) => (j === i ? { ...d, len } : d)) });
+  });
   for (const callers of shrinkArray(l.callers)) out.push({ ...l, callers });
   if (l.westIdle) out.push({ ...l, westIdle: 0 });
   for (const idleWagons of shrinkInt(l.idleWagons, 1)) out.push({ ...l, idleWagons });
@@ -615,16 +701,30 @@ function* shrinkLine(l: GenLine, ok = valid): Iterable<GenLine> {
 /** Lays a generated line and its stations. */
 function layLine(l: GenLine) {
   const w = simWorld({ terrain: 'grass', size: 64 });
-  const blocks = [...l.sidings].sort((a, b) => a.x - b.x);
+  // every switch block on the main line, west to east: (x, rot)
+  const blocks: [number, number][] = [
+    ...l.sidings.map((s): [number, number] => [s.x, s.east ? 1 : 7]),
+    ...l.loops.flatMap((o): [number, number][] => [
+      [o.x, 7],
+      [o.x + o.len + 2, 1],
+    ]),
+  ].sort((a, b) => a[0] - b[0]);
   let from = 4;
-  for (const s of blocks) {
-    lay(w, s.x, ROW, 'switch', s.east ? 1 : 7);
-    for (let y = ROW + 2; y < ROW + 2 + s.len; y++)
-      lay(w, s.east ? s.x : s.x + 1, y, 'straight', 0);
-    if (s.x - 1 >= from) line(w, from, ROW, s.x - 1);
-    from = s.x + 2;
+  for (const [x, rot] of blocks) {
+    lay(w, x, ROW, 'switch', rot);
+    if (x - 1 >= from) line(w, from, ROW, x - 1);
+    from = x + 2;
   }
   line(w, from, ROW, l.end);
+  for (const s of l.sidings)
+    for (let y = ROW + 2; y < ROW + 2 + s.len; y++)
+      lay(w, s.east ? s.x : s.x + 1, y, 'straight', 0);
+  for (const o of l.loops) {
+    line(w, o.x + 2, ROW + 1, o.x + o.len + 1);
+    // the loop track beside them bends both switches' branches into it
+    for (const x of [o.x, o.x + o.len + 2])
+      expect(w.track.get(x, ROW)!.form, `the switch at ${x} leads into the loop`).toBe('parallel');
+  }
   const stations: Record<StopName, Station | null> = {
     west: station(w, 'warehouse', WEST, ROW - 1),
     quarry: station(w, 'quarry', l.quarry, ROW - 1),
@@ -656,6 +756,77 @@ const IN_THE_WAY: string[] = [STR.traffic.waitAside, STR.traffic.noWayAside];
 const SAY_IN_WAY = 3;
 /** Longest an idle train may keep saying it is in the way after nobody needs its track. */
 const SAY_CLEAR = 0.5;
+/** The notes that say a train has no way on: held in a jam none of its trains can clear, or cut off. */
+const NO_WAY_ON: string[] = [STR.traffic.jammed, STR.traffic.noWayOn];
+/** States the train panel names as having no way on ('No route', stranded off the track). */
+const NO_WAY_STATES: string[] = ['noRoute', 'stranded'];
+/**
+ * Longest a train that is not idle may stand (its head within STOOD of where it stopped, not
+ * loading) with no deadlock counted against it and neither a note nor a state saying it has no way
+ * on: past the 90 s a yielding train gives the line before it sets off anyway.
+ */
+const STALL = 120;
+/** Tiles a train's head may move and still stand where it stood, as the jam note counts it. */
+const STOOD = 0.5;
+/** Seconds a yielding train's note may lag a change of track: it looks again every 2 s. */
+const NOTE_LAG = 2 + 2 * GDT;
+
+/** A train as it stood before a step. */
+interface Before {
+  state: string;
+  x: number;
+  y: number;
+  holding: boolean;
+  atStation: number | null;
+  stop: number | null;
+  ends: PathSegment[];
+}
+/** The private Train member a refuge search starts from when the train backs off rear first. */
+interface Reversible {
+  reversedTrail(): { trail: { seg: PathSegment }[] };
+}
+/** Where a train's head and rear stand, as the states it would set off from, either end first. */
+function endsOf(t: Train): PathSegment[] {
+  const rear = (t as unknown as Reversible).reversedTrail().trail.at(-1)?.seg;
+  return [t.headSeg, rear].filter((s): s is PathSegment => !!s);
+}
+/** The station a train is bound for next: its fuel detour, else its stop. */
+function nextStop(t: Train): number | null {
+  return t.detour ?? (t.route.length ? t.route[t.routeIndex % t.route.length] : null);
+}
+/**
+ * The oracle for a way on to `stationId`: from a state on one of its platforms, or with a way there
+ * that never reverses, as findPath finds it for the consist on the bare track.
+ */
+function wayTo(w: SimWorld, t: Train, stationId: number) {
+  const s = w.builder.stationById(stationId);
+  const wk = w.track.w;
+  const plat = new Set((s ? w.builder.platformTiles(s) : []).map((p) => p.y * wk + p.x));
+  const isStop = (x: number, y: number) => plat.has(y * wk + x);
+  return (from: { x: number; y: number; in: Dir }) =>
+    isStop(from.x, from.y) ||
+    findPath(w.track, from, isStop, Infinity, undefined, t.canUse) !== null;
+}
+/**
+ * Whether a train `length` long that stops with its head at the centre of the last tile of `way`
+ * can go on from there, head first or rear first.
+ */
+function wayOnFrom(
+  w: SimWorld,
+  way: readonly PathSegment[],
+  length: number,
+  to: (from: { x: number; y: number; in: Dir }) => boolean,
+) {
+  const last = way[way.length - 1];
+  if (!last || to(last)) return !!last;
+  let behind = 0;
+  for (let i = way.length - 1; i >= 0; i--) {
+    const s = way[i];
+    behind += w.track.segLength(s.x, s.y, s.in, s.out) / (i === way.length - 1 ? 2 : 1);
+    if (behind >= length || i === 0) return to({ x: s.x, y: s.y, in: s.out });
+  }
+  return false;
+}
 
 /**
  * Steps the fleet as the game does and checks after every step what must hold whatever the line:
@@ -663,6 +834,12 @@ const SAY_CLEAR = 0.5;
  * one among them; an idle train has no path ahead, never moves, and claims no tile but those under
  * its cars; a train making way says so; and an idle train says it is in the way only while another
  * train's route crosses its tiles, and says so within SAY_IN_WAY seconds of standing there.
+ *
+ * And for every train, idle or not: it pulls aside only to where it has a way on to the station it
+ * is bound for (an idle one, back to the station it stood at) if it had one where it stood; it is
+ * never left standing longer than STALL with no deadlock counted against it and no note that says
+ * it has no way on; and it says it is jammed only while it stands in a jam declared a deadlock, and
+ * that it has no track on only when it has none.
  */
 function watch(w: SimWorld) {
   let now = 0;
@@ -673,10 +850,74 @@ function watch(w: SimWorld) {
     arrivals.set(t.id, (arrivals.get(t.id) ?? 0) + 1);
     next?.(t, s);
   };
+  // every deadlock the jam resolution declares: where each train of it stood, and when one counted
+  const traffic = w.fleet.traffic;
+  const declare = traffic.deadlock.bind(traffic);
+  const declared = new Map<number, { x: number; y: number }>();
+  const counted = new Map<number, number>();
+  traffic.deadlock = (chain, at) => {
+    const was = traffic.counters.deadlocks;
+    declare(chain, at);
+    for (const t of chain) {
+      const p = t.poses[0];
+      if (p) declared.set(t.id, { x: p.x, y: p.y });
+      if (traffic.counters.deadlocks > was) counted.set(t.id, at);
+    }
+  };
+  const stood = new Map<number, { since: number; x: number; y: number }>();
+  const wrongNoWay = new Map<number, number>();
   const inWay = new Map<number, number>();
   const clear = new Map<number, number>();
   const wk = w.track.w;
-  const check = (before: Map<number, { state: string; x: number; y: number }>) => {
+  /** A train that set off aside in this step to where it has no way on, when it had one. */
+  const strandedAside = (t: Train, was: Before | undefined) => {
+    if (!was || was.holding || !t.holding) return null;
+    const bound = t.makingWay ? (was.atStation ?? was.stop) : nextStop(t);
+    if (bound === null) return null;
+    const to = wayTo(w, t, bound);
+    if (!was.ends.some(to)) return null;
+    const way = t.pathAhead();
+    if (wayOnFrom(w, way, t.length, to)) return null;
+    const end = way.at(-1);
+    const name = w.builder.stationById(bound)?.name;
+    return `pulls aside to ${end?.x},${end?.y} with no way on to ${name} from there`;
+  };
+  const truthful = (t: Train, groups: Set<number>) => {
+    const p = t.poses[0];
+    if (t.lastMessage === STR.traffic.jammed) {
+      const j = declared.get(t.id);
+      if (!j) return 'says it is jammed in no declared deadlock';
+      const off = Math.hypot(p.x - j.x, p.y - j.y);
+      // the note holds within STOOD of where it was first held, each later call within STOOD too
+      if (off > 2 * STOOD)
+        return `says it is jammed ${off.toFixed(2)} tiles from where it was held`;
+      if (t.holding || (t.state !== 'moving' && t.state !== 'yielding'))
+        return `says it is jammed while ${t.state}${t.holding ? ', holding an escape' : ''}`;
+      if (!groups.has(t.id)) return 'says it is jammed, held by no train';
+    }
+    // a yielding train looks again every 2 s: its note may lag a change of track by that long
+    const says = t.lastMessage === STR.traffic.noWayOn;
+    const bound = says || t.state === 'yielding' ? nextStop(t) : null;
+    const to = bound === null ? null : wayTo(w, t, bound);
+    const h = t.headSeg;
+    const wrong = !!to && !!h && (to(h) || to({ ...h, in: h.out })) === says;
+    if (wrong && (says || !t.holding)) {
+      const since = wrongNoWay.get(t.id) ?? now;
+      wrongNoWay.set(t.id, since);
+      if (now - since > NOTE_LAG)
+        return says
+          ? `says it has no track on to its next stop, which it has had for ${(now - since).toFixed(2)} s`
+          : `has waited aside with no track on to its next stop for ${(now - since).toFixed(2)} s, saying "${t.lastMessage}"`;
+    } else wrongNoWay.delete(t.id);
+    // notes about a yield hold only while the train pulls aside or waits where it did
+    const yielding = t.state === 'yielding' || (t.state === 'moving' && t.holding && !t.makingWay);
+    if (t.lastMessage === STR.traffic.pullingAside && !yielding)
+      return `says it is pulling aside while ${t.state}${t.holding ? '' : ', not holding'}`;
+    if (t.lastMessage === STR.traffic.replan && t.state !== 'yielding' && t.state !== 'idle')
+      return `says it waits for a new escape plan while ${t.state}`;
+    return null;
+  };
+  const check = (before: Map<number, Before>) => {
     const at = `at ${now.toFixed(2)} s`;
     const trains = w.fleet.trains;
     const shared = sharedTiles(trains, wk);
@@ -688,8 +929,29 @@ function watch(w: SimWorld) {
         if (w.fleet.byId(id)?.state === 'idle') return `${at} idle train #${id} holds ${s.name}`;
     }
     const routes = new Map(trains.map((t) => [t.id, t.pathTileKeys(wk)]));
+    const groups = new Set(blockingGroups(trains).flatMap((g) => g.map((t) => t.id)));
     for (const t of trains) {
       const name = `#${t.id}`;
+      const aside = strandedAside(t, before.get(t.id));
+      if (aside) return `${at} ${name} ${aside}`;
+      const untrue = truthful(t, groups);
+      if (untrue) return `${at} ${name} ${untrue}`;
+      const p = t.poses[0];
+      const s = stood.get(t.id);
+      if (
+        !s ||
+        t.state === 'idle' ||
+        t.state === 'loading' ||
+        Math.hypot(p.x - s.x, p.y - s.y) > STOOD
+      )
+        stood.set(t.id, { since: now, x: p.x, y: p.y });
+      else if (
+        now - s.since > STALL &&
+        (counted.get(t.id) ?? -Infinity) < s.since &&
+        !NO_WAY_ON.includes(t.lastMessage) &&
+        !NO_WAY_STATES.includes(t.state)
+      )
+        return `${at} ${name} has stood ${(now - s.since).toFixed(1)} s ${t.state} saying "${t.lastMessage}", with no deadlock counted`;
       if (t.makingWay) {
         if (t.state !== 'moving' || !t.holding)
           return `${at} ${name} makes way while ${t.state}${t.holding ? '' : ', not holding'}`;
@@ -727,7 +989,18 @@ function watch(w: SimWorld) {
   };
   const step = () => {
     const before = new Map(
-      w.fleet.trains.map((t) => [t.id, { state: t.state, x: t.poses[0].x, y: t.poses[0].y }]),
+      w.fleet.trains.map((t): [number, Before] => [
+        t.id,
+        {
+          state: t.state,
+          x: t.poses[0].x,
+          y: t.poses[0].y,
+          holding: t.holding,
+          atStation: t.atStation?.id ?? null,
+          stop: nextStop(t),
+          ends: endsOf(t),
+        },
+      ]),
     );
     w.fleet.tick(GDT, (now += GDT));
     broken ??= check(before);
@@ -789,6 +1062,40 @@ function story(w: SimWorld, sim: ReturnType<typeof watch>) {
   return `${sim.broken ?? 'no broken step'}; after ${sim.now.toFixed(1)} s: ${trains}; counters ${JSON.stringify({ overlaps, deadlocks, stuck })}`;
 }
 
+/**
+ * A main-line column to take up: plain track (off every switch block and platform) under no train,
+ * on the way a train waiting where it pulled aside wants to go on by when there is one; `pick` is
+ * the fraction of the way along the ones that fit. Null when none fits.
+ */
+function tileToCut(w: SimWorld, l: GenLine, pick: number): number | null {
+  const wk = w.track.w;
+  const under = new Set(w.fleet.trains.flatMap((t) => t.occupancyKeys(wk)));
+  const plat = new Set(
+    w.builder.stations.flatMap((s) => w.builder.platformTiles(s)).map((p) => p.y * wk + p.x),
+  );
+  const plain: number[] = [];
+  for (let x = 4; x <= l.end; x++) {
+    const k = ROW * wk + x;
+    if (!switchBlocks(l).some((b) => meets(b, [x, x])) && !plat.has(k) && !under.has(k))
+      plain.push(x);
+  }
+  const wanted = new Set(
+    w.fleet.trains.filter((t) => t.state === 'yielding').flatMap((t) => [...t.pathTileKeys(wk)]),
+  );
+  const onWay = plain.filter((x) => wanted.has(ROW * wk + x));
+  const fit = onWay.length ? onWay : plain;
+  return fit.length ? fit[Math.floor(pick * fit.length)] : null;
+}
+
+/**
+ * Lines with a way aside the idle train can run straight into, and the movement properties hold
+ * on them; lines whose only siding faces away need shunting (#189).
+ */
+const USABLE = [
+  { kind: 'a siding facing it', gen: clearLine, ok: hasWayAside },
+  { kind: 'a passing loop', gen: loopLine, ok: hasLoopAside },
+];
+
 /** Seeds per property: each case runs a few thousand fleet ticks. */
 const LINE_SEEDS = Array.from({ length: 24 }, (_, i) => i + 1);
 /** Each property runs LINE_SEEDS cases of minutes of game time: generous on a loaded runner. */
@@ -839,24 +1146,120 @@ describe('idle trains on generated lines', () => {
     },
   );
 
+  // property B, restated for #151: a jam no siding can clear (#189 is shunting) is counted and
+  // said, never a train standing silent; checked at every step by `watch`
   it(
-    'let the train behind run its schedule when there is a way aside without reversing',
+    'never leave a train with no way on without a counted deadlock or a note saying so',
     PROPERTY,
     () => {
-      forAll(
-        clearLine,
-        (l) => {
-          const { w, sim, callers, idled } = setUp(l);
-          expect(idled, 'the idle train never idled').toBe(true);
-          const [caller] = callers;
-          const ran = sim.until(() => sim.arrivals(caller) >= 3, 300);
-          expect(ran, `the caller stopped running: ${story(w, sim)}`).toBe(true);
+      interface Case {
+        line: GenLine;
+        /** seconds into the run at which track is laid far off: every escape goes stale */
+        builds: number[];
+      }
+      forAll<Case>(
+        (rng) => ({
+          line: anyLine(rng),
+          builds: Array.from({ length: rng.int(0, 3) }, () => rng.int(5, 300)).sort(
+            (a, b) => a - b,
+          ),
+        }),
+        ({ line: l, builds }) => {
+          const { w, sim, idled } = setUp(l);
+          expect(idled, 'the roaming trains never idled').toBe(true);
+          const stop = () => sim.broken !== null;
+          let at = 0;
+          for (const t of builds) {
+            sim.until(stop, t - at);
+            w.track.place(w.track.w - 2, w.track.h - 2, 'straight', 1);
+            at = t;
+          }
+          sim.until(stop, STALL * 3 - at);
           expect(sim.broken, story(w, sim)).toBeNull();
         },
-        { seeds: LINE_SEEDS, shrink: (l) => shrinkLine(l, hasWayAside) },
+        {
+          seeds: LINE_SEEDS,
+          shrink: function* (c) {
+            for (const builds of shrinkArray(c.builds)) yield { ...c, builds };
+            for (const line of shrinkLine(c.line)) yield { ...c, line };
+          },
+        },
       );
     },
   );
+
+  // the note half of property B: no generated line strands a train in a siding, so here the line
+  // itself is cut, at a tile a train waiting where it pulled aside wants to take, and laid again
+  it(
+    'say they have no track on only while they have none, as track is taken up and laid again',
+    PROPERTY,
+    () => {
+      interface Case {
+        line: GenLine;
+        /** seconds into the run from which a tile is taken up once a train waits aside */
+        from: number;
+        /** seconds the tile stays out */
+        out: number;
+        /** which of the tiles fit to take up, as a fraction of their number */
+        pick: number;
+      }
+      forAll<Case>(
+        (rng) => ({
+          line: anyLine(rng),
+          from: rng.int(5, 120),
+          out: rng.int(5, 60),
+          pick: rng.next(),
+        }),
+        ({ line: l, from, out, pick }) => {
+          const { w, sim, idled } = setUp(l);
+          expect(idled, 'the roaming trains never idled').toBe(true);
+          const stop = () => sim.broken !== null;
+          sim.until(stop, from);
+          sim.until(() => stop() || w.fleet.trains.some((t) => t.state === 'yielding'), 60);
+          const x = tileToCut(w, l, pick);
+          if (x !== null && !stop()) {
+            w.builder.free = true;
+            expect(w.builder.removeTrack(x, ROW)).toBe(true);
+            w.builder.free = false;
+            sim.until(stop, out);
+            line(w, x, ROW, x);
+          }
+          sim.until(stop, STALL * 2);
+          expect(
+            sim.broken,
+            `${x === null ? 'nothing cut' : `cut at x ${x}`}: ${story(w, sim)}`,
+          ).toBeNull();
+        },
+        {
+          seeds: LINE_SEEDS,
+          shrink: function* (c) {
+            for (const line of shrinkLine(c.line)) yield { ...c, line };
+            for (const out of shrinkInt(c.out, 5)) yield { ...c, out };
+          },
+        },
+      );
+    },
+  );
+
+  for (const { kind, gen, ok } of USABLE)
+    it(
+      `let the train behind run its schedule when there is a way aside without reversing (${kind})`,
+      PROPERTY,
+      () => {
+        forAll(
+          gen,
+          (l) => {
+            const { w, sim, callers, idled } = setUp(l);
+            expect(idled, 'the idle train never idled').toBe(true);
+            const [caller] = callers;
+            const ran = sim.until(() => sim.arrivals(caller) >= 3, 300);
+            expect(ran, `the caller stopped running: ${story(w, sim)}`).toBe(true);
+            expect(sim.broken, story(w, sim)).toBeNull();
+          },
+          { seeds: LINE_SEEDS, shrink: (l) => shrinkLine(l, ok) },
+        );
+      },
+    );
 
   it('take up work where they stand at their next look once cargo turns up', PROPERTY, () => {
     interface Case {
@@ -901,38 +1304,39 @@ describe('idle trains on generated lines', () => {
     );
   });
 
-  it('take up work again from where they made way', PROPERTY, () => {
-    forAll(
-      clearLine,
-      (l) => {
-        // the caller calls without loading, and leaves service once the idle train has made way
-        // for it: on single track, a loaded train meeting it would have to shunt
-        const { w, sim, stations, idle, callers, idled } = setUp(l, 'none');
-        expect(idled, 'the idle train never idled').toBe(true);
-        const [caller] = callers;
-        expect(
-          sim.until(() => sim.arrivals(caller) >= 2, 300),
-          story(w, sim),
-        ).toBe(true);
-        w.fleet.recall(caller);
-        // it may still be on its way aside
-        expect(
-          sim.until(() => idle.state === 'idle', 60),
-          story(w, sim),
-        ).toBe(true);
-        stations.quarry!.store('stone', 40);
-        expect(
-          sim.until(() => idle.totalCargo() > 0, 120),
-          `never loaded: ${story(w, sim)}`,
-        ).toBe(true);
-        const delivered = () =>
-          [stations.west, stations.east].some((s) => (s?.stored('stone') ?? 0) > 0);
-        expect(sim.until(delivered, 200), `never delivered: ${story(w, sim)}`).toBe(true);
-        expect(sim.broken, story(w, sim)).toBeNull();
-      },
-      { seeds: LINE_SEEDS, shrink: (l) => shrinkLine(l, hasWayAside) },
-    );
-  });
+  for (const { kind, gen, ok } of USABLE)
+    it(`take up work again from where they made way (${kind})`, PROPERTY, () => {
+      forAll(
+        gen,
+        (l) => {
+          // the caller calls without loading, and leaves service once the idle train has made way
+          // for it: on single track, a loaded train meeting it would have to shunt
+          const { w, sim, stations, idle, callers, idled } = setUp(l, 'none');
+          expect(idled, 'the idle train never idled').toBe(true);
+          const [caller] = callers;
+          expect(
+            sim.until(() => sim.arrivals(caller) >= 2, 300),
+            story(w, sim),
+          ).toBe(true);
+          w.fleet.recall(caller);
+          // it may still be on its way aside
+          expect(
+            sim.until(() => idle.state === 'idle', 60),
+            story(w, sim),
+          ).toBe(true);
+          stations.quarry!.store('stone', 40);
+          expect(
+            sim.until(() => idle.totalCargo() > 0, 120),
+            `never loaded: ${story(w, sim)}`,
+          ).toBe(true);
+          const delivered = () =>
+            [stations.west, stations.east].some((s) => (s?.stored('stone') ?? 0) > 0);
+          expect(sim.until(delivered, 200), `never delivered: ${story(w, sim)}`).toBe(true);
+          expect(sim.broken, story(w, sim)).toBeNull();
+        },
+        { seeds: LINE_SEEDS, shrink: (l) => shrinkLine(l, ok) },
+      );
+    });
 
   it('back the train behind off only to where it can go on to its stop', SLOW, () => {
     // the idle train's way aside is the siding at x 24, which the caller stands across. The
@@ -945,6 +1349,7 @@ describe('idle trains on generated lines', () => {
         { x: 24, east: true, len: 5 },
         { x: 45, east: false, len: 5 },
       ],
+      loops: [],
       idleWagons: 1,
       westIdle: 0,
       callers: [{ x: 30, wagons: 1, stops: ['quarry', 'west'] }],
