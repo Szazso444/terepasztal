@@ -22,6 +22,23 @@ captures stay on that branch). Nothing reaches the game yet: `public/assets/roll
   gauge), the user's verdict on pilot 5 and on the steam trucks swinging clear of the frame on curves, and a
   home for resolution-4 frames beside the resolution-1 Mk48 (a group of their own, the Mk48 scaled up, or
   several sheets per group). No running gear animates: wheels and rods are baked into still frames.
+- Packing them reproduces the pilot's `public/assets/rolling.*` and `wagons.*` byte for byte:
+  `node tools/pack-atlas.mjs rolling --src art-src/train-models/rolling --out <dir> --max 4096` and
+  `node tools/pack-atlas.mjs wagons --prefix rolling/ --src art-src/train-models/wagons --out <dir> --max 4096`
+  (4096 is the game stage's `max_px`; the packer's default 1024 packs the same frames differently).
+
+State per locomotive. Every part below has the 25 drawn facings of `src/sim/body.ts`, an anchor on every frame,
+`resolution` 4 and no animation frames. The data each one waits for is the pilot's row in `src/data/locomotives.json`
+on `local/train-models`; develop's `src/sim` reads none of `pivots` or `coupled` yet.
+
+| Id | Parts and own bogies | On develop's data as it is | Waits for |
+| --- | --- | --- | --- |
+| `rocket` | body | standard-gauge sprite on the narrow Rocket (`locoFrame` takes `loco_rocket_*` for either gauge) | a narrow-gauge re-render |
+| `flying_scotsman` | engine, tender; `flying_scotsman_leading`, `_trailing` | develop's resolution-1 generic trucks drawn under the baked drivers and tender axles | `bogieStyle {engine: [own leading, own trailing], tender: none}`, `pivots`, `coupled`; the author's verdict on the leading truck swinging clear of the frame |
+| `black_five` | engine, tender; `black_five_leading` | as the Flying Scotsman | `bogieStyle {engine: [own leading, none], tender: none}`, `pivots`, `coupled`; the same verdict |
+| `nine_f` | engine, tender; `nine_f_pony` | as the Flying Scotsman | `bogieStyle {engine: [own pony, none], tender: none}`, `pivots`, `coupled`; the same verdict |
+| `f7` | body; `f7_front`, `f7_rear` | the body stands on resolution-1 generic trucks at the default pivots | `bogieStyle {body: [own front, own rear]}`, `pivots`; the author's verdict on pilot 5 (rear end gear dropped: the reconstruction has only a wall there) |
+| `sd40` | body; `sd40_front`, `sd40_rear` | a three-tile body in develop's medium (two-tile) slot overruns the next vehicle | `size: large`, `plan: rigid`, `bogies: 2`, own `bogieStyle`, `pivots`; in the pilot, large barred it from regular track |
 
 ## Bridge kit v1 — 2026-09-27 (source kit complete)
 

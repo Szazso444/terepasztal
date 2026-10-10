@@ -189,7 +189,8 @@ Five, 9F, F7, SD40-2 and their own bogies; 25 facings, resolution 4). They are n
 diesels stand on the `pivots` and `coupled` that `src/data` and `src/sim/body.ts` do not have yet, the Rocket is drawn on
 standard gauge while the game's Rocket is narrow, and `art-src/rolling` packs the Mk48 at resolution 1 (one atlas file
 has one resolution). The game stage still exports into `art-src/<group>/` and refuses a group that holds frames of
-another resolution, so a run cannot shrink the Mk48. `assets/source/base-v1/RESUME.md` has the state per locomotive.
+another resolution, so a run cannot shrink the Mk48. `assets/source/base-v1/RESUME.md` has the state per locomotive
+and the two `tools/pack-atlas.mjs` commands (`--max 4096`, the game stage's `max_px`) that rebuild the pilot's atlases.
 
 ## Game frames
 - `game_frame` in `assets.csv` is the frame key the asset replaces; empty = the asset stays out of the game.
