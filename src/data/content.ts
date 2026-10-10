@@ -3,9 +3,12 @@
  * replace any table with an edited copy stored in localStorage. Each stored table carries a stamp
  * of the shipped table it was made from and applies only while that table is unchanged, so an
  * override never masks a later shipped change. A stale or malformed table is set aside with a
- * console warning and the shipped one loads in its place. Overrides are applied once, here, at
- * module load so every consumer sees one consistent bundle for the session. Editing content
- * therefore takes effect on the next page load (the editor reloads for you).
+ * console warning and the shipped one loads in its place. An override stored before stamps, in
+ * the old whole-bundle format, is converted at load: each table of it that differs from today's
+ * shipped one is stamped with today's table and checked like any other, and the stored value is
+ * rewritten in the per-table format so the conversion runs once. Overrides are applied once,
+ * here, at module load so every consumer sees one consistent bundle for the session. Editing
+ * content therefore takes effect on the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
 import wagonJson from './wagons.json';
@@ -503,7 +506,7 @@ export interface ContentOverrideReport {
   applied: ContentKey[];
   /**
    * stored tables this session ignores: `stale` when the shipped table changed since the override
-   * was made (or the override predates stamps), `invalid` when it is malformed or fails validation
+   * was made, `invalid` when it is malformed or fails validation
    */
   setAside: { key: ContentKey; reason: 'stale' | 'invalid'; problems: string[] }[];
 }
@@ -850,9 +853,30 @@ export function validateContent(b: ContentBundle): string[] {
 type SetAsideEntry = ContentOverrideReport['setAside'][number];
 
 /**
+ * Store the tables of an override read in the old whole-bundle format in the per-table one, each
+ * stamped with today's shipped table, set-aside ones included so they stay stored like any other.
+ * Tables equal to the shipped ones are left out. When the write fails the next load converts again.
+ */
+function rewriteLegacy(tables: Map<ContentKey, unknown>) {
+  const keys = [...tables.keys()];
+  if (writeContentOverrides(Object.fromEntries(tables) as Partial<ContentBundle>))
+    console.info(
+      `[content] stored overrides converted from the old whole-bundle format: ${
+        keys.length ? keys.join(', ') : 'no table differs from the shipped ones'
+      }`,
+    );
+  else
+    console.warn(
+      '[content] stored overrides in the old whole-bundle format could not be rewritten; they convert again next load',
+    );
+}
+
+/**
  * The shipped bundle with every stored table that may apply: one stamped with the current shipped
- * table, that validates together with the others. Everything else is set aside, with a warning,
- * and stays in storage until the editor next writes or resets.
+ * table, that validates together with the others. A table stored in the old whole-bundle format
+ * counts as stamped with today's table when it differs from it, and the stored value is rewritten
+ * in the per-table format. Everything else is set aside, with a warning, and stays in storage
+ * until the editor next writes or resets.
  */
 function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport } {
   const base = clone(DEFAULT_CONTENT);
@@ -876,10 +900,11 @@ function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport 
     notes.set(key, why);
   };
   const candidates = new Map<ContentKey, unknown>();
+  // The old whole-bundle format holds every table the editor saved, edited or not.
+  const legacy =
+    stored.format === undefined ? CONTENT_KEYS.filter((k) => stored[k] !== undefined) : [];
   if (stored.format === undefined) {
-    for (const k of CONTENT_KEYS)
-      if (stored[k] !== undefined)
-        setAside(k, 'stale', [], 'stored in the old whole-bundle format, without a stamp');
+    for (const k of legacy) if (!sameAsShipped(k, stored[k])) candidates.set(k, stored[k]);
   } else if (stored.format !== CONTENT_FORMAT) {
     const tables = isObj(stored.tables) ? stored.tables : {};
     const problem = `unknown storage format ${JSON.stringify(stored.format)}`;
@@ -947,6 +972,7 @@ function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport 
     }
   }
   for (const [k, problems] of invalid) setAside(k, 'invalid', problems, 'fails validation');
+  if (legacy.length) rewriteLegacy(candidates);
 
   report.applied = order(applied);
   for (const k of report.applied)

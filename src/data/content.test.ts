@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ContentBundle, ContentKey } from './content';
+import type { ContentBundle, ContentKey, HouseConfig, StationLevels, TrackConfig } from './content';
 
 type ContentModule = typeof import('./content');
 type Table = Record<string, unknown>;
@@ -10,14 +10,14 @@ function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
 }
 
-/** A Storage over a map, holding `value` under the overrides key. */
+/** A Storage over a map, holding `value` under the overrides key; writes are spied on. */
 function memoryStorage(value?: unknown) {
   const m = new Map<string, string>();
   if (value !== undefined) m.set(KEY, typeof value === 'string' ? value : JSON.stringify(value));
   return {
     getItem: (k: string) => m.get(k) ?? null,
-    setItem: (k: string, v: string) => void m.set(k, String(v)),
-    removeItem: (k: string) => void m.delete(k),
+    setItem: vi.fn((k: string, v: string) => void m.set(k, String(v))),
+    removeItem: vi.fn((k: string) => void m.delete(k)),
     clear: () => m.clear(),
     key: (i: number) => [...m.keys()][i] ?? null,
     get length() {
@@ -55,8 +55,46 @@ function warnedAbout(key: string) {
   return vi.mocked(console.warn).mock.calls.some((c) => String(c[0]).includes(`"${key}"`));
 }
 
+/** The level table and houses of an override stored before one level per age (#92), verbatim. */
+const PRE_92_STATION_LEVELS = {
+  capacity: [60, 120, 200, 320, 500],
+  loadRate: [4, 6, 9, 13, 18],
+  platforms: [1, 1, 2, 2, 3],
+  production: [30, 50, 80, 120, 170],
+  upgradeCostMul: [0, 0.8, 1.2, 1.8, 2.6],
+  spriteByLevel: [1, 2, 3, 4, 5],
+  maxLevelByTier: [3, 4, 5],
+  crew: [2, 3, 5, 8, 12],
+};
+const PRE_92_HOUSES: HouseConfig = {
+  capacity: [20, 60, 140, 300],
+  startResidents: 8,
+  constructionDays: 2,
+  growthDays: 0.5,
+  autoUpgradeDays: 3,
+  upgradeCost: [
+    { wood: 60, stone: 40 },
+    { wood: 80, stone: 140, iron: 30 },
+    { stone: 260, iron: 90 },
+  ],
+  spawnAt: 0.8,
+  spawnMulCap: 3,
+  trafficPerMul: 10,
+  trafficWindowDays: 3,
+  bonusIndustry: 5,
+  bonusFirstTrain: 3,
+};
+
+/** What the editor stored before stamps: the whole live bundle, edited or not, with no format. */
+function oldBundle(edit: (b: ContentBundle) => void) {
+  const b = clone(shipped.content);
+  edit(b);
+  return b;
+}
+
 beforeEach(async () => {
   vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.spyOn(console, 'info').mockImplementation(() => {});
   shipped = await load();
 });
 afterEach(() => {
@@ -66,18 +104,18 @@ afterEach(() => {
 
 describe('a bad stored override never stops the load', () => {
   it.each(['{"contracts":{}}', '{"locomotives":null}', '{"stations":{"defs":[]}}', '{"track":{}}'])(
-    'old whole-bundle value %s: shipped tables, set aside as stale, kept in storage',
+    'old whole-bundle value %s: shipped tables, set aside as invalid, kept in storage',
     async (raw) => {
       const mod = await load(raw);
       expect(mod.content).toEqual(shipped.content);
-      const key = Object.keys(JSON.parse(raw) as Table)[0];
-      expect(mod.contentOverrideReport()).toEqual({
-        applied: [],
-        setAside: [{ key, reason: 'stale', problems: [] }],
-      });
+      const [[key, data]] = Object.entries(JSON.parse(raw) as Table);
+      const { applied, setAside } = mod.contentOverrideReport();
+      expect(applied).toEqual([]);
+      expect(setAside.map((s) => [s.key, s.reason])).toEqual([[key, 'invalid']]);
+      expect(setAside[0].problems.length).toBeGreaterThan(0);
       expect(mod.contentIsCustom()).toBe(false);
       expect(warnedAbout(key)).toBe(true);
-      expect(localStorage.getItem(KEY)).toBe(raw);
+      expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(stamped({ [key]: data }));
     },
   );
 
@@ -255,6 +293,63 @@ describe('applying stored tables', () => {
     const report = mod.contentOverrideReport();
     expect(report.applied).toEqual(['stations']);
     expect(report.setAside.map((s) => [s.key, s.reason])).toEqual([['cargo', 'invalid']]);
+  });
+});
+
+describe('an override in the old whole-bundle format', () => {
+  it('converts an edited table into an applied override stamped with the shipped table', async () => {
+    const old = oldBundle((b) => (b.houses.startResidents += 1));
+    const mod = await load(old);
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['houses'], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(true);
+    expect(mod.content.houses).toEqual(old.houses);
+    for (const k of mod.CONTENT_KEYS)
+      if (k !== 'houses') expect(mod.content[k], k).toEqual(shipped.content[k]);
+    expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(stamped({ houses: old.houses }));
+  });
+
+  it('sets aside only a table that fails validation and converts one whose shipped table changed', async () => {
+    const old = oldBundle((b) => {
+      b.stations.levels = clone(PRE_92_STATION_LEVELS) as unknown as StationLevels;
+      b.houses = clone(PRE_92_HOUSES);
+    });
+    const mod = await load(old);
+    const report = mod.contentOverrideReport();
+    expect(report.applied).toEqual(['houses']);
+    expect(report.setAside.map((s) => [s.key, s.reason])).toEqual([['stations', 'invalid']]);
+    expect(report.setAside[0].problems.some((p) => p.startsWith('station levels:'))).toBe(true);
+    expect(warnedAbout('stations')).toBe(true);
+    expect(mod.content.stations).toEqual(shipped.content.stations);
+    expect(mod.content.houses).toEqual(PRE_92_HOUSES);
+    // the set-aside table stays stored until the editor next writes or resets
+    expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(
+      stamped({ stations: old.stations, houses: old.houses }),
+    );
+  });
+
+  it('converts once: the next load reads the per-table overrides and writes nothing', async () => {
+    const old = oldBundle((b) => {
+      b.houses.startResidents += 1;
+      b.track = {} as TrackConfig;
+    });
+    const first = await load(old);
+    const rewritten = localStorage.getItem(KEY)!;
+    expect(JSON.parse(rewritten)).toMatchObject({ format: 2 });
+    vi.mocked(console.info).mockClear();
+    const second = await load(rewritten);
+    expect(localStorage.setItem).not.toHaveBeenCalled();
+    expect(localStorage.removeItem).not.toHaveBeenCalled();
+    expect(localStorage.getItem(KEY)).toBe(rewritten);
+    expect(console.info).not.toHaveBeenCalled();
+    expect(second.contentOverrideReport()).toEqual(first.contentOverrideReport());
+    expect(second.contentOverrideReport().applied).toEqual(['houses']);
+    expect(second.content).toEqual(first.content);
+  });
+
+  it('clears the stored value when no table differs from the shipped ones', async () => {
+    const mod = await load(oldBundle(() => {}));
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(localStorage.getItem(KEY)).toBeNull();
   });
 });
 
