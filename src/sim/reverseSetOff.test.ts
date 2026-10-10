@@ -767,30 +767,83 @@ function edgeProbes(edges: number[], head: number, room: number): Probe[] {
   return out;
 }
 
+/** Most times a train is turned round where it stands by `turnRoundWrongs`. */
+const TURNS = 4;
+const times = (n: number) => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
+
 /**
- * Turning round twice where it stands leaves a train setting off reversing from the tile it set
- * off from before: with its rear end on each edge behind the head, and just either side of it,
- * the tile `tileAt` puts the rear end on. The train is put back as it stood after each.
+ * Turning round where it stands is undone by turning round again: with its rear end on each edge
+ * behind the head, and just either side of it, a train turned round twice or four times sets off
+ * reversing from the tile it set off from before, the one `tileAt` puts the rear end on; turned
+ * round once or three times, it sets off (head first again) from the tile its head is on. A head
+ * within 1e-5 of a tile edge is left out of the odd turns: which tile a rear end there stands on
+ * once the train has turned round is a question for the author. The train is put back as it stood
+ * after each.
  */
-function turnTwiceWrongs({ w, t, path, from, head }: Ran): string[] {
+function turnRoundWrongs({ w, t, path, from, head }: Ran): string[] {
   const out: string[] = [];
   const line = chordLine(w.track, path);
   const room = Math.min(head - from, t.length + 1);
+  const ahead = { ...t.headSeg! };
+  const headOnEdge = line.edges.some((e, k) => k > 0 && Math.abs(e - head) <= 1e-5);
   for (const { back, k } of edgeProbes(line.edges, head, room)) {
     const was = { trail: inside(t).trail, trailCum: inside(t).trailCum, reversed: t.reversed };
-    const got = withLength(t, back, () => {
-      inside(t).reverseConsist();
-      inside(t).reverseConsist();
-      return inside(t).reversedTrail().trail.at(-1)!.seg;
+    const offs = withLength(t, back, () => {
+      const seen: PathSegment[] = [];
+      for (let n = 0; n <= TURNS; n++) {
+        if (n) inside(t).reverseConsist();
+        seen.push(inside(t).reversedTrail().trail.at(-1)!.seg);
+      }
+      return seen;
     });
     Object.assign(inside(t), { trail: was.trail, trailCum: was.trailCum });
     t.reversed = was.reversed;
     t.updatePoses();
-    if (!same(got, turned(path[k]))) {
-      const rear = along(line, head - back);
-      out.push(
-        `with the rear end ${fix(back)} behind the head, at (${fix(rear.x)},${fix(rear.y)}), it sets off from ${show(got)} once it has turned round twice, not ${show(turned(path[k]))}`,
+    const rear = along(line, head - back);
+    offs.forEach((got, n) => {
+      if (n % 2 && headOnEdge) return;
+      const want = n % 2 ? ahead : turned(path[k]);
+      if (!same(got, want))
+        out.push(
+          `with the rear end ${fix(back)} behind the head, at (${fix(rear.x)},${fix(rear.y)}), it sets off from ${show(got)} once it has turned round ${times(n)}, not ${show(want)}`,
+        );
+    });
+  }
+  return out;
+}
+
+/**
+ * Everything a save and load changes about a train that stands where it ran, turned round where it
+ * stands 0 to `TURNS` - 1 times before each save, one line each: the tile it sets off from
+ * reversing, the tile its head is on and where each car stands, and all three again once both it
+ * and the loaded train have turned round once more. The save goes through `toJSON`, JSON and
+ * `fromJSON` on the same track, which lays the trail again from its points. The train is left
+ * turned round `TURNS` times.
+ */
+function loadWrongs(w: SimWorld, t: Train): string[] {
+  const out: string[] = [];
+  for (let turns = 0; turns < TURNS; turns++) {
+    const back = Train.fromJSON(JSON.parse(JSON.stringify(t.toJSON())), w.track);
+    for (const again of [false, true]) {
+      if (again) {
+        inside(t).reverseConsist();
+        inside(back).reverseConsist();
+      }
+      const when = `turned round ${times(turns)} and loaded${again ? ', then turned round again' : ''}`;
+      const want = inside(t).reversedTrail().trail.at(-1)!.seg;
+      const got = inside(back).reversedTrail().trail.at(-1)!.seg;
+      if (!same(got, want)) out.push(`${when}, it sets off from ${show(got)}, not ${show(want)}`);
+      if (!same(back.headSeg!, t.headSeg!))
+        out.push(`${when}, its head is on ${show(back.headSeg!)}, not ${show(t.headSeg!)}`);
+      const car = t.poses.findIndex(
+        (p, i) => Math.hypot(p.x - back.poses[i].x, p.y - back.poses[i].y) > 1e-9,
       );
+      if (car >= 0) {
+        const [p, q] = [back.poses[car], t.poses[car]];
+        out.push(
+          `${when}, car ${car} stands at (${fix(p.x)},${fix(p.y)}), not (${fix(q.x)},${fix(q.y)})`,
+        );
+      }
     }
   }
   return out;
@@ -946,12 +999,12 @@ describe('a train that ran to where it stands, wherever its rear end lies', () =
     },
   );
 
-  it('sets off reversing from the same tile once it has turned round twice where it stands', () => {
+  it('sets off reversing from the same tile once it has turned round twice where it stands, or four times, and turned round once or three times from the tile its head is on', () => {
     forAll(
       winding,
       (c) => {
         const { ran } = drive(c);
-        const wrongs = turnTwiceWrongs(ran);
+        const wrongs = turnRoundWrongs(ran);
         if (wrongs.length)
           throw new Error(`${ran.t.length.toFixed(1)} tiles long:\n${wrongs.join('\n')}`);
       },
@@ -969,10 +1022,14 @@ describe('a train that ran to where it stands, wherever its rear end lies', () =
     expect(t.headPos).toEqual({ x: 30, y: 30 });
     const setsOff = () => show(inside(t).reversedTrail().trail.at(-1)!.seg);
     expect(setsOff()).toBe(show({ x: 25, y: 30, in: Dir.E, out: Dir.W }));
-    inside(t).reverseConsist();
-    inside(t).reverseConsist();
+    for (let n = 1; n <= TURNS; n++) {
+      inside(t).reverseConsist();
+      // turned round, it would set off back from the tile its head stood on
+      const want =
+        n % 2 ? { x: 30, y: 30, in: Dir.W, out: Dir.E } : { x: 25, y: 30, in: Dir.E, out: Dir.W };
+      expect(setsOff(), `turned round ${times(n)}`).toBe(show(want));
+    }
     expect(t.headPos).toEqual({ x: 30, y: 30 });
-    expect(setsOff()).toBe(show({ x: 25, y: 30, in: Dir.E, out: Dir.W }));
   });
 
   it('on a figure of eight, sets off along the crossing the way its rear end ran over it', () => {
@@ -1015,5 +1072,28 @@ describe('a train that ran to where it stands, wherever its rear end lies', () =
     const spots = Array.from({ length: 19 }, (_, i) => (i + 1) / 20);
     const ran = { w, t, path, from, head: t.pathProgress };
     expect([...heads, ...standWrongs(ran, spots, false)]).toEqual([]);
+  });
+});
+
+describe('a train that ran to where it stands, turned round where it stands, saved and loaded', () => {
+  it('sets off reversing from the same tile, its head on the same tile and its cars where they stood, on lines winding either way through curves of either gauge', () => {
+    forAll(
+      winding,
+      (c) => {
+        const { ran } = drive(c);
+        const wrongs = loadWrongs(ran.w, ran.t);
+        if (wrongs.length)
+          throw new Error(`${ran.t.length.toFixed(1)} tiles long:\n${wrongs.join('\n')}`);
+      },
+      { shrink: smaller, shrinkBudget: 200 },
+    );
+  });
+
+  it('a Muki with five mine tubs, its rear end on an edge, sets off from the same tile', () => {
+    const layout = straight('narrow');
+    const { w, stop } = build(layout);
+    const { t } = run(w, stop.id, layout, 'muki', Array<string>(5).fill('mine_tub'))!;
+    expect(t.length).toBeCloseTo(4.5, 9);
+    expect(loadWrongs(w, t)).toEqual([]);
   });
 });
