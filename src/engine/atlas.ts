@@ -29,11 +29,25 @@ export interface FrameInfo {
 }
 
 /**
+ * Names with a `.json` in `public/assets` when the bundle was built (`vite.config.ts`); undefined
+ * where nothing defines it, such as the Node tests.
+ */
+declare const __ATLAS_FILES__: readonly string[] | undefined;
+/** The groups the build ships a file pair for. */
+const SHIPPED_GROUPS: ReadonlySet<string> = new Set(
+  typeof __ATLAS_FILES__ === 'undefined' ? [] : __ATLAS_FILES__,
+);
+
+/**
  * Asset pipeline. Each named atlas group is loaded from `/assets/<group>.json` + `.png` when
  * present (exported by any packer that writes {frames:{name:{x,y,w,h,ax,ay}}}); otherwise the
  * procedural generator supplies it. A file marked `"partial": true` is layered over the
  * generator instead, so a handful of rendered frames can replace their procedural namesakes
  * without the rest of the group going missing. Game code only ever asks for frame names.
+ *
+ * A group the build ships a file for and that falls back to its generator anyway is a broken file
+ * or server: it is warned about once, on the console. A group with no file is procedural by design
+ * and stays quiet.
  */
 export class AtlasRegistry {
   private frames = new Map<string, FrameInfo>();
@@ -41,6 +55,13 @@ export class AtlasRegistry {
   readonly groupOrigin = new Map<string, 'png' | 'procedural' | 'png+procedural'>();
   /** Raw atlas images by group, kept for the debug atlas viewer. */
   readonly images = new Map<string, HTMLCanvasElement | HTMLImageElement>();
+  /** shipped groups already warned about */
+  private warned = new Set<string>();
+
+  constructor(
+    /** groups whose file pair ships with the game; the build's list unless a test gives one */
+    private readonly shipped: ReadonlySet<string> = SHIPPED_GROUPS,
+  ) {}
 
   async load(groups: { name: string; generate: AtlasGenerator }[]) {
     await Promise.all(groups.map((g) => this.loadGroup(g.name, g.generate)));
@@ -48,7 +69,7 @@ export class AtlasRegistry {
 
   private async loadGroup(name: string, generate: AtlasGenerator) {
     const fromFile = await this.tryLoadFile(name);
-    if (fromFile) {
+    if (typeof fromFile !== 'string') {
       // generated first, so the file's frames win where the names collide
       if (fromFile.partial) this.register(generate());
       this.register(fromFile);
@@ -56,30 +77,39 @@ export class AtlasRegistry {
       this.groupOrigin.set(name, fromFile.partial ? 'png+procedural' : 'png');
       return;
     }
+    if (this.shipped.has(name) && !this.warned.has(name)) {
+      this.warned.add(name);
+      console.warn(`Atlas: ${name} falls back to procedural art: ${fromFile}`);
+    }
     const gen = generate();
     this.register(gen);
     this.images.set(name, gen.image);
     this.groupOrigin.set(name, 'procedural');
   }
 
-  private async tryLoadFile(name: string): Promise<AtlasImage | null> {
+  /** The group's file pair, or why it cannot be used. */
+  private async tryLoadFile(name: string): Promise<AtlasImage | string> {
+    const json = `/assets/${name}.json`;
+    const png = `/assets/${name}.png`;
     try {
-      const res = await fetch(`/assets/${name}.json`, { cache: 'no-cache' });
-      if (!res.ok) return null;
+      const res = await fetch(json, { cache: 'no-cache' });
+      if (!res.ok) return `${json} answered ${res.status}`;
       const ct = res.headers.get('content-type') ?? '';
-      if (!ct.includes('json')) return null;
-      const json = (await res.json()) as Omit<AtlasImage, 'image'>;
-      const resolution = json.resolution ?? 1;
-      if (!Number.isFinite(resolution) || resolution < 1 || resolution > 8) return null;
+      if (!ct.includes('json')) return `${json} came as ${ct || 'no content type'}`;
+      const data = (await res.json()) as Omit<AtlasImage, 'image'>;
+      const resolution = data.resolution ?? 1;
+      if (!Number.isFinite(resolution) || resolution < 1 || resolution > 8)
+        return `${json} has resolution ${resolution}, outside 1 to 8`;
       const image = new Image();
-      await new Promise<void>((ok, fail) => {
-        image.onload = () => ok();
-        image.onerror = () => fail(new Error('atlas png missing'));
-        image.src = `/assets/${name}.png`;
+      const loaded = await new Promise<boolean>((done) => {
+        image.onload = () => done(true);
+        image.onerror = () => done(false);
+        image.src = png;
       });
-      return { image, frames: json.frames, resolution, partial: json.partial === true };
-    } catch {
-      return null;
+      if (!loaded) return `${png} did not load as an image`;
+      return { image, frames: data.frames, resolution, partial: data.partial === true };
+    } catch (err) {
+      return `${json} did not load: ${String(err)}`;
     }
   }
 

@@ -150,6 +150,14 @@ export const STR = {
     /** toast for an error the game loop caught; shown once per distinct message */
     frameError: (message: string) =>
       `Something went wrong: ${message}. The game keeps running; the browser console has details.`,
+    /** the painted landscape's status: loading, active, or failed with the reason */
+    landscape: 'Landscape',
+    landscapeLoading: 'loading',
+    landscapeActive: 'active',
+    landscapeFailed: (reason: string) => `failed: ${reason}`,
+    /** toast when the painted landscape fails for the session and the per-tile ground stands in */
+    landscapeLost:
+      'The detailed terrain could not load, so simple ground is shown for this session. The browser console has details.',
   },
   traffic: {
     pullingAside: 'Pulling aside on a reserved escape route',
