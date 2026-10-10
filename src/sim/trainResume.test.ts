@@ -48,10 +48,12 @@ import {
 // or changes where it is bound or how fast, a save made between a load and the first tick, and
 // the traffic scenarios with a round trip mid-run: no shared tile or deadlock, a train backing
 // off kept on its escape and only on one it can still run, a yielding train kept waiting as long
-// as it would have, no train asked to back off again before its last back-off has run out, and a
-// world grown around the save carrying on as the save. At the end: the scenes of
-// src/sim/idleTraffic.test.ts, in which a train with nothing worth hauling idles and makes way
-// for another (issue #151), saved at any tick, and saved again after a load before a tick.
+// as it would have, no train asked to back off again before its last back-off has run out, no jam
+// searched again before 4 s have passed since its last search, and a world grown around the save
+// carrying on as the save. At the end: the scenes of src/sim/idleTraffic.test.ts, in which a train
+// with nothing worth hauling idles and makes way for another (issue #151), saved at any tick, saved
+// again after a load before a tick, and saved just before an idle train looks for a way aside or a
+// jam is searched, with the time the look or search is due moved past that tick.
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -1562,6 +1564,41 @@ describe('the traffic scenarios with a round trip mid-run', () => {
   );
 
   it(
+    'searches a jam loaded less than 4 s after its last search only once they have passed',
+    { timeout: 120_000 },
+    () => {
+      // Every save of the uninterrupted runs after which the control searches a jam for a train to
+      // back off on the next tick, loaded and run that tick: with the time any one train of the
+      // jam may be searched again put past the tick, that train is not searched (`checkRetry`).
+      // That the save loaded as it is searches the same jam is not held here: the order claims
+      // are granted in is not saved (docs/traffic-current.md §8), and in a few of these saves a
+      // train the control holds back claims its way first after the load, so the jam the control
+      // searches does not form on that tick. The idle scenes below hold it.
+      const counts: RetryCounts = { saves: 0, several: 0, decided: 0 };
+      for (const c of TRAFFIC) {
+        const ctl = trafficControl(c);
+        for (let tick = 0; tick + 1 < ctl.texts.length; tick++) {
+          const now = (tick + 1) / SCENARIO_TICK_RATE;
+          const run = (edit?: (trains: TrainJSON[]) => void) => {
+            const j = JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[] };
+            edit?.(j.trains);
+            const fleet = trafficLoaded({ ...ctl, texts: [JSON.stringify(j)] }, 0);
+            fleet.tick(SCENARIO_GDT, now);
+            return fleet.trains;
+          };
+          const why = `${caseName(c)}, the save after tick ${tick} (${ctl.doing[tick]})`;
+          const [was, next] = [trainsIn(ctl.texts[tick]), trainsIn(ctl.texts[tick + 1])];
+          checkRetry('recoveryRetry', why, was, next, now, run, counts, false);
+        }
+      }
+      // the runs search jams of more than one train, and holding a search back changes who backs
+      // off, or this says nothing
+      expect(counts.several, 'saves before a jam of several trains is searched').toBeGreaterThan(0);
+      expect(counts.decided, 'searches held back that changed what a train did').toBeGreaterThan(0);
+    },
+  );
+
+  it(
     'a save made after a load, before the first tick, is the save loaded',
     { timeout: 120_000 },
     () => {
@@ -1797,6 +1834,97 @@ function grownLoaded(c: TrafficControl, tick: number): Fleet {
   const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
   for (const t of save.trains as TrainJSON[]) fleet.trains.push(Train.fromJSON(t, track));
   return fleet;
+}
+
+// ------------------------------------------------------------------ the retry times a save keeps
+// Since v17 each train keeps the game time from which a jam it is in may be searched again for a
+// train to back off (`recoveryRetry`, 4 s after the last search, `Traffic.canRecover`), and from
+// which an idle train in another train's way may look again for a way aside (`asideRetry`, 2 s
+// after its last look, `Fleet.makeWay`). A search or a look moves the time on for every train it
+// covers, so a save after which the control moves a train's time on is one after which the control
+// searches or looks on the next tick.
+
+/** A train's retry time a save keeps. */
+type RetryField = 'recoveryRetry' | 'asideRetry';
+/** The trains of a save, by id. */
+const trainsIn = (text: string) =>
+  new Map((JSON.parse(text) as { trains: TrainJSON[] }).trains.map((j) => [j.id, j]));
+/**
+ * What a tick decides for a train, as the retry properties compare it: whether it backs off or
+ * makes way, the way it wants, what an idle train or one making way says, and both retry times. A
+ * jammed note reads as none: the fleet's memory of jams is not saved, and a load shows the note
+ * again only once the jam resolution says so (docs/traffic-current.md §8).
+ */
+const decidedFor = (j: TrainJSON) => ({
+  id: j.id,
+  state: j.state,
+  holding: j.holding,
+  aside: j.aside,
+  yieldCount: j.yieldCount,
+  want: j.want,
+  note: j.state !== 'idle' && !j.aside ? null : j.note === STR.traffic.jammed ? '' : j.note,
+  recoveryRetry: j.recoveryRetry,
+  asideRetry: j.asideRetry,
+});
+/** What `decidedFor` holds but the retry times. */
+const besideRetries = (d: ReturnType<typeof decidedFor>) =>
+  JSON.stringify({ ...d, recoveryRetry: 0, asideRetry: 0 });
+/** How often a retry property found a time moved on, and what holding it back changed. */
+interface RetryCounts {
+  /** saves after which the control moved the time on for some train on the next tick */
+  saves: number;
+  /** saves after which it moved it on for more than one train at once */
+  several: number;
+  /**
+   * loads with one of those trains' time put past the tick after which some train decided other
+   * than in the same save loaded as it is
+   */
+  decided: number;
+}
+/**
+ * One save of an uninterrupted run: `was` its trains, `next` the control's trains after the tick
+ * that follows it, at game time `now`, and `run` loads the save, `edit`ed first, and runs that
+ * tick. When the control moved `field` on for some train on that tick, each of those trains, its
+ * time put just past the tick or 1 s past it, still has the time it was loaded with after the
+ * tick: its look, or the search of the jam it is in, that would have moved the time on is not
+ * made. With `exact`, the save loaded as it is decides for every train the control still has what
+ * the control decides (`decidedFor`).
+ */
+function checkRetry(
+  field: RetryField,
+  why: string,
+  was: Map<number, TrainJSON>,
+  next: Map<number, TrainJSON>,
+  now: number,
+  run: (edit?: (trains: TrainJSON[]) => void) => Train[],
+  counts: RetryCounts,
+  exact: boolean,
+) {
+  const moved = [...next.values()]
+    .filter((j) => was.has(j.id) && j[field] > was.get(j.id)![field])
+    .map((j) => j.id);
+  if (!moved.length) return;
+  counts.saves++;
+  if (moved.length > 1) counts.several++;
+  const decided = (trains: Train[]) =>
+    [...next.keys()].map((id) => decidedFor(trains.find((t) => t.id === id)!.toJSON()));
+  const asSaved = decided(run());
+  if (exact) {
+    const control = [...next.values()].map(decidedFor);
+    if (JSON.stringify(asSaved) !== JSON.stringify(control))
+      expect(asSaved, `${why}: loaded as saved`).toEqual(control);
+  }
+  for (const id of moved)
+    for (const ahead of [1e-3, 1]) {
+      const due = now + ahead;
+      const trains = run((js) => void (js.find((j) => j.id === id)![field] = due));
+      expect(
+        trains.find((t) => t.id === id)![field],
+        `${why}: #${id}'s ${field} put ${ahead} s past the tick`,
+      ).toBe(due);
+      const held = decided(trains);
+      if (held.some((d, i) => besideRetries(d) !== besideRetries(asSaved[i]))) counts.decided++;
+    }
 }
 
 // ------------------------------------------------------------------ idle trains (issue #151)
@@ -2323,6 +2451,60 @@ describe('a train idle or making way, saved at any tick of the idle scenes', () 
       // every field the save holds since v17 is held in some save of the scenes
       for (const [field, n] of Object.entries(held))
         expect(n, `trains saved with ${field}`).toBeGreaterThan(0);
+    },
+  );
+
+  /**
+   * Every save of the idle scenes after which the control moves `field` on for some train on the
+   * next tick, loaded and run that tick, the scene doing before it what it did, as `checkRetry`
+   * states with `exact`: the scenes carry on as never saved after any save (see above). The counts
+   * it draws.
+   */
+  function idleRetries(field: RetryField): RetryCounts {
+    const counts: RetryCounts = { saves: 0, several: 0, decided: 0 };
+    IDLE_SCENES.forEach((sc, scene) => {
+      const c = idleControl(scene);
+      for (let tick = 0; tick + 1 < IDLE_SPAN / GDT; tick++) {
+        const run = (edit?: (trains: TrainJSON[]) => void) => {
+          const j = JSON.parse(c.texts[tick]) as { trains: TrainJSON[] };
+          edit?.(j.trains);
+          const w = idleLoaded(sc, JSON.stringify(j));
+          for (const n of c.fired.get(tick + 1) ?? []) sc.actions![n].act(w);
+          w.fleet.tick(GDT, c.nows[tick] + GDT);
+          return w.fleet.trains;
+        };
+        const why = `${sc.name}, the save after tick ${tick} (${c.doing[tick]})`;
+        const [was, next] = [trainsIn(c.texts[tick]), trainsIn(c.texts[tick + 1])];
+        checkRetry(field, why, was, next, c.nows[tick + 1], run, counts, true);
+      }
+    });
+    return counts;
+  }
+
+  it(
+    'has an idle train in the way loaded less than 2 s after its last look for a way aside look again only once they have passed',
+    { timeout: 120_000 },
+    () => {
+      // Every save of the scenes after which an idle train in another train's way looks for a way
+      // aside on the next tick: as saved, it looks, and makes way, wants a way or says it has none
+      // as the control's does, and every other train does as the control's does; with the time it
+      // may look again put past the tick, it does not look.
+      const counts = idleRetries('asideRetry');
+      // holding a look back changes what an idle train does or says, or this says nothing
+      expect(counts.decided, 'looks held back that changed what a train did').toBeGreaterThan(0);
+    },
+  );
+
+  it(
+    'searches a jam loaded less than 4 s after its last search only once they have passed',
+    { timeout: 120_000 },
+    () => {
+      // As for the traffic scenarios above, and here the save loaded as it is searches the jam the
+      // control searches: an idle train in the way of a train that wants its track, or a yielding
+      // train waiting on the way an idle one wants aside.
+      const counts = idleRetries('recoveryRetry');
+      expect(counts.several, 'saves before a jam of several trains is searched').toBeGreaterThan(0);
+      expect(counts.decided, 'searches held back that changed what a train did').toBeGreaterThan(0);
     },
   );
 });
