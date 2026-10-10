@@ -241,9 +241,10 @@ function build(w: SimWorld) {
     w.houses.sync({ id: 'townhouse', x: hx, y: hy, rot: 0 }, false);
     Object.assign(w.houses.at(hx, hy)!, { progress: i < 4 ? 1 : 0.3, residents: i < 4 ? 8 : 0 });
   }
-  const loco = w.inventory.items.find((i) => i.defId === 'adler');
+  // the starter engines are narrow gauge: the regular line gets an Adler of its own
+  const loco = w.inventory.add('adler', 0);
   const hopper = w.inventory.items.find((i) => i.defId === 'wood_hopper');
-  if (!loco || !hopper) throw new Error(`seed ${w.seed}: no starter adler and wood hopper`);
+  if (!hopper) throw new Error(`seed ${w.seed}: no starter wood hopper`);
   const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
   if (typeof train === 'string') throw new Error(`seed ${w.seed}: fleet.create: ${train}`);
   w.clock.time = daySeconds() - 20;
@@ -326,7 +327,7 @@ interface Scene {
   /** two more depots and a house of 1000 residents: past the diesel age's goals */
   ageUp: boolean;
   buildings: string[];
-  /** a train of the starter engine and a hopper between the quarry and the town */
+  /** a train of an Adler and a starter hopper between the quarry and the town */
   train: boolean;
   /** game seconds until a standing deal (buy stone, sell wood) first settles; null: no deal */
   tradeIn: number | null;
@@ -448,7 +449,7 @@ function stage(s: Scene): Staged {
   for (const [id, n] of Object.entries(startStock()))
     w.stock.add(id, Math.round(n * rules.startStock));
   if (s.train) {
-    const loco = w.inventory.items.find((i) => i.defId === 'adler')!;
+    const loco = w.inventory.add('adler', 0);
     const hopper = w.inventory.items.find((i) => i.defId === 'wood_hopper')!;
     const t = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, town.id]);
     if (typeof t === 'string') throw new Error(`fleet.create: ${t}`);
