@@ -2597,6 +2597,9 @@ export class Train {
       retreat: this.loaded ? this.loaded.retreat : this.retreatJSON(),
       blockedTime: this.blockedTime,
       yieldCount: this.yieldCount,
+      // the game time until which it is not asked to back off again, and a yielding train sets
+      // off ignoring other trains a minute after it
+      yieldUntil: this.yieldUntil,
       // the stations a roaming train ruled out, with the game time each comes back
       badTargets: [...this.badTargets],
       head: head
@@ -2673,6 +2676,7 @@ export class Train {
     t.holding = j.holding;
     t.blockedTime = j.blockedTime;
     t.yieldCount = j.yieldCount;
+    t.yieldUntil = j.yieldUntil;
     t.badTargets = new Map(j.badTargets);
     // the station, the escape and the path wait for the builder (`resumeAfterLoad`)
     t.loaded = { station: j.station, retreat: j.retreat };

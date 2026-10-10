@@ -431,7 +431,7 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 13,
-    note: 'trains stand without a route and look for one, as every load left them before, with no escape to back off along and no stop ruled out; from now on a save keeps what each train was doing',
+    note: 'trains stand without a route and look for one, as every load left them before, with no escape to back off along, free to be asked to back off again and no stop ruled out; from now on a save keeps what each train was doing',
     run: (j) => {
       for (const t of j.trains) {
         if (!isRecord(t)) continue;
@@ -443,6 +443,7 @@ export const MIGRATIONS: Migration[] = [
         t.retreat = t.retreat ?? null;
         t.blockedTime = t.blockedTime ?? 0;
         t.yieldCount = t.yieldCount ?? 0;
+        t.yieldUntil = t.yieldUntil ?? 0;
         t.badTargets = t.badTargets ?? [];
       }
     },

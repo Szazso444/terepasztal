@@ -34,7 +34,8 @@ import {
 // every load left them before. Further down: the same held at any tick of generated lines, a load
 // that moves no car, a save made between a load and the first tick, and the traffic scenarios
 // with a round trip mid-run: no shared tile or deadlock, a train backing off kept on its escape
-// and only on one it can still run, and a world grown around the save carrying on as the save.
+// and only on one it can still run, a yielding train kept waiting as long as it would have, and a
+// world grown around the save carrying on as the save.
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -64,6 +65,7 @@ const V14_FIELDS = [
   'retreat',
   'blockedTime',
   'yieldCount',
+  'yieldUntil',
   'badTargets',
 ] as const;
 
@@ -375,6 +377,7 @@ describe('a v13 save', () => {
         retreat: null,
         blockedTime: 0,
         yieldCount: 0,
+        yieldUntil: 0,
         badTargets: [],
       });
       const t = Train.fromJSON(
@@ -951,6 +954,46 @@ describe('the traffic scenarios with a round trip mid-run', () => {
     // the runs back off often enough for this to say something
     expect(saves).toBeGreaterThan(1000);
   });
+
+  it(
+    'keeps a yielding train waiting as long as it would have, and asks no train to back off sooner',
+    { timeout: 120_000 },
+    () => {
+      // A yielding train looks for a clear way every two seconds and sets off past the other
+      // trains once a minute has gone by after its last back-off ran out, and the traffic control
+      // asks no train to back off again before that back-off has run out (`Train.yieldUntil`, a
+      // game time). Every save of the uninterrupted runs after which a train was held up, yielding
+      // or backing off, loaded and run a tick on: every train is doing what the control's is, and
+      // one saved yielding stands where the control's does.
+      let yielding = 0;
+      for (const c of TRAFFIC) {
+        const ctl = trafficControl(c);
+        for (const tick of ctl.busy) {
+          if (tick + 1 >= ctl.texts.length) continue;
+          const fleet = trafficLoaded(ctl, tick);
+          fleet.tick(SCENARIO_GDT, (tick + 1) / SCENARIO_TICK_RATE);
+          const why = `${caseName(c)}, the save after tick ${tick} (${ctl.doing[tick]})`;
+          const was = (JSON.parse(ctl.texts[tick]) as { trains: TrainJSON[] }).trains;
+          // trains the control took out of the run on this tick are not compared
+          for (const j of (JSON.parse(ctl.texts[tick + 1]) as { trains: TrainJSON[] }).trains) {
+            const t = fleet.trains.find((x) => x.id === j.id)!;
+            expect({ state: t.state, holding: t.holding }, `${why}: #${j.id}`).toEqual({
+              state: j.state,
+              holding: j.holding,
+            });
+            if (was.find((x) => x.id === j.id)?.state !== 'yielding') continue;
+            yielding++;
+            const want = Train.fromJSON(j, ctl.track).poses;
+            expect(apart(want, t.poses), `${why}: #${j.id}'s tiles from the control`).toBeLessThan(
+              TOLERANCE,
+            );
+          }
+        }
+      }
+      // the runs yield often enough for this to say something
+      expect(yielding).toBeGreaterThan(1000);
+    },
+  );
 
   it(
     'a save made after a load, before the first tick, is the save loaded',

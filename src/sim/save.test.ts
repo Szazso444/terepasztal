@@ -1875,8 +1875,8 @@ const MODE_VALUES: unknown[] = [
 ];
 /**
  * The fields the step from v13 gives every train, with what a load before v14 left in them: it
- * stands without a route, at no station, with no escape to back off along and no stop ruled out,
- * and looks for one on its first tick.
+ * stands without a route, at no station, with no escape to back off along, free to be asked to
+ * back off again and no stop ruled out, and looks for one on its first tick.
  */
 const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
   state: 'noRoute',
@@ -1887,6 +1887,7 @@ const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
   retreat: null,
   blockedTime: 0,
   yieldCount: 0,
+  yieldUntil: 0,
   badTargets: [],
 };
 /**
@@ -1902,6 +1903,7 @@ const RESUME_HELD: Readonly<Record<string, readonly unknown[]>> = {
   retreat: [{ path: [{ x: 3, y: 4, in: 0, out: 2 }], group: [1, 2] }],
   blockedTime: [2.5],
   yieldCount: [1, 3],
+  yieldUntil: [34, 1250.5],
   badTargets: [
     [[2, 240]],
     [
