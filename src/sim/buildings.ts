@@ -2,6 +2,7 @@ import { content, type BuildingDef, type Cost } from '../data/content';
 import type { Stockpile } from './stockpile';
 import { rules, weekSeconds } from './rules';
 import { MAX_LEVEL } from './levels';
+import { workFromJSON, workToJSON, type Work } from './upgrade';
 
 export type { BuildingDef };
 export const BUILDING_DEFS: BuildingDef[] = content.buildings;
@@ -27,16 +28,35 @@ export interface Building {
   /** total output produced over the building's life, per resource */
   made?: Record<string, number>;
   /** why the last tick did not run (empty when running) */
-  reason?: 'inputs' | 'full' | '';
+  reason?: 'inputs' | 'full' | 'upgrading' | '';
+  /**
+   * The upgrade under way (`Builder.upgradeBuilding`), absent when none is. While it runs the
+   * works is closed: it processes nothing, has no crew, and gives no power and feeds no wire.
+   */
+  work?: Work;
 }
-/** A building as a save holds it (v4); the level came later, and a save without one means 1. */
-export type BuildingJSON = [x: number, y: number, id: string, acc: number, level?: number];
+/**
+ * A building as a save holds it (v4); the level came later, and a save without one means 1. The
+ * upgrade under way came in v15, null for none.
+ */
+export type BuildingJSON = [
+  x: number,
+  y: number,
+  id: string,
+  acc: number,
+  level?: number,
+  work?: Work | null,
+];
 export function buildingToJSON(b: Building): BuildingJSON {
-  return [b.x, b.y, b.id, b.acc, b.level ?? 1];
+  return [b.x, b.y, b.id, b.acc, b.level ?? 1, workToJSON(b.work)];
 }
 /** A saved building, idle until its first tick says otherwise. */
-export function buildingFromJSON([x, y, id, acc, level]: BuildingJSON): Building {
-  return { id, x, y, acc: acc ?? 0, level: level ?? 1, active: false, rate: 0 };
+export function buildingFromJSON([x, y, id, acc, level, work]: BuildingJSON): Building {
+  const lv = level ?? 1;
+  const b: Building = { id, x, y, acc: acc ?? 0, level: lv, active: false, rate: 0 };
+  const w = workFromJSON(work, lv);
+  if (w) b.work = w;
+  return b;
 }
 /** Which primary input is short, if any. */
 export function missingInput(def: BuildingDef, stock: Stockpile): string | null {
@@ -47,6 +67,7 @@ export function missingInput(def: BuildingDef, stock: Stockpile): string | null 
 /**
  * Run every building's recipe against the stockpile. Inputs are consumed continuously; when the
  * primary inputs run short the alternative input set is tried (power plants burn oil instead of coal).
+ * A building being upgraded is skipped: it takes nothing in and makes nothing.
  */
 export function tickBuildings(
   buildings: Iterable<Building>,
@@ -57,6 +78,13 @@ export function tickBuildings(
   depots: number,
 ) {
   for (const b of buildings) {
+    if (b.work) {
+      b.reason = 'upgrading';
+      b.active = false;
+      // the estimate fades as it does over any idle tick
+      b.rate *= 0.95;
+      continue;
+    }
     const def = buildingDef(b.id);
     const recipe = buildingRecipe(b);
     const rate = buildingRate(b);

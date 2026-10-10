@@ -34,7 +34,8 @@ import {
   type Settings,
   type WorldSpec,
 } from './save';
-import { buildingFromJSON, buildingToJSON, type Building } from './buildings';
+import { buildingFromJSON, buildingToJSON, type Building, type BuildingJSON } from './buildings';
+import type { Work } from './upgrade';
 import { TradeDesk } from './trade';
 import { Train, DYNAMIC_MODES, resetTrainIds, type RouteMode } from './trains';
 import { Station, resetStationIds, type StationJSON } from './stations';
@@ -128,14 +129,16 @@ describe('the migration registry', () => {
   it('has no step that leaves the file as it found it', () => {
     // An empty step tells the player a default was filled in and leaves the load code to keep
     // the promise. Each step meets a file of its own version with nothing optional in it, the
-    // old offer defaults the step to v11 rewrites, and a train with nothing but its id for the
-    // steps that fill a train's fields.
+    // old offer defaults the step to v11 rewrites, a train with nothing but its id for the
+    // steps that fill a train's fields, and a station with no turn and no work for the steps
+    // that fill a station's.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
         version: m.from,
         rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
         trains: [{ id: 1 }],
+        stations: [stationOf('farm', undefined)],
       };
       const before = asStored(file);
       m.run(file);
@@ -566,9 +569,10 @@ describe('v8 to v9', () => {
 
   it('turns every townhouse in the decor into a level 1 house', () => {
     const j = migrate(v8());
+    // the step to v15 then says no house is being upgraded
     expect(j.houses?.list).toEqual([
-      { x: 3, y: 4, level: 1, residents: 6, progress: 1 },
-      { x: 7, y: 8, level: 1, residents: 6, progress: 1 },
+      { x: 3, y: 4, level: 1, residents: 6, progress: 1, work: null },
+      { x: 7, y: 8, level: 1, residents: 6, progress: 1, work: null },
     ]);
     expect(j.houses?.arrivals).toEqual([]);
     expect(j.houses?.visited).toEqual([]);
@@ -704,7 +708,8 @@ describe('v11 to v12', () => {
       ],
     });
     expect(j.track[0]).toEqual([4, 8, 'straight', 1, 'high_speed', undefined]);
-    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1]);
+    // the step to v15 then says the bridge is not being strengthened
+    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null]);
     expect(j.stockpile).toEqual({ amounts: { wheat: 200, coal: 50, food: 1000 }, famine: false });
     expect(j.economy.money).toBe(1000);
   });
@@ -885,7 +890,7 @@ describe('readSaveText', () => {
 describe('works buildings in a save', () => {
   it('come back as they were saved, idle until their first tick', () => {
     const b: Building = { id: 'sawmill', x: 4, y: 9, acc: 0.25, level: 3, active: true, rate: 2 };
-    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3]);
+    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3, null]);
     expect(buildingFromJSON(buildingToJSON(b))).toEqual({
       ...b,
       active: false,
@@ -909,7 +914,93 @@ describe('works buildings in a save', () => {
       'mill',
       0,
       1,
+      null,
     ]);
+  });
+
+  it('carry the upgrade under way, and drop one that is no upgrade to the next level', () => {
+    const work = { to: 3, left: 40, total: 90 };
+    const b: Building = { id: 'sawmill', x: 4, y: 9, acc: 0, level: 2, active: false, rate: 0 };
+    b.work = { ...work };
+    const j = asStored(buildingToJSON(b)) as BuildingJSON;
+    expect(j[5]).toEqual(work);
+    expect(buildingFromJSON(j).work).toEqual(work);
+    // a work to any other level, without a time, or of another shape is none
+    for (const odd of [
+      { ...work, to: 4 },
+      { ...work, total: 0 },
+      { ...work, left: Number.NaN },
+      { to: 3, left: '40', total: 90 },
+      7,
+      null,
+    ])
+      expect(
+        buildingFromJSON([4, 9, 'sawmill', 0, 2, odd as Work]).work,
+        JSON.stringify(odd),
+      ).toBeUndefined();
+    // time left beyond the work's time is the whole time
+    expect(buildingFromJSON([4, 9, 'sawmill', 0, 2, { ...work, left: 500 }]).work).toEqual({
+      ...work,
+      left: 90,
+    });
+  });
+});
+
+describe('v14 to v15', () => {
+  function v14(extra: Partial<SaveGame> = {}): SaveGame {
+    return {
+      ...oldestSave(),
+      version: 14,
+      stations: [stationOf('farm', 0), stationOf('depot', 1, 1)],
+      buildings: [
+        [7, 7, 'windmill', 0.5, 2],
+        [9, 7, 'kiln', 0],
+      ],
+      houses: {
+        list: [{ x: 3, y: 4, level: 2, residents: 30, progress: 1 }],
+        arrivals: [],
+        visited: [],
+      },
+      ...extra,
+    };
+  }
+
+  it('says that nothing was being upgraded, on every station, works and house', () => {
+    const j = migrate(v14());
+    expect(j.version).toBe(15);
+    expect(j.migrationNotes).toEqual([`v14→v15: ${MIGRATIONS.at(-1)!.note}`]);
+    expect(j.stations.map((s) => s.work)).toEqual([null, null]);
+    // a works saved without its level gets the 1 it always meant, so the work has its place
+    expect(j.buildings).toEqual([
+      [7, 7, 'windmill', 0.5, 2, null],
+      [9, 7, 'kiln', 0, 1, null],
+    ]);
+    expect(j.houses?.list[0]).toEqual({
+      x: 3,
+      y: 4,
+      level: 2,
+      residents: 30,
+      progress: 1,
+      work: null,
+    });
+    // and every one loads as it did: open, at its level
+    const s = Station.fromJSON(asStored(j.stations[0]) as StationJSON);
+    expect([s.level, s.work, s.closed]).toEqual([1, null, false]);
+    expect(j.buildings!.map((b) => buildingFromJSON(b))).toEqual(
+      v14().buildings!.map((b) => buildingFromJSON(b)),
+    );
+  });
+
+  it('keeps a work a file already holds, and copes with a file without works or houses', () => {
+    const work = { to: 2, left: 10, total: 60 };
+    const station = { ...stationOf('farm', 0), work };
+    const j = migrate(
+      v14({ stations: [station], buildings: [[1, 1, 'kiln', 0, 1, work]], houses: undefined }),
+    );
+    expect(j.stations[0].work).toEqual(work);
+    expect(j.buildings![0][5]).toEqual(work);
+    expect(j.houses).toBeUndefined();
+    expect(migrate(v14({ buildings: undefined })).buildings).toBeUndefined();
   });
 });
 
@@ -2202,6 +2293,13 @@ function withoutFilled(from: number, file: unknown): unknown {
   if (from === 6 || from === 7) for (const t of trains) delete t.mode;
   if (from === 9) for (const t of trains) if (isObject(t.tanks)) delete t.tanks.battery;
   if (from === 13) for (const t of trains) for (const key in RESUME_DEFAULTS) delete t[key];
+  if (from === 14) {
+    for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.work;
+    for (const b of Array.isArray(copy.buildings) ? copy.buildings : [])
+      if (Array.isArray(b)) b.length = Math.min(b.length, 5);
+    const list = isObject(copy.houses) ? copy.houses.list : undefined;
+    if (Array.isArray(list)) for (const h of list.filter(isObject)) delete h.work;
+  }
   return copy;
 }
 
@@ -2357,7 +2455,7 @@ describe('the defaults the steps fill', () => {
     // fill when it runs again; a step that rewrote a value it should keep would not.
     forAll(
       (rng) => {
-        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13]);
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14]);
         const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
         return { from, file };
       },

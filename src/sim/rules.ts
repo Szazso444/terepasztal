@@ -12,6 +12,8 @@ export interface Rules {
   startMoney: number;
   startTickets: number;
   buildCostMul: number;
+  /** multiplies the game time an upgrade takes; 0 makes every upgrade instant */
+  upgradeTimeMul: number;
   refundRate: number;
   runningCostMul: number;
   spotPriceMul: number;
@@ -89,6 +91,7 @@ export const DEFAULT_RULES: Rules = {
   startMoney: 40000,
   startTickets: 3,
   buildCostMul: 1,
+  upgradeTimeMul: 1,
   refundRate: 0.5,
   runningCostMul: 1,
   spotPriceMul: 1,
@@ -160,6 +163,15 @@ export const RULE_META: RuleMeta[] = [
     max: 5,
     step: 0.05,
     hint: '0 = free building',
+  },
+  {
+    key: 'upgradeTimeMul',
+    label: 'Upgrade time x',
+    group: 'Economy',
+    min: 0,
+    max: 4,
+    step: 0.1,
+    hint: 'game time an upgrade keeps a building closed; 0 = every upgrade is instant',
   },
   { key: 'refundRate', label: 'Refund rate', group: 'Economy', min: 0, max: 1, step: 0.05 },
   { key: 'runningCostMul', label: 'Fuel use x', group: 'Economy', min: 0, max: 5, step: 0.1 },

@@ -14,6 +14,15 @@ the Hyper Age, and a Refinery of the Diesel Age reaches level 5 at most. A build
 stands above its age's level, from an old save or a level file, keeps its level and is offered
 the next one when that age comes. Bridges keep their own four levels in every age.
 
+An upgrade is paid when it starts and takes game time: 6, 9, 12, 18 and 24 game hours to levels
+2 to 6, from a quarter of a day to a whole one (the **Upgrade time** tuning value scales them; at
+0 every upgrade is instant). The building is closed until the work is done and keeps its old
+level meanwhile: a station or works makes nothing and has no crew to feed, a Power Plant gives
+no power and a Substation feeds no wire, and a House takes no newcomers but keeps its residents.
+Trains still stop at a closed station and load what it holds, but deliver nothing there. A
+second upgrade waits until the first is done, and a building removed during its upgrade is gone
+with the work. The Depot's upgrade is instant and free.
+
 Houses hold 20, 60, 140, 300, 520 and 800 residents at levels 1–6. Select a completed House
 and use **Enlarge** to pay for the next level. Its appearance progresses from house to
 apartments, high-rise and skyscraper; levels 5 and 6 keep the skyscraper. Residents fill
@@ -104,9 +113,10 @@ is excluded from pathfinding. Above 80% capacity, crossing speed is halved until
 leaves the bridge. A train exactly at capacity may cross at half speed.
 
 Select a platform to inspect its limit and pay for reinforcement. Each level adds 25% of the
-base capacity, up to level 4, and adds visible reinforcement. Upgrade every platform in the
-crossing for heavier traffic: its weakest platform remains the limiting one. Remove track
-before demolishing its platform. The removal tool removes the rails first on an occupied deck.
+base capacity, up to level 4, and adds visible reinforcement once the work is done; trains keep
+crossing at the old limit while it runs. Upgrade every platform in the crossing for heavier
+traffic: its weakest platform remains the limiting one. Remove track before demolishing its
+platform. The removal tool removes the rails first on an occupied deck.
 
 ## Crafting and old saves
 
