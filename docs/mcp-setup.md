@@ -12,9 +12,11 @@ Three local MCP servers, wired into both Claude Code and Codex.
   console errors, network, performance traces and screenshots. The renderer is a canvas, so this
   is the only one of the three that can see what the game actually draws.
 
-Both servers run on your machine, next to Blender and Unity. Nothing in this repository runs them;
-`.mcp.json` at the repo root only tells Claude Code where to find them, and the Codex config lives
-in your home directory.
+All three servers run on your machine, next to Blender and Unity. Nothing in this repository runs
+them; `.mcp.json` at the repo root only tells Claude Code where to find Blender and Chrome DevTools,
+and the Codex config lives in your home directory. MCP for Unity is registered on each machine by
+Unity's own setup (section 2.2), not by a file in the repository: its address only answers where
+Unity is running.
 
 ---
 
@@ -129,7 +131,8 @@ Only needed if auto-configuration cannot run.
 claude mcp add --scope local --transport http UnityMCP http://127.0.0.1:8080/mcp
 ```
 
-This repo's `.mcp.json` already carries the same HTTP entry, so the project scope covers it too.
+No file in this repository carries this entry; `--scope local` keeps it in your own Claude Code
+config.
 
 **Codex**, HTTP — `~/.codex/config.toml`. The `features` flag is required: Codex needs its Rust MCP
 client for HTTP transport.
@@ -187,8 +190,10 @@ on screen — a sprite anchored wrong, a train drawn behind the terrain, a frame
 1. `uv --version` answers in a plain terminal.
 2. Blender: addon enabled, **Start MCP Server** clicked.
 3. Unity: **Window → MCP for Unity** status panel reads `Connected`.
-4. Claude Code: `/mcp` lists `blender`, `unityMCP` and `chrome-devtools` as connected.
-5. Codex: `codex mcp list` shows them enabled; restart Codex to pick up the tools.
+4. Claude Code: `/mcp` lists `blender` and `chrome-devtools` as connected, and `UnityMCP` once
+   section 2.2 or 2.3 has been done on this machine.
+5. Codex: `codex mcp list` shows `blender` and `chrome-devtools` enabled, and `unityMCP` once
+   section 2.2 or 2.3 has been done on this machine; restart Codex to pick up the tools.
 6. Smoke tests — Blender: _"list the objects in the current scene"_. Unity: _"create a cube at the
    origin and add a Rigidbody"_. Chrome DevTools: `npm run dev`, then _"screenshot
    http://localhost:5173 and show me the console"_.
