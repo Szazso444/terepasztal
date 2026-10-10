@@ -24,7 +24,7 @@ import { gaugeOf } from './compat';
 import type { TrackClass } from '../world/track';
 import { rules, DEFAULT_RULES } from './rules';
 import { startStock } from './step';
-import { SUPPLY_MODES, dieselFuelId, setSupplyMode, supplyMode } from './supply';
+import { DEFAULT_SUPPLY, SUPPLY_MODES, dieselFuelId, setSupplyMode, supplyMode } from './supply';
 import { STR } from '../strings';
 import { Inventory } from '../gacha/inventory';
 import { Crafting, craftPool, craftResources } from '../gacha/crafting';
@@ -34,6 +34,7 @@ import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
+  setSupplyMode(DEFAULT_SUPPLY);
   resetStationIds(1);
   resetTrainIds(1);
 });
@@ -321,6 +322,44 @@ describe('the depot a new game starts with', () => {
     const free = w.inventory.free('loco');
     const deployable = free.filter((i) => !w.fleet.modelDeployReason(locoDef(i.defId), depot));
     expect(deployable[0].defId).toBe('rocket');
+  });
+
+  // the depot's word for each model alone, borne out by trains: every starter wagon behind every
+  // starter engine is accepted there (gauge, weight), rolls out and runs from one stop on to the
+  // next on the start stock alone
+  it.each(
+    STARTER_LOCOS.flatMap((l) =>
+      content.wagons.filter((wg) => wg.starter).map((wg) => [l.id, wg.id]),
+    ),
+  )('rolls a %s pulling a %s out of it, past two stops on the start stock', (locoId, wagonId) => {
+    const w = newGame(startStock());
+    const { depot, cls } = firstDepot(w, startDepotKind(), 0);
+    // the player's first line, in the depot's gauge: on east from the east gate, two quarries
+    const ew = [0, 1].find((r) => makePiece('straight', r, cls).links[0].includes(Dir.E))!;
+    for (let x = 23; x <= 44; x++) w.track.place(x, 20, 'straight', ew, cls);
+    const near = w.builder.placeStation(30, 21, 'quarry', 0)!;
+    const far = w.builder.placeStation(40, 21, 'quarry', 0)!;
+    const loco = w.inventory.free('loco').find((i) => i.defId === locoId)!;
+    const wagon = w.inventory.free('wagon').find((i) => i.defId === wagonId)!;
+    const pair = `${locoId} + ${wagonId}`;
+    const t = w.fleet.create(
+      [loco.uid],
+      [wagon.uid],
+      [near.id, far.id],
+      undefined,
+      'schedule',
+      depot.id,
+    );
+    expect(t, pair).toBeInstanceOf(Train);
+    const train = t as Train;
+    expect([loco.assigned, wagon.assigned], pair).toEqual([train.id, train.id]);
+    const reached: Station[] = [];
+    w.fleet.onArrive = (_t, s) => void reached.push(s);
+    for (let i = 0; i < 20000 && reached.length < 2; i++) w.fleet.tick(0.05, i * 0.05);
+    // both stops, so the train left the first one again under its own power
+    const stops = reached.map((s) => s.id);
+    expect(stops, pair).toEqual([near.id, far.id]);
+    expect(train.state, pair).not.toBe('noFuel');
   });
 
   it('rolls the Rocket out of its east gate once a line leads on from there', () => {
