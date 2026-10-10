@@ -115,6 +115,11 @@ export class Builder {
    * done (`tickWorks`), after `onStationChanged` or `onBuildingChanged`
    */
   onUpgraded: ((e: Upgraded) => void) | null = null;
+  /**
+   * fired once by `reclassTrack` after a stroke relaid track, with the anchor of every piece it
+   * relaid (neighbours turned into transitions included) and the class it converted to
+   */
+  onReclassed: ((tiles: { x: number; y: number }[], target: WideClass) => void) | null = null;
 
   constructor(
     readonly map: GameMap,
@@ -529,6 +534,10 @@ export class Builder {
     // that only now matches its class, and part the lane it carried
     for (const t of laid) this.checkOrphans(t.x, t.y);
     sfx('build.place');
+    this.onReclassed?.(
+      c.changes.map((p) => ({ x: p.x, y: p.y })),
+      target,
+    );
     return true;
   }
   /** Compatibility: lay a regular piece by kind. */
