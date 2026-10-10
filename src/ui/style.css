@@ -526,6 +526,11 @@ body {
   margin-top: 6px;
   flex-wrap: wrap;
 }
+/* buttons stacked at the right end of a list row */
+.row.stack {
+  margin: 0;
+  flex-direction: column;
+}
 
 /* ---- toasts ---- */
 #toasts {
@@ -648,6 +653,10 @@ body {
 }
 .item.disabled {
   opacity: 0.5;
+  cursor: default;
+}
+/* a row that is not picked by a click; its own buttons act */
+.item.static {
   cursor: default;
 }
 .item .name {
@@ -1324,6 +1333,12 @@ input.text {
 .menu-row .menu-btn {
   flex: 1;
 }
+/* what a menu button goes back to, in the body font under its title-font label */
+.menu-btn-detail {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0;
+}
 .menu-audio {
   display: flex;
   flex-direction: column;
@@ -1835,6 +1850,7 @@ table.market td {
   height: 10px;
   border: 1px solid var(--border-dark);
 }
+/* above the menus (.menu-root) and the modal screens (#modal-root): both ask through it */
 #name-prompt-root {
   position: absolute;
   inset: 0;
@@ -1842,7 +1858,7 @@ table.market td {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 60;
+  z-index: 75;
 }
 #name-prompt {
   width: 340px;
@@ -1882,6 +1898,15 @@ table.market td {
   max-height: 40vh;
   overflow-y: auto;
   margin: 2px 0 6px;
+}
+/* a named save in the settings screen: its name and lines, then Load and Delete on one line */
+.kv.save-row {
+  align-items: center;
+  gap: 8px;
+}
+.kv.save-row > .row {
+  margin: 0;
+  flex-wrap: nowrap;
 }
 
 .vehicle-preview-overlay {

@@ -3,7 +3,7 @@ import { AGE_ORDER, STR } from '../strings';
 import { LAST_AGE } from '../sim/ages';
 import { SAVE_VERSION, type SlotMeta } from '../sim/save';
 import { fmtMoney } from './dom';
-import { autosaveText, formatNote, slotText } from './saveSlots';
+import { autosaveText, formatNote, liveText, slotText } from './saveSlots';
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -66,6 +66,36 @@ describe('what a save list says about one save', () => {
     expect(slotText(meta({ version: SAVE_VERSION - 1 }), NOW).format).toBe(older);
     // a file without a version reads 0: older than any build
     expect(formatNote(0)).toBe(STR.saves.olderFormat(0));
+  });
+});
+
+describe('what Continue says over a game being played', () => {
+  it('reads the game as it is now, like a save of it would', () => {
+    const live = liveText(meta(), NOW);
+    expect(live.detail).toBe(slotText(meta(), NOW).detail);
+    expect(liveText(meta({ day: 13 }), NOW).detail).not.toBe(live.detail);
+    expect(liveText(meta({ money: 1 }), NOW).detail).toContain(fmtMoney(1));
+  });
+
+  it('says it goes back to the game in progress, not to a save written then', () => {
+    const live = liveText(meta(), NOW);
+    expect(live.saved).not.toBe(slotText(meta(), NOW).saved);
+    // when the game was last stored, from the time it is asked, with the date as title
+    expect(live.saved).toContain(STR.saves.ago(2 * HOUR));
+    expect(liveText(meta(), NOW + HOUR).saved).toContain(STR.saves.ago(3 * HOUR));
+    expect(live.savedAt).toBe(slotText(meta(), NOW).savedAt);
+  });
+
+  it('still says so for a game never stored, without a time', () => {
+    const fresh = liveText(meta({ savedAt: 0 }), NOW);
+    expect(fresh.saved).toBeTruthy();
+    expect(fresh.saved).not.toBe(liveText(meta(), NOW).saved);
+    expect(fresh.savedAt).toBeNull();
+  });
+
+  it('never marks a format: the game in memory has no file', () => {
+    expect(liveText(meta({ version: SAVE_VERSION - 1 }), NOW).format).toBeNull();
+    expect(liveText(meta({ version: SAVE_VERSION + 1 }), NOW).format).toBeNull();
   });
 });
 
