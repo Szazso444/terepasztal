@@ -852,3 +852,83 @@ describe('planRetreat on generated lines with sidings', () => {
     );
   });
 });
+
+/**
+ * An idle train in the other's way: it stood at the station under its head or stands at none
+ * (it has made way before), and the platforms of either station may be ones another train is
+ * bound for.
+ */
+interface AsideCase {
+  line: RetreatCase;
+  atStation: boolean;
+  boundStop: boolean;
+  boundStood: boolean;
+}
+function asideSetUp(a: AsideCase) {
+  const s = standing(a.line, true);
+  if (!s) return null;
+  const { g, t, ctx, keys, starts, refugeOff, waysTo, wayTo, wayOn, platforms } = s;
+  t.state = 'idle';
+  t.atStation = a.atStation ? ctx.builder.stationById(STOOD)! : null;
+  const bound = keys([
+    ...(a.boundStop ? platforms.get(STOP)! : []),
+    ...(a.boundStood ? platforms.get(STOOD)! : []),
+  ]);
+  // the fleet's sidings: dead ends with no platform on them
+  const plat = keys([...platforms.values()].flat());
+  const sidings = keys(
+    a.line.sidings
+      .map(sidingTiles)
+      .filter((ts) => ts.every((p) => !plat.has(g.key(p.x, p.y))))
+      .flat(),
+  );
+  const spots = { theirs: ctx.trainPath(2), bound, sidings };
+  // where it is bound back to: the station it stood at, else its stop
+  const to = wayTo(a.atStation ? STOOD : STOP);
+  return {
+    t,
+    ctx,
+    spots,
+    had: starts.some(to),
+    inSidings: waysTo(refugeOff(bound, sidings)),
+    anywhere: waysTo(refugeOff(bound)),
+    wayOn: (w: readonly PathSegment[]) => wayOn(w, to),
+  };
+}
+
+describe('planAside on generated lines with sidings', () => {
+  // the oracle as for planRetreat; the station it must get back to is the one it stood at
+  it('moves an idle train only where it can get back to its station from, into a siding first', () => {
+    forAll(
+      (rng): AsideCase => ({
+        line: retreatCase(rng),
+        atStation: rng.chance(0.5),
+        boundStop: rng.chance(0.5),
+        boundStood: rng.chance(0.5),
+      }),
+      (a) => {
+        const { t, ctx, spots, had, inSidings, anywhere, wayOn } = asideSetUp(a)!;
+        const fits = (ways: PathSegment[][]) => (had ? ways.filter(wayOn) : ways);
+        const sided = fits(inSidings);
+        const any = fits(anywhere);
+        const plan = t.planAside(ctx, [2], spots);
+        const story = `had a way back: ${had}; ${sided.length} sidings and ${any.length} refuges fit; plan ${plan && showWay(plan.path)}`;
+        if (!plan) return expect(any.map(showWay), story).toEqual([]);
+        const pool = sided.length ? inSidings : anywhere;
+        expect(
+          pool.some((w) => sameWay(w, plan.path)),
+          story,
+        ).toBe(true);
+        if (had) expect(wayOn(plan.path), story).toBe(true);
+      },
+      {
+        seeds: MANY_SEEDS,
+        shrink: function* (a) {
+          for (const line of shrinkRetreat(a.line)) yield { ...a, line };
+          for (const flag of ['atStation', 'boundStop', 'boundStood'] as const)
+            if (a[flag]) yield { ...a, [flag]: false };
+        },
+      },
+    );
+  });
+});
