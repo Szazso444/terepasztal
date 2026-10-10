@@ -1,7 +1,0 @@
-For the target video, at 0.00 seconds into the target video, <Picture 1> (from [Shot 1]) is fully referenced.
-
-integrated_multimodal_description: [Shot 1] A single continuous {duration}-second shot begins exactly from the supplied image of {subject}, preserving its pixel-art style, its proportions and livery, and the solid flat magenta background. The {kind} remains completely stationary and keeps its shape: nothing is added, removed or redrawn. The camera performs exactly one smooth 360-degree orbit around the {kind}'s vertical centre axis at a constant angular speed of {deg_per_s} degrees per second, at a fixed height about 30 degrees above it and looking down at it. Keep the orbit radius, camera height, downward viewing angle and orthographic scale constant: no zoom, no dolly, no tilt, no shake. The whole {kind} stays centred and fully visible in every frame. Complete 90 degrees at {q1} seconds, 180 degrees at {q2} seconds, 270 degrees at {q3} seconds and exactly 360 degrees at {duration} seconds, returning to the opening composition. Same flat even lighting from every angle. Only the camera moves. No cuts, wheel movement, smoke, steam, added objects, shadows, ground or background changes.
-
-overall_soundscape: Silent throughout.
-
-non_diegetic_music: N/A
