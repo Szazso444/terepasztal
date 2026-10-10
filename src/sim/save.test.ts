@@ -139,8 +139,9 @@ describe('the migration registry', () => {
     // An empty step tells the player a default was filled in and leaves the load code to keep
     // the promise. Each step meets a file of its own version with nothing optional in it, the
     // old offer defaults the step to v11 rewrites, a train with nothing but its id for the
-    // steps that fill a train's fields, and a station with no turn and no work for the steps
-    // that fill a station's.
+    // steps that fill a train's fields, a station with no turn and no work for the steps that
+    // fill a station's, and past the step that starts the works list, a works with no level, no
+    // work and no rotation for the steps that fill a works'.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
@@ -148,6 +149,7 @@ describe('the migration registry', () => {
         rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
         trains: [{ id: 1 }],
         stations: [stationOf('farm', undefined)],
+        ...(m.from > 3 ? { buildings: [[7, 7, 'kiln', 0] as BuildingJSON] } : {}),
       };
       const before = asStored(file);
       m.run(file);
@@ -717,8 +719,9 @@ describe('v11 to v12', () => {
       ],
     });
     expect(j.track[0]).toEqual([4, 8, 'straight', 1, 'high_speed', undefined]);
-    // the step to v15 then says the bridge is not being strengthened
-    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null]);
+    // the step to v15 then says the bridge is not being strengthened, and the step to v16 that it
+    // stands at rotation 0
+    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null, 0]);
     expect(j.stockpile).toEqual({ amounts: { wheat: 200, coal: 50, food: 1000 }, famine: false });
     expect(j.economy.money).toBe(1000);
   });
@@ -898,8 +901,17 @@ describe('readSaveText', () => {
 
 describe('works buildings in a save', () => {
   it('come back as they were saved, idle until their first tick', () => {
-    const b: Building = { id: 'sawmill', x: 4, y: 9, acc: 0.25, level: 3, active: true, rate: 2 };
-    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3, null]);
+    const b: Building = {
+      id: 'sawmill',
+      x: 4,
+      y: 9,
+      acc: 0.25,
+      level: 3,
+      rot: 2,
+      active: true,
+      rate: 2,
+    };
+    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3, null, 2]);
     expect(buildingFromJSON(buildingToJSON(b))).toEqual({
       ...b,
       active: false,
@@ -907,13 +919,14 @@ describe('works buildings in a save', () => {
     });
   });
 
-  it('take level 1 where the save has none', () => {
+  it('take level 1 and rotation 0 where the save has none', () => {
     expect(buildingFromJSON([1, 2, 'mill', 0])).toEqual({
       id: 'mill',
       x: 1,
       y: 2,
       acc: 0,
       level: 1,
+      rot: 0,
       active: false,
       rate: 0,
     });
@@ -924,6 +937,7 @@ describe('works buildings in a save', () => {
       0,
       1,
       null,
+      0,
     ]);
   });
 
@@ -987,13 +1001,15 @@ describe('v14 to v15', () => {
 
   it('says that nothing was being upgraded, on every station, works and house', () => {
     const j = migrate(v14());
-    expect(j.version).toBe(15);
-    expect(j.migrationNotes).toEqual([`v14→v15: ${MIGRATIONS.at(-1)!.note}`]);
+    expect(j.version).toBe(SAVE_VERSION);
+    const step = MIGRATIONS.find((m) => m.from === 14)!;
+    expect(j.migrationNotes?.[0]).toBe(`v14→v15: ${step.note}`);
     expect(j.stations.map((s) => s.work)).toEqual([null, null]);
-    // a works saved without its level gets the 1 it always meant, so the work has its place
+    // a works saved without its level gets the 1 it always meant, so the work has its place (the
+    // step to v16 then turns each to rotation 0)
     expect(j.buildings).toEqual([
-      [7, 7, 'windmill', 0.5, 2, null],
-      [9, 7, 'kiln', 0, 1, null],
+      [7, 7, 'windmill', 0.5, 2, null, 0],
+      [9, 7, 'kiln', 0, 1, null, 0],
     ]);
     expect(j.houses?.list[0]).toEqual({
       x: 3,
@@ -1190,6 +1206,129 @@ describe('v14 to v15', () => {
           expect(loadHouses(once), 'the houses load as before').toEqual(loadHouses(before));
       },
       { shrink: shrinkV14 },
+    );
+  });
+});
+
+describe('v15 to v16', () => {
+  beforeEach(() => {
+    resetTrainIds(1);
+    resetStationIds(1);
+    Object.assign(rules, DEFAULT_RULES);
+  });
+
+  /** A turn a works tuple could hold: the four, null, and values no build wrote. */
+  const TURN_VALUES: unknown[] = [0, 1, 2, 3, null, 5, -1, 2.5, '1'];
+  /**
+   * A works tuple in any shape a build, an older file's steps or a hand could leave: no level, a
+   * level written as null, no work, a turn already there (or null, or one no build wrote),
+   * something newer after the turn, too short to be a works, or (unless `tuples`) no tuple at all.
+   */
+  function genWorks(rng: Rng, tuples = false): unknown {
+    const id = rng.pick(['windmill', 'kiln', 'colliery', 'bridge_wood', 'sawmill']);
+    const t: unknown[] = [rng.int(0, 31), rng.int(0, 31), id, rng.pick([0, 0.5, rng.next()])];
+    const level = () => rng.pick<unknown>([1, 2, 4, 6, null]);
+    const work = () => rng.pick<unknown>([null, { to: 2, left: 10, total: 60 }, 7, {}]);
+    switch (rng.int(0, tuples ? 5 : 6)) {
+      case 0:
+        return t;
+      case 1:
+        return [...t, level()];
+      case 2:
+        return [...t, level(), work()];
+      case 3:
+        return [...t, level(), work(), rng.pick(TURN_VALUES)];
+      case 4:
+        return [...t, level(), work(), rng.pick(TURN_VALUES), 'newer'];
+      case 5:
+        return t.slice(0, rng.int(0, 3));
+      default:
+        return rng.pick([null, 'kiln', {}, 7]);
+    }
+  }
+  /** A v15 file, as it reads from disk, with a works list of any shapes or none at all. */
+  function genV15(rng: Rng): SaveGame {
+    const file: Record<string, unknown> = { ...genOldFile(rng), version: 15 };
+    if (rng.chance(0.15)) delete file.buildings;
+    else file.buildings = Array.from({ length: rng.int(0, 6) }, () => genWorks(rng));
+    return asStored(file) as SaveGame;
+  }
+  /** Smaller v15 files: what `shrinkOldFile` drops, then a shorter works list. */
+  function* shrinkV15(file: SaveGame): Iterable<SaveGame> {
+    const f = file as unknown as Record<string, unknown>;
+    for (const smaller of shrinkOldFile(f)) if (smaller.version === 15) yield smaller as never;
+    if (Array.isArray(f.buildings))
+      for (const buildings of shrinkArray(f.buildings)) yield { ...f, buildings } as never;
+  }
+  /**
+   * The step as the brief states it, for one works item: a tuple of at least four places is
+   * padded to seven with what a missing place always meant (level 1, no work, turn 0), and a turn
+   * written as null is 0; anything else, and every place the tuple had, is as it was.
+   */
+  function turned(item: unknown): unknown {
+    if (!Array.isArray(item) || item.length < 4) return item;
+    const t = [...item];
+    const defaults = [1, null, 0];
+    for (let i = t.length; i < 7; i++) t.push(defaults[i - 4]);
+    if (t[6] === null) t[6] = 0;
+    return t;
+  }
+
+  it('gives each works a turn, fills nothing else, finds nothing to do again, and loads as before', () => {
+    forAll(
+      genV15,
+      (file) => {
+        const before = asStored(file) as SaveGame;
+        const once = asStored(runStep(15, asStored(file) as SaveGame)) as SaveGame;
+        expect(asStored(runStep(15, asStored(once) as SaveGame)), 'run again').toEqual(once);
+        // everything but the works list is untouched, and the works are as the brief says
+        const { buildings: worksAfter, ...restAfter } = once;
+        const { buildings: worksBefore, ...restBefore } = before;
+        expect(restAfter, 'beside the works').toEqual(restBefore);
+        expect(worksAfter, 'the works list').toEqual(worksBefore?.map(turned));
+        // and the load code sees no difference: a missing turn always loaded as r0
+        (worksBefore ?? []).forEach((bj: unknown, i) => {
+          if (!Array.isArray(bj) || bj.length < 3) return;
+          const load = (j: unknown) => buildingFromJSON(asStored(j) as BuildingJSON);
+          expect(load(worksAfter![i]), `works ${i} loads as before`).toEqual(load(bj));
+        });
+      },
+      { shrink: shrinkV15 },
+    );
+  });
+
+  it('leaves every works of a file of any older version with a turn, and a v16 file as it was', () => {
+    // Tuples only: the step from v11 reads each works item as a tuple where the file has old
+    // bridge track, and refuses the file as damaged when one is not.
+    forAll(
+      (rng) => {
+        const file = genOldFile(rng);
+        file.version = rng.int(SAVE_MIN_VERSION, SAVE_VERSION);
+        file.buildings = Array.from({ length: rng.int(1, 5) }, () => genWorks(rng, true));
+        return asStored(file) as Record<string, unknown>;
+      },
+      (file) => {
+        const read = readSaveText(JSON.stringify(file));
+        if (!('save' in read)) throw new Error(`the file was refused as ${read.error}`);
+        const works = (read.save.buildings ?? []) as unknown[];
+        if (file.version === SAVE_VERSION) {
+          expect(works, 'a file of this version').toEqual(file.buildings);
+          return;
+        }
+        works.forEach((b, i) => {
+          if (!Array.isArray(b) || b.length < 4) return;
+          expect(b.length, `works ${i}: the place for its turn`).toBeGreaterThanOrEqual(7);
+          expect(b[6] ?? 'none', `works ${i}: its turn`).not.toBe('none');
+          expect(TURN_VALUES, `works ${i}: its turn`).toContain(b[6]);
+        });
+      },
+      {
+        shrink: function* (file) {
+          for (const smaller of shrinkOldFile(file)) yield smaller;
+          if (Array.isArray(file.buildings))
+            for (const buildings of shrinkArray(file.buildings)) yield { ...file, buildings };
+        },
+      },
     );
   });
 });
@@ -2490,6 +2629,16 @@ function withoutFilled(from: number, file: unknown): unknown {
     const list = isObject(copy.houses) ? copy.houses.list : undefined;
     if (Array.isArray(list)) for (const h of list.filter(isObject)) delete h.work;
   }
+  if (from === 15)
+    for (const b of Array.isArray(copy.buildings) ? copy.buildings : []) {
+      if (!Array.isArray(b) || b.length < 4) continue;
+      // what the step may add, taken off the end: rotation 0 in place of none, then the no-work
+      // and level 1 it put before it; a value the file held is kept, and must be the same
+      if (b.length >= 7 && b[6] === null) b[6] = 0;
+      if (b.length === 7 && b[6] === 0) b.length = 6;
+      if (b.length === 6 && b[5] === null) b.length = 5;
+      if (b.length === 5 && b[4] === 1) b.length = 4;
+    }
   return copy;
 }
 
@@ -2645,7 +2794,7 @@ describe('the defaults the steps fill', () => {
     // fill when it runs again; a step that rewrote a value it should keep would not.
     forAll(
       (rng) => {
-        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14]);
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15]);
         const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
         return { from, file };
       },

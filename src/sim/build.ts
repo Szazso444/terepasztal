@@ -32,6 +32,7 @@ import {
 import { advanceWork, startWork, workProgress, type Upgraded, type WorkSite } from './upgrade';
 import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
+import { wrapRotation } from './rotation';
 import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
@@ -629,8 +630,13 @@ export class Builder {
   refreshHarvest() {
     for (const s of this.stations) s.terrainFactor = terrainFactorAt(this.map, s.x, s.y, s.def.id);
   }
+  /**
+   * Place a station turned to `rot`, one of the four rotations (`BUILDING_ROTATIONS`); its
+   * footprint and gates follow the rotation's axis, so `rot` and `rot + 2` cover the same tiles.
+   */
   placeStation(x: number, y: number, defId: string, rot = 0): Station | null {
-    const c = this.checkStation(x, y, defId, rot);
+    const turn = wrapRotation(rot);
+    const c = this.checkStation(x, y, defId, turn);
     if (!c.ok || !this.pay(c.cost)) return null;
     const count = this.stations.filter((s) => s.def.id === defId).length;
     const s = new Station(
@@ -639,7 +645,7 @@ export class Builder {
       y,
       count ? `${stationDef(defId).name} ${count + 1}` : undefined,
     );
-    s.rot = rot % 2;
+    s.rot = turn;
     s.terrainFactor = terrainFactorAt(this.map, x, y, defId);
     this.stations.push(s);
     this.refreshStationBoosts();
@@ -792,7 +798,11 @@ export class Builder {
   }
 
   // ------------------------------------------------------------------ buildings
-  checkBuilding(x: number, y: number, defId: string): PlacementCheck {
+  /**
+   * Whether a works may stand on a tile turned to `_rot`. A works covers its one tile whatever
+   * its rotation, so the rotation changes nothing here; it is taken as `checkStation` takes it.
+   */
+  checkBuilding(x: number, y: number, defId: string, _rot = 0): PlacementCheck {
     const def = buildingDef(defId);
     if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
     if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
@@ -855,10 +865,12 @@ export class Builder {
     sfx('build.remove');
     return true;
   }
-  placeBuilding(x: number, y: number, defId: string): Building | null {
-    const c = this.checkBuilding(x, y, defId);
+  /** Place a works turned to `rot`, one of the four rotations (`BUILDING_ROTATIONS`). */
+  placeBuilding(x: number, y: number, defId: string, rot = 0): Building | null {
+    const turn = wrapRotation(rot);
+    const c = this.checkBuilding(x, y, defId, turn);
     if (!c.ok || !this.pay(c.cost)) return null;
-    const b: Building = { id: defId, x, y, acc: 0, active: false, rate: 0 };
+    const b: Building = { id: defId, x, y, acc: 0, rot: turn, active: false, rate: 0 };
     this.buildings.set(this.key(x, y), b);
     this.onBuildingChanged?.(b, false);
     this.onIndustryPlaced?.(x, y);

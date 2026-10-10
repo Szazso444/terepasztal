@@ -20,7 +20,7 @@
     },
     "crew": 1,
     "onTrack": false,
-    "rotations": 1,
+    "rotations": 4,
     "radius": 2,
     "loadBoost": 0.25,
     "water": true
@@ -35,7 +35,7 @@
     },
     "crew": 1,
     "onTrack": false,
-    "rotations": 1,
+    "rotations": 4,
     "radius": 2,
     "fuel": true
   },
@@ -63,7 +63,7 @@
     },
     "crew": 0,
     "onTrack": false,
-    "rotations": 2,
+    "rotations": 4,
     "residents": 6
   }
 ]

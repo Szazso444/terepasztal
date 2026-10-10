@@ -3,6 +3,7 @@ import type { Stockpile } from './stockpile';
 import { rules, weekSeconds } from './rules';
 import { MAX_LEVEL } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
+import { wrapRotation } from './rotation';
 
 export type { BuildingDef };
 export const BUILDING_DEFS: BuildingDef[] = content.buildings;
@@ -21,6 +22,11 @@ export interface Building {
   acc: number;
   /** Player-paid upgrade, 1..`worksMaxLevel`. Older saves default to 1. */
   level?: number;
+  /**
+   * The rotation it was placed in, 0 to 3 (`BUILDING_ROTATIONS`). A works covers its one tile at
+   * every rotation, so nothing it does depends on it. Missing (a level file's works) means 0.
+   */
+  rot?: number;
   /** running in the last tick */
   active: boolean;
   /** batches completed in the last in-game week (rolling estimate) */
@@ -37,7 +43,7 @@ export interface Building {
 }
 /**
  * A building as a save holds it (v4); the level came later, and a save without one means 1. The
- * upgrade under way came in v15, null for none.
+ * upgrade under way came in v15, null for none; the rotation in v16, and a save without one means 0.
  */
 export type BuildingJSON = [
   x: number,
@@ -46,17 +52,28 @@ export type BuildingJSON = [
   acc: number,
   level?: number,
   work?: Work | null,
+  rot?: number,
 ];
 export function buildingToJSON(b: Building): BuildingJSON {
-  return [b.x, b.y, b.id, b.acc, b.level ?? 1, workToJSON(b.work)];
+  return [b.x, b.y, b.id, b.acc, b.level ?? 1, workToJSON(b.work), b.rot ?? 0];
 }
 /**
  * A saved building, idle until its first tick says otherwise. Its work is kept only where the game
  * could have started it: on a building it knows, towards the next level and at most the top one.
+ * Its rotation is one of the four (`wrapRotation`), 0 where the save has none.
  */
-export function buildingFromJSON([x, y, id, acc, level, work]: BuildingJSON): Building {
+export function buildingFromJSON([x, y, id, acc, level, work, rot]: BuildingJSON): Building {
   const lv = level ?? 1;
-  const b: Building = { id, x, y, acc: acc ?? 0, level: lv, active: false, rate: 0 };
+  const b: Building = {
+    id,
+    x,
+    y,
+    acc: acc ?? 0,
+    level: lv,
+    rot: wrapRotation(rot),
+    active: false,
+    rate: 0,
+  };
   if (BUILDING_DEFS.some((d) => d.id === id)) {
     const w = workFromJSON(work, buildingLevel(b), worksMaxLevel(b));
     if (w) b.work = w;

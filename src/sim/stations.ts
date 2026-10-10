@@ -7,6 +7,7 @@ import { rules } from './rules';
 import { cargoDef } from './cargo';
 import { MAX_LEVEL } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
+import { wrapRotation } from './rotation';
 
 export type { StationDef };
 export { MAX_LEVEL };
@@ -19,7 +20,10 @@ export function stationDef(id: string): StationDef {
   if (!d) throw new Error(`unknown station ${id}`);
   return d;
 }
-/** Width (along x) and depth (along y) of a station turned to `rot`. */
+/**
+ * Width (along x) and depth (along y) of a station turned to `rot`: the rotation's axis decides
+ * it (`rotationAxis`), so `rot` and `rot + 2` give the same span.
+ */
 export function stationSpan(def: StationDef, rot: number): { w: number; h: number } {
   if (def.long) return rot % 2 === 0 ? { w: 2, h: 1 } : { w: 1, h: 2 };
   const n = def.size ?? 1;
@@ -34,8 +38,9 @@ export function stationFootprint(defId: string, x: number, y: number, rot: numbe
 }
 /**
  * Tiles where track may serve a station of this kind with its corner at (x, y), turned to `rot`:
- * a shed (a depot) has one gate at each end of every track through it, west then east (rot 0) or
- * north then south (rot 1); any other station every orthogonal neighbour of its footprint.
+ * a shed (a depot) has one gate at each end of every track through it, west then east (rot 0 and
+ * 2) or north then south (rot 1 and 3); any other station every orthogonal neighbour of its
+ * footprint.
  */
 export function stationGates(defId: string, x: number, y: number, rot: number) {
   return gatesOf(stationDef(defId), x, y, rot);
@@ -79,7 +84,10 @@ export interface StationJSON {
   level: number;
   storage: Record<string, number>;
   market?: Record<string, number>;
-  /** v7: orientation of multi-tile stations (depot gates: 0 = west/east, 1 = north/south) */
+  /**
+   * v7: orientation of multi-tile stations (depot gates: 0 = west/east, 1 = north/south); v16:
+   * one of the four rotations, 0 to 3, whose axis is that orientation (`rotationAxis`)
+   */
   rot?: number;
   /** v15: the upgrade under way, null for none */
   work?: Work | null;
@@ -162,7 +170,11 @@ export class Station {
   get refuelsWater() {
     return !!this.def.water || this.waterSupply || this.producedCargo().includes('water');
   }
-  /** orientation of a multi-tile station (depot: 0 = gates west and east, 1 = north and south) */
+  /**
+   * The rotation it was placed in, 0 to 3 (`BUILDING_ROTATIONS`, front facing S, W, N or E). The
+   * footprint and gates follow its axis alone (depot: 0 and 2 gates west and east, 1 and 3 north
+   * and south).
+   */
   rot = 0;
   constructor(
     defId: string,
@@ -339,7 +351,7 @@ export class Station {
   static fromJSON(j: StationJSON): Station {
     const s = new Station(j.defId, j.x, j.y, j.name, j.id);
     s.level = j.level;
-    s.rot = j.rot ?? 0;
+    s.rot = wrapRotation(j.rot);
     s.storage = new Map(Object.entries(j.storage));
     s.market = new Map(Object.entries(j.market ?? {}));
     s.work = workFromJSON(j.work, s.level, MAX_LEVEL);
@@ -359,7 +371,7 @@ export class Station {
   static fromLevel(j: LevelStation): Station {
     const s = new Station(j.defId, j.x, j.y, j.name || undefined);
     s.level = Math.max(1, Math.min(MAX_LEVEL, j.level));
-    s.rot = j.rot ?? 0;
+    s.rot = wrapRotation(j.rot);
     return s;
   }
 }
