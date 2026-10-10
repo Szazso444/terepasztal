@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { Terrain, type GameMap } from '../world/tiles';
 import { RegionState } from '../world/regions';
-import { TrackGraph } from '../world/track';
+import { TrackGraph, type TrackKind } from '../world/track';
 import type { PathSegment } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import type { Rng } from '../engine/rng';
@@ -10,15 +10,25 @@ import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, type StationJSON } from './stations';
-import { Train, defaultStop, resetTrainIds, type RouteMode, type TrainState } from './trains';
+import {
+  Train,
+  defaultStop,
+  resetTrainIds,
+  type RouteMode,
+  type StopPlan,
+  type TrainState,
+} from './trains';
 import { Fleet } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY, dieselFuelId } from './supply';
+import { setSeasonOffset } from './weather';
 import { migrate, SAVE_VERSION, type SaveGame } from './save';
 import { expandSave, CHUNK_TILES } from './expand';
 import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
+import { STR } from '../strings';
 import { SEEDS, forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import {
   buildTrafficScenario,
   sharedTiles,
@@ -38,7 +48,8 @@ import {
 // mid-run: no shared tile or deadlock, a train backing off kept on its escape and only on one it
 // can still run, a yielding train kept waiting as long as it would have, no train asked to back
 // off again before its last back-off has run out, and a world grown around the save carrying on
-// as the save.
+// as the save. At the end: the scenes of src/sim/idleTraffic.test.ts, in which a train with
+// nothing worth hauling idles and makes way for another (issue #151), saved at any tick.
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -1502,3 +1513,500 @@ function grownLoaded(c: TrafficControl, tick: number): Fleet {
   for (const t of save.trains as TrainJSON[]) fleet.trains.push(Train.fromJSON(t, track));
   return fleet;
 }
+
+// ------------------------------------------------------------------ idle trains (issue #151)
+// The scenes of src/sim/idleTraffic.test.ts: a roaming train finds nothing worth hauling at its
+// station and idles there, holding no platform, and a train on a schedule comes by. Where that
+// train needs the track under it, the idle train makes way: it runs an escape aside, reserved as a
+// train backing off has its escape, and idles where it ends. On a single line it has nowhere to go
+// and says so, and where the other train comes in by another road it stays where it stands. In two
+// more, stone turns up at the quarry the train idles at, before and after it made way, and it takes
+// up work again. Saved after any tick from the moment the second train sets off (the train idles
+// alone in one), and loaded into the scene laid afresh at the saved game time, every train carries
+// on as the uninterrupted run does.
+
+/** Game seconds of an idle scene's run the save moments are drawn from, and run on after one. */
+const IDLE_SPAN = 100;
+const IDLE_AFTER = 60;
+/** The notes an idle train may show: none, or one about making way (as idleTraffic.test.ts). */
+const IDLE_NOTES: string[] = [
+  '',
+  STR.traffic.madeWay,
+  STR.traffic.waitAside,
+  STR.traffic.noWayAside,
+  STR.traffic.replan,
+];
+
+/** An idle scene's world and its stations, in the order they were placed. */
+interface IdleLaid {
+  w: SimWorld;
+  st: Station[];
+}
+
+/** Lays a piece through the builder, free of cost and region, as the game would. */
+function layPiece(w: SimWorld, x: number, y: number, kind: TrackKind, rot: number) {
+  w.builder.free = true;
+  const ok = w.builder.placeTrack(x, y, { kind, cls: 'regular' }, rot);
+  w.builder.free = false;
+  if (!ok) throw new Error(`no ${kind} at ${x},${y}`);
+}
+/**
+ * A terminus: the main line along ROW from x 4 to 40, a warehouse at its west end (platform x 5)
+ * and a quarry at its dead east end (platform x 40). A switch at x 20, its throat facing east,
+ * leads into a six-tile siding south of the line.
+ */
+function terminusLine(): IdleLaid {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  layPiece(w, 20, ROW, 'switch', 1);
+  for (let y = ROW + 2; y < ROW + 8; y++) layPiece(w, 20, y, 'straight', 0);
+  line(w, 4, ROW, 19);
+  line(w, 22, ROW, 40);
+  return { w, st: [station(w, 'warehouse', 5, ROW - 1), station(w, 'quarry', 40, ROW - 1)] };
+}
+/**
+ * A through station: the main line along ROW from x 4 to 56, a quarry beside it at x 30 and a
+ * warehouse at x 50. Past the quarry a switch at x 36, its throat facing west, leads into a
+ * six-tile siding south of the line.
+ */
+function throughLine(): IdleLaid {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  layPiece(w, 36, ROW, 'switch', 7);
+  for (let y = ROW + 2; y < ROW + 8; y++) layPiece(w, 37, y, 'straight', 0);
+  line(w, 4, ROW, 35);
+  line(w, 38, ROW, 56);
+  return { w, st: [station(w, 'quarry', 30, ROW - 1), station(w, 'warehouse', 50, ROW - 1)] };
+}
+/**
+ * One platform two roads end at: the main line along ROW from x 4 ends at the quarry's platform
+ * (x 30), and a road from the north down x 31 at the tile east of it, with a warehouse beside it.
+ * The quarry has one platform for both.
+ */
+function twoRoads(): IdleLaid {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  line(w, 4, ROW, 30);
+  for (let y = ROW - 8; y <= ROW - 1; y++) layPiece(w, 31, y, 'straight', 0);
+  const quarry = station(w, 'quarry', 30, ROW - 1);
+  expect(quarry.platforms).toBe(1);
+  return { w, st: [quarry, station(w, 'warehouse', 32, ROW - 7)] };
+}
+/** A single line from x 4 to 40 between a warehouse and a quarry at its ends: nowhere to pass. */
+function singleLine(): IdleLaid {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  line(w, 4, ROW, 40);
+  return { w, st: [station(w, 'warehouse', 5, ROW - 1), station(w, 'quarry', 40, ROW - 1)] };
+}
+
+/**
+ * An F7 and a hopper with full tanks, its head at (x, y) entering from `from`, sent off for its
+ * first stop as the fleet sends a train off.
+ */
+function sendOff(w: SimWorld, x: number, y: number, from: Dir, mode: RouteMode, stops: StopPlan[]) {
+  const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+  t.wagons = [
+    { uid: 2, def: wagonDef('wood_hopper'), level: 1, cargo: null, amount: 0, origin: null },
+  ];
+  expect(t.spawnAt(w.track, x, y, from)).toBe(true);
+  t.oil = t.oilCap;
+  t.mode = mode;
+  t.schedule = stops;
+  w.fleet.trains.push(t);
+  expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+  t.onPathReady({ builder: w.builder });
+  return t;
+}
+/** A roaming train heading east on the main line, its head at x, bound for `s`. */
+const roamTo = (w: SimWorld, x: number, s: Station) =>
+  void sendOff(w, x, ROW, Dir.W, 'production', [defaultStop(s.id)]);
+/** A train on a schedule heading east on the main line, its head at x. */
+const runFrom = (w: SimWorld, x: number, stops: StopPlan[]) =>
+  void sendOff(w, x, ROW, Dir.W, 'schedule', stops);
+/** A stop where the train calls and moves on without waiting for full wagons. */
+const callAt = (s: Station, load: 'auto' | 'none' = 'auto'): StopPlan => ({
+  ...defaultStop(s.id),
+  waitFull: false,
+  load,
+});
+/** Stone turns up at the station with this id. */
+const stoneAt = (id: number) => (w: SimWorld) => void w.builder.stationById(id)!.store('stone', 40);
+
+/**
+ * A scene of idleTraffic.test.ts: its track, its roaming trains sent off to the station where they
+ * find nothing to haul, the trains set off once those idle, and what it does to its world on the
+ * way.
+ */
+interface IdleScene {
+  name: string;
+  lay: () => IdleLaid;
+  idle: (l: IdleLaid) => void;
+  others: (l: IdleLaid) => void;
+  /**
+   * Done to the world before a tick of the uninterrupted run, once, the first time `when` holds
+   * (`arrived` lists the stations a train has arrived at); a load does it before the same tick.
+   */
+  actions?: {
+    when: (arrived: (id: number) => number[], tick: number) => boolean;
+    act: (w: SimWorld) => void;
+  }[];
+}
+// In each world the idle train is #1 and the other #2; the stations take ids in `st` order.
+const IDLE_SCENES: readonly IdleScene[] = [
+  ...[8, 30].map((x): IdleScene => ({
+    name: `a terminus, the caller setting off at x ${x}`,
+    lay: terminusLine,
+    idle: ({ w, st }) => roamTo(w, 34, st[1]),
+    others: ({ w, st }) => runFrom(w, x, [callAt(st[1]), callAt(st[0])]),
+  })),
+  ...(
+    [
+      [12, 'east'],
+      [25, 'east'],
+      [12, 'mid'],
+    ] as const
+  ).map(([x, first]): IdleScene => ({
+    name: `a through station, the train behind setting off at x ${x} for ${first} first`,
+    lay: throughLine,
+    idle: ({ w, st }) => roamTo(w, 24, st[0]),
+    others: ({ w, st: [mid, east] }) =>
+      runFrom(w, x, first === 'east' ? [callAt(east), callAt(mid)] : [callAt(mid), callAt(east)]),
+  })),
+  {
+    name: 'one platform two roads end at, the second train on the other road',
+    lay: twoRoads,
+    idle: ({ w, st }) => roamTo(w, 24, st[0]),
+    others: ({ w, st }) =>
+      void sendOff(w, 31, ROW - 6, Dir.N, 'schedule', [callAt(st[0]), callAt(st[1])]),
+  },
+  {
+    name: 'a single line, nowhere to move aside to',
+    lay: singleLine,
+    idle: ({ w, st }) => roamTo(w, 34, st[1]),
+    others: ({ w, st }) => runFrom(w, 8, [callAt(st[1]), callAt(st[0])]),
+  },
+  {
+    name: 'a terminus, stone turning up where the train idles',
+    lay: terminusLine,
+    idle: ({ w, st }) => roamTo(w, 34, st[1]),
+    others: () => {},
+    actions: [{ when: (_, tick) => tick === 30 / GDT, act: stoneAt(2) }],
+  },
+  {
+    name: 'a terminus, stone turning up once the train made way and the caller left',
+    lay: terminusLine,
+    idle: ({ w, st }) => roamTo(w, 34, st[1]),
+    others: ({ w, st }) => runFrom(w, 8, [callAt(st[1], 'none'), callAt(st[0], 'none')]),
+    actions: [
+      {
+        // the caller has called at the quarry (2) and back at the warehouse (1)
+        when: (arrived) => arrived(2).join() === '2,1',
+        act: (w) => {
+          w.fleet.recall(w.fleet.byId(2)!);
+          stoneAt(2)(w);
+        },
+      },
+    ],
+  },
+];
+
+/** What every train of an idle scene is doing, and what the stations hold. */
+function idleStatus(w: SimWorld) {
+  return {
+    trains: w.fleet.trains.map((t) => ({
+      id: t.id,
+      state: t.state,
+      makingWay: t.makingWay,
+      holding: t.holding,
+      station: t.atStation?.id ?? null,
+      cargo: t.totalCargo(),
+    })),
+    platforms: w.builder.stations.map((s) => [...s.occupants].sort((a, b) => a - b)),
+    stone: w.builder.stations.map((s) => s.stored('stone')),
+  };
+}
+type IdleStatus = ReturnType<typeof idleStatus>;
+
+/**
+ * The first thing wrong in an idle scene after a tick, as idleTraffic.test.ts's `run` watches:
+ * two trains on one tile, a station with more trains on its platforms than it has or an idle one
+ * among them, an idle train saying anything but about making way, or a train making way that does
+ * not say so.
+ */
+function idleBroken(w: SimWorld): string | null {
+  const shared = sharedTiles(w.fleet.trains, w.track.w);
+  if (shared.length) return `trains share tiles ${JSON.stringify(shared)}`;
+  for (const s of w.builder.stations) {
+    if (s.occupants.size > s.platforms) return `${s.name} has too many trains`;
+    for (const id of s.occupants)
+      if (w.fleet.byId(id)?.state === 'idle') return `idle #${id} holds ${s.name}`;
+  }
+  for (const t of w.fleet.trains) {
+    if (t.state === 'idle' && !IDLE_NOTES.includes(t.lastMessage))
+      return `idle #${t.id} says "${t.lastMessage}"`;
+    if (t.makingWay && t.lastMessage !== STR.traffic.makingWay)
+      return `#${t.id} makes way saying "${t.lastMessage}"`;
+  }
+  return null;
+}
+
+/**
+ * Whether a train waiting to go on from where it pulled aside (`yielding`) wants a way through a
+ * train standing idle. A save does not keep the way it wants (docs/traffic-current.md §8): a load
+ * forgets it until the train's next try, and the idle train moves aside that much later.
+ */
+function wantsThroughIdle(w: SimWorld): boolean {
+  const wk = w.track.w;
+  return w.fleet.trains.some((y) => {
+    if (y.state !== 'yielding') return false;
+    const wants = y.pathTileKeys(wk);
+    return w.fleet.trains.some(
+      (t) => t.state === 'idle' && t.occupancyKeys(wk).some((k) => wants.has(k)),
+    );
+  });
+}
+
+/** What a save keeps of an idle scene: its trains and stations, as JSON. */
+const idleSaved = (w: SimWorld) =>
+  JSON.stringify({
+    trains: w.fleet.trains.map((t) => t.toJSON()),
+    stations: w.builder.stations.map((s) => s.toJSON()),
+  });
+/**
+ * The scene laid afresh with the stations read back and the trains through `Train.fromJSON`, as a
+ * load builds the world before it reads the trains.
+ */
+function idleLoaded(sc: IdleScene, text: string): SimWorld {
+  const { w } = sc.lay();
+  const j = JSON.parse(text) as { trains: TrainJSON[]; stations: StationJSON[] };
+  const stations = j.stations.map((s) => Station.fromJSON(s));
+  w.builder.stations.splice(0, w.builder.stations.length, ...stations);
+  w.fleet.trains = j.trains.map((t) => Train.fromJSON(t, w.track));
+  return w;
+}
+/** Logs every arrival of `w`'s fleet, train and station, into `into`. */
+function logArrivals(w: SimWorld, into: [number, number][]) {
+  const next = w.fleet.onArrive;
+  w.fleet.onArrive = (t, s) => {
+    into.push([t.id, s.id]);
+    next?.(t, s);
+  };
+}
+
+/** The uninterrupted run of an idle scene, after each tick from the second train setting off. */
+interface IdleControl {
+  /** the save, for the ticks before IDLE_SPAN */
+  texts: string[];
+  /** the game time */
+  nows: number[];
+  status: IdleStatus[];
+  /** where every car of every train stands */
+  poses: { x: number; y: number }[][][];
+  /** every arrival of the run, train and station, and how many there were after each tick */
+  arrivals: [number, number][];
+  arrived: number[];
+  /** what each train was doing, for a failure message */
+  doing: string[];
+  /** ticks before IDLE_SPAN after which a train was making way */
+  aside: number[];
+  /** ticks before IDLE_SPAN after which a yielding train wanted a way through an idle one */
+  wanting: number[];
+  /** the actions of the scene, by index, done before each tick */
+  fired: Map<number, number[]>;
+  /** the stuck episodes and deadlocks counted in the whole run */
+  counted: { stuck: number; deadlocks: number };
+}
+const idleControls = new Map<number, IdleControl>();
+/** The control of IDLE_SCENES[scene], run once for IDLE_SPAN + IDLE_AFTER game seconds. */
+function idleControl(scene: number): IdleControl {
+  const known = idleControls.get(scene);
+  if (known) return known;
+  const sc = IDLE_SCENES[scene];
+  const laid = sc.lay();
+  const { w } = laid;
+  const c: IdleControl = {
+    texts: [],
+    nows: [],
+    status: [],
+    poses: [],
+    arrivals: [],
+    arrived: [],
+    doing: [],
+    aside: [],
+    wanting: [],
+    fired: new Map(),
+    counted: { stuck: 0, deadlocks: 0 },
+  };
+  logArrivals(w, c.arrivals);
+  const arrived = (id: number) => c.arrivals.filter(([t]) => t === id).map(([, s]) => s);
+  let now = 0;
+  sc.idle(laid);
+  const idle = [...w.fleet.trains];
+  for (let i = 0; i < 60 / GDT && idle.some((t) => t.state !== 'idle'); i++)
+    w.fleet.tick(GDT, (now += GDT));
+  expect(
+    idle.map((t) => t.state),
+    `${sc.name}: the roaming trains idle`,
+  ).toEqual(idle.map(() => 'idle'));
+  sc.others(laid);
+  const done = new Set<number>();
+  for (let i = 0; i < (IDLE_SPAN + IDLE_AFTER) / GDT; i++) {
+    sc.actions?.forEach((a, n) => {
+      if (done.has(n) || !a.when(arrived, i)) return;
+      done.add(n);
+      a.act(w);
+      c.fired.set(i, [...(c.fired.get(i) ?? []), n]);
+    });
+    w.fleet.tick(GDT, (now += GDT));
+    const span = i < IDLE_SPAN / GDT;
+    c.texts.push(span ? idleSaved(w) : '');
+    c.nows.push(now);
+    c.status.push(idleStatus(w));
+    c.poses.push(w.fleet.trains.map((t) => t.poses.map((p) => ({ x: p.x, y: p.y }))));
+    c.arrived.push(c.arrivals.length);
+    c.doing.push(
+      w.fleet.trains
+        .map((t) => `#${t.id} ${t.state}${t.makingWay ? ' making way' : ''}`)
+        .join(', '),
+    );
+    if (span && w.fleet.trains.some((t) => t.makingWay)) c.aside.push(i);
+    if (span && wantsThroughIdle(w)) c.wanting.push(i);
+  }
+  expect(done.size, `${sc.name}: the actions taken`).toBe(sc.actions?.length ?? 0);
+  const { stuck, deadlocks } = w.fleet.traffic.counters;
+  c.counted = { stuck, deadlocks };
+  idleControls.set(scene, c);
+  return c;
+}
+
+/**
+ * The control's save after `tick`, loaded and run IDLE_AFTER seconds on from the saved game time,
+ * the scene doing what it did after the save; `check` sees the world after every tick.
+ */
+function idleRoundTrip(scene: number, tick: number, check: (w: SimWorld, k: number) => void) {
+  const sc = IDLE_SCENES[scene];
+  const c = idleControl(scene);
+  const w = idleLoaded(sc, c.texts[tick]);
+  const arrivals: [number, number][] = [];
+  logArrivals(w, arrivals);
+  let now = c.nows[tick];
+  for (let k = tick + 1; k <= tick + IDLE_AFTER / GDT; k++) {
+    for (const n of c.fired.get(k) ?? []) sc.actions![n].act(w);
+    w.fleet.tick(GDT, (now += GDT));
+    check(w, k);
+  }
+  return { w, arrivals };
+}
+
+/** A scene, by its index in IDLE_SCENES, and the tick of its uninterrupted run the save follows. */
+interface IdleSave {
+  scene: number;
+  tick: number;
+}
+/**
+ * Any tick of IDLE_SPAN, half the time one after which a train is making way, but none after which
+ * a yielding train wants a way through an idle one: the test after the property covers those.
+ */
+function idleSave(rng: Rng): IdleSave {
+  const scene = rng.int(0, IDLE_SCENES.length - 1);
+  const c = idleControl(scene);
+  const aside = rng.chance(0.5) && c.aside.length > 0;
+  for (;;) {
+    const tick = aside ? rng.pick(c.aside) : rng.int(0, IDLE_SPAN / GDT - 1);
+    if (!c.wanting.includes(tick)) return { scene, tick };
+  }
+}
+/** An earlier save of the same scene. */
+function* shrinkIdleSave(s: IdleSave): Iterable<IdleSave> {
+  const c = idleControl(s.scene);
+  for (const tick of shrinkInt(s.tick)) if (!c.wanting.includes(tick)) yield { ...s, tick };
+}
+const formatIdleSave = ({ scene, tick }: IdleSave) =>
+  `${IDLE_SCENES[scene].name}, saved after tick ${tick} (${idleControl(scene).doing[tick]})`;
+
+describe('a train idle or making way, saved at any tick of the idle scenes', () => {
+  beforeEach(() => setSeasonOffset(0));
+
+  it('carries on as if never saved', { timeout: 300_000 }, () => {
+    // After every tick of IDLE_AFTER seconds on, every train stands within TOLERANCE of the
+    // control's, in its state, making way or not, at the same station, with the same cargo; each
+    // station's platforms are held by the same trains and hold the same stone; and what
+    // idleTraffic.test.ts watches holds (`idleBroken`). By the end, every train has arrived where
+    // the control's arrived. The traffic control's counters are not saved, so a load may count a
+    // jam the run counted before the save again, but never one the uninterrupted run did not.
+    let makingWay = 0;
+    let idleAtStation = 0;
+    forAll(
+      idleSave,
+      ({ scene, tick }) => {
+        const c = idleControl(scene);
+        const saved = c.status[tick].trains;
+        if (saved.some((t) => t.makingWay)) makingWay++;
+        if (saved.some((t) => t.state === 'idle' && t.station !== null)) idleAtStation++;
+        const { w, arrivals } = idleRoundTrip(scene, tick, (back, k) => {
+          const after = `${k - tick} ticks after the load`;
+          const broken = idleBroken(back);
+          if (broken) expect(broken, after).toBeNull();
+          const status = idleStatus(back);
+          if (JSON.stringify(status) !== JSON.stringify(c.status[k]))
+            expect(status, after).toEqual(c.status[k]);
+          back.fleet.trains.forEach((t, i) => {
+            const gap = apart(c.poses[k][i], t.poses);
+            if (gap >= TOLERANCE)
+              expect(gap, `${after}: #${t.id}'s tiles from the control`).toBeLessThan(TOLERANCE);
+          });
+        });
+        const end = tick + IDLE_AFTER / GDT;
+        const why = `${IDLE_AFTER} s after the load`;
+        expect(arrivals, `${why}: arrivals`).toEqual(
+          c.arrivals.slice(c.arrived[tick], c.arrived[end]),
+        );
+        const { overlaps, stuck, deadlocks } = w.fleet.traffic.counters;
+        expect(overlaps, `${why}: overlaps`).toBe(0);
+        expect(stuck, `${why}: stuck episodes`).toBeLessThanOrEqual(c.counted.stuck);
+        expect(deadlocks, `${why}: deadlocks`).toBeLessThanOrEqual(c.counted.deadlocks);
+      },
+      { shrink: shrinkIdleSave, format: formatIdleSave, shrinkBudget: 30 },
+    );
+    // the draws say something about both halves of the claim
+    expect(makingWay, 'saves while a train makes way').toBeGreaterThanOrEqual(30);
+    expect(idleAtStation, 'saves while a train idles at its station').toBeGreaterThanOrEqual(25);
+  });
+
+  it(
+    'saved as a yielding train wants the track an idle one stands on, moves that one aside at most 2 s late',
+    { timeout: 120_000 },
+    () => {
+      // The known limit of docs/traffic-current.md §8: a train waiting to go on from where it
+      // pulled aside forgets the way it wants until its next try, at most 2 s on, so the idle
+      // train standing in that way moves aside up to that much later than it would have. Every
+      // such save of the scenes, loaded and run on: each train idle when saved that the control
+      // moves aside sets off aside no earlier and at most 2 s later (1.9 s for the save after tick
+      // 562 of the terminus with the caller from x 30), and the run stays sound.
+      let moved = 0;
+      IDLE_SCENES.forEach((_, scene) => {
+        const c = idleControl(scene);
+        for (const tick of c.wanting) {
+          const why = formatIdleSave({ scene, tick });
+          const idle = c.status[tick].trains.filter((t) => t.state === 'idle').map((t) => t.id);
+          const setOff = new Map<number, number>();
+          idleRoundTrip(scene, tick, (w, k) => {
+            const broken = idleBroken(w);
+            if (broken) expect(broken, `${why}: ${k - tick} ticks after the load`).toBeNull();
+            for (const id of idle)
+              if (!setOff.has(id) && w.fleet.byId(id)?.makingWay) setOff.set(id, k);
+          });
+          const end = tick + IDLE_AFTER / GDT;
+          for (const id of idle) {
+            let k = tick + 1;
+            while (k <= end && !c.status[k].trains.find((t) => t.id === id)?.makingWay) k++;
+            if (k > end) continue;
+            moved++;
+            const late = ((setOff.get(id) ?? Infinity) - k) * GDT;
+            expect(late, `${why}: #${id} sets off aside, seconds late`).toBeGreaterThanOrEqual(0);
+            expect(late, `${why}: #${id} sets off aside, seconds late`).toBeLessThanOrEqual(2);
+          }
+        }
+      });
+      // the scenes have such saves (the terminus with the caller from x 30), or this says nothing
+      expect(moved, 'idle trains moved aside after such a save').toBeGreaterThan(0);
+    },
+  );
+});

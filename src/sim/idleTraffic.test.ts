@@ -972,9 +972,11 @@ function wayOnFrom(
  * never left standing longer than STALL with no deadlock counted against it and no note that says
  * it has no way on; and it says it is jammed only while it stands in a jam declared a deadlock, and
  * that it has no track on only when it has none.
+ *
+ * The game clock starts at `from`: 0 for a new world, the save's time for a loaded one.
  */
-function watch(w: SimWorld) {
-  let now = 0;
+function watch(w: SimWorld, from = 0) {
+  let now = from;
   let broken: string | null = null;
   const arrivals = new Map<number, number>();
   const next = w.fleet.onArrive;
@@ -1498,4 +1500,112 @@ describe('idle trains on generated lines', () => {
     expect(sim.broken, story(w, sim)).toBeNull();
     expect(w.fleet.traffic.counters.deadlocks, story(w, sim)).toBe(0);
   });
+});
+
+// ------------------------------------------------------------------ generated lines, saved and loaded
+
+/** Game seconds from the callers setting off that a save is drawn from. */
+const SAVE_SPAN = 100;
+/** A generated line and when it is saved. */
+interface SavedLine {
+  line: GenLine;
+  /** the tick after which it is saved, counted from the callers setting off */
+  tick: number;
+  /**
+   * Count `tick` among the ticks after which a train is making way instead, round and round, when
+   * the line has any: a save while one is on its way aside is otherwise a rare draw.
+   */
+  aside: boolean;
+}
+/** A case on lines from `gen`: any tick of SAVE_SPAN, half the time one with a train making way. */
+const savedLine =
+  (gen: (rng: Rng) => GenLine) =>
+  (rng: Rng): SavedLine => ({
+    line: gen(rng),
+    tick: rng.int(0, SAVE_SPAN / GDT - 1),
+    aside: rng.chance(0.5),
+  });
+/** Smaller cases that are still `ok`: an earlier save, any save, then a smaller line. */
+function* shrinkSaved(c: SavedLine, ok = valid): Iterable<SavedLine> {
+  for (const tick of shrinkInt(c.tick)) yield { ...c, tick };
+  if (c.aside) yield { ...c, aside: false };
+  for (const line of shrinkLine(c.line, ok)) yield { ...c, line };
+}
+/** The tick of the callers' run a case is saved after (`SavedLine.aside`). */
+function saveTick({ line: l, tick, aside }: SavedLine): number {
+  if (!aside) return tick;
+  const { w, sim } = setUp(l);
+  const making: number[] = [];
+  for (let i = 0; i < SAVE_SPAN / GDT; i++) {
+    sim.until(() => false, GDT);
+    if (w.fleet.trains.some((t) => t.makingWay)) making.push(i);
+  }
+  return making.length ? making[tick % making.length] : tick;
+}
+/**
+ * Sets the line up as `setUp` does and runs it to the end of the tick the case is saved after,
+ * every step watched; then saves it and loads it into the line laid afresh, watched from the saved
+ * game time. Trains keep their ids through the load.
+ */
+function savedAndLoaded(c: SavedLine) {
+  const tick = saveTick(c);
+  const { w, sim, callers, idled } = setUp(c.line);
+  expect(idled, 'the roaming trains never idled').toBe(true);
+  for (let i = 0; i <= tick && sim.broken === null; i++) sim.until(() => false, GDT);
+  const at = `saved after tick ${tick}`;
+  expect(sim.broken, `${at}, before the save: ${story(w, sim)}`).toBeNull();
+  const back = reload(w, () => layLine(c.line).w);
+  return { back, again: watch(back, sim.now), callers: callers.map((t) => t.id), at };
+}
+
+describe('idle trains on generated lines, saved and loaded at any tick', () => {
+  // A load forgets what the save does not hold: the path a train under way had planned, the way a
+  // train waiting aside or an idle train standing in another's way wants to take (`wantAside`),
+  // and when an idle train may look again for a way aside (docs/traffic-current.md §8 and §9). So
+  // a loaded line need not run on exactly as it would have (the fixed scenes of
+  // src/sim/trainResume.test.ts do), but it runs on soundly.
+  it(
+    'never share a tile, hold a platform or a path, move, misreport or stall, and idle where they made way',
+    PROPERTY,
+    () => {
+      // after the load, every step `watch` checks holds for 150 s, past the STALL a train may
+      // stand, and no two trains overlap. The roaming trains find nothing to haul all along, so
+      // each idles or makes way: one loaded on its way aside idles where the way ends, and never
+      // waits there to head back to its station (`yielding`) as a train that pulled aside does
+      forAll(
+        savedLine(anyLine),
+        (c) => {
+          const { back, again, at } = savedAndLoaded(c);
+          const roaming = back.fleet.trains.filter((t) => t.mode === 'production');
+          const yielding = () => roaming.find((t) => t.state === 'yielding');
+          again.until(() => again.broken !== null || !!yielding(), 150);
+          expect(again.broken, `${at}: ${story(back, again)}`).toBeNull();
+          expect(yielding()?.id, `${at}, waits aside: ${story(back, again)}`).toBe(undefined);
+          expect(back.fleet.traffic.counters.overlaps, `${at}: ${story(back, again)}`).toBe(0);
+        },
+        { seeds: LINE_SEEDS, shrink: (c) => shrinkSaved(c) },
+      );
+    },
+  );
+
+  for (const { kind, gen, ok } of USABLE)
+    it(
+      `let the train behind run its schedule on when there is a way aside without reversing (${kind})`,
+      PROPERTY,
+      () => {
+        // as the uninterrupted line does (`let the train behind run its schedule`): from the load
+        // on, the caller calls three more times within 300 s, and every step is sound
+        forAll(
+          savedLine(gen),
+          (c) => {
+            const { back, again, callers, at } = savedAndLoaded(c);
+            const caller = back.fleet.byId(callers[0])!;
+            const ran = again.until(() => again.arrivals(caller) >= 3, 300);
+            expect(ran, `${at}, the caller stopped running: ${story(back, again)}`).toBe(true);
+            expect(again.broken, `${at}: ${story(back, again)}`).toBeNull();
+          },
+          { seeds: LINE_SEEDS, shrink: (c) => shrinkSaved(c, ok) },
+        );
+      },
+    );
 });
