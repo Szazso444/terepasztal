@@ -2,7 +2,7 @@ import type { WideClass } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
-import { rotationCount, itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
+import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
 import type { SupplyKind } from '../sim/catenary';
 import { inBounds } from '../world/tiles';
 import type { Builder } from '../sim/build';
@@ -19,6 +19,8 @@ import { cargoDef } from '../sim/cargo';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
+import { structureFrame } from '../art/frames';
+import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
@@ -114,16 +116,8 @@ export class BuildController {
       if (this.tool.kind !== 'none') this.setTool({ kind: 'none' });
       else this.select(null);
     }
-    if (inp.wasPressed('KeyR')) {
-      if (this.tool.kind === 'track')
-        this.rot = (this.rot + 1) % rotationCount(this.tool.item.kind);
-      else if (this.tool.kind === 'decor')
-        this.rot = (this.rot + 1) % decorDef(this.tool.defId).rotations;
-      else if (this.tool.kind === 'station') {
-        const def = stationDef(this.tool.defId);
-        if ((def.size ?? 1) > 1 || def.long) this.rot = (this.rot + 1) % 2;
-      }
-    }
+    // track, decor, stations and works turn; anything else keeps its rotation
+    if (inp.wasPressed('KeyR') && this.turns()) this.rot = nextToolRotation(this.tool, this.rot);
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
     if (!active) {
       // over a panel or outside the field: a stroke does not carry on to where the cursor returns
@@ -364,10 +358,7 @@ export class BuildController {
     }
     const check = this.builder.checkStation(t.x, t.y, tool.defId, this.rot);
     const def = stationDef(tool.defId);
-    const size = def.size ?? 1;
-    const turns = size > 1 || !!def.long;
-    const fam = turns ? `structures/${def.art}_r${this.rot % 2}` : `structures/${def.art}_1`;
-    const g = this.ensureGhost(this.world.atlas.has(fam) ? fam : 'structures/station_1');
+    const g = this.ensureGhost(stationGhostFrame(this.world.atlas, def, this.rot));
     // a sprite of more than one tile is anchored at its footprint centre
     const span = stationSpan(def, this.rot);
     this.placeGhostAt(g, t.x + (span.w - 1) / 2, t.y + (span.h - 1) / 2, check.ok);
@@ -377,9 +368,10 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.ghostDiamond.visible = !turns;
+    // the tile diamond shows under a one-tile station only; a wider one's picture covers its tiles
+    this.ghostDiamond.visible = span.w === 1 && span.h === 1;
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
-    if (turns) parts.push(STR.build.rotate);
+    if (this.turns()) parts.push(STR.build.rotate);
     if (def.terrain) {
       const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
       const perWeek = LEVELS.production[0] * rules.productionMul * f * 7;
@@ -472,7 +464,7 @@ export class BuildController {
     const def = decorDef(tool.defId);
     this.showReach(t, def.power ? 2 : (def.radius ?? 0));
     const check = this.builder.checkDecor(t.x, t.y, tool.defId);
-    const g = this.ensureGhost(def.id === 'signal' ? 'structures/signal' : `structures/${def.id}`);
+    const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, this.rot));
     this.placeGhostAt(g, t.x, t.y, check.ok);
     const off = decorOffset({ id: def.id, rot: this.rot });
     g.position.set(g.position.x + off.dx, g.position.y + off.dy);
@@ -483,7 +475,7 @@ export class BuildController {
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
-    if (def.rotations > 1) parts.push(STR.build.rotate);
+    if (this.turns()) parts.push(STR.build.rotate);
     if (def.id === 'signal')
       parts.push(STR.signals.governsTravel(STR.signals.directions[this.rot]));
     this.status(parts.join('   '));
@@ -500,8 +492,10 @@ export class BuildController {
     }
     const def = buildingDef(tool.defId);
     this.showReach(t, def.power ? 2 : 0);
-    const check = this.builder.checkBuilding(t.x, t.y, tool.defId);
-    const g = this.ensureGhost(`structures/${def.id}`);
+    // a bridge platform does not turn: it stays at rotation 0
+    const rot = this.turns() ? this.rot : 0;
+    const check = this.builder.checkBuilding(t.x, t.y, tool.defId, rot);
+    const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, rot));
     this.placeGhostAt(g, t.x, t.y, check.ok);
     this.world.setSpriteFrame(
       this.ghostDiamond,
@@ -509,9 +503,16 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.status(check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? ''));
+    const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
+    if (this.turns()) parts.push(STR.build.rotate);
+    this.status(parts.join('   '));
     for (const c of this.input.clicks)
-      if (c.button === 0) this.builder.placeBuilding(t.x, t.y, tool.defId);
+      if (c.button === 0) this.builder.placeBuilding(t.x, t.y, tool.defId, rot);
+  }
+
+  /** Whether R turns the tool in hand. */
+  private turns() {
+    return toolRotations(this.tool) > 1;
   }
 
   private updateRemoveTool(t: { x: number; y: number }, inMap: boolean) {

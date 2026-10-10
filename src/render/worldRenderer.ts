@@ -8,7 +8,7 @@ import {
   MeshGeometry,
   type Texture,
 } from 'pixi.js';
-import type { AtlasRegistry } from '../engine/atlas';
+import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import {
   tileToWorld,
   worldToTileInt,
@@ -22,7 +22,7 @@ import { Terrain, Biome, type GameMap, type PropInstance, idx } from '../world/t
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 import { MATERIAL_COLORS, materialAt } from './landscapeModel';
-import { structureScale, hasScaleReference, TREE_SCALE, isTree } from './assetScale';
+import { scaleReference, TREE_SCALE, isTree, type ScaleReference } from './assetScale';
 import { SurfaceAssets, windowSprite } from './surfaceAssets';
 import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
@@ -65,6 +65,11 @@ const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
 >;
 
 const CHUNK = 8;
+
+/** An illustrated picture: more texels than world pixels (an atlas `resolution` above 1). */
+function illustrated(f: FrameInfo) {
+  return f.texture.frame.width / f.w > 1;
+}
 
 /**
  * Isometric world view. Ground tiles live in chunked static containers (culled per chunk);
@@ -1247,18 +1252,19 @@ export class WorldRenderer {
     this.structureAnchors.set(id, { x, y, dx, dy });
     let s = this.structures.get(id);
     if (!s) {
-      s = new Sprite(f.texture);
+      s = new Sprite();
       s.cullable = true;
       this.objects.addChild(s);
       this.structures.set(id, s);
-    } else s.texture = f.texture;
-    s.anchor.set(f.anchorX, f.anchorY);
+    }
+    // texture, anchor and size: a reused sprite never keeps the size of the frame it showed
+    const building = this.setSpriteFrame(s, frame);
     const p = tileToWorld(x, y);
     s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
     s.zIndex = depthKey(x, y, layer);
-    const building = hasScaleReference(frame);
-    if (building) {
-      s.scale.set(structureScale(frame, f.texture.frame.width / f.w > 1 ? f.h : undefined));
+    // only a building has window lights and contact patches; drop those of a building shown before
+    if (!building) this.dropBuildingDressing(id);
+    else {
       s.texture = this.surfaces.contact(frame, f, MATERIAL_COLORS[materialAt(this.map, x, y)]);
       let light = this.windowLights.get(id);
       if (!light) {
@@ -1266,7 +1272,7 @@ export class WorldRenderer {
         this.objects.addChild(light);
         this.windowLights.set(id, light);
       }
-      light.texture = this.surfaces.window(frame, f, f.texture.frame.width / f.w === 1);
+      light.texture = this.surfaces.window(frame, f, !illustrated(f), building.family);
       light.anchor.set(f.anchorX, f.anchorY);
       light.position.copyFrom(s.position);
       light.scale.copyFrom(s.scale);
@@ -1330,13 +1336,17 @@ export class WorldRenderer {
       this.atmosphereTints.set(object, { base, applied });
     }
   }
-  removeStructure(id: string) {
-    const anchor = this.structureAnchors.get(id);
-    this.structureAnchors.delete(id);
+  /** A structure's window lights and contact patches, which only a building has. */
+  private dropBuildingDressing(id: string) {
     this.contactPatches.get(id)?.destroy();
     this.contactPatches.delete(id);
     this.windowLights.get(id)?.destroy();
     this.windowLights.delete(id);
+  }
+  removeStructure(id: string) {
+    const anchor = this.structureAnchors.get(id);
+    this.structureAnchors.delete(id);
+    this.dropBuildingDressing(id);
     const s = this.structures.get(id);
     if (s) {
       s.destroy();
@@ -1355,17 +1365,25 @@ export class WorldRenderer {
     this.overlay.addChild(s);
     return s;
   }
-  setSpriteFrame(s: Sprite, frame: string) {
+  /**
+   * Show `frame` on `s` at its anchor and size: a building by its scale reference (a turned
+   * frame by its unturned frame's), a tree at tree scale, anything else at 1, so a reused sprite
+   * never keeps the size of the frame it showed before. Returns the building's scale reference,
+   * or null for a frame without one.
+   */
+  setSpriteFrame(s: Sprite, frame: string): ScaleReference | null {
     const f = this.atlas.get(frame);
     s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
+    const building = scaleReference(this.atlas, frame, illustrated(f) ? f.h : undefined);
     s.scale.set(
-      hasScaleReference(frame)
-        ? structureScale(frame, f.texture.frame.width / f.w > 1 ? f.h : undefined)
+      building
+        ? building.scale
         : frame.startsWith('props/') && isTree(frame.slice(6).replace(/_\d+$/, ''))
           ? TREE_SCALE
           : 1,
     );
+    return building;
   }
 
   /** World pixel position of the top surface of a tile centre (for placing sprites). */
