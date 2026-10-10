@@ -249,6 +249,33 @@ function trailLength(track: TrackGraph, seg: PathSegment, head = false) {
   return sum;
 }
 
+/** Trail laid past the rear of a train placed on the track (`spawnAt`): a tile and a half. */
+const SPAWN_REACH = 1.5;
+
+/**
+ * The track behind a train `length` long whose head stops on `seg`: the tiles `walkBack` finds,
+ * as many as it takes for the trail laid along them and the head's half of its own tile
+ * (`trailLength`) to reach SPAWN_REACH past the rear, or as many as there are before the rails
+ * end; the trail that must reach, and how much the tiles lay. A straight tile lays a tile of
+ * trail and a curve less, so the walk asks for a tile per tile of train and one more, then for
+ * what the curves left short.
+ */
+function trackBehind(track: TrackGraph, seg: PathSegment, length: number) {
+  const need = length + SPAWN_REACH;
+  const head = trailLength(track, seg, true);
+  let tiles = Math.ceil(length) + 1;
+  let before = -1;
+  for (;;) {
+    const back = walkBack(track, seg.x, seg.y, seg.in, tiles);
+    let laid = head;
+    for (const s of back) laid += trailLength(track, s);
+    // done when the trail reaches, when the rails end, or (never on built track) when it stalls
+    if (laid >= need || back.length < tiles || laid <= before) return { back, need, laid };
+    before = laid;
+    tiles += Math.ceil(need - laid) + 1;
+  }
+}
+
 export interface WagonSlot {
   uid: number;
   def: WagonDef;
@@ -1276,7 +1303,11 @@ export class Train {
   }
 
   // ------------------------------------------------------------ placement
-  /** Place the train stopped on a track tile, facing out of edge `out`. */
+  /**
+   * Place the train stopped on a track tile entered by `entry`, its head halfway across facing
+   * on, and its cars back along a trail that reaches SPAWN_REACH past the rear however the track
+   * behind it winds (`trackBehind`).
+   */
   spawnAt(track: TrackGraph, x: number, y: number, entry: Dir) {
     const piece = track.get(x, y);
     if (!piece) return false;
@@ -1284,7 +1315,7 @@ export class Train {
     const out = exits.find((e) => e === (entry + 2) % 4) ?? exits[0];
     if (out === undefined) return false;
     const seg: PathSegment = { x, y, in: entry, out };
-    const back = walkBack(track, x, y, entry, Math.ceil(this.length) + 1);
+    const { back, need, laid } = trackBehind(track, seg, this.length);
     this.trail = [];
     this.trailCum = [];
     // the consist stands behind the gate: where the rails end (inside the shed) a straight
@@ -1292,7 +1323,7 @@ export class Train {
     const first = back[0] ?? seg;
     const firstPts = track.segGeom(first.x, first.y, first.in, first.out, first.route).pts;
     const p0 = { x: first.x + firstPts[0].x, y: first.y + firstPts[0].y };
-    const behind = this.length + 1 - back.length;
+    const behind = need - laid;
     const dx = DIR_DX[first.in];
     const dy = DIR_DY[first.in];
     for (let d = Math.ceil(behind / 0.125); d >= 1; d--)
