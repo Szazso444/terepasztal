@@ -895,11 +895,6 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
-    // failed is final and replayed to a late watcher, so this toasts once, even for a failure the
-    // renderer's constructor already hit
-    this.world.landscape.watchStatus((s) => {
-      if (s.state === 'failed') this.toasts.push(STR.debug.landscapeLost, 'warn');
-    });
     await this.world.loadBridgeSurfaces();
     this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
@@ -995,6 +990,11 @@ export class Game implements UiHost {
       build: this.build,
       tooltip: this.tooltip,
       uiRoot: this.uiRoot,
+    });
+    // Watched once the toast layer is on the page, so the toast gets its full time. Failed is final
+    // and replayed to a late watcher, so this toasts once, even for a failure during init.
+    this.world.landscape.watchStatus((s) => {
+      if (s.state === 'failed') this.toasts.push(STR.debug.landscapeLost, 'warn');
     });
     this.fleet.waitingAt = (id) => this.people.waitingAt(id).length;
     this.fleet.contractDest = (cargo, origin) => {

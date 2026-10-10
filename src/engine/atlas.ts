@@ -39,15 +39,26 @@ const SHIPPED_GROUPS: ReadonlySet<string> = new Set(
 );
 
 /**
- * Asset pipeline. Each named atlas group is loaded from `/assets/<group>.json` + `.png` when
- * present (exported by any packer that writes {frames:{name:{x,y,w,h,ax,ay}}}); otherwise the
- * procedural generator supplies it. A file marked `"partial": true` is layered over the
- * generator instead, so a handful of rendered frames can replace their procedural namesakes
- * without the rest of the group going missing. Game code only ever asks for frame names.
+ * Where a group's file is served: `public/assets`, under the build's base path, the way
+ * `src/render/landscape.ts` finds its sheet. `base` is Vite's `BASE_URL` (`/`, `/sub/` or `./` in
+ * the forms Vite documents), so the default `/` gives `/assets/<group>.<ext>`.
+ */
+function atlasFileUrl(base: string, group: string, ext: 'json' | 'png') {
+  return `${base}assets/${group}.${ext}`;
+}
+
+/**
+ * Asset pipeline. Each named atlas group is loaded from `assets/<group>.json` + `.png` under the
+ * build's base path when present (exported by any packer that writes
+ * {frames:{name:{x,y,w,h,ax,ay}}}); otherwise the procedural generator supplies it. A file marked
+ * `"partial": true` is layered over the generator instead, so a handful of rendered frames can
+ * replace their procedural namesakes without the rest of the group going missing. Game code only
+ * ever asks for frame names.
  *
  * A group the build ships a file for and that falls back to its generator anyway is a broken file
  * or server: it is warned about once, on the console. A group with no file is procedural by design
- * and stays quiet.
+ * and stays quiet. A file that breaks the frame contract falls back the same way, so it costs only
+ * its own group.
  */
 export class AtlasRegistry {
   private frames = new Map<string, FrameInfo>();
@@ -61,6 +72,8 @@ export class AtlasRegistry {
   constructor(
     /** groups whose file pair ships with the game; the build's list unless a test gives one */
     private readonly shipped: ReadonlySet<string> = SHIPPED_GROUPS,
+    /** the base path the files are served under; the build's unless a test gives one */
+    private readonly base: string = import.meta.env.BASE_URL,
   ) {}
 
   async load(groups: { name: string; generate: AtlasGenerator }[]) {
@@ -89,14 +102,19 @@ export class AtlasRegistry {
 
   /** The group's file pair, or why it cannot be used. */
   private async tryLoadFile(name: string): Promise<AtlasImage | string> {
-    const json = `/assets/${name}.json`;
-    const png = `/assets/${name}.png`;
+    const json = atlasFileUrl(this.base, name, 'json');
+    const png = atlasFileUrl(this.base, name, 'png');
     try {
       const res = await fetch(json, { cache: 'no-cache' });
       if (!res.ok) return `${json} answered ${res.status}`;
       const ct = res.headers.get('content-type') ?? '';
       if (!ct.includes('json')) return `${json} came as ${ct || 'no content type'}`;
-      const data = (await res.json()) as Omit<AtlasImage, 'image'>;
+      const body: unknown = await res.json();
+      if (!isRecord(body) || !isRecord(body.frames)) return `${json} has no frames object`;
+      for (const [key, f] of Object.entries(body.frames))
+        if (!isFrameDef(f))
+          return `${json} frame ${key} needs finite x, y, ax, ay and positive w, h`;
+      const data = body as Omit<AtlasImage, 'image'>;
       const resolution = data.resolution ?? 1;
       if (!Number.isFinite(resolution) || resolution < 1 || resolution > 8)
         return `${json} has resolution ${resolution}, outside 1 to 8`;
@@ -219,6 +237,27 @@ export class AtlasBuilder {
     }
     return { image: canvas, frames };
   }
+}
+
+/** A JSON object, as opposed to an array, null or a primitive. */
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+/** One entry of a file's frame table that `register` can turn into a texture. */
+function isFrameDef(v: unknown): v is FrameDef {
+  const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
+  return (
+    isRecord(v) &&
+    finite(v.x) &&
+    finite(v.y) &&
+    finite(v.ax) &&
+    finite(v.ay) &&
+    finite(v.w) &&
+    finite(v.h) &&
+    v.w > 0 &&
+    v.h > 0
+  );
 }
 
 function nextPow2(v: number) {
