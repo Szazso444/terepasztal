@@ -3,7 +3,7 @@ import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph, makePiece } from '../world/track';
-import { Dir } from '../engine/iso';
+import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import { content } from '../data/content';
 import { Builder } from './build';
@@ -11,8 +11,9 @@ import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
 import { Train, resetTrainIds } from './trains';
-import { resetStationIds, type Station } from './stations';
+import { resetStationIds, stationGates, type Station } from './stations';
 import { gaugeOf } from './compat';
+import type { TrackClass } from '../world/track';
 import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
 import { Inventory } from '../gacha/inventory';
@@ -134,6 +135,84 @@ describe('the starter kit of a new game', () => {
       );
       expect(loco.assigned).toBeNull();
     }
+  });
+});
+
+describe('the depot a new game starts with', () => {
+  /**
+   * The depot and gate track `Game.ensureDepot` lays: the kind at (20, 20) turned to `rot`, a
+   * straight of the depot's gauge across each gate, as `stationGates` foresaw them.
+   */
+  function firstDepot(w: ReturnType<typeof newGame>, defId: string, rot: number) {
+    const gates = stationGates(defId, 20, 20, rot);
+    const depot = w.builder.placeStation(20, 20, defId, rot)!;
+    const cls: TrackClass = depot.def.gauge ?? 'regular';
+    for (const g of gates)
+      expect(
+        w.builder.placeTrack(g.x, g.y, { kind: 'straight', cls, cls2: cls }, rot === 0 ? 1 : 0),
+      ).toBe(true);
+    return { depot, gates, cls };
+  }
+
+  it.each([
+    ['narrow_depot', 0],
+    ['narrow_depot', 1],
+    ['depot', 0],
+    ['depot', 1],
+  ])('%s at rot %i: gate track at each end of every track through the shed', (defId, rot) => {
+    const w = newGame();
+    const { depot, gates, cls } = firstDepot(w, defId, rot);
+    // the tiles foreseen before placing are the placed depot's own gates
+    expect(depot.gateTiles()).toEqual(gates);
+    expect(gates.length).toBe(2 * depot.platforms);
+    for (const g of gates) {
+      expect(depot.covers(g.x, g.y)).toBe(false);
+      // gates lie along the shed's tracks: west and east at rot 0, north and south at rot 1
+      const toShed = rot === 0 ? (g.x < depot.x ? Dir.E : Dir.W) : g.y < depot.y ? Dir.S : Dir.N;
+      expect(depot.covers(g.x + DIR_DX[toShed], g.y + DIR_DY[toShed])).toBe(true);
+      // and the straight laid across the gate runs into the shed
+      expect(w.track.get(g.x, g.y)!.links.flat()).toContain(toShed);
+    }
+    expect([...w.fleet.depotClasses(depot)]).toEqual([cls]);
+    expect(w.builder.platformTiles(depot)).toEqual(gates);
+  });
+
+  it('builds the Rocket first: the first free engine its gate track takes', () => {
+    const w = newGame();
+    const { depot } = firstDepot(w, 'narrow_depot', 0);
+    const free = w.inventory.free('loco');
+    const deployable = free.filter((i) => !w.fleet.modelDeployReason(locoDef(i.defId), depot));
+    expect(deployable.map((i) => i.defId)).toEqual(free.map((i) => i.defId));
+    expect(deployable[0].defId).toBe('rocket');
+  });
+
+  it('rolls the Rocket out of its east gate once a line leads on from there', () => {
+    const w = newGame();
+    const { depot } = firstDepot(w, 'narrow_depot', 0);
+    // the player's first line: on east from the east gate, two quarries beside it
+    const ew = [0, 1].find((r) => makePiece('straight', r, 'narrow').links[0].includes(Dir.E))!;
+    for (let x = 23; x <= 44; x++) w.track.place(x, 20, 'straight', ew, 'narrow');
+    w.builder.placeStation(30, 21, 'quarry', 0);
+    w.builder.placeStation(40, 21, 'quarry', 0);
+    const rocket = w.inventory.free('loco').find((i) => i.defId === 'rocket')!;
+    const spawn = w.fleet.previewSpawn([rocket.uid], [], depot.id);
+    expect(spawn.reason).toBeNull();
+    expect(spawn.depot).toBe(depot);
+    expect(spawn.gate).toEqual({ x: 22, y: 20 });
+    const t = w.fleet.create([rocket.uid], [], [], undefined, 'schedule', depot.id);
+    expect(t).toBeInstanceOf(Train);
+    expect((t as Train).locos.map((l) => l.def.id)).toEqual(['rocket']);
+    expect(w.track.get(22, 20)!.cls).toBe('narrow');
+  });
+
+  it('is a regular depot with regular gate track when an older save gets one on load', () => {
+    const w = newGame();
+    const { depot, cls } = firstDepot(w, 'depot', 0);
+    expect(cls).toBe('regular');
+    expect(w.fleet.modelDeployReason(locoDef('adler'), depot)).toBeNull();
+    expect(w.fleet.modelDeployReason(locoDef('rocket'), depot)).toBe(
+      STR.fleet.wrongDepot(depot.name),
+    );
   });
 });
 

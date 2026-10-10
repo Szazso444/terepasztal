@@ -31,6 +31,44 @@ export function stationFootprint(defId: string, x: number, y: number, rot: numbe
   for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) out.push({ x: x + dx, y: y + dy });
   return out;
 }
+/**
+ * Tiles where track may serve a station of this kind with its corner at (x, y), turned to `rot`:
+ * a shed (a depot) has one gate at each end of every track through it, west then east (rot 0) or
+ * north then south (rot 1); any other station every orthogonal neighbour of its footprint.
+ */
+export function stationGates(defId: string, x: number, y: number, rot: number) {
+  return gatesOf(stationDef(defId), x, y, rot);
+}
+function gatesOf(def: StationDef, x: number, y: number, rot: number) {
+  const { w, h } = stationSpan(def, rot);
+  const out: { x: number; y: number }[] = [];
+  // a narrow shed is one track through, in at one end and out at the other; a wide depot two
+  if (def.long || (def.depot && (def.size ?? 1) === 2)) {
+    if (rot % 2 === 0) {
+      for (let dy = 0; dy < h; dy++) out.push({ x: x - 1, y: y + dy });
+      for (let dy = 0; dy < h; dy++) out.push({ x: x + w, y: y + dy });
+    } else {
+      for (let dx = 0; dx < w; dx++) out.push({ x: x + dx, y: y - 1 });
+      for (let dx = 0; dx < w; dx++) out.push({ x: x + dx, y: y + h });
+    }
+    return out;
+  }
+  const covers = (tx: number, ty: number) => tx >= x && ty >= y && tx < x + w && ty < y + h;
+  for (let ty = y; ty < y + h; ty++)
+    for (let tx = x; tx < x + w; tx++)
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nx = tx + dx;
+        const ny = ty + dy;
+        if (!covers(nx, ny) && !out.some((o) => o.x === nx && o.y === ny))
+          out.push({ x: nx, y: ny });
+      }
+  return out;
+}
 export interface StationJSON {
   id: number;
   defId: string;
@@ -155,52 +193,9 @@ export class Station {
   get cy() {
     return this.y + (this.h - 1) / 2;
   }
-  /**
-   * Tiles where track may serve the station: every orthogonal neighbour of a one-tile station;
-   * a depot only has its four gates, two on each of the sides its orientation selects.
-   */
+  /** Tiles where track may serve the station (`stationGates`). */
   gateTiles(): { x: number; y: number }[] {
-    // a one-track shed: in at one end, out at the other
-    if (this.def.long)
-      return this.rot % 2 === 0
-        ? [
-            { x: this.x - 1, y: this.y },
-            { x: this.x + 2, y: this.y },
-          ]
-        : [
-            { x: this.x, y: this.y - 1 },
-            { x: this.x, y: this.y + 2 },
-          ];
-    if (this.def.depot && this.size === 2) {
-      return this.rot % 2 === 0
-        ? [
-            { x: this.x - 1, y: this.y },
-            { x: this.x - 1, y: this.y + 1 },
-            { x: this.x + 2, y: this.y },
-            { x: this.x + 2, y: this.y + 1 },
-          ]
-        : [
-            { x: this.x, y: this.y - 1 },
-            { x: this.x + 1, y: this.y - 1 },
-            { x: this.x, y: this.y + 2 },
-            { x: this.x + 1, y: this.y + 2 },
-          ];
-    }
-    const out: { x: number; y: number }[] = [];
-    for (const t of this.footprint()) {
-      for (const [dx, dy] of [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-      ]) {
-        const nx = t.x + dx;
-        const ny = t.y + dy;
-        if (!this.covers(nx, ny) && !out.some((o) => o.x === nx && o.y === ny))
-          out.push({ x: nx, y: ny });
-      }
-    }
-    return out;
+    return gatesOf(this.def, this.x, this.y, this.rot);
   }
   /** Chebyshev distance from the footprint to a tile. */
   distTo(x: number, y: number) {
