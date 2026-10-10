@@ -894,6 +894,11 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    // failed is final and replayed to a late watcher, so this toasts once, even for a failure the
+    // renderer's constructor already hit
+    this.world.landscape.watchStatus((s) => {
+      if (s.state === 'failed') this.toasts.push(STR.debug.landscapeLost, 'warn');
+    });
     await this.world.loadBridgeSurfaces();
     this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
@@ -2528,6 +2533,15 @@ export class Game implements UiHost {
     );
     d.set(STR.debug.zoom, `${this.camera.targetZoom}x (${this.viewTarget ? 'overview' : 'rts'})`);
     d.set(STR.debug.camera, `${Math.round(this.camera.x)}, ${Math.round(this.camera.y)}`);
+    const ls = this.world.landscape.status;
+    d.set(
+      STR.debug.landscape,
+      ls.state === 'failed'
+        ? STR.debug.landscapeFailed(ls.reason)
+        : ls.state === 'active'
+          ? STR.debug.landscapeActive
+          : STR.debug.landscapeLoading,
+    );
     const tc = this.traffic.counters;
     d.set(STR.debug.recovery, this.traffic.recoverySummary(this.fleet.trains));
     d.set(
