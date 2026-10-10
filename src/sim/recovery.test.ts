@@ -9,7 +9,7 @@ import {
   type TrackClass,
   type TrackPiece,
 } from '../world/track';
-import { findPath, type PathSegment } from '../world/pathfinding';
+import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import {
   blockingGroups,
@@ -681,7 +681,7 @@ const sidingTiles = (s: Siding): Tile[] =>
 const columns = ([a, b]: [number, number]) =>
   Array.from({ length: b - a + 1 }, (_, i) => ({ x: a + i, y: MAIN }));
 
-function layMain(c: RetreatCase) {
+function layMain(c: Pick<RetreatCase, 'end' | 'sidings' | 'mine'>) {
   const g = new TrackGraph(48, 26);
   const blocks = new Set<number>();
   for (const s of c.sidings) {
@@ -1016,5 +1016,255 @@ describe('planAside on mine lines', () => {
       boundStop: false,
       boundStood: false,
     });
+  });
+});
+
+// ------------------------------------------------------------ the tile the rear sets off from
+
+/** The private Train member that makes a refuge's way-on test (`refugePlan` passes it as accept). */
+interface Onward {
+  onwardTest(ctx: TickCtx): ((path: readonly PathSegment[]) => boolean) | null;
+}
+
+/**
+ * A train standing with its head at a tile's centre and its cars back along the track: on a tree
+ * of narrow pieces with switches (`tree`), on a narrow line that winds without branching
+ * (`snake`), or on the main line of `layMain`, with sidings when the stock is regular. The stock
+ * is content's, of the track's gauge, by id.
+ */
+interface RearCase {
+  track:
+    | { kind: 'tree' | 'snake'; size: number; lays: Lay[] }
+    | { kind: 'line'; end: number; sidings: Siding[]; narrow: boolean };
+  head: State;
+  locos: string[];
+  wagons: string[];
+}
+
+const STOCK = (narrow: boolean) => ({
+  locos: content.locomotives.filter((d) => (d.gauge === 'narrow') === narrow).map((d) => d.id),
+  wagons: content.wagons.filter((d) => (d.gauge === 'narrow') === narrow).map((d) => d.id),
+});
+
+/**
+ * A narrow line that winds across the grid: on from tile to tile, turning at a share of them,
+ * never onto a tile it has laid or the one its first piece opens onto, so it closes no loop.
+ */
+function snake(rng: Rng, size: number): Lay[] {
+  const turn = rng.pick([0.1, 0.4, 0.8, 1]);
+  const lays: Lay[] = [];
+  let x = rng.int(0, size - 1);
+  let y = rng.int(0, size - 1);
+  let entry = rng.pick(DIRS);
+  const used = new Set([`${x + DIR_DX[entry]},${y + DIR_DY[entry]}`]);
+  for (let steps = rng.int(size, 4 * size); steps > 0; steps--) {
+    if (x < 0 || y < 0 || x >= size || y >= size || used.has(`${x},${y}`)) break;
+    used.add(`${x},${y}`);
+    const out = rng.chance(turn)
+      ? rng.pick(DIRS.filter((d) => d !== entry && d !== opposite(entry)))
+      : opposite(entry);
+    const p = PIECES.find(
+      (q) => (q.kind === 'straight' || q.kind === 'curve') && hasLink(q.links, entry, out),
+    )!;
+    lays.push({ x, y, kind: p.kind, rot: p.rot, cls: 'narrow' });
+    x += DIR_DX[out];
+    y += DIR_DY[out];
+    entry = opposite(out);
+  }
+  return lays;
+}
+
+function layRear(track: RearCase['track']) {
+  if (track.kind !== 'line') return layOut(track.size, [], track.lays);
+  const mine = track.narrow ? { tubs: 0, boxes: 0 } : undefined;
+  return layMain({ end: track.end, sidings: track.narrow ? [] : track.sidings, mine });
+}
+
+function rearTrain(c: RearCase) {
+  const loco = (id: string) => content.locomotives.find((d) => d.id === id)!;
+  const car = (id: string) => content.wagons.find((d) => d.id === id)!;
+  const t = new Train(
+    c.locos.map((id, i) => ({ uid: 1 + i, level: 0, def: loco(id) })),
+    'Rear',
+    1,
+  );
+  t.wagons = c.wagons.map((id, i) => ({
+    uid: 10 + i,
+    def: car(id),
+    level: 1,
+    cargo: null,
+    amount: 0,
+    origin: null,
+  }));
+  return t;
+}
+
+/**
+ * The case laid out with the train stood there, the tiles it stands along (as `spawnAt` lays the
+ * cars: `walkBack`'s tiles behind the head, then the head's) and the tile its reversed trail starts
+ * on. Null unless it stands as at the end of a way to a refuge: on its own gauge, on plain 1×1
+ * track (no switch or crossing, no tile of a larger unit) that runs on half a tile or more behind
+ * its rear end.
+ */
+function rearSetUp(c: RearCase) {
+  const g = layRear(c.track);
+  const there = rearTrain(c);
+  if (!g.has(c.head.x, c.head.y) || !there.spawnAt(g, c.head.x, c.head.y, c.head.in)) return null;
+  const head = there.headSeg!;
+  const path = [...walkBack(g, head.x, head.y, head.in, Math.ceil(there.length) + 1), head];
+  if (path.some((s) => !there.canUse(g.get(s.x, s.y)!, s.in))) return null;
+  let plain = -g.segLength(head.x, head.y, head.in, head.out) / 2;
+  for (let i = path.length - 1; i >= 0; i--) {
+    const s = path[i];
+    const p = g.get(s.x, s.y)!;
+    if (p.unit || p.links.length !== 1) break;
+    plain += g.segLength(s.x, s.y, s.in, s.out);
+  }
+  if (plain < there.length + 0.5) return null;
+  const rear = (there as unknown as Reversible).reversedTrail().trail.at(-1)!.seg;
+  return { g, path, rear, r: path.findIndex((s) => s.x === rear.x && s.y === rear.y) };
+}
+
+function rearCase(rng: Rng): RearCase {
+  for (;;) {
+    const kind = rng.pick(['tree', 'snake', 'line', 'line'] as const);
+    const narrow = kind !== 'line' || rng.chance(0.5);
+    let track: RearCase['track'];
+    if (kind === 'line') {
+      const end = rng.int(24, 44);
+      const sidings: Siding[] = [];
+      for (let n = narrow ? 0 : rng.int(0, 4), i = 0; sidings.length < n && i < 30; i++) {
+        const s = {
+          x: rng.int(3, end - 4),
+          north: rng.chance(0.5),
+          east: rng.chance(0.5),
+          len: rng.int(3, 8),
+        };
+        if (sidings.every((o) => Math.abs(o.x - s.x) >= 3)) sidings.push(s);
+      }
+      track = { kind, end, sidings, narrow };
+    } else {
+      const size = rng.int(6, 14);
+      track = { kind, size, lays: kind === 'tree' ? tree(rng, size) : snake(rng, size) };
+    }
+    const g = layRear(track);
+    const plain = [...g.tiles()].filter((t) => !t.piece.unit && t.piece.links.length === 1);
+    if (!plain.length) continue;
+    const at = rng.pick(plain);
+    const head = { x: at.x, y: at.y, in: rng.pick(edgesOf(at.piece.links)) };
+    // plain track behind the head's centre, which the train must fit with half a tile to spare
+    let room = g.segLength(head.x, head.y, head.in, g.exits(head.x, head.y, head.in)[0]) / 2;
+    for (const s of walkBack(g, head.x, head.y, head.in, 64).reverse()) {
+      const p = g.get(s.x, s.y)!;
+      if (p.unit || p.links.length !== 1) break;
+      room += g.segLength(s.x, s.y, s.in, s.out);
+    }
+    const stock = STOCK(narrow);
+    for (let tries = 0; tries < 20; tries++) {
+      const locos = Array.from({ length: rng.chance(0.2) ? 2 : 1 }, () => rng.pick(stock.locos));
+      // five, ten, fifteen or thirty couplers half the time: with an odd number of mine tubs, a
+      // narrow train is then a whole number of tiles and a half long, its rear end on a tile edge
+      const most = Math.max(1, Math.min(31, Math.floor(room)));
+      const edgy = [6, 11, 16, 31].filter((n) => n <= most);
+      const cars = edgy.length && rng.chance(0.5) ? rng.pick(edgy) : rng.int(1, most);
+      const wagons = Array.from({ length: Math.max(0, cars - locos.length) }, () =>
+        narrow && rng.chance(0.5) ? 'mine_tub' : rng.pick(stock.wagons),
+      );
+      const c = { track, head, locos, wagons };
+      if (rearTrain(c).length + 0.5 <= room && rearSetUp(c)) return c;
+    }
+  }
+}
+function* shrinkRear(c: RearCase): Iterable<RearCase> {
+  const out: RearCase[] = [];
+  for (const wagons of shrinkArray(c.wagons)) out.push({ ...c, wagons });
+  if (c.locos.length > 1) out.push({ ...c, locos: c.locos.slice(0, 1) });
+  const t = c.track;
+  if (t.kind === 'line')
+    for (const sidings of shrinkArray(t.sidings)) out.push({ ...c, track: { ...t, sidings } });
+  else for (const lays of shrinkArray(t.lays)) out.push({ ...c, track: { ...t, lays } });
+  for (const r of out) if (rearSetUp(r)) yield r;
+}
+
+/**
+ * `Train.onwardTest` counts a way on rear first from the tile the rear end stands on, a rear end on
+ * a tile edge standing on the tile beyond it: the tile the train sets off from when it reverses
+ * (where its reversed trail starts, as `dispatch` sets off). The oracle is the train stood there by
+ * `spawnAt`, on plain track as in a refuge. The test is read off with a stop on each tile behind
+ * the head in turn: on track with no loop, the train reaches it rear first exactly when it lies on
+ * the rear's tile or beyond, and never head first.
+ */
+function rearHolds(c: RearCase) {
+  const { g, path, rear, r } = rearSetUp(c)!;
+  expect(r, `the rear end on the way it stands along: ${showWay(path)}`).toBeGreaterThanOrEqual(0);
+  for (let j = 0; j < path.length - 1; j++) {
+    const stop = path[j];
+    // with its head on its stop the train has a way there, so the test is made
+    const t = rearTrain(c);
+    expect(t.spawnAt(g, stop.x, stop.y, stop.in)).toBe(true);
+    t.schedule = [defaultStop(STOP)];
+    const station = { id: STOP } as Station;
+    const ctx = {
+      track: g,
+      now: 10,
+      builder: {
+        stationById: (id: number) => (id === STOP ? station : undefined),
+        platformTiles: () => [{ x: stop.x, y: stop.y }],
+      },
+    } as unknown as TickCtx;
+    const onward = (t as unknown as Onward).onwardTest(ctx);
+    expect(onward, `a train on its stop at (${stop.x},${stop.y}) makes the test`).not.toBeNull();
+    const at = `a stop at (${stop.x},${stop.y}), the ${t.length}-tile train setting off reversing from (${rear.x},${rear.y}) along ${showWay(path)}`;
+    const counts = onward!(path);
+    if (counts && j > r)
+      throw new Error(`counts a way on rear first to ${at}, which it runs away from`);
+    if (!counts && j <= r)
+      throw new Error(`counts no way on rear first to ${at}, which it reaches`);
+  }
+}
+
+/** Narrow track laid tile by tile: each (x, y) joins its `entry` edge to its `exit` edge. */
+function wind(steps: readonly [number, number, Dir, Dir][]): Lay[] {
+  return steps.map(([x, y, entry, exit]) => {
+    const p = PIECES.find(
+      (q) => (q.kind === 'straight' || q.kind === 'curve') && hasLink(q.links, entry, exit),
+    )!;
+    return { x, y, kind: p.kind, rot: p.rot, cls: 'narrow' };
+  });
+}
+
+describe("the tile a refuge's way on is counted from, rear first", () => {
+  it('is the one the train sets off from reversing, for any stock, on curves and on a tile edge', () => {
+    forAll(rearCase, rearHolds, { seeds: MANY_SEEDS, shrink: shrinkRear });
+  });
+
+  it('is the one a mine train sets off from where its cars stand along the chords of curves', () => {
+    // a Muki, seven tubs and a box wagon, 7.1 tiles, its head on the curve at (7,7) with six curves
+    // and two straights behind it. Along the curves' arcs (pi/4 a tile) its rear end lies 0.005
+    // short of the edge of (2,10) and (1,10); along the trail, which runs eight chords a curve, it
+    // lies 0.003 past it, so the train sets off reversing from (1,10), away from a stop at (2,10)
+    const [N, E, S, W] = [Dir.N, Dir.E, Dir.S, Dir.W];
+    const lays = wind([
+      [0, 10, W, E],
+      [1, 10, W, E],
+      [2, 10, W, E],
+      [3, 10, W, E],
+      [4, 10, W, N],
+      [4, 9, S, E],
+      [5, 9, W, N],
+      [5, 8, S, E],
+      [6, 8, W, N],
+      [6, 7, S, E],
+      [7, 7, W, N],
+      [7, 6, S, N],
+    ]);
+    const c: RearCase = {
+      track: { kind: 'snake', size: 12, lays },
+      head: { x: 7, y: 7, in: W },
+      locos: ['muki'],
+      wagons: [...Array<string>(7).fill('mine_tub'), 'narrow_box'],
+    };
+    expect(rearSetUp(c), 'it stands on plain track with room behind it').not.toBeNull();
+    rearHolds(c);
   });
 });
