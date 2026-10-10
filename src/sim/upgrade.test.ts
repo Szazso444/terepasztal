@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import type { Rng } from '../engine/rng';
@@ -33,6 +33,9 @@ import {
   type Upgraded,
   type Work,
 } from './upgrade';
+import { sfx } from '../engine/audio';
+
+vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -1118,6 +1121,99 @@ describe('a station being upgraded, of every kind', () => {
           for (const held of shrinkArray(c.held)) yield { ...c, held };
           for (const level of shrinkInt(c.level, 1)) yield { ...c, level };
           for (const amount of shrinkInt(c.amount, 1)) yield { ...c, amount };
+        },
+      },
+    );
+  });
+});
+
+// ------------------------------------------------------------ the upgrade click
+
+/** Every sound played since the last `mockClear`, by name. */
+const played = () => vi.mocked(sfx).mock.calls.map(([name]) => name);
+
+/** What the player does: click Upgrade on one of five things, in play or the editor, or wait. */
+type ClickOp =
+  | { kind: 'click'; target: number; free: boolean }
+  | { kind: 'remove'; target: number }
+  | { kind: 'wait'; hours: number };
+interface ClickCase {
+  age: number;
+  poor: boolean;
+  ops: ClickOp[];
+}
+const TARGETS = ['station', 'depot', 'works', 'bridge', 'house'] as const;
+
+/** A station, a depot, a works, a bridge and a house, each with its Upgrade and Demolish. */
+function clickables(w: World) {
+  const { farm, mill, home } = three(w);
+  const depot = station(w, 'depot', 24, 20);
+  const bridge = works(w, 'bridge_wood', 26, 10);
+  const upgrade = [
+    () => w.builder.upgradeStation(farm),
+    () => w.builder.upgradeStation(depot),
+    () => w.builder.upgradeBuilding(mill),
+    () => w.builder.upgradeBuilding(bridge),
+    () => w.houses.upgrade(home),
+  ];
+  const remove = [
+    () => w.builder.removeStation(farm),
+    () => w.builder.removeStation(depot),
+    () => w.builder.removeBuilding(mill.x, mill.y),
+    () => w.builder.removeBuilding(bridge.x, bridge.y),
+    () => w.builder.removeDecor(home.x, home.y),
+  ];
+  return { upgrade, remove };
+}
+
+describe('the upgrade click', () => {
+  it('sounds the same for a station, a depot, a works, a bridge and a house', () => {
+    const w = world(1);
+    const { upgrade } = clickables(w);
+    for (const [i, click] of upgrade.entries()) {
+      vi.mocked(sfx).mockClear();
+      expect(click(), TARGETS[i]).toBe(true);
+      expect(played(), TARGETS[i]).toEqual(['station.upgrade']);
+    }
+  });
+
+  it('plays once for every upgrade a click starts and never for one refused', () => {
+    forAll(
+      (rng: Rng): ClickCase => ({
+        age: rng.int(0, 2),
+        poor: rng.chance(0.3),
+        ops: Array.from({ length: rng.int(1, 20) }, (): ClickOp => {
+          const target = rng.int(0, TARGETS.length - 1);
+          const roll = rng.next();
+          if (roll < 0.6) return { kind: 'click', target, free: rng.chance(0.2) };
+          if (roll < 0.7) return { kind: 'remove', target };
+          return { kind: 'wait', hours: rng.int(1, 30) };
+        }),
+      }),
+      (c) => {
+        const w = world(c.age, c.poor);
+        const { upgrade, remove } = clickables(w);
+        for (const [i, op] of c.ops.entries()) {
+          if (op.kind === 'wait') {
+            w.builder.tickWorks(op.hours * hour());
+            w.houses.tickWorks(op.hours * hour());
+            continue;
+          }
+          if (op.kind === 'remove') {
+            remove[op.target]();
+            continue;
+          }
+          const at = `op ${i}: ${op.free ? 'editor ' : ''}upgrade of the ${TARGETS[op.target]}`;
+          vi.mocked(sfx).mockClear();
+          const done = op.free ? freely(w, upgrade[op.target]) : upgrade[op.target]();
+          expect(played(), at).toEqual(done ? ['station.upgrade'] : []);
+        }
+      },
+      {
+        shrink: function* (c) {
+          for (const ops of shrinkArray(c.ops)) if (ops.length) yield { ...c, ops };
+          if (c.poor) yield { ...c, poor: false };
+          for (const age of shrinkInt(c.age)) yield { ...c, age };
         },
       },
     );

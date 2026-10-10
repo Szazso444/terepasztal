@@ -287,6 +287,7 @@ export class Builder {
     if (this.buildingAt(b.x, b.y) !== b) return false;
     const c = this.canUpgradeBuilding(b);
     if (!c.ok || !this.pay(c.cost)) return false;
+    sfx('station.upgrade');
     const work = this.free ? null : startWork(buildingLevel(b) + 1);
     if (!work) {
       this.finishBuilding(b);
