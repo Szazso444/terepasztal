@@ -24,7 +24,8 @@ import { Fleet, MAX_LOCOS, MAX_WAGONS } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { gaugeOf } from './compat';
-import { vehicleFronts } from './body';
+import { Polyline, vehicleFronts, vehicleSpec, type BodyFields } from './body';
+import { walkBack, type PathSegment } from '../world/pathfinding';
 import { content, type Gauge } from '../data/content';
 import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
@@ -997,6 +998,160 @@ function staircase(n: number) {
   return { g, head: last };
 }
 
+/**
+ * Tiles `trackUnder` asks `walkBack` for: several times what the longest train stands on, round
+ * and round a loop.
+ */
+const WALK_ALL = 300;
+
+/**
+ * The track a train whose head stops on tile `at` stands on, found the slow obvious way and read
+ * from the head back as a save stores a trail (`[x, y, tile x, tile y, in, out]`): the head's tile
+ * up to its middle, going straight on where it can; every tile `walkBack` finds behind it, however
+ * many the train needs; and, where the rails end, a straight run `run` long on out of the edge the
+ * last of them is entered by. Laid point by point from each tile's geometry as `segGeom` gives it
+ * for the tile's edges alone, as `spawnAt` lays it (a switch's throat takes its first route), with
+ * a point on a tile border once, on the tile nearer the head.
+ */
+function trackUnder(g: TrackGraph, at: LineTile, run: number): number[][] {
+  const exits = g.exits(at.x, at.y, at.in);
+  const head: PathSegment = {
+    x: at.x,
+    y: at.y,
+    in: at.in,
+    out: exits.find((e) => e === opposite(at.in)) ?? exits[0],
+  };
+  const back = walkBack(g, at.x, at.y, at.in, WALK_ALL);
+  const rows: number[][] = [];
+  const lay = (x: number, y: number, s: PathSegment) => {
+    const last = rows[rows.length - 1];
+    if (last && Math.hypot(x - last[0], y - last[1]) < 1e-6)
+      last.splice(2, 4, s.x, s.y, s.in, s.out);
+    else rows.push([x, y, s.x, s.y, s.in, s.out]);
+  };
+  if (back.length < WALK_ALL) {
+    const end = back[0] ?? head;
+    const p = g.segGeom(end.x, end.y, end.in, end.out).pts[0];
+    for (let d = Math.ceil(run / 0.125); d >= 1; d--)
+      lay(end.x + p.x + DIR_DX[end.in] * d * 0.125, end.y + p.y + DIR_DY[end.in] * d * 0.125, end);
+  }
+  for (const s of [...back, head]) {
+    const pts = g.segGeom(s.x, s.y, s.in, s.out).pts;
+    const upto = s === head ? Math.floor(pts.length / 2) + 1 : pts.length;
+    for (let i = 0; i < upto; i++) lay(s.x + pts[i].x, s.y + pts[i].y, s);
+  }
+  return rows.reverse();
+}
+
+/**
+ * Whether the train stands on the track behind its head (`trackUnder`, the oracle): its trail,
+ * read from the head back, is that track point for point and at least as long as the train, and
+ * every bogie stands on that track at its own distance from the head (its vehicle's front, its
+ * segment's place in the body, its place in the segment), so no body is pulled short or pushed
+ * off the end of the rails.
+ */
+function expectOnTrack(t: Train, g: TrackGraph, at: LineTile, what: string) {
+  const under = trackUnder(g, at, t.length + 4);
+  const trail = t.toJSON().trail.reverse();
+  const off = trail.findIndex((p, i) => {
+    const q = under[i];
+    return (
+      !q ||
+      Math.hypot(p[0] - q[0], p[1] - q[1]) >= 1e-9 ||
+      p.slice(2, 6).join() !== q.slice(2, 6).join()
+    );
+  });
+  expect(
+    off < 0 ? null : { point: off, trail: trail[off], track: under[off] ?? 'none' },
+    `${what}: the first trail point, from the head back, off the track behind the head`,
+  ).toBeNull();
+  let laid = 0;
+  for (let i = 1; i < trail.length; i++)
+    laid += Math.hypot(trail[i][0] - trail[i - 1][0], trail[i][1] - trail[i - 1][1]);
+  expect(laid, `${what}: trail under a train ${t.length} long`).toBeGreaterThanOrEqual(t.length);
+  const track = new Polyline(under.map(([x, y]) => ({ x, y })));
+  const fronts = vehicleFronts(t.carLengths);
+  const astray: string[] = [];
+  t.vehicleSpecs.forEach((spec, car) =>
+    spec.segments.forEach((s, j) =>
+      t.vehiclePoses[car].segments[j].bogies.forEach((b, k) => {
+        const p = track.at(fronts[car] + s.front + (s.L - s.W) / 2 + (s.W / (s.nb - 1)) * k);
+        const d = Math.hypot(b.x - p.x, b.y - p.y);
+        if (d >= 1e-9) astray.push(`car ${car}, segment ${j}, bogie ${k}: ${d.toFixed(4)} off`);
+      }),
+    ),
+  );
+  expect(astray, `${what}: bogies away from their place on the track`).toEqual([]);
+}
+
+/** The case's train placed on its line by `spawnAt`, and again by a save without its trail. */
+function standsOnTrack(c: LineCase) {
+  const { g, tiles } = layLine(c);
+  const at = tiles[c.head === 'last' ? tiles.length - 1 : Math.min(c.head, tiles.length - 1)];
+  const t = lineTrain(c);
+  expect(t.spawnAt(g, at.x, at.y, at.in), 'placed').toBe(true);
+  expectOnTrack(t, g, at, 'rolled out');
+  expectOnTrack(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), g, at, 'loaded without a trail');
+}
+
+/** The longest consist of a gauge: the most units and wagons a train may have, of its longest stock. */
+function longestOf(gauge: Gauge) {
+  const longest = (ids: string[], def: (id: string) => BodyFields) => {
+    const len = (id: string) => vehicleSpec(def(id)).L;
+    const most = Math.max(...ids.map(len));
+    return ids.find((id) => len(id) === most)!;
+  };
+  return {
+    locos: Array<string>(MAX_LOCOS).fill(longest(STOCK[gauge].locos, locoDef)),
+    wagons: Array<string>(MAX_WAGONS).fill(longest(STOCK[gauge].wagons, wagonDef)),
+  };
+}
+
+/** The tile a line goes on to past the end of a piece laid along it. */
+function past(way: Way): LineTile {
+  const end = way.tiles[way.tiles.length - 1];
+  return { x: end.x + DIR_DX[way.out], y: end.y + DIR_DY[way.out], in: opposite(way.out) };
+}
+
+/**
+ * A line of nothing but curves of `cls`, turning north and east by turns from the grid's
+ * south-west corner for as long as the grid has room, and the tiles it crosses.
+ */
+function zigzag(cls: TrackClass) {
+  const g = new TrackGraph(LINE_SIZE, LINE_SIZE);
+  const tiles: LineTile[] = [];
+  let at: LineTile = { x: 0, y: LINE_SIZE - 1, in: Dir.W };
+  for (let out = Dir.N; ; out = out === Dir.N ? Dir.E : Dir.N) {
+    const way = waysOn(g, { kind: 'curve', way: 0 }, cls, at).find((w) => w.out === out);
+    if (!way) break;
+    way.lay(g);
+    tiles.push(...way.tiles);
+    at = past(way);
+  }
+  return { g, tiles };
+}
+
+/** A ring of four curves of `cls` around the middle of the grid, and the tiles it crosses. */
+function ring(cls: TrackClass) {
+  const start: LineTile = { x: LINE_SIZE >> 1, y: LINE_SIZE >> 1, in: Dir.W };
+  const close = (laid: Way[], at: LineTile): Way[] | null => {
+    const g = new TrackGraph(LINE_SIZE, LINE_SIZE);
+    for (const way of laid) way.lay(g);
+    if (laid.length === 4)
+      return at.x === start.x && at.y === start.y && at.in === start.in ? laid : null;
+    for (const way of waysOn(g, { kind: 'curve', way: 0 }, cls, at)) {
+      const found = close([...laid, way], past(way));
+      if (found) return found;
+    }
+    return null;
+  };
+  const ways = close([], start);
+  if (!ways) throw new Error(`no ring of four ${cls} curves`);
+  const g = new TrackGraph(LINE_SIZE, LINE_SIZE);
+  for (const way of ways) way.lay(g);
+  return { g, tiles: ways.flatMap((way) => way.tiles) };
+}
+
 describe('a train placed on the track (spawnAt)', () => {
   it('stands whole on a winding narrow line, up to the longest consist a train may have', () => {
     forAll((rng) => lineCase(rng, 'narrow', true), standsWhole, { shrink: shrinkLine });
@@ -1065,5 +1220,111 @@ describe('a train placed on the track (spawnAt)', () => {
         }
       },
     );
+  });
+
+  it('stands on the track behind its head, every bogie at its own distance along it', () => {
+    forAll((rng) => lineCase(rng, 'narrow', true), standsOnTrack, { shrink: shrinkLine });
+    forAll((rng) => lineCase(rng, rng.pick(TRACK_CLASSES), rng.chance(0.5)), standsOnTrack, {
+      shrink: shrinkLine,
+      seeds: SEEDS.map((s) => 1000 + s),
+    });
+  });
+
+  it('stands on the track with the longest consist of its gauge on a line of nothing but curves', () => {
+    for (const cls of TRACK_CLASSES) {
+      const { g, tiles } = zigzag(cls);
+      const c = longestOf(cls === 'narrow' ? 'narrow' : 'regular');
+      // a curve lays less than a tile of trail a tile, but far more than half
+      expect(tiles.length, `${cls}: tiles the line crosses`).toBeGreaterThan(
+        2 * lineTrain(c).length,
+      );
+      // rails behind it all the way at the end of the line, and ending under it near the start
+      for (const at of [tiles[tiles.length - 1], tiles[tiles.length >> 1], tiles[5]]) {
+        const what = `${cls}, head on ${at.x},${at.y}`;
+        const t = lineTrain(c);
+        expect(t.spawnAt(g, at.x, at.y, at.in), what).toBe(true);
+        expectOnTrack(t, g, at, `${what}, rolled out`);
+        expectOnTrack(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), g, at, `${what}, loaded`);
+      }
+    }
+  });
+
+  it('stands on a ring shorter than itself, going round it as often as it takes', () => {
+    for (const cls of TRACK_CLASSES) {
+      const { g, tiles } = ring(cls);
+      const c = longestOf(cls === 'narrow' ? 'narrow' : 'regular');
+      expect(tiles.length, `${cls}: tiles round the ring`).toBeLessThan(lineTrain(c).length);
+      for (const at of tiles) {
+        const what = `${cls} ring, head on ${at.x},${at.y}`;
+        const t = lineTrain(c);
+        expect(t.spawnAt(g, at.x, at.y, at.in), what).toBe(true);
+        expectOnTrack(t, g, at, `${what}, rolled out`);
+        expectOnTrack(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), g, at, `${what}, loaded`);
+      }
+    }
+  });
+
+  it('rolls out of a depot as it did: the head on the gate, the cars in line behind it', () => {
+    const y = 60;
+    const depots = [
+      { depotId: 'depot', cls: 'regular', train: ['f7', 'wood_hopper'] },
+      { depotId: 'narrow_depot', cls: 'narrow', train: ['mk48', 'mine_tub'] },
+    ] as const;
+    for (const { depotId, cls, train } of depots)
+      for (const east of [true, false])
+        for (const c of [
+          { locos: [train[0]], wagons: [] },
+          { locos: [train[0], train[0]], wagons: Array<string>(6).fill(train[1]) },
+        ]) {
+          const what = `${depotId}, ${east ? 'east' : 'west'} gate, ${c.locos.length}+${c.wagons.length}`;
+          const w = world();
+          const depot = w.builder.placeStation(east ? 5 : SIZE - 8, y, depotId, 0)!;
+          const gate = depot.gateTiles().find((p) => p.y === y && p.x > depot.x === east)!;
+          const u = east ? 1 : -1;
+          for (let i = 0; i <= 40; i++) w.track.place(gate.x + u * i, y, 'straight', 1, cls);
+          for (const k of [12, 24]) w.builder.placeStation(gate.x + u * k, y + 1, 'quarry', 0);
+          const inv = w.fleet.inventory;
+          const t = w.fleet.create(
+            c.locos.map((id) => inv.add(id, 0).uid),
+            c.wagons.map((id) => inv.add(id, 0).uid),
+            [],
+            undefined,
+            'schedule',
+            depot.id,
+          );
+          if (typeof t === 'string') throw new Error(`${what}: ${t}`);
+          const loaded = Train.fromJSON({ ...t.toJSON(), trail: [] }, w.track);
+          const specs = t.vehicleSpecs;
+          const fronts = vehicleFronts(specs.map((s) => s.L));
+          // `back` tiles behind the gate's centre, along the line and on into the shed
+          const at = (back: number) => ({ x: gate.x - u * back, y });
+          for (const [train, how] of [
+            [t, 'rolled out'],
+            [loaded, 'loaded without a trail'],
+          ] as const) {
+            const head = train.headPos!;
+            expect(Math.hypot(head.x - gate.x, head.y - y), `${what}, ${how}: head`).toBeLessThan(
+              1e-9,
+            );
+            specs.forEach((spec, i) => {
+              const v = train.vehiclePoses[i];
+              const mid = at(fronts[i] + spec.L / 2);
+              expect(
+                Math.hypot(v.x - mid.x, v.y - mid.y),
+                `${what}, ${how}: car ${i}`,
+              ).toBeLessThan(1e-9);
+              expect(Math.cos(v.heading), `${what}, ${how}: car ${i} heading`).toBeCloseTo(u, 9);
+              spec.segments.forEach((s, j) =>
+                v.segments[j].bogies.forEach((b, k) => {
+                  const p = at(fronts[i] + s.front + (s.L - s.W) / 2 + (s.W / (s.nb - 1)) * k);
+                  expect(
+                    Math.hypot(b.x - p.x, b.y - p.y),
+                    `${what}, ${how}: car ${i}, segment ${j}, bogie ${k}`,
+                  ).toBeLessThan(1e-9);
+                }),
+              );
+            });
+          }
+        }
   });
 });
