@@ -7,8 +7,9 @@ what the generator does wrong, and how to change the set. The artist agent has i
 `assets/source/buildings-v2/GUIDE.md`; the design and its reasons are in
 `docs/superpowers/specs/2026-10-02-building-eras-art-package-design.md`.
 
-Status: the pictures are being made on the branch `art/buildings-v2`. The game does not load
-them yet (see "Not built yet").
+Status: the pictures are made on a branch of their own, `art/<issue>-buildings-v2` from
+`origin/develop` (`PROMPT.md`); none is in `develop` yet, and the game does not load them (see "Not
+built yet").
 
 ## The parts
 
@@ -37,9 +38,11 @@ document to what the tools do.
 
 ## Running it
 
-1. Work on a branch of its own. `node tools/building-guides.mjs` redraws the block-outs (only
-   needed when a footprint changes), `node tools/building-queue.mjs` builds or refreshes the list
-   and keeps what was recorded.
+1. Work on a branch of its own, `art/<issue>-buildings-v2` from `origin/develop`, `<issue>` being
+   the issue the pictures are tracked in (write its number into the block in `PROMPT.md`).
+   `node tools/building-guides.mjs` redraws the block-outs (only needed when a footprint
+   changes), `node tools/building-queue.mjs` builds or refreshes the list and keeps what was
+   recorded.
 2. Open an agent session on the repository and paste the block from `PROMPT.md`. The agent runs
    `node tools/building-queue.mjs next`, paints the picture as an edit of the block-out with the
    references and the prompt `next` printed, takes it
@@ -63,8 +66,8 @@ account. Nothing has to be carried over. Progress is in `queue.json` and in the 
 the checkout, and the way of working is in the guide and in what `next` prints.
 
 1. In the same checkout, open a new session (log the agent in with the other account first) and
-   paste the block from `PROMPT.md`. It commits what is in hand, brings the tools up to date,
-   reads the guide, and goes on from `status` and `next`.
+   paste the block from `PROMPT.md`. It commits what is in hand, brings the tools up to date by
+   merging `origin/develop`, reads the guide, and goes on from `status` and `next`.
 2. A picture the earlier session made but did not record shows in `status` as
    `on disk, but not recorded`. The new session looks at it and records it, or makes it again.
 3. A gate holds across sessions: the new session stops at `GATE` like the old one.
@@ -271,9 +274,9 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
 
 ## When a run goes wrong
 
-- Have the agent commit before any step that moves many files and before it merges the tools,
-  and never stash pictures: with staged and unrecorded pictures in its tree, a merge had the
-  agent juggling five stashes. A run is put back with
+- Have the agent commit before any step that moves many files and before it merges
+  `origin/develop` for the tools, and never stash pictures: with staged and unrecorded pictures
+  in its tree, a merge had the agent juggling five stashes. A run is put back with
   `git checkout <that commit> -- <the family folders> assets/source/buildings-v2/queue.json`
   and `recheck`.
 - `redo <id>` puts back a picture and every picture built on it, to be made afresh. For a first
