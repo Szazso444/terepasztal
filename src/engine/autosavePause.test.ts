@@ -25,6 +25,18 @@ describe('AutosavePause', () => {
     expect(pause.paused).toBe(true);
   });
 
+  it('offers no way to lift the pause: paused is read-only', () => {
+    // Game and the settings screen read it; writing it back would lift the pause before a reload
+    const pause = new AutosavePause();
+    pause.trip();
+    expect(() => {
+      // @ts-expect-error paused has a getter and no setter
+      pause.paused = false;
+    }).toThrow(TypeError);
+    expect(pause.paused).toBe(true);
+    expect(pause.allows('implicit')).toBe(false);
+  });
+
   it('allows an implicit write exactly when no error came before it, and every manual save', () => {
     // The oracle reads the sequence itself: an attempt at i is refused exactly when 'error' occurs
     // among events 0..i-1, and the pause reports itself paused once an 'error' is among 0..i.
