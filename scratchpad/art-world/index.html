@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Illustrated world · art preview</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #182723;
+      color: #eee7d3;
+      font: 16px/1.5 system-ui;
+    }
+    main {
+      max-width: 1450px;
+      margin: auto;
+      padding: 28px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+    p {
+      color: #bdc9b7;
+      max-width: 1000px;
+    }
+    button,
+    select {
+      background: #31493b;
+      color: #eee7d3;
+      border: 1px solid #78916b;
+      border-radius: 6px;
+      padding: 9px;
+      font: inherit;
+    }
+    nav {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    #scene {
+      overflow: auto;
+      border: 1px solid #435b47;
+      border-radius: 10px;
+    }
+    #scene canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    #catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 14px;
+    }
+    article {
+      background: #253a2e;
+      padding: 14px;
+      border: 1px solid #435b47;
+      border-radius: 8px;
+    }
+    article h3 {
+      font-size: 16px;
+      margin: 0;
+    }
+    article .pair {
+      display: flex;
+      align-items: center;
+      height: 170px;
+      gap: 10px;
+    }
+    article img,
+    article canvas {
+      width: 48%;
+      height: 150px;
+      object-fit: contain;
+    }
+    small {
+      color: #b8c8aa;
+    }
+    a {
+      color: #dbca8e;
+    }
+  </style>
+  <main>
+    <small>ILLUSTRATED WORLD · APPROVED WIDTH FORMULA</small>
+    <h1>A railway village in the source art style</h1>
+    <p>
+      The approved full-footprint yard now extends to stone forecourts, dirt farmyards and gravel
+      industrial lots. Door-bearing buildings use a provisional shared human scale, with larger
+      buildings allocated larger lots. Grass, yard materials and the shoreline blend continuously.
+    </p>
+    <nav>
+      <label
+        >Scene
+        <select id="mode">
+          <option value="village">Railway village</option>
+          <option value="industry">Industry and countryside</option>
+          <option value="terrain">Terrain palette</option>
+        </select></label
+      ><label><input id="grid" type="checkbox" /> Show tile grid</label
+      ><label><input id="width" type="checkbox" checked /> Approved wider objects</label
+      ><label><input id="yards" type="checkbox" checked /> Material yards</label
+      ><label><input id="people" type="checkbox" checked /> Human references</label
+      ><button id="save">Save scene PNG</button>
+    </nav>
+    <div id="scene"></div>
+    <p id="status">Loading atlases…</p>
+    <p>
+      This is a composed art preview using the game’s atlas renderer, not a running simulation.
+      Tracks retain their original geometry. Directional trains, bridge spans, signals and
+      connection-dependent pieces still require separate art work. Gold outlines show candidate lot
+      allocations. Industrial structures without a visible door still use estimated scale. Gameplay
+      footprints and saves are unchanged.
+    </p>
+    <h2>Original illustrations → game sprites</h2>
+    <p>
+      Left: source image. Right: converted atlas sprite. Each source is shown once; level variants
+      currently share the source artwork.
+    </p>
+    <div id="catalog"></div>
+    <p>
+      <a href="/public/assets/illustrated-report.json"
+        >Complete conversion and deferred-art report</a
+      >
+    </p>
+  </main>
+  <script type="module" src="scene.js"></script>
+</html>

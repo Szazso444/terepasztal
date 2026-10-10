@@ -1,0 +1,14 @@
+{
+  "resolution": 4,
+  "partial": true,
+  "frames": {
+    "people/walker_0_f0": {
+      "x": 2,
+      "y": 2,
+      "w": 17,
+      "h": 44,
+      "ax": 8.5,
+      "ay": 44
+    }
+  }
+}

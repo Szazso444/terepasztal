@@ -1,0 +1,2119 @@
+{
+  "seed": 7412,
+  "size": [
+    128,
+    128
+  ],
+  "generator": "generateMap(seed, { w:128, h:128 }); every other generation parameter is default",
+  "before": {
+    "terrain": 1093084268,
+    "biome": 4108660151,
+    "variant": 278013659
+  },
+  "after": {
+    "terrain": 1093084268,
+    "biome": 4108660151,
+    "variant": 278013659
+  },
+  "terrainCounts": {
+    "0": 7127,
+    "1": 2603,
+    "2": 1890,
+    "3": 2556,
+    "4": 273,
+    "5": 1872,
+    "6": 63
+  },
+  "biomeCounts": {
+    "0": 6222,
+    "1": 1832,
+    "2": 2275,
+    "3": 4261,
+    "4": 1615,
+    "5": 179
+  },
+  "placed": [
+    {
+      "type": "station",
+      "id": "station",
+      "x": 48,
+      "y": 47
+    },
+    {
+      "type": "station",
+      "id": "town",
+      "x": 43,
+      "y": 47
+    },
+    {
+      "type": "station",
+      "id": "warehouse",
+      "x": 52,
+      "y": 49
+    },
+    {
+      "type": "decor",
+      "id": "townhouse",
+      "x": 46,
+      "y": 44
+    },
+    {
+      "type": "decor",
+      "id": "townhouse",
+      "x": 49,
+      "y": 43
+    },
+    {
+      "type": "decor",
+      "id": "townhouse",
+      "x": 52,
+      "y": 44
+    },
+    {
+      "type": "decor",
+      "id": "townhouse",
+      "x": 43,
+      "y": 44
+    },
+    {
+      "type": "decor",
+      "id": "water_tower",
+      "x": 50,
+      "y": 50
+    },
+    {
+      "type": "decor",
+      "id": "fuel_stop",
+      "x": 54,
+      "y": 50
+    },
+    {
+      "type": "station",
+      "id": "farm",
+      "x": 26,
+      "y": 31
+    },
+    {
+      "type": "building",
+      "id": "windmill",
+      "x": 27,
+      "y": 28
+    },
+    {
+      "type": "decor",
+      "id": "townhouse",
+      "x": 29,
+      "y": 27
+    },
+    {
+      "type": "station",
+      "id": "warehouse",
+      "x": 91,
+      "y": 75
+    },
+    {
+      "type": "station",
+      "id": "lumber",
+      "x": 87,
+      "y": 75
+    },
+    {
+      "type": "building",
+      "id": "kiln",
+      "x": 85,
+      "y": 73
+    },
+    {
+      "type": "building",
+      "id": "grinder",
+      "x": 92,
+      "y": 70
+    },
+    {
+      "type": "building",
+      "id": "refinery",
+      "x": 95,
+      "y": 71
+    },
+    {
+      "type": "building",
+      "id": "power_plant",
+      "x": 96,
+      "y": 75
+    },
+    {
+      "type": "building",
+      "id": "substation",
+      "x": 93,
+      "y": 78
+    },
+    {
+      "type": "decor",
+      "id": "water_tower",
+      "x": 89,
+      "y": 78
+    }
+  ],
+  "railPieces": 114,
+  "railMaterials": [
+    {
+      "x": 25,
+      "y": 30,
+      "terrain": "sand",
+      "bedColor": [
+        166,
+        149,
+        113
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 26,
+      "y": 30,
+      "terrain": "sand",
+      "bedColor": [
+        166,
+        149,
+        113
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 27,
+      "y": 30,
+      "terrain": "plains",
+      "bedColor": [
+        128,
+        128,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 28,
+      "y": 30,
+      "terrain": "plains",
+      "bedColor": [
+        118,
+        121,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 29,
+      "y": 30,
+      "terrain": "plains",
+      "bedColor": [
+        116,
+        119,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 30,
+      "y": 30,
+      "terrain": "plains",
+      "bedColor": [
+        117,
+        120,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 31,
+      "y": 30,
+      "terrain": "plains",
+      "bedColor": [
+        118,
+        120,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 32,
+      "y": 30,
+      "terrain": "plains",
+      "bedColor": [
+        116,
+        119,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 33,
+      "y": 30,
+      "terrain": "forest",
+      "bedColor": [
+        98,
+        100,
+        75
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 34,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        104,
+        106,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 35,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        112,
+        111,
+        86
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 36,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        110,
+        112,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 37,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        115,
+        117,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 38,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        114,
+        116,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 39,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        113,
+        115,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 40,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        114,
+        115,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 41,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        116,
+        118,
+        86
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 42,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        115,
+        116,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 43,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        113,
+        114,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 30,
+      "terrain": "swamp",
+      "bedColor": [
+        106,
+        106,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 31,
+      "terrain": "swamp",
+      "bedColor": [
+        104,
+        104,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 32,
+      "terrain": "swamp",
+      "bedColor": [
+        103,
+        106,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 33,
+      "terrain": "swamp",
+      "bedColor": [
+        107,
+        108,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 34,
+      "terrain": "forest",
+      "bedColor": [
+        103,
+        102,
+        76
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 35,
+      "terrain": "forest",
+      "bedColor": [
+        105,
+        109,
+        79
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 36,
+      "terrain": "forest",
+      "bedColor": [
+        100,
+        103,
+        76
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 37,
+      "terrain": "forest",
+      "bedColor": [
+        97,
+        99,
+        75
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 38,
+      "terrain": "plains",
+      "bedColor": [
+        121,
+        123,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 39,
+      "terrain": "plains",
+      "bedColor": [
+        137,
+        135,
+        88
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 40,
+      "terrain": "plains",
+      "bedColor": [
+        116,
+        119,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 41,
+      "terrain": "plains",
+      "bedColor": [
+        117,
+        120,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 42,
+      "terrain": "plains",
+      "bedColor": [
+        123,
+        124,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 43,
+      "terrain": "plains",
+      "bedColor": [
+        127,
+        127,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 44,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        124,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 45,
+      "terrain": "plains",
+      "bedColor": [
+        121,
+        123,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 46,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        124,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 47,
+      "terrain": "plains",
+      "bedColor": [
+        120,
+        122,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 44,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        118,
+        121,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 45,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        116,
+        119,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 46,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        117,
+        119,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 47,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        118,
+        120,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 48,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        113,
+        116,
+        80
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 49,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        116,
+        119,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 50,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        123,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 51,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        125,
+        126,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 52,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        126,
+        127,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 53,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        127,
+        127,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 54,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        121,
+        123,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 55,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        124,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 56,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        123,
+        124,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 57,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        123,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 58,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        119,
+        121,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 59,
+      "y": 48,
+      "terrain": "plains",
+      "bedColor": [
+        126,
+        126,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 60,
+      "y": 48,
+      "terrain": "forest",
+      "bedColor": [
+        98,
+        101,
+        76
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 61,
+      "y": 48,
+      "terrain": "forest",
+      "bedColor": [
+        100,
+        104,
+        77
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 62,
+      "y": 48,
+      "terrain": "forest",
+      "bedColor": [
+        99,
+        103,
+        77
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 63,
+      "y": 48,
+      "terrain": "forest",
+      "bedColor": [
+        106,
+        110,
+        80
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 64,
+      "y": 48,
+      "terrain": "swamp",
+      "bedColor": [
+        113,
+        114,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 65,
+      "y": 48,
+      "terrain": "swamp",
+      "bedColor": [
+        112,
+        114,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 48,
+      "terrain": "swamp",
+      "bedColor": [
+        113,
+        114,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 49,
+      "terrain": "swamp",
+      "bedColor": [
+        105,
+        107,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 50,
+      "terrain": "swamp",
+      "bedColor": [
+        107,
+        112,
+        91
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 51,
+      "terrain": "swamp",
+      "bedColor": [
+        111,
+        116,
+        93
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 52,
+      "terrain": "swamp",
+      "bedColor": [
+        110,
+        112,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 53,
+      "terrain": "swamp",
+      "bedColor": [
+        110,
+        112,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 54,
+      "terrain": "swamp",
+      "bedColor": [
+        113,
+        115,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 55,
+      "terrain": "swamp",
+      "bedColor": [
+        114,
+        115,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 56,
+      "terrain": "swamp",
+      "bedColor": [
+        112,
+        114,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 57,
+      "terrain": "swamp",
+      "bedColor": [
+        105,
+        109,
+        87
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 58,
+      "terrain": "swamp",
+      "bedColor": [
+        105,
+        110,
+        88
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 59,
+      "terrain": "swamp",
+      "bedColor": [
+        107,
+        109,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 60,
+      "terrain": "swamp",
+      "bedColor": [
+        104,
+        106,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 61,
+      "terrain": "swamp",
+      "bedColor": [
+        107,
+        108,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 62,
+      "terrain": "swamp",
+      "bedColor": [
+        105,
+        107,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 63,
+      "terrain": "swamp",
+      "bedColor": [
+        114,
+        115,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 64,
+      "terrain": "swamp",
+      "bedColor": [
+        114,
+        115,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 65,
+      "terrain": "swamp",
+      "bedColor": [
+        115,
+        116,
+        86
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 66,
+      "terrain": "swamp",
+      "bedColor": [
+        111,
+        113,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 66,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        114,
+        115,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 67,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        111,
+        111,
+        86
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 68,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        110,
+        112,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 69,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        111,
+        113,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 70,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        107,
+        107,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 71,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        109,
+        112,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 72,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        110,
+        112,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 73,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        116,
+        118,
+        86
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 74,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        113,
+        115,
+        85
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 75,
+      "y": 67,
+      "terrain": "swamp",
+      "bedColor": [
+        113,
+        114,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 76,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        118,
+        121,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 77,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        127,
+        127,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 78,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        127,
+        128,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 79,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        124,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 80,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        116,
+        118,
+        80
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 81,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        116,
+        119,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 82,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        116,
+        119,
+        80
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 83,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        120,
+        122,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 67,
+      "terrain": "plains",
+      "bedColor": [
+        117,
+        120,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 68,
+      "terrain": "plains",
+      "bedColor": [
+        129,
+        129,
+        84
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 69,
+      "terrain": "plains",
+      "bedColor": [
+        127,
+        128,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 70,
+      "terrain": "plains",
+      "bedColor": [
+        123,
+        123,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 71,
+      "terrain": "plains",
+      "bedColor": [
+        123,
+        124,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 72,
+      "terrain": "plains",
+      "bedColor": [
+        128,
+        128,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 73,
+      "terrain": "plains",
+      "bedColor": [
+        128,
+        128,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 74,
+      "terrain": "plains",
+      "bedColor": [
+        119,
+        121,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 75,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        123,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 84,
+      "y": 76,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        124,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 85,
+      "y": 76,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        123,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 86,
+      "y": 76,
+      "terrain": "plains",
+      "bedColor": [
+        122,
+        123,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 87,
+      "y": 76,
+      "terrain": "plains",
+      "bedColor": [
+        127,
+        128,
+        83
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 88,
+      "y": 76,
+      "terrain": "plains",
+      "bedColor": [
+        120,
+        122,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 89,
+      "y": 76,
+      "terrain": "plains",
+      "bedColor": [
+        117,
+        120,
+        82
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 90,
+      "y": 76,
+      "terrain": "plains",
+      "bedColor": [
+        117,
+        120,
+        81
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 91,
+      "y": 76,
+      "terrain": "sand",
+      "bedColor": [
+        166,
+        150,
+        113
+      ],
+      "railGauge": 0.32
+    },
+    {
+      "x": 92,
+      "y": 76,
+      "terrain": "sand",
+      "bedColor": [
+        166,
+        148,
+        111
+      ],
+      "railGauge": 0.32
+    }
+  ],
+  "patchCount": 50,
+  "patchMaxRadius": 0.28,
+  "patches": [
+    {
+      "owner": {
+        "x": 48,
+        "y": 47,
+        "id": "station"
+      },
+      "x": 47.8218045172398,
+      "y": 47.38140789638274,
+      "rx": 0.19148872275836765,
+      "ry": 0.18774624130688608,
+      "seed": 7.872180689591914,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 48,
+        "y": 47,
+        "id": "station"
+      },
+      "x": 47.81270780309569,
+      "y": 47.35625294638798,
+      "rx": 0.19003324849531056,
+      "ry": 0.1769655484519899,
+      "seed": 7.508312123827636,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 43,
+        "y": 47,
+        "id": "town"
+      },
+      "x": 42.833397740032524,
+      "y": 47.452324694097044,
+      "rx": 0.19334363840520383,
+      "ry": 0.21813915461301803,
+      "seed": 8.335909601300955,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 43,
+        "y": 47,
+        "id": "town"
+      },
+      "x": 43.11742895748466,
+      "y": 47.364453873615716,
+      "rx": 0.238788633197546,
+      "ry": 0.1804802315495908,
+      "seed": 19.6971582993865,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 43,
+        "y": 47,
+        "id": "town"
+      },
+      "x": 42.89086899498943,
+      "y": 47.45656560678035,
+      "rx": 0.20253903919830918,
+      "ry": 0.21995668862015008,
+      "seed": 10.634759799577296,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 52,
+        "y": 49,
+        "id": "warehouse"
+      },
+      "x": 52.27219998894725,
+      "y": 49.372237560637295,
+      "rx": 0.26355199823156,
+      "ry": 0.18381609741598368,
+      "seed": 25.887999557889998,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 52,
+        "y": 49,
+        "id": "warehouse"
+      },
+      "x": 51.83819256827701,
+      "y": 49.381961048906675,
+      "rx": 0.19411081092432142,
+      "ry": 0.18798330667428673,
+      "seed": 8.527702731080353,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 52,
+        "y": 49,
+        "id": "warehouse"
+      },
+      "x": 52.0334475497948,
+      "y": 49.28509557462298,
+      "rx": 0.22535160796716808,
+      "ry": 0.1464695319812745,
+      "seed": 16.337901991792023,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 46,
+        "y": 44,
+        "id": "townhouse"
+      },
+      "x": 46.36557073611766,
+      "y": 44.47113421536982,
+      "rx": 0.27849131777882574,
+      "ry": 0.2262003780156374,
+      "seed": 29.62282944470644,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 46,
+        "y": 44,
+        "id": "townhouse"
+      },
+      "x": 46.35812325711595,
+      "y": 44.304165825992825,
+      "rx": 0.27729972113855184,
+      "ry": 0.15464249685406684,
+      "seed": 29.324930284637958,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 49,
+        "y": 43,
+        "id": "townhouse"
+      },
+      "x": 49.28802100283792,
+      "y": 43.36976989219897,
+      "rx": 0.2660833604540676,
+      "ry": 0.18275852522812785,
+      "seed": 26.520840113516897,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 49,
+        "y": 43,
+        "id": "townhouse"
+      },
+      "x": 48.797664264333434,
+      "y": 43.37098437703215,
+      "rx": 0.18762628229334952,
+      "ry": 0.18327901872806251,
+      "seed": 6.906570573337376,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 52,
+        "y": 44,
+        "id": "townhouse"
+      },
+      "x": 52.01370285998564,
+      "y": 44.46608844793402,
+      "rx": 0.22219245759770273,
+      "ry": 0.2240379062574357,
+      "seed": 15.548114399425685,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 52,
+        "y": 44,
+        "id": "townhouse"
+      },
+      "x": 51.888688659935724,
+      "y": 44.37322247768753,
+      "rx": 0.20219018558971585,
+      "ry": 0.18423820472322405,
+      "seed": 10.54754639742896,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 52,
+        "y": 44,
+        "id": "townhouse"
+      },
+      "x": 51.65564836887643,
+      "y": 44.25105129087344,
+      "rx": 0.1649037390202284,
+      "ry": 0.13187912466004492,
+      "seed": 1.2259347550570965,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 43,
+        "y": 44,
+        "id": "townhouse"
+      },
+      "x": 42.64680818095803,
+      "y": 44.31981854488142,
+      "rx": 0.16348930895328523,
+      "ry": 0.1613508049491793,
+      "seed": 0.8723272383213043,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 43,
+        "y": 44,
+        "id": "townhouse"
+      },
+      "x": 43.335074582952075,
+      "y": 44.326809894386685,
+      "rx": 0.27361193327233196,
+      "ry": 0.16434709759429098,
+      "seed": 28.40298331808299,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 43,
+        "y": 44,
+        "id": "townhouse"
+      },
+      "x": 42.85000107449014,
+      "y": 44.38674414018169,
+      "rx": 0.19600017191842198,
+      "ry": 0.1900332029350102,
+      "seed": 9.000042979605496,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 50,
+        "y": 50,
+        "id": "water_tower"
+      },
+      "x": 49.705366385227535,
+      "y": 50.407548041930426,
+      "rx": 0.17285862163640558,
+      "ry": 0.19894916082732378,
+      "seed": 3.214655409101397,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 50,
+        "y": 50,
+        "id": "water_tower"
+      },
+      "x": 50.36497115448583,
+      "y": 50.20768385658041,
+      "rx": 0.2783953847177327,
+      "ry": 0.11329308139160275,
+      "seed": 29.598846179433167,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 54,
+        "y": 50,
+        "id": "fuel_stop"
+      },
+      "x": 53.86022799520288,
+      "y": 50.30792968968861,
+      "rx": 0.19763647923246025,
+      "ry": 0.15625558129511774,
+      "seed": 9.409119808115065,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 54,
+        "y": 50,
+        "id": "fuel_stop"
+      },
+      "x": 54.27007251087343,
+      "y": 50.34010220834055,
+      "rx": 0.26321160173974933,
+      "ry": 0.17004380357451737,
+      "seed": 25.802900434937328,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 54,
+        "y": 50,
+        "id": "fuel_stop"
+      },
+      "x": 54.18381932156626,
+      "y": 50.439602852379906,
+      "rx": 0.2494110914506018,
+      "ry": 0.21268693673424421,
+      "seed": 22.352772862650454,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 26,
+        "y": 31,
+        "id": "farm"
+      },
+      "x": 26.31104602222331,
+      "y": 31.260269511872902,
+      "rx": 0.2697673635557294,
+      "ry": 0.1358297908026725,
+      "seed": 27.441840888932347,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 26,
+        "y": 31,
+        "id": "farm"
+      },
+      "x": 25.79620563663775,
+      "y": 31.344618930947036,
+      "rx": 0.18739290186204016,
+      "ry": 0.1719795418344438,
+      "seed": 6.8482254655100405,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 26,
+        "y": 31,
+        "id": "farm"
+      },
+      "x": 26.14591571892379,
+      "y": 31.27759719693102,
+      "rx": 0.24334651502780616,
+      "ry": 0.14325594154186547,
+      "seed": 20.83662875695154,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 27,
+        "y": 28,
+        "id": "windmill"
+      },
+      "x": 27.09839273005491,
+      "y": 28.253523405315352,
+      "rx": 0.2357428368087858,
+      "ry": 0.13293860227800905,
+      "seed": 18.93570920219645,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 27,
+        "y": 28,
+        "id": "windmill"
+      },
+      "x": 27.340543827333022,
+      "y": 28.462256352510302,
+      "rx": 0.2744870123732835,
+      "ry": 0.22239557964727283,
+      "seed": 28.621753093320876,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 29,
+        "y": 27,
+        "id": "townhouse"
+      },
+      "x": 28.889636520296335,
+      "y": 27.235931271379812,
+      "rx": 0.20234184324741364,
+      "ry": 0.12539911630563438,
+      "seed": 10.585460811853409,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 29,
+        "y": 27,
+        "id": "townhouse"
+      },
+      "x": 29.035057658038568,
+      "y": 27.31996862628497,
+      "rx": 0.22560922528617083,
+      "ry": 0.1614151255507022,
+      "seed": 16.40230632154271,
+      "material": "stone"
+    },
+    {
+      "owner": {
+        "x": 91,
+        "y": 75,
+        "id": "warehouse"
+      },
+      "x": 90.72609347774414,
+      "y": 75.31304147386923,
+      "rx": 0.17617495643906295,
+      "ry": 0.15844634594395757,
+      "seed": 4.043739109765738,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 91,
+        "y": 75,
+        "id": "warehouse"
+      },
+      "x": 91.33394094731193,
+      "y": 75.27091814635322,
+      "rx": 0.27343055156990886,
+      "ry": 0.14039349129423498,
+      "seed": 28.357637892477214,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 87,
+        "y": 75,
+        "id": "lumber"
+      },
+      "x": 87.1606285701273,
+      "y": 75.40947994216346,
+      "rx": 0.24570057122036815,
+      "ry": 0.19977711807005105,
+      "seed": 21.425142805092037,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 87,
+        "y": 75,
+        "id": "lumber"
+      },
+      "x": 87.35857761040097,
+      "y": 75.23243482230231,
+      "rx": 0.2773724176641554,
+      "ry": 0.12390063812956215,
+      "seed": 29.34310441603884,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 85,
+        "y": 73,
+        "id": "kiln"
+      },
+      "x": 84.74012130917981,
+      "y": 73.22255111824721,
+      "rx": 0.17841940946877002,
+      "ry": 0.11966476496309042,
+      "seed": 4.604852367192507,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 85,
+        "y": 73,
+        "id": "kiln"
+      },
+      "x": 85.02887206163723,
+      "y": 73.4249576553516,
+      "rx": 0.22461952986195682,
+      "ry": 0.20641042372211815,
+      "seed": 16.15488246548921,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 92,
+        "y": 70,
+        "id": "grinder"
+      },
+      "x": 91.99564748915145,
+      "y": 70.396683250824,
+      "rx": 0.2193035982642323,
+      "ry": 0.19429282178170978,
+      "seed": 14.82589956605807,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 92,
+        "y": 70,
+        "id": "grinder"
+      },
+      "x": 92.24059744359693,
+      "y": 70.34753303028643,
+      "rx": 0.2584955909755081,
+      "ry": 0.17322844155132772,
+      "seed": 24.623897743877023,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 92,
+        "y": 70,
+        "id": "grinder"
+      },
+      "x": 92.17029125691624,
+      "y": 70.31040168385022,
+      "rx": 0.24724660110659896,
+      "ry": 0.15731500736437737,
+      "seed": 21.811650276649743,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 95,
+        "y": 71,
+        "id": "refinery"
+      },
+      "x": 94.808095665765,
+      "y": 71.3191080739256,
+      "rx": 0.18929530652239918,
+      "ry": 0.16104631739668548,
+      "seed": 7.323826630599797,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 95,
+        "y": 71,
+        "id": "refinery"
+      },
+      "x": 94.98286629171344,
+      "y": 71.37902770726011,
+      "rx": 0.21725860667414965,
+      "ry": 0.18672616025432942,
+      "seed": 14.314651668537408,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 95,
+        "y": 71,
+        "id": "refinery"
+      },
+      "x": 95.2957709361799,
+      "y": 71.24662376429886,
+      "rx": 0.26732334978878497,
+      "ry": 0.1299816132709384,
+      "seed": 26.830837447196245,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 96,
+        "y": 75,
+        "id": "power_plant"
+      },
+      "x": 96.26330321514979,
+      "y": 75.36341692402029,
+      "rx": 0.2621285144239664,
+      "ry": 0.18003582458011808,
+      "seed": 25.532128605991602,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 96,
+        "y": 75,
+        "id": "power_plant"
+      },
+      "x": 96.02629023499321,
+      "y": 75.45225049724803,
+      "rx": 0.2242064375989139,
+      "ry": 0.21810735596343875,
+      "seed": 16.051609399728477,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 93,
+        "y": 78,
+        "id": "substation"
+      },
+      "x": 93.21933776006335,
+      "y": 78.27878873547539,
+      "rx": 0.2550940416101366,
+      "ry": 0.1437666009180248,
+      "seed": 23.773510402534157,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 93,
+        "y": 78,
+        "id": "substation"
+      },
+      "x": 93.06313221756136,
+      "y": 78.20418616845272,
+      "rx": 0.2301011548098177,
+      "ry": 0.11179407219402492,
+      "seed": 17.525288702454418,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 93,
+        "y": 78,
+        "id": "substation"
+      },
+      "x": 92.7064232120756,
+      "y": 78.24306297197008,
+      "rx": 0.17302771393209695,
+      "ry": 0.12845555941574274,
+      "seed": 3.2569284830242395,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 89,
+        "y": 78,
+        "id": "water_tower"
+      },
+      "x": 88.78304177284008,
+      "y": 78.38453279280104,
+      "rx": 0.18528668365441264,
+      "ry": 0.18908548262901603,
+      "seed": 6.321670913603157,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 89,
+        "y": 78,
+        "id": "water_tower"
+      },
+      "x": 89.35247954691295,
+      "y": 78.38728634556756,
+      "rx": 0.27639672750607136,
+      "ry": 0.19026557667180896,
+      "seed": 29.099181876517832,
+      "material": "dirt"
+    },
+    {
+      "owner": {
+        "x": 89,
+        "y": 78,
+        "id": "water_tower"
+      },
+      "x": 89.01482935354579,
+      "y": 78.41288047972135,
+      "rx": 0.22237269656732678,
+      "ry": 0.20123449130915105,
+      "seed": 15.593174141831696,
+      "material": "dirt"
+    }
+  ],
+  "trackOnWater": 0,
+  "generatedTerrainUnmodified": true,
+  "maximumPatchDistanceFromAnchor": 0.9165949677352749,
+  "connectedRoute": true,
+  "humanLogicalHeight": 11,
+  "trainBodyUnstretched": true,
+  "views": [
+    {
+      "id": "01-whole-map",
+      "title": "Generated 128 × 128 map",
+      "x": 63.5,
+      "y": 63.5,
+      "zoom": 0.215
+    },
+    {
+      "id": "02-railway-region",
+      "title": "Railway through the generated landscape",
+      "x": 54,
+      "y": 48,
+      "zoom": 0.8
+    },
+    {
+      "id": "03-town-station",
+      "title": "Town station · small ground patches",
+      "x": 48,
+      "y": 47,
+      "zoom": 3
+    },
+    {
+      "id": "04-industry",
+      "title": "Industry · terrain at the building bases",
+      "x": 91,
+      "y": 75,
+      "zoom": 2.7
+    },
+    {
+      "id": "05-farm-halt",
+      "title": "Farm halt · natural vegetation",
+      "x": 26,
+      "y": 31,
+      "zoom": 2.7
+    },
+    {
+      "id": "06-track-ground",
+      "title": "Rails blending with their underlying tiles",
+      "x": 36,
+      "y": 30,
+      "zoom": 3
+    }
+  ],
+  "errors": []
+}

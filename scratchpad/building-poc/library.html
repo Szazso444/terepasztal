@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Building library · four facings</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #182723;
+      color: #eee7d3;
+      font: 16px/1.5 system-ui;
+    }
+    main {
+      max-width: 1680px;
+      padding: 26px;
+      margin: auto;
+    }
+    h1 {
+      margin: 0;
+    }
+    p {
+      color: #c4cebc;
+    }
+    a {
+      color: #e1c98c;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 180px repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .cell {
+      background: #293f34;
+      border: 1px solid #526d54;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+    }
+    img {
+      width: 100%;
+      height: 170px;
+      object-fit: contain;
+    }
+    h2 {
+      font-size: 20px;
+      margin: 0 0 8px;
+    }
+    select {
+      padding: 8px;
+      background: #36513d;
+      color: inherit;
+      font: inherit;
+    }
+    small {
+      color: #c0ccb8;
+    }
+    .heading {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-top: 22px;
+    }
+    @media (max-width: 900px) {
+      .row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .reference {
+        grid-column: 1/-1;
+      }
+    }
+  </style>
+  <main>
+    <h1>Building library</h1>
+    <p id="summary">Loading completed assets…</p>
+    <p>
+      Original reference at left; four generated views at the same display scale. Gold diamonds
+      indicate the approved one- or two-tile footprint. These are first-pass designs: machinery
+      orientation, clearances and human scale still need visual review before production
+      integration.
+    </p>
+    <label
+      >Show
+      <select id="filter">
+        <option value="all">All buildings</option>
+        <option value="1">One tile</option>
+        <option value="2">Two tiles</option>
+      </select></label
+    >
+    <a href="index.html">Placement POC</a>
+    <div id="library"></div>
+  </main>
+  <script type="module" src="library.js"></script>
+</html>

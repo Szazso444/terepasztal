@@ -1,0 +1,2 @@
+import {launch} from './runtime.mjs';
+const b=await launch();try{const p=await b.newPage({viewport:{width:1800,height:1600}});await p.goto('http://127.0.0.1:5173/assets/source/current-grid-regeneration-v2/handoff/references.html');await p.waitForFunction(()=>window.ready);await p.screenshot({path:'assets/source/current-grid-regeneration-v2/original-reference-review.png',fullPage:true});console.log('Reference contact sheet saved locally.');}finally{await b.close();}

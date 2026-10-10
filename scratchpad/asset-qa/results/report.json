@@ -1,0 +1,484 @@
+{
+  "scope": "actual game classes and world renderer; deterministic fixture routes driven by Fleet.tick",
+  "bootstrap": {
+    "baselineKeys": 25,
+    "candidateKeys": 25,
+    "placements": [
+      {
+        "id": "station",
+        "placed": true
+      },
+      {
+        "id": "townhouse",
+        "placed": true
+      },
+      {
+        "id": "water_tower",
+        "placed": true
+      }
+    ]
+  },
+  "samples": [
+    {
+      "scenario": "straight",
+      "progress": 2.0084666666666644,
+      "state": "moving",
+      "x": 25.008466666666664,
+      "y": 20,
+      "angle": 0,
+      "facing": 0,
+      "drawn": 0,
+      "key": "rolling/loco_steam_early_small_yellow_body_f0",
+      "reversed": false,
+      "spriteScale": [
+        1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": 0,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 147
+    },
+    {
+      "scenario": "switch-enter",
+      "progress": 6.453116666666701,
+      "state": "moving",
+      "x": 29.45303217132599,
+      "y": 20,
+      "angle": 0.13127088366812,
+      "facing": 1,
+      "drawn": 1,
+      "key": "rolling/loco_steam_early_small_yellow_body_f1",
+      "reversed": false,
+      "spriteScale": [
+        1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": 0.00017581653060100288,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 408
+    },
+    {
+      "scenario": "switch-middle",
+      "progress": 6.90706000000004,
+      "state": "moving",
+      "x": 29.8630310107064,
+      "y": 20.15799512292876,
+      "angle": 0.814877985436505,
+      "facing": 6,
+      "drawn": 6,
+      "key": "rolling/loco_steam_early_small_yellow_body_f6",
+      "reversed": false,
+      "spriteScale": [
+        1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": 0.02945424674642272,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 44
+    },
+    {
+      "scenario": "switch-leave",
+      "progress": 7.508126666666728,
+      "state": "moving",
+      "x": 30,
+      "y": 20.723989544030246,
+      "angle": 1.545405903235672,
+      "facing": 12,
+      "drawn": 0,
+      "key": "rolling/loco_steam_early_small_yellow_body_f0",
+      "reversed": false,
+      "spriteScale": [
+        -1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": -0.010314072531333318,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 49
+    },
+    {
+      "scenario": "curve-two",
+      "progress": 16.705573333333707,
+      "state": "moving",
+      "x": 29.830917361311542,
+      "y": 29.872130299733367,
+      "angle": 2.413979660760473,
+      "facing": 18,
+      "drawn": 18,
+      "key": "rolling/loco_steam_early_small_yellow_body_f18",
+      "reversed": false,
+      "spriteScale": [
+        1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": 0.014458362212856457,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 802
+    },
+    {
+      "scenario": "curve-three",
+      "progress": 26.509606666666233,
+      "state": "moving",
+      "x": 20.11526240926811,
+      "y": 29.81555533278173,
+      "angle": -2.258437764609862,
+      "facing": 31,
+      "drawn": 29,
+      "key": "rolling/loco_steam_early_small_yellow_body_f29",
+      "reversed": false,
+      "spriteScale": [
+        -1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": -0.031890655169095616,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 851
+    },
+    {
+      "scenario": "curve-four",
+      "progress": 36.25905333333269,
+      "state": "moving",
+      "x": 20.157665841418567,
+      "y": 20.13723922364522,
+      "angle": -0.7567423382811894,
+      "facing": 42,
+      "drawn": 18,
+      "key": "rolling/loco_steam_early_small_yellow_body_f18",
+      "reversed": false,
+      "spriteScale": [
+        -1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": 0.007165427263006516,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 847
+    },
+    {
+      "scenario": "forward-loop-complete",
+      "progress": 38.50385333333309,
+      "state": "moving",
+      "x": 22.367304842787142,
+      "y": 20,
+      "angle": 0,
+      "facing": 0,
+      "drawn": 0,
+      "key": "rolling/loco_steam_early_small_yellow_body_f0",
+      "reversed": false,
+      "spriteScale": [
+        1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": 0,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 183
+    },
+    {
+      "scenario": "reverse-moving",
+      "progress": 4.003047823879548,
+      "state": "moving",
+      "x": 20,
+      "y": 21.018910701243062,
+      "angle": 1.5707963267948966,
+      "facing": 36,
+      "drawn": 24,
+      "key": "rolling/loco_steam_early_small_yellow_body_f24",
+      "reversed": true,
+      "spriteScale": [
+        -1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": 0,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 481
+    },
+    {
+      "scenario": "reverse-loop-complete",
+      "progress": 37.50405849054621,
+      "state": "moving",
+      "x": 24.832489999999748,
+      "y": 20,
+      "angle": 3.141592653589793,
+      "facing": 0,
+      "drawn": 0,
+      "key": "rolling/loco_steam_early_small_yellow_body_f0",
+      "reversed": true,
+      "spriteScale": [
+        1,
+        1
+      ],
+      "textureSize": [
+        96,
+        96
+      ],
+      "anchor": [
+        0.5,
+        0.7200000000000001
+      ],
+      "rotation": -8.326672684688674e-17,
+      "vehicleCount": 2,
+      "rigidLengths": [
+        1,
+        1
+      ],
+      "couplerGap": 0.2,
+      "ticks": 4492
+    }
+  ],
+  "errors": [],
+  "baseline": {
+    "scenario": "straight",
+    "progress": 2.0084666666666644,
+    "state": "moving",
+    "x": 25.008466666666664,
+    "y": 20,
+    "angle": 0,
+    "facing": 0,
+    "drawn": 0,
+    "key": "rolling/loco_steam_early_small_yellow_body_f0",
+    "reversed": false,
+    "spriteScale": [
+      1,
+      1
+    ],
+    "textureSize": [
+      45,
+      33
+    ],
+    "anchor": [
+      0.4888888888888889,
+      0.7575757575757576
+    ],
+    "rotation": 0,
+    "vehicleCount": 2,
+    "rigidLengths": [
+      1,
+      1
+    ],
+    "couplerGap": 0.2
+  },
+  "reversal": {
+    "scenario": "reversed",
+    "progress": 0.8326951572128571,
+    "state": "moving",
+    "x": 22.367304842787142,
+    "y": 20,
+    "angle": 3.141592653589793,
+    "facing": 0,
+    "drawn": 0,
+    "key": "rolling/loco_steam_early_small_yellow_body_f0",
+    "reversed": true,
+    "spriteScale": [
+      1,
+      1
+    ],
+    "textureSize": [
+      96,
+      96
+    ],
+    "anchor": [
+      0.5,
+      0.7200000000000001
+    ],
+    "rotation": -8.326672684688674e-17,
+    "vehicleCount": 2,
+    "rigidLengths": [
+      1,
+      1
+    ],
+    "couplerGap": 0.2,
+    "reversalError": 0
+  },
+  "coverage": {
+    "ticks": 8304,
+    "facings": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "trackKinds": [
+      "straight",
+      "switch",
+      "curve"
+    ],
+    "reversedTicks": 4973
+  },
+  "rendererChecks": {
+    "sameLogicalResolution": true,
+    "rigidSpriteScale": true,
+    "correctTextures": true,
+    "noMissingFrames": true,
+    "atlasToggleDoesNotMoveVehicle": true,
+    "all48HeadingsCovered": true
+  },
+  "visualAcceptance": {
+    "accepted": false,
+    "status": "blocked_pending_measured_wheel_landmarks_and_scale_contract",
+    "issues": [
+      "Reconstructed wheel geometry remains uncalibrated",
+      "Yellow changed toward olive",
+      "Appearance and scale differ from procedural coach; no per-asset auto-resizing applied"
+    ],
+    "automatableNextStep": "Supply wheel-tread, axle and coupler landmarks in model coordinates, then project and compare against runtime rails and body sockets at every sample."
+  }
+}

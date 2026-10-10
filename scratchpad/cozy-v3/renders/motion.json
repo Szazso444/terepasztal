@@ -1,0 +1,95 @@
+{
+  "scope": "existing real Fleet.tick fixture with production renderer changes; Rocket candidate remains QA-only",
+  "coverage": {
+    "ticks": 8304,
+    "facings": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "trackKinds": [
+      "straight",
+      "switch",
+      "curve"
+    ],
+    "reversedTicks": 4973
+  },
+  "reversal": {
+    "scenario": "reversed",
+    "progress": 0.8326951572128571,
+    "state": "moving",
+    "x": 22.367304842787142,
+    "y": 20,
+    "angle": 3.141592653589793,
+    "facing": 0,
+    "drawn": 0,
+    "key": "rolling/loco_steam_early_small_yellow_body_f0",
+    "reversed": true,
+    "spriteScale": [
+      1,
+      1
+    ],
+    "textureSize": [
+      96,
+      96
+    ],
+    "anchor": [
+      0.5,
+      0.7200000000000001
+    ],
+    "rotation": -8.326672684688674e-17,
+    "vehicleCount": 2,
+    "rigidLengths": [
+      1,
+      1
+    ],
+    "couplerGap": 0.2,
+    "reversalError": 0
+  },
+  "errors": []
+}

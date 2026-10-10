@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Building placement POC</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #182723;
+      color: #eee7d3;
+      font: 16px/1.5 system-ui;
+    }
+    main {
+      max-width: 1300px;
+      margin: auto;
+      padding: 24px;
+    }
+    h1 {
+      margin: 0;
+    }
+    p {
+      color: #c3ccbb;
+    }
+    nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 18px 0;
+    }
+    button,
+    select {
+      font: inherit;
+      padding: 8px 14px;
+      background: #34513e;
+      color: #eee7d3;
+      border: 1px solid #71846b;
+      border-radius: 6px;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+      background: #253b30;
+      border: 1px solid #526d54;
+      border-radius: 10px;
+      touch-action: none;
+    }
+    #status {
+      min-height: 25px;
+      color: #eed396;
+    }
+    a {
+      color: #e1c98c;
+    }
+  </style>
+  <main>
+    <small>PLAYABLE PLACEMENT POC · ISOLATED FROM GAME SAVES</small>
+    <h1>Build on one or two cells</h1>
+    <nav>
+      <label
+        >Tool
+        <select id="tool">
+          <option value="house">House · 1×1</option>
+          <option value="station">Station · 2×1</option>
+          <option value="asset">Building library</option>
+          <option value="track">Track · 1 cell</option>
+          <option value="rotate">Rotate placed building</option>
+          <option value="remove">Demolish</option>
+        </select></label
+      ><label
+        >Asset
+        <select id="asset"></select></label
+      ><button id="rotate">Rotate preview (R)</button
+      ><label><input id="grid" type="checkbox" checked /> Grid</label
+      ><label><input id="art" type="checkbox" checked /> Illustrated assets</label
+      ><button id="save">Save POC layout</button><button id="load">Load POC layout</button
+      ><button id="reset">Reset example</button>
+    </nav>
+    <p>
+      Move over the grid and click to place. Green means valid; red means occupied or outside the
+      map. Click either occupied cell to rotate or demolish a two-cell building. Rotation fails
+      safely if its new footprint is blocked.
+    </p>
+    <canvas id="world" width="1200" height="740"></canvas>
+    <p id="status"></p>
+    <p id="summary"></p>
+    <p>
+      Station access uses adjacent track on any side for this test, matching the existing general
+      station concept. Cyan dots mark stations with access; amber dots mark those without it. This
+      POC does not run trains, economy or cargo. The building library supplies four illustrated
+      facings per building. Toggle illustrated assets to compare with a generic footprint model.
+      Generated details and projection still need visual approval.
+    </p>
+    <p>
+      <a href="../grid-buildings/index.html">Approved geometry study</a> ·
+      <a href="library.html">Complete building library</a> ·
+      <a href="assets.html">Original house and station facings</a> ·
+      <a href="../art-world/index.html">Preserved shoreline study</a>
+    </p>
+  </main>
+  <script type="module" src="scene.js"></script>
+</html>
