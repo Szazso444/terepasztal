@@ -65,6 +65,9 @@ export const STR = {
     buyConfirm: (v: string) => `Buy this chunk for ${v}?`,
     bought: 'Chunk charted. Neighbouring land is now visible.',
     growing: 'Charting new land beyond the edge of the map…',
+    /** after a loop error the map cannot grow now, since growing stores the game first */
+    growHeld:
+      'The map grows past its edge once you save the game and reload it. Until then nothing is saved automatically, because of the earlier error.',
     cannotAfford: (v: string) => `Need ${v} to buy this chunk`,
     chunkTitle: 'Uncharted chunk',
     chunkLines: (v: string) => [`Price ${v}`, 'Click to buy'],
@@ -147,9 +150,12 @@ export const STR = {
     junctions: 'Junctions',
     tile: 'Tile',
     regenerate: 'New map (seed)',
-    /** toast for an error the game loop caught; shown once per distinct message */
+    /**
+     * toast for an error the game loop caught; shown once per distinct message. From the first one
+     * the game stores nothing on its own until the page reloads; a save the player makes still does
+     */
     frameError: (message: string) =>
-      `Something went wrong: ${message}. The game keeps running; the browser console has details.`,
+      `Something went wrong: ${message}. The game keeps running, but nothing is saved automatically until the game is reloaded, and your last save is kept. The browser console has details.`,
     /** the painted landscape's status: loading, active, or failed with the reason */
     landscape: 'Landscape',
     landscapeLoading: 'loading',
