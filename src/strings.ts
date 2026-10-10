@@ -51,7 +51,11 @@ export const STR = {
       wires: 'Live electrified tiles',
       chunks: 'Owned chunks',
     } as Record<string, string>,
-    hint: 'An age begins once every goal listed for it is met (checked every hour).',
+    /** heads the goals that are alternatives of one another */
+    anyOf: 'One of these:',
+    /** the same heading once one of its goals is met */
+    anyOfMet: 'One of these: met',
+    hint: 'An age begins once every goal listed for it is met; under "One of these", one goal is enough. Goals are checked every hour.',
   },
   overview: {
     locked: 'UNCHARTED',
