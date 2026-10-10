@@ -1138,8 +1138,8 @@ interface Laid {
  * off. A rear end exactly on a tile edge stands on the tile beyond it, the rule `onwardTest`
  * states; the trail's distances cannot settle that last bit, because they carry the rounding of
  * every chord laid beyond the edge. Behind a straight stretch with curves beyond it, a rear end on
- * the edge can come out 1e-15 short of it, and such a train sets off from the nearer tile, which
- * `onwardTest` does not count: there it misses a way on the train has, and never claims one.
+ * the edge can come out 1e-15 short of it. `reversedTrail` counts a rear end that close to an edge
+ * as on it; this reads the edge from where the tiles the trail's points carry change instead.
  */
 function setOff(t: Train) {
   const { trail, trailCum } = t as unknown as Laid;

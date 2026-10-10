@@ -201,7 +201,10 @@ export class Polyline {
     if (pts.length === 1) return { p: pts[0], arc: 0 };
     const i0 = Math.max(1, this.seg(arcGuess - window));
     const i1 = Math.min(pts.length - 1, this.seg(arcGuess + window));
-    let best = { p: pts[i0 - 1], arc: this.cum[i0 - 1] };
+    // the closest so far, kept in numbers: this runs for every body segment every tick
+    let bx = 0;
+    let by = 0;
+    let arc = 0;
     let bd = Infinity;
     for (let i = i0; i <= i1; i++) {
       const a = pts[i - 1];
@@ -211,14 +214,18 @@ export class Polyline {
       const l2 = dx * dx + dy * dy;
       let t = l2 > 1e-12 ? ((P.x - a.x) * dx + (P.y - a.y) * dy) / l2 : 0;
       t = Math.max(0, Math.min(1, t));
-      const q = { x: a.x + dx * t, y: a.y + dy * t };
-      const d = (q.x - P.x) ** 2 + (q.y - P.y) ** 2;
+      const qx = a.x + dx * t;
+      const qy = a.y + dy * t;
+      const d = (qx - P.x) ** 2 + (qy - P.y) ** 2;
       if (d < bd) {
         bd = d;
-        best = { p: q, arc: this.cum[i - 1] + Math.sqrt(l2) * t };
+        bx = qx;
+        by = qy;
+        arc = this.cum[i - 1] + Math.sqrt(l2) * t;
       }
     }
-    return best;
+    if (bd === Infinity) return { p: pts[i0 - 1], arc: this.cum[i0 - 1] };
+    return { p: { x: bx, y: by }, arc };
   }
 }
 
