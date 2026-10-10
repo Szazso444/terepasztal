@@ -4,7 +4,7 @@ import type { LevelData } from '../world/level';
 import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import type { SlotMeta } from '../sim/save';
 import type { NamePrompt } from './namePrompt';
-import { slotText } from './saveSlots';
+import { liveText, slotText, type SlotText } from './saveSlots';
 
 /** Shared by both menus: music and effects volume, so the player can set them from the menu. */
 export interface AudioActions {
@@ -62,7 +62,11 @@ export type Confirm = Pick<NamePrompt, 'confirm'>;
  * ago, with the date and time as its title; the format, when it is not this build's.
  */
 export function slotLines(meta: SlotMeta, now: number, cls = 'sub'): HTMLElement[] {
-  const t = slotText(meta, now);
+  return textLines(slotText(meta, now), cls);
+}
+
+/** One `cls` line each of what `slotText` or `liveText` says, the date as the time line's title. */
+function textLines(t: SlotText, cls: string): HTMLElement[] {
   const lines = [el('div', { class: cls, text: t.detail })];
   if (t.saved) lines.push(el('div', { class: cls, text: t.saved, title: t.savedAt ?? '' }));
   if (t.format) lines.push(el('div', { class: cls, text: t.format }));
@@ -93,11 +97,11 @@ function slotList(actions: SlotActions, prompt: Confirm, onDeleted: () => void) 
     list.append(
       el(
         'div',
-        { class: 'item', style: 'cursor:default' },
+        { class: 'item static' },
         el('div', {}, el('div', { class: 'name', text: sl.name }), ...slotLines(sl, now)),
         el(
           'div',
-          { class: 'row', style: 'margin:0;flex-direction:column' },
+          { class: 'row stack' },
           btn(STR.settings.loadSlot, () => actions.loadSlot(sl.name), 'small accent'),
           btn(
             STR.settings.deleteSlot,
@@ -108,6 +112,15 @@ function slotList(actions: SlotActions, prompt: Confirm, onDeleted: () => void) 
       ),
     );
   return list;
+}
+
+/**
+ * What Continue goes back to, described like a save: the stored save (`continueMeta()`), or with
+ * `live` the game being played under the title screen, which it was opened over.
+ */
+export interface ContinueTarget {
+  meta: SlotMeta;
+  live: boolean;
 }
 
 export interface MainMenuActions extends SlotActions, AudioActions {
@@ -152,8 +165,12 @@ export class MainMenu {
     this.root.style.display = 'none';
   }
 
-  /** `save` is the save Continue loads (`continueMeta()`), null when there is none. */
-  show(save: SlotMeta | null, levels: LevelData[], custom: { rules: boolean; content: boolean }) {
+  /** `save` is what Continue goes back to, null when there is nothing to continue. */
+  show(
+    save: ContinueTarget | null,
+    levels: LevelData[],
+    custom: { rules: boolean; content: boolean },
+  ) {
     this.visible = true;
     this.root.style.display = 'flex';
     this.render(save, levels, custom);
@@ -164,7 +181,7 @@ export class MainMenu {
   }
 
   private render(
-    save: SlotMeta | null,
+    save: ContinueTarget | null,
     levels: LevelData[],
     custom: { rules: boolean; content: boolean },
   ) {
@@ -179,14 +196,11 @@ export class MainMenu {
     const cont = btn(STR.menu.continue, () => this.actions.continue(), 'menu-btn accent');
     cont.disabled = !save;
     // what Continue goes back to, in the body font under the title-font label
-    if (save)
-      cont.append(
-        el(
-          'div',
-          { style: 'font-family:var(--font-body);font-size:11px;letter-spacing:0' },
-          ...slotLines(save, Date.now(), 'sub dim'),
-        ),
-      );
+    if (save) {
+      const now = Date.now();
+      const t = save.live ? liveText(save.meta, now) : slotText(save.meta, now);
+      cont.append(el('div', { class: 'menu-btn-detail' }, ...textLines(t, 'sub dim')));
+    }
     // production chain of the new game: simple (default) or the full supply set
     const supply = el('select', { class: 'text', title: STR.menu.supply }) as HTMLSelectElement;
     for (const m of SUPPLY_MODES)
@@ -234,7 +248,7 @@ export class MainMenu {
       list.append(
         el(
           'div',
-          { class: 'item', style: 'cursor:default' },
+          { class: 'item static' },
           el(
             'div',
             {},
@@ -249,7 +263,7 @@ export class MainMenu {
           ),
           el(
             'div',
-            { class: 'row', style: 'margin:0;flex-direction:column' },
+            { class: 'row stack' },
             btn(STR.menu.play, () => this.actions.playLevel(lv.id), 'small accent'),
             btn(STR.menu.edit, () => this.actions.editLevel(lv.id), 'small'),
             btn(

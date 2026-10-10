@@ -42,9 +42,8 @@ export class NamePrompt {
       ),
     );
     this.root.append(this.frame);
+    // sits above the menus and the modal screens by stylesheet (`#name-prompt-root`)
     this.root.style.display = 'none';
-    // above the modal screens (#modal-root, z-index 70): the settings screen asks through it too
-    this.root.style.zIndex = '75';
     this.root.addEventListener('mousedown', (e) => {
       if (e.target === this.root) this.finish(null);
     });

@@ -11,7 +11,15 @@ import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
 import { Train, resetTrainIds } from './trains';
-import { resetStationIds, stationGates, type Station } from './stations';
+import { resetStationIds, stationDef, stationGates, type Station } from './stations';
+import {
+  START_DEPOT_REACH,
+  depotSiteBlocked,
+  ensureStartDepot,
+  grantDepot,
+  startDepotCentre,
+  startDepotKind,
+} from './startDepot';
 import { gaugeOf } from './compat';
 import type { TrackClass } from '../world/track';
 import { rules, DEFAULT_RULES } from './rules';
@@ -138,19 +146,30 @@ describe('the starter kit of a new game', () => {
   });
 });
 
+/** Every gate of the depot carries a straight of the depot's gauge that runs into the shed. */
+function expectServed(w: ReturnType<typeof newGame>, depot: Station) {
+  const cls: TrackClass = depot.def.gauge ?? 'regular';
+  for (const g of depot.gateTiles()) {
+    const p = w.track.get(g.x, g.y);
+    expect(p, `gate ${g.x},${g.y}`).toBeDefined();
+    expect(p!.kind).toBe('straight');
+    expect(p!.cls).toBe(cls);
+    const toShed =
+      depot.rot === 0 ? (g.x < depot.x ? Dir.E : Dir.W) : g.y < depot.y ? Dir.S : Dir.N;
+    expect(p!.links.flat()).toContain(toShed);
+  }
+}
+
 describe('the depot a new game starts with', () => {
   /**
-   * The depot and gate track `Game.ensureDepot` lays: the kind at (20, 20) turned to `rot`, a
-   * straight of the depot's gauge across each gate, as `stationGates` foresaw them.
+   * The depot and gate track a game is granted (`grantDepot`): the kind at (20, 20) turned to
+   * `rot`, a straight of the depot's gauge across each gate, as `stationGates` foresaw them.
    */
   function firstDepot(w: ReturnType<typeof newGame>, defId: string, rot: number) {
     const gates = stationGates(defId, 20, 20, rot);
-    const depot = w.builder.placeStation(20, 20, defId, rot)!;
+    const depot = grantDepot(w.builder, defId, 20, 20, rot)!;
+    expect(depot).not.toBeNull();
     const cls: TrackClass = depot.def.gauge ?? 'regular';
-    for (const g of gates)
-      expect(
-        w.builder.placeTrack(g.x, g.y, { kind: 'straight', cls, cls2: cls }, rot === 0 ? 1 : 0),
-      ).toBe(true);
     return { depot, gates, cls };
   }
 
@@ -213,6 +232,126 @@ describe('the depot a new game starts with', () => {
     expect(w.fleet.modelDeployReason(locoDef('rocket'), depot)).toBe(
       STR.fleet.wrongDepot(depot.name),
     );
+  });
+});
+
+describe('the site a game is granted its depot on', () => {
+  /** Ground the hill allows only on `ok` tiles: elsewhere neither a shed nor a straight stands. */
+  function onlyOn(w: ReturnType<typeof newGame>, ok: (x: number, y: number) => boolean) {
+    w.builder.groundCheck = (x, y) => ok(x, y);
+  }
+
+  it('is the middle of the start chunk when the ground there takes it', () => {
+    const w = newGame();
+    const c = startDepotCentre(w.map);
+    const d = ensureStartDepot(w.builder, 'narrow_depot')!;
+    expect([d.x, d.y, d.rot]).toEqual([c.x - 1, c.y - 1, 0]);
+    expectServed(w, d);
+  });
+
+  it.each(['narrow_depot', 'depot'])(
+    '%s: a first site on sloping ground is skipped and the search goes on',
+    (defId) => {
+      const w = newGame();
+      const c = startDepotCentre(w.map);
+      // a tile of the first site in both turns, where a straight could climb but a shed not stand
+      const slope = { x: c.x - 1, y: c.y - 1 };
+      w.builder.groundCheck = (x, y, need) => need !== 'level' || x !== slope.x || y !== slope.y;
+      for (const rot of [0, 1])
+        expect(depotSiteBlocked(w.builder, defId, slope.x, slope.y, rot)).toBe(STR.build.notLevel);
+      const d = ensureStartDepot(w.builder, defId);
+      expect(d).not.toBeNull();
+      expect(w.builder.depots()).toEqual([d]);
+      expect(d!.covers(slope.x, slope.y)).toBe(false);
+      expectServed(w, d!);
+    },
+  );
+
+  it.each(['narrow_depot', 'depot'])(
+    '%s: a site counts only when every gate takes its straight',
+    (defId) => {
+      const w = newGame();
+      const c = startDepotCentre(w.map);
+      const x = c.x - 1,
+        y = c.y - 1;
+      // the first gate of the first site is too steep for any rail
+      const steep = stationGates(defId, x, y, 0)[0];
+      onlyOn(w, (tx, ty) => tx !== steep.x || ty !== steep.y);
+      expect(depotSiteBlocked(w.builder, defId, x, y, 0)).toBe(STR.build.tooSteep);
+      const d = ensureStartDepot(w.builder, defId)!;
+      expect(w.builder.depots()).toEqual([d]);
+      expect(w.track.has(steep.x, steep.y)).toBe(false);
+      expectServed(w, d);
+      // the next try is the same corner turned, its gates north and south, clear of the steep tile
+      expect([d.x, d.y, d.rot]).toEqual([x, y, 1]);
+    },
+  );
+
+  it('takes the one site that works at the edge of its reach, and none beyond it', () => {
+    // level ground for exactly one narrow depot and its two gates, `reach` tiles east
+    const island = (reach: number) => {
+      const w = newGame();
+      const c = startDepotCentre(w.map);
+      const x = c.x + reach - 1,
+        y = c.y - 1;
+      onlyOn(w, (tx, ty) => ty === y && tx >= x - 1 && tx <= x + 2);
+      return { w, x, y, d: ensureStartDepot(w.builder, 'narrow_depot') };
+    };
+    const edge = island(START_DEPOT_REACH);
+    expect(edge.d).not.toBeNull();
+    expect([edge.d!.x, edge.d!.y, edge.d!.rot]).toEqual([edge.x, edge.y, 0]);
+    expect(edge.w.builder.depots()).toEqual([edge.d]);
+    expectServed(edge.w, edge.d!);
+
+    // one tile further no site works: nothing is granted and nothing is left behind
+    const beyond = island(START_DEPOT_REACH + 1);
+    expect(beyond.d).toBeNull();
+    expect(beyond.w.builder.stations).toEqual([]);
+    expect(beyond.w.track.pieces.size).toBe(0);
+  });
+
+  it('stands only on ground the player owns, though granting lifts the chunk lock', () => {
+    const w = newGame();
+    w.builder.free = false;
+    // own the start chunk alone, where the ground takes nothing; the level chunks beside it are
+    // within reach but not the player's
+    w.builder.regions.unlocked = w.builder.regions.unlocked.map((_, i) => i === 0);
+    onlyOn(w, (x, y) => !w.builder.regions.isTileUnlocked(x, y));
+    expect(ensureStartDepot(w.builder, 'narrow_depot')).toBeNull();
+    expect(w.builder.stations).toEqual([]);
+    expect(w.track.pieces.size).toBe(0);
+    expect(w.builder.free).toBe(false);
+  });
+
+  it.each([
+    [1, 'narrow_depot', 'narrow', stationDef('narrow_depot').name],
+    [0, 'depot', 'regular', STR.station.depotName],
+  ])(
+    'is what a new game asks for: narrowUnlocked %i gives a %s with %s gate track',
+    (narrow, kind, gauge, name) => {
+      rules.narrowUnlocked = narrow;
+      const w = newGame();
+      w.builder.free = false;
+      expect(startDepotKind()).toBe(kind);
+      const d = ensureStartDepot(w.builder, startDepotKind())!;
+      expect(d.def.id).toBe(kind);
+      expect(d.def.gauge ?? 'regular').toBe(gauge);
+      expect(d.name).toBe(name);
+      expectServed(w, d);
+      expect(w.builder.free).toBe(false);
+    },
+  );
+
+  it('is a regular depot for an older save without one, and a game that has one keeps it', () => {
+    const w = newGame();
+    const d = ensureStartDepot(w.builder, 'depot')!;
+    expect(d.def.id).toBe('depot');
+    expect(d.name).toBe(STR.station.depotName);
+    expectServed(w, d);
+    const track = w.track.pieces.size;
+    expect(ensureStartDepot(w.builder, 'narrow_depot')).toBe(d);
+    expect(w.builder.depots()).toEqual([d]);
+    expect(w.track.pieces.size).toBe(track);
   });
 });
 
