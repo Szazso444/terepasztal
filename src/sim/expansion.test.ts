@@ -26,6 +26,7 @@ import type { SaveGame } from './save';
 import { AGE_DEFS } from './ages';
 import { referencePath } from './compat';
 import { STR } from '../strings';
+import { upgradeSeconds } from './upgrade';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 function world() {
@@ -107,6 +108,11 @@ describe('weekly food economy and housing', () => {
     w.economy.setAge(1);
     expect(houses.upgrade(h)).toBe(true);
     expect(w.stock.get('wood')).toBe(wood - 60);
+    // the work takes its game time; nobody moves in meanwhile
+    houses.tick(daySeconds() * 100, daySeconds() * 101);
+    expect([h.level, h.residents]).toEqual([1, 20]);
+    houses.tickWorks(upgradeSeconds(2));
+    expect(h.level).toBe(2);
     houses.tick(daySeconds() * 100, daySeconds() * 200);
     expect(h.residents).toBe(60);
     expect(h.level).toBe(2);

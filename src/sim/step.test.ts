@@ -792,6 +792,23 @@ describe('SimStep: one step', () => {
           } = w;
           const play = ctx.mode === 'play';
           let completedAtEnd = -1;
+          // the works under way advance once a step, by the step's game time, before anything else
+          builder.tickWorks = watched(
+            calls,
+            'builder.tickWorks',
+            builder.tickWorks.bind(builder),
+            (dt) => {
+              expect(dt, 'builder.tickWorks: gdt').toBe(gdt);
+            },
+          );
+          houses.tickWorks = watched(
+            calls,
+            'houses.tickWorks',
+            houses.tickWorks.bind(houses),
+            (dt) => {
+              expect(dt, 'houses.tickWorks: gdt').toBe(gdt);
+            },
+          );
           stock.tick = watched(calls, 'stock.tick', stock.tick.bind(stock), (dt) => {
             expect(dt, 'stock.tick: gdt').toBe(gdt);
             expect(stock.population, 'population').toBe(houses.residentsTotal());
@@ -886,6 +903,8 @@ describe('SimStep: one step', () => {
 
           const ticket = turns && completedAtEnd > 0;
           expect(calls, 'calls').toEqual([
+            'builder.tickWorks',
+            'houses.tickWorks',
             'stock.tick',
             'houses.tick',
             ...(cityDue ? ['refreshCity'] : []),

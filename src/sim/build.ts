@@ -25,9 +25,11 @@ import {
   buildingDef,
   buildingLevel,
   buildingUpgradeCost,
+  worksMaxLevel,
   BUILDING_DEFS,
   type Building,
 } from './buildings';
+import { advanceWork, startWork, workProgress, type Upgraded, type WorkSite } from './upgrade';
 import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
 import { STR } from '../strings';
@@ -108,6 +110,11 @@ export class Builder {
   onIndustryPlaced: ((x: number, y: number) => void) | null = null;
   /** fired when a station loses (true) or regains (false) its last platform tile */
   onStationOrphaned: ((s: Station, orphaned: boolean) => void) | null = null;
+  /**
+   * fired when an upgrade raises a station's or a building's level: at once, or when its work is
+   * done (`tickWorks`), after `onStationChanged` or `onBuildingChanged`
+   */
+  onUpgraded: ((e: Upgraded) => void) | null = null;
 
   constructor(
     readonly map: GameMap,
@@ -232,7 +239,8 @@ export class Builder {
     let n = 0;
     for (const s of this.stations) n += s.crew;
     for (const d of this.decor.values()) n += decorDef(d.id).crew;
-    for (const b of this.buildings.values()) n += buildingDef(b.id).crew;
+    // a works being upgraded has no crew to feed (a closed station's crew is 0 already)
+    for (const b of this.buildings.values()) if (!b.work) n += buildingDef(b.id).crew;
     return n;
   }
   warehouseLevels() {
@@ -249,35 +257,83 @@ export class Builder {
   }
   /**
    * Whether a works or bridge may rise a level: works one level per age from the age they appear
-   * in, bridges to their four levels in any age. The editor ignores the age.
+   * in, bridges to their four levels in any age. The editor ignores the age. None while one runs.
    */
   canUpgradeBuilding(b: Building): PlacementCheck {
+    if (b.work) return { ok: false, cost: {}, reason: STR.build.upgradingNow };
     const cost = buildingUpgradeCost(b);
     if (!cost) return { ok: false, cost: {}, reason: STR.station.maxed };
     if (this.free) return { ok: true, cost: {} };
     const def = buildingDef(b.id);
+    // a works the content editor left without an age belongs to the first one, as stations do
     const locked = def.bridge
       ? null
-      : levelLocked(def.tier, buildingLevel(b) + 1, this.economy.tier);
+      : levelLocked(def.tier ?? 0, buildingLevel(b) + 1, this.economy.tier);
     if (locked) return { ok: false, cost, reason: locked };
     return this.affordable(cost);
   }
+  /**
+   * Pay for the next level and start the work: the building closes until its time is up
+   * (`tickWorks`), with `onBuildingChanged` fired so the power is rebuilt. In the editor, or when
+   * upgrades take no time, the level rises at once.
+   */
   upgradeBuilding(b: Building) {
     if (this.buildingAt(b.x, b.y) !== b) return false;
     const c = this.canUpgradeBuilding(b);
     if (!c.ok || !this.pay(c.cost)) return false;
-    b.level = buildingLevel(b) + 1;
-    if (buildingDef(b.id).bridge) {
+    const work = this.free ? null : startWork(buildingLevel(b) + 1);
+    if (!work) {
+      this.finishBuilding(b);
+      return true;
+    }
+    b.work = work;
+    this.onBuildingChanged?.(b, false);
+    return true;
+  }
+  /** The building's level rises by one: it opens again, and the change is reported. */
+  private finishBuilding(b: Building) {
+    const def = buildingDef(b.id);
+    b.level = Math.min(worksMaxLevel(b), buildingLevel(b) + 1);
+    delete b.work;
+    if (def.bridge) {
       this.refreshBridgeCapacity(b.x, b.y);
       this.track.version++;
     }
     this.onBuildingChanged?.(b, false);
-    return true;
+    this.onUpgraded?.({
+      kind: 'works',
+      x: b.x,
+      y: b.y,
+      w: 1,
+      h: 1,
+      name: def.name,
+      level: b.level,
+    });
   }
+  /** Power plants at work: one being upgraded gives no power. */
   plantCount() {
     let n = 0;
-    for (const b of this.buildings.values()) if (buildingDef(b.id).power) n++;
+    for (const b of this.buildings.values()) if (!b.work && buildingDef(b.id).power) n++;
     return n;
+  }
+  /**
+   * Advance every work under way by `gameDt` game seconds (the step calls this once with its game
+   * time); a station or building whose work is done rises a level.
+   */
+  tickWorks(gameDt: number) {
+    for (const s of [...this.stations])
+      if (s.work && advanceWork(s.work, gameDt)) this.finishStation(s);
+    for (const b of [...this.buildings.values()])
+      if (b.work && advanceWork(b.work, gameDt)) this.finishBuilding(b);
+  }
+  /** Every station and building being upgraded, with how far its work has come. */
+  works(): WorkSite[] {
+    const out: WorkSite[] = [];
+    for (const s of this.stations)
+      if (s.work) out.push({ x: s.x, y: s.y, w: s.w, h: s.h, progress: workProgress(s.work) });
+    for (const b of this.buildings.values())
+      if (b.work) out.push({ x: b.x, y: b.y, w: 1, h: 1, progress: workProgress(b.work) });
+    return out;
   }
 
   /** Services can serve a platform or the rail directly within their advertised radius. */
@@ -587,32 +643,65 @@ export class Builder {
     const i = this.stations.indexOf(s);
     if (i < 0) return false;
     this.stations.splice(i, 1);
+    // removed during its upgrade, it is gone for good: no level rises later
+    s.work = null;
     this.refund(s.def.cost);
     this.onStationChanged?.(s, true);
     return true;
   }
-  /** Whether a station may rise a level: one level per age from the age it appears in. */
+  /**
+   * Whether a station may rise a level: one level per age from the age it appears in, and not
+   * while an upgrade runs.
+   */
   canUpgrade(s: Station): PlacementCheck {
+    if (s.work) return { ok: false, cost: {}, reason: STR.build.upgradingNow };
     if (s.level >= MAX_LEVEL) return { ok: false, cost: {}, reason: STR.station.maxed };
     if (this.free) return { ok: true, cost: {} };
     const locked = levelLocked(s.firstAge, s.level + 1, this.economy.tier);
     if (locked) return { ok: false, cost: s.upgradeCost(), reason: locked };
     return this.affordable(s.upgradeCost());
   }
-  /** Editor only: lower a station's level. */
+  /** Editor only: lower a station's level (an upgrade under way is dropped with it). */
   downgradeStation(s: Station): boolean {
     if (!this.free || s.level <= 1) return false;
     s.level--;
+    s.work = null;
     this.onStationChanged?.(s, false);
     return true;
   }
+  /**
+   * Pay for the next level and start the work: the station closes until its time is up
+   * (`tickWorks`). A depot's upgrade, the editor's, and any when upgrades take no time raise the
+   * level at once.
+   */
   upgradeStation(s: Station): boolean {
+    if (!this.stations.includes(s)) return false;
     const c = this.canUpgrade(s);
     if (!c.ok || !this.pay(c.cost)) return false;
-    s.level++;
-    this.onStationChanged?.(s, false);
     sfx('station.upgrade');
+    const work = s.def.depot || this.free ? null : startWork(s.level + 1);
+    if (!work) {
+      this.finishStation(s);
+      return true;
+    }
+    s.work = work;
+    this.onStationChanged?.(s, false);
     return true;
+  }
+  /** The station's level rises by one: it opens again, and the change is reported. */
+  private finishStation(s: Station) {
+    s.level = Math.min(MAX_LEVEL, s.level + 1);
+    s.work = null;
+    this.onStationChanged?.(s, false);
+    this.onUpgraded?.({
+      kind: 'station',
+      x: s.x,
+      y: s.y,
+      w: s.w,
+      h: s.h,
+      name: s.name,
+      level: s.level,
+    });
   }
 
   // ------------------------------------------------------------------ decor
@@ -776,6 +865,8 @@ export class Builder {
     const b = this.buildingAt(x, y);
     if (!b || (buildingDef(b.id).bridge && this.track.has(x, y))) return false;
     this.buildings.delete(this.key(x, y));
+    // removed during its upgrade, it is gone for good: no level rises later
+    delete b.work;
     this.refund(buildingDef(b.id).cost);
     this.onBuildingChanged?.(b, true);
     sfx('build.remove');

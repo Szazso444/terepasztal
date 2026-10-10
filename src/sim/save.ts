@@ -17,7 +17,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -54,6 +54,7 @@ export interface SaveParts {
   };
   /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
   track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
+  /** v15: each with the upgrade under way (`work`), null for none */
   stations: StationJSON[];
   trains: unknown[];
   contracts: unknown;
@@ -73,7 +74,7 @@ export interface SaveParts {
   rules: Partial<Rules>;
   /** v4: global resources */
   stockpile: unknown;
-  /** v4: processing buildings, as `buildingToJSON` writes them */
+  /** v4: processing buildings, as `buildingToJSON` writes them (v15: the upgrade under way) */
   buildings: BuildingJSON[];
   /** v5: owned chunks */
   regions: boolean[];
@@ -85,7 +86,10 @@ export interface SaveParts {
   trade: unknown;
   /** v10: known crafting recipes, craft statistics and an unfinished recipe draw */
   crafting: unknown;
-  /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
+  /**
+   * v9: townhouses (level, residents, construction) plus town traffic and first-train marks;
+   * v15: each house's upgrade under way
+   */
   houses: HousesJSON;
   /** v9: production-chain mode the game was started with */
   supply: SupplyMode;
@@ -480,6 +484,21 @@ export const MIGRATIONS: Migration[] = [
         t.serviceStop = t.serviceStop ?? null;
         t.nextFuelCheck = t.nextFuelCheck ?? 0;
       }
+    },
+  },
+  {
+    from: 14,
+    note: 'no station, works or house was being upgraded: upgrades take game time from now on and close the building while they run, and a save keeps the ones under way',
+    run: (j) => {
+      for (const s of j.stations) if (isRecord(s)) s.work = s.work ?? null;
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the work is the sixth place of the tuple: a level left out before it is the 1 it meant
+        if (b.length < 5) b.push(1);
+        b[5] = b[5] ?? null;
+      }
+      const list: unknown = isRecord(j.houses) ? j.houses.list : undefined;
+      if (Array.isArray(list)) for (const h of list) if (isRecord(h)) h.work = h.work ?? null;
     },
   },
 ];

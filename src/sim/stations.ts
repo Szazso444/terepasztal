@@ -6,6 +6,7 @@ import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import { rules } from './rules';
 import { cargoDef } from './cargo';
 import { MAX_LEVEL } from './levels';
+import { workFromJSON, workToJSON, type Work } from './upgrade';
 
 export type { StationDef };
 export { MAX_LEVEL };
@@ -80,6 +81,8 @@ export interface StationJSON {
   market?: Record<string, number>;
   /** v7: orientation of multi-tile stations (depot gates: 0 = west/east, 1 = north/south) */
   rot?: number;
+  /** v15: the upgrade under way, null for none */
+  work?: Work | null;
 }
 
 let nextId = 1;
@@ -140,8 +143,14 @@ export class Station {
   passengerPopulation = 0;
   /** a coaling stage stands within reach (engines refuel from the stockpile) */
   fuelSupply = false;
+  /** the upgrade under way (`Builder.upgradeStation`); null when none is */
+  work: Work | null = null;
+  /** Closed while it is upgraded: it makes nothing, takes nothing in and has no crew to feed. */
+  get closed() {
+    return !!this.work;
+  }
   get crew() {
-    return LEVELS.crew[this.level - 1];
+    return this.closed ? 0 : LEVELS.crew[this.level - 1];
   }
   /** the age the station appears in: its levels open one per age from there (`levelCap`) */
   get firstAge() {
@@ -222,11 +231,12 @@ export class Station {
       for (const [c, v] of this.storage) if (v >= 1 && !out.includes(c)) out.push(c);
     return out;
   }
-  /** Room a warehouse has for more goods. */
+  /** Room a warehouse has for more goods: none while it is closed. */
   get room() {
+    if (this.closed) return 0;
     return Math.max(0, this.capacity - this.totalStored());
   }
-  /** Put goods into a warehouse's store; returns what fitted. */
+  /** Put goods into a warehouse's store; returns what fitted (nothing while it is closed). */
   store(cargo: string, amount: number): number {
     const n = Math.max(0, Math.min(amount, this.room));
     if (n > 0) this.storage.set(cargo, this.stored(cargo) + n);
@@ -249,8 +259,9 @@ export class Station {
   nextLevelUnlocks(): string[] {
     return this.def.produces.filter((p) => p.level === this.level + 1).map((p) => p.cargo);
   }
+  /** Whether a delivery of the cargo is taken here: never while the station is closed. */
   accepts(cargo: string) {
-    return this.def.accepts.includes(cargo);
+    return !this.closed && this.def.accepts.includes(cargo);
   }
   upgradeCost(): Cost {
     if (this.level >= MAX_LEVEL) return {};
@@ -276,7 +287,6 @@ export class Station {
   hasFreePlatform() {
     return this.occupants.size < this.platforms;
   }
-  /** Produce goods over in-game seconds. Storage is shared across produced cargo types. */
   /** Current spot price per unit for cargo delivered here without a contract. */
   marketPrice(cargo: string, distance: number) {
     const sat = this.satiety(cargo);
@@ -294,9 +304,14 @@ export class Station {
   absorb(cargo: string, amount: number) {
     this.market.set(cargo, Math.min(1, this.satiety(cargo) + amount / (this.capacity * 1.5)));
   }
+  /**
+   * Produce goods over in-game seconds, nothing while closed; storage is shared across produced
+   * cargo types. The market's demand recovers either way.
+   */
   tick(gameDt: number) {
     const decay = Math.exp(-gameDt / weekSeconds());
     for (const [c, v] of this.market) this.market.set(c, v * decay);
+    if (this.closed) return;
     const produced = this.producedCargo();
     if (!produced.length) return;
     const perType =
@@ -318,6 +333,7 @@ export class Station {
       storage: Object.fromEntries(this.storage),
       market: Object.fromEntries(this.market),
       rot: this.rot,
+      work: workToJSON(this.work),
     };
   }
   static fromJSON(j: StationJSON): Station {
@@ -326,6 +342,7 @@ export class Station {
     s.rot = j.rot ?? 0;
     s.storage = new Map(Object.entries(j.storage));
     s.market = new Map(Object.entries(j.market ?? {}));
+    s.work = workFromJSON(j.work, s.level, MAX_LEVEL);
     return s;
   }
   /** The station as a level file holds it: what it is, where, its level, name and turn. */

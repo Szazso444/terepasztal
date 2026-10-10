@@ -92,6 +92,8 @@ export class Notices {
       if (e.b.plant) plantsWired.add(`${e.b.x},${e.b.y}`);
     }
     for (const b of src.builder.buildings.values()) {
+      // closed for its upgrade: off the grid and idle on purpose, nothing to report
+      if (b.work) continue;
       const def = buildingDef(b.id);
       const target = { kind: 'tile' as const, x: b.x, y: b.y };
       if (def.power && !plantsWired.has(`${b.x},${b.y}`))

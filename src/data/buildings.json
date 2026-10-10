@@ -2,7 +2,7 @@
   {
     "id": "windmill",
     "name": "Windmill",
-    "flavor": "Mills wheat into food. One wheat makes 5 food, then 7, 9 and 11 with upgrades.",
+    "flavor": "Mills wheat into food. One wheat makes 5 food, then 7, 9, 11, 13 and 15 with upgrades.",
     "cost": {
       "wood": 45,
       "stone": 25

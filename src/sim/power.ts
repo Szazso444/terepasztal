@@ -7,7 +7,8 @@ import { buildingDef } from './buildings';
 /**
  * Electric network. Poles (power-line decor) and power plants are nodes; nodes within two tiles of
  * each other connect. A component with at least one plant is live, and every tile within one tile of
- * a live node is powered. Rebuilt whenever decor or buildings change.
+ * a live node is powered. Rebuilt whenever decor or buildings change. A plant or substation being
+ * upgraded is closed and is no node at all.
  */
 export interface PowerNode {
   x: number;
@@ -39,6 +40,7 @@ export class PowerGrid {
     const nodes: { x: number; y: number; plant: boolean }[] = [];
     for (const d of decor) if (decorDef(d.id).power) nodes.push({ x: d.x, y: d.y, plant: false });
     for (const b of buildings) {
+      if (b.work) continue;
       const def = buildingDef(b.id);
       if (def.power) nodes.push({ x: b.x, y: b.y, plant: true });
       else if (def.substation) nodes.push({ x: b.x, y: b.y, plant: false });
