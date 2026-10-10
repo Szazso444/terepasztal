@@ -45,7 +45,7 @@ export const STR = {
     start: 'Where every railway begins.',
     goal: {
       depots: 'Depots',
-      population: 'Population',
+      population: 'Residents',
       earned: 'Earned in total',
       substations: 'Powered substations',
       wires: 'Live electrified tiles',
@@ -343,9 +343,12 @@ export const STR = {
       'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
   },
   upgrade: {
-    /** `hours` is rounded up to a whole hour; with none left the time is not shown. */
+    /**
+     * `hours` is rounded up to a whole hour; with none left the time is not shown. An empty `cost`
+     * (nothing to pay) is left out the same way.
+     */
     button: (level: number, cost: string, hours: number) =>
-      `Upgrade to level ${level} · ${cost}${hours > 0 ? ` · ${Math.ceil(hours)} h` : ''}`,
+      `Upgrade to level ${level}${cost ? ` · ${cost}` : ''}${hours > 0 ? ` · ${Math.ceil(hours)} h` : ''}`,
     /** Rounded up and never "0 h left": an upgrade still running has at least an hour to go. */
     running: (level: number, hours: number) =>
       `Upgrading to level ${level} · ${Math.max(1, Math.ceil(hours))} h left`,
@@ -706,6 +709,13 @@ export const STR = {
     fuel: (cap: number, perTile?: number) => `Fuel ${cap} · ${perTile} per tile`,
     water: (cap: number, perTile?: number) => `Water ${cap} · ${perTile} per tile`,
     wagon: (carries: string, units: number) => `${carries} · ${units} units`,
+    /** the body plans of `src/sim/body.ts`, by id */
+    plan: {
+      rigid: 'Rigid body',
+      tender: 'Engine and tender',
+      garratt: 'Garratt articulated',
+      meyer: 'Meyer articulated',
+    } as Record<string, string>,
     angle: 'Viewing angle',
     pause: 'Pause rotation',
     rotate: 'Rotate',
@@ -1019,7 +1029,7 @@ export const STR = {
     shipped: 'Shipped content',
     /** tooltip of a tab whose table this session loaded from a stored edit */
     customTab: 'Runs on your stored edit of this table',
-    setAsideTitle: 'Stored edits not applied this session. Apply or Reset removes them.',
+    setAsideTitle: 'Stored edits not applied this session. Apply or Reset deletes them for good.',
     setAsideStale: (tab: string) => `${tab}: the shipped table changed after this edit was made`,
     setAsideInvalid: (tab: string, problems: string) =>
       problems ? `${tab}: the edit is invalid (${problems})` : `${tab}: the edit is invalid`,

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { STR } from '../strings';
+import type { Cost } from '../data/content';
 import { levelLocked, type PlacementCheck } from '../sim/build';
 import { LAST_AGE } from '../sim/ages';
 import { MAX_LEVEL } from '../sim/levels';
@@ -45,6 +46,23 @@ describe('what an upgrade shows in a panel', () => {
     expect(upgradeView({ check: ok, level: 2, instant: false }).label).not.toBe(instant);
     rules.upgradeTimeMul = 0;
     expect(upgradeView({ check: ok, level: 2, instant: false })).toMatchObject({ label: instant });
+  });
+
+  it('names no cost when there is nothing to pay, with its time as before', () => {
+    // a depot's (its defs cost nothing), any in the editor (the check's cost is empty), all-zero
+    for (const nothing of [{}, { wood: 0 }, { wood: 0, stone: 0 }] as Cost[]) {
+      const check: PlacementCheck = { ok: true, cost: nothing };
+      const instant = upgradeView({ check, level: 1, instant: true }).label;
+      expect(instant).toBe(STR.upgrade.button(2, '', 0));
+      expect(instant).not.toContain(STR.build.free);
+      expect(instant).not.toContain('·');
+      expect(instant).toMatch(/\b2$/);
+      const timed = upgradeView({ check, level: 1, instant: false }).label;
+      expect(timed).toBe(STR.upgrade.button(2, '', upgradeHours(2, false)));
+      expect(timed).not.toContain(STR.build.free);
+      // the level, then the time: one separator
+      expect(timed.split(' · ')).toEqual([instant, `${Math.ceil(upgradeHours(2, false))} h`]);
+    }
   });
 
   it('turns the button off and names the age that opens every level an age keeps shut', () => {

@@ -1,7 +1,8 @@
 /**
  * What the station, works and house panels show for an upgrade, from the simulation's own check:
- * the button with the next level, its cost and its time; the age that opens a level the current
- * age does not allow; the top level; or the work under way with its progress and time left.
+ * the button with the next level, its cost (none when there is nothing to pay) and its time; the
+ * age that opens a level the current age does not allow; the top level; or the work under way with
+ * its progress and time left.
  * DOM-free so it runs under Node; `upgradeRow` in upgradeRow.ts turns it into elements.
  */
 import { STR } from '../strings';
@@ -52,7 +53,9 @@ export function upgradeView(o: {
   const { ok, cost, reason = '' } = o.check;
   if (!ok && TOP.has(reason)) return { kind: 'top', label: reason };
   const next = o.level + 1;
-  const label = STR.upgrade.button(next, fmtCost(cost), upgradeHours(next, o.instant));
+  // nothing to pay (a depot's, the editor's, an all-zero cost): the button names no cost at all
+  const price = Object.values(cost).some((v) => v > 0) ? fmtCost(cost) : '';
+  const label = STR.upgrade.button(next, price, upgradeHours(next, o.instant));
   if (ok) return { kind: 'button', label, enabled: true, title: '' };
   // the age keeps the level shut: the button names the age that opens it, the hover what it costs
   if (opensInLaterAge(reason, next))

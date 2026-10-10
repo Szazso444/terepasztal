@@ -1,4 +1,5 @@
-import { showVehiclePreview, vehicleProperties } from './vehiclePreview';
+import { showVehiclePreview } from './vehiclePreview';
+import { vehicleProperties } from './vehicleProperties';
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
