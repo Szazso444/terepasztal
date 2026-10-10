@@ -494,9 +494,10 @@ export function buildSave(
 
 /**
  * Why a text was not taken as a save: it is not JSON, it is JSON but no save (no numeric seed),
- * or it is a save without something every version since v1 holds.
+ * or it is a save without something every version since v1 holds; or, for an import, storage
+ * refused to keep it (full or blocked).
  */
-export type SaveRefusal = 'json' | 'notSave' | 'damaged';
+export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'storage';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -573,15 +574,16 @@ export function readSave(): SaveGame | null {
 }
 /**
  * Store a save text the player brought (an export or a diagnostics bundle) as the game Continue
- * loads. A refused text stores nothing. The player's settings are never touched: the copy that
- * files from v8 to v13 carry is not applied.
+ * loads. A refused text stores nothing; a save storage will not keep (full or blocked) is refused
+ * as `storage`, and Continue still loads what it did. The player's settings are never touched: the
+ * copy that files from v8 to v13 carry is not applied.
  */
 export function importSave(
   raw: string,
 ): { ok: true; save: SaveGame } | { ok: false; error: SaveRefusal } {
   const read = readSaveText(raw);
   if ('error' in read) return { ok: false, error: read.error };
-  writeSave(read.save);
+  if (!writeSave(read.save)) return { ok: false, error: 'storage' };
   return { ok: true, save: read.save };
 }
 /** Run the migration chain from the save's version to the current one; records where it came from. */

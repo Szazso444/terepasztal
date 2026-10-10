@@ -12,7 +12,7 @@ import { resetStationIds, type Station } from './stations';
 import { biomeAt, biomeDef } from './biomes';
 import { tickBuildings } from './buildings';
 import { SIM_STEP } from './time';
-import type { AgeSnapshot } from './ages';
+import { LAST_AGE, type AgeSnapshot } from './ages';
 import {
   SimStep,
   startStock,
@@ -324,7 +324,7 @@ interface Scene {
   /** a second passenger station at the far end of the line */
   second: boolean;
   houses: SceneHouse[];
-  /** two more depots and a house of 1000 residents: the diesel age's goals */
+  /** two more depots and a house of 1000 residents: past the diesel age's goals */
   ageUp: boolean;
   buildings: string[];
   /** a train of an Adler and a starter hopper between the quarry and the town */
@@ -556,7 +556,7 @@ interface GameClocks {
   nextAgeCheck: number;
 }
 
-/** Game.ageSnapshot as #72 left it (src/game.ts at f1b444d). */
+/** Game.ageSnapshot as #72 left it (src/game.ts at f1b444d), with the owned chunks of #158. */
 function gameAgeSnapshot(w: SimWorld): AgeSnapshot {
   let wires = 0;
   for (const e of w.catenary.entries()) if (w.catenary.isLive(e.x, e.y)) wires++;
@@ -566,6 +566,7 @@ function gameAgeSnapshot(w: SimWorld): AgeSnapshot {
     earned: w.economy.earned,
     substations: w.catenary.substations.filter((s) => s.powered).length,
     wires,
+    chunks: w.regions.unlocked.filter(Boolean).length,
   };
 }
 
@@ -1253,10 +1254,10 @@ describe('ageSnapshot against Game.ageSnapshot', () => {
   ];
 
   it(
-    'measures regular depots, population, earnings, powered substations and live wires alike',
+    'measures regular depots, population, earnings, powered substations, live wires and owned chunks alike',
     { timeout: 30_000 },
     () => {
-      const seen = { narrow: 0, powered: 0, unpowered: 0, live: 0, dead: 0 };
+      const seen = { narrow: 0, powered: 0, unpowered: 0, live: 0, dead: 0, bought: 0 };
       forAll(
         (rng) => {
           const from = rng.int(2, 30);
@@ -1268,6 +1269,8 @@ describe('ageSnapshot against Game.ageSnapshot', () => {
             wires: { from, to: rng.int(from, 46) },
             population: rng.int(0, 5000),
             earned: rng.int(0, 200000),
+            /** chunks bought besides the start chunk (0) of the 2 x 2 grid */
+            bought: [1, 2, 3].filter(() => rng.chance(0.5)),
           };
         },
         (c) => {
@@ -1284,11 +1287,14 @@ describe('ageSnapshot against Game.ageSnapshot', () => {
           w.builder.free = false;
           w.stock.population = c.population;
           w.economy.earned = c.earned;
+          for (const i of c.bought) if (!w.regions.own(i)) throw new Error(`chunk ${i}`);
 
           const snap = ageSnapshot(w);
           expect(snap).toEqual(gameAgeSnapshot(w));
           expect(snap.depots, 'regular depots').toBe(c.depots);
           expect([snap.population, snap.earned]).toEqual([c.population, c.earned]);
+          expect(snap.chunks, 'owned chunks').toBe(1 + c.bought.length);
+          if (c.bought.length) seen.bought++;
           if (c.narrow) seen.narrow++;
           if (snap.substations) seen.powered++;
           if (snap.substations < c.substations.length) seen.unpowered++;
@@ -1299,6 +1305,49 @@ describe('ageSnapshot against Game.ageSnapshot', () => {
       for (const [k, n] of Object.entries(seen)) expect(n, `cases with ${k}`).toBeGreaterThan(0);
     },
   );
+});
+
+describe('SimStep: the age check', () => {
+  /**
+   * A grass world of 3 x 3 chunks with two depots and only the start chunk owned, nobody housed,
+   * and its economy loaded from a save made in age `tier`. An in-game hour is one game second.
+   */
+  function saved(tier: number) {
+    rules.daySeconds = AGE_CHECKS_PER_DAY;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    station(w, 'depot', 40, 40);
+    station(w, 'depot', 46, 40);
+    w.economy.setAge(tier);
+    w.economy.load(JSON.parse(JSON.stringify(w.economy.toJSON())));
+    return w;
+  }
+
+  it('moves a Steam-age save up on the first check after it owns nine chunks', () => {
+    const w = saved(0);
+    const step = new SimStep(w);
+    const ctx = context(w, false);
+    run(w, step, ctx, 1);
+    expect(w.economy.tier, 'two depots and the start chunk').toBe(0);
+    expect(w.regions.applyTier(1), 'the ring around the start chunk').toHaveLength(8);
+    const due = step.nextAgeCheck;
+    for (let n = 0; step.nextAgeCheck === due; n++) {
+      expect(w.economy.tier, `step ${n}, before the next check`).toBe(0);
+      if (n > 1000) throw new Error('no age check');
+      run(w, step, ctx, 1);
+    }
+    expect(w.economy.tier, 'on the next check').toBe(1);
+  });
+
+  it('leaves a save past the Diesel age where it is, short of the Diesel goal', () => {
+    for (let tier = 1; tier <= LAST_AGE; tier++) {
+      const w = saved(tier);
+      const step = new SimStep(w);
+      run(w, step, context(w, false), 100);
+      expect(step.nextAgeCheck, 'checked more than once').toBeGreaterThan(2);
+      expect(ageSnapshot(w).chunks).toBe(1);
+      expect(w.economy.tier, `a save in age ${tier}`).toBe(tier);
+    }
+  });
 });
 
 // ---------------------------------------------------------------- determinism over seeds
