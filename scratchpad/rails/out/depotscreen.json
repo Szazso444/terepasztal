@@ -1,6 +1,0 @@
-{
- "before": "Roll out of\nNarrow Depot\nNarrow Depot 2\nDepot\nShow\nDepot: gate at 11,66, first stop Farm Halt\n3 stations on this depot's rails",
- "after": "Roll out of\nNarrow Depot\nNarrow Depot 2\nShow\nNarrow Depot: gate at 68,66, first stop Quarry\n3 stations on this depot's rails",
- "back": "Roll out of\nDepot\nShow\nDepot: gate at 11,66, first stop Farm Halt\n3 stations on this depot's rails",
- "errors": []
-}
