@@ -2644,16 +2644,17 @@ export class Train {
 
   /**
    * After a load, once, before the train's first tick: it stands at the station it was saved at
-   * again (among the station's occupants unless it waits for a platform), a train backing off for
-   * another has its escape reserved again (`reserve`) and runs on along it, and any other train
-   * under way plans its path again from where its head stands to the service or the stop it was
-   * bound for, keeping its speed. The fleet's
-   * traffic control calls this for every train before any claim is made or any train moves, so
-   * loaded trains find each other on the platforms and their paths are claimed from the first
-   * tick. What the save does not hold is settled as play would settle it: a train backing off
-   * whose escape cannot be reserved again stops and plans again, a contract that closed under it
-   * (the hand-back was pending, not saved) hands the program back on the first tick, and a train
-   * whose station or way is gone stands without a route and looks for one at once.
+   * again (among the station's occupants only while loading: a train waiting for a platform holds
+   * none, and an idle one none either), a train backing off for another or making way for it has
+   * its escape reserved again (`reserve`) and runs on along it, and any other train under way
+   * plans its path again from where its head stands to the service or the stop it was bound for,
+   * keeping its speed. The fleet's traffic control calls this for every train before any claim is
+   * made or any train moves, so loaded trains find each other on the platforms and their paths
+   * are claimed from the first tick. What the save does not hold is settled as play would settle
+   * it: a train backing off whose escape cannot be reserved again stops and plans again (making
+   * way, it stops and idles), a contract that closed under it (the hand-back was pending, not
+   * saved) hands the program back on the first tick, and a train whose station or way is gone
+   * stands without a route and looks for one at once.
    */
   resumeAfterLoad(builder: Builder, now: number, reserve: ReserveEscape) {
     const loaded = this.loaded;
@@ -2665,7 +2666,7 @@ export class Train {
       const st = loaded.station === null ? undefined : builder.stationById(loaded.station);
       if (st) {
         this.atStation = st;
-        if (this.state !== 'waiting') st.occupants.add(this.id);
+        if (this.state === 'loading') st.occupants.add(this.id);
       } else if (this.state !== 'idle') this.standAfterLoad();
     }
     if (
@@ -2812,6 +2813,8 @@ export class Train {
       // and saved again before its first tick has not looked it up yet)
       station: this.atStation?.id ?? this.loaded?.station ?? null,
       holding: this.holding,
+      // v17: the escape is an idle train making way, which idles where it ends
+      aside: this.aside,
       // the escape it is backing off along, and the group it was reserved for
       retreat: this.loaded ? this.loaded.retreat : this.retreatJSON(),
       blockedTime: this.blockedTime,
@@ -2897,6 +2900,7 @@ export class Train {
     t.stateTime = j.stateTime;
     t.speed = j.speed;
     t.holding = j.holding;
+    t.aside = j.aside;
     t.blockedTime = j.blockedTime;
     t.yieldCount = j.yieldCount;
     t.yieldUntil = j.yieldUntil;
@@ -2905,6 +2909,8 @@ export class Train {
     t.nextFuelCheck = j.nextFuelCheck;
     // the station, the escape and the path wait for the builder (`resumeAfterLoad`)
     t.loaded = { station: j.station, retreat: j.retreat };
+    // the note is not saved: a train making way says so again, as `retreat` had it say
+    if (t.aside) t.lastMessage = STR.traffic.makingWay;
     if (t.consistProblem) t.lastMessage = t.consistProblem;
     return t;
   }

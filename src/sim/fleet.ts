@@ -970,7 +970,7 @@ export class Fleet {
     // Build the complete wait-for graph once, including queues feeding other queues. A
     // group's chosen train owns its escape corridor before any other group can plan a move.
     this.rebuildOccupancy();
-    this.makeWay(ctx, now);
+    this.makeWay(ctx, now, gdt);
     const groups = blockingGroups(this.trains).sort(
       (a, b) => Math.max(...b.map((t) => t.blockedTime)) - Math.max(...a.map((t) => t.blockedTime)),
     );
@@ -1076,8 +1076,6 @@ export class Fleet {
 
   /** game time from which each idle train may look again for a way aside */
   private asideRetry = new Map<number, number>();
-  /** game time of the next look at whether an idle train stands in another train's way */
-  private wayCheckAt = -Infinity;
   /**
    * Idle trains make way. An idle train standing on a tile another train's route crosses (the
    * path it runs, or the one it waits on a siding to take) moves aside to the nearest place off
@@ -1088,10 +1086,10 @@ export class Fleet {
    * way out at all it stands and says so. Runs after the trains have moved, so the claims of the
    * next tick hold the others back before any train moves again.
    */
-  private makeWay(ctx: TickCtx, now: number) {
-    // a few looks a second (and one at once should the clock have been set back)
-    if (now < this.wayCheckAt && this.wayCheckAt - now <= WAY_CHECK) return;
-    this.wayCheckAt = now + WAY_CHECK;
+  private makeWay(ctx: TickCtx, now: number, gdt: number) {
+    // a few looks a second, on the ticks that pass a multiple of WAY_CHECK of game time: a game
+    // loaded from a save looks on the ticks the saved one would have
+    if (Math.floor(now / WAY_CHECK) === Math.floor((now - gdt) / WAY_CHECK)) return;
     for (const id of this.asideRetry.keys()) if (!this.byId(id)) this.asideRetry.delete(id);
     const idle = this.trains.filter((t) => t.state === 'idle' && !t.holding);
     if (!idle.length) return;

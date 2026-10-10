@@ -8,7 +8,7 @@ import { sharedTiles } from '../testing/trafficScenario';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { blockingGroups } from './recovery';
 import { Train, defaultStop, resetTrainIds, type RouteMode, type StopPlan } from './trains';
-import { resetStationIds, type Station } from './stations';
+import { Station, resetStationIds } from './stations';
 import { locoDef, wagonDef } from '../gacha/items';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
@@ -110,9 +110,10 @@ function go(w: SimWorld, t: Train) {
  * Steps the fleet as the game does and watches every step: no two trains on one tile, no station
  * with more trains on its platforms than it has, no idle train holding a platform or showing a
  * note about anything but making way, and how long each train stood held behind an idle train.
+ * The game clock starts at `from`: 0 for a new world, the save's time for a loaded one.
  */
-function run(w: SimWorld) {
-  let now = 0;
+function run(w: SimWorld, from = 0) {
+  let now = from;
   const arrivals = new Map<number, number[]>();
   const next = w.fleet.onArrive;
   w.fleet.onArrive = (t, s) => {
@@ -404,6 +405,137 @@ describe('a train left with no way on', () => {
       expect(sim.broken).toBeNull();
     },
   );
+});
+
+// ------------------------------------------------------------------ a save and load
+
+/**
+ * Save `w`'s trains and stations as the game saves them, and load them into the world `scene`
+ * lays afresh: the same track and stations, the stations' state and the trains read back from
+ * JSON, as a load builds the world before it reads the trains.
+ */
+function reload(w: SimWorld, scene: () => SimWorld): SimWorld {
+  const text = JSON.stringify({
+    trains: w.fleet.trains.map((t) => t.toJSON()),
+    stations: w.builder.stations.map((s) => s.toJSON()),
+  });
+  const j = JSON.parse(text) as {
+    trains: ReturnType<Train['toJSON']>[];
+    stations: ReturnType<Station['toJSON']>[];
+  };
+  const back = scene();
+  const stations = j.stations.map((s) => Station.fromJSON(s));
+  back.builder.stations.splice(0, back.builder.stations.length, ...stations);
+  back.fleet.trains = j.trains.map((t) => Train.fromJSON(t, back.track));
+  return back;
+}
+/** The farthest any car of `a` stands from the same car of `b`, in tiles. */
+function apart(a: Train, b: Train) {
+  expect(b.poses.length).toBe(a.poses.length);
+  return Math.max(...a.poses.map((p, i) => Math.hypot(p.x - b.poses[i].x, p.y - b.poses[i].y)));
+}
+
+describe('an idle train saved and loaded', () => {
+  it('saved on its way aside, idles where the way ends, as it does never saved', SLOW, () => {
+    const { w, west, end } = terminus();
+    const sim = run(w);
+    const idle = idleAt(w, sim, 34, end);
+    const caller = train(w, 8, true, 'schedule', [call(end), call(west)]);
+    go(w, caller);
+    expect(
+      sim.until(() => idle.makingWay, 10),
+      'it never made way',
+    ).toBe(true);
+    sim.ticks(1);
+    const back = reload(w, () => terminus().w);
+    const again = run(back, sim.now);
+    const [idleBack, callerBack] = back.fleet.trains;
+    expect(idleBack.makingWay, 'loaded on its way aside').toBe(true);
+    expect(idleBack.lastMessage).toBe(STR.traffic.makingWay);
+    // both run on side by side: the loaded one never waits to go back where it stood
+    const states = new Set<string>();
+    for (let i = 0; i < 60 / GDT; i++) {
+      sim.ticks(GDT);
+      again.ticks(GDT);
+      states.add(idleBack.state);
+    }
+    expect([...states].sort()).toEqual(['idle', 'moving']);
+    for (const [a, b] of [
+      [idle, idleBack],
+      [caller, callerBack],
+    ] as const) {
+      expect(b.state, b.name).toBe(a.state);
+      expect(apart(a, b), `${b.name}: tiles from where it stands never saved`).toBeLessThan(0.01);
+    }
+    expect(idleBack.lastMessage).toBe(STR.traffic.madeWay);
+    expect(back.builder.stationById(end.id)!.occupants.has(idleBack.id)).toBe(false);
+    expectSound(sim);
+    expectSound(again);
+  });
+
+  it(
+    'saved as a train comes into its way, moves aside on the tick it would never saved',
+    SLOW,
+    () => {
+      // The fleet looks for idle trains in the way on the quarter seconds of the game clock, which
+      // the save holds, so a load does not move the next look. Saved on any tick before or after
+      // that look, the loaded train sets off aside on the tick the train never saved does.
+      for (let saveAfter = 0; saveAfter < 8; saveAfter++) {
+        const { w, west, end } = terminus();
+        const sim = run(w);
+        const idle = idleAt(w, sim, 34, end);
+        const caller = train(w, 8, true, 'schedule', [call(end), call(west)]);
+        go(w, caller);
+        for (let i = 0; i <= saveAfter; i++) sim.ticks(GDT);
+        const back = reload(w, () => terminus().w);
+        const again = run(back, sim.now);
+        const [idleBack, callerBack] = back.fleet.trains;
+        const label = `saved ${saveAfter + 1} ticks after the caller set off`;
+        let setOff: number | null = idle.makingWay ? -1 : null;
+        let setOffBack: number | null = idleBack.makingWay ? -1 : null;
+        for (let i = 0; i < 60 / GDT; i++) {
+          sim.ticks(GDT);
+          again.ticks(GDT);
+          if (setOff === null && idle.makingWay) setOff = i;
+          if (setOffBack === null && idleBack.makingWay) setOffBack = i;
+        }
+        expect(setOff, label).not.toBeNull();
+        expect(setOffBack, label).toBe(setOff);
+        for (const [a, b] of [
+          [idle, idleBack],
+          [caller, callerBack],
+        ] as const) {
+          expect(b.state, `${label}: ${b.name}`).toBe(a.state);
+          expect(apart(a, b), `${label}: ${b.name}`).toBeLessThan(0.01);
+        }
+        expectSound(again);
+      }
+    },
+  );
+
+  it('loaded standing idle at its station, stands there holding no platform', SLOW, () => {
+    const { w, end } = terminus();
+    const sim = run(w);
+    const idle = idleAt(w, sim, 34, end);
+    sim.ticks(3);
+    const back = reload(w, () => terminus().w);
+    const again = run(back, sim.now);
+    const [idleBack] = back.fleet.trains;
+    const quarry = back.builder.stationById(end.id)!;
+    sim.ticks(GDT);
+    again.ticks(GDT);
+    expect(idleBack.state).toBe('idle');
+    expect(idleBack.atStation).toBe(quarry);
+    expect([...quarry.occupants]).toEqual([]);
+    // past its next look where to go, it is where it would be never saved, holding nothing there
+    sim.ticks(15);
+    again.ticks(15);
+    expect(idleBack.state).toBe(idle.state);
+    expect(idleBack.atStation?.id).toBe(idle.atStation?.id);
+    expect([...quarry.occupants]).toEqual([]);
+    expectSound(sim);
+    expectSound(again);
+  });
 });
 
 // ------------------------------------------------------------------ generated lines

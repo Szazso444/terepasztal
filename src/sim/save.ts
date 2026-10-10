@@ -17,7 +17,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -59,6 +59,10 @@ export interface SaveParts {
    * rotations, 0 to 3
    */
   stations: StationJSON[];
+  /**
+   * as `Train.toJSON` writes them; v14: what each was doing; v17: whether the escape it runs is an
+   * idle train making way (`aside`)
+   */
   trains: unknown[];
   contracts: unknown;
   inventory: unknown;
@@ -519,6 +523,13 @@ export const MIGRATIONS: Migration[] = [
         if (b.length < 6) b.push(null);
         b[6] = b[6] ?? 0;
       }
+    },
+  },
+  {
+    from: 16,
+    note: 'no train was saved making way: a train saved pulling aside waits where it pulls in to go on, as every load had it do before; from now on a save keeps an idle train making way, and it stays idle where it parks',
+    run: (j) => {
+      for (const t of j.trains) if (isRecord(t)) t.aside = t.aside ?? false;
     },
   },
 ];
