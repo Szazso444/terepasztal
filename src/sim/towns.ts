@@ -164,24 +164,33 @@ export class TownRegistry {
     }
     return n;
   }
-  /** Goods made per week by the town's stations and works, per cargo. */
+  /**
+   * Goods made per week by the town's stations and works, per cargo. A station or works closed for
+   * its upgrade makes nothing and adds nothing.
+   */
   production(t: Town, m = this.members(t)): Record<string, number> {
     const out: Record<string, number> = {};
     for (const s of m.stations) {
+      if (s.closed) continue;
       const list = s.producedCargo().filter((c) => c !== 'passengers');
       for (const c of list)
         out[c] = (out[c] ?? 0) + (s.productionPerWeek * s.productionMul) / list.length;
     }
     for (const b of m.buildings) {
+      if (b.work) continue;
       for (const [k, v] of Object.entries(buildingRecipe(b).out))
         out[k] = (out[k] ?? 0) + v * buildingRate(b);
     }
     return out;
   }
-  /** Goods used per week: works inputs plus residents' food. */
+  /**
+   * Goods used per week: works inputs plus residents' food. A works closed for its upgrade takes
+   * nothing in; the residents of a house being upgraded stay and still eat.
+   */
   consumption(t: Town, m = this.members(t)): Record<string, number> {
     const out: Record<string, number> = {};
     for (const b of m.buildings) {
+      if (b.work) continue;
       for (const [k, v] of Object.entries(buildingRecipe(b).in))
         out[k] = (out[k] ?? 0) + v * buildingRate(b);
     }

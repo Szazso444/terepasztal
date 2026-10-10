@@ -9,7 +9,7 @@ import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
-import { ageDef, LAST_AGE, type AgeSnapshot } from './sim/ages';
+import { ageDef, LAST_AGE, railAge, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
 import { Editor } from './editor/editor';
 import { EditorPanel } from './ui/editorPanel';
@@ -106,6 +106,10 @@ import {
 import { PowerGrid } from './sim/power';
 import { BuildingPanel } from './ui/buildingPanel';
 import { Floaters } from './render/floaters';
+import { Halos } from './render/halo';
+import { WorkBars } from './render/workBars';
+import { hoursLeft, type Upgraded } from './sim/upgrade';
+import type { WideClass } from './world/reclass';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
@@ -131,6 +135,8 @@ const SIM_HZ = 1 / SIM_STEP;
 const EDGE_MARGIN = 14;
 const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
+/** Relaid track pieces that start their shimmer in one frame; a long stroke's others follow. */
+const PIECE_HALOS_PER_FRAME = 12;
 
 /**
  * Top-level orchestrator: owns renderer, camera, sim clock and the RTS/overview state machine. The
@@ -207,6 +213,12 @@ export class Game implements UiHost {
   dayNight = new DayNight();
   glows!: Glows;
   smoke!: Smoke;
+  /** the halo over whatever finished an upgrade, and the shimmer along track relaid as high speed */
+  halos!: Halos;
+  /** a bar over each building being upgraded */
+  workBars!: WorkBars;
+  /** relaid pieces (their footprints) waiting for their shimmer to start */
+  private pieceHalos: { x: number; y: number; w: number; h: number }[] = [];
   private autosaveTimer = 0;
   /** the stored save was just replaced and the page is reloading into it: do not save over it */
   private keepStoredSave = false;
@@ -451,7 +463,8 @@ export class Game implements UiHost {
     }
     if (start && start.tier > this.economy.tier) {
       this.economy.tier = Math.min(start.tier, LAST_AGE);
-      const newly = this.regions.applyTier(start.tier);
+      // the land opens with the rail age, which stops at Electric
+      const newly = this.regions.applyTier(railAge(start.tier));
       if (newly.length) {
         this.world.rebuildFog();
         this.overview.rebuildRegions();
@@ -794,6 +807,9 @@ export class Game implements UiHost {
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
+    this.builder.onUpgraded = (e) => this.onUpgraded(e);
+    this.houses.onUpgraded = (e) => this.onUpgraded(e);
+    this.builder.onReclassed = (tiles, target) => this.onReclassed(tiles, target);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
     validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
@@ -895,11 +911,6 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
-    // failed is final and replayed to a late watcher, so this toasts once, even for a failure the
-    // renderer's constructor already hit
-    this.world.landscape.watchStatus((s) => {
-      if (s.state === 'failed') this.toasts.push(STR.debug.landscapeLost, 'warn');
-    });
     await this.world.loadBridgeSurfaces();
     this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
@@ -936,6 +947,8 @@ export class Game implements UiHost {
     this.floaters = new Floaters(this.atlas, this.world.overlay, (x, y) =>
       this.world.surfacePoint(x, y),
     );
+    this.halos = new Halos(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.workBars = new WorkBars(this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
     this.powerLines = new PowerLines((n) => {
       const p = this.world.surfacePoint(n.x, n.y);
       if (n.plant) return { x: p.x - 12, y: p.y - 42 };
@@ -995,6 +1008,11 @@ export class Game implements UiHost {
       build: this.build,
       tooltip: this.tooltip,
       uiRoot: this.uiRoot,
+    });
+    // Watched once the toast layer is on the page, so the toast gets its full time. Failed is final
+    // and replayed to a late watcher, so this toasts once, even for a failure during init.
+    this.world.landscape.watchStatus((s) => {
+      if (s.state === 'failed') this.toasts.push(STR.debug.landscapeLost, 'warn');
     });
     this.fleet.waitingAt = (id) => this.people.waitingAt(id).length;
     this.fleet.contractDest = (cargo, origin) => {
@@ -1612,6 +1630,45 @@ export class Game implements UiHost {
     sfx('tier.up');
     audio.setAge(ageDef(tier).id);
   }
+  /**
+   * A station, works or house finished its upgrade: a halo over it, the chime, a toast, and in play
+   * a notice that leads to it. A house's level already has its toast (`HouseRegistry.onMessage`),
+   * so it gets no second one here.
+   */
+  private onUpgraded(e: Upgraded) {
+    this.halos.spawn(e.x, e.y, e.w, e.h, 'building');
+    sfx('upgrade.done');
+    const text = STR.upgrade.done(e.name, e.level);
+    if (e.kind !== 'house') this.toasts.push(text, 'good');
+    if (this.mode === 'play')
+      this.notices.push({
+        key: `upgrade:${e.x},${e.y}`,
+        kind: 'info',
+        text,
+        target: { kind: 'tile', x: e.x, y: e.y },
+      });
+  }
+  /**
+   * Track relaid as high speed shimmers piece by piece (`startPieceHalos`); going back to regular
+   * track does not. Each halo covers its whole piece, not only the anchor tile.
+   */
+  private onReclassed(anchors: { x: number; y: number }[], target: WideClass) {
+    if (target === 'regular') return;
+    for (const a of anchors) {
+      const tiles = this.track.unitTiles(a.x, a.y);
+      if (!tiles.length) continue;
+      const x = Math.min(...tiles.map((t) => t.x));
+      const y = Math.min(...tiles.map((t) => t.y));
+      const w = Math.max(...tiles.map((t) => t.x)) - x + 1;
+      const h = Math.max(...tiles.map((t) => t.y)) - y + 1;
+      this.pieceHalos.push({ x, y, w, h });
+    }
+  }
+  /** Start the next relaid pieces' shimmer, a few a frame, so a long stroke ripples along. */
+  private startPieceHalos() {
+    for (const p of this.pieceHalos.splice(0, PIECE_HALOS_PER_FRAME))
+      this.halos.spawn(p.x, p.y, p.w, p.h, 'piece');
+  }
   /** Biome multiplier on a station's output. */
   private biomeProduction(s: Station) {
     return biomeDef(biomeAt(this.map, s.x, s.y)).production[s.def.id] ?? 1;
@@ -2127,6 +2184,9 @@ export class Game implements UiHost {
     if (this.junctionFlash && performance.now() / 1000 > this.junctionFlash.until)
       this.clearJunctionFlash();
     this.floaters.update(dt);
+    this.startPieceHalos();
+    this.halos.update(dt);
+    this.workBars.sync([...this.builder.works(), ...this.houses.works()]);
     this.powerLines.update(dt);
     this.updateTrainSide(dt);
     this.minimap.draw(this.minimapMarks());
@@ -2159,6 +2219,9 @@ export class Game implements UiHost {
     } else if (st && this.build.tool.kind === 'none') {
       this.tooltip.show(this.input.mouseX, this.input.mouseY, st.name, [
         STR.station.level(st.level),
+        ...(st.work
+          ? [STR.upgrade.closed, STR.upgrade.running(st.work.to, hoursLeft(st.work))]
+          : []),
         `${STR.station.storage}: ${Math.floor(st.totalStored())} / ${st.capacity}`,
         biomeSummary(biomeAt(this.map, st.x, st.y)),
       ]);
@@ -2175,7 +2238,9 @@ export class Game implements UiHost {
       const status = BuildingPanel.status(bld, this.stock);
       this.tooltip.show(this.input.mouseX, this.input.mouseY, def.name, [
         BuildingPanel.recipeText(bld.id),
+        // closed while it is upgraded, which the status says
         status.text,
+        ...(bld.work ? [STR.upgrade.running(bld.work.to, hoursLeft(bld.work))] : []),
         `${STR.building.rate}: ${STR.station.perWeek(Math.round(bld.rate * 10) / 10)}`,
       ]);
     } else this.tooltip.hide();

@@ -194,6 +194,8 @@ function moving(id: number, xs: number[], occupied: number[], w: number, y = 5):
     claimBlocker: null,
     pathAhead: () => path,
     occupancyKeys: () => occupied.map((x) => y * w + x),
+    // built here, not loaded from a save: nothing to resume
+    resumeAfterLoad: () => {},
     cancelRetreat(this: Train) {
       this.holding = false;
       this.state = 'yielding';

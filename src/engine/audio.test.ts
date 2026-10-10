@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // imported for real, with no vi.mock: loading the audio modules must not need a browser
 import { audio, sfx, SOUND_EVENTS } from './audio';
 import { Ambience } from './ambience';
+import { Synth } from './synth';
 import { MUSIC_TRACKS } from './musicPlaylist';
 
 type Listener = () => void;
@@ -211,5 +212,25 @@ describe('audio in a browser', () => {
     doc.hidden = false;
     doc.fire('visibilitychange');
     expect(master).toHaveBeenLastCalledWith(0.5, 1, 0.15);
+  });
+});
+
+describe('the synthesizer', () => {
+  it('gives every sound event a voice of its own', () => {
+    const { ctx } = fakeContext();
+    vi.stubGlobal('window', {
+      AudioContext: function () {
+        return ctx;
+      },
+    });
+    const synth = new Synth();
+    synth.markGesture();
+    const voices = vi.spyOn(ctx, 'createOscillator');
+    // an event the synth has no case for plays silence wherever it has no sound file
+    for (const name of SOUND_EVENTS) {
+      voices.mockClear();
+      synth.play(name, 1);
+      expect(voices, name).toHaveBeenCalled();
+    }
   });
 });

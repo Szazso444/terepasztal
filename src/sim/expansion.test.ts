@@ -26,6 +26,7 @@ import type { SaveGame } from './save';
 import { AGE_DEFS } from './ages';
 import { referencePath } from './compat';
 import { STR } from '../strings';
+import { upgradeSeconds } from './upgrade';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 function world() {
@@ -107,6 +108,11 @@ describe('weekly food economy and housing', () => {
     w.economy.setAge(1);
     expect(houses.upgrade(h)).toBe(true);
     expect(w.stock.get('wood')).toBe(wood - 60);
+    // the work takes its game time; nobody moves in meanwhile
+    houses.tick(daySeconds() * 100, daySeconds() * 101);
+    expect([h.level, h.residents]).toEqual([1, 20]);
+    houses.tickWorks(upgradeSeconds(2));
+    expect(h.level).toBe(2);
     houses.tick(daySeconds() * 100, daySeconds() * 200);
     expect(h.residents).toBe(60);
     expect(h.level).toBe(2);
@@ -366,7 +372,7 @@ describe('semaphore boundaries and growing worlds', () => {
       ]),
     ).toBe('red');
   });
-  it('shifts bridge levels, houses, wires, track classes and car trails together during expansion', () => {
+  it('shifts bridge levels, houses, wires, track classes, car trails, escapes and service stops together during expansion', () => {
     const save = {
       world: { kind: 'generated', seed: 4242, params: { w: 96, h: 96 } },
       track: [[20, 20, 'straight', 1, 'high_speed']],
@@ -379,7 +385,24 @@ describe('semaphore boundaries and growing worlds', () => {
         arrivals: [],
         visited: [],
       },
-      trains: [{ head: { x: 20, y: 20 }, trail: [[20, 20, 20, 20, 3, 1]] }],
+      trains: [
+        {
+          head: { x: 20, y: 20 },
+          trail: [[20, 20, 20, 20, 3, 1, 1]],
+          retreat: {
+            path: [
+              { x: 20, y: 20, in: 3, out: 1, route: 1 },
+              { x: 21, y: 20, in: 3, out: 1 },
+            ],
+            group: [7],
+          },
+        },
+        {
+          head: { x: 22, y: 20 },
+          trail: [[22, 20, 22, 20, 3, 1]],
+          serviceStop: { x: 24, y: 20, fuel: true, water: false },
+        },
+      ],
       regions: Array(9).fill(true),
       camera: { x: 12, y: 14, zoomIndex: 2 },
       clock: { time: 500, speedIndex: 2 },
@@ -389,6 +412,22 @@ describe('semaphore boundaries and growing worlds', () => {
     expect(grown.buildings?.[0]).toEqual([52, 52, 'bridge_stone', 0.5, 3]);
     expect(grown.houses?.list[0]).toMatchObject({ x: 57, y: 57, residents: 100 });
     expect(grown.wires?.[0]).toEqual([52, 52, 'catenary']);
+    // a trail point keeps the route it lies on, and a train backing off keeps its escape
+    const t = grown.trains[0] as unknown as {
+      trail: number[][];
+      retreat: { path: unknown[]; group: number[] };
+    };
+    expect(t.trail[0]).toEqual([52, 52, 52, 52, 3, 1, 1]);
+    expect(t.retreat).toEqual({
+      path: [
+        { x: 52, y: 52, in: 3, out: 1, route: 1 },
+        { x: 53, y: 52, in: 3, out: 1 },
+      ],
+      group: [7],
+    });
+    // a train heading for a fuel or water service keeps heading for it
+    const s = grown.trains[1] as unknown as { serviceStop: unknown };
+    expect(s.serviceStop).toEqual({ x: 56, y: 52, fuel: true, water: false });
     expect(grown.clock.speedIndex).toBe(2);
   });
 });

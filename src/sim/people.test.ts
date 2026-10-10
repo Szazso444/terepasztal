@@ -9,7 +9,8 @@ import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds, type Station } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
-import { PeopleSim, type PeopleJSON } from './people';
+import { PeopleSim, findWalk, type PeopleJSON } from './people';
+import { startWork } from './upgrade';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -146,6 +147,43 @@ describe('PeopleSim randomness', () => {
       people.load(j);
       expect(people.toJSON()).toEqual(seeded);
     }
+  });
+});
+
+describe('walkers and a works closed for its upgrade', () => {
+  it('neither live at it nor walk home to it until it opens again', () => {
+    const { map, builder, station } = world();
+    const mill = builder.buildingAt(27, 34)!;
+    const key = `b${mill.x},${mill.y}`;
+    const people = new PeopleSim(map, builder, new Rng(3));
+    run(people, station, 1);
+    const lived = people.persons.filter((p) => p.home === key);
+    expect(lived.length).toBeGreaterThan(0);
+    // one of them on its way home to the works, a few tiles off
+    const walker = lived[0];
+    const path = findWalk(map, { x: 27, y: 40 }, mill)!;
+    Object.assign(walker, { state: 'return', path, step: 0, x: 27, y: 40, timer: 0 });
+
+    mill.work = startWork(2)!;
+    expect(people.places().map((p) => p.key)).not.toContain(key);
+    people.tick(DT, POPULATION, MIDDAY);
+    // the walker turned for its new home where it stood
+    expect(walker.state).toBe('return');
+    expect(walker.home).not.toBe(key);
+    const home = people.places().find((p) => p.key === walker.home)!;
+    expect(walker.path.at(-1)).toEqual({ x: home.x, y: home.y });
+    expect(walker.y).toBeGreaterThan(38);
+    for (let i = 0; i < 400; i++) {
+      for (const p of people.persons) {
+        expect(p.home, `tick ${i}`).not.toBe(key);
+        if (p.state === 'return' || p.state === 'walk')
+          expect(p.path.at(-1), `tick ${i}`).not.toEqual({ x: mill.x, y: mill.y });
+      }
+      people.tick(DT, POPULATION, MIDDAY);
+    }
+
+    delete mill.work;
+    expect(people.places().map((p) => p.key)).toContain(key);
   });
 });
 

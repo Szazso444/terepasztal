@@ -203,11 +203,11 @@ function reach({ w, t }: Pick<Scene, 'w' | 't'>, s: Station): 'yes' | 'no' | 'un
  * head taken up first, so that it stands stranded until the rail is laid again (`stranded`).
  */
 type How = 'tick' | 'reloadBefore' | 'reloadAfter' | 'stranded';
-/** The train as saved and loaded again, in its place in the fleet: it stands without a route. */
+/** The train as saved and loaded again, in its place in the fleet: it carries on as it was. */
 function reloaded(w: ReturnType<typeof world>, t: Train): Train {
   const back = Train.fromJSON(JSON.parse(JSON.stringify(t.toJSON())), w.track);
   w.fleet.trains[w.fleet.trains.indexOf(t)] = back;
-  expect(back.state).toBe('noRoute');
+  expect(back.state).toBe(t.state);
   return back;
 }
 /** Game seconds a stranded train stands off the rails before they are laid again. */
@@ -428,8 +428,8 @@ describe('a train whose contract closes while it has no route to the job', () =>
   MODES.forEach((mode) =>
     it(`goes back after a reload that falls between the close and the next tick (${mode})`, () => {
       const { w, t, run, expectBack } = closedInNoRoute(mode);
-      // the save keeps the set-aside program, not the pending hand-back; a loaded train stands
-      // without a route
+      // the save keeps the set-aside program, not the pending hand-back; the train loads standing
+      // without a route, as it was saved
       const back = Train.fromJSON(JSON.parse(JSON.stringify(t.toJSON())), w.track);
       w.fleet.trains[w.fleet.trains.indexOf(t)] = back;
       expect(back.job).toBeNull();

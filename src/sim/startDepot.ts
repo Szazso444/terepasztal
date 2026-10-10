@@ -4,6 +4,7 @@ import { STR } from '../strings';
 import { rules } from './rules';
 import type { Builder } from './build';
 import { stationDef, stationFootprint, stationGates, type Station } from './stations';
+import { rotationAxis } from './rotation';
 
 /** How far from the start chunk's middle a depot is looked for, in tiles (Chebyshev). */
 export const START_DEPOT_REACH = 24;
@@ -20,10 +21,13 @@ export function startDepotCentre(map: GameMap): { x: number; y: number } {
   return { x: Math.floor((rx + 0.5) * rs), y: Math.floor((ry + 0.5) * rs) };
 }
 
-/** The straight across a depot's gate: of its gauge, along the tracks through the shed. */
+/**
+ * The straight across a depot's gate: of its gauge, along the tracks through the shed, which
+ * follow the axis of the shed's rotation.
+ */
 function gateTrack(defId: string, rot: number): { item: TrackItem; rot: number } {
   const cls = stationDef(defId).gauge ?? 'regular';
-  return { item: { kind: 'straight', cls, cls2: cls }, rot: rot === 0 ? 1 : 0 };
+  return { item: { kind: 'straight', cls, cls2: cls }, rot: rotationAxis(rot) === 0 ? 1 : 0 };
 }
 
 /** Run `fn` with the builder granting: no cost, age, supply or depot-count limits. */

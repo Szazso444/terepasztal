@@ -17,7 +17,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 16;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -54,6 +54,10 @@ export interface SaveParts {
   };
   /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
   track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
+  /**
+   * v15: each with the upgrade under way (`work`), null for none; v16: `rot` one of the four
+   * rotations, 0 to 3
+   */
   stations: StationJSON[];
   trains: unknown[];
   contracts: unknown;
@@ -61,7 +65,7 @@ export interface SaveParts {
   gacha: unknown;
   camera: { x: number; y: number; zoomIndex: number };
   lastDay: number;
-  /** v2: signals and water towers [x, y, id, rot] */
+  /** v2: signals, services and houses [x, y, id, rot] (rot below the decor's `rotations`) */
   decor: [number, number, string, number][];
   /** v9: electrified track [x, y, kind] */
   wires: [number, number, string][];
@@ -73,7 +77,10 @@ export interface SaveParts {
   rules: Partial<Rules>;
   /** v4: global resources */
   stockpile: unknown;
-  /** v4: processing buildings, as `buildingToJSON` writes them */
+  /**
+   * v4: processing buildings, as `buildingToJSON` writes them (v15: the upgrade under way; v16:
+   * the rotation)
+   */
   buildings: BuildingJSON[];
   /** v5: owned chunks */
   regions: boolean[];
@@ -85,7 +92,10 @@ export interface SaveParts {
   trade: unknown;
   /** v10: known crafting recipes, craft statistics and an unfinished recipe draw */
   crafting: unknown;
-  /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
+  /**
+   * v9: townhouses (level, residents, construction) plus town traffic and first-train marks;
+   * v15: each house's upgrade under way
+   */
   houses: HousesJSON;
   /** v9: production-chain mode the game was started with */
   supply: SupplyMode;
@@ -355,8 +365,12 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 7,
-    note: 'trade desk opened empty: no standing deals, fuel at its base price',
-    run: (j) => (j.trade = j.trade ?? { deals: {}, nextAt: 0, fuelMul: 1, driftDay: 0 }),
+    // the route modes were renamed while saves were v7, so a v7 file may still hold the old names
+    note: 'trade desk opened empty: no standing deals, fuel at its base price; routing modes mapped to the new names',
+    run: (j) => {
+      j.trade = j.trade ?? { deals: {}, nextAt: 0, fuelMul: 1, driftDay: 0 };
+      for (const t of j.trains) if (isRecord(t)) t.mode = routeMode(t);
+    },
   },
   {
     from: 8,
@@ -455,6 +469,56 @@ export const MIGRATIONS: Migration[] = [
     run: (j) => {
       j.track = convertOneTileRegular(j.track);
       grantStarters(j, V13_STARTERS);
+    },
+  },
+  {
+    from: 13,
+    note: 'trains stand without a route and look for one, as every load left them before, with no escape to back off along, free to be asked to back off again, no stop ruled out and no service to head for, and look for fuel or water at once; from now on a save keeps what each train was doing',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        t.state = t.state ?? 'noRoute';
+        t.stateTime = t.stateTime ?? 10;
+        t.speed = t.speed ?? 0;
+        t.station = t.station ?? null;
+        t.holding = t.holding ?? false;
+        t.retreat = t.retreat ?? null;
+        t.blockedTime = t.blockedTime ?? 0;
+        t.yieldCount = t.yieldCount ?? 0;
+        t.yieldUntil = t.yieldUntil ?? 0;
+        t.badTargets = t.badTargets ?? [];
+        t.serviceStop = t.serviceStop ?? null;
+        t.nextFuelCheck = t.nextFuelCheck ?? 0;
+      }
+    },
+  },
+  {
+    from: 14,
+    note: 'no station, works or house was being upgraded: upgrades take game time from now on and close the building while they run, and a save keeps the ones under way',
+    run: (j) => {
+      for (const s of j.stations) if (isRecord(s)) s.work = s.work ?? null;
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the work is the sixth place of the tuple: a level left out before it is the 1 it meant
+        if (b.length < 5) b.push(1);
+        b[5] = b[5] ?? null;
+      }
+      const list: unknown = isRecord(j.houses) ? j.houses.list : undefined;
+      if (Array.isArray(list)) for (const h of list) if (isRecord(h)) h.work = h.work ?? null;
+    },
+  },
+  {
+    from: 15,
+    note: 'every works faces the way it was drawn (rotation 0); from now on stations, works and houses are placed in one of four rotations, and a save keeps each one',
+    run: (j) => {
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the rotation is the seventh place of the tuple: a level or a work left out before it
+        // is the 1 and the none it meant
+        if (b.length < 5) b.push(1);
+        if (b.length < 6) b.push(null);
+        b[6] = b[6] ?? 0;
+      }
     },
   },
 ];
