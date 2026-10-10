@@ -1545,7 +1545,8 @@ function saveTick({ line: l, tick, aside }: SavedLine): number {
 /**
  * Sets the line up as `setUp` does and runs it to the end of the tick the case is saved after,
  * every step watched; then saves it and loads it into the line laid afresh, watched from the saved
- * game time. Trains keep their ids through the load.
+ * game time. Trains keep their ids through the load. The line never saved (`w`, `sim`) runs on
+ * from the save too.
  */
 function savedAndLoaded(c: SavedLine) {
   const tick = saveTick(c);
@@ -1555,15 +1556,126 @@ function savedAndLoaded(c: SavedLine) {
   const at = `saved after tick ${tick}`;
   expect(sim.broken, `${at}, before the save: ${story(w, sim)}`).toBeNull();
   const back = reload(w, () => layLine(c.line).w);
-  return { back, again: watch(back, sim.now), callers: callers.map((t) => t.id), at };
+  return { w, sim, back, again: watch(back, sim.now), callers: callers.map((t) => t.id), at };
 }
 
+/** Seconds a loaded line runs beside the line never saved, and how far apart a car may stand. */
+const SIDE_BY_SIDE = 60;
+const APART = 0.01;
+/**
+ * What every train of a line is doing, where it stands and what it carries, what an idle train or
+ * one making way says, and which trains hold each station's platforms.
+ */
+function doing(w: SimWorld) {
+  return JSON.stringify({
+    trains: w.fleet.trains.map((t) => ({
+      id: t.id,
+      state: t.state,
+      makingWay: t.makingWay,
+      holding: t.holding,
+      station: t.atStation?.id ?? null,
+      cargo: t.totalCargo(),
+      note: t.state === 'idle' || t.makingWay ? t.lastMessage : null,
+    })),
+    platforms: w.builder.stations.map((s) => [...s.occupants].sort((a, b) => a - b)),
+  });
+}
+/**
+ * Loads the case's save and runs it SIDE_BY_SIDE seconds beside the line never saved: the first
+ * tick after which the two part (a train doing or saying something else, or a car APART or more
+ * from where it stands never saved), or null.
+ */
+function parting(c: SavedLine): string | null {
+  const { w, sim, back, again, at } = savedAndLoaded(c);
+  for (let k = 1; k <= SIDE_BY_SIDE / GDT; k++) {
+    sim.until(() => false, GDT);
+    again.until(() => false, GDT);
+    const why = `${at}, ${k} ticks on`;
+    if (doing(back) !== doing(w)) return `${why}: ${doing(back)} where never saved ${doing(w)}`;
+    for (const [i, t] of back.fleet.trains.entries()) {
+      const gap = apart(w.fleet.trains[i], t);
+      if (gap >= APART) return `${why}: #${t.id} stands ${gap.toFixed(3)} tiles off`;
+    }
+  }
+  expect(again.broken, `${at}: ${story(back, again)}`).toBeNull();
+  return null;
+}
+/**
+ * The smallest lines and saves found to part from the line never saved before v17 kept the way
+ * each train runs, the way a waiting train wants and what it waits for, and its note: an idle
+ * train in the way past a train held 4 s, whose wanted way the jam resolution backed that train
+ * off along 4 s late; a train routed round an idle one through a passing loop, planned straight
+ * into it; a train under way beside one making way, planned from a tile ahead of its head and so
+ * not held behind that escape; and a train waiting aside whose wanted way through an idle train
+ * the idle train moved aside for up to 2 s late.
+ */
+const PARTED: readonly { line: GenLine; tick: number }[] = [
+  {
+    line: {
+      end: 44,
+      quarry: 44,
+      sidings: [{ x: 29, east: true, len: 6 }],
+      loops: [],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [{ x: 38, wagons: 1, stops: ['quarry', 'west'] }],
+    },
+    tick: 120,
+  },
+  {
+    line: {
+      end: 49,
+      quarry: 34,
+      sidings: [],
+      loops: [{ x: 36, len: 8 }],
+      idleWagons: 2,
+      westIdle: 0,
+      callers: [{ x: 9, wagons: 1, stops: ['quarry', 'east'] }],
+    },
+    tick: 400,
+  },
+  {
+    line: {
+      end: 50,
+      quarry: 50,
+      sidings: [],
+      loops: [{ x: 13, len: 6 }],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [{ x: 10, wagons: 2, stops: ['west', 'quarry'] }],
+    },
+    tick: 150,
+  },
+  {
+    line: {
+      end: 44,
+      quarry: 44,
+      sidings: [{ x: 29, east: true, len: 6 }],
+      loops: [],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [{ x: 38, wagons: 1, stops: ['quarry', 'west'] }],
+    },
+    tick: 421,
+  },
+];
+
 describe('idle trains on generated lines, saved and loaded at any tick', () => {
-  // A load forgets what the save does not hold: the path a train under way had planned, the way a
-  // train waiting aside or an idle train standing in another's way wants to take (`wantAside`),
-  // and when an idle train may look again for a way aside (docs/traffic-current.md §8 and §9). So
-  // a loaded line need not run on exactly as it would have (the fixed scenes of
-  // src/sim/trainResume.test.ts do), but it runs on soundly.
+  // A load starts afresh the timers and memory the save does not hold (docs/traffic-current.md
+  // §8): when an idle train may look again for a way aside, when a jam may be tried again, the
+  // order claims are granted in. Where one of those decides, a loaded line can part from the line
+  // never saved, so a line saved at any tick is held to run on soundly; the saves that parted
+  // before v17 kept each train's way and what it waits for, to run on exactly as never saved.
+  it(
+    'carry on as never saved where a load once parted them: every train doing and saying the same',
+    SLOW,
+    () => {
+      // run SIDE_BY_SIDE seconds beside the line never saved, every car where it stands there
+      for (const { line: l, tick } of PARTED)
+        expect(parting({ line: l, tick, aside: false }), JSON.stringify(l)).toBeNull();
+    },
+  );
+
   it(
     'never share a tile, hold a platform or a path, move, misreport or stall, and idle where they made way',
     PROPERTY,

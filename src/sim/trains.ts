@@ -346,10 +346,24 @@ export interface RetreatPlan {
   group: number[];
   distance: number;
 }
-/** A save's escape of a train backing off for another: the rest of its path, and its group. */
+/**
+ * A save's way of a train under way (`Train.wayJSON`, since v17): the rest of its path, from the
+ * first tile the train still counts as ahead of it or still stands on, and how far the head has
+ * left to run along it.
+ */
+export interface WaySave {
+  path: PathSegment[];
+  left: number;
+}
+/**
+ * A save's escape of a train backing off for another: the rest of its path, and its group. Since
+ * v17 the path is a way (`WaySave`) with how far the head has left to run; before, it started on
+ * the tile the head stood on, or the one it was leaving.
+ */
 export interface RetreatSave {
   path: PathSegment[];
   group: number[];
+  left?: number;
 }
 /** Reserves an escape for the train being resumed, as `TickCtx.reserveRecovery` does. */
 export type ReserveEscape = (path: PathSegment[], group: number[]) => boolean;
@@ -632,10 +646,14 @@ export class Train {
   private resumePending = false;
   /**
    * Set by `fromJSON` until `resumeAfterLoad` runs: the id of the station the train stood at when
-   * saved, which a train cannot look up before it meets the builder, and the escape it was
-   * backing off along, which the traffic control has to reserve again.
+   * saved, which a train cannot look up before it meets the builder, the escape it was backing
+   * off along, which the traffic control has to reserve again, and the way it was running.
    */
-  private loaded: { station: number | null; retreat: RetreatSave | null } | null = null;
+  private loaded: {
+    station: number | null;
+    retreat: RetreatSave | null;
+    way: WaySave | null;
+  } | null = null;
   /** the waiting group the escape being run (`holding`) was reserved for */
   private retreatGroup: number[] = [];
   /** Queue a contract; it starts once the current leg is done. */
@@ -781,8 +799,11 @@ export class Train {
     return until !== undefined && until > now;
   }
   private anticipateAt = 0;
-  /** tile keys of the plain path a holding train would take once the line clears */
-  private wantKeys: number[] | null = null;
+  /**
+   * the tiles of the way a waiting train would take once the line clears: on from a siding
+   * (`yielding`), or aside out of another train's way (`idle`, `wantAside`)
+   */
+  private wantTiles: { x: number; y: number }[] | null = null;
   /** the states that run on to the stop `onwardTest` checks, kept for the rest of the tick */
   private onwardMemo: { key: string; states: Set<number> } | null = null;
 
@@ -1645,7 +1666,7 @@ export class Train {
           this.dispatch(ctx.track, ctx.builder, ctx.map, avoid) ||
           (ctx.now > this.yieldUntil + 60 && this.dispatch(ctx.track, ctx.builder, ctx.map))
         ) {
-          this.wantKeys = null;
+          this.wantTiles = null;
           this.yieldWait = 0;
           this.clearHold();
           // on its way again: a note about pulling aside, or about the jam, no longer holds
@@ -1725,7 +1746,7 @@ export class Train {
     const path =
       this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
       this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
-    this.wantKeys = path ? path.map((s) => s.y * w + s.x) : null;
+    this.wantTiles = path ? path.map((s) => ({ x: s.x, y: s.y })) : null;
     // with no track on at all it is not waiting for traffic: say so rather than stand silent
     if (!path) this.lastMessage = STR.traffic.noWayOn;
     else if (this.lastMessage === STR.traffic.noWayOn) this.lastMessage = '';
@@ -1757,7 +1778,7 @@ export class Train {
   private setState(s: TrainState) {
     if (s !== 'moving') this.clearHold();
     // the way an idle train wants aside is its own (`wantAside`): never a later yield's way on
-    if (s !== this.state && (s === 'idle' || this.state === 'idle')) this.wantKeys = null;
+    if (s !== this.state && (s === 'idle' || this.state === 'idle')) this.wantTiles = null;
     this.state = s;
     this.stateTime = 0;
     if (s === 'noRoute' && this.consistProblem) this.lastMessage = this.consistProblem;
@@ -2471,8 +2492,8 @@ export class Train {
    * `planAside` with `through`), or null. It counts as the idle train's route (`pathTileKeys`), so
    * the jam resolution sees a train standing in it and can back that train off.
    */
-  wantAside(path: readonly PathSegment[] | null, w: number) {
-    this.wantKeys = path ? path.map((s) => s.y * w + s.x) : null;
+  wantAside(path: readonly PathSegment[] | null) {
+    this.wantTiles = path ? path.map((s) => ({ x: s.x, y: s.y })) : null;
   }
 
   /**
@@ -2624,8 +2645,8 @@ export class Train {
   pathTileKeys(w: number, ahead = Infinity): Set<number> {
     const out = new Set<number>();
     for (const p of this.poses) out.add(Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5));
-    if ((this.state === 'yielding' || this.state === 'idle') && this.wantKeys)
-      for (const k of this.wantKeys) out.add(k);
+    if ((this.state === 'yielding' || this.state === 'idle') && this.wantTiles)
+      for (const s of this.wantTiles) out.add(s.y * w + s.x);
     if (this.path)
       for (let i = 0; i < this.pathPts.length; i++) {
         if (this.pathCum[i] < this.pathPos - 0.5) continue;
@@ -2646,13 +2667,14 @@ export class Train {
    * After a load, once, before the train's first tick: it stands at the station it was saved at
    * again (among the station's occupants only while loading: a train waiting for a platform holds
    * none, and an idle one none either), a train backing off for another or making way for it has
-   * its escape reserved again (`reserve`) and runs on along it, and any other train under way
-   * plans its path again from where its head stands to the service or the stop it was bound for,
-   * keeping its speed. The fleet's traffic control calls this for every train before any claim is
-   * made or any train moves, so loaded trains find each other on the platforms and their paths
-   * are claimed from the first tick. What the save does not hold is settled as play would settle
-   * it: a train backing off whose escape cannot be reserved again stops and plans again (making
-   * way, it stops and idles), a contract that closed under it (the hand-back was pending, not
+   * its escape reserved again (`reserve`) and runs on along it, and any other train with a way
+   * runs on along the way it had (`wayJSON`), keeping its speed. The fleet's traffic control
+   * calls this for every train before any claim is made or any train moves, so loaded trains find
+   * each other on the platforms and their paths are claimed from the first tick. What the save
+   * does not hold is settled as play would settle it: a train backing off whose escape cannot be
+   * reserved again stops and plans again (making way, it stops and idles), a train under way whose
+   * way the save does not hold (a save before v17) or the track no longer carries plans its path
+   * again (`replanAfterLoad`), a contract that closed under it (the hand-back was pending, not
    * saved) hands the program back on the first tick, and a train whose station or way is gone
    * stands without a route and looks for one at once.
    */
@@ -2660,8 +2682,9 @@ export class Train {
     const loaded = this.loaded;
     if (!loaded) return;
     this.loaded = null;
-    if (this.holding && !this.resumeRetreat(builder, loaded.retreat, reserve))
-      this.cancelRetreat(now);
+    // a train backing off runs on along its escape or stops: it has no other way
+    const backing = this.holding;
+    if (backing && !this.resumeRetreat(builder, loaded.retreat, reserve)) this.cancelRetreat(now);
     if (this.state === 'loading' || this.state === 'waiting' || this.state === 'idle') {
       const st = loaded.station === null ? undefined : builder.stationById(loaded.station);
       if (st) {
@@ -2675,15 +2698,22 @@ export class Train {
       ((this.state === 'moving' && !this.holding) || this.state === 'noRoute')
     )
       this.resumePending = true;
-    else if (this.state === 'moving' && !this.path && !this.replanAfterLoad(builder))
-      this.standAfterLoad();
+    else if (
+      backing ||
+      !loaded.way ||
+      !this.leadsOn(builder, loaded.way.path) ||
+      !this.followSaved(builder, loaded.way)
+    ) {
+      if (this.state === 'moving' && !this.path && !this.replanAfterLoad(builder))
+        this.standAfterLoad();
+    }
   }
   /**
-   * The path of a loaded train under way, planned again from its head to where it was bound at
-   * the speed it had: the fuel or water service it was heading to, or else the stop (a refuelling
-   * detour's station first). The head may already stand on the tile it halts on, short of the
-   * middle. A service it can no longer reach is dropped for the stop, as `dispatch` drops it.
-   * False when the stop or every way there is gone.
+   * The path of a loaded train under way whose save holds no way it can run on, planned again
+   * from its head to where it was bound at the speed it had: the fuel or water service it was
+   * heading to, or else the stop (a refuelling detour's station first). The head may already
+   * stand on the tile it halts on, short of the middle. A service it can no longer reach is
+   * dropped for the stop, as `dispatch` drops it. False when the stop or every way there is gone.
    */
   private replanAfterLoad(builder: Builder): boolean {
     const track = builder.track;
@@ -2715,25 +2745,59 @@ export class Train {
   }
   /**
    * The escape of a loaded train that was backing off for another: the rest of the path it was
-   * running, reserved again for the same waiting group. False when the save holds none, the
-   * train no longer stands at its start or under way, the track no longer carries it, or another
-   * train or escape is in the way.
+   * running, reserved again for the same waiting group. False when the save holds none, the train
+   * no longer stands on it or is not under way, the track no longer carries it, or another train
+   * or escape is in the way.
    */
   private resumeRetreat(
     builder: Builder,
     retreat: RetreatSave | null,
     reserve: ReserveEscape,
   ): boolean {
-    const head = this.trail[this.trail.length - 1]?.seg;
-    const path = retreat?.path.map((s) => ({ ...s }));
-    if (this.state !== 'moving' || !head || !retreat || !path?.length) return false;
-    // the escape starts on the head's tile, or on the one the head is just leaving for it
-    const under = (s?: PathSegment) => s?.x === head.x && s.y === head.y && s.in === head.in;
-    if (!under(path[0]) && !under(path[1])) return false;
-    if (!this.pathStillValid(builder.track, path) || !reserve(path, retreat.group)) return false;
-    this.followAfterLoad(path, builder, path[0].route);
+    if (this.state !== 'moving' || !retreat || !this.followSaved(builder, retreat)) return false;
+    if (!reserve(this.path!, retreat.group)) {
+      this.dropPath();
+      return false;
+    }
     this.retreatGroup = retreat.group;
     return true;
+  }
+  /**
+   * Run on along a saved way from where the head stands, at the speed the train had: true when
+   * the track still carries it and the head stands on it where the save has it. A way saved
+   * before v17, which holds no `left`, starts on the head's tile or on the one the head is just
+   * leaving for it.
+   */
+  private followSaved(builder: Builder, way: { path: PathSegment[]; left?: number }): boolean {
+    const head = this.trail[this.trail.length - 1]?.seg;
+    const path = way.path.map((s) => ({ ...s }));
+    if (!head || !path.length || !this.pathStillValid(builder.track, path)) return false;
+    const under = (s?: PathSegment) => s?.x === head.x && s.y === head.y && s.in === head.in;
+    if (way.left === undefined && !under(path[0]) && !under(path[1])) return false;
+    this.followAfterLoad(path, builder, path[0].route);
+    if (way.left === undefined) return true;
+    const at = this.pathTotal - way.left;
+    this.pathPos = Math.max(0, at);
+    if (at > -1e-6 && under(this.samplePath(this.pathPos).seg)) return true;
+    this.dropPath();
+    return false;
+  }
+  /**
+   * Whether a saved way still ends where the train is bound: at the fuel or water service it
+   * heads to, or else on a platform of its stop (a refuelling detour's station first). What is
+   * left of an escape cut short, which a yielding train may still have, ends where it was to pull
+   * aside.
+   */
+  private leadsOn(builder: Builder, path: readonly PathSegment[]): boolean {
+    const end = path[path.length - 1];
+    if (this.state === 'yielding' || !end) return !!end;
+    const service = this.serviceStop;
+    if (service) return end.x === service.x && end.y === service.y;
+    if (!this.route.length) return false;
+    const target = builder.stationById(
+      this.detour ?? this.route[this.routeIndex % this.route.length],
+    );
+    return !!target && builder.platformTiles(target).some((p) => p.x === end.x && p.y === end.y);
   }
   /** Run on along `path` from the head at the speed the train had. */
   private followAfterLoad(path: PathSegment[], builder: Builder, headRoute?: number) {
@@ -2742,20 +2806,35 @@ export class Train {
     this.trackVersion = builder.track.version;
     this.speed = speed;
   }
+  /** Forget a way taken up after a load that cannot be run after all. */
+  private dropPath() {
+    this.path = null;
+    this.pathPts = [];
+    this.pathCum = [];
+    this.pathPos = 0;
+  }
   /**
-   * The rest of the escape a train backing off runs, from the tile of the last point of it the
-   * head has passed: the head may stand on the link from there into the next tile.
+   * The rest of the path the train runs, for a save: from the first tile it still counts as ahead
+   * (`pathAhead`, from half a tile behind the head) or, when nearer, the tile of the last point
+   * the head has passed, and how far the head has left to run along it.
    */
+  private wayJSON(): WaySave | null {
+    const path = this.path;
+    if (!path || !this.pathPts.length) return null;
+    let k = 0;
+    while (
+      k + 1 < this.pathPts.length &&
+      this.pathCum[k] < this.pathPos - 0.5 &&
+      this.pathCum[k + 1] <= this.pathPos
+    )
+      k++;
+    const from = Math.max(0, path.indexOf(this.pathPts[k].seg));
+    return { path: path.slice(from).map((s) => ({ ...s })), left: this.pathTotal - this.pathPos };
+  }
+  /** The rest of the escape a train backing off runs (`wayJSON`), and the group it is for. */
   private retreatJSON(): RetreatSave | null {
-    if (!this.holding || !this.path) return null;
-    let i = 0;
-    while (i + 1 < this.pathPts.length && this.pathCum[i + 1] <= this.pathPos) i++;
-    const passed = this.pathPts[i]?.seg;
-    const from = passed ? Math.max(0, this.path.indexOf(passed)) : 0;
-    return {
-      path: this.path.slice(from).map((s) => ({ ...s })),
-      group: [...this.retreatGroup],
-    };
+    const way = this.holding ? this.wayJSON() : null;
+    return way && { path: way.path, group: [...this.retreatGroup], left: way.left };
   }
   /** Nothing to carry on with after a load: stand without a route and look for one at once. */
   private standAfterLoad() {
@@ -2805,7 +2884,7 @@ export class Train {
       jobPhase: this.jobPhase,
       suspended: this.suspended,
       distance: this.distance,
-      // v14: what the train was doing, so it carries on after a load; only its path is planned again
+      // v14: what the train was doing, so it carries on after a load
       state: this.state,
       stateTime: this.stateTime,
       speed: this.speed,
@@ -2817,7 +2896,14 @@ export class Train {
       aside: this.aside,
       // the escape it is backing off along, and the group it was reserved for
       retreat: this.loaded ? this.loaded.retreat : this.retreatJSON(),
+      // v17: the way any other train with one runs, which it runs on along after a load (before,
+      // a train under way planned its path again)
+      way: this.loaded ? this.loaded.way : this.holding ? null : this.wayJSON(),
       blockedTime: this.blockedTime,
+      // v17: the train a yielding train last found in its way, and the tiles of the way a waiting
+      // train would take once the line clears: on from a siding, or aside (`wantAside`)
+      blockedBy: this.state === 'yielding' ? this.blockedBy : null,
+      want: this.wantTiles && this.wantTiles.map((s) => [s.x, s.y]),
       yieldCount: this.yieldCount,
       // the game time until which it is not asked to back off again, and a yielding train sets
       // off ignoring other trains a minute after it
@@ -2843,6 +2929,8 @@ export class Train {
         p.seg.out,
         ...(p.seg.route === undefined ? [] : [p.seg.route]),
       ]),
+      // v17: the note it shows
+      note: this.lastMessage,
     };
   }
 
@@ -2907,10 +2995,17 @@ export class Train {
     t.badTargets = new Map(j.badTargets);
     t.serviceStop = j.serviceStop && { ...j.serviceStop };
     t.nextFuelCheck = j.nextFuelCheck;
-    // the station, the escape and the path wait for the builder (`resumeAfterLoad`)
-    t.loaded = { station: j.station, retreat: j.retreat };
-    // the note is not saved: a train making way says so again, as `retreat` had it say
-    if (t.aside) t.lastMessage = STR.traffic.makingWay;
+    // a yielding train looks again only every two seconds: until then what it last found holds
+    if (t.state === 'yielding') {
+      t.blockedBy = j.blockedBy;
+      t.blocked = j.blockedBy !== null;
+    }
+    t.wantTiles = j.want && j.want.map(([x, y]) => ({ x, y }));
+    // the station, the escape and the way wait for the builder (`resumeAfterLoad`)
+    t.loaded = { station: j.station, retreat: j.retreat, way: j.way };
+    // the note it showed, but that it is jammed: the fleet says so again while the jam lasts, and
+    // keeps what it would say after only while it runs (`Fleet.keepJamNotes`)
+    t.lastMessage = j.note === STR.traffic.jammed ? '' : j.note;
     if (t.consistProblem) t.lastMessage = t.consistProblem;
     return t;
   }

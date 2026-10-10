@@ -1104,7 +1104,7 @@ export class Fleet {
       );
       if (!group.length) {
         // nobody needs its tiles (any more): it wants nothing and has nothing to say about it
-        t.wantAside(null, w);
+        t.wantAside(null);
         if (notes.includes(t.lastMessage)) t.lastMessage = '';
         continue;
       }
@@ -1142,7 +1142,7 @@ export class Fleet {
       for (const o of group)
         for (const k of [...o.occupancyKeys(w), ...o.lineBehind(this.track)]) lines.add(k);
       const wanted = t.planAside(ctx, ids, { theirs: lines, bound, sidings }, true);
-      t.wantAside(wanted?.path ?? null, w);
+      t.wantAside(wanted?.path ?? null);
       routes.set(t.id, t.pathTileKeys(w));
       t.lastMessage = wanted ? STR.traffic.waitAside : STR.traffic.noWayAside;
     }

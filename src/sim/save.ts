@@ -61,7 +61,8 @@ export interface SaveParts {
   stations: StationJSON[];
   /**
    * as `Train.toJSON` writes them; v14: what each was doing; v17: whether the escape it runs is an
-   * idle train making way (`aside`)
+   * idle train making way (`aside`), the way it runs (`way`), what a waiting train waits for
+   * (`blockedBy`, `want`) and its note (`note`)
    */
   trains: unknown[];
   contracts: unknown;
@@ -527,9 +528,16 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 16,
-    note: 'no train was saved making way: a train saved pulling aside waits where it pulls in to go on, as every load had it do before; from now on a save keeps an idle train making way, and it stays idle where it parks',
+    note: 'no train was saved making way, nor with its way, what it waits for or its note: a train saved pulling aside waits where it pulls in to go on, a train under way plans its path again, a waiting train looks again, and every note starts blank, as every load had it before; from now on a save keeps an idle train making way, and it stays idle where it parks, and every train runs on along its way, waits for what it waited for and shows its note',
     run: (j) => {
-      for (const t of j.trains) if (isRecord(t)) t.aside = t.aside ?? false;
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        t.aside = t.aside ?? false;
+        t.way = t.way ?? null;
+        t.blockedBy = t.blockedBy ?? null;
+        t.want = t.want ?? null;
+        t.note = t.note ?? '';
+      }
     },
   },
 ];

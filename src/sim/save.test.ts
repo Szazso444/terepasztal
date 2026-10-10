@@ -1342,8 +1342,8 @@ describe('v16 to v17', () => {
 
   /**
    * A v16 file, as it reads from disk: trains of the shapes old builds wrote, some holding a
-   * making-way flag already (a field is carried through whatever wrote it), and now and then an
-   * item no build wrote in the train list.
+   * field the step fills already (a field is carried through whatever wrote it), and now and then
+   * an item no build wrote in the train list.
    */
   function genV16(rng: Rng): SaveGame {
     const file: Record<string, unknown> = { ...genOldFile(rng), version: 16 };
@@ -1356,11 +1356,18 @@ describe('v16 to v17', () => {
     for (const smaller of shrinkOldFile(file as unknown as Record<string, unknown>))
       if (smaller.version === 16) yield smaller as unknown as SaveGame;
   }
-  /** The step as the brief states it: every train says it is not making way unless it says so. */
-  const unmade = (t: unknown) =>
-    isObject(t) ? { ...t, aside: 'aside' in t ? t.aside : false } : t;
+  /**
+   * The step as stated: every train says it is not making way, runs no way of its own, waits for
+   * nothing and shows no note, unless it says otherwise.
+   */
+  const unmade = (t: unknown) => {
+    if (!isObject(t)) return t;
+    const out: Record<string, unknown> = { ...t };
+    for (const [key, value] of Object.entries(V17_DEFAULTS)) if (!(key in t)) out[key] = value;
+    return out;
+  };
 
-  it('says that no train was making way, fills nothing else and finds nothing to do again', () => {
+  it('fills what a load before v17 left in each train, nothing else, and nothing again', () => {
     forAll(
       genV16,
       (file) => {
@@ -1380,7 +1387,7 @@ describe('v16 to v17', () => {
     const step = MIGRATIONS.find((m) => m.from === 16)!;
     const v16 = migrate({ ...oldestSave(), version: 16, trains: [{ id: 1 }] });
     expect(v16.migrationNotes).toEqual([`v16→v17: ${step.note}`]);
-    expect(v16.trains).toEqual([{ id: 1, aside: false }]);
+    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS }]);
     const v17 = { ...oldestSave(), version: 17, trains: [{ id: 1 }, { id: 2, aside: true }] };
     expect(migrate(asStored(v17) as SaveGame).trains).toEqual(v17.trains);
   });
@@ -1396,13 +1403,13 @@ describe('v16 to v17', () => {
       for (const state of ['moving', 'idle', 'loading']) {
         const label = `${state}${holding ? ', backing off' : ''}`;
         const v16: Record<string, unknown> = { ...base, state, holding };
-        delete v16.aside;
+        for (const key in V17_DEFAULTS) delete v16[key];
         const j = migrate({ ...oldestSave(), version: 16, trains: [asStored(v16)] });
         const t = Train.fromJSON(asStored(j.trains[0]) as TrainJSON, track);
         expect(t.makingWay, label).toBe(false);
-        expect(asStored(t.toJSON()), label).toEqual({ ...v16, aside: false });
+        expect(asStored(t.toJSON()), label).toEqual({ ...v16, ...V17_DEFAULTS });
         for (const aside of [false, true]) {
-          const v17 = { ...v16, aside };
+          const v17 = { ...v16, ...V17_DEFAULTS, aside };
           const read = readSaveText(
             JSON.stringify({ ...oldestSave(), version: SAVE_VERSION, trains: [v17] }),
           );
@@ -2531,16 +2538,35 @@ const RESUME_HELD: Readonly<Record<string, readonly unknown[]>> = {
   nextFuelCheck: [5.05, 812],
 };
 /**
- * The field the step from v16 gives every train, with what a load before v17 left in it: no
- * escape is an idle train making way, so one saved on its way aside waits to go on at its end.
+ * The fields the step from v16 gives every train, with what a load before v17 left in each: no
+ * escape is an idle train making way, so one saved on its way aside waits to go on at its end;
+ * a train under way has no way kept, so it plans its path again; a waiting train has not found
+ * what is in its way nor which way it wants until it looks again; and no note was kept.
  */
-const ASIDE_DEFAULTS: Readonly<Record<string, unknown>> = { aside: false };
-/** Values a file may already hold in the field the step from v16 fills, none the default. */
-const ASIDE_HELD: Readonly<Record<string, readonly unknown[]>> = { aside: [true] };
+const V17_DEFAULTS: Readonly<Record<string, unknown>> = {
+  aside: false,
+  way: null,
+  blockedBy: null,
+  want: null,
+  note: '',
+};
+/** Values a file may already hold in the fields the step from v16 fills, none the default. */
+const V17_HELD: Readonly<Record<string, readonly unknown[]>> = {
+  aside: [true],
+  way: [{ path: [{ x: 3, y: 4, in: 0, out: 2 }], left: 0.5 }],
+  blockedBy: [2],
+  want: [
+    [
+      [3, 4],
+      [4, 4],
+    ],
+  ],
+  note: ['Parked out of the way'],
+};
 /** The fields a step fills on every train, by the version the step upgrades from. */
 const TRAIN_DEFAULTS: readonly [from: number, defaults: Readonly<Record<string, unknown>>][] = [
   [13, RESUME_DEFAULTS],
-  [16, ASIDE_DEFAULTS],
+  [16, V17_DEFAULTS],
 ];
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
@@ -2555,7 +2581,7 @@ interface OldTrain {
   mode?: unknown;
   dynamic?: boolean;
   battery?: number;
-  /** some of the fields the steps from v13 and v16 fill, already held (RESUME_HELD, ASIDE_HELD) */
+  /** some of the fields the steps from v13 and v16 fill, already held (RESUME_HELD, V17_HELD) */
   held?: Record<string, unknown>;
 }
 function genOldTrain(rng: Rng): OldTrain {
@@ -2566,7 +2592,7 @@ function genOldTrain(rng: Rng): OldTrain {
   if (rng.chance(0.6)) t.battery = rng.pick([0, rng.int(1, 60), rng.range(0, 60), 90]);
   if (rng.chance(0.3)) {
     t.held = {};
-    for (const [key, values] of Object.entries({ ...RESUME_HELD, ...ASIDE_HELD }))
+    for (const [key, values] of Object.entries({ ...RESUME_HELD, ...V17_HELD }))
       if (rng.chance(0.5)) t.held[key] = rng.pick(values);
   }
   return t;
