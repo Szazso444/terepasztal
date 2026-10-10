@@ -150,8 +150,11 @@ export const STR = {
     madeWay: 'Parked out of the way',
     /** an idle train in another train's way waits for that train to clear its way aside */
     waitAside: 'In the way: waiting for room to move aside',
-    /** an idle train another train needs to pass has nowhere to move aside to */
-    noWayAside: 'In the way, with no siding or free platform to move aside to',
+    /**
+     * an idle train another train needs to pass has nowhere it can go: no siding or platform is
+     * free and long enough, or it could get into one only by reversing partway, which no train does
+     */
+    noWayAside: 'In the way, with no siding or free platform it can pull into',
     replan: 'Escape route unavailable; waiting for a new plan',
     stalled: (name: string) => `${name}: escape stalled; released for replanning`,
     released: (name: string) => `${name}: escape route released`,

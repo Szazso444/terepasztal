@@ -89,9 +89,13 @@ train's retreat. If no reachable siding fits the full train, add a longer loop o
 
 A roaming train with nothing worth hauling waits where it stopped without keeping the station's
 platform. When another train needs the track it stands on, it moves aside, into a siding when
-one is free, and waits there until there is work. A short dead-end siding off each busy line
-gives idle trains somewhere to go; without one, the train note says it is in the way with
-nowhere to move aside.
+one is free, and waits there until there is work. Trains never reverse partway along a move, so
+a train uses a siding only when it can run straight into it: give each busy line a dead-end
+siding as long as the whole train, its switch facing the station the train idles at, so a train
+leaving it turns straight in. A siding it could reach only by running past the switch and
+backing in does not count. Without one, the train note says it is in the way with no siding or
+free platform it can pull into. A dead-end siding does not let two working trains pass each
+other on single track; that still needs a passing loop.
 
 ## Bridges
 
