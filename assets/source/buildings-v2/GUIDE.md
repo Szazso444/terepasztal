@@ -424,9 +424,10 @@ built on a rejected picture, or kept with its camera off by more than 3°), `nex
 Close the family as above, tell the user what kept going wrong, and wait. The user either has the
 pictures put back or accepts the family as it is (`accept`).
 
-One commit per family, on the branch `art/buildings-v2`. Also commit what you have before you
-merge the tools or run anything that moves many files (`Buildings: work in progress`), and never
-stash pictures: a commit is the one safe place for work in hand.
+One commit per family, on your branch `art/<issue>-buildings-v2`, made from `origin/develop` (the
+block in `PROMPT.md` names the issue and says how). Also commit what you have before you merge
+`origin/develop` for the tools or run anything that moves many files (`Buildings: work in
+progress`), and never stash pictures: a commit is the one safe place for work in hand.
 
 ## 9. Stopping and resuming
 

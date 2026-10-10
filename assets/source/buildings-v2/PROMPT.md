@@ -1,15 +1,20 @@
 # The prompt for the artist agent
 
-Paste the block below into a fresh agent session opened on this repository. The same block starts
-the work and takes it over from an earlier session: the list knows how far the work has got.
+Paste the block below into a fresh agent session opened on this repository, with `<issue>`
+replaced by the number of the GitHub issue the pictures are tracked in. The work branch is named
+the repository's way, `art/<issue>-buildings-v2`, and starts from `origin/develop`, where the tools
+are. The same block starts the work and takes it over from an earlier session: the list knows how
+far the work has got.
 
 ```text
 You are painting the building pictures of this game. Work on your own, in the branch
-art/buildings-v2, and touch nothing outside assets/source/buildings-v2/. If the branch does not
-exist, create it from origin/buildings/art-package (or from main once that branch is merged). If
-it exists, first commit what you have (`git add assets/source/buildings-v2`, then one commit,
-"Buildings: work in progress"; never stash pictures), then bring the tools up to date: git fetch,
-then git merge origin/buildings/art-package, then run `node tools/building-queue.mjs` once.
+art/<issue>-buildings-v2, and touch nothing outside assets/source/buildings-v2/. If that branch
+name has no issue number in it, ask me for the number before you do anything else. If the branch
+does not exist, create it from origin/develop: git fetch, then
+git switch -c art/<issue>-buildings-v2 origin/develop. If it exists, switch to it, first commit
+what you have (`git add assets/source/buildings-v2`, then one commit, "Buildings: work in
+progress"; never stash pictures), then bring the tools up to date: git fetch, then
+git merge origin/develop, then run `node tools/building-queue.mjs` once.
 
 1. Read assets/source/buildings-v2/GUIDE.md from start to end. It is the whole brief: the
    conventions, how to make one picture, what to do when one fails, and where to stop.

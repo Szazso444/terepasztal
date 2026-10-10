@@ -229,7 +229,21 @@ describe('the guide for the artist agent', () => {
     expect(prompt).toContain('node tools/building-queue.mjs next');
     expect(prompt).toMatch(/GATE/);
     expect(prompt).toMatch(/STOP/);
-    expect(prompt).toContain('origin/buildings/art-package');
+    // the package was merged into develop (#154): the work starts from there, on a branch named
+    // the repository's way, and the tools are brought up to date from there too
+    for (const text of [prompt, guide, production]) {
+      expect(text).toContain('art/<issue>-buildings-v2');
+      expect(text).toContain('origin/develop');
+    }
+    expect(prompt).toMatch(/git\s+switch\s+-c\s+art\/<issue>-buildings-v2\s+origin\/develop/);
+    expect(prompt).toMatch(/git\s+merge\s+origin\/develop/);
+    // nothing sends the agent to the package's old branch, to main for it, or to a branch that
+    // carries no issue
+    for (const text of [prompt, guide, production]) {
+      expect(text).not.toContain('buildings/art-package');
+      expect(text).not.toMatch(/origin\/main|from main/);
+      expect(text).not.toContain('art/buildings-v2');
+    }
     // work in hand is committed before the tools are brought up to date, never stashed: a merge
     // over staged and unrecorded pictures had the agent juggling five stashes
     expect(prompt).toMatch(/commit\s+what\s+you\s+have/);
