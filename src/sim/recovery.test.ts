@@ -648,9 +648,19 @@ interface Siding {
   len: number;
 }
 /**
+ * A mine train on narrow gauge: a Muki, `tubs` mine tubs (half a tile long) and `boxes` box wagons.
+ * With five wagons, an odd number of them tubs, it is a whole number of tiles and a half long, so
+ * with its head at a tile's centre its rear end lies on a tile edge.
+ */
+interface Mine {
+  tubs: number;
+  boxes: number;
+}
+/**
  * The main line along MAIN from x 1 to `end` with sidings off it, a stop, a train on the main
  * line with its head at `head`, and another train ahead of it that it is held by: the other
- * stands on the main-line columns `other` and its route covers `theirs`.
+ * stands on the main-line columns `other` and its route covers `theirs`. The train is an F7 with
+ * `wagons` hoppers, or, on a `mine` line (narrow gauge, no sidings), the mine train.
  */
 interface RetreatCase {
   end: number;
@@ -661,6 +671,7 @@ interface RetreatCase {
   wagons: number;
   other: [number, number];
   theirs: [number, number];
+  mine?: Mine;
 }
 const sidingTiles = (s: Siding): Tile[] =>
   Array.from({ length: s.len }, (_, i) => ({
@@ -679,7 +690,8 @@ function layMain(c: RetreatCase) {
     blocks.add(s.x).add(s.x + 1);
     for (const t of sidingTiles(s)) g.place(t.x, t.y, 'straight', 0);
   }
-  for (let x = 1; x <= c.end; x++) if (!blocks.has(x)) g.place(x, MAIN, 'straight', 1);
+  const cls = c.mine ? 'narrow' : 'regular';
+  for (let x = 1; x <= c.end; x++) if (!blocks.has(x)) g.place(x, MAIN, 'straight', 1, cls);
   return g;
 }
 
@@ -700,17 +712,7 @@ const STOOD = 8;
  */
 function standing(c: RetreatCase, stood = false) {
   const g = layMain(c);
-  const def = content.locomotives.find((d) => d.id === 'f7')!;
-  const hopper = content.wagons.find((d) => d.id === 'wood_hopper')!;
-  const t = new Train([{ uid: 1, level: 0, def }], 'Behind', 1);
-  t.wagons = Array.from({ length: c.wagons }, (_, i) => ({
-    uid: 2 + i,
-    def: hopper,
-    level: 1,
-    cargo: null,
-    amount: 0,
-    origin: null,
-  }));
+  const t = consist(c, 'Behind', 1);
   if (!t.spawnAt(g, c.head, MAIN, c.east ? Dir.W : Dir.E)) return null;
   const keys = (ts: Tile[]) => new Set(ts.map((p) => g.key(p.x, p.y)));
   const theirs = keys(columns(c.theirs));
@@ -757,20 +759,42 @@ function standing(c: RetreatCase, stood = false) {
     return (s: State) =>
       isStop(s.x, s.y) || findPath(g, s, isStop, Infinity, undefined, t.canUse) !== null;
   };
-  /** the train standing at the end of `way`: a way on, head first or rear first */
+  /**
+   * The train standing at the end of `way`: a way on, head first or rear first. The same cars are
+   * put there as the game puts a train (`spawnAt`: the head at the last tile's centre, the cars back
+   * along the track, which on a refuge is the way itself), and each end sets off as `dispatch`
+   * sets off: from the head's tile, or from the tile its reversed trail starts on.
+   */
   const wayOn = (way: readonly PathSegment[], to: (s: State) => boolean) => {
     const last = way[way.length - 1];
-    if (to(last)) return true;
-    // the rear stands `t.length` back from the head, which stops at the last tile's centre
-    let behind = 0;
-    for (let i = way.length - 1; i >= 0; i--) {
-      const s = way[i];
-      behind += g.segLength(s.x, s.y, s.in, s.out) / (i === way.length - 1 ? 2 : 1);
-      if (behind >= t.length || i === 0) return to({ x: s.x, y: s.y, in: s.out });
-    }
-    return false;
+    const there = consist(c, 'There', 1);
+    if (!there.spawnAt(g, last.x, last.y, last.in)) throw new Error('cannot stand where it ends');
+    const rear = (there as unknown as Reversible).reversedTrail().trail.at(-1)!.seg;
+    return to(there.headSeg!) || to({ x: rear.x, y: rear.y, in: rear.in });
   };
   return { g, t, ctx, keys, starts, refugeOff, waysTo, wayTo, wayOn, platforms };
+}
+
+/** The case's train, not yet on the track. */
+function consist(c: RetreatCase, name: string, id: number) {
+  const car = (wagon: string) => content.wagons.find((d) => d.id === wagon)!;
+  const loco = content.locomotives.find((d) => d.id === (c.mine ? 'muki' : 'f7'))!;
+  const cars = c.mine
+    ? [
+        ...Array<string>(c.mine.tubs).fill('mine_tub'),
+        ...Array<string>(c.mine.boxes).fill('narrow_box'),
+      ]
+    : Array<string>(c.wagons).fill('wood_hopper');
+  const t = new Train([{ uid: 1, level: 0, def: loco }], name, id);
+  t.wagons = cars.map((wagon, i) => ({
+    uid: 2 + i,
+    def: car(wagon),
+    level: 1,
+    cargo: null,
+    amount: 0,
+    origin: null,
+  }));
+  return t;
 }
 
 /** A train held by the other, planning where to back off to (`planRetreat`). */
@@ -786,11 +810,12 @@ function retreatSetUp(c: RetreatCase) {
   return { t, ctx, starts, ways, wayFrom: to, wayOn: (w: readonly PathSegment[]) => wayOn(w, to) };
 }
 
-function retreatCase(rng: Rng): RetreatCase {
+/** A line with sidings and an F7, or with `mine`, a mine line and its train (`Mine`). */
+function retreatCase(rng: Rng, mine = false): RetreatCase {
   for (;;) {
     const end = rng.int(24, 44);
     const sidings: Siding[] = [];
-    for (let n = rng.int(1, 4), i = 0; sidings.length < n && i < 30; i++) {
+    for (let n = mine ? 0 : rng.int(1, 4), i = 0; sidings.length < n && i < 30; i++) {
       const s: Siding = {
         x: rng.int(3, end - 4),
         north: rng.chance(0.5),
@@ -801,7 +826,9 @@ function retreatCase(rng: Rng): RetreatCase {
     }
     const blocks = new Set(sidings.flatMap((s) => [s.x, s.x + 1]));
     const plain = columns([1, end]).filter((t) => !blocks.has(t.x));
-    const platform = [rng.chance(0.5) ? rng.pick(plain) : rng.pick(sidingTiles(rng.pick(sidings)))];
+    const platform = [
+      mine || rng.chance(0.5) ? rng.pick(plain) : rng.pick(sidingTiles(rng.pick(sidings))),
+    ];
     const east = rng.chance(0.5);
     const head = rng.int(2, end - 1);
     const gap = rng.int(1, 4);
@@ -813,14 +840,29 @@ function retreatCase(rng: Rng): RetreatCase {
     const theirs: [number, number] = east
       ? [Math.max(1, head - reach), other[1]]
       : [other[0], Math.min(end, head + reach)];
-    const c = { end, sidings, platform, head, east, wagons: rng.int(0, 2), other, theirs };
+    const c: RetreatCase = mine
+      ? { end, sidings, platform, head, east, wagons: 0, other, theirs, mine: mineTrain(rng) }
+      : { end, sidings, platform, head, east, wagons: rng.int(0, 2), other, theirs };
     if (other[0] >= 1 && other[1] <= end && retreatSetUp(c)) return c;
   }
+}
+/**
+ * Up to five wagons, five at least half the time: a whole number of tiles and a half long when an
+ * odd number of them are tubs.
+ */
+function mineTrain(rng: Rng): Mine {
+  const tubs = rng.int(0, 5);
+  return { tubs, boxes: rng.chance(0.5) ? 5 - tubs : rng.int(0, 5 - tubs) };
 }
 function* shrinkRetreat(c: RetreatCase): Iterable<RetreatCase> {
   const out: RetreatCase[] = [];
   for (const sidings of shrinkArray(c.sidings)) out.push({ ...c, sidings });
   for (const wagons of shrinkInt(c.wagons)) out.push({ ...c, wagons });
+  if (c.mine) {
+    const { tubs, boxes } = c.mine;
+    for (const n of shrinkInt(tubs)) out.push({ ...c, mine: { tubs: n, boxes } });
+    for (const n of shrinkInt(boxes)) out.push({ ...c, mine: { tubs, boxes: n } });
+  }
   c.sidings.forEach((s, i) => {
     for (const len of shrinkInt(s.len, 1))
       out.push({ ...c, sidings: c.sidings.map((d, j) => (j === i ? { ...d, len } : d)) });
@@ -828,28 +870,40 @@ function* shrinkRetreat(c: RetreatCase): Iterable<RetreatCase> {
   for (const r of out) if (retreatSetUp(r)) yield r;
 }
 
+/**
+ * planRetreat backs the train only into a refuge it can go on to its stop from, and into one if
+ * there is one. The oracle: every refuge either end of the train could back into (an exhaustive
+ * search on a line whose sidings are dead ends), and findPath on from either end of the train
+ * standing in each.
+ */
+function retreatHolds(c: RetreatCase) {
+  const { t, ctx, starts, ways, wayFrom, wayOn } = retreatSetUp(c)!;
+  // with no way to its stop from where it stands, any refuge will do
+  const had = starts.some(wayFrom);
+  const fit = had ? ways.filter(wayOn) : ways;
+  const plan = t.planRetreat(ctx, [1, 2]);
+  const story = `had a way on: ${had}; ${fit.length} of ${ways.length} refuges fit; plan ${plan && showWay(plan.path)}`;
+  if (!plan) return expect(fit.map(showWay), story).toEqual([]);
+  expect(
+    ways.some((w) => sameWay(w, plan.path)),
+    story,
+  ).toBe(true);
+  if (had) expect(wayOn(plan.path), story).toBe(true);
+}
+
 describe('planRetreat on generated lines with sidings', () => {
-  // the oracle: every refuge either end of the train could back into (an exhaustive search on
-  // a line whose sidings are dead ends), and findPath on from the end of each
   it('backs a train only into a refuge it can go on to its stop from, and into one if there is one', () => {
-    forAll(
-      retreatCase,
-      (c) => {
-        const { t, ctx, starts, ways, wayFrom, wayOn } = retreatSetUp(c)!;
-        // with no way to its stop from where it stands, any refuge will do
-        const had = starts.some(wayFrom);
-        const fit = had ? ways.filter(wayOn) : ways;
-        const plan = t.planRetreat(ctx, [1, 2]);
-        const story = `had a way on: ${had}; ${fit.length} of ${ways.length} refuges fit; plan ${plan && showWay(plan.path)}`;
-        if (!plan) return expect(fit.map(showWay), story).toEqual([]);
-        expect(
-          ways.some((w) => sameWay(w, plan.path)),
-          story,
-        ).toBe(true);
-        if (had) expect(wayOn(plan.path), story).toBe(true);
-      },
-      { seeds: MANY_SEEDS, shrink: shrinkRetreat },
-    );
+    forAll(retreatCase, retreatHolds, { seeds: MANY_SEEDS, shrink: shrinkRetreat });
+  });
+});
+
+describe('planRetreat on mine lines', () => {
+  // every platform is barred to a refuge, so none lies under the cars where a retreat ends
+  it('backs a mine train only into a refuge it can go on to its stop from, its rear on a tile edge too', () => {
+    forAll((rng) => retreatCase(rng, true), retreatHolds, {
+      seeds: MANY_SEEDS,
+      shrink: shrinkRetreat,
+    });
   });
 });
 
@@ -896,39 +950,71 @@ function asideSetUp(a: AsideCase) {
   };
 }
 
+/**
+ * planAside moves an idle train only where it can get back to the station it is bound for (the
+ * one it stood at, else its stop), into a siding when one fits, and somewhere whenever a place
+ * fits. The oracle as for planRetreat.
+ */
+function asideHolds(a: AsideCase) {
+  const { t, ctx, spots, had, inSidings, anywhere, wayOn } = asideSetUp(a)!;
+  const fits = (ways: PathSegment[][]) => (had ? ways.filter(wayOn) : ways);
+  const sided = fits(inSidings);
+  const any = fits(anywhere);
+  const plan = t.planAside(ctx, [2], spots);
+  const story = `had a way back: ${had}; ${sided.length} sidings and ${any.length} refuges fit; plan ${plan && showWay(plan.path)}`;
+  if (!plan) return expect(any.map(showWay), story).toEqual([]);
+  const pool = sided.length ? inSidings : anywhere;
+  expect(
+    pool.some((w) => sameWay(w, plan.path)),
+    story,
+  ).toBe(true);
+  if (had) expect(wayOn(plan.path), story).toBe(true);
+}
+const asideCase =
+  (mine: boolean) =>
+  (rng: Rng): AsideCase => ({
+    line: retreatCase(rng, mine),
+    atStation: rng.chance(0.5),
+    boundStop: rng.chance(0.5),
+    boundStood: rng.chance(0.5),
+  });
+function* shrinkAside(a: AsideCase): Iterable<AsideCase> {
+  for (const line of shrinkRetreat(a.line)) yield { ...a, line };
+  for (const flag of ['atStation', 'boundStop', 'boundStood'] as const)
+    if (a[flag]) yield { ...a, [flag]: false };
+}
+
 describe('planAside on generated lines with sidings', () => {
-  // the oracle as for planRetreat; the station it must get back to is the one it stood at
   it('moves an idle train only where it can get back to its station from, into a siding first', () => {
-    forAll(
-      (rng): AsideCase => ({
-        line: retreatCase(rng),
-        atStation: rng.chance(0.5),
-        boundStop: rng.chance(0.5),
-        boundStood: rng.chance(0.5),
-      }),
-      (a) => {
-        const { t, ctx, spots, had, inSidings, anywhere, wayOn } = asideSetUp(a)!;
-        const fits = (ways: PathSegment[][]) => (had ? ways.filter(wayOn) : ways);
-        const sided = fits(inSidings);
-        const any = fits(anywhere);
-        const plan = t.planAside(ctx, [2], spots);
-        const story = `had a way back: ${had}; ${sided.length} sidings and ${any.length} refuges fit; plan ${plan && showWay(plan.path)}`;
-        if (!plan) return expect(any.map(showWay), story).toEqual([]);
-        const pool = sided.length ? inSidings : anywhere;
-        expect(
-          pool.some((w) => sameWay(w, plan.path)),
-          story,
-        ).toBe(true);
-        if (had) expect(wayOn(plan.path), story).toBe(true);
+    forAll(asideCase(false), asideHolds, { seeds: MANY_SEEDS, shrink: shrinkAside });
+  });
+});
+
+describe('planAside on mine lines', () => {
+  // the station's platform may lie under the cars where the way aside ends, the rear end on its
+  // edge: the train sets off rear first from the tile beyond that edge, which the stop is not on
+  it('moves an idle mine train only where it can get back to its station from, its rear on a tile edge too', () => {
+    forAll(asideCase(true), asideHolds, { seeds: MANY_SEEDS, shrink: shrinkAside });
+  });
+  it('does not leave a Muki and five tubs with its stop under the last tub', () => {
+    // four and a half tiles, its head at x 13 and its rear end on the edge of x 8 and 9; the other
+    // train's route takes x 9 to 16, the stop is at x 7. Backed off to x 3, its rear end would lie
+    // on the stop's east edge and it would set off rear first from x 8, away from it; x 2 does
+    asideHolds({
+      line: {
+        end: 16,
+        sidings: [],
+        platform: [{ x: 7, y: MAIN }],
+        head: 13,
+        east: true,
+        wagons: 0,
+        other: [15, 16],
+        theirs: [9, 16],
+        mine: { tubs: 5, boxes: 0 },
       },
-      {
-        seeds: MANY_SEEDS,
-        shrink: function* (a) {
-          for (const line of shrinkRetreat(a.line)) yield { ...a, line };
-          for (const flag of ['atStation', 'boundStop', 'boundStood'] as const)
-            if (a[flag]) yield { ...a, [flag]: false };
-        },
-      },
-    );
+      atStation: false,
+      boundStop: false,
+      boundStood: false,
+    });
   });
 });

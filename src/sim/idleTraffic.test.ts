@@ -808,24 +808,24 @@ function wayTo(w: SimWorld, t: Train, stationId: number) {
     findPath(w.track, from, isStop, Infinity, undefined, t.canUse) !== null;
 }
 /**
- * Whether a train `length` long that stops with its head at the centre of the last tile of `way`
- * can go on from there, head first or rear first.
+ * Whether train `t`, stopped with its head at the centre of the last tile of `way`, can go on from
+ * there, head first or rear first. Its cars are put there as the game puts a train (`spawnAt`, back
+ * along the track, which on a refuge is the way itself), and each end sets off as `dispatch` sets
+ * off (`endsOf`), so a rear end on a tile edge sets off from the tile beyond it.
  */
 function wayOnFrom(
   w: SimWorld,
   way: readonly PathSegment[],
-  length: number,
+  t: Train,
   to: (from: { x: number; y: number; in: Dir }) => boolean,
 ) {
   const last = way[way.length - 1];
-  if (!last || to(last)) return !!last;
-  let behind = 0;
-  for (let i = way.length - 1; i >= 0; i--) {
-    const s = way[i];
-    behind += w.track.segLength(s.x, s.y, s.in, s.out) / (i === way.length - 1 ? 2 : 1);
-    if (behind >= length || i === 0) return to({ x: s.x, y: s.y, in: s.out });
-  }
-  return false;
+  if (!last) return false;
+  const locos = t.locos.map((l) => ({ uid: l.uid, level: l.level, def: l.def }));
+  const there = new Train(locos, 'There', t.id);
+  there.wagons = t.wagons.map((car) => ({ ...car }));
+  if (!there.spawnAt(w.track, last.x, last.y, last.in)) return false;
+  return endsOf(there).some(to);
 }
 
 /**
@@ -877,7 +877,7 @@ function watch(w: SimWorld) {
     const to = wayTo(w, t, bound);
     if (!was.ends.some(to)) return null;
     const way = t.pathAhead();
-    if (wayOnFrom(w, way, t.length, to)) return null;
+    if (wayOnFrom(w, way, t, to)) return null;
     const end = way.at(-1);
     const name = w.builder.stationById(bound)?.name;
     return `pulls aside to ${end?.x},${end?.y} with no way on to ${name} from there`;
