@@ -1521,14 +1521,25 @@ export class Train {
    * either tile (`spawnAt` gives it the one nearer the head, `layTrail` the one farther), so the
    * tile is read from where the point lies, and its crossing from the nearest point of the trail
    * within a tile and a half that carries that tile; failing one, from the point just beyond.
+   * A train turned round where it stands has a trail that starts at its rear end (`reversedTrail`
+   * cuts it there), so a point short of the trail's start is read on along its first chord.
    */
   private crossingBehind(back: number): PathSegment | undefined {
     const pts = this.trail;
     const cum = this.trailCum;
     if (!pts.length) return undefined;
     const end = cum[cum.length - 1] - back;
-    const at = Math.max(cum[0], end - EDGE_SLACK);
-    const p = this.sampleTrail(at);
+    const at = end - EDGE_SLACK;
+    let p: Vec2 = this.sampleTrail(Math.max(cum[0], at));
+    if (at < cum[0]) {
+      // the trail may start on two points that coincide, where `reversedTrail` cut it on a point
+      const q = pts.find((r) => Math.hypot(r.x - pts[0].x, r.y - pts[0].y) > 1e-6);
+      if (q) {
+        const a = pts[0];
+        const k = (cum[0] - at) / Math.hypot(q.x - a.x, q.y - a.y);
+        p = { x: a.x - (q.x - a.x) * k, y: a.y - (q.y - a.y) * k };
+      }
+    }
     const x = Math.floor(p.x + 0.5);
     const y = Math.floor(p.y + 0.5);
     let found: PathSegment | undefined;
