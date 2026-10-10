@@ -3,6 +3,7 @@
  * reached through goals.
  */
 import { LAST_AGE, goalsMet, type AgeSnapshot } from './ages';
+import { STR } from '../strings';
 
 export class Economy {
   money = 25000;
@@ -26,7 +27,7 @@ export class Economy {
   }
   spend(v: number): boolean {
     if (!this.canAfford(v)) {
-      this.onMessage?.('Not enough funds', 'warn');
+      this.onMessage?.(STR.build.funds, 'warn');
       return false;
     }
     this.money -= v;

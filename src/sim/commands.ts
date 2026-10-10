@@ -86,14 +86,13 @@ export class Commands {
   renameStation(s: Station, name: string): CommandResult {
     if (!this.builder.stations.includes(s)) return refuse(STR.fleet.missingStation);
     const n = name.trim().slice(0, STATION_NAME_MAX);
-    if (!n) return refuse(STR.station.rename);
+    if (!n) return refuse(STR.station.nameEmpty);
     s.name = n;
     return done();
   }
   /** Turn a signal to govern the next direction of travel: north, east, south, west in turn. */
   turnSignal(d: Decor): CommandResult {
-    if (d.id !== 'signal' || this.builder.decorAt(d.x, d.y) !== d)
-      return refuse(STR.build.needTrackHere);
+    if (d.id !== 'signal' || this.builder.decorAt(d.x, d.y) !== d) return refuse(STR.signals.gone);
     d.rot = (d.rot + 1) % 4;
     this.builder.onDecorChanged?.(d, false);
     return done();
@@ -104,7 +103,7 @@ export class Commands {
   fitInCab(item: Item): CommandResult {
     if (item.kind !== 'loco' || !this.inventory.items.includes(item))
       return refuse(STR.fleet.locoUnavailable);
-    if (item.inCab || locoDef(item.defId).inCab) return refuse(STR.roster.hasInCab);
+    if (item.inCab || locoDef(item.defId).inCab) return refuse(STR.roster.alreadyFitted);
     const cost = rules.inCabCost;
     // checked first: a refused spend would also post the economy's own warning
     if (!this.economy.canAfford(cost) || !this.economy.spend(cost))
@@ -121,7 +120,7 @@ export class Commands {
   spotBuy(cargoId: string, n: number, cap: number): CommandResult {
     if (!spotTraded(cargoId)) return refuse(STR.build.supplyLocked);
     const want = Math.floor(n);
-    if (!(want >= 1)) return refuse(STR.depot.empty);
+    if (!(want >= 1)) return refuse(STR.market.nothingToBuy);
     const room = Math.floor(Math.max(0, cap - this.stock.get(cargoId)));
     if (!(room >= 1)) return refuse(STR.market.full);
     const { buy } = this.trade.spotQuote(cargoId);
@@ -139,7 +138,7 @@ export class Commands {
   spotSell(cargoId: string, n: number): CommandResult {
     if (!spotTraded(cargoId)) return refuse(STR.build.supplyLocked);
     const qty = Math.min(Math.floor(n), Math.floor(this.stock.get(cargoId)));
-    if (!(qty >= 1)) return refuse(STR.depot.empty);
+    if (!(qty >= 1)) return refuse(STR.market.nothingToSell);
     const { sell } = this.trade.spotQuote(cargoId);
     this.stock.take(cargoId, qty);
     this.economy.earn(qty * sell);
