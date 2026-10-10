@@ -17,7 +17,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -59,6 +59,12 @@ export interface SaveParts {
    * rotations, 0 to 3
    */
   stations: StationJSON[];
+  /**
+   * as `Train.toJSON` writes them; v14: what each was doing; v17: whether the escape it runs is an
+   * idle train making way (`aside`), the way it runs (`way`), what a waiting train waits for
+   * (`blockedBy`, `want`), its note (`note`) and when it may next look for a way aside and a jam
+   * it is in be searched again (`asideRetry`, `recoveryRetry`)
+   */
   trains: unknown[];
   contracts: unknown;
   inventory: unknown;
@@ -518,6 +524,22 @@ export const MIGRATIONS: Migration[] = [
         if (b.length < 5) b.push(1);
         if (b.length < 6) b.push(null);
         b[6] = b[6] ?? 0;
+      }
+    },
+  },
+  {
+    from: 16,
+    note: 'no train was saved making way, nor with its way, what it waits for, its note or when it may next try a way aside or out of a jam: a train saved pulling aside waits where it pulls in to go on, a train under way plans its path again, a waiting train looks again, an idle train in the way and a jam are tried again at once, and every note starts blank, as every load had it before; from now on a save keeps an idle train making way, and it stays idle where it parks, and every train runs on along its way, waits for what it waited for, tries again when it would have and shows its note',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        t.aside = t.aside ?? false;
+        t.way = t.way ?? null;
+        t.blockedBy = t.blockedBy ?? null;
+        t.want = t.want ?? null;
+        t.note = t.note ?? '';
+        t.asideRetry = t.asideRetry ?? 0;
+        t.recoveryRetry = t.recoveryRetry ?? 0;
       }
     },
   },

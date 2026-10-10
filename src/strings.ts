@@ -161,6 +161,24 @@ export const STR = {
   },
   traffic: {
     pullingAside: 'Pulling aside on a reserved escape route',
+    /** an idle train leaves the track another train needs */
+    makingWay: 'Nothing to haul: moving out of the way',
+    /** an idle train has parked off every other train's route */
+    madeWay: 'Parked out of the way',
+    /** an idle train in another train's way waits for that train to clear its way aside */
+    waitAside: 'In the way: waiting for room to move aside',
+    /**
+     * an idle train another train needs to pass has nowhere it can go: no siding or platform is
+     * free and long enough, or it could get into one only by reversing partway, which no train does
+     */
+    noWayAside: 'In the way, with no siding or free platform it can pull into',
+    /**
+     * a train held in a jam none of its trains can pull aside from: no siding or loop off the
+     * others' way holds one of them and leaves it a way on to its stop (a counted deadlock)
+     */
+    jammed: 'Jammed: no siding it can pull into to let the other train by',
+    /** a train waiting where it pulled aside has no track on to its next stop from there */
+    noWayOn: 'Pulled aside, with no track on to its next stop',
     replan: 'Escape route unavailable; waiting for a new plan',
     stalled: (name: string) => `${name}: escape stalled; released for replanning`,
     released: (name: string) => `${name}: escape route released`,

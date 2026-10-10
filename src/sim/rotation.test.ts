@@ -197,11 +197,13 @@ describe('houses and services', () => {
 });
 
 describe('a save from before rotations', () => {
-  /** A file of the format before this one, as that build wrote it: works without a rotation. */
+  /** The last format without a rotation on works: the step from it gives them one. */
+  const BEFORE = 15;
+  /** A file of that format, as that build wrote it: works without a rotation. */
   function previous(buildings: unknown[] | undefined): SaveGame {
     const depot = { ...new Station('depot', 3, 3, 'Depot', 1).toJSON(), rot: 1 };
     const file: SaveGame = {
-      version: SAVE_VERSION - 1,
+      version: BEFORE,
       savedAt: 1700000000000,
       seed: 99,
       clock: { time: 10, speedIndex: 1 },
@@ -221,7 +223,7 @@ describe('a save from before rotations', () => {
   const work = { to: 2, left: 10, total: 60 };
 
   it('gives every works rotation 0, says so, and loads each one at r0', () => {
-    const step = MIGRATIONS.find((m) => m.from === SAVE_VERSION - 1)!;
+    const step = MIGRATIONS.find((m) => m.from === BEFORE)!;
     expect(step.note).toMatch(/rotation 0/);
     const j = migrate(
       previous([
@@ -230,7 +232,7 @@ describe('a save from before rotations', () => {
       ]),
     );
     expect(j.version).toBe(SAVE_VERSION);
-    expect(j.migrationNotes).toEqual([`v${step.from}→v${SAVE_VERSION}: ${step.note}`]);
+    expect(j.migrationNotes?.[0]).toBe(`v${BEFORE}→v${BEFORE + 1}: ${step.note}`);
     expect(j.buildings).toEqual([
       [7, 7, 'windmill', 0.5, 2, null, 0],
       [9, 7, 'kiln', 0, 1, work, 0],
@@ -258,7 +260,7 @@ describe('a save from before rotations', () => {
   });
 
   it('changes nothing when run again, and loads through the save reader', () => {
-    const step = MIGRATIONS.find((m) => m.from === SAVE_VERSION - 1)!;
+    const step = MIGRATIONS.find((m) => m.from === BEFORE)!;
     const file = previous([
       [7, 7, 'windmill', 0.5, 2, null],
       [9, 7, 'kiln', 0],

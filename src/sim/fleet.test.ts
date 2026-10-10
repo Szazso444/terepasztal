@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
-import { TrackGraph } from '../world/track';
-import { Dir } from '../engine/iso';
+import { TrackGraph, rotationCount, type TrackPiece } from '../world/track';
+import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
 import { Stockpile } from './stockpile';
@@ -570,5 +570,176 @@ describe('Fleet.setMode from every train state', () => {
       wait: 0,
     };
     switchFrom('noRoute', 'production', standing, overPick);
+  });
+});
+
+/**
+ * A piece laid on the test track. A straight is a run of `len` tiles along its own axis; any other
+ * piece gets a straight arm of each length in `arms` laid out from its open ends, in turn.
+ */
+interface Piece {
+  x: number;
+  y: number;
+  kind: 'straight' | 'curve' | 'switch' | 'crossing';
+  rot: number;
+  cls: 'regular' | 'narrow';
+  len: number;
+  arms: number[];
+}
+/** Random track in a corner of the map, laid over itself in any order, and stations beside it. */
+interface Tangle {
+  pieces: Piece[];
+  /** stations beside tile `at` of a straight run (by index, modulo the runs), a gate on the run */
+  stations: { run: number; at: number }[];
+}
+function tangle(rng: Rng): Tangle {
+  const kinds: Piece['kind'][] = ['straight', 'curve', 'switch', 'switch', 'crossing'];
+  return {
+    pieces: Array.from({ length: rng.int(2, 10) }, () => {
+      const kind = rng.pick(kinds);
+      return {
+        x: rng.int(4, 24),
+        y: rng.int(4, 24),
+        kind,
+        rot: rng.int(0, rotationCount(kind) - 1),
+        cls: rng.chance(0.75) ? 'regular' : 'narrow',
+        len: kind === 'straight' ? rng.int(1, 10) : 1,
+        arms: kind === 'straight' ? [] : Array.from({ length: rng.int(1, 4) }, () => rng.int(0, 6)),
+      };
+    }),
+    stations: Array.from({ length: rng.int(0, 3) }, () => ({
+      run: rng.int(0, 20),
+      at: rng.int(0, 9),
+    })),
+  };
+}
+function* shrinkTangle(c: Tangle): Iterable<Tangle> {
+  for (const pieces of shrinkArray(c.pieces)) yield { ...c, pieces };
+  for (const stations of shrinkArray(c.stations)) yield { ...c, stations };
+  for (let i = 0; i < c.pieces.length; i++) {
+    const p = c.pieces[i];
+    const set = (q: Partial<Piece>) => c.pieces.map((r, j) => (j === i ? { ...r, ...q } : r));
+    for (const len of shrinkInt(p.len, 1)) yield { ...c, pieces: set({ len }) };
+    for (const arms of shrinkArray(p.arms, (n) => shrinkInt(n)))
+      yield { ...c, pieces: set({ arms }) };
+  }
+}
+
+/** A straight run: `len` tiles from (x, y) heading `d`. */
+interface Run {
+  x: number;
+  y: number;
+  d: Dir;
+  len: number;
+}
+/** Lays a tangle on the track, through `TrackGraph.place` only, and returns its straight runs. */
+function layTangle(track: TrackGraph, c: Tangle): Run[] {
+  const runs: Run[] = [];
+  const run = (r: Run, cls: Piece['cls']) => {
+    for (let i = 0; i < r.len; i++) {
+      const x = r.x + DIR_DX[r.d] * i;
+      const y = r.y + DIR_DY[r.d] * i;
+      if (track.inBounds(x, y)) track.place(x, y, 'straight', r.d % 2, cls);
+    }
+    if (r.len) runs.push(r);
+  };
+  for (const p of c.pieces) {
+    // a straight at rot 0 runs north to south, at rot 1 west to east
+    if (p.kind === 'straight') {
+      run({ x: p.x, y: p.y, d: p.rot % 2 ? Dir.E : Dir.S, len: p.len }, p.cls);
+      continue;
+    }
+    const tiles = track.place(p.x, p.y, p.kind, p.rot, p.cls);
+    const own = new Set(tiles.map((t) => `${t.x},${t.y}`));
+    const ends: Run[] = [];
+    for (const t of tiles)
+      for (const link of track.get(t.x, t.y)!.links)
+        for (const d of link) {
+          const x = t.x + DIR_DX[d];
+          const y = t.y + DIR_DY[d];
+          if (!own.has(`${x},${y}`) && !ends.some((e) => e.x === x && e.y === y && e.d === d))
+            ends.push({ x, y, d, len: 0 });
+        }
+    p.arms.forEach((len, i) => {
+      if (ends.length) run({ ...ends[i % ends.length], len }, p.cls);
+    });
+  }
+  return runs;
+}
+
+/**
+ * The slow, obvious sidings: flood each chain of plain track (one link, and not a switch block; a
+ * multi-tile curve is plain) through its connected ends. A chain is a siding when one of its ends
+ * is a dead end and the other meets a piece that is not plain, and no tile of it is a platform.
+ */
+function sidingOracle(track: TrackGraph, platforms: Set<number>): Set<number> {
+  const w = track.w;
+  const plain = (p: TrackPiece | undefined) =>
+    !!p && p.links.length === 1 && !(p.unit && p.kind !== 'curve');
+  const seen = new Set<number>();
+  const out = new Set<number>();
+  for (const { x, y, piece } of track.tiles()) {
+    if (!plain(piece) || seen.has(y * w + x)) continue;
+    const chain: number[] = [];
+    let dead = 0;
+    let junction = 0;
+    const stack = [y * w + x];
+    seen.add(y * w + x);
+    while (stack.length) {
+      const k = stack.pop()!;
+      chain.push(k);
+      const cx = k % w;
+      const cy = Math.floor(k / w);
+      for (const d of track.get(cx, cy)!.links[0]) {
+        if (!track.connected(cx, cy, d)) {
+          dead++;
+          continue;
+        }
+        const nk = (cy + DIR_DY[d]) * w + cx + DIR_DX[d];
+        if (!plain(track.get(cx + DIR_DX[d], cy + DIR_DY[d]))) junction++;
+        else if (!seen.has(nk)) {
+          seen.add(nk);
+          stack.push(nk);
+        }
+      }
+    }
+    if (dead === 1 && junction === 1 && chain.every((k) => !platforms.has(k)))
+      for (const k of chain) out.add(k);
+  }
+  return out;
+}
+
+describe('Fleet sidings', () => {
+  it('are the dead-end runs off a junction with no platform, as an exhaustive flood finds', () => {
+    const tiles = (keys: Iterable<number>) =>
+      [...keys].sort((a, b) => a - b).map((k) => `${k % SIZE},${Math.floor(k / SIZE)}`);
+    forAll(
+      tangle,
+      (c) => {
+        const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass);
+        const track = new TrackGraph(SIZE, SIZE);
+        const economy = new Economy();
+        const stock = new Stockpile();
+        const builder = new Builder(map, new RegionState(map), track, economy, stock);
+        const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+        const runs = layTangle(track, c);
+        for (const s of c.stations) {
+          if (!runs.length) break;
+          const r = runs[s.run % runs.length];
+          const i = s.at % r.len;
+          // north of a west-east run, west of a north-south one: its south or east gate is on it
+          const x = r.x + DIR_DX[r.d] * i - (r.d % 2 ? 0 : 1);
+          const y = r.y + DIR_DY[r.d] * i - (r.d % 2 ? 1 : 0);
+          builder.stations.push(new Station('quarry', x, y));
+        }
+        const platforms = new Set<number>();
+        for (const s of builder.stations)
+          for (const p of builder.platformTiles(s)) platforms.add(p.y * SIZE + p.x);
+        // private, and a function of the track and the stations only
+        const sidings = (fleet as unknown as { sidingTiles(): Set<number> }).sidingTiles();
+        expect(tiles(sidings)).toEqual(tiles(sidingOracle(track, platforms)));
+      },
+      { shrink: shrinkTangle },
+    );
   });
 });

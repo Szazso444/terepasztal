@@ -95,6 +95,20 @@ post's preview follows the straight continuation; a train checks the branch on i
 The debug traffic panel shows blocking groups and active escape owners. Recovery reserves
 one escape route per conflicting group, and can first move a queue that obstructs another
 train's retreat. If no reachable siding fits the full train, add a longer loop or another route.
+A train only backs into a siding it can leave towards its next stop, so a siding whose switch
+faces away from where the train is going does not count. When no train in the way has room to
+pull aside, the traffic counts a deadlock and each train held in it says it is jammed, with no
+siding it can pull into to let the other train by.
+
+A roaming train with nothing worth hauling waits where it stopped without keeping the station's
+platform. When another train needs the track it stands on, it moves aside, into a siding when
+one is free and it can come back out of it to the station, and waits there until there is work. Trains never reverse partway along a move, so
+a train uses a siding only when it can run straight into it: give each busy line a dead-end
+siding as long as the whole train, its switch facing the station the train idles at, so a train
+leaving it turns straight in. A siding it could reach only by running past the switch and
+backing in does not count. Without one, the train note says it is in the way with no siding or
+free platform it can pull into. A dead-end siding does not let two working trains pass each
+other on single track; that still needs a passing loop.
 
 ## Bridges
 

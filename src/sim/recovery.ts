@@ -1,4 +1,4 @@
-import { DIR_DX, DIR_DY, opposite, type Dir } from '../engine/iso';
+import { DIRS, DIR_DX, DIR_DY, opposite, type Dir } from '../engine/iso';
 import type { TrackGraph, TrackPiece } from '../world/track';
 import type { PathSegment } from '../world/pathfinding';
 
@@ -76,6 +76,8 @@ export function blockingCycles(trains: WaitingTrain[]): Set<number> {
  * The train stops at the final tile's centre, so only half that tile counts towards refuge
  * length. Switches, platforms and the waiting group's routes reset the clearance to zero.
  * No repeated tile is allowed: circling a short loop must not manufacture parking capacity.
+ * A refuge `accept` turns down (one that would leave the train no way on) does not end the
+ * search: it goes on to the next one.
  */
 export function findRefugePath(
   track: TrackGraph,
@@ -84,6 +86,7 @@ export function findRefugePath(
   blocked: (x: number, y: number) => boolean,
   refuge: (x: number, y: number) => boolean,
   access: (piece: TrackPiece, entry: Dir) => boolean,
+  accept?: (path: readonly PathSegment[]) => boolean,
 ): PathSegment[] | null {
   type State = { x: number; y: number; in: Dir; clear: number; path: PathSegment[] };
   const queue: State[] = [{ ...start, clear: 0, path: [] }];
@@ -98,7 +101,7 @@ export function findRefugePath(
       const path = [...s.path, seg];
       if (refuge(s.x, s.y) && clear + arc / 2 >= length + 0.5) {
         track.resolveRoutes(path);
-        return path;
+        if (!accept || accept(path)) return path;
       }
       const x = s.x + DIR_DX[out];
       const y = s.y + DIR_DY[out];
@@ -115,6 +118,47 @@ export function findRefugePath(
     }
   }
   return null;
+}
+
+/** Key of a directed track state (`statesReaching`): a train on (x, y) that came in through `entry`. */
+export function stateKey(w: number, x: number, y: number, entry: Dir) {
+  return (y * w + x) * 4 + entry;
+}
+
+/**
+ * Every directed track state (`stateKey`) from which a train runs on to one of `targets` without
+ * reversing, as `findPath` would find it with the consist's `access`, plus every state on a
+ * target. One walk back from the targets answers the question for each refuge a search tries.
+ */
+export function statesReaching(
+  track: TrackGraph,
+  targets: Iterable<{ x: number; y: number }>,
+  access: (piece: TrackPiece, entry: Dir) => boolean,
+): Set<number> {
+  const w = track.w;
+  const states = new Set<number>();
+  const queue: number[] = [];
+  const add = (k: number) => {
+    if (states.has(k)) return;
+    states.add(k);
+    queue.push(k);
+  };
+  for (const t of targets)
+    if (track.get(t.x, t.y)) for (const d of DIRS) add(stateKey(w, t.x, t.y, d));
+  for (let i = 0; i < queue.length; i++) {
+    const k = queue[i];
+    const entry = (k % 4) as Dir;
+    const tile = (k - entry) / 4;
+    const nx = tile % w;
+    const ny = (tile - nx) / w;
+    // the train came onto (nx, ny) through `entry`, from the neighbour on that side
+    const x = nx + DIR_DX[entry];
+    const y = ny + DIR_DY[entry];
+    const out = opposite(entry);
+    if (!track.connected(x, y, out) || !access(track.get(nx, ny)!, entry)) continue;
+    for (const d of DIRS) if (track.exits(x, y, d).includes(out)) add(stateKey(w, x, y, d));
+  }
+  return states;
 }
 
 export interface RecoveryReservation {
