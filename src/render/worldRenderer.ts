@@ -1241,9 +1241,13 @@ export class WorldRenderer {
     const g = this.landscape.slope(x, y);
     return { dz: -g.z, sgx: -g.gx, sgy: -g.gy };
   }
-  /** Rails climb only straight, at most one level per tile; everything else needs level ground. */
+  /**
+   * Rails climb only straight, at most one level per tile; everything else needs level ground.
+   * The relief that decides is built on the main thread, so the answer is the same whether the
+   * paint workers run or have failed.
+   */
   groundAllows(x: number, y: number, need: 'straight' | 'level') {
-    return this.landscape.failed || this.landscape.groundAllows(x, y, need);
+    return this.landscape.groundAllows(x, y, need);
   }
 
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */

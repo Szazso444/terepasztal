@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Container, Rectangle, Sprite, Texture, TextureSource } from 'pixi.js';
 import type { FrameInfo } from '../engine/atlas';
+import { emptyMap } from '../world/mapgen';
+import { Terrain } from '../world/tiles';
 import { structureScale, TREE_SCALE } from './assetScale';
+import { Landscape, type PainterPool } from './landscape';
+import { buildRelief, groundAllows } from './terrainRelief';
 import { WorldRenderer } from './worldRenderer';
 
 const SOURCE = new TextureSource({ width: 1024, height: 1024 });
@@ -123,5 +127,110 @@ describe('a ghost sprite switching frames', () => {
       expect(g.scale.x, key).toBeCloseTo(scale, 9);
       expect(g.scale.y, key).toBeCloseTo(scale, 9);
     }
+  });
+});
+
+/** A paint worker that hears everything and answers nothing. */
+const quietWorker = () => ({
+  onmessage: null,
+  onerror: null,
+  postMessage: () => {},
+  terminate: () => {},
+});
+type Quiet = ReturnType<typeof quietWorker>;
+
+/** A world renderer with only what the building rules ask of it: a landscape and its map. */
+function groundOf(map: ReturnType<typeof emptyMap>, painters: PainterPool) {
+  const landscape = new Landscape(map, new Set(), new Map(), painters);
+  const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
+  Object.assign(world, { landscape, map });
+  return { world, landscape };
+}
+/** Workers that loaded their sheet: painting, and active from the first flush. */
+function working(map: ReturnType<typeof emptyMap>) {
+  const spawned: Quiet[] = [];
+  const g = groundOf(map, {
+    size: 2,
+    spawn: () => {
+      const w = quietWorker();
+      spawned.push(w);
+      return w as unknown as Worker;
+    },
+    sheet: () => 'test://terrain-surfaces.png',
+  });
+  (spawned[0].onmessage as unknown as (e: { data: object }) => void)?.({ data: { loaded: true } });
+  g.landscape.flush();
+  expect(g.landscape.active).toBe(true);
+  return g;
+}
+/** Workers that cannot start, twice: the landscape is off for the session. */
+function failed(map: ReturnType<typeof emptyMap>) {
+  const g = groundOf(map, {
+    size: 2,
+    spawn: () => {
+      throw new Error('Worker is not defined');
+    },
+    sheet: () => 'test://terrain-surfaces.png',
+  });
+  expect(g.landscape.failed).toBe(true);
+  return g;
+}
+/** A 32 x 32 map of hills with a mountain in them, as terrainRelief.test.ts walks. */
+function hills() {
+  const m = emptyMap(7412, 32, 32);
+  for (let y = 3; y < 29; y++)
+    for (let x = 3; x < 29; x++)
+      m.terrain[y * 32 + x] = x > 7 && x < 25 && y > 7 && y < 25 ? Terrain.Mountain : Terrain.Hill;
+  return m;
+}
+
+describe('the building rules on slopes', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('answer alike while the painter works and after it has failed, as the relief says', () => {
+    const map = hills(),
+      relief = buildRelief(map, new Set(), undefined, new Map());
+    const ok = working(hills()).world,
+      lost = failed(hills()).world;
+    let refused = 0,
+      allowed = 0;
+    // every tile and the ring just outside the map, for both needs
+    for (let y = -1; y <= map.h; y++)
+      for (let x = -1; x <= map.w; x++)
+        for (const need of ['straight', 'level'] as const) {
+          const expected = groundAllows(map, relief, x, y, need);
+          expect(ok.groundAllows(x, y, need), `working, ${need} at ${x},${y}`).toBe(expected);
+          expect(lost.groundAllows(x, y, need), `failed, ${need} at ${x},${y}`).toBe(expected);
+          if (expected) allowed++;
+          else refused++;
+        }
+    expect(refused).toBeGreaterThan(0);
+    expect(allowed).toBeGreaterThan(0);
+    // a bank is refused level ground and a tile outside the map is refused outright
+    expect(lost.groundAllows(3, 3, 'level')).toBe(false);
+    expect(lost.groundAllows(-1, 0, 'straight')).toBe(false);
+  });
+
+  it('follow the terrain changed after the failure, as they do while the painter works', () => {
+    const grow = (world: WorldRenderer, landscape: Landscape, map: ReturnType<typeof emptyMap>) => {
+      const before = world.groundAllows(14, 16, 'level');
+      for (let y = 14; y < 19; y++)
+        for (let x = 14; x < 19; x++) {
+          map.terrain[y * map.w + x] = Terrain.Hill;
+          landscape.invalidate(x, y);
+        }
+      return [before, world.groundAllows(14, 16, 'level'), world.groundAllows(16, 16, 'level')];
+    };
+    const flat = () => emptyMap(7412, 32, 32);
+    const [a, b] = [flat(), flat()];
+    const ok = working(a),
+      lost = failed(b);
+    // open ground first, then the hill's foot is a bank and its top is level again
+    expect(grow(ok.world, ok.landscape, a)).toEqual([true, false, true]);
+    expect(grow(lost.world, lost.landscape, b)).toEqual([true, false, true]);
   });
 });
