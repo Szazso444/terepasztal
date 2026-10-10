@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { FOOTPRINTS, ROTATIONS, project, diamond } from './building-kit.mjs';
-import { GREY, drawGuide, guideFile, blockOf } from './building-guides.mjs';
+import { GREY, drawGuide, guideFile, blockOf, openingsOf, portalWall } from './building-guides.mjs';
 
 const at = (png, [x, y]) => {
   const o = (Math.round(y) * png.width + Math.round(x)) * 4;
@@ -71,6 +71,29 @@ describe('building guides', () => {
     expect(at(r1, project(fp, 0.5, b.y1, z))).toEqual(solid(GREY.opening));
     expect(at(r1, project(fp, b.x1, -0.5, z))).toEqual(solid(GREY.right));
     expect(at(r1, project(fp, b.x1, 0.5, z))).toEqual(solid(GREY.right));
+  });
+
+  it("says which visible wall carries a depot's portals, and where every opening is", () => {
+    // 0 the lower-left wall, 1 the lower-right: the end walls come round as the depot turns
+    expect(ROTATIONS.map((r) => portalWall('t2x2', r.index))).toEqual([1, 0, 1, 0]);
+    expect(ROTATIONS.map((r) => portalWall('t1x2', r.index))).toEqual([1, 0, 1, 0]);
+    // a building with a front door only has no such wall
+    expect(portalWall('t1', 0)).toBeNull();
+    expect(portalWall('t1tall', 2)).toBeNull();
+    // the openings as the guide draws them: the crew door in front, two portals in an end wall
+    const list = (rot) => openingsOf('t2x2', rot).map((o) => `${o.kind}${o.wall}`);
+    expect(list(0)).toEqual(['front0', 'side1', 'side1']);
+    expect(list(1)).toEqual(['side0', 'side0']);
+    expect(list(2)).toEqual(['side1', 'side1']);
+    expect(list(3)).toEqual(['side0', 'side0', 'front1']);
+    expect(openingsOf('t1', 1)).toEqual([]);
+    // each is the dark quad of the guide
+    const fp = FOOTPRINTS.t2x2;
+    const b = blockOf('t2x2', 0);
+    const door = openingsOf('t2x2', 0)[0];
+    expect(door.pts).toHaveLength(4);
+    expect(door.pts[0]).toEqual(project(fp, -0.08, b.y1, b.z0));
+    expect(door.pts[2]).toEqual(project(fp, 0.08, b.y1, b.z0 + 18));
   });
 
   it('gives the narrow depot one portal per end and turns its footprint', () => {

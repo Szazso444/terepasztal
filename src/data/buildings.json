@@ -29,6 +29,7 @@
     },
     "crew": 3,
     "tier": 0,
+    "lastTier": 2,
     "recipe": {
       "in": {
         "wood": 2
