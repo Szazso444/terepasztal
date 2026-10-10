@@ -1152,6 +1152,108 @@ function ring(cls: TrackClass) {
   return { g, tiles: ways.flatMap((way) => way.tiles) };
 }
 
+/** A train stood at the end of a straight line of `cls` that runs `tiles` tiles towards `dir`. */
+interface StraightCase {
+  cls: TrackClass;
+  dir: Dir;
+  tiles: number;
+  locos: string[];
+  wagons: string[];
+}
+
+function straightCase(rng: Rng): StraightCase {
+  return {
+    cls: rng.pick(TRACK_CLASSES),
+    dir: rng.pick(DIRS),
+    tiles: rng.int(1, 30),
+    ...consistOf(rng, rng.pick(['regular', 'narrow'] as const)),
+  };
+}
+
+function* shrinkStraight(c: StraightCase): Iterable<StraightCase> {
+  for (const wagons of shrinkArray(c.wagons)) yield { ...c, wagons };
+  for (const locos of shrinkArray(c.locos)) if (locos.length) yield { ...c, locos };
+  for (const tiles of shrinkInt(c.tiles, 1)) yield { ...c, tiles };
+}
+
+/** The case's line, laid from the middle of the grid, and its last tile, where the head stands. */
+function straightLine(c: StraightCase) {
+  const g = new TrackGraph(LINE_SIZE, LINE_SIZE);
+  const [ux, uy] = [DIR_DX[c.dir], DIR_DY[c.dir]];
+  const start = LINE_SIZE >> 1;
+  for (let i = 0; i < c.tiles; i++)
+    g.set(start + ux * i, start + uy * i, makePiece('straight', c.dir % 2, c.cls));
+  const head: LineTile = {
+    x: start + ux * (c.tiles - 1),
+    y: start + uy * (c.tiles - 1),
+    in: opposite(c.dir),
+  };
+  return { g, head };
+}
+
+/**
+ * The trail `spawnAt` laid on straight track before it measured what the tiles behind lay (issue
+ * #201), read from the head back as a save stores it: the track behind the head (`trackUnder`)
+ * for `ceil(length) + 1` tiles past the head's half tile, or where the rails end sooner, on past
+ * them in eighths of a tile to `length + 1.5` or just beyond; less what a trail keeps no more of
+ * (`pushTrail`), every point more than `length + 2` behind the head but the nearest. How far
+ * behind the head a point lies is measured in a straight line, which is the way along the track
+ * on straight track alone.
+ */
+function straightTrailBefore(g: TrackGraph, at: LineTile, length: number) {
+  const tiles = Math.ceil(length) + 1;
+  const behind = walkBack(g, at.x, at.y, at.in, tiles).length;
+  const reach =
+    0.5 + behind + (behind < tiles ? Math.ceil((length + 1 - behind) / 0.125) * 0.125 : 0);
+  const rows = trackUnder(g, at, reach + 1);
+  const back = (r: number[]) => Math.hypot(r[0] - rows[0][0], r[1] - rows[0][1]);
+  const laid = rows.filter((r) => back(r) <= reach + 1e-9);
+  const beyond = laid.findIndex((r) => back(r) > length + 2);
+  return beyond < 0 ? laid : laid.slice(0, beyond + 1);
+}
+
+/** Whether the train's trail, read from the head back, is `rows` point for point, tiles and all. */
+function expectTrail(t: Train, rows: number[][], what: string) {
+  const trail = t.toJSON().trail.reverse();
+  const off = Array.from({ length: Math.max(trail.length, rows.length) }, (_, i) => i).find(
+    (i) =>
+      !trail[i] ||
+      !rows[i] ||
+      Math.hypot(trail[i][0] - rows[i][0], trail[i][1] - rows[i][1]) >= 1e-9 ||
+      trail[i].slice(2, 6).join() !== rows[i].slice(2, 6).join(),
+  );
+  expect(
+    off === undefined
+      ? null
+      : { point: off, of: [trail.length, rows.length], trail: trail[off], want: rows[off] },
+    `${what}: the first trail point, from the head back, unlike the one wanted`,
+  ).toBeNull();
+}
+
+/**
+ * How far past its rear a placed train's trail runs, at the least. On straight track it always
+ * ran so far (`straightTrailBefore`), and `spawnAt` keeps it however the line behind it winds.
+ */
+const REACH = 1.5;
+
+/** Whether the train's trail runs REACH or more past its rear, measured chord by chord. */
+function expectReach(t: Train, what: string) {
+  expect(
+    trailUnder(t) - t.length,
+    `${what}: trail past the rear of a train ${t.length} long`,
+  ).toBeGreaterThanOrEqual(REACH - 1e-9);
+}
+
+/** The case's train placed on its line by `spawnAt`, and again by a save without its trail. */
+function reachesPast(c: LineCase) {
+  const { g, tiles } = layLine(c);
+  const at = tiles[c.head === 'last' ? tiles.length - 1 : Math.min(c.head, tiles.length - 1)];
+  const t = lineTrain(c);
+  expect(t.spawnAt(g, at.x, at.y, at.in), 'placed').toBe(true);
+  expectReach(t, 'rolled out');
+  expectReach(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), 'loaded without a trail');
+}
+
 describe('a train placed on the track (spawnAt)', () => {
   it('stands whole on a winding narrow line, up to the longest consist a train may have', () => {
     forAll((rng) => lineCase(rng, 'narrow', true), standsWhole, { shrink: shrinkLine });
@@ -1180,46 +1282,78 @@ describe('a train placed on the track (spawnAt)', () => {
   });
 
   it('stands on straight track as it did: the head at the tile centre, the cars in line behind', () => {
+    forAll(straightCase, (c) => {
+      const { g, head } = straightLine(c);
+      const [ux, uy] = [DIR_DX[c.dir], DIR_DY[c.dir]];
+      const [hx, hy] = [head.x, head.y];
+      const t = lineTrain(c);
+      expect(t.spawnAt(g, hx, hy, head.in)).toBe(true);
+      const loaded = Train.fromJSON({ ...t.toJSON(), trail: [] }, g);
+      const specs = t.vehicleSpecs;
+      const fronts = vehicleFronts(specs.map((s) => s.L));
+      // `back` tiles behind the head's centre, along the line and on past where it ends
+      const at = (back: number) => ({ x: hx - ux * back, y: hy - uy * back });
+      for (const train of [t, loaded]) {
+        specs.forEach((spec, i) => {
+          const v = train.vehiclePoses[i];
+          const mid = at(fronts[i] + spec.L / 2);
+          expect(v.x).toBeCloseTo(mid.x, 9);
+          expect(v.y).toBeCloseTo(mid.y, 9);
+          expect(Math.cos(v.heading)).toBeCloseTo(ux, 9);
+          expect(Math.sin(v.heading)).toBeCloseTo(uy, 9);
+          spec.segments.forEach((s, j) =>
+            v.segments[j].bogies.forEach((b, k) => {
+              const p = at(fronts[i] + s.front + (s.L - s.W) / 2 + (s.W / (s.nb - 1)) * k);
+              expect(b.x).toBeCloseTo(p.x, 9);
+              expect(b.y).toBeCloseTo(p.y, 9);
+            }),
+          );
+        });
+      }
+    });
+  });
+
+  it('lays on straight track the trail it laid before, out past the rear as far as it reached', () => {
     forAll(
-      (rng) => ({
-        cls: rng.pick(TRACK_CLASSES),
-        dir: rng.pick(DIRS),
-        tiles: rng.int(1, 30),
-        ...consistOf(rng, rng.pick(['regular', 'narrow'] as const)),
-      }),
+      straightCase,
       (c) => {
-        const g = new TrackGraph(LINE_SIZE, LINE_SIZE);
-        const [ux, uy] = [DIR_DX[c.dir], DIR_DY[c.dir]];
-        const start = LINE_SIZE >> 1;
-        for (let i = 0; i < c.tiles; i++)
-          g.set(start + ux * i, start + uy * i, makePiece('straight', c.dir % 2, c.cls));
-        const [hx, hy] = [start + ux * (c.tiles - 1), start + uy * (c.tiles - 1)];
+        const { g, head } = straightLine(c);
         const t = lineTrain(c);
-        expect(t.spawnAt(g, hx, hy, opposite(c.dir))).toBe(true);
-        const loaded = Train.fromJSON({ ...t.toJSON(), trail: [] }, g);
-        const specs = t.vehicleSpecs;
-        const fronts = vehicleFronts(specs.map((s) => s.L));
-        // `back` tiles behind the head's centre, along the line and on past where it ends
-        const at = (back: number) => ({ x: hx - ux * back, y: hy - uy * back });
-        for (const train of [t, loaded]) {
-          specs.forEach((spec, i) => {
-            const v = train.vehiclePoses[i];
-            const mid = at(fronts[i] + spec.L / 2);
-            expect(v.x).toBeCloseTo(mid.x, 9);
-            expect(v.y).toBeCloseTo(mid.y, 9);
-            expect(Math.cos(v.heading)).toBeCloseTo(ux, 9);
-            expect(Math.sin(v.heading)).toBeCloseTo(uy, 9);
-            spec.segments.forEach((s, j) =>
-              v.segments[j].bogies.forEach((b, k) => {
-                const p = at(fronts[i] + s.front + (s.L - s.W) / 2 + (s.W / (s.nb - 1)) * k);
-                expect(b.x).toBeCloseTo(p.x, 9);
-                expect(b.y).toBeCloseTo(p.y, 9);
-              }),
-            );
-          });
-        }
+        expect(t.spawnAt(g, head.x, head.y, head.in)).toBe(true);
+        const before = straightTrailBefore(g, head, t.length);
+        expectTrail(t, before, 'rolled out');
+        expectTrail(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), before, 'loaded, no trail');
       },
+      { shrink: shrinkStraight },
     );
+  });
+
+  it('reaches a tile and a half past its rear however the line behind it winds', () => {
+    forAll((rng) => lineCase(rng, 'narrow', true), reachesPast, {
+      shrink: shrinkLine,
+      seeds: SEEDS.map((s) => 2000 + s),
+    });
+    forAll((rng) => lineCase(rng, rng.pick(TRACK_CLASSES), rng.chance(0.5)), reachesPast, {
+      shrink: shrinkLine,
+      seeds: SEEDS.map((s) => 3000 + s),
+    });
+  });
+
+  it('reaches as far with the longest consist of its gauge on curves and round a ring', () => {
+    // its head on every seventh tile of a line of nothing but curves, the rails behind it ending
+    // anywhere from under its head to past its rear, and on every other tile of a ring
+    for (const cls of TRACK_CLASSES)
+      for (const [line, { g, tiles }, every] of [
+        ['curves', zigzag(cls), 7],
+        ['ring', ring(cls), 2],
+      ] as const)
+        for (const at of tiles.filter((_, i) => i % every === 0)) {
+          const what = `${cls} ${line}, head on ${at.x},${at.y}`;
+          const t = lineTrain(longestOf(cls === 'narrow' ? 'narrow' : 'regular'));
+          expect(t.spawnAt(g, at.x, at.y, at.in), what).toBe(true);
+          expectReach(t, `${what}, rolled out`);
+          expectReach(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), `${what}, loaded`);
+        }
   });
 
   it('stands on the track behind its head, every bogie at its own distance along it', () => {
@@ -1298,10 +1432,13 @@ describe('a train placed on the track (spawnAt)', () => {
           const fronts = vehicleFronts(specs.map((s) => s.L));
           // `back` tiles behind the gate's centre, along the line and on into the shed
           const at = (back: number) => ({ x: gate.x - u * back, y });
+          const entry = t.headSeg!.in;
+          const before = straightTrailBefore(w.track, { x: gate.x, y, in: entry }, t.length);
           for (const [train, how] of [
             [t, 'rolled out'],
             [loaded, 'loaded without a trail'],
           ] as const) {
+            expectTrail(train, before, `${what}, ${how}: the trail it laid before`);
             const head = train.headPos!;
             expect(Math.hypot(head.x - gate.x, head.y - y), `${what}, ${how}: head`).toBeLessThan(
               1e-9,
