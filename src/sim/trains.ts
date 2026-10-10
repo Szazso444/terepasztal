@@ -224,8 +224,10 @@ function bump(rec: Record<string, number>, k: string, v: number) {
 
 /**
  * How much trail a train lays crossing `seg`, up to the tile's centre with `head` (where a head
- * stops): the chords between the geometry points that `spawnAt` and `setPath` lay. A curve's chords
- * fall a little short of its arc (`segLength`), so the cars stand by these, not by the arcs.
+ * stops): the chords between the geometry points that `spawnAt` and `setPath` lay. A moving train
+ * lays every point where its path turns or crosses a tile edge (`layTrail`), so its trail measures
+ * the same. A curve's chords fall a little short of its arc (`segLength`), so the cars stand by
+ * these, not by the arcs.
  */
 function trailLength(track: TrackGraph, seg: PathSegment, head = false) {
   const pts = track.segGeom(seg.x, seg.y, seg.in, seg.out, seg.route).pts;
@@ -234,6 +236,17 @@ function trailLength(track: TrackGraph, seg: PathSegment, head = false) {
   for (let i = 1; i < upto; i++)
     sum += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
   return sum;
+}
+
+/** The first index from `lo` on whose running sum reaches `arc` (`cum.length` when none does). */
+function reach(cum: readonly number[], arc: number, lo = 1) {
+  let hi = cum.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (cum[mid] < arc) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
 }
 
 export interface WagonSlot {
@@ -261,6 +274,14 @@ const MIN_DWELL = 2;
 const LOOKAHEAD = 2.5;
 /** distance kept before an occupied tile */
 const HOLD_GAP = 0.45;
+/** tiles short of the end of its path at which a train has arrived */
+const ARRIVE = 1e-3;
+/**
+ * Tiles of arc within which a point of the trail counts as on a tile edge: rounding in the car
+ * lengths and in the trail's sums. A point on an edge belongs to the tile on the side the trail
+ * comes from: a head to the tile it is leaving, the rear end to the tile beyond it.
+ */
+const EDGE_SLACK = 1e-6;
 /** seconds blocked before trying another path */
 const REROUTE_AFTER = 6;
 /** blocked this long: try rerouting again */
@@ -1354,8 +1375,7 @@ export class Train {
       const h = pts.length > 1 ? Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x) : 0;
       return { x: pts[0].x, y: pts[0].y, heading: h };
     }
-    let i = 1;
-    while (i < cum.length && cum[i] < arc) i++;
+    const i = reach(cum, arc);
     if (i >= cum.length) {
       const n = pts.length - 1;
       const h = Math.atan2(pts[n].y - pts[n - 1].y, pts[n].x - pts[n - 1].x);
@@ -1458,20 +1478,23 @@ export class Train {
     return true;
   }
 
+  /**
+   * The trail turned round at the rear end, which becomes the head: the points from the head back
+   * to the rear end, each crossing reversed. The new head sets off from the tile the rear end
+   * stands on (`crossingBehind`).
+   */
   private reversedTrail() {
     const total = this.trailCum[this.trailCum.length - 1];
     const newHeadArc = Math.min(total, this.length); // arc behind head of the rear end
     const pts = [...this.trail].reverse();
     const cumR = pts.map((_, i) => total - this.trailCum[this.trail.length - 1 - i]);
+    const flip = (s: PathSegment): PathSegment => ({ x: s.x, y: s.y, in: s.out, out: s.in });
     // truncate at newHeadArc
     const nt: TrailPoint[] = [];
     const nc: number[] = [];
     for (let i = 0; i < pts.length; i++) {
       if (cumR[i] <= newHeadArc) {
-        nt.push({
-          ...pts[i],
-          seg: { x: pts[i].seg.x, y: pts[i].seg.y, in: pts[i].seg.out, out: pts[i].seg.in },
-        });
+        nt.push({ ...pts[i], seg: flip(pts[i].seg) });
         nc.push(cumR[i]);
       } else {
         const prev = i > 0 ? pts[i - 1] : pts[i];
@@ -1480,13 +1503,47 @@ export class Train {
         nt.push({
           x: prev.x + (pts[i].x - prev.x) * t,
           y: prev.y + (pts[i].y - prev.y) * t,
-          seg: { x: pts[i].seg.x, y: pts[i].seg.y, in: pts[i].seg.out, out: pts[i].seg.in },
+          seg: flip(pts[i].seg),
         });
         nc.push(newHeadArc);
         break;
       }
     }
+    const rear = this.crossingBehind(newHeadArc);
+    if (rear && nt.length) nt[nt.length - 1].seg = flip(rear);
     return { trail: nt, cum: nc };
+  }
+
+  /**
+   * The crossing of the tile under the trail `back` behind the head: the tile the point lies in,
+   * and for a point on a tile edge (within `EDGE_SLACK`) the tile beyond it, away from the head,
+   * which is where a rear end stands and the tile `onwardTest` counts from. A sample on an edge may
+   * carry either tile it joins (`spawnAt` gives it the one after, `layTrail` the one before), so
+   * the tile is read from where the point lies and its crossing from the nearest sample on it,
+   * or, where no sample within a tile and a half carries it, from the sample just beyond.
+   */
+  private crossingBehind(back: number): PathSegment | undefined {
+    const pts = this.trail;
+    const cum = this.trailCum;
+    if (!pts.length) return undefined;
+    const end = cum[cum.length - 1] - back;
+    const at = Math.max(cum[0], end - EDGE_SLACK);
+    const p = this.sampleTrail(at);
+    const x = Math.floor(p.x + 0.5);
+    const y = Math.floor(p.y + 0.5);
+    let found: PathSegment | undefined;
+    let near = 1.5;
+    let beyond = 0;
+    for (let i = 0; i < pts.length; i++) {
+      if (cum[i] < end) beyond = i;
+      const s = pts[i].seg;
+      const d = Math.abs(cum[i] - at);
+      if (s.x === x && s.y === y && d < near) {
+        found = s;
+        near = d;
+      }
+    }
+    return found ?? pts[beyond].seg;
   }
 
   private reverseConsist() {
@@ -2001,11 +2058,14 @@ export class Train {
     else this.speed = Math.max(target, this.speed - DECEL * gdt * 1.5);
     if (bridgeFactor < 1) this.speed = Math.min(this.speed, cap);
     const braking = this.speed < prevSpeed - 1e-6;
-    const step = Math.min(
+    const travel = Math.min(
       remaining,
       Math.max(0, blockDist),
       Math.max(0.02 * gdt, this.speed * gdt),
     );
+    // a head that comes within ARRIVE of the end of its path runs the rest: it stops on the end,
+    // the last tile's centre, which `onwardTest` counts the cars back from
+    const step = remaining - travel < ARRIVE ? remaining : travel;
     const problem = this.fuelProblem(ctx, step * ecoMul * Math.max(1, bio.waterUseMul));
     if (step > 0 && problem) {
       this.speed = 0;
@@ -2013,6 +2073,7 @@ export class Train {
       this.lastMessage = 'Out of fuel or water';
       return;
     }
+    const from = this.pathPos;
     this.pathPos += step;
     this.distance += step;
     // access charge: high-speed track costs money per tile run
@@ -2075,11 +2136,9 @@ export class Train {
       if (this.waterRate > 0 && this.water < this.waterCap * 0.5) this.drawTankerWater();
       this.trip.distance += step;
     }
-    // append head sample(s)
-    const p = this.samplePath(this.pathPos);
-    this.pushTrail(p);
+    this.layTrail(from, this.pathPos);
     this.updatePoses();
-    if (this.pathTotal - this.pathPos < 1e-3) {
+    if (this.pathTotal - this.pathPos < ARRIVE) {
       if (!this.path) {
         this.speed = 0;
         this.setState('noRoute');
@@ -2138,11 +2197,15 @@ export class Train {
     }
   }
 
+  /**
+   * The point `arc` along the path, on the tile it lies in. A geometry point carries the tile its
+   * stretch ends in, so a tile edge carries the tile before it, and a point still on the edge of
+   * the tile it is leaving (within `EDGE_SLACK`) stands on that tile.
+   */
   private samplePath(arc: number): TrailPoint {
     const cum = this.pathCum;
     const pts = this.pathPts;
-    let i = 1;
-    while (i < cum.length && cum[i] < arc) i++;
+    const i = reach(cum, arc);
     if (i >= cum.length) {
       const l = pts[pts.length - 1];
       return { x: l.x, y: l.y, seg: l.seg };
@@ -2150,7 +2213,30 @@ export class Train {
     const t = (arc - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1]);
     const a = pts[i - 1];
     const b = pts[i];
-    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, seg: t < 0.5 ? a.seg : b.seg };
+    const x = a.x + (b.x - a.x) * t;
+    const y = a.y + (b.y - a.y) * t;
+    const leaving = Math.max(Math.abs(x - a.seg.x), Math.abs(y - a.seg.y)) <= 0.5 + EDGE_SLACK;
+    return { x, y, seg: leaving ? a.seg : b.seg };
+  }
+
+  /**
+   * Lay the trail the head ran along the path from arc `from` to `to`: every geometry point
+   * between where the path turns or crosses a tile edge, then the head. The trail then runs along
+   * the chords `trailLength` measures, and every tile edge it crosses is a point of it.
+   */
+  private layTrail(from: number, to: number) {
+    const pts = this.pathPts;
+    const cum = this.pathCum;
+    let i = reach(cum, from);
+    while (i < cum.length && cum[i] <= from) i++;
+    for (; i + 1 < pts.length && cum[i] < to; i++) {
+      const a = pts[i - 1];
+      const p = pts[i];
+      const b = pts[i + 1];
+      const turn = (p.x - a.x) * (b.y - p.y) - (p.y - a.y) * (b.x - p.x);
+      if (b.seg !== p.seg || Math.abs(turn) > 1e-12) this.pushTrail({ x: p.x, y: p.y, seg: p.seg });
+    }
+    this.pushTrail(this.samplePath(to));
   }
 
   private arrive(st: Station, ctx?: TickCtx) {
@@ -2535,13 +2621,13 @@ export class Train {
       if (on(last.x, last.y, last.in)) return true;
       // or rear first, from the tile the rear stands on, `length` back along the trail the way
       // lays (`trailLength`): looking back from the head would count a stop under the cars,
-      // which the rear runs away from. A rear end on a tile edge stands on the tile beyond it,
-      // the one `reversedTrail` sets off from; the slack absorbs rounding in the car lengths
+      // which the rear runs away from. A rear end on a tile edge (within `EDGE_SLACK`) stands on
+      // the tile beyond it, the one `reversedTrail` sets off from
       let behind = 0;
       for (let i = path.length - 1; i >= 0; i--) {
         const s = path[i];
         behind += trailLength(ctx.track, s, i === path.length - 1);
-        if (behind > length + 1e-6 || i === 0) return on(s.x, s.y, s.out);
+        if (behind > length + EDGE_SLACK || i === 0) return on(s.x, s.y, s.out);
       }
       return false;
     };
