@@ -36,7 +36,7 @@ import {
 } from './save';
 import { buildingFromJSON, buildingToJSON, type Building } from './buildings';
 import { TradeDesk } from './trade';
-import { Train, DYNAMIC_MODES, resetTrainIds } from './trains';
+import { Train, DYNAMIC_MODES, resetTrainIds, type RouteMode } from './trains';
 import { Station, resetStationIds, type StationJSON } from './stations';
 import { Economy } from './economy';
 import { rules, DEFAULT_RULES } from './rules';
@@ -127,13 +127,15 @@ describe('the migration registry', () => {
 
   it('has no step that leaves the file as it found it', () => {
     // An empty step tells the player a default was filled in and leaves the load code to keep
-    // the promise. Each step meets a file of its own version with nothing optional in it, and
-    // the old offer defaults the step to v11 rewrites.
+    // the promise. Each step meets a file of its own version with nothing optional in it, the
+    // old offer defaults the step to v11 rewrites, and a train with nothing but its id for the
+    // steps that fill a train's fields.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
         version: m.from,
         rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
+        trains: [{ id: 1 }],
       };
       const before = asStored(file);
       m.run(file);
@@ -501,6 +503,26 @@ describe('v7 to v8', () => {
     const missing = new TradeDesk();
     missing.load(undefined);
     expect(filled.toJSON()).toEqual(missing.toJSON());
+  });
+
+  it('maps every old route-mode name a v7 file can hold, so its train loads with the mode', () => {
+    // The modes were renamed while saves were v7: a file written before the renaming holds the
+    // old names, and never met the step from v6 that maps them.
+    const track = new TrackGraph(8, 8);
+    expect([...OLD_MODE_TO_NEW.keys()]).toEqual(['fixed', 'dynamic', 'collect']);
+    for (const [old, now] of OLD_MODE_TO_NEW) {
+      const file = { ...oldestSave(), version: 7, trains: [withOld(savedTrain(), { mode: old })] };
+      expect((runStep(7, asStored(file) as SaveGame).trains[0] as OldTrain).mode, old).toBe(now);
+      const train = migrate(file).trains[0];
+      expect(Train.fromJSON(asStored(train) as TrainJSON, track).mode, old).toBe(now);
+    }
+    // a v7 file written after the renaming keeps its modes
+    const kept = runStep(7, {
+      ...oldestSave(),
+      version: 7,
+      trains: ROUTE_MODES.map((mode, id) => ({ id, mode })),
+    });
+    expect(kept.trains.map((t) => (t as OldTrain).mode)).toEqual(ROUTE_MODES);
   });
 
   it('keeps a desk the save already has, and no longer speaks of settings', () => {
@@ -1215,7 +1237,7 @@ describe('v12 to v13', () => {
         [12, 8, 'crossing', 0, 'regular', 'high_speed'],
       ],
     });
-    expect(j.version).toBe(13);
+    expect(j.version).toBe(SAVE_VERSION);
     expect(j.track).toEqual([
       [4, 8, 'curve', 1, 'narrow', undefined],
       [6, 8, 'switch', 5, 'narrow', undefined],
@@ -1943,8 +1965,14 @@ describe('storage, from any state it is in', () => {
 
 /** Every route mode a train has today. */
 const ROUTE_MODES: readonly unknown[] = ['schedule', ...DYNAMIC_MODES];
-/** The names route modes had before v7. */
-const OLD_MODE_NAMES: readonly unknown[] = ['fixed', 'dynamic', 'collect'];
+/** The names route modes had before the renaming in v7, and the names they have now. */
+const OLD_MODE_TO_NEW: ReadonlyMap<string, RouteMode> = new Map([
+  ['fixed', 'schedule'],
+  ['dynamic', 'production'],
+  ['collect', 'collection'],
+]);
+/** The names route modes had before the renaming in v7. */
+const OLD_MODE_NAMES: readonly unknown[] = [...OLD_MODE_TO_NEW.keys()];
 /** Modes no build wrote: the step keeps them, and the load code turns them into a schedule. */
 const ODD_MODES: readonly unknown[] = ['bogus', 7];
 /** What a train's mode could be in a file: none, an old name, today's, and values no build wrote. */
@@ -1956,6 +1984,50 @@ const MODE_VALUES: unknown[] = [
   ...ROUTE_MODES,
   ...ODD_MODES,
 ];
+/**
+ * The fields the step from v13 gives every train, with what a load before v14 left in them: it
+ * stands without a route, at no station, with no escape to back off along, free to be asked to
+ * back off again, no stop ruled out and no service to head for, and looks for a route and for
+ * fuel or water on its first tick.
+ */
+const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
+  state: 'noRoute',
+  stateTime: 10,
+  speed: 0,
+  station: null,
+  holding: false,
+  retreat: null,
+  blockedTime: 0,
+  yieldCount: 0,
+  yieldUntil: 0,
+  badTargets: [],
+  serviceStop: null,
+  nextFuelCheck: 0,
+};
+/**
+ * Values a file may already hold in a field the step from v13 fills, none of them the step's
+ * default: unknown fields are carried through, and a step only fills what is absent.
+ */
+const RESUME_HELD: Readonly<Record<string, readonly unknown[]>> = {
+  state: ['moving', 'loading', 'waiting', 'idle'],
+  stateTime: [0, 3.5],
+  speed: [0.7, 1.4],
+  station: [1, 7],
+  holding: [true],
+  retreat: [{ path: [{ x: 3, y: 4, in: 0, out: 2 }], group: [1, 2] }],
+  blockedTime: [2.5],
+  yieldCount: [1, 3],
+  yieldUntil: [34, 1250.5],
+  badTargets: [
+    [[2, 240]],
+    [
+      [1, 60.5],
+      [4, 300],
+    ],
+  ],
+  serviceStop: [{ x: 5, y: 6, fuel: true, water: false }],
+  nextFuelCheck: [5.05, 812],
+};
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
 /** A tier a file could hold: whole ones past the Electric Age too, and values no build wrote. */
@@ -1969,6 +2041,8 @@ interface OldTrain {
   mode?: unknown;
   dynamic?: boolean;
   battery?: number;
+  /** some of the fields the step from v13 fills, already held (RESUME_HELD) */
+  held?: Record<string, unknown>;
 }
 function genOldTrain(rng: Rng): OldTrain {
   const t: OldTrain = {};
@@ -1976,14 +2050,23 @@ function genOldTrain(rng: Rng): OldTrain {
   if (mode !== undefined) t.mode = mode;
   if (rng.chance(0.5)) t.dynamic = rng.chance(0.5);
   if (rng.chance(0.6)) t.battery = rng.pick([0, rng.int(1, 60), rng.range(0, 60), 90]);
+  if (rng.chance(0.3)) {
+    t.held = {};
+    for (const [key, values] of Object.entries(RESUME_HELD))
+      if (rng.chance(0.5)) t.held[key] = rng.pick(values);
+  }
   return t;
 }
-/** `base` (a saved train) with the old train's mode, flag and battery, and no tanks unless `tanks`. */
+/**
+ * `base` (a saved train) with the old train's mode, flag, battery and held fields, and no tanks
+ * unless `tanks`.
+ */
 function withOld(base: object, t: OldTrain, tanks = true): Record<string, unknown> {
   const train = asStored(base) as Record<string, unknown> & { tanks?: Record<string, unknown> };
   delete train.mode;
   if ('mode' in t) train.mode = t.mode;
   if ('dynamic' in t) train.dynamic = t.dynamic;
+  if (t.held) Object.assign(train, t.held);
   if (!tanks) delete train.tanks;
   else {
     train.tanks = train.tanks ?? { coal: 0, oil: 0, water: 0 };
@@ -2114,11 +2197,11 @@ function withoutFilled(from: number, file: unknown): unknown {
     9: ['crafting'],
   };
   for (const key of top[from] ?? []) delete copy[key];
-  if (from === 6) {
-    for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.rot;
-    for (const t of trains) delete t.mode;
-  }
+  if (from === 6) for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.rot;
+  // the modes were renamed while saves were v7: the steps from v6 and v7 both map them
+  if (from === 6 || from === 7) for (const t of trains) delete t.mode;
   if (from === 9) for (const t of trains) if (isObject(t.tanks)) delete t.tanks.battery;
+  if (from === 13) for (const t of trains) for (const key in RESUME_DEFAULTS) delete t[key];
   return copy;
 }
 
@@ -2132,11 +2215,30 @@ describe('the defaults the steps fill', () => {
   it('load every train and station as they loaded before a step filled them', () => {
     // Before the steps filled them, no step touched a train or a station: Train.fromJSON mapped
     // the old route modes and filled the battery, Station.fromJSON the turn. Moving the defaults
-    // into the steps may not change what loads, and a v6 train or station already holds what
-    // loads, so the fallbacks in the load code are no longer needed for it. The shapes are few,
-    // so every one is tried from every version, each failure naming the one train or station.
+    // into the steps may not change what loads. Train.fromJSON no longer maps or fills, so what
+    // it did is written out here (`loadedBefore`) and every shape a build of a version wrote is
+    // held to it: old mode names and a missing mode up to v7, where the modes were renamed, and a
+    // missing battery up to v9, before the battery came. Station.fromJSON still fills the turn and
+    // is its own oracle. The shapes are few, so every one is tried from every version, each
+    // failure naming the one train or station.
     const track = new TrackGraph(8, 8);
     const base = savedTrain();
+    const cap = Train.fromJSON(asStored(base) as TrainJSON, track).batteryCap;
+    /** The mode and battery the load code gave a stored train before the steps filled them. */
+    const loadedBefore = (t: OldTrain) => {
+      const m = t.mode;
+      const old = typeof m === 'string' ? OLD_MODE_TO_NEW.get(m) : undefined;
+      const mode = m
+        ? (old ?? (ROUTE_MODES.includes(m) ? m : 'schedule'))
+        : t.dynamic
+          ? 'production'
+          : 'schedule';
+      return { mode, battery: Math.min(cap, t.battery ?? 0) };
+    };
+    /** Could a build of `version` have written the train: modes and battery as it named them. */
+    const wrote = (version: number, t: OldTrain) =>
+      (version <= 7 || ROUTE_MODES.includes(t.mode) || ODD_MODES.includes(t.mode)) &&
+      (version <= 9 || t.battery !== undefined);
     const trains: OldTrain[] = [];
     for (const mode of MODE_VALUES)
       for (const dynamic of [undefined, true, false])
@@ -2151,22 +2253,23 @@ describe('the defaults the steps fill', () => {
       ['farm', 'town', 'depot', 'lumber'].map((defId) => ({ defId, rot })),
     );
     for (let version = SAVE_MIN_VERSION; version <= SAVE_VERSION; version++) {
+      const written = trains.filter((t) => wrote(version, t));
       const file: SaveGame = {
         ...oldestSave(),
         version,
-        trains: trains.map((t) => withOld(base, t)),
+        trains: written.map((t) => withOld(base, t)),
         stations: stations.map((s, i) => stationOf(s.defId, s.rot, i)),
       };
       const before = asStored(file) as SaveGame;
       const j = migrate(file);
       j.trains.forEach((after, i) => {
-        const label = `v${version} train ${JSON.stringify(trains[i])}`;
-        const was = Train.fromJSON(asStored(before.trains[i]) as TrainJSON, track);
+        const label = `v${version} train ${JSON.stringify(written[i])}`;
+        const was = loadedBefore(written[i]);
         const now = Train.fromJSON(asStored(after) as TrainJSON, track);
         expect(now.mode, `${label}: the mode it loads with`).toBe(was.mode);
         expect(now.battery, `${label}: the battery it loads with`).toBe(was.battery);
         const stored = after as { mode?: unknown; tanks: { battery?: unknown } };
-        if (version <= 6 && !ODD_MODES.includes(trains[i].mode))
+        if (version <= 7 && !ODD_MODES.includes(written[i].mode))
           expect(stored.mode, `${label}: the mode the file now holds`).toBe(was.mode);
         if (version <= 9) expect(typeof stored.tanks.battery, label).toBe('number');
       });
@@ -2225,9 +2328,14 @@ describe('the defaults the steps fill', () => {
           const was = trains[i];
           const mode = 'mode' in t ? t.mode : 'absent';
           const wasMode = 'mode' in was ? was.mode : 'absent';
-          if (from > 6 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
+          if (from > 7 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
             expect(mode, `train ${i}: mode`).toBe(wasMode);
           else expect(ROUTE_MODES, `train ${i}: mode`).toContain(mode);
+          for (const [key, value] of Object.entries(RESUME_DEFAULTS)) {
+            if (key in was) expect(t[key], `train ${i}: ${key}`).toEqual(was[key]);
+            else if (from <= 13) expect(t[key], `train ${i}: ${key}`).toEqual(value);
+            else expect(key in t, `train ${i}: ${key} from v${from}`).toBe(false);
+          }
           expect(isObject(t.tanks), `train ${i}: tanks`).toBe(isObject(was.tanks));
           if (!isObject(t.tanks) || !isObject(was.tanks)) return;
           const battery = 'battery' in t.tanks ? t.tanks.battery : 'absent';
@@ -2249,7 +2357,7 @@ describe('the defaults the steps fill', () => {
     // fill when it runs again; a step that rewrote a value it should keep would not.
     forAll(
       (rng) => {
-        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9]);
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13]);
         const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
         return { from, file };
       },

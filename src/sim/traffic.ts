@@ -227,13 +227,20 @@ export class Traffic {
         }
       }
     }
-    // A restored save carries physical train state, but never stale reservation ownership.
+    // A train backing off with no reservation behind it (its escape was not reserved again after
+    // a load) never runs on along a stale escape.
     for (const t of trains)
       if (t.holding && !this.recoveries.active.has(t.id)) t.cancelRetreat(now);
     for (const id of this.recoveryRetry.keys()) if (!live.has(id)) this.recoveryRetry.delete(id);
   }
   /** Recompute claims before any train moves; occupied track always wins over future claims. */
   assign(trains: Train[], now: number) {
+    // Trains loaded from a save take their platforms, escapes and paths before anything is
+    // claimed, every one of them before any train moves.
+    for (const t of trains)
+      t.resumeAfterLoad(this.builder, now, (path, group) =>
+        this.reserveRecovery(t, path, group, trains, now),
+      );
     this.maintainRecoveries(trains, now);
     if (this.track.version !== this.trackVersion) {
       this.rebuildSections();
