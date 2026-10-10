@@ -149,6 +149,39 @@ describe('the starter kit of a new game', () => {
     },
   );
 
+  it.each(SUPPLY_MODES)(
+    'judges an engine fuelled exactly when a train of it fills every tank it has (%s chain)',
+    (mode) => {
+      // the oracle for `fuelable`: a one-engine train refuelled from the stock, over every engine
+      // and every stock of these ids, the stocks with fewer ids first so a failure is the smallest
+      const ids = ['coal', 'wood', 'water', 'oil', 'diesel', 'power'];
+      const stocks = Array.from({ length: 1 << ids.length }, (_, mask) =>
+        ids.filter((_, i) => mask & (1 << i)),
+      ).sort((a, b) => a.length - b.length);
+      const was = supplyMode();
+      setSupplyMode(mode);
+      try {
+        for (const held of stocks)
+          for (const def of content.locomotives) {
+            const stock = Object.fromEntries(held.map((id) => [id, 100]));
+            const pile = new Stockpile();
+            for (const id of held) pile.add(id, 100);
+            const train = new Train([{ uid: 1, def, level: 1 }]);
+            train.refuel(pile, { fuel: true, water: true });
+            const tanks = [
+              [train.coalCap, train.coal],
+              [train.oilCap, train.oil],
+              [train.waterCap, train.water],
+            ];
+            const filled = tanks.every(([cap, got]) => cap === 0 || got > 0);
+            expect(fuelable(def, stock), `${def.id} on [${held.join(', ')}]`).toBe(filled);
+          }
+      } finally {
+        setSupplyMode(was);
+      }
+    },
+  );
+
   it('marks only narrow-gauge wagons as starters, and hands out no regular one', () => {
     const starters = content.wagons.filter((w) => w.starter);
     expect(starters.length).toBeGreaterThan(0);
