@@ -17,7 +17,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -54,7 +54,10 @@ export interface SaveParts {
   };
   /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
   track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
-  /** v15: each with the upgrade under way (`work`), null for none */
+  /**
+   * v15: each with the upgrade under way (`work`), null for none; v16: `rot` one of the four
+   * rotations, 0 to 3
+   */
   stations: StationJSON[];
   trains: unknown[];
   contracts: unknown;
@@ -62,7 +65,7 @@ export interface SaveParts {
   gacha: unknown;
   camera: { x: number; y: number; zoomIndex: number };
   lastDay: number;
-  /** v2: signals and water towers [x, y, id, rot] */
+  /** v2: signals, services and houses [x, y, id, rot] (rot below the decor's `rotations`) */
   decor: [number, number, string, number][];
   /** v9: electrified track [x, y, kind] */
   wires: [number, number, string][];
@@ -74,7 +77,10 @@ export interface SaveParts {
   rules: Partial<Rules>;
   /** v4: global resources */
   stockpile: unknown;
-  /** v4: processing buildings, as `buildingToJSON` writes them (v15: the upgrade under way) */
+  /**
+   * v4: processing buildings, as `buildingToJSON` writes them (v15: the upgrade under way; v16:
+   * the rotation)
+   */
   buildings: BuildingJSON[];
   /** v5: owned chunks */
   regions: boolean[];
@@ -499,6 +505,20 @@ export const MIGRATIONS: Migration[] = [
       }
       const list: unknown = isRecord(j.houses) ? j.houses.list : undefined;
       if (Array.isArray(list)) for (const h of list) if (isRecord(h)) h.work = h.work ?? null;
+    },
+  },
+  {
+    from: 15,
+    note: 'every works faces the way it was drawn (rotation 0); from now on stations, works and houses are placed in one of four rotations, and a save keeps each one',
+    run: (j) => {
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the rotation is the seventh place of the tuple: a level or a work left out before it
+        // is the 1 and the none it meant
+        if (b.length < 5) b.push(1);
+        if (b.length < 6) b.push(null);
+        b[6] = b[6] ?? 0;
+      }
     },
   },
 ];
