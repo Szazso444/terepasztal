@@ -30,7 +30,9 @@ import { supplyMode, type SupplyMode } from '../sim/supply';
 import {
   SAVE_VERSION,
   CONTRACT_RARITIES,
+  continueMeta,
   contractPolicyFor,
+  hasSlot,
   listSlots,
   readSave,
   readSlot,
@@ -342,7 +344,13 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     {
       save: () => host.save(),
       load: () => {
-        if (!host.loadSave()) d.toasts.push(STR.settings.noSave, 'warn');
+        if (!readSave()) {
+          d.toasts.push(STR.settings.noSave, 'warn');
+          return;
+        }
+        askBeforeLoad(STR.saves.confirmLoadLast, () => {
+          if (!host.loadSave()) d.toasts.push(STR.settings.noSave, 'warn');
+        });
       },
       newGame: (seed) => host.newGame(seed, supplyMode()),
       exportSave: () => host.exportSave(),
@@ -365,6 +373,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       version: `v${SAVE_VERSION}`,
       warning: host.deprecatedSave,
     }),
+    d.namePrompt,
   );
   const gachaScreen = new GachaScreen(
     d.gacha,
@@ -532,7 +541,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.screens.close();
     pauseMenu.hide();
     d.build.setTool({ kind: 'none' });
-    mainMenu.show(!!readSave(), listLevels(), {
+    mainMenu.show(continueMeta(), listLevels(), {
       // the tuning a new game starts from, not the loaded game's own
       rules: rulesDiffer(readRules()).length > 0,
       content: contentIsCustom(),
@@ -549,6 +558,15 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     mainMenu.hide();
     host.resumeGame();
   }
+  /**
+   * Run `load`; over a game in progress (playing, not at the title screen) only once the player
+   * says yes to `question` in the game's own dialog, since its unsaved progress is lost.
+   */
+  function askBeforeLoad(question: string, load: () => void) {
+    if (host.mode === 'play' && !mainMenu.visible)
+      void d.namePrompt.confirm(STR.saves.loadTitle, question).then((ok) => ok && load());
+    else load();
+  }
   /** Named-save actions shared by the menus and the settings screen. */
   function slotActions(): SlotActions {
     return {
@@ -558,9 +576,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
           d.toasts.push(STR.settings.noSave, 'warn');
           return;
         }
-        if (host.mode === 'play' && !mainMenu.visible && !confirm(STR.menu.confirmLoad(name)))
-          return;
-        if (!host.loadSlot(name)) d.toasts.push(STR.settings.noSave, 'warn');
+        askBeforeLoad(STR.menu.confirmLoad(name), () => {
+          if (!host.loadSlot(name)) d.toasts.push(STR.settings.noSave, 'warn');
+        });
       },
       deleteSlot: (name) => {
         host.deleteSlot(name);
@@ -578,7 +596,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       },
     };
   }
-  /** "Save as..." from the pause menu: asks for a name in the in-game dialog. */
+  /**
+   * "Save as..." from the pause menu: asks for a name in the in-game dialog, and before replacing
+   * a save of that name asks again; a no writes nothing.
+   */
   async function promptSaveAs() {
     const fallback = `${STR.menu.day(d.clock.day)} · ${host.seed}`;
     const name = await d.namePrompt.ask(
@@ -587,53 +608,65 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       fallback,
     );
     if (!name) return;
-    if (host.saveSlot(name.slice(0, 32))) closeMenus();
+    const n = name.slice(0, 32).trim();
+    if (
+      hasSlot(n) &&
+      !(await d.namePrompt.confirm(STR.saves.overwriteTitle, STR.saves.confirmOverwrite(n)))
+    )
+      return;
+    if (host.saveSlot(n)) closeMenus();
   }
-  const mainMenu = new MainMenu({
-    ...slotActions(),
-    ...audioActions(),
-    continue: () => closeMenus(),
-    newGame: (seed, supply) => {
-      if (confirmReplaceSave()) host.newGame(seed, supply);
+  const mainMenu = new MainMenu(
+    {
+      ...slotActions(),
+      ...audioActions(),
+      continue: () => closeMenus(),
+      newGame: (seed, supply) => {
+        if (confirmReplaceSave()) host.newGame(seed, supply);
+      },
+      playLevel: (id) => {
+        if (confirmReplaceSave()) host.playLevel(id);
+      },
+      editLevel: (id) => host.editLevel(id),
+      newLevel: (size, generated, seedText) => host.newLevel(size, generated, seedText),
+      deleteLevel: (id) => {
+        host.deleteLevel(id);
+        openMainMenu();
+      },
+      importLevel: (json) => {
+        if (!host.importLevel(json)) return false;
+        openMainMenu();
+        return true;
+      },
+      exportLevel: (id) => JSON.stringify(listLevels().find((l) => l.id === id) ?? null),
+      tuning: () => d.screens.open(tuningScreen),
+      content: () => d.screens.open(contentScreen),
+      settings: () => d.screens.open(settingsScreen),
     },
-    playLevel: (id) => {
-      if (confirmReplaceSave()) host.playLevel(id);
+    d.namePrompt,
+  );
+  const pauseMenu = new PauseMenu(
+    {
+      ...slotActions(),
+      ...audioActions(),
+      resume: () => closeMenus(),
+      save: () => {
+        host.save();
+        closeMenus();
+      },
+      saveAs: () => void promptSaveAs(),
+      settings: () => d.screens.open(settingsScreen),
+      tuning: () => d.screens.open(tuningScreen),
+      content: () => d.screens.open(contentScreen),
+      backToEditor: () => host.backToEditor(),
+      mainMenu: () => {
+        if (host.mode === 'editor') {
+          if (!host.editor?.dirty || confirm(STR.editor.unsaved)) host.reloadToMenu();
+        } else openMainMenu();
+      },
     },
-    editLevel: (id) => host.editLevel(id),
-    newLevel: (size, generated, seedText) => host.newLevel(size, generated, seedText),
-    deleteLevel: (id) => {
-      host.deleteLevel(id);
-      openMainMenu();
-    },
-    importLevel: (json) => {
-      if (!host.importLevel(json)) return false;
-      openMainMenu();
-      return true;
-    },
-    exportLevel: (id) => JSON.stringify(listLevels().find((l) => l.id === id) ?? null),
-    tuning: () => d.screens.open(tuningScreen),
-    content: () => d.screens.open(contentScreen),
-    settings: () => d.screens.open(settingsScreen),
-  });
-  const pauseMenu = new PauseMenu({
-    ...slotActions(),
-    ...audioActions(),
-    resume: () => closeMenus(),
-    save: () => {
-      host.save();
-      closeMenus();
-    },
-    saveAs: () => void promptSaveAs(),
-    settings: () => d.screens.open(settingsScreen),
-    tuning: () => d.screens.open(tuningScreen),
-    content: () => d.screens.open(contentScreen),
-    backToEditor: () => host.backToEditor(),
-    mainMenu: () => {
-      if (host.mode === 'editor') {
-        if (!host.editor?.dirty || confirm(STR.editor.unsaved)) host.reloadToMenu();
-      } else openMainMenu();
-    },
-  });
+    d.namePrompt,
+  );
   hud.onMenu = () => (menuOpen() ? closeMenus() : openPauseMenu());
 
   d.uiRoot.append(

@@ -845,6 +845,13 @@ export const STR = {
           ? `Autosave on · last saved ${ago}`
           : 'Autosave on · not saved yet',
     confirmOverwrite: (n: string) => `A save named "${n}" already exists. Replace it?`,
+    /** Titles of the in-game dialog that asks before a save is replaced, deleted or loaded. */
+    overwriteTitle: 'Replace save',
+    deleteTitle: 'Delete save',
+    loadTitle: 'Load save',
+    importTitle: 'Import save',
+    /** Asked before the settings screen's Load replaces a game in progress with the stored one. */
+    confirmLoadLast: 'Load the last save? Unsaved progress in the current game is lost.',
     olderFormat: (v: number) => `format v${v}, upgraded on load`,
     newerFormat: (v: number) => `format v${v}, from a newer game`,
     refused: {
