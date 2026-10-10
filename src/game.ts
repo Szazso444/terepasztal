@@ -1485,11 +1485,12 @@ export class Game {
             );
       } else {
         const fam = `structures/${s.def.art}_${s.spriteLevel}`;
+        // DEMO: a one-tile station's new picture, by age and view, where the atlas has it
         this.world.setStructure(
           id,
           s.x,
           s.y,
-          this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+          this.pilotFrame(s) ?? (this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`),
         );
       }
       if (this.stationPanel.station === s) this.stationPanel.render();
@@ -1598,10 +1599,17 @@ export class Game {
     if (look !== 'old' && this.atlas.has(pilot)) return pilot;
     return `structures/${s.def.art}_r${s.rot % 2}${s.level > 1 ? '_lv' + s.level : ''}`;
   }
-  /** DEMO: redraw every two-by-two depot after one of the demo's switches changed */
+  /** DEMO: a one-tile station's new picture by the demo's look and age and the station's turn */
+  private pilotFrame(s: Station): string | null {
+    if (this.depotLook === 'old') return null;
+    const age = this.depotAge ?? Math.max(0, Math.min(5, s.level - 1));
+    const raw = this.depotLook === 'raw' ? '_raw' : '';
+    const frame = `structures/${s.def.art}_a${age}_r${s.rot % 4}${raw}`;
+    return this.atlas.has(frame) ? frame : null;
+  }
+  /** DEMO: redraw every station after one of the demo's switches changed */
   private redrawDepots(text: string) {
-    for (const s of this.builder.stations)
-      if (s.def.depot && s.size === 2) this.onStationChanged(s, false);
+    for (const s of this.builder.stations) this.onStationChanged(s, false);
     this.toasts.push(text, 'info');
   }
   private onAgeUp(tier: number) {
