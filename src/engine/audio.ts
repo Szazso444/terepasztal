@@ -18,6 +18,7 @@ export const SOUND_EVENTS = [
   'build.remove',
   'build.invalid',
   'station.upgrade',
+  'upgrade.done',
   'train.dispatch',
   'train.whistle',
   'train.arrive',
