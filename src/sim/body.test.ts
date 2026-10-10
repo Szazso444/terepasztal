@@ -17,6 +17,7 @@ import {
   poseVehicle,
 } from './body';
 import { referencePath, measure } from './compat';
+import { forAll } from '../testing/property';
 
 const ALL = Array.from({ length: FACINGS }, (_, f) => f);
 /** Measured worst-case sprite lean: the 7.5 degree facing step projects to at most 7.469 degrees
@@ -230,5 +231,67 @@ describe('Polyline', () => {
     expect(n.p.y).toBeCloseTo(0, 6);
     const far = straight.nearest({ x: 3, y: 3 }, 6);
     expect(far.arc).toBeCloseTo(6, 6);
+  });
+
+  /**
+   * The nearest point the slow way: each segment from the one the window's near end falls in to
+   * the one its far end falls in (an end off the line falls in the segment at that end), P's
+   * projection onto it, and the first of the closest.
+   */
+  function slowNearest(line: Polyline, P: { x: number; y: number }, guess: number, window: number) {
+    const { pts, cum } = line;
+    if (pts.length === 1) return { p: pts[0], arc: 0 };
+    const last = pts.length - 1;
+    const fallsIn = (arc: number) => {
+      if (arc <= cum[0]) return 1;
+      if (arc >= cum[last]) return last;
+      let i = 1;
+      while (cum[i] < arc) i++;
+      return i;
+    };
+    let best = { p: pts[0], arc: 0 };
+    let bd = Infinity;
+    for (let i = fallsIn(guess - window); i <= fallsIn(guess + window); i++) {
+      const [a, b] = [pts[i - 1], pts[i]];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const l2 = dx * dx + dy * dy;
+      const along = l2 > 1e-12 ? ((P.x - a.x) * dx + (P.y - a.y) * dy) / l2 : 0;
+      const t = Math.max(0, Math.min(1, along));
+      const q = { x: a.x + dx * t, y: a.y + dy * t };
+      const d = (q.x - P.x) ** 2 + (q.y - P.y) ** 2;
+      if (d < bd) {
+        bd = d;
+        best = { p: q, arc: cum[i - 1] + Math.sqrt(l2) * t };
+      }
+    }
+    return best;
+  }
+
+  it('finds the first closest point of the segments its window reaches, at its arc', () => {
+    forAll(
+      (rng) => {
+        // on a whole-tile grid half the time, where points repeat and distances tie
+        const grid = rng.chance(0.5);
+        const step = () => (grid ? rng.int(-2, 2) : rng.range(-1.5, 1.5));
+        const pts = [{ x: 0, y: 0 }];
+        for (let n = rng.int(0, 10); n > 0; n--) {
+          const { x, y } = pts[pts.length - 1];
+          pts.push({ x: x + step(), y: y + step() });
+        }
+        const P = grid
+          ? { x: rng.int(-6, 6), y: rng.int(-6, 6) }
+          : { x: rng.range(-6, 6), y: rng.range(-6, 6) };
+        return { pts, P, guess: rng.range(-2, 20), window: rng.pick([0.3, 1.5, 4, 100]) };
+      },
+      ({ pts, P, guess, window }) => {
+        const line = new Polyline(pts);
+        const got = line.nearest(P, guess, window);
+        expect(got).toEqual(slowNearest(line, P, guess, window));
+        const at = line.at(got.arc);
+        expect(Math.hypot(at.x - got.p.x, at.y - got.p.y)).toBeLessThan(1e-9);
+      },
+      { seeds: Array.from({ length: 2000 }, (_, i) => i + 1) },
+    );
   });
 });
