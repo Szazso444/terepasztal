@@ -134,12 +134,16 @@ export class PeopleSim {
     if (typeof rng === 'number') this.rng.state = rng;
   }
 
+  /**
+   * Where walkers live and go back to. A works closed for its upgrade has no crew and is none: its
+   * walkers move to another place on the next tick.
+   */
   places(): Place[] {
     const out: Place[] = [];
     for (const s of this.builder.stations)
       out.push({ x: s.x, y: s.y, key: `s${s.id}`, gathers: this.gatherTerrain[s.def.id] ?? null });
     for (const b of this.builder.buildings.values())
-      if (buildingDef(b.id).crew > 0)
+      if (!b.work && buildingDef(b.id).crew > 0)
         out.push({ x: b.x, y: b.y, key: `b${b.x},${b.y}`, gathers: null });
     for (const d of this.builder.decor.values())
       if (decorDef(d.id).crew > 0 || decorDef(d.id).residents)
@@ -274,9 +278,18 @@ export class PeopleSim {
         if (!this.advance(p, gdt)) this.persons.splice(i, 1);
         continue;
       }
-      const home = byKey.get(p.home) ?? places[Math.floor(this.rnd() * places.length)];
+      const known = byKey.get(p.home);
+      const home = known ?? places[Math.floor(this.rnd() * places.length)];
       if (!home) continue;
       p.home = home.key;
+      // the way home led to a place that is gone or closed: walk to the new home from here
+      if (!known && p.state === 'return') {
+        const back = findWalk(this.map, { x: Math.round(p.x), y: Math.round(p.y) }, home);
+        if (back && back.length >= 2) {
+          p.path = back;
+          p.step = 0;
+        }
+      }
       switch (p.state) {
         case 'inside': {
           p.timer -= gdt;
