@@ -36,6 +36,8 @@ import {
 } from './save';
 import { buildingFromJSON, buildingToJSON, type Building, type BuildingJSON } from './buildings';
 import type { Work } from './upgrade';
+import type { HousesJSON } from './houses';
+import { simWorld } from '../testing/simWorld';
 import { TradeDesk } from './trade';
 import { Train, DYNAMIC_MODES, resetTrainIds, type RouteMode } from './trains';
 import { Station, resetStationIds, type StationJSON } from './stations';
@@ -1001,6 +1003,176 @@ describe('v14 to v15', () => {
     expect(j.buildings![0][5]).toEqual(work);
     expect(j.houses).toBeUndefined();
     expect(migrate(v14({ buildings: undefined })).buildings).toBeUndefined();
+  });
+
+  /** Tiles of the houses standing in the world the houses load into, and one with none. */
+  const HOUSE_TILES = [
+    [3, 4],
+    [7, 8],
+    [12, 5],
+    [20, 20],
+  ] as const;
+  /**
+   * A v14 file in any shape a build, an older file's steps or a hand could leave: stations, works
+   * and houses with or without a work already, a works with no level (v4 to v11 wrote none) or a
+   * level written as null, something newer after the work, and items the step must pass over.
+   */
+  function genV14(rng: Rng): SaveGame {
+    const file: Record<string, unknown> = { ...genOldFile(rng), version: 14 };
+    const work = () =>
+      rng.pick<unknown>([
+        null,
+        { to: 2, left: 10, total: 60 },
+        { to: 4, left: 0, total: 9 },
+        7,
+        {},
+      ]);
+    file.stations = Array.from({ length: rng.int(0, 4) }, (_, i) => {
+      if (rng.chance(0.1)) return rng.pick([null, 3, 'station']);
+      const defId = rng.pick(['farm', 'town', 'warehouse', 'depot']);
+      const s = { ...stationOf(defId, rng.pick(ROT_VALUES), i), level: rng.int(1, 6) };
+      return rng.chance(0.3) ? { ...s, work: work() } : s;
+    });
+    if (rng.chance(0.2)) delete file.buildings;
+    else
+      file.buildings = Array.from({ length: rng.int(0, 5) }, () => {
+        const id = rng.pick(['windmill', 'sawmill', 'bridge_wood']);
+        const t: unknown[] = [rng.int(0, 31), rng.int(0, 31), id, rng.next()];
+        switch (rng.int(0, 6)) {
+          case 0:
+            return t;
+          case 1:
+            return [...t, null];
+          case 2:
+            return [...t, rng.int(1, 4), work()];
+          case 3:
+            return [...t, rng.int(1, 4), work(), 'newer'];
+          case 4:
+            return t.slice(0, rng.int(0, 3));
+          case 5:
+            return rng.pick([null, 'kiln', {}]);
+          default:
+            return [...t, rng.int(1, 4)];
+        }
+      });
+    const shape = rng.next();
+    if (shape < 0.2) delete file.houses;
+    else if (shape < 0.3) file.houses = rng.pick([null, 'houses', { list: 'none' }]);
+    else
+      file.houses = {
+        list: Array.from({ length: rng.int(0, 4) }, () => {
+          if (rng.chance(0.1)) return rng.pick([null, 5]);
+          const [x, y] = rng.pick(HOUSE_TILES);
+          const h: Record<string, unknown> = {
+            x,
+            y,
+            level: rng.int(1, 6),
+            residents: rng.int(0, 40),
+            progress: rng.pick([1, 0.5]),
+          };
+          if (rng.chance(0.5)) h.grow = rng.int(0, 3);
+          if (rng.chance(0.5)) h.full = rng.int(0, 3);
+          if (rng.chance(0.3)) h.work = work();
+          return h;
+        }),
+        arrivals: [],
+        visited: [],
+      };
+    return file as unknown as SaveGame;
+  }
+  /** Smaller v14 files: what `shrinkOldFile` drops, then shorter works and house lists. */
+  function* shrinkV14(file: SaveGame): Iterable<SaveGame> {
+    const f = file as unknown as Record<string, unknown>;
+    for (const smaller of shrinkOldFile(f)) if (smaller.version === 14) yield smaller as never;
+    if (Array.isArray(f.buildings))
+      for (const buildings of shrinkArray(f.buildings)) yield { ...f, buildings } as never;
+    if (isObject(f.houses) && Array.isArray(f.houses.list))
+      for (const list of shrinkArray(f.houses.list))
+        yield { ...f, houses: { ...f.houses, list } } as never;
+  }
+  /**
+   * `after` with what the step may add taken out again: a `work: null` on a station or house that
+   * had no work, and on a works tuple a null work, after a level where the tuple had none (whether
+   * that level means what the missing one did is for the load comparison to judge). Anything else
+   * the step changed is left for the comparison with the file before to find.
+   */
+  function unfilled(after: SaveGame, before: SaveGame): unknown {
+    const copy = asStored(after) as Record<string, unknown>;
+    const was = asStored(before) as Record<string, unknown>;
+    const dropWork = (items: unknown, old: unknown) => {
+      if (!Array.isArray(items) || !Array.isArray(old)) return;
+      items.forEach((item, i) => {
+        const o: unknown = old[i];
+        if (isObject(item) && isObject(o) && !('work' in o) && item.work === null) delete item.work;
+      });
+    };
+    dropWork(copy.stations, was.stations);
+    if (isObject(copy.houses) && isObject(was.houses)) dropWork(copy.houses.list, was.houses.list);
+    if (Array.isArray(copy.buildings) && Array.isArray(was.buildings))
+      copy.buildings.forEach((b: unknown, i) => {
+        const old: unknown = (was.buildings as unknown[])[i];
+        if (!Array.isArray(b) || !Array.isArray(old)) return;
+        if ((old.length === 4 || old.length === 5) && b.length === 6 && b[5] === null)
+          b.length = old.length;
+      });
+    return copy;
+  }
+
+  it('fills an explicit no-work and nothing else, idempotently, and loads as before', () => {
+    // The step only fills defaults: taking out what it may add gives back the file it was given,
+    // so a work a file holds and everything newer than v15 survive. Each station and house then
+    // says it has no work, and each works tuple has the place for one. Run again it finds
+    // nothing to do. And the load code sees no difference: every station, works and house loads
+    // from the stepped file as it loaded from the v14 file, the houses onto houses standing in a
+    // world as a save's houses do (items the load code cannot read at all are left out of both).
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    w.builder.free = true;
+    for (const [x, y] of HOUSE_TILES.slice(0, 3)) w.builder.spawnDecor(x, y, 'townhouse', 0);
+    w.builder.free = false;
+    w.houses.finishAll();
+    const loadHouses = (j: SaveGame) => {
+      const houses = j.houses as HousesJSON;
+      w.houses.load({ ...houses, list: houses.list.filter(isObject) as HousesJSON['list'] });
+      return w.houses.toJSON().list;
+    };
+    forAll(
+      genV14,
+      (file) => {
+        const before = asStored(file) as SaveGame;
+        const once = asStored(runStep(14, asStored(file) as SaveGame)) as SaveGame;
+        expect(asStored(runStep(14, asStored(once) as SaveGame)), 'run again').toEqual(once);
+        expect(unfilled(once, before), 'beside the defaults it fills').toEqual(before);
+
+        const houseList = (j: SaveGame) =>
+          isObject(j.houses) && Array.isArray(j.houses.list) ? (j.houses.list as unknown[]) : [];
+        for (const [what, items] of [
+          ['station', once.stations as unknown[]],
+          ['house', houseList(once)],
+        ] as const)
+          items.forEach((item, i) => {
+            if (isObject(item))
+              expect('work' in item, `${what} ${i} says if it has a work`).toBe(true);
+          });
+        (once.buildings ?? []).forEach((b: unknown, i) => {
+          if (Array.isArray(b) && b.length >= 4)
+            expect(b.length, `works ${i} has the place for a work`).toBeGreaterThanOrEqual(6);
+        });
+
+        (before.stations as unknown[]).forEach((sj, i) => {
+          if (!isObject(sj)) return;
+          const load = (j: unknown) => Station.fromJSON(asStored(j) as StationJSON).toJSON();
+          expect(load(once.stations[i]), `station ${i} loads as before`).toEqual(load(sj));
+        });
+        (before.buildings ?? []).forEach((bj: unknown, i) => {
+          if (!Array.isArray(bj) || bj.length < 3) return;
+          const load = (j: unknown) => buildingFromJSON(asStored(j) as BuildingJSON);
+          expect(load(once.buildings![i]), `works ${i} loads as before`).toEqual(load(bj));
+        });
+        if (houseList(before).length)
+          expect(loadHouses(once), 'the houses load as before').toEqual(loadHouses(before));
+      },
+      { shrink: shrinkV14 },
+    );
   });
 });
 

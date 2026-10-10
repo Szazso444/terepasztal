@@ -1,17 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
-import { forAll } from '../testing/property';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import type { Rng } from '../engine/rng';
 import { content } from '../data/content';
 import { STR } from '../strings';
 import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
 import { setSeasonOffset } from './weather';
-import { LEVELS, Station, type StationJSON } from './stations';
+import { LEVELS, MAX_LEVEL, STATION_DEFS, Station, type StationJSON } from './stations';
 import {
+  BUILDING_DEFS,
   buildingDef,
   buildingFromJSON,
   buildingLevel,
   buildingToJSON,
   tickBuildings,
+  worksMaxLevel,
   type Building,
   type BuildingJSON,
 } from './buildings';
@@ -598,5 +601,426 @@ describe('what may be upgraded', () => {
     v.houses.tickWorks(t / 3);
     expect([farm2.level, buildingLevel(mill2), home2.level]).toEqual([2, 2, 2]);
     expect(v.ups.map((e) => e.kind)).toEqual(['station', 'works', 'house']);
+  });
+});
+
+// ------------------------------------------------------------------------------------ properties
+
+/** Game hours of an upgrade to levels 2 to 6, as the design sets them: the oracle's own table. */
+const HOURS = [6, 9, 12, 18, 24];
+
+/** What an upgrade raises, named as `Upgraded.kind` names it. */
+type Kind = Upgraded['kind'];
+/** In the order a step finishes them: the builder's stations, its works, then the houses. */
+const KINDS: readonly Kind[] = ['station', 'works', 'house'];
+/** Where `site` puts the farm, the windmill and the house, and their footprints. */
+const AT: Record<Kind, { x: number; y: number; w: number; h: number }> = {
+  station: { x: 6, y: 29, w: 1, h: 1 },
+  works: { x: 4, y: 10, w: 1, h: 1 },
+  house: { x: 20, y: 25, w: 1, h: 1 },
+};
+/** A value for each kind. */
+const perKind = <T>(f: (k: Kind) => T) =>
+  ({ station: f('station'), works: f('works'), house: f('house') }) as Record<Kind, T>;
+
+/** The farm, the windmill and the house of a world, found where they stand (a load makes anew). */
+const farmOf = (w: SimWorld) => w.builder.stations.find((s) => s.def.id === 'farm')!;
+const millOf = (w: SimWorld) => w.builder.buildingAt(AT.works.x, AT.works.y)!;
+const homeOf = (w: SimWorld) => w.houses.at(AT.house.x, AT.house.y)!;
+function levelOf(w: SimWorld, k: Kind): number {
+  if (k === 'station') return farmOf(w).level;
+  return k === 'works' ? buildingLevel(millOf(w)) : homeOf(w).level;
+}
+function closedOf(w: SimWorld, k: Kind): boolean {
+  if (k === 'station') return farmOf(w).closed;
+  return !!(k === 'works' ? millOf(w).work : homeOf(w).work);
+}
+/** Puts the next level's cost of `k` in the stockpile, then presses Upgrade; true if it started. */
+function press(w: SimWorld, k: Kind): boolean {
+  const check =
+    k === 'station'
+      ? w.builder.canUpgrade(farmOf(w))
+      : k === 'works'
+        ? w.builder.canUpgradeBuilding(millOf(w))
+        : w.houses.canUpgrade(homeOf(w));
+  for (const [id, n] of Object.entries(check.cost)) w.stock.add(id, n);
+  if (k === 'station') return w.builder.upgradeStation(farmOf(w));
+  return k === 'works' ? w.builder.upgradeBuilding(millOf(w)) : w.houses.upgrade(homeOf(w));
+}
+
+/**
+ * A Hyper age world (every level open) with a farm, a windmill and a house at `AT`, each raised
+ * in the editor to its level in `from`, and the rises that took recorded nowhere.
+ */
+function site(from: Record<Kind, number>): World {
+  const w = world(5);
+  station(w, 'farm', AT.station.x, AT.station.y);
+  works(w, 'windmill', AT.works.x, AT.works.y);
+  house(w, AT.house.x, AT.house.y);
+  freely(w, () => {
+    for (const k of KINDS)
+      while (levelOf(w, k) < from[k])
+        if (!press(w, k)) throw new Error(`site: ${k} stuck at ${levelOf(w, k)}`);
+  });
+  w.ups.length = 0;
+  return w;
+}
+
+/**
+ * The game saved and loaded again: the farm, the works and the house written as a save writes
+ * them, read back through `readSaveText` and loaded into a new world in `applySave`'s order
+ * (stations, the decor and the houses, then the works). The new world records its own rises.
+ */
+function reload(w: World): World {
+  const text = JSON.stringify({
+    version: SAVE_VERSION,
+    savedAt: 0,
+    seed: 1,
+    clock: { time: w.clock.time, speedIndex: 1 },
+    economy: { money: 0, tickets: 0, tier: 5, granted: [] },
+    track: [],
+    stations: w.builder.stations.map((s) => s.toJSON()),
+    trains: [],
+    contracts: {},
+    inventory: {},
+    gacha: {},
+    camera: { x: 0, y: 0, zoomIndex: 0 },
+    lastDay: 1,
+    buildings: [...w.builder.buildings.values()].map(buildingToJSON),
+    houses: w.houses.toJSON(),
+  });
+  const read = readSaveText(text);
+  if (!('save' in read)) throw new Error(`reload: the save was refused as ${read.error}`);
+  const { save } = read;
+  const v = world(5);
+  v.clock.time = save.clock.time;
+  for (const sj of save.stations) {
+    const s = Station.fromJSON(sj as StationJSON);
+    v.builder.stations.push(s);
+    v.builder.onStationChanged?.(s, false);
+  }
+  house(v, AT.house.x, AT.house.y);
+  v.houses.load(save.houses);
+  for (const bj of save.buildings!) {
+    const b = buildingFromJSON(bj as BuildingJSON);
+    v.builder.buildings.set(b.y * v.map.w + b.x, b);
+    v.builder.onBuildingChanged?.(b, false);
+  }
+  return v;
+}
+
+describe('upgrade time, for any steps', () => {
+  it('ends on the first step of SIM_STEP that reaches it, at any level, day and multiplier', () => {
+    // The game steps SIM_STEP (1/20) game seconds at a time. A work of H hours under a day of D
+    // seconds and a multiplier of c hundredths takes H·D/24·c/100 s, that is H·D·c/120 steps,
+    // counted in whole numbers here. It must end on the first whole step at or past that: never
+    // a step early, and never a step late because thousands of float steps did not quite add up.
+    // Half the cases sit on the Day length and Upgrade time sliders (tens of seconds, tenths);
+    // the rest take any whole second and hundredth, as rules from a save may, which brings the
+    // time of a work as close as 1/120 of a step to a step's end.
+    forAll(
+      (rng) => {
+        const on = rng.chance(0.5);
+        const day = on ? 10 * rng.int(3, 120) : rng.int(30, 1200);
+        return { from: rng.int(1, 5), day, hundredths: on ? 10 * rng.int(1, 40) : rng.int(1, 400) };
+      },
+      ({ from, day, hundredths }) => {
+        rules.daySeconds = day;
+        rules.upgradeTimeMul = hundredths / 100;
+        const w = site(perKind(() => from));
+        for (const k of KINDS) expect(press(w, k), `press ${k}`).toBe(true);
+        const due = Math.ceil((HOURS[from - 1] * day * hundredths) / 120);
+        const endedAt: Partial<Record<Kind, number>> = {};
+        for (let n = 1; n <= due + 1 && w.ups.length < KINDS.length; n++) {
+          w.builder.tickWorks(SIM_STEP);
+          w.houses.tickWorks(SIM_STEP);
+          for (const e of w.ups) endedAt[e.kind] ??= n;
+        }
+        expect(endedAt, `the step each work ended on, of ${due}`).toEqual(perKind(() => due));
+        expect(w.ups.map((e) => e.level)).toEqual(KINDS.map(() => from + 1));
+      },
+      {
+        shrink: function* (c) {
+          for (const from of shrinkInt(c.from, 1)) yield { ...c, from };
+          for (const day of shrinkInt(c.day, 30)) yield { ...c, day };
+          for (const hundredths of shrinkInt(c.hundredths, 1)) yield { ...c, hundredths };
+        },
+      },
+    );
+  }, 30_000);
+
+  /** A game run: upgrades pressed between steps of any size, maybe a save and load on the way. */
+  interface Run {
+    /** each one's level before its upgrade */
+    from: Record<Kind, number>;
+    day: number;
+    mul: number;
+    /** the step before which each upgrade is pressed; past the last step, after them all */
+    at: Record<Kind, number>;
+    /**
+     * game seconds of each step, in whole eighths so every sum is exact (0 is a paused frame), or
+     * `rest`: exactly the time the first work to end has left by the oracle's count, or nothing
+     * when no work runs
+     */
+    steps: (number | 'rest')[];
+    /** the step before which the game is saved and loaded again, or never */
+    saveAt: number | null;
+  }
+  function genRun(rng: Rng): Run {
+    const steps = Array.from({ length: rng.int(1, 30) }, (): number | 'rest' => {
+      switch (rng.int(0, 5)) {
+        case 0:
+          return 0;
+        case 1:
+          return rng.int(1, 8) / 8;
+        case 2:
+          return rng.int(1, 120);
+        case 3:
+          return rng.int(1, 4800) / 8;
+        default:
+          return 'rest';
+      }
+    });
+    return {
+      from: perKind(() => rng.int(1, 5)),
+      // whole game seconds an hour, and multipliers in quarters: the work times are exact too
+      day: rng.pick([120, 240, 360, 480, 720]),
+      mul: rng.pick([0.25, 0.5, 0.75, 1, 1.5, 2, 4]),
+      at: perKind(() => rng.int(0, steps.length)),
+      steps,
+      saveAt: rng.chance(0.5) ? rng.int(0, steps.length) : null,
+    };
+  }
+  function* shrinkRun(r: Run): Iterable<Run> {
+    if (r.saveAt !== null) yield { ...r, saveAt: null };
+    const eighths = (s: number | 'rest') =>
+      s === 'rest' ? [0] : [...shrinkInt(s * 8, 0)].map((n) => n / 8);
+    for (const steps of shrinkArray(r.steps, eighths)) if (steps.length) yield { ...r, steps };
+    for (const k of KINDS) {
+      for (const v of shrinkInt(r.at[k], 0)) yield { ...r, at: { ...r.at, [k]: v } };
+      for (const v of shrinkInt(r.from[k], 1)) yield { ...r, from: { ...r.from, [k]: v } };
+    }
+    if (r.saveAt !== null) for (const saveAt of shrinkInt(r.saveAt, 0)) yield { ...r, saveAt };
+  }
+
+  it('raises the level on the step its game time is reached, through the step and a save', () => {
+    // The oracle sums the game time of the steps since each press, exactly (whole eighths of a
+    // second against work times that are whole quarters, and steps that land on a work's end):
+    // the building is closed and at its old level until the step at which the sum reaches the
+    // work's time, then open one level up, and onUpgraded reports it once, on that step. Until
+    // then `works()` lists it with that sum over its time as its progress, so a step of no time
+    // moves nothing. A save and load anywhere changes none of it.
+    forAll(
+      genRun,
+      (run) => {
+        rules.daySeconds = run.day;
+        rules.upgradeTimeMul = run.mul;
+        const last = run.steps.length;
+        const at = perKind((k) => Math.min(run.at[k], last));
+        const time = perKind((k) => HOURS[run.from[k] - 1] * (run.day / 24) * run.mul);
+        // the oracle: game seconds of every step, and the step on which each work ends
+        const due = perKind(() => Infinity);
+        const sum = perKind(() => 0);
+        const dts = run.steps.map((s, j) => {
+          const running = KINDS.filter((k) => at[k] <= j && due[k] === Infinity);
+          const left = running.map((k) => time[k] - sum[k]);
+          const dt = s !== 'rest' ? s : left.length ? Math.min(...left) : 0;
+          for (const k of running) if ((sum[k] += dt) >= time[k]) due[k] = j;
+          return dt;
+        });
+        const stepped = perKind(() => 0);
+        let w = site(run.from);
+        let step = stepper(w);
+        const rises: (Omit<Upgraded, 'name'> & { step: number })[] = [];
+        for (let j = 0; j <= last; j++) {
+          for (const k of KINDS) {
+            if (at[k] !== j) continue;
+            expect(press(w, k), `press ${k} before step ${j}`).toBe(true);
+            expect(closedOf(w, k), `${k} closed once pressed`).toBe(true);
+          }
+          if (run.saveAt === j) {
+            w = reload(w);
+            step = stepper(w);
+          }
+          if (j === last) break;
+          step(dts[j]);
+          for (const { kind, x, y, w: wide, h: deep, level } of w.ups.splice(0))
+            rises.push({ kind, x, y, w: wide, h: deep, level, step: j });
+          for (const k of KINDS) {
+            if (at[k] <= j) stepped[k] += dts[j];
+            const done = due[k] <= j;
+            expect([levelOf(w, k), closedOf(w, k)], `${k} after step ${j}`).toEqual([
+              run.from[k] + (done ? 1 : 0),
+              at[k] <= j && !done,
+            ]);
+          }
+          const sites = [...w.builder.works(), ...w.houses.works()];
+          const running = KINDS.filter((k) => at[k] <= j && due[k] > j);
+          expect(
+            sites.map(({ progress: _, ...where }) => where),
+            `the works under way after step ${j}`,
+          ).toEqual(running.map((k) => AT[k]));
+          running.forEach((k, i) =>
+            expect(sites[i].progress, `${k}'s progress after step ${j}`).toBeCloseTo(
+              stepped[k] / time[k],
+              12,
+            ),
+          );
+        }
+        const expected = KINDS.filter((k) => due[k] <= last)
+          .map((k) => ({ kind: k, ...AT[k], level: run.from[k] + 1, step: due[k] }))
+          .sort((a, b) => a.step - b.step || KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
+        expect(rises, 'the rises onUpgraded reported, with their steps').toEqual(expected);
+      },
+      { shrink: shrinkRun },
+    );
+  }, 60_000);
+});
+
+describe('a work in a save', () => {
+  /** A work a save could hold for a building at `level`, well formed or not, as JSON reads it. */
+  function genWork(rng: Rng, level: number): unknown {
+    const total = rng.pick([1, 60, rng.range(0.001, 5000)]);
+    const work: Record<string, unknown> = { to: level + 1, left: rng.range(0, total), total };
+    if (rng.chance(0.2)) work.left = rng.pick([0, total]);
+    switch (rng.int(0, 9)) {
+      case 0:
+        work.to = level + rng.pick([-1, 0, 2]);
+        break;
+      case 1:
+        work.left = rng.pick([-5, total + 3, Number.NaN, Infinity, '7', null]);
+        break;
+      case 2:
+        work.total = rng.pick([0, -60, Number.NaN, Infinity, '60', null]);
+        break;
+      case 3:
+        delete work[rng.pick(['to', 'left', 'total'])];
+        break;
+      case 4:
+        return rng.pick([null, 7, 'work', [], {}]);
+      default:
+      // well formed
+    }
+    return asStored(work);
+  }
+  /** Whether `v` is a work the game could have started on a building at `level` below `top`. */
+  const startable = (v: unknown, level: number, top: number): v is Work => {
+    if (!v || typeof v !== 'object') return false;
+    const { to, left, total } = v as Record<string, unknown>;
+    if (typeof to !== 'number' || typeof left !== 'number' || typeof total !== 'number')
+      return false;
+    return (
+      to === level + 1 && to <= top && total > 0 && total < Infinity && left >= 0 && left <= total
+    );
+  };
+  const STATION_IDS = ['farm', 'lumber', 'quarry', 'pump', 'town', 'warehouse', 'station'];
+  const WORKS_IDS = BUILDING_DEFS.map((d) => d.id);
+
+  it('keeps only a work the building could have started, and every such work as it was', () => {
+    // A loaded work brings the level one above the one the building loads at, no higher than its
+    // top level, with its time left within its time; so when it ends the level rises by one, as
+    // onUpgraded says. Anything else is dropped, and a work the game could have written is kept
+    // exactly. The house loads onto a house standing in a world, as a save's houses do.
+    const w = world(5);
+    house(w, AT.house.x, AT.house.y);
+    forAll(
+      (rng) => {
+        const kind = rng.pick(KINDS);
+        const id =
+          kind === 'station'
+            ? rng.pick(STATION_IDS)
+            : kind === 'works'
+              ? rng.pick(WORKS_IDS)
+              : 'townhouse';
+        const top =
+          kind === 'station'
+            ? MAX_LEVEL
+            : kind === 'works'
+              ? worksMaxLevel({ id } as Building)
+              : w.houses.maxLevel;
+        const level = rng.chance(0.3) ? top : rng.int(1, top);
+        return { kind, id, level, work: genWork(rng, level) };
+      },
+      ({ kind, id, level, work }) => {
+        let loaded: { level: number; top: number; work: Work | null };
+        if (kind === 'station') {
+          const sj = { id: 1, defId: id, name: 'S', x: 1, y: 1, level, storage: {}, work };
+          const s = Station.fromJSON(asStored(sj) as StationJSON);
+          loaded = { level: s.level, top: MAX_LEVEL, work: s.work };
+        } else if (kind === 'works') {
+          const b = buildingFromJSON(asStored([1, 1, id, 0, level, work]) as BuildingJSON);
+          loaded = { level: buildingLevel(b), top: worksMaxLevel(b), work: b.work ?? null };
+        } else {
+          const hj = { ...AT.house, level, residents: 0, progress: 1, work };
+          w.houses.load(asStored({ list: [hj], arrivals: [], visited: [] }) as never);
+          const h = homeOf(w);
+          loaded = { level: h.level, top: w.houses.maxLevel, work: h.work ?? null };
+        }
+        expect(loaded.level, 'the level it loads at').toBe(level);
+        if (loaded.work)
+          expect(
+            startable(loaded.work, loaded.level, loaded.top),
+            `kept ${JSON.stringify(loaded.work)} at level ${loaded.level} of ${loaded.top}`,
+          ).toBe(true);
+        if (startable(work, level, loaded.top)) expect(loaded.work, 'kept as it was').toEqual(work);
+      },
+    );
+  });
+});
+
+describe('a station being upgraded, of every kind', () => {
+  it('makes nothing, takes nothing in, has no crew, and gives out what it holds as if open', () => {
+    // Every kind of station but the depot (whose upgrade is instant), at every level a work can
+    // start from, holding any goods: closed, it accepts no cargo, has no room, stores nothing and
+    // makes nothing however long it ticks, and feeds no crew. What it holds goes out as from the
+    // same station open: the same cargo on offer, the same free platform, the same amounts taken.
+    const kinds = STATION_DEFS.filter((d) => !d.depot).map((d) => d.id);
+    const cargos = [
+      ...new Set(STATION_DEFS.flatMap((d) => [...d.accepts, ...d.produces.map((p) => p.cargo)])),
+    ];
+    forAll(
+      (rng) => ({
+        id: rng.pick(kinds),
+        level: rng.int(1, MAX_LEVEL - 1),
+        held: cargos.filter(() => rng.chance(0.3)).map((c) => [c, rng.int(0, 60)] as const),
+        cargo: rng.pick(cargos),
+        amount: rng.int(1, 100),
+        dt: rng.pick([SIM_STEP, daySeconds(), weekSeconds()]),
+      }),
+      ({ id, level, held, cargo, amount, dt }) => {
+        const make = (closed: boolean) => {
+          const s = new Station(id, 1, 1);
+          s.level = level;
+          for (const [c, n] of held) if (n > 0) s.storage.set(c, n);
+          if (closed) s.work = { to: level + 1, left: 60, total: 60 };
+          return s;
+        };
+        const shut = make(true);
+        const open = make(false);
+        expect([shut.closed, open.closed]).toEqual([true, false]);
+        expect([shut.crew, shut.room], 'crew and room').toEqual([0, 0]);
+        expect(open.crew, 'crew when open').toBe(LEVELS.crew[level - 1]);
+        expect(cargos.filter((c) => shut.accepts(c))).toEqual([]);
+        expect(cargos.filter((c) => open.accepts(c))).toEqual(
+          cargos.filter((c) => open.def.accepts.includes(c)),
+        );
+        const holds = () => JSON.stringify([...shut.storage]);
+        const before = holds();
+        expect(shut.store(cargo, amount), `store ${amount} ${cargo}`).toBe(0);
+        shut.tick(dt);
+        expect(holds(), `after a tick of ${dt} s`).toBe(before);
+        expect(shut.availableCargo()).toEqual(open.availableCargo());
+        expect(shut.hasFreePlatform()).toBe(open.hasFreePlatform());
+        expect(shut.take(cargo, amount), `take ${amount} ${cargo}`).toBe(open.take(cargo, amount));
+        expect(holds()).toBe(JSON.stringify([...open.storage]));
+      },
+      {
+        shrink: function* (c) {
+          for (const held of shrinkArray(c.held)) yield { ...c, held };
+          for (const level of shrinkInt(c.level, 1)) yield { ...c, level };
+          for (const amount of shrinkInt(c.amount, 1)) yield { ...c, amount };
+        },
+      },
+    );
   });
 });
