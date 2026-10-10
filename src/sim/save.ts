@@ -143,6 +143,11 @@ export interface Settings {
   autoContracts?: boolean;
   /** v9: what happens to a new offer of each rarity */
   contractPolicy?: Record<ContractRarity, ContractPolicy>;
+  /**
+   * Which default `contractPolicy` was written under: absent (1) when every offer was accepted
+   * by default, `CONTRACT_POLICY_VERSION` once offers wait for the player by default.
+   */
+  contractPolicyVersion?: number;
   /** v10: signalling level (auto keeps the claims only) */
   signalling?: SignalLevel;
 }
@@ -151,22 +156,48 @@ export const CONTRACT_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legenda
 export type ContractRarity = (typeof CONTRACT_RARITIES)[number];
 /** accept: taken as it appears; prompt: left on the board; deny: dropped (free before acceptance) */
 export type ContractPolicy = 'accept' | 'prompt' | 'deny';
+/** What a new offer of any rarity meets unless the player chose otherwise: it waits for them. */
+export const DEFAULT_CONTRACT_POLICY: ContractPolicy = 'prompt';
+/** `Settings.contractPolicyVersion` of settings written since offers wait by default. */
+export const CONTRACT_POLICY_VERSION = 2;
 export function uniformContractPolicy(p: ContractPolicy): Record<ContractRarity, ContractPolicy> {
   return { common: p, uncommon: p, rare: p, epic: p, legendary: p };
 }
-/** Policy for a rarity, with the retired boolean and missing entries filled in. */
+/** Policy for a rarity; a missing entry is the default. */
 export function contractPolicyFor(s: Settings, rarity: ContractRarity): ContractPolicy {
-  const fallback: ContractPolicy = s.autoContracts === false ? 'prompt' : 'accept';
-  return s.contractPolicy?.[rarity] ?? fallback;
+  return s.contractPolicy?.[rarity] ?? DEFAULT_CONTRACT_POLICY;
 }
 /**
- * Turn the retired `autoContracts` flag into a per-rarity policy (true → accept, false → prompt).
- * Runs on the stored object before defaults are merged in, so a missing policy is still visible.
+ * Turn the retired `autoContracts` flag into a per-rarity policy (true → accept, false → prompt),
+ * as settings that travelled with a version 8 save had it.
  */
-export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+function retireAutoContracts(s: Partial<Settings>) {
   if (!s.contractPolicy && s.autoContracts !== undefined)
     s.contractPolicy = uniformContractPolicy(s.autoContracts === false ? 'prompt' : 'accept');
   delete s.autoContracts;
+}
+/**
+ * Bring stored settings to the current shape. Runs on the stored object before defaults are
+ * merged in, so a missing policy is still visible. The retired `autoContracts` flag becomes a
+ * per-rarity policy; then, once, settings written while every offer was accepted by default move
+ * to the new default: a policy that accepts every rarity (a missing entry read as accept then),
+ * or none at all, becomes `DEFAULT_CONTRACT_POLICY` for every rarity. Any other policy is the
+ * player's own choice and stays, its missing entries filled with the accept they meant.
+ */
+export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+  retireAutoContracts(s);
+  const v = s.contractPolicyVersion;
+  if (typeof v === 'number' && v >= CONTRACT_POLICY_VERSION) return s;
+  const old: Partial<Record<ContractRarity, unknown>> = isRecord(s.contractPolicy)
+    ? s.contractPolicy
+    : {};
+  const policy = Object.fromEntries(
+    CONTRACT_RARITIES.map((r) => [r, old[r] ?? 'accept']),
+  ) as Record<ContractRarity, ContractPolicy>;
+  s.contractPolicy = CONTRACT_RARITIES.every((r) => policy[r] === 'accept')
+    ? uniformContractPolicy(DEFAULT_CONTRACT_POLICY)
+    : policy;
+  s.contractPolicyVersion = CONTRACT_POLICY_VERSION;
   return s;
 }
 export const DEFAULT_SETTINGS: Settings = {
@@ -181,7 +212,8 @@ export const DEFAULT_SETTINGS: Settings = {
   showFps: false,
   weather: true,
   advisor: true,
-  contractPolicy: uniformContractPolicy('accept'),
+  contractPolicy: uniformContractPolicy(DEFAULT_CONTRACT_POLICY),
+  contractPolicyVersion: CONTRACT_POLICY_VERSION,
 };
 
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
@@ -336,7 +368,7 @@ export const MIGRATIONS: Migration[] = [
         c.trainId = c.trainId ?? null;
         delete c.reputation;
       }
-      if (j.settings) migrateSettings(j.settings);
+      if (j.settings) retireAutoContracts(j.settings);
       j.supply = j.supply ?? 'simple';
       if (j.economy) {
         j.economy.tier = Math.max(0, Math.min(2, j.economy.tier ?? 0));
@@ -494,9 +526,10 @@ export function buildSave(
 
 /**
  * Why a text was not taken as a save: it is not JSON, it is JSON but no save (no numeric seed),
- * or it is a save without something every version since v1 holds.
+ * or it is a save without something every version since v1 holds; or, for an import, storage
+ * refused to keep it (full or blocked).
  */
-export type SaveRefusal = 'json' | 'notSave' | 'damaged';
+export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'storage';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -573,15 +606,16 @@ export function readSave(): SaveGame | null {
 }
 /**
  * Store a save text the player brought (an export or a diagnostics bundle) as the game Continue
- * loads. A refused text stores nothing. The player's settings are never touched: the copy that
- * files from v8 to v13 carry is not applied.
+ * loads. A refused text stores nothing; a save storage will not keep (full or blocked) is refused
+ * as `storage`, and Continue still loads what it did. The player's settings are never touched: the
+ * copy that files from v8 to v13 carry is not applied.
  */
 export function importSave(
   raw: string,
 ): { ok: true; save: SaveGame } | { ok: false; error: SaveRefusal } {
   const read = readSaveText(raw);
   if ('error' in read) return { ok: false, error: read.error };
-  writeSave(read.save);
+  if (!writeSave(read.save)) return { ok: false, error: 'storage' };
   return { ok: true, save: read.save };
 }
 /** Run the migration chain from the save's version to the current one; records where it came from. */
@@ -621,14 +655,18 @@ export function clearSave() {
     /* ignore */
   }
 }
+/** The defaults overlaid by `stored`, sharing no object with `DEFAULT_SETTINGS`. */
+function settingsFrom(stored: Partial<Settings>): Settings {
+  const s = { ...DEFAULT_SETTINGS, ...stored };
+  if (s.contractPolicy) s.contractPolicy = { ...s.contractPolicy };
+  return s;
+}
 export function readSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw
-      ? { ...DEFAULT_SETTINGS, ...migrateSettings(JSON.parse(raw) as Partial<Settings>) }
-      : { ...DEFAULT_SETTINGS };
+    return settingsFrom(raw ? migrateSettings(JSON.parse(raw) as Partial<Settings>) : {});
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    return settingsFrom({});
   }
 }
 export function writeSettings(s: Settings) {

@@ -49,8 +49,13 @@ export const STR = {
       earned: 'Earned in total',
       substations: 'Powered substations',
       wires: 'Live electrified tiles',
+      chunks: 'Owned chunks',
     } as Record<string, string>,
-    hint: 'An age begins once every goal listed for it is met (checked every hour).',
+    /** heads the goals that are alternatives of one another */
+    anyOf: 'One of these:',
+    /** the same heading once one of its goals is met */
+    anyOfMet: 'One of these: met',
+    hint: 'An age begins once every goal listed for it is met; under "One of these", one goal is enough. Goals are checked every hour.',
   },
   overview: {
     locked: 'UNCHARTED',
@@ -104,6 +109,7 @@ export const STR = {
     governs: (dir: string) => `Governs trains travelling ${dir}`,
     governsTravel: (dir: string) => `Governs travel ${dir}`,
     rotate: 'Rotate direction',
+    gone: 'That signal is no longer there',
     guideButton: 'Semaphore guide',
     guideTitle: 'Semaphores and track blocks',
     guidePlace:
@@ -141,6 +147,9 @@ export const STR = {
     junctions: 'Junctions',
     tile: 'Tile',
     regenerate: 'New map (seed)',
+    /** toast for an error the game loop caught; shown once per distinct message */
+    frameError: (message: string) =>
+      `Something went wrong: ${message}. The game keeps running; the browser console has details.`,
   },
   traffic: {
     pullingAside: 'Pulling aside on a reserved escape route',
@@ -568,12 +577,14 @@ export const STR = {
     failed: 'Deadline missed',
     expired: 'Expired',
     accepted: (n: string) => `${n} accepted`,
+    activeFull: (n: number) =>
+      `Your land supports ${n} active contract${n === 1 ? '' : 's'}. Finish one or buy land to take on more.`,
     completed: (n: string, pay: string) => `${n} delivered: ${pay}`,
     failedMsg: (n: string, fine: string) => `${n} failed: fined ${fine}`,
     autoOn: 'Auto-accept: on',
     autoOff: 'Auto-accept: off',
     autoHint:
-      'On: every offer is accepted as it comes. Off: offers wait here for you. Finer control per rarity is in Settings.',
+      'On: offers are accepted as they come, while your land has room for another active contract; the rest wait here. Off: offers wait here for you. Finer control per rarity is in Settings.',
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
     offersBadge: (n: number) => `${n} new`,
     sideEmpty: 'No active contracts.',
@@ -699,6 +710,7 @@ export const STR = {
       'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
     fitted: (n: string) => `${n} fitted with in-cab signalling`,
     hasInCab: 'in-cab signalling fitted',
+    alreadyFitted: 'Already fitted with in-cab signalling',
     noMoney: 'Not enough money',
     size: {
       tiny: 'tiny (half a tile)',
@@ -784,10 +796,9 @@ export const STR = {
     controls: 'Controls',
     controlsText:
       'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Track: 1-5 piece, Q / E type · U upgrade track, Shift+U downgrade · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
-    lastSave: 'Last save',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
-      'Auto-accept takes the offer at once; Ask leaves it on the board; Auto-deny drops it (free).',
+      'Auto-accept takes the offer at once while your land has room for another active contract, and otherwise leaves it on the board; Ask leaves it on the board; Auto-deny drops it (free).',
     policy: { accept: 'Auto-accept', prompt: 'Ask', deny: 'Auto-deny' } as Record<string, string>,
     slots: 'Named saves',
     slotName: 'Save name',
@@ -795,7 +806,6 @@ export const STR = {
     loadSlot: 'Load',
     deleteSlot: 'Delete',
     noSlots: 'No named saves yet. Type a name and press Save as.',
-    slotMeta: (day: number, version: number) => `day ${day} · v${version}`,
     slotSaved: (n: string) => `Saved as "${n}"`,
     saveAsTitle: 'Save game as',
     saveAsHint: 'Name for this save. An existing save with the same name is replaced.',
@@ -847,6 +857,11 @@ export const STR = {
       return `${d} day${d === 1 ? '' : 's'} ago`;
     },
     saved: (ago: string) => `saved ${ago}`,
+    /**
+     * Continue over a game being played goes back to that game, not to a save; `ago` is when it
+     * was last stored, null when it has not been.
+     */
+    inProgress: (ago: string | null) => (ago ? `in progress · last saved ${ago}` : 'in progress'),
     autosaveStatus: (on: boolean, ago: string | null) =>
       !on
         ? 'Autosave off'
@@ -854,12 +869,20 @@ export const STR = {
           ? `Autosave on · last saved ${ago}`
           : 'Autosave on · not saved yet',
     confirmOverwrite: (n: string) => `A save named "${n}" already exists. Replace it?`,
+    /** Titles of the in-game dialog that asks before a save is replaced, deleted or loaded. */
+    overwriteTitle: 'Replace save',
+    deleteTitle: 'Delete save',
+    loadTitle: 'Load save',
+    importTitle: 'Import save',
+    /** Asked before the settings screen's Load replaces a game in progress with the stored one. */
+    confirmLoadLast: 'Load the last save? Unsaved progress in the current game is lost.',
     olderFormat: (v: number) => `format v${v}, upgraded on load`,
     newerFormat: (v: number) => `format v${v}, from a newer game`,
     refused: {
       json: 'That text is not save data.',
       notSave: 'That is not a Terepasztal save.',
       damaged: 'That save is damaged and was not loaded. Your game is unchanged.',
+      storage: 'Could not store that save (storage full or blocked). Your game is unchanged.',
     },
     /** `refund` is the text of `saves.refund`; with nothing refunded its sentence is left out. */
     pruned: (list: string, refund: string) =>
@@ -1070,6 +1093,8 @@ export const STR = {
     buy: 'Buy',
     sell: 'Sell',
     full: 'Stockpile is full',
+    nothingToBuy: 'Nothing to buy',
+    nothingToSell: 'None in the stockpile to sell',
     trend: 'Trend',
     driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
     driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow weekly walk.',
@@ -1192,6 +1217,8 @@ export const STR = {
       `Not founded yet: needs ${[house ? 'a House' : '', wh ? 'a warehouse' : ''].filter(Boolean).join(' and ')} within 7 tiles`,
     makes: 'Makes / week',
     uses: 'Uses / week',
+    /** power among what a town makes or uses, lowercase like the cargo names beside it */
+    power: 'power',
     go: 'Go',
     rename: 'Rename',
     namePrompt: 'Name the town',
@@ -1252,6 +1279,7 @@ export const STR = {
     unlocks: (c: string) => `Next: ${c}`,
     demolish: 'Demolish',
     rename: 'Rename',
+    nameEmpty: 'A station needs a name',
     noPlatform: 'No adjacent track!',
     orphaned: (n: string) => `${n} lost its platform track`,
     boost: (pct: number) => `Water tower: loading +${pct}%`,

@@ -3,6 +3,8 @@ import { STR } from '../strings';
 import type { LevelData } from '../world/level';
 import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import type { SlotMeta } from '../sim/save';
+import type { NamePrompt } from './namePrompt';
+import { liveText, slotText, type SlotText } from './saveSlots';
 
 /** Shared by both menus: music and effects volume, so the player can set them from the menu. */
 export interface AudioActions {
@@ -52,42 +54,73 @@ export interface SlotActions {
   deleteSlot(name: string): void;
 }
 
-function slotList(actions: SlotActions, onDeleted: () => void) {
+/** The game's own dialog, which the menus and the settings screen ask their questions in. */
+export type Confirm = Pick<NamePrompt, 'confirm'>;
+
+/**
+ * What one save holds and when it was written, one `cls` line each: day, age and money; how long
+ * ago, with the date and time as its title; the format, when it is not this build's.
+ */
+export function slotLines(meta: SlotMeta, now: number, cls = 'sub'): HTMLElement[] {
+  return textLines(slotText(meta, now), cls);
+}
+
+/** One `cls` line each of what `slotText` or `liveText` says, the date as the time line's title. */
+function textLines(t: SlotText, cls: string): HTMLElement[] {
+  const lines = [el('div', { class: cls, text: t.detail })];
+  if (t.saved) lines.push(el('div', { class: cls, text: t.saved, title: t.savedAt ?? '' }));
+  if (t.format) lines.push(el('div', { class: cls, text: t.format }));
+  return lines;
+}
+
+/** Delete a named save once the player says yes in the game's dialog. */
+export function confirmDeleteSlot(
+  prompt: Confirm,
+  actions: Pick<SlotActions, 'deleteSlot'>,
+  name: string,
+  onDeleted: () => void,
+) {
+  void prompt.confirm(STR.saves.deleteTitle, STR.settings.confirmDelete(name)).then((ok) => {
+    if (!ok) return;
+    actions.deleteSlot(name);
+    onDeleted();
+  });
+}
+
+/** The named saves in the order `slots()` gives them (newest first), with load and delete. */
+function slotList(actions: SlotActions, prompt: Confirm, onDeleted: () => void) {
   const list = el('div', { class: 'menu-levels' });
   const slots = actions.slots();
+  const now = Date.now();
   if (!slots.length) list.append(el('div', { class: 'dim', text: STR.menu.noSaves }));
   for (const sl of slots)
     list.append(
       el(
         'div',
-        { class: 'item', style: 'cursor:default' },
+        { class: 'item static' },
+        el('div', {}, el('div', { class: 'name', text: sl.name }), ...slotLines(sl, now)),
         el(
           'div',
-          {},
-          el('div', { class: 'name', text: sl.name }),
-          el('div', {
-            class: 'sub',
-            text: `${STR.menu.day(sl.day)} · ${new Date(sl.savedAt).toLocaleString()}`,
-          }),
-        ),
-        el(
-          'div',
-          { class: 'row', style: 'margin:0;flex-direction:column' },
+          { class: 'row stack' },
           btn(STR.settings.loadSlot, () => actions.loadSlot(sl.name), 'small accent'),
           btn(
             STR.settings.deleteSlot,
-            () => {
-              if (confirm(STR.settings.confirmDelete(sl.name))) {
-                actions.deleteSlot(sl.name);
-                onDeleted();
-              }
-            },
+            () => confirmDeleteSlot(prompt, actions, sl.name, onDeleted),
             'small',
           ),
         ),
       ),
     );
   return list;
+}
+
+/**
+ * What Continue goes back to, described like a save: the stored save (`continueMeta()`), or with
+ * `live` the game being played under the title screen, which it was opened over.
+ */
+export interface ContinueTarget {
+  meta: SlotMeta;
+  live: boolean;
 }
 
 export interface MainMenuActions extends SlotActions, AudioActions {
@@ -111,7 +144,10 @@ export class MainMenu {
   private right = el('div', { class: 'menu-col levels' });
   visible = false;
 
-  constructor(private readonly actions: MainMenuActions) {
+  constructor(
+    private readonly actions: MainMenuActions,
+    private readonly prompt: Confirm,
+  ) {
     this.root.append(
       el(
         'div',
@@ -129,10 +165,15 @@ export class MainMenu {
     this.root.style.display = 'none';
   }
 
-  show(hasSave: boolean, levels: LevelData[], custom: { rules: boolean; content: boolean }) {
+  /** `save` is what Continue goes back to, null when there is nothing to continue. */
+  show(
+    save: ContinueTarget | null,
+    levels: LevelData[],
+    custom: { rules: boolean; content: boolean },
+  ) {
     this.visible = true;
     this.root.style.display = 'flex';
-    this.render(hasSave, levels, custom);
+    this.render(save, levels, custom);
   }
   hide() {
     this.visible = false;
@@ -140,7 +181,7 @@ export class MainMenu {
   }
 
   private render(
-    hasSave: boolean,
+    save: ContinueTarget | null,
     levels: LevelData[],
     custom: { rules: boolean; content: boolean },
   ) {
@@ -153,7 +194,13 @@ export class MainMenu {
       style: 'width:140px',
     }) as HTMLInputElement;
     const cont = btn(STR.menu.continue, () => this.actions.continue(), 'menu-btn accent');
-    cont.disabled = !hasSave;
+    cont.disabled = !save;
+    // what Continue goes back to, in the body font under the title-font label
+    if (save) {
+      const now = Date.now();
+      const t = save.live ? liveText(save.meta, now) : slotText(save.meta, now);
+      cont.append(el('div', { class: 'menu-btn-detail' }, ...textLines(t, 'sub dim')));
+    }
     // production chain of the new game: simple (default) or the full supply set
     const supply = el('select', { class: 'text', title: STR.menu.supply }) as HTMLSelectElement;
     for (const m of SUPPLY_MODES)
@@ -190,7 +237,7 @@ export class MainMenu {
       btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'),
       audioRows(this.actions),
       el('div', { class: 'col-title', style: 'margin-top:8px', text: STR.menu.savedGames }),
-      slotList(this.actions, () => this.render(hasSave, levels, custom)),
+      slotList(this.actions, this.prompt, () => this.render(save, levels, custom)),
     );
     const r = this.right;
     r.innerHTML = '';
@@ -201,7 +248,7 @@ export class MainMenu {
       list.append(
         el(
           'div',
-          { class: 'item', style: 'cursor:default' },
+          { class: 'item static' },
           el(
             'div',
             {},
@@ -216,7 +263,7 @@ export class MainMenu {
           ),
           el(
             'div',
-            { class: 'row', style: 'margin:0;flex-direction:column' },
+            { class: 'row stack' },
             btn(STR.menu.play, () => this.actions.playLevel(lv.id), 'small accent'),
             btn(STR.menu.edit, () => this.actions.editLevel(lv.id), 'small'),
             btn(
@@ -300,14 +347,18 @@ export class PauseMenu {
   readonly root = el('div', { id: 'pause-root', class: 'menu-root' });
   private box = el('div', { class: 'menu-frame panel small' });
   visible = false;
-  constructor(private readonly actions: PauseMenuActions) {
+  constructor(
+    private readonly actions: PauseMenuActions,
+    private readonly prompt: Confirm,
+  ) {
     this.root.append(this.box);
     this.root.style.display = 'none';
     this.root.addEventListener('mousedown', (e) => {
       if (e.target === this.root) this.actions.resume();
     });
   }
-  show(opts: { testing: boolean; editor: boolean }) {
+  /** `slotsOpen` shows the named saves unfolded, as they were before a delete redrew the menu. */
+  show(opts: { testing: boolean; editor: boolean }, slotsOpen = false) {
     this.visible = true;
     this.root.style.display = 'flex';
     const b = this.box;
@@ -324,8 +375,8 @@ export class PauseMenu {
       b.append(btn(STR.settings.save, () => this.actions.save(), 'menu-btn'));
       b.append(btn(STR.menu.saveAs, () => this.actions.saveAs(), 'menu-btn'));
       // "Load game" unfolds the named saves under the button
-      const list = slotList(this.actions, () => this.show(opts));
-      list.style.display = 'none';
+      const list = slotList(this.actions, this.prompt, () => this.show(opts, true));
+      list.style.display = slotsOpen ? 'flex' : 'none';
       list.classList.add('menu-slots');
       b.append(
         btn(

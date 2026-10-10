@@ -2,12 +2,16 @@ import { SIGNAL_LEVELS } from '../sim/signals';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
+import { confirmDeleteSlot, slotLines, type Confirm } from './menu';
+import { autosaveText } from './saveSlots';
 import {
   CONTRACT_RARITIES,
   contractPolicyFor,
+  hasSlot,
   uniformContractPolicy,
   type ContractPolicy,
   type Settings,
+  type SlotMeta,
 } from '../sim/save';
 
 export interface SettingsActions {
@@ -20,7 +24,8 @@ export interface SettingsActions {
   saveAs(name: string): boolean;
   loadSlot(name: string): void;
   deleteSlot(name: string): void;
-  slots(): { name: string; savedAt: number; version: number; day: number }[];
+  /** the named saves, newest first */
+  slots(): SlotMeta[];
 }
 
 /** Settings and save management. */
@@ -30,6 +35,8 @@ export class SettingsScreen implements Screen {
   readonly root = el('div', { class: 'cols' });
   private left = el('div', { class: 'col-body' });
   private right = el('div', { class: 'col-body' });
+  /** autosave on or off and when the game was last stored; kept current while the screen is up */
+  private autosaveLine = el('div', { class: 'kv' });
 
   constructor(
     private readonly settings: Settings,
@@ -41,6 +48,8 @@ export class SettingsScreen implements Screen {
       version: string;
       warning: string | null;
     },
+    /** the game's dialog, for overwrite, delete and import questions */
+    private readonly prompt: Confirm,
   ) {
     this.root.append(
       el(
@@ -59,6 +68,20 @@ export class SettingsScreen implements Screen {
   }
   onOpen() {
     this.render();
+  }
+  refresh() {
+    this.showAutosave();
+  }
+
+  /** The autosave line: whether it is on, how long ago the game was stored, the date as title. */
+  private showAutosave() {
+    const savedAt = this.info().savedAt;
+    const text = autosaveText(!!this.settings.autosave, savedAt, Date.now());
+    if (this.autosaveLine.textContent !== text) {
+      this.autosaveLine.textContent = '';
+      this.autosaveLine.append(el('span', { class: 'k', text }));
+    }
+    this.autosaveLine.title = savedAt ? new Date(savedAt).toLocaleString() : '';
   }
 
   private slider(label: string, key: 'master' | 'sfx' | 'music' | 'ambient') {
@@ -121,6 +144,7 @@ export class SettingsScreen implements Screen {
         b.textContent = this.settings[key] ? STR.settings.on : STR.settings.off;
         b.classList.toggle('active', this.settings[key]);
         this.onChange();
+        if (key === 'autosave') this.showAutosave();
       },
       `small ${this.settings[key] ? 'active' : ''}`,
     );
@@ -174,6 +198,7 @@ export class SettingsScreen implements Screen {
     const r = this.right;
     r.innerHTML = '';
     const info = this.info();
+    this.showAutosave();
     r.append(
       el(
         'div',
@@ -181,15 +206,7 @@ export class SettingsScreen implements Screen {
         el('span', { class: 'k', text: STR.debug.seed }),
         el('span', { class: 'v', text: String(info.seed) }),
       ),
-      el(
-        'div',
-        { class: 'kv' },
-        el('span', { class: 'k', text: STR.settings.lastSave }),
-        el('span', {
-          class: 'v',
-          text: info.savedAt ? new Date(info.savedAt).toLocaleString() : '-',
-        }),
-      ),
+      this.autosaveLine,
       el(
         'div',
         { class: 'kv' },
@@ -221,51 +238,47 @@ export class SettingsScreen implements Screen {
     nameInput.addEventListener('keydown', (e) => e.stopPropagation());
     const slotList = el('div', { class: 'slots' });
     const slots = this.actions.slots();
+    const now = Date.now();
     if (!slots.length) slotList.append(el('div', { class: 'dim', text: STR.settings.noSlots }));
     for (const sl of slots)
       slotList.append(
         el(
           'div',
-          { class: 'kv' },
-          el('span', {
-            class: 'k',
-            text: `${sl.name} · ${STR.settings.slotMeta(sl.day, sl.version)} · ${new Date(sl.savedAt).toLocaleString()}`,
-          }),
+          { class: 'kv save-row' },
+          el('div', {}, el('div', { text: sl.name }), ...slotLines(sl, now, 'sub dim')),
           el(
             'span',
-            { class: 'row', style: 'margin:0' },
+            { class: 'row' },
             btn(STR.settings.loadSlot, () => this.actions.loadSlot(sl.name), 'small'),
             btn(
               STR.settings.deleteSlot,
-              () => {
-                if (confirm(STR.settings.confirmDelete(sl.name))) {
-                  this.actions.deleteSlot(sl.name);
-                  this.render();
-                }
-              },
+              () => confirmDeleteSlot(this.prompt, this.actions, sl.name, () => this.render()),
               'small',
             ),
           ),
         ),
       );
+    const saveAs = async () => {
+      const n = nameInput.value.trim();
+      if (!n) return;
+      // replacing a save is asked first; a no writes nothing and leaves the name to change
+      if (
+        hasSlot(n) &&
+        !(await this.prompt.confirm(STR.saves.overwriteTitle, STR.saves.confirmOverwrite(n)))
+      )
+        return;
+      if (this.actions.saveAs(n)) {
+        nameInput.value = '';
+        this.render();
+      }
+    };
     r.append(
       el('div', { class: 'col-title', style: 'margin-top:12px', text: STR.settings.slots }),
       el(
         'div',
         { class: 'row' },
         nameInput,
-        btn(
-          STR.settings.saveAs,
-          () => {
-            const n = nameInput.value.trim();
-            if (!n) return;
-            if (this.actions.saveAs(n)) {
-              nameInput.value = '';
-              this.render();
-            }
-          },
-          'accent',
-        ),
+        btn(STR.settings.saveAs, () => void saveAs(), 'accent'),
       ),
       slotList,
     );
@@ -311,8 +324,11 @@ export class SettingsScreen implements Screen {
         btn(
           STR.settings.importSave,
           () => {
-            if (area.value.trim() && confirm(STR.settings.confirmImport))
-              this.actions.importSave(area.value.trim());
+            const text = area.value.trim();
+            if (!text) return;
+            void this.prompt
+              .confirm(STR.saves.importTitle, STR.settings.confirmImport)
+              .then((ok) => ok && this.actions.importSave(text));
           },
           'small',
         ),

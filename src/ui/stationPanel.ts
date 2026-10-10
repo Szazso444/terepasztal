@@ -2,6 +2,7 @@ import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import type { Station } from '../sim/stations';
 import type { Builder } from '../sim/build';
+import type { Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
 import { inSupplyMode } from '../sim/supply';
 import { fmtCost } from '../sim/stockpile';
@@ -25,6 +26,8 @@ export class StationPanel {
     private readonly clock: GameClock,
     private readonly towns: TownRegistry,
     private readonly onRenameTown: (t: Town) => void,
+    private readonly commands: Commands,
+    private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
   ) {
     this.root = el(
       'div',
@@ -207,10 +210,11 @@ export class StationPanel {
               STR.station.rename,
               () => {
                 const n = prompt(STR.station.rename, s.name);
-                if (n && n.trim()) {
-                  s.name = n.trim().slice(0, 24);
-                  this.render();
-                }
+                // cancelled, or left blank: nothing to rename
+                if (!n?.trim()) return;
+                const done = this.commands.renameStation(s, n);
+                if (!done.ok) this.toast(done.message, 'warn');
+                this.render();
               },
               'small',
             ),

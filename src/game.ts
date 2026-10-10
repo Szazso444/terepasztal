@@ -2,7 +2,7 @@ import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
-import { GameLoop } from './engine/loop';
+import { GameLoop, type LoopPhase } from './engine/loop';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
@@ -27,7 +27,7 @@ import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './wor
 import { levelAt } from './world/elevation';
 import { climbAxes, railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
-import { WorldRenderer } from './render/worldRenderer';
+import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
 import { GameClock, SIM_STEP } from './sim/time';
 import { Tooltip } from './ui/tooltip';
@@ -59,7 +59,7 @@ import {
 import { decorOffset, type Decor } from './sim/build';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
-import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
+import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import {
   SAVE_VERSION,
@@ -83,6 +83,7 @@ import {
 import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
 import { Station, resetStationIds, stationFootprint } from './sim/stations';
+import { ensureStartDepot, startDepotKind } from './sim/startDepot';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
@@ -441,7 +442,8 @@ export class Game implements UiHost {
     for (const [id, n] of Object.entries(startStock()))
       this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (!start) {
-      const d = this.ensureDepot();
+      // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
+      const d = this.ensureDepot(startDepotKind());
       if (d) {
         const p = tileToWorld(d.cx + 0.5, d.cy + 0.5);
         this.camera.centerOn(p.x, p.y);
@@ -551,11 +553,18 @@ export class Game implements UiHost {
     );
     return ok;
   }
-  /** Make a named save the stored game and reload into it; false when there is none. */
+  /**
+   * Make a named save the stored game and reload into it; false when there is none. A save storage
+   * will not keep (full or blocked) is not loaded: it says so and the running game goes on, since
+   * reloading would land in the older stored save.
+   */
   loadSlot(name: string) {
     const j = readSlot(name);
     if (!j) return false;
-    writeSave(j);
+    if (!writeSave(j)) {
+      this.toasts.push(STR.saves.refused.storage, 'warn');
+      return true;
+    }
     this.reloadIntoStoredSave(j.seed);
     return true;
   }
@@ -636,12 +645,15 @@ export class Game implements UiHost {
   reloadToMenu() {
     setIntentAndReload({ action: 'menu' });
   }
-  /** The debug panel's Regenerate: reload with its seed text in the address (`#seed=`). */
+  /**
+   * The debug panel's Regenerate: a new game on its seed text (a number, other text hashed, empty
+   * a random seed) in the running game's production chain. The new game replaces the stored one,
+   * so the running game is not written back on its way out, as in `reloadIntoStoredSave`.
+   */
   regenerate(seedText: string) {
-    const v = seedText.trim();
-    const seed = /^\d+$/.test(v) ? Number(v) : hashSeed(v);
-    location.hash = `seed=${seed}`;
-    location.reload();
+    this.keepStoredSave = true;
+    this.loop.stop();
+    setIntentAndReload({ action: 'new', seed: this.parseSeed(seedText), supply: this.supply });
   }
 
   // ---------------------------------------------------------------- editor
@@ -883,6 +895,8 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    await this.world.loadBridgeSurfaces();
+    this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
       !!(
         this.builder.stationAt(x, y) ||
@@ -986,6 +1000,7 @@ export class Game implements UiHost {
       SIM_HZ,
       (dt) => this.update(dt),
       (a, dt) => this.render(a, dt),
+      (err, phase) => this.frameError(err, phase),
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
@@ -1265,6 +1280,8 @@ export class Game implements UiHost {
   private restoringWorld = false;
   private refreshBridges() {
     if (this.restoringWorld) return;
+    const mode = this.world.bridgeMode,
+      textured: TexturedBridge[] = [];
     for (const b of this.builder.buildings.values())
       if (buildingDef(b.id).bridge) {
         const s = bridgeSpan(this.builder, b);
@@ -1286,7 +1303,27 @@ export class Game implements UiHost {
               ? `structures/landspan_${s.material}_${s.axis}`
               : `structures/landpad_${s.material}`;
         const id = 'bridge:' + b.x + ',' + b.y;
-        if (this.world.bridgeKit) {
+        if (mode === 'textured') {
+          // Meshes for every tile at once, so side-by-side bridges merge (setTexturedBridges).
+          for (const layer of [0, 1]) this.world.setPlatform(b.x, b.y, null, layer);
+          this.world.removeStructure(id);
+          this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
+          this.world.setBridgePiers(b.x, b.y, null);
+          this.world.setBridgeKit(b.x, b.y, null);
+          // A member of a wide curve or switch, or a crossing, stands on a square pad.
+          const span = !piece || (!piece.unit && climbAxes(piece.links).length === 1);
+          textured.push({
+            x: b.x,
+            y: b.y,
+            material: s.material,
+            axis: span ? (s.axis as 0 | 1) : null,
+            open: DIRS.map((d) => !!piece?.links.some((l) => l.includes(d))),
+            water,
+            level: b.level ?? 1,
+          });
+          continue;
+        }
+        if (mode === 'kit') {
           // The illustrated kit: deck or pad, near railing, and the parts under the deck.
           const dir = s.axis ? 'x' : 'y';
           this.world.setPlatform(
@@ -1341,6 +1378,7 @@ export class Game implements UiHost {
           this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36, dy);
         else this.world.removeStructure(detailId);
       }
+    this.world.setTexturedBridges(textured);
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
@@ -1551,67 +1589,14 @@ export class Game implements UiHost {
     }
   }
   /**
-   * Every game has a depot: the start grants one at the middle of the start chunk, an older save
-   * gets one on load. Gate track is laid where nothing stands yet. Returns the depot, or null when
-   * no room could be found nearby.
+   * Every game has a depot (`ensureStartDepot`): a new game's is narrow, for its narrow starter
+   * engines; an older save's regular, as its roster is. Returns the depot, or null after saying
+   * on the console that no site near the start could take one.
    */
-  ensureDepot(): Station | null {
-    const have = this.builder.depots()[0];
-    if (have) return have;
-    const rs = this.map.regionSize;
-    const cx = Math.floor((Math.floor((this.map.regionsX - 1) / 2) + 0.5) * rs);
-    const cy = Math.floor((Math.floor((this.map.regionsY - 1) / 2) + 0.5) * rs);
-    const clear = (x: number, y: number, allowTrack: boolean) => {
-      if (!inBounds(this.map, x, y) || !this.regions.isTileUnlocked(x, y)) return false;
-      const t = terrainAt(this.map, x, y);
-      if (t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain) return false;
-      if (this.builder.stationAt(x, y) || this.builder.decorAt(x, y)) return false;
-      if (this.builder.buildingAt(x, y)) return false;
-      if (!allowTrack && this.track.has(x, y)) return false;
-      return true;
-    };
-    const fits = (x: number, y: number, rot: number) => {
-      for (let dy = 0; dy < 2; dy++)
-        for (let dx = 0; dx < 2; dx++) if (!clear(x + dx, y + dy, false)) return false;
-      const gates =
-        rot === 0
-          ? [
-              [x - 1, y],
-              [x - 1, y + 1],
-              [x + 2, y],
-              [x + 2, y + 1],
-            ]
-          : [
-              [x, y - 1],
-              [x + 1, y - 1],
-              [x, y + 2],
-              [x + 1, y + 2],
-            ];
-      return gates.every(([gx, gy]) => clear(gx, gy, true));
-    };
-    for (let r = 0; r <= 24; r++)
-      for (let dy = -r; dy <= r; dy++)
-        for (let dx = -r; dx <= r; dx++) {
-          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-          for (const rot of [0, 1]) {
-            const x = cx + dx - 1;
-            const y = cy + dy - 1;
-            if (!fits(x, y, rot)) continue;
-            const wasFree = this.builder.free;
-            this.builder.free = true;
-            const d = this.builder.placeStation(x, y, 'depot', rot);
-            if (d) {
-              for (const g of d.gateTiles())
-                if (!this.track.has(g.x, g.y))
-                  this.builder.placeTrackKind(g.x, g.y, 'straight', rot === 0 ? 1 : 0);
-              d.name = STR.station.depotName;
-              this.onStationChanged(d, false);
-            }
-            this.builder.free = wasFree;
-            return d;
-          }
-        }
-    return null;
+  ensureDepot(defId = 'depot'): Station | null {
+    const d = ensureStartDepot(this.builder, defId);
+    if (!d) console.warn(`[depot] no site near the start takes a ${defId} and its gate track`);
+    return d;
   }
   /** A new age begins: its works, stations and rolling stock unlock. */
   private onAgeUp(tier: number) {
@@ -2025,7 +2010,28 @@ export class Game implements UiHost {
   }
 
   // ---------------------------------------------------------------- frame
+  /** messages of loop errors already toasted this session */
+  private readonly frameErrors = new Set<string>();
+  /**
+   * A loop callback threw and the loop carried on: log it with its stack every time, and toast each
+   * distinct message once, so an error repeating every frame does not flood the screen.
+   */
+  private frameError(err: unknown, phase: LoopPhase) {
+    console.error(`[loop] ${phase} threw; the game keeps running`, err);
+    const message = err instanceof Error ? err.message : String(err);
+    if (this.frameErrors.has(message)) return;
+    this.frameErrors.add(message);
+    this.toasts.push(STR.debug.frameError(message), 'warn');
+  }
   private render(alpha: number, dt: number) {
+    try {
+      this.drawFrame(alpha, dt);
+    } finally {
+      // input is read once per frame: a frame that throws must not replay its keys and clicks
+      this.input.endFrame();
+    }
+  }
+  private drawFrame(alpha: number, dt: number) {
     this.camera.viewW = this.app.screen.width;
     this.camera.viewH = this.app.screen.height;
     this.handleInput(dt);
@@ -2120,7 +2126,6 @@ export class Game implements UiHost {
     this.updateTrainSide(dt);
     this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
-    this.input.endFrame();
   }
 
   private minimapMarks() {

@@ -107,10 +107,11 @@ export function mapParams(size: number): MapGenParams {
  * fleet's signals, decor syncs houses and towns, works refresh towns, power lines, plants and
  * substations rebuild power and catenary, supply changes rebuild the catenary, and a placed
  * station gets its season and biome production multiplier. Contract offers follow
- * DEFAULT_SETTINGS (every rarity accepted at once) and the fleet's signalling level is the
- * default. Toasts, sounds, renderer updates and the notices Game pushes for the notice panel
- * (junction alerts, a failed contract, an age-up) are left unset; `builder.groundCheck` asks the
- * renderer in the game and stays unset here, so all ground counts as level.
+ * DEFAULT_SETTINGS (every rarity asks, so an offer waits for `contracts.accept`) and the fleet's
+ * signalling level is the default. Toasts, sounds, renderer updates and the notices Game pushes
+ * for the notice panel (junction alerts, a failed contract, an age-up) are left unset;
+ * `builder.groundCheck` asks the renderer in the game and stays unset here, so all ground counts
+ * as level.
  *
  * Building a world sets the supply mode and restarts station and train ids at 1, as a page load
  * does, so two worlds built alike match id for id. Build one world at a time: a world still being

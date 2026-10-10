@@ -1,5 +1,5 @@
 import { content, type ContractTemplate, type ContractRarityDef } from '../data/content';
-import { rules, daySeconds } from './rules';
+import { rules, daySeconds, type Rules } from './rules';
 import { Rng } from '../engine/rng';
 import type { Station } from './stations';
 import type { Builder } from './build';
@@ -61,6 +61,18 @@ export function rarityDef(id: ContractRarity): ContractRarityDef {
   );
 }
 
+/**
+ * Contracts the player's land supports: the most open offers, and the most active contracts. The
+ * start chunk alone gives `contractOfferCount`; each chunk owned beyond it adds
+ * `contractOffersPerChunk`, rounded down; `contractOfferMax` caps the sum.
+ */
+export function contractLimit(ownedChunks: number, r: Rules = rules): number {
+  const extra = Math.max(0, ownedChunks - 1) * r.contractOffersPerChunk;
+  // a hair over the product, so ten chunks at 0.1 count the whole offer they make
+  const n = r.contractOfferCount + Math.floor(extra + 1e-9);
+  return Math.max(1, Math.min(r.contractOfferMax, n));
+}
+
 /** Generates offers, tracks active contracts and applies deliveries. */
 export class ContractBoard {
   contracts: Contract[] = [];
@@ -84,6 +96,14 @@ export class ContractBoard {
   }
   byId(id: number) {
     return this.contracts.find((c) => c.id === id);
+  }
+  /** Open offers, and active contracts, the land the player owns now supports (`contractLimit`). */
+  limit() {
+    return contractLimit(this.builder.regions.ownedCount());
+  }
+  /** True when the player holds as many active contracts as their land supports, or more. */
+  activeFull() {
+    return this.active.length >= this.limit();
   }
 
   /** Every valid (origin, destination, cargo) triple given current stations. */
@@ -196,8 +216,9 @@ export class ContractBoard {
     return c;
   }
 
+  /** Take an offer on. Refused (false) for anything but an offer, or while `activeFull()`. */
   accept(c: Contract, now: number) {
-    if (c.status !== 'offer') return false;
+    if (c.status !== 'offer' || this.activeFull()) return false;
     c.status = 'active';
     c.acceptedAt = now;
     c.expires = now + c.duration;
@@ -238,9 +259,10 @@ export class ContractBoard {
   tick(now: number) {
     if (now >= this.nextRefresh) {
       this.nextRefresh = now + rules.contractRefreshDays * daySeconds();
-      const want = rules.contractOfferCount;
+      const want = this.limit();
+      // a skipped duplicate or an offer taken at once costs a try: five to spare
       let tries = 0;
-      while (this.offers.length < want && tries++ < 6) this.generate(now);
+      while (this.offers.length < want && tries++ < want + 5) this.generate(now);
     }
     for (const c of this.contracts) {
       if (c.status === 'offer' && now >= c.expires) c.status = 'expired';

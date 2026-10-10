@@ -7,8 +7,8 @@
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { isMain } from './is-main.mjs';
 import {
   FOOTPRINTS,
   ROOT,
@@ -140,24 +140,20 @@ function drawBox(png, fp, b, colours) {
   for (const face of Object.values(faces)) strokePoly(png, face, GREY.line);
 }
 
-/** One guide: plinth, block, and the openings of the walls the camera sees. */
-export function drawGuide(fpId, rot) {
+/**
+ * The openings a guide shows on the two walls the camera sees: the front door, and a depot's
+ * portals. Each has its wall (0 the lower-left, 1 the lower-right), its kind (`front` or `side`)
+ * and its outline on the canvas.
+ */
+export function openingsOf(fpId, rot) {
   const fp = FOOTPRINTS[fpId];
-  const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
-  const { w, h } = footprintTiles(fp, rot);
-  drawBox(
-    png,
-    fp,
-    { x0: -w / 2, y0: -h / 2, x1: w / 2, y1: h / 2, z0: 0, z1: PLINTH },
-    { top: GREY.plinthTop, left: GREY.plinthLeft, right: GREY.plinthRight },
-  );
   const b = blockOf(fpId, rot);
-  drawBox(png, fp, b, GREY);
+  const out = [];
   // the S wall runs along x at y1, the E wall along y at x1
-  for (const wall of ['S', 'E']) {
+  ['S', 'E'].forEach((wall, i) => {
     const role = wallRole(wall, rot);
-    const list = OPENINGS[fpId][role === 'front' ? 'front' : role === 'back' ? 'none' : 'side'];
-    for (const o of list ?? []) {
+    const kind = role === 'front' ? 'front' : role === 'back' ? null : 'side';
+    for (const o of (kind && OPENINGS[fpId][kind]) || []) {
       const a = o.at - o.width / 2,
         c = o.at + o.width / 2,
         top = b.z0 + o.height;
@@ -175,9 +171,36 @@ export function drawGuide(fpId, rot) {
               project(fp, b.x1, c, top),
               project(fp, b.x1, a, top),
             ];
-      fillPoly(png, pts, GREY.opening);
-      strokePoly(png, pts, GREY.line);
+      out.push({ wall: i, kind, pts });
     }
+  });
+  return out;
+}
+
+/**
+ * Which of the two visible walls carries a depot's portals: 0 the lower-left, 1 the lower-right.
+ * Null for a footprint whose buildings have no portals.
+ */
+export function portalWall(fpId, rot) {
+  return openingsOf(fpId, rot).find((o) => o.kind === 'side')?.wall ?? null;
+}
+
+/** One guide: plinth, block, and the openings of the walls the camera sees. */
+export function drawGuide(fpId, rot) {
+  const fp = FOOTPRINTS[fpId];
+  const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
+  const { w, h } = footprintTiles(fp, rot);
+  drawBox(
+    png,
+    fp,
+    { x0: -w / 2, y0: -h / 2, x1: w / 2, y1: h / 2, z0: 0, z1: PLINTH },
+    { top: GREY.plinthTop, left: GREY.plinthLeft, right: GREY.plinthRight },
+  );
+  const b = blockOf(fpId, rot);
+  drawBox(png, fp, b, GREY);
+  for (const o of openingsOf(fpId, rot)) {
+    fillPoly(png, o.pts, GREY.opening);
+    strokePoly(png, o.pts, GREY.line);
   }
   return png;
 }
@@ -195,7 +218,7 @@ export function writeGuides(root = '.') {
   return out;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const files = writeGuides(process.argv[2] ?? '.');
   console.log(`${files.length} guides in ${dirname(files[0])}`);
 }

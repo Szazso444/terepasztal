@@ -4,7 +4,8 @@ import { STR } from '../strings';
 /** Small centred dialog asking for a name; resolves with the text or null when dismissed. */
 export class NamePrompt {
   readonly root = el('div', { id: 'name-prompt-root' });
-  private frame = el('div', { id: 'name-prompt', class: 'panel' });
+  // focusable, so a click on its text keeps the keys in the dialog
+  private frame = el('div', { id: 'name-prompt', class: 'panel', tabindex: '-1' });
   private title = el('div', { class: 'panel-title' });
   private hint = el('div', { class: 'dim' });
   private input = el('input', { type: 'text', maxlength: '20' }) as HTMLInputElement;
@@ -23,6 +24,13 @@ export class NamePrompt {
       e.stopPropagation();
     });
     this.input.addEventListener('keyup', (e) => e.stopPropagation());
+    // a yes / no question has the focus on its buttons: Escape says no, Enter presses the one
+    // focused, and no key press reaches the game or the menu underneath while it is up (key
+    // releases still do, so a key held when it opened does not stay down)
+    this.frame.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.finish(null);
+      e.stopPropagation();
+    });
     this.frame.append(
       this.title,
       el(
@@ -34,6 +42,7 @@ export class NamePrompt {
       ),
     );
     this.root.append(this.frame);
+    // sits above the menus and the modal screens by stylesheet (`#name-prompt-root`)
     this.root.style.display = 'none';
     this.root.addEventListener('mousedown', (e) => {
       if (e.target === this.root) this.finish(null);
@@ -63,6 +72,8 @@ export class NamePrompt {
     this.input.style.display = 'none';
     this.okLabel(true);
     this.root.style.display = 'flex';
+    // like the browser's own confirm: Enter says yes, Escape no
+    setTimeout(() => this.ok.focus(), 0);
     return new Promise((res) => (this.resolve = (v) => res(v !== null)));
   }
   private okLabel(yesNo: boolean) {

@@ -12,7 +12,7 @@ import { resetStationIds, type Station } from './stations';
 import { biomeAt, biomeDef } from './biomes';
 import { tickBuildings } from './buildings';
 import { SIM_STEP } from './time';
-import type { AgeSnapshot } from './ages';
+import { LAST_AGE, type AgeSnapshot } from './ages';
 import {
   SimStep,
   startStock,
@@ -241,9 +241,10 @@ function build(w: SimWorld) {
     w.houses.sync({ id: 'townhouse', x: hx, y: hy, rot: 0 }, false);
     Object.assign(w.houses.at(hx, hy)!, { progress: i < 4 ? 1 : 0.3, residents: i < 4 ? 8 : 0 });
   }
-  const loco = w.inventory.items.find((i) => i.defId === 'adler');
+  // the starter engines are narrow gauge: the regular line gets an Adler of its own
+  const loco = w.inventory.add('adler', 0);
   const hopper = w.inventory.items.find((i) => i.defId === 'wood_hopper');
-  if (!loco || !hopper) throw new Error(`seed ${w.seed}: no starter adler and wood hopper`);
+  if (!hopper) throw new Error(`seed ${w.seed}: no starter wood hopper`);
   const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
   if (typeof train === 'string') throw new Error(`seed ${w.seed}: fleet.create: ${train}`);
   w.clock.time = daySeconds() - 20;
@@ -323,17 +324,25 @@ interface Scene {
   /** a second passenger station at the far end of the line */
   second: boolean;
   houses: SceneHouse[];
-  /** two more depots and a house of 1000 residents: the diesel age's goals */
+  /** two more depots and a house of 1000 residents: past the diesel age's goals */
   ageUp: boolean;
   buildings: string[];
-  /** a train of the starter engine and a hopper between the quarry and the town */
+  /** a train of an Adler and a starter hopper between the quarry and the town */
   train: boolean;
   /** game seconds until a standing deal (buy stone, sell wood) first settles; null: no deal */
   tradeIn: number | null;
   /** steps, from 0, in whose fleet.tick a contract is offered, accepted and delivered in full */
   deliveries: number[];
   steps: number;
+  /**
+   * the player takes each offer on as it comes (Auto-accept for every rarity), on land that
+   * supports `TAKEN_AT_ONCE` contracts; otherwise offers wait on the board, as by default
+   */
+  takeOffers: boolean;
 }
+
+/** Contracts a refresh took on at once when every offer was accepted by default. */
+const TAKEN_AT_ONCE = 6;
 
 const BUILDINGS = ['windmill', 'kiln', 'grinder'] as const;
 
@@ -375,6 +384,7 @@ function genScene(rng: Rng, steps: [number, number] = [100, 700]): Scene {
     tradeIn: rng.chance(0.5) ? Math.round(rng.range(0, 3 * day) * 100) / 100 : null,
     deliveries,
     steps: n,
+    takeOffers: rng.chance(0.6),
   };
 }
 
@@ -385,7 +395,15 @@ function* shrinkScene(s: Scene): Iterable<Scene> {
   for (const houses of shrinkArray(s.houses)) yield { ...s, houses };
   for (const deliveries of shrinkArray(s.deliveries)) yield { ...s, deliveries };
   for (const buildings of shrinkArray(s.buildings)) yield { ...s, buildings };
-  for (const k of ['train', 'ageUp', 'farm', 'second', 'famine', 'staleLastDay'] as const)
+  for (const k of [
+    'train',
+    'ageUp',
+    'farm',
+    'second',
+    'famine',
+    'staleLastDay',
+    'takeOffers',
+  ] as const)
     if (s[k]) yield { ...s, [k]: false };
   if (s.tradeIn !== null) yield { ...s, tradeIn: null };
   if (s.completedToday) yield { ...s, completedToday: 0 };
@@ -448,7 +466,7 @@ function stage(s: Scene): Staged {
   for (const [id, n] of Object.entries(startStock()))
     w.stock.add(id, Math.round(n * rules.startStock));
   if (s.train) {
-    const loco = w.inventory.items.find((i) => i.defId === 'adler')!;
+    const loco = w.inventory.add('adler', 0);
     const hopper = w.inventory.items.find((i) => i.defId === 'wood_hopper')!;
     const t = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, town.id]);
     if (typeof t === 'string') throw new Error(`fleet.create: ${t}`);
@@ -466,6 +484,16 @@ function stage(s: Scene): Staged {
   if (s.tradeIn !== null)
     w.trade.load({ deals: { stone: 5, wood: -3 }, nextAt: w.clock.time + s.tradeIn });
   w.contracts.completedToday = s.completedToday;
+  // set on every call, as daySeconds is: the scene alone decides it, whatever ran before it
+  rules.contractOfferCount = s.takeOffers ? TAKEN_AT_ONCE : DEFAULT_RULES.contractOfferCount;
+  if (s.takeOffers) {
+    const answer = w.contracts.onEvent;
+    w.contracts.onEvent = (e) => {
+      answer?.(e);
+      if (e.kind === 'offered' && e.contract.status === 'offer')
+        w.contracts.accept(e.contract, w.clock.time);
+    };
+  }
 
   const log: string[] = [];
   let season: Season | null = null;
@@ -500,12 +528,18 @@ function stage(s: Scene): Staged {
 }
 
 /**
- * A contract offered and accepted at once (DEFAULT_SETTINGS accepts every rarity) and delivered
- * in full through fleet.onDelivery, as a train unloading at its destination would.
+ * A contract delivered in full through fleet.onDelivery, as a train unloading at its destination
+ * would: one offered and accepted at once (by the player, as an offer waits for them by default),
+ * or the active one due first when the land holds no more contracts.
  */
 function deliverContract(w: SimWorld) {
-  const c = w.contracts.generate(w.clock.time, true);
-  if (!c || c.status !== 'active') return;
+  const fresh = w.contracts.generate(w.clock.time, true);
+  if (fresh?.status === 'offer') w.contracts.accept(fresh, w.clock.time);
+  const c =
+    fresh?.status === 'active'
+      ? fresh
+      : w.contracts.active.sort((a, b) => a.expires - b.expires || a.id - b.id)[0];
+  if (!c) return;
   const dest = w.builder.stationById(c.destId);
   if (!dest) return;
   const train = undefined as unknown as Train; // the board does not read it
@@ -555,7 +589,7 @@ interface GameClocks {
   nextAgeCheck: number;
 }
 
-/** Game.ageSnapshot as #72 left it (src/game.ts at f1b444d). */
+/** Game.ageSnapshot as #72 left it (src/game.ts at f1b444d), with the owned chunks of #158. */
 function gameAgeSnapshot(w: SimWorld): AgeSnapshot {
   let wires = 0;
   for (const e of w.catenary.entries()) if (w.catenary.isLive(e.x, e.y)) wires++;
@@ -565,6 +599,7 @@ function gameAgeSnapshot(w: SimWorld): AgeSnapshot {
     earned: w.economy.earned,
     substations: w.catenary.substations.filter((s) => s.powered).length,
     wires,
+    chunks: w.regions.unlocked.filter(Boolean).length,
   };
 }
 
@@ -1252,10 +1287,10 @@ describe('ageSnapshot against Game.ageSnapshot', () => {
   ];
 
   it(
-    'measures regular depots, population, earnings, powered substations and live wires alike',
+    'measures regular depots, population, earnings, powered substations, live wires and owned chunks alike',
     { timeout: 30_000 },
     () => {
-      const seen = { narrow: 0, powered: 0, unpowered: 0, live: 0, dead: 0 };
+      const seen = { narrow: 0, powered: 0, unpowered: 0, live: 0, dead: 0, bought: 0 };
       forAll(
         (rng) => {
           const from = rng.int(2, 30);
@@ -1267,6 +1302,8 @@ describe('ageSnapshot against Game.ageSnapshot', () => {
             wires: { from, to: rng.int(from, 46) },
             population: rng.int(0, 5000),
             earned: rng.int(0, 200000),
+            /** chunks bought besides the start chunk (0) of the 2 x 2 grid */
+            bought: [1, 2, 3].filter(() => rng.chance(0.5)),
           };
         },
         (c) => {
@@ -1283,11 +1320,14 @@ describe('ageSnapshot against Game.ageSnapshot', () => {
           w.builder.free = false;
           w.stock.population = c.population;
           w.economy.earned = c.earned;
+          for (const i of c.bought) if (!w.regions.own(i)) throw new Error(`chunk ${i}`);
 
           const snap = ageSnapshot(w);
           expect(snap).toEqual(gameAgeSnapshot(w));
           expect(snap.depots, 'regular depots').toBe(c.depots);
           expect([snap.population, snap.earned]).toEqual([c.population, c.earned]);
+          expect(snap.chunks, 'owned chunks').toBe(1 + c.bought.length);
+          if (c.bought.length) seen.bought++;
           if (c.narrow) seen.narrow++;
           if (snap.substations) seen.powered++;
           if (snap.substations < c.substations.length) seen.unpowered++;
@@ -1298,6 +1338,49 @@ describe('ageSnapshot against Game.ageSnapshot', () => {
       for (const [k, n] of Object.entries(seen)) expect(n, `cases with ${k}`).toBeGreaterThan(0);
     },
   );
+});
+
+describe('SimStep: the age check', () => {
+  /**
+   * A grass world of 3 x 3 chunks with two depots and only the start chunk owned, nobody housed,
+   * and its economy loaded from a save made in age `tier`. An in-game hour is one game second.
+   */
+  function saved(tier: number) {
+    rules.daySeconds = AGE_CHECKS_PER_DAY;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    station(w, 'depot', 40, 40);
+    station(w, 'depot', 46, 40);
+    w.economy.setAge(tier);
+    w.economy.load(JSON.parse(JSON.stringify(w.economy.toJSON())));
+    return w;
+  }
+
+  it('moves a Steam-age save up on the first check after it owns nine chunks', () => {
+    const w = saved(0);
+    const step = new SimStep(w);
+    const ctx = context(w, false);
+    run(w, step, ctx, 1);
+    expect(w.economy.tier, 'two depots and the start chunk').toBe(0);
+    expect(w.regions.applyTier(1), 'the ring around the start chunk').toHaveLength(8);
+    const due = step.nextAgeCheck;
+    for (let n = 0; step.nextAgeCheck === due; n++) {
+      expect(w.economy.tier, `step ${n}, before the next check`).toBe(0);
+      if (n > 1000) throw new Error('no age check');
+      run(w, step, ctx, 1);
+    }
+    expect(w.economy.tier, 'on the next check').toBe(1);
+  });
+
+  it('leaves a save past the Diesel age where it is, short of the Diesel goal', () => {
+    for (let tier = 1; tier <= LAST_AGE; tier++) {
+      const w = saved(tier);
+      const step = new SimStep(w);
+      run(w, step, context(w, false), 100);
+      expect(step.nextAgeCheck, 'checked more than once').toBeGreaterThan(2);
+      expect(ageSnapshot(w).chunks).toBe(1);
+      expect(w.economy.tier, `a save in age ${tier}`).toBe(tier);
+    }
+  });
 });
 
 // ---------------------------------------------------------------- determinism over seeds
