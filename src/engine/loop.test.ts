@@ -128,6 +128,57 @@ describe('GameLoop', () => {
     expect(renders).toBe(2);
   });
 
+  it('a first frame stamped before start() does not hold the updates back', () => {
+    // headless Chromium: the first frame's stamp came about 7.6 s before start()'s clock read
+    vi.spyOn(performance, 'now').mockReturnValueOnce(7600);
+    let updates = 0;
+    const renders: [number, number][] = [];
+    const loop = new GameLoop(
+      HZ,
+      () => updates++,
+      (alpha, dt) => renders.push([alpha, dt]),
+    );
+    loop.start();
+    frame(0);
+    frame(50);
+    expect(updates).toBe(1);
+    expect(renders).toEqual([
+      [0, 0],
+      [0, 0.05],
+    ]);
+  });
+
+  it('a frame stamped before the one before it counts as no time passing', () => {
+    // Twin runs: one on frames some of which are stamped earlier than the frame before (the first
+    // one earlier than start()), one on the same frames with each of those gaps made zero. They
+    // must make the same calls, and no render may see negative time or a negative alpha.
+    forAll(
+      (rng) => ({
+        hz: rng.pick([HZ, 60]),
+        frames: Array.from({ length: rng.int(1, 30) }, () =>
+          rng.chance(0.3) ? -rng.int(1, 10_000) : rng.int(0, 300),
+        ),
+      }),
+      ({ hz, frames }) => {
+        const calls = run(hz, frames);
+        expect(calls).toEqual(
+          run(
+            hz,
+            frames.map((ms) => Math.max(0, ms)),
+          ),
+        );
+        for (const [phase, , alpha, dt] of calls)
+          if (phase === 'render') expect(Math.min(alpha, dt)).toBeGreaterThanOrEqual(0);
+      },
+      {
+        shrink: function* (c) {
+          for (const frames of shrinkArray(c.frames, (ms) => shrinkInt(ms)))
+            if (frames.length) yield { ...c, frames };
+        },
+      },
+    );
+  });
+
   it('with no onError, an error goes to console.error and the loop carries on', () => {
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
     const boom = new Error('update');
@@ -179,6 +230,16 @@ function* shrinkCase(c: Case): Iterable<Case> {
     if (frames.length) yield { ...c, frames };
   for (const badUpdates of shrinkArray(c.badUpdates)) yield { ...c, badUpdates };
   for (const badRenders of shrinkArray(c.badRenders)) yield { ...c, badRenders };
+}
+
+/** The calls of a loop that never throws, started on a fresh clock and run over `frames`. */
+function run(hz: number, frames: number[]): Call[] {
+  resetFrames();
+  const { loop, calls } = record(hz, new Set(), new Set());
+  loop.start();
+  for (const ms of frames) frame(ms);
+  loop.stop();
+  return calls;
 }
 
 /** A loop that logs each call and throws on the chosen ones, with its onError log. */
