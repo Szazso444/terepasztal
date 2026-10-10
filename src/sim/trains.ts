@@ -222,12 +222,23 @@ function bump(rec: Record<string, number>, k: string, v: number) {
   rec[k] = (rec[k] ?? 0) + v;
 }
 
+/** The first index from 1 on whose running sum reaches `arc` (`cum.length` when none does). */
+function reach(cum: readonly number[], arc: number) {
+  let lo = 1;
+  let hi = cum.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (cum[mid] < arc) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
 /**
  * How much trail a train lays crossing `seg`, up to the tile's centre with `head` (where a head
- * stops): the chords between the geometry points that `spawnAt` and `setPath` lay. A moving train
- * lays every point where its path turns or crosses a tile edge (`layTrail`), so its trail measures
- * the same. A curve's chords fall a little short of its arc (`segLength`), so the cars stand by
- * these, not by the arcs.
+ * stops): the chords between the tile's geometry points, which `spawnAt` lays and a moving train
+ * lays where its path turns or crosses a tile edge (`layTrail`). A curve's chords fall a little
+ * short of its arc (`segLength`), so the cars stand by these, not by the arcs.
  */
 function trailLength(track: TrackGraph, seg: PathSegment, head = false) {
   const pts = track.segGeom(seg.x, seg.y, seg.in, seg.out, seg.route).pts;
@@ -236,17 +247,6 @@ function trailLength(track: TrackGraph, seg: PathSegment, head = false) {
   for (let i = 1; i < upto; i++)
     sum += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
   return sum;
-}
-
-/** The first index from `lo` on whose running sum reaches `arc` (`cum.length` when none does). */
-function reach(cum: readonly number[], arc: number, lo = 1) {
-  let hi = cum.length;
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if (cum[mid] < arc) lo = mid + 1;
-    else hi = mid;
-  }
-  return lo;
 }
 
 export interface WagonSlot {
@@ -277,9 +277,9 @@ const HOLD_GAP = 0.45;
 /** tiles short of the end of its path at which a train has arrived */
 const ARRIVE = 1e-3;
 /**
- * Tiles of arc within which a point of the trail counts as on a tile edge: rounding in the car
- * lengths and in the trail's sums. A point on an edge belongs to the tile on the side the trail
- * comes from: a head to the tile it is leaving, the rear end to the tile beyond it.
+ * Tiles within which a point of the trail counts as on a tile edge: rounding in the car lengths
+ * and in the trail's sums. A head on an edge stands on the tile it is leaving; a rear end on the
+ * tile beyond it, which the train sets off from reversing and `onwardTest` counts from.
  */
 const EDGE_SLACK = 1e-6;
 /** seconds blocked before trying another path */
@@ -1515,12 +1515,12 @@ export class Train {
   }
 
   /**
-   * The crossing of the tile under the trail `back` behind the head: the tile the point lies in,
-   * and for a point on a tile edge (within `EDGE_SLACK`) the tile beyond it, away from the head,
-   * which is where a rear end stands and the tile `onwardTest` counts from. A sample on an edge may
-   * carry either tile it joins (`spawnAt` gives it the one after, `layTrail` the one before), so
-   * the tile is read from where the point lies and its crossing from the nearest sample on it,
-   * or, where no sample within a tile and a half carries it, from the sample just beyond.
+   * The crossing of the tile under the trail `back` behind the head: the tile the point there lies
+   * in, or for a point on a tile edge (within `EDGE_SLACK`) the tile beyond it, away from the head,
+   * where a rear end stands and `onwardTest` counts from. A point of the trail on an edge may carry
+   * either tile (`spawnAt` gives it the one nearer the head, `layTrail` the one farther), so the
+   * tile is read from where the point lies, and its crossing from the nearest point of the trail
+   * within a tile and a half that carries that tile; failing one, from the point just beyond.
    */
   private crossingBehind(back: number): PathSegment | undefined {
     const pts = this.trail;
@@ -2198,9 +2198,9 @@ export class Train {
   }
 
   /**
-   * The point `arc` along the path, on the tile it lies in. A geometry point carries the tile its
-   * stretch ends in, so a tile edge carries the tile before it, and a point still on the edge of
-   * the tile it is leaving (within `EDGE_SLACK`) stands on that tile.
+   * The point `arc` along the path, on the tile it lies in. A point on a tile edge (within
+   * `EDGE_SLACK`) stands on the tile it is leaving, the one the path's own point on that edge
+   * carries: the path keeps the point that ends a tile and drops the same point starting the next.
    */
   private samplePath(arc: number): TrailPoint {
     const cum = this.pathCum;
@@ -2220,8 +2220,8 @@ export class Train {
   }
 
   /**
-   * Lay the trail the head ran along the path from arc `from` to `to`: every geometry point
-   * between where the path turns or crosses a tile edge, then the head. The trail then runs along
+   * Lay the trail the head ran along the path from arc `from` to `to`: each geometry point between
+   * them at which the path turns or crosses a tile edge, then the head. The trail then runs along
    * the chords `trailLength` measures, and every tile edge it crosses is a point of it.
    */
   private layTrail(from: number, to: number) {
