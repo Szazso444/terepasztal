@@ -552,11 +552,18 @@ export class Game implements UiHost {
     );
     return ok;
   }
-  /** Make a named save the stored game and reload into it; false when there is none. */
+  /**
+   * Make a named save the stored game and reload into it; false when there is none. A save storage
+   * will not keep (full or blocked) is not loaded: it says so and the running game goes on, since
+   * reloading would land in the older stored save.
+   */
   loadSlot(name: string) {
     const j = readSlot(name);
     if (!j) return false;
-    writeSave(j);
+    if (!writeSave(j)) {
+      this.toasts.push(STR.saves.refused.storage, 'warn');
+      return true;
+    }
     this.reloadIntoStoredSave(j.seed);
     return true;
   }
