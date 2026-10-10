@@ -1,0 +1,37 @@
+{
+  "frame": {
+    "x": 4,
+    "y": 907,
+    "w": 180,
+    "h": 169,
+    "ax": 92,
+    "ay": 125
+  },
+  "previousFrame": {
+    "x": 4,
+    "y": 907,
+    "w": 180,
+    "h": 169,
+    "ax": 92,
+    "ay": 125
+  },
+  "resolution": 4,
+  "uncorrectedHeight": 111,
+  "source": {
+    "width": 1536,
+    "height": 1024
+  },
+  "sourcePath": "scratchpad/station-pipeline/previous-sprite.png",
+  "processing": "Original contracted pixels; renderer width scale 1.2, height scale 1",
+  "projectionVerified": false,
+  "targetSlopes": [
+    0.5,
+    -0.5
+  ],
+  "projectionStatus": "Wider-depth candidate from previous-sprite.png; visual review required",
+  "widthScale": 1.2,
+  "footprint": [
+    1,
+    1
+  ]
+}

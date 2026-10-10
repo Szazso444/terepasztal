@@ -15,7 +15,7 @@
     "station",
     "lumber"
   ],
-  "mark": 1791483929439,
+  "mark": 1791488349450.4375,
   "chat": "01a10d7a-313a-7262-a722-27dbdc2ecf8f",
   "counts": {
     "pictures": 548,
@@ -1301,9 +1301,13 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/quarry/quarry-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 2,
+      "note": "",
+      "repaint": {
+        "by": null,
+        "was": "Its lower-left wall's foot ran too steep. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a0-r1",
@@ -1311,9 +1315,14 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/quarry/quarry-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 5.4° after 3 attempts",
+      "kept": 5.4,
+      "repaint": {
+        "by": null,
+        "was": "Its lower-right wall's foot ran too flat. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a0-r2",
@@ -1321,9 +1330,9 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/quarry/quarry-a0-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "All three attempts showed the front hopper discharge on the lower-right wall instead of the back and left side; no visually correct attempt to keep."
     },
     {
       "id": "quarry-a0-r3",
@@ -1331,9 +1340,13 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/quarry/quarry-a0-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "",
+      "repaint": {
+        "by": 2.9,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a1-r0",
@@ -1341,8 +1354,8 @@
       "age": 1,
       "rot": 0,
       "file": "assets/source/buildings-v2/quarry/quarry-a1-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -1351,9 +1364,9 @@
       "age": 1,
       "rot": 1,
       "file": "assets/source/buildings-v2/quarry/quarry-a1-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "Three attempts did not turn the front hopper discharge out of sight. The third also changed the roof vents from two to three; no correct rear view to keep."
     },
     {
       "id": "quarry-a1-r2",
@@ -1361,9 +1374,9 @@
       "age": 1,
       "rot": 2,
       "file": "assets/source/buildings-v2/quarry/quarry-a1-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "Rear rotation did not preserve the known left side: first attempt removed its two windows, second and third exposed the front hopper discharge. No correct attempt to keep."
     },
     {
       "id": "quarry-a1-r3",
@@ -1371,9 +1384,14 @@
       "age": 1,
       "rot": 3,
       "file": "assets/source/buildings-v2/quarry/quarry-a1-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.1° after 3 attempts: an earlier one was the closest",
+      "kept": 2.1,
+      "repaint": {
+        "by": 2.1,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a2-r0",
@@ -1381,9 +1399,13 @@
       "age": 2,
       "rot": 0,
       "file": "assets/source/buildings-v2/quarry/quarry-a2-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 2,
+      "note": "",
+      "repaint": {
+        "by": 3.5,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a2-r1",
@@ -1391,9 +1413,9 @@
       "age": 2,
       "rot": 1,
       "file": "assets/source/buildings-v2/quarry/quarry-a2-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "Three attempts failed the rear-view identity check: first and third exposed the front hopper discharge; second replaced the two side windows with three and moved the glazed cabin onto that side. No correct attempt to keep."
     },
     {
       "id": "quarry-a2-r2",
@@ -1401,8 +1423,8 @@
       "age": 2,
       "rot": 2,
       "file": "assets/source/buildings-v2/quarry/quarry-a2-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 2,
       "note": ""
     },
     {
@@ -1411,9 +1433,13 @@
       "age": 2,
       "rot": 3,
       "file": "assets/source/buildings-v2/quarry/quarry-a2-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 2,
+      "note": "",
+      "repaint": {
+        "by": null,
+        "was": "Its lower-right wall's foot ran too flat. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a3-r0",
@@ -1421,9 +1447,14 @@
       "age": 3,
       "rot": 0,
       "file": "assets/source/buildings-v2/quarry/quarry-a3-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.7° after 3 attempts",
+      "kept": 2.7,
+      "repaint": {
+        "by": 2.8,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a3-r1",
@@ -1431,9 +1462,13 @@
       "age": 3,
       "rot": 1,
       "file": "assets/source/buildings-v2/quarry/quarry-a3-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "All three attempts changed the right-hand side from two arched vents to three. The first was sent to the camera check before this identity fault was noticed; its held earlier self is also wrong and must not be kept.",
+      "repaint": {
+        "by": 5,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a3-r2",
@@ -1441,9 +1476,14 @@
       "age": 3,
       "rot": 2,
       "file": "assets/source/buildings-v2/quarry/quarry-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.1° after 3 attempts: an earlier one was the closest",
+      "kept": 3.1,
+      "repaint": {
+        "by": 3.1,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a3-r3",
@@ -1451,8 +1491,8 @@
       "age": 3,
       "rot": 3,
       "file": "assets/source/buildings-v2/quarry/quarry-a3-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -1461,9 +1501,14 @@
       "age": 4,
       "rot": 0,
       "file": "assets/source/buildings-v2/quarry/quarry-a4-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.8° after 3 attempts: an earlier one was the closest",
+      "kept": 3.8,
+      "repaint": {
+        "by": 3.8,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "quarry-a4-r1",
@@ -1473,7 +1518,8 @@
       "file": "assets/source/buildings-v2/quarry/quarry-a4-r1.png",
       "status": "pending",
       "attempts": 0,
-      "note": ""
+      "note": "",
+      "taken": true
     },
     {
       "id": "quarry-a4-r2",

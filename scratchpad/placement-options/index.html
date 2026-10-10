@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Grid-first building placement</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #182723;
+      color: #eee7d3;
+      font: 16px/1.5 system-ui;
+    }
+    main {
+      max-width: 1500px;
+      margin: auto;
+      padding: 28px;
+    }
+    p {
+      color: #c3ccbc;
+    }
+    h1 {
+      margin: 0;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    article {
+      padding: 20px;
+      background: #253a30;
+      border: 1px solid #55715a;
+      border-radius: 10px;
+    }
+    h2 {
+      font-size: 21px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+    }
+    button {
+      padding: 10px 18px;
+      background: #d9c58c;
+      border: 0;
+      border-radius: 6px;
+      font: inherit;
+      margin: 10px 12px 10px 0;
+    }
+    li {
+      margin: 8px 0;
+    }
+    .legend {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .legend span {
+      border-left: 16px solid;
+      padding-left: 8px;
+    }
+    @media (max-width: 1000px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <main>
+    <small>PLACEMENT MECHANICS · OPTIONS FOR DISCUSSION</small>
+    <h1>Let the occupied tiles define the building</h1>
+    <p>
+      These are schematic examples, not final art or implemented game rules. Every occupied cell
+      snaps to the same grid. The sprite’s ground contact must fit those cells; roof height may
+      overlap tiles visually. The approved shoreline blend remains separate from placement.
+    </p>
+    <div class="legend">
+      <span style="border-color: #cbb887">Building</span
+      ><span style="border-color: #8c9680">Reserved yard</span
+      ><span style="border-color: #4eb9b0">Usable platform</span
+      ><span style="border-color: #ba7770">Blocked test tile</span>
+    </div>
+    <button id="rotate">Rotate 90°</button><button id="obstacle">Toggle obstruction</button>
+    <div class="cards">
+      <article>
+        <h2>A · One reserved lot</h2>
+        <div id="a"></div>
+        <p>
+          A 3 × 2 property is placed as one object. Buildings and yard reserve all six tiles.
+          Platforms sit outside the selected frontage.
+        </p>
+        <ul>
+          <li>Simple, predictable occupancy and demolition.</li>
+          <li>Yard space cannot later be used for another building or track.</li>
+          <li>Larger buildings require larger whole-tile lots.</li>
+        </ul>
+      </article>
+      <article>
+        <h2>B · Building + optional yard</h2>
+        <div id="b"></div>
+        <p>
+          A 3 × 1 building reserves three tiles. An optional 3 × 1 forecourt is a separate ground
+          treatment. Platforms still connect to an explicit frontage.
+        </p>
+        <ul>
+          <li>Building scale remains consistent without forcing a large property.</li>
+          <li>Decorative paving can be replaced by track or another building.</li>
+          <li>Keep visual blending within the neighbour’s placement rules.</li>
+        </ul>
+      </article>
+      <article>
+        <h2>C · Modular station</h2>
+        <div id="c"></div>
+        <p>
+          A 2 × 1 station building and three platform modules form a connected facility. The player
+          adds modules on grid cells.
+        </p>
+        <ul>
+          <li>Capacity and usable length follow the actual platform modules.</li>
+          <li>Station buildings, loading yards and platforms can grow independently.</li>
+          <li>More flexible construction, with more connection rules to implement.</li>
+        </ul>
+      </article>
+    </div>
+    <p id="status"></p>
+    <p>
+      <strong>Common rule:</strong> one footprint definition must drive the placement ghost,
+      collision checks, selection, demolition, sprite anchor and track connection points. Yards must
+      not invent a second footprint.
+    </p>
+    <p>
+      Next decisions: reserved property or optional yard; automatic adjacent platforms or a chosen
+      frontage; fixed footprints during upgrades or explicit expansion.
+    </p>
+  </main>
+  <script>
+    let rotation = 0,
+      blocked = false;
+    const configurations = {
+      a: {
+        body: [
+          [1, 1],
+          [2, 1],
+          [3, 1],
+        ],
+        yard: [
+          [1, 2],
+          [2, 2],
+          [3, 2],
+        ],
+        platform: [
+          [1, 3],
+          [2, 3],
+          [3, 3],
+        ],
+        reserveYard: true,
+      },
+      b: {
+        body: [
+          [1, 1],
+          [2, 1],
+          [3, 1],
+        ],
+        yard: [
+          [1, 2],
+          [2, 2],
+          [3, 2],
+        ],
+        platform: [
+          [1, 3],
+          [2, 3],
+          [3, 3],
+        ],
+        reserveYard: false,
+      },
+      c: {
+        body: [
+          [1, 1],
+          [2, 1],
+        ],
+        yard: [],
+        platform: [
+          [1, 2],
+          [2, 2],
+          [3, 2],
+        ],
+        reserveYard: false,
+      },
+    };
+    const transform = ([x, y]) => (rotation ? [4 - y, x] : [x, y]);
+    const project = ([x, y]) => [220 + (x - y) * 35, 35 + (x + y) * 17.5];
+    function tile(x, y, color, stroke = '#607460', dash = '') {
+      const [px, py] = project(transform([x, y]));
+      return `<polygon points="${px},${py - 17.5} ${px + 35},${py} ${px},${py + 17.5} ${px - 35},${py}" fill="${color}" stroke="${stroke}" stroke-width="1.3" ${dash ? 'stroke-dasharray="4 3"' : ''}/>`;
+    }
+    function draw() {
+      for (const [id, c] of Object.entries(configurations)) {
+        let shapes = '';
+        for (let n = 0; n <= 8; n++)
+          for (let x = 0; x < 5; x++) {
+            const y = n - x;
+            if (y >= 0 && y < 5) shapes += tile(x, y, '#385444');
+          }
+        for (const [x, y] of c.yard) shapes += tile(x, y, '#8c9680', '#eee0b0', !c.reserveYard);
+        for (const [x, y] of c.body) shapes += tile(x, y, '#cbb887');
+        for (const [x, y] of c.platform) shapes += tile(x, y, '#4eb9b0');
+        if (blocked) shapes += tile(2, 2, '#ba7770', '#ffd0c5');
+        const invalid = blocked && (c.reserveYard || id === 'c');
+        const message = !blocked
+          ? 'All required cells available'
+          : invalid
+            ? 'Blocked: required cell occupied'
+            : 'Building fits; decorative yard yields';
+        document.getElementById(id).innerHTML =
+          `<svg viewBox="0 0 440 245" role="img" aria-label="${id} grid footprint"><g>${shapes}</g><text x="220" y="225" text-anchor="middle" fill="${invalid ? '#ffb7a8' : '#dce9ce'}" font-size="13">${message}</text></svg>`;
+      }
+      document.getElementById('status').textContent =
+        `${rotation ? 'Rotated footprints: 2 × 3 or 1 × 3 instead of 3 × 2 or 3 × 1.' : 'Original orientation.'} The grid, frontage and occupied cells rotate together.`;
+    }
+    document.getElementById('rotate').onclick = () => {
+      rotation = 1 - rotation;
+      draw();
+    };
+    document.getElementById('obstacle').onclick = () => {
+      blocked = !blocked;
+      draw();
+    };
+    draw();
+  </script>
+</html>

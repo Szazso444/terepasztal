@@ -1,0 +1,20 @@
+<!doctype html><html><body style="margin:0"><canvas width="768" height="768"></canvas><script type="module">
+import {drawModel} from './building-poc/model.mjs';
+import {rotatePoint,dimensions} from './grid-buildings/footprint.mjs';
+const q=new URLSearchParams(location.search),tiles=Number(q.get('tiles')),r=Number(q.get('rotation')),kind=q.get('kind'),c=document.querySelector('canvas'),ctx=c.getContext('2d'),[w,h]=dimensions(tiles,r);
+const scale=170,p=(x,y,z=0)=>[384+(x-y)*scale,530+(x+y)*scale*.5-z*scale*Math.sqrt(1.5)];
+if(kind==='building')drawModel(ctx,tiles,r,p,[-w/2,-h/2]);
+else {
+ ctx.fillStyle='#f0eddf';ctx.fillRect(0,0,768,768);
+ const world=(x,y,z=0)=>{const [a,b]=rotatePoint(x,y,tiles,r);return p(a-w/2,b-h/2,z);};
+ const line=(points,color,width=2)=>{ctx.beginPath();points.forEach((v,i)=>{const [x,y]=world(...v);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();};
+ for(let a=0;a<=tiles;a++)line([[a,0],[a,1]],'#99a797');
+ line([[0,0],[tiles,0],[tiles,1],[0,1],[0,0]],'#ba9849',3);
+ for(const [x,y]of[[.12,.12],[tiles-.12,.12],[tiles-.12,.88],[.12,.88]])line([[x,y,0],[x,y,1.2]],'#607c72');
+ for(const z of [0,1.2])line([[.12,.12,z],[tiles-.12,.12,z],[tiles-.12,.88,z],[.12,.88,z],[.12,.12,z]],'#607c72');
+ line([[.12,.88,.40],[tiles-.12,.88,.40]],'#c27958',3);
+ line([[tiles-.12,.12,.40],[tiles-.12,.88,.40]],'#407f98',3);
+ ctx.fillStyle='#223e35';ctx.font='19px sans-serif';ctx.fillText('2:1 CAMERA / FOOTPRINT CALIBRATION ONLY',32,38);ctx.font='15px sans-serif';ctx.fillText('45° azimuth · 30° elevation · screen slopes ±0.5',32,66);ctx.fillText('Keep the source architecture; this box is not a building design.',32,710);
+}
+window.guideReady=true;
+</script></body></html>

@@ -1,0 +1,178 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #142923;
+  color: #ecedda;
+  font:
+    15px/1.55 system-ui,
+    sans-serif;
+}
+main {
+  max-width: 1900px;
+  margin: auto;
+  padding: 32px;
+}
+h1 {
+  font:
+    600 clamp(28px, 3vw, 46px)/1.1 Georgia,
+    serif;
+  margin: 12px 0;
+}
+h2 {
+  font:
+    600 27px Georgia,
+    serif;
+  margin: 10px 0;
+}
+h3 {
+  margin: 0;
+  font-size: 19px;
+}
+p {
+  color: #becbbd;
+  max-width: 1100px;
+}
+.eyebrow {
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  color: #ddbc76;
+  font-weight: 700;
+}
+.notice {
+  background: #243b31;
+  border-left: 3px solid #d9b878;
+  padding: 14px 18px;
+  margin: 24px 0;
+  color: #d1d8c6;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 24px 0;
+}
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+select,
+button {
+  background: #31483c;
+  color: #f1ecd7;
+  border: 1px solid #69785d;
+  border-radius: 5px;
+  padding: 10px;
+  cursor: pointer;
+}
+input {
+  accent-color: #dbba70;
+}
+.scenes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.card {
+  border: 1px solid #49614d;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #213a30;
+}
+.card.current {
+  border-color: #d3b56e;
+}
+.card header {
+  padding: 17px 18px 0;
+}
+.card .metric {
+  font-size: 12px;
+  color: #b4c3af;
+}
+.card canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.card footer {
+  padding: 0 18px 15px;
+  font-size: 12px;
+  color: #c4ceb8;
+}
+.tag {
+  color: #e3c67c;
+  letter-spacing: 0.1em;
+  font-size: 10px;
+}
+.caption {
+  font-size: 12px;
+}
+.audit {
+  border-top: 1px solid #4c614e;
+  margin-top: 32px;
+  padding-top: 26px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 28px;
+}
+.originals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.originals figure {
+  margin: 0;
+  background: #263e34;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.originals canvas {
+  width: 100%;
+  display: block;
+}
+.originals figcaption {
+  padding: 8px;
+  font-size: 12px;
+  text-align: center;
+  color: #d7c38e;
+}
+.details {
+  margin-top: 32px;
+  max-width: 1000px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+td,
+th {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #415b48;
+}
+th {
+  color: #c4d1bd;
+  font-size: 12px;
+}
+a {
+  color: #e2c37d;
+}
+@media (max-width: 1050px) {
+  main {
+    padding: 18px;
+  }
+  .scenes {
+    grid-template-columns: 1fr;
+  }
+  .audit {
+    grid-template-columns: 1fr;
+  }
+  .originals {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

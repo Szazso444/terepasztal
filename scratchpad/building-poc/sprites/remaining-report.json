@@ -1,0 +1,25 @@
+{
+  "completedBuildings": 6,
+  "completedFacings": 24,
+  "missing": [
+    "stations-depot",
+    "stations-full-mine",
+    "stations-full-sand_pit",
+    "stations-full-copper_mine",
+    "works-windmill",
+    "works-kiln",
+    "works-grinder",
+    "works-refinery",
+    "works-power_plant",
+    "works-substation",
+    "works-hydro_plant",
+    "works-full-colliery",
+    "works-full-ironworks",
+    "works-full-oil_derrick",
+    "works-full-diesel_refinery",
+    "works-full-wire_mill",
+    "decor-water_tower",
+    "decor-fuel_stop"
+  ],
+  "notes": "First-pass sources and footprint-fitted sprites; projection, human scale and direction continuity require visual approval."
+}

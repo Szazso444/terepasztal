@@ -1,0 +1,774 @@
+{
+  "reports": [
+    {
+      "mode": "village",
+      "placed": [
+        {
+          "type": "station",
+          "id": "station",
+          "x": 26,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "town",
+          "x": 22,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "farm",
+          "x": 18,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "warehouse",
+          "x": 32,
+          "y": 29
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 22,
+          "y": 21
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 25,
+          "y": 20
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 28,
+          "y": 21
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 24,
+          "y": 23
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 29,
+          "y": 23
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 21,
+          "y": 23
+        },
+        {
+          "type": "building",
+          "id": "windmill",
+          "x": 18,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "water_tower",
+          "x": 28,
+          "y": 27
+        },
+        {
+          "type": "decor",
+          "id": "fuel_stop",
+          "x": 30,
+          "y": 24
+        },
+        {
+          "type": "building",
+          "id": "kiln",
+          "x": 25,
+          "y": 30
+        }
+      ],
+      "projection": "2:1, 64x32 logical pixels",
+      "rocketFacings": 25,
+      "ground": {
+        "sourceMaterials": [
+          "terrain-grass.png",
+          "people-road-stone.png",
+          "people-path-dirt.png",
+          "terrain-sand.png",
+          "terrain-water.png"
+        ],
+        "width": 2816,
+        "height": 1920
+      },
+      "scales": [
+        {
+          "id": "station",
+          "key": "structures/station_1",
+          "scale": 1.2000000000000002
+        },
+        {
+          "id": "town",
+          "key": "structures/town_1",
+          "scale": 1.2600000000000002
+        },
+        {
+          "id": "farm",
+          "key": "structures/farm_1",
+          "scale": 1.05
+        },
+        {
+          "id": "warehouse",
+          "key": "structures/warehouse_1",
+          "scale": 1.1454545454545455
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "windmill",
+          "key": "structures/windmill",
+          "scale": 0.9692307692307693
+        },
+        {
+          "id": "water_tower",
+          "key": "structures/water_tower",
+          "scale": 0.7
+        },
+        {
+          "id": "fuel_stop",
+          "key": "structures/fuel_stop",
+          "scale": 0.65
+        },
+        {
+          "id": "kiln",
+          "key": "structures/kiln",
+          "scale": 1
+        }
+      ],
+      "checks": {
+        "trackOnWater": 0,
+        "humanLogicalHeight": 11,
+        "illustratedHumanLoaded": true,
+        "trainSpriteScale": [
+          1,
+          1
+        ]
+      },
+      "source": "real Game and WorldRenderer with isolated continuous terrain and art scale preview",
+      "productionAssetsModified": false
+    },
+    {
+      "mode": "industry",
+      "placed": [
+        {
+          "type": "station",
+          "id": "lumber",
+          "x": 20,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "warehouse",
+          "x": 27,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "quarry",
+          "x": 20,
+          "y": 27
+        },
+        {
+          "type": "station",
+          "id": "station",
+          "x": 33,
+          "y": 25
+        },
+        {
+          "type": "building",
+          "id": "kiln",
+          "x": 23,
+          "y": 22
+        },
+        {
+          "type": "building",
+          "id": "grinder",
+          "x": 23,
+          "y": 29
+        },
+        {
+          "type": "building",
+          "id": "refinery",
+          "x": 27,
+          "y": 30
+        },
+        {
+          "type": "building",
+          "id": "power_plant",
+          "x": 28,
+          "y": 21
+        },
+        {
+          "type": "building",
+          "id": "substation",
+          "x": 31,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "water_tower",
+          "x": 29,
+          "y": 27
+        },
+        {
+          "type": "decor",
+          "id": "fuel_stop",
+          "x": 25,
+          "y": 27
+        }
+      ],
+      "projection": "2:1, 64x32 logical pixels",
+      "rocketFacings": 25,
+      "ground": {
+        "sourceMaterials": [
+          "terrain-grass.png",
+          "people-road-stone.png",
+          "people-path-dirt.png",
+          "terrain-sand.png",
+          "terrain-water.png"
+        ],
+        "width": 2816,
+        "height": 1920
+      },
+      "scales": [
+        {
+          "id": "lumber",
+          "key": "structures/lumber_1",
+          "scale": 1.05
+        },
+        {
+          "id": "warehouse",
+          "key": "structures/warehouse_1",
+          "scale": 1.1454545454545455
+        },
+        {
+          "id": "quarry",
+          "key": "structures/quarry_1",
+          "scale": 1
+        },
+        {
+          "id": "station",
+          "key": "structures/station_1",
+          "scale": 1.2000000000000002
+        },
+        {
+          "id": "kiln",
+          "key": "structures/kiln",
+          "scale": 1
+        },
+        {
+          "id": "grinder",
+          "key": "structures/grinder",
+          "scale": 1.05
+        },
+        {
+          "id": "refinery",
+          "key": "structures/refinery",
+          "scale": 1.1
+        },
+        {
+          "id": "power_plant",
+          "key": "structures/power_plant",
+          "scale": 1.1
+        },
+        {
+          "id": "substation",
+          "key": "structures/substation",
+          "scale": 1
+        },
+        {
+          "id": "water_tower",
+          "key": "structures/water_tower",
+          "scale": 0.7
+        },
+        {
+          "id": "fuel_stop",
+          "key": "structures/fuel_stop",
+          "scale": 0.65
+        }
+      ],
+      "checks": {
+        "trackOnWater": 0,
+        "humanLogicalHeight": 11,
+        "illustratedHumanLoaded": true,
+        "trainSpriteScale": [
+          1,
+          1
+        ]
+      },
+      "source": "real Game and WorldRenderer with isolated continuous terrain and art scale preview",
+      "productionAssetsModified": false
+    },
+    {
+      "mode": "countryside",
+      "placed": [
+        {
+          "type": "station",
+          "id": "farm",
+          "x": 23,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "station",
+          "x": 29,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "lumber",
+          "x": 18,
+          "y": 25
+        },
+        {
+          "type": "building",
+          "id": "windmill",
+          "x": 23,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 28,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 26,
+          "y": 20
+        },
+        {
+          "type": "decor",
+          "id": "water_tower",
+          "x": 30,
+          "y": 27
+        }
+      ],
+      "projection": "2:1, 64x32 logical pixels",
+      "rocketFacings": 25,
+      "ground": {
+        "sourceMaterials": [
+          "terrain-grass.png",
+          "people-road-stone.png",
+          "people-path-dirt.png",
+          "terrain-sand.png",
+          "terrain-water.png"
+        ],
+        "width": 2816,
+        "height": 1920
+      },
+      "scales": [
+        {
+          "id": "farm",
+          "key": "structures/farm_1",
+          "scale": 1.05
+        },
+        {
+          "id": "station",
+          "key": "structures/station_1",
+          "scale": 1.2000000000000002
+        },
+        {
+          "id": "lumber",
+          "key": "structures/lumber_1",
+          "scale": 1.05
+        },
+        {
+          "id": "windmill",
+          "key": "structures/windmill",
+          "scale": 0.9692307692307693
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "water_tower",
+          "key": "structures/water_tower",
+          "scale": 0.7
+        }
+      ],
+      "checks": {
+        "trackOnWater": 0,
+        "humanLogicalHeight": 11,
+        "illustratedHumanLoaded": true,
+        "trainSpriteScale": [
+          1,
+          1
+        ]
+      },
+      "source": "real Game and WorldRenderer with isolated continuous terrain and art scale preview",
+      "productionAssetsModified": false
+    },
+    {
+      "mode": "desert",
+      "placed": [
+        {
+          "type": "station",
+          "id": "farm",
+          "x": 23,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "station",
+          "x": 29,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "lumber",
+          "x": 18,
+          "y": 25
+        },
+        {
+          "type": "building",
+          "id": "windmill",
+          "x": 23,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 28,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 26,
+          "y": 20
+        },
+        {
+          "type": "decor",
+          "id": "water_tower",
+          "x": 30,
+          "y": 27
+        }
+      ],
+      "projection": "2:1, 64x32 logical pixels",
+      "rocketFacings": 25,
+      "ground": {
+        "sourceMaterials": [
+          "terrain-desert.png",
+          "people-road-stone.png",
+          "people-path-dirt.png",
+          "terrain-sand.png",
+          "terrain-water.png"
+        ],
+        "width": 2816,
+        "height": 1920
+      },
+      "scales": [
+        {
+          "id": "farm",
+          "key": "structures/farm_1",
+          "scale": 1.05
+        },
+        {
+          "id": "station",
+          "key": "structures/station_1",
+          "scale": 1.2000000000000002
+        },
+        {
+          "id": "lumber",
+          "key": "structures/lumber_1",
+          "scale": 1.05
+        },
+        {
+          "id": "windmill",
+          "key": "structures/windmill",
+          "scale": 0.9692307692307693
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "water_tower",
+          "key": "structures/water_tower",
+          "scale": 0.7
+        }
+      ],
+      "checks": {
+        "trackOnWater": 0,
+        "humanLogicalHeight": 11,
+        "illustratedHumanLoaded": true,
+        "trainSpriteScale": [
+          1,
+          1
+        ]
+      },
+      "source": "real Game and WorldRenderer with isolated continuous terrain and art scale preview",
+      "productionAssetsModified": false
+    },
+    {
+      "mode": "taiga",
+      "placed": [
+        {
+          "type": "station",
+          "id": "farm",
+          "x": 23,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "station",
+          "x": 29,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "lumber",
+          "x": 18,
+          "y": 25
+        },
+        {
+          "type": "building",
+          "id": "windmill",
+          "x": 23,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 28,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 26,
+          "y": 20
+        },
+        {
+          "type": "decor",
+          "id": "water_tower",
+          "x": 30,
+          "y": 27
+        }
+      ],
+      "projection": "2:1, 64x32 logical pixels",
+      "rocketFacings": 25,
+      "ground": {
+        "sourceMaterials": [
+          "terrain-taiga.png",
+          "people-road-stone.png",
+          "people-path-dirt.png",
+          "terrain-sand.png",
+          "terrain-water.png"
+        ],
+        "width": 2816,
+        "height": 1920
+      },
+      "scales": [
+        {
+          "id": "farm",
+          "key": "structures/farm_1",
+          "scale": 1.05
+        },
+        {
+          "id": "station",
+          "key": "structures/station_1",
+          "scale": 1.2000000000000002
+        },
+        {
+          "id": "lumber",
+          "key": "structures/lumber_1",
+          "scale": 1.05
+        },
+        {
+          "id": "windmill",
+          "key": "structures/windmill",
+          "scale": 0.9692307692307693
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "water_tower",
+          "key": "structures/water_tower",
+          "scale": 0.7
+        }
+      ],
+      "checks": {
+        "trackOnWater": 0,
+        "humanLogicalHeight": 11,
+        "illustratedHumanLoaded": true,
+        "trainSpriteScale": [
+          1,
+          1
+        ]
+      },
+      "source": "real Game and WorldRenderer with isolated continuous terrain and art scale preview",
+      "productionAssetsModified": false
+    },
+    {
+      "mode": "wetlands",
+      "placed": [
+        {
+          "type": "station",
+          "id": "farm",
+          "x": 23,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "station",
+          "x": 29,
+          "y": 25
+        },
+        {
+          "type": "station",
+          "id": "lumber",
+          "x": 18,
+          "y": 25
+        },
+        {
+          "type": "building",
+          "id": "windmill",
+          "x": 23,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 28,
+          "y": 22
+        },
+        {
+          "type": "decor",
+          "id": "townhouse",
+          "x": 26,
+          "y": 20
+        },
+        {
+          "type": "decor",
+          "id": "water_tower",
+          "x": 30,
+          "y": 27
+        }
+      ],
+      "projection": "2:1, 64x32 logical pixels",
+      "rocketFacings": 25,
+      "ground": {
+        "sourceMaterials": [
+          "terrain-swamp.png",
+          "people-road-stone.png",
+          "people-path-dirt.png",
+          "terrain-sand.png",
+          "terrain-water.png"
+        ],
+        "width": 2816,
+        "height": 1920
+      },
+      "scales": [
+        {
+          "id": "farm",
+          "key": "structures/farm_1",
+          "scale": 1.05
+        },
+        {
+          "id": "station",
+          "key": "structures/station_1",
+          "scale": 1.2000000000000002
+        },
+        {
+          "id": "lumber",
+          "key": "structures/lumber_1",
+          "scale": 1.05
+        },
+        {
+          "id": "windmill",
+          "key": "structures/windmill",
+          "scale": 0.9692307692307693
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "townhouse",
+          "key": "structures/townhouse",
+          "scale": 0.7000000000000001
+        },
+        {
+          "id": "water_tower",
+          "key": "structures/water_tower",
+          "scale": 0.7
+        }
+      ],
+      "checks": {
+        "trackOnWater": 0,
+        "humanLogicalHeight": 11,
+        "illustratedHumanLoaded": true,
+        "trainSpriteScale": [
+          1,
+          1
+        ]
+      },
+      "source": "real Game and WorldRenderer with isolated continuous terrain and art scale preview",
+      "productionAssetsModified": false
+    }
+  ],
+  "errors": []
+}

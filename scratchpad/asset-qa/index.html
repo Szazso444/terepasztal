@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Terepasztal · In-game asset QA</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+    <style>
+      #qa {
+        position: fixed;
+        z-index: 100000;
+        top: 16px;
+        left: 16px;
+        background: #17221fed;
+        color: #eee6cf;
+        padding: 16px;
+        border: 1px solid #647268;
+        border-radius: 8px;
+        font: 14px/1.5 system-ui;
+        max-width: 480px;
+      }
+      #qa h1 {
+        font-size: 19px;
+        margin: 0 0 8px;
+      }
+      #qa button,
+      #qa select {
+        font: inherit;
+        padding: 6px 10px;
+        margin: 4px;
+        background: #35493b;
+        color: #fff;
+        border: 1px solid #799082;
+        border-radius: 4px;
+      }
+      #qa small {
+        display: block;
+        color: #c2cdbb;
+      }
+      #qa-status {
+        margin: 8px 0;
+        color: #e8d49c;
+      }
+      #ui-root {
+        visibility: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas"></canvas>
+      <div id="ui-root"></div>
+    </div>
+    <section id="qa">
+      <h1>Actual-game asset QA · Rocket</h1>
+      <small
+        >Real Game, AtlasRegistry, Fleet, Train, TrackGraph and TrainRenderer.<br />Isolated test
+        world. Candidate remains unapproved.</small
+      >
+      <div>
+        <button id="asset">Show procedural baseline</button><button id="run">Run</button
+        ><button id="reverse">Reverse</button><button id="reset">Reset</button
+        ><select id="zoom">
+          <option value="4">4× close view</option>
+          <option value="2">2× context</option>
+          <option value="1">1× game scale</option>
+        </select>
+      </div>
+      <div id="qa-status">Loading game…</div>
+      <small id="qa-details"></small>
+    </section>
+    <script type="module" src="./scene.js"></script>
+  </body>
+</html>

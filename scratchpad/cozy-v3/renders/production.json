@@ -1,0 +1,22 @@
+{
+  "size": [
+    160,
+    160
+  ],
+  "workerReady": true,
+  "legacyGroundHidden": true,
+  "ambientDefault": 0.35,
+  "atlas": {
+    "track": "procedural",
+    "rolling": "procedural",
+    "wagons": "procedural",
+    "fx": "procedural",
+    "people": "procedural",
+    "props": "png",
+    "icons": "png",
+    "terrain": "png",
+    "structures": "png"
+  },
+  "musicGestureGated": true,
+  "errors": []
+}

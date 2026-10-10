@@ -1,0 +1,31 @@
+{
+  "sourceHashPreserved": true,
+  "renderedFacings": 25,
+  "headingsChecked": 48,
+  "projectionMaxErrorPixels": 7.105427357601002e-15,
+  "images": [
+    {
+      "src": "original.png",
+      "loaded": true
+    },
+    {
+      "src": "renders/source-camera-35-25.png",
+      "loaded": true
+    },
+    {
+      "src": "renders/side.png",
+      "loaded": true
+    },
+    {
+      "src": "renders/front.png",
+      "loaded": true
+    },
+    {
+      "src": "renders/top.png",
+      "loaded": true
+    }
+  ],
+  "consoleErrors": [],
+  "wheelFit": "NOT accepted; visual contact/gauge failures",
+  "humanScale": "relative ruler only; no global metre calibration in repo"
+}
