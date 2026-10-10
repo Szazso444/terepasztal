@@ -636,12 +636,15 @@ export class Game implements UiHost {
   reloadToMenu() {
     setIntentAndReload({ action: 'menu' });
   }
-  /** The debug panel's Regenerate: reload with its seed text in the address (`#seed=`). */
+  /**
+   * The debug panel's Regenerate: a new game on its seed text (a number, other text hashed, empty
+   * a random seed) in the running game's production chain. The new game replaces the stored one,
+   * so the running game is not written back on its way out, as in `reloadIntoStoredSave`.
+   */
   regenerate(seedText: string) {
-    const v = seedText.trim();
-    const seed = /^\d+$/.test(v) ? Number(v) : hashSeed(v);
-    location.hash = `seed=${seed}`;
-    location.reload();
+    this.keepStoredSave = true;
+    this.loop.stop();
+    setIntentAndReload({ action: 'new', seed: this.parseSeed(seedText), supply: this.supply });
   }
 
   // ---------------------------------------------------------------- editor
