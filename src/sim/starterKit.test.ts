@@ -27,6 +27,7 @@ import { STR } from '../strings';
 import { Inventory } from '../gacha/inventory';
 import { Crafting, craftPool, craftResources } from '../gacha/crafting';
 import { itemDef, locoDef } from '../gacha/items';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -155,7 +156,7 @@ function expectServed(w: ReturnType<typeof newGame>, depot: Station) {
     expect(p!.kind).toBe('straight');
     expect(p!.cls).toBe(cls);
     const toShed =
-      depot.rot === 0 ? (g.x < depot.x ? Dir.E : Dir.W) : g.y < depot.y ? Dir.S : Dir.N;
+      depot.rot % 2 === 0 ? (g.x < depot.x ? Dir.E : Dir.W) : g.y < depot.y ? Dir.S : Dir.N;
     expect(p!.links.flat()).toContain(toShed);
   }
 }
@@ -176,18 +177,24 @@ describe('the depot a new game starts with', () => {
   it.each([
     ['narrow_depot', 0],
     ['narrow_depot', 1],
+    ['narrow_depot', 2],
+    ['narrow_depot', 3],
     ['depot', 0],
     ['depot', 1],
+    ['depot', 2],
+    ['depot', 3],
   ])('%s at rot %i: gate track at each end of every track through the shed', (defId, rot) => {
     const w = newGame();
     const { depot, gates, cls } = firstDepot(w, defId, rot);
+    expect(depot.rot).toBe(rot);
     // the tiles foreseen before placing are the placed depot's own gates
     expect(depot.gateTiles()).toEqual(gates);
     expect(gates.length).toBe(2 * depot.platforms);
     for (const g of gates) {
       expect(depot.covers(g.x, g.y)).toBe(false);
-      // gates lie along the shed's tracks: west and east at rot 0, north and south at rot 1
-      const toShed = rot === 0 ? (g.x < depot.x ? Dir.E : Dir.W) : g.y < depot.y ? Dir.S : Dir.N;
+      // gates lie along the shed's tracks: west and east at rot 0 and 2, north and south at 1 and 3
+      const toShed =
+        rot % 2 === 0 ? (g.x < depot.x ? Dir.E : Dir.W) : g.y < depot.y ? Dir.S : Dir.N;
       expect(depot.covers(g.x + DIR_DX[toShed], g.y + DIR_DY[toShed])).toBe(true);
       // and the straight laid across the gate runs into the shed
       expect(w.track.get(g.x, g.y)!.links.flat()).toContain(toShed);
@@ -352,6 +359,103 @@ describe('the site a game is granted its depot on', () => {
     expect(ensureStartDepot(w.builder, 'narrow_depot')).toBe(d);
     expect(w.builder.depots()).toEqual([d]);
     expect(w.track.pieces.size).toBe(track);
+  });
+});
+
+describe('a depot granted at any of the four turns', () => {
+  /** Tiles near a site, as offsets from its corner: the shed's and its gates' tiles, and around. */
+  type Near = [dx: number, dy: number];
+  /** A depot site and what lies around it. */
+  interface Site {
+    defId: string;
+    x: number;
+    y: number;
+    rot: number;
+    /** too steep for anything */
+    steep: Near[];
+    /** too steep for a shed, level enough for a straight */
+    slope: Near[];
+    water: Near[];
+    /** straights already laid, at either turn and of either gauge */
+    rails: [dx: number, dy: number, rot: number, cls: TrackClass][];
+  }
+  function genSite(rng: Rng): Site {
+    const near = (): Near => [rng.int(-2, 3), rng.int(-2, 3)];
+    const some = <T>(max: number, make: () => T) =>
+      Array.from({ length: rng.chance(0.3) ? 0 : rng.int(1, max) }, make);
+    return {
+      defId: rng.pick(['depot', 'narrow_depot']),
+      x: rng.int(18, 22),
+      y: rng.int(18, 22),
+      rot: rng.int(0, 3),
+      steep: some(2, near),
+      slope: some(2, near),
+      water: some(2, near),
+      rails: some(3, () => [...near(), rng.int(0, 1), rng.pick<TrackClass>(['narrow', 'regular'])]),
+    };
+  }
+  function* shrinkSite(s: Site): Iterable<Site> {
+    for (const key of ['steep', 'slope', 'water', 'rails'] as const)
+      for (const shorter of shrinkArray<unknown>(s[key])) yield { ...s, [key]: shorter };
+    for (const rot of shrinkInt(s.rot)) yield { ...s, rot };
+  }
+  /** A new game with the site's surroundings made, the same way each time it is asked for. */
+  function siteWorld(s: Site) {
+    const w = newGame();
+    const at = (list: Near[], x: number, y: number) =>
+      list.some(([dx, dy]) => s.x + dx === x && s.y + dy === y);
+    w.builder.groundCheck = (x, y, need) =>
+      !at(s.steep, x, y) && (need !== 'level' || !at(s.slope, x, y));
+    for (const [dx, dy] of s.water) w.map.terrain[(s.y + dy) * w.map.w + s.x + dx] = Terrain.Water;
+    for (const [dx, dy, rot, cls] of s.rails)
+      w.track.place(s.x + dx, s.y + dy, 'straight', rot, cls);
+    return w;
+  }
+  /** Every piece of track in a world, as text in tile order. */
+  const pieces = (w: ReturnType<typeof newGame>) =>
+    [...w.track.pieces.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([k, p]) => `${k}:${p.kind}/${p.rot}/${p.cls}/${p.cls2 ?? '-'}`);
+
+  it('is judged, built and given gate track as a half turn on, along the same axis', () => {
+    forAll(
+      genSite,
+      (s) => {
+        const other = (s.rot + 2) % 4;
+        const a = siteWorld(s);
+        const b = siteWorld(s);
+        const before = pieces(a);
+        const blocked = depotSiteBlocked(a.builder, s.defId, s.x, s.y, s.rot);
+        expect(depotSiteBlocked(a.builder, s.defId, s.x, s.y, other), 'the site').toBe(blocked);
+        const da = grantDepot(a.builder, s.defId, s.x, s.y, s.rot);
+        const db = grantDepot(b.builder, s.defId, s.x, s.y, other);
+        expect(!!da, `granted as judged (${blocked ?? 'clear'})`).toBe(blocked === null);
+        expect(!!db, `granted at r${other} as at r${s.rot}`).toBe(!!da);
+        if (!da || !db) {
+          // nothing left behind
+          expect(a.builder.stations).toEqual([]);
+          expect(pieces(a)).toEqual(before);
+          return;
+        }
+        expect([da.rot, db.rot], 'the turns kept').toEqual([s.rot, other]);
+        expect(db.footprint()).toEqual(da.footprint());
+        expect(db.gateTiles()).toEqual(da.gateTiles());
+        expect(pieces(b), 'the same track laid').toEqual(pieces(a));
+        // each gate the grant laid track on has a straight of the shed's gauge running into it
+        // (a gate with track already keeps what it had, whatever that is)
+        const had = new Set(s.rails.map(([dx, dy]) => `${s.x + dx},${s.y + dy}`));
+        for (const g of da.gateTiles()) {
+          if (had.has(`${g.x},${g.y}`)) continue;
+          const p = a.track.get(g.x, g.y);
+          expect(p?.kind, `gate ${g.x},${g.y}`).toBe('straight');
+          expect(p!.cls, `gate ${g.x},${g.y}`).toBe(da.def.gauge ?? 'regular');
+          const toShed =
+            s.rot % 2 === 0 ? (g.x < da.x ? Dir.E : Dir.W) : g.y < da.y ? Dir.S : Dir.N;
+          expect(p!.links.flat(), `gate ${g.x},${g.y} runs into the shed`).toContain(toShed);
+        }
+      },
+      { shrink: shrinkSite },
+    );
   });
 });
 

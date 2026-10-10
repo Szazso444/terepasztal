@@ -1210,6 +1210,129 @@ describe('v14 to v15', () => {
   });
 });
 
+describe('v15 to v16', () => {
+  beforeEach(() => {
+    resetTrainIds(1);
+    resetStationIds(1);
+    Object.assign(rules, DEFAULT_RULES);
+  });
+
+  /** A turn a works tuple could hold: the four, null, and values no build wrote. */
+  const TURN_VALUES: unknown[] = [0, 1, 2, 3, null, 5, -1, 2.5, '1'];
+  /**
+   * A works tuple in any shape a build, an older file's steps or a hand could leave: no level, a
+   * level written as null, no work, a turn already there (or null, or one no build wrote),
+   * something newer after the turn, too short to be a works, or (unless `tuples`) no tuple at all.
+   */
+  function genWorks(rng: Rng, tuples = false): unknown {
+    const id = rng.pick(['windmill', 'kiln', 'colliery', 'bridge_wood', 'sawmill']);
+    const t: unknown[] = [rng.int(0, 31), rng.int(0, 31), id, rng.pick([0, 0.5, rng.next()])];
+    const level = () => rng.pick<unknown>([1, 2, 4, 6, null]);
+    const work = () => rng.pick<unknown>([null, { to: 2, left: 10, total: 60 }, 7, {}]);
+    switch (rng.int(0, tuples ? 5 : 6)) {
+      case 0:
+        return t;
+      case 1:
+        return [...t, level()];
+      case 2:
+        return [...t, level(), work()];
+      case 3:
+        return [...t, level(), work(), rng.pick(TURN_VALUES)];
+      case 4:
+        return [...t, level(), work(), rng.pick(TURN_VALUES), 'newer'];
+      case 5:
+        return t.slice(0, rng.int(0, 3));
+      default:
+        return rng.pick([null, 'kiln', {}, 7]);
+    }
+  }
+  /** A v15 file, as it reads from disk, with a works list of any shapes or none at all. */
+  function genV15(rng: Rng): SaveGame {
+    const file: Record<string, unknown> = { ...genOldFile(rng), version: 15 };
+    if (rng.chance(0.15)) delete file.buildings;
+    else file.buildings = Array.from({ length: rng.int(0, 6) }, () => genWorks(rng));
+    return asStored(file) as SaveGame;
+  }
+  /** Smaller v15 files: what `shrinkOldFile` drops, then a shorter works list. */
+  function* shrinkV15(file: SaveGame): Iterable<SaveGame> {
+    const f = file as unknown as Record<string, unknown>;
+    for (const smaller of shrinkOldFile(f)) if (smaller.version === 15) yield smaller as never;
+    if (Array.isArray(f.buildings))
+      for (const buildings of shrinkArray(f.buildings)) yield { ...f, buildings } as never;
+  }
+  /**
+   * The step as the brief states it, for one works item: a tuple of at least four places is
+   * padded to seven with what a missing place always meant (level 1, no work, turn 0), and a turn
+   * written as null is 0; anything else, and every place the tuple had, is as it was.
+   */
+  function turned(item: unknown): unknown {
+    if (!Array.isArray(item) || item.length < 4) return item;
+    const t = [...item];
+    const defaults = [1, null, 0];
+    for (let i = t.length; i < 7; i++) t.push(defaults[i - 4]);
+    if (t[6] === null) t[6] = 0;
+    return t;
+  }
+
+  it('gives each works a turn, fills nothing else, finds nothing to do again, and loads as before', () => {
+    forAll(
+      genV15,
+      (file) => {
+        const before = asStored(file) as SaveGame;
+        const once = asStored(runStep(15, asStored(file) as SaveGame)) as SaveGame;
+        expect(asStored(runStep(15, asStored(once) as SaveGame)), 'run again').toEqual(once);
+        // everything but the works list is untouched, and the works are as the brief says
+        const { buildings: worksAfter, ...restAfter } = once;
+        const { buildings: worksBefore, ...restBefore } = before;
+        expect(restAfter, 'beside the works').toEqual(restBefore);
+        expect(worksAfter, 'the works list').toEqual(worksBefore?.map(turned));
+        // and the load code sees no difference: a missing turn always loaded as r0
+        (worksBefore ?? []).forEach((bj: unknown, i) => {
+          if (!Array.isArray(bj) || bj.length < 3) return;
+          const load = (j: unknown) => buildingFromJSON(asStored(j) as BuildingJSON);
+          expect(load(worksAfter![i]), `works ${i} loads as before`).toEqual(load(bj));
+        });
+      },
+      { shrink: shrinkV15 },
+    );
+  });
+
+  it('leaves every works of a file of any older version with a turn, and a v16 file as it was', () => {
+    // Tuples only: the step from v11 reads each works item as a tuple where the file has old
+    // bridge track, and refuses the file as damaged when one is not.
+    forAll(
+      (rng) => {
+        const file = genOldFile(rng);
+        file.version = rng.int(SAVE_MIN_VERSION, SAVE_VERSION);
+        file.buildings = Array.from({ length: rng.int(1, 5) }, () => genWorks(rng, true));
+        return asStored(file) as Record<string, unknown>;
+      },
+      (file) => {
+        const read = readSaveText(JSON.stringify(file));
+        if (!('save' in read)) throw new Error(`the file was refused as ${read.error}`);
+        const works = (read.save.buildings ?? []) as unknown[];
+        if (file.version === SAVE_VERSION) {
+          expect(works, 'a file of this version').toEqual(file.buildings);
+          return;
+        }
+        works.forEach((b, i) => {
+          if (!Array.isArray(b) || b.length < 4) return;
+          expect(b.length, `works ${i}: the place for its turn`).toBeGreaterThanOrEqual(7);
+          expect(b[6] ?? 'none', `works ${i}: its turn`).not.toBe('none');
+          expect(TURN_VALUES, `works ${i}: its turn`).toContain(b[6]);
+        });
+      },
+      {
+        shrink: function* (file) {
+          for (const smaller of shrinkOldFile(file)) yield smaller;
+          if (Array.isArray(file.buildings))
+            for (const buildings of shrinkArray(file.buildings)) yield { ...file, buildings };
+        },
+      },
+    );
+  });
+});
+
 /** An in-memory `localStorage` that counts its writes, so a test can see nothing was written. */
 class MemoryStorage {
   items = new Map<string, string>();
