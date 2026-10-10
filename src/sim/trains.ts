@@ -2446,10 +2446,20 @@ export class Train {
     const on = (x: number, y: number, entry: Dir) => states.has(stateKey(w, x, y, entry));
     const rear = this.reversedTrail().trail.at(-1)?.seg;
     if (!on(head.x, head.y, head.in) && !(rear && on(rear.x, rear.y, rear.in))) return null;
-    // the head stands on the last tile: on through it, or back along the train, its rear first
+    const length = this.length;
     return (path) => {
+      // the head stops at the last tile's centre: on through it, head first
       const last = path[path.length - 1];
-      return on(last.x, last.y, last.in) || on(last.x, last.y, last.out);
+      if (on(last.x, last.y, last.in)) return true;
+      // or rear first, from the tile the rear stands on, `length` back along the way: looking
+      // back from the head would count a stop under the cars, which the rear runs away from
+      let behind = 0;
+      for (let i = path.length - 1; i >= 0; i--) {
+        const s = path[i];
+        behind += ctx.track.segLength(s.x, s.y, s.in, s.out) / (i === path.length - 1 ? 2 : 1);
+        if (behind >= length || i === 0) return on(s.x, s.y, s.out);
+      }
+      return false;
     };
   }
 
