@@ -9,6 +9,7 @@ import {
   type StopPlan,
   type LocoSlotInit,
   type RouteMode,
+  type TrainState,
 } from './trains';
 import type { TrackGraph, TrackClass, TrackPiece } from '../world/track';
 import { findPath } from '../world/pathfinding';
@@ -973,6 +974,7 @@ export class Fleet {
     const groups = blockingGroups(this.trains).sort(
       (a, b) => Math.max(...b.map((t) => t.blockedTime)) - Math.max(...a.map((t) => t.blockedTime)),
     );
+    this.keepJamNotes(groups);
     for (const group of groups) {
       if (!group.some((t) => t.blockedTime >= MUTUAL_GRACE)) continue;
       if (!this.traffic.canRecover(group, now)) continue;
@@ -1023,8 +1025,52 @@ export class Fleet {
           break;
         }
       }
-      if (!moved && group.some((t) => t.blockedTime >= MUTUAL_GRACE * 4))
+      if (!moved && group.some((t) => t.blockedTime >= MUTUAL_GRACE * 4)) {
         this.traffic.deadlock(group, now);
+        // the trains held in it say why (an idle train in the way says so itself, `makeWay`)
+        for (const t of group) {
+          const head = t.poses[0];
+          if (!head || t.holding || this.jams.has(t.id)) continue;
+          if (t.state !== 'moving' && t.state !== 'yielding') continue;
+          if (!t.blocked && t.claimBlocker === null) continue;
+          this.jams.set(t.id, { x: head.x, y: head.y, state: t.state, was: t.lastMessage });
+          t.lastMessage = STR.traffic.jammed;
+        }
+      }
+    }
+  }
+
+  /**
+   * Trains held in a jam no train of it could pull aside from, with where each stood, what it was
+   * doing and the note it had: its note says it is jammed until it moves, does something else or
+   * leaves the jam.
+   */
+  private jams = new Map<number, { x: number; y: number; state: TrainState; was: string }>();
+  /**
+   * Keep each jammed train's note while the jam lasts. Once it ends the train gets its own note
+   * back, unless it has set off from where it pulled aside, which a note of then no longer fits.
+   */
+  private keepJamNotes(groups: Train[][]) {
+    if (!this.jams.size) return;
+    const inJam = new Set(groups.flat().map((t) => t.id));
+    for (const [id, jam] of this.jams) {
+      const t = this.byId(id);
+      const head = t?.poses[0];
+      if (!t || !head) {
+        this.jams.delete(id);
+        continue;
+      }
+      const held =
+        inJam.has(id) &&
+        !t.holding &&
+        t.state === jam.state &&
+        Math.hypot(head.x - jam.x, head.y - jam.y) <= JAM_MOVED;
+      if (held) t.lastMessage = STR.traffic.jammed;
+      else {
+        this.jams.delete(id);
+        if (t.lastMessage === STR.traffic.jammed)
+          t.lastMessage = t.state === jam.state ? jam.was : '';
+      }
     }
   }
 
@@ -1153,6 +1199,8 @@ export class Fleet {
   }
 }
 const MUTUAL_GRACE = 4;
+/** tiles a jammed train's head moves before its note no longer says it is jammed */
+const JAM_MOVED = 0.5;
 /** seconds an idle train in another train's way waits before looking again for a way aside */
 const ASIDE_RETRY = 2;
 /** seconds between looks at whether an idle train stands in another train's way */

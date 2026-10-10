@@ -341,6 +341,69 @@ describe('an idle train with nothing worth hauling', () => {
   });
 });
 
+describe('a train left with no way on', () => {
+  it(
+    'behind an idle train with nowhere to move aside to, is a counted jam and says so until it clears',
+    SLOW,
+    () => {
+      // a single line between two termini: nowhere to pass
+      const w = simWorld({ terrain: 'grass', size: 64 });
+      line(w, 4, ROW, 40);
+      const west = station(w, 'warehouse', 5, ROW - 1);
+      const end = station(w, 'quarry', 40, ROW - 1);
+      const sim = run(w);
+      const idle = idleAt(w, sim, 34, end);
+      const caller = train(w, 8, true, 'schedule', [call(end), call(west)]);
+      go(w, caller);
+      expect(
+        sim.until(() => caller.lastMessage === STR.traffic.jammed, 60),
+        `the caller says "${caller.lastMessage}"`,
+      ).toBe(true);
+      expect(sim.counters().deadlocks).toBeGreaterThan(0);
+      expect(caller.state).toBe('moving');
+      // it keeps saying so for as long as it stands there, whatever else it tries meanwhile
+      expect(sim.until(() => caller.lastMessage !== STR.traffic.jammed, 60)).toBe(false);
+      // the idle train leaves service: the line is clear, and the note goes with the jam
+      w.fleet.recall(idle);
+      expect(
+        sim.until(() => sim.arrivals(caller).includes(end.id), 60),
+        'the caller never reached the quarry',
+      ).toBe(true);
+      expect(caller.lastMessage).not.toBe(STR.traffic.jammed);
+      expect(sim.broken).toBeNull();
+    },
+  );
+
+  it(
+    'where it pulled aside, says it has no track on to its stop, and drops that once it sets off',
+    SLOW,
+    () => {
+      // the line to the quarry has a gap at x 20: the track was taken up after the train pulled aside
+      const w = simWorld({ terrain: 'grass', size: 64 });
+      line(w, 4, ROW, 19);
+      line(w, 21, ROW, 40);
+      const west = station(w, 'warehouse', 5, ROW - 1);
+      const end = station(w, 'quarry', 40, ROW - 1);
+      const sim = run(w);
+      const t = train(w, 12, true, 'schedule', [call(end), call(west)]);
+      t.state = 'yielding';
+      t.lastMessage = STR.traffic.pullingAside;
+      sim.ticks(3);
+      expect(t.state).toBe('yielding');
+      expect(t.lastMessage).toBe(STR.traffic.noWayOn);
+      // the gap is closed: it sets off, and no longer says anything about pulling aside
+      lay(w, 20, ROW, 'straight', 1);
+      expect(sim.until(() => t.state !== 'yielding', 5)).toBe(true);
+      expect(t.lastMessage).toBe('');
+      expect(
+        sim.until(() => sim.arrivals(t).includes(end.id), 60),
+        'it never reached the quarry',
+      ).toBe(true);
+      expect(sim.broken).toBeNull();
+    },
+  );
+});
+
 // ------------------------------------------------------------------ generated lines
 
 /** A siding south of the main line: a switch block on x and x + 1 and dead-end track below it. */
@@ -869,5 +932,33 @@ describe('idle trains on generated lines', () => {
       },
       { seeds: LINE_SEEDS, shrink: (l) => shrinkLine(l, hasWayAside) },
     );
+  });
+
+  it('back the train behind off only to where it can go on to its stop', SLOW, () => {
+    // the idle train's way aside is the siding at x 24, which the caller stands across. The
+    // siding at x 45 would clear it, but lets a train out westwards only, away from the quarry the
+    // caller is bound for; backing west past x 24 instead leaves it a way on
+    const l: GenLine = {
+      end: 51,
+      quarry: 51,
+      sidings: [
+        { x: 24, east: true, len: 5 },
+        { x: 45, east: false, len: 5 },
+      ],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [{ x: 30, wagons: 1, stops: ['quarry', 'west'] }],
+    };
+    expect(valid(l)).toBe(true);
+    const { w, sim, idle, callers, idled } = setUp(l);
+    expect(idled, 'the idle train never idled').toBe(true);
+    const [caller] = callers;
+    expect(
+      sim.until(() => sim.arrivals(caller) >= 3, 300),
+      `the caller stopped running: ${story(w, sim)}`,
+    ).toBe(true);
+    expect(idle.lastMessage, story(w, sim)).toBe(STR.traffic.madeWay);
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect(w.fleet.traffic.counters.deadlocks, story(w, sim)).toBe(0);
   });
 });

@@ -16,7 +16,7 @@ import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules } from './rules';
-import { findRefugePath } from './recovery';
+import { findRefugePath, stateKey, statesReaching } from './recovery';
 import { STR } from '../strings';
 import {
   Polyline,
@@ -251,6 +251,13 @@ const HOLD_GAP = 0.45;
 const REROUTE_AFTER = 6;
 /** blocked this long: try rerouting again */
 const RETRY_EVERY = 20;
+/** notes about a yield, dropped when the train sets off from it */
+const YIELD_NOTES: readonly string[] = [
+  STR.traffic.pullingAside,
+  STR.traffic.replan,
+  STR.traffic.noWayOn,
+  STR.traffic.jammed,
+];
 /** tank fraction below which the economy mode kicks in */
 const ECO_BELOW = 0.3;
 /** speed and consumption multiplier while saving fuel */
@@ -739,6 +746,8 @@ export class Train {
   private anticipateAt = 0;
   /** tile keys of the plain path a holding train would take once the line clears */
   private wantKeys: number[] | null = null;
+  /** the states that run on to the stop `onwardTest` checks, kept for the rest of the tick */
+  private onwardMemo: { key: string; states: Set<number> } | null = null;
 
   constructor(locos: LocoSlotInit[], name?: string, id?: number) {
     if (!locos.length) throw new Error('a train needs a locomotive');
@@ -1588,6 +1597,8 @@ export class Train {
           this.wantKeys = null;
           this.yieldWait = 0;
           this.clearHold();
+          // on its way again: a note about pulling aside, or about the jam, no longer holds
+          if (YIELD_NOTES.includes(this.lastMessage)) this.lastMessage = '';
           if (!this.path) {
             this.pathPts = [];
             this.pathCum = [];
@@ -1664,6 +1675,9 @@ export class Train {
       this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.in }, isTarget, 100000) ??
       this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
     this.wantKeys = path ? path.map((s) => s.y * w + s.x) : null;
+    // with no track on at all it is not waiting for traffic: say so rather than stand silent
+    if (!path) this.lastMessage = STR.traffic.noWayOn;
+    else if (this.lastMessage === STR.traffic.noWayOn) this.lastMessage = '';
     let by: number | null = null;
     if (path)
       for (const s of path) {
@@ -2411,10 +2425,40 @@ export class Train {
   }
 
   /**
+   * Whether a refuge leaves the train a way on (`refugePlan`): from where the way there ends, it
+   * can run, either end first, to its next stop, or, idle, back to the station it stood at. Null
+   * when there is nothing to check: no such stop, or no way there from where the train stands
+   * now either, so no refuge leaves it worse off.
+   */
+  private onwardTest(ctx: TickCtx): ((path: readonly PathSegment[]) => boolean) | null {
+    const stop = this.route.length ? this.route[this.routeIndex % this.route.length] : null;
+    const id = this.state === 'idle' ? (this.atStation?.id ?? stop) : (this.detour ?? stop);
+    const head = this.trail.at(-1)?.seg;
+    if (id === null || !head) return null;
+    const station = ctx.builder.stationById(id);
+    const plat = station ? ctx.builder.platformTiles(station) : [];
+    if (!plat.length) return null;
+    const w = ctx.track.w;
+    const key = `${id}|${ctx.track.version}|${ctx.now}`;
+    if (this.onwardMemo?.key !== key)
+      this.onwardMemo = { key, states: statesReaching(ctx.track, plat, this.canUse) };
+    const { states } = this.onwardMemo;
+    const on = (x: number, y: number, entry: Dir) => states.has(stateKey(w, x, y, entry));
+    const rear = this.reversedTrail().trail.at(-1)?.seg;
+    if (!on(head.x, head.y, head.in) && !(rear && on(rear.x, rear.y, rear.in))) return null;
+    // the head stands on the last tile: on through it, or back along the train, its rear first
+    return (path) => {
+      const last = path[path.length - 1];
+      return on(last.x, last.y, last.in) || on(last.x, last.y, last.out);
+    };
+  }
+
+  /**
    * The shorter way, either end first, to a refuge that holds the whole consist: plain track off
-   * the routes in `theirs` and off the tiles in `barred` (and on the tiles of `only`, when given).
-   * The way never crosses another train or another escape, nor a claim of a train outside
-   * `members`; with `through`, it may cross the trains in that set.
+   * the routes in `theirs` and off the tiles in `barred` (and on the tiles of `only`, when given),
+   * from which the train has a way on (`onwardTest`). The way never crosses another train or
+   * another escape, nor a claim of a train outside `members`; with `through`, it may cross the
+   * trains in that set.
    */
   private refugePlan(
     ctx: TickCtx,
@@ -2449,13 +2493,14 @@ export class Train {
         !avoid(x, y)
       );
     };
+    const onward = this.onwardTest(ctx) ?? undefined;
     const reversed = this.reversedTrail();
     const plans: RetreatPlan[] = [];
     for (const flip of [false, true]) {
       const points = flip ? reversed.trail : this.trail;
       const head = points[points.length - 1]?.seg;
       if (!head) continue;
-      const path = findRefugePath(ctx.track, head, this.length, avoid, refuge, this.canUse);
+      const path = findRefugePath(ctx.track, head, this.length, avoid, refuge, this.canUse, onward);
       if (path)
         plans.push({
           path,

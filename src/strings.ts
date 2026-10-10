@@ -164,6 +164,13 @@ export const STR = {
      * free and long enough, or it could get into one only by reversing partway, which no train does
      */
     noWayAside: 'In the way, with no siding or free platform it can pull into',
+    /**
+     * a train held in a jam none of its trains can pull aside from: no siding or loop off the
+     * others' way holds one of them and leaves it a way on to its stop (a counted deadlock)
+     */
+    jammed: 'Jammed: no siding it can pull into to let the other train by',
+    /** a train waiting where it pulled aside has no track on to its next stop from there */
+    noWayOn: 'Pulled aside, with no track on to its next stop',
     replan: 'Escape route unavailable; waiting for a new plan',
     stalled: (name: string) => `${name}: escape stalled; released for replanning`,
     released: (name: string) => `${name}: escape route released`,
