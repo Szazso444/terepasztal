@@ -483,8 +483,9 @@ function stage(s: Scene): Staged {
   if (s.tradeIn !== null)
     w.trade.load({ deals: { stone: 5, wood: -3 }, nextAt: w.clock.time + s.tradeIn });
   w.contracts.completedToday = s.completedToday;
+  // set on every call, as daySeconds is: the scene alone decides it, whatever ran before it
+  rules.contractOfferCount = s.takeOffers ? TAKEN_AT_ONCE : DEFAULT_RULES.contractOfferCount;
   if (s.takeOffers) {
-    rules.contractOfferCount = TAKEN_AT_ONCE;
     const answer = w.contracts.onEvent;
     w.contracts.onEvent = (e) => {
       answer?.(e);
