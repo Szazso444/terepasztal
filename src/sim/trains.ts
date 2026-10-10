@@ -332,6 +332,13 @@ export interface RetreatSave {
 }
 /** Reserves an escape for the train being resumed, as `TickCtx.reserveRecovery` does. */
 export type ReserveEscape = (path: PathSegment[], group: number[]) => boolean;
+/** The track tile of a fuel or water service a train is heading to, and what it hands out. */
+export interface ServiceStop {
+  x: number;
+  y: number;
+  fuel: boolean;
+  water: boolean;
+}
 
 export interface DeliveryEvent {
   cargo: string;
@@ -445,7 +452,8 @@ export class Train {
     return r.length ? Math.min(...r) : Infinity;
   }
   /** A temporary service stop leaves the scheduled destination and cargo program intact. */
-  private serviceStop: { x: number; y: number; fuel: boolean; water: boolean } | null = null;
+  private serviceStop: ServiceStop | null = null;
+  /** game time of the next look for a service */
   private nextFuelCheck = 0;
   /** Route to the closest reachable, stocked service that replenishes the limiting tank. */
   planFuelDetour(ctx: TickCtx): boolean {
@@ -2438,7 +2446,8 @@ export class Train {
    * After a load, once, before the train's first tick: it stands at the station it was saved at
    * again (among the station's occupants unless it waits for a platform), a train backing off for
    * another has its escape reserved again (`reserve`) and runs on along it, and any other train
-   * under way plans its path again from where its head stands, keeping its speed. The fleet's
+   * under way plans its path again from where its head stands to the service or the stop it was
+   * bound for, keeping its speed. The fleet's
    * traffic control calls this for every train before any claim is made or any train moves, so
    * loaded trains find each other on the platforms and their paths are claimed from the first
    * tick. What the save does not hold is settled as play would settle it: a train backing off
@@ -2469,27 +2478,36 @@ export class Train {
       this.standAfterLoad();
   }
   /**
-   * The path of a loaded train under way, planned again from its head to the stop it was bound
-   * for (a refuelling detour's station first) at the speed it had. The head may already stand on
-   * the stop's platform tile, short of the middle where it halts. False when the stop or every
-   * way there is gone.
+   * The path of a loaded train under way, planned again from its head to where it was bound at
+   * the speed it had: the fuel or water service it was heading to, or else the stop (a refuelling
+   * detour's station first). The head may already stand on the tile it halts on, short of the
+   * middle. A service it can no longer reach is dropped for the stop, as `dispatch` drops it.
+   * False when the stop or every way there is gone.
    */
   private replanAfterLoad(builder: Builder): boolean {
     const track = builder.track;
     const head = this.trail[this.trail.length - 1]?.seg;
-    if (!head || !this.route.length) return false;
-    const target = builder.stationById(
-      this.detour ?? this.route[this.routeIndex % this.route.length],
-    );
-    const keys = new Set(
-      (target ? builder.platformTiles(target) : []).map((p) => p.y * track.w + p.x),
-    );
-    if (!keys.size) return false;
+    if (!head) return false;
+    const keys = new Set<number>();
+    const service = this.serviceStop;
+    if (service) keys.add(service.y * track.w + service.x);
+    else if (this.route.length) {
+      const target = builder.stationById(
+        this.detour ?? this.route[this.routeIndex % this.route.length],
+      );
+      for (const p of target ? builder.platformTiles(target) : []) keys.add(p.y * track.w + p.x);
+    }
     const isTarget = (x: number, y: number) => keys.has(y * track.w + x);
-    const path = isTarget(head.x, head.y)
-      ? [{ ...head }]
-      : this.pathTo(track, { x: head.x, y: head.y, in: head.in }, isTarget);
-    if (!path) return false;
+    const path = !keys.size
+      ? null
+      : isTarget(head.x, head.y)
+        ? [{ ...head }]
+        : this.pathTo(track, { x: head.x, y: head.y, in: head.in }, isTarget);
+    if (!path) {
+      if (!service) return false;
+      this.serviceStop = null;
+      return this.replanAfterLoad(builder);
+    }
     // leaving the head's tile the way the head runs, it stays on the route it stands on
     this.followAfterLoad(path, builder, path[0].out === head.out ? head.route : undefined);
     return true;
@@ -2540,6 +2558,7 @@ export class Train {
   }
   /** Nothing to carry on with after a load: stand without a route and look for one at once. */
   private standAfterLoad() {
+    this.serviceStop = null;
     this.speed = 0;
     this.setState('noRoute');
     this.stateTime = 10;
@@ -2602,6 +2621,10 @@ export class Train {
       yieldUntil: this.yieldUntil,
       // the stations a roaming train ruled out, with the game time each comes back
       badTargets: [...this.badTargets],
+      // the fuel or water service it is heading to before its stop, and the game time it next
+      // looks for one
+      serviceStop: this.serviceStop && { ...this.serviceStop },
+      nextFuelCheck: this.nextFuelCheck,
       head: head
         ? { x: head.seg.x, y: head.seg.y, in: head.seg.in, reversed: this.reversed }
         : null,
@@ -2678,6 +2701,8 @@ export class Train {
     t.yieldCount = j.yieldCount;
     t.yieldUntil = j.yieldUntil;
     t.badTargets = new Map(j.badTargets);
+    t.serviceStop = j.serviceStop && { ...j.serviceStop };
+    t.nextFuelCheck = j.nextFuelCheck;
     // the station, the escape and the path wait for the builder (`resumeAfterLoad`)
     t.loaded = { station: j.station, retreat: j.retreat };
     if (t.consistProblem) t.lastMessage = t.consistProblem;

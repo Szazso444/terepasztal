@@ -68,6 +68,8 @@ const V14_FIELDS = [
   'yieldCount',
   'yieldUntil',
   'badTargets',
+  'serviceStop',
+  'nextFuelCheck',
 ] as const;
 
 interface World {
@@ -381,6 +383,8 @@ describe('a v13 save', () => {
         yieldCount: 0,
         yieldUntil: 0,
         badTargets: [],
+        serviceStop: null,
+        nextFuelCheck: 0,
       });
       const t = Train.fromJSON(
         JSON.parse(JSON.stringify(stored)) as TrainJSON,
@@ -663,6 +667,51 @@ describe('a single train saved at any tick of a generated line', () => {
       });
     },
   );
+
+  it('keeps heading for the service it set off for, and the time of its next look for one', () => {
+    // The smallest case the property above found: saved on the tick it set off for the coaling
+    // stage, a load that planned the path to its stop stood it still for a tick while it turned
+    // for the service again, and one that forgot when it next looks for a service looked a tick
+    // late.
+    const c: Layout = {
+      loco: 'john_bull',
+      mode: 'schedule',
+      sites: [
+        { kind: 'quarry', x: 14, stocked: true },
+        { kind: 'warehouse', x: 44, stocked: false },
+      ],
+      siding: null,
+      trainX: 25,
+      east: true,
+      fuel: 0.405,
+      tick: 200,
+      service: 86,
+    };
+    const w = layoutScene(c);
+    for (let i = 0; i <= c.tick; i++) step(w, timeOf(i));
+    const text = saved(w);
+    const j = (JSON.parse(text) as { trains: TrainJSON[] }).trains[0];
+    expect(j.serviceStop, 'the service it heads to').toMatchObject({ x: 84, y: ROW });
+    expect(j.nextFuelCheck, 'its next look for one').toBeGreaterThan(timeOf(c.tick));
+    // a tick on, the loaded train runs on to the same tile at the same speed as the control
+    const ahead = (t: Train) => {
+      const end = t.pathAhead().at(-1);
+      return { speed: t.speed, end: end && { x: end.x, y: end.y } };
+    };
+    step(w, timeOf(c.tick + 1));
+    const was = ahead(w.fleet.trains[0]);
+    expect(was.speed).toBeGreaterThan(0);
+    expect(was.end).toEqual({ x: 84, y: ROW });
+    const back = loaded(w, text);
+    step(back, timeOf(c.tick + 1));
+    const now = ahead(back.fleet.trains[0]);
+    expect(now.end).toEqual(was.end);
+    expect(now.speed).toBeCloseTo(was.speed, 9);
+    // and saved again, it still holds both
+    const again = back.fleet.trains[0].toJSON();
+    expect(again.serviceStop).toEqual(j.serviceStop);
+    expect(again.nextFuelCheck).toBe(j.nextFuelCheck);
+  });
 });
 
 /**

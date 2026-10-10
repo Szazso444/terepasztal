@@ -1876,7 +1876,8 @@ const MODE_VALUES: unknown[] = [
 /**
  * The fields the step from v13 gives every train, with what a load before v14 left in them: it
  * stands without a route, at no station, with no escape to back off along, free to be asked to
- * back off again and no stop ruled out, and looks for one on its first tick.
+ * back off again, no stop ruled out and no service to head for, and looks for a route and for
+ * fuel or water on its first tick.
  */
 const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
   state: 'noRoute',
@@ -1889,6 +1890,8 @@ const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
   yieldCount: 0,
   yieldUntil: 0,
   badTargets: [],
+  serviceStop: null,
+  nextFuelCheck: 0,
 };
 /**
  * Values a file may already hold in a field the step from v13 fills, none of them the step's
@@ -1911,6 +1914,8 @@ const RESUME_HELD: Readonly<Record<string, readonly unknown[]>> = {
       [4, 300],
     ],
   ],
+  serviceStop: [{ x: 5, y: 6, fuel: true, water: false }],
+  nextFuelCheck: [5.05, 812],
 };
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];

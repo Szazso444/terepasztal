@@ -358,7 +358,7 @@ describe('semaphore boundaries and growing worlds', () => {
       ]),
     ).toBe('red');
   });
-  it('shifts bridge levels, houses, wires, track classes, car trails and escapes together during expansion', () => {
+  it('shifts bridge levels, houses, wires, track classes, car trails, escapes and service stops together during expansion', () => {
     const save = {
       world: { kind: 'generated', seed: 4242, params: { w: 96, h: 96 } },
       track: [[20, 20, 'straight', 1, 'high_speed']],
@@ -383,6 +383,11 @@ describe('semaphore boundaries and growing worlds', () => {
             group: [7],
           },
         },
+        {
+          head: { x: 22, y: 20 },
+          trail: [[22, 20, 22, 20, 3, 1]],
+          serviceStop: { x: 24, y: 20, fuel: true, water: false },
+        },
       ],
       regions: Array(9).fill(true),
       camera: { x: 12, y: 14, zoomIndex: 2 },
@@ -406,6 +411,9 @@ describe('semaphore boundaries and growing worlds', () => {
       ],
       group: [7],
     });
+    // a train heading for a fuel or water service keeps heading for it
+    const s = grown.trains[1] as unknown as { serviceStop: unknown };
+    expect(s.serviceStop).toEqual({ x: 56, y: 52, fuel: true, water: false });
     expect(grown.clock.speedIndex).toBe(2);
   });
 });

@@ -43,6 +43,7 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
     head?: { x: number; y: number } | null;
     trail?: number[][];
     retreat?: { path: { x: number; y: number }[] } | null;
+    serviceStop?: { x: number; y: number } | null;
   }[]) {
     if (t.head) {
       t.head.x += d;
@@ -50,8 +51,8 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
     }
     if (t.trail)
       t.trail = t.trail.map(([x, y, sx, sy, ...rest]) => [x + d, y + d, sx + d, sy + d, ...rest]);
-    // the escape a train backing off runs along
-    for (const s of t.retreat?.path ?? []) {
+    // the escape a train backing off runs along, and the service a train heads to
+    for (const s of [...(t.retreat?.path ?? []), ...(t.serviceStop ? [t.serviceStop] : [])]) {
       s.x += d;
       s.y += d;
     }
