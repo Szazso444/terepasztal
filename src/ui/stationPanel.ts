@@ -5,12 +5,13 @@ import type { Builder } from '../sim/build';
 import type { Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
 import { inSupplyMode } from '../sim/supply';
-import { fmtCost } from '../sim/stockpile';
 import type { ContractBoard } from '../sim/contracts';
 import type { GameClock } from '../sim/time';
 import { fmtDuration } from './contractsScreen';
 import { biomeSummary, biomeAt } from '../sim/biomes';
 import type { TownRegistry, Town } from '../sim/towns';
+import { upgradeView } from './upgradeView';
+import { upgradeRow } from './upgradeRow';
 
 /** Side panel for a selected station. */
 export class StationPanel {
@@ -69,6 +70,7 @@ export class StationPanel {
       );
     b.append(el('div', { class: 'flavor', text: s.def.flavor }));
     b.append(row(STR.station.level(s.level), `${s.def.name}`));
+    if (s.closed) b.append(el('div', { class: 'amber', text: STR.upgrade.closed }));
     const town = this.towns.townOfStation(s);
     if (town) b.append(row(STR.station.town, town.name));
     b.append(row(STR.station.biome, biomeSummary(biomeAt(this.builder.map, s.x, s.y))));
@@ -160,7 +162,6 @@ export class StationPanel {
         );
       }
     }
-    const up = this.builder.canUpgrade(s);
     const actions = el('div', { class: 'row' });
     if (this.builder.free) {
       actions.append(
@@ -179,18 +180,21 @@ export class StationPanel {
           'small',
         ),
       );
-    } else if (s.level < 5) {
-      const ub = btn(
-        STR.station.upgradeTo(s.level + 1, fmtCost(s.upgradeCost())),
-        () => {
-          if (this.builder.upgradeStation(s)) this.render();
-        },
-        'accent',
-      );
-      ub.disabled = !up.ok;
-      ub.title = up.ok ? '' : (up.reason ?? '');
-      actions.append(ub);
-      const nx = s.nextLevelUnlocks();
+    } else {
+      const view = upgradeView({
+        check: this.builder.canUpgrade(s),
+        level: s.level,
+        work: s.work,
+        // a depot's upgrade is instant (Builder.upgradeStation)
+        instant: !!s.def.depot,
+      });
+      const up = upgradeRow(view, () => {
+        if (this.builder.upgradeStation(s)) this.render();
+      });
+      // the work's bar takes the panel's width; the button sits in the row with what it unlocks
+      if (view.kind === 'work') b.append(up);
+      else actions.append(up);
+      const nx = view.kind === 'top' ? [] : s.nextLevelUnlocks();
       if (nx.length)
         actions.append(
           el('span', {
@@ -198,7 +202,7 @@ export class StationPanel {
             text: STR.station.unlocks(nx.map((c) => cargoDef(c).name).join(', ')),
           }),
         );
-    } else actions.append(el('span', { class: 'dim', text: STR.station.maxed }));
+    }
     b.append(actions);
     b.append(
       el(
