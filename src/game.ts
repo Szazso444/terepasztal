@@ -82,7 +82,8 @@ import {
 } from './sim/save';
 import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
-import { Station, resetStationIds, stationFootprint, stationGates } from './sim/stations';
+import { Station, resetStationIds, stationFootprint } from './sim/stations';
+import { ensureStartDepot, startDepotKind } from './sim/startDepot';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
@@ -442,7 +443,7 @@ export class Game implements UiHost {
       this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (!start) {
       // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
-      const d = this.ensureDepot(rules.narrowUnlocked ? 'narrow_depot' : 'depot');
+      const d = this.ensureDepot(startDepotKind());
       if (d) {
         const p = tileToWorld(d.cx + 0.5, d.cy + 0.5);
         this.camera.centerOn(p.x, p.y);
@@ -1588,59 +1589,14 @@ export class Game implements UiHost {
     }
   }
   /**
-   * Every game has a depot: the start grants one at the middle of the start chunk, an older save
-   * gets one on load. `defId` is the kind placed: a new game's is narrow, for its narrow starter
-   * engines; an older save's regular, as its roster is. Gate track of the depot's gauge is laid
-   * where nothing stands yet. Returns the depot, or null when no room could be found nearby.
+   * Every game has a depot (`ensureStartDepot`): a new game's is narrow, for its narrow starter
+   * engines; an older save's regular, as its roster is. Returns the depot, or null after saying
+   * on the console that no site near the start could take one.
    */
   ensureDepot(defId = 'depot'): Station | null {
-    const have = this.builder.depots()[0];
-    if (have) return have;
-    const rs = this.map.regionSize;
-    const cx = Math.floor((Math.floor((this.map.regionsX - 1) / 2) + 0.5) * rs);
-    const cy = Math.floor((Math.floor((this.map.regionsY - 1) / 2) + 0.5) * rs);
-    const clear = (x: number, y: number, allowTrack: boolean) => {
-      if (!inBounds(this.map, x, y) || !this.regions.isTileUnlocked(x, y)) return false;
-      const t = terrainAt(this.map, x, y);
-      if (t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain) return false;
-      if (this.builder.stationAt(x, y) || this.builder.decorAt(x, y)) return false;
-      if (this.builder.buildingAt(x, y)) return false;
-      if (!allowTrack && this.track.has(x, y)) return false;
-      return true;
-    };
-    const fits = (x: number, y: number, rot: number) =>
-      stationFootprint(defId, x, y, rot).every((t) => clear(t.x, t.y, false)) &&
-      stationGates(defId, x, y, rot).every((g) => clear(g.x, g.y, true));
-    for (let r = 0; r <= 24; r++)
-      for (let dy = -r; dy <= r; dy++)
-        for (let dx = -r; dx <= r; dx++) {
-          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-          for (const rot of [0, 1]) {
-            const x = cx + dx - 1;
-            const y = cy + dy - 1;
-            if (!fits(x, y, rot)) continue;
-            const wasFree = this.builder.free;
-            this.builder.free = true;
-            const d = this.builder.placeStation(x, y, defId, rot);
-            if (d) {
-              const cls = d.def.gauge ?? 'regular';
-              for (const g of d.gateTiles())
-                if (!this.track.has(g.x, g.y))
-                  this.builder.placeTrack(
-                    g.x,
-                    g.y,
-                    { kind: 'straight', cls, cls2: cls },
-                    rot === 0 ? 1 : 0,
-                  );
-              // a narrow one keeps its kind's name, as one the player builds does
-              if (cls === 'regular') d.name = STR.station.depotName;
-              this.onStationChanged(d, false);
-            }
-            this.builder.free = wasFree;
-            return d;
-          }
-        }
-    return null;
+    const d = ensureStartDepot(this.builder, defId);
+    if (!d) console.warn(`[depot] no site near the start takes a ${defId} and its gate track`);
+    return d;
   }
   /** A new age begins: its works, stations and rolling stock unlock. */
   private onAgeUp(tier: number) {
