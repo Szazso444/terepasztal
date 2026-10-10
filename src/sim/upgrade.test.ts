@@ -966,6 +966,105 @@ describe('a work in a save', () => {
       },
     );
   });
+
+  it('ends a loaded work one level up, at the level it names, whatever level the save gives', () => {
+    // A save may give any level: below 1, above the top, a fraction, or none for a works. Loaded
+    // and run to its end through the builder and the houses, a kept work ends with the level one
+    // above the level the building loaded at, which is the work's own `to` and at most the top,
+    // and onUpgraded reports that level once. A building whose work was dropped stays as it
+    // loaded and reports nothing. A works the game does not know loads, and the step runs on it.
+    const w = world(5);
+    house(w, AT.house.x, AT.house.y);
+    const tops = (kind: Kind, id: string) =>
+      kind === 'station'
+        ? MAX_LEVEL
+        : kind === 'works'
+          ? WORKS_IDS.includes(id)
+            ? worksMaxLevel({ id } as Building)
+            : MAX_LEVEL
+          : w.houses.maxLevel;
+    forAll(
+      (rng) => {
+        const kind = rng.pick(KINDS);
+        const id =
+          kind === 'station'
+            ? rng.pick(STATION_IDS)
+            : kind === 'works'
+              ? rng.pick([...WORKS_IDS, 'sawmill'])
+              : 'townhouse';
+        const top = tops(kind, id);
+        const odd: (number | null)[] = [0, -1, top, top + 1, top + 3, 2.5];
+        if (kind === 'works') odd.push(null);
+        const level = rng.chance(0.5) ? rng.int(1, top) : rng.pick(odd);
+        // the work names the level after the saved one, or after the one it may load at
+        const clamped = Math.max(1, Math.min(top, level ?? 1));
+        const base = rng.chance(0.5) ? (level ?? 1) : rng.pick([clamped, Math.round(clamped)]);
+        return { kind, id, level, work: genWork(rng, base) };
+      },
+      ({ kind, id, level, work }) => {
+        w.ups.length = 0;
+        let now: () => number;
+        let kept: Work | null;
+        let unload: () => void;
+        if (kind === 'station') {
+          const sj = { id: 1, defId: id, name: 'S', x: 1, y: 1, level, storage: {}, work };
+          const s = Station.fromJSON(asStored(sj) as StationJSON);
+          w.builder.stations.push(s);
+          unload = () => w.builder.stations.splice(w.builder.stations.indexOf(s), 1);
+          now = () => s.level;
+          kept = s.work;
+        } else if (kind === 'works') {
+          const b = buildingFromJSON(asStored([1, 1, id, 0, level, work]) as BuildingJSON);
+          const key = b.y * w.map.w + b.x;
+          w.builder.buildings.set(key, b);
+          unload = () => w.builder.buildings.delete(key);
+          now = () => (WORKS_IDS.includes(id) ? buildingLevel(b) : (b.level ?? 1));
+          kept = b.work ?? null;
+        } else {
+          const hj = { ...AT.house, level, residents: 0, progress: 1, work };
+          w.houses.load(asStored({ list: [hj], arrivals: [], visited: [] }) as never);
+          const h = homeOf(w);
+          unload = () => {};
+          now = () => h.level;
+          kept = h.work ?? null;
+        }
+        try {
+          const at = now();
+          const top = tops(kind, id);
+          const to = kept?.to;
+          w.builder.tickWorks(kept ? kept.total : 1);
+          w.houses.tickWorks(kept ? kept.total : 1);
+          const rises = w.ups.map((e) => ({ kind: e.kind, level: e.level }));
+          if (to !== undefined) {
+            expect(to, `the level the work brings, loaded at ${at}`).toBe(at + 1);
+            expect(to, `the level the work brings, of ${top}`).toBeLessThanOrEqual(top);
+            expect(rises, 'what onUpgraded reports').toEqual([{ kind, level: to }]);
+            expect(now(), 'the level once the work is done').toBe(to);
+          } else {
+            expect(rises, 'what onUpgraded reports').toEqual([]);
+            expect(now(), 'the level with no work').toBe(at);
+          }
+        } finally {
+          unload();
+        }
+      },
+      {
+        seeds: Array.from({ length: 400 }, (_, i) => i + 1),
+        shrink: function* (c) {
+          // toward level 1, then 0, then none, each simpler than the one before
+          const simpler: (number | null)[] = [1, 0, null];
+          const rank = simpler.includes(c.level) ? simpler.indexOf(c.level) : simpler.length;
+          for (const level of simpler.slice(0, rank))
+            if (level !== null || c.kind === 'works') yield { ...c, level };
+          if (c.work && typeof c.work === 'object' && !Array.isArray(c.work)) {
+            const v = c.work as Record<string, unknown>;
+            if (v.left !== 0) yield { ...c, work: { ...v, left: 0 } };
+            if (v.total !== 1) yield { ...c, work: { ...v, left: 0, total: 1 } };
+          }
+        },
+      },
+    );
+  });
 });
 
 describe('a station being upgraded, of every kind', () => {
