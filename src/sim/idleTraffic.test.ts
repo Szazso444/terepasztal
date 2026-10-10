@@ -1602,12 +1602,16 @@ function parting(c: SavedLine): string | null {
 }
 /**
  * The smallest lines and saves found to part from the line never saved before v17 kept the way
- * each train runs, the way a waiting train wants and what it waits for, and its note: an idle
- * train in the way past a train held 4 s, whose wanted way the jam resolution backed that train
- * off along 4 s late; a train routed round an idle one through a passing loop, planned straight
- * into it; a train under way beside one making way, planned from a tile ahead of its head and so
- * not held behind that escape; and a train waiting aside whose wanted way through an idle train
- * the idle train moved aside for up to 2 s late.
+ * each train runs, the way a waiting train wants and what it waits for, its note, and when it may
+ * next try a way aside or out of a jam: an idle train in the way past a train held 4 s, whose
+ * wanted way the jam resolution backed that train off along 4 s late; a train routed round an idle
+ * one through a passing loop, planned straight into it; a train under way beside one making way,
+ * planned from a tile ahead of its head and so not held behind that escape; a train waiting aside
+ * whose wanted way through an idle train the idle train moved aside for up to 2 s late; an idle
+ * train with no way aside whose looks after a failed one, 2 s apart, ran 1.5 s out of step, so it
+ * said it had no way aside while never saved it waited for room; and a jam searched again at once
+ * after a load rather than 4 s after the last search, which backed the caller off a tick late and
+ * sent the idle train aside where never saved it stayed.
  */
 const PARTED: readonly { line: GenLine; tick: number }[] = [
   {
@@ -1658,14 +1662,39 @@ const PARTED: readonly { line: GenLine; tick: number }[] = [
     },
     tick: 421,
   },
+  {
+    line: {
+      end: 53,
+      quarry: 53,
+      sidings: [{ x: 28, east: true, len: 1 }],
+      loops: [],
+      idleWagons: 1,
+      westIdle: 2,
+      callers: [{ x: 16, wagons: 1, stops: ['west', 'quarry'] }],
+    },
+    tick: 775,
+  },
+  {
+    line: {
+      end: 56,
+      quarry: 56,
+      sidings: [{ x: 37, east: false, len: 1 }],
+      loops: [],
+      idleWagons: 2,
+      westIdle: 0,
+      callers: [{ x: 36, wagons: 1, stops: ['quarry', 'west'] }],
+    },
+    tick: 788,
+  },
 ];
 
 describe('idle trains on generated lines, saved and loaded at any tick', () => {
   // A load starts afresh the timers and memory the save does not hold (docs/traffic-current.md
-  // §8): when an idle train may look again for a way aside, when a jam may be tried again, the
-  // order claims are granted in. Where one of those decides, a loaded line can part from the line
-  // never saved, so a line saved at any tick is held to run on soundly; the saves that parted
-  // before v17 kept each train's way and what it waits for, to run on exactly as never saved.
+  // §8): the order claims are granted in, how long an escape has gone without progress. Where one
+  // of those decides, a loaded line can part from the line never saved, so a line saved at any
+  // tick is held to run on soundly; the saves that parted before v17 kept each train's way, what
+  // it waits for and when it may next try a way aside or out of a jam, to run on exactly as never
+  // saved.
   it(
     'carry on as never saved where a load once parted them: every train doing and saying the same',
     SLOW,

@@ -599,6 +599,16 @@ export class Train {
   private rerouted = false;
   /** while set, the train is backing off for an oncoming one and must not be asked to yield again */
   yieldUntil = 0;
+  /**
+   * Game time from which an idle train in another train's way may look again for a way aside
+   * (`Fleet.makeWay`): each look puts it ASIDE_RETRY seconds on.
+   */
+  asideRetry = 0;
+  /**
+   * Game time from which a jam the train is in may be searched again for one to back off
+   * (`Traffic.canRecover`): each search puts it 4 s on for every train of the jam.
+   */
+  recoveryRetry = 0;
   /** the current path ends at a holding spot, not a station */
   holding = false;
   /** the holding path is an idle train making way: at its end the train idles there again */
@@ -2908,6 +2918,10 @@ export class Train {
       // the game time until which it is not asked to back off again, and a yielding train sets
       // off ignoring other trains a minute after it
       yieldUntil: this.yieldUntil,
+      // v17: the game time from which it may look again for a way aside, and from which a jam it
+      // is in may be searched again
+      asideRetry: this.asideRetry,
+      recoveryRetry: this.recoveryRetry,
       // the stations a roaming train ruled out, with the game time each comes back
       badTargets: [...this.badTargets],
       // the fuel or water service it is heading to before its stop, and the game time it next
@@ -2992,6 +3006,8 @@ export class Train {
     t.blockedTime = j.blockedTime;
     t.yieldCount = j.yieldCount;
     t.yieldUntil = j.yieldUntil;
+    t.asideRetry = j.asideRetry;
+    t.recoveryRetry = j.recoveryRetry;
     t.badTargets = new Map(j.badTargets);
     t.serviceStop = j.serviceStop && { ...j.serviceStop };
     t.nextFuelCheck = j.nextFuelCheck;

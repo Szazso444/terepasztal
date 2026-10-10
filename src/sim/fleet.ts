@@ -1074,8 +1074,6 @@ export class Fleet {
     }
   }
 
-  /** game time from which each idle train may look again for a way aside */
-  private asideRetry = new Map<number, number>();
   /**
    * Idle trains make way. An idle train standing on a tile another train's route crosses (the
    * path it runs, or the one it waits on a siding to take) moves aside to the nearest place off
@@ -1090,7 +1088,6 @@ export class Fleet {
     // a few looks a second, on the ticks that pass a multiple of WAY_CHECK of game time: a game
     // loaded from a save looks on the ticks the saved one would have
     if (Math.floor(now / WAY_CHECK) === Math.floor((now - gdt) / WAY_CHECK)) return;
-    for (const id of this.asideRetry.keys()) if (!this.byId(id)) this.asideRetry.delete(id);
     const idle = this.trains.filter((t) => t.state === 'idle' && !t.holding);
     if (!idle.length) return;
     const w = this.map.w;
@@ -1108,8 +1105,10 @@ export class Fleet {
         if (notes.includes(t.lastMessage)) t.lastMessage = '';
         continue;
       }
-      if ((this.asideRetry.get(t.id) ?? -Infinity) > now) continue;
-      this.asideRetry.set(t.id, now + ASIDE_RETRY);
+      // the train keeps when it may look again, so a game loaded from a save looks when the saved
+      // one would have
+      if (t.asideRetry > now) continue;
+      t.asideRetry = now + ASIDE_RETRY;
       // off every other train's route, and off the platforms of every station another train
       // is bound for
       const theirs = new Set<number>();

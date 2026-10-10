@@ -70,7 +70,6 @@ export class Traffic {
   /** tile key -> train id */
   readonly claims = new Map<number, number>();
   readonly recoveries = new RecoveryReservations();
-  private recoveryRetry = new Map<number, number>();
   private sections = new Map<number, number>();
   private sectionTiles = new Map<number, number[]>();
   private trackVersion = -1;
@@ -180,12 +179,15 @@ export class Traffic {
     return true;
   }
 
-  /** Rate-limit failed searches; an active group keeps its plan until it clears or stalls. */
+  /**
+   * Rate-limit failed searches; an active group keeps its plan until it clears or stalls. Each
+   * train keeps when it may be searched again (`Train.recoveryRetry`), so a game loaded from a save
+   * searches when the saved one would have.
+   */
   canRecover(group: Train[], now: number) {
-    const ids = group.map((t) => t.id);
-    if (this.recoveries.hasGroup(ids)) return false;
-    if (ids.some((id) => (this.recoveryRetry.get(id) ?? 0) > now)) return false;
-    for (const id of ids) this.recoveryRetry.set(id, now + 4);
+    if (this.recoveries.hasGroup(group.map((t) => t.id))) return false;
+    if (group.some((t) => t.recoveryRetry > now)) return false;
+    for (const t of group) t.recoveryRetry = now + 4;
     return true;
   }
 
@@ -231,7 +233,6 @@ export class Traffic {
     // a load) never runs on along a stale escape.
     for (const t of trains)
       if (t.holding && !this.recoveries.active.has(t.id)) t.cancelRetreat(now);
-    for (const id of this.recoveryRetry.keys()) if (!live.has(id)) this.recoveryRetry.delete(id);
   }
   /** Recompute claims before any train moves; occupied track always wins over future claims. */
   assign(trains: Train[], now: number) {

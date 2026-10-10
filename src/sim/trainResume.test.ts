@@ -1733,7 +1733,15 @@ function editEscape(
 }
 
 /** The fields `Train.toJSON` writes since v17, which a v16 build did not. */
-const V17_FIELDS = ['aside', 'way', 'blockedBy', 'want', 'note'] as const;
+const V17_FIELDS = [
+  'aside',
+  'way',
+  'blockedBy',
+  'want',
+  'note',
+  'asideRetry',
+  'recoveryRetry',
+] as const;
 /**
  * The control's save after `tick` as a v16 build wrote it, stepped to v17 as a load steps it:
  * without the fields v17 added, each escape the rest of it as that build saved it (`v16Escape`),
@@ -2276,8 +2284,18 @@ describe('a train idle or making way, saved at any tick of the idle scenes', () 
       // As for the single trains and the traffic scenarios above, here for every train of every
       // save of the idle scenes: an idle train making way, the way an idle or yielding train wants
       // and the train a yielding one found in it, the way any other runs, and its note, but that it
-      // is jammed, which loads blank (see "a train's note, when saved").
-      const held = { aside: 0, want: 0, blockedBy: 0, way: 0, note: 0, jammed: 0 };
+      // is jammed, which loads blank (see "a train's note, when saved"), and when it may next try a
+      // way aside or out of a jam.
+      const held = {
+        aside: 0,
+        want: 0,
+        blockedBy: 0,
+        way: 0,
+        note: 0,
+        jammed: 0,
+        asideRetry: 0,
+        recoveryRetry: 0,
+      };
       IDLE_SCENES.forEach((sc, scene) => {
         const { track } = sc.lay().w;
         idleControl(scene).texts.forEach((text, tick) => {
@@ -2289,6 +2307,8 @@ describe('a train idle or making way, saved at any tick of the idle scenes', () 
             if (j.way) held.way++;
             if (j.note) held.note++;
             if (j.note === STR.traffic.jammed) held.jammed++;
+            if (j.asideRetry > 0) held.asideRetry++;
+            if (j.recoveryRetry > 0) held.recoveryRetry++;
             const back = Train.fromJSON(JSON.parse(JSON.stringify(j)) as TrainJSON, track);
             const again = JSON.stringify(back.toJSON());
             const want = { ...j, note: j.note === STR.traffic.jammed ? '' : j.note };

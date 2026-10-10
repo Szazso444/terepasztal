@@ -1358,7 +1358,8 @@ describe('v16 to v17', () => {
   }
   /**
    * The step as stated: every train says it is not making way, runs no way of its own, waits for
-   * nothing and shows no note, unless it says otherwise.
+   * nothing, shows no note and may try a way aside or out of a jam at once, unless it says
+   * otherwise.
    */
   const unmade = (t: unknown) => {
     if (!isObject(t)) return t;
@@ -2541,7 +2542,8 @@ const RESUME_HELD: Readonly<Record<string, readonly unknown[]>> = {
  * The fields the step from v16 gives every train, with what a load before v17 left in each: no
  * escape is an idle train making way, so one saved on its way aside waits to go on at its end;
  * a train under way has no way kept, so it plans its path again; a waiting train has not found
- * what is in its way nor which way it wants until it looks again; and no note was kept.
+ * what is in its way nor which way it wants until it looks again; no note was kept; and an idle
+ * train in the way may look for a way aside, and a jam it is in be searched, at once.
  */
 const V17_DEFAULTS: Readonly<Record<string, unknown>> = {
   aside: false,
@@ -2549,6 +2551,8 @@ const V17_DEFAULTS: Readonly<Record<string, unknown>> = {
   blockedBy: null,
   want: null,
   note: '',
+  asideRetry: 0,
+  recoveryRetry: 0,
 };
 /** Values a file may already hold in the fields the step from v16 fills, none the default. */
 const V17_HELD: Readonly<Record<string, readonly unknown[]>> = {
@@ -2562,6 +2566,8 @@ const V17_HELD: Readonly<Record<string, readonly unknown[]>> = {
     ],
   ],
   note: ['Parked out of the way'],
+  asideRetry: [2, 42.3],
+  recoveryRetry: [4, 97.15],
 };
 /** The fields a step fills on every train, by the version the step upgrades from. */
 const TRAIN_DEFAULTS: readonly [from: number, defaults: Readonly<Record<string, unknown>>][] = [

@@ -62,7 +62,8 @@ export interface SaveParts {
   /**
    * as `Train.toJSON` writes them; v14: what each was doing; v17: whether the escape it runs is an
    * idle train making way (`aside`), the way it runs (`way`), what a waiting train waits for
-   * (`blockedBy`, `want`) and its note (`note`)
+   * (`blockedBy`, `want`), its note (`note`) and when it may next look for a way aside and a jam
+   * it is in be searched again (`asideRetry`, `recoveryRetry`)
    */
   trains: unknown[];
   contracts: unknown;
@@ -528,7 +529,7 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 16,
-    note: 'no train was saved making way, nor with its way, what it waits for or its note: a train saved pulling aside waits where it pulls in to go on, a train under way plans its path again, a waiting train looks again, and every note starts blank, as every load had it before; from now on a save keeps an idle train making way, and it stays idle where it parks, and every train runs on along its way, waits for what it waited for and shows its note',
+    note: 'no train was saved making way, nor with its way, what it waits for, its note or when it may next try a way aside or out of a jam: a train saved pulling aside waits where it pulls in to go on, a train under way plans its path again, a waiting train looks again, an idle train in the way and a jam are tried again at once, and every note starts blank, as every load had it before; from now on a save keeps an idle train making way, and it stays idle where it parks, and every train runs on along its way, waits for what it waited for, tries again when it would have and shows its note',
     run: (j) => {
       for (const t of j.trains) {
         if (!isRecord(t)) continue;
@@ -537,6 +538,8 @@ export const MIGRATIONS: Migration[] = [
         t.blockedBy = t.blockedBy ?? null;
         t.want = t.want ?? null;
         t.note = t.note ?? '';
+        t.asideRetry = t.asideRetry ?? 0;
+        t.recoveryRetry = t.recoveryRetry ?? 0;
       }
     },
   },
