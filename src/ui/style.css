@@ -533,6 +533,12 @@ body {
 }
 
 /* ---- toasts ---- */
+/*
+ * Toasts answer what the player just did, often from a menu or screen that stays open (Save now,
+ * a refused load), so they sit above every overlay: the menus (60), the modal screens (70), the
+ * name prompt (75), the hover cards (80) and the guide and preview overlays on <body> (500). They
+ * never take the pointer, so a menu under them stays clickable.
+ */
 #toasts {
   position: absolute;
   left: 50%;
@@ -543,6 +549,7 @@ body {
   gap: 3px;
   align-items: center;
   pointer-events: none !important;
+  z-index: 600;
 }
 .toast {
   padding: 3px 10px;
