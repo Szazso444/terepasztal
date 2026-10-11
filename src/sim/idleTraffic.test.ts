@@ -35,8 +35,8 @@ beforeEach(() => {
 /** Row of the main line. */
 const ROW = 30;
 const GDT = 0.05;
-/** Each case steps a few thousand ticks: a second or two alone, far longer on a loaded runner. */
-const SLOW = { timeout: 60_000 };
+/** Each case steps a few thousand ticks (1 to 8 s alone, several times that on a loaded runner). */
+const SLOW = { timeout: 180_000 };
 /** Longest a train may stand behind an idle train before it moves off: well under the 4 s grace. */
 const HELD_AT_MOST = 2;
 /** The notes an idle train may show: none, or one about making way. */
@@ -1494,7 +1494,7 @@ const USABLE = [
 /** Seeds per property: each case runs a few thousand fleet ticks. */
 const LINE_SEEDS = Array.from({ length: 24 }, (_, i) => i + 1);
 /** Each property runs LINE_SEEDS cases of minutes of game time: generous on a loaded runner. */
-const PROPERTY = { timeout: 600_000 };
+const PROPERTY = { timeout: 900_000 };
 
 describe('idle trains on generated lines', () => {
   it(
@@ -3740,7 +3740,8 @@ describe('Train.gaveWay against the kept-back rule, over any order of give-ways,
   // escape it set off on in a jam, holding a stop, since it last reached a station (a fuel detour's
   // too: the fleet's `onArrive` counts it) and in this game since it was loaded, was for the same
   // train
-  it('keeps a train back exactly when the rule does', () => {
+  // slow because GIVE_WAY_SEEDS runs 1000 sequences, each saved and loaded along the way: about 3 s
+  it('keeps a train back exactly when the rule does', SLOW, () => {
     let backAfterStop = 0;
     let keptBack = 0;
     forAll<GiveWay[]>(

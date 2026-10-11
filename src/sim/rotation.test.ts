@@ -558,6 +558,8 @@ function occupancy(w: ReturnType<typeof worldOf>): number[] {
 }
 
 describe('in any small world', () => {
+  // slow because every seeded trial builds two worlds and checks and places stations in both: 0.8 s
+  // alone
   it('a station a half turn on meets the same check, and stands, costs and is served the same', () => {
     forAll(
       genTrial,
@@ -616,5 +618,5 @@ describe('in any small world', () => {
       },
       { shrink: shrinkTrial },
     );
-  });
+  }, 30_000);
 });

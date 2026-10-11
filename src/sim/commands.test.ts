@@ -1247,9 +1247,11 @@ function reroute(c: Rerouting): 'unreached' | 'none' | 'aside' {
 }
 
 describe('setSchedule from every contract job state', () => {
+  // slow because each seeded case ticks a train through its job, then 120 s on the new stops: 7 s
+  // alone
   it(
     'lets a job finish first, then runs the stops given from the first',
-    { timeout: 120_000 },
+    { timeout: 180_000 },
     () => {
       const seen = { unreached: 0, none: 0, aside: 0 };
       const aside = Object.fromEntries(MOMENTS.map((m) => [m, 0])) as Record<Moment, number>;

@@ -30,6 +30,8 @@ beforeEach(() => {
 // ------------------------------------------------------------------ production
 
 describe('a station closed for its upgrade, of every kind and level', () => {
+  // slow because every station kind at every level a work starts from is run under 100 seeded rules
+  // and holdings: 0.6 s alone
   it('makes nothing until the work is done, then its normal rate, its store untouched', () => {
     // Every kind at every level a work starts from, under any production rule, ground and
     // catchment, holding any goods: closed, its weekly rate is 0 however long it waits; the step
@@ -107,7 +109,7 @@ describe('a station closed for its upgrade, of every kind and level', () => {
         },
       },
     );
-  });
+  }, 30_000);
 });
 
 // ------------------------------------------------------------------ trains at a closed station
@@ -329,6 +331,8 @@ describe('dispatch to a closed producer', () => {
     expect(closed).toBe(idle);
   });
 
+  // slow because 100 seeded layouts each dispatch a train among producers, some of them closed:
+  // 0.6 s alone
   it('weighs a closed producer as one whose rate is zero, over layouts', () => {
     let credited = 0;
     forAll(
@@ -379,5 +383,5 @@ describe('dispatch to a closed producer', () => {
     );
     // the layouts are worth comparing: in some the credit would change the pick
     expect(credited).toBeGreaterThan(0);
-  });
+  }, 30_000);
 });

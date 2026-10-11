@@ -104,6 +104,8 @@ describe('banners and retired models', () => {
     expect(validateBanners()).toEqual([]);
   });
 
+  // slow because every banner, as shipped and stale, pulls 11 cards in 12 rotations for 8 seeds,
+  // with and without a later retirement: 0.7 s alone
   it('never pulls, features or lists a retired model, even when the pool still names one', () => {
     for (const shipped of BANNERS) {
       // what a stored content override from before the retirement looks like
@@ -146,7 +148,7 @@ describe('banners and retired models', () => {
           }
         });
     }
-  });
+  }, 30_000);
 
   it('falls back to a model it may hand out when the rolled rarity has only retired ones', () => {
     // N rolls find no N model to give; the downgrade search runs dry and the fallback picks
@@ -453,10 +455,12 @@ describe('any set of retired models', () => {
     return ALL.filter(() => rng.chance(share));
   };
 
+  // slow because every one of the 100 seeded sets is put through every path that hands a model
+  // out, workshop, banners and content check alike: a few seconds alone
   it('hands none of them out by any path, and every other model as before', () => {
     forAll(genRetirement, (extra) => retiring(extra, nothingRetiredHandedOut), {
       shrink: (extra) => shrinkArray(extra),
     });
     expect(ALL.filter(isRetired), 'the flags put back').toEqual(RETIRED);
-  });
+  }, 60_000);
 });

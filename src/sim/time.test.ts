@@ -120,6 +120,8 @@ describe('the same game time gives the same outcome at every game speed', () => 
     };
   }
 
+  // slow because each case runs the whole refuge scenario twice, at 1x and at 3x: 1.8 s alone with
+  // 12 trains
   it.each([
     { count: 3, pinned: false },
     { count: 4, pinned: true },
@@ -136,7 +138,7 @@ describe('the same game time gives the same outcome at every game speed', () => 
       expect(slow.result.passed).toBe(true);
       expect(slow.result.trains.filter((t) => t.arrivedAt === null)).toEqual([]);
     },
-    30_000,
+    90_000,
   );
 
   it('a single f7 on a straight line arrives at the same game time at 1x and 3x', () => {
@@ -461,6 +463,8 @@ describe('the traffic scenarios on the fixed-step path', () => {
     { count: 12, pinned: false, stuckFree: false },
   ];
 
+  // slow because the whole refuge scenario runs to its tick limit and every step is checked: about
+  // a second alone with 12 trains
   it.each(CASES)(
     '$count trains (pinned: $pinned) at 1x: train 2 passes, no overlap, no deadlock, all leave',
     ({ count, pinned, stuckFree }) => {
@@ -492,6 +496,8 @@ describe('the traffic scenarios on the fixed-step path', () => {
     60_000,
   );
 
+  // slow because the whole refuge scenario runs again at speed 2 or 3, each step compared with the
+  // 1x trace: about a second alone with 12 trains
   it.each(CASES.flatMap((c) => [2, 3].map((speed) => ({ ...c, speed }))))(
     '$count trains (pinned: $pinned) at speed $speed with beginFrame: each step is the 1x step, each loop tick keeps its start poses',
     ({ count, pinned, speed }) => {
@@ -540,6 +546,8 @@ describe('the traffic scenarios on the fixed-step path', () => {
     if (x.frame) yield { ...x, frame: false };
   }
 
+  // slow because each of 10 seeded mixes of up to six stretches of 400 loop ticks is compared step
+  // by step with the 1x trace: 1 to 1.3 s alone
   it('3 trains under any mix of speeds, pauses and frames: every step is the 1x step', () => {
     const ref = reference(3, false);
     forAll(
