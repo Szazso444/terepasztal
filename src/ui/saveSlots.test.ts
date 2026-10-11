@@ -327,6 +327,30 @@ describe('when a replacement asks first', () => {
     expect(replaceQuestion('leave', at(pause, true))).toBe(leave);
   });
 
+  it('says what is lost over a game being played, and calls that game what Continue calls it', () => {
+    const inProgress = STR.saves.inProgress(null);
+    expect(inProgress.length).toBeGreaterThan(0);
+    for (const w of WHERE)
+      for (const stored of [false, true]) {
+        const asked = [
+          ...KINDS.map((k) => replaceQuestion(k, at(w, stored))),
+          loadQuestion('Line one', at(w, stored)),
+        ].filter((q): q is string => q !== null);
+        // the question over a game being played says its progress is lost; the ones that only
+        // protect the stored game name that instead
+        for (const q of asked)
+          expect(q, `${w.name} stored=${stored}`).toMatch(
+            w.played ? /\blost\b/i : /\bsaved game\b/i,
+          );
+        // the replace and leave questions name the game in progress as Continue does
+        for (const k of KINDS) {
+          const q = replaceQuestion(k, at(w, stored));
+          if (q !== null)
+            expect(q.includes(inProgress), `${k} ${w.name} stored=${stored}`).toBe(w.played);
+        }
+      }
+  });
+
   it('asks a load over a game as before, and otherwise says the stored game is replaced', () => {
     const name = 'Line one';
     for (const stored of [false, true])
