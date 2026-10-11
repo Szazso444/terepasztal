@@ -3,11 +3,28 @@ import { DEFAULT_CONTENT, validateContent, type Banner } from '../data/content';
 import { Rng } from '../engine/rng';
 import { Economy } from '../sim/economy';
 import { Stockpile } from '../sim/stockpile';
-import { LOCOS, WAGONS, RARITIES, isRetired, itemDef, locoDef, obtainable } from './items';
+import { forAll, shrinkArray } from '../testing/property';
+import {
+  LOCOS,
+  WAGONS,
+  RARITIES,
+  isRetired,
+  itemDef,
+  itemKind,
+  locoDef,
+  obtainable,
+} from './items';
 import type { Item } from './items';
 import { Inventory } from './inventory';
 import { BANNERS, Gacha, bannerPool, validateBanners } from './gacha';
-import { CRAFT_TIERS, Crafting, craftPool, craftResources, type CraftKind } from './crafting';
+import {
+  CRAFT_TIERS,
+  Crafting,
+  craftPool,
+  craftResources,
+  craftTier,
+  type CraftKind,
+} from './crafting';
 
 /**
  * A retired model stays in the tables so copies a player owns keep working, and nothing may hand
@@ -299,5 +316,147 @@ describe('the workshop and retired models', () => {
     w.crafting.load(undefined); // a save from before the workshop existed
     expect([...w.crafting.recipes]).toEqual(['rocket']);
     expect(w.inventory.ownedDefs()).toEqual(['rocket', ...RETIRED]);
+  });
+});
+
+/** Every model the content defines, engines first, in table order. */
+const ALL = [...LOCOS, ...WAGONS].map((d) => d.id);
+
+/** Runs `fn` with every model marked as a starter, then puts every starter flag back. */
+function everyStarter<T>(fn: () => T): T {
+  const defs = [...LOCOS, ...WAGONS];
+  const before = defs.map((d) => ('starter' in d ? d.starter : null));
+  try {
+    for (const d of defs) d.starter = true;
+    return fn();
+  } finally {
+    defs.forEach((d, i) => {
+      if (before[i] === null) delete d.starter;
+      else d.starter = before[i];
+    });
+  }
+}
+
+/**
+ * Every way a model is handed out, checked against the `retired` flag read straight off the
+ * tables (not through `isRetired`): banner listings, featured picks and pulls, the starter kit,
+ * the recipe pools, draws, choices and builds, the recipes and drawn cards a save brings back,
+ * the recipes derived from an inventory, and the content checks.
+ */
+function nothingRetiredHandedOut() {
+  const off = new Set([...LOCOS, ...WAGONS].filter((d) => d.retired === true).map((d) => d.id));
+  const on = (ids: readonly string[]) => ids.filter((id) => !off.has(id));
+  const retiredOf = (ids: readonly string[]) => ids.filter((id) => off.has(id));
+
+  // banners: as shipped (plus the shipped retired models, as a stale override has them), and a
+  // stale banner that names every model
+  for (const shipped of BANNERS)
+    for (const banner of [
+      { ...shipped, pool: [...RETIRED, ...shipped.pool] },
+      { ...shipped, id: `${shipped.id}+all`, pool: [...ALL] },
+    ]) {
+      expect(bannerPool(banner), banner.id).toEqual(on(banner.pool));
+      const inventory = new Inventory();
+      const gacha = new Gacha(new Rng(17), inventory);
+      for (let rotation = 0; rotation < 3; rotation++) {
+        expect(retiredOf(Gacha.featured(banner, rotation)), `${banner.id} featured`).toEqual([]);
+        const got = gacha.pull(banner, 10, 0, rotation).map((r) => r.defId);
+        expect(got, `${banner.id} pull`).toHaveLength(on(banner.pool).length ? 10 : 0);
+        expect(retiredOf(got), `${banner.id} pull`).toEqual([]);
+      }
+      expect(retiredOf(inventory.ownedDefs()), banner.id).toEqual([]);
+    }
+
+  // the starter kit, with every model marked as a starter
+  const kit = everyStarter(() => {
+    const inventory = new Inventory();
+    inventory.seedStarter(0);
+    return inventory.ownedDefs();
+  });
+  expect(kit, 'starter kit').toEqual(on(ALL));
+
+  // recipe pools and draws, age by age
+  const w = workshop(11);
+  for (const kind of KINDS)
+    for (const tier of CRAFT_TIERS) {
+      const age = on(ALL.filter((id) => itemKind(id) === kind && craftTier(id) === tier));
+      expect(craftPool(kind, tier), `${kind} age ${tier}`).toEqual(age);
+      const draw = w.crafting.draw(kind, tier);
+      expect(draw === null, `${kind} age ${tier} draw`).toBe(age.length === 0);
+      if (!draw) continue;
+      expect(retiredOf(draw.cards), `${kind} age ${tier} draw`).toEqual([]);
+      expect(w.crafting.choose(draw.cards[0])?.defId).toBe(draw.cards[0]);
+    }
+
+  // a recipe in hand and a card left in a draw: refused, the stock untouched, the draw kept open
+  const stock = () => JSON.stringify(w.stock.toJSON());
+  for (const id of off) {
+    w.crafting.recipes.add(id);
+    const had = stock();
+    expect(w.crafting.canCraft(id), id).toBe(false);
+    expect(w.crafting.craft(id, 0), id).toBeNull();
+    expect(stock(), id).toBe(had);
+  }
+  w.crafting.pending = { kind: 'loco', tier: 0, cards: [...ALL] };
+  for (const id of off) expect(w.crafting.choose(id), id).toBeNull();
+  const kept = on(ALL)[0];
+  if (kept) expect(w.crafting.choose(kept)?.defId).toBe(kept);
+
+  // a save's recipes and drawn cards; a draw left with no card it may keep is dropped, or the
+  // workshop would wait for ever on a choice it refuses
+  const loaded = workshop(12);
+  loaded.crafting.load({ recipes: [...ALL], pending: { kind: 'loco', tier: 0, cards: [...ALL] } });
+  expect([...loaded.crafting.recipes], 'loaded recipes').toEqual(on(ALL));
+  expect(loaded.crafting.pending?.cards ?? [], 'loaded draw').toEqual(on(ALL));
+  loaded.crafting.load({ recipes: [], pending: { kind: 'loco', tier: 0, cards: [...off] } });
+  expect(loaded.crafting.pending, 'a draw of retired cards only').toBeNull();
+
+  // recipes derived from an inventory that owns one of every model; the copies stay
+  const owner = workshop(13);
+  owner.inventory.load({ items: ALL.map((id, i) => item(i + 1, id)), nextUid: ALL.length + 1 });
+  owner.crafting.load(undefined);
+  expect([...owner.crafting.recipes], 'derived recipes').toEqual(on(ALL));
+  expect(owner.inventory.ownedDefs()).toEqual(ALL);
+
+  // content checks: the retired starters do not count, and a banner of retired models only (of
+  // either kind, or both) is rejected
+  const bundle = structuredClone(DEFAULT_CONTENT);
+  for (const row of [...bundle.locomotives, ...bundle.wagons])
+    if (off.has(row.id)) row.retired = true;
+    else delete row.retired;
+  const tested = [
+    { id: 'off_locos', pool: retiredOf(LOCOS.map((d) => d.id)) },
+    { id: 'off_wagons', pool: retiredOf(WAGONS.map((d) => d.id)) },
+    { id: 'off_all', pool: [...off] },
+    { id: 'off_and_one', pool: [...off, ...on(ALL).slice(0, 1)] },
+  ];
+  for (const { id, pool } of tested)
+    if (pool.length) bundle.gacha.banners.push({ id, name: id, tier: 0, pool });
+  const problems = validateContent(bundle);
+  const startersLeft = (rows: { id: string; starter?: boolean }[]) =>
+    rows.some((r) => r.starter && !off.has(r.id));
+  expect(problems.includes('no starter locomotive')).toBe(!startersLeft(bundle.locomotives));
+  expect(problems.includes('no starter wagon')).toBe(!startersLeft(bundle.wagons));
+  expect(problems.filter((p) => p.endsWith(': every item in the pool is retired'))).toEqual(
+    bundle.gacha.banners
+      .filter((b) => b.pool.every((id) => off.has(id)))
+      .map((b) => `banner ${b.id}: every item in the pool is retired`),
+  );
+}
+
+describe('any set of retired models', () => {
+  // The shipped retirement is two N engines; a later one may flag any model. Each case retires a
+  // seeded set on top of the shipped one, so a guard that kept its own list of names, or skipped
+  // a kind or a rarity, fails here even while it passes for Adler and John Bull.
+  const genRetirement = (rng: Rng) => {
+    const share = rng.pick([0, 0.05, 0.2, 0.5, 1]);
+    return ALL.filter(() => rng.chance(share));
+  };
+
+  it('hands none of them out by any path, and every other model as before', () => {
+    forAll(genRetirement, (extra) => retiring(extra, nothingRetiredHandedOut), {
+      shrink: (extra) => shrinkArray(extra),
+    });
+    expect(ALL.filter(isRetired), 'the flags put back').toEqual(RETIRED);
   });
 });
