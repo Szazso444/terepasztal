@@ -458,6 +458,169 @@ describe('the starter engines of a new game', () => {
       expect(crafting.canCraft(l.id), l.id).toBe(true);
     }
   });
+
+  it('each have an era line of their own, and the 490 names no year (its first is disputed)', () => {
+    const eras = content.locomotives.map((l) => l.era);
+    for (const l of STARTER_LOCOS) {
+      expect(l.era.trim().length, l.id).toBeGreaterThan(0);
+      expect(
+        eras.filter((e) => e === l.era),
+        `${l.id} shares its era line`,
+      ).toHaveLength(1);
+    }
+    // Core checked the facts: two sources give 1905 and 1906 for the 490, one gives 1899 for the
+    // field engine's works number; a year in the line must be one of the checked ones
+    const years = (id: string) => locoDef(id).era.match(/\b(?:1[89]|20)\d{2}\b/g) ?? [];
+    expect(years('mav490')).toEqual([]);
+    expect(years('orenstein_koppel')).toEqual(['1899']);
+  });
+
+  describe('as trains', () => {
+    /** A stockpile holding `amounts`. */
+    const pileOf = (amounts: Record<string, number>) => {
+      const pile = new Stockpile();
+      for (const [id, n] of Object.entries(amounts)) pile.add(id, n);
+      return pile;
+    };
+    /** A train of this one engine, its tanks filled from `pile` the way a depot fills them. */
+    const filled = (def: LocoDef, pile: Stockpile, uid = 1) => {
+      const train = new Train([{ uid, level: 1, def }]);
+      train.refuel(pile, { fuel: true, water: true });
+      return train;
+    };
+    /** The cargo a wagon takes that weighs most a unit, so fills it to the most tonnes. */
+    const heaviestCargo = (w: WagonDef) =>
+      [...w.accepts!].sort((a, b) => cargoDef(b).weight - cargoDef(a).weight)[0];
+
+    it('fill every tank of every copy from the start stock, one train after another', () => {
+      const copies = content.crafting.starterCopies.loco;
+      const sumCoal = copies * STARTER_LOCOS.reduce((n, l) => n + (l.fuelCap ?? 0), 0);
+      const fillAll = (coal: number) => {
+        // coal and water alone: wood in the stock would make up a shortfall at half a unit each
+        const pile = pileOf({ coal, water: startStock().water });
+        const short: string[] = [];
+        let uid = 0;
+        for (let copy = 1; copy <= copies; copy++)
+          for (const def of STARTER_LOCOS) {
+            const t = filled(def, pile, ++uid);
+            expect(t.coalCap, def.id).toBeGreaterThan(0);
+            if (t.coal < t.coalCap - 1e-6) short.push(`${def.id} copy ${copy}: coal`);
+            if (t.water < t.waterCap - 1e-6) short.push(`${def.id} copy ${copy}: water`);
+          }
+        return short;
+      };
+      expect(fillAll(startStock().coal)).toEqual([]);
+      // the check can fail: one unit of coal short of every tank and the last one is not full
+      expect(fillAll(sumCoal - 1)).toHaveLength(1);
+    });
+
+    it("carry 400 tiles or more on full tanks by the train's own count of its range", () => {
+      const pile = pileOf({ coal: 1e5, water: 1e5 });
+      for (const def of STARTER_LOCOS) {
+        const t = filled(def, pile);
+        // the content's two ratios, and the train's: the lesser of what fuel and water last for
+        const byContent = Math.min(
+          def.fuelCap! / def.fuelPerTile!,
+          def.waterCap! / def.waterPerTile!,
+        );
+        expect(t.rangeTiles, def.id).toBeCloseTo(byContent, 6);
+        expect(t.rangeTiles, def.id).toBeGreaterThanOrEqual(400);
+      }
+    });
+
+    it('are not overweight with one wagon of any starter type full of its heaviest cargo', () => {
+      for (const def of STARTER_LOCOS)
+        for (const w of content.wagons.filter((x) => x.starter)) {
+          const t = new Train([{ uid: 1, level: 1, def }]);
+          t.wagons = [
+            { uid: 2, def: w, level: 1, cargo: heaviestCargo(w), amount: w.capacity, origin: null },
+          ];
+          const what = `${def.id} with ${w.id} full of ${heaviestCargo(w)}`;
+          // the helper the content checks use agrees with the train, and the train's own test for
+          // `overweight` (weight above power) does not trip
+          expect(t.weight, what).toBeCloseTo(loadedWeight(w), 6);
+          expect(t.weight, what).toBeLessThanOrEqual(t.power + 1e-6);
+        }
+    });
+
+    it('stand in for the narrow gauge by the inventory first and the first starter after', () => {
+      const w = newGame();
+      const narrowStarters = STARTER_LOCOS.filter((l) => gaugeOf(l) === 'narrow');
+      // nothing owned: the first starter of the gauge, so the Rocket has to stay first in the file
+      w.inventory.load({ items: [], nextUid: 1 });
+      expect(w.fleet.probeLoco('narrow').def.id).toBe(narrowStarters[0].id);
+      expect(narrowStarters[0].id).toBe('rocket');
+      // only the last starter owned: the stand-in is the engine the player has
+      const last = narrowStarters[narrowStarters.length - 1];
+      w.inventory.add(last.id, 0);
+      expect(w.fleet.probeLoco('narrow').def.id).toBe(last.id);
+    });
+
+    it.each(STARTER_LOCOS.map((l) => l.id))(
+      'survive a save and a load with the %s running: the train comes back as it went',
+      (id) => {
+        const w = newGame(startStock());
+        const { near, far } = narrowLine(w);
+        const loco = w.inventory.free('loco').find((i) => i.defId === id)!;
+        const wagon = w.inventory
+          .free('wagon')
+          .find((i) => gaugeOf(itemDef(i.defId)) === 'narrow' && itemDef(i.defId).size !== 'tiny')!;
+        const made = w.fleet.create([loco.uid], [wagon.uid], [near.id, far.id]);
+        expect(made).toBeInstanceOf(Train);
+        for (let i = 0; i < 400; i++) w.fleet.tick(0.05, i * 0.05);
+        const train = made as Train;
+        expect(train.distance).toBeGreaterThan(0);
+        const saved = JSON.parse(JSON.stringify(train.toJSON())) as ReturnType<Train['toJSON']>;
+        resetTrainIds(1);
+        const back = Train.fromJSON(structuredClone(saved), w.track);
+        expect(back.locos.map((l) => l.def.id)).toEqual([id]);
+        expect(back.toJSON()).toEqual(saved);
+      },
+    );
+  });
+
+  it('are left out of a game saved with the Rocket alone, and still found in its recipe draws', () => {
+    // the kit before this change: the Rocket and the starter wagons, as the game saved them
+    const old = newGame();
+    old.inventory.load({ items: [], nextUid: 1 });
+    old.inventory.add('rocket', 0);
+    for (const wg of content.wagons.filter((x) => x.starter))
+      for (let i = 0; i < content.crafting.starterCopies.wagon; i++) old.inventory.add(wg.id, 0);
+    const saved = JSON.parse(
+      JSON.stringify({
+        inventory: old.inventory.toJSON(),
+        crafting: { ...old.crafting.toJSON(), recipes: old.inventory.ownedDefs() },
+      }),
+    ) as { inventory: ReturnType<Inventory['toJSON']>; crafting: ReturnType<Crafting['toJSON']> };
+
+    // loaded the way Game.applySave does, into a game that was seeded with the new kit first
+    const w = newGame();
+    w.inventory.load(structuredClone(saved.inventory));
+    w.crafting.load(structuredClone(saved.crafting));
+    expect(w.inventory.toJSON()).toEqual(saved.inventory);
+    expect(w.inventory.free('loco').map((i) => i.defId)).toEqual(['rocket']);
+    expect([...w.crafting.recipes].sort()).toEqual([...saved.crafting.recipes].sort());
+    const newcomers = STARTER_LOCOS.filter((l) => l.id !== 'rocket');
+    expect(newcomers.length).toBeGreaterThan(0);
+    for (const { id } of newcomers) {
+      expect(w.inventory.count(id), id).toBe(0);
+      expect(w.crafting.knows(id), id).toBe(false);
+    }
+
+    // the recipe draws of the first age do offer them, and keeping one lets the workshop build it
+    w.crafting.economy.money = 1e9;
+    const offered = new Set<string>();
+    for (let n = 0; n < 300 && offered.size < newcomers.length; n++) {
+      const draw = w.crafting.draw('loco', 0);
+      expect(draw, `draw ${n}`).not.toBeNull();
+      const find = draw!.cards.find((id) => newcomers.some((l) => l.id === id) && !offered.has(id));
+      if (find) offered.add(find);
+      const kept = find ?? draw!.cards[0];
+      expect(w.crafting.choose(kept)?.defId, `draw ${n}`).toBe(kept);
+    }
+    expect([...offered].sort()).toEqual(newcomers.map((l) => l.id).sort());
+    for (const { id } of newcomers) expect(w.crafting.canCraft(id), id).toBe(true);
+  });
 });
 
 /** Every gate of the depot carries a straight of the depot's gauge that runs into the shed. */
