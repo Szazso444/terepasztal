@@ -1,0 +1,158 @@
+{
+  "footprint": {
+    "id": "t1",
+    "canvas": [
+      1024,
+      1024
+    ],
+    "scale": 8,
+    "centre": [
+      512,
+      832
+    ],
+    "tiles": [
+      1,
+      1
+    ]
+  },
+  "anchor": [
+    512,
+    832
+  ],
+  "gameAnchor": [
+    32,
+    16
+  ],
+  "roadWidth": 0.5,
+  "deckOutsideRail": 0.1,
+  "pieces": [
+    {
+      "id": "crossing-regular-r0",
+      "gauge": "regular",
+      "rotation": 0,
+      "railOffset": 0.16,
+      "rails": [
+        [
+          [
+            599.04,
+            747.52
+          ],
+          [
+            343.03999999999996,
+            875.52
+          ]
+        ],
+        [
+          [
+            680.96,
+            788.48
+          ],
+          [
+            424.96000000000004,
+            916.48
+          ]
+        ]
+      ],
+      "roadEdges": [
+        "nw",
+        "se"
+      ]
+    },
+    {
+      "id": "crossing-regular-r1",
+      "gauge": "regular",
+      "rotation": 1,
+      "railOffset": 0.16,
+      "rails": [
+        [
+          [
+            424.96000000000004,
+            747.52
+          ],
+          [
+            680.96,
+            875.52
+          ]
+        ],
+        [
+          [
+            343.03999999999996,
+            788.48
+          ],
+          [
+            599.04,
+            916.48
+          ]
+        ]
+      ],
+      "roadEdges": [
+        "ne",
+        "sw"
+      ]
+    },
+    {
+      "id": "crossing-narrow-r0",
+      "gauge": "narrow",
+      "rotation": 0,
+      "railOffset": 0.08,
+      "rails": [
+        [
+          [
+            619.52,
+            757.76
+          ],
+          [
+            363.52,
+            885.76
+          ]
+        ],
+        [
+          [
+            660.48,
+            778.24
+          ],
+          [
+            404.48,
+            906.24
+          ]
+        ]
+      ],
+      "roadEdges": [
+        "nw",
+        "se"
+      ]
+    },
+    {
+      "id": "crossing-narrow-r1",
+      "gauge": "narrow",
+      "rotation": 1,
+      "railOffset": 0.08,
+      "rails": [
+        [
+          [
+            404.48,
+            757.76
+          ],
+          [
+            660.48,
+            885.76
+          ]
+        ],
+        [
+          [
+            363.52,
+            778.24
+          ],
+          [
+            619.52,
+            906.24
+          ]
+        ]
+      ],
+      "roadEdges": [
+        "ne",
+        "sw"
+      ]
+    }
+  ]
+}

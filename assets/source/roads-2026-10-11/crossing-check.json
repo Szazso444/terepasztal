@@ -1,0 +1,51 @@
+{
+  "status": "drafts; exact geometry and alpha fail",
+  "visualFindings": [
+    "Correction removed metallic railheads and fixed rotation-0 groove direction.",
+    "Generated bands and deck extents drift from guides.",
+    "Narrow r1 includes paving on approaches instead of the requested gravel.",
+    "Exact groove offsets remain unverified; do not pack as accepted production artwork."
+  ],
+  "report": [
+    {
+      "id": "crossing-regular-r0",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "outsideDiamond": 18130,
+      "outsideRoadBand": 32626,
+      "alphaIntermediate": 91179,
+      "accepted": false
+    },
+    {
+      "id": "crossing-regular-r1",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "outsideDiamond": 24095,
+      "outsideRoadBand": 47996,
+      "alphaIntermediate": 110219,
+      "accepted": false
+    },
+    {
+      "id": "crossing-narrow-r0",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "outsideDiamond": 1975,
+      "outsideRoadBand": 8910,
+      "alphaIntermediate": 59445,
+      "accepted": false
+    },
+    {
+      "id": "crossing-narrow-r1",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "outsideDiamond": 10131,
+      "outsideRoadBand": 56384,
+      "alphaIntermediate": 107557,
+      "accepted": false
+    }
+  ]
+}
