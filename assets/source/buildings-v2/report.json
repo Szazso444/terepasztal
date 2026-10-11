@@ -1,5 +1,212 @@
 {
-  "checked": 0,
+  "checked": 4,
   "failed": 0,
-  "pictures": {}
+  "pictures": {
+    "water_tower-a0-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 2.7°: the building is turned 2.7° towards its lower-right wall (the wall feet slope 0.54 and -0.45, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.54,
+          -0.447
+        ],
+        "slopes": [
+          0.54,
+          -0.447
+        ],
+        "base": {
+          "w": [
+            373,
+            988
+          ],
+          "s": [
+            629.3,
+            1126.4
+          ],
+          "e": [
+            893,
+            1008.7
+          ]
+        },
+        "scale": 0.8665,
+        "vertical": 1.0136,
+        "shear": -0.0474,
+        "cx": 633,
+        "cy": 981.9,
+        "box": {
+          "left": 219.1,
+          "top": 97,
+          "right": 738.1,
+          "bottom": 945.2
+        },
+        "camera": {
+          "elevation": 29.4,
+          "turn": 2.7
+        },
+        "area": 402639
+      },
+      "camera": {
+        "by": 2.7,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "water_tower-a0-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.527,
+          -0.513
+        ],
+        "slopes": [
+          0.527,
+          -0.513
+        ],
+        "base": {
+          "w": [
+            341,
+            1002.6
+          ],
+          "s": [
+            625.2,
+            1152.4
+          ],
+          "e": [
+            911,
+            1005.7
+          ]
+        },
+        "scale": 0.7905,
+        "vertical": 0.9615,
+        "shear": -0.0067,
+        "cx": 626,
+        "cy": 961.2,
+        "box": {
+          "left": 286.7,
+          "top": 156.1,
+          "right": 737.3,
+          "bottom": 945.1
+        },
+        "camera": {
+          "elevation": 31.3,
+          "turn": 0.4
+        },
+        "area": 437046
+      }
+    },
+    "water_tower-a0-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.529,
+          -0.515
+        ],
+        "slopes": [
+          0.529,
+          -0.515
+        ],
+        "base": {
+          "w": [
+            357,
+            969.5
+          ],
+          "s": [
+            624,
+            1110.7
+          ],
+          "e": [
+            897,
+            970.2
+          ]
+        },
+        "scale": 0.8344,
+        "vertical": 0.9581,
+        "shear": -0.0067,
+        "cx": 627,
+        "cy": 924.9,
+        "box": {
+          "left": 286.7,
+          "top": 200.5,
+          "right": 789,
+          "bottom": 944.9
+        },
+        "camera": {
+          "elevation": 31.5,
+          "turn": 0.4
+        },
+        "area": 401547
+      }
+    },
+    "water_tower-a0-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.517,
+          -0.505
+        ],
+        "slopes": [
+          0.517,
+          -0.505
+        ],
+        "base": {
+          "w": [
+            344,
+            1012.7
+          ],
+          "s": [
+            626.4,
+            1158.8
+          ],
+          "e": [
+            912,
+            1014.6
+          ]
+        },
+        "scale": 0.7932,
+        "vertical": 0.9783,
+        "shear": -0.0061,
+        "cx": 628,
+        "cy": 987.8,
+        "box": {
+          "left": 285.9,
+          "top": 176.4,
+          "right": 737.3,
+          "bottom": 944.8
+        },
+        "camera": {
+          "elevation": 30.7,
+          "turn": 0.4
+        },
+        "area": 414891
+      }
+    }
+  }
 }

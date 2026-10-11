@@ -1,12 +1,21 @@
 {
-  "schema": 1,
+  "schema": 2,
   "guide": "assets/source/buildings-v2/GUIDE.md",
-  "pilot": {
-    "family": "depot",
-    "approved": false
-  },
+  "gates": [
+    {
+      "family": "depot",
+      "approved": false
+    },
+    {
+      "family": "station",
+      "approved": false
+    }
+  ],
+  "accepted": [],
+  "mark": 1791748671321,
+  "chat": "01a12c68-070c-7b91-9ff6-217c3f4318b1",
   "counts": {
-    "pictures": 560,
+    "pictures": 548,
     "families": 27
   },
   "entries": [
@@ -3171,126 +3180,6 @@
       "note": ""
     },
     {
-      "id": "kiln-a3-r0",
-      "family": "kiln",
-      "age": 3,
-      "rot": 0,
-      "file": "assets/source/buildings-v2/kiln/kiln-a3-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a3-r1",
-      "family": "kiln",
-      "age": 3,
-      "rot": 1,
-      "file": "assets/source/buildings-v2/kiln/kiln-a3-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a3-r2",
-      "family": "kiln",
-      "age": 3,
-      "rot": 2,
-      "file": "assets/source/buildings-v2/kiln/kiln-a3-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a3-r3",
-      "family": "kiln",
-      "age": 3,
-      "rot": 3,
-      "file": "assets/source/buildings-v2/kiln/kiln-a3-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a4-r0",
-      "family": "kiln",
-      "age": 4,
-      "rot": 0,
-      "file": "assets/source/buildings-v2/kiln/kiln-a4-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a4-r1",
-      "family": "kiln",
-      "age": 4,
-      "rot": 1,
-      "file": "assets/source/buildings-v2/kiln/kiln-a4-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a4-r2",
-      "family": "kiln",
-      "age": 4,
-      "rot": 2,
-      "file": "assets/source/buildings-v2/kiln/kiln-a4-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a4-r3",
-      "family": "kiln",
-      "age": 4,
-      "rot": 3,
-      "file": "assets/source/buildings-v2/kiln/kiln-a4-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a5-r0",
-      "family": "kiln",
-      "age": 5,
-      "rot": 0,
-      "file": "assets/source/buildings-v2/kiln/kiln-a5-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a5-r1",
-      "family": "kiln",
-      "age": 5,
-      "rot": 1,
-      "file": "assets/source/buildings-v2/kiln/kiln-a5-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a5-r2",
-      "family": "kiln",
-      "age": 5,
-      "rot": 2,
-      "file": "assets/source/buildings-v2/kiln/kiln-a5-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
-      "id": "kiln-a5-r3",
-      "family": "kiln",
-      "age": 5,
-      "rot": 3,
-      "file": "assets/source/buildings-v2/kiln/kiln-a5-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
-    },
-    {
       "id": "grinder-a0-r0",
       "family": "grinder",
       "age": 0,
@@ -5536,9 +5425,14 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/water_tower/water_tower-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.7° after 3 attempts: an earlier one was the closest",
+      "kept": 2.7,
+      "repaint": {
+        "by": 2.7,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "water_tower-a0-r1",
@@ -5546,8 +5440,8 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/water_tower/water_tower-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -5556,8 +5450,8 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/water_tower/water_tower-a0-r2.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -5566,8 +5460,8 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/water_tower/water_tower-a0-r3.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
