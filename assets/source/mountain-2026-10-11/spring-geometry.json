@@ -1,0 +1,62 @@
+{
+  "projection": "2:1 orthographic isometric",
+  "gameTile": [64, 32],
+  "footprint": "FOOTPRINTS.t1",
+  "canvas": [1024, 1024],
+  "scale": 8,
+  "centre": [512, 832],
+  "anchor": [512, 832],
+  "packedAnchor": [32, 16],
+  "axes": {
+    "x": "NW to SE",
+    "y": "NE to SW"
+  },
+  "tileOffsetRange": [-0.5, 0.5],
+  "projectionFormula": ["512 + 256*(x-y)", "832 + 128*(x+y)"],
+  "corners": {
+    "top": [512, 704],
+    "right": [768, 832],
+    "bottom": [512, 960],
+    "left": [256, 832]
+  },
+  "edgeMidpoints": {
+    "ne": [640, 768],
+    "se": [640, 896],
+    "sw": [384, 896],
+    "nw": [384, 768]
+  },
+  "edgeNames": {
+    "ne": "upper-right",
+    "se": "lower-right",
+    "sw": "lower-left",
+    "nw": "upper-left"
+  },
+  "waterCrossSection": [-0.38, 0.38],
+  "bankAbsCrossSection": [0.38, 0.5],
+  "roundEnd": {
+    "centre": [512, 832],
+    "waterHalfAxes": [138, 69],
+    "bankHalfAxes": [181, 90.5]
+  },
+  "pool": {
+    "centre": [512, 832],
+    "acrossTiles": 0.3,
+    "halfAxes": [54, 27]
+  },
+  "stones": {
+    "radialRange": [0.38, 0.5],
+    "largestAcrossTiles": 0.1,
+    "side": "upstream half, away from exit"
+  },
+  "retainedSpring": {
+    "radius": 0.5,
+    "side": "upstream half, away from exit"
+  },
+  "animationFrames": 4,
+  "reviewCanvas": [128, 128],
+  "reviewTileWidth": 64,
+  "waterReferenceCrop": {
+    "x": [0.25, 0.75],
+    "y": [0.3, 0.7]
+  }
+}
