@@ -322,5 +322,97 @@
       "assets/source/base-v1/people-crossing-dirt.png",
       "assets/source/base-v1/track-crossing.png"
     ]
+  },
+  {
+    "id": "material-road-strip-x",
+    "file": "materials/road-strip-x.png",
+    "prompt": "Use case: sketch-to-render. Paint the grey guide (image 1) as a reusable SOURCE MATERIAL image for a smooth painted Steam-age isometric railway game. This is an input to a script that sets final geometry, widths, position and grid connections. Exact pixel coordinates, final tile footprints and canvas size are not acceptance criteria here. Prioritize excellent consistent material quality and evenness along the whole length. Smooth painted contours and BROAD quiet colour clusters, three or four shades per material, restrained detail, no per-pixel noise or pixel-art stair steps. A single upper-left light; the flat material has uniform illumination with no longitudinal gradient, spotlight or darkened ends. Transparent RGBA background around the plane, opaque material inside. Absolutely flat ground plane, no thickness, side walls, raised kerb, shadows or glow. Palette oat #E4D5B5, limestone #BCA98B, moss #78804C, slate #626B6C, copper #A36B42. No text, labels, objects, people, vehicles, grass tufts, footprints, debris, cracks, puddles, stains, decorative border, unique feature or conspicuous individual patch. This will repeat many times; there must be NO memorable patch, large stone, damage, colour blotch or special mark that would advertise repetition. Only evenly distributed subtle painted texture. Keep the guide's broad silhouette and orientation. Do not copy the grey colour. Subject: one LONG straight country road strip, many tile lengths, constant width all the way, x direction descending diagonally from upper LEFT to lower RIGHT. TWO straight, parallel, softly darker wheel ruts at fixed spacing, each continuous end to end. Flat packed oat and limestone FINE gravel; no big stones and no cobblestone paving. Muted light warm limestone, gentle material clusters evenly distributed along the full strip. Keep every cross-section consistent: pale central lane, paired slightly darker wheel ruts, pale outside shoulders. Very narrow trodden moss verge only on the two long sides, uniform and tiny, no tufts. Both ends are square cuts, no round end and no road junction. Image 2 is the approved town-growth style board, image 3 pale stone colour reference ONLY, image 4 moss palette reference ONLY: do not copy either full tile, pixel edges or ground base. No bend, no taper, no interruptions to the two ruts.",
+    "references": [
+      "assets/source/roads-2026-10-11/guides/materials/road-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/people-road-stone.png",
+      "assets/source/base-v1/terrain-grass.png"
+    ]
+  },
+  {
+    "id": "material-road-strip-y",
+    "file": "materials/road-strip-y.png",
+    "prompt": "Use case: sketch-to-render. Paint the grey guide (image 1) as a reusable SOURCE MATERIAL image for a smooth painted Steam-age isometric railway game. This is an input to a script that sets final geometry, widths, position and grid connections. Exact pixel coordinates, final tile footprints and canvas size are not acceptance criteria here. Prioritize excellent consistent material quality and evenness along the whole length. Smooth painted contours and BROAD quiet colour clusters, three or four shades per material, restrained detail, no per-pixel noise or pixel-art stair steps. A single upper-left light; the flat material has uniform illumination with no longitudinal gradient, spotlight or darkened ends. Transparent RGBA background around the plane, opaque material inside. Absolutely flat ground plane, no thickness, side walls, raised kerb, shadows or glow. Palette oat #E4D5B5, limestone #BCA98B, moss #78804C, slate #626B6C, copper #A36B42. No text, labels, objects, people, vehicles, grass tufts, footprints, debris, cracks, puddles, stains, decorative border, unique feature or conspicuous individual patch. This will repeat many times; there must be NO memorable patch, large stone, damage, colour blotch or special mark that would advertise repetition. Only evenly distributed subtle painted texture. Keep the guide's broad silhouette and orientation. Do not copy the grey colour. Subject: one LONG straight country road strip, many tile lengths, constant width all the way, y direction descending diagonally from upper RIGHT to lower LEFT. TWO straight, parallel, softly darker wheel ruts at fixed spacing, each continuous end to end. Flat packed oat and limestone FINE gravel; no big stones and no cobblestone paving. Muted light warm limestone, gentle material clusters evenly distributed along the full strip. Keep every cross-section consistent: pale central lane, paired slightly darker wheel ruts, pale outside shoulders. Very narrow trodden moss verge only on the two long sides, uniform and tiny, no tufts. Both ends are square cuts, no round end and no road junction. Image 2 is the approved town-growth style board, image 3 pale stone colour reference ONLY, image 4 moss palette reference ONLY: do not copy either full tile, pixel edges or ground base. No bend, no taper, no interruptions to the two ruts.",
+    "references": [
+      "assets/source/roads-2026-10-11/guides/materials/road-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/people-road-stone.png",
+      "assets/source/base-v1/terrain-grass.png"
+    ]
+  },
+  {
+    "id": "material-crossing-material-regular",
+    "file": "materials/crossing-material-regular.png",
+    "prompt": "Use case: sketch-to-render. Paint the grey guide (image 1) as a reusable SOURCE MATERIAL image for a smooth painted Steam-age isometric railway game. This is an input to a script that sets final geometry, widths, position and grid connections. Exact pixel coordinates, final tile footprints and canvas size are not acceptance criteria here. Prioritize excellent consistent material quality and evenness along the whole length. Smooth painted contours and BROAD quiet colour clusters, three or four shades per material, restrained detail, no per-pixel noise or pixel-art stair steps. A single upper-left light; the flat material has uniform illumination with no longitudinal gradient, spotlight or darkened ends. Transparent RGBA background around the plane, opaque material inside. Absolutely flat ground plane, no thickness, side walls, raised kerb, shadows or glow. Palette oat #E4D5B5, limestone #BCA98B, moss #78804C, slate #626B6C, copper #A36B42. No text, labels, objects, people, vehicles, grass tufts, footprints, debris, cracks, puddles, stains, decorative border, unique feature or conspicuous individual patch. This will repeat many times; there must be NO memorable patch, large stone, damage, colour blotch or special mark that would advertise repetition. Only evenly distributed subtle painted texture. Keep the guide's broad silhouette and orientation. Do not copy the grey colour. Subject: broad uniform sample of dressed LIMESTONE COBBLE SETTS in evenly staggered rows. Every sett similar scale and pale oat/limestone hue, sparse quiet variation, no large slabs, no cracks. TWO straight continuous weathered timber check-plank bands run parallel along the reference guide's darker grey strips, laid beside where rails will eventually run. Timber boards are flat, consistently medium brown with quiet grain and evenly spaced subtle joints; no damage, bolts or metal. The whole remaining plane is uniform cobble material. No road approaches and no wheel ruts. Images 2-5 are style/material references: town-growth board, stone crossing, dirt crossing, track crossing. Use their materials ONLY, never their rails, sleepers, ballast, thick base or mixed track layouts. NO rail grooves, railheads or metallic rails in this material sample; a script supplies the final crossing geometry.",
+    "references": [
+      "assets/source/roads-2026-10-11/guides/materials/crossing-material-regular.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/people-crossing-stone.png",
+      "assets/source/base-v1/people-crossing-dirt.png",
+      "assets/source/base-v1/track-crossing.png"
+    ]
+  },
+  {
+    "id": "material-crossing-material-narrow",
+    "file": "materials/crossing-material-narrow.png",
+    "prompt": "Use case: sketch-to-render. Paint the grey guide (image 1) as a reusable SOURCE MATERIAL image for a smooth painted Steam-age isometric railway game. This is an input to a script that sets final geometry, widths, position and grid connections. Exact pixel coordinates, final tile footprints and canvas size are not acceptance criteria here. Prioritize excellent consistent material quality and evenness along the whole length. Smooth painted contours and BROAD quiet colour clusters, three or four shades per material, restrained detail, no per-pixel noise or pixel-art stair steps. A single upper-left light; the flat material has uniform illumination with no longitudinal gradient, spotlight or darkened ends. Transparent RGBA background around the plane, opaque material inside. Absolutely flat ground plane, no thickness, side walls, raised kerb, shadows or glow. Palette oat #E4D5B5, limestone #BCA98B, moss #78804C, slate #626B6C, copper #A36B42. No text, labels, objects, people, vehicles, grass tufts, footprints, debris, cracks, puddles, stains, decorative border, unique feature or conspicuous individual patch. This will repeat many times; there must be NO memorable patch, large stone, damage, colour blotch or special mark that would advertise repetition. Only evenly distributed subtle painted texture. Keep the guide's broad silhouette and orientation. Do not copy the grey colour. Subject: broad uniform weathered TIMBER PLANK pavement sample, rural and simple. Entire guide plane covered by straight parallel wooden boards laid ALONG the future rail direction (from upper RIGHT toward lower LEFT). Boards have constant width, orderly understated end joints, quiet painted grain and three or four subtle brown shades. Medium warm weathered timber, not orange varnished wood, not dark burnt wood. No pale paved shoulders, stone surface, wheel ruts or loose gravel in this sample. Images 2-5 are style/material references: town-growth board, stone crossing, dirt crossing, track crossing. Do not paint any rails, sleepers, ballast, bolts, metal or thick foundation. NO rail grooves in this material sample: only even plank material, the script supplies crossing geometry.",
+    "references": [
+      "assets/source/roads-2026-10-11/guides/materials/crossing-material-narrow.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/people-crossing-stone.png",
+      "assets/source/base-v1/people-crossing-dirt.png",
+      "assets/source/base-v1/track-crossing.png"
+    ]
+  },
+  {
+    "id": "material-road-strip-x-alpha-correction",
+    "file": "materials/road-strip-x.png",
+    "prompt": "Use case: background-extraction. Image 1 is the EDIT TARGET. Preserve its painted material, colours, silhouette, length, width, two wheel ruts if present, plank stripes if present, and every opaque interior pixel. Remove ONLY the entire surrounding coloured glow/haze/shadow, and replace all background pixels outside the road or paving plane with genuine alpha ZERO. Opaque material inside, a crisp clean cutout contour. No faint halo or semi-transparent ground outside the object. Do not redesign or shorten the long road, do not change its orientation, do not add rails or any feature. The upper-left lighting on the material itself remains. Other images are the mandatory style references only; ignore their ground bases, halos and pixel edges. This source material will be fitted by a script; exact canvas size is immaterial. Return a clean truly transparent RGBA PNG. The current glow must be entirely GONE, including the large brown/moss haze and the bright patches near the ends. Keep all internal painted details and no cast shadow.",
+    "references": [
+      "assets/source/roads-2026-10-11/raw/materials/road-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/people-road-stone.png",
+      "assets/source/base-v1/terrain-grass.png"
+    ]
+  },
+  {
+    "id": "material-road-strip-y-alpha-correction",
+    "file": "materials/road-strip-y.png",
+    "prompt": "Use case: background-extraction. Image 1 is the EDIT TARGET. Preserve its painted material, colours, silhouette, length, width, two wheel ruts if present, plank stripes if present, and every opaque interior pixel. Remove ONLY the entire surrounding coloured glow/haze/shadow, and replace all background pixels outside the road or paving plane with genuine alpha ZERO. Opaque material inside, a crisp clean cutout contour. No faint halo or semi-transparent ground outside the object. Do not redesign or shorten the long road, do not change its orientation, do not add rails or any feature. The upper-left lighting on the material itself remains. Other images are the mandatory style references only; ignore their ground bases, halos and pixel edges. This source material will be fitted by a script; exact canvas size is immaterial. Return a clean truly transparent RGBA PNG. The current glow must be entirely GONE, including the large brown/moss haze and the bright patches near the ends. Keep all internal painted details and no cast shadow.",
+    "references": [
+      "assets/source/roads-2026-10-11/raw/materials/road-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/people-road-stone.png",
+      "assets/source/base-v1/terrain-grass.png"
+    ]
+  },
+  {
+    "id": "material-crossing-material-regular-alpha-correction",
+    "file": "materials/crossing-material-regular.png",
+    "prompt": "Use case: background-extraction. Image 1 is the EDIT TARGET. Preserve its painted material, colours, silhouette, length, width, two wheel ruts if present, plank stripes if present, and every opaque interior pixel. Remove ONLY the entire surrounding coloured glow/haze/shadow, and replace all background pixels outside the road or paving plane with genuine alpha ZERO. Opaque material inside, a crisp clean cutout contour. No faint halo or semi-transparent ground outside the object. Do not redesign or shorten the long road, do not change its orientation, do not add rails or any feature. The upper-left lighting on the material itself remains. Other images are the mandatory style references only; ignore their ground bases, halos and pixel edges. This source material will be fitted by a script; exact canvas size is immaterial. Return a clean truly transparent RGBA PNG. The current glow must be entirely GONE, including the large brown/moss haze and the bright patches near the ends. Keep all internal painted details and no cast shadow.",
+    "references": [
+      "assets/source/roads-2026-10-11/raw/materials/crossing-material-regular.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/people-crossing-stone.png",
+      "assets/source/base-v1/people-crossing-dirt.png",
+      "assets/source/base-v1/track-crossing.png"
+    ]
+  },
+  {
+    "id": "material-crossing-material-narrow-alpha-correction",
+    "file": "materials/crossing-material-narrow.png",
+    "prompt": "Use case: background-extraction. Image 1 is the EDIT TARGET. Preserve its painted material, colours, silhouette, length, width, two wheel ruts if present, plank stripes if present, and every opaque interior pixel. Remove ONLY the entire surrounding coloured glow/haze/shadow, and replace all background pixels outside the road or paving plane with genuine alpha ZERO. Opaque material inside, a crisp clean cutout contour. No faint halo or semi-transparent ground outside the object. Do not redesign or shorten the long road, do not change its orientation, do not add rails or any feature. The upper-left lighting on the material itself remains. Other images are the mandatory style references only; ignore their ground bases, halos and pixel edges. This source material will be fitted by a script; exact canvas size is immaterial. Return a clean truly transparent RGBA PNG. The current glow must be entirely GONE, including the large brown/moss haze and the bright patches near the ends. Keep all internal painted details and no cast shadow.",
+    "references": [
+      "assets/source/roads-2026-10-11/raw/materials/crossing-material-narrow.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/people-crossing-stone.png",
+      "assets/source/base-v1/people-crossing-dirt.png",
+      "assets/source/base-v1/track-crossing.png"
+    ]
   }
 ]

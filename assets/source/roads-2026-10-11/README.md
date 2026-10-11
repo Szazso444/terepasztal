@@ -2,14 +2,54 @@
 
 Issue: #319. Branch: `art/319-roads`, based on `origin/develop` at `dea4267`.
 
+## Current material-source delivery
+
+The author's revised brief requests four uniform source paintings. Final width, position,
+footprint and tile connections are assigned by a script, not by the paintings. The previous
+exact-canvas draft failures below therefore do not gate these material sources.
+
+- `materials/road-strip-x.png`: long, straight x road, two continuous parallel wheel ruts.
+- `materials/road-strip-y.png`: independently painted long y road, two parallel wheel ruts.
+- `materials/crossing-material-regular.png`: staggered limestone setts and two flat timber
+  check-plank bands; no rails or sleepers.
+- `materials/crossing-material-narrow.png`: uniform weathered timber planking.
+- `materials.json`: source file manifest, roles, dimensions, alpha counts and eight interior
+  colour samples along each road. Mean colour varies by less than 2.3/255 per channel along
+  either road. Visual review found no conspicuous individual patch, knot, damage or object.
+- `review/materials-sheet.png`: the four selected paintings composited over a solid background
+  with alpha respected. The raw viewer exposed RGB stored below alpha-zero pixels as an
+  apparent glow. In the composite, this colour is invisible; it is not painted ground.
+- `material-generations.json` and `raw/materials/`: original imagegen sources and additional
+  alpha-correction attempts. Originals were selected for their quieter palette. Each of the
+  four originals was painted separately, without mirroring or reuse.
+- `make-material-guides.mjs` and `guides/materials/`: loose source silhouettes; they do not
+  specify final tile geometry. `review-materials.mjs` rebuilds the review and source manifest.
+
+All four selected images are 1536x1024 RGBA. Exact source size and position are intentionally
+not checked against the former 1024x1024 tile contract. Every prompt/reference, including the
+additional alpha-correction attempts, is appended to `prompts.json`.
+
+The author explicitly permits script-controlled geometry in the revised brief. The existing
+fitting script was not found in this checkout or `origin/develop`; its path was requested.
+Final road-piece regeneration is therefore not claimed here. These four sources are ready for
+that script. No replacement fitting pipeline or game/atlas changes were made.
+
+```powershell
+$env:ROAD_TOOLING='C:/Users/Zso/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules'
+node assets/source/roads-2026-10-11/make-material-guides.mjs
+node assets/source/roads-2026-10-11/review-materials.mjs
+```
+
+## Earlier tile drafts
+
 Status: 15 independent road guide edits, plus one rejected straight-road attempt, and four
 independent crossing guide edits with a corrective generation for each. These are drafts,
 not accepted production assets. The user explicitly requested that the existing pictures and
 files be committed despite the previously reported failed checks. The road checkpoint is
 commit `9dbeb5d`. The crossings and their failed checks are preserved in the next commit.
 
-Deterministic image finishing (resize, exact guide geometry, opaque alpha) was requested but
-has not been authorized. Do not infer authorization from elapsed time or the request to commit.
+At this earlier checkpoint, deterministic finishing had not yet been authorized. The revised
+brief above now assigns geometry to a script; the earlier drafts remain preserved for history.
 
 - `make-guides.mjs`: exact FOOTPRINTS.t1 geometry and one grey guide per piece.
 - `guides/`: the 15 attached edit targets.
