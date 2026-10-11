@@ -1,0 +1,102 @@
+{
+ "kind": "gpu",
+ "query": "mode=B&glb=_r025",
+ "stand": {
+  "engine": {
+   "before": {
+    "pitch_deg": 1.99,
+    "roll_deg": 0,
+    "yaw_deg": 0,
+    "height_mm": -109,
+    "lateral_mm": 0,
+    "gauge_m": 1.08,
+    "ms": 11.8
+   },
+   "after": {
+    "pitch_deg": 0,
+    "roll_deg": 0,
+    "yaw_deg": 0,
+    "height_mm": 0,
+    "lateral_mm": 0,
+    "gauge_m": 1.08,
+    "ms": 13.6
+   },
+   "gauge_m": 1.0819210310777028
+  },
+  "tender": {
+   "before": {
+    "pitch_deg": -1.22,
+    "roll_deg": 0,
+    "yaw_deg": 0,
+    "height_mm": -21,
+    "lateral_mm": 0,
+    "gauge_m": 1.56,
+    "ms": 1.5
+   },
+   "after": {
+    "pitch_deg": 0,
+    "roll_deg": 0,
+    "yaw_deg": 0,
+    "height_mm": 0,
+    "lateral_mm": 0,
+    "gauge_m": 1.56,
+    "ms": 1
+   },
+   "gauge_m": 1.5558403770128886
+  }
+ },
+ "fitStandard": {
+  "engine": {
+   "measured_gauge_m": 1.08,
+   "rails_m": 2,
+   "width_factor": 1.84
+  },
+  "tender": {
+   "measured_gauge_m": 1.56,
+   "rails_m": 2,
+   "width_factor": 1.28
+  }
+ },
+ "drag": {
+  "sx": {
+   "median": 1.1,
+   "worst": 4
+  },
+  "sz": {
+   "median": 1,
+   "worst": 1.4
+  },
+  "heading": {
+   "median": 0.4,
+   "worst": 1.1
+  },
+  "grade": {
+   "median": 0.4,
+   "worst": 0.8
+  },
+  "lift": {
+   "median": 0.4,
+   "worst": 0.6
+  }
+ },
+ "narrow": {
+  "engine": {
+   "measured_gauge_m": 1.08,
+   "rails_m": 1.06,
+   "width_factor": 0.98
+  },
+  "tender": {
+   "measured_gauge_m": 1.56,
+   "rails_m": 1.06,
+   "width_factor": 0.68
+  }
+ },
+ "modeA": {
+  "median": 0.3,
+  "worst": 0.6
+ },
+ "json": "{\"engine\":{\"sx\":1.25,\"sy\":0.9767,\"sz\":1.15,\"yaw\":0,\"pitch0\":0.0348,\"roll0\":0,\"lift\":0,\"lateral\":0,\"fore\":0},\"tender\":{\"sx\":1,\"sy\":0.6792,\"sz\":1,\"yaw\":0,\"pitch0\":-0.0212,\"roll0\":0,\"lift\":0.0208,\"lateral\":0,\"fore\":0}}",
+ "errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}

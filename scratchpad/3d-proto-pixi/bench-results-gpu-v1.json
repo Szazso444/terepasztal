@@ -1,0 +1,842 @@
+[
+ {
+  "approach": "direct",
+  "n": 1,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.2,
+  "jsMs": 0,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 1.7,
+  "firstFrameMs": 72.9,
+  "loadMs": 182.8,
+  "fetchMs": 71.5,
+  "parseMs": 42.7,
+  "alignMs": 7.9,
+  "cellPx": null,
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "atlas",
+  "n": 1,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.3,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 3,
+  "firstFrameMs": 43.6,
+  "loadMs": 148.6,
+  "fetchMs": 44,
+  "parseMs": 37.8,
+  "alignMs": 7.6,
+  "atlas": 256,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "each",
+  "n": 1,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.3,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.2,
+  "maxMs": 4.5,
+  "firstFrameMs": 25.5,
+  "loadMs": 161.2,
+  "fetchMs": 55.5,
+  "parseMs": 39.5,
+  "alignMs": 6,
+  "atlas": 256,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "separate",
+  "n": 1,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.4,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.2,
+  "maxMs": 6.2,
+  "firstFrameMs": 33.4,
+  "loadMs": 168,
+  "fetchMs": 44.5,
+  "parseMs": 39.8,
+  "alignMs": 8.6,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "static",
+  "n": 1,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.2,
+  "jsMs": 0,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 4.5,
+  "firstFrameMs": 28.4,
+  "loadMs": 188.8,
+  "fetchMs": 74,
+  "parseMs": 44.9,
+  "alignMs": 7.8,
+  "atlas": 256,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "direct",
+  "n": 20,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.5,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.4,
+  "maxMs": 3.8,
+  "firstFrameMs": 36.8,
+  "loadMs": 173.9,
+  "fetchMs": 48.6,
+  "parseMs": 38.8,
+  "alignMs": 6,
+  "cellPx": null,
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "atlas",
+  "n": 20,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.7,
+  "jsMs": 0.1,
+  "refreshJsMs": 0.1,
+  "minMs": 0.5,
+  "maxMs": 4.1,
+  "firstFrameMs": 26.3,
+  "loadMs": 153.9,
+  "fetchMs": 50.4,
+  "parseMs": 39.2,
+  "alignMs": 6.1,
+  "atlas": 512,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "each",
+  "n": 20,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.7,
+  "jsMs": 0.2,
+  "refreshJsMs": 0.2,
+  "minMs": 0.5,
+  "maxMs": 4,
+  "firstFrameMs": 25.1,
+  "loadMs": 154.1,
+  "fetchMs": 45.3,
+  "parseMs": 36.2,
+  "alignMs": 6.1,
+  "atlas": 512,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "separate",
+  "n": 20,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.8,
+  "jsMs": 0.1,
+  "refreshJsMs": 0.1,
+  "minMs": 0.6,
+  "maxMs": 5.2,
+  "firstFrameMs": 39,
+  "loadMs": 183.9,
+  "fetchMs": 52.8,
+  "parseMs": 41.2,
+  "alignMs": 7.6,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "static",
+  "n": 20,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.2,
+  "jsMs": 0,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 3.2,
+  "firstFrameMs": 29.4,
+  "loadMs": 154.3,
+  "fetchMs": 50.8,
+  "parseMs": 37.9,
+  "alignMs": 6.3,
+  "atlas": 512,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "direct",
+  "n": 100,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 1.5,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 1.3,
+  "maxMs": 4.9,
+  "firstFrameMs": 35,
+  "loadMs": 150.6,
+  "fetchMs": 48.3,
+  "parseMs": 39.3,
+  "alignMs": 6,
+  "cellPx": null,
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "atlas",
+  "n": 100,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 2.1,
+  "jsMs": 0.2,
+  "refreshJsMs": 0.2,
+  "minMs": 1.7,
+  "maxMs": 5.9,
+  "firstFrameMs": 31.8,
+  "loadMs": 148.2,
+  "fetchMs": 47.7,
+  "parseMs": 36,
+  "alignMs": 6.5,
+  "atlas": 1024,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "each",
+  "n": 100,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 2,
+  "jsMs": 0.3,
+  "refreshJsMs": 0.3,
+  "minMs": 1.8,
+  "maxMs": 4.9,
+  "firstFrameMs": 28.8,
+  "loadMs": 157.7,
+  "fetchMs": 47.2,
+  "parseMs": 36.3,
+  "alignMs": 6.3,
+  "atlas": 1024,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "separate",
+  "n": 100,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 2.1,
+  "jsMs": 0.3,
+  "refreshJsMs": 0.3,
+  "minMs": 1.9,
+  "maxMs": 5.4,
+  "firstFrameMs": 58.7,
+  "loadMs": 149.1,
+  "fetchMs": 49.1,
+  "parseMs": 35.8,
+  "alignMs": 6.4,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "static",
+  "n": 100,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.2,
+  "jsMs": 0,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 1.5,
+  "firstFrameMs": 28.5,
+  "loadMs": 151.8,
+  "fetchMs": 50.6,
+  "parseMs": 36.7,
+  "alignMs": 6.6,
+  "atlas": 1024,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "direct",
+  "n": 1,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.2,
+  "jsMs": 0,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 3.4,
+  "firstFrameMs": 26.7,
+  "loadMs": 65.7,
+  "fetchMs": 3.3,
+  "parseMs": 0.6,
+  "alignMs": 3.7,
+  "cellPx": null,
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "atlas",
+  "n": 1,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.3,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.2,
+  "maxMs": 2.8,
+  "firstFrameMs": 21.5,
+  "loadMs": 61.2,
+  "fetchMs": 2.8,
+  "parseMs": 0.3,
+  "alignMs": 3.6,
+  "atlas": 256,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "each",
+  "n": 1,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.3,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.2,
+  "maxMs": 3.1,
+  "firstFrameMs": 20.4,
+  "loadMs": 67.5,
+  "fetchMs": 2.9,
+  "parseMs": 0.5,
+  "alignMs": 2.8,
+  "atlas": 256,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "separate",
+  "n": 1,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.3,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 3,
+  "firstFrameMs": 20.2,
+  "loadMs": 63.9,
+  "fetchMs": 3.1,
+  "parseMs": 0.5,
+  "alignMs": 3,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "static",
+  "n": 1,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.3,
+  "jsMs": 0,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 2.8,
+  "firstFrameMs": 20.9,
+  "loadMs": 60.9,
+  "fetchMs": 3.3,
+  "parseMs": 0.3,
+  "alignMs": 3,
+  "atlas": 256,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "direct",
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.3,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 3.3,
+  "firstFrameMs": 24.5,
+  "loadMs": 71.4,
+  "fetchMs": 3.1,
+  "parseMs": 0.4,
+  "alignMs": 3.1,
+  "cellPx": null,
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "atlas",
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.5,
+  "jsMs": 0.1,
+  "refreshJsMs": 0.1,
+  "minMs": 0.3,
+  "maxMs": 4.4,
+  "firstFrameMs": 21.2,
+  "loadMs": 67.7,
+  "fetchMs": 2.8,
+  "parseMs": 0.4,
+  "alignMs": 2.9,
+  "atlas": 512,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "each",
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.5,
+  "jsMs": 0.1,
+  "refreshJsMs": 0.1,
+  "minMs": 0.3,
+  "maxMs": 3.3,
+  "firstFrameMs": 20.3,
+  "loadMs": 61,
+  "fetchMs": 3,
+  "parseMs": 0.5,
+  "alignMs": 2.7,
+  "atlas": 512,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "separate",
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.6,
+  "jsMs": 0.1,
+  "refreshJsMs": 0.1,
+  "minMs": 0.4,
+  "maxMs": 2.3,
+  "firstFrameMs": 25.5,
+  "loadMs": 61,
+  "fetchMs": 2.8,
+  "parseMs": 0.4,
+  "alignMs": 2.9,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "static",
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.2,
+  "jsMs": 0,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 3,
+  "firstFrameMs": 20.4,
+  "loadMs": 64,
+  "fetchMs": 3.1,
+  "parseMs": 0.4,
+  "alignMs": 3,
+  "atlas": 512,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "direct",
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.5,
+  "jsMs": 0.1,
+  "refreshJsMs": 0,
+  "minMs": 0.4,
+  "maxMs": 2.2,
+  "firstFrameMs": 25.7,
+  "loadMs": 62.7,
+  "fetchMs": 2.8,
+  "parseMs": 0.3,
+  "alignMs": 2.9,
+  "cellPx": null,
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "atlas",
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.9,
+  "jsMs": 0.2,
+  "refreshJsMs": 0.1,
+  "minMs": 0.6,
+  "maxMs": 4.3,
+  "firstFrameMs": 22.2,
+  "loadMs": 88.6,
+  "fetchMs": 3.2,
+  "parseMs": 0.5,
+  "alignMs": 3.1,
+  "atlas": 1024,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "each",
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 1.2,
+  "jsMs": 0.4,
+  "refreshJsMs": 0.4,
+  "minMs": 0.9,
+  "maxMs": 3.8,
+  "firstFrameMs": 25.1,
+  "loadMs": 62.4,
+  "fetchMs": 3,
+  "parseMs": 0.3,
+  "alignMs": 3.5,
+  "atlas": 1024,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "separate",
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 1.3,
+  "jsMs": 0.3,
+  "refreshJsMs": 0.3,
+  "minMs": 1,
+  "maxMs": 3.3,
+  "firstFrameMs": 52.3,
+  "loadMs": 65.4,
+  "fetchMs": 3.2,
+  "parseMs": 0.3,
+  "alignMs": 3,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ },
+ {
+  "approach": "static",
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 0.3,
+  "jsMs": 0,
+  "refreshJsMs": 0,
+  "minMs": 0.1,
+  "maxMs": 1.7,
+  "firstFrameMs": 22.6,
+  "loadMs": 65,
+  "fetchMs": 3,
+  "parseMs": 0.4,
+  "alignMs": 2.7,
+  "atlas": 1024,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+ }
+]

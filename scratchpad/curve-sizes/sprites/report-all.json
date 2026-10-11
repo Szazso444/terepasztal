@@ -1,0 +1,2431 @@
+{
+ "errors": [],
+ "lineups": {
+  "overview": {
+   "rows": [
+    "rocket",
+    "muki",
+    "",
+    "john_bull",
+    "class08",
+    "",
+    "general",
+    "sw1",
+    "",
+    "black_five",
+    "f7",
+    "",
+    "nine_f",
+    "sd40",
+    "",
+    "big_boy",
+    "koutetsujou"
+   ],
+   "crop": [
+    145,
+    267,
+    1367,
+    609
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "rocket",
+      "",
+      "",
+      "john_bull",
+      "class08",
+      "",
+      "general",
+      "sw1",
+      "",
+      "black_five",
+      "f7",
+      "",
+      "nine_f",
+      "sd40",
+      "",
+      "big_boy",
+      ""
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 1,
+       "progress": 8.0068666666668
+      },
+      {
+       "id": "john_bull",
+       "row": 3,
+       "L": 1,
+       "progress": 8.012916666666712
+      },
+      {
+       "id": "class08",
+       "row": 4,
+       "L": 1,
+       "progress": 8.004600833333255
+      },
+      {
+       "id": "general",
+       "row": 6,
+       "L": 1,
+       "progress": 8.015966666666687
+      },
+      {
+       "id": "sw1",
+       "row": 7,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "black_five",
+       "row": 9,
+       "L": 2,
+       "progress": 8.000386904761859
+      },
+      {
+       "id": "f7",
+       "row": 10,
+       "L": 2,
+       "progress": 8.012516666666658
+      },
+      {
+       "id": "nine_f",
+       "row": 12,
+       "L": 2,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "sd40",
+       "row": 13,
+       "L": 2,
+       "progress": 8.009583333333289
+      },
+      {
+       "id": "big_boy",
+       "row": 15,
+       "L": 3,
+       "progress": 8.009296666666627
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "rocket",
+      "muki",
+      "",
+      "john_bull",
+      "class08",
+      "",
+      "general",
+      "sw1",
+      "",
+      "black_five",
+      "f7",
+      "",
+      "nine_f",
+      "sd40",
+      "",
+      "big_boy",
+      "koutetsujou"
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 0.5,
+       "progress": 8.0068666666668
+      },
+      {
+       "id": "muki",
+       "row": 1,
+       "L": 0.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "john_bull",
+       "row": 3,
+       "L": 1,
+       "progress": 8.012916666666712
+      },
+      {
+       "id": "class08",
+       "row": 4,
+       "L": 1,
+       "progress": 8.004600833333255
+      },
+      {
+       "id": "general",
+       "row": 6,
+       "L": 1.5,
+       "progress": 8.015966666666687
+      },
+      {
+       "id": "sw1",
+       "row": 7,
+       "L": 1.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "black_five",
+       "row": 9,
+       "L": 2,
+       "progress": 8.000386904761859
+      },
+      {
+       "id": "f7",
+       "row": 10,
+       "L": 2,
+       "progress": 8.012516666666658
+      },
+      {
+       "id": "nine_f",
+       "row": 12,
+       "L": 2.5,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "sd40",
+       "row": 13,
+       "L": 2.5,
+       "progress": 8.009583333333289
+      },
+      {
+       "id": "big_boy",
+       "row": 15,
+       "L": 3,
+       "progress": 8.009296666666627
+      },
+      {
+       "id": "koutetsujou",
+       "row": 16,
+       "L": 3,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    },
+    "B": {
+     "rows": [
+      "rocket",
+      "muki",
+      "",
+      "john_bull",
+      "class08",
+      "",
+      "general",
+      "sw1",
+      "",
+      "black_five",
+      "f7",
+      "",
+      "nine_f",
+      "sd40",
+      "",
+      "big_boy",
+      "koutetsujou"
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 0.5,
+       "progress": 8.0068666666668
+      },
+      {
+       "id": "muki",
+       "row": 1,
+       "L": 0.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "john_bull",
+       "row": 3,
+       "L": 1,
+       "progress": 8.012916666666712
+      },
+      {
+       "id": "class08",
+       "row": 4,
+       "L": 1,
+       "progress": 8.004600833333255
+      },
+      {
+       "id": "general",
+       "row": 6,
+       "L": 1.5,
+       "progress": 8.015966666666687
+      },
+      {
+       "id": "sw1",
+       "row": 7,
+       "L": 1.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "black_five",
+       "row": 9,
+       "L": 2,
+       "progress": 8.000386904761859
+      },
+      {
+       "id": "f7",
+       "row": 10,
+       "L": 2,
+       "progress": 8.012516666666658
+      },
+      {
+       "id": "nine_f",
+       "row": 12,
+       "L": 3,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "sd40",
+       "row": 13,
+       "L": 3,
+       "progress": 8.009583333333289
+      },
+      {
+       "id": "big_boy",
+       "row": 15,
+       "L": 4,
+       "progress": 8.009296666666627
+      },
+      {
+       "id": "koutetsujou",
+       "row": 16,
+       "L": 4,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  },
+  "corvette": {
+   "rows": [
+    "rocket",
+    "muki",
+    "bm50"
+   ],
+   "crop": [
+    821,
+    476,
+    312,
+    228
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "rocket",
+      "",
+      ""
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 1,
+       "progress": 8.0068666666668
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "rocket",
+      "muki",
+      "bm50"
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 0.5,
+       "progress": 8.0068666666668
+      },
+      {
+       "id": "muki",
+       "row": 1,
+       "L": 0.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "bm50",
+       "row": 2,
+       "L": 0.5,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  },
+  "frigate": {
+   "rows": [
+    "mk45",
+    "mk48",
+    "rezet",
+    "mav490",
+    "c50",
+    "adler",
+    "john_bull",
+    "mav375",
+    "j94",
+    "class08"
+   ],
+   "crop": [
+    501,
+    323,
+    872,
+    492
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "",
+      "mk48",
+      "",
+      "",
+      "",
+      "adler",
+      "john_bull",
+      "mav375",
+      "j94",
+      "class08"
+     ],
+     "placed": [
+      {
+       "id": "mk48",
+       "row": 1,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "adler",
+       "row": 5,
+       "L": 1,
+       "progress": 8.005883333333255
+      },
+      {
+       "id": "john_bull",
+       "row": 6,
+       "L": 1,
+       "progress": 8.012916666666712
+      },
+      {
+       "id": "mav375",
+       "row": 7,
+       "L": 1,
+       "progress": 8.010833333333371
+      },
+      {
+       "id": "j94",
+       "row": 8,
+       "L": 1,
+       "progress": 8.003843749999923
+      },
+      {
+       "id": "class08",
+       "row": 9,
+       "L": 1,
+       "progress": 8.004600833333255
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "mk45",
+      "mk48",
+      "rezet",
+      "mav490",
+      "c50",
+      "adler",
+      "john_bull",
+      "mav375",
+      "j94",
+      "class08"
+     ],
+     "placed": [
+      {
+       "id": "mk45",
+       "row": 0,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "mk48",
+       "row": 1,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "rezet",
+       "row": 2,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "mav490",
+       "row": 3,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "c50",
+       "row": 4,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "adler",
+       "row": 5,
+       "L": 1,
+       "progress": 8.005883333333255
+      },
+      {
+       "id": "john_bull",
+       "row": 6,
+       "L": 1,
+       "progress": 8.012916666666712
+      },
+      {
+       "id": "mav375",
+       "row": 7,
+       "L": 1,
+       "progress": 8.010833333333371
+      },
+      {
+       "id": "j94",
+       "row": 8,
+       "L": 1,
+       "progress": 8.003843749999923
+      },
+      {
+       "id": "class08",
+       "row": 9,
+       "L": 1,
+       "progress": 8.004600833333255
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  },
+  "destroyer": {
+   "rows": [
+    "sw1",
+    "kando_v40",
+    "general",
+    "jupiter"
+   ],
+   "crop": [
+    658,
+    380,
+    533,
+    337
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "sw1",
+      "kando_v40",
+      "general",
+      "jupiter"
+     ],
+     "placed": [
+      {
+       "id": "sw1",
+       "row": 0,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "kando_v40",
+       "row": 1,
+       "L": 1,
+       "progress": 8.004100000000044
+      },
+      {
+       "id": "general",
+       "row": 2,
+       "L": 1,
+       "progress": 8.015966666666687
+      },
+      {
+       "id": "jupiter",
+       "row": 3,
+       "L": 1,
+       "progress": 8.001733333333299
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "sw1",
+      "kando_v40",
+      "general",
+      "jupiter"
+     ],
+     "placed": [
+      {
+       "id": "sw1",
+       "row": 0,
+       "L": 1.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "kando_v40",
+       "row": 1,
+       "L": 1.5,
+       "progress": 8.004100000000044
+      },
+      {
+       "id": "general",
+       "row": 2,
+       "L": 1.5,
+       "progress": 8.015966666666687
+      },
+      {
+       "id": "jupiter",
+       "row": 3,
+       "L": 1.5,
+       "progress": 8.001733333333299
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  },
+  "cruiser": {
+   "rows": [
+    "k4s",
+    "flying_scotsman",
+    "drg01",
+    "taurus",
+    "v63",
+    "m62",
+    "re460",
+    "black_five",
+    "deltic",
+    "f7",
+    "mallard",
+    "ice1",
+    "tgv"
+   ],
+   "crop": [
+    367,
+    245,
+    1060,
+    598
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "k4s",
+      "flying_scotsman",
+      "drg01",
+      "taurus",
+      "v63",
+      "m62",
+      "re460",
+      "black_five",
+      "deltic",
+      "f7",
+      "mallard",
+      "ice1",
+      "tgv"
+     ],
+     "placed": [
+      {
+       "id": "k4s",
+       "row": 0,
+       "L": 2,
+       "progress": 8.001336309523763
+      },
+      {
+       "id": "flying_scotsman",
+       "row": 1,
+       "L": 2,
+       "progress": 8.011176975945002
+      },
+      {
+       "id": "drg01",
+       "row": 2,
+       "L": 2,
+       "progress": 8.005128787878743
+      },
+      {
+       "id": "taurus",
+       "row": 3,
+       "L": 2,
+       "progress": 8.01850000000003
+      },
+      {
+       "id": "v63",
+       "row": 4,
+       "L": 2,
+       "progress": 8.01789999999999
+      },
+      {
+       "id": "m62",
+       "row": 5,
+       "L": 2,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "re460",
+       "row": 6,
+       "L": 2,
+       "progress": 8.01850000000003
+      },
+      {
+       "id": "black_five",
+       "row": 7,
+       "L": 2,
+       "progress": 8.000386904761859
+      },
+      {
+       "id": "deltic",
+       "row": 8,
+       "L": 2,
+       "progress": 8.01850000000003
+      },
+      {
+       "id": "f7",
+       "row": 9,
+       "L": 2,
+       "progress": 8.012516666666658
+      },
+      {
+       "id": "mallard",
+       "row": 10,
+       "L": 2,
+       "progress": 8.002500000000005
+      },
+      {
+       "id": "ice1",
+       "row": 11,
+       "L": 2,
+       "progress": 8.02243333333336
+      },
+      {
+       "id": "tgv",
+       "row": 12,
+       "L": 2,
+       "progress": 8.021083333333346
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "k4s",
+      "flying_scotsman",
+      "drg01",
+      "taurus",
+      "v63",
+      "m62",
+      "re460",
+      "black_five",
+      "deltic",
+      "f7",
+      "mallard",
+      "ice1",
+      "tgv"
+     ],
+     "placed": [
+      {
+       "id": "k4s",
+       "row": 0,
+       "L": 2,
+       "progress": 8.001336309523763
+      },
+      {
+       "id": "flying_scotsman",
+       "row": 1,
+       "L": 2,
+       "progress": 8.011176975945002
+      },
+      {
+       "id": "drg01",
+       "row": 2,
+       "L": 2,
+       "progress": 8.005128787878743
+      },
+      {
+       "id": "taurus",
+       "row": 3,
+       "L": 2,
+       "progress": 8.01850000000003
+      },
+      {
+       "id": "v63",
+       "row": 4,
+       "L": 2,
+       "progress": 8.01789999999999
+      },
+      {
+       "id": "m62",
+       "row": 5,
+       "L": 2,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "re460",
+       "row": 6,
+       "L": 2,
+       "progress": 8.01850000000003
+      },
+      {
+       "id": "black_five",
+       "row": 7,
+       "L": 2,
+       "progress": 8.000386904761859
+      },
+      {
+       "id": "deltic",
+       "row": 8,
+       "L": 2,
+       "progress": 8.01850000000003
+      },
+      {
+       "id": "f7",
+       "row": 9,
+       "L": 2,
+       "progress": 8.012516666666658
+      },
+      {
+       "id": "mallard",
+       "row": 10,
+       "L": 2,
+       "progress": 8.002500000000005
+      },
+      {
+       "id": "ice1",
+       "row": 11,
+       "L": 2,
+       "progress": 8.02243333333336
+      },
+      {
+       "id": "tgv",
+       "row": 12,
+       "L": 2,
+       "progress": 8.021083333333346
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  },
+  "battleship": {
+   "rows": [
+    "crocodile",
+    "nine_f",
+    "gg1",
+    "daylight",
+    "sd40",
+    "dda40x",
+    "mav424"
+   ],
+   "crop": [
+    503,
+    337,
+    724,
+    397
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "crocodile",
+      "nine_f",
+      "gg1",
+      "daylight",
+      "sd40",
+      "dda40x",
+      "mav424"
+     ],
+     "placed": [
+      {
+       "id": "crocodile",
+       "row": 0,
+       "L": 3,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "nine_f",
+       "row": 1,
+       "L": 2,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "gg1",
+       "row": 2,
+       "L": 3,
+       "progress": 8.025709722222171
+      },
+      {
+       "id": "daylight",
+       "row": 3,
+       "L": 2,
+       "progress": 8.020301041666691
+      },
+      {
+       "id": "sd40",
+       "row": 4,
+       "L": 2,
+       "progress": 8.009583333333289
+      },
+      {
+       "id": "dda40x",
+       "row": 5,
+       "L": 3,
+       "progress": 8.015533333333282
+      },
+      {
+       "id": "mav424",
+       "row": 6,
+       "L": 2,
+       "progress": 8.016583333333395
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "crocodile",
+      "nine_f",
+      "gg1",
+      "daylight",
+      "sd40",
+      "dda40x",
+      "mav424"
+     ],
+     "placed": [
+      {
+       "id": "crocodile",
+       "row": 0,
+       "L": 2.5,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "nine_f",
+       "row": 1,
+       "L": 2.5,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "gg1",
+       "row": 2,
+       "L": 2.5,
+       "progress": 8.025709722222171
+      },
+      {
+       "id": "daylight",
+       "row": 3,
+       "L": 2.5,
+       "progress": 8.020301041666691
+      },
+      {
+       "id": "sd40",
+       "row": 4,
+       "L": 2.5,
+       "progress": 8.009583333333289
+      },
+      {
+       "id": "dda40x",
+       "row": 5,
+       "L": 2.5,
+       "progress": 8.015533333333282
+      },
+      {
+       "id": "mav424",
+       "row": 6,
+       "L": 2.5,
+       "progress": 8.016583333333395
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    },
+    "B": {
+     "rows": [
+      "crocodile",
+      "nine_f",
+      "gg1",
+      "daylight",
+      "sd40",
+      "dda40x",
+      "mav424"
+     ],
+     "placed": [
+      {
+       "id": "crocodile",
+       "row": 0,
+       "L": 3,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "nine_f",
+       "row": 1,
+       "L": 3,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "gg1",
+       "row": 2,
+       "L": 3,
+       "progress": 8.025709722222171
+      },
+      {
+       "id": "daylight",
+       "row": 3,
+       "L": 3,
+       "progress": 8.020301041666691
+      },
+      {
+       "id": "sd40",
+       "row": 4,
+       "L": 3,
+       "progress": 8.009583333333289
+      },
+      {
+       "id": "dda40x",
+       "row": 5,
+       "L": 3,
+       "progress": 8.015533333333282
+      },
+      {
+       "id": "mav424",
+       "row": 6,
+       "L": 3,
+       "progress": 8.016583333333395
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  },
+  "juggernaut": {
+   "rows": [
+    "big_boy",
+    "koutetsujou"
+   ],
+   "crop": [
+    563,
+    336,
+    501,
+    314
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "big_boy",
+      ""
+     ],
+     "placed": [
+      {
+       "id": "big_boy",
+       "row": 0,
+       "L": 3,
+       "progress": 8.009296666666627
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "big_boy",
+      "koutetsujou"
+     ],
+     "placed": [
+      {
+       "id": "big_boy",
+       "row": 0,
+       "L": 3,
+       "progress": 8.009296666666627
+      },
+      {
+       "id": "koutetsujou",
+       "row": 1,
+       "L": 3,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    },
+    "B": {
+     "rows": [
+      "big_boy",
+      "koutetsujou"
+     ],
+     "placed": [
+      {
+       "id": "big_boy",
+       "row": 0,
+       "L": 4,
+       "progress": 8.009296666666627
+      },
+      {
+       "id": "koutetsujou",
+       "row": 1,
+       "L": 4,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "adler",
+      "john_bull",
+      "mav375",
+      "general",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "drg01",
+      "flying_scotsman",
+      "daylight",
+      "mallard",
+      "big_boy",
+      "sw1",
+      "class08",
+      "m62",
+      "f7",
+      "sd40",
+      "deltic",
+      "dda40x",
+      "kando_v40",
+      "v63",
+      "crocodile",
+      "taurus",
+      "re460",
+      "gg1",
+      "j94",
+      "black_five",
+      "nine_f",
+      "tgv",
+      "ice1",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  }
+ },
+ "curves": [
+  {
+   "id": "rocket",
+   "name": "now",
+   "file": "curve-rocket-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "adler",
+   "name": "now",
+   "file": "curve-adler-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "john_bull",
+   "name": "now",
+   "file": "curve-john_bull-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "mav375",
+   "name": "now",
+   "file": "curve-mav375-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "general",
+   "name": "now",
+   "file": "curve-general-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "jupiter",
+   "name": "now",
+   "file": "curve-jupiter-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "mav424",
+   "name": "now",
+   "file": "curve-mav424-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "k4s",
+   "name": "now",
+   "file": "curve-k4s-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "drg01",
+   "name": "now",
+   "file": "curve-drg01-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "flying_scotsman",
+   "name": "now",
+   "file": "curve-flying_scotsman-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "daylight",
+   "name": "now",
+   "file": "curve-daylight-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "mallard",
+   "name": "now",
+   "file": "curve-mallard-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "sw1",
+   "name": "now",
+   "file": "curve-sw1-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "class08",
+   "name": "now",
+   "file": "curve-class08-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "m62",
+   "name": "now",
+   "file": "curve-m62-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "f7",
+   "name": "now",
+   "file": "curve-f7-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "sd40",
+   "name": "now",
+   "file": "curve-sd40-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "deltic",
+   "name": "now",
+   "file": "curve-deltic-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "kando_v40",
+   "name": "now",
+   "file": "curve-kando_v40-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "v63",
+   "name": "now",
+   "file": "curve-v63-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "taurus",
+   "name": "now",
+   "file": "curve-taurus-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "re460",
+   "name": "now",
+   "file": "curve-re460-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "j94",
+   "name": "now",
+   "file": "curve-j94-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "black_five",
+   "name": "now",
+   "file": "curve-black_five-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "nine_f",
+   "name": "now",
+   "file": "curve-nine_f-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "tgv",
+   "name": "now",
+   "file": "curve-tgv-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "ice1",
+   "name": "now",
+   "file": "curve-ice1-now.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "mk48",
+   "name": "now",
+   "file": "curve-mk48-now.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "big_boy",
+   "name": "now",
+   "file": "curve-big_boy-now.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "dda40x",
+   "name": "now",
+   "file": "curve-dda40x-now.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "crocodile",
+   "name": "now",
+   "file": "curve-crocodile-now.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "gg1",
+   "name": "now",
+   "file": "curve-gg1-now.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "adler",
+   "name": "A",
+   "file": "curve-adler-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "john_bull",
+   "name": "A",
+   "file": "curve-john_bull-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "mav375",
+   "name": "A",
+   "file": "curve-mav375-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "general",
+   "name": "A",
+   "file": "curve-general-A.png",
+   "loco": 1.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "jupiter",
+   "name": "A",
+   "file": "curve-jupiter-A.png",
+   "loco": 1.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "mav424",
+   "name": "A",
+   "file": "curve-mav424-A.png",
+   "loco": 2.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "k4s",
+   "name": "A",
+   "file": "curve-k4s-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "drg01",
+   "name": "A",
+   "file": "curve-drg01-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "flying_scotsman",
+   "name": "A",
+   "file": "curve-flying_scotsman-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "daylight",
+   "name": "A",
+   "file": "curve-daylight-A.png",
+   "loco": 2.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "mallard",
+   "name": "A",
+   "file": "curve-mallard-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "big_boy",
+   "name": "A",
+   "file": "curve-big_boy-A.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "sw1",
+   "name": "A",
+   "file": "curve-sw1-A.png",
+   "loco": 1.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "class08",
+   "name": "A",
+   "file": "curve-class08-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "m62",
+   "name": "A",
+   "file": "curve-m62-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "f7",
+   "name": "A",
+   "file": "curve-f7-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "sd40",
+   "name": "A",
+   "file": "curve-sd40-A.png",
+   "loco": 2.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "deltic",
+   "name": "A",
+   "file": "curve-deltic-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "dda40x",
+   "name": "A",
+   "file": "curve-dda40x-A.png",
+   "loco": 2.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "kando_v40",
+   "name": "A",
+   "file": "curve-kando_v40-A.png",
+   "loco": 1.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "v63",
+   "name": "A",
+   "file": "curve-v63-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "crocodile",
+   "name": "A",
+   "file": "curve-crocodile-A.png",
+   "loco": 2.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "taurus",
+   "name": "A",
+   "file": "curve-taurus-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "re460",
+   "name": "A",
+   "file": "curve-re460-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "gg1",
+   "name": "A",
+   "file": "curve-gg1-A.png",
+   "loco": 2.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "j94",
+   "name": "A",
+   "file": "curve-j94-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "black_five",
+   "name": "A",
+   "file": "curve-black_five-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "nine_f",
+   "name": "A",
+   "file": "curve-nine_f-A.png",
+   "loco": 2.5,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "tgv",
+   "name": "A",
+   "file": "curve-tgv-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "ice1",
+   "name": "A",
+   "file": "curve-ice1-A.png",
+   "loco": 2,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "koutetsujou",
+   "name": "A",
+   "file": "curve-koutetsujou-A.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "rocket",
+   "name": "A",
+   "file": "curve-rocket-A.png",
+   "loco": 0.5,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "mk48",
+   "name": "A",
+   "file": "curve-mk48-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "bm50",
+   "name": "A",
+   "file": "curve-bm50-A.png",
+   "loco": 0.5,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "muki",
+   "name": "A",
+   "file": "curve-muki-A.png",
+   "loco": 0.5,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "c50",
+   "name": "A",
+   "file": "curve-c50-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "mav490",
+   "name": "A",
+   "file": "curve-mav490-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "mk45",
+   "name": "A",
+   "file": "curve-mk45-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "rezet",
+   "name": "A",
+   "file": "curve-rezet-A.png",
+   "loco": 1,
+   "sprited": true,
+   "n": "1"
+  },
+  {
+   "id": "mav424",
+   "name": "B",
+   "file": "curve-mav424-B.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "daylight",
+   "name": "B",
+   "file": "curve-daylight-B.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "big_boy",
+   "name": "B",
+   "file": "curve-big_boy-B.png",
+   "loco": 4,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "sd40",
+   "name": "B",
+   "file": "curve-sd40-B.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "dda40x",
+   "name": "B",
+   "file": "curve-dda40x-B.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "crocodile",
+   "name": "B",
+   "file": "curve-crocodile-B.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "gg1",
+   "name": "B",
+   "file": "curve-gg1-B.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "nine_f",
+   "name": "B",
+   "file": "curve-nine_f-B.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "koutetsujou",
+   "name": "B",
+   "file": "curve-koutetsujou-B.png",
+   "loco": 4,
+   "sprited": true,
+   "n": "2"
+  },
+  {
+   "id": "mav424",
+   "name": "B3",
+   "file": "curve-mav424-B3.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "3"
+  },
+  {
+   "id": "daylight",
+   "name": "B3",
+   "file": "curve-daylight-B3.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "3"
+  },
+  {
+   "id": "big_boy",
+   "name": "B3",
+   "file": "curve-big_boy-B3.png",
+   "loco": 4,
+   "sprited": true,
+   "n": "3"
+  },
+  {
+   "id": "sd40",
+   "name": "B3",
+   "file": "curve-sd40-B3.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "3"
+  },
+  {
+   "id": "dda40x",
+   "name": "B3",
+   "file": "curve-dda40x-B3.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "3"
+  },
+  {
+   "id": "crocodile",
+   "name": "B3",
+   "file": "curve-crocodile-B3.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "3"
+  },
+  {
+   "id": "gg1",
+   "name": "B3",
+   "file": "curve-gg1-B3.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "3"
+  },
+  {
+   "id": "nine_f",
+   "name": "B3",
+   "file": "curve-nine_f-B3.png",
+   "loco": 3,
+   "sprited": true,
+   "n": "3"
+  },
+  {
+   "id": "koutetsujou",
+   "name": "B3",
+   "file": "curve-koutetsujou-B3.png",
+   "loco": 4,
+   "sprited": true,
+   "n": "3"
+  }
+ ]
+}

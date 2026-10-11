@@ -1,0 +1,2524 @@
+{
+ "errors": [
+  "[error] Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "[warning] [.WebGL-0x62f40018e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "[warning] [.WebGL-0x62f40018e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "[warning] [.WebGL-0x62f40018e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "[warning] [.WebGL-0x62f40018e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+  "[error] Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "frames": {
+  "level": {
+   "progress": 3.2090797362110384,
+   "state": "moving",
+   "steps": 184,
+   "dump": {
+    "reversed": false,
+    "speed": 1.3800000000000001,
+    "samePoseObjects": [
+     false,
+     false,
+     false
+    ],
+    "vehicles": [
+     {
+      "id": "black_five",
+      "isLoco": true,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "tender",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 44.7091,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "engine",
+        "spec": {
+         "part": "engine",
+         "L": 1.278,
+         "W": 0,
+         "nb": 1,
+         "bogie": "bogie",
+         "front": 0,
+         "at": [
+          0.21100000000000008
+         ],
+         "kinds": [
+          "bogie"
+         ],
+         "rigid": [
+          0.5720000000000001,
+          0.8,
+          1.026
+         ],
+         "hidden": [
+          true
+         ]
+        },
+        "pose": {
+         "x": 45.0701,
+         "y": 40,
+         "angle": 0,
+         "L": 1.278,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 45.4981,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": true,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 162,
+         "y": 1361,
+         "zIndex": 8522.01,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "104x89",
+         "logical": "52x44.5",
+         "windowLight": false
+        }
+       },
+       {
+        "part": "tender",
+        "spec": {
+         "part": "tender",
+         "L": 0.662,
+         "W": 0.662,
+         "nb": 0,
+         "bogie": "bogie",
+         "front": 1.338,
+         "rigid": [
+          0.128,
+          0.326,
+          0.492
+         ]
+        },
+        "pose": {
+         "x": 44.0401,
+         "y": 40,
+         "angle": 0,
+         "L": 0.662,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 129,
+         "y": 1345,
+         "zIndex": 8419.01,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "65x65",
+         "logical": "32.5x32.5",
+         "windowLight": false
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": null
+     },
+     {
+      "id": "pullman",
+      "isLoco": false,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "rigid",
+       "drawBogies": true
+      },
+      "centre": {
+       "x": 42.5091,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 2,
+         "W": 1.4,
+         "nb": 2,
+         "bogie": "bogie3",
+         "front": 0
+        },
+        "pose": {
+         "x": 42.5091,
+         "y": 40,
+         "angle": 0,
+         "L": 2,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 43.2091,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         },
+         {
+          "x": 41.8091,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 80,
+         "y": 1320,
+         "zIndex": 8265.91,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "73x51",
+         "logical": "73x51",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [
+       {
+        "visible": true,
+        "zIndex": 8264.91
+       },
+       {
+        "visible": true,
+        "zIndex": 8264.91
+       }
+      ],
+      "load": null
+     },
+     {
+      "id": "steel_hopper",
+      "isLoco": false,
+      "spec": {
+       "L": 1,
+       "size": "small",
+       "plan": "rigid",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 40.8091,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 1,
+         "W": 0.7,
+         "nb": 2,
+         "bogie": "bogie",
+         "front": 0
+        },
+        "pose": {
+         "x": 40.8091,
+         "y": 40,
+         "angle": 0,
+         "L": 1,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 41.1591,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         },
+         {
+          "x": 40.4591,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 26,
+         "y": 1293,
+         "zIndex": 8095.91,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "43x35",
+         "logical": "43x35",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": {
+       "visible": true,
+       "zIndex": 8096.91,
+       "tint": "2c2c2e"
+      }
+     }
+    ]
+   },
+   "mesh": {
+    "mode": "mesh",
+    "renders": 0,
+    "log": []
+   },
+   "rt": {
+    "mode": "rt",
+    "renders": 1,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   }
+  },
+  "climb": {
+   "progress": 8.604396402877683,
+   "state": "moving",
+   "steps": 361,
+   "dump": {
+    "reversed": false,
+    "speed": 0.5865,
+    "samePoseObjects": [
+     false,
+     false,
+     false
+    ],
+    "vehicles": [
+     {
+      "id": "black_five",
+      "isLoco": true,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "tender",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 50.1044,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "engine",
+        "spec": {
+         "part": "engine",
+         "L": 1.278,
+         "W": 0,
+         "nb": 1,
+         "bogie": "bogie",
+         "front": 0,
+         "at": [
+          0.21100000000000008
+         ],
+         "kinds": [
+          "bogie"
+         ],
+         "rigid": [
+          0.5720000000000001,
+          0.8,
+          1.026
+         ],
+         "hidden": [
+          true
+         ]
+        },
+        "pose": {
+         "x": 50.4654,
+         "y": 40,
+         "angle": 0,
+         "L": 1.278,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 50.8934,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": true,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": -14.36,
+         "sgx": -9.79,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": -14.36,
+         "sgx": -9.79,
+         "sgy": 0
+        },
+        "heightTiles": 0.3663,
+        "pitchDeg": 14.02,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 335,
+         "y": 1432.64,
+         "zIndex": 9061.54,
+         "scaleX": 1.0116234351347773,
+         "rotation": 0,
+         "skew": [
+          0,
+          -0.1517
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "104x89",
+         "logical": "52x44.5",
+         "windowLight": false
+        }
+       },
+       {
+        "part": "tender",
+        "spec": {
+         "part": "tender",
+         "L": 0.662,
+         "W": 0.662,
+         "nb": 0,
+         "bogie": "bogie",
+         "front": 1.338,
+         "rigid": [
+          0.128,
+          0.326,
+          0.492
+         ]
+        },
+        "pose": {
+         "x": 49.4354,
+         "y": 40,
+         "angle": 0,
+         "L": 0.662,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [],
+        "railUnderCentre": {
+         "dz": -4.29,
+         "sgx": -9.16,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": -4.29,
+         "sgx": -9.16,
+         "sgy": 0
+        },
+        "heightTiles": 0.1094,
+        "pitchDeg": 13.16,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 302,
+         "y": 1426.71,
+         "zIndex": 8958.54,
+         "scaleX": 1.0102014777831343,
+         "rotation": 0,
+         "skew": [
+          0,
+          -0.1422
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "65x65",
+         "logical": "32.5x32.5",
+         "windowLight": false
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": null
+     },
+     {
+      "id": "pullman",
+      "isLoco": false,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "rigid",
+       "drawBogies": true
+      },
+      "centre": {
+       "x": 47.9044,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 2,
+         "W": 1.4,
+         "nb": 2,
+         "bogie": "bogie3",
+         "front": 0
+        },
+        "pose": {
+         "x": 47.9044,
+         "y": 40,
+         "angle": 0,
+         "L": 2,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 48.6044,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         },
+         {
+          "x": 47.2044,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": -0.03,
+         "sgx": -0.04,
+         "sgy": 0
+        },
+        "heightTiles": 0.0007,
+        "pitchDeg": 0.06,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 253,
+         "y": 1405.97,
+         "zIndex": 8805.44,
+         "scaleX": 1.0000001775445424,
+         "rotation": 0,
+         "skew": [
+          0,
+          -0.0006
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "73x51",
+         "logical": "73x51",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [
+       {
+        "visible": true,
+        "zIndex": 8804.44
+       },
+       {
+        "visible": true,
+        "zIndex": 8804.44
+       }
+      ],
+      "load": null
+     },
+     {
+      "id": "steel_hopper",
+      "isLoco": false,
+      "spec": {
+       "L": 1,
+       "size": "small",
+       "plan": "rigid",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 46.2044,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 1,
+         "W": 0.7,
+         "nb": 2,
+         "bogie": "bogie",
+         "front": 0
+        },
+        "pose": {
+         "x": 46.2044,
+         "y": 40,
+         "angle": 0,
+         "L": 1,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 46.5544,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         },
+         {
+          "x": 45.8544,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 199,
+         "y": 1379,
+         "zIndex": 8635.44,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "43x35",
+         "logical": "43x35",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": {
+       "visible": true,
+       "zIndex": 8636.44,
+       "tint": "2c2c2e"
+      }
+     }
+    ]
+   },
+   "mesh": {
+    "mode": "mesh",
+    "renders": 1,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   },
+   "rt": {
+    "mode": "rt",
+    "renders": 2,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   }
+  },
+  "top": {
+   "progress": 12.017261330935277,
+   "state": "moving",
+   "steps": 212,
+   "dump": {
+    "reversed": false,
+    "speed": 1.173,
+    "samePoseObjects": [
+     false,
+     false,
+     false
+    ],
+    "vehicles": [
+     {
+      "id": "black_five",
+      "isLoco": true,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "tender",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 53.5173,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "engine",
+        "spec": {
+         "part": "engine",
+         "L": 1.278,
+         "W": 0,
+         "nb": 1,
+         "bogie": "bogie",
+         "front": 0,
+         "at": [
+          0.21100000000000008
+         ],
+         "kinds": [
+          "bogie"
+         ],
+         "rigid": [
+          0.5720000000000001,
+          0.8,
+          1.026
+         ],
+         "hidden": [
+          true
+         ]
+        },
+        "pose": {
+         "x": 53.8783,
+         "y": 40,
+         "angle": 0,
+         "L": 1.278,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 54.3063,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": true,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": -19.6,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": -19.6,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0.5,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 444,
+         "y": 1482.4,
+         "zIndex": 9402.83,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "104x89",
+         "logical": "52x44.5",
+         "windowLight": false
+        }
+       },
+       {
+        "part": "tender",
+        "spec": {
+         "part": "tender",
+         "L": 0.662,
+         "W": 0.662,
+         "nb": 0,
+         "bogie": "bogie",
+         "front": 1.338,
+         "rigid": [
+          0.128,
+          0.326,
+          0.492
+         ]
+        },
+        "pose": {
+         "x": 52.8483,
+         "y": 40,
+         "angle": 0,
+         "L": 0.662,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [],
+        "railUnderCentre": {
+         "dz": -19.6,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": -19.6,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0.5,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 411,
+         "y": 1466.4,
+         "zIndex": 9299.83,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "65x65",
+         "logical": "32.5x32.5",
+         "windowLight": false
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": null
+     },
+     {
+      "id": "pullman",
+      "isLoco": false,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "rigid",
+       "drawBogies": true
+      },
+      "centre": {
+       "x": 51.3173,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 2,
+         "W": 1.4,
+         "nb": 2,
+         "bogie": "bogie3",
+         "front": 0
+        },
+        "pose": {
+         "x": 51.3173,
+         "y": 40,
+         "angle": 0,
+         "L": 2,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 52.0173,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         },
+         {
+          "x": 50.6173,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": -19.43,
+         "sgx": -1.79,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": -17.69,
+         "sgx": -2.73,
+         "sgy": 0
+        },
+        "heightTiles": 0.4513,
+        "pitchDeg": 3.98,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 362,
+         "y": 1443.31,
+         "zIndex": 9146.73,
+         "scaleX": 1.0009071871389563,
+         "rotation": 0,
+         "skew": [
+          0,
+          -0.0426
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "73x51",
+         "logical": "73x51",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [
+       {
+        "visible": true,
+        "zIndex": 9145.73
+       },
+       {
+        "visible": true,
+        "zIndex": 9145.73
+       }
+      ],
+      "load": null
+     },
+     {
+      "id": "steel_hopper",
+      "isLoco": false,
+      "spec": {
+       "L": 1,
+       "size": "small",
+       "plan": "rigid",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 49.6173,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 1,
+         "W": 0.7,
+         "nb": 2,
+         "bogie": "bogie",
+         "front": 0
+        },
+        "pose": {
+         "x": 49.6173,
+         "y": 40,
+         "angle": 0,
+         "L": 1,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 49.9673,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         },
+         {
+          "x": 49.2673,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": -6.05,
+         "sgx": -9.8,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": -6.18,
+         "sgx": -9.42,
+         "sgy": 0
+        },
+        "heightTiles": 0.1577,
+        "pitchDeg": 13.51,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 308,
+         "y": 1427.82,
+         "zIndex": 8976.73,
+         "scaleX": 1.010771462182282,
+         "rotation": 0,
+         "skew": [
+          0,
+          -0.1461
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "43x35",
+         "logical": "43x35",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": {
+       "visible": true,
+       "zIndex": 8977.73,
+       "tint": "2c2c2e"
+      }
+     }
+    ]
+   },
+   "mesh": {
+    "mode": "mesh",
+    "renders": 2,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   },
+   "rt": {
+    "mode": "rt",
+    "renders": 3,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   }
+  },
+  "curve": {
+   "progress": 23.60859151051845,
+   "state": "moving",
+   "steps": 513,
+   "dump": {
+    "reversed": false,
+    "speed": 1.314626562944778,
+    "samePoseObjects": [
+     false,
+     false,
+     false
+    ],
+    "vehicles": [
+     {
+      "id": "black_five",
+      "isLoco": true,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "tender",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 65.1086,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "engine",
+        "spec": {
+         "part": "engine",
+         "L": 1.278,
+         "W": 0,
+         "nb": 1,
+         "bogie": "bogie",
+         "front": 0,
+         "at": [
+          0.21100000000000008
+         ],
+         "kinds": [
+          "bogie"
+         ],
+         "rigid": [
+          0.5720000000000001,
+          0.8,
+          1.026
+         ],
+         "hidden": [
+          true
+         ]
+        },
+        "pose": {
+         "x": 65.4696,
+         "y": 40.0004,
+         "angle": 0.0011,
+         "L": 1.278,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0.1092,
+         "wheelGap": 0.0003
+        },
+        "bogies": [
+         {
+          "x": 65.8929,
+          "y": 40.0524,
+          "angle": 0.2655,
+          "kind": "bogie",
+          "hidden": true,
+          "foreAft": 0.0046,
+          "lateral": 0.0515
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0.05,
+         "appliedDeg": 0.03,
+         "x": 815,
+         "y": 1688,
+         "zIndex": 10562,
+         "scaleX": 1,
+         "rotation": 0.0004,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "104x89",
+         "logical": "52x44.5",
+         "windowLight": false
+        }
+       },
+       {
+        "part": "tender",
+        "spec": {
+         "part": "tender",
+         "L": 0.662,
+         "W": 0.662,
+         "nb": 0,
+         "bogie": "bogie",
+         "front": 1.338,
+         "rigid": [
+          0.128,
+          0.326,
+          0.492
+         ]
+        },
+        "pose": {
+         "x": 64.4396,
+         "y": 40,
+         "angle": 0,
+         "L": 0.662,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 782,
+         "y": 1671,
+         "zIndex": 10458.96,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "65x65",
+         "logical": "32.5x32.5",
+         "windowLight": false
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": null
+     },
+     {
+      "id": "pullman",
+      "isLoco": false,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "rigid",
+       "drawBogies": true
+      },
+      "centre": {
+       "x": 62.9086,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 2,
+         "W": 1.4,
+         "nb": 2,
+         "bogie": "bogie3",
+         "front": 0
+        },
+        "pose": {
+         "x": 62.9086,
+         "y": 40,
+         "angle": 0,
+         "L": 2,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 63.6086,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         },
+         {
+          "x": 62.2086,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 733,
+         "y": 1647,
+         "zIndex": 10305.86,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "73x51",
+         "logical": "73x51",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [
+       {
+        "visible": true,
+        "zIndex": 10304.86
+       },
+       {
+        "visible": true,
+        "zIndex": 10304.86
+       }
+      ],
+      "load": null
+     },
+     {
+      "id": "steel_hopper",
+      "isLoco": false,
+      "spec": {
+       "L": 1,
+       "size": "small",
+       "plan": "rigid",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 61.2086,
+       "y": 40,
+       "heading": 0
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 1,
+         "W": 0.7,
+         "nb": 2,
+         "bogie": "bogie",
+         "front": 0
+        },
+        "pose": {
+         "x": 61.2086,
+         "y": 40,
+         "angle": 0,
+         "L": 1,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 61.5586,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         },
+         {
+          "x": 60.8586,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 0,
+         "mirrored": false,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 679,
+         "y": 1619,
+         "zIndex": 10135.86,
+         "scaleX": 1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "43x35",
+         "logical": "43x35",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": {
+       "visible": true,
+       "zIndex": 10136.86,
+       "tint": "2c2c2e"
+      }
+     }
+    ]
+   },
+   "mesh": {
+    "mode": "mesh",
+    "renders": 3,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   },
+   "rt": {
+    "mode": "rt",
+    "renders": 4,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   }
+  },
+  "south": {
+   "progress": 28.017673433084475,
+   "state": "moving",
+   "steps": 195,
+   "dump": {
+    "reversed": false,
+    "speed": 1.3800000000000001,
+    "samePoseObjects": [
+     false,
+     false,
+     false
+    ],
+    "vehicles": [
+     {
+      "id": "black_five",
+      "isLoco": true,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "tender",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 67,
+       "y": 43.1615,
+       "heading": 1.5708
+      },
+      "segments": [
+       {
+        "part": "engine",
+        "spec": {
+         "part": "engine",
+         "L": 1.278,
+         "W": 0,
+         "nb": 1,
+         "bogie": "bogie",
+         "front": 0,
+         "at": [
+          0.21100000000000008
+         ],
+         "kinds": [
+          "bogie"
+         ],
+         "rigid": [
+          0.5720000000000001,
+          0.8,
+          1.026
+         ],
+         "hidden": [
+          true
+         ]
+        },
+        "pose": {
+         "x": 67,
+         "y": 43.5225,
+         "angle": 1.5708,
+         "L": 1.278,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 67,
+          "y": 43.9505,
+          "angle": 1.5708,
+          "kind": "bogie",
+          "hidden": true,
+          "foreAft": 0,
+          "lateral": 0
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 12,
+         "mirrored": true,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 751,
+         "y": 1768,
+         "zIndex": 11067.25,
+         "scaleX": -1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "104x89",
+         "logical": "52x44.5",
+         "windowLight": false
+        }
+       },
+       {
+        "part": "tender",
+        "spec": {
+         "part": "tender",
+         "L": 0.662,
+         "W": 0.662,
+         "nb": 0,
+         "bogie": "bogie",
+         "front": 1.338,
+         "rigid": [
+          0.128,
+          0.326,
+          0.492
+         ]
+        },
+        "pose": {
+         "x": 67,
+         "y": 42.4925,
+         "angle": 1.5708,
+         "L": 0.662,
+         "mirror": false,
+         "delta": 0,
+         "residualGap": 0,
+         "wheelGap": 0
+        },
+        "bogies": [],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 12,
+         "mirrored": true,
+         "residualDeg": 0,
+         "appliedDeg": 0,
+         "x": 784,
+         "y": 1752,
+         "zIndex": 10964.25,
+         "scaleX": -1,
+         "rotation": 0,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "65x65",
+         "logical": "32.5x32.5",
+         "windowLight": false
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": null
+     },
+     {
+      "id": "pullman",
+      "isLoco": false,
+      "spec": {
+       "L": 2,
+       "size": "medium",
+       "plan": "rigid",
+       "drawBogies": true
+      },
+      "centre": {
+       "x": 66.9043,
+       "y": 40.973,
+       "heading": 1.2121
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 2,
+         "W": 1.4,
+         "nb": 2,
+         "bogie": "bogie3",
+         "front": 0
+        },
+        "pose": {
+         "x": 66.7678,
+         "y": 41.026,
+         "angle": 1.2058,
+         "L": 2,
+         "mirror": false,
+         "delta": -0.0099,
+         "residualGap": 0.1464,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 67,
+          "y": 41.6615,
+          "angle": 1.5708,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0.0234,
+          "lateral": 0.0099
+         },
+         {
+          "x": 66.517,
+          "y": 40.3975,
+          "angle": 0.7444,
+          "kind": "bogie3",
+          "hidden": false,
+          "foreAft": 0.0234,
+          "lateral": 0.0099
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 9,
+         "mirrored": true,
+         "residualDeg": 2.16,
+         "appliedDeg": 1.08,
+         "x": 824,
+         "y": 1725,
+         "zIndex": 10794.38,
+         "scaleX": -1,
+         "rotation": 0.0189,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "49x55",
+         "logical": "49x55",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [
+       {
+        "visible": true,
+        "zIndex": 10793.38
+       },
+       {
+        "visible": true,
+        "zIndex": 10793.38
+       }
+      ],
+      "load": null
+     },
+     {
+      "id": "steel_hopper",
+      "isLoco": false,
+      "spec": {
+       "L": 1,
+       "size": "small",
+       "plan": "rigid",
+       "drawBogies": false
+      },
+      "centre": {
+       "x": 65.6175,
+       "y": 40.0047,
+       "heading": 0.078
+      },
+      "segments": [
+       {
+        "part": "body",
+        "spec": {
+         "part": "body",
+         "L": 1,
+         "W": 0.7,
+         "nb": 2,
+         "bogie": "bogie",
+         "front": 0
+        },
+        "pose": {
+         "x": 65.6136,
+         "y": 40.0387,
+         "angle": 0.1042,
+         "L": 1,
+         "mirror": false,
+         "delta": 0.0025,
+         "residualGap": 0.0342,
+         "wheelGap": 0
+        },
+        "bogies": [
+         {
+          "x": 65.9601,
+          "y": 40.0724,
+          "angle": 0.3118,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0.0019,
+          "lateral": 0.0025
+         },
+         {
+          "x": 65.2676,
+          "y": 40,
+          "angle": 0,
+          "kind": "bogie",
+          "hidden": false,
+          "foreAft": 0.0019,
+          "lateral": 0.0025
+         }
+        ],
+        "railUnderCentre": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "bodyGround": {
+         "dz": 0,
+         "sgx": 0,
+         "sgy": 0
+        },
+        "heightTiles": 0,
+        "pitchDeg": 0,
+        "sprite": {
+         "facing": 1,
+         "mirrored": false,
+         "residualDeg": -1.42,
+         "appliedDeg": -0.71,
+         "x": 818,
+         "y": 1690,
+         "zIndex": 10580.23,
+         "scaleX": 1,
+         "rotation": -0.0124,
+         "skew": [
+          0,
+          0
+         ],
+         "visible": true,
+         "tint": "ffffff",
+         "texel": "41x36",
+         "logical": "41x36",
+         "windowLight": true
+        }
+       }
+      ],
+      "bogieSprites": [],
+      "load": {
+       "visible": true,
+       "zIndex": 10581.23,
+       "tint": "2c2c2e"
+      }
+     }
+    ]
+   },
+   "mesh": {
+    "mode": "mesh",
+    "renders": 4,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   },
+   "rt": {
+    "mode": "rt",
+    "renders": 5,
+    "log": [
+     "rt 95x82 @3"
+    ]
+   }
+  }
+ },
+ "objects": {
+  "children": 3388,
+  "kinds": {
+   "_Sprite": 3380,
+   "_Container": 3,
+   "emissive": 4,
+   "Mesh": 1
+  },
+  "sortableChildren": true,
+  "cullableChildren": true,
+  "isRenderGroup": false,
+  "rootIsRenderGroup": false,
+  "stageLayers": [
+   "_Container(32)",
+   "_Container(392)",
+   "_Container(196)",
+   "_Graphics(0)",
+   "_Container(2)",
+   "_Container(0)",
+   "_Container(0)",
+   "_Container(65)",
+   "_Container(0)",
+   "_Graphics(0)",
+   "_Container(3388)",
+   "_Container(0)",
+   "_Container(6)"
+  ],
+  "order": [
+   {
+    "who": "train car2 undercarriage(0 bogies)",
+    "zIndex": 8094.91,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train car2 part0",
+    "zIndex": 8095.91,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train window light",
+    "zIndex": 8095.92,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train car2 load",
+    "zIndex": 8096.91,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train car1 undercarriage(2 bogies)",
+    "zIndex": 8264.91,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train car1 part0",
+    "zIndex": 8265.91,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train window light",
+    "zIndex": 8265.92,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train car0 undercarriage(0 bogies)",
+    "zIndex": 8418.01,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train car0 part1",
+    "zIndex": 8419.01,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "probe:far-house",
+    "zIndex": 8420,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "train car0 part0",
+    "zIndex": 8522.01,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "STANDIN mesh",
+    "zIndex": 8522.01,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "STANDIN rt sprite",
+    "zIndex": 8522.01,
+    "visible": false,
+    "culled": false
+   },
+   {
+    "who": "probe:far-tree",
+    "zIndex": 8610,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "probe:near-house",
+    "zIndex": 8620,
+    "visible": true,
+    "culled": false
+   },
+   {
+    "who": "probe:near-tree",
+    "zIndex": 8810,
+    "visible": true,
+    "culled": false
+   }
+  ]
+ },
+ "gl": {
+  "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": true,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": true,
+   "xrCompatible": false
+  },
+  "depthBits": 24,
+  "stencilBits": 8,
+  "resolution": 1
+ },
+ "previews": [
+  {
+   "id": "rocket",
+   "urlBytes": 2974,
+   "previewFrames": [
+    "rolling/loco_steam_early_small_yellow_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_rocket_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "adler",
+   "urlBytes": 4350,
+   "previewFrames": [
+    "rolling/loco_steam_early_small_green_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_adler_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "john_bull",
+   "urlBytes": 4390,
+   "previewFrames": [
+    "rolling/loco_steam_early_small_black_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_john_bull_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "mav375",
+   "urlBytes": 4390,
+   "previewFrames": [
+    "rolling/loco_steam_std_small_black_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_mav375_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "general",
+   "urlBytes": 5290,
+   "previewFrames": [
+    "rolling/loco_steam_std_small_rust_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_general_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "jupiter",
+   "urlBytes": 5518,
+   "previewFrames": [
+    "rolling/loco_steam_std_small_blue_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_jupiter_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "mav424",
+   "urlBytes": 9662,
+   "previewFrames": [
+    "rolling/loco_steam_std_medium_black_engine_f0 ok",
+    "rolling/loco_steam_std_medium_black_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_mav424_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "k4s",
+   "urlBytes": 8126,
+   "previewFrames": [
+    "rolling/loco_steam_std_medium_iron_engine_f0 ok",
+    "rolling/loco_steam_std_medium_iron_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_k4s_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "drg01",
+   "urlBytes": 8058,
+   "previewFrames": [
+    "rolling/loco_steam_std_medium_black_engine_f0 ok",
+    "rolling/loco_steam_std_medium_black_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_drg01_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "flying_scotsman",
+   "urlBytes": 7118,
+   "previewFrames": [
+    "rolling/loco_steam_std_medium_green_engine_f0 ok",
+    "rolling/loco_steam_std_medium_green_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_flying_scotsman_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "daylight",
+   "urlBytes": 8686,
+   "previewFrames": [
+    "rolling/loco_steam_streamlined_medium_rust_engine_f0 ok",
+    "rolling/loco_steam_streamlined_medium_rust_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_daylight_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "mallard",
+   "urlBytes": 7002,
+   "previewFrames": [
+    "rolling/loco_steam_streamlined_medium_blue_engine_f0 ok",
+    "rolling/loco_steam_streamlined_medium_blue_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_mallard_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "big_boy",
+   "urlBytes": 11338,
+   "previewFrames": [
+    "rolling/loco_steam_std_large_black_engine_f0 ok",
+    "rolling/loco_steam_std_large_black_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_big_boy_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "sw1",
+   "urlBytes": 4942,
+   "previewFrames": [
+    "rolling/loco_diesel_switcher_small_black_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_sw1_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_sw1_body_f3"
+  },
+  {
+   "id": "class08",
+   "urlBytes": 3882,
+   "previewFrames": [
+    "rolling/loco_diesel_switcher_small_green_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_class08_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_class08_body_f3"
+  },
+  {
+   "id": "m62",
+   "urlBytes": 6042,
+   "previewFrames": [
+    "rolling/loco_diesel_hood_medium_green_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_m62_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_m62_body_f3"
+  },
+  {
+   "id": "f7",
+   "urlBytes": 6186,
+   "previewFrames": [
+    "rolling/loco_diesel_cab_medium_red_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_f7_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_f7_body_f3"
+  },
+  {
+   "id": "sd40",
+   "urlBytes": 8398,
+   "previewFrames": [
+    "rolling/loco_diesel_hood_medium_black_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_sd40_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_sd40_body_f3"
+  },
+  {
+   "id": "deltic",
+   "urlBytes": 6326,
+   "previewFrames": [
+    "rolling/loco_diesel_cab_medium_blue_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_deltic_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_deltic_body_f3"
+  },
+  {
+   "id": "dda40x",
+   "urlBytes": 8234,
+   "previewFrames": [
+    "rolling/loco_diesel_hood_large_yellow_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_dda40x_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_dda40x_body_f3"
+  },
+  {
+   "id": "kando_v40",
+   "urlBytes": 4986,
+   "previewFrames": [
+    "rolling/loco_electric_box_small_green_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_kando_v40_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_kando_v40_body_f3"
+  },
+  {
+   "id": "v63",
+   "urlBytes": 6102,
+   "previewFrames": [
+    "rolling/loco_electric_box_medium_red_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_v63_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_v63_body_f3"
+  },
+  {
+   "id": "crocodile",
+   "urlBytes": 7034,
+   "previewFrames": [
+    "rolling/loco_electric_crocodile_large_brown_engine_f0 ok",
+    "rolling/loco_electric_crocodile_large_brown_cradle_f0 ok",
+    "rolling/loco_electric_crocodile_large_brown_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_crocodile_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_electric_box_large_iron_body_f3"
+  },
+  {
+   "id": "taurus",
+   "urlBytes": 6102,
+   "previewFrames": [
+    "rolling/loco_electric_box_medium_red_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_taurus_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_taurus_body_f3"
+  },
+  {
+   "id": "re460",
+   "urlBytes": 6102,
+   "previewFrames": [
+    "rolling/loco_electric_box_medium_red_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_re460_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_re460_body_f3"
+  },
+  {
+   "id": "gg1",
+   "urlBytes": 7594,
+   "previewFrames": [
+    "rolling/loco_electric_box_large_green_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_gg1_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_gg1_body_f3"
+  },
+  {
+   "id": "j94",
+   "urlBytes": 4390,
+   "previewFrames": [
+    "rolling/loco_steam_std_small_black_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_j94_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "black_five",
+   "urlBytes": 8226,
+   "previewFrames": [
+    "rolling/loco_steam_std_medium_black_engine_f0 ok",
+    "rolling/loco_steam_std_medium_black_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_black_five_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "nine_f",
+   "urlBytes": 9690,
+   "previewFrames": [
+    "rolling/loco_steam_std_medium_black_engine_f0 ok",
+    "rolling/loco_steam_std_medium_black_tender_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_nine_f_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "gmam",
+   "urlBytes": 11578,
+   "previewFrames": [
+    "rolling/loco_steam_garratt_large_green_engine_f0 ok",
+    "rolling/loco_steam_garratt_large_green_cradle_f0 ok",
+    "rolling/loco_steam_garratt_large_green_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_gmam_engine_f0",
+   "ownInAtlas": false,
+   "ownResolution": null,
+   "locoFrameF3": "rolling/loco_steam_std_small_iron_body_f3"
+  },
+  {
+   "id": "tgv",
+   "urlBytes": 6206,
+   "previewFrames": [
+    "rolling/loco_electric_hs_medium_orange_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_tgv_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_tgv_body_f3"
+  },
+  {
+   "id": "ice1",
+   "urlBytes": 6314,
+   "previewFrames": [
+    "rolling/loco_electric_hs_medium_white_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_ice1_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_ice1_body_f3"
+  },
+  {
+   "id": "mk48",
+   "urlBytes": 3886,
+   "previewFrames": [
+    "rolling/loco_diesel_switcher_small_red_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_mk48_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_mk48_body_f3"
+  },
+  {
+   "id": "bm50",
+   "urlBytes": 3886,
+   "previewFrames": [
+    "rolling/loco_diesel_switcher_small_red_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_bm50_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_bm50_body_f3"
+  },
+  {
+   "id": "muki",
+   "urlBytes": 3882,
+   "previewFrames": [
+    "rolling/loco_diesel_switcher_small_green_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_muki_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_muki_body_f3"
+  },
+  {
+   "id": "c50",
+   "urlBytes": 3886,
+   "previewFrames": [
+    "rolling/loco_diesel_switcher_small_red_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_c50_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_c50_body_f3"
+  },
+  {
+   "id": "mav490",
+   "urlBytes": 4390,
+   "previewFrames": [
+    "rolling/loco_steam_std_small_black_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_mav490_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_diesel_hood_small_iron_body_f3"
+  },
+  {
+   "id": "mk45",
+   "urlBytes": 4274,
+   "previewFrames": [
+    "rolling/loco_diesel_hood_small_red_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_mk45_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_mk45_body_f3"
+  },
+  {
+   "id": "rezet",
+   "urlBytes": 4350,
+   "previewFrames": [
+    "rolling/loco_steam_std_small_green_engine_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_rezet_engine_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_diesel_hood_small_iron_body_f3"
+  },
+  {
+   "id": "koutetsujou",
+   "urlBytes": 5030,
+   "previewFrames": [
+    "rolling/loco_electric_box_small_iron_body_f0 ok"
+   ],
+   "ownFrame": "rolling/loco_koutetsujou_body_f0",
+   "ownInAtlas": true,
+   "ownResolution": 2,
+   "locoFrameF3": "rolling/loco_koutetsujou_body_f3"
+  }
+ ]
+}

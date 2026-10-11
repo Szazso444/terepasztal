@@ -1,0 +1,71 @@
+[
+ {
+  "kind": "gpu",
+  "query": "mode=A&n=60&glb=_r025&pref=webgpu&frames=20",
+  "mode": "A",
+  "n": 60,
+  "zoom": 1,
+  "dpr": 1,
+  "turn": 0.5,
+  "renderer": "webgpu",
+  "gpu": "webgpu nvidia",
+  "trisPerPart": [
+   18267,
+   7972
+  ],
+  "cpuMs": 0.275,
+  "totalMs": 112.395,
+  "worstMs": 135.9,
+  "drawsPerFrame": 0,
+  "trisPerFrame": 0,
+  "impostorRendersPerFrame": 0,
+  "cacheEntries": 0,
+  "cacheMB": 0
+ },
+ {
+  "kind": "gpu",
+  "query": "mode=B&n=60&glb=_r025&turn=0.2&distinct=1&max=120&pref=webgpu&frames=20",
+  "mode": "B",
+  "n": 60,
+  "zoom": 1,
+  "dpr": 1,
+  "turn": 0.2,
+  "renderer": "webgpu",
+  "gpu": "webgpu nvidia",
+  "trisPerPart": [
+   18267,
+   7972
+  ],
+  "cpuMs": 0.87,
+  "totalMs": 38.845,
+  "worstMs": 111.5,
+  "drawsPerFrame": 0,
+  "trisPerFrame": 0,
+  "impostorRendersPerFrame": 12,
+  "cacheEntries": 120,
+  "cacheMB": 7
+ },
+ {
+  "kind": "gpu",
+  "query": "mode=A&n=60&glb=_r025&frames=20",
+  "mode": "A",
+  "n": 60,
+  "zoom": 1,
+  "dpr": 1,
+  "turn": 0.5,
+  "renderer": "webgl",
+  "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "trisPerPart": [
+   18267,
+   7972
+  ],
+  "cpuMs": 0.135,
+  "totalMs": 0.66,
+  "worstMs": 1.5,
+  "drawsPerFrame": 60,
+  "trisPerFrame": 787200,
+  "impostorRendersPerFrame": 0,
+  "cacheEntries": 0,
+  "cacheMB": 0
+ }
+]

@@ -64,7 +64,10 @@ export class AtlasRegistry {
 
   private async tryLoadFile(name: string): Promise<AtlasImage | null> {
     try {
-      const res = await fetch(`/assets/${name}.json`, { cache: 'no-cache' });
+      // scratch (ladder explore): ?sprites=<set> loads the pipeline's rolling-<set> atlas instead
+      const set = name === 'rolling' ? new URLSearchParams(globalThis.location?.search ?? '').get('sprites') : null;
+      const file = set ? `${name}-${set}` : name;
+      const res = await fetch(`/assets/${file}.json`, { cache: 'no-cache' });
       if (!res.ok) return null;
       const ct = res.headers.get('content-type') ?? '';
       if (!ct.includes('json')) return null;
@@ -75,7 +78,7 @@ export class AtlasRegistry {
       await new Promise<void>((ok, fail) => {
         image.onload = () => ok();
         image.onerror = () => fail(new Error('atlas png missing'));
-        image.src = `/assets/${name}.png`;
+        image.src = `/assets/${file}.png`;
       });
       return { image, frames: json.frames, resolution, partial: json.partial === true };
     } catch {

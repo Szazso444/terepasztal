@@ -1,0 +1,52 @@
+{
+ "renderer": "webgl",
+ "resolution": 1,
+ "gpu": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+ "maxTex": 16384,
+ "trains": 40,
+ "vehicles": 40,
+ "parts": 51,
+ "bogies": 64,
+ "withTrains_z1": {
+  "zoom": 1,
+  "trainUpdateMs": 0.135,
+  "renderCpuMs": 3.458,
+  "totalMs": 6.352,
+  "draws": 1,
+  "tris": 40686
+ },
+ "withTrains_z05": {
+  "zoom": 0.5,
+  "trainUpdateMs": 0.135,
+  "renderCpuMs": 3.492,
+  "totalMs": 6.407,
+  "draws": 1,
+  "tris": 40684
+ },
+ "withTrains_z2": {
+  "zoom": 2,
+  "trainUpdateMs": 0.125,
+  "renderCpuMs": 3.51,
+  "totalMs": 6.607,
+  "draws": 1,
+  "tris": 40686
+ },
+ "objectsChildren": 3078,
+ "bare_z1": {
+  "zoom": 1,
+  "trainUpdateMs": 0,
+  "renderCpuMs": 3.077,
+  "totalMs": 5.693,
+  "draws": 1,
+  "tris": 40584
+ },
+ "bare_z05": {
+  "zoom": 0.5,
+  "trainUpdateMs": 0.005,
+  "renderCpuMs": 3.392,
+  "totalMs": 6.15,
+  "draws": 1,
+  "tris": 40582
+ },
+ "objectsChildrenBare": 2987
+}

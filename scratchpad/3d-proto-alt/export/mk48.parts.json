@@ -1,0 +1,49 @@
+{
+ "id": "mk48",
+ "prep_seconds": 33.4,
+ "tile_m": 6.235064799811727,
+ "k_px": 14.516235339624876,
+ "parts": [
+  {
+   "part": "body",
+   "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/mk48_body.glb",
+   "objects": [
+    "part_body",
+    "wheels_body"
+   ],
+   "tris": 106736,
+   "verts": 100404,
+   "lo": [
+    -2.917532674527365,
+    -1.4885404275646295,
+    -0.1324152946472168
+   ],
+   "hi": [
+    2.897794798565883,
+    1.488540359612557,
+    3.4030600786209106
+   ],
+   "tiles": [
+    1,
+    1
+   ],
+   "footprint_m": [
+    6.235064799811727,
+    6.235064799811727
+   ],
+   "comp": [
+    0.8781766791354682,
+    1.457255981386962,
+    1.0
+   ],
+   "variants": [
+    {
+     "ratio": 0.25,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/mk48_body_r025.glb",
+     "tris": 28280
+    }
+   ]
+  }
+ ],
+ "export_seconds": 0.7
+}

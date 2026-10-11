@@ -1,0 +1,91 @@
+[
+ {
+  "kind": "sw",
+  "query": "mode=sprite&n=60&frames=30",
+  "mode": "sprite",
+  "n": 60,
+  "zoom": 1,
+  "dpr": 1,
+  "turn": 0.5,
+  "renderer": "webgl",
+  "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "trisPerPart": [],
+  "cpuMs": 0.133,
+  "totalMs": 1.62,
+  "worstMs": 2,
+  "drawsPerFrame": 1,
+  "trisPerFrame": 120,
+  "impostorRendersPerFrame": 0,
+  "cacheEntries": 0,
+  "cacheMB": 0
+ },
+ {
+  "kind": "sw",
+  "query": "mode=A&n=60&glb=_r025&frames=30",
+  "mode": "A",
+  "n": 60,
+  "zoom": 1,
+  "dpr": 1,
+  "turn": 0.5,
+  "renderer": "webgl",
+  "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "trisPerPart": [
+   18267,
+   7972
+  ],
+  "cpuMs": 0.243,
+  "totalMs": 47.087,
+  "worstMs": 51.2,
+  "drawsPerFrame": 60,
+  "trisPerFrame": 787170,
+  "impostorRendersPerFrame": 0,
+  "cacheEntries": 0,
+  "cacheMB": 0
+ },
+ {
+  "kind": "sw",
+  "query": "mode=B&n=60&glb=_r025&turn=0&distinct=1&frames=30",
+  "mode": "B",
+  "n": 60,
+  "zoom": 1,
+  "dpr": 1,
+  "turn": 0,
+  "renderer": "webgl",
+  "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "trisPerPart": [
+   18267,
+   7972
+  ],
+  "cpuMs": 0.073,
+  "totalMs": 2.687,
+  "worstMs": 3.2,
+  "drawsPerFrame": 2,
+  "trisPerFrame": 120,
+  "impostorRendersPerFrame": 0,
+  "cacheEntries": 60,
+  "cacheMB": 3.5
+ },
+ {
+  "kind": "sw",
+  "query": "mode=B&n=60&glb=_r025&turn=0.2&distinct=1&max=120&frames=30",
+  "mode": "B",
+  "n": 60,
+  "zoom": 1,
+  "dpr": 1,
+  "turn": 0.2,
+  "renderer": "webgl",
+  "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "trisPerPart": [
+   18267,
+   7972
+  ],
+  "cpuMs": 0.537,
+  "totalMs": 18.657,
+  "worstMs": 20.5,
+  "drawsPerFrame": 14,
+  "trisPerFrame": 157554,
+  "impostorRendersPerFrame": 12,
+  "cacheEntries": 120,
+  "cacheMB": 7
+ }
+]

@@ -1,0 +1,456 @@
+{
+ "errors": [],
+ "lineups": {
+  "overview": {
+   "rows": [
+    "rocket",
+    "muki",
+    "",
+    "john_bull",
+    "class08",
+    "",
+    "general",
+    "sw1",
+    "",
+    "black_five",
+    "f7",
+    "",
+    "nine_f",
+    "sd40",
+    "",
+    "big_boy",
+    "koutetsujou"
+   ],
+   "crop": [
+    145,
+    267,
+    1367,
+    609
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "rocket",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "black_five",
+      "f7",
+      "",
+      "nine_f",
+      "sd40",
+      "",
+      "",
+      ""
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 1,
+       "progress": 8.0068666666668
+      },
+      {
+       "id": "black_five",
+       "row": 9,
+       "L": 2,
+       "progress": 8.000386904761859
+      },
+      {
+       "id": "f7",
+       "row": 10,
+       "L": 2,
+       "progress": 8.012516666666658
+      },
+      {
+       "id": "nine_f",
+       "row": 12,
+       "L": 2,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "sd40",
+       "row": 13,
+       "L": 2,
+       "progress": 8.009583333333289
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "flying_scotsman",
+      "f7",
+      "sd40",
+      "black_five",
+      "nine_f",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "rocket",
+      "muki",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "black_five",
+      "f7",
+      "",
+      "nine_f",
+      "sd40",
+      "",
+      "",
+      "koutetsujou"
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 0.5,
+       "progress": 8.0068666666668
+      },
+      {
+       "id": "muki",
+       "row": 1,
+       "L": 0.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "black_five",
+       "row": 9,
+       "L": 2,
+       "progress": 8.000386904761859
+      },
+      {
+       "id": "f7",
+       "row": 10,
+       "L": 2,
+       "progress": 8.012516666666658
+      },
+      {
+       "id": "nine_f",
+       "row": 12,
+       "L": 2.5,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "sd40",
+       "row": 13,
+       "L": 2.5,
+       "progress": 8.009583333333289
+      },
+      {
+       "id": "koutetsujou",
+       "row": 16,
+       "L": 3,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "flying_scotsman",
+      "f7",
+      "sd40",
+      "black_five",
+      "nine_f",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    },
+    "B": {
+     "rows": [
+      "rocket",
+      "muki",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "black_five",
+      "f7",
+      "",
+      "nine_f",
+      "sd40",
+      "",
+      "",
+      "koutetsujou"
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 0.5,
+       "progress": 8.0068666666668
+      },
+      {
+       "id": "muki",
+       "row": 1,
+       "L": 0.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "black_five",
+       "row": 9,
+       "L": 2,
+       "progress": 8.000386904761859
+      },
+      {
+       "id": "f7",
+       "row": 10,
+       "L": 2,
+       "progress": 8.012516666666658
+      },
+      {
+       "id": "nine_f",
+       "row": 12,
+       "L": 3,
+       "progress": 8.007616666666674
+      },
+      {
+       "id": "sd40",
+       "row": 13,
+       "L": 3,
+       "progress": 8.009583333333289
+      },
+      {
+       "id": "koutetsujou",
+       "row": 16,
+       "L": 4,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "flying_scotsman",
+      "f7",
+      "sd40",
+      "black_five",
+      "nine_f",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  },
+  "corvette": {
+   "rows": [
+    "rocket",
+    "muki",
+    "bm50"
+   ],
+   "crop": [
+    821,
+    476,
+    312,
+    228
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "rocket",
+      "",
+      ""
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 1,
+       "progress": 8.0068666666668
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "flying_scotsman",
+      "f7",
+      "sd40",
+      "black_five",
+      "nine_f",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "rocket",
+      "muki",
+      "bm50"
+     ],
+     "placed": [
+      {
+       "id": "rocket",
+       "row": 0,
+       "L": 0.5,
+       "progress": 8.0068666666668
+      },
+      {
+       "id": "muki",
+       "row": 1,
+       "L": 0.5,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "bm50",
+       "row": 2,
+       "L": 0.5,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "flying_scotsman",
+      "f7",
+      "sd40",
+      "black_five",
+      "nine_f",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  },
+  "frigate": {
+   "rows": [
+    "mk45",
+    "mk48",
+    "rezet",
+    "mav490",
+    "c50",
+    "adler",
+    "john_bull",
+    "mav375",
+    "j94",
+    "class08"
+   ],
+   "crop": [
+    899,
+    323,
+    474,
+    300
+   ],
+   "sets": {
+    "now": {
+     "rows": [
+      "",
+      "mk48",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+     ],
+     "placed": [
+      {
+       "id": "mk48",
+       "row": 1,
+       "L": 1,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "flying_scotsman",
+      "f7",
+      "sd40",
+      "black_five",
+      "nine_f",
+      "mk48"
+     ]
+    },
+    "A": {
+     "rows": [
+      "mk45",
+      "mk48",
+      "rezet",
+      "mav490",
+      "c50",
+      "",
+      "",
+      "",
+      "",
+      ""
+     ],
+     "placed": [
+      {
+       "id": "mk45",
+       "row": 0,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "mk48",
+       "row": 1,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "rezet",
+       "row": 2,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "mav490",
+       "row": 3,
+       "L": 1,
+       "progress": 8.014638888888927
+      },
+      {
+       "id": "c50",
+       "row": 4,
+       "L": 1,
+       "progress": 8.014638888888927
+      }
+     ],
+     "sprited": [
+      "rocket",
+      "flying_scotsman",
+      "f7",
+      "sd40",
+      "black_five",
+      "nine_f",
+      "mk48",
+      "bm50",
+      "muki",
+      "c50",
+      "mav490",
+      "mk45",
+      "rezet",
+      "koutetsujou"
+     ]
+    }
+   }
+  }
+ },
+ "curves": []
+}

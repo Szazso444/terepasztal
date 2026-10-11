@@ -1,0 +1,52 @@
+{
+ "renderer": "webgl",
+ "resolution": 1,
+ "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+ "maxTex": 16384,
+ "trains": 40,
+ "vehicles": 40,
+ "parts": 51,
+ "bogies": 64,
+ "withTrains_z1": {
+  "zoom": 1,
+  "trainUpdateMs": 0.14,
+  "renderCpuMs": 3.605,
+  "totalMs": 4.688,
+  "draws": 1,
+  "tris": 40686
+ },
+ "withTrains_z05": {
+  "zoom": 0.5,
+  "trainUpdateMs": 0.143,
+  "renderCpuMs": 4.393,
+  "totalMs": 5.53,
+  "draws": 1,
+  "tris": 40684
+ },
+ "withTrains_z2": {
+  "zoom": 2,
+  "trainUpdateMs": 0.12,
+  "renderCpuMs": 3.732,
+  "totalMs": 4.81,
+  "draws": 1,
+  "tris": 40686
+ },
+ "objectsChildren": 3078,
+ "bare_z1": {
+  "zoom": 1,
+  "trainUpdateMs": 0.003,
+  "renderCpuMs": 3.207,
+  "totalMs": 4.102,
+  "draws": 1,
+  "tris": 40584
+ },
+ "bare_z05": {
+  "zoom": 0.5,
+  "trainUpdateMs": 0.003,
+  "renderCpuMs": 3.28,
+  "totalMs": 4.19,
+  "draws": 1,
+  "tris": 40582
+ },
+ "objectsChildrenBare": 2987
+}

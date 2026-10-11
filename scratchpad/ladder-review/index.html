@@ -1,0 +1,453 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>Terepasztal Size Ladders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+<style>
+:root {
+  --ground: #e9ece5; --surface: #f7f8f4; --sunk: #dde2d9; --ink: #1b221e; --muted: #56625a; --line: #c4ccc1;
+  --accent: #1f5c45; --accent-soft: #d3e3da; --ok: #2e7d4f; --warn: #a86d12; --bad: #ac3d2b;
+  --display: 'Barlow Semi Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark; --ground: #111513; --surface: #1a201c; --sunk: #232b26; --ink: #e2e8e0; --muted: #9ba79f;
+    --line: #313b35; --accent: #6cbf97; --accent-soft: #1f3329; --ok: #62c28b; --warn: #e0a441; --bad: #e37a66;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark; --ground: #111513; --surface: #1a201c; --sunk: #232b26; --ink: #e2e8e0; --muted: #9ba79f;
+  --line: #313b35; --accent: #6cbf97; --accent-soft: #1f3329; --ok: #62c28b; --warn: #e0a441; --bad: #e37a66;
+}
+body { background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); padding-inline: clamp(16px, 4vw, 48px); padding-block: 28px 64px; }
+.wrap { max-width: 1240px; margin-inline: auto; display: grid; gap: 48px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2rem, 4.5vw, 3.1rem); font-weight: 700; }
+h2 { font-size: 1.7rem; font-weight: 700; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; max-width: 74ch; }
+ul, ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 92ch; }
+a { color: var(--accent); }
+.label { font: 600 0.72rem/1.2 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.num, dd { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+header.top, section { display: grid; gap: 14px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 0.93rem; }
+th, td { text-align: left; padding: 6px 16px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; font-size: 0.82rem; color: var(--muted); }
+th.num, td.num { text-align: right; }
+td.num { white-space: nowrap; }
+tr.diff td { background: var(--accent-soft); }
+tr.diff td:first-child { box-shadow: inset 3px 0 0 var(--accent); padding-left: 8px; }
+.colgroup { border-bottom: 2px solid var(--accent); color: var(--accent); }
+figure { margin: 0; display: grid; gap: 4px; align-content: start; }
+figure img { width: 100%; height: auto; display: block; border-radius: 4px; background: var(--sunk); image-rendering: pixelated; }
+figcaption { font-size: 0.8rem; color: var(--muted); line-height: 1.3; }
+figcaption b { color: var(--accent); font-weight: 600; }
+.noimg { aspect-ratio: 320 / 260; max-width: 100%; border-radius: 4px; background: var(--sunk); display: grid; place-items: center; color: var(--muted); font-size: 0.85rem; }
+.clshead { display: grid; gap: 4px; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card.wide { grid-column: 1 / -1; }
+.card header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tag { font-size: 0.75rem; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; white-space: nowrap; }
+.shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.card.wide .shots, .shots.q4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 14px; }
+dl div { display: grid; gap: 2px; }
+dt { font-size: 0.75rem; color: var(--muted); }
+dd { margin: 0; font-size: 0.95rem; }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+.flag { font-size: 0.88rem; border-left: 3px solid var(--warn); padding-left: 10px; }
+.verdict { border-left: 3px solid var(--accent); padding-left: 18px; display: grid; gap: 12px; }
+.questions { display: grid; gap: 28px; }
+.q { display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; min-width: 0; }
+.q h3 { display: flex; gap: 10px; align-items: baseline; font-size: 1.3rem; }
+.qn { font: 600 0.9rem var(--mono); color: var(--surface); background: var(--accent); border-radius: 99px; min-width: 1.7em; text-align: center; padding: 1px 6px; }
+.note { font-size: 0.85rem; color: var(--muted); }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
+nav.toc { display: flex; gap: 8px 16px; flex-wrap: wrap; font-size: 0.9rem; }
+.done { font-size: 0.88rem; border-left: 3px solid var(--accent); padding-left: 10px; }
+.lineups { display: grid; gap: 36px; }
+.lineup { display: grid; gap: 10px; }
+.lrow { display: flex; flex-wrap: wrap; gap: 14px; align-items: start; }
+.lfig { flex: 1 1 300px; min-width: 0; }
+.lfig img { image-rendering: auto; }
+@media (max-width: 760px) {
+  .card.wide .shots, .shots.q4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <span class="label">Terepasztal · locomotive design · scratch/ladder-explore</span>
+  <h1>Terepasztal Size Ladders</h1>
+  <p>Every locomotive is now the asset pipeline's own model: image to 3D model, then rendered in Blender at each length, cut into the same parts the game moves. Side by side on straight track and through its first curve, at today's lengths, on <b>Ladder A</b> (0.5 to 3 tiles) and on <b>Ladder B</b> (0.5 to 4).</p>
+  <ul>
+    <li><b>The models:</b> 14 engines already had one; the other 25 went through the pipeline today with the same settings, without the hand-measured wheel positions the pilot engines got. Some are rough, but they show size and proportion. Each keeps its own wheels for this test, so the game draws no bogies under them.</li>
+    <li><b>Today's lengths</b> are the game's 1, 2 and 3 tiles with these same models, so only the length changes from picture to picture. The 3-tile engines run on 2×2 curves, the rest on today's 1×1.</li>
+    <li><b>Ladder A and B</b> use the rail spike's 2×2 regular curve; narrow engines stand on regular rails on the straight and use a 1×1 curve as a stand-in. Wagons are still the game's 1-tile boxes (question 2).</li>
+    <li>Applied: the Crocodile is a Battleship, the General and Jupiter stay Destroyers. Nothing in the game or the track has changed; this is a scratch branch.</li>
+  </ul>
+  <div class="legend"><span>Body off the rail, in tiles:</span><span class="ok">up to 0.20 fine</span><span class="warn">0.21 to 0.30 noticeable</span><span class="bad">over 0.30 cuts into the curve</span></div>
+  <nav class="toc"><a href="#lineup">Side by side</a><a href="#ladders">The two ladders</a><a href="#questions">Still open</a><a href="#decided">Your answers</a><a href="#curves">Overhang by curve size</a><a href="#corvette">Corvette</a><a href="#frigate">Frigate</a><a href="#destroyer">Destroyer</a><a href="#cruiser">Cruiser</a><a href="#battleship">Battleship</a><a href="#juggernaut">Juggernaut</a></nav>
+</header>
+
+<section id="lineup">
+  <h2>Side by side</h2>
+  <p>One engine per track, fronts level, the class's engines from the back (top right) to the front (bottom left). An empty track separates the classes. Each group is cropped to the same frame in every picture, so lengths compare one to one; the rails are 1 tile apart.</p>
+  <div class="lineups"><div class="lineup" id="lineup-overview"><h3>Two engines from every class</h3>
+<p class="note">Back to front: Stephenson's Rocket, Muki · John Bull, BR Class 08 · The General, EMD SW1 · LMS Black Five, EMD F7 · BR 9F, EMD SD40-2 · Big Boy 4014, Koutetsujou. Not in the game yet, so missing from today’s: Muki, Koutetsujou.</p>
+<div class="lrow"><figure class="lfig" style="flex-basis:1160px;max-width:1367px"><img src="img/sp-lineup-overview-now.webp" alt="Two engines from every class: Today’s lengths: 1, 2 and 3 tiles" width="1367" height="609" loading="lazy"><figcaption>Today’s lengths: 1, 2 and 3 tiles</figcaption></figure><figure class="lfig" style="flex-basis:1160px;max-width:1367px"><img src="img/sp-lineup-overview-A.webp" alt="Two engines from every class: Ladder A · 0.5 to 3" width="1367" height="609" loading="lazy"><figcaption>Ladder A · 0.5 to 3</figcaption></figure><figure class="lfig" style="flex-basis:1160px;max-width:1367px"><img src="img/sp-lineup-overview-B.webp" alt="Two engines from every class: Ladder B · 0.5 to 4" width="1367" height="609" loading="lazy"><figcaption><b>Ladder B · 0.5 to 4</b></figcaption></figure></div></div>
+<div class="lineup" id="lineup-corvette"><h3>Corvette (XS)</h3>
+<p class="note">Back to front: Stephenson's Rocket, Muki, BM-50. Not in the game yet, so missing from today’s: Muki, BM-50.</p>
+<div class="lrow"><figure class="lfig" style="flex-basis:573px;max-width:312px"><img src="img/sp-lineup-corvette-now.webp" alt="Corvette (XS): Today’s lengths: 1, 2 and 3 tiles" width="312" height="228" loading="lazy"><figcaption>Today’s lengths: 1, 2 and 3 tiles</figcaption></figure><figure class="lfig" style="flex-basis:573px;max-width:312px"><img src="img/sp-lineup-corvette-A.webp" alt="Corvette (XS): Ladder A and B" width="312" height="228" loading="lazy"><figcaption>Ladder A and B</figcaption></figure></div></div>
+<div class="lineup" id="lineup-frigate"><h3>Frigate (S)</h3>
+<p class="note">Back to front: MÁV Mk45, MÁV Mk48, Rezét, MÁV 490, C-50, Adler, John Bull, MÁV 375, Saddle Tank J94, BR Class 08. Not in the game yet, so missing from today’s: MÁV Mk45, Rezét, MÁV 490, C-50.</p>
+<div class="lrow"><figure class="lfig" style="flex-basis:1160px;max-width:872px"><img src="img/sp-lineup-frigate-now.webp" alt="Frigate (S): Today’s lengths: 1, 2 and 3 tiles" width="872" height="492" loading="lazy"><figcaption>Today’s lengths: 1, 2 and 3 tiles</figcaption></figure><figure class="lfig" style="flex-basis:1160px;max-width:872px"><img src="img/sp-lineup-frigate-A.webp" alt="Frigate (S): Ladder A and B" width="872" height="492" loading="lazy"><figcaption>Ladder A and B</figcaption></figure></div></div>
+<div class="lineup" id="lineup-destroyer"><h3>Destroyer (M)</h3>
+<p class="note">Back to front: EMD SW1, Kandó V40, The General, Jupiter.</p>
+<div class="lrow"><figure class="lfig" style="flex-basis:573px;max-width:533px"><img src="img/sp-lineup-destroyer-now.webp" alt="Destroyer (M): Today’s lengths: 1, 2 and 3 tiles" width="533" height="337" loading="lazy"><figcaption>Today’s lengths: 1, 2 and 3 tiles</figcaption></figure><figure class="lfig" style="flex-basis:573px;max-width:533px"><img src="img/sp-lineup-destroyer-A.webp" alt="Destroyer (M): Ladder A and B" width="533" height="337" loading="lazy"><figcaption>Ladder A and B</figcaption></figure></div></div>
+<div class="lineup" id="lineup-cruiser"><h3>Cruiser (L)</h3>
+<p class="note">Back to front: PRR K4s, Flying Scotsman, DRG Class 01, ÖBB 1116 Taurus, V63 Gigant, M62 Szergej, SBB Re 460, LMS Black Five, Deltic Class 55, EMD F7, Mallard, ICE 1, TGV Sud-Est.</p>
+<div class="lrow"><figure class="lfig" style="flex-basis:1160px;max-width:1060px"><img src="img/sp-lineup-cruiser-now.webp" alt="Cruiser (L): Today’s lengths: 1, 2 and 3 tiles" width="1060" height="598" loading="lazy"><figcaption>Today’s lengths: 1, 2 and 3 tiles</figcaption></figure><figure class="lfig" style="flex-basis:1160px;max-width:1060px"><img src="img/sp-lineup-cruiser-A.webp" alt="Cruiser (L): Ladder A and B" width="1060" height="598" loading="lazy"><figcaption>Ladder A and B</figcaption></figure></div></div>
+<div class="lineup" id="lineup-battleship"><h3>Battleship (XL)</h3>
+<p class="note">Back to front: SBB Ce 6/8 Crocodile, BR 9F, PRR GG1, SP 4449 Daylight, EMD SD40-2, DDA40X Centennial, MÁV 424 Bivaly.</p>
+<div class="lrow"><figure class="lfig" style="flex-basis:1160px;max-width:724px"><img src="img/sp-lineup-battleship-now.webp" alt="Battleship (XL): Today’s lengths: 1, 2 and 3 tiles" width="724" height="397" loading="lazy"><figcaption>Today’s lengths: 1, 2 and 3 tiles</figcaption></figure><figure class="lfig" style="flex-basis:1160px;max-width:724px"><img src="img/sp-lineup-battleship-A.webp" alt="Battleship (XL): Ladder A · 0.5 to 3" width="724" height="397" loading="lazy"><figcaption>Ladder A · 0.5 to 3</figcaption></figure><figure class="lfig" style="flex-basis:1160px;max-width:724px"><img src="img/sp-lineup-battleship-B.webp" alt="Battleship (XL): Ladder B · 0.5 to 4" width="724" height="397" loading="lazy"><figcaption><b>Ladder B · 0.5 to 4</b></figcaption></figure></div></div>
+<div class="lineup" id="lineup-juggernaut"><h3>Juggernaut (XXL)</h3>
+<p class="note">Back to front: Big Boy 4014, Koutetsujou. Not in the game yet, so missing from today’s: Koutetsujou.</p>
+<div class="lrow"><figure class="lfig" style="flex-basis:377px;max-width:501px"><img src="img/sp-lineup-juggernaut-now.webp" alt="Juggernaut (XXL): Today’s lengths: 1, 2 and 3 tiles" width="501" height="314" loading="lazy"><figcaption>Today’s lengths: 1, 2 and 3 tiles</figcaption></figure><figure class="lfig" style="flex-basis:377px;max-width:501px"><img src="img/sp-lineup-juggernaut-A.webp" alt="Juggernaut (XXL): Ladder A · 0.5 to 3" width="501" height="314" loading="lazy"><figcaption>Ladder A · 0.5 to 3</figcaption></figure><figure class="lfig" style="flex-basis:377px;max-width:501px"><img src="img/sp-lineup-juggernaut-B.webp" alt="Juggernaut (XXL): Ladder B · 0.5 to 4" width="501" height="314" loading="lazy"><figcaption><b>Ladder B · 0.5 to 4</b></figcaption></figure></div></div></div>
+</section>
+
+<section id="ladders">
+  <h2>The two ladders</h2>
+  <div class="table-wrap"><table>
+    <thead>
+      <tr><th colspan="4"></th><th colspan="3" class="colgroup">Ladder A · 0.5 to 3</th><th colspan="4" class="colgroup">Ladder B · 0.5 to 4</th></tr>
+      <tr><th>Class</th><th class="num">Database size</th><th>Gauge</th><th class="num">Engines</th><th class="num">Tiles</th><th class="num">Off the rail, 2×2</th><th class="num">Length kept</th><th class="num">Tiles</th><th class="num">Off the rail, 2×2</th><th class="num">On 3×3</th><th class="num">Length kept</th></tr>
+    </thead>
+    <tbody><tr><td><b>Corvette (XS)</b></td><td class="num">0.5</td><td>narrow</td><td class="num">3</td>
+    <td class="num">0.5</td><td class="num">0.04 to 0.05</td><td class="num">67 to 72 %</td>
+    <td class="num"><b>0.5</b></td><td class="num"><span class="muted">same as A</span></td><td class="num"></td><td class="num"></td></tr>
+<tr><td><b>Frigate (S)</b></td><td class="num">1</td><td>narrow and regular</td><td class="num">10</td>
+    <td class="num">1</td><td class="num">0.05 to 0.15</td><td class="num">64 to 112 %</td>
+    <td class="num"><b>1</b></td><td class="num"><span class="muted">same as A</span></td><td class="num"></td><td class="num"></td></tr>
+<tr><td><b>Destroyer (M)</b></td><td class="num">2</td><td>regular</td><td class="num">4</td>
+    <td class="num">1.5</td><td class="num">0.09 to 0.25</td><td class="num">91 to 97 %</td>
+    <td class="num"><b>1.5</b></td><td class="num"><span class="muted">same as A</span></td><td class="num"></td><td class="num"></td></tr>
+<tr><td><b>Cruiser (L)</b></td><td class="num">3</td><td>regular</td><td class="num">13</td>
+    <td class="num">2</td><td class="num">0.12 to 0.18</td><td class="num">62 to 106 %</td>
+    <td class="num"><b>2</b></td><td class="num"><span class="muted">same as A</span></td><td class="num"></td><td class="num"></td></tr>
+<tr class="diff"><td><b>Battleship (XL)</b></td><td class="num">4 + Crocodile</td><td>regular</td><td class="num">7</td>
+    <td class="num">2.5</td><td class="num">0.11 to 0.26</td><td class="num">64 to 100 %</td>
+    <td class="num"><b>3</b></td><td class="num">0.15 to 0.35</td><td class="num">0.10 to 0.26</td><td class="num">77 to 120 %</td></tr>
+<tr class="diff"><td><b>Juggernaut (XXL)</b></td><td class="num">5 and 6</td><td>regular</td><td class="num">2</td>
+    <td class="num">3</td><td class="num">0.30 to 0.34</td><td class="num">70 to 74 %</td>
+    <td class="num"><b>4</b></td><td class="num">0.46 to 0.54</td><td class="num">0.35 to 0.40</td><td class="num">95 to 99 %</td></tr></tbody>
+  </table></div>
+  <div class="verdict">
+    <span class="label">My proposal for the 0.5 to 4 scale</span>
+    <p><b>Ladder B: Corvette 0.5, Frigate 1, Destroyer 1.5, Cruiser 2, Battleship 3, Juggernaut 4 tiles.</b></p>
+    <ul>
+      <li>The four lower classes stay exactly as on Ladder A, so 30 of 39 engines keep the length you are testing.</li>
+      <li>The top two grow by a full tile each step instead of half a tile, so a Battleship looks clearly bigger than a Cruiser and a Juggernaut is twice a Cruiser's length.</li>
+      <li>The cost is overhang. On a 2×2 curve a 3-tile Battleship is 0.15 to 0.35 off the rail and a 4-tile Juggernaut 0.46 to 0.54. On a 3×3 curve that drops to 0.10 to 0.26 and 0.35 to 0.40; on 4×4 the Juggernauts are at 0.28 to 0.31.</li>
+      <li><b>Length kept</b> is how long each engine is drawn against its own model: under 100 % it is squeezed, over 100 % stretched. The four lower classes come out at 62 to 112 %. The top two are at 64 to 100 % on Ladder A and 77 to 120 % on Ladder B. On B the Juggernauts sit almost at their models' own length, but PRR GG1 (120 %), SBB Ce 6/8 Crocodile (115 %), MÁV 424 Bivaly (114 %), BR 9F (105 %) would be stretched past theirs at 3 tiles.</li>
+      <li>So B works if the two top classes run on bigger curves. Main already keeps its biggest engines off regular track, so they could stay on high-speed track with 3×3 or bigger curves. Curve sizes are the rail chat's decision, and I haven't changed any track.</li>
+    </ul>
+    <p class="note">I also tried even steps (0.5, 1, 1.75, 2.5, 3.25, 4) and a 2-tile Destroyer (0.5, 1, 2, 2.5, 3, 4). Both change lengths you are already testing and add overhang lower down, where every engine runs on 2×2 curves. B leaves those classes alone.</p>
+  </div>
+</section>
+
+<section id="questions">
+  <h2>Still open</h2>
+  <p>I haven't decided any of these.</p>
+  <div class="questions"><article class="q" id="q1"><h3><span class="qn">1</span>Ladder A or Ladder B?</h3>
+<p>The side-by-side pictures above show the difference: the two ladders are the same up to Cruiser, then B gives each of the top two classes a full extra tile. B's cost is overhang on the 2×2 curve: Battleships 0.15 to 0.35, Juggernauts 0.46 to 0.54, unless those classes stay on bigger curves.</p></article>
+<article class="q" id="q2"><h3><span class="qn">2</span>Wagon lengths on the new scale</h3>
+<p>Today 18 freight wagons are 1 tile and the two coaches (Steel Coach, Pullman Car) are 2 tiles. Every render on this page keeps them that way. On either ladder a 2-tile coach is as long as a Cruiser. Should wagons get the same ladder (a few fixed lengths per wagon type), or stay at 1 and 2? Tell me what you prefer and I'll render it next to today's wagons before changing anything.</p></article>
+<article class="q" id="q3"><h3><span class="qn">3</span>Steam leading and trailing trucks swinging out on curves</h3>
+<p>On a curve the small leading and trailing trucks of steam engines follow the rail, so they slide sideways from under the frame while the frame stays on its drivers. The longer the engine, the further they go:</p>
+<div class="table-wrap"><table><thead><tr><th>Trucks off the frame, 2×2</th><th class="num">Ladder A</th><th class="num">Ladder B</th></tr></thead><tbody>
+<tr><td>Big Boy 4014</td><td class="num">0.32 at 3</td><td class="num">0.54 at 4</td></tr><tr><td>MÁV 424 Bivaly</td><td class="num">0.22 at 2.5</td><td class="num">0.31 at 3</td></tr><tr><td>Jupiter</td><td class="num">0.17 at 1.5</td><td class="num"><span class="muted">same</span></td></tr><tr><td>BR 9F</td><td class="num">0.15 at 2.5</td><td class="num">0.21 at 3</td></tr><tr><td>The General</td><td class="num">0.13 at 1.5</td><td class="num"><span class="muted">same</span></td></tr><tr><td>SP 4449 Daylight</td><td class="num">0.12 at 2.5</td><td class="num">0.17 at 3</td></tr><tr><td>LMS Black Five</td><td class="num">0.10 at 2</td><td class="num"><span class="muted">same</span></td></tr>
+</tbody></table></div>
+<p>Let them swing out as the real engines do, or keep them tucked under the frame (the frame then has to follow the trucks a little, and the drivers leave the rail)? In this test the trucks are part of each sprite, so here they do not swing at all.</p>
+<div class="shots q2"><figure><img src="img/sp-curve-big_boy-A.webp" alt="Big Boy at 3 tiles" width="640" height="480" loading="lazy"><figcaption>Big Boy · A · 3 tiles</figcaption></figure><figure><img src="img/sp-curve-big_boy-B.webp" alt="Big Boy at 4 tiles" width="640" height="480" loading="lazy"><figcaption>Big Boy · B · 4 tiles</figcaption></figure></div></article></div>
+</section>
+
+<section id="decided">
+  <h2>Your answers</h2>
+  
+<ul>
+  <li><b>The General and Jupiter</b> stay Destroyers at 1.5 tiles (0.21 and 0.25 off the rail on the 2×2 curve).</li>
+  <li><b>The Crocodile</b> moves up to Battleship: 2.5 tiles on Ladder A (0.11 off the rail), 3 on Ladder B (0.15). It is still the steadiest Battleship by far.</li>
+  <li><b>No hinged halves</b> for the Koutetsujou or the DDA40X.</li>
+  <li><b>The Koutetsujou's bogies</b> spread evenly along its body, as you suggested, instead of all four sitting under the rear half. Its body then centres over the curve like any other engine's, so its overhang drops to the normal level for its length.</li>
+</ul>
+<div class="table-wrap"><table><thead><tr><th>Koutetsujou, off the rail</th><th class="num">2×2 at 3</th><th class="num">2×2 at 4</th><th class="num">3×3 at 4</th><th class="num">4×4 at 4</th></tr></thead><tbody>
+<tr><td>Bogies as drawn</td><td class="num"><span class="bad">0.55</span></td><td class="num"><span class="bad">0.78</span></td><td class="num"><span class="bad">0.68</span></td><td class="num"><span class="bad">0.59</span></td></tr>
+<tr><td><b>Bogies spread evenly</b></td><td class="num"><span class="bad">0.34</span></td><td class="num"><span class="bad">0.54</span></td><td class="num"><span class="bad">0.40</span></td><td class="num"><span class="bad">0.31</span></td></tr>
+<tr><td class="muted">Big Boy, for comparison</td><td class="num"><span class="bad">0.30</span></td><td class="num"><span class="bad">0.46</span></td><td class="num"><span class="bad">0.35</span></td><td class="num"><span class="warn">0.28</span></td></tr>
+</tbody></table></div>
+<div class="shots q4"><figure><img src="img/koutetsujou-A.webp" alt="Koutetsujou with its bogies as drawn" width="320" height="260" loading="lazy"><figcaption>Ladder A · 3 tiles · bogies as drawn</figcaption></figure><figure><img src="img/koutetsujou-Aspread.webp" alt="Koutetsujou with its bogies spread" width="320" height="260" loading="lazy"><figcaption><b>Ladder A · 3 tiles · bogies spread</b></figcaption></figure><figure><img src="img/koutetsujou-B.webp" alt="Koutetsujou at 4 tiles, bogies as drawn" width="320" height="260" loading="lazy"><figcaption>Ladder B · 4 tiles · bogies as drawn</figcaption></figure><figure><img src="img/koutetsujou-Bspread.webp" alt="Koutetsujou at 4 tiles, bogies spread" width="320" height="260" loading="lazy"><figcaption><b>Ladder B · 4 tiles · bogies spread</b></figcaption></figure></div>
+<p class="note">These four pictures use the game's plain boxes, to show the bogies. Spreading the bogies more or less makes little difference: anywhere from 6 % to 32 % of the length in from each end gives 0.29 to 0.36 at 3 tiles. The model image draws its wheels under the rear half, so the sprite's bogies would have to move with them.</p>
+</section>
+
+<section id="curves">
+  <h2>Overhang by curve size</h2>
+  <p>Median over the 31 regular-gauge engines, in tiles off the rail. How much a bigger curve helps each length.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th class="num">Length</th><th>Class</th><th class="num">2×2</th><th class="num">3×3</th><th class="num">4×4</th></tr></thead>
+    <tbody><tr><td class="num">2</td><td>Cruiser</td><td class="num"><span class="ok">0.16</span></td><td class="num"><span class="ok">0.11</span></td><td class="num"><span class="ok">0.08</span></td></tr>
+<tr><td class="num">2.5</td><td>Battleship A</td><td class="num"><span class="warn">0.23</span></td><td class="num"><span class="ok">0.16</span></td><td class="num"><span class="ok">0.12</span></td></tr>
+<tr><td class="num">3</td><td>Juggernaut A · Battleship B</td><td class="num"><span class="bad">0.31</span></td><td class="num"><span class="warn">0.22</span></td><td class="num"><span class="ok">0.17</span></td></tr>
+<tr><td class="num">3.5</td><td></td><td class="num"><span class="bad">0.40</span></td><td class="num"><span class="warn">0.29</span></td><td class="num"><span class="warn">0.23</span></td></tr>
+<tr><td class="num">4</td><td>Juggernaut B</td><td class="num"><span class="bad">0.48</span></td><td class="num"><span class="bad">0.36</span></td><td class="num"><span class="warn">0.29</span></td></tr></tbody>
+  </table></div>
+</section>
+
+
+<section class="cls" id="corvette"><div class="clshead"><span class="label">0.5 tiles on both ladders · database size 0.5</span><h2>Corvette (XS)</h2></div>
+<div class="grid"><article class="card" id="rocket">
+  <header><h3>Stephenson's Rocket</h3><span class="tag">narrow · db 0.5</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-rocket-now.webp" alt="Stephenson's Rocket at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-rocket-A.webp" alt="Stephenson's Rocket on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 0.5 tiles · 1×1 narrow stand-in</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 0.5</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.04</span></dd></div><div><dt>Length kept</dt><dd>72 %</dd></div></dl>
+  
+</article>
+<article class="card" id="muki">
+  <header><h3>Muki</h3><span class="tag">narrow · db 0.5</span></header>
+  <div class="shots"><figure><div class="noimg">Not in the game yet</div><figcaption>Now</figcaption></figure><figure><img src="img/sp-curve-muki-A.webp" alt="Muki on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 0.5 tiles · 1×1 narrow stand-in</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>– → 0.5</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.04</span></dd></div><div><dt>Length kept</dt><dd>71 %</dd></div></dl>
+  
+</article>
+<article class="card" id="bm50">
+  <header><h3>BM-50</h3><span class="tag">narrow · db 0.5</span></header>
+  <div class="shots"><figure><div class="noimg">Not in the game yet</div><figcaption>Now</figcaption></figure><figure><img src="img/sp-curve-bm50-A.webp" alt="BM-50 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 0.5 tiles · 1×1 narrow stand-in</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>– → 0.5</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.05</span></dd></div><div><dt>Length kept</dt><dd>67 %</dd></div></dl>
+  
+</article></div></section>
+<section class="cls" id="frigate"><div class="clshead"><span class="label">1 tile on both ladders · database size 1</span><h2>Frigate (S)</h2></div>
+<div class="grid"><article class="card" id="mk45">
+  <header><h3>MÁV Mk45</h3><span class="tag">narrow · db 1</span></header>
+  <div class="shots"><figure><div class="noimg">Not in the game yet</div><figcaption>Now</figcaption></figure><figure><img src="img/sp-curve-mk45-A.webp" alt="MÁV Mk45 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 1×1 narrow stand-in</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>– → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.10</span></dd></div><div><dt>Length kept</dt><dd>64 %</dd></div></dl>
+  
+</article>
+<article class="card" id="mk48">
+  <header><h3>MÁV Mk48</h3><span class="tag">narrow · db 1</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-mk48-now.webp" alt="MÁV Mk48 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-mk48-A.webp" alt="MÁV Mk48 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 1×1 narrow stand-in</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.10</span></dd></div><div><dt>Length kept</dt><dd>88 %</dd></div></dl>
+  
+</article>
+<article class="card" id="rezet">
+  <header><h3>Rezét</h3><span class="tag">narrow · db 1</span></header>
+  <div class="shots"><figure><div class="noimg">Not in the game yet</div><figcaption>Now</figcaption></figure><figure><img src="img/sp-curve-rezet-A.webp" alt="Rezét on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 1×1 narrow stand-in</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>– → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.13</span></dd></div><div><dt>Length kept</dt><dd>74 %</dd></div></dl>
+  
+</article>
+<article class="card" id="mav490">
+  <header><h3>MÁV 490</h3><span class="tag">narrow · db 1</span></header>
+  <div class="shots"><figure><div class="noimg">Not in the game yet</div><figcaption>Now</figcaption></figure><figure><img src="img/sp-curve-mav490-A.webp" alt="MÁV 490 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 1×1 narrow stand-in</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>– → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.14</span></dd></div><div><dt>Length kept</dt><dd>74 %</dd></div></dl>
+  
+</article>
+<article class="card" id="c50">
+  <header><h3>C-50</h3><span class="tag">narrow · db 1</span></header>
+  <div class="shots"><figure><div class="noimg">Not in the game yet</div><figcaption>Now</figcaption></figure><figure><img src="img/sp-curve-c50-A.webp" alt="C-50 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 1×1 narrow stand-in</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>– → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.15</span></dd></div><div><dt>Length kept</dt><dd>112 %</dd></div></dl>
+  
+</article>
+<article class="card" id="adler">
+  <header><h3>Adler</h3><span class="tag">regular · db 1</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-adler-now.webp" alt="Adler at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-adler-A.webp" alt="Adler on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.05</span></dd></div><div><dt>Length kept</dt><dd>95 %</dd></div></dl>
+  
+</article>
+<article class="card" id="john_bull">
+  <header><h3>John Bull</h3><span class="tag">regular · db 1</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-john_bull-now.webp" alt="John Bull at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-john_bull-A.webp" alt="John Bull on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.06</span></dd></div><div><dt>Length kept</dt><dd>77 %</dd></div></dl>
+  
+</article>
+<article class="card" id="mav375">
+  <header><h3>MÁV 375</h3><span class="tag">regular · db 1</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-mav375-now.webp" alt="MÁV 375 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-mav375-A.webp" alt="MÁV 375 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.07</span></dd></div><div><dt>Length kept</dt><dd>70 %</dd></div></dl>
+  
+</article>
+<article class="card" id="j94">
+  <header><h3>Saddle Tank J94</h3><span class="tag">regular · db 1</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-j94-now.webp" alt="Saddle Tank J94 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-j94-A.webp" alt="Saddle Tank J94 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.07</span></dd></div><div><dt>Length kept</dt><dd>68 %</dd></div></dl>
+  
+</article>
+<article class="card" id="class08">
+  <header><h3>BR Class 08</h3><span class="tag">regular · db 1</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-class08-now.webp" alt="BR Class 08 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-class08-A.webp" alt="BR Class 08 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1 tile · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.07</span></dd></div><div><dt>Length kept</dt><dd>71 %</dd></div></dl>
+  
+</article></div></section>
+<section class="cls" id="destroyer"><div class="clshead"><span class="label">1.5 tiles on both ladders · database size 2</span><h2>Destroyer (M)</h2></div>
+<div class="grid"><article class="card" id="sw1">
+  <header><h3>EMD SW1</h3><span class="tag">regular · db 2</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-sw1-now.webp" alt="EMD SW1 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-sw1-A.webp" alt="EMD SW1 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1.5 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1.5</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.09</span></dd></div><div><dt>Length kept</dt><dd>97 %</dd></div></dl>
+  
+</article>
+<article class="card" id="kando_v40">
+  <header><h3>Kandó V40</h3><span class="tag">regular · db 2</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-kando_v40-now.webp" alt="Kandó V40 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-kando_v40-A.webp" alt="Kandó V40 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1.5 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1.5</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.13</span></dd></div><div><dt>Length kept</dt><dd>92 %</dd></div></dl>
+  
+</article>
+<article class="card" id="general">
+  <header><h3>The General</h3><span class="tag">regular · db 2</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-general-now.webp" alt="The General at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-general-A.webp" alt="The General on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1.5 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1.5</dd></div><div><dt>Body off the rail, A</dt><dd><span class="warn">0.21</span></dd></div><div><dt>Length kept</dt><dd>91 %</dd></div></dl>
+  <p class="done">Your call: stays a Destroyer.</p>
+</article>
+<article class="card" id="jupiter">
+  <header><h3>Jupiter</h3><span class="tag">regular · db 2</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-jupiter-now.webp" alt="Jupiter at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 1 tile · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-jupiter-A.webp" alt="Jupiter on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 1.5 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>1 → 1.5</dd></div><div><dt>Body off the rail, A</dt><dd><span class="warn">0.25</span></dd></div><div><dt>Length kept</dt><dd>96 %</dd></div></dl>
+  <p class="done">Your call: stays a Destroyer.</p>
+</article></div></section>
+<section class="cls" id="cruiser"><div class="clshead"><span class="label">2 tiles on both ladders · database size 3</span><h2>Cruiser (L)</h2></div>
+<div class="grid"><article class="card" id="k4s">
+  <header><h3>PRR K4s</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-k4s-now.webp" alt="PRR K4s at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-k4s-A.webp" alt="PRR K4s on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.12</span></dd></div><div><dt>Length kept</dt><dd>62 %</dd></div></dl>
+  
+</article>
+<article class="card" id="flying_scotsman">
+  <header><h3>Flying Scotsman</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-flying_scotsman-now.webp" alt="Flying Scotsman at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-flying_scotsman-A.webp" alt="Flying Scotsman on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.13</span></dd></div><div><dt>Length kept</dt><dd>72 %</dd></div></dl>
+  
+</article>
+<article class="card" id="drg01">
+  <header><h3>DRG Class 01</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-drg01-now.webp" alt="DRG Class 01 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-drg01-A.webp" alt="DRG Class 01 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.14</span></dd></div><div><dt>Length kept</dt><dd>63 %</dd></div></dl>
+  
+</article>
+<article class="card" id="taurus">
+  <header><h3>ÖBB 1116 Taurus</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-taurus-now.webp" alt="ÖBB 1116 Taurus at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-taurus-A.webp" alt="ÖBB 1116 Taurus on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.14</span></dd></div><div><dt>Length kept</dt><dd>101 %</dd></div></dl>
+  
+</article>
+<article class="card" id="v63">
+  <header><h3>V63 Gigant</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-v63-now.webp" alt="V63 Gigant at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-v63-A.webp" alt="V63 Gigant on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.14</span></dd></div><div><dt>Length kept</dt><dd>98 %</dd></div></dl>
+  
+</article>
+<article class="card" id="re460">
+  <header><h3>SBB Re 460</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-re460-now.webp" alt="SBB Re 460 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-re460-A.webp" alt="SBB Re 460 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.15</span></dd></div><div><dt>Length kept</dt><dd>80 %</dd></div></dl>
+  
+</article>
+<article class="card" id="m62">
+  <header><h3>M62 Szergej</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-m62-now.webp" alt="M62 Szergej at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-m62-A.webp" alt="M62 Szergej on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.15</span></dd></div><div><dt>Length kept</dt><dd>83 %</dd></div></dl>
+  
+</article>
+<article class="card" id="deltic">
+  <header><h3>Deltic Class 55</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-deltic-now.webp" alt="Deltic Class 55 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-deltic-A.webp" alt="Deltic Class 55 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.15</span></dd></div><div><dt>Length kept</dt><dd>73 %</dd></div></dl>
+  
+</article>
+<article class="card" id="f7">
+  <header><h3>EMD F7</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-f7-now.webp" alt="EMD F7 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-f7-A.webp" alt="EMD F7 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.16</span></dd></div><div><dt>Length kept</dt><dd>77 %</dd></div></dl>
+  
+</article>
+<article class="card" id="mallard">
+  <header><h3>Mallard</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-mallard-now.webp" alt="Mallard at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-mallard-A.webp" alt="Mallard on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.16</span></dd></div><div><dt>Length kept</dt><dd>74 %</dd></div></dl>
+  
+</article>
+<article class="card" id="black_five">
+  <header><h3>LMS Black Five</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-black_five-now.webp" alt="LMS Black Five at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-black_five-A.webp" alt="LMS Black Five on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.17</span></dd></div><div><dt>Length kept</dt><dd>75 %</dd></div></dl>
+  
+</article>
+<article class="card" id="ice1">
+  <header><h3>ICE 1</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-ice1-now.webp" alt="ICE 1 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-ice1-A.webp" alt="ICE 1 on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.17</span></dd></div><div><dt>Length kept</dt><dd>106 %</dd></div></dl>
+  
+</article>
+<article class="card" id="tgv">
+  <header><h3>TGV Sud-Est</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-tgv-now.webp" alt="TGV Sud-Est at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-tgv-A.webp" alt="TGV Sud-Est on both ladders" width="640" height="480" loading="lazy"><figcaption>Ladder A and B · 2 tiles · 2×2 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A</dt><dd>2 → 2</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.18</span></dd></div><div><dt>Length kept</dt><dd>91 %</dd></div></dl>
+  
+</article></div></section>
+<section class="cls" id="battleship"><div class="clshead"><span class="label">2.5 tiles on A · <b>3 tiles on B</b> · database size 4 and the Crocodile</span><h2>Battleship (XL)</h2></div>
+<div class="grid"><article class="card wide" id="crocodile">
+  <header><h3>SBB Ce 6/8 Crocodile</h3><span class="tag">regular · db 3</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-crocodile-now.webp" alt="SBB Ce 6/8 Crocodile at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 3 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-crocodile-A.webp" alt="SBB Ce 6/8 Crocodile on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 2.5 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-crocodile-B.webp" alt="SBB Ce 6/8 Crocodile on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 3 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-crocodile-B3.webp" alt="SBB Ce 6/8 Crocodile on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 3 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>3 → 2.5 → 3</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.11</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="ok">0.15</span> / <span class="ok">0.10</span> / <span class="ok">0.07</span></dd></div><div><dt>Length kept, A / B</dt><dd>94 % / 115 %</dd></div></dl>
+  <p class="done">Your call: moved up from Cruiser to Battleship.</p>
+</article>
+<article class="card wide" id="nine_f">
+  <header><h3>BR 9F</h3><span class="tag">regular · db 4</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-nine_f-now.webp" alt="BR 9F at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-nine_f-A.webp" alt="BR 9F on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 2.5 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-nine_f-B.webp" alt="BR 9F on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 3 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-nine_f-B3.webp" alt="BR 9F on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 3 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>2 → 2.5 → 3</dd></div><div><dt>Body off the rail, A</dt><dd><span class="ok">0.17</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="warn">0.23</span> / <span class="ok">0.17</span> / <span class="ok">0.13</span></dd></div><div><dt>Length kept, A / B</dt><dd>87 % / 105 %</dd></div></dl>
+  
+</article>
+<article class="card wide" id="gg1">
+  <header><h3>PRR GG1</h3><span class="tag">regular · db 4</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-gg1-now.webp" alt="PRR GG1 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 3 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-gg1-A.webp" alt="PRR GG1 on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 2.5 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-gg1-B.webp" alt="PRR GG1 on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 3 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-gg1-B3.webp" alt="PRR GG1 on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 3 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>3 → 2.5 → 3</dd></div><div><dt>Body off the rail, A</dt><dd><span class="warn">0.21</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="warn">0.28</span> / <span class="warn">0.20</span> / <span class="ok">0.16</span></dd></div><div><dt>Length kept, A / B</dt><dd>100 % / 120 %</dd></div></dl>
+  
+</article>
+<article class="card wide" id="daylight">
+  <header><h3>SP 4449 Daylight</h3><span class="tag">regular · db 4</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-daylight-now.webp" alt="SP 4449 Daylight at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-daylight-A.webp" alt="SP 4449 Daylight on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 2.5 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-daylight-B.webp" alt="SP 4449 Daylight on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 3 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-daylight-B3.webp" alt="SP 4449 Daylight on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 3 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>2 → 2.5 → 3</dd></div><div><dt>Body off the rail, A</dt><dd><span class="warn">0.21</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="warn">0.29</span> / <span class="warn">0.20</span> / <span class="ok">0.16</span></dd></div><div><dt>Length kept, A / B</dt><dd>70 % / 85 %</dd></div></dl>
+  
+</article>
+<article class="card wide" id="sd40">
+  <header><h3>EMD SD40-2</h3><span class="tag">regular · db 4</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-sd40-now.webp" alt="EMD SD40-2 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-sd40-A.webp" alt="EMD SD40-2 on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 2.5 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-sd40-B.webp" alt="EMD SD40-2 on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 3 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-sd40-B3.webp" alt="EMD SD40-2 on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 3 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>2 → 2.5 → 3</dd></div><div><dt>Body off the rail, A</dt><dd><span class="warn">0.23</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="bad">0.31</span> / <span class="warn">0.22</span> / <span class="ok">0.17</span></dd></div><div><dt>Length kept, A / B</dt><dd>76 % / 92 %</dd></div></dl>
+  
+</article>
+<article class="card wide" id="dda40x">
+  <header><h3>DDA40X Centennial</h3><span class="tag">regular · db 4</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-dda40x-now.webp" alt="DDA40X Centennial at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 3 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-dda40x-A.webp" alt="DDA40X Centennial on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 2.5 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-dda40x-B.webp" alt="DDA40X Centennial on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 3 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-dda40x-B3.webp" alt="DDA40X Centennial on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 3 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>3 → 2.5 → 3</dd></div><div><dt>Body off the rail, A</dt><dd><span class="warn">0.26</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="bad">0.34</span> / <span class="warn">0.25</span> / <span class="ok">0.19</span></dd></div><div><dt>Length kept, A / B</dt><dd>64 % / 77 %</dd></div></dl>
+  <p class="done">Your call: stays one body, no halves.</p>
+</article>
+<article class="card wide" id="mav424">
+  <header><h3>MÁV 424 Bivaly</h3><span class="tag">regular · db 4</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-mav424-now.webp" alt="MÁV 424 Bivaly at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 2 tiles · 1×1 curve</figcaption></figure><figure><img src="img/sp-curve-mav424-A.webp" alt="MÁV 424 Bivaly on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 2.5 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-mav424-B.webp" alt="MÁV 424 Bivaly on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 3 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-mav424-B3.webp" alt="MÁV 424 Bivaly on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 3 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>2 → 2.5 → 3</dd></div><div><dt>Body off the rail, A</dt><dd><span class="warn">0.26</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="bad">0.35</span> / <span class="warn">0.26</span> / <span class="ok">0.20</span></dd></div><div><dt>Length kept, A / B</dt><dd>95 % / 114 %</dd></div></dl>
+  
+</article></div></section>
+<section class="cls" id="juggernaut"><div class="clshead"><span class="label">3 tiles on A · <b>4 tiles on B</b> · database size 5 and 6</span><h2>Juggernaut (XXL)</h2></div>
+<div class="grid"><article class="card wide" id="big_boy">
+  <header><h3>Big Boy 4014</h3><span class="tag">regular · db 5</span></header>
+  <div class="shots"><figure><img src="img/sp-curve-big_boy-now.webp" alt="Big Boy 4014 at today's length" width="640" height="480" loading="lazy"><figcaption>Now · 3 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-big_boy-A.webp" alt="Big Boy 4014 on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 3 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-big_boy-B.webp" alt="Big Boy 4014 on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 4 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-big_boy-B3.webp" alt="Big Boy 4014 on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 4 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>3 → 3 → 4</dd></div><div><dt>Body off the rail, A</dt><dd><span class="bad">0.30</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="bad">0.46</span> / <span class="bad">0.35</span> / <span class="warn">0.28</span></dd></div><div><dt>Length kept, A / B</dt><dd>70 % / 95 %</dd></div></dl>
+  
+</article>
+<article class="card wide" id="koutetsujou">
+  <header><h3>Koutetsujou</h3><span class="tag">regular · db 6</span></header>
+  <div class="shots"><figure><div class="noimg">Not in the game yet</div><figcaption>Now</figcaption></figure><figure><img src="img/sp-curve-koutetsujou-A.webp" alt="Koutetsujou on Ladder A" width="640" height="480" loading="lazy"><figcaption>Ladder A · 3 tiles · 2×2 curve</figcaption></figure><figure><img src="img/sp-curve-koutetsujou-B.webp" alt="Koutetsujou on Ladder B" width="640" height="480" loading="lazy"><figcaption><b>Ladder B · 4 tiles · 2×2 curve</b></figcaption></figure><figure><img src="img/sp-curve-koutetsujou-B3.webp" alt="Koutetsujou on Ladder B, 3×3 curve" width="640" height="480" loading="lazy"><figcaption>Ladder B · 4 tiles · 3×3 curve</figcaption></figure></div>
+  <dl><div><dt>Length now → A → B</dt><dd>– → 3 → 4</dd></div><div><dt>Body off the rail, A</dt><dd><span class="bad">0.34</span></dd></div><div><dt>B on 2×2 / 3×3 / 4×4</dt><dd><span class="bad">0.54</span> / <span class="bad">0.40</span> / <span class="bad">0.31</span></dd></div><div><dt>Length kept, A / B</dt><dd>74 % / 99 %</dd></div></dl>
+  <p class="done">Your idea: bogies spread evenly along the body, no halves.</p>
+</article></div></section>
+</div>
+</body></html>

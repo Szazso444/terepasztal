@@ -9,7 +9,11 @@ const trackData = content.track;
 export type TrackClass = 'regular' | 'high_speed';
 export const TRACK_CLASSES: TrackClass[] = ['regular', 'high_speed'];
 // spike: high_speed stands in for the narrow gauge's 1x1 geometry
-export const CLASS_N: Record<TrackClass, number> = { regular: 2, high_speed: 1 };
+// scratch (ladder explore): ?hsn=3 makes high_speed a 3x3 class (default: the 1x1 narrow stand-in)
+export const CLASS_N: Record<TrackClass, number> = {
+  regular: 2,
+  high_speed: Number(new URLSearchParams(globalThis.location?.search ?? '').get('hsn') ?? 1),
+};
 export function classRadius(cls: TrackClass) {
   return CLASS_N[cls] - 0.5;
 }

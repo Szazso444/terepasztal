@@ -1,0 +1,118 @@
+{
+ "id": "black_five",
+ "prep_seconds": 63.5,
+ "tile_m": 6.235064799811727,
+ "k_px": 14.516235339624876,
+ "parts": [
+  {
+   "part": "engine",
+   "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_engine.glb",
+   "objects": [
+    "part_engine",
+    "skirt_engine"
+   ],
+   "tris": 72960,
+   "verts": 65420,
+   "lo": [
+    -3.7842062688123406,
+    -1.3865808125005117,
+    -0.18284809589385986
+   ],
+   "hi": [
+    3.7842063162040063,
+    1.38658103254415,
+    4.004734039306641
+   ],
+   "tiles": [
+    1.278,
+    1
+   ],
+   "footprint_m": [
+    7.968412814159387,
+    6.235064799811727
+   ],
+   "comp": [
+    0.7606445039356168,
+    0.9293912299224835,
+    1.0
+   ],
+   "variants": [
+    {
+     "ratio": 0.5,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_engine_r050.glb",
+     "tris": 36480
+    },
+    {
+     "ratio": 0.25,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_engine_r025.glb",
+     "tris": 18249
+    },
+    {
+     "ratio": 0.1,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_engine_r010.glb",
+     "tris": 7310
+    },
+    {
+     "ratio": 0.05,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_engine_r005.glb",
+     "tris": 3664
+    }
+   ]
+  },
+  {
+   "part": "tender",
+   "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_tender.glb",
+   "objects": [
+    "part_tender"
+   ],
+   "tris": 31890,
+   "verts": 27898,
+   "lo": [
+    -1.8593204731141668,
+    -1.4284616534807029,
+    -0.04813814163208008
+   ],
+   "hi": [
+    1.8638062182362773,
+    1.428461762732276,
+    3.5758689641952515
+   ],
+   "tiles": [
+    0.662,
+    1
+   ],
+   "footprint_m": [
+    4.127612897475363,
+    6.235064799811727
+   ],
+   "comp": [
+    0.7234852481094991,
+    0.9293912299224835,
+    1.0
+   ],
+   "variants": [
+    {
+     "ratio": 0.5,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_tender_r050.glb",
+     "tris": 15944
+    },
+    {
+     "ratio": 0.25,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_tender_r025.glb",
+     "tris": 7972
+    },
+    {
+     "ratio": 0.1,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_tender_r010.glb",
+     "tris": 3189
+    },
+    {
+     "ratio": 0.05,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_tender_r005.glb",
+     "tris": 1594
+    }
+   ]
+  }
+ ],
+ "export_seconds": 3.2
+}
