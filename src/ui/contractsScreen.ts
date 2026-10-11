@@ -169,6 +169,9 @@ export class ContractsScreen implements Screen {
     // the land owned caps the active contracts: past it, Accept is refused and says why
     const full = this.board.activeFull();
     const refusal = STR.contracts.activeFull(this.board.limit());
+    // said once above the offers, since a disabled button's hover may never show
+    if (full && offers.length)
+      o.append(el('div', { class: 'amber', style: 'margin-bottom:4px', text: refusal }));
     for (const c of offers) {
       const accept = btn(
         STR.contracts.accept,

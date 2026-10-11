@@ -52,16 +52,23 @@ export class BuildingPanel {
     this.onClose();
   }
 
-  /** One-line status used by the panel and the hover tooltip. */
+  /**
+   * One-line status used by the panel and the hover tooltip. A works is closed while it is
+   * upgraded; a bridge being strengthened still carries trains, so it reads as it does without one.
+   */
   static status(b: Building, stock: Stockpile): { text: string; cls: string } {
     const def = buildingDef(b.id);
-    if (b.work) return { text: STR.upgrade.closed, cls: 'amber' };
+    if (b.work && !def.bridge) return { text: STR.upgrade.closed, cls: 'amber' };
     if (b.reason === 'full') return { text: STR.building.full, cls: 'amber' };
     if (b.reason === 'inputs') {
       const m = missingInput(def, stock);
       return { text: STR.building.starved(m ? cargoName(m) : '?'), cls: 'red' };
     }
     return { text: STR.building.running, cls: 'good' };
+  }
+  /** The crew the panel shows: none while the works is closed for its upgrade (`crewTotal`). */
+  static crew(b: Building): number {
+    return b.work ? 0 : buildingDef(b.id).crew;
   }
   static recipeText(id: string, building?: Building) {
     const def = buildingDef(id);
@@ -103,7 +110,7 @@ export class BuildingPanel {
       body.append(row(STR.building.maxRate, STR.station.perWeek(buildingRate(b))));
       body.append(row(STR.building.status, st.text, st.cls));
       body.append(row(STR.building.progress, `${Math.round(b.acc * 100)}%`));
-      body.append(row(STR.building.crew, String(def.crew)));
+      body.append(row(STR.building.crew, String(BuildingPanel.crew(b))));
       const made = Object.entries(b.made ?? {})
         .map(([k, v]) => `${Math.round(v)} ${cargoName(k)}`)
         .join(', ');

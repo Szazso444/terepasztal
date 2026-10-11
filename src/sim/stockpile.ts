@@ -1,6 +1,7 @@
 import { CARGO } from './cargo';
 import type { Cost } from '../data/content';
 import { rules, weekSeconds } from './rules';
+import { STR } from '../strings';
 
 /** Resource ids that can sit in the stockpile: every cargo plus stored power. */
 export const RESOURCE_IDS: string[] = [
@@ -143,7 +144,7 @@ export function fmtCost(cost: Cost, mul = 1): string {
   const parts = Object.entries(cost)
     .filter(([, v]) => v > 0)
     .map(([k, v]) => `${Math.ceil(v * mul)} ${k}`);
-  return parts.length ? parts.join(', ') : 'free';
+  return parts.length ? parts.join(', ') : STR.build.free;
 }
 export function scaleCost(cost: Cost, mul: number): Cost {
   const out: Cost = {};
