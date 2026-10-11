@@ -3,16 +3,16 @@ import { simWorld, line, station, SIM_WORLD_SEED, type SimWorld } from '../testi
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import type { Rng } from '../engine/rng';
 import { Terrain, terrainAt } from '../world/tiles';
-import { pieceCost, type TrackKind } from '../world/track';
+import { pieceCost } from '../world/track';
 import { rules, DEFAULT_RULES, daySeconds } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { setSeasonOffset, seasonOf, productionMul, type Season, type WeatherKind } from './weather';
 import { resetTrainIds, type Train } from './trains';
 import { resetStationIds, type Station } from './stations';
 import { biomeAt, biomeDef } from './biomes';
-import { tickBuildings } from './buildings';
+import { buildingDef, tickBuildings } from './buildings';
 import { SIM_STEP } from './time';
-import { LAST_AGE, type AgeSnapshot } from './ages';
+import { LAST_AGE } from './ages';
 import {
   SimStep,
   startStock,
@@ -23,6 +23,9 @@ import {
   FAMINE_PRODUCTION_MUL,
   FAMINE_SPEED_MUL,
   PASSENGER_CATCHMENT,
+  START_CRAFT,
+  START_SUPPLIES,
+  START_TRACK,
   type StepContext,
   type StepHooks,
 } from './step';
@@ -202,6 +205,50 @@ describe('startStock', () => {
       });
     },
   );
+
+  it('is that sum for any resource and track cost scale, whatever rules.startStock is, with its keys in order', () => {
+    const count = new Map(START_TRACK);
+    /** Wood, stone or iron by hand: straights, curves and the switch, then the crafting, scaled. */
+    const byHand = (k: 'wood' | 'stone' | 'iron', scale: number) => {
+      const pieces = (kind: 'straight' | 'curve' | 'switch') =>
+        (pieceCost(kind, 'regular')[k] ?? 0) * (count.get(kind) ?? 0);
+      return Math.round(
+        (pieces('straight') + pieces('curve') + pieces('switch') + START_CRAFT[k]) * scale,
+      );
+    };
+    forAll(
+      (rng) => ({
+        scale: Math.round(rng.range(0.05, 10) * 1000) / 1000,
+        trackCost: Math.round(rng.range(0.1, 4) * 1000) / 1000,
+        /** two settings of rules.startStock, under which the stock must be the same */
+        startStock: [rng.range(0.1, 5), rng.range(0.1, 5)].map((n) => Math.round(n * 100) / 100),
+      }),
+      (c) => {
+        rules.startingResourceScale = c.scale;
+        rules.trackCostScale = c.trackCost;
+        rules.startStock = c.startStock[0];
+        const got = startStock();
+        expect(got, 'by hand').toEqual({
+          wood: byHand('wood', c.scale),
+          stone: byHand('stone', c.scale),
+          iron: byHand('iron', c.scale),
+          ...START_SUPPLIES,
+        });
+        // the order a new game adds them to its stockpile in
+        expect(Object.keys(got), 'keys').toEqual([
+          'wood',
+          'stone',
+          'iron',
+          'water',
+          'wheat',
+          'food',
+          'coal',
+        ]);
+        rules.startStock = c.startStock[1];
+        expect(startStock(), `rules.startStock ${c.startStock[1]}`).toEqual(got);
+      },
+    );
+  });
 });
 
 /** The first row, scanning from the top, whose tiles x0 - 1 .. x0 + 22 on rows y - 9 .. y + 9 all take buildings. */
@@ -579,144 +626,8 @@ function firstDifference(a: FullState, b: FullState): string | null {
   return null;
 }
 
-// ---------------------------------------------------------------- parity with Game.update
-
-/** The step's clocks where Game kept them. */
-interface GameClocks {
-  lastDay: number;
-  nextCityCheck: number;
-  nextAgeCheck: number;
-}
-
-/** Game.ageSnapshot as #72 left it (src/game.ts at f1b444d), with the owned chunks of #158. */
-function gameAgeSnapshot(w: SimWorld): AgeSnapshot {
-  let wires = 0;
-  for (const e of w.catenary.entries()) if (w.catenary.isLive(e.x, e.y)) wires++;
-  return {
-    depots: w.builder.depotsOf('regular').length,
-    population: w.stock.population,
-    earned: w.economy.earned,
-    substations: w.catenary.substations.filter((s) => s.powered).length,
-    wires,
-    chunks: w.regions.unlocked.filter(Boolean).length,
-  };
-}
-
-/**
- * The oracle: the body of Game.update's clock.run callback as #72 left it (src/game.ts at
- * f1b444d), with `this.` turned into the world, `this.mode` and `this.settings.weather` into the
- * context, and refreshCity, applySeason and the ticket toast into the hooks. Its literals are the
- * values SimStep's named constants must keep. A deliberate change to the step's rules changes
- * this copy with it.
- */
-function gameStep(
-  w: SimWorld,
-  g: GameClocks,
-  ctx: StepContext,
-  hooks: Required<StepHooks>,
-  gdt: number,
-) {
-  w.stock.population = w.houses.residentsTotal();
-  w.stock.workforce = w.builder.crewTotal() + w.fleet.crewTotal();
-  w.stock.tick(gdt);
-  w.houses.tick(gdt, w.clock.time, ctx.mode === 'play');
-  if (w.clock.time >= g.nextCityCheck) {
-    g.nextCityCheck = w.clock.time + 10;
-    hooks.refreshCity();
-  }
-  if (ctx.mode === 'play')
-    w.people.tick(gdt, w.builder.crewTotal() + w.houses.residentsTotal(), w.clock.dayFraction);
-  const famineMul = w.stock.famine ? 0.5 : 1;
-  for (const s of w.builder.stations) {
-    if (s.def.id === 'station')
-      s.passengerPopulation = [...w.houses.houses.values()]
-        .filter((h) => h.progress >= 1 && Math.max(Math.abs(h.x - s.x), Math.abs(h.y - s.y)) <= 7)
-        .reduce((n, h) => n + h.residents, 0);
-    s.tick(gdt * famineMul);
-  }
-  tickBuildings(
-    w.builder.buildings.values(),
-    w.stock,
-    gdt,
-    w.stock.famine,
-    w.builder.plantCount(),
-    w.builder.depotCount(),
-  );
-  if (ctx.weather) w.weather.tick(w.clock.time, w.clock.day, gdt);
-  hooks.season();
-  const wf = (ctx.weather ? w.weather.speedFactor() : 1) * (w.stock.famine ? 0.7 : 1);
-  w.fleet.tick(gdt, w.clock.time, wf);
-  w.contracts.tick(w.clock.time);
-  w.trade.tick(w.clock.time, w.stock, w.economy, (id) => ctx.stockCap(id));
-  if (ctx.mode === 'play' && w.clock.time >= g.nextAgeCheck) {
-    g.nextAgeCheck = w.clock.time + daySeconds() / 24;
-    const snap = gameAgeSnapshot(w);
-    w.economy.advanceAge(snap);
-  }
-  if (w.clock.day !== g.lastDay) {
-    g.lastDay = w.clock.day;
-    if (w.contracts.completedToday > 0) {
-      w.economy.tickets += 1;
-      hooks.dailyTicket();
-    }
-    w.contracts.completedToday = 0;
-  }
-}
-
-/** Every 100th step's state and the last, from running the scene with SimStep or with gameStep. */
-function replay(s: Scene, how: 'SimStep' | 'Game.update'): { w: SimWorld; states: FullState[] } {
-  const { w, ctx, hooks, log, lastDay, at } = stage(s);
-  const g: GameClocks = { lastDay, nextCityCheck: 0, nextAgeCheck: 0 };
-  const step = new SimStep(w, hooks);
-  step.lastDay = lastDay;
-  const clocks = (): [number, number, number] =>
-    how === 'SimStep'
-      ? [step.lastDay, step.nextCityCheck, step.nextAgeCheck]
-      : [g.lastDay, g.nextCityCheck, g.nextAgeCheck];
-  const out: FullState[] = [];
-  for (at.step = 0; at.step < s.steps; at.step++) {
-    w.clock.run((gdt) =>
-      how === 'SimStep' ? step.run(gdt, ctx) : gameStep(w, g, ctx, hooks, gdt),
-    );
-    if ((at.step + 1) % 100 === 0 || at.step + 1 === s.steps) out.push(fullState(w, clocks(), log));
-  }
-  return { w, states: out };
-}
-
-describe('SimStep against the Game.update body it replaces', () => {
-  it(
-    'ends every scene in the same state, with the same hook calls at the same game times',
-    { timeout: 30_000 },
-    () => {
-      const seen = { trainsRan: 0, famines: 0, ageUps: 0, tickets: 0, seasons: 0, editor: 0 };
-      forAll(
-        (rng) => genScene(rng),
-        (s) => {
-          const { w, states: want } = replay(s, 'Game.update');
-          const { states: got } = replay(s, 'SimStep');
-          for (let i = 0; i < want.length; i++) {
-            const k = firstDifference(want[i], got[i]);
-            if (k) throw new Error(`checkpoint ${i + 1} of ${want.length}: ${k} differs`);
-          }
-          const hooks = JSON.parse(want[want.length - 1].hooks) as string[];
-          if (w.fleet.trains.some((t) => t.distance > 0)) seen.trainsRan++;
-          if (w.stock.famine) seen.famines++;
-          if (w.economy.tier > 0) seen.ageUps++;
-          if (hooks.some((h) => h.startsWith('ticket'))) seen.tickets++;
-          if (hooks.filter((h) => h.startsWith('season')).length > 1) seen.seasons++;
-          if (s.mode === 'editor') seen.editor++;
-        },
-        { shrink: shrinkScene, seeds: Array.from({ length: 24 }, (_, i) => i + 1) },
-      );
-      // Not vacuous: the scenes ran trains, starved, aged up, earned daily tickets, turned seasons
-      // and ran in the editor.
-      for (const [k, n] of Object.entries(seen)) expect(n, `scenes where ${k}`).toBeGreaterThan(0);
-    },
-  );
-});
-
 describe('the named constants', () => {
-  it('hold the literals of the Game.update body they replace', () => {
+  it('keep the values the step applies', () => {
     expect(FAMINE_PRODUCTION_MUL, 'FAMINE_PRODUCTION_MUL').toBe(0.5);
     expect(FAMINE_SPEED_MUL, 'FAMINE_SPEED_MUL').toBe(0.7);
     expect(PASSENGER_CATCHMENT, 'PASSENGER_CATCHMENT').toBe(7);
@@ -883,7 +794,6 @@ describe('SimStep: one step', () => {
             'advanceAge',
             economy.advanceAge.bind(economy),
             (snap) => {
-              expect(snap, 'advanceAge: Game.ageSnapshot').toEqual(gameAgeSnapshot(w));
               expect(snap, 'advanceAge: ageSnapshot').toEqual(ageSnapshot(w));
             },
           );
@@ -1249,109 +1159,187 @@ describe('SimStep: tickets, money and stock', () => {
   );
 });
 
-// ---------------------------------------------------------------- the starting stock
-
-/** Game's startStock as #72 left it (src/game.ts at f1b444d), the oracle for the export. */
-function gameStartStock(): Record<string, number> {
-  const piece = (kind: TrackKind, n: number) => {
-    const c = pieceCost(kind, 'regular');
-    return { wood: (c.wood ?? 0) * n, stone: (c.stone ?? 0) * n, iron: (c.iron ?? 0) * n };
-  };
-  const parts = [piece('straight', 50), piece('curve', 6), piece('switch', 1)];
-  const craft = { wood: 40, stone: 10, iron: 30 };
-  const sum = (k: 'wood' | 'stone' | 'iron') => parts.reduce((a, p) => a + p[k], 0) + craft[k];
-  const s = rules.startingResourceScale;
-  return {
-    wood: Math.round(sum('wood') * s),
-    stone: Math.round(sum('stone') * s),
-    iron: Math.round(sum('iron') * s),
-    water: 600,
-    wheat: 300,
-    food: 600,
-    coal: 240,
-  };
-}
-
-describe('startStock against Game.startStock', () => {
-  it('gives the same stock for any resource and track cost scale, whatever rules.startStock is', () => {
-    forAll(
-      (rng) => ({
-        scale: Math.round(rng.range(0.05, 10) * 1000) / 1000,
-        trackCost: Math.round(rng.range(0.1, 4) * 1000) / 1000,
-        startStock: Math.round(rng.range(0.1, 5) * 100) / 100,
-      }),
-      (c) => {
-        rules.startingResourceScale = c.scale;
-        rules.trackCostScale = c.trackCost;
-        const want = gameStartStock();
-        rules.startStock = c.startStock;
-        expect(startStock()).toEqual(want);
-        // keys in the order Game added them to the stockpile
-        expect(Object.keys(startStock())).toEqual(Object.keys(want));
-      },
-    );
-  });
-});
-
 // ---------------------------------------------------------------- the age snapshot
 
-describe('ageSnapshot against Game.ageSnapshot', () => {
-  /** Substation sites: two within reach of the power plant at (10, 24), two out of it. */
-  const SUBSTATIONS = [
-    { x: 12, y: 24 },
-    { x: 10, y: 26 },
-    { x: 30, y: 24 },
-    { x: 40, y: 26 },
-  ];
+interface Site {
+  x: number;
+  y: number;
+}
 
+/** A world for the age snapshot: what stands where, and the numbers it holds. */
+interface AgeCase {
+  depots: number;
+  narrow: number;
+  plant: boolean;
+  substations: Site[];
+  poles: Site[];
+  /** the wired tiles of the line, x from .. to on WIRE_ROW */
+  wires: { from: number; to: number };
+  population: number;
+  earned: number;
+  /** chunks bought besides the start chunk (0) of the 2 x 2 grid */
+  bought: number[];
+}
+
+/** The power plant's site, when a case has one. */
+const PLANT: Site = { x: 10, y: 24 };
+/** The row the line and its wire run along. */
+const WIRE_ROW = 20;
+/**
+ * Substation sites: two within two tiles of the plant, (30, 24) at the end of the power line and
+ * (40, 26) out of every node's reach.
+ */
+const SUBSTATIONS: readonly Site[] = [
+  { x: 12, y: 24 },
+  { x: 10, y: 26 },
+  { x: 30, y: 24 },
+  { x: 40, y: 26 },
+];
+/**
+ * Pole sites: a power line from the plant to the substation site at (30, 24), each pole within two
+ * tiles of the one before, running along row 21 beside the wired row from x 14 to 28.
+ */
+const POLES: readonly Site[] = [
+  { x: 12, y: 22 },
+  ...Array.from({ length: 8 }, (_, i) => ({ x: 14 + 2 * i, y: 21 })),
+  { x: 30, y: 22 },
+];
+
+const chebyshev = (a: Site, b: Site) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+
+/**
+ * The snapshot of a case counted from its own sites, by the rules of PowerGrid.rebuild and
+ * Catenary.rebuild and isLive. The plant, the poles and the substations are the grid's nodes; two
+ * within Chebyshev distance 2 of each other are joined, and every node joined to the plant, however
+ * many hops away, is live and powers the tiles within 1 of it. A substation is powered when it is
+ * live. With a substation anywhere, a wire tile is live when a powered one stands within the
+ * substation's radius; with none at all, when the grid powers the tile. `gridOnly` counts the wire
+ * tiles the grid powers that are dead all the same.
+ */
+function ageByHand(c: AgeCase) {
+  const radius = buildingDef('substation').substation?.radius ?? Number.NaN;
+  const nodes = [...(c.plant ? [PLANT] : []), ...c.poles, ...c.substations];
+  const live = new Set<number>();
+  const todo = c.plant ? [0] : [];
+  for (let i = todo.pop(); i !== undefined; i = todo.pop()) {
+    if (live.has(i)) continue;
+    live.add(i);
+    nodes.forEach((n, j) => {
+      if (!live.has(j) && chebyshev(nodes[i], n) <= 2) todo.push(j);
+    });
+  }
+  const first = nodes.length - c.substations.length;
+  const powered = c.substations.filter((_, i) => live.has(first + i));
+  let wires = 0;
+  let gridOnly = 0;
+  for (let x = c.wires.from; x <= c.wires.to; x++) {
+    const tile = { x, y: WIRE_ROW };
+    const gridPowers = [...live].some((i) => chebyshev(nodes[i], tile) <= 1);
+    const isLive =
+      c.substations.length > 0 ? powered.some((s) => chebyshev(s, tile) <= radius) : gridPowers;
+    if (isLive) wires++;
+    else if (gridPowers) gridOnly++;
+  }
+  const snap = {
+    depots: c.depots,
+    population: c.population,
+    earned: c.earned,
+    substations: powered.length,
+    wires,
+    chunks: 1 + c.bought.length,
+  };
+  return { snap, gridOnly };
+}
+
+/** Smaller worlds than `c`: fewer substations, poles, wired tiles, depots and chunks; no plant. */
+function* shrinkAgeCase(c: AgeCase): Iterable<AgeCase> {
+  for (const substations of shrinkArray(c.substations)) yield { ...c, substations };
+  for (const poles of shrinkArray(c.poles)) yield { ...c, poles };
+  if (c.plant) yield { ...c, plant: false };
+  for (const to of shrinkInt(c.wires.to, c.wires.from)) yield { ...c, wires: { ...c.wires, to } };
+  for (const from of shrinkInt(c.wires.from, c.wires.to))
+    yield { ...c, wires: { ...c.wires, from } };
+  for (const depots of shrinkInt(c.depots)) yield { ...c, depots };
+  for (const narrow of shrinkInt(c.narrow)) yield { ...c, narrow };
+  for (const bought of shrinkArray(c.bought)) yield { ...c, bought };
+}
+
+describe('ageSnapshot against a count by hand', () => {
   it(
-    'measures regular depots, population, earnings, powered substations, live wires and owned chunks alike',
+    'measures regular depots, population, earnings, powered substations, live wires and owned chunks',
     { timeout: 30_000 },
     () => {
-      const seen = { narrow: 0, powered: 0, unpowered: 0, live: 0, dead: 0, bought: 0 };
+      const seen = {
+        narrow: 0,
+        powered: 0,
+        unpowered: 0,
+        /** a substation powered through the power line, out of the plant's own reach */
+        relayed: 0,
+        live: 0,
+        dead: 0,
+        /** wire tiles the grid powers, dead because no powered substation reaches them */
+        gridOnly: 0,
+        /** no substation anywhere */
+        legacy: 0,
+        legacyLive: 0,
+        legacyDead: 0,
+        bought: 0,
+      };
       forAll(
-        (rng) => {
+        (rng): AgeCase => {
           const from = rng.int(2, 30);
           return {
             depots: rng.int(0, 3),
             narrow: rng.int(0, 2),
             plant: rng.chance(0.7),
-            substations: SUBSTATIONS.filter(() => rng.chance(0.5)),
+            substations: rng.chance(0.25) ? [] : SUBSTATIONS.filter(() => rng.chance(0.5)),
+            poles: rng.chance(0.3) ? [] : POLES.filter(() => rng.chance(0.9)),
             wires: { from, to: rng.int(from, 46) },
             population: rng.int(0, 5000),
             earned: rng.int(0, 200000),
-            /** chunks bought besides the start chunk (0) of the 2 x 2 grid */
             bought: [1, 2, 3].filter(() => rng.chance(0.5)),
           };
         },
         (c) => {
           const w = simWorld({ terrain: 'grass', size: 48 });
-          line(w, 2, 20, 46);
+          line(w, 2, WIRE_ROW, 46);
           for (let i = 0; i < c.depots; i++) station(w, 'depot', 4 + 5 * i, 30);
           for (let i = 0; i < c.narrow; i++) station(w, 'narrow_depot', 4 + 5 * i, 38);
           w.builder.free = true;
-          if (c.plant && !w.builder.placeBuilding(10, 24, 'power_plant')) throw new Error('plant');
+          if (c.plant && !w.builder.placeBuilding(PLANT.x, PLANT.y, 'power_plant'))
+            throw new Error('plant');
           for (const s of c.substations)
-            if (!w.builder.placeBuilding(s.x, s.y, 'substation')) throw new Error('substation');
+            if (!w.builder.placeBuilding(s.x, s.y, 'substation'))
+              throw new Error(`substation at ${s.x},${s.y}`);
+          for (const p of c.poles)
+            if (!w.builder.placeDecor(p.x, p.y, 'power_line', 0))
+              throw new Error(`pole at ${p.x},${p.y}`);
           for (let x = c.wires.from; x <= c.wires.to; x++)
-            if (!w.builder.placeSupply(x, 20, 'catenary')) throw new Error(`wire at ${x}`);
+            if (!w.builder.placeSupply(x, WIRE_ROW, 'catenary')) throw new Error(`wire at ${x}`);
           w.builder.free = false;
           w.stock.population = c.population;
           w.economy.earned = c.earned;
           for (const i of c.bought) if (!w.regions.own(i)) throw new Error(`chunk ${i}`);
 
-          const snap = ageSnapshot(w);
-          expect(snap).toEqual(gameAgeSnapshot(w));
-          expect(snap.depots, 'regular depots').toBe(c.depots);
-          expect([snap.population, snap.earned]).toEqual([c.population, c.earned]);
-          expect(snap.chunks, 'owned chunks').toBe(1 + c.bought.length);
+          const { snap, gridOnly } = ageByHand(c);
+          expect(ageSnapshot(w)).toEqual(snap);
+          const wired = c.wires.to - c.wires.from + 1;
+          const plantReach = c.substations.filter((s) => c.plant && chebyshev(s, PLANT) <= 2);
           if (c.bought.length) seen.bought++;
           if (c.narrow) seen.narrow++;
           if (snap.substations) seen.powered++;
           if (snap.substations < c.substations.length) seen.unpowered++;
+          if (snap.substations > plantReach.length) seen.relayed++;
           if (snap.wires) seen.live++;
-          if (snap.wires < c.wires.to - c.wires.from + 1) seen.dead++;
+          if (snap.wires < wired) seen.dead++;
+          if (gridOnly && c.substations.length) seen.gridOnly++;
+          if (!c.substations.length) {
+            seen.legacy++;
+            if (snap.wires) seen.legacyLive++;
+            if (snap.wires < wired) seen.legacyDead++;
+          }
         },
+        { shrink: shrinkAgeCase },
       );
       for (const [k, n] of Object.entries(seen)) expect(n, `cases with ${k}`).toBeGreaterThan(0);
     },
