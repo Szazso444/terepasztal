@@ -647,14 +647,58 @@ function applyShut(f: Layout, s: Shut) {
 }
 
 /**
- * Plays the case with its closings, checking every tick: a walker whose home is not among the
- * places has, after the tick, the first listed of the open places nearest to where it stood;
- * while any place is open every walker lives at one and there are as many as the population; a
- * walk out to gather starts at the walker's own open home; and with no place open the walkers
- * stay as they are. Returns how many walkers were re-homed.
+ * The sim as it would stand had each walker in `homes` lived at the place given for it all along,
+ * one on its way home ('return') walking there from the tile it stands on: the same stream and
+ * walkers otherwise. Ticked beside the real sim, it shows what re-homing changes besides the home.
  */
-function playShut(people: PeopleSim, f: Layout, c: ShutCase) {
+function rehomedTwin(
+  people: PeopleSim,
+  f: Pick<Layout, 'map' | 'builder'>,
+  homes: Map<Person, Place>,
+) {
+  const twin = new PeopleSim(f.map, f.builder, new Rng(0));
+  twin.load(people.toJSON());
+  twin.persons = people.persons.map((p) => {
+    const q = structuredClone(p);
+    const home = homes.get(p);
+    if (!home) return q;
+    q.home = home.key;
+    if (q.state === 'return') {
+      const back = findWalk(f.map, { x: Math.round(q.x), y: Math.round(q.y) }, home);
+      if (back && back.length >= 2) Object.assign(q, { path: back, step: 0 });
+    }
+    return q;
+  });
+  return twin;
+}
+
+/** Where two sims part, ids aside (a twin numbers new walkers anew), or null when they do not. */
+function parting(a: PeopleSim, b: PeopleSim): string | null {
+  const [ra, rb] = [a.toJSON().rng, b.toJSON().rng];
+  if (ra !== rb) return `the streams part, ${ra} against ${rb}`;
+  if (a.persons.length !== b.persons.length)
+    return `${a.persons.length} walkers against ${b.persons.length}`;
+  for (let i = 0; i < a.persons.length; i++) {
+    const x = JSON.stringify({ ...a.persons[i], id: 0 });
+    const y = JSON.stringify({ ...b.persons[i], id: 0 });
+    if (x !== y)
+      return `walker ${a.persons[i].id}\n  got  ${x.slice(0, 240)}\n  want ${y.slice(0, 240)}`;
+  }
+  return null;
+}
+
+/**
+ * Plays the case with its closings, checking every tick: a walker whose home is not among the
+ * places has, after the tick, the first listed of the open places nearest to where it stood; a
+ * walker whose home is among them keeps it; while any place is open every walker lives at one
+ * and there are as many as the population; a walk out to gather starts at the walker's own open
+ * home; and with no place open the walkers stay as they are. With `twin`, the tick also equals a
+ * `rehomedTwin`'s: re-homing changes the home, and the way home of a walker on it, and nothing
+ * else, drawing nothing. Returns how many walkers were re-homed, and in which states.
+ */
+function playShut(people: PeopleSim, f: Layout, c: ShutCase, twin = false) {
   let moved = 0;
+  const states = new Set<PersonState>();
   const regular = () => people.persons.filter((p) => !p.transient);
   for (let t = 0; t < c.ticks; t++) {
     for (const s of c.shuts) if (s.at === t) applyShut(f, s);
@@ -670,9 +714,15 @@ function playShut(people: PeopleSim, f: Layout, c: ShutCase) {
     for (const p of regular())
       if (places.length && !open.has(p.home))
         want.set(p, { home: nearestOf(places, p.x, p.y)!, from: `${p.home} at ${p.x},${p.y}` });
+    const homes = new Map(regular().map((p) => [p, p.home]));
     const before = statesOf(people);
     const still = structuredClone(regular());
-    people.tick(c.gdt, c.population, (c.day0 + t * c.dayStep) % 1);
+    const day = (c.day0 + t * c.dayStep) % 1;
+    const other = twin
+      ? rehomedTwin(people, f, new Map([...want].map(([p, w]) => [p, w.home])))
+      : null;
+    people.tick(c.gdt, c.population, day);
+    other?.tick(c.gdt, c.population, day);
     const at = `tick ${t}`;
     if (!places.length) {
       expect(regular(), `${at}: no place open`).toEqual(still);
@@ -682,6 +732,12 @@ function playShut(people: PeopleSim, f: Layout, c: ShutCase) {
       if (p.home !== home.key)
         throw new Error(`${at}: walker ${p.id} of ${from} went to ${p.home}, not ${home.key}`);
       moved++;
+      states.add(before.get(p)!);
+    }
+    for (const p of regular()) {
+      const had = homes.get(p);
+      if (had !== undefined && open.has(had) && p.home !== had)
+        throw new Error(`${at}: walker ${p.id} moved from ${had}, which is open, to ${p.home}`);
     }
     expect(regular().length, at).toBe(c.population);
     const homeless = regular().find((p) => !open.has(p.home));
@@ -691,8 +747,10 @@ function playShut(people: PeopleSim, f: Layout, c: ShutCase) {
       if (!home || p.path[0].x !== home.x || p.path[0].y !== home.y)
         throw new Error(`${at}: walker ${p.id} of ${p.home} set out to gather from elsewhere`);
     }
+    const parted = other && parting(people, other);
+    if (parted) throw new Error(`${at}: re-homing changed more than the home: ${parted}`);
   }
-  return moved;
+  return { moved, states };
 }
 
 describe('PeopleSim.places(), over seeded layouts', () => {
@@ -752,7 +810,7 @@ describe('PeopleSim.places(), over seeded layouts', () => {
         genShutCase,
         (c) => {
           const f = shutLayout(c);
-          moved += playShut(sim(f, c), f, c);
+          moved += playShut(sim(f, c), f, c).moved;
         },
         { shrink: shrinkShutCase },
       );
@@ -761,6 +819,73 @@ describe('PeopleSim.places(), over seeded layouts', () => {
       expect(Math.random).not.toHaveBeenCalled();
     },
   );
+
+  // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
+  it(
+    'changes nothing but the home, and a way home, of a walker whose home closed or went',
+    { timeout: 20_000 },
+    () => {
+      // Beside each tick runs a twin in which every displaced walker already lived at its new
+      // home, one on its way home already walking there from where it stands: after the tick the
+      // two match walker for walker and stream for stream: whatever the walker was doing, it
+      // carries on as it was, and no timer, place or draw moves.
+      const states = new Set<PersonState>();
+      forAll(
+        genShutCase,
+        (c) => {
+          const f = shutLayout(c);
+          for (const s of playShut(sim(f, c), f, c, true).states) states.add(s);
+        },
+        { shrink: shrinkShutCase },
+      );
+      // the twins are worth comparing: walkers were re-homed inside, idling, bound for a train
+      // and waiting for one ('re-homing a walker whose home closed' takes every state in turn)
+      for (const s of ['inside', 'idle', 'toStation', 'waiting'] as const)
+        expect([...states], `nobody re-homed while ${s}`).toContain(s);
+      expect(Math.random).not.toHaveBeenCalled();
+    },
+  );
+
+  it('gives a new walker a random first home among the open places', () => {
+    // A layout with a random set of its stations and works closed fills up with as many walkers
+    // as a town has: each new walker's home is an open place, every open place gets some, and
+    // which goes where follows the stream, so another stream homes them otherwise.
+    let several = 0;
+    forAll(
+      genShutCase,
+      (c) => {
+        const f = shutLayout(c);
+        sites(f).forEach((x, i) => setClosed(x, c.closed[i % c.closed.length]));
+        const homesOn = (people: PeopleSim) => {
+          people.tick(DT, 160, MIDDAY);
+          return people.persons.filter((p) => !p.transient).map((p) => p.home);
+        };
+        const people = sim(f, c);
+        const places = people.places();
+        const stream = people.toJSON().rng;
+        const homes = homesOn(people);
+        if (!places.length) {
+          expect(homes).toEqual([]);
+          return;
+        }
+        expect(homes.length).toBe(160);
+        const open = new Set(places.map((p) => p.key));
+        expect(
+          homes.filter((h) => !open.has(h)),
+          'homed at no open place',
+        ).toEqual([]);
+        expect(new Set(homes), 'an open place nobody was homed at').toEqual(open);
+        expect(people.toJSON().rng, 'the stream did not move').not.toBe(stream);
+        if (places.length < 2) return;
+        expect(homesOn(elsewhere(f, c)), 'another stream homed them the same').not.toEqual(homes);
+        several++;
+      },
+      { shrink: shrinkShutCase },
+    );
+    // the property is worth checking: most layouts had more than one open place to pick from
+    expect(several).toBeGreaterThan(SEEDS.length / 2);
+    expect(Math.random).not.toHaveBeenCalled();
+  });
 });
 
 // ------------------------------------------------------------------ a home closing, case by case
@@ -978,6 +1103,155 @@ describe('re-homing a walker whose home closed', () => {
         expect(p.home).toBe(want.key);
       },
     );
+  });
+
+  it('changes nothing else, whatever the walker is doing, as its walks and timers run out', () => {
+    // One walker in any state, anywhere along a walk to its home, with any time left in its
+    // state, by day, at dusk or at night, loses its home. A twin that already lived at the new
+    // home (one on its way home walking there from where it stands) plays the same, tick for
+    // tick, walker and stream: a gatherer, idler or traveller carries on as it was.
+    let ranOut = 0;
+    forAll(
+      (rng) => ({
+        state: rng.pick(STATES),
+        closes: rng.pick(['station', 'works'] as const),
+        stream: rng.int(0, 0xffffffff),
+        x: rng.int(4, 40),
+        y: rng.int(36, 46),
+        along: rng.next(),
+        timer: rng.pick([0.5, 5, 30, 1000]),
+        day: rng.pick([MIDDAY, 0.84, 0.95]),
+        ticks: rng.int(1, 60),
+      }),
+      (c) => {
+        const { map, builder, station } = world();
+        const mill = builder.buildingAt(27, 34)!;
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        people.tick(DT, 1, MIDDAY);
+        const [p] = people.persons;
+        const home = c.closes === 'station' ? station : mill;
+        const path = findWalk(map, { x: c.x, y: c.y }, home)!;
+        const step = Math.floor(c.along * (path.length - 1));
+        Object.assign(p, {
+          home: c.closes === 'station' ? stationKey(station) : worksKey(mill),
+          state: c.state,
+          path,
+          step,
+          x: path[step].x,
+          y: path[step].y,
+          timer: c.timer,
+          stationId: station.id,
+        });
+        setClosed(home, true);
+        const want = nearestOf(people.places(), p.x, p.y)!;
+        const twin = rehomedTwin(people, { map, builder }, new Map([[p, want]]));
+        for (let i = 0; i < c.ticks; i++) {
+          const day = (c.day + i * 0.002) % 1;
+          people.tick(DT, 1, day);
+          twin.tick(DT, 1, day);
+          const parted = parting(people, twin);
+          if (parted) throw new Error(`tick ${i}: ${parted}`);
+        }
+        expect(p.home).toBe(want.key);
+        if (p.state !== c.state) ranOut++;
+      },
+    );
+    // the twins are worth comparing: in many cases a walk or a timer ran out along the way
+    expect(ranOut).toBeGreaterThan(SEEDS.length / 4);
+  });
+
+  it('leaves a traveller bound for or waiting at a station that closes as it was', () => {
+    // A traveller walking to the platform or waiting on it plays the same with the station
+    // closed as open, tick for tick, walker and stream; one that lived at the station has the
+    // nearest open place for a home and is otherwise the same.
+    forAll(
+      (rng) => ({
+        state: rng.pick(['toStation', 'waiting'] as const),
+        livesThere: rng.chance(0.3),
+        stream: rng.int(0, 0xffffffff),
+        x: rng.int(20, 40),
+        y: rng.int(36, 44),
+        ticks: rng.int(1, 40),
+      }),
+      (c) => {
+        const { map, builder, station } = world();
+        const mill = builder.buildingAt(27, 34)!;
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        people.tick(DT, 1, MIDDAY);
+        const [p] = people.persons;
+        const waits = c.state === 'waiting';
+        Object.assign(p, {
+          home: c.livesThere ? stationKey(station) : worksKey(mill),
+          state: c.state,
+          path: waits ? [] : findWalk(map, { x: c.x, y: c.y }, station)!,
+          step: 0,
+          x: waits ? station.x : c.x,
+          y: waits ? station.y : c.y,
+          timer: waits ? 1000 : 0,
+          stationId: station.id,
+        });
+        // the same walker and stream played with the station open, then with it closed
+        const play = (closed: boolean) => {
+          const q = new PeopleSim(map, builder, new Rng(0));
+          q.load(people.toJSON());
+          q.persons = structuredClone(people.persons);
+          setClosed(station, closed);
+          const home = closed && c.livesThere ? nearestOf(q.places(), p.x, p.y)!.key : p.home;
+          for (let i = 0; i < c.ticks; i++) q.tick(DT, 1, MIDDAY);
+          setClosed(station, false);
+          const [r] = q.persons;
+          expect(r.home, closed ? 'closed' : 'open').toBe(home);
+          return { ...r, home: '', stream: q.toJSON().rng };
+        };
+        const open = play(false);
+        expect(play(true)).toEqual(open);
+        // the comparison is worth making: it is still bound for the platform or waiting on it
+        expect(['toStation', 'waiting']).toContain(open.state);
+        expect(open.stationId).toBe(station.id);
+      },
+    );
+  });
+
+  it("gives the nearest open place however far, past a traveller's reach", () => {
+    // the place that closes and a passenger station 15 to 48 tiles along the line, the only
+    // other place: every walker that lived at the first goes to it, none is dropped, and one on
+    // its way home turns for it
+    let turned = 0;
+    forAll(
+      (rng) => ({
+        far: rng.int(15, 48),
+        closes: rng.pick(['station', 'works'] as const),
+        mapSeed: rng.int(0, 0x7fffffff),
+        stream: rng.int(0, 0xffffffff),
+        settle: rng.int(0, 200),
+      }),
+      (c) => {
+        const { map, builder } = flat(c.mapSeed, 64, 40, 20);
+        const gone =
+          c.closes === 'station'
+            ? builder.placeStation(8, 21, 'farm')!
+            : builder.placeBuilding(8, 24, 'windmill')!;
+        const far = builder.placeStation(8 + c.far, 21, 'station')!;
+        expect([gone, far].every(Boolean)).toBe(true);
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        moveIn(people, gone instanceof Station ? stationKey(gone) : worksKey(gone), gone);
+        for (let i = 0; i < c.settle; i++) people.tick(DT, POPULATION, MIDDAY);
+        const displaced = people.persons.filter((p) => !p.transient);
+        const returning = displaced.filter((p) => p.state === 'return');
+        setClosed(gone, true);
+        expect(keysOf(people)).toEqual([stationKey(far)]);
+        people.tick(DT, POPULATION, MIDDAY);
+        expect(people.persons.filter((p) => !p.transient)).toEqual(displaced);
+        expect(displaced.map((p) => p.home)).toEqual(displaced.map(() => stationKey(far)));
+        for (const p of returning)
+          if (p.state === 'return') {
+            expect(p.path.at(-1)).toEqual({ x: far.x, y: far.y });
+            turned++;
+          }
+      },
+    );
+    // the case is worth making: walkers were on their way home when it closed
+    expect(turned).toBeGreaterThan(0);
   });
 
   // each case runs a few hundred ticks; the margin keeps a loaded CI runner green
