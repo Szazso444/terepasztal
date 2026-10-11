@@ -292,7 +292,7 @@ export const RULE_META: RuleMeta[] = [
     min: 1,
     max: 12,
     step: 1,
-    hint: 'also the active contracts you may hold there; land bought adds more',
+    hint: 'also the active contracts you may hold there; land bought adds more; never above "Most open offers", this start value included',
   },
   {
     key: 'contractOffersPerChunk',
