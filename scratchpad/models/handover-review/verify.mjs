@@ -1,0 +1,22 @@
+import { launch } from '../../runtime.mjs';
+import { writeFileSync } from 'node:fs';
+const b=await launch();
+const p=await b.newPage({viewport:{width:1500,height:1000}});
+const errors=[];
+p.on('pageerror',e=>errors.push(e.message));
+await p.goto('http://localhost:5182/scratchpad/models/handover-review/page/');
+await p.waitForLoadState('networkidle');
+const images=await p.locator('img').evaluateAll(imgs=>imgs.map(i=>({src:i.getAttribute('src'),ok:i.complete&&i.naturalWidth>0})));
+const save=await p.evaluate(async()=>{
+  const {parseSave}=await import('/src/sim/save.ts');
+  const {content}=await import('/src/data/content.ts');
+  const saved=parseSave(await(await fetch('/scratchpad/models/engine-models-demo.json')).text());
+  if(!saved) throw new Error('Demo save failed parsing');
+  return {version:saved.version,retired:content.locomotives.filter(l=>l.retired).map(l=>l.id)};
+});
+await p.screenshot({path:'scratchpad/models/handover-review/page-check.png'});
+const report={errors,images,save};
+writeFileSync('scratchpad/models/handover-review/verification.json',JSON.stringify(report,null,2));
+console.log(JSON.stringify({errors,images:images.length,broken:images.filter(i=>!i.ok),save}));
+await b.close();
+if(errors.length || images.some(i=>!i.ok)) throw new Error('Review page verification failed');

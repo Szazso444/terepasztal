@@ -1,0 +1,14 @@
+{
+  "asset": "c50",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_c50_body_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-5"
+    ]
+  ],
+  "total_pages": 5
+}

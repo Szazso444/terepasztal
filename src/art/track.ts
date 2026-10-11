@@ -33,9 +33,9 @@ function drawLinkRails(b: PixelBuf, link: Link, opts: RailStyle) {
   drawRails(b, linkPoints(link[0], link[1], 24), opts);
 }
 function drawRails(b: PixelBuf, pts: Vec2[], opts: RailStyle) {
-  const gauge = 0.16; // half-gauge in tile units
+  const gauge = 0.12; // owner-approved standard half-gauge in tile units
   const hs = opts.cls === 'high_speed';
-  const shoulder = hs ? 0.4 : 0.32;
+  const shoulder = hs ? 0.3 : 0.24;
   // high-speed: pale concrete sleepers on a tidier, slightly cooler ballast bed
   const sleeper: RGB = hs ? [200, 196, 186] : PAL.sleeper;
   const sleeperDark: RGB = hs ? [148, 144, 136] : PAL.sleeperDark;
@@ -84,8 +84,8 @@ function drawRails(b: PixelBuf, pts: Vec2[], opts: RailStyle) {
     const l = Math.hypot(dx, dy) || 1;
     const nx = -dy / l;
     const ny = dx / l;
-    const a = proj(OX, OY, p.x + nx * 0.24, p.y + ny * 0.24);
-    const c = proj(OX, OY, p.x - nx * 0.24, p.y - ny * 0.24);
+    const a = proj(OX, OY, p.x + nx * 0.18, p.y + ny * 0.18);
+    const c = proj(OX, OY, p.x - nx * 0.18, p.y - ny * 0.18);
     b.line(Math.round(a.x), Math.round(a.y), Math.round(c.x), Math.round(c.y), sleeper);
     b.line(Math.round(a.x), Math.round(a.y) + 1, Math.round(c.x), Math.round(c.y) + 1, sleeperDark);
   }

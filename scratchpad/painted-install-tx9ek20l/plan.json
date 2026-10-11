@@ -1,0 +1,14 @@
+{
+  "asset": "mav375",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_mav375_body_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-19"
+    ]
+  ],
+  "total_pages": 22
+}

@@ -1,0 +1,16 @@
+{
+  "asset": "mk48",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_mk48_body_",
+    "rolling/loco_mk48_body-t0_",
+    "rolling/loco_mk48_body-t1_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-11"
+    ]
+  ],
+  "total_pages": 22
+}

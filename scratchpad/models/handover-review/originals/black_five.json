@@ -1,0 +1,83 @@
+{
+  "id": "black_five",
+  "source_sha256": "c4c0721ebdc3fede297a457972c2d03e7044093115cb2c6ce639ee413884467c",
+  "mesh_sha256": "cf921f37dd3fed6fe42f015a7c4ecfb0eebcb497b6a6eb2f8ea9e2ffce3998ba",
+  "orientation_score": 0.8094850975888834,
+  "rotation_degrees": {
+    "yaw": 44.75,
+    "pitch": -27.0,
+    "roll": -0.5
+  },
+  "uniform_scale": 12.781029618063608,
+  "rigid_matrix": [
+    [
+      9.04090690612793,
+      -8.017306327819824,
+      -4.16407585144043,
+      0.1707250475883484
+    ],
+    [
+      9.033651351928711,
+      8.087576866149902,
+      4.042148113250732,
+      0.06132905185222626
+    ],
+    [
+      0.09937761723995209,
+      -5.802465915679932,
+      11.387547492980957,
+      1.7269203662872314
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "material_policy": "Original imported materials, unchanged; neutral scene lighting.",
+  "candidate_limit": "Whole-model normal-based alignment only; wheel stance and nose direction need owner review.",
+  "renders": [
+    {
+      "mode": "raw",
+      "heading": 0,
+      "file": "black_five-raw-000.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 45,
+      "file": "black_five-raw-045.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 135,
+      "file": "black_five-raw-135.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 225,
+      "file": "black_five-raw-225.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 0,
+      "file": "black_five-rigid-000.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 45,
+      "file": "black_five-rigid-045.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 135,
+      "file": "black_five-rigid-135.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 225,
+      "file": "black_five-rigid-225.png"
+    }
+  ],
+  "mesh_unchanged": true
+}

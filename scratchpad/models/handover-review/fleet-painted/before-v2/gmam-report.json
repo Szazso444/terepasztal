@@ -1,0 +1,217 @@
+{
+  "id": "gmam",
+  "placed": [
+    {
+      "id": "gmam",
+      "row": 0,
+      "L": 3.27,
+      "sprite": true
+    }
+  ],
+  "box": {
+    "x0": 438.2399999999998,
+    "x1": 1001.7600000000002,
+    "y0": 251.1199999999999,
+    "y1": 688.8800000000001
+  },
+  "completeness": {
+    "facings": 96,
+    "missing": []
+  },
+  "frozen": true,
+  "frames": [
+    {
+      "progress": 19.277,
+      "speed": 1.052,
+      "state": "moving",
+      "distance": 18.777
+    },
+    {
+      "progress": 19.418,
+      "speed": 1.052,
+      "state": "moving",
+      "distance": 18.918
+    },
+    {
+      "progress": 19.558,
+      "speed": 1.052,
+      "state": "moving",
+      "distance": 19.058
+    },
+    {
+      "progress": 19.698,
+      "speed": 1.052,
+      "state": "moving",
+      "distance": 19.198
+    },
+    {
+      "progress": 19.838,
+      "speed": 1.052,
+      "state": "moving",
+      "distance": 19.338
+    },
+    {
+      "progress": 19.979,
+      "speed": 1.052,
+      "state": "moving",
+      "distance": 19.479
+    },
+    {
+      "progress": 20.12,
+      "speed": 1.097,
+      "state": "moving",
+      "distance": 19.62
+    },
+    {
+      "progress": 20.267,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 19.767
+    },
+    {
+      "progress": 20.415,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 19.915
+    },
+    {
+      "progress": 20.562,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 20.062
+    },
+    {
+      "progress": 20.709,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 20.209
+    },
+    {
+      "progress": 20.856,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 20.356
+    },
+    {
+      "progress": 21.003,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 20.503
+    },
+    {
+      "progress": 21.151,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 20.651
+    },
+    {
+      "progress": 21.298,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 20.798
+    },
+    {
+      "progress": 21.445,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 20.945
+    },
+    {
+      "progress": 21.592,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 21.092
+    },
+    {
+      "progress": 21.739,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 21.239
+    },
+    {
+      "progress": 21.887,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 21.387
+    },
+    {
+      "progress": 22.034,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 21.534
+    },
+    {
+      "progress": 22.181,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 21.681
+    },
+    {
+      "progress": 22.328,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 21.828
+    },
+    {
+      "progress": 22.475,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 21.975
+    },
+    {
+      "progress": 22.623,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 22.123
+    },
+    {
+      "progress": 22.77,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 22.27
+    },
+    {
+      "progress": 22.917,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 22.417
+    },
+    {
+      "progress": 23.064,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 22.564
+    },
+    {
+      "progress": 23.211,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 22.711
+    },
+    {
+      "progress": 23.359,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 22.859
+    },
+    {
+      "progress": 23.506,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 23.006
+    },
+    {
+      "progress": 23.653,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 23.153
+    },
+    {
+      "progress": 23.8,
+      "speed": 1.104,
+      "state": "moving",
+      "distance": 23.3
+    }
+  ],
+  "bundleKey": "ba2b1ee149295108"
+}

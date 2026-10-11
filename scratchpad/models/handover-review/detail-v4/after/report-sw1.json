@@ -1,0 +1,224 @@
+{
+  "errors": [],
+  "records": [
+    {
+      "id": "sw1",
+      "bundleKey": "ed9df605d84506ea",
+      "placed": [
+        {
+          "id": "sw1",
+          "row": 0,
+          "L": 1.5042,
+          "sprite": true
+        }
+      ],
+      "box": {
+        "x0": 522.9984000000004,
+        "x1": 917.0016000000003,
+        "y0": 293.4992000000002,
+        "y1": 646.5007999999998
+      },
+      "completeness": {
+        "facings": 96,
+        "missing": []
+      },
+      "frozen": true,
+      "frames": [
+        {
+          "progress": 18.377,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 17.877
+        },
+        {
+          "progress": 18.494,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 17.994
+        },
+        {
+          "progress": 18.611,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 18.111
+        },
+        {
+          "progress": 18.728,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 18.228
+        },
+        {
+          "progress": 18.845,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 18.345
+        },
+        {
+          "progress": 18.962,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 18.462
+        },
+        {
+          "progress": 19.079,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 18.579
+        },
+        {
+          "progress": 19.195,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 18.695
+        },
+        {
+          "progress": 19.312,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 18.812
+        },
+        {
+          "progress": 19.429,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 18.929
+        },
+        {
+          "progress": 19.546,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 19.046
+        },
+        {
+          "progress": 19.663,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 19.163
+        },
+        {
+          "progress": 19.78,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 19.28
+        },
+        {
+          "progress": 19.897,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 19.397
+        },
+        {
+          "progress": 20.013,
+          "speed": 0.876,
+          "state": "moving",
+          "distance": 19.513
+        },
+        {
+          "progress": 20.133,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 19.633
+        },
+        {
+          "progress": 20.255,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 19.755
+        },
+        {
+          "progress": 20.378,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 19.878
+        },
+        {
+          "progress": 20.501,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.001
+        },
+        {
+          "progress": 20.623,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.123
+        },
+        {
+          "progress": 20.746,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.246
+        },
+        {
+          "progress": 20.869,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.369
+        },
+        {
+          "progress": 20.991,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.491
+        },
+        {
+          "progress": 21.114,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.614
+        },
+        {
+          "progress": 21.237,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.737
+        },
+        {
+          "progress": 21.359,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.859
+        },
+        {
+          "progress": 21.482,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 20.982
+        },
+        {
+          "progress": 21.605,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 21.105
+        },
+        {
+          "progress": 21.727,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 21.227
+        },
+        {
+          "progress": 21.85,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 21.35
+        },
+        {
+          "progress": 21.973,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 21.473
+        },
+        {
+          "progress": 22.095,
+          "speed": 0.92,
+          "state": "moving",
+          "distance": 21.595
+        }
+      ],
+      "capturedBundleKey": "b8cbc27753db91a0",
+      "metadataOnlyRebind": "Workbook formula/row-height preservation; all rendering bytes and fit patch verified identical."
+    }
+  ]
+}

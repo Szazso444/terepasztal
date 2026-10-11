@@ -1,0 +1,1 @@
+Reference-v2 bundle 82c2bc3df986cad5: inspected straight, 32 curve captures, reversed orientation and night. No clipping or doubled layers observed.

@@ -361,6 +361,22 @@ describe('a hinged half', () => {
   });
   const path = referencePath('regular');
 
+  it('keeps the hinged half on its truck socket in both travel directions', () => {
+    for (const reversed of [false, true]) {
+      for (let front = 4.8; front <= path.length - 0.5; front += 0.1) {
+        const rear = poseVehicle(path, front, spec, reversed).segments[1];
+        const support = rear.bogies.find((b) => !b.hidden)!;
+        const socket = (0.12 - 0.47 / 2) * spec.L * (reversed ? -1 : 1);
+        expect(
+          Math.hypot(
+            rear.x + Math.cos(rear.angle) * socket - support.x,
+            rear.y + Math.sin(rear.angle) * socket - support.y,
+          ),
+        ).toBeLessThan(1e-5);
+      }
+    }
+  });
+
   it('stays joined to the part that carries it through the curve', () => {
     let worst = 0;
     for (let front = 4.8; front <= path.length - 0.5; front += 0.1) {

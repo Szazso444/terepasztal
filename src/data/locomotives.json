@@ -208,6 +208,7 @@
   },
   {
     "id": "jupiter",
+    "retired": true,
     "name": "Jupiter",
     "rarity": "R",
     "type": "steam",
@@ -226,6 +227,7 @@
   },
   {
     "id": "mav424",
+    "retired": true,
     "name": "MÁV 424 Bivaly",
     "rarity": "R",
     "type": "steam",
@@ -249,6 +251,7 @@
   },
   {
     "id": "k4s",
+    "retired": true,
     "name": "PRR K4s",
     "rarity": "R",
     "type": "steam",
@@ -295,6 +298,7 @@
   },
   {
     "id": "flying_scotsman",
+    "retired": true,
     "name": "Flying Scotsman",
     "rarity": "SR",
     "type": "steam",
@@ -441,6 +445,7 @@
   },
   {
     "id": "f7",
+    "retired": true,
     "name": "EMD F7",
     "rarity": "R",
     "type": "diesel",
@@ -536,6 +541,7 @@
   },
   {
     "id": "v63",
+    "retired": true,
     "name": "V63 Gigant",
     "rarity": "R",
     "type": "electric",
@@ -640,6 +646,7 @@
   },
   {
     "id": "j94",
+    "retired": true,
     "name": "Saddle Tank J94",
     "rarity": "N",
     "type": "steam",
@@ -681,6 +688,7 @@
   },
   {
     "id": "nine_f",
+    "retired": true,
     "name": "BR 9F",
     "rarity": "SR",
     "type": "steam",

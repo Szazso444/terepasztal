@@ -1,0 +1,14 @@
+{
+  "asset": "rezet",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_rezet_body_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-18"
+    ]
+  ],
+  "total_pages": 18
+}

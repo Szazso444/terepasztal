@@ -1,0 +1,82 @@
+[
+  {
+    "id": "c50",
+    "rear_image": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\c50-rear.png",
+    "reconstruction_inputs": 1,
+    "rear_used_for_geometry": false,
+    "rear_texture_fit": [
+      {
+        "image": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\c50-rear.png",
+        "silhouette_iou": 0.931,
+        "pose_deg": [
+          130.91,
+          19.84,
+          2.62
+        ],
+        "colour_matched": true,
+        "overlap_texels": 13718
+      }
+    ],
+    "source_job": "pipeline-out-std/jobs/c50.json"
+  },
+  {
+    "id": "black_five",
+    "rear_image": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-black-five-rear.png",
+    "reconstruction_inputs": 1,
+    "rear_used_for_geometry": false,
+    "rear_texture_fit": [
+      {
+        "image": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-black-five-rear.png",
+        "silhouette_iou": 0.913,
+        "pose_deg": [
+          129.96,
+          27.8,
+          2.0
+        ],
+        "colour_matched": true,
+        "overlap_texels": 26095
+      }
+    ],
+    "source_job": "pipeline-out-std/jobs/black_five.json"
+  },
+  {
+    "id": "drg01",
+    "rear_image": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-drg01-rear.png",
+    "reconstruction_inputs": 1,
+    "rear_used_for_geometry": false,
+    "rear_texture_fit": [
+      {
+        "image": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-drg01-rear.png",
+        "silhouette_iou": 0.9275,
+        "pose_deg": [
+          129.57,
+          18.25,
+          4.31
+        ],
+        "colour_matched": true,
+        "overlap_texels": 14630
+      }
+    ],
+    "source_job": "pipeline-out-std/jobs/drg01.json"
+  },
+  {
+    "id": "daylight",
+    "rear_image": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-daylight-rear.png",
+    "reconstruction_inputs": 1,
+    "rear_used_for_geometry": false,
+    "rear_texture_fit": [
+      {
+        "image": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-daylight-rear.png",
+        "silhouette_iou": 0.9335,
+        "pose_deg": [
+          133.67,
+          24.32,
+          0.06
+        ],
+        "colour_matched": true,
+        "overlap_texels": 11282
+      }
+    ],
+    "source_job": "pipeline-out-std/jobs/daylight.json"
+  }
+]

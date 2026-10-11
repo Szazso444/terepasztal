@@ -591,6 +591,48 @@ export function poseVehicle(
     const T = truck.reduce((a, b) =>
       Math.hypot(b.x - E.x, b.y - E.y) > Math.hypot(a.x - E.x, a.y - E.y) ? b : a,
     );
+    // Solve the support's rail position as well as the body's angle. Merely
+    // rotating towards its old position leaves the socket sliding along the truck.
+    const supportIndex = s.truck?.indexOf(T.truck ?? -1) ?? -1;
+    if (supportIndex >= 0 && s.at) {
+      const back = reversed !== !!s.mirror;
+      const behind = back ? s.L - s.at[supportIndex] : s.at[supportIndex];
+      const distance = Math.abs((side * s.L) / 2 - (s.L / 2 - behind));
+      const hw = s.half?.[supportIndex] ?? 0;
+      const stand = (arc: number) => {
+        const q = hw > LONG_TRUCK ? hw * Math.SQRT1_2 : 0;
+        const a = pl.at(arc + q),
+          b = pl.at(arc - q);
+        const tangent = pl.tangent(arc);
+        return {
+          x: (a.x + b.x) / 2,
+          y: (a.y + b.y) / 2,
+          angle: q ? Math.atan2(a.y - b.y, a.x - b.x) : Math.atan2(tangent.y, tangent.x),
+        };
+      };
+      const guess = arcFront - (reversed ? spec.L - s.front - s.L : s.front) - behind;
+      let arc = pl.nearest(T, guess).arc;
+      const error = (u: number) => {
+        const p = stand(u);
+        return Math.hypot(p.x - E.x, p.y - E.y) - distance;
+      };
+      for (let n = 0; n < 16; n++) {
+        const e = error(arc);
+        if (Math.abs(e) < 1e-8) break;
+        const derivative = (error(arc + 0.001) - error(arc - 0.001)) / 0.002;
+        if (Math.abs(derivative) < 1e-6) break;
+        arc = Math.max(
+          0,
+          Math.min(pl.length, arc - Math.max(-0.25, Math.min(0.25, e / derivative))),
+        );
+      }
+      if (Math.abs(error(arc)) < 1e-6) {
+        Object.assign(T, stand(arc));
+        T.drawX = T.x;
+        T.drawY = T.y;
+        T.foreAft = T.lateral = 0;
+      }
+    }
     let ax = (E.x - T.x) * side,
       ay = (E.y - T.y) * side;
     const al = Math.hypot(ax, ay);

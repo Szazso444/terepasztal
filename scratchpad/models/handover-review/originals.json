@@ -1,0 +1,7 @@
+{
+  "ids": ["c50", "black_five", "drg01", "daylight"],
+  "raw": "G:/DEV/Terepasztal/pipeline-out/models_raw",
+  "jobs": "G:/DEV/Terepasztal/pipeline-out-std/jobs",
+  "output": "C:/Users/Zso/terepasztal-playtest/scratchpad/models/handover-review/originals",
+  "headings": [0, 45, 135, 225]
+}

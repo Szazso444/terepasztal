@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Terepasztal mozdonymodellek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+<style>
+:root {
+  --ground: #e9ece5; --surface: #f7f8f4; --sunk: #dde2d9; --ink: #1b221e; --muted: #56625a; --line: #c4ccc1; --accent: #1f5c45; --warn: #a86d12;
+  --display: 'Barlow Semi Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) { color-scheme: dark; --ground: #111513; --surface: #1a201c; --sunk: #232b26; --ink: #e2e8e0; --muted: #9ba79f; --line: #313b35; --accent: #6cbf97; --warn: #e0a84a; }
+}
+:root[data-theme='dark'] { color-scheme: dark; --ground: #111513; --surface: #1a201c; --sunk: #232b26; --ink: #e2e8e0; --muted: #9ba79f; --line: #313b35; --accent: #6cbf97; --warn: #e0a84a; }
+body { background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); padding-inline: clamp(16px, 4vw, 48px); padding-block: 28px 64px; }
+.wrap { max-width: 1240px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; }
+h2 { font-size: 1.6rem; font-weight: 700; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; max-width: 74ch; }
+ul, ol { margin: 0; padding-left: 1.2em; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; max-width: 92ch; }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.9em; overflow-wrap: anywhere; }
+.label { font: 600 0.72rem/1.2 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+header.top, section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+nav { display: flex; gap: 8px 16px; flex-wrap: wrap; font-size: 0.9rem; }
+figure { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-width: 0; align-content: start; }
+figure img { width: 100%; height: auto; display: block; border-radius: 4px; background: var(--sunk); }
+figcaption, .note { font-size: 0.85rem; color: var(--muted); }
+figcaption b { color: var(--accent); font-weight: 600; }
+.lineups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 34px; }
+.lineup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; }
+.cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; align-content: start; }
+.card header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.idn { font: 600 0.85rem var(--mono); color: var(--surface); background: var(--accent); border-radius: 99px; padding: 1px 8px; margin-right: 8px; }
+.tag { font-size: 0.75rem; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
+.quote { font-style: italic; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; font-size: 0.92rem; }
+.shots { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 10px; align-items: start; }
+.three { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; align-items: start; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px; }
+@media (max-width: 720px) { .shots { grid-template-columns: minmax(0, 1fr); } }
+.did { font-size: 0.9rem; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: left; padding: 5px 14px 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; font-size: 0.8rem; color: var(--muted); }
+.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pairs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.ask { border-left: 3px solid var(--accent); padding-left: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.warn { border-left: 3px solid var(--warn); padding-left: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.cause { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; align-content: start; }
+.causes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.big { font: 700 1.9rem/1 var(--display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.rules { counter-reset: r; list-style: none; padding: 0; gap: 12px; }
+.rules li { counter-increment: r; display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 4px 10px; }
+.rules li::before { content: counter(r); font: 700 1.3rem/1.2 var(--display); color: var(--accent); }
+.rules li > * { grid-column: 2; }
+.ba { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 12px; align-items: start; }
+.bad { color: var(--warn); font-weight: 600; }
+.good { color: var(--accent); font-weight: 600; }
+td.l { white-space: normal; min-width: 14ch; }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <span class="label">Terepasztal · demó build · demo/lifelike-models ág · nincs pusholva</span>
+  <h1>Fordulás, Big Boy, vágási felületek, torzulás, nyomtáv</h1>
+  <p>Mind a hat jelzésedet végignéztem, mindegyiknél előbb az okot kerestem meg. Négy javítva van: <b>a fordulás nem pulzál</b>, <b>a Big Boy két forgóvázon ül</b>, <b>a vágási felület festett végfal</b>, és <b>a dízel- és villanymozdonyok teste párhuzamos a sínnel</b>. Az ötödik, a gőzösök „kettéváló” eleje a széles nyomtávból jön: ehhez a három nyomtávszintet mutatom, a döntés a tiéd. Az Mk48-hoz nem nyúltam.</p>
+  <nav><a href="#turning">Fordulás</a><a href="#bigboy">Big Boy</a><a href="#cuts">Vágási felületek</a><a href="#square">Hátul lejjebb</a><a href="#front">A gőzösök eleje</a><a href="#gauge">Nyomtáv</a><a href="#lineups">Előtte és most</a><a href="#motion">Mozgásban</a><a href="#try">Kipróbálás</a><a href="#numbers">Számok</a><a href="#open">Döntésre vár</a></nav>
+</header>
+
+<section id="turning">
+  <h2>Fordulás: mi pulzált, és mi van helyette</h2>
+  <p>Egy mozdony 48 irányból van renderelve. Az előző körben két irány között a képet a hossztengelye mentén <b>ferdítettem</b> a pontos irányba. Ez a test tengelyét jól tartotta, de a kép szélességét is nyújtotta és zsugorította, 7,5 fokonként akár 13 %-kal, majd a következő képnél visszaugrott. Ezt láttad lüktetésnek.</p>
+  <p>Most a kép <b>egy dobozra feszítve fordul</b>. Minden résznek (test, szerkocsi, forgóváz) megvan a doboza a modellből: hossz, szélesség, magasság. A kamera a doboz három lapját látja: a tetőt, a közelebbi oldalt és a közelebbi véget. Mindhárom lap a saját síkjában fordul a pontos irányba: az oldalon a függőlegesek függőlegesek maradnak, a tető alaprajzként fordul, a három lap pedig az éleknél összeér, így a kép nem szakad.</p>
+  <ul>
+    <li><b>Mérve:</b> a doboz lapjain lévő pontok két irány között végig század pixelen belül ott vannak, ahol a valódi doboz pontjai lennének. A szélesség nem változik.</li>
+    <li><b>Ami megmarad:</b> ami kilóg a dobozból vagy beljebb van nála (kémény, áramszedő, a kazán íve), az a hozzá legközelebbi lappal megy, és képváltáskor legfeljebb fél pixelt lép.</li>
+    <li><b>Több sprite:</b> emiatt most nem kell. Ha a felvételeken még látsz ugrást, a 96 irány megfelezi, az atlasz duplázódása árán.</li>
+  </ul>
+  <div class="ba"><figure><img src="img/prev-clip-sd40-curve.webp" alt="SD40-2 előtte: ferdítés, a test szélessége lüktet." width="720" height="440" loading="lazy"><figcaption>SD40-2 előtte: ferdítés, a test szélessége lüktet.</figcaption></figure><figure><img src="img/clip-sd40-curve.webp" alt="SD40-2 most: dobozként fordul." width="720" height="440" loading="lazy"><figcaption><b>SD40-2 most: dobozként fordul.</b></figcaption></figure></div>
+  <div class="two"></div>
+</section>
+
+<section id="bigboy">
+  <h2>Big Boy: két forgóváz a kazán alatt</h2>
+  <p>Úgy készült, ahogy a szűk ívre épített modellek: <b>mindkét hajtott kerékcsoport külön forgóváz</b>, a kazán és a fülke rajtuk ül. Az első forgóváz viszi magával a futókerekeket, a hengereit és a sínkotrót a mellső peronnal; a hátsó a saját hengereit és a fülke alatti tengelyt a lépcsőkkel. A rudazat mindkettőn jár. Egy hosszú forgóváz nem érintőként, hanem húrként áll a sínen, így a szélső és a középső kerekei egyformán közel maradnak hozzá (a legszűkebb ívben 0,07 mezőn belül).</p>
+  <p>Amit az ívben látsz: a két forgóváz a sínt követi, a kazán eleje pedig kilendül az ív külső oldalára, ahogy egy modellnél is. Ennek mértéke számtan: a kazán a fülkével 2,82 mező, a két forgócsap 1,5 mezőre van egymástól, a kazán 0,89 mezőt nyúlik az első forgócsap elé, az ív sugara pedig 1,5 mező.</p>
+  <div class="ba"><figure><img src="img/prev-curve-big_boy.webp" alt="Előtte: merev test, az első hajtómű forgóvázként; a kerekek elváltak a testtől." width="640" height="480" loading="lazy"><figcaption>Előtte: merev test, az első hajtómű forgóvázként; a kerekek elváltak a testtől.</figcaption></figure><figure><img src="img/curve-big_boy.webp" alt="Most: a kazán két forgóvázon." width="640" height="480" loading="lazy"><figcaption><b>Most: a kazán két forgóvázon.</b></figcaption></figure></div>
+  <div class="two"><figure><img src="img/prev-clip-big_boy-curve.webp" alt="Előtte." width="720" height="440" loading="lazy"><figcaption>Előtte.</figcaption></figure><figure><img src="img/clip-big_boy-curve.webp" alt="Most." width="720" height="440" loading="lazy"><figcaption><b>Most.</b></figcaption></figure></div>
+</section>
+
+<section id="cuts">
+  <h2>Vágási felületek: festett végfal</h2>
+  <p>Igazad volt, a sötét lap ürességnek látszott. Ahol egy testet elvágok a szomszédjától (mozdony és szerkocsi, a DDA40X két fele), ott a vágást most <b>végfal zárja, amely a test saját színeit viseli</b>: minden magasságban azt a színt, ami ott az oldalfalon van, így a festés sávjai körbefutnak a sarkon. Az oldalnál egy árnyalattal sötétebb, a közepén sötétebb mezővel (ajtó, szénkamra).</p>
+  <p>A forgóvázak helyén a test alja sötét maradt: az a jármű alja, oda nem való festés.</p>
+  <div class="ba"><figure><img src="img/prev-curve-daylight.webp" alt="Daylight előtte: sötét lap a szerkocsi elején és a fülke hátulján." width="640" height="480" loading="lazy"><figcaption>Daylight előtte: sötét lap a szerkocsi elején és a fülke hátulján.</figcaption></figure><figure><img src="img/curve-daylight.webp" alt="Daylight most: a szerkocsi eleje a saját sávjait viseli." width="640" height="480" loading="lazy"><figcaption><b>Daylight most: a szerkocsi eleje a saját sávjait viseli.</b></figcaption></figure></div>
+  <div class="ba"><figure><img src="img/prev-curve-dda40x.webp" alt="DDA40X előtte: a csuklónál sötét rés." width="640" height="480" loading="lazy"><figcaption>DDA40X előtte: a csuklónál sötét rés.</figcaption></figure><figure><img src="img/curve-dda40x.webp" alt="DDA40X most: a két fél vége festett fal." width="640" height="480" loading="lazy"><figcaption><b>DDA40X most: a két fél vége festett fal.</b></figcaption></figure></div>
+  <div class="two"></div>
+</section>
+
+<section id="square">
+  <h2>„A hátulja lejjebb van”: a dobozos testek beállítása</h2>
+  <p>Kimértem a modelleken, és jól láttad. Három különböző hibát találtam, mozdonyonként mást:</p>
+  <ul>
+    <li><b>A test dőlt a kerekeihez képest</b> (0,3–0,9 fok). A rekonstrukcióban a kerekek sora nem párhuzamos a szekrénnyel, én pedig az előző körben a kerekekre állítottam a modellt, ezért a szekrény hátulja lejjebb került (Taurus, F7, ICE 1, M62).</li>
+    <li><b>Az oldalfalak összetartottak.</b> A TGV és az F7 hátulja ötödével keskenyebb volt az elejénél, a GG1-é nyolcadával. Ez az a „kicsit torz”.</li>
+    <li><b>A tető lejtett az aljhoz képest</b> (Deltic, SD40, Mk45: 10–14 % a két vég között), az SD40 teste pedig 1 fokkal el volt fordulva a sínhez képest. Ez utóbbit az előző kör kerék-alapú irányjavítása okozta.</li>
+  </ul>
+  <p>A javítás: a dízel- és villanymozdonyok (20 db) teste mostantól <b>a saját hosszú vonalaira áll be</b>. Az oldalfalak a sínnel párhuzamosak, az alj és a tető vízszintes; a forgó kerekek ettől függetlenül a sínen állnak. Egy vonal csak akkor számít, ha többféle mérés ugyanazt adja, és a test nagy részén végigfut; 17 mozdonynál kellett igazítani. A gőzösöknek nincs ilyen vonaluk (kazán, szerkocsi), ők a kerekeiken állnak, mint eddig.</p>
+  <div class="two"><figure><img src="img/square-tgv.webp" alt="TGV felülről: a hátulja (balra) keskenyebb volt. Felül oldalnézet, alul felülnézet; balra előtte, jobbra utána." width="868" height="280" loading="lazy"><figcaption>TGV felülről: a hátulja (balra) keskenyebb volt. Felül oldalnézet, alul felülnézet; balra előtte, jobbra utána.</figcaption></figure><figure><img src="img/square-sd40.webp" alt="SD40-2: a test ferdén állt a tengelyén, a géptető hátrafelé lejtett." width="960" height="279" loading="lazy"><figcaption>SD40-2: a test ferdén állt a tengelyén, a géptető hátrafelé lejtett.</figcaption></figure><figure><img src="img/square-f7.webp" alt="F7: dőlt, és hátul keskenyebb volt." width="810" height="273" loading="lazy"><figcaption>F7: dőlt, és hátul keskenyebb volt.</figcaption></figure><figure><img src="img/square-deltic.webp" alt="Deltic: a tető az egyik vég felé lejtett." width="882" height="260" loading="lazy"><figcaption>Deltic: a tető az egyik vég felé lejtett.</figcaption></figure></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>ID</th><th>Mozdony</th><th class="num">Elfordítva</th><th class="num">Megdöntve</th><th class="num">Szélesség, két vég között</th><th class="num">Magasság, két vég között</th><th></th></tr></thead>
+    <tbody><tr><td class="num">2</td><td>BM-50</td>
+<td class="num"></td><td class="num"></td>
+<td class="num">+8 %</td><td class="num">+4 %</td>
+<td class="l"></td></tr>
+<tr><td class="num">3</td><td>Muki</td>
+<td class="num"></td><td class="num">−1,1°</td>
+<td class="num"></td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">4</td><td>C-50</td>
+<td class="num"></td><td class="num">+0,4°</td>
+<td class="num"></td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">6</td><td>MÁV Mk45</td>
+<td class="num"></td><td class="num"></td>
+<td class="num"></td><td class="num">−13 %</td>
+<td class="l"></td></tr>
+<tr><td class="num">7</td><td>MÁV Mk48</td>
+<td class="num"></td><td class="num"></td>
+<td class="num"></td><td class="num"></td>
+<td class="l">a vonalai rendben voltak, vagy nem mérhetők</td></tr>
+<tr><td class="num">13</td><td>BR Class 08</td>
+<td class="num"></td><td class="num">+0,2°</td>
+<td class="num"></td><td class="num">−2 %</td>
+<td class="l"></td></tr>
+<tr><td class="num">16</td><td>Kandó V40</td>
+<td class="num"></td><td class="num">+1,9°</td>
+<td class="num">+5 %</td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">17</td><td>EMD SW1</td>
+<td class="num"></td><td class="num"></td>
+<td class="num"></td><td class="num"></td>
+<td class="l">a vonalai rendben voltak, vagy nem mérhetők</td></tr>
+<tr><td class="num">19</td><td>SBB Ce 6/8 Crocodile</td>
+<td class="num">−0,2°</td><td class="num"></td>
+<td class="num">−6 %</td><td class="num">−8 %</td>
+<td class="l"></td></tr>
+<tr><td class="num">20</td><td>Deltic Class 55</td>
+<td class="num"></td><td class="num"></td>
+<td class="num">−4 %</td><td class="num">−10 %</td>
+<td class="l"></td></tr>
+<tr><td class="num">22</td><td>EMD F7</td>
+<td class="num"></td><td class="num">−0,9°</td>
+<td class="num">+20 %</td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">24</td><td>ICE 1</td>
+<td class="num"></td><td class="num">−0,3°</td>
+<td class="num"></td><td class="num">+5 %</td>
+<td class="l"></td></tr>
+<tr><td class="num">26</td><td>M62 Szergej</td>
+<td class="num"></td><td class="num">−0,3°</td>
+<td class="num">+8 %</td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">28</td><td>SBB Re 460</td>
+<td class="num"></td><td class="num">−0,3°</td>
+<td class="num"></td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">29</td><td>ÖBB 1116 Taurus</td>
+<td class="num"></td><td class="num">−0,9°</td>
+<td class="num"></td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">30</td><td>TGV Sud-Est</td>
+<td class="num"></td><td class="num"></td>
+<td class="num">+21 %</td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">31</td><td>V63 Gigant</td>
+<td class="num">−0,2°</td><td class="num"></td>
+<td class="num">+5 %</td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">33</td><td>DDA40X Centennial</td>
+<td class="num"></td><td class="num"></td>
+<td class="num"></td><td class="num"></td>
+<td class="l">a vonalai rendben voltak, vagy nem mérhetők</td></tr>
+<tr><td class="num">34</td><td>PRR GG1</td>
+<td class="num"></td><td class="num"></td>
+<td class="num">+12 %</td><td class="num"></td>
+<td class="l"></td></tr>
+<tr><td class="num">37</td><td>EMD SD40-2</td>
+<td class="num">+1,1°</td><td class="num"></td>
+<td class="num"></td><td class="num">+12 %</td>
+<td class="l"></td></tr></tbody>
+  </table></div>
+  <p class="note">A százalék azt mutatja, mennyivel volt nagyobb az orr a hátuljánál (szélességben, illetve a szekrény magasságában); ennyit vettem ki.</p>
+  <p><b>A 36-os (9F)</b> gőzös, rajta nem találtam mérhető eltérést: az alja 0,05 fokon belül vízszintes. Ha a mostani képen is látod, karikázd be, hol.</p>
+</section>
+
+<section id="front">
+  <h2>A gőzösök eleje (DRG 01, Black Five, Daylight)</h2>
+  <p>Rétegenként szétszedtem a képet. Az elejét nem a modell vágja ketté: az első futókerekek lógnak ki alóla, két okból.</p>
+  <ul>
+    <li><b>Egyenesben:</b> a játék sínjei 39 %-kal szélesebben állnak, mint a méretarányos nyomtáv, a kerekeknek pedig a sínen kell állniuk. A futóforgóváz így szélesebb a mozdony keskeny orránál, és a kereke kilátszik a mellgerenda sarka alól; menet közben forog, ettől külön mozgó darabnak hat.</li>
+    <li><b>Ívben:</b> a futóforgóváz a sínt követi, a merev test nem tudja. A legszűkebb ívben a forgóváz legfeljebb 0,1 mezőt tér el a helyétől (0,62 m a játék léptékében), és mivel a kerekek amúgy is a test szélénél járnak, ennyi már kilátszik.</li>
+  </ul>
+  <p>Ezen a modellben nem tudok javítani úgy, hogy a kerekek a sínen maradjanak. A szűkebb nyomtáv viszont mindkettőn segít: a kerekek beljebb kerülnek a test alá. Ezt mutatja a következő rész.</p>
+</section>
+
+<section id="gauge">
+  <h2>Nyomtáv három szinten</h2>
+  <p>Ugyanaz az öt mozdony, ugyanabban a nagyításban. A pályarajzot (sínek, talpfák, ágyazat) arányosan szűkítettem, a mozdonyokat mindhárom nyomtávra külön rendereltem, hogy a kerekek a sínen álljanak. Keskeny nyomtávhoz nem nyúltam.</p>
+  <div class="three"><figure><img src="img/gauge-39.webp" alt="Ma: 39 %-kal széles. A sínek 0,32 mezőre (2,00 m) vannak egymástól." width="1751" height="1085" loading="lazy"><figcaption>Ma: 39 %-kal széles. A sínek 0,32 mezőre (2,00 m) vannak egymástól.</figcaption></figure><figure><img src="img/gauge-20.webp" alt="20 %-kal széles: 0,276 mező (1,72 m)." width="1751" height="1085" loading="lazy"><figcaption>20 %-kal széles: 0,276 mező (1,72 m).</figcaption></figure><figure><img src="img/gauge-0.webp" alt="Valósághű: 0,23 mező (1,435 m)." width="1751" height="1085" loading="lazy"><figcaption><b>Valósághű: 0,23 mező (1,435 m).</b></figcaption></figure></div>
+  <h3>A DRG 01 eleje közelről</h3>
+  <div class="three"><figure><img src="img/gauge-39-front.webp" alt="39 %: az első futókerék kilátszik a mellgerenda sarka alól." width="570" height="496" loading="lazy"><figcaption>39 %: az első futókerék kilátszik a mellgerenda sarka alól.</figcaption></figure><figure><img src="img/gauge-20-front.webp" alt="20 %." width="570" height="496" loading="lazy"><figcaption>20 %.</figcaption></figure><figure><img src="img/gauge-0-front.webp" alt="Valósághű: a kerék a test alatt van." width="570" height="496" loading="lazy"><figcaption>Valósághű: a kerék a test alatt van.</figcaption></figure></div>
+  <p>Amit a képeken látok: a mozdonyok teste mindhárom szinten ugyanaz, csak a futómű és a pálya szélessége változik. 39 %-nál a kerekek a test szélén járnak, a keskeny orrú gőzösöknél kilátszanak alóla. A valósághű nyomtávnál a futómű pontosan a modellé (nem kell széthúzni), a mozdony pedig nagyobbnak hat a pályához képest, ahogy egy terepasztalon. Az ára: a pálya vékonyabb, kis nagyításon kevésbé rajzos.</p>
+  <p class="note">Bármelyiket választod: a pályarajz a pályás beszélgetés dolga (váltók, kereszteződések, hidak is), a mozdonyokat pedig mind újrarenderelem az új nyomtávra (kb. másfél óra gépidő). A kocsik rajzolt kerekei ugyanígy követik.</p>
+</section>
+
+<section id="lineups">
+  <h2>Előtte és most, lap-ID sorrendben</h2>
+  <p>Azonos nagyítás (3×). Felül az előző kör, alatta a mostani.</p>
+  <div class="lineups">
+    <div class="lineup"><h3>25–31.</h3><p class="note">Hátulról (jobb fent) előre: 25 PRR K4s · 26 M62 Szergej · 27 Mallard · 28 SBB Re 460 · 29 ÖBB 1116 Taurus · 30 TGV Sud-Est · 31 V63 Gigant. Jelölted: 29, 30, 31.</p><div class="pairs"><figure><img src="img/prev-lineup-ids-25-31-day.webp" alt="Előtte (az előző kör)." width="1699" height="1007" loading="lazy"><figcaption>Előtte (az előző kör).</figcaption></figure><figure><img src="img/lineup-ids-25-31-day.webp" alt="Most." width="1699" height="1007" loading="lazy"><figcaption><b>Most.</b></figcaption></figure></div></div>
+    <div class="lineup"><h3>18–24.</h3><p class="note">Hátulról (jobb fent) előre: 18 LMS Black Five · 19 SBB Ce 6/8 Crocodile · 20 Deltic Class 55 · 21 DRG Class 01 · 22 EMD F7 · 23 Flying Scotsman · 24 ICE 1. Jelölted: 20, 22, 24.</p><div class="pairs"><figure><img src="img/prev-lineup-ids-18-24-day.webp" alt="Előtte (az előző kör)." width="1695" height="1005" loading="lazy"><figcaption>Előtte (az előző kör).</figcaption></figure><figure><img src="img/lineup-ids-18-24-day.webp" alt="Most." width="1691" height="1003" loading="lazy"><figcaption><b>Most.</b></figcaption></figure></div></div>
+    <div class="lineup"><h3>32–39.</h3><p class="note">Hátulról (jobb fent) előre: 32 SP 4449 Daylight · 33 DDA40X Centennial · 34 PRR GG1 · 35 MÁV 424 Bivaly · 36 BR 9F · 37 EMD SD40-2 · 38 Big Boy 4014 · 39 Koutetsujou. Jelölted: 34, 36.</p><div class="pairs"><figure><img src="img/prev-lineup-ids-32-39-day.webp" alt="Előtte (az előző kör)." width="2009" height="1161" loading="lazy"><figcaption>Előtte (az előző kör).</figcaption></figure><figure><img src="img/lineup-ids-32-39-day.webp" alt="Most." width="2009" height="1161" loading="lazy"><figcaption><b>Most.</b></figcaption></figure></div></div>
+    <div class="lineup"><h3>11–17.</h3><p class="note">Hátulról (jobb fent) előre: 11 MÁV 375 · 12 Saddle Tank J94 · 13 BR Class 08 · 14 The General · 15 Jupiter · 16 Kandó V40 · 17 EMD SW1.</p><div class="pairs"><figure><img src="img/prev-lineup-ids-11-17-day.webp" alt="Előtte (az előző kör)." width="1589" height="951" loading="lazy"><figcaption>Előtte (az előző kör).</figcaption></figure><figure><img src="img/lineup-ids-11-17-day.webp" alt="Most." width="1589" height="951" loading="lazy"><figcaption><b>Most.</b></figcaption></figure></div></div>
+    <div class="lineup"><h3>1–8. (keskeny nyomtáv)</h3><p class="note">Hátulról (jobb fent) előre: 1 Stephenson's Rocket · 2 BM-50 · 3 Muki · 4 C-50 · 5 MÁV 490 · 6 MÁV Mk45 · 7 MÁV Mk48 · 8 Rezét.</p><div class="pairs"><figure><img src="img/prev-lineup-ids-01-08-day.webp" alt="Előtte (az előző kör)." width="1067" height="691" loading="lazy"><figcaption>Előtte (az előző kör).</figcaption></figure><figure><img src="img/lineup-ids-01-08-day.webp" alt="Most." width="1067" height="691" loading="lazy"><figcaption><b>Most.</b></figcaption></figure></div></div>
+  </div>
+</section>
+
+<section id="motion">
+  <h2>Mozgásban</h2>
+  <p>Rövid, ismétlődő felvételek a játékból; a kamera a mozdonnyal megy.</p>
+  <div class="two"></div>
+</section>
+
+<section id="try">
+  <h2>Kipróbálás</h2>
+  <p>A mentés: <code>G:/DEV/Terepasztal/saves/engine-models-demo.json</code>. Minden mozdony lap-ID sorrendben áll egy rendezőn, két hurkon pedig vonatok járnak (köztük a DDA40X és a Big Boy), nappal és éjjel, füsttel.</p>
+  <p>Betöltés egy kattintással, amíg a demó build fut: <a href="http://localhost:5182/scratchpad/models/load-save.html">http://localhost:5182/scratchpad/models/load-save.html</a>.</p>
+</section>
+
+<section id="numbers">
+  <h2>Számok mozdonyonként</h2>
+  <p class="note">Mező: a hossz az előző körben és most. Talált tengely: hányat talált meg a modellben a táblázat szerintiekből (összesen 202 / 215).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>ID</th><th>Mozdony</th><th class="num">Mező, előtte</th><th class="num">most</th><th class="num">Talált tengely</th></tr></thead>
+    <tbody><tr><td class="num">1</td><td>Stephenson's Rocket</td>
+<td class="num">0,75</td><td class="num"><b>0,75</b></td>
+<td class="num">2 / 2</td></tr>
+<tr><td class="num">2</td><td>BM-50</td>
+<td class="num">0,76</td><td class="num"><b>0,76</b></td>
+<td class="num">3 / 3</td></tr>
+<tr><td class="num">3</td><td>Muki</td>
+<td class="num">0,6</td><td class="num"><b>0,59</b></td>
+<td class="num">2 / 2</td></tr>
+<tr><td class="num">4</td><td>C-50</td>
+<td class="num">0,88</td><td class="num"><b>0,88</b></td>
+<td class="num">2 / 2</td></tr>
+<tr><td class="num">5</td><td>MÁV 490</td>
+<td class="num">1,06</td><td class="num"><b>1,06</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">6</td><td>MÁV Mk45</td>
+<td class="num">1,5</td><td class="num"><b>1,5</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">7</td><td>MÁV Mk48</td>
+<td class="num">1,11</td><td class="num"><b>1,11</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">8</td><td>Rezét</td>
+<td class="num">1,15</td><td class="num"><b>1,15</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">11</td><td>MÁV 375</td>
+<td class="num">1,34</td><td class="num"><b>1,34</b></td>
+<td class="num">3 / 4</td></tr>
+<tr><td class="num">12</td><td>Saddle Tank J94</td>
+<td class="num">1,34</td><td class="num"><b>1,34</b></td>
+<td class="num">3 / 3</td></tr>
+<tr><td class="num">13</td><td>BR Class 08</td>
+<td class="num">1,43</td><td class="num"><b>1,43</b></td>
+<td class="num">3 / 3</td></tr>
+<tr><td class="num">14</td><td>The General</td>
+<td class="num">1,58</td><td class="num"><b>1,58</b></td>
+<td class="num">5 / 5</td></tr>
+<tr><td class="num">15</td><td>Jupiter</td>
+<td class="num">1,76</td><td class="num"><b>1,76</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">16</td><td>Kandó V40</td>
+<td class="num">1,93</td><td class="num"><b>1,94</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">17</td><td>EMD SW1</td>
+<td class="num">1,59</td><td class="num"><b>1,59</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">18</td><td>LMS Black Five</td>
+<td class="num">2,39</td><td class="num"><b>2,39</b></td>
+<td class="num">8 / 8</td></tr>
+<tr><td class="num">19</td><td>SBB Ce 6/8 Crocodile</td>
+<td class="num">3,03</td><td class="num"><b>3</b></td>
+<td class="num">7 / 8</td></tr>
+<tr><td class="num">20</td><td>Deltic Class 55</td>
+<td class="num">2,76</td><td class="num"><b>2,78</b></td>
+<td class="num">4 / 6</td></tr>
+<tr><td class="num">21</td><td>DRG Class 01</td>
+<td class="num">2,96</td><td class="num"><b>2,96</b></td>
+<td class="num">9 / 10</td></tr>
+<tr><td class="num">22</td><td>EMD F7</td>
+<td class="num">2,48</td><td class="num"><b>2,51</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">23</td><td>Flying Scotsman</td>
+<td class="num">2,62</td><td class="num"><b>2,62</b></td>
+<td class="num">9 / 9</td></tr>
+<tr><td class="num">24</td><td>ICE 1</td>
+<td class="num">2,73</td><td class="num"><b>2,71</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">25</td><td>PRR K4s</td>
+<td class="num">3,07</td><td class="num"><b>3,07</b></td>
+<td class="num">10 / 10</td></tr>
+<tr><td class="num">26</td><td>M62 Szergej</td>
+<td class="num">2,63</td><td class="num"><b>2,61</b></td>
+<td class="num">6 / 6</td></tr>
+<tr><td class="num">27</td><td>Mallard</td>
+<td class="num">2,75</td><td class="num"><b>2,75</b></td>
+<td class="num">9 / 9</td></tr>
+<tr><td class="num">28</td><td>SBB Re 460</td>
+<td class="num">2,6</td><td class="num"><b>2,56</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">29</td><td>ÖBB 1116 Taurus</td>
+<td class="num">2,13</td><td class="num"><b>2,13</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">30</td><td>TGV Sud-Est</td>
+<td class="num">2,7</td><td class="num"><b>2,7</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">31</td><td>V63 Gigant</td>
+<td class="num">2,18</td><td class="num"><b>2,18</b></td>
+<td class="num">4 / 4</td></tr>
+<tr><td class="num">32</td><td>SP 4449 Daylight</td>
+<td class="num">3,4</td><td class="num"><b>3,4</b></td>
+<td class="num">13 / 13</td></tr>
+<tr><td class="num">33</td><td>DDA40X Centennial</td>
+<td class="num">4,3</td><td class="num"><b>4,3</b></td>
+<td class="num">8 / 9</td></tr>
+<tr><td class="num">34</td><td>PRR GG1</td>
+<td class="num">3,15</td><td class="num"><b>3,15</b></td>
+<td class="num">9 / 10</td></tr>
+<tr><td class="num">35</td><td>MÁV 424 Bivaly</td>
+<td class="num">2,68</td><td class="num"><b>2,68</b></td>
+<td class="num">9 / 10</td></tr>
+<tr><td class="num">36</td><td>BR 9F</td>
+<td class="num">2,69</td><td class="num"><b>2,69</b></td>
+<td class="num">8 / 9</td></tr>
+<tr><td class="num">37</td><td>EMD SD40-2</td>
+<td class="num">3,06</td><td class="num"><b>3,06</b></td>
+<td class="num">6 / 6</td></tr>
+<tr><td class="num">38</td><td>Big Boy 4014</td>
+<td class="num">4,21</td><td class="num"><b>4,21</b></td>
+<td class="num">12 / 16</td></tr>
+<tr><td class="num">39</td><td>Koutetsujou</td>
+<td class="num">4,31</td><td class="num"><b>4,31</b></td>
+<td class="num"></td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="open">
+  <h2>Döntésre vár</h2>
+  <div class="ask">
+    <ol>
+      <li><b>Nyomtáv:</b> 39 %, 20 % vagy valósághű? Én a valósághűt javaslom: ott a futóműhöz egyáltalán nem kell nyúlni, és a kerekek a test alatt maradnak. A 20 % félút, a hiba fele megmarad.</li>
+      <li><b>Ívsugár:</b> a Big Boy kazánjának kilendülése és a gőzösök futóforgóváza az 1,5 mezős ívsugárból jön. Nagyobb sugár (pl. 2,5 mező) a kilengést a mostani 60 %-ára vinné. Ez a pályás beszélgetés dolga, és a meglévő pályákat érinti; szólj, ha vigyem oda.</li>
+      <li><b>9F (36):</b> ha még látsz rajta eltérést, karikázd be.</li>
+    </ol>
+  </div>
+  <div class="warn">
+    <h3>Amit tudnod kell</h3>
+    <ul>
+      <li><b>Mk48 (7):</b> ahogy írtad, rendben van; nem változott.</li>
+      <li><b>Atlasz:</b> a festett végfalakkal és a Big Boy két forgóvázával a mozdonyok most négy 4096×4096-os oldalt töltenek (eddig hármat; a negyediken egyetlen mozdony van).</li>
+      <li><b>Kocsik:</b> még a régi rajzolt modellek. Fordulásnál ők is dobozként fordulnak, becsült mérettel; a végleges futóművet akkor kapják, amikor lesz modelljük.</li>
+      <li><b>Semmi nincs pusholva vagy véglegesítve</b>, amíg rá nem bólintasz.</li>
+    </ul>
+  </div>
+</section>
+</div>
+
+</body>
+</html>

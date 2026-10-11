@@ -1,0 +1,15 @@
+{
+  "asset": "general",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_general_engine_",
+    "rolling/loco_general_engine-t0_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-8"
+    ]
+  ],
+  "total_pages": 16
+}

@@ -1,0 +1,257 @@
+{
+  "records": [
+    {
+      "distance": 9.527833333333236,
+      "phase": 1,
+      "overlays": 0
+    },
+    {
+      "distance": 9.550833333333236,
+      "phase": 3,
+      "overlays": 0
+    },
+    {
+      "distance": 9.573833333333235,
+      "phase": 5,
+      "overlays": 0
+    },
+    {
+      "distance": 9.596833333333235,
+      "phase": 6,
+      "overlays": 0
+    },
+    {
+      "distance": 9.619833333333235,
+      "phase": 0,
+      "overlays": 0
+    },
+    {
+      "distance": 9.642833333333234,
+      "phase": 2,
+      "overlays": 0
+    },
+    {
+      "distance": 9.665833333333234,
+      "phase": 3,
+      "overlays": 0
+    },
+    {
+      "distance": 9.688833333333234,
+      "phase": 5,
+      "overlays": 0
+    },
+    {
+      "distance": 9.711833333333233,
+      "phase": 7,
+      "overlays": 0
+    },
+    {
+      "distance": 9.734833333333233,
+      "phase": 0,
+      "overlays": 0
+    },
+    {
+      "distance": 9.757833333333233,
+      "phase": 2,
+      "overlays": 0
+    },
+    {
+      "distance": 9.780833333333232,
+      "phase": 4,
+      "overlays": 0
+    },
+    {
+      "distance": 9.803833333333232,
+      "phase": 6,
+      "overlays": 0
+    },
+    {
+      "distance": 9.826833333333232,
+      "phase": 7,
+      "overlays": 0
+    },
+    {
+      "distance": 9.849833333333232,
+      "phase": 1,
+      "overlays": 0
+    },
+    {
+      "distance": 9.872833333333231,
+      "phase": 3,
+      "overlays": 0
+    },
+    {
+      "distance": 9.895833333333231,
+      "phase": 4,
+      "overlays": 0
+    },
+    {
+      "distance": 9.91883333333323,
+      "phase": 6,
+      "overlays": 0
+    },
+    {
+      "distance": 9.94183333333323,
+      "phase": 0,
+      "overlays": 0
+    },
+    {
+      "distance": 9.96483333333323,
+      "phase": 1,
+      "overlays": 0
+    },
+    {
+      "distance": 9.98783333333323,
+      "phase": 3,
+      "overlays": 0
+    },
+    {
+      "distance": 10.01083333333323,
+      "phase": 5,
+      "overlays": 0
+    },
+    {
+      "distance": 10.033833333333229,
+      "phase": 7,
+      "overlays": 0
+    },
+    {
+      "distance": 10.056833333333229,
+      "phase": 0,
+      "overlays": 0
+    },
+    {
+      "distance": 10.079833333333228,
+      "phase": 2,
+      "overlays": 0
+    },
+    {
+      "distance": 10.102833333333228,
+      "phase": 4,
+      "overlays": 0
+    },
+    {
+      "distance": 10.125833333333228,
+      "phase": 5,
+      "overlays": 0
+    },
+    {
+      "distance": 10.148833333333227,
+      "phase": 7,
+      "overlays": 0
+    },
+    {
+      "distance": 10.171833333333227,
+      "phase": 1,
+      "overlays": 0
+    },
+    {
+      "distance": 10.194833333333227,
+      "phase": 2,
+      "overlays": 0
+    },
+    {
+      "distance": 10.217833333333227,
+      "phase": 4,
+      "overlays": 0
+    },
+    {
+      "distance": 10.240833333333226,
+      "phase": 6,
+      "overlays": 0
+    },
+    {
+      "distance": 10.263833333333226,
+      "phase": 0,
+      "overlays": 0
+    },
+    {
+      "distance": 10.286833333333226,
+      "phase": 1,
+      "overlays": 0
+    },
+    {
+      "distance": 10.309833333333225,
+      "phase": 3,
+      "overlays": 0
+    },
+    {
+      "distance": 10.332833333333225,
+      "phase": 5,
+      "overlays": 0
+    },
+    {
+      "distance": 10.355833333333225,
+      "phase": 6,
+      "overlays": 0
+    },
+    {
+      "distance": 10.378833333333224,
+      "phase": 0,
+      "overlays": 0
+    },
+    {
+      "distance": 10.401833333333224,
+      "phase": 2,
+      "overlays": 0
+    },
+    {
+      "distance": 10.424833333333224,
+      "phase": 3,
+      "overlays": 0
+    },
+    {
+      "distance": 10.447833333333223,
+      "phase": 5,
+      "overlays": 0
+    },
+    {
+      "distance": 10.470833333333223,
+      "phase": 7,
+      "overlays": 0
+    },
+    {
+      "distance": 10.493833333333223,
+      "phase": 1,
+      "overlays": 0
+    },
+    {
+      "distance": 10.516833333333222,
+      "phase": 2,
+      "overlays": 0
+    },
+    {
+      "distance": 10.539833333333222,
+      "phase": 4,
+      "overlays": 0
+    },
+    {
+      "distance": 10.562833333333222,
+      "phase": 6,
+      "overlays": 0
+    },
+    {
+      "distance": 10.585833333333222,
+      "phase": 7,
+      "overlays": 0
+    },
+    {
+      "distance": 10.608833333333221,
+      "phase": 1,
+      "overlays": 0
+    }
+  ],
+  "stopped": {
+    "a": {
+      "distance": 10.608833333333221,
+      "phase": 1,
+      "overlays": 0
+    },
+    "b": {
+      "distance": 10.608833333333221,
+      "phase": 1,
+      "overlays": 0
+    }
+  },
+  "errors": []
+}

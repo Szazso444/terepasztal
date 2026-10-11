@@ -1,0 +1,812 @@
+{
+ "errors": [],
+ "lineups": {
+  "ids-01-08": {
+   "size": [
+    1043,
+    679
+   ],
+   "zoom": 3,
+   "engines": [
+    {
+     "id": "rocket",
+     "n": 1
+    },
+    {
+     "id": "bm50",
+     "n": 2
+    },
+    {
+     "id": "muki",
+     "n": 3
+    },
+    {
+     "id": "c50",
+     "n": 4
+    },
+    {
+     "id": "mav490",
+     "n": 5
+    },
+    {
+     "id": "mk45",
+     "n": 6
+    },
+    {
+     "id": "mk48",
+     "n": 7
+    },
+    {
+     "id": "rezet",
+     "n": 8
+    }
+   ],
+   "placed": [
+    {
+     "id": "rocket",
+     "row": 0,
+     "L": 0.75,
+     "sprite": true
+    },
+    {
+     "id": "bm50",
+     "row": 1,
+     "L": 0.625,
+     "sprite": true
+    },
+    {
+     "id": "muki",
+     "row": 2,
+     "L": 0.5,
+     "sprite": true
+    },
+    {
+     "id": "c50",
+     "row": 3,
+     "L": 0.8,
+     "sprite": true
+    },
+    {
+     "id": "mav490",
+     "row": 4,
+     "L": 1,
+     "sprite": true
+    },
+    {
+     "id": "mk45",
+     "row": 5,
+     "L": 1.25,
+     "sprite": true
+    },
+    {
+     "id": "mk48",
+     "row": 6,
+     "L": 1.125,
+     "sprite": true
+    },
+    {
+     "id": "rezet",
+     "row": 7,
+     "L": 1,
+     "sprite": true
+    }
+   ]
+  },
+  "ids-11-17": {
+   "size": [
+    1547,
+    931
+   ],
+   "zoom": 3,
+   "engines": [
+    {
+     "id": "mav375",
+     "n": 11
+    },
+    {
+     "id": "j94",
+     "n": 12
+    },
+    {
+     "id": "class08",
+     "n": 13
+    },
+    {
+     "id": "general",
+     "n": 14
+    },
+    {
+     "id": "jupiter",
+     "n": 15
+    },
+    {
+     "id": "kando_v40",
+     "n": 16
+    },
+    {
+     "id": "sw1",
+     "n": 17
+    }
+   ],
+   "placed": [
+    {
+     "id": "mav375",
+     "row": 0,
+     "L": 1.25,
+     "sprite": true
+    },
+    {
+     "id": "j94",
+     "row": 1,
+     "L": 1.125,
+     "sprite": true
+    },
+    {
+     "id": "class08",
+     "row": 2,
+     "L": 1.125,
+     "sprite": true
+    },
+    {
+     "id": "general",
+     "row": 3,
+     "L": 1.5,
+     "sprite": true
+    },
+    {
+     "id": "jupiter",
+     "row": 4,
+     "L": 1.5,
+     "sprite": true
+    },
+    {
+     "id": "kando_v40",
+     "row": 5,
+     "L": 1.5,
+     "sprite": true
+    },
+    {
+     "id": "sw1",
+     "row": 6,
+     "L": 1.5,
+     "sprite": true
+    }
+   ]
+  },
+  "ids-18-24": {
+   "size": [
+    1691,
+    1003
+   ],
+   "zoom": 3,
+   "engines": [
+    {
+     "id": "black_five",
+     "n": 18
+    },
+    {
+     "id": "crocodile",
+     "n": 19
+    },
+    {
+     "id": "deltic",
+     "n": 20
+    },
+    {
+     "id": "drg01",
+     "n": 21
+    },
+    {
+     "id": "f7",
+     "n": 22
+    },
+    {
+     "id": "flying_scotsman",
+     "n": 23
+    },
+    {
+     "id": "ice1",
+     "n": 24
+    }
+   ],
+   "placed": [
+    {
+     "id": "black_five",
+     "row": 0,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "crocodile",
+     "row": 1,
+     "L": 3,
+     "sprite": true
+    },
+    {
+     "id": "deltic",
+     "row": 2,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "drg01",
+     "row": 3,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "f7",
+     "row": 4,
+     "L": 2.25,
+     "sprite": true
+    },
+    {
+     "id": "flying_scotsman",
+     "row": 5,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "ice1",
+     "row": 6,
+     "L": 2.5,
+     "sprite": true
+    }
+   ]
+  },
+  "ids-25-31": {
+   "size": [
+    1643,
+    979
+   ],
+   "zoom": 3,
+   "engines": [
+    {
+     "id": "k4s",
+     "n": 25
+    },
+    {
+     "id": "m62",
+     "n": 26
+    },
+    {
+     "id": "mallard",
+     "n": 27
+    },
+    {
+     "id": "re460",
+     "n": 28
+    },
+    {
+     "id": "taurus",
+     "n": 29
+    },
+    {
+     "id": "tgv",
+     "n": 30
+    },
+    {
+     "id": "v63",
+     "n": 31
+    }
+   ],
+   "placed": [
+    {
+     "id": "k4s",
+     "row": 0,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "m62",
+     "row": 1,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "mallard",
+     "row": 2,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "re460",
+     "row": 3,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "taurus",
+     "row": 4,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "tgv",
+     "row": 5,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "v63",
+     "row": 6,
+     "L": 2.5,
+     "sprite": true
+    }
+   ]
+  },
+  "ids-32-39": {
+   "size": [
+    1979,
+    1147
+   ],
+   "zoom": 3,
+   "engines": [
+    {
+     "id": "daylight",
+     "n": 32
+    },
+    {
+     "id": "dda40x",
+     "n": 33
+    },
+    {
+     "id": "gg1",
+     "n": 34
+    },
+    {
+     "id": "mav424",
+     "n": 35
+    },
+    {
+     "id": "nine_f",
+     "n": 36
+    },
+    {
+     "id": "sd40",
+     "n": 37
+    },
+    {
+     "id": "big_boy",
+     "n": 38
+    },
+    {
+     "id": "koutetsujou",
+     "n": 39
+    }
+   ],
+   "placed": [
+    {
+     "id": "daylight",
+     "row": 0,
+     "L": 3.5,
+     "sprite": true
+    },
+    {
+     "id": "dda40x",
+     "row": 1,
+     "L": 3.4,
+     "sprite": true
+    },
+    {
+     "id": "gg1",
+     "row": 2,
+     "L": 3.5,
+     "sprite": true
+    },
+    {
+     "id": "mav424",
+     "row": 3,
+     "L": 3,
+     "sprite": true
+    },
+    {
+     "id": "nine_f",
+     "row": 4,
+     "L": 3,
+     "sprite": true
+    },
+    {
+     "id": "sd40",
+     "row": 5,
+     "L": 3.4,
+     "sprite": true
+    },
+    {
+     "id": "big_boy",
+     "row": 6,
+     "L": 4,
+     "sprite": true
+    },
+    {
+     "id": "koutetsujou",
+     "row": 7,
+     "L": 4,
+     "sprite": true
+    }
+   ]
+  },
+  "all": {
+   "size": [
+    2047,
+    1103
+   ],
+   "zoom": 1.5,
+   "engines": [
+    {
+     "id": "rocket",
+     "n": 1
+    },
+    {
+     "id": "bm50",
+     "n": 2
+    },
+    {
+     "id": "muki",
+     "n": 3
+    },
+    {
+     "id": "c50",
+     "n": 4
+    },
+    {
+     "id": "mav490",
+     "n": 5
+    },
+    {
+     "id": "mk45",
+     "n": 6
+    },
+    {
+     "id": "mk48",
+     "n": 7
+    },
+    {
+     "id": "rezet",
+     "n": 8
+    },
+    {
+     "id": "mav375",
+     "n": 11
+    },
+    {
+     "id": "j94",
+     "n": 12
+    },
+    {
+     "id": "class08",
+     "n": 13
+    },
+    {
+     "id": "general",
+     "n": 14
+    },
+    {
+     "id": "jupiter",
+     "n": 15
+    },
+    {
+     "id": "kando_v40",
+     "n": 16
+    },
+    {
+     "id": "sw1",
+     "n": 17
+    },
+    {
+     "id": "black_five",
+     "n": 18
+    },
+    {
+     "id": "crocodile",
+     "n": 19
+    },
+    {
+     "id": "deltic",
+     "n": 20
+    },
+    {
+     "id": "drg01",
+     "n": 21
+    },
+    {
+     "id": "f7",
+     "n": 22
+    },
+    {
+     "id": "flying_scotsman",
+     "n": 23
+    },
+    {
+     "id": "ice1",
+     "n": 24
+    },
+    {
+     "id": "k4s",
+     "n": 25
+    },
+    {
+     "id": "m62",
+     "n": 26
+    },
+    {
+     "id": "mallard",
+     "n": 27
+    },
+    {
+     "id": "re460",
+     "n": 28
+    },
+    {
+     "id": "taurus",
+     "n": 29
+    },
+    {
+     "id": "tgv",
+     "n": 30
+    },
+    {
+     "id": "v63",
+     "n": 31
+    },
+    {
+     "id": "daylight",
+     "n": 32
+    },
+    {
+     "id": "dda40x",
+     "n": 33
+    },
+    {
+     "id": "gg1",
+     "n": 34
+    },
+    {
+     "id": "mav424",
+     "n": 35
+    },
+    {
+     "id": "nine_f",
+     "n": 36
+    },
+    {
+     "id": "sd40",
+     "n": 37
+    },
+    {
+     "id": "big_boy",
+     "n": 38
+    },
+    {
+     "id": "koutetsujou",
+     "n": 39
+    }
+   ],
+   "placed": [
+    {
+     "id": "rocket",
+     "row": 0,
+     "L": 0.75,
+     "sprite": true
+    },
+    {
+     "id": "bm50",
+     "row": 1,
+     "L": 0.625,
+     "sprite": true
+    },
+    {
+     "id": "muki",
+     "row": 2,
+     "L": 0.5,
+     "sprite": true
+    },
+    {
+     "id": "c50",
+     "row": 3,
+     "L": 0.8,
+     "sprite": true
+    },
+    {
+     "id": "mav490",
+     "row": 4,
+     "L": 1,
+     "sprite": true
+    },
+    {
+     "id": "mk45",
+     "row": 5,
+     "L": 1.25,
+     "sprite": true
+    },
+    {
+     "id": "mk48",
+     "row": 6,
+     "L": 1.125,
+     "sprite": true
+    },
+    {
+     "id": "rezet",
+     "row": 7,
+     "L": 1,
+     "sprite": true
+    },
+    {
+     "id": "mav375",
+     "row": 8,
+     "L": 1.25,
+     "sprite": true
+    },
+    {
+     "id": "j94",
+     "row": 9,
+     "L": 1.125,
+     "sprite": true
+    },
+    {
+     "id": "class08",
+     "row": 10,
+     "L": 1.125,
+     "sprite": true
+    },
+    {
+     "id": "general",
+     "row": 11,
+     "L": 1.5,
+     "sprite": true
+    },
+    {
+     "id": "jupiter",
+     "row": 12,
+     "L": 1.5,
+     "sprite": true
+    },
+    {
+     "id": "kando_v40",
+     "row": 13,
+     "L": 1.5,
+     "sprite": true
+    },
+    {
+     "id": "sw1",
+     "row": 14,
+     "L": 1.5,
+     "sprite": true
+    },
+    {
+     "id": "black_five",
+     "row": 15,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "crocodile",
+     "row": 16,
+     "L": 3,
+     "sprite": true
+    },
+    {
+     "id": "deltic",
+     "row": 17,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "drg01",
+     "row": 18,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "f7",
+     "row": 19,
+     "L": 2.25,
+     "sprite": true
+    },
+    {
+     "id": "flying_scotsman",
+     "row": 20,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "ice1",
+     "row": 21,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "k4s",
+     "row": 22,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "m62",
+     "row": 23,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "mallard",
+     "row": 24,
+     "L": 2,
+     "sprite": true
+    },
+    {
+     "id": "re460",
+     "row": 25,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "taurus",
+     "row": 26,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "tgv",
+     "row": 27,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "v63",
+     "row": 28,
+     "L": 2.5,
+     "sprite": true
+    },
+    {
+     "id": "daylight",
+     "row": 29,
+     "L": 3.5,
+     "sprite": true
+    },
+    {
+     "id": "dda40x",
+     "row": 30,
+     "L": 3.4,
+     "sprite": true
+    },
+    {
+     "id": "gg1",
+     "row": 31,
+     "L": 3.5,
+     "sprite": true
+    },
+    {
+     "id": "mav424",
+     "row": 32,
+     "L": 3,
+     "sprite": true
+    },
+    {
+     "id": "nine_f",
+     "row": 33,
+     "L": 3,
+     "sprite": true
+    },
+    {
+     "id": "sd40",
+     "row": 34,
+     "L": 3.4,
+     "sprite": true
+    },
+    {
+     "id": "big_boy",
+     "row": 35,
+     "L": 4,
+     "sprite": true
+    },
+    {
+     "id": "koutetsujou",
+     "row": 36,
+     "L": 4,
+     "sprite": true
+    }
+   ]
+  }
+ },
+ "curves": []
+}

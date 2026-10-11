@@ -1,0 +1,19 @@
+{
+  "asset": "drg01",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_drg01_engine_",
+    "rolling/loco_drg01_engine-t0_",
+    "rolling/loco_drg01_engine-t1_",
+    "rolling/loco_drg01_tender_",
+    "rolling/loco_drg01_tender-t0_",
+    "rolling/loco_drg01_tender-t1_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-13"
+    ]
+  ],
+  "total_pages": 22
+}

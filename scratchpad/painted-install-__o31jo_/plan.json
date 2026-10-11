@@ -1,0 +1,16 @@
+{
+  "asset": "sw1",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_sw1_body_",
+    "rolling/loco_sw1_body-t0_",
+    "rolling/loco_sw1_body-t1_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-14"
+    ]
+  ],
+  "total_pages": 22
+}

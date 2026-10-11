@@ -1,0 +1,265 @@
+{
+ "errors": [],
+ "lineups": {},
+ "curves": [
+  {
+   "id": "rocket",
+   "n": 1,
+   "L": 0.75,
+   "progress": 18.774446666667046,
+   "state": "moving"
+  },
+  {
+   "id": "bm50",
+   "n": 2,
+   "L": 0.625,
+   "progress": 18.71103833333318,
+   "state": "moving"
+  },
+  {
+   "id": "muki",
+   "n": 3,
+   "L": 0.5,
+   "progress": 18.64573166666714,
+   "state": "moving"
+  },
+  {
+   "id": "c50",
+   "n": 4,
+   "L": 0.8,
+   "progress": 18.794683333333456,
+   "state": "moving"
+  },
+  {
+   "id": "mav490",
+   "n": 5,
+   "L": 1,
+   "progress": 18.8971133333337,
+   "state": "moving"
+  },
+  {
+   "id": "mk45",
+   "n": 6,
+   "L": 1.25,
+   "progress": 19.02899999999969,
+   "state": "moving"
+  },
+  {
+   "id": "mk48",
+   "n": 7,
+   "L": 1.125,
+   "progress": 18.96825746527746,
+   "state": "moving"
+  },
+  {
+   "id": "rezet",
+   "n": 8,
+   "L": 1,
+   "progress": 18.8971133333337,
+   "state": "moving"
+  },
+  {
+   "id": "mav375",
+   "n": 11,
+   "L": 1.25,
+   "progress": 19.817587205567424,
+   "state": "moving"
+  },
+  {
+   "id": "j94",
+   "n": 12,
+   "L": 1.125,
+   "progress": 19.747655467335342,
+   "state": "moving"
+  },
+  {
+   "id": "class08",
+   "n": 13,
+   "L": 1.125,
+   "progress": 19.747338969434796,
+   "state": "moving"
+  },
+  {
+   "id": "general",
+   "n": 14,
+   "L": 1.5,
+   "progress": 19.93201379675115,
+   "state": "moving"
+  },
+  {
+   "id": "jupiter",
+   "n": 15,
+   "L": 1.5,
+   "progress": 19.943447625747112,
+   "state": "moving"
+  },
+  {
+   "id": "kando_v40",
+   "n": 16,
+   "L": 1.5,
+   "progress": 19.930976274274478,
+   "state": "moving"
+  },
+  {
+   "id": "sw1",
+   "n": 17,
+   "L": 1.5,
+   "progress": 19.940500182374716,
+   "state": "moving"
+  },
+  {
+   "id": "black_five",
+   "n": 18,
+   "L": 2,
+   "progress": 20.193647298171747,
+   "state": "moving"
+  },
+  {
+   "id": "crocodile",
+   "n": 19,
+   "L": 3,
+   "progress": 20.686906294205528,
+   "state": "moving"
+  },
+  {
+   "id": "deltic",
+   "n": 20,
+   "L": 2,
+   "progress": 20.196458403588117,
+   "state": "moving"
+  },
+  {
+   "id": "drg01",
+   "n": 21,
+   "L": 2,
+   "progress": 20.19191389539666,
+   "state": "moving"
+  },
+  {
+   "id": "f7",
+   "n": 22,
+   "L": 2.25,
+   "progress": 20.32213823021329,
+   "state": "moving"
+  },
+  {
+   "id": "flying_scotsman",
+   "n": 23,
+   "L": 2,
+   "progress": 20.20419906766216,
+   "state": "moving"
+  },
+  {
+   "id": "ice1",
+   "n": 24,
+   "L": 2.5,
+   "progress": 20.461166666666838,
+   "state": "moving"
+  },
+  {
+   "id": "k4s",
+   "n": 25,
+   "L": 2.5,
+   "progress": 20.44818386987775,
+   "state": "moving"
+  },
+  {
+   "id": "m62",
+   "n": 26,
+   "L": 2.5,
+   "progress": 20.439988934302754,
+   "state": "moving"
+  },
+  {
+   "id": "mallard",
+   "n": 27,
+   "L": 2,
+   "progress": 20.192483705772997,
+   "state": "moving"
+  },
+  {
+   "id": "re460",
+   "n": 28,
+   "L": 2.5,
+   "progress": 20.44158899387577,
+   "state": "moving"
+  },
+  {
+   "id": "taurus",
+   "n": 29,
+   "L": 2.5,
+   "progress": 20.44158899387577,
+   "state": "moving"
+  },
+  {
+   "id": "tgv",
+   "n": 30,
+   "L": 2.5,
+   "progress": 20.461166666666838,
+   "state": "moving"
+  },
+  {
+   "id": "v63",
+   "n": 31,
+   "L": 2.5,
+   "progress": 20.43585230637027,
+   "state": "moving"
+  },
+  {
+   "id": "daylight",
+   "n": 32,
+   "L": 3.5,
+   "progress": 20.94872312358123,
+   "state": "moving"
+  },
+  {
+   "id": "dda40x",
+   "n": 33,
+   "L": 3.5,
+   "progress": 20.95111374041048,
+   "state": "moving"
+  },
+  {
+   "id": "gg1",
+   "n": 34,
+   "L": 3.5,
+   "progress": 20.9296442039655,
+   "state": "moving"
+  },
+  {
+   "id": "mav424",
+   "n": 35,
+   "L": 3,
+   "progress": 20.689212913135858,
+   "state": "moving"
+  },
+  {
+   "id": "nine_f",
+   "n": 36,
+   "L": 3,
+   "progress": 20.686906294205528,
+   "state": "moving"
+  },
+  {
+   "id": "sd40",
+   "n": 37,
+   "L": 3.4,
+   "progress": 20.890971263465005,
+   "state": "moving"
+  },
+  {
+   "id": "big_boy",
+   "n": 38,
+   "L": 4,
+   "progress": 21.180896845444302,
+   "state": "moving"
+  },
+  {
+   "id": "koutetsujou",
+   "n": 39,
+   "L": 4,
+   "progress": 21.180896845444302,
+   "state": "moving"
+  }
+ ]
+}

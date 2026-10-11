@@ -1,0 +1,1 @@
+250421a21cdd25a8: reviewed 32 curve frames, straight/detail, lamp/window night alignment, stationary freeze and orthographic geometry. SW1 only. 2026-10-08.

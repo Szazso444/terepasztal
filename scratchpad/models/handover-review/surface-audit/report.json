@@ -1,0 +1,13 @@
+{
+  "mesh_unchanged": true,
+  "mesh_sha256": "d0fbcc03ae667d795d4f77a238bc8f5965e244f0b113e7add6d334c1cd9512d4",
+  "modes": [
+    "painted",
+    "flat",
+    "clay"
+  ],
+  "facings": [
+    0,
+    24
+  ]
+}

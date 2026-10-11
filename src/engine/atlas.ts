@@ -84,7 +84,7 @@ export class AtlasRegistry {
         image.src = `/assets/${name}.png`;
       });
       const pages =
-        Number.isInteger(json.pages) && json.pages! > 1 && json.pages! <= 16
+        Number.isInteger(json.pages) && json.pages! > 1 && json.pages! <= 128
           ? json.pages
           : undefined;
       return { image, frames: json.frames, resolution, partial: json.partial === true, pages };
