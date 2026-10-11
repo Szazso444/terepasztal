@@ -152,40 +152,47 @@ function ageAfter(s: Partial<AgeSnapshot>) {
   return e.tier;
 }
 
+/** Depot counts around anything a goal could ever have asked of them, and a thousand. */
+const DEPOT_COUNTS = [0, 1, 2, 3, 1e3];
+
 describe('the diesel goal', () => {
-  it('opens the Diesel age at two depots and either 100 residents or nine owned chunks', () => {
-    expect(ageAfter({ depots: 2, population: 100 }), '2 depots, 100 residents').toBe(1);
-    expect(ageAfter({ depots: 2, chunks: 9 }), '2 depots, 9 chunks').toBe(1);
-    expect(ageAfter({ depots: 2, population: 100, chunks: 9 }), 'both alternatives').toBe(1);
+  it('opens the Diesel age at 100 residents or nine owned chunks, with a single depot', () => {
+    expect(ageAfter({ depots: 1, population: 100 }), '100 residents').toBe(1);
+    expect(ageAfter({ depots: 1, chunks: 9 }), '9 chunks').toBe(1);
+    expect(ageAfter({ depots: 1, population: 100, chunks: 9 }), 'both alternatives').toBe(1);
   });
 
-  it('keeps the Steam age with one depot, or short of both alternatives', () => {
-    expect(ageAfter({ depots: 1, population: 100, chunks: 9 }), '1 depot').toBe(0);
-    expect(ageAfter({ depots: 1, population: 1e6, chunks: 1e3 }), '1 depot, far past').toBe(0);
-    expect(ageAfter({ depots: 2, population: 99, chunks: 8 }), '99 residents, 8 chunks').toBe(0);
-    expect(ageAfter({ depots: 1e3, population: 99, chunks: 8 }), 'any depots, short').toBe(0);
+  it('keeps the Steam age in a new game, and short of both alternatives however many depots', () => {
+    expect(ageAfter({}), 'a new game').toBe(0);
+    for (const depots of DEPOT_COUNTS)
+      expect(ageAfter({ depots, population: 99, chunks: 8 }), `${depots} depots, short`).toBe(0);
   });
 
-  it('opens exactly when the depots and one alternative are met, around every threshold', () => {
-    for (const depots of [0, 1, 2, 3])
+  it('opens exactly on 100 residents or nine chunks, whatever the depots, around every threshold', () => {
+    for (const depots of DEPOT_COUNTS)
       for (const population of [0, 99, 100, 1000])
         for (const chunks of [1, 8, 9, 16]) {
-          const opens = depots >= 2 && (population >= 100 || chunks >= 9);
+          const opens = population >= 100 || chunks >= 9;
           expect(
             ageAfter({ depots, population, chunks }),
-            `${depots} ${population} ${chunks}`,
+            `${depots} depots, ${population} residents, ${chunks} chunks`,
           ).toBe(opens ? 1 : 0);
         }
   });
 
-  it('shows the depots and both alternatives with their progress on the age card', () => {
-    const diesel = ageStatus(0, { ...NEW_GAME, depots: 2, population: 40, chunks: 9 })[1];
-    expect(diesel.goals).toEqual([
-      { kind: 'depots', target: 2, current: 2, done: true },
-      { kind: 'population', target: 100, current: 40, done: false, anyOf: 1 },
-      { kind: 'chunks', target: 9, current: 9, done: true, anyOf: 1 },
+  it('shows only the two alternatives, in one group, with their progress on the age card', () => {
+    const card = (depots: number) =>
+      ageStatus(0, { ...NEW_GAME, depots, population: 40, chunks: 9 })[1].goals;
+    const goals = card(1);
+    const group = goals[0].anyOf;
+    expect(group).toBeTypeOf('number');
+    expect(goals).toEqual([
+      { kind: 'population', target: 100, current: 40, done: false, anyOf: group },
+      { kind: 'chunks', target: 9, current: 9, done: true, anyOf: group },
     ]);
-    for (const g of diesel.goals) expect(STR.ages.goal[g.kind], g.kind).toBeTruthy();
+    for (const g of goals) expect(STR.ages.goal[g.kind], g.kind).toBeTruthy();
+    // the depots change nothing the card shows
+    for (const depots of DEPOT_COUNTS) expect(card(depots), `${depots} depots`).toEqual(goals);
   });
 
   it('leaves a save past the Diesel age where it is, and moves a Steam save up on its next check', () => {
@@ -200,7 +207,7 @@ describe('the diesel goal', () => {
     const steam = new Economy();
     steam.load(JSON.parse(JSON.stringify(new Economy().toJSON())));
     expect(steam.tier).toBe(0);
-    steam.advanceAge({ ...NEW_GAME, depots: 2, chunks: 9 });
+    steam.advanceAge({ ...NEW_GAME, depots: 1, chunks: 9 });
     expect(steam.tier).toBe(1);
   });
 });
