@@ -104,7 +104,10 @@ train's retreat. If no reachable siding fits the full train, add a longer loop o
 A train only backs into a siding it can leave towards its next stop, so a siding whose switch
 faces away from where the train is going does not count. When no train in the way has room to
 pull aside, the traffic counts a deadlock and each train held in it says it is jammed, with no
-siding it can pull into to let the other train by.
+siding it can pull into to let the other train by. A train that has to back off for the same
+train again before it reaches its stop is kept back: it still gives way, so the other runs on,
+but the traffic counts a deadlock and the train says it gives way to the same train each time,
+with nowhere free to pass it. A free siding or a passing loop on that line lets the two pass.
 
 A roaming train with nothing worth hauling waits where it stopped without keeping the station's
 platform. When another train needs the track it stands on, it moves aside, into a siding when

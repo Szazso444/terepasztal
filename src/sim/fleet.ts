@@ -1019,6 +1019,9 @@ export class Fleet {
       for (const { train: t, other, plan } of candidates) {
         if (t.retreat(ctx, ids, plan)) {
           this.traffic.yielded(t, other, now);
+          // giving way to the same train again before reaching its stop: the line keeps the two
+          // from passing, so the jam is counted though one of them could pull aside
+          if (t.gaveWay(other)) this.traffic.deadlock(group, now);
           this.rebuildOccupancy();
           this.rebuildReservations();
           moved = true;

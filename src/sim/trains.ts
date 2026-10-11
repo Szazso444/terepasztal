@@ -331,6 +331,7 @@ const RETRY_EVERY = 20;
 /** notes about a yield, dropped when the train sets off from it */
 const YIELD_NOTES: readonly string[] = [
   STR.traffic.pullingAside,
+  STR.traffic.keptBack,
   STR.traffic.replan,
   STR.traffic.noWayOn,
   STR.traffic.jammed,
@@ -441,6 +442,11 @@ export interface RetreatSave {
    * version of its own: a save without it holds no shunt, as no save before it did.
    */
   back?: PathSegment[];
+  /**
+   * The escape gives way to the same train again (`Train.gaveWay`), with no format version of its
+   * own either: a save without it was not kept back, as no save before it was.
+   */
+  kept?: boolean;
 }
 /** Reserves an escape for the train being resumed, as `TickCtx.reserveRecovery` does. */
 export type ReserveEscape = (path: PathSegment[], group: number[]) => boolean;
@@ -690,7 +696,10 @@ export class Train {
   holding = false;
   /** the holding path is an idle train making way: at its end the train idles there again */
   private aside = false;
-  /** An idle train on its way out of other trains' route (`retreat` from the idle state). */
+  /**
+   * An idle train on its way out of other trains' route (`retreat` from the idle state, or from
+   * standing with no stop at all).
+   */
   get makingWay() {
     return this.aside;
   }
@@ -745,6 +754,10 @@ export class Train {
   private retreatGroup: number[] = [];
   /** the second leg of the shunt being run, reserved with the path: run after the turn */
   private shunt: PathSegment[] | null = null;
+  /** the train the last escape in a jam gave way to (`gaveWay`), not kept in a save */
+  private gaveWayTo: number | null = null;
+  /** the escape being run gives way to the same train again (`gaveWay`): said where it ends */
+  private kept = false;
   /** Queue a contract; it starts once the current leg is done. */
   addJob(j: TrainJob) {
     if (
@@ -2248,6 +2261,8 @@ export class Train {
           return;
         }
         this.setState('yielding');
+        if (this.kept) this.lastMessage = STR.traffic.keptBack;
+        this.kept = false;
         return;
       }
       if (want && st === want) this.arrive(want, ctx);
@@ -2811,15 +2826,15 @@ export class Train {
 
   /**
    * Pull aside along a plan (from `planRetreat`, or `planAside` for an idle train), reserved before
-   * anything changes, both legs of a shunt with it. An idle train making way idles where the way
-   * ends; any other waits there to go on (`yielding`).
+   * anything changes, both legs of a shunt with it. An idle train, or one standing with no stop at
+   * all, makes way and idles where the way ends; any other waits there to go on (`yielding`).
    */
   retreat(ctx: TickCtx, group: number[] = [], plan = this.planRetreat(ctx, group)): boolean {
     if (!plan) return false;
     const way = plan.back ? [...plan.path, ...plan.back] : plan.path;
     if (!ctx.reserveRecovery(this, way, plan.group)) return false;
     // The complete plan is reserved before changing direction or leaving the platform.
-    this.aside = this.state === 'idle';
+    this.aside = this.state === 'idle' || (this.state === 'noRoute' && !this.route.length);
     this.serviceStop = null;
     if (plan.flip) this.reverseConsist();
     if (this.atStation) this.atStation.occupants.delete(this.id);
@@ -2828,6 +2843,7 @@ export class Train {
     this.shunt = plan.back ?? null;
     this.trackVersion = ctx.track.version;
     this.holding = true;
+    this.kept = false;
     this.retreatGroup = plan.group;
     this.yieldCount++;
     this.yieldUntil = ctx.now + 30;
@@ -2835,6 +2851,18 @@ export class Train {
     this.lastMessage = this.aside ? STR.traffic.makingWay : STR.traffic.pullingAside;
     this.setState('moving');
     return true;
+  }
+  /**
+   * Note that the escape a working train has just set off along in a jam (`retreat`) gives way to
+   * train `other`. True when it gave way to that train before and has reached no stop since
+   * (`yieldCount`): the line keeps the two from passing, and where the escape ends the train says
+   * it is kept back (`STR.traffic.keptBack`). Always false for a train with no stop, or making way.
+   */
+  gaveWay(other: number): boolean {
+    if (!this.holding || this.aside || !this.route.length) return false;
+    this.kept = this.yieldCount > 1 && this.gaveWayTo === other;
+    this.gaveWayTo = other;
+    return this.kept;
   }
 
   /**
@@ -2861,6 +2889,7 @@ export class Train {
     if (!this.holding) return;
     this.holding = false;
     this.shunt = null;
+    this.kept = false;
     this.speed = 0;
     this.yieldUntil = now + 4;
     if (this.aside) {
@@ -3002,6 +3031,7 @@ export class Train {
       return false;
     }
     this.shunt = back;
+    this.kept = retreat.kept === true;
     this.retreatGroup = retreat.group;
     return true;
   }
@@ -3076,12 +3106,15 @@ export class Train {
   }
   /**
    * The rest of the escape a train backing off runs (`wayJSON`), and the group it is for; a shunt's
-   * second leg too, before the turn.
+   * second leg too, before the turn, and that it is kept back.
    */
   private retreatJSON(): RetreatSave | null {
     const way = this.holding ? this.wayJSON() : null;
     const back = this.shunt && { back: this.shunt.map((s) => ({ ...s })) };
-    return way && { path: way.path, group: [...this.retreatGroup], left: way.left, ...back };
+    const kept = this.kept && { kept: true };
+    return (
+      way && { path: way.path, group: [...this.retreatGroup], left: way.left, ...back, ...kept }
+    );
   }
   /** Nothing to carry on with after a load: stand without a route and look for one at once. */
   private standAfterLoad() {
