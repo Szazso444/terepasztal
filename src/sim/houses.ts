@@ -250,17 +250,11 @@ export class HouseRegistry {
     h.level = Math.min(this.maxLevel, h.level + 1);
     h.full = 0;
     delete h.work;
+    // The toast and the notice (`Game.onUpgraded`) read the same words, so say the name once.
+    const name = decorDef(HOUSE_ID).name;
     this.onChanged?.(h);
-    this.onMessage?.(STR.house.upgraded(h.level), 'good');
-    this.onUpgraded?.({
-      kind: 'house',
-      x: h.x,
-      y: h.y,
-      w: 1,
-      h: 1,
-      name: decorDef(HOUSE_ID).name,
-      level: h.level,
-    });
+    this.onMessage?.(STR.upgrade.done(name, h.level), 'good');
+    this.onUpgraded?.({ kind: 'house', x: h.x, y: h.y, w: 1, h: 1, name, level: h.level });
   }
 
   // ------------------------------------------------------------------ towns

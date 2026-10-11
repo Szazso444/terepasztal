@@ -19,7 +19,8 @@ import {
   type BuildingJSON,
 } from './buildings';
 import { bridgeCapacity } from './bridges';
-import type { House } from './houses';
+import { HOUSE_ID, type House } from './houses';
+import { decorDef } from './build';
 import { SimStep, type StepContext } from './step';
 import { SIM_STEP } from './time';
 import { SAVE_VERSION, readSaveText } from './save';
@@ -1218,4 +1219,423 @@ describe('the upgrade click', () => {
       },
     );
   });
+});
+
+// ---------------------------------------------- a house's finished upgrade: its toast and notice
+
+/**
+ * What a house registry told the game, in the order it did: a redraw (`onChanged`), a toast
+ * (`onMessage`) and a report (`onUpgraded`, which `Game.onUpgraded` turns into the play-mode notice
+ * with `STR.upgrade.done(name, level)`). `level` is the house's own level when it was told.
+ */
+type Told =
+  | { call: 'changed'; level: number }
+  | { call: 'message'; text: string; kind: string; level: number }
+  | { call: 'upgraded'; report: Upgraded };
+type Toast = Extract<Told, { call: 'message' }>;
+type Report = Extract<Told, { call: 'upgraded' }>;
+
+/** Records what the registry tells about the house `h`, besides the world's own record of rises. */
+function listen(w: World, h: House): Told[] {
+  const told: Told[] = [];
+  w.houses.onChanged = () => told.push({ call: 'changed', level: h.level });
+  w.houses.onMessage = (text, kind) => told.push({ call: 'message', text, kind, level: h.level });
+  w.houses.onUpgraded = (report) => {
+    told.push({ call: 'upgraded', report });
+    w.ups.push(report);
+  };
+  return told;
+}
+
+/**
+ * Splits what the registry told into the works it started and the rises it made. Every redraw
+ * opens a group. Alone, it is a work starting (the house closes, drawn at its old level). With
+ * company it is a rise, and the company is exactly one toast and one report, in either order.
+ */
+function readTold(told: readonly Told[]) {
+  const groups: Told[][] = [];
+  for (const t of told) {
+    if (t.call === 'changed') groups.push([]);
+    else if (groups.length) groups[groups.length - 1].push(t);
+    else throw new Error(`the registry told ${t.call} before any redraw`);
+  }
+  let starts = 0;
+  const rises: { toast: Toast; report: Upgraded }[] = [];
+  for (const g of groups) {
+    if (!g.length) {
+      starts++;
+      continue;
+    }
+    expect(g.map((t) => t.call).sort(), 'a rise tells one toast and one report').toEqual([
+      'message',
+      'upgraded',
+    ]);
+    rises.push({
+      toast: g.find((t): t is Toast => t.call === 'message')!,
+      report: g.find((t): t is Report => t.call === 'upgraded')!.report,
+    });
+  }
+  return { starts, rises };
+}
+
+/**
+ * The invariant: each rise is one level up from `from`, its toast is the text the notice gets from
+ * its report (`Game.onUpgraded` builds `STR.upgrade.done(e.name, e.level)`), of kind 'good', told
+ * when the house had already risen, and the report names the house the decor data names.
+ */
+function expectAgree(h: House, rises: { toast: Toast; report: Upgraded }[], from: number) {
+  for (const [i, { toast, report }] of rises.entries()) {
+    const level = from + 1 + i;
+    const at = `rise ${i + 1}, to level ${level}`;
+    expect(report, `${at}: the report`).toEqual({
+      kind: 'house',
+      x: h.x,
+      y: h.y,
+      w: 1,
+      h: 1,
+      name: decorDef(HOUSE_ID).name,
+      level,
+    });
+    expect(toast.kind, `${at}: the kind of the toast`).toBe('good');
+    expect(toast.text, `${at}: the toast against the notice`).toBe(
+      STR.upgrade.done(report.name, report.level),
+    );
+    expect(toast.level, `${at}: the house's level when the toast came`).toBe(level);
+  }
+}
+
+describe("a house's finished upgrade", () => {
+  const PATHS: {
+    name: string;
+    timed: boolean;
+    setup: () => void;
+    start: (w: World, h: House) => boolean;
+  }[] = [
+    {
+      name: 'a work that runs its time',
+      timed: true,
+      setup: () => {},
+      start: (w, h) => w.houses.upgrade(h),
+    },
+    {
+      name: 'an upgrade that takes no time (tuning at 0)',
+      timed: false,
+      setup: () => {
+        rules.upgradeTimeMul = 0;
+      },
+      start: (w, h) => w.houses.upgrade(h),
+    },
+    {
+      name: 'a click in the editor',
+      timed: false,
+      setup: () => {},
+      start: (w, h) => freely(w, () => w.houses.upgrade(h)),
+    },
+  ];
+
+  for (const path of PATHS)
+    it(`toasts what its notice says, once per level, through ${path.name}`, () => {
+      path.setup();
+      const w = world(5);
+      const h = house(w, AT.house.x, AT.house.y);
+      const told = listen(w, h);
+      const top = w.houses.maxLevel;
+      expect(top, 'levels a house has').toBeGreaterThan(2);
+      const toasts = () => told.filter((t) => t.call === 'message').length;
+
+      for (let level = 1; level < top; level++) {
+        expect(path.start(w, h), `start the upgrade to level ${level + 1}`).toBe(true);
+        if (path.timed) {
+          // under way the house is closed at its old level, and nothing has been said about it
+          expect(h.work, `work to level ${level + 1}`).toBeDefined();
+          expect([h.level, toasts()]).toEqual([level, level - 1]);
+          w.houses.tickWorks(h.work!.total / 2);
+          expect([h.level, toasts()]).toEqual([level, level - 1]);
+          w.houses.tickWorks(h.work!.left);
+        }
+        expect([h.work, h.level, toasts()], `after the upgrade to level ${level + 1}`).toEqual([
+          undefined,
+          level + 1,
+          level,
+        ]);
+      }
+
+      // nothing more is said by time passing, nor by an upgrade there is no level for
+      const said = told.length;
+      w.houses.tickWorks(1e6);
+      expect(w.houses.upgrade(h)).toBe(false);
+      expect(freely(w, () => w.houses.upgrade(h))).toBe(false);
+      expect(told).toHaveLength(said);
+
+      const { starts, rises } = readTold(told);
+      expect(starts, 'works started').toBe(path.timed ? top - 1 : 0);
+      expect(rises, 'rises, one for each level above the first').toHaveLength(top - 1);
+      expectAgree(h, rises, 1);
+      expect(w.ups, 'the reports the world recorded').toEqual(rises.map((r) => r.report));
+    });
+
+  /** A house, in a world, that cannot be upgraded, and the reason the check gives for it. */
+  const REFUSALS: {
+    name: string;
+    free?: boolean;
+    reason?: string | RegExp;
+    make: () => { w: World; h: House };
+  }[] = [
+    {
+      name: 'cannot be paid for',
+      reason: /^Need /,
+      make: () => {
+        const w = world(5, true);
+        return { w, h: house(w, AT.house.x, AT.house.y) };
+      },
+    },
+    {
+      name: 'is not open to its next level in this age',
+      reason: /^Level 2 opens in the /,
+      make: () => {
+        const w = world(0);
+        return { w, h: house(w, AT.house.x, AT.house.y) };
+      },
+    },
+    {
+      name: 'is still under construction',
+      reason: STR.house.building,
+      make: () => {
+        const w = world(5);
+        freely(w, () => w.builder.spawnDecor(AT.house.x, AT.house.y, HOUSE_ID, 0));
+        return { w, h: homeOf(w) };
+      },
+    },
+    {
+      name: 'is still under construction, in the editor',
+      free: true,
+      reason: STR.house.building,
+      make: () => {
+        const w = world(5);
+        freely(w, () => w.builder.spawnDecor(AT.house.x, AT.house.y, HOUSE_ID, 0));
+        return { w, h: homeOf(w) };
+      },
+    },
+    {
+      name: 'is already at its top level',
+      reason: STR.house.maxed,
+      make: () => {
+        const w = world(5);
+        const h = house(w, AT.house.x, AT.house.y);
+        rules.upgradeTimeMul = 0;
+        while (h.level < w.houses.maxLevel) expect(w.houses.upgrade(h)).toBe(true);
+        rules.upgradeTimeMul = DEFAULT_RULES.upgradeTimeMul;
+        return { w, h };
+      },
+    },
+    {
+      name: 'is already being upgraded',
+      reason: STR.build.upgradingNow,
+      make: () => {
+        const w = world(5);
+        const h = house(w, AT.house.x, AT.house.y);
+        expect(w.houses.upgrade(h)).toBe(true);
+        return { w, h };
+      },
+    },
+    {
+      name: 'is already being upgraded, in the editor',
+      free: true,
+      reason: STR.build.upgradingNow,
+      make: () => {
+        const w = world(5);
+        const h = house(w, AT.house.x, AT.house.y);
+        expect(w.houses.upgrade(h)).toBe(true);
+        return { w, h };
+      },
+    },
+    {
+      name: 'has been demolished',
+      make: () => {
+        const w = world(5);
+        const h = house(w, AT.house.x, AT.house.y);
+        expect(w.builder.removeDecor(h.x, h.y)).toBe(true);
+        return { w, h };
+      },
+    },
+  ];
+
+  for (const refusal of REFUSALS)
+    it(`says nothing when the house ${refusal.name}`, () => {
+      const { w, h } = refusal.make();
+      const told = listen(w, h);
+      const level = h.level;
+      const work = asStored(h.work ?? null);
+      const stock = holdings(w);
+      const reported = w.ups.length;
+      const attempt = <T>(f: () => T) => (refusal.free ? freely(w, f) : f());
+      if (refusal.reason !== undefined) {
+        const check = attempt(() => w.houses.canUpgrade(h));
+        expect(check.ok, 'the check allows it').toBe(false);
+        if (typeof refusal.reason === 'string') expect(check.reason).toBe(refusal.reason);
+        else expect(check.reason).toMatch(refusal.reason);
+      }
+      expect(
+        attempt(() => w.houses.upgrade(h)),
+        'upgrade',
+      ).toBe(false);
+      // a work already under way is not done after half its time; with none, time does nothing
+      w.houses.tickWorks(h.work ? h.work.total / 2 : 1e6);
+      expect(told, 'what the registry told').toEqual([]);
+      expect(h.level, 'the level').toBe(level);
+      expect(!!h.work, 'a work under way').toBe(!!work);
+      expect(holdings(w), 'the stockpile').toBe(stock);
+      expect(w.ups, 'the reports the world recorded').toHaveLength(reported);
+    });
+
+  it('takes the house name from the decor data once, for the toast and the report alike', () => {
+    // The data's name is made afresh on every read; if the toast and the report each read it,
+    // a source that answers differently every time shows them apart.
+    const def = decorDef(HOUSE_ID);
+    const was = def.name;
+    try {
+      const w = world(5);
+      const h = house(w, AT.house.x, AT.house.y);
+      const told = listen(w, h);
+      let reads = 0;
+      Object.defineProperty(def, 'name', {
+        get: () => `House number ${++reads}`,
+        configurable: true,
+      });
+      for (let rise = 1; rise <= 3; rise++) {
+        rules.upgradeTimeMul = rise === 2 ? 0 : 1;
+        expect(w.houses.upgrade(h)).toBe(true);
+        w.houses.tickWorks(1e6);
+      }
+      const { rises } = readTold(told);
+      expect(rises).toHaveLength(3);
+      for (const [i, { toast, report }] of rises.entries()) {
+        expect(toast.text, `rise ${i + 1}`).toBe(STR.upgrade.done(report.name, report.level));
+        expect(report.name, `rise ${i + 1}: the name in the report`).toMatch(/^House number \d+$/);
+      }
+    } finally {
+      Object.defineProperty(def, 'name', {
+        value: was,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+    }
+    expect(decorDef(HOUSE_ID).name).toBe(was);
+  });
+
+  it('has one wording for the rise: the old house wording is gone from the strings', () => {
+    expect(STR.house).not.toHaveProperty('upgraded');
+    for (const level of [2, 6])
+      expect(STR.upgrade.done(decorDef(HOUSE_ID).name, level)).not.toMatch(/upgraded to/i);
+  });
+});
+
+describe("a house's toast, for any run of clicks, waits and saves", () => {
+  type Op = { op: 'upgrade'; free: boolean } | { op: 'wait'; eighths: number } | { op: 'reload' };
+  interface HouseRun {
+    age: number;
+    poor: boolean;
+    day: number;
+    mul: number;
+    ops: Op[];
+  }
+
+  it('is told once on exactly the step the level rises, and is the text its notice gets', () => {
+    // The oracle is the level of the house and the game time stepped since its work started (whole
+    // eighths of a second, against work times that are whole eighths too, so every sum is exact).
+    // An accepted upgrade rises at once only when the editor or the tuning at 0 makes it instant,
+    // else it starts a work and says nothing; a work rises on the tick whose time reaches its
+    // total; a refused upgrade, a tick without a rise and a save and load say nothing. Each rise
+    // is one toast and one report that agree. Clicks, waits and saves come in any order.
+    forAll<HouseRun>(
+      (rng) => ({
+        age: rng.int(0, 5),
+        poor: rng.chance(0.2),
+        day: rng.pick([120, 240, 480]),
+        mul: rng.pick([0, 0.25, 0.5, 1, 2]),
+        ops: Array.from({ length: rng.int(1, 40) }, (): Op => {
+          const roll = rng.int(0, 5);
+          if (roll <= 2) return { op: 'upgrade', free: rng.chance(0.25) };
+          if (roll === 3) return { op: 'reload' };
+          const eighths = rng.pick([0, rng.int(1, 8), 8 * rng.int(1, 120), rng.int(1, 4800)]);
+          return { op: 'wait', eighths };
+        }),
+      }),
+      (run) => {
+        rules.daySeconds = run.day;
+        rules.upgradeTimeMul = run.mul;
+        let w = world(run.age, run.poor);
+        let h = house(w, AT.house.x, AT.house.y);
+        let told = listen(w, h);
+        let elapsed = 0;
+        for (const [i, op] of run.ops.entries()) {
+          const level = h.level;
+          const at = `op ${i} ${JSON.stringify(op)} at level ${level}${h.work ? ' with a work running' : ''}`;
+          if (op.op === 'reload') {
+            const work = asStored(h.work ?? null);
+            w = reload(w);
+            h = homeOf(w);
+            told = listen(w, h);
+            expect([h.level, asStored(h.work ?? null)], `${at}: loaded`).toEqual([level, work]);
+          } else if (op.op === 'upgrade') {
+            const attempt = () => [w.houses.canUpgrade(h).ok, w.houses.upgrade(h)] as const;
+            const [ok, done] = op.free ? freely(w, attempt) : attempt();
+            expect(done, `${at}: the click against the check`).toBe(ok);
+            const { starts, rises } = readTold(told.splice(0));
+            if (!done) {
+              expect([starts, rises.length, h.level], `${at}: refused`).toEqual([0, 0, level]);
+            } else if (h.work) {
+              expect(op.free || run.mul === 0, `${at}: a work where it was instant`).toBe(false);
+              expect([starts, rises.length, h.level], `${at}: a work started`).toEqual([
+                1,
+                0,
+                level,
+              ]);
+              elapsed = 0;
+            } else {
+              expect(op.free || run.mul === 0, `${at}: a rise at once`).toBe(true);
+              expect([starts, rises.length, h.level], `${at}: a rise at once`).toEqual([
+                0,
+                1,
+                level + 1,
+              ]);
+              expectAgree(h, rises, level);
+            }
+          } else {
+            const running = h.work;
+            const dt = op.eighths / 8;
+            w.houses.tickWorks(dt);
+            if (running) elapsed += dt;
+            const rose = !!running && elapsed >= running.total;
+            const { starts, rises } = readTold(told.splice(0));
+            expect([starts, rises.length, h.level], `${at}: after ${elapsed} s`).toEqual([
+              0,
+              rose ? 1 : 0,
+              level + (rose ? 1 : 0),
+            ]);
+            expect(h.work === undefined, `${at}: the work is over`).toBe(!running || rose);
+            expectAgree(h, rises, level);
+          }
+        }
+      },
+      {
+        shrink: function* (c) {
+          const simpler = (op: Op): Iterable<Op> =>
+            op.op === 'upgrade'
+              ? op.free
+                ? [{ op: 'upgrade', free: false }]
+                : []
+              : op.op === 'wait'
+                ? [...shrinkInt(op.eighths, 0)].map((eighths): Op => ({ op: 'wait', eighths }))
+                : [];
+          for (const ops of shrinkArray(c.ops, simpler)) if (ops.length) yield { ...c, ops };
+          if (c.poor) yield { ...c, poor: false };
+          for (const age of shrinkInt(c.age, 5)) yield { ...c, age };
+          if (c.mul !== 1) yield { ...c, mul: 1 };
+          if (c.day !== 240) yield { ...c, day: 240 };
+        },
+      },
+    );
+  }, 60_000);
 });

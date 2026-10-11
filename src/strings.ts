@@ -1284,7 +1284,6 @@ export const STR = {
     makeRoom: 'Upgrade this House to make room for more residents',
     autoUpgrade: (days: number) => `Upgrade to provide more homes (construction: ${days} days)`,
     maxed: 'Largest house',
-    upgraded: (l: number) => `House upgraded to level ${l}`,
     finished: 'A House is finished',
   },
   station: {
