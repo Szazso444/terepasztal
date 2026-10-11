@@ -1,0 +1,604 @@
+{
+ "stone-deck-x": {
+  "size": [
+   64.25,
+   47.25
+  ],
+  "x": [
+   -31.91,
+   32.09
+  ],
+  "y": [
+   -26.41,
+   20.84
+  ],
+  "kit": {
+   "thickness": 4.76
+  },
+  "bottomLeft": {
+   "slope": 0.56,
+   "y@-32": 2.1,
+   "y@0": 20.08,
+   "rms": 0.09,
+   "ideal": "slope 0.5, thickness at -32, 16+thickness at 0"
+  },
+  "bottomRight": {
+   "slope": -0.54,
+   "y@0": 21.51,
+   "y@32": 4.18,
+   "rms": 0.08,
+   "ideal": "slope -0.5"
+  },
+  "endColumns": {
+   "left": [
+    -2.66,
+    2.34
+   ],
+   "right": [
+    -7.66,
+    4.09
+   ]
+  }
+ },
+ "stone-deck-y": {
+  "size": [
+   64,
+   47.75
+  ],
+  "x": [
+   -31.85,
+   31.9
+  ],
+  "y": [
+   -26.69,
+   21.06
+  ],
+  "kit": {
+   "thickness": 4.94
+  },
+  "bottomLeft": {
+   "slope": 0.59,
+   "y@-32": 3,
+   "y@0": 21.99,
+   "rms": 0.08,
+   "ideal": "slope 0.5, thickness at -32, 16+thickness at 0"
+  },
+  "bottomRight": {
+   "slope": -0.55,
+   "y@0": 20.44,
+   "y@32": 2.98,
+   "rms": 0.09,
+   "ideal": "slope -0.5"
+  },
+  "endColumns": {
+   "left": [
+    -6.94,
+    3.06
+   ],
+   "right": [
+    -1.69,
+    3.06
+   ]
+  }
+ },
+ "stone-pad": {
+  "size": [
+   64,
+   40
+  ],
+  "x": [
+   -31.84,
+   31.91
+  ],
+  "y": [
+   -17.97,
+   22.03
+  ],
+  "kit": {
+   "thickness": 5.89
+  },
+  "bottomLeft": {
+   "slope": 0.54,
+   "y@-32": 4.62,
+   "y@0": 22.03,
+   "rms": 0.13,
+   "ideal": "slope 0.5, thickness at -32, 16+thickness at 0"
+  },
+  "bottomRight": {
+   "slope": -0.55,
+   "y@0": 22.12,
+   "y@32": 4.65,
+   "rms": 0.13,
+   "ideal": "slope -0.5"
+  },
+  "endColumns": {
+   "left": [
+    -1.22,
+    4.78
+   ],
+   "right": [
+    -1.22,
+    4.78
+   ]
+  },
+  "topLeft": {
+   "slope": -0.53,
+   "y@-32": -0.97,
+   "y@0": -18
+  },
+  "topRight": {
+   "slope": 0.53,
+   "y@0": -18.06,
+   "y@32": -0.98
+  }
+ },
+ "stone-rail-x": {
+  "size": [
+   36,
+   26.25
+  ],
+  "x": [
+   -31.44,
+   4.31
+  ],
+  "y": [
+   -10.18,
+   16.07
+  ],
+  "kit": {
+   "height": 11.58
+  },
+  "top": {
+   "slope": 0.56,
+   "y@-32": -12.86,
+   "y@0": 4.9,
+   "rms": 0.13
+  },
+  "bottom": {
+   "slope": 0.56,
+   "y@-32": -1.95,
+   "y@0": 16.05,
+   "rms": 0.08,
+   "ideal": "slope 0.5, foot 0 at -32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "stone-rail-y": {
+  "size": [
+   36,
+   26.25
+  ],
+  "x": [
+   -4.07,
+   31.68
+  ],
+  "y": [
+   -10.09,
+   16.16
+  ],
+  "kit": {
+   "height": 10.55
+  },
+  "top": {
+   "slope": -0.55,
+   "y@32": -12.71,
+   "y@0": 4.88,
+   "rms": 0.11
+  },
+  "bottom": {
+   "slope": -0.55,
+   "y@32": -1.24,
+   "y@0": 16.33,
+   "rms": 0.07,
+   "ideal": "slope -0.5, foot 0 at 32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "stone-arch-x": {
+  "size": [
+   36.5,
+   36.75
+  ],
+  "x": [
+   -32.2,
+   4.05
+  ],
+  "y": [
+   -20.74,
+   16.01
+  ],
+  "kit": {
+   "height": 22.03
+  },
+  "top": {
+   "slope": 0.55,
+   "y@-32": -23.25,
+   "y@0": -5.59,
+   "rms": 0.08
+  },
+  "bottom": {
+   "slope": 0.29,
+   "y@-32": -2.45,
+   "y@0": 6.89,
+   "rms": 4.89,
+   "ideal": "slope 0.5, foot 0 at -32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "stone-arch-y": {
+  "size": [
+   36.5,
+   32.5
+  ],
+  "x": [
+   -3.97,
+   32.28
+  ],
+  "y": [
+   -16.56,
+   15.94
+  ],
+  "kit": {
+   "height": 16.72
+  },
+  "top": {
+   "slope": -0.54,
+   "y@32": -18.59,
+   "y@0": -1.26,
+   "rms": 0.08
+  },
+  "bottom": {
+   "slope": -0.4,
+   "y@32": -1.89,
+   "y@0": 10.81,
+   "rms": 4.04,
+   "ideal": "slope -0.5, foot 0 at 32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "stone-pier": {
+  "size": [
+   12.75,
+   51.25
+  ],
+  "x": [
+   -6.25,
+   6.25
+  ],
+  "y": [
+   -3.2,
+   48.05
+  ],
+  "kit": {
+   "length": 48.09
+  },
+  "widthPx": 12.5
+ },
+ "wood-deck-x": {
+  "size": [
+   64.25,
+   50.25
+  ],
+  "x": [
+   -31.91,
+   32.09
+  ],
+  "y": [
+   -29.21,
+   21.04
+  ],
+  "kit": {
+   "thickness": 4.9
+  },
+  "bottomLeft": {
+   "slope": 0.66,
+   "y@-32": 0.45,
+   "y@0": 21.48,
+   "rms": 0.07,
+   "ideal": "slope 0.5, thickness at -32, 16+thickness at 0"
+  },
+  "bottomRight": {
+   "slope": -0.57,
+   "y@0": 20.76,
+   "y@32": 2.39,
+   "rms": 0.07,
+   "ideal": "slope -0.5"
+  },
+  "endColumns": {
+   "left": [
+    -4.21,
+    0.79
+   ],
+   "right": [
+    -9.96,
+    2.54
+   ]
+  }
+ },
+ "wood-deck-y": {
+  "size": [
+   64.25,
+   51.5
+  ],
+  "x": [
+   -31.91,
+   32.09
+  ],
+  "y": [
+   -30.22,
+   21.03
+  ],
+  "kit": {
+   "thickness": 4.9
+  },
+  "bottomLeft": {
+   "slope": 0.63,
+   "y@-32": 1.53,
+   "y@0": 21.73,
+   "rms": 0.07,
+   "ideal": "slope 0.5, thickness at -32, 16+thickness at 0"
+  },
+  "bottomRight": {
+   "slope": -0.62,
+   "y@0": 20.45,
+   "y@32": 0.63,
+   "rms": 0.07,
+   "ideal": "slope -0.5"
+  },
+  "endColumns": {
+   "left": [
+    -9.97,
+    1.78
+   ],
+   "right": [
+    -4.22,
+    0.78
+   ]
+  }
+ },
+ "wood-pad": {
+  "size": [
+   64,
+   43.25
+  ],
+  "x": [
+   -31.84,
+   31.91
+  ],
+  "y": [
+   -21.85,
+   21.4
+  ],
+  "kit": {
+   "thickness": 5.45
+  },
+  "bottomLeft": {
+   "slope": 0.63,
+   "y@-32": 1.58,
+   "y@0": 21.78,
+   "rms": 0.07,
+   "ideal": "slope 0.5, thickness at -32, 16+thickness at 0"
+  },
+  "bottomRight": {
+   "slope": -0.59,
+   "y@0": 21.06,
+   "y@32": 2.11,
+   "rms": 0.07,
+   "ideal": "slope -0.5"
+  },
+  "endColumns": {
+   "left": [
+    -3.6,
+    1.9
+   ],
+   "right": [
+    -3.35,
+    2.4
+   ]
+  },
+  "topLeft": {
+   "slope": -0.57,
+   "y@-32": -3.55,
+   "y@0": -21.87
+  },
+  "topRight": {
+   "slope": 0.59,
+   "y@0": -22.17,
+   "y@32": -3.42
+  }
+ },
+ "wood-rail-x": {
+  "size": [
+   34.5,
+   29.5
+  ],
+  "x": [
+   -31.19,
+   3.06
+  ],
+  "y": [
+   -13.5,
+   16
+  ],
+  "kit": {
+   "height": 12.4
+  },
+  "top": {
+   "slope": 0.63,
+   "y@-32": -15.49,
+   "y@0": 4.65,
+   "rms": 0.31
+  },
+  "bottom": {
+   "slope": 0.6,
+   "y@-32": -4.02,
+   "y@0": 15.27,
+   "rms": 0.24,
+   "ideal": "slope 0.5, foot 0 at -32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "wood-rail-y": {
+  "size": [
+   34.5,
+   29.75
+  ],
+  "x": [
+   -2.89,
+   31.36
+  ],
+  "y": [
+   -13.7,
+   16.05
+  ],
+  "kit": {
+   "height": 13.54
+  },
+  "top": {
+   "slope": -0.62,
+   "y@32": -14.6,
+   "y@0": 5.15,
+   "rms": 0.57
+  },
+  "bottom": {
+   "slope": -0.55,
+   "y@32": -3.05,
+   "y@0": 14.4,
+   "rms": 0.32,
+   "ideal": "slope -0.5, foot 0 at 32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "wood-truss-x": {
+  "size": [
+   34.5,
+   26.75
+  ],
+  "x": [
+   -32.71,
+   1.54
+  ],
+  "y": [
+   -10.77,
+   15.98
+  ],
+  "kit": {
+   "height": 11.48
+  },
+  "top": {
+   "slope": 0.5,
+   "y@-32": -11.05,
+   "y@0": 4.89,
+   "rms": 0.08
+  },
+  "bottom": {
+   "slope": 0.5,
+   "y@-32": -0.03,
+   "y@0": 16.04,
+   "rms": 0.07,
+   "ideal": "slope 0.5, foot 0 at -32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "wood-truss-y": {
+  "size": [
+   34.5,
+   25.75
+  ],
+  "x": [
+   -3.13,
+   31.12
+  ],
+  "y": [
+   -9.77,
+   15.98
+  ],
+  "kit": {
+   "height": 10.33
+  },
+  "top": {
+   "slope": -0.5,
+   "y@32": -10.78,
+   "y@0": 5.23,
+   "rms": 0.06
+  },
+  "bottom": {
+   "slope": -0.48,
+   "y@32": 0.92,
+   "y@0": 16.21,
+   "rms": 0.09,
+   "ideal": "slope -0.5, foot 0 at 32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "wood-brace-x": {
+  "size": [
+   33.75,
+   37.25
+  ],
+  "x": [
+   -30.31,
+   3.19
+  ],
+  "y": [
+   -21.17,
+   16.08
+  ],
+  "kit": {
+   "height": 25.64
+  },
+  "top": {
+   "slope": 0.7,
+   "y@-32": -23.05,
+   "y@0": -0.8,
+   "rms": 1.99
+  },
+  "bottom": {
+   "slope": 0.24,
+   "y@-32": 1.93,
+   "y@0": 9.5,
+   "rms": 2.45,
+   "ideal": "slope 0.5, foot 0 at -32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "wood-brace-y": {
+  "size": [
+   33.75,
+   36
+  ],
+  "x": [
+   -2.21,
+   31.29
+  ],
+  "y": [
+   -19.99,
+   16.01
+  ],
+  "kit": {
+   "height": 28.24
+  },
+  "top": {
+   "slope": -0.43,
+   "y@32": -17.57,
+   "y@0": -3.86,
+   "rms": 2.69
+  },
+  "bottom": {
+   "slope": -0.05,
+   "y@32": 6.03,
+   "y@0": 7.67,
+   "rms": 2.85,
+   "ideal": "slope -0.5, foot 0 at 32, 16 at 0 (minus what hangs)"
+  }
+ },
+ "wood-post": {
+  "size": [
+   4.5,
+   38.25
+  ],
+  "x": [
+   -2.13,
+   2.12
+  ],
+  "y": [
+   -1.15,
+   37.1
+  ],
+  "kit": {
+   "length": 36.94
+  },
+  "widthPx": 4.25
+ }
+}

@@ -74,6 +74,8 @@ export class Glows {
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
     private readonly surface: (x: number, y: number) => { x: number; y: number },
+    /** Screen offset of the rail under a tile position (negative is up): lamps ride the train. */
+    private readonly railDz: (x: number, y: number) => number = () => 0,
   ) {}
   private make(frame: string) {
     const f = this.atlas.get(frame);
@@ -118,7 +120,7 @@ export class Glows {
       const fx = pose.x + Math.cos(dir) * 0.36;
       const fy = pose.y + Math.sin(dir) * 0.36;
       const w = tileToWorld(fx, fy);
-      s.position.set(Math.round(w.x), Math.round(w.y) - 8);
+      s.position.set(Math.round(w.x), Math.round(w.y + this.railDz(fx, fy)) - 8);
       s.alpha = night * 0.9;
       s.visible = night > 0.02;
     }
@@ -138,8 +140,10 @@ export class GroundLights {
     private readonly layer: Container,
     private readonly surface: (x: number, y: number) => { x: number; y: number },
     private readonly inBounds: (x: number, y: number) => boolean,
+    /** Puts a tile's light in the layer it belongs to (a bridge deck carries its own). */
+    private readonly place: ((s: Sprite, x: number, y: number) => void) | null = null,
   ) {}
-  private get(key: string) {
+  private get(key: string, x: number, y: number) {
     let s = this.pool.get(key);
     if (!s) {
       const f = this.atlas.get('fx/light_tile');
@@ -147,9 +151,10 @@ export class GroundLights {
       s.anchor.set(f.anchorX, f.anchorY);
       s.blendMode = 'add';
       s.cullable = true;
-      this.layer.addChild(s);
+      if (!this.place) this.layer.addChild(s);
       this.pool.set(key, s);
     }
+    this.place?.(s, x, y);
     return s;
   }
   update(stations: Station[], trains: Train[], night: number) {
@@ -165,7 +170,7 @@ export class GroundLights {
             const y = st.y + dy;
             if (!this.inBounds(x, y)) continue;
             const key = `${x},${y}`;
-            const s = this.get(key);
+            const s = this.get(key, x, y);
             const p = this.surface(x, y);
             s.position.set(p.x, p.y);
             const a = night * (1 - d / (R + 1)) * (0.55 + st.level * 0.08);
@@ -181,7 +186,7 @@ export class GroundLights {
         const y = Math.floor(pose.y + Math.sin(dir) * 1.1 + 0.5);
         if (!this.inBounds(x, y)) continue;
         const key = `${x},${y}`;
-        const s = this.get(key);
+        const s = this.get(key, x, y);
         const p = this.surface(x, y);
         s.position.set(p.x, p.y);
         s.alpha = seen.has(key) ? Math.min(1, s.alpha + 0.4 * night) : 0.75 * night;
@@ -306,6 +311,8 @@ export class Smoke {
   constructor(
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
+    /** Screen offset of the rail under a tile position (negative is up): smoke leaves the chimney. */
+    private readonly railDz: (x: number, y: number) => number = () => 0,
   ) {}
   update(trains: Train[], dt: number, enabled: boolean) {
     if (enabled)
@@ -322,7 +329,7 @@ export class Smoke {
           const f = this.atlas.get(`fx/smoke_${Math.floor(Math.random() * 3)}`);
           const s = new Sprite(f.texture);
           s.anchor.set(0.5);
-          s.position.set(w.x, w.y - 30);
+          s.position.set(w.x, w.y - 30 + this.railDz(cx, cy));
           s.alpha = 0.8;
           this.layer.addChild(s);
           this.puffs.push({

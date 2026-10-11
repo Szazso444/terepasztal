@@ -14,7 +14,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -67,8 +67,11 @@ export interface SaveGame {
   rules?: Partial<Rules>;
   /** v4: global resources */
   stockpile?: unknown;
-  /** v4: processing buildings [x, y, id, acc] */
-  buildings?: [number, number, string, number, number?][];
+  /**
+   * v4: processing buildings [x, y, id, acc], v12: upgrade level, v14: deck height of a bridge
+   * platform the player set (absent or null: automatic)
+   */
+  buildings?: [number, number, string, number, number?, (number | null)?][];
   /** v5: owned chunks */
   regions?: boolean[];
   /** v6: season of day 1 (0 spring .. 3 winter) */
@@ -317,6 +320,11 @@ export const MIGRATIONS: Migration[] = [
       j.track = convertOneTileRegular(j.track);
       grantStarters(j, V13_STARTERS);
     },
+  },
+  {
+    from: 13,
+    note: 'bridge decks keep their automatic height (the level of the rail they carry) until raised or lowered; bridges over land keep the land under them',
+    run: () => {},
   },
 ];
 /** Fields the current build reads; everything else is carried through untouched. */

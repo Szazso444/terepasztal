@@ -33,8 +33,8 @@ export interface LevelData {
   trackFormat?: 2;
   stations: LevelStation[];
   decor: [number, number, string, number][];
-  /** processing buildings [x, y, id] */
-  buildings?: [number, number, string][];
+  /** processing buildings [x, y, id], and for a bridge platform the deck height set by hand */
+  buildings?: [number, number, string, number?][];
   start: {
     money: number;
     tickets: number;

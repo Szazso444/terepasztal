@@ -38,6 +38,8 @@ import { inSupplyMode } from './supply';
 import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
+import { levelAt, MAX_LEVEL as HIGHEST_LEVEL } from '../world/elevation';
+import type { Dir } from '../engine/iso';
 import { sfx } from '../engine/audio';
 
 const trackData = content.track;
@@ -101,6 +103,13 @@ export class Builder {
   onIndustryPlaced: ((x: number, y: number) => void) | null = null;
   /** fired when a station loses (true) or regains (false) its last platform tile */
   onStationOrphaned: ((s: Station, orphaned: boolean) => void) | null = null;
+  /**
+   * The level of the rail on a tile in the current rail profile (set by the game): where an
+   * automatic bridge deck stands once track lies on it. Undefined where no straight rail runs.
+   */
+  autoDeck: ((x: number, y: number) => number | undefined) | null = null;
+  /** A train stands on the tile (set by the game): no deck moves under it. */
+  busy: ((x: number, y: number) => boolean) | null = null;
 
   constructor(
     readonly map: GameMap,
@@ -138,6 +147,117 @@ export class Builder {
     const b = this.buildingAt(x, y);
     return b && buildingDef(b.id).bridge ? b : undefined;
   }
+  // ------------------------------------------------------------------ bridge decks
+  /**
+   * Deck height of a bridge platform, in levels: what the player set, else the level of the rail
+   * it carries, else the ground (or water) it lies on. Never below that ground, as in the rail
+   * profile (the terrain under a platform can change in the editor).
+   */
+  deckLevel(b: Building) {
+    return this.railLevelAt(b.x, b.y);
+  }
+  /** Level of the rail on a track tile: a deck set by hand, the rail profile, or the ground. */
+  private railLevelAt(x: number, y: number) {
+    const ground = levelAt(this.map, x, y);
+    return Math.max(ground, this.bridgeAt(x, y)?.deck ?? this.autoDeck?.(x, y) ?? ground);
+  }
+  /** Can the rail of piece `p` bend where it leaves through edge `d`? Only a straight run can. */
+  private bends(p: TrackPiece, d: Dir) {
+    return !p.unit && p.links.some(([a, b]) => a === opposite(b) && (a === d || b === d));
+  }
+  /** Platforms joined edge to edge with `b`, itself included: one bridge. */
+  bridgeGroup(b: Building): Building[] {
+    const seen = new Set<Building>([b]),
+      out = [b];
+    for (let i = 0; i < out.length; i++)
+      for (const d of DIRS) {
+        const n = this.bridgeAt(out[i].x + DIR_DX[d], out[i].y + DIR_DY[d]);
+        if (n && !seen.has(n)) {
+          seen.add(n);
+          out.push(n);
+        }
+      }
+    return out;
+  }
+  /**
+   * Can the deck of a platform move by `delta` levels (docs/rail-inclines.md)? A deck stands
+   * between the ground under it and the highest level. Rail on it climbs one level per tile at
+   * most to the rail beside it and meets a curve or switch at that piece's own level; a curve,
+   * switch or crossing on the deck stays where it was laid, and so does a station platform.
+   * Nothing moves under a train. `level` is the height the deck would take; `limit` says that
+   * the deck already stands at its floor or at the greatest height.
+   */
+  checkDeck(
+    b: Building,
+    delta: number,
+  ): { ok: boolean; level: number; reason?: string; limit?: 'floor' | 'ceiling' } {
+    const level = this.deckLevel(b) + delta,
+      why = STR.build.deck,
+      no = (reason: string) => ({ ok: false, level, reason });
+    if (level < levelAt(this.map, b.x, b.y))
+      return {
+        ...no(why.lowest(terrainAt(this.map, b.x, b.y) === Terrain.Water)),
+        limit: 'floor',
+      };
+    if (level > HIGHEST_LEVEL) return { ...no(why.highest), limit: 'ceiling' };
+    const piece = this.track.get(b.x, b.y);
+    if (!piece) return { ok: true, level };
+    if (piece.unit || piece.links.length !== 1 || !climbAxes(piece.links).length)
+      return no(why.fixed);
+    if (this.stationForTrackTile(b.x, b.y)) return no(why.station);
+    if (this.busy?.(b.x, b.y)) return no(why.train);
+    for (const d of piece.links[0]) {
+      const nx = b.x + DDX[d],
+        ny = b.y + DDY[d],
+        q = this.track.get(nx, ny);
+      if (!q || !this.track.opensTo(nx, ny, opposite(d))) continue;
+      // The rail bends on the tiles either side of a step: no train may stand there either.
+      if (this.busy?.(nx, ny)) return no(why.train);
+      const there = this.railLevelAt(nx, ny);
+      if (this.bends(q, opposite(d))) {
+        if (Math.abs(level - there) > 1) return no(why.steep);
+      } else if (level !== there) return no(why.meets);
+    }
+    return { ok: true, level };
+  }
+  /**
+   * Raise (+1) or lower (-1) the deck of a platform. The first change on a bridge fixes the rail
+   * it already carries where it runs: an automatic deck follows the rail beside it, so without
+   * this the whole bridge would move with the one tile. Platforms without track stay automatic
+   * and take the level of the rail laid over them later; one that is lowered back onto the ground
+   * (or the water) before any rail lies on it is automatic again, as it was placed. Returns false
+   * when a rule refuses.
+   */
+  changeDeck(b: Building, delta: number): boolean {
+    if (this.bridgeAt(b.x, b.y) !== b) return false;
+    const c = this.checkDeck(b, delta);
+    if (!c.ok) {
+      sfx('build.invalid');
+      return false;
+    }
+    const pinned = this.bridgeGroup(b)
+      .filter((p) => p !== b && p.deck === undefined && this.track.has(p.x, p.y))
+      .map((p) => ({ p, deck: this.deckLevel(p) }));
+    for (const { p, deck } of pinned) p.deck = deck;
+    if (!this.track.has(b.x, b.y) && c.level === levelAt(this.map, b.x, b.y)) delete b.deck;
+    else b.deck = c.level;
+    this.onBuildingChanged?.(b, false);
+    sfx(delta > 0 ? 'build.place' : 'build.remove');
+    return true;
+  }
+  /**
+   * The deck a new platform takes on a tile: beside a deck set by hand the bridge continues at
+   * that height (never below the ground), otherwise it is automatic.
+   */
+  placedDeck(x: number, y: number): number | undefined {
+    let deck: number | undefined;
+    for (const d of DIRS) {
+      const n = this.bridgeAt(x + DIR_DX[d], y + DIR_DY[d]);
+      if (n?.deck !== undefined) deck = Math.max(deck ?? 0, n.deck);
+    }
+    return deck === undefined ? undefined : Math.max(deck, levelAt(this.map, x, y));
+  }
+
   refreshBridgeCapacity(x: number, y: number) {
     const p = this.track.get(x, y);
     if (p)
@@ -336,18 +456,62 @@ export class Builder {
     // they sit at the deck, the level of the rails they meet off the bridge.
     const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
       // Members of a wide piece are parts of a curve or switch, whatever their links look like.
-      climbs = !wide && members.some((m) => climbAxes(m.links).length > 0);
-    if (this.groundCheck && !climbs && !tiles.every((t) => this.groundCheck!(t.x, t.y, 'level'))) {
+      climbs = !wide && members.some((m) => climbAxes(m.links).length > 0),
+      /** The deck the player set under a tile, if any. */
+      set = (t: { x: number; y: number }) => this.bridgeAt(t.x, t.y)?.deck;
+    // A level piece on uneven ground, or over a deck set by hand, sits on platforms: its seat.
+    let seat: number | null = null;
+    if (
+      !climbs &&
+      (tiles.some((t) => set(t) !== undefined) ||
+        (this.groundCheck && !tiles.every((t) => this.groundCheck!(t.x, t.y, 'level'))))
+    ) {
       if (!tiles.every((t) => this.bridgeAt(t.x, t.y)))
         return { ok: false, cost: {}, reason: STR.build.notSmooth };
-      if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by)) === null)
-        return { ok: false, cost: {}, reason: STR.build.deckLevels };
+      seat = supportedDeck(this.map, members, (bx, by) => this.bridgeAt(bx, by));
+      if (seat === null) return { ok: false, cost: {}, reason: STR.build.deckLevels };
     }
+    /** Track beside tile `t` that the new piece would join: its edge and the piece there. */
+    const joins = (t: { x: number; y: number }, p: TrackPiece) =>
+      p.links.flat().flatMap((d) => {
+        const nx = t.x + DDX[d],
+          ny = t.y + DDY[d],
+          q = this.track.get(nx, ny);
+        return !q ||
+          tiles.some((m) => m.x === nx && m.y === ny) ||
+          !this.track.opensTo(nx, ny, opposite(d))
+          ? []
+          : [{ d, nx, ny, q }];
+      });
     for (const t of tiles) {
       const p = probe.get(t.x, t.y);
       if (!p) continue;
       if (climbs && this.groundCheck && !this.groundCheck(t.x, t.y, 'straight'))
         return { ok: false, cost: {}, reason: STR.build.tooSteep };
+      // Heights: where a deck set by hand is involved the rails have to meet. A straight rail
+      // climbs one level per tile at most; a curve or switch meets its rails at its own level.
+      const beside = joins(t, p),
+        here = this.bridgeAt(t.x, t.y),
+        ground = levelAt(this.map, t.x, t.y);
+      if (
+        beside.length &&
+        (set(t) !== undefined || beside.some((n) => set({ x: n.nx, y: n.ny }) !== undefined))
+      ) {
+        const theirs = beside.map((n) => this.railLevelAt(n.nx, n.ny)),
+          // An automatic deck takes the level of the higher rail it meets.
+          mine =
+            set(t) ?? (!climbs ? (seat ?? ground) : here ? Math.max(ground, ...theirs) : ground);
+        for (let i = 0; i < beside.length; i++) {
+          const n = beside[i],
+            bends = climbs && this.bends(p, n.d) && this.bends(n.q, opposite(n.d));
+          if (bends ? Math.abs(mine - theirs[i]) > 1 : mine !== theirs[i])
+            return {
+              ok: false,
+              cost: {},
+              reason: bends ? STR.build.tooSteep : STR.build.deckMeets,
+            };
+        }
+      }
       for (const [a, b] of p.links)
         for (const d of [a, b]) {
           const nx = t.x + DDX[d];
@@ -368,6 +532,33 @@ export class Builder {
     let mul = 0;
     for (const t of tiles) mul = Math.max(mul, this.terrainMul(t.x, t.y));
     return this.affordable(this.priced(pieceCost(kind, item.cls, item.cls2), mul));
+  }
+  /**
+   * A run of straights dragged in one go, as it would be laid tile after tile: each piece is
+   * checked against the track that stands already (checkTrack) and against the piece before it
+   * in the run, which is not there yet. Terrain never puts two neighbours more than a level
+   * apart; a deck height set by hand can.
+   */
+  checkTrackRun(
+    tiles: readonly { x: number; y: number; rot: number }[],
+    item: TrackItem,
+  ): PlacementCheck[] {
+    let before: number | null = null;
+    return tiles.map((t) => {
+      let c = this.checkTrack(t.x, t.y, item, t.rot);
+      const p = this.bridgeAt(t.x, t.y),
+        ground = levelAt(this.map, t.x, t.y),
+        // An automatic deck carries on at the level of the rail it continues.
+        level = this.track.has(t.x, t.y)
+          ? this.railLevelAt(t.x, t.y)
+          : p
+            ? (p.deck ?? Math.max(ground, before ?? ground))
+            : ground;
+      if (c.ok && before !== null && Math.abs(level - before) > 1)
+        c = { ok: false, cost: {}, reason: STR.build.tooSteep };
+      before = c.ok ? level : null;
+      return c;
+    });
   }
   refundFor(p: TrackPiece): Cost {
     return this.free
@@ -684,6 +875,10 @@ export class Builder {
     const c = this.checkBuilding(x, y, defId);
     if (!c.ok || !this.pay(c.cost)) return null;
     const b: Building = { id: defId, x, y, acc: 0, active: false, rate: 0 };
+    if (buildingDef(defId).bridge) {
+      const deck = this.placedDeck(x, y);
+      if (deck !== undefined) b.deck = deck;
+    }
     this.buildings.set(this.key(x, y), b);
     this.onBuildingChanged?.(b, false);
     this.onIndustryPlaced?.(x, y);

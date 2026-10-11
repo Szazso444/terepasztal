@@ -199,9 +199,9 @@ export class Toolbar {
         name: d.name,
         cost: d.cost,
         frame: 'structures/' + d.id,
-        desc: `${d.bridge!.capacity} t capacity. ${d.flavor}`,
+        desc: STR.toolbar.bridgeDesc(d.bridge!.capacity, d.flavor),
         tier: d.tier,
-        place: 'On water. Lay track on the platform after building it.',
+        place: STR.toolbar.place.platform,
       })),
     );
     const terrain: ToolItem[] = [

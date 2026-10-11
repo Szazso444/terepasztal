@@ -1,4 +1,4 @@
-import { type LandscapeMap } from './landscapeModel';
+import { materialAt, type LandscapeMap } from './landscapeModel';
 import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
 import {
   grassDetail,
@@ -67,6 +67,17 @@ self.onmessage = async (event: MessageEvent) => {
           raised = true;
           break;
         }
+    // A rail that climbs over level ground lifts its bed: an embankment to paint.
+    if (!raised && relief.rails)
+      for (const [k, bed] of relief.rails) {
+        if (bed.flat && !bed.cross) continue;
+        const tx = k % map.w,
+          ty = Math.floor(k / map.w);
+        if (tx >= x - 2 && tx < x + w + 3 && ty >= y - 2 && ty < y + h + 3) {
+          raised = true;
+          break;
+        }
+      }
     for (let py = 0; py < height; py += 1)
       for (let px = 0; px < width; px += 1) {
         const sx = left + (px + 0.5) / scale,
@@ -99,21 +110,28 @@ self.onmessage = async (event: MessageEvent) => {
             if (bank > 0) {
               const stacked =
                 terrain === Terrain.Mountain ? 1 : unit((levelSpan(tx, ty) - 1.4) / 0.4);
-              const outcrop = unit(
-                (surfaceNoise(wx * 1.4, wy * 1.4, 631) -
-                  0.6 +
-                  (surfaceNoise(wx * 5, wy * 5, 637) - 0.5) * 0.12) /
-                  0.1,
-              );
+              // The sides of a rail bed are earthworks: graded soil, no rock breaking through.
+              const outcrop = relief.rails?.has(tileIndex)
+                ? 0
+                : unit(
+                    (surfaceNoise(wx * 1.4, wy * 1.4, 631) -
+                      0.6 +
+                      (surfaceNoise(wx * 5, wy * 5, 637) - 0.5) * 0.12) /
+                      0.1,
+                  );
               steep = bank * Math.max(stacked, outcrop);
             } else steep = 0;
           } else
             steep = unit((levels - 1.4 + (surfaceNoise(wx * 3, wy * 3, 617) - 0.5) * 0.6) / 0.4);
         }
+        // A rail bed raised beside water is earthwork: the shore keeps to its foot, and no
+        // water is painted up its side.
+        const dry = z > 0.6 && relief.rails?.has(tileIndex);
         for (let m = 0; m < 4; m++) {
           const weight = blend[m + 4];
           if (!weight) continue;
           let material = blend[m];
+          if (dry && material === 5) material = materialAt(map, Math.round(tx), Math.round(ty));
           if (city.has(tileIndex)) material = 8;
           if (z > 2 && terrain === Terrain.Mountain && material === 7) material = 9;
           surfaceColor(

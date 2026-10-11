@@ -5,6 +5,7 @@ import {
   reliefHeight,
   reliefCorners,
   reliefTileAtWorld,
+  reliefHitAtWorld,
   groundAllows,
   surfaceSlope,
   RELIEF_MAX,
@@ -442,6 +443,11 @@ export class Landscape {
   tileAtWorld(x: number, y: number) {
     this.updateHeights();
     return reliefTileAtWorld(this.map, this.relief, x, y);
+  }
+  /** The tile under a world pixel and the surface height (world pixels up) the camera sees. */
+  hitAtWorld(x: number, y: number) {
+    this.updateHeights();
+    return reliefHitAtWorld(this.map, this.relief, x, y);
   }
   /** Original illustrated silhouettes only at sparse, unbuildable local summits. */
   summit(x: number, y: number) {

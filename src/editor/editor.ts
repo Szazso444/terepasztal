@@ -107,7 +107,9 @@ export class Editor {
     ]);
     l.stations = this.builder.stations.map((s) => s.toLevel());
     l.decor = [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]);
-    l.buildings = [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id]);
+    l.buildings = [...this.builder.buildings.values()].map((b) =>
+      b.deck === undefined ? [b.x, b.y, b.id] : [b.x, b.y, b.id, b.deck],
+    );
     l.updatedAt = Date.now();
     return l;
   }

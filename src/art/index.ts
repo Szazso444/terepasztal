@@ -7,6 +7,7 @@ import { generateRollingAtlas, generateWagonAtlas } from './rolling';
 import { generateFxAtlas } from './fx';
 import { generateIconsAtlas } from './icons';
 import { generatePeopleAtlas } from './people';
+import { generateBridgesAtlas } from './bridges';
 
 /**
  * Atlas groups. A real `/public/assets/<name>.png` + `.json` pair overrides the generator for that
@@ -22,12 +23,7 @@ export const ATLAS_GROUPS: { name: string; generate: AtlasGenerator }[] = [
   { name: 'fx', generate: generateFxAtlas },
   { name: 'icons', generate: generateIconsAtlas },
   { name: 'people', generate: generatePeopleAtlas },
-  // Illustrated bridge kit (tools/bridge-kit.mjs); without the file, bridges stay procedural.
-  { name: 'bridges', generate: emptyAtlas },
+  // Bridge materials: tools/bridge-kit.mjs cuts them from the illustrated kit; without that file
+  // the generator's plain swatches clothe the same geometry.
+  { name: 'bridges', generate: generateBridgesAtlas },
 ];
-
-function emptyAtlas() {
-  const image = document.createElement('canvas');
-  image.width = image.height = 1;
-  return { image, frames: {} };
-}

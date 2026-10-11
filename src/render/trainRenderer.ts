@@ -1,4 +1,4 @@
-import { Container, Sprite } from 'pixi.js';
+import { Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import { SurfaceAssets, windowSprite } from './surfaceAssets';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey } from '../engine/iso';
@@ -14,6 +14,7 @@ import {
   bogieStyleOf,
 } from '../art/frames';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
+import { groundSliceKey, ridingKey, tileColumns } from './bridgeDepth';
 import {
   facingOf,
   DRAWN_FACINGS,
@@ -24,12 +25,28 @@ import {
   type VehiclePose,
 } from '../sim/body';
 
+/** Bridge decks as the train renderer needs them: they sort with the scenery, trains ride them. */
+export interface DeckSorting {
+  /** A bridge deck lies under the tile position. */
+  onDeck(x: number, y: number): boolean;
+}
+
 interface VehicleSprites {
   parts: Sprite[];
   undercarriage: Container;
   bogies: Sprite[];
   load: Sprite | null;
   spec: VehicleSpec;
+  /** Copies of its sprites cut to the tiles it is over, while it rides a bridge deck. */
+  slices: Sprite[];
+}
+/** A sprite of a vehicle that rides a deck, to be drawn in slices (bridgeDepth.ts). */
+interface Sliced {
+  s: Sprite;
+  /** Depth key its position alone gives it, its layer among the vehicle's sprites, and a nudge. */
+  own: number;
+  layer: number;
+  nudge: number;
 }
 
 /**
@@ -50,6 +67,8 @@ export class TrainRenderer {
   selectedId: number | null = null;
   /** vehicles standing inside an engine shed are not drawn */
   hideAt: ((x: number, y: number) => boolean) | null = null;
+  /** Bridge decks under the trains (the world renderer); absent, trains sort by position alone. */
+  decks: DeckSorting | null = null;
   private hoverSince = 0;
   private clock = 0;
   setHover(id: number | null) {
@@ -112,7 +131,7 @@ export class TrainRenderer {
           loadKind(train.wagons[i - train.locos.length].def) !== 'none'
         )
           load = this.make();
-        list.push({ parts, undercarriage, bogies, load, spec });
+        list.push({ parts, undercarriage, bogies, load, spec, slices: [] });
       }
     }
     return list;
@@ -125,6 +144,78 @@ export class TrainRenderer {
     }
     c.undercarriage.destroy({ children: true });
     c.load?.destroy();
+    for (const s of c.slices) {
+      const texture = s.texture;
+      s.destroy();
+      texture.destroy();
+    }
+  }
+
+  /**
+   * Draw the sprites of a vehicle that rides a bridge deck on straight track in slices, one per
+   * tile it is over, each sorted with that tile (bridgeDepth.ts): above the deck under it, below
+   * the parapet beside it and whatever stands in front. The sprites themselves are not drawn
+   * while their slices are. `axis` is the tile axis the track runs along and `line` its row
+   * (axis x) or column (axis y). Without `sprites` the vehicle is drawn whole again.
+   */
+  private slice(c: VehicleSprites, sprites: Sliced[], axis: 'x' | 'y' = 'x', line = 0) {
+    let n = 0;
+    for (const { s, own, layer, nudge } of sprites) {
+      s.renderable = false;
+      if (!s.visible) continue;
+      const base = s.texture,
+        w = base.orig.width,
+        res = base.frame.width / w,
+        // Standing square on the track the sprite is not turned: only mirrored, and sheared up
+        // or down along a climb. Its screen columns are its texture columns.
+        mirrored = Math.cos(s.rotation + s.skew.y) * s.scale.x < 0,
+        left = s.x - (mirrored ? 1 - s.anchor.x : s.anchor.x) * w;
+      for (const col of tileColumns(axis, line, left, left + w)) {
+        const t0 = mirrored ? left + w - col.to : col.from - left,
+          t1 = mirrored ? left + w - col.from : col.to - left;
+        if (t1 - t0 < 0.01) continue;
+        let piece = c.slices[n];
+        if (!piece) {
+          piece = new Sprite({
+            texture: new Texture({
+              source: base.source,
+              frame: new Rectangle(),
+              orig: new Rectangle(),
+              dynamic: true,
+            }),
+            cullable: true,
+          });
+          this.layer.addChild(piece);
+          c.slices.push(piece);
+        }
+        n++;
+        const texture = piece.texture;
+        if (texture.source !== base.source) texture.source = base.source;
+        texture.frame.x = base.frame.x + t0 * res;
+        texture.frame.y = base.frame.y;
+        texture.frame.width = (t1 - t0) * res;
+        texture.frame.height = base.frame.height;
+        texture.orig.width = t1 - t0;
+        texture.orig.height = base.orig.height;
+        texture.update();
+        piece.anchor.set((s.anchor.x * w - t0) / (t1 - t0), s.anchor.y);
+        piece.position.copyFrom(s.position);
+        piece.scale.copyFrom(s.scale);
+        piece.skew.copyFrom(s.skew);
+        piece.rotation = s.rotation;
+        piece.tint = s.tint;
+        piece.alpha = s.alpha;
+        piece.blendMode = s.blendMode;
+        piece.label = s.label;
+        piece.visible = true;
+        const tile = depthKey(col.x, col.y);
+        piece.zIndex =
+          (this.decks?.onDeck(col.x, col.y)
+            ? ridingKey(tile, own, layer)
+            : groundSliceKey(tile, own, layer)) + nudge;
+      }
+    }
+    for (let k = n; k < c.slices.length; k++) c.slices[k].visible = false;
   }
 
   remove(trainId: number) {
@@ -141,6 +232,8 @@ export class TrainRenderer {
     angle: number,
     layer: number,
     ground = this.ground(x, y),
+    /** The vehicle rides a bridge deck askew: the depth key of the front-most deck under it. */
+    front?: number,
   ) {
     const f = facingOf(angle);
     const drawn = DRAWN_FACINGS.has(f);
@@ -162,8 +255,10 @@ export class TrainRenderer {
       sgx: along * cos,
       sgy: along * sin,
     });
-    s.zIndex = depthKey(x, y, layer);
+    s.zIndex =
+      front === undefined ? depthKey(x, y, layer) : ridingKey(front, depthKey(x, y, 15), layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
+    s.renderable = true;
     return key;
   }
 
@@ -228,6 +323,53 @@ export class TrainRenderer {
         const segments = cur.segments;
         const previous = prev?.segments;
         c.undercarriage.zIndex = Infinity;
+        // Bridge decks sort with the scenery around them, so a vehicle over one cannot sort by
+        // its centre alone (bridgeDepth.ts). On straight track it is drawn in slices, one per
+        // tile under it; askew (on a curve carried by platforms) it takes the depth of the
+        // front-most deck under it, wheels included.
+        let deck: number | undefined,
+          axis: 'x' | 'y' | null | undefined,
+          line = 0;
+        if (this.decks)
+          segments.forEach((seg, si) => {
+            const ps = previous?.[si],
+              x = ps ? ps.x + (seg.x - ps.x) * alpha : seg.x,
+              y = ps ? ps.y + (seg.y - ps.y) * alpha : seg.y,
+              angle = ps ? lerpAngle(ps.angle, seg.angle, alpha) : seg.angle,
+              cos = Math.cos(angle),
+              sin = Math.sin(angle),
+              // The body ends a little short of its nominal length: a buffer over the next tile
+              // does not put the vehicle on it.
+              half = c.spec.segments[si].L / 2 - 0.06,
+              steps = Math.max(2, Math.ceil(half * 4));
+            for (let k = -steps; k <= steps; k++) {
+              const px = x + (cos * half * k) / steps,
+                py = y + (sin * half * k) / steps;
+              if (this.decks!.onDeck(px, py))
+                deck = Math.max(deck ?? -Infinity, depthKey(Math.round(px), Math.round(py)));
+            }
+            // Square on a line of tile centres, as straight track runs; every part on one line.
+            const along = Math.abs(sin) < 1e-4 ? 'x' : Math.abs(cos) < 1e-4 ? 'y' : null,
+              at = along === 'x' ? y : x,
+              square =
+                along !== null &&
+                Math.abs(at - Math.round(at)) < 0.02 &&
+                seg.bogies.every((b, k) => {
+                  const pb = ps?.bogies[k],
+                    ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
+                  return Math.abs(along === 'x' ? Math.sin(ba) : Math.cos(ba)) < 1e-4;
+                });
+            if (!square || (axis !== undefined && (axis !== along || line !== Math.round(at))))
+              axis = null;
+            else {
+              axis = along;
+              line = Math.round(at);
+            }
+          });
+        const riding = deck !== undefined,
+          straight = riding && !!axis,
+          front = straight ? undefined : deck,
+          sliced: Sliced[] = [];
         segments.forEach((seg, si) => {
           const ps = previous?.[si];
           const x = ps ? ps.x + (seg.x - ps.x) * alpha : seg.x;
@@ -247,7 +389,10 @@ export class TrainRenderer {
             shown,
             15,
             this.bodyGround(seg, ps, alpha, x, y),
+            front,
           );
+          const own = depthKey(x, y, 15);
+          if (straight) sliced.push({ s, own, layer: 15, nudge: 0 });
           const fr = this.atlas.get(key);
           // Procedural vehicle windows carry explicit amber palette pixels.
           // Illustrated replacements need their own authored mask; never light a boiler.
@@ -267,6 +412,8 @@ export class TrainRenderer {
             light.skew.copyFrom(s.skew);
             light.zIndex = s.zIndex + 0.01;
             light.visible = s.visible;
+            light.renderable = true;
+            if (straight) sliced.push({ s: light, own, layer: 15, nudge: 0.01 });
           } else {
             const light = this.windowLights.get(s);
             if (light) light.visible = false;
@@ -308,19 +455,23 @@ export class TrainRenderer {
               // ahead of the body centre (towards the camera) would otherwise paint over it
               bs.zIndex = s.zIndex - 1;
               bs.tint = tint;
+              if (straight) sliced.push({ s: bs, own, layer: 15, nudge: -0.03 });
             });
           if (c.load && si === 0) {
             const w = t.wagons[i - t.locos.length];
             if (w.cargo && w.amount > 0.5) {
               const kind = loadKind(w.def, w.cargo);
               const thin = w.def.gauge === 'narrow';
-              this.pose(c.load, (f) => loadFrame(kind, f, thin), x, y, shown, 16);
+              this.pose(c.load, (f) => loadFrame(kind, f, thin), x, y, shown, 16, undefined, front);
               const col =
                 (PAL as unknown as Record<string, RGB>)[cargoDef(w.cargo).color] ?? PAL.white;
               c.load.tint = hex(col);
+              if (straight) sliced.push({ s: c.load, own, layer: 16, nudge: 0 });
             } else c.load.visible = false;
           }
         });
+        if (straight) this.slice(c, sliced, axis!, line);
+        else if (c.slices.length) this.slice(c, []);
       }
     }
     for (const id of [...this.cars.keys()]) if (!seen.has(id)) this.remove(id);
