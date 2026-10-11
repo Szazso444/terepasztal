@@ -63,6 +63,7 @@ describe('building check', () => {
         ).toMatchObject({ ok: true, problems: [], notes: [] });
   }, 20_000);
 
+  // slow because every footprint at every rotation is painted at full size and checked: 0.6 s alone
   it("passes the guide's own block, painted where the guide draws it", () => {
     // on the plinth, as every guide shows it: a picture that keeps its guide's place must pass
     for (const fp of Object.values(FOOTPRINTS))
@@ -73,7 +74,7 @@ describe('building check', () => {
           problems: [],
         });
       }
-  });
+  }, 30_000);
 
   it('passes a building drawn larger, off centre and on a canvas of its own', () => {
     // the pilot: generators fill the canvas and choose its size themselves
@@ -440,6 +441,8 @@ describe('building check', () => {
   /** a camera 6.4 degrees too low: every height four fifths of what the game's camera draws */
   const tooLow = ([x, y]) => [x, 760 + (y - 760) * 0.8];
 
+  // slow because every wall of the depot is painted and checked a dozen ways, each a full-size
+  // picture: 2 s alone
   it("wants the ground inside a depot's portals left open, for the game's rails", () => {
     // the game lays its rails under the picture, through the portals. Four of the first depot's
     // pictures had a floor painted in the portals, and the rails did not show running in
@@ -511,8 +514,10 @@ describe('building check', () => {
     expect(checkPicture(portals('t2x2', 0, 0, { floor: true }), 't2x2', 0).problems).toEqual([
       'the portals are in the lower-left wall; they belong in the lower-right wall, where the block-out has them',
     ]);
-  }, 30000);
+  }, 90_000);
 
+  // slow because both depots on both walls are painted and checked at each limit, each a full-size
+  // picture: 1.9 s alone
   it("measures a portal's open ground by the portal's own width: how deep, how wide", () => {
     // the limits, on both depots and both walls. Measured on the first depot's pictures: those
     // whose rails did not show were open 0.18 of a portal's width at most, the others 0.50 and
@@ -563,8 +568,10 @@ describe('building check', () => {
       // so a portal half as wide as the block-out's is too narrow for the track
       told(seen({ from: 0.25, to: 0.75, deep: 0.5, wedge: true }), said, at);
     }
-  }, 30000);
+  }, 90_000);
 
+  // slow because each wall is painted with each apron, rail and gap and checked, each a full-size
+  // picture: 1.3 s alone
   it('takes the lowest thing painted in a column: an apron, a rail, a gap in the building', () => {
     const fp = FOOTPRINTS.t2x2;
     for (const [rot, wall] of END_WALLS) {
@@ -659,7 +666,7 @@ describe('building check', () => {
       expect(turreted, `turret r${rot}`).toMatchObject({ ok: true, problems: [] });
       for (const share of turreted.ground) expect(share, `turret r${rot}`).toBeCloseTo(0.7, 1);
     }
-  }, 30000);
+  }, 90_000);
 
   it('does not take a hairline or a speck for a floor', () => {
     // paint a pixel or two thick hides no rail: a line along the foot of the wall across the
@@ -703,6 +710,8 @@ describe('building check', () => {
     }
   });
 
+  // slow because the depot is painted and checked at each limit of a hole, each a full-size
+  // picture: 1.6 s alone
   it('refuses a portal of the depot that is a hole right through the building', () => {
     // told to leave the ground "transparent from the foot of the wall upwards", the generator
     // emptied the whole portal: the rails showed, and the hall's inner walls were gone. The
@@ -758,7 +767,7 @@ describe('building check', () => {
           `r${rot} portal ${n} and one seen far through`,
         );
       }
-  }, 30000);
+  }, 90_000);
 
   it("only says so of the narrow depot's portal, until its pictures have been measured", () => {
     // the limit was found on the depot's pictures. A narrow hall behind a wide portal shows a

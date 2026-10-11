@@ -334,6 +334,7 @@ describe('interlocking and recovery ownership', () => {
     expect(traffic.recoveries.active.has(1)).toBe(true);
   });
 
+  // slow because 100 seeded lines each lease a shunt among other trains standing about: 0.7 s alone
   it('leases a shunt on generated lines whole or not at all, and lets go of nothing still to run', () => {
     // a single line along y 5 from x 1 to LINE; the shunter (#1, `len` tiles long) heads west from
     // x `from` for `out` tiles, turns where it stands wholly on them and runs east from its rear
@@ -484,7 +485,7 @@ describe('interlocking and recovery ownership', () => {
     // both outcomes are drawn often
     expect(leased.yes).toBeGreaterThan(50);
     expect(leased.no).toBeGreaterThan(50);
-  });
+  }, 30_000);
 
   it('keeps the escape owner subject to a newly occupied route', () => {
     const g = new TrackGraph(24, 24);

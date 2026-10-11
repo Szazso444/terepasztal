@@ -1046,6 +1046,8 @@ describe('a save the game wrote', () => {
 // ------------------------------------------------------------------ a real game
 
 describe("a real game's save", () => {
+  // slow because each seeded game runs 600 to 1500 steps, saved and read back every 40 ticks: 1.6 s
+  // alone
   it(
     'is never refused for a broken number while the game runs, and reads back as written',
     { timeout: 120_000 },

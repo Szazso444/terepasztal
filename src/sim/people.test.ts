@@ -407,7 +407,7 @@ function bare(seed: number, side = 8) {
 
 describe('PeopleSim randomness, over seeded layouts', () => {
   // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
-  it('plays the same walkers from the same seed', { timeout: 20_000 }, () => {
+  it('plays the same walkers from the same seed', { timeout: 90_000 }, () => {
     let busy = 0;
     forAll(
       genCase,
@@ -425,7 +425,7 @@ describe('PeopleSim randomness, over seeded layouts', () => {
   });
 
   // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
-  it('carries on the same draws after a save taken at any tick', { timeout: 20_000 }, () => {
+  it('carries on the same draws after a save taken at any tick', { timeout: 90_000 }, () => {
     let busy = 0;
     forAll(
       genCase,
@@ -468,7 +468,7 @@ describe('PeopleSim randomness, over seeded layouts', () => {
   // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
   it(
     'saves its stream as a 32-bit integer at any tick, and loads it back unchanged',
-    { timeout: 20_000 },
+    { timeout: 90_000 },
     () => {
       let moved = 0;
       forAll(
@@ -803,7 +803,7 @@ describe('PeopleSim.places(), over seeded layouts', () => {
   // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
   it(
     'gives a walker whose home closed or went the nearest open place, leaving nobody homeless',
-    { timeout: 20_000 },
+    { timeout: 90_000 },
     () => {
       let moved = 0;
       forAll(
@@ -820,10 +820,11 @@ describe('PeopleSim.places(), over seeded layouts', () => {
     },
   );
 
-  // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
+  // each seeded layout runs a twin beside it, so the layouts take three seconds; the margin keeps a
+  // loaded CI runner green
   it(
     'changes nothing but the home, and a way home, of a walker whose home closed or went',
-    { timeout: 20_000 },
+    { timeout: 90_000 },
     () => {
       // Beside each tick runs a twin in which every displaced walker already lived at its new
       // home, one on its way home already walking there from where it stands: after the tick the
@@ -925,7 +926,7 @@ describe('walkers and a station closed for its upgrade', () => {
   // each case runs a thousand ticks or so; the margin keeps a loaded CI runner green
   it(
     'neither live at it nor set out from it to gather, and do again once it opens',
-    { timeout: 20_000 },
+    { timeout: 90_000 },
     () => {
       forAll(
         (rng) => ({
@@ -1255,7 +1256,7 @@ describe('re-homing a walker whose home closed', () => {
   });
 
   // each case runs a few hundred ticks; the margin keeps a loaded CI runner green
-  it('keeps it local: never the open place 30 or more tiles off', { timeout: 20_000 }, () => {
+  it('keeps it local: never the open place 30 or more tiles off', { timeout: 90_000 }, () => {
     forAll(
       (rng) => ({
         far: rng.int(30, 44),
