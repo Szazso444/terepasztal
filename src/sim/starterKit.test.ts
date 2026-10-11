@@ -5,7 +5,7 @@ import { RegionState } from '../world/regions';
 import { TrackGraph, TRACK_ITEMS, makePiece } from '../world/track';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import { Rng } from '../engine/rng';
-import { content, type LocoDef } from '../data/content';
+import { content, type LocoDef, type WagonDef } from '../data/content';
 import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
@@ -26,7 +26,9 @@ import {
   startDepotCentre,
   startDepotKind,
 } from './startDepot';
-import { gaugeOf } from './compat';
+import { gaugeOf, vehicleAccess } from './compat';
+import { vehicleSpec } from './body';
+import { cargoDef } from './cargo';
 import type { TrackClass } from '../world/track';
 import { rules, DEFAULT_RULES } from './rules';
 import { startStock } from './step';
@@ -259,6 +261,201 @@ describe('the starter kit of a new game', () => {
         STR.fleet.noNarrowDepot,
       );
       expect(loco.assigned).toBeNull();
+    }
+  });
+});
+
+/** Starter engines that wear the look of an earlier one: same body, size, gauge and paint. */
+function lookAlikes(locos: LocoDef[]): string[] {
+  const first = new Map<string, string>();
+  const out: string[] = [];
+  for (const l of locos) {
+    const look = [l.body, l.size ?? 'small', gaugeOf(l), l.paint].join('|');
+    const twin = first.get(look);
+    if (twin) out.push(`${l.id} looks like ${twin}`);
+    else first.set(look, l.id);
+  }
+  return out;
+}
+/** Tiles a full tank carries an engine, for fuel or for water; the engines that fall short. */
+function shortRange(locos: LocoDef[], tank: 'fuel' | 'water', tiles: number): string[] {
+  const out: string[] = [];
+  for (const l of locos) {
+    const cap = tank === 'fuel' ? l.fuelCap : l.waterCap;
+    const per = tank === 'fuel' ? l.fuelPerTile : l.waterPerTile;
+    const range = cap && per ? cap / per : 0;
+    if (range < tiles) out.push(`${l.id}: ${Math.floor(range)} tiles on ${tank}`);
+  }
+  return out;
+}
+/**
+ * What the copies of these steam engines hold in coal and in water when full, against the stock:
+ * the tanks that do not all fit at once.
+ */
+function overStock(locos: LocoDef[], copies: number, stock: Record<string, number>): string[] {
+  const need = { coal: 0, water: 0 };
+  for (const l of locos) {
+    if (l.type !== 'steam') continue;
+    need.coal += copies * (l.fuelCap ?? 0);
+    need.water += copies * (l.waterCap ?? 0);
+  }
+  return (['coal', 'water'] as const)
+    .filter((id) => need[id] > (stock[id] ?? 0))
+    .map((id) => `${id}: tanks hold ${need[id]} of ${stock[id] ?? 0}`);
+}
+/** Tonnes of a wagon loaded to capacity with the heaviest cargo it accepts. */
+function loadedWeight(w: WagonDef): number {
+  return w.weight + w.capacity * Math.max(0, ...(w.accepts ?? []).map((c) => cargoDef(c).weight));
+}
+/** The engines that cannot haul one fully loaded wagon of a type, with the first such wagon. */
+function cannotHaul(locos: LocoDef[], wagons: WagonDef[]): string[] {
+  const out: string[] = [];
+  for (const l of locos) {
+    const heavy = wagons.find((w) => loadedWeight(w) > l.power);
+    if (heavy)
+      out.push(`${l.id} (power ${l.power}) cannot haul ${heavy.id} at ${loadedWeight(heavy)}`);
+  }
+  return out;
+}
+
+describe('the starter engines of a new game', () => {
+  const STARTER_WAGONS = content.wagons.filter((w) => w.starter);
+
+  it('are the Rocket, the MÁV 490 and Orenstein & Koppel: weak, middling and strong', () => {
+    // the author's decision (startkit-engines): a tiny field engine, the middling Rocket and the
+    // strong 490; the Rocket stays first in the file, so the depot lists it first
+    expect(STARTER_LOCOS.map((l) => l.id)).toEqual(['rocket', 'mav490', 'orenstein_koppel']);
+    expect(content.locomotives.slice(0, 3).map((l) => l.id)).toEqual([
+      'rocket',
+      'mav490',
+      'orenstein_koppel',
+    ]);
+    expect(locoDef('mav490').name).toBe('MÁV 490');
+    expect(locoDef('orenstein_koppel').name).toBe('Orenstein & Koppel');
+    const power = (id: string) => locoDef(id).power;
+    expect(power('orenstein_koppel')).toBeLessThan(power('rocket'));
+    expect(power('rocket')).toBeLessThan(power('mav490'));
+    for (const l of STARTER_LOCOS) {
+      expect(l.power, l.id).toBeGreaterThanOrEqual(30);
+      expect(l.power, l.id).toBeLessThanOrEqual(60);
+    }
+    // plain small tank engines: no field of the body, so each has the Rocket's rigid body
+    for (const id of ['mav490', 'orenstein_koppel']) {
+      const def = locoDef(id);
+      expect(def.body, id).toBe('steam_std');
+      expect(def.size, id).toBe('small');
+      expect(def.rarity, id).toBe('N');
+      for (const field of ['plan', 'bogies', 'bogieAxles', 'pivotRatio', 'bogieStyle'])
+        expect(def, `${id}.${field}`).not.toHaveProperty(field);
+    }
+  });
+
+  it('hands out each of them with the inventory in the order of the file', () => {
+    const { inventory } = newGame();
+    expect(inventory.free('loco').map((i) => i.defId)).toEqual(STARTER_LOCOS.map((l) => l.id));
+  });
+
+  it("run on narrow track as plain rigid bodies, with the Rocket's length", () => {
+    const rocket = vehicleSpec(locoDef('rocket'));
+    for (const l of STARTER_LOCOS) {
+      expect(vehicleAccess(l, 'narrow'), l.id).toBeNull();
+      const spec = vehicleSpec(l);
+      expect(spec.plan, l.id).toBe('rigid');
+      expect(spec.segments.length, l.id).toBe(1);
+      expect(spec.L, l.id).toBe(rocket.L);
+    }
+  });
+
+  it('are told apart on screen: no two share a body and a paint', () => {
+    expect(lookAlikes(STARTER_LOCOS)).toEqual([]);
+  });
+
+  it('carry at least 400 tiles on a full tank of fuel and of water', () => {
+    expect(shortRange(STARTER_LOCOS, 'fuel', 400)).toEqual([]);
+    expect(shortRange(STARTER_LOCOS, 'water', 400)).toEqual([]);
+  });
+
+  it('fit the start stock together: every tank of every copy can be filled at once', () => {
+    expect(overStock(STARTER_LOCOS, content.crafting.starterCopies.loco, startStock())).toEqual([]);
+  });
+
+  it('are each strong enough to haul one fully loaded wagon of every starter wagon type', () => {
+    expect(STARTER_WAGONS.length).toBeGreaterThan(0);
+    expect(cannotHaul(STARTER_LOCOS, STARTER_WAGONS)).toEqual([]);
+    // the heaviest is a tub of iron: 3 t and 10 units at 2.4 t
+    expect(Math.max(...STARTER_WAGONS.map(loadedWeight))).toBeCloseTo(27);
+  });
+
+  it('are found out by the checks above when the table is wrong', () => {
+    // synthetic engines and a stock of their own, so the checks are tried whatever the tuning is
+    const eng = (id: string, over: Partial<LocoDef> = {}): LocoDef => ({
+      ...locoDef('rocket'),
+      id,
+      fuelCap: 50,
+      fuelPerTile: 0.1,
+      waterCap: 50,
+      waterPerTile: 0.1,
+      power: 40,
+      ...over,
+    });
+    const stock = { coal: 100, water: 100 };
+
+    // tanks: two full tanks fit exactly, one more unit of coal does not, nor does a second copy
+    expect(overStock([eng('a'), eng('b')], 1, stock)).toEqual([]);
+    expect(overStock([eng('a'), eng('b', { fuelCap: 51 })], 1, stock)).toEqual([
+      'coal: tanks hold 101 of 100',
+    ]);
+    expect(overStock([eng('a'), eng('b', { waterCap: 400 })], 1, stock)).toEqual([
+      'water: tanks hold 450 of 100',
+    ]);
+    expect(overStock([eng('a'), eng('b')], 2, stock)).toHaveLength(2);
+
+    // looks: the same body and paint twice, but not when body, paint or size differ
+    const red = { body: 'steam_std', paint: 'red' };
+    expect(lookAlikes([eng('a', red), eng('b', { ...red, paint: 'blue' }), eng('c', red)])).toEqual(
+      ['c looks like a'],
+    );
+    expect(lookAlikes([eng('a', red), eng('b', { ...red, body: 'steam_early' })])).toEqual([]);
+    expect(lookAlikes([eng('a', red), eng('b', { ...red, size: 'medium' })])).toEqual([]);
+
+    // range: 400 tiles is enough, a few less is not, and a missing tank is none
+    const quarter = { fuelPerTile: 0.25 };
+    expect(shortRange([eng('a', { ...quarter, fuelCap: 100 })], 'fuel', 400)).toEqual([]);
+    expect(shortRange([eng('a', { ...quarter, fuelCap: 99 })], 'fuel', 400)).toEqual([
+      'a: 396 tiles on fuel',
+    ]);
+    expect(shortRange([eng('a', { waterPerTile: 1 })], 'water', 400)).toEqual([
+      'a: 50 tiles on water',
+    ]);
+    expect(shortRange([eng('a', { fuelCap: undefined })], 'fuel', 400)).toHaveLength(1);
+
+    // haulage: a wagon of 3 t and ten units of its heaviest cargo (iron, 2.4 t) is 27 t
+    const tub: WagonDef = {
+      ...STARTER_WAGONS[0],
+      id: 'tub',
+      weight: 3,
+      capacity: 10,
+      accepts: ['stone', 'iron', 'coal'],
+    };
+    expect(loadedWeight(tub)).toBeCloseTo(27);
+    expect(cannotHaul([eng('a', { power: 27 })], [tub])).toEqual([]);
+    expect(cannotHaul([eng('a', { power: 26.9 })], [tub])).toEqual([
+      'a (power 26.9) cannot haul tub at 27',
+    ]);
+    // the first wagon of the list it cannot haul is the one named
+    const light = { ...tub, id: 'light', weight: 1, capacity: 1 };
+    expect(cannotHaul([eng('a', { power: 10 })], [light, tub])).toEqual([
+      'a (power 10) cannot haul tub at 27',
+    ]);
+  });
+
+  it('are all in the recipe draws of the first age and craftable by a new game', () => {
+    const { crafting } = newGame();
+    const pool = craftPool('loco', 0);
+    for (const l of STARTER_LOCOS) {
+      expect(pool, l.id).toContain(l.id);
+      expect(crafting.knows(l.id), l.id).toBe(true);
+      expect(crafting.canCraft(l.id), l.id).toBe(true);
     }
   });
 });
