@@ -716,6 +716,22 @@ describe('rule presets', () => {
     expect(raw.presets.Rich.savedAt).toBe(1000);
   });
 
+  it('stores a name cut just after a space in the form a lookup finds, for every cut', async () => {
+    const m = await load();
+    for (let len = 1; len <= m.RULE_PRESET_NAME_MAX + 2; len++) {
+      // a space falls exactly on the last character the cut keeps when len = MAX
+      const typed = `${'a'.repeat(m.RULE_PRESET_NAME_MAX - 1)} ${'b'.repeat(len)}`;
+      expect(m.saveRulePreset(typed, m.rulesFrom({ payoutMul: 2 }))).toBe(true);
+      for (const { name } of m.listRulePresets()) {
+        expect(name).toBe(name.trim());
+        expect(m.readRulePreset(name)).not.toBeNull();
+      }
+      expect(m.readRulePreset(typed)).not.toBeNull();
+      expect(m.deleteRulePreset(typed)).toBe(true);
+      expect(m.listRulePresets()).toEqual([]);
+    }
+  });
+
   it('saves the live rules when no set is given, and writes no tuning key', async () => {
     const m = await load();
     m.applyGameRules({ deadlineMul: 2 });
@@ -1001,7 +1017,8 @@ function expectAsWritten(s: Shipped, raw: Json, got: Rules, at: string) {
 }
 
 const JUNK = ['{bad', '42', '[]', 'null', '""', 'true', ''];
-const CANON = (n: string) => Array.from(n.trim()).slice(0, 32).join('');
+// A preset name as stored: trimmed, cut to 32 characters, trimmed again (a cut can end in a space).
+const CANON = (n: string) => Array.from(n.trim()).slice(0, 32).join('').trim();
 
 type Op =
   | { op: 'set'; patch: Record<string, number> }

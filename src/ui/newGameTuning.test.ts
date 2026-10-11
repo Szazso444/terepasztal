@@ -402,12 +402,7 @@ describe('the New game choice against the tunings the Game tuning screen saves a
     startsFromWhatIsListed(RULE_PRESET_NAME_MAX);
   });
 
-  // KNOWN FAILURE, a finding for Gameplay (src/sim/rules.ts, `presetName`): a name cut to 32
-  // characters can end in a space, which a second `presetName` trims off, so the tuning is listed
-  // under a name the staging (and Load, and Delete) cannot find again. Smallest case: 31 times 'a',
-  // a space and one more character. When rules.ts keeps the stored name findable, this test fails
-  // with "expected to fail": make it a plain `it`.
-  it.fails('can start a game from every tuning it lists, whatever its name was cut from', () => {
+  it('can start a game from every tuning it lists, whatever its name was cut from', () => {
     startsFromWhatIsListed(RULE_PRESET_NAME_MAX + 16);
   });
 

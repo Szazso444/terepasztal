@@ -567,9 +567,12 @@ interface RulePreset {
   rules: Partial<Rules>;
 }
 
-/** A preset name as stored: trimmed and cut to `RULE_PRESET_NAME_MAX` characters. */
+/**
+ * A preset name as stored: trimmed, cut to `RULE_PRESET_NAME_MAX` characters and trimmed again,
+ * so a name cut just after a space is stored in the form every lookup asks for.
+ */
 function presetName(name: string): string {
-  return Array.from(String(name).trim()).slice(0, RULE_PRESET_NAME_MAX).join('');
+  return Array.from(String(name).trim()).slice(0, RULE_PRESET_NAME_MAX).join('').trim();
 }
 
 /**
