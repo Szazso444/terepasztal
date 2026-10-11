@@ -1,0 +1,17 @@
+{
+  "projection": "2:1 orthographic isometric, 30 degrees down",
+  "gameTile": [64, 32],
+  "requestedCanvas": [1024, 1024],
+  "centre": [512, 512],
+  "sourceTile": [330, 165],
+  "tileOffsetToScreen": ["512 + 165 * (x - y)", "512 + 82.5 * (x + y)"],
+  "scaleCardCorners": [
+    [512, 430],
+    [677, 512],
+    [512, 594],
+    [347, 512]
+  ],
+  "stoneOneTenthTileWidth": 33,
+  "reviewSquareWidth": 199,
+  "note": "Scale card only. Never attach this guide to a generation or paint its diamond."
+}

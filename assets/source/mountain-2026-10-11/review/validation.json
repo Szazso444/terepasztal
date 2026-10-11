@@ -1,0 +1,68 @@
+{
+  "reviewWidth": 199,
+  "approximateGameTileWidth": 64,
+  "order": [
+    "snow.png",
+    "mountain-rock-high.png",
+    "alpine-ground.png",
+    "glacier-ice.png",
+    "moraine.png"
+  ],
+  "images": [
+    {
+      "file": "snow.png",
+      "returned": [
+        1254,
+        1254
+      ],
+      "transparentPixels": 0,
+      "cursorOrBrighterPixels": 124543,
+      "maximumLuma": 239.4986,
+      "sha256": "8f2a4ad40844fe9cdac9bce4a0dacfc9544fe8dce9a8aefd26628056411a7287"
+    },
+    {
+      "file": "mountain-rock-high.png",
+      "returned": [
+        1254,
+        1254
+      ],
+      "transparentPixels": 0,
+      "cursorOrBrighterPixels": 0,
+      "maximumLuma": 225.725,
+      "sha256": "55a34beef5248110571bc5241b63bacdddb996f5f61eaa7850eead81492005b4"
+    },
+    {
+      "file": "alpine-ground.png",
+      "returned": [
+        1254,
+        1254
+      ],
+      "transparentPixels": 0,
+      "cursorOrBrighterPixels": 37,
+      "maximumLuma": 254.35019999999997,
+      "sha256": "d04b67fd06719f24e2e4f7003a7a37a294de4d28ad5b4b74c87525d1e0740e40"
+    },
+    {
+      "file": "glacier-ice.png",
+      "returned": [
+        1254,
+        1254
+      ],
+      "transparentPixels": 0,
+      "cursorOrBrighterPixels": 175,
+      "maximumLuma": 243.0814,
+      "sha256": "21618d35562b0913eeb3a335f78b9b58f0dc28c5711e93e4a7a8338e6d67d9de"
+    },
+    {
+      "file": "moraine.png",
+      "returned": [
+        1254,
+        1254
+      ],
+      "transparentPixels": 0,
+      "cursorOrBrighterPixels": 105,
+      "maximumLuma": 251.69919999999996,
+      "sha256": "5be75a5c2fd67f9392d61a1ca11959d77f37d4e83c83af75fac7e5b80dc8eaed"
+    }
+  ]
+}
