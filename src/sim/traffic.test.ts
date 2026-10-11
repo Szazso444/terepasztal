@@ -4,6 +4,8 @@ import { Traffic } from './traffic';
 import type { Builder } from './build';
 import type { Train } from './trains';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
+import type { Rng } from '../engine/rng';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
 /** Traffic only reads `stations` off the builder, to find platform tiles. */
 function trafficOn(
@@ -280,6 +282,208 @@ describe('interlocking and recovery ownership', () => {
     expect(traffic.recoveries.active.size).toBe(0);
     expect(traffic.claimedBy(2, 5, 2)).toBeNull();
     expect(traffic.claimedBy(4, 5, 2)).toBe(1);
+  });
+
+  it('leases both legs of a shunt whole, keeps the second until the turn, and counts the turn as progress', () => {
+    const g = new TrackGraph(24, 24);
+    line(g, 5, 1, 14);
+    const traffic = trafficOn(g);
+    // the first leg runs west from x 8 to 4, where the train turns and runs east from x 6 to 10
+    const shunter = moving(1, [8, 7, 6, 5, 4], [8, 9], g.w);
+    const out = shunter.pathAhead();
+    const back = [6, 7, 8, 9, 10].map((x) => ({ x, y: 5, in: Dir.W, out: Dir.E }));
+    const behind = moving(2, [13, 12, 11], [13], g.w);
+    const stand = moving(3, [11, 10], [10], g.w);
+    stand.state = 'waiting';
+    // a train standing on the second leg: nothing is leased, nothing claimed
+    expect(traffic.reserveRecovery(shunter, [...out, ...back], [1, 2], [shunter, stand], 0)).toBe(
+      false,
+    );
+    expect(traffic.recoveries.active.size).toBe(0);
+    expect(traffic.claims.size).toBe(0);
+    expect(traffic.reserveRecovery(shunter, [...out, ...back], [1, 2], [shunter, behind], 0)).toBe(
+      true,
+    );
+    shunter.holding = true;
+    for (const x of [4, 5, 6, 7, 8, 9, 10]) expect(traffic.claimedBy(x, 5, 2), `x ${x}`).toBe(1);
+    // where the train stands (`cars`) and the tiles its path runs on over (`ahead`, one a tile)
+    const at = (progress: number, cars: number[], ahead: number[]) =>
+      Object.assign(shunter, {
+        pathProgress: progress,
+        occupancyKeys: () => cars.map((x) => 5 * g.w + x),
+        pathAhead: () =>
+          ahead.map((x, i) => {
+            const east = ahead.length < 2 || ahead[1] > ahead[0];
+            return { x, y: 5, in: east ? Dir.W : Dir.E, out: east ? Dir.E : Dir.W, arc: i };
+          }),
+      });
+    // on its first leg, past x 7 and 8: the tiles it comes back over stay its own
+    at(3, [5, 6], [5, 4]);
+    traffic.assign([shunter, behind], 20);
+    for (const x of [7, 8, 9, 10]) expect(traffic.claimedBy(x, 5, 2), `x ${x}`).toBe(1);
+    // turned at x 4 (its path starts afresh): the turn is progress, and what it leaves is let go
+    at(0.2, [4, 5, 6], [6, 7, 8, 9, 10]);
+    traffic.assign([shunter, behind], 20.05);
+    at(2.5, [7, 8], [8, 9, 10]);
+    traffic.assign([shunter, behind], 45);
+    expect(traffic.claimedBy(4, 5, 2)).toBeNull();
+    expect(traffic.claimedBy(9, 5, 2)).toBe(1);
+    // 31 s past the last gain on the first leg, but 6 s past one on the second: not stalled
+    traffic.assign([shunter, behind], 51);
+    expect(shunter.holding).toBe(true);
+    expect(traffic.recoveries.active.has(1)).toBe(true);
+  });
+
+  it('leases a shunt on generated lines whole or not at all, and lets go of nothing still to run', () => {
+    // a single line along y 5 from x 1 to LINE; the shunter (#1, `len` tiles long) heads west from
+    // x `from` for `out` tiles, turns where it stands wholly on them and runs east from its rear
+    // end's tile for `back` tiles. Other trains stand about, some in its group, some of them
+    // claiming tiles, and another group may hold an escape of its own
+    const LINE = 30;
+    interface Other {
+      cars: number[];
+      inGroup: boolean;
+      claims: number[];
+    }
+    interface LeaseCase {
+      from: number;
+      out: number;
+      len: number;
+      back: number;
+      others: Other[];
+      escape: number[];
+    }
+    const gen = (rng: Rng): LeaseCase => {
+      const len = rng.int(1, 4);
+      const out = rng.int(len + 1, 12);
+      const from = rng.int(out + 1, LINE - len);
+      const back = rng.int(len, LINE - (from - out + len));
+      const tiles = () => {
+        const a = rng.int(1, LINE);
+        return Array.from({ length: rng.int(1, 3) }, (_, i) => a + i).filter((x) => x <= LINE);
+      };
+      const others = Array.from({ length: rng.int(0, 3) }, () => ({
+        cars: rng.chance(0.4) ? tiles() : [],
+        inGroup: rng.chance(0.5),
+        claims: rng.chance(0.5) ? tiles() : [],
+      }));
+      return { from, out, len, back, others, escape: rng.chance(0.3) ? tiles() : [] };
+    };
+    const leased = { yes: 0, no: 0 };
+    forAll(
+      gen,
+      (c) => {
+        const g = new TrackGraph(40, 12);
+        line(g, 5, 1, LINE);
+        const traffic = trafficOn(g);
+        const k = (x: number) => key(g, x, 5);
+        const xsOut = Array.from({ length: c.out }, (_, i) => c.from - i);
+        const rearX = xsOut[c.out - c.len];
+        const xsBack = Array.from({ length: c.back }, (_, i) => rearX + i);
+        const way = [
+          ...xsOut.map((x) => ({ x, y: 5, in: Dir.E, out: Dir.W })),
+          ...xsBack.map((x) => ({ x, y: 5, in: Dir.W, out: Dir.E })),
+        ];
+        // the shunter's cars, its head on x `from`
+        const at = { cars: Array.from({ length: c.len }, (_, i) => c.from + i), ahead: way };
+        const shunter = Object.assign(moving(1, [c.from], [], g.w), {
+          occupancyKeys: () => at.cars.map(k),
+          pathAhead: () => at.ahead.map((s, i) => ({ ...s, arc: i })),
+        });
+        const others = c.others.map((o, i) => {
+          const t = moving(2 + i, o.cars.length ? o.cars : [LINE], o.cars, g.w);
+          t.state = 'waiting';
+          return t;
+        });
+        const trains = [shunter, ...others];
+        const group = [1, ...others.filter((_, i) => c.others[i].inGroup).map((t) => t.id)];
+        c.others.forEach((o, i) => o.claims.forEach((x) => traffic.claims.set(k(x), 2 + i)));
+        // another group's escape, owned by #9 for #9 and #10
+        if (c.escape.length)
+          expect(traffic.recoveries.reserve(9, [9, 10], new Set(c.escape.map(k)), 0, 0)).toBe(true);
+        const tiles = new Set(way.map((s) => k(s.x)));
+        // the oracle: no train outside the shunter stands on the way, no train outside its group
+        // claims a tile of it, and no other escape holds one
+        const standing = others.some((o) => o.occupancyKeys(g.w).some((t) => tiles.has(t)));
+        const claimed = [...tiles].some((t) => {
+          const owner = traffic.claims.get(t);
+          return owner !== undefined && !group.includes(owner);
+        });
+        const escaped = c.escape.some((x) => tiles.has(k(x)));
+        const want = !standing && !claimed && !escaped;
+        const before = JSON.stringify({
+          claims: [...traffic.claims],
+          active: [...traffic.recoveries.active.keys()],
+        });
+        const got = traffic.reserveRecovery(shunter, way, group, trains, 0);
+        expect(got, `standing ${standing}, claimed ${claimed}, escaped ${escaped}`).toBe(want);
+        leased[got ? 'yes' : 'no']++;
+        if (!got) {
+          // nothing changed: no tile claimed, no lease
+          expect(
+            JSON.stringify({
+              claims: [...traffic.claims],
+              active: [...traffic.recoveries.active.keys()],
+            }),
+          ).toBe(before);
+          return;
+        }
+        const plan = traffic.recoveries.active.get(1)!;
+        for (const t of tiles) expect(traffic.claims.get(t), `tile ${t % g.w}`).toBe(1);
+        expect([...plan.tiles].sort((a, b) => a - b)).toEqual([...tiles].sort((a, b) => a - b));
+        expect([...plan.rest].sort((a, b) => a - b)).toEqual(
+          [...new Set(xsBack.map(k))].sort((a, b) => a - b),
+        );
+        // run it: every tile still to run (the rest of the leg, and the second leg until the
+        // turn) stays the shunter's at every step, and it is never released as stalled
+        shunter.holding = true;
+        // the others stand still and claim nothing more: keep them out of the way of the run
+        const run = [shunter];
+        const still = (now: number, rest: { x: number; y: number }[], where: string) => {
+          traffic.assign(run, now);
+          expect(shunter.holding, where).toBe(true);
+          for (const s of rest)
+            expect(traffic.claims.get(k(s.x)), `${where}: x ${s.x} still to run`).toBe(1);
+        };
+        let now = 0;
+        for (let h = 0; h < c.out; h++) {
+          at.cars = Array.from({ length: c.len }, (_, i) => xsOut[h] + i);
+          at.ahead = way.slice(h, c.out);
+          Object.assign(shunter, { pathProgress: h + 0.5 });
+          now += 2;
+          still(now, [...way.slice(h, c.out), ...way.slice(c.out)], `first leg at x ${xsOut[h]}`);
+        }
+        // turned where it stands: the path starts afresh, the second leg ahead
+        for (let h = 0; h < c.back; h++) {
+          at.cars = Array.from({ length: c.len }, (_, i) => xsBack[h] - i);
+          at.ahead = way.slice(c.out + h);
+          Object.assign(shunter, { pathProgress: h + 0.3 });
+          now += 2;
+          still(now, way.slice(c.out + h), `second leg at x ${xsBack[h]}`);
+          // what lies behind it on neither leg's rest is let go
+          for (let x = 1; x <= LINE; x++) {
+            const behind = x < xsBack[h] - c.len + 1 || (x > xsBack[h] && !xsBack.includes(x));
+            if (
+              behind &&
+              traffic.claims.get(k(x)) === 1 &&
+              !c.others.some((o) => o.cars.includes(x))
+            )
+              expect.fail(`second leg at x ${xsBack[h]}: x ${x} behind it is still claimed`);
+          }
+        }
+      },
+      {
+        seeds: Array.from({ length: 300 }, (_, i) => i + 1),
+        shrink: function* (c) {
+          for (const others of shrinkArray(c.others)) yield { ...c, others };
+          if (c.escape.length) yield { ...c, escape: [] };
+          for (const back of shrinkInt(c.back, c.len)) yield { ...c, back };
+        },
+      },
+    );
+    // both outcomes are drawn often
+    expect(leased.yes).toBeGreaterThan(50);
+    expect(leased.no).toBeGreaterThan(50);
   });
 
   it('keeps the escape owner subject to a newly occupied route', () => {

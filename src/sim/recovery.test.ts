@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Dir, DIRS, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import { hash2, type Rng } from '../engine/rng';
 import {
@@ -15,16 +15,23 @@ import {
   blockingGroups,
   blockingCycles,
   findRefugePath,
+  findShuntPath,
   RecoveryReservations,
+  SHUNT_TURNS,
   stateKey,
   statesReaching,
+  turnIndex,
 } from './recovery';
-import { Train, defaultStop, type TickCtx } from './trains';
+import { Train, defaultStop, type RetreatPlan, type TickCtx } from './trains';
 import { consistLength, vehicleSpec } from './body';
 import type { Station } from './stations';
 import { content } from '../data/content';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
+import { simWorld } from '../testing/simWorld';
+import { rules, DEFAULT_RULES } from './rules';
+import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
+import { STR } from '../strings';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -47,6 +54,20 @@ function sided(from = 1) {
   for (let y = 7; y <= 12; y++) track.place(15, y, 'straight', 0);
   return track;
 }
+
+/**
+ * Where the rear end of a train `length` long stands on a way, its head at the last tile's centre,
+ * counted along the arcs (`findShuntPath`'s `rearOn`): its index in the way, -1 when it is shorter.
+ */
+const rearAlong = (track: TrackGraph, length: number) => (path: readonly PathSegment[]) => {
+  let behind = 0;
+  for (let i = path.length - 1; i >= 0; i--) {
+    const s = path[i];
+    behind += track.segLength(s.x, s.y, s.in, s.out) / (i === path.length - 1 ? 2 : 1);
+    if (behind > length) return i;
+  }
+  return -1;
+};
 
 describe('coordinated recovery', () => {
   it('preserves the underlying fuel failure when releasing a recovery', () => {
@@ -237,6 +258,150 @@ describe('coordinated recovery', () => {
     expect(into.flip).toBe(false);
     const end = into.path.at(-1)!;
     expect(end.x === 15 && end.y >= 7).toBe(true);
+  });
+
+  it('turns once past a switch it cannot run straight into the siding from, clear of it, and backs in', () => {
+    // heading west from x 20, the switch at x 14 and 15 lets it out of the siding only
+    const track = sided();
+    const start = { x: 20, y: 5, in: Dir.E };
+    const refuge = (x: number, y: number) => x === 15 && y >= 7;
+    const free = () => false;
+    expect(findRefugePath(track, start, 2.4, free, refuge, () => true)).toBeNull();
+    const rear = rearAlong(track, 2.4);
+    const legs = findShuntPath(track, start, 2.4, free, refuge, () => true, rear)!;
+    expect(legs).not.toBeNull();
+    // it stands with its head at x 11 and its rear end on x 13, every car past the switch
+    expect(showWay(legs.out.slice(-3))).toBe('(13,5) E->W (12,5) E->W (11,5) E->W');
+    expect(rear(legs.out)).toBe(legs.out.length - 3);
+    // and runs from its rear end's tile through the switch's branch into the siding
+    expect(showWay(legs.back.slice(0, 4))).toBe('(13,5) W->E (14,5) W->E (15,5) W->S (15,6) N->S');
+    expect(legs.back.at(-1)).toMatchObject({ x: 15, y: 10 });
+    // reserved as one way, the second leg starts where the first does not lead
+    expect(turnIndex([...legs.out, ...legs.back])).toBe(legs.out.length);
+    expect(turnIndex(legs.out)).toBe(legs.out.length);
+    // where it cannot stand clear of the switch, or the siding cannot hold it, it does not turn
+    const at = (bx: number, by: number) => (x: number, y: number) => x === bx && y === by;
+    expect(findShuntPath(track, start, 2.4, at(12, 5), refuge, () => true, rear)).toBeNull();
+    expect(findShuntPath(track, start, 2.4, at(15, 9), refuge, () => true, rear)).toBeNull();
+  });
+
+  it('stopped astride the switch, runs on just clear of it, turns and backs in', () => {
+    // heading west with its cars back over the switch tile at x 15 that offers the choice coming
+    // back, as a shunt whose lease went stale stops: the switch lies behind its head. Its head at
+    // x 13, 2.4 tiles long, or at x 12, 3.4 long
+    const track = sided();
+    const refuge = (x: number, y: number) => x === 15 && y >= 7;
+    const free = () => false;
+    for (const [head, length, stops] of [
+      [13, 2.4, 11],
+      [12, 3.4, 10],
+    ]) {
+      const start = { x: head, y: 5, in: Dir.E };
+      const rear = rearAlong(track, length);
+      // the tiles under it behind its head, rear end first
+      const under = walkBack(track, head, 5, Dir.E, Math.ceil(length - 0.5));
+      expect(under[0], `head at ${head}`).toMatchObject({ x: 15, y: 5 });
+      const legs = (stood: PathSegment[]) =>
+        findShuntPath(track, start, length, free, refuge, () => true, rear, undefined, stood);
+      expect(legs([])).toBeNull();
+      const got = legs(under);
+      // its rear end on x 13, every car past the switch: the first tile of its way, or one it
+      // stood on with its head at x 12
+      expect(got?.out.at(-1), `head at ${head}`).toMatchObject({ x: stops, y: 5 });
+      expect(showWay(got!.back.slice(0, 4))).toBe(
+        '(13,5) W->E (14,5) W->E (15,5) W->S (15,6) N->S',
+      );
+      expect(turnIndex([...got!.out, ...got!.back])).toBe(got!.out.length);
+    }
+  });
+
+  it('tries no more than SHUNT_TURNS places to turn', () => {
+    // eight switches along a line, each with a siding a train heading west backs into
+    const track = new TrackGraph(64, 16);
+    const blocks = [8, 14, 20, 26, 32, 38, 44, 50];
+    for (const x of blocks) {
+      track.place(x, 5, 'switch', 7);
+      for (let y = 7; y <= 12; y++) track.place(x + 1, y, 'straight', 0);
+    }
+    for (let x = 1; x <= 60; x++) if (!track.has(x, 5)) track.place(x, 5, 'straight', 1);
+    const turnedAt = new Set<string>();
+    const legs = findShuntPath(
+      track,
+      { x: 58, y: 5, in: Dir.E },
+      2.4,
+      () => false,
+      (x, y) => y >= 7,
+      () => true,
+      rearAlong(track, 2.4),
+      (p) => {
+        turnedAt.add(`${p[0].x},${p[0].y}`);
+        return false;
+      },
+    );
+    expect(legs).toBeNull();
+    expect(turnedAt.size).toBe(SHUNT_TURNS);
+  });
+
+  it('backs a train off with one turn partway where no refuge can be run straight into', () => {
+    // a train heading east with its head at x 12; the other stands from x 16 on and its route takes
+    // the whole main line, so the only refuge is the siding under x 7, whose switch lets a train
+    // heading west out of it only. Its stop has no track, so any refuge will do
+    const track = new TrackGraph(28, 28);
+    track.place(6, 5, 'switch', 7);
+    for (let x = 1; x <= 24; x++) if (!track.has(x, 5)) track.place(x, 5, 'straight', 1);
+    for (let y = 7; y <= 12; y++) track.place(7, y, 'straight', 0);
+    const w = track.w;
+    const def = content.locomotives.find((d) => d.id === 'f7')!;
+    const hopper = content.wagons.find((d) => d.id === 'wood_hopper')!;
+    const t = new Train([{ uid: 1, level: 0, def }], 'Behind', 1);
+    t.wagons = [{ uid: 2, def: hopper, level: 1, cargo: null, amount: 0, origin: null }];
+    expect(t.spawnAt(track, 12, 5, Dir.W)).toBe(true);
+    const stop = { id: 7 } as Station;
+    t.schedule = [defaultStop(stop.id)];
+    t.state = 'moving';
+    t.blockedBy = 2;
+    const reserved: PathSegment[][] = [];
+    const ctx = {
+      track,
+      now: 10,
+      map: emptyMap(1, 28, 28, Terrain.Grass),
+      builder: {
+        stations: [stop],
+        stationById: (id: number) => (id === stop.id ? stop : undefined),
+        platformTiles: () => [{ x: 26, y: 20 }],
+      },
+      trainPath: () => new Set(Array.from({ length: 24 }, (_, i) => 5 * w + 1 + i)),
+      occupied: (x: number, y: number) => y === 5 && x >= 16,
+      recoveryOwner: () => null,
+      claimedBy: () => null,
+      reserveRecovery: (_t: Train, path: PathSegment[]) => {
+        reserved.push(path);
+        return false;
+      },
+    } as unknown as TickCtx;
+    expect(t.planRetreat(ctx, [1, 2])).toBeNull();
+    const plan = t.planRetreat(ctx, [1, 2], true)!;
+    expect(plan).not.toBeNull();
+    // rear first past the switch, then into the siding
+    expect(plan.flip).toBe(true);
+    expect(plan.path.at(-1)!.x).toBeLessThan(6);
+    expect(plan.back!.at(-1)).toMatchObject({ x: 7 });
+    expect(plan.back!.at(-1)!.y).toBeGreaterThanOrEqual(7);
+    // both legs are leased at once, or nothing changes
+    const before = t.toJSON();
+    expect(t.retreat(ctx, [1, 2], plan)).toBe(false);
+    expect(reserved).toEqual([[...plan.path, ...plan.back!]]);
+    expect(t.toJSON()).toEqual(before);
+    ctx.reserveRecovery = () => true;
+    expect(t.retreat(ctx, [1, 2], plan)).toBe(true);
+    // it runs the first leg, and counts the second as its route
+    expect(t.holding).toBe(true);
+    expect(t.pathAhead().at(-1)).toMatchObject({ x: plan.path.at(-1)!.x, y: 5 });
+    const keys = t.pathTileKeys(w);
+    for (const s of plan.back!) expect(keys.has(s.y * w + s.x)).toBe(true);
+    // a stale escape drops the second leg with the first
+    t.cancelRetreat(20);
+    expect(t.pathTileKeys(w).has(plan.back!.at(-1)!.y * w + 7)).toBe(false);
   });
 
   it('previews a reverse retreat from the rear and leaves the train unchanged on reservation failure', () => {
@@ -636,6 +801,276 @@ describe('findRefugePath on generated trees', () => {
   });
 });
 
+/**
+ * Every way `findShuntPath` may turn at the end of, found the slow way: each walk from `start`
+ * that `refugeWays` would walk (no repeated tile, only open, unblocked track the consist may use),
+ * cut where the train, its head at the centre of the walk's last tile and its rear end on the tile
+ * `rear` gives, stands wholly on plain track past a switch that offers a choice coming back, at the
+ * first place past that switch where it does. The train stands on `under` behind `start` as it
+ * sets off: its rear end may stay there, and a switch there lies behind it. Any order.
+ */
+function shuntTurns(
+  g: TrackGraph,
+  start: State,
+  blocked: (x: number, y: number) => boolean,
+  access: (p: TrackPiece, entry: Dir) => boolean,
+  rear: (path: readonly PathSegment[]) => number,
+  under: readonly PathSegment[] = [],
+): PathSegment[][] {
+  // plain: one link, and no part of a multi-tile switch (a 2x2 curve is plain)
+  const plain = (s: PathSegment) => {
+    const p = g.get(s.x, s.y);
+    return !!p && p.links.length === 1 && !(p.unit && p.kind !== 'curve');
+  };
+  const clear = (way: readonly PathSegment[]) => {
+    const r = rear(way);
+    return r >= 0 && way.slice(r).every(plain);
+  };
+  // coming back into the tile through the edge the walk left it by, there is more than one way on
+  const choiceBack = (s: PathSegment) => g.exits(s.x, s.y, s.out).length > 1;
+  // clear here, and some switch with a choice back lies behind with nowhere clear since it: the
+  // head stops only on the walk, never on `under`
+  const turnsHere = (way: readonly PathSegment[]) => {
+    const stands = [...under, ...way];
+    if (!clear(stands)) return false;
+    for (let j = stands.length - 1; j >= 0; j--) {
+      if (j < stands.length - 1 && j >= under.length && clear(stands.slice(0, j + 1))) return false;
+      if (choiceBack(stands[j])) return true;
+    }
+    return false;
+  };
+  const out: PathSegment[][] = [];
+  const walk = (s: State, path: PathSegment[]) => {
+    for (const exit of g.exits(s.x, s.y, s.in)) {
+      const way = [...path, { x: s.x, y: s.y, in: s.in, out: exit }];
+      if (turnsHere(way)) out.push(way);
+      const next = { x: s.x + DIR_DX[exit], y: s.y + DIR_DY[exit], in: opposite(exit) };
+      if (!g.opensTo(next.x, next.y, next.in) || blocked(next.x, next.y)) continue;
+      if (!access(g.get(next.x, next.y)!, next.in)) continue;
+      if (way.some((p) => p.x === next.x && p.y === next.y)) continue;
+      walk(next, way);
+    }
+  };
+  walk(start, []);
+  return out;
+}
+
+/**
+ * `findShuntPath` from `start` against the oracle (`shuntTurns`, `refugeWays`): it turns at the
+ * nearest place to turn from which the train can back into a refuge `takes` accepts, trying only
+ * the SHUNT_TURNS nearest places, and backs into the nearest such refuge; with none, there is no
+ * shunt. Whether it found one, and whether only a place to turn past those it may try had a refuge.
+ * The train stands on `under` behind `start` (`shuntTurns`).
+ */
+function shuntHolds(
+  g: TrackGraph,
+  start: State,
+  length: number,
+  blocked: (x: number, y: number) => boolean,
+  refuge: (x: number, y: number) => boolean,
+  access: (p: TrackPiece, entry: Dir) => boolean,
+  takes: (p: readonly PathSegment[]) => boolean,
+  under: readonly PathSegment[] = [],
+) {
+  const rear = rearAlong(g, length);
+  const turns = shuntTurns(g, start, blocked, access, rear, under).sort(
+    (a, b) => a.length - b.length,
+  );
+  // the refuges the train can back into from a place to turn: it sets off from its rear end's tile
+  const backs = (out: readonly PathSegment[]) => {
+    const stands = [...under, ...out];
+    const from = stands[rear(stands)];
+    const at = { x: from.x, y: from.y, in: from.out };
+    return refugeWays(g, at, length, blocked, refuge, access).filter(takes);
+  };
+  const got = findShuntPath(g, start, length, blocked, refuge, access, rear, takes, under);
+  const story = `${turns.length} places to turn: ${turns.map((w) => `${showWay(w)} [${backs(w).length} refuges]`).join('; ')}; got ${got && `${showWay(got.out)} | ${showWay(got.back)}`}`;
+  // the places it may try: the SHUNT_TURNS nearest (ties in length may go either way)
+  const tried = (w: readonly PathSegment[]) =>
+    turns.filter((v) => v.length < w.length).length < SHUNT_TURNS;
+  // more places to turn than it may try, and only those past the ones it tries have a refuge
+  const bounded =
+    turns.some((w) => !tried(w) && backs(w).length) &&
+    turns.every((w) => !tried(w) || !backs(w).length);
+  if (!got) {
+    for (const w of turns) if (tried(w)) expect(backs(w).map(showWay), story).toEqual([]);
+    return { shunt: false, bounded };
+  }
+  expect(
+    turns.some((w) => sameWay(w, got.out)),
+    story,
+  ).toBe(true);
+  expect(tried(got.out), `turned past the first ${SHUNT_TURNS} places: ${story}`).toBe(true);
+  // no nearer place to turn had a refuge to back into
+  for (const w of turns)
+    if (w.length < got.out.length) expect(backs(w).map(showWay), story).toEqual([]);
+  const ways = backs(got.out);
+  expect(
+    ways.some((w) => sameWay(w, got.back)),
+    story,
+  ).toBe(true);
+  expect(got.back.length, story).toBe(Math.min(...ways.map((w) => w.length)));
+  // leased as one way, the second leg starts where the first stops leading on
+  expect(turnIndex([...got.out, ...got.back]), story).toBe(got.out.length);
+  expect(turnIndex(got.out), story).toBe(got.out.length);
+  expect(turnIndex(got.back), story).toBe(got.back.length);
+  return { shunt: true, bounded };
+}
+
+/** A refuge case on a larger tree than `refugeCase` lays, with fewer refuges at times. */
+function shuntCase(rng: Rng): RefugeCase {
+  const size = rng.int(8, 16);
+  const lays = tree(rng, size);
+  const s = rng.pick(lays);
+  const some = (p: number) => lays.filter(() => rng.chance(p)).map(({ x, y }) => ({ x, y }));
+  return {
+    size,
+    lays,
+    start: { x: s.x, y: s.y, in: rng.pick(edgesOf(pieceLinks(s.kind, s.rot))) },
+    length: rng.int(3, 30),
+    refuges: some(rng.pick([0.3, 0.9])),
+    blocked: some(0.04),
+    deny: Array.from({ length: rng.int(0, 2) }, () => {
+      const { x, y } = rng.pick(lays);
+      return { x, y, entry: rng.pick(DIRS) };
+    }),
+    cut: rng.int(0, 10) / 10,
+    salt: rng.int(0, 999),
+  };
+}
+
+/**
+ * A comb: the main line along MAIN from x 1 to `end` with many dead-end sidings off it (regular
+ * 2x2 switches, either facing), a train setting off from the east end heading west or from the west
+ * end heading east, refuges in the sidings only, a few blocked tiles, and an accept that takes some
+ * refuges. Many places to turn, so the bound on how many the search tries comes into play.
+ */
+interface CombCase {
+  end: number;
+  sidings: Siding[];
+  west: boolean;
+  /** tenths of a tile */
+  length: number;
+  blocked: Tile[];
+  cut: number;
+  salt: number;
+}
+function combCase(rng: Rng): CombCase {
+  const end = rng.int(30, 46);
+  const west = rng.chance(0.5);
+  // the throat mostly where the train leaves the switch by: a choice coming back, a place to turn.
+  // The first `short` sidings the train passes hold no train: the places to turn it may try are
+  // often all in vain
+  const short = rng.int(2, 8);
+  const sidings: Siding[] = [];
+  for (let x = rng.int(3, 6); x <= end - 3; x += rng.int(4, 8)) {
+    const east = rng.chance(west ? 0.25 : 0.75);
+    sidings.push({ x, north: rng.chance(0.5), east, len: rng.int(1, 6) });
+  }
+  (west ? [...sidings].reverse() : sidings).slice(0, short).forEach((s) => (s.len = 1));
+  const g = layMain({ end, sidings });
+  const laid = [...g.tiles()].map(({ x, y }) => ({ x, y }));
+  return {
+    end,
+    sidings,
+    west,
+    length: rng.int(10, 20),
+    blocked: laid.filter(() => rng.chance(0.01)),
+    cut: rng.int(0, 10) / 10,
+    salt: rng.int(0, 999),
+  };
+}
+/** Cheap cases, few of which only a place to turn past the first SHUNT_TURNS would clear. */
+const COMB_SEEDS = Array.from({ length: 1000 }, (_, i) => i + 1);
+function* shrinkComb(c: CombCase): Iterable<CombCase> {
+  for (const sidings of shrinkArray(c.sidings)) yield { ...c, sidings };
+  for (const blocked of shrinkArray(c.blocked)) yield { ...c, blocked };
+  for (const length of shrinkInt(c.length, 5)) yield { ...c, length };
+}
+
+describe('findShuntPath on generated track', () => {
+  // the oracle: every place to turn and every refuge from there, by exhaustive search. On a tree
+  // (and a comb is one) each tile is reached along one way only, so the search loses none to its
+  // seen set
+  it('on trees, turns at the nearest place past a switch with a refuge to back into and backs into the nearest', () => {
+    let shunts = 0;
+    let astride = 0;
+    forAll(
+      shuntCase,
+      (c) => {
+        const g = layOut(c.size, [], c.lays);
+        const set = (ts: readonly Tile[]) => new Set(ts.map((t) => g.key(t.x, t.y)));
+        const refuges = set(c.refuges);
+        const blockedSet = set(c.blocked);
+        const takes = (p: readonly PathSegment[]) => {
+          const last = p[p.length - 1];
+          return hash2(last.x * 4 + last.in, last.y * 4 + last.out, c.salt) < c.cut;
+        };
+        const length = c.length / 10;
+        const holds = (start: State, under?: readonly PathSegment[]) =>
+          shuntHolds(
+            g,
+            start,
+            length,
+            (x, y) => blockedSet.has(g.key(x, y)),
+            (x, y) => refuges.has(g.key(x, y)),
+            accessOf(g, c.deny),
+            takes,
+            under,
+          ).shunt;
+        if (holds(c.start)) shunts++;
+        // and from where the train stands astride a switch that offers a choice coming back, on
+        // the tiles behind its head as far back as a train that long reaches (one such place)
+        const back = Math.ceil(length - 0.5);
+        const astrideOf = c.lays
+          .flatMap((l) => edgesOf(pieceLinks(l.kind, l.rot)).map((e) => ({ ...l, in: e })))
+          .map((at) => ({ at, under: walkBack(g, at.x, at.y, at.in, back) }))
+          .filter(({ under }) => under.some((s) => g.exits(s.x, s.y, s.out).length > 1));
+        if (!astrideOf.length) return;
+        const { at, under } = astrideOf[c.salt % astrideOf.length];
+        if (holds({ x: at.x, y: at.y, in: at.in }, under)) astride++;
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkRefuge },
+    );
+    expect(shunts, 'trees a shunt was found on').toBeGreaterThan(20);
+    expect(astride, 'trees a shunt was found on from astride a switch').toBeGreaterThan(20);
+  });
+
+  it('on combs of sidings, tries no more than the SHUNT_TURNS nearest places to turn', () => {
+    let shunts = 0;
+    let bounded = 0;
+    forAll(
+      combCase,
+      (c) => {
+        const g = layMain(c);
+        const blockedSet = new Set(c.blocked.map((t) => g.key(t.x, t.y)));
+        const inSiding = new Set(c.sidings.flatMap(sidingTiles).map((t) => g.key(t.x, t.y)));
+        const takes = (p: readonly PathSegment[]) => {
+          const last = p[p.length - 1];
+          return hash2(last.x * 4 + last.in, last.y * 4 + last.out, c.salt) < c.cut;
+        };
+        const start = c.west ? { x: c.end, y: MAIN, in: Dir.E } : { x: 1, y: MAIN, in: Dir.W };
+        const got = shuntHolds(
+          g,
+          start,
+          c.length / 10,
+          (x, y) => blockedSet.has(g.key(x, y)),
+          (x, y) => inSiding.has(g.key(x, y)),
+          () => true,
+          takes,
+        );
+        if (got.shunt) shunts++;
+        if (got.bounded) bounded++;
+      },
+      { seeds: COMB_SEEDS, shrink: shrinkComb },
+    );
+    // the property is not vacuous: shunts are found, and on some combs only a place to turn past
+    // those the search may try has a refuge, so that it must find none
+    expect(shunts, 'combs a shunt was found on').toBeGreaterThan(100);
+    expect(bounded, 'combs only a place past the first SHUNT_TURNS clears').toBeGreaterThan(10);
+  });
+});
+
 // ------------------------------------------------------------ a refuge with a way on
 
 /** Row of the generated main line. */
@@ -682,8 +1117,7 @@ const sidingTiles = (s: Siding): Tile[] =>
 const columns = ([a, b]: [number, number]) =>
   Array.from({ length: b - a + 1 }, (_, i) => ({ x: a + i, y: MAIN }));
 
-function layMain(c: Pick<RetreatCase, 'end' | 'sidings' | 'mine'>) {
-  const g = new TrackGraph(48, 26);
+function layMain(c: Pick<RetreatCase, 'end' | 'sidings' | 'mine'>, g = new TrackGraph(48, 26)) {
   const blocks = new Set<number>();
   for (const s of c.sidings) {
     if (s.north) g.place(s.x, MAIN - 1, 'switch', s.east ? 5 : 3);
@@ -942,12 +1376,15 @@ function asideSetUp(a: AsideCase) {
   // where it is bound back to: the station it stood at, else its stop
   const to = wayTo(a.atStation ? STOOD : STOP);
   return {
+    g,
     t,
     ctx,
     spots,
+    starts,
     had: starts.some(to),
     inSidings: waysTo(refugeOff(bound, sidings)),
     anywhere: waysTo(refugeOff(bound)),
+    refuge: refugeOff(bound),
     wayOn: (w: readonly PathSegment[]) => wayOn(w, to),
   };
 }
@@ -989,6 +1426,113 @@ function* shrinkAside(a: AsideCase): Iterable<AsideCase> {
 describe('planAside on generated lines with sidings', () => {
   it('moves an idle train only where it can get back to its station from, into a siding first', () => {
     forAll(asideCase(false), asideHolds, { seeds: MANY_SEEDS, shrink: shrinkAside });
+  });
+});
+
+/**
+ * A shunt is two ordinary ways and a stand. The first leg runs on from the end of the train it
+ * sets off from (`starts`: the head, or the rear when it turns first), never onto another train,
+ * never twice over a tile, and over a switch that offers a choice coming back, or off one the
+ * train stands on as it sets off. At its end the train stands (stood there as `spawnAt` stands it)
+ * on the first leg's tiles and those it stood on, wholly on plain track. The second leg runs from
+ * the tile the rear end is on, as the train sets off reversing, to a refuge `refugeWays` lists
+ * from there under the plain search's rules.
+ */
+function shuntSound(
+  g: TrackGraph,
+  t: Train,
+  plan: RetreatPlan,
+  starts: readonly PathSegment[],
+  blocked: (x: number, y: number) => boolean,
+  refuge: (x: number, y: number) => boolean,
+) {
+  const { path: out, back } = plan;
+  const story = `${showWay(out)} | ${back && showWay(back)}`;
+  expect(back, story).toBeDefined();
+  const from = starts[plan.flip ? 1 : 0];
+  expect(showState(out[0]), story).toBe(showState(from));
+  out.forEach((s, i) => {
+    expect(g.exits(s.x, s.y, s.in), story).toContain(s.out);
+    expect(
+      out.findIndex((p) => p.x === s.x && p.y === s.y),
+      story,
+    ).toBe(i);
+    if (!i) return;
+    const p = out[i - 1];
+    expect(showState(s), story).toBe(
+      showState({ x: p.x + DIR_DX[p.out], y: p.y + DIR_DY[p.out], in: opposite(p.out) }),
+    );
+    expect(blocked(s.x, s.y) || !t.canUse(g.get(s.x, s.y)!, s.in), story).toBe(false);
+  });
+  // the tiles it stood on, crossed the way the move sets off: turned round, or not
+  const stood = (t as unknown as Reversible)
+    .reversedTrail()
+    .trail.map(({ seg }) => (plan.flip ? seg : { ...seg, in: seg.out, out: seg.in }));
+  expect(
+    [...stood, ...out].some((s) => g.exits(s.x, s.y, s.out).length > 1),
+    story,
+  ).toBe(true);
+  const last = out[out.length - 1];
+  const locos = t.locos.map((l) => ({ uid: l.uid, level: l.level, def: l.def }));
+  const there = new Train(locos, 'There', t.id);
+  there.wagons = t.wagons.map((car) => ({ ...car }));
+  expect(there.spawnAt(g, last.x, last.y, last.in), story).toBe(true);
+  const on = new Set([...out.map((s) => g.key(s.x, s.y)), ...t.occupancyKeys(g.w)]);
+  for (const k of there.occupancyKeys(g.w)) {
+    const p = g.get(k % g.w, Math.floor(k / g.w));
+    expect(on.has(k) && p?.links.length === 1 && !p.unit, `stands on ${k}: ${story}`).toBe(true);
+  }
+  const rear = (there as unknown as Reversible).reversedTrail().trail.at(-1)!.seg;
+  expect(showState(back![0]), story).toBe(showState(rear));
+  const ways = refugeWays(g, back![0], t.length, blocked, refuge, t.canUse);
+  expect(
+    ways.some((w) => sameWay(w, back!)),
+    story,
+  ).toBe(true);
+}
+
+describe('planRetreat and planAside with shunting on generated lines with sidings', () => {
+  // the fallback only: where a plan without a reversal exists it is the plan
+  it('give the plain plan wherever there is one, else only a sound shunt with a way on', () => {
+    let shunts = 0;
+    forAll(
+      retreatCase,
+      (c) => {
+        const { g, t, ctx, keys, starts, refugeOff, wayTo, wayOn } = standing(c)!;
+        t.state = 'moving';
+        t.blockedBy = 2;
+        const plain = t.planRetreat(ctx, [1, 2]);
+        const plan = t.planRetreat(ctx, [1, 2], true);
+        if (plain) return expect(plan).toEqual(plain);
+        if (!plan) return;
+        shunts++;
+        const blocked = (x: number, y: number) => ctx.occupied(x, y, t.id);
+        shuntSound(g, t, plan, starts, blocked, refugeOff(keys(c.platform)));
+        const to = wayTo(STOP);
+        if (starts.some(to)) expect(wayOn(plan.back!, to)).toBe(true);
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkRetreat },
+    );
+    expect(shunts, 'lines that only a shunt clears').toBeGreaterThan(0);
+  });
+
+  it('move an idle train aside with the plain plan wherever there is one, else a sound shunt', () => {
+    let shunts = 0;
+    forAll(
+      asideCase(false),
+      (a) => {
+        const { g, t, ctx, spots, starts, had, refuge, wayOn } = asideSetUp(a)!;
+        const plain = t.planAside(ctx, [2], spots);
+        const plan = t.planAside(ctx, [2], spots, false, true);
+        if (plain) return expect(plan).toEqual(plain);
+        if (!plan) return;
+        shunts++;
+        shuntSound(g, t, plan, starts, (x, y) => ctx.occupied(x, y, t.id), refuge);
+        if (had) expect(wayOn(plan.back!)).toBe(true);
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkAside },
+    );
+    expect(shunts, 'lines that only a shunt clears').toBeGreaterThan(0);
   });
 });
 
@@ -1426,4 +1970,328 @@ describe("the tile a refuge's way on is counted from, rear first", () => {
     expect(rearSetUp(c), 'it stands on plain track with room behind it').not.toBeNull();
     rearHolds(c);
   });
+});
+
+// ------------------------------------------------------------ a shunt run by a train
+
+/** The fleet's private context a move aside is planned in, as `Fleet.makeWay` plans it. */
+interface FleetInside {
+  ctx(now: number, speedFactor: number): TickCtx;
+}
+/** The private Train member that turns a consist round where it stands. */
+interface Turning {
+  reverseConsist(): void;
+}
+/** A reversal of the consist: its speed then, the tiles under it that are not plain, how far a car moved. */
+interface Turned {
+  speed: number;
+  onSwitch: string[];
+  moved: number;
+}
+/** The reversals of the train of the world a case runs in, on that world's track. */
+interface Turns {
+  track: TrackGraph | null;
+  list: Turned[];
+}
+
+/**
+ * An idle train with no stop alone on generated track, made to leave the tiles it stands on and
+ * those of `theirs` (another train's route): on a narrow tree (`tree`: 1×1 curves and switches)
+ * or a narrow comb (`layComb`: 1×1 switches) with narrow stock, or on a regular main line with
+ * sidings either side, facing either way (`layMain`: 2×2 switches), with regular stock. Its head
+ * on plain track; cars may stand on a switch behind it.
+ */
+interface RunCase {
+  track:
+    | { kind: 'tree'; size: number; lays: Lay[] }
+    | { kind: 'line' | 'comb'; end: number; sidings: Siding[] };
+  head: State;
+  loco: string;
+  wagons: string[];
+  theirs: Tile[];
+}
+
+/** Seconds a game step lasts, as the fleet is stepped in play. */
+const RUN_GDT = 0.05;
+/** Longest a shunt on generated track may run: both legs are a few dozen tiles at most. */
+const RUN_FOR = 120;
+/** Cheap cases, of which about one in seven holds a shunt to run. */
+const RUN_SEEDS = Array.from({ length: 1500 }, (_, i) => i + 1);
+const RUN_SLOW = { timeout: 120_000 };
+
+/** The 1×1 piece of `kind` with exactly these links. */
+const oneTile = (kind: OneTile, links: [Dir, Dir][]) =>
+  PIECES.find(
+    (p) =>
+      p.kind === kind &&
+      p.links.length === links.length &&
+      links.every(([a, b]) => hasLink(p.links, a, b)),
+  )!;
+/**
+ * A comb: `layMain`'s line on narrow gauge, its sidings off 1×1 switches on the main line (the
+ * throat east or west, the branch north or south) and running straight on from them.
+ */
+function layComb(g: TrackGraph, c: { end: number; sidings: Siding[] }) {
+  const at = new Map(c.sidings.map((s) => [s.x, s]));
+  for (let x = 1; x <= c.end; x++) {
+    const s = at.get(x);
+    if (!s) {
+      const p = oneTile('straight', [[Dir.W, Dir.E]]);
+      g.set(x, MAIN, makePiece('straight', p.rot, 'narrow'));
+      continue;
+    }
+    const throat = s.east ? Dir.E : Dir.W;
+    const branch = s.north ? Dir.N : Dir.S;
+    const p = oneTile('switch', [
+      [throat, opposite(throat)],
+      [throat, branch],
+    ]);
+    g.set(x, MAIN, makePiece('switch', p.rot, 'narrow'));
+    const q = oneTile('straight', [[Dir.N, Dir.S]]);
+    for (let i = 1; i <= s.len; i++)
+      g.set(x, s.north ? MAIN - i : MAIN + i, makePiece('straight', q.rot, 'narrow'));
+  }
+  return g;
+}
+function layRun(g: TrackGraph, track: RunCase['track']) {
+  if (track.kind !== 'tree') return track.kind === 'line' ? layMain(track, g) : layComb(g, track);
+  for (const l of track.lays) g.set(l.x, l.y, makePiece(l.kind, l.rot, l.cls, l.cls2));
+  return g;
+}
+/** Locomotives of the gauge that run on their own tanks, no wire needed. */
+const runLocos = (narrow: boolean) =>
+  content.locomotives
+    .filter((d) => (d.gauge === 'narrow') === narrow && (d.type === 'diesel' || d.type === 'steam'))
+    .map((d) => d.id);
+function runTrain(c: Pick<RunCase, 'loco' | 'wagons'>) {
+  const t = rearTrain({ locos: [c.loco], wagons: c.wagons });
+  t.oil = t.oilCap;
+  t.coal = t.coalCap;
+  t.water = t.waterCap;
+  t.mode = 'schedule';
+  t.schedule = [];
+  return t;
+}
+/** The case laid in a fleet's world with the train standing idle in it; null if it cannot stand there or pull its cars. */
+function runSetUp(c: RunCase) {
+  const w = simWorld({ terrain: 'grass', size: 48 });
+  layRun(w.track, c.track);
+  const t = runTrain(c);
+  if (!w.track.has(c.head.x, c.head.y) || !t.spawnAt(w.track, c.head.x, c.head.y, c.head.in))
+    return null;
+  if (t.weight > t.power) return null;
+  t.idle('');
+  w.fleet.trains.push(t);
+  return { w, t };
+}
+/** Tile keys of every tile a train runs onto from `starts` without turning, as a refuge search runs. */
+function runsOnto(g: TrackGraph, starts: readonly State[]) {
+  const tiles = new Set<number>();
+  const seen = new Set<string>();
+  const queue = [...starts];
+  while (queue.length) {
+    const s = queue.pop()!;
+    tiles.add(g.key(s.x, s.y));
+    for (const out of g.exits(s.x, s.y, s.in)) {
+      const next = { x: s.x + DIR_DX[out], y: s.y + DIR_DY[out], in: opposite(out) };
+      const key = `${next.x},${next.y},${next.in}`;
+      if (!g.opensTo(next.x, next.y, next.in) || seen.has(key)) continue;
+      seen.add(key);
+      queue.push(next);
+    }
+  }
+  return tiles;
+}
+function runCase(rng: Rng): RunCase {
+  for (;;) {
+    let track: RunCase['track'];
+    const kind = rng.pick(['line', 'comb', 'tree'] as const);
+    if (kind !== 'tree') {
+      const end = rng.int(24, 44);
+      const sidings: Siding[] = [];
+      for (let n = rng.int(1, 4), i = 0; sidings.length < n && i < 30; i++) {
+        const s = { x: rng.int(3, end - 4), north: rng.chance(0.5), east: rng.chance(0.5) };
+        if (sidings.every((o) => Math.abs(o.x - s.x) >= 3))
+          sidings.push({ ...s, len: rng.int(2, 8) });
+      }
+      track = { kind, end, sidings };
+    } else {
+      const size = rng.int(8, 16);
+      track = { kind, size, lays: tree(rng, size) };
+    }
+    const g = layRun(new TrackGraph(48, 48), track);
+    const plain = [...g.tiles()].filter((t) => !t.piece.unit && t.piece.links.length === 1);
+    if (!plain.length) continue;
+    const at = rng.pick(plain);
+    const narrow = track.kind !== 'line';
+    const wagons = STOCK(narrow).wagons;
+    // on narrow gauge, a Muki and five wagons an odd number of them tubs, half the time on a comb:
+    // a whole number of tiles and a half long, its rear end on a tile edge where it stands to turn
+    const edgy = narrow && rng.chance(track.kind === 'comb' ? 1 / 2 : 1 / 4);
+    const tubs = rng.pick([1, 3, 5]);
+    const c: RunCase = {
+      track,
+      head: { x: at.x, y: at.y, in: rng.pick(edgesOf(at.piece.links)) },
+      loco: edgy ? 'muki' : rng.pick(runLocos(narrow)),
+      wagons: edgy
+        ? [...Array<string>(tubs).fill('mine_tub'), ...Array<string>(5 - tubs).fill('narrow_box')]
+        : Array.from({ length: rng.int(0, 3) }, () => rng.pick(wagons)),
+      theirs: [],
+    };
+    const t = runTrain(c);
+    if (!t.spawnAt(g, c.head.x, c.head.y, c.head.in)) continue;
+    // their route takes a share of the track, and half the time every tile either end of the
+    // train runs onto without turning: then only a shunt gets it off
+    const share = rng.pick([0.1, 0.3, 0.5]);
+    const rear = (t as unknown as Reversible).reversedTrail().trail.at(-1)!.seg;
+    const straight = rng.chance(0.5) ? runsOnto(g, [t.headSeg!, rear]) : new Set<number>();
+    c.theirs = [...g.tiles()]
+      .filter(({ x, y }) => straight.has(g.key(x, y)) || rng.chance(share))
+      .map(({ x, y }) => ({ x, y }));
+    if (runSetUp(c)) return c;
+  }
+}
+function* shrinkRun(c: RunCase): Iterable<RunCase> {
+  const out: RunCase[] = [];
+  for (const theirs of shrinkArray(c.theirs)) out.push({ ...c, theirs });
+  for (const wagons of shrinkArray(c.wagons)) out.push({ ...c, wagons });
+  const t = c.track;
+  if (t.kind === 'tree')
+    for (const lays of shrinkArray(t.lays)) out.push({ ...c, track: { ...t, lays } });
+  else for (const sidings of shrinkArray(t.sidings)) out.push({ ...c, track: { ...t, sidings } });
+  for (const r of out) if (runSetUp(r)) yield r;
+}
+
+/**
+ * The case run: where the train has no way off its tiles but a shunt (`planAside` with `shunt`,
+ * none without), it sets off on it (`retreat`) and the fleet steps it. Every step no car stands
+ * off the tiles it stood on and those its move was leased, and until it turns every tile of the
+ * second leg is its own; it reverses once partway, standing still (speed 0), with no car on a
+ * switch, crossing or tile of a larger piece and no car moving as it turns; and it ends its move
+ * within RUN_FOR, idle and saying it made way, its head on the second leg's last tile and every car
+ * on plain track off the tiles it had to leave, its lease gone on the next step. What it found:
+ * a way with no turn, no way, or a shunt it ran, and whether it set off astride a switch.
+ */
+function runHolds(c: RunCase, turns: Turns) {
+  const { w, t } = runSetUp(c)!;
+  turns.track = w.track;
+  const wk = w.track.w;
+  const ctx = (w.fleet as unknown as FleetInside).ctx(0, 1);
+  const stood = t.occupancyKeys(wk);
+  const theirs = new Set([...stood, ...c.theirs.map((p) => p.y * wk + p.x)]);
+  const spots = { theirs, bound: new Set<number>(), sidings: new Set<number>() };
+  const plain = t.planAside(ctx, [], spots);
+  const plan = t.planAside(ctx, [], spots, false, true);
+  // the fallback only: where a way with no turn exists, it is the plan
+  if (plain) {
+    expect(plan, 'a shunt where a way with no turn exists').toEqual(plain);
+    return { found: 'plain', astride: false, curved: false, edge: false };
+  }
+  if (!plan) return { found: 'none', astride: false, curved: false, edge: false };
+  const show = (keys: number[]) => keys.map((k) => `(${k % wk},${Math.floor(k / wk)})`).join(' ');
+  const plainAt = (k: number) => {
+    const p = w.track.get(k % wk, Math.floor(k / wk));
+    return !!p && p.links.length === 1 && !p.unit;
+  };
+  const story = `${t.length.toFixed(3)} tiles long, ${plan.flip ? 'rear' : 'head'} first: ${showWay(plan.path)} | ${plan.back && showWay(plan.back)}`;
+  expect(plan.back, story).toBeDefined();
+  const back = plan.back!;
+  const astride = stood.some((k) => !plainAt(k));
+  expect(t.retreat(ctx, [], plan), story).toBe(true);
+  // the turn before it sets off is not one partway
+  turns.list = [];
+  const lease = w.fleet.traffic.recoveries.active.get(t.id);
+  expect(lease, story).toBeDefined();
+  const allowed = new Set([...lease!.tiles, ...stood]);
+  let now = 0;
+  for (let i = 0; i < RUN_FOR / RUN_GDT && t.holding; i++) {
+    w.fleet.tick(RUN_GDT, (now += RUN_GDT));
+    const at = `at ${now.toFixed(2)} s`;
+    const off = t.occupancyKeys(wk).filter((k) => !allowed.has(k));
+    if (off.length) throw new Error(`${at} a car stands on ${show(off)}, off its lease: ${story}`);
+    if (t.holding && !turns.list.length)
+      for (const s of back)
+        if (w.fleet.traffic.claims.get(s.y * wk + s.x) !== t.id)
+          throw new Error(`${at} (${s.x},${s.y}) of its second leg is not its own: ${story}`);
+  }
+  expect(t.holding, `still on its move after ${RUN_FOR} s: ${story}`).toBe(false);
+  expect([t.state, t.lastMessage], story).toEqual(['idle', STR.traffic.madeWay]);
+  expect(turns.list, story).toEqual([{ speed: 0, onSwitch: [], moved: expect.closeTo(0, 9) }]);
+  const end = back[back.length - 1];
+  expect(t.headTile, story).toEqual({ x: end.x, y: end.y });
+  const parked = t.occupancyKeys(wk);
+  const wrong = parked.filter((k) => !plainAt(k) || theirs.has(k));
+  expect(show(wrong), `parked off a refuge: ${story}`).toBe('');
+  w.fleet.tick(RUN_GDT, (now += RUN_GDT));
+  expect(w.fleet.traffic.recoveries.active.has(t.id), story).toBe(false);
+  const curved = [...plan.path, ...back].some((s) => w.track.get(s.x, s.y)?.kind === 'curve');
+  // a whole number of tiles and a half long: on straight track its rear end turns on a tile edge
+  const edge = Math.abs((t.length % 1) - 0.5) < 1e-9;
+  return { found: 'shunt', astride, curved, edge };
+}
+
+describe('a shunt run by a train on generated track', () => {
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+    setSupplyMode(DEFAULT_SUPPLY);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // the plan is the oracle's (`findShuntPath on generated track`); here the train runs it, on
+  // curves and over 1×1 and 2×2 switches, its rear end on a tile edge at times, and must turn
+  // exactly where the plan turns. A thousand short runs: a few seconds alone, longer on a loaded
+  // runner
+  it(
+    'turns once at rest, clear of every switch, where the plan turns, and parks where it ends',
+    RUN_SLOW,
+    () => {
+      const turns: Turns = { track: null, list: [] };
+      const turning = Train.prototype as unknown as Turning;
+      const reverse = turning.reverseConsist;
+      vi.spyOn(turning, 'reverseConsist').mockImplementation(function (this: Train) {
+        const g = turns.track!;
+        const before = this.poses.map((p) => ({ ...p }));
+        const onSwitch = this.occupancyKeys(g.w)
+          .filter((k) => {
+            const p = g.get(k % g.w, Math.floor(k / g.w));
+            return !p || p.links.length !== 1 || !!p.unit;
+          })
+          .map((k) => `(${k % g.w},${Math.floor(k / g.w)})`);
+        const speed = this.speed;
+        reverse.call(this);
+        const moved = Math.max(
+          0,
+          ...this.poses.map((p, i) => Math.hypot(p.x - before[i].x, p.y - before[i].y)),
+        );
+        turns.list.push({ speed, onSwitch, moved });
+      });
+      const found = new Map<string, number>();
+      let astride = 0;
+      let curved = 0;
+      let edge = 0;
+      forAll(
+        runCase,
+        (c) => {
+          const got = runHolds(c, turns);
+          const key = `${got.found} ${c.track.kind}`;
+          found.set(key, (found.get(key) ?? 0) + 1);
+          if (got.astride) astride++;
+          if (got.curved) curved++;
+          if (got.edge) edge++;
+        },
+        { seeds: RUN_SEEDS, shrink: shrinkRun },
+      );
+      // not vacuous: shunts run on every kind of track, set off astride a switch, over curves and
+      // by trains whose rear end turns on a tile edge
+      const shunts = (kind: string) => found.get(`shunt ${kind}`) ?? 0;
+      expect(shunts('line'), 'shunts run on sided lines').toBeGreaterThan(40);
+      expect(shunts('comb'), 'shunts run on narrow combs').toBeGreaterThan(40);
+      expect(shunts('tree'), 'shunts run on trees').toBeGreaterThan(20);
+      expect(astride, 'shunts set off astride a switch').toBeGreaterThan(45);
+      expect(curved, 'shunts over curves').toBeGreaterThan(18);
+      expect(edge, 'shunts turning with the rear end on a tile edge').toBeGreaterThan(8);
+    },
+  );
 });

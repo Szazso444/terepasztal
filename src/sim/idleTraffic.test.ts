@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Dir } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import type { TrackKind } from '../world/track';
@@ -7,7 +7,16 @@ import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import { sharedTiles } from '../testing/trafficScenario';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { blockingGroups } from './recovery';
-import { Train, defaultStop, resetTrainIds, type RouteMode, type StopPlan } from './trains';
+import {
+  Train,
+  defaultStop,
+  resetTrainIds,
+  type RouteMode,
+  type StopPlan,
+  type TickCtx,
+  type RetreatPlan,
+  type AsideSpots,
+} from './trains';
 import { Station, resetStationIds } from './stations';
 import { locoDef, wagonDef } from '../gacha/items';
 import { rules, DEFAULT_RULES } from './rules';
@@ -538,6 +547,183 @@ describe('an idle train saved and loaded', () => {
   });
 });
 
+// ------------------------------------------------------------------ one reversal partway
+
+/**
+ * A single line from x 4 to 56 with a warehouse at its west end (platform x 5). A switch at x 30,
+ * its throat facing west, leads into a siding south of the line under x 31: a train heading west
+ * cannot run straight into it.
+ */
+function shuntLine() {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  lay(w, 30, ROW, 'switch', 7);
+  siding(w, 31, ROW + 2);
+  line(w, 4, ROW, 29);
+  line(w, 32, ROW, 56);
+  const west = station(w, 'warehouse', 5, ROW - 1);
+  return { w, west };
+}
+/** The fleet's private members a move aside is planned with, as `Fleet.makeWay` plans it. */
+interface FleetInside {
+  ctx(now: number, speedFactor: number): TickCtx;
+  sidingTiles(): Set<number>;
+}
+/** The private Train member that turns a consist round where it stands. */
+interface Turning {
+  reverseConsist(): void;
+}
+
+/**
+ * An idle train with no stop (so any refuge leaves it no worse off) stands with its head at x 40,
+ * heading west on `shuntLine`, in the way of a train coming from x 52 for the warehouse. Only a
+ * shunt gets it aside, and after the first tick it sets off on one as the fleet sets a train off
+ * aside (`planAside`, `Train.retreat`).
+ */
+function shuntScene() {
+  const { w, west } = shuntLine();
+  const sim = run(w);
+  const idle = train(w, 40, false, 'schedule', []);
+  idle.idle('');
+  const caller = train(w, 52, false, 'schedule', [call(west)]);
+  go(w, caller);
+  sim.ticks(GDT);
+  const fleet = w.fleet as unknown as FleetInside;
+  const ctx = fleet.ctx(sim.now, 1);
+  const wk = w.track.w;
+  const spots = {
+    theirs: caller.pathTileKeys(wk),
+    bound: new Set(w.builder.platformTiles(west).map((p) => p.y * wk + p.x)),
+    sidings: fleet.sidingTiles(),
+  };
+  expect(idle.planAside(ctx, [caller.id], spots), 'a way aside with no turn').toBeNull();
+  const plan = idle.planAside(ctx, [caller.id], spots, false, true)!;
+  expect(plan?.back, 'a shunt').toBeDefined();
+  expect(idle.retreat(ctx, [caller.id], plan)).toBe(true);
+  return { w, west, sim, idle, caller, plan };
+}
+
+describe('a train that reverses once partway', () => {
+  it(
+    'runs past the switch, turns at rest clear of it with no car moving, and backs into the siding',
+    SLOW,
+    () => {
+      const { w, west, sim, idle, caller, plan } = shuntScene();
+      // head first: the turn partway is the only one
+      expect(plan.flip).toBe(false);
+      const wk = w.track.w;
+      const turns: { speed: number; onSwitch: number[]; moved: number }[] = [];
+      const turning = idle as unknown as Turning;
+      const reverse = turning.reverseConsist.bind(idle);
+      turning.reverseConsist = () => {
+        const before = idle.poses.map((p) => ({ ...p }));
+        const onSwitch = idle.occupancyKeys(wk).filter((k) => {
+          const p = w.track.get(k % wk, Math.floor(k / wk));
+          return !p || p.links.length !== 1 || !!p.unit;
+        });
+        const speed = idle.speed;
+        reverse();
+        const moved = Math.max(
+          ...idle.poses.map((p, i) => Math.hypot(p.x - before[i].x, p.y - before[i].y)),
+        );
+        turns.push({ speed, onSwitch, moved });
+      };
+      const lease = () => w.fleet.traffic.recoveries.active.get(idle.id)?.tiles;
+      let released: string | null = null;
+      let parked: { state: string; note: string; x: number; y: number } | null = null;
+      const done = sim.until(() => {
+        // until it turns, every tile of the second leg stays its own
+        if (idle.holding && !turns.length)
+          for (const s of plan.back!)
+            if (!lease()?.has(s.y * wk + s.x)) released ??= `(${s.x},${s.y}) at ${sim.now} s`;
+        const { x, y } = idle.headTile!;
+        if (!parked && !idle.holding) parked = { state: idle.state, note: idle.lastMessage, x, y };
+        return !!parked && sim.arrivals(caller).includes(west.id);
+      }, 120);
+      expect(done, `${idle.name} ${idle.state} "${idle.lastMessage}"`).toBe(true);
+      expect(released, 'a tile of the second leg let go before the turn').toBeNull();
+      expect(turns).toEqual([{ speed: 0, onSwitch: [], moved: expect.closeTo(0, 6) }]);
+      // it ends its move in the siding, saying it made way, and its lease goes with the move
+      expect(parked).toMatchObject({ state: 'idle', note: STR.traffic.madeWay, x: 31 });
+      expect(parked!.y).toBeGreaterThan(ROW + 1);
+      expect(lease()).toBeUndefined();
+      expectSound(sim);
+    },
+  );
+
+  it('saved and loaded at any tick of its shunt, runs on as it does never saved', SLOW, () => {
+    // the ticks it turns and ends its shunt on, never saved
+    const { sim, idle } = shuntScene();
+    let turn = -1;
+    let end = -1;
+    for (let i = 0; end < 0 && i < 60 / GDT; i++) {
+      const was = idle.reversed;
+      sim.ticks(GDT);
+      if (idle.reversed !== was) turn = i;
+      if (!idle.holding) end = i;
+    }
+    expect(turn, 'it never turned').toBeGreaterThan(0);
+    expect(end, 'it never ended its shunt').toBeGreaterThan(turn);
+    const saves = new Set([turn - 1, turn, turn + 1, end - 1]);
+    for (let k = 0; k < end; k += 15) saves.add(k);
+    for (const k of saves) {
+      const { w, sim, idle, caller } = shuntScene();
+      for (let i = 0; i <= k; i++) sim.ticks(GDT);
+      const back = reload(w, () => shuntLine().w);
+      const again = run(back, sim.now);
+      const [idleBack, callerBack] = back.fleet.trains;
+      const at = `saved after tick ${k} of the shunt (it turns on ${turn})`;
+      expect(idleBack.holding, at).toBe(true);
+      for (let i = 0; i < 40 / GDT; i++) {
+        sim.ticks(GDT);
+        again.ticks(GDT);
+        for (const [a, b] of [
+          [idle, idleBack],
+          [caller, callerBack],
+        ] as const) {
+          const was = `${at}, ${b.name} ${i} ticks on`;
+          expect([b.state, b.holding, b.reversed, b.lastMessage], was).toEqual([
+            a.state,
+            a.holding,
+            a.reversed,
+            a.lastMessage,
+          ]);
+          expect(apart(a, b), was).toBeLessThan(0.01);
+        }
+      }
+      expect(idleBack.holding, at).toBe(false);
+      expect(idleBack.headTile?.x, at).toBe(31);
+      expectSound(again);
+    }
+  });
+
+  it(
+    'loaded with its second leg no longer laid, stops where it stands and lets its lease go',
+    SLOW,
+    () => {
+      const { w, sim } = shuntScene();
+      sim.ticks(1);
+      const back = reload(w, () => {
+        const fresh = shuntLine().w;
+        fresh.builder.free = true;
+        expect(fresh.builder.removeTrack(31, ROW + 3)).toBe(true);
+        fresh.builder.free = false;
+        return fresh;
+      });
+      const again = run(back, sim.now);
+      const [idleBack] = back.fleet.trains;
+      expect(idleBack.holding).toBe(true);
+      again.ticks(GDT);
+      expect([idleBack.state, idleBack.holding, idleBack.lastMessage]).toEqual([
+        'idle',
+        false,
+        STR.traffic.replan,
+      ]);
+      expect(back.fleet.traffic.recoveries.active.size).toBe(0);
+      expect(again.broken).toBeNull();
+    },
+  );
+});
+
 // ------------------------------------------------------------------ generated lines
 
 /** A siding south of the main line: a switch block on x and x + 1 and dead-end track below it. */
@@ -917,6 +1103,10 @@ interface Before {
 interface Reversible {
   reversedTrail(): { trail: { seg: PathSegment }[] };
 }
+/** The private Train member that holds a shunt's second leg until the train turns to run it. */
+interface Shunting {
+  shunt: PathSegment[] | null;
+}
 /** Where a train's head and rear stand, as the states it would set off from, either end first. */
 function endsOf(t: Train): PathSegment[] {
   const rear = (t as unknown as Reversible).reversedTrail().trail.at(-1)?.seg;
@@ -961,6 +1151,47 @@ function wayOnFrom(
 }
 
 /**
+ * The oracle for the jam resolution's give-ways (`Train.gaveWay`), as `traffic-current.md` §5
+ * states the rule: a working train backed off in a jam for train `other` is kept back when the
+ * train it last backed off for in a jam was `other` and it has reached no stop since. A train with
+ * no stop, or making way, is never kept back and its move counts for nothing. What a train last
+ * gave way to is not saved (§8), so a loaded game starts with none, as this oracle does.
+ *
+ * `follow(t)` wraps a train's `gaveWay` once; `arrived(t)` is told each stop it reaches; `broken`
+ * is the first give-way that broke the rule, and `keptAt(t)` when the train was last kept back.
+ */
+function keptBackRule() {
+  const wrapped = new WeakSet<Train>();
+  /** the train each one last gave way to in a jam, since the last stop it reached */
+  const last = new Map<number, number>();
+  const keptAt = new Map<number, number>();
+  let broken: string | null = null;
+  return {
+    follow(t: Train, clock: () => number) {
+      if (wrapped.has(t)) return;
+      wrapped.add(t);
+      const own = t.gaveWay.bind(t);
+      t.gaveWay = (other: number) => {
+        const counts = t.holding && !t.makingWay && t.route.length > 0;
+        const before = last.get(t.id);
+        const expected = counts && before === other;
+        const got = own(other);
+        if (counts) last.set(t.id, other);
+        if (got) keptAt.set(t.id, clock());
+        if (got !== expected)
+          broken ??= `at ${clock().toFixed(2)} s #${t.id} gave way to #${other} ${got ? '' : 'not '}kept back, where the train it last gave way to since its last stop was ${before === undefined ? 'none' : `#${before}`}`;
+        return got;
+      };
+    },
+    arrived(t: Train) {
+      last.delete(t.id);
+    },
+    broken: () => broken,
+    keptAt: (t: Train) => keptAt.get(t.id),
+  };
+}
+
+/**
  * Steps the fleet as the game does and checks after every step what must hold whatever the line:
  * no two trains on one tile; no station with more trains on its platforms than it has, nor an idle
  * one among them; an idle train has no path ahead, never moves, and claims no tile but those under
@@ -973,15 +1204,23 @@ function wayOnFrom(
  * it has no way on; and it says it is jammed only while it stands in a jam declared a deadlock, and
  * that it has no track on only when it has none.
  *
+ * A train with no stop at all never waits where it pulled aside, nor pulls aside but to make way.
+ * Each time the jam resolution backs a working train off (`Train.gaveWay`), it is kept back
+ * exactly when the train it last backed off for in a jam was the same and it has reached no stop
+ * since (`keptBackRule`), and the jam is declared as it sets off; and a train says it is kept back
+ * only while it waits where that move ended.
+ *
  * The game clock starts at `from`: 0 for a new world, the save's time for a loaded one.
  */
 function watch(w: SimWorld, from = 0) {
   let now = from;
   let broken: string | null = null;
   const arrivals = new Map<number, number>();
+  const kept = keptBackRule();
   const next = w.fleet.onArrive;
   w.fleet.onArrive = (t, s) => {
     arrivals.set(t.id, (arrivals.get(t.id) ?? 0) + 1);
+    kept.arrived(t);
     next?.(t, s);
   };
   // every deadlock the jam resolution declares: where each train of it stood, and when one counted
@@ -989,15 +1228,20 @@ function watch(w: SimWorld, from = 0) {
   const declare = traffic.deadlock.bind(traffic);
   const declared = new Map<number, { x: number; y: number }>();
   const counted = new Map<number, number>();
+  // when each train was last in a deadlock declared, counted or not (once a minute per group)
+  const declaredAt = new Map<number, number>();
   traffic.deadlock = (chain, at) => {
     const was = traffic.counters.deadlocks;
     declare(chain, at);
     for (const t of chain) {
       const p = t.poses[0];
       if (p) declared.set(t.id, { x: p.x, y: p.y });
+      declaredAt.set(t.id, at);
       if (traffic.counters.deadlocks > was) counted.set(t.id, at);
     }
   };
+  // when each train last set off on an escape, as this watch saw it
+  const setOff = new Map<number, number>();
   const stood = new Map<number, { since: number; x: number; y: number }>();
   const wrongNoWay = new Map<number, number>();
   const inWay = new Map<number, number>();
@@ -1010,7 +1254,8 @@ function watch(w: SimWorld, from = 0) {
     if (bound === null) return null;
     const to = wayTo(w, t, bound);
     if (!was.ends.some(to)) return null;
-    const way = t.pathAhead();
+    // the refuge is where the way ends: for a shunt, where its second leg does
+    const way = (t as unknown as Shunting).shunt ?? t.pathAhead();
     if (wayOnFrom(w, way, t, to)) return null;
     const end = way.at(-1);
     const name = w.builder.stationById(bound)?.name;
@@ -1049,6 +1294,19 @@ function watch(w: SimWorld, from = 0) {
       return `says it is pulling aside while ${t.state}${t.holding ? '' : ', not holding'}`;
     if (t.lastMessage === STR.traffic.replan && t.state !== 'yielding' && t.state !== 'idle')
       return `says it waits for a new escape plan while ${t.state}`;
+    // kept back: only waiting where the move it was kept back on ended, declared a jam as it set off
+    if (t.lastMessage === STR.traffic.keptBack) {
+      if (t.state !== 'yielding') return `says it is kept back while ${t.state}`;
+      const off = setOff.get(t.id);
+      const keptAt = kept.keptAt(t);
+      if (off !== undefined && keptAt !== off)
+        return `says it is kept back, though the move it set off on at ${off.toFixed(2)} s was not`;
+      if (keptAt !== undefined && (declaredAt.get(t.id) ?? -Infinity) < keptAt)
+        return `says it is kept back, with no jam declared as it set off at ${keptAt.toFixed(2)} s`;
+    }
+    // a train with no stop has nothing to wait for where it pulled aside: it makes way, and idles
+    if (!t.route.length && (t.state === 'yielding' || (t.holding && !t.makingWay)))
+      return `has no stop, yet ${t.state === 'yielding' ? 'waits where it pulled aside' : 'pulls aside without making way'} saying "${t.lastMessage}"`;
     return null;
   };
   const check = (before: Map<number, Before>) => {
@@ -1136,8 +1394,11 @@ function watch(w: SimWorld, from = 0) {
         },
       ]),
     );
+    for (const t of w.fleet.trains) kept.follow(t, () => now);
     w.fleet.tick(GDT, (now += GDT));
-    broken ??= check(before);
+    for (const t of w.fleet.trains)
+      if (t.holding && before.get(t.id)?.holding === false) setOff.set(t.id, now);
+    broken ??= kept.broken() ?? check(before);
   };
   return {
     get now() {
@@ -1749,4 +2010,1971 @@ describe('idle trains on generated lines, saved and loaded at any tick', () => {
         );
       },
     );
+});
+
+// ------------------------------------------------------------------ shunting switched on
+
+/** A move a train set off on (`Train.retreat`), and what was wrong as it set off. */
+interface Move {
+  id: number;
+  plan: RetreatPlan;
+  at: number;
+  bad: string | null;
+}
+/** A reversal of a train's consist (`reverseConsist`), and how the train stood. */
+interface Reversal {
+  id: number;
+  at: number;
+  /** at the end of a shunt's first leg (`turn`): a turn partway along a move */
+  partway: boolean;
+  /** neither that nor as a move sets off (`retreat`), by a train holding an escape */
+  stray: boolean;
+  /** its speed when the step began, tiles a second */
+  speed: number;
+  /** tiles under its cars that are not plain track */
+  onSwitch: string[];
+  /** the farthest a car moved as it turned (over the whole of `turn`, for a turn partway), tiles */
+  moved: number;
+}
+/** The private Train members that turn a consist round where it stands, and a shunt at its turn. */
+interface Turnable {
+  reverseConsist(): void;
+  turn(ctx: TickCtx, back: PathSegment[]): void;
+}
+/** Plain track at tile key `k`: one link, and no part of a multi-tile switch. */
+function plainAt(w: SimWorld, k: number) {
+  const p = w.track.get(k % w.track.w, Math.floor(k / w.track.w));
+  return !!p && p.links.length === 1 && !(p.unit && p.kind !== 'curve');
+}
+/**
+ * The fastest a train may run as the step it turns partway in begins, tiles a second: it has
+ * braked to a stand at the end of its first leg and creeps the last of it (about 0.15 on the
+ * single-line layouts), far below running speed.
+ */
+const AT_REST = 0.5;
+
+/** What `shuntingOn` records for one world, and the check of every step. */
+interface ShuntLog {
+  w: SimWorld;
+  moves: Move[];
+  reversals: Reversal[];
+  /** How every train stands as a step begins: call before each step. */
+  begin(): void;
+  /** The first thing found wrong since the last call, or null. */
+  check(): string | null;
+}
+
+/**
+ * Shunting switched on as the fleet is to switch it on (the wiring is #189's follow-up): an idle
+ * train moving aside and a train backing off fall back on a move that reverses once partway
+ * (`planAside` and `planRetreat` with `shunt`; the way an idle train shows it would take stays
+ * plain). `watch(w, clock)` records, for a world, every move set off (`Train.retreat`) with what
+ * the claims and the other trains were as it began, and every reversal of a consist.
+ *
+ * Its `check` holds every step to what a shunt promises: a move never starts onto a tile another
+ * train stands on or a train outside its group claims; a train reverses partway at most once a
+ * move, and only along a shunt, at rest, with no car on a switch or crossing and no car moving;
+ * a train holding an escape holds its lease, and every tile of the way still ahead of it, and of
+ * a shunt's second leg until it turns, is claimed by it; from the step after it turns, its lease
+ * keeps nothing of the second leg whole that it has left behind.
+ */
+function shuntingOn() {
+  const logs: ShuntLog[] = [];
+  const logOf = (t: Train) => logs.find((l) => l.w.fleet.trains.includes(t));
+  const clocks = new Map<ShuntLog, () => number>();
+  const began = new Map<Train, { holding: boolean; speed: number }>();
+  const aside = Train.prototype.planAside;
+  const back = Train.prototype.planRetreat;
+  const retreat = Train.prototype.retreat;
+  const turnable = Train.prototype as unknown as Turnable;
+  const reverse = turnable.reverseConsist;
+  const turn = turnable.turn;
+  let turning = false;
+  let settingOff = false;
+  vi.spyOn(Train.prototype, 'planAside').mockImplementation(function (
+    this: Train,
+    ctx: TickCtx,
+    group: number[],
+    spots: AsideSpots,
+    through = false,
+  ) {
+    return aside.call(this, ctx, group, spots, through, !through);
+  });
+  vi.spyOn(Train.prototype, 'planRetreat').mockImplementation(function (
+    this: Train,
+    ctx: TickCtx,
+    group: number[] = [],
+  ) {
+    return back.call(this, ctx, group, true);
+  });
+  vi.spyOn(Train.prototype, 'retreat').mockImplementation(function (
+    this: Train,
+    ctx: TickCtx,
+    group: number[] = [],
+    plan = this.planRetreat(ctx, group),
+  ) {
+    const log = logOf(this);
+    const claims = new Map(log?.w.fleet.traffic.claims ?? []);
+    settingOff = true;
+    const ok = (() => {
+      try {
+        return retreat.call(this, ctx, group, plan);
+      } finally {
+        settingOff = false;
+      }
+    })();
+    if (!ok || !plan || !log) return ok;
+    const wk = log.w.track.w;
+    let bad: string | null = null;
+    for (const s of [...plan.path, ...(plan.back ?? [])]) {
+      const k = s.y * wk + s.x;
+      const under = log.w.fleet.trains.find((o) => o !== this && o.occupancyKeys(wk).includes(k));
+      const owner = claims.get(k);
+      if (under) bad ??= `#${this.id} set off along ${s.x},${s.y} under #${under.id}`;
+      else if (owner !== undefined && owner !== this.id && !plan.group.includes(owner))
+        bad ??= `#${this.id} set off along ${s.x},${s.y}, claimed by #${owner} outside its group`;
+    }
+    log.moves.push({ id: this.id, plan, at: clocks.get(log)!(), bad });
+    return ok;
+  });
+  vi.spyOn(turnable, 'turn').mockImplementation(function (
+    this: Train,
+    ctx: TickCtx,
+    leg: PathSegment[],
+  ) {
+    const before = this.poses.map((p) => ({ ...p }));
+    const log = logOf(this);
+    const was = log?.reversals.length ?? 0;
+    turning = true;
+    try {
+      turn.call(this, ctx, leg);
+    } finally {
+      turning = false;
+    }
+    // no car moves over the whole turn, the reversal and the new path both
+    const r = log?.reversals[was];
+    if (r) {
+      const moved = this.poses.map((p, i) => Math.hypot(p.x - before[i].x, p.y - before[i].y));
+      r.moved = Math.max(r.moved, ...moved);
+    }
+  });
+  vi.spyOn(turnable, 'reverseConsist').mockImplementation(function (this: Train) {
+    const log = logOf(this);
+    const before = this.poses.map((p) => ({ ...p }));
+    const wk = log?.w.track.w ?? 1;
+    const onSwitch = log
+      ? this.occupancyKeys(wk)
+          .filter((k) => !plainAt(log.w, k))
+          .map((k) => `${k % wk},${Math.floor(k / wk)}`)
+      : [];
+    reverse.call(this);
+    if (!log) return;
+    const was = began.get(this);
+    log.reversals.push({
+      id: this.id,
+      at: clocks.get(log)!(),
+      partway: turning,
+      stray: !turning && !settingOff && !!was?.holding,
+      speed: was?.speed ?? 0,
+      onSwitch,
+      moved: Math.max(
+        0,
+        ...this.poses.map((p, i) => Math.hypot(p.x - before[i].x, p.y - before[i].y)),
+      ),
+    });
+  });
+  const watch = (w: SimWorld, clock: () => number): ShuntLog => {
+    let seen = 0;
+    let turned = 0;
+    const log: ShuntLog = {
+      w,
+      moves: [],
+      reversals: [],
+      begin() {
+        for (const t of w.fleet.trains) began.set(t, { holding: t.holding, speed: t.speed });
+      },
+      check() {
+        const at = `at ${clock().toFixed(2)} s`;
+        for (const m of log.moves.slice(seen)) if (m.bad) return `${at}: ${m.bad}`;
+        seen = log.moves.length;
+        for (const r of log.reversals.slice(turned)) {
+          if (r.stray) return `${at}: #${r.id} reversed holding an escape, not at a turn`;
+          if (!r.partway) continue;
+          const move = log.moves.filter((m) => m.id === r.id && m.at <= r.at).at(-1);
+          if (!move?.plan.back) return `${at}: #${r.id} reversed partway along a move with no turn`;
+          const again = log.reversals.filter((o) => o.id === r.id && o.partway && o.at >= move.at);
+          if (again.length > 1)
+            return `${at}: #${r.id} reversed ${again.length} times along a move`;
+          if (r.speed > AT_REST) return `${at}: #${r.id} turned at ${r.speed} tiles a second`;
+          if (r.onSwitch.length) return `${at}: #${r.id} turned with a car on ${r.onSwitch}`;
+          if (r.moved > 1e-6) return `${at}: #${r.id} turned, a car moving ${r.moved} tiles`;
+        }
+        turned = log.reversals.length;
+        const traffic = w.fleet.traffic;
+        const wk = w.track.w;
+        for (const t of w.fleet.trains) {
+          if (!t.holding || t.state !== 'moving') continue;
+          const lease = traffic.recoveries.active.get(t.id);
+          if (!lease) return `${at}: #${t.id} holds an escape with no lease`;
+          for (const s of t.pathAhead())
+            if (traffic.claims.get(s.y * wk + s.x) !== t.id)
+              return `${at}: #${t.id} has ${s.x},${s.y} still to run, claimed by #${traffic.claims.get(s.y * wk + s.x)}`;
+          const move = log.moves.filter((m) => m.id === t.id).at(-1);
+          if (!move) return `${at}: #${t.id} holds an escape it never set off on`;
+          const turns = log.reversals.filter((r) => r.id === t.id && r.partway && r.at >= move.at);
+          const turnedYet = turns.length > 0;
+          // the step after it turns, the traffic control has seen the turn: what it left behind
+          // goes, and nothing of the second leg is kept whole any more
+          if (turns.some((r) => r.at < clock() - 1e-9) && lease.rest.size)
+            return `${at}: #${t.id} turned, but its lease still keeps its second leg whole`;
+          if (move.plan.back && !turnedYet)
+            for (const s of move.plan.back) {
+              const k = s.y * wk + s.x;
+              if (!lease.tiles.has(k) || traffic.claims.get(k) !== t.id)
+                return `${at}: #${t.id} let ${s.x},${s.y} of its second leg go before it turned`;
+            }
+        }
+        return null;
+      },
+    };
+    logs.push(log);
+    clocks.set(log, clock);
+    return log;
+  };
+  return { watch };
+}
+
+/**
+ * A single line along ROW from x 4 to 56 with a warehouse at each end (platforms x 5 and 56) and one
+ * dead-end siding of six tiles south of it off a switch at x 30: its throat facing east (rot 1, the
+ * siding under x 30) or west (rot 7, the siding under x 31).
+ */
+function shuntingLine(throatEast: boolean) {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  lay(w, 30, ROW, 'switch', throatEast ? 1 : 7);
+  siding(w, throatEast ? 30 : 31, ROW + 2);
+  line(w, 4, ROW, 29);
+  line(w, 32, ROW, 56);
+  const west = station(w, 'warehouse', 5, ROW - 1);
+  const east = station(w, 'warehouse', 56, ROW - 1);
+  return { w, west, east, sidingX: throatEast ? 30 : 31 };
+}
+/** One of the ways round a single line whose siding faces away from the idle train. */
+interface ShuntLayout {
+  throatEast: boolean;
+  /** the other train comes from the east end, bound for the west warehouse */
+  fromEast: boolean;
+  /** the idle train's head points at the switch (else it sets off rear first) */
+  facing: boolean;
+}
+const SHUNT_LAYOUTS: ShuntLayout[] = [false, true].flatMap((throatEast) =>
+  [true, false].flatMap((fromEast) =>
+    [true, false].map((facing) => ({ throatEast, fromEast, facing })),
+  ),
+);
+const showLayout = (l: ShuntLayout) =>
+  `throat facing ${l.throatEast ? 'east' : 'west'}, the other train from the ${l.fromEast ? 'east' : 'west'}, the idle train ${l.facing ? 'facing' : 'backing towards'} the switch`;
+
+/**
+ * The layout laid and its trains set: the idle train (no stop, so any refuge leaves it no worse
+ * off) stands on the side of the switch it cannot run straight into the siding from, with its head
+ * at x 40 east of a westward throat or x 20 west of an eastward one; the other train sets off from
+ * x 51 heading west or x 12 heading east, for the warehouse at the far end.
+ */
+function shuntingScene(l: ShuntLayout) {
+  const { w, west, east, sidingX } = shuntingLine(l.throatEast);
+  const sim = run(w);
+  // west of the switch, a train faces it heading east
+  const idle = train(w, l.throatEast ? 20 : 40, l.throatEast === l.facing, 'schedule', []);
+  idle.idle('');
+  const target = l.fromEast ? west : east;
+  const caller = train(w, l.fromEast ? 51 : 12, !l.fromEast, 'schedule', [call(target)]);
+  go(w, caller);
+  return { w, sim, idle, caller, target, sidingX };
+}
+
+describe('with shunting on, an idle train in the way on a single line whose siding faces away from it', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  for (const l of SHUNT_LAYOUTS)
+    it(
+      `backs into the siding with one turn partway, and the other train passes (${showLayout(l)})`,
+      SLOW,
+      () => {
+        const on = shuntingOn();
+        const { w, sim, idle, caller, target, sidingX } = shuntingScene(l);
+        const log = on.watch(w, () => sim.now);
+        let broken: string | null = null;
+        // how it stands as its move ends (with no stop, it gives up looking for work 10 s later)
+        let parked: { state: string; note: string; keys: number[] } | null = null;
+        const done = sim.until(() => {
+          broken ??= log.check();
+          log.begin();
+          if (!parked && log.moves.length && !idle.holding)
+            parked = {
+              state: idle.state,
+              note: idle.lastMessage,
+              keys: idle.occupancyKeys(w.track.w),
+            };
+          return broken !== null || (!!parked && sim.arrivals(caller).includes(target.id));
+        }, 120);
+        const story = `${broken}; ${idle.state} "${idle.lastMessage}" at ${JSON.stringify(idle.headTile)}; caller ${caller.state} "${caller.lastMessage}"; ${JSON.stringify(log.reversals)}`;
+        expect(broken, story).toBeNull();
+        expect(done, story).toBe(true);
+        // one move, a shunt, set off rear first when the head points away; and one turn partway
+        expect(log.moves.map((m) => [m.id, !!m.plan.back, m.plan.flip])).toEqual([
+          [idle.id, true, !l.facing],
+        ]);
+        expect(log.reversals.filter((r) => r.partway).map((r) => r.id)).toEqual([idle.id]);
+        // it ends idle wholly in the siding, saying it made way, and its lease goes with the move
+        expect([parked!.state, parked!.note]).toEqual(['idle', STR.traffic.madeWay]);
+        const wk = w.track.w;
+        for (const k of parked!.keys)
+          expect([k % wk, Math.floor(k / wk) >= ROW + 2], story).toEqual([sidingX, true]);
+        expect(w.fleet.traffic.recoveries.active.size).toBe(0);
+        expectSound(sim);
+      },
+    );
+});
+
+/** Every train of a world as a step leaves it: what it does and says, and where its cars stand. */
+function frameOf(w: SimWorld) {
+  return w.fleet.trains.map((t) => ({
+    id: t.id,
+    doing: [t.state, t.holding, t.reversed, t.lastMessage],
+    poses: t.poses.map((p) => ({ x: p.x, y: p.y })),
+  }));
+}
+type Frame = ReturnType<typeof frameOf>;
+/** Where two frames of the same trains part: a train doing or saying else, or a car APART off. */
+function parts(a: Frame, b: Frame): string | null {
+  for (const [i, t] of a.entries()) {
+    const u = b[i];
+    if (!u || u.id !== t.id) return `no #${t.id}`;
+    if (JSON.stringify(u.doing) !== JSON.stringify(t.doing))
+      return `#${t.id} ${JSON.stringify(u.doing)} where never saved ${JSON.stringify(t.doing)}`;
+    const off = Math.max(
+      ...t.poses.map((p, j) => Math.hypot(p.x - u.poses[j].x, p.y - u.poses[j].y)),
+    );
+    if (off >= APART) return `#${t.id} stands ${off.toFixed(3)} tiles off`;
+  }
+  return null;
+}
+/** A game's trains and stations saved as the game saves them (`reload` saves and loads at once). */
+function saveText(w: SimWorld) {
+  return JSON.stringify({
+    trains: w.fleet.trains.map((t) => t.toJSON()),
+    stations: w.builder.stations.map((s) => s.toJSON()),
+  });
+}
+/** A save loaded into the world `scene` lays afresh, as `reload` loads it. */
+function loadText(text: string, scene: () => SimWorld): SimWorld {
+  const j = JSON.parse(text) as {
+    trains: ReturnType<Train['toJSON']>[];
+    stations: ReturnType<Station['toJSON']>[];
+  };
+  const back = scene();
+  const stations = j.stations.map((s) => Station.fromJSON(s));
+  back.builder.stations.splice(0, back.builder.stations.length, ...stations);
+  back.fleet.trains = j.trains.map((t) => Train.fromJSON(t, back.track));
+  return back;
+}
+/** Seconds a loaded game runs on past the end of the shunt beside the game never saved. */
+const AFTER_SHUNT = 5;
+
+/**
+ * The layouts saved after every tick of the shunt (indexes into SHUNT_LAYOUTS): between them both
+ * facings of the throat, the other train from either end and the idle train either way round.
+ * The others, to keep the run short, after every SPARSE-th tick and every tick within 2 of the
+ * ones it sets off, turns and ends on.
+ */
+const EVERY_TICK = new Set([0, 7]);
+const SPARSE = 4;
+
+describe('with shunting on, a shunt saved and loaded at any tick of it', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  for (const [n, l] of SHUNT_LAYOUTS.entries())
+    it(
+      `runs on as it does never saved, every step sound (${showLayout(l)}${EVERY_TICK.has(n) ? ', every tick' : ''})`,
+      PROPERTY,
+      () => {
+        const on = shuntingOn();
+        // the game never saved: a save after every tick from the one before the move sets off to the
+        // one it ends on (the turn included), and every train after every tick
+        const { w, sim, idle } = shuntingScene(l);
+        const log = on.watch(w, () => sim.now);
+        const frames: Frame[] = [];
+        const saves: { tick: number; now: number; text: string }[] = [];
+        let last = { now: sim.now, text: saveText(w) };
+        let start = -1;
+        let turn = -1;
+        let end = -1;
+        const turns = () => log.reversals.filter((r) => r.partway).length;
+        for (let i = 0; i < 60 / GDT && (end < 0 || i <= end + AFTER_SHUNT / GDT); i++) {
+          log.begin();
+          const was = turns();
+          sim.ticks(GDT);
+          if (turns() > was) turn = i;
+          expect(log.check()).toBeNull();
+          frames.push(frameOf(w));
+          if (start < 0 && idle.holding) {
+            start = i;
+            saves.push({ tick: i - 1, ...last });
+          }
+          if (start >= 0 && end < 0) saves.push({ tick: i, now: sim.now, text: saveText(w) });
+          if (start >= 0 && end < 0 && !idle.holding) end = i;
+          last = { now: sim.now, text: saveText(w) };
+        }
+        expect(end, 'the shunt never ended').toBeGreaterThan(turn);
+        expect(turn, 'it never turned').toBeGreaterThan(start);
+        expect(turns()).toBe(1);
+        expectSound(sim);
+        const near = (k: number) => [start - 1, turn, end].some((t) => Math.abs(k - t) <= 2);
+        const loaded = saves.filter(
+          (s) => EVERY_TICK.has(n) || (s.tick - start) % SPARSE === 0 || near(s.tick),
+        );
+        // each save loaded and run beside it: the first tick at which the two part, if any
+        const parted: string[] = [];
+        for (const s of loaded) {
+          const back = loadText(s.text, () => shuntingLine(l.throatEast).w);
+          const again = run(back, s.now);
+          const logBack = on.watch(back, () => again.now);
+          // the move each loaded train was on as it was saved: the rest of it, both legs of a shunt
+          // until it turns
+          for (const t of JSON.parse(s.text).trains as ReturnType<Train['toJSON']>[])
+            if (t.retreat) {
+              const { path, back: leg, group } = t.retreat;
+              const plan = { path, back: leg, group, flip: false, distance: 0 };
+              logBack.moves.push({ id: t.id, plan, at: s.now, bad: null });
+            }
+          for (let i = s.tick + 1; i < frames.length; i++) {
+            logBack.begin();
+            again.ticks(GDT);
+            const why = logBack.check() ?? again.broken ?? parts(frames[i], frameOf(back));
+            if (why) {
+              parted.push(
+                `saved after tick ${s.tick} (it sets off on ${start}, turns on ${turn}, ends on ${end}), ${i - s.tick} ticks on: ${why}`,
+              );
+              break;
+            }
+          }
+          const { overlaps, deadlocks, stuck } = again.counters();
+          if (overlaps + deadlocks + stuck)
+            parted.push(
+              `saved after tick ${s.tick}: ${JSON.stringify({ overlaps, deadlocks, stuck })}`,
+            );
+        }
+        expect(parted).toEqual([]);
+      },
+    );
+});
+
+/** A train on a generated shunting line: its head at x, heading east or west, F7 and hoppers. */
+interface GenTrain {
+  x: number;
+  east: boolean;
+  wagons: number;
+}
+/**
+ * A line on which only a shunt may clear the way (`GenLine` with no callers and no loops; its
+ * quarry at the dead east end): one or two sidings facing either way, some too short to hold a
+ * train; an idle train with no stop anywhere on it, facing either way, so any refuge will do; a
+ * caller running between the warehouse at the west end and the quarry, setting off either way;
+ * and the seconds into the run at which track is laid far off, so that every reservation goes
+ * stale and a shunt under way stops where it is.
+ */
+interface ShuntCase {
+  line: GenLine;
+  idle: GenTrain;
+  caller: GenTrain;
+  builds: number[];
+}
+const spanOf = (t: GenTrain): Span =>
+  t.east ? [t.x - tilesOf(t.wagons) + 1, t.x] : [t.x, t.x + tilesOf(t.wagons) - 1];
+/** Track that can be laid, and both trains on plain main line, clear of each other. */
+function validShunt(c: ShuntCase): boolean {
+  const l = c.line;
+  if (!validTrack(l) || l.callers.length || l.loops.length || !atEnd(l) || !l.sidings.length)
+    return false;
+  const spans = [spanOf(c.idle), spanOf(c.caller)];
+  for (const span of spans) {
+    if (span[0] < 7 || span[1] > l.end - 2) return false;
+    if (turnouts(l).some((b) => meets(span, b))) return false;
+  }
+  return !meets(spans[0], spans[1], 2);
+}
+function shuntCase(rng: Rng): ShuntCase {
+  for (;;) {
+    const end = rng.int(40, 58);
+    const line: GenLine = {
+      end,
+      quarry: end,
+      sidings: [],
+      loops: [],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [],
+    };
+    const draw = (): GenTrain => ({
+      x: rng.int(8, end - 2),
+      east: rng.chance(0.5),
+      wagons: rng.int(1, 2),
+    });
+    const idle = draw();
+    // mostly facing away from the idle train: a siding west of it it could run straight into
+    // has its throat facing east
+    for (let n = rng.int(1, 2), i = 0; line.sidings.length < n && i < 40; i++) {
+      const x = rng.int(8, end - 4);
+      const away = rng.chance(0.75);
+      const s = { x, east: x < idle.x !== away, len: rng.int(3, 8) };
+      if (validTrack({ ...line, sidings: [...line.sidings, s] })) line.sidings.push(s);
+    }
+    for (let i = 0; i < 40; i++) {
+      const c: ShuntCase = {
+        line,
+        idle,
+        caller: draw(),
+        builds: Array.from({ length: rng.int(0, 3) }, () => rng.int(5, 145)).sort((a, b) => a - b),
+      };
+      if (validShunt(c)) return c;
+    }
+  }
+}
+function* shrinkShunt(c: ShuntCase): Iterable<ShuntCase> {
+  const out: ShuntCase[] = [];
+  for (const builds of shrinkArray(c.builds)) out.push({ ...c, builds });
+  for (const sidings of shrinkArray(c.line.sidings))
+    out.push({ ...c, line: { ...c.line, sidings } });
+  for (const wagons of shrinkInt(c.idle.wagons, 1)) out.push({ ...c, idle: { ...c.idle, wagons } });
+  for (const wagons of shrinkInt(c.caller.wagons, 1))
+    out.push({ ...c, caller: { ...c.caller, wagons } });
+  c.line.sidings.forEach((s, i) => {
+    for (const len of shrinkInt(s.len, 1)) {
+      const sidings = c.line.sidings.map((d, j) => (j === i ? { ...d, len } : d));
+      out.push({ ...c, line: { ...c.line, sidings } });
+    }
+  });
+  for (const o of out) if (validShunt(o)) yield o;
+}
+/**
+ * Seeds for the generated shunting lines: many cases hold no shunt, and each runs 150 s. Seed 160
+ * once left the idle train, which has no stop, standing where the jam resolution backed it off,
+ * saying it was pulling aside.
+ */
+const SHUNT_SEEDS = [...Array.from({ length: 60 }, (_, i) => i + 1), 160];
+/**
+ * Most turns partway, and moves aside or back, one train may make in a run of a generated shunting
+ * line (150 s, up to three stale reservations): seen at most one and three.
+ */
+const SHUNTS_AT_MOST = 2;
+const MOVES_AT_MOST = 6;
+
+describe('with shunting on, trains on generated lines that only a shunt clears', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // the overlap, no-silent-stall and deadlock properties of `idle trains on generated lines`,
+  // with shunting on: `watch` checks every step as it does there, and the shunt log what a shunt
+  // promises (`shuntingOn`)
+  it(
+    'never share a tile, start a move into another train, turn but at rest and clear, or stall silently',
+    PROPERTY,
+    () => {
+      let shunts = 0;
+      const on = shuntingOn();
+      forAll<ShuntCase>(
+        shuntCase,
+        (c) => {
+          const { w, stations } = layLine(c.line);
+          const sim = watch(w);
+          const log = on.watch(w, () => sim.now);
+          const idle = consist(w, c.idle.x, c.idle.east, c.idle.wagons);
+          idle.mode = 'schedule';
+          idle.idle('');
+          const caller = consist(w, c.caller.x, c.caller.east, c.caller.wagons);
+          caller.mode = 'schedule';
+          const [first, then] = c.caller.east ? ['quarry', 'west'] : ['west', 'quarry'];
+          caller.schedule = [first, then].map((s) => call(stations[s as StopName]!, 'none'));
+          go(w, caller);
+          let broken: string | null = null;
+          const step = () => {
+            broken ??= log.check() ?? sim.broken;
+            log.begin();
+            return broken !== null;
+          };
+          let at = 0;
+          for (const t of c.builds) {
+            sim.until(step, t - at);
+            w.track.place(w.track.w - 2, w.track.h - 2, 'straight', 1);
+            at = t;
+          }
+          sim.until(step, 150 - at);
+          const counted = w.fleet.traffic.counters;
+          const said = `${broken ?? 'no broken step'}; ${story(w, sim)}; moves ${JSON.stringify(log.moves.map((m) => [m.id, m.at.toFixed(2), !!m.plan.back]))}`;
+          expect(broken, said).toBeNull();
+          expect(counted.overlaps, said).toBe(0);
+          // the caller got through, or the jam was counted
+          expect(sim.arrivals(caller) > 0 || counted.deadlocks > 0, said).toBe(true);
+          // no livelock: each train turns partway and sets off aside or back a bounded number of
+          // times in the run
+          for (const t of [idle, caller]) {
+            const turns = log.reversals.filter((r) => r.id === t.id && r.partway).length;
+            const moves = log.moves.filter((m) => m.id === t.id).length;
+            shunts += turns;
+            expect(turns, `turns partway by #${t.id}: ${said}`).toBeLessThanOrEqual(SHUNTS_AT_MOST);
+            expect(moves, `moves by #${t.id}: ${said}`).toBeLessThanOrEqual(MOVES_AT_MOST);
+          }
+        },
+        { seeds: SHUNT_SEEDS, shrink: shrinkShunt },
+      );
+      // the property is not vacuous: lines are cleared by a shunt (most others hold none at all)
+      expect(shunts, 'turns partway over all the lines').toBeGreaterThan(10);
+    },
+  );
+});
+
+/**
+ * Ticks of a shunt at which track is laid far off: this many spread over it, the turn's, and the
+ * first, middle and last of each stretch it stands astride the switch.
+ */
+const STALE_AT = 12;
+
+describe('with shunting on, a shunt whose lease goes stale part-way', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // track laid elsewhere makes every reservation stale (`Traffic.maintainRecoveries`): the shunt
+  // stops where it is, the turn included, and the fleet looks again from there. Stopped astride
+  // the switch, the idle train runs on clear of it and turns (`findShuntPath`'s `under`), so the
+  // other train passes wherever it stopped but in one place: backed into the siding with the
+  // other train come up to the switch behind it, it could clear the switch only by running on
+  // deeper into the siding, which no refuge search offers until the whole train fits ahead of its
+  // head (`findRefugePath`). There the jam is counted and said
+  for (const l of SHUNT_LAYOUTS)
+    it(
+      `stops where it is, and makes way again from there for the other train to pass (${showLayout(l)})`,
+      PROPERTY,
+      () => {
+        const on = shuntingOn();
+        // the ticks it sets off, turns and ends on, and stands astride the switch, never made stale
+        const first = shuntingScene(l);
+        const log = on.watch(first.w, () => first.sim.now);
+        const wk = first.w.track.w;
+        let start = -1;
+        let turn = -1;
+        let end = -1;
+        const astride: [number, number][] = [];
+        for (let i = 0; i < 60 / GDT && end < 0; i++) {
+          log.begin();
+          const was = log.reversals.length;
+          first.sim.ticks(GDT);
+          if (start < 0 && first.idle.holding) start = i;
+          if (log.reversals.slice(was).some((r) => r.partway)) turn = i;
+          if (start >= 0 && !first.idle.holding) end = i;
+          const now =
+            first.idle.holding && first.idle.occupancyKeys(wk).some((k) => !plainAt(first.w, k));
+          const last = astride.at(-1);
+          if (now && last?.[1] === i - 1) last[1] = i;
+          else if (now) astride.push([i, i]);
+        }
+        expect([start >= 0, turn > start, end > turn]).toEqual([true, true, true]);
+        expect(astride.length, 'stretches astride the switch, out and back').toBe(2);
+        const ticks = new Set([turn - 1, turn, turn + 1]);
+        for (let k = 0; k < STALE_AT; k++)
+          ticks.add(start + Math.floor(((end - start) * k) / STALE_AT));
+        for (const [a, b] of astride) for (const k of [a, (a + b) >> 1, b]) ticks.add(k);
+        const failed: string[] = [];
+        for (const k of [...ticks].sort((a, b) => a - b)) {
+          // the same game, made stale after tick k, every step watched as on generated lines
+          const { w: lw, idle, caller, target } = shuntingScene(l);
+          const sim = watch(lw);
+          const slog = on.watch(lw, () => sim.now);
+          let broken: string | null = null;
+          const step = () => {
+            broken ??= slog.check() ?? sim.broken;
+            slog.begin();
+            return broken !== null;
+          };
+          sim.until(step, (k + 1) * GDT - GDT / 2);
+          // backed into the siding, the other train coming from the side the siding lets out to
+          const shutIn =
+            l.fromEast === l.throatEast &&
+            idle.occupancyKeys(wk).some((q) => Math.floor(q / wk) >= ROW + 2);
+          lw.track.place(lw.track.w - 2, lw.track.h - 2, 'straight', 1);
+          const where = `made stale after tick ${k} (it sets off on ${start}, turns on ${turn}, ends on ${end})`;
+          // holding its shunt as the track changes, it stops on the next step and looks again: it
+          // stands idle saying it waits for a plan or what it found, or sets off on a new move
+          const held = idle.holding;
+          const moves = slog.moves.length;
+          sim.until(step, GDT / 2);
+          const anew = slog.moves.length > moves;
+          const looks = [STR.traffic.replan, ...IN_THE_WAY].includes(idle.lastMessage);
+          if (held && !anew && (idle.holding || idle.state !== 'idle' || !looks))
+            failed.push(`${where}: it ran on, ${idle.state} saying "${idle.lastMessage}"`);
+          sim.until(() => step() || (!idle.holding && sim.arrivals(caller) > 0), STALL * 2);
+          const counted = lw.fleet.traffic.counters;
+          if (broken) failed.push(`${where}: ${broken}`);
+          else if (counted.overlaps) failed.push(`${where}: ${counted.overlaps} overlaps`);
+          else if (!sim.arrivals(caller) && !(shutIn && counted.deadlocks))
+            failed.push(
+              `${where}: the caller never reached ${target.name}${shutIn ? ' and no jam was counted' : ''}: ${story(lw, sim)}`,
+            );
+        }
+        expect(failed).toEqual([]);
+      },
+    );
+});
+
+// ------------------------------------------------------------------ shunting on, more generated lines
+
+/**
+ * A generated shunting line laid and its trains set as `trains on generated lines that only a
+ * shunt clears` sets them: the idle train with no stop, and the caller calling at both ends of the
+ * line without loading, sent off.
+ */
+function shuntWorld(c: ShuntCase) {
+  const { w, stations } = layLine(c.line);
+  const idle = consist(w, c.idle.x, c.idle.east, c.idle.wagons);
+  idle.mode = 'schedule';
+  idle.idle('');
+  const caller = consist(w, c.caller.x, c.caller.east, c.caller.wagons);
+  caller.mode = 'schedule';
+  const stops: StopName[] = c.caller.east ? ['quarry', 'west'] : ['west', 'quarry'];
+  caller.schedule = stops.map((s) => call(stations[s]!, 'none'));
+  go(w, caller);
+  return { w, idle, caller };
+}
+/** The trains of a world on a shunt: holding a move whose plan, as the log has it, turns partway. */
+function onShunt(w: SimWorld, log: ShuntLog) {
+  return w.fleet.trains.filter(
+    (t) => t.holding && !!log.moves.filter((m) => m.id === t.id).at(-1)?.plan.back,
+  );
+}
+
+/** Seconds a generated shunting line runs. */
+const SHUNT_RUN = 150;
+/** A generated shunting line with no track laid off it, and when during a shunt it is saved. */
+interface SavedShunt {
+  shunt: ShuntCase;
+  /** which of the ticks it may be saved after it is saved after, as a fraction of them */
+  pick: number;
+  /**
+   * The ticks it may be saved after: any after which a train is on a shunt or sets off on one the
+   * next, or only those within 2 of setting off or of a turn, or past a turn, when the line has any
+   */
+  near: 'any' | 'start' | 'turn' | 'after';
+}
+/** Seeds for the saved shunts: about a quarter of the lines hold one. */
+const SAVED_SHUNT_SEEDS = Array.from({ length: 150 }, (_, i) => i + 1);
+
+describe('with shunting on, a shunt on a generated line saved and loaded at any tick of it', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // `a shunt saved and loaded at any tick of it`, on generated lines: saved after the tick before a
+  // train sets off on a shunt or any tick it is on one (its first leg, its turn, its second leg),
+  // the loaded game runs beside the game never saved until AFTER_SHUNT past the end of that shunt,
+  // every train doing and saying the same and every car where it stands there, so no train runs
+  // its way the wrong way round; then on to SHUNT_RUN. Every step of both holds to the shunt log,
+  // no two trains ever share a tile, and the loaded game is never found unsound by `watch` at a
+  // step at which the game never saved is still sound: whether that one is, is the property of
+  // `trains on generated lines that only a shunt clears`
+  it('runs on as never saved until the shunt ends, and no less soundly after', PROPERTY, () => {
+    const on = shuntingOn();
+    const where = new Map<string, number>();
+    forAll<SavedShunt>(
+      (rng) => ({
+        shunt: { ...shuntCase(rng), builds: [] },
+        pick: rng.next(),
+        near: rng.pick(['any', 'start', 'turn', 'after'] as const),
+      }),
+      (c) => {
+        const ticks = SHUNT_RUN / GDT;
+        const step = (sim: ReturnType<typeof watch>, log: ShuntLog) => {
+          log.begin();
+          sim.until(() => false, GDT);
+          return log.check();
+        };
+        // the game never saved: every train after every tick, the ticks after which a train is on
+        // a shunt, those it sets off on one and turns on, and the first it is found unsound on
+        const never = shuntWorld(c.shunt);
+        const sim = watch(never.w);
+        const log = on.watch(never.w, () => sim.now);
+        const frames: Frame[] = [];
+        const shunting = new Set<number>();
+        const starts: number[] = [];
+        const turns: number[] = [];
+        let unsound = Infinity;
+        for (let i = 0; i < ticks; i++) {
+          const moves = log.moves.length;
+          const reversals = log.reversals.length;
+          const why = step(sim, log);
+          if (why) throw new Error(`never saved: ${why}`);
+          if (sim.broken !== null) unsound = Math.min(unsound, i);
+          frames.push(frameOf(never.w));
+          if (log.moves.slice(moves).some((m) => m.plan.back)) starts.push(i);
+          if (log.reversals.slice(reversals).some((r) => r.partway)) turns.push(i);
+          if (onShunt(never.w, log).length) shunting.add(i);
+        }
+        if (!shunting.size) return;
+        const all = [...new Set([...starts.map((k) => k - 1), ...shunting])].filter((k) => k >= 0);
+        const close = (marks: number[]) => (k: number) => marks.some((t) => Math.abs(k - t) <= 2);
+        const near = all.filter(
+          c.near === 'start'
+            ? close(starts)
+            : c.near === 'turn'
+              ? close(turns)
+              : c.near === 'after'
+                ? (k) => turns.some((t) => k > t + 2)
+                : () => false,
+        );
+        const pool = near.length ? near : all;
+        const tick = pool[Math.min(pool.length - 1, Math.floor(c.pick * pool.length))];
+        // the shunt it is on, or sets off on the next tick, ends on the first tick off one after it
+        let end = tick + 1;
+        while (end < ticks && shunting.has(end)) end++;
+        const side = Math.min(ticks - 1, end + AFTER_SHUNT / GDT);
+        // the same game run again to the end of that tick, and saved
+        const again = shuntWorld(c.shunt);
+        const simAgain = watch(again.w);
+        const logAgain = on.watch(again.w, () => simAgain.now);
+        for (let i = 0; i <= tick; i++) step(simAgain, logAgain);
+        expect(parts(frames[tick], frameOf(again.w)), 'the same game run again').toBeNull();
+        const shunter = onShunt(again.w, logAgain)[0] as unknown as Shunting | undefined;
+        const at = !shunter
+          ? 'before it sets off'
+          : turns.some((t) => Math.abs(tick - t) <= 2)
+            ? 'at its turn'
+            : shunter.shunt
+              ? 'on its first leg'
+              : 'on its second leg';
+        where.set(at, (where.get(at) ?? 0) + 1);
+        const text = saveText(again.w);
+        const back = loadText(text, () => layLine(c.shunt.line).w);
+        const loaded = watch(back, simAgain.now);
+        const logBack = on.watch(back, () => loaded.now);
+        // the move each loaded train was on as it was saved: the rest of it, both legs of a shunt
+        // until it turns
+        for (const t of JSON.parse(text).trains as ReturnType<Train['toJSON']>[])
+          if (t.retreat) {
+            const { path, back: leg, group } = t.retreat;
+            const plan = { path, back: leg, group, flip: false, distance: 0 };
+            logBack.moves.push({ id: t.id, plan, at: simAgain.now, bad: null });
+          }
+        const saved = `saved after tick ${tick} ${at} (it ends on ${end})`;
+        for (let i = tick + 1; i < ticks; i++) {
+          const why =
+            step(loaded, logBack) ??
+            (i <= side ? parts(frames[i], frameOf(back)) : null) ??
+            (i < unsound ? loaded.broken : null);
+          if (why) throw new Error(`${saved}, ${i - tick} ticks on: ${why}`);
+        }
+        expect(never.w.fleet.traffic.counters.overlaps, `never saved: ${story(never.w, sim)}`).toBe(
+          0,
+        );
+        expect(back.fleet.traffic.counters.overlaps, `${saved}: ${story(back, loaded)}`).toBe(0);
+      },
+      {
+        seeds: SAVED_SHUNT_SEEDS,
+        shrink: function* (c) {
+          for (const pick of shrinkInt(Math.round(c.pick * 100))) yield { ...c, pick: pick / 100 };
+          if (c.near !== 'any') yield { ...c, near: 'any' as const };
+          for (const shunt of shrinkShunt(c.shunt)) yield { ...c, shunt };
+        },
+      },
+    );
+    // not vacuous: lines are saved on a shunt's first leg, at its turn and on its second leg (seen
+    // 14, 16 and 14 times; once just before it sets off)
+    for (const at of ['on its first leg', 'at its turn', 'on its second leg'])
+      expect(where.get(at) ?? 0, `saves ${at}`).toBeGreaterThan(5);
+  });
+});
+
+/**
+ * A busier line for shunting: the main line of `GenLine` with one to three sidings, mostly facing
+ * away from the first idle train and some too short to hold a train, and sometimes a passing loop;
+ * the quarry at the dead east end or a through station; one or two idle trains, either way round,
+ * bound for a station they cannot reach (`ISLAND`); one or two callers running between two
+ * stations, either way first; and the seconds into the run at which track is laid far off, so that
+ * every reservation goes stale.
+ */
+interface BusyCase {
+  line: GenLine;
+  idles: GenTrain[];
+  callers: { at: GenTrain; stops: StopName[] }[];
+  builds: number[];
+}
+/**
+ * Track that can be laid, and every train on plain main line clear of turnouts, platforms and each
+ * other; and, unless `partial`, at least one idle train and one caller.
+ */
+function validBusy(c: BusyCase, partial = false): boolean {
+  const l = c.line;
+  if (!validTrack(l) || l.callers.length || l.westIdle || !l.sidings.length) return false;
+  if (!partial && (!c.idles.length || !c.callers.length)) return false;
+  if (c.callers.some((k) => k.stops.includes('east') && atEnd(l))) return false;
+  const spans = [...c.idles, ...c.callers.map((k) => k.at)].map(spanOf);
+  for (const span of spans) {
+    if (span[0] < 7 || span[1] > l.end - 2) return false;
+    if (turnouts(l).some((b) => meets(span, b))) return false;
+    if (platformsOf(l).some((p) => meets(span, [p, p], 1))) return false;
+  }
+  for (let i = 0; i < spans.length; i++)
+    for (let j = i + 1; j < spans.length; j++) if (meets(spans[i], spans[j], 2)) return false;
+  return true;
+}
+function busyCase(rng: Rng): BusyCase {
+  for (;;) {
+    const end = rng.int(44, 58);
+    const quarry = rng.chance(0.5) ? end : rng.int(22, end - 10);
+    const line: GenLine = {
+      end,
+      quarry,
+      sidings: [],
+      loops: [],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [],
+    };
+    if (!validTrack(line)) continue;
+    const draw = (): GenTrain => ({
+      x: rng.int(8, end - 2),
+      east: rng.chance(0.5),
+      wagons: rng.int(1, 2),
+    });
+    const idles = Array.from({ length: rng.int(1, 2) }, draw);
+    // a siding west of the idle train it could run straight into has its throat facing east
+    for (let n = rng.int(1, 3), i = 0; line.sidings.length < n && i < 40; i++) {
+      const x = rng.int(8, end - 4);
+      const s = { x, east: x < idles[0].x !== rng.chance(0.75), len: rng.int(2, 8) };
+      if (validTrack({ ...line, sidings: [...line.sidings, s] })) line.sidings.push(s);
+    }
+    for (let i = 0, n = rng.chance(0.3) ? 1 : 0; line.loops.length < n && i < 40; i++) {
+      const o = { x: rng.int(8, end - 6), len: rng.int(2, 9) };
+      if (validTrack({ ...line, loops: [o] })) line.loops.push(o);
+    }
+    const builds = Array.from({ length: rng.int(0, 3) }, () => rng.int(5, 145)).sort(
+      (a, b) => a - b,
+    );
+    // each train drawn until it stands clear of the track and of the trains drawn before it
+    let c: BusyCase = { line, idles: [], callers: [], builds };
+    const two = () => (rng.chance(0.5) ? 2 : 1);
+    const kinds = [...Array<string>(two()).fill('idle'), ...Array<string>(two()).fill('caller')];
+    for (const kind of kinds)
+      for (let i = 0; i < 40; i++) {
+        const at = draw();
+        const next =
+          kind === 'idle'
+            ? { ...c, idles: [...c.idles, at] }
+            : { ...c, callers: [...c.callers, { at, stops: stopsFor(rng, line) }] };
+        if (validBusy(next, true)) {
+          c = next;
+          break;
+        }
+      }
+    if (validBusy(c)) return c;
+  }
+}
+function* shrinkBusy(c: BusyCase): Iterable<BusyCase> {
+  const out: BusyCase[] = [];
+  for (const builds of shrinkArray(c.builds)) out.push({ ...c, builds });
+  for (const idles of shrinkArray(c.idles)) out.push({ ...c, idles });
+  for (const callers of shrinkArray(c.callers)) out.push({ ...c, callers });
+  for (const loops of shrinkArray(c.line.loops)) out.push({ ...c, line: { ...c.line, loops } });
+  for (const sidings of shrinkArray(c.line.sidings))
+    out.push({ ...c, line: { ...c.line, sidings } });
+  c.line.sidings.forEach((s, i) => {
+    for (const len of shrinkInt(s.len, 1)) {
+      const sidings = c.line.sidings.map((d, j) => (j === i ? { ...d, len } : d));
+      out.push({ ...c, line: { ...c.line, sidings } });
+    }
+  });
+  for (const o of out) if (validBusy(o)) yield o;
+}
+/** Where the station of a line's idle trains stands, on a stretch of track of its own. */
+const ISLAND = { x: 10, y: ROW + 20 };
+/** Seeds for the busier lines: each runs SHUNT_RUN seconds with up to four trains. */
+const BUSY_SEEDS = Array.from({ length: 60 }, (_, i) => i + 1);
+/** The notes of a train held in a jam: none of its trains can pull aside, or it always does. */
+const HELD: string[] = [STR.traffic.jammed, STR.traffic.keptBack];
+
+describe('with shunting on, trains on busier generated lines', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // the overlap, no-silent-stall and deadlock properties once more, with two idle trains that may
+  // shunt, passing loops, through stations, callers meeting head-on and leases going stale: every
+  // step sound by `watch` and the shunt log, no two trains ever on one tile, every caller calls
+  // somewhere or a jam is counted with a note that says so, and no train turns partway or sets off
+  // aside or back more than a bounded number of times
+  it(
+    'never share a tile, start a move into another train, turn but at rest and clear, or stall silently',
+    PROPERTY,
+    () => {
+      const on = shuntingOn();
+      let shunts = 0;
+      forAll(
+        busyCase,
+        (c) => {
+          const { w, stations } = layLine(c.line);
+          const sim = watch(w);
+          const log = on.watch(w, () => sim.now);
+          // roaming trains with nothing to haul, bound for a station on track of its own they cannot
+          // reach: they stay idle, and any refuge leaves them no worse off
+          line(w, ISLAND.x, ISLAND.y, ISLAND.x + 6);
+          const island = station(w, 'warehouse', ISLAND.x + 3, ISLAND.y - 1);
+          const idles = c.idles.map((g) => {
+            const t = consist(w, g.x, g.east, g.wagons);
+            t.mode = 'production';
+            t.schedule = [defaultStop(island.id)];
+            t.idle('');
+            return t;
+          });
+          const callers = c.callers.map(({ at, stops }) => {
+            const t = consist(w, at.x, at.east, at.wagons);
+            t.mode = 'schedule';
+            t.schedule = stops.map((s) => call(stations[s]!, 'none'));
+            go(w, t);
+            return t;
+          });
+          let broken: string | null = null;
+          // what each caller has said, as `#id note`
+          const told = new Set<string>();
+          const step = () => {
+            broken ??= log.check() ?? sim.broken;
+            log.begin();
+            for (const t of callers) told.add(`#${t.id} ${t.lastMessage}`);
+            return broken !== null;
+          };
+          let at = 0;
+          for (const t of c.builds) {
+            sim.until(step, t - at);
+            w.track.place(w.track.w - 2, w.track.h - 2, 'straight', 1);
+            at = t;
+          }
+          sim.until(step, SHUNT_RUN - at);
+          // a caller still backing off runs on to where its move ends, where it says why it did
+          sim.until(() => step() || !callers.some((t) => t.holding), STALL);
+          const counted = w.fleet.traffic.counters;
+          const said = `${broken ?? 'no broken step'}; ${story(w, sim)}; moves ${JSON.stringify(log.moves.map((m) => [m.id, m.at.toFixed(2), !!m.plan.back]))}`;
+          expect(broken, said).toBeNull();
+          expect(counted.overlaps, said).toBe(0);
+          // every caller calls somewhere, or a jam is counted and the caller has said it is held in
+          // one: jammed, or kept back by a train it keeps giving way to
+          for (const t of callers) {
+            if (sim.arrivals(t) > 0) continue;
+            expect(counted.deadlocks, `#${t.id} never called: ${said}`).toBeGreaterThan(0);
+            const held = HELD.some((note) => told.has(`#${t.id} ${note}`));
+            expect(held, `#${t.id} never called nor said why: ${said}`).toBe(true);
+          }
+          for (const t of [...idles, ...callers]) {
+            const turns = log.reversals.filter((r) => r.id === t.id && r.partway).length;
+            const moves = log.moves.filter((m) => m.id === t.id).length;
+            shunts += turns;
+            expect(turns, `turns partway by #${t.id}: ${said}`).toBeLessThanOrEqual(BUSY_TURNS);
+            expect(moves, `moves by #${t.id}: ${said}`).toBeLessThanOrEqual(BUSY_MOVES);
+          }
+        },
+        { seeds: BUSY_SEEDS, shrink: shrinkBusy },
+      );
+      // the property is not vacuous: idle trains shunt on these lines
+      expect(shunts, 'turns partway over all the lines').toBeGreaterThan(8);
+    },
+  );
+});
+
+/**
+ * Most turns partway, and moves aside or back, one train may make in a run of a busier line (150 s,
+ * up to three stale reservations): seen at most one and nine.
+ */
+const BUSY_TURNS = 2;
+const BUSY_MOVES = 12;
+
+/**
+ * Two shunts at once on one line: the main line along ROW from x 4 to 58 with a warehouse in the
+ * middle (platform x 30); a switch at x 16 with its throat facing west, its siding under x 17, and
+ * one at x 44 with its throat facing east, its siding under x 44, so that no train between them
+ * can run straight into either. An idle train stands on x 20 to 23 and another on x 37 to 40,
+ * heads `facing` the switch nearer each or backing towards it; a caller sets off from x 9 heading
+ * east and another from x 51 heading west, both for the warehouse, so each idle train is in the way
+ * of one caller and not the other's: their waiting groups share no train, and each may lease an
+ * escape while the other holds one. Both idle trains are bound for a station on track of their own
+ * they cannot reach (`ISLAND`), so any refuge leaves them no worse off.
+ */
+function twoShuntsLine() {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  lay(w, 16, ROW, 'switch', 7);
+  siding(w, 17, ROW + 2);
+  lay(w, 44, ROW, 'switch', 1);
+  siding(w, 44, ROW + 2);
+  line(w, 4, ROW, 15);
+  line(w, 18, ROW, 43);
+  line(w, 46, ROW, 58);
+  const mid = station(w, 'warehouse', 30, ROW - 1);
+  line(w, ISLAND.x, ISLAND.y, ISLAND.x + 6);
+  const island = station(w, 'warehouse', ISLAND.x + 3, ISLAND.y - 1);
+  return { w, mid, island };
+}
+function twoShunts(facing: boolean) {
+  const { w, mid, island } = twoShuntsLine();
+  const sim = run(w);
+  // heading west, the west one faces the switch at x 16; heading east, the east one the one at 44
+  const idles = [
+    { x: facing ? 20 : 23, east: !facing },
+    { x: facing ? 40 : 37, east: facing },
+  ].map(({ x, east: e }) => {
+    const t = train(w, x, e, 'production', [defaultStop(island.id)]);
+    t.idle('');
+    return t;
+  });
+  const callers = [
+    train(w, 9, true, 'schedule', [call(mid)]),
+    train(w, 51, false, 'schedule', [call(mid)]),
+  ];
+  for (const t of callers) go(w, t);
+  return { w, sim, idles, callers };
+}
+
+describe('with shunting on, two idle trains in the way on one line, each beside a siding facing away', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  for (const facing of [true, false])
+    it(
+      `both shunt at once on ways of their own and back into their sidings (${facing ? 'facing' : 'backing towards'} the switches)`,
+      SLOW,
+      () => {
+        const on = shuntingOn();
+        const { w, sim, idles, callers } = twoShunts(facing);
+        const log = on.watch(w, () => sim.now);
+        let broken: string | null = null;
+        let together = 0;
+        let shared: string | null = null;
+        const wk = w.track.w;
+        sim.until(() => {
+          broken ??= log.check();
+          log.begin();
+          const leases = idles.map((t) => w.fleet.traffic.recoveries.active.get(t.id)?.tiles);
+          if (leases[0] && leases[1]) {
+            together++;
+            for (const k of leases[0])
+              if (leases[1].has(k)) shared ??= `${k % wk},${Math.floor(k / wk)} at ${sim.now}`;
+          }
+          return broken !== null || (log.moves.length >= 2 && idles.every((t) => !t.holding));
+        }, 60);
+        const told = `${broken}; ${idles.map((t) => `#${t.id} ${t.state} "${t.lastMessage}" at ${JSON.stringify(t.headTile)}`).join('; ')}; ${JSON.stringify(log.moves.map((m) => [m.id, m.at, !!m.plan.back]))}`;
+        expect(broken, told).toBeNull();
+        // one shunt each, both leased at the same time, no tile in both leases
+        expect(
+          log.moves.map((m) => [m.id, !!m.plan.back]),
+          told,
+        ).toEqual(expect.arrayContaining(idles.map((t) => [t.id, true])));
+        expect(together, `steps both leases were held: ${told}`).toBeGreaterThan(0);
+        expect(shared, told).toBeNull();
+        expect(
+          log.reversals
+            .filter((r) => r.partway)
+            .map((r) => r.id)
+            .sort(),
+          told,
+        ).toEqual(idles.map((t) => t.id).sort());
+        // each ends idle wholly in its siding, saying it made way
+        idles.forEach((t, i) => {
+          expect([t.state, t.lastMessage], told).toEqual(['idle', STR.traffic.madeWay]);
+          for (const k of t.occupancyKeys(wk))
+            expect([k % wk, Math.floor(k / wk) >= ROW + 2], told).toEqual([i ? 44 : 17, true]);
+        });
+        // and the callers come on to the warehouse, the first of them calling there, every step sound
+        expect(sim.until(() => callers.some((t) => sim.arrivals(t).length > 0), 120)).toBe(true);
+        sim.until(() => false, 60);
+        expect(sim.broken).toBeNull();
+        expect(w.fleet.traffic.counters.overlaps).toBe(0);
+      },
+    );
+
+  // both leases are taken again on load, in the order the trains were saved in, the one train's
+  // never in the other's way: saved after every third tick of the two shunts and every tick within
+  // 2 of a turn, the loaded game runs as the game never saved to AFTER_SHUNT past their end
+  for (const facing of [true, false])
+    it(
+      `saved and loaded at any tick of the two shunts, runs on as never saved (${facing ? 'facing' : 'backing towards'} the switches)`,
+      PROPERTY,
+      () => {
+        const on = shuntingOn();
+        const { w, sim, idles } = twoShunts(facing);
+        const log = on.watch(w, () => sim.now);
+        const frames: Frame[] = [];
+        const saves: { tick: number; now: number; text: string }[] = [];
+        const turns: number[] = [];
+        let end = -1;
+        for (let i = 0; i < 60 / GDT && (end < 0 || i <= end + AFTER_SHUNT / GDT); i++) {
+          log.begin();
+          const was = log.reversals.length;
+          sim.ticks(GDT);
+          expect(log.check()).toBeNull();
+          if (log.reversals.slice(was).some((r) => r.partway)) turns.push(i);
+          frames.push(frameOf(w));
+          const holding = idles.some((t) => t.holding);
+          if (holding && end < 0) saves.push({ tick: i, now: sim.now, text: saveText(w) });
+          if (end < 0 && log.moves.length >= 2 && !holding) end = i;
+        }
+        expect(turns.length, 'turns partway').toBe(2);
+        expect(end, 'the shunts never ended').toBeGreaterThan(Math.max(...turns));
+        const loaded = saves.filter(
+          (s) => s.tick % 3 === 0 || turns.some((t) => Math.abs(s.tick - t) <= 2),
+        );
+        expect(loaded.length, 'saves loaded').toBeGreaterThan(20);
+        const parted: string[] = [];
+        for (const s of loaded) {
+          const back = loadText(s.text, () => twoShuntsLine().w);
+          const again = run(back, s.now);
+          const logBack = on.watch(back, () => again.now);
+          for (const t of JSON.parse(s.text).trains as ReturnType<Train['toJSON']>[])
+            if (t.retreat) {
+              const { path, back: leg, group } = t.retreat;
+              const plan = { path, back: leg, group, flip: false, distance: 0 };
+              logBack.moves.push({ id: t.id, plan, at: s.now, bad: null });
+            }
+          for (let i = s.tick + 1; i < frames.length; i++) {
+            logBack.begin();
+            again.ticks(GDT);
+            const why = logBack.check() ?? again.broken ?? parts(frames[i], frameOf(back));
+            if (why) {
+              parted.push(
+                `saved after tick ${s.tick} (they turn on ${turns}, end on ${end}), ${i - s.tick} ticks on: ${why}`,
+              );
+              break;
+            }
+          }
+          const { overlaps, deadlocks, stuck } = again.counters();
+          if (overlaps + deadlocks + stuck)
+            parted.push(
+              `saved after tick ${s.tick}: ${JSON.stringify({ overlaps, deadlocks, stuck })}`,
+            );
+        }
+        expect(parted).toEqual([]);
+      },
+    );
+});
+
+/**
+ * A terminus line on which nothing holds a train off the main line: `anyLine`'s with the quarry at
+ * the dead east end, no passing loop, no second idle train and every siding one or two tiles long,
+ * and the seconds into the run at which track is laid far off. The caller is bound for the quarry
+ * sooner or later, where the roaming train stands idle.
+ */
+interface JamCase {
+  line: GenLine;
+  builds: number[];
+}
+const jammedLine = (l: GenLine) =>
+  valid(l) && atEnd(l) && !l.loops.length && !l.westIdle && l.sidings.every((s) => s.len <= 2);
+function jamCase(rng: Rng): JamCase {
+  for (;;) {
+    const l = anyLine(rng);
+    const sidings = l.sidings.map((s) => ({ ...s, len: rng.int(1, 2) }));
+    const line = { ...l, sidings, loops: [], westIdle: 0 };
+    if (!jammedLine(line)) continue;
+    const builds = Array.from({ length: rng.int(0, 3) }, () => rng.int(5, 145)).sort(
+      (a, b) => a - b,
+    );
+    return { line, builds };
+  }
+}
+/** Seconds a line with no siding that holds a train runs: the caller may call at the west end first. */
+const JAM_RUN = 300;
+
+describe('with shunting on, a line with no siding that holds a train', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // shunting finds nowhere either, so it changes nothing: the line runs as it does with shunting
+  // off, every train doing and saying the same and every car where it stands there at every step,
+  // stale leases and all; no train sets off on a shunt, every step is sound, the jam is counted, and
+  // the caller says it is jammed and the idle train that it is in the way
+  it('runs as with shunting off, to a counted jam both trains say, with no shunt', PROPERTY, () => {
+    forAll(
+      jamCase,
+      ({ line: l, builds }) => {
+        const play = (shunting: boolean) => {
+          vi.restoreAllMocks();
+          const on = shunting ? shuntingOn() : null;
+          const { w, sim, idle, callers, idled } = setUp(l);
+          expect(idled, 'the idle train never idled').toBe(true);
+          const [caller] = callers;
+          const log = on?.watch(w, () => sim.now);
+          const frames: Frame[] = [];
+          const said = new Set<string>();
+          let broken: string | null = null;
+          const step = () => {
+            broken ??= log?.check() ?? sim.broken;
+            log?.begin();
+            frames.push(frameOf(w));
+            said.add(`#${caller.id} ${caller.lastMessage}`).add(`#${idle.id} ${idle.lastMessage}`);
+            return broken !== null;
+          };
+          let at = 0;
+          for (const t of builds) {
+            sim.until(step, t - at);
+            w.track.place(w.track.w - 2, w.track.h - 2, 'straight', 1);
+            at = t;
+          }
+          sim.until(step, JAM_RUN - at);
+          const shunts = log?.moves.filter((m) => m.plan.back).length ?? 0;
+          return { w, sim, idle, caller, frames, said, broken, shunts };
+        };
+        const off = play(false);
+        const on = play(true);
+        const told = `${on.broken ?? 'no broken step'}; ${story(on.w, on.sim)}`;
+        // frames are taken as each step begins: the same count, and each the same
+        expect(on.frames.length, told).toBe(off.frames.length);
+        const parted = on.frames.findIndex((f, i) => parts(off.frames[i], f) !== null);
+        if (parted >= 0)
+          throw new Error(
+            `parts from shunting off at step ${parted}: ${parts(off.frames[parted], on.frames[parted])}`,
+          );
+        expect(on.broken, told).toBeNull();
+        expect(on.shunts, `shunts: ${told}`).toBe(0);
+        const { overlaps, deadlocks } = on.w.fleet.traffic.counters;
+        expect(overlaps, told).toBe(0);
+        expect(deadlocks, told).toBeGreaterThan(0);
+        expect(on.said, told).toContain(`#${on.caller.id} ${STR.traffic.jammed}`);
+        expect(
+          IN_THE_WAY.some((note) => on.said.has(`#${on.idle.id} ${note}`)),
+          told,
+        ).toBe(true);
+      },
+      {
+        seeds: LINE_SEEDS,
+        shrink: function* (c) {
+          for (const builds of shrinkArray(c.builds)) yield { ...c, builds };
+          for (const line of shrinkLine(c.line, jammedLine)) yield { ...c, line };
+        },
+      },
+    );
+  });
+});
+
+describe('a train with no stop, backed off in a jam', () => {
+  // seed 160 of the generated shunting lines, the train with no stop in the caller's way: backed
+  // off into the siding, it stood there saying it was pulling aside, with nothing to wait for
+  it('makes way as an idle train does, and stands with no route again after', SLOW, () => {
+    const { w, stations } = layLine({
+      end: 41,
+      quarry: 41,
+      sidings: [{ x: 24, east: true, len: 5 }],
+      loops: [],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [],
+    });
+    const sim = watch(w);
+    const idle = consist(w, 32, false, 1);
+    idle.mode = 'schedule';
+    idle.idle('');
+    const caller = consist(w, 29, true, 1);
+    caller.mode = 'schedule';
+    caller.schedule = [call(stations.quarry!, 'none'), call(stations.west!, 'none')];
+    go(w, caller);
+    const stop = () => sim.broken !== null;
+    // with no stop it stands with no route (`depart`), and the jam resolution backs it off
+    expect(
+      sim.until(() => stop() || idle.state === 'noRoute', 15),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || idle.holding, 60),
+      'never backed off',
+    ).toBe(true);
+    expect([idle.makingWay, idle.lastMessage]).toEqual([true, STR.traffic.makingWay]);
+    expect(
+      sim.until(() => stop() || !idle.holding, 60),
+      'its way never ended',
+    ).toBe(true);
+    expect([idle.state, idle.lastMessage]).toEqual(['idle', STR.traffic.madeWay]);
+    // it asks again 10 s on, and stands with no route again, where it parked
+    expect(sim.until(() => stop() || idle.state === 'noRoute', 10 + 2 * GDT)).toBe(true);
+    sim.until(stop, 150 - sim.now);
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect(sim.arrivals(caller), story(w, sim)).toBeGreaterThan(0);
+    expect(w.fleet.traffic.counters.overlaps).toBe(0);
+  });
+});
+
+/**
+ * Seed 30 of the busier generated lines: a train with nothing to haul parked in the only siding,
+ * #2 shuttling between the quarry and the east warehouse, and #3 bound east from west of the
+ * quarry, which meets #2 head-on and backs off each time, as #2 has nowhere to go.
+ */
+function keptBackScene() {
+  const { w, stations } = layLine({
+    end: 56,
+    quarry: 32,
+    sidings: [{ x: 43, east: false, len: 5 }],
+    loops: [],
+    idleWagons: 1,
+    westIdle: 0,
+    callers: [],
+  });
+  line(w, ISLAND.x, ISLAND.y, ISLAND.x + 6);
+  const island = station(w, 'warehouse', ISLAND.x + 3, ISLAND.y - 1);
+  return { w, stations, island };
+}
+
+describe('a working train that keeps giving way to the same train', () => {
+  it('is kept back: the jam is counted and it says so, and the other runs on', SLOW, () => {
+    const { w, stations, island } = keptBackScene();
+    const sim = watch(w);
+    const idle = consist(w, 35, false, 1);
+    idle.mode = 'production';
+    idle.schedule = [defaultStop(island.id)];
+    idle.idle('');
+    const shuttle = consist(w, 16, false, 2);
+    shuttle.mode = 'schedule';
+    shuttle.schedule = [call(stations.quarry!, 'none'), call(stations.east!, 'none')];
+    go(w, shuttle);
+    const kept = consist(w, 11, true, 1);
+    kept.mode = 'schedule';
+    kept.schedule = [call(stations.east!, 'none'), call(stations.west!, 'none')];
+    go(w, kept);
+    const counted = w.fleet.traffic.counters;
+    const stop = () => sim.broken !== null;
+    // the first time it gives way, nothing is counted and it says it pulled aside
+    const backs = (n: number) => () => stop() || (kept.yieldCount === n && kept.holding);
+    expect(sim.until(backs(1), 150), story(w, sim)).toBe(true);
+    expect(
+      sim.until(() => stop() || !kept.holding, 60),
+      story(w, sim),
+    ).toBe(true);
+    expect([kept.state, kept.lastMessage]).toEqual(['yielding', STR.traffic.pullingAside]);
+    expect(counted.deadlocks).toBe(0);
+    // the second, for the same train with no stop reached between, the jam is counted as it sets
+    // off, and where its way ends it says it is kept back
+    expect(sim.until(backs(2), 150), story(w, sim)).toBe(true);
+    expect(counted.deadlocks).toBe(1);
+    expect(kept.lastMessage).toBe(STR.traffic.pullingAside);
+    expect(
+      sim.until(() => stop() || !kept.holding, 60),
+      story(w, sim),
+    ).toBe(true);
+    expect([kept.state, kept.lastMessage]).toEqual(['yielding', STR.traffic.keptBack]);
+    // it says so only while it waits where it pulled aside, and the other train keeps calling
+    const calls = sim.arrivals(shuttle);
+    const said = new Set<string>();
+    sim.until(() => {
+      if (kept.lastMessage === STR.traffic.keptBack) said.add(kept.state);
+      return stop();
+    }, 300);
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect([...said]).toEqual(['yielding']);
+    expect(sim.arrivals(shuttle)).toBeGreaterThan(calls);
+    expect(sim.arrivals(kept)).toBe(0);
+    expect(counted.overlaps).toBe(0);
+  });
+
+  it('saved on its way back the second time, says it is kept back where the way ends', SLOW, () => {
+    const { w, stations, island } = keptBackScene();
+    const sim = watch(w);
+    const idle = consist(w, 35, false, 1);
+    idle.mode = 'production';
+    idle.schedule = [defaultStop(island.id)];
+    idle.idle('');
+    const shuttle = consist(w, 16, false, 2);
+    shuttle.mode = 'schedule';
+    shuttle.schedule = [call(stations.quarry!, 'none'), call(stations.east!, 'none')];
+    go(w, shuttle);
+    const kept = consist(w, 11, true, 1);
+    kept.mode = 'schedule';
+    kept.schedule = [call(stations.east!, 'none'), call(stations.west!, 'none')];
+    go(w, kept);
+    const stop = () => sim.broken !== null;
+    const second = () => stop() || (kept.yieldCount === 2 && kept.holding);
+    expect(sim.until(second, 300), story(w, sim)).toBe(true);
+    sim.until(stop, 1);
+    expect(kept.holding, 'its way back ended within a second').toBe(true);
+    const back = reload(w, () => keptBackScene().w);
+    const again = watch(back, sim.now);
+    const loaded = back.fleet.trains[2];
+    // both run on side by side until the way back ends, never saved and loaded
+    const tick = (s: ReturnType<typeof watch>) => s.until(() => false, GDT);
+    for (let i = 0; i < 60 / GDT && (kept.holding || loaded.holding); i++) {
+      tick(sim);
+      tick(again);
+    }
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect(again.broken, story(back, again)).toBeNull();
+    for (const t of [kept, loaded])
+      expect([t.state, t.lastMessage], t.name).toEqual(['yielding', STR.traffic.keptBack]);
+  });
+});
+
+describe('a working train that gave way to a train and has reached a stop since', () => {
+  // on the terminus line #1, roaming, backs off for #2 on its way to the quarry, reaches it and
+  // finds nothing to haul, then makes way for #2 coming back there; once stone turns up it sets
+  // off for it and meets #2 again. Its make-way adds to yieldCount as a back-off does, yet it has
+  // reached a stop since it last backed off for #2, so it is not kept back
+  it('is not kept back: no jam is counted and it says it is pulling aside', SLOW, () => {
+    const { w, west, end } = terminus();
+    const sim = watch(w);
+    const roaming = train(w, 26, true, 'production', [defaultStop(end.id)]);
+    const other = train(w, 37, false, 'schedule', [call(west, 'none'), call(end, 'none')]);
+    go(w, roaming);
+    go(w, other);
+    const counted = w.fleet.traffic.counters;
+    const stop = () => sim.broken !== null;
+    const backsOff = () => roaming.holding && !roaming.makingWay;
+    expect(
+      sim.until(() => stop() || backsOff(), 30),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || (roaming.state === 'idle' && roaming.atStation === end), 200),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || roaming.makingWay, 60),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || roaming.lastMessage === STR.traffic.madeWay, 60),
+      story(w, sim),
+    ).toBe(true);
+    end.store('stone', 40);
+    expect(
+      sim.until(() => stop() || backsOff(), 120),
+      story(w, sim),
+    ).toBe(true);
+    expect(sim.arrivals(roaming), story(w, sim)).toBe(1);
+    expect(roaming.yieldCount).toBe(2);
+    expect(counted.deadlocks).toBe(0);
+    expect(
+      sim.until(() => stop() || !roaming.holding, 60),
+      story(w, sim),
+    ).toBe(true);
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect([roaming.state, roaming.lastMessage]).toEqual(['yielding', STR.traffic.pullingAside]);
+    expect(counted.deadlocks).toBe(0);
+    expect(counted.overlaps).toBe(0);
+  });
+});
+
+describe('a working train that gives way to one train and then another', () => {
+  // the main line to x 56 with the quarry at x 30, and one siding at x 12 facing east: a train
+  // heading east backs into it. #1 sets off east for the east warehouse and meets #2 coming west,
+  // then, once it has set off from the siding, #3, which is put on the line only then as #2 leaves
+  // service: it backs off for each in turn and reaches no stop in between, yet it is never kept back
+  it('is not kept back: no jam is counted and it says it is pulling aside', SLOW, () => {
+    const { w, stations } = layLine({
+      end: 56,
+      quarry: 30,
+      sidings: [{ x: 12, east: true, len: 6 }],
+      loops: [],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [],
+    });
+    const sim = watch(w);
+    const there = [call(stations.east!, 'none'), call(stations.west!, 'none')];
+    const back = [call(stations.west!, 'none'), call(stations.east!, 'none')];
+    const first = consist(w, 20, true, 1);
+    first.mode = 'schedule';
+    first.schedule = there;
+    go(w, first);
+    const one = consist(w, 44, false, 1);
+    one.mode = 'schedule';
+    one.schedule = back;
+    go(w, one);
+    const stop = () => sim.broken !== null;
+    const gave: number[] = [];
+    const own = first.gaveWay.bind(first);
+    first.gaveWay = (other) => {
+      gave.push(other);
+      return own(other);
+    };
+    expect(
+      sim.until(() => stop() || (first.yieldCount === 1 && first.holding), 60),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || (first.state === 'moving' && !first.holding), 120),
+      story(w, sim),
+    ).toBe(true);
+    expect(gave, story(w, sim)).toEqual([one.id]);
+    // the first train it gave way to leaves service, and the second comes on
+    w.fleet.recall(one);
+    const two = consist(w, 52, false, 1);
+    two.mode = 'schedule';
+    two.schedule = back;
+    go(w, two);
+    expect(
+      sim.until(() => stop() || (first.yieldCount === 2 && first.holding), 120),
+      story(w, sim),
+    ).toBe(true);
+    expect(gave, story(w, sim)).toEqual([one.id, two.id]);
+    expect(sim.arrivals(first), 'it reached a stop in between').toBe(0);
+    expect(
+      sim.until(() => stop() || !first.holding, 60),
+      story(w, sim),
+    ).toBe(true);
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect([first.state, first.lastMessage]).toEqual(['yielding', STR.traffic.pullingAside]);
+    expect(w.fleet.traffic.counters.deadlocks).toBe(0);
+  });
+});
+
+/**
+ * The kept-back scene set going: the train with nothing to haul parked in the siding, the shuttle
+ * and the train that keeps giving way to it, watched (`watch`).
+ */
+function keptBackRun() {
+  const { w, stations, island } = keptBackScene();
+  const sim = watch(w);
+  const idle = consist(w, 35, false, 1);
+  idle.mode = 'production';
+  idle.schedule = [defaultStop(island.id)];
+  idle.idle('');
+  const shuttle = consist(w, 16, false, 2);
+  shuttle.mode = 'schedule';
+  shuttle.schedule = [call(stations.quarry!, 'none'), call(stations.east!, 'none')];
+  go(w, shuttle);
+  const kept = consist(w, 11, true, 1);
+  kept.mode = 'schedule';
+  kept.schedule = [call(stations.east!, 'none'), call(stations.west!, 'none')];
+  go(w, kept);
+  return { w, sim, kept };
+}
+/** Seconds a loaded game runs on beside the one never saved once the kept-back move has ended. */
+const AFTER_KEPT = 5;
+
+describe('a kept-back move saved and loaded at any tick of it', () => {
+  // saved after the tick the train sets off on, kept back, after every tick of the move (92 of
+  // them) and every tick of the 5 s past its end, and each save loaded and run beside the game
+  // never saved: what a train last gave way to is not saved (traffic-current.md §8), so a save from
+  // before it sets off may not keep it back, but one from any tick after must, every step as never
+  // saved and as sound
+  it('runs on as never saved and ends kept back, every step sound', PROPERTY, () => {
+    const { w, sim, kept } = keptBackRun();
+    const frames: Frame[] = [];
+    const saves: { tick: number; now: number; text: string }[] = [];
+    let start = -1;
+    let end = -1;
+    const step = (s: ReturnType<typeof watch>) => s.until(() => false, GDT);
+    for (let i = 0; i < 400 / GDT && (end < 0 || i <= end + AFTER_KEPT / GDT); i++) {
+      step(sim);
+      if (sim.broken) break;
+      frames.push(frameOf(w));
+      if (start < 0 && kept.holding && kept.yieldCount === 2) start = i;
+      if (start >= 0) saves.push({ tick: i, now: sim.now, text: saveText(w) });
+      if (start >= 0 && end < 0 && !kept.holding) end = i;
+    }
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect(start, 'it never gave way a second time').toBeGreaterThanOrEqual(0);
+    expect(end, 'its move never ended').toBeGreaterThan(start);
+    expect([kept.state, kept.lastMessage]).toEqual(['yielding', STR.traffic.keptBack]);
+    const parted: string[] = [];
+    for (const s of saves) {
+      const back = loadText(s.text, () => keptBackScene().w);
+      const again = watch(back, s.now);
+      for (let i = s.tick + 1; i < frames.length; i++) {
+        step(again);
+        const why = again.broken ?? parts(frames[i], frameOf(back));
+        if (why) {
+          parted.push(
+            `saved after tick ${s.tick} (it sets off on ${start}, ends on ${end}), ${i - s.tick} ticks on: ${why}`,
+          );
+          break;
+        }
+      }
+      const t = back.fleet.byId(kept.id)!;
+      if (!parted.length && (t.state !== 'yielding' || t.lastMessage !== STR.traffic.keptBack))
+        parted.push(`saved after tick ${s.tick}: ends ${t.state} saying "${t.lastMessage}"`);
+      expect(back.fleet.traffic.counters.overlaps).toBe(0);
+    }
+    expect(parted).toEqual([]);
+    // not vacuous: saves on the way, as it ends and after
+    expect(saves.filter((s) => s.tick < end).length).toBeGreaterThan(10);
+    expect(saves.filter((s) => s.tick >= end).length).toBeGreaterThan(2);
+  });
+});
+
+// ------------------------------------------------------------------ the kept-back rule, event by event
+
+/** The private Train members: whether the escape `retreat` set off on makes way, and a stop. */
+interface Escaping {
+  aside: boolean;
+  arrive(st: Station): void;
+}
+/**
+ * One thing that happens to a working train, as the kept-back rule reads it: it sets off on an
+ * escape in a jam for train `other`, holding a stop (`back`), making way while idle (`aside`) or
+ * with no stop at all (`noStop`); it reaches a stop (`arrive`) or the station of a fuel detour
+ * (`detour`); or the game is saved and loaded.
+ */
+type GiveWay =
+  | { kind: 'back' | 'aside' | 'noStop'; other: number }
+  | { kind: 'arrive' }
+  | { kind: 'detour' }
+  | { kind: 'reload' };
+const showGiveWays = (es: GiveWay[]) =>
+  es.map((e) => ('other' in e ? `${e.kind} #${e.other}` : e.kind)).join(', ');
+/** Seeds for the event sequences: each case is a handful of calls on one train, no fleet ticks. */
+const GIVE_WAY_SEEDS = Array.from({ length: 1000 }, (_, i) => i + 1);
+
+describe('Train.gaveWay against the kept-back rule, over any order of give-ways, stops and saves', () => {
+  // The fleet notes every escape the jam resolution sets a train off on (`gaveWay`, right after
+  // `retreat`). Here a train in the terminus scene is put through generated orders of escapes, for
+  // two other trains, with stops, fuel detours and save-and-load between, each escape leaving it as
+  // `retreat` does (holding, making way or not, one more `yieldCount`), and every answer is held to
+  // the rule as traffic-current.md §5 states it (`keptBackRule`): kept back exactly when the last
+  // escape it set off on in a jam, holding a stop, since it last reached a station (a fuel detour's
+  // too: the fleet's `onArrive` counts it) and in this game since it was loaded, was for the same
+  // train
+  it('keeps a train back exactly when the rule does', () => {
+    let backAfterStop = 0;
+    let keptBack = 0;
+    forAll<GiveWay[]>(
+      (rng) =>
+        Array.from({ length: rng.int(1, 12) }, (): GiveWay => {
+          const kind = rng.pick([
+            'back',
+            'back',
+            'back',
+            'aside',
+            'aside',
+            'noStop',
+            'arrive',
+            'arrive',
+            'detour',
+            'reload',
+          ] as const);
+          return kind === 'back' || kind === 'aside' || kind === 'noStop'
+            ? { kind, other: rng.int(2, 3) }
+            : { kind };
+        }),
+      (events) => {
+        const { w, end } = terminus();
+        let t = train(w, 26, true, 'production', [defaultStop(end.id)]);
+        let rule = keptBackRule();
+        const rules = [rule];
+        rule.follow(t, () => 0);
+        // the train each escape holding a stop was for since the last stop, and before it
+        let since: number | null = null;
+        let beforeStop: number | null = null;
+        for (const e of events) {
+          if (e.kind === 'arrive' || e.kind === 'detour') {
+            if (e.kind === 'detour') t.detour = end.id;
+            (t as unknown as Escaping).arrive(end);
+            t.detour = null;
+            rule.arrived(t);
+            beforeStop = since ?? beforeStop;
+            since = null;
+            continue;
+          }
+          if (e.kind === 'reload') {
+            t = Train.fromJSON(JSON.parse(JSON.stringify(t.toJSON())), w.track);
+            rule = keptBackRule();
+            rules.push(rule);
+            rule.follow(t, () => 0);
+            since = beforeStop = null;
+            continue;
+          }
+          const schedule = t.schedule;
+          if (e.kind === 'noStop') t.schedule = [];
+          const escaping = t as unknown as Escaping;
+          escaping.aside = e.kind === 'aside';
+          t.holding = true;
+          t.yieldCount++;
+          const kept = t.gaveWay(e.other);
+          if (kept) keptBack++;
+          if (e.kind === 'back') {
+            if (since === null && beforeStop === e.other && t.yieldCount > 1) backAfterStop++;
+            since = e.other;
+          }
+          t.holding = false;
+          escaping.aside = false;
+          t.schedule = schedule;
+        }
+        for (const r of rules) expect(r.broken(), showGiveWays(events)).toBeNull();
+      },
+      { seeds: GIVE_WAY_SEEDS, shrink: (es) => shrinkArray(es), format: showGiveWays },
+    );
+    // not vacuous: trains kept back, and trains that gave way to the train they had given way to
+    // before their last stop, having pulled aside since that stop (`yieldCount` above 1)
+    expect(keptBack).toBeGreaterThan(100);
+    expect(backAfterStop).toBeGreaterThan(20);
+  });
+});
+
+/**
+ * The terminus scene of `a working train that gave way to a train and has reached a stop since`,
+ * generated: the main line along ROW with the quarry at its dead end and a warehouse at the other,
+ * one dead-end siding whose throat faces the quarry, a roaming train between the siding and the
+ * quarry bound for the quarry and a scheduled train between it and the quarry heading away.
+ * Columns are given as on the line whose quarry stands at its east end; `east: false` mirrors
+ * them, the quarry at the west end.
+ */
+interface Revisit {
+  east: boolean;
+  /** the quarry's platform, at the line's dead end; the warehouse's is at WEST */
+  quarry: number;
+  /** the switch block's column on the warehouse side */
+  switchAt: number;
+  /** tiles of dead-end siding */
+  siding: number;
+  roamWagons: number;
+  otherWagons: number;
+  /** the roaming train's head, heading for the quarry */
+  roamAt: number;
+  /** the other train's head, heading away from the quarry */
+  otherAt: number;
+}
+/**
+ * Tiles from the switch to the quarry at least: the other train runs that far and back while the
+ * roaming train makes way and idles in the siding, so it is still about the quarry, mostly, when
+ * the roaming train sets off for the stone.
+ */
+const REVISIT_REACH = 18;
+/**
+ * A scene that can be laid: the siding holds the roaming train; the other train standing at the
+ * warehouse, the roaming train at the quarry and both where they start stand clear of the switch;
+ * the two start apart, both on the line.
+ */
+function revisitOk(c: Revisit): boolean {
+  const roam = tilesOf(c.roamWagons);
+  const other = tilesOf(c.otherWagons);
+  if (c.quarry < 40 || c.quarry > 58 || c.roamWagons < 1 || c.otherWagons < 1) return false;
+  if (c.siding < roam + 1 || c.quarry - c.switchAt < REVISIT_REACH) return false;
+  if (c.switchAt < WEST + other + 3 || c.roamAt - roam + 1 < c.switchAt + 3) return false;
+  return c.otherAt >= c.roamAt + 2 && c.otherAt + other - 1 <= c.quarry;
+}
+function revisitCase(rng: Rng): Revisit {
+  for (;;) {
+    const quarry = rng.int(40, 58);
+    const roamWagons = rng.int(1, 2);
+    const otherWagons = rng.int(1, 2);
+    const switchAt = rng.int(WEST + tilesOf(otherWagons) + 3, quarry - REVISIT_REACH);
+    const roamAt = rng.int(switchAt + 2 + tilesOf(roamWagons), quarry - tilesOf(otherWagons) - 3);
+    const c: Revisit = {
+      east: rng.chance(0.5),
+      quarry,
+      switchAt,
+      siding: tilesOf(roamWagons) + rng.int(1, 3),
+      roamWagons,
+      otherWagons,
+      roamAt,
+      otherAt: rng.int(roamAt + 2, quarry - tilesOf(otherWagons) + 1),
+    };
+    if (revisitOk(c)) return c;
+  }
+}
+/** Smaller scenes still laid: fewer wagons, a shorter siding, the line shorter, the trains nearer. */
+function* shrinkRevisit(c: Revisit): Iterable<Revisit> {
+  const out: Revisit[] = [];
+  if (!c.east) out.push({ ...c, east: true });
+  for (const roamWagons of shrinkInt(c.roamWagons, 1)) out.push({ ...c, roamWagons });
+  for (const otherWagons of shrinkInt(c.otherWagons, 1)) out.push({ ...c, otherWagons });
+  for (const siding of shrinkInt(c.siding, 1)) out.push({ ...c, siding });
+  for (const quarry of shrinkInt(c.quarry, 40)) out.push({ ...c, quarry });
+  for (const otherAt of shrinkInt(c.otherAt, c.roamAt + 2)) out.push({ ...c, otherAt });
+  for (const switchAt of shrinkInt(c.switchAt, WEST)) out.push({ ...c, switchAt });
+  for (const o of out) if (revisitOk(o)) yield o;
+}
+/** Lays a generated scene: `at` maps a column as on the east-facing line to where it lies. */
+function revisitLine(c: Revisit) {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  const at = (x: number) => (c.east ? x : c.quarry + 4 - x);
+  // the switch block's west column; its throat faces the quarry, the siding under its far column
+  const x = c.east ? c.switchAt : at(c.switchAt + 1);
+  lay(w, x, ROW, 'switch', c.east ? 1 : 7);
+  for (let y = ROW + 2; y < ROW + 2 + c.siding; y++) lay(w, c.east ? x : x + 1, y, 'straight', 0);
+  line(w, 4, ROW, x - 1);
+  line(w, x + 2, ROW, c.quarry);
+  const warehouse = station(w, 'warehouse', at(WEST), ROW - 1);
+  const quarry = station(w, 'quarry', at(c.quarry), ROW - 1);
+  return { w, warehouse, quarry, at };
+}
+/** Seeds of the generated scenes: each runs four or five minutes of game time. */
+const REVISIT_SEEDS = Array.from({ length: 40 }, (_, i) => i + 1);
+
+describe('a working train that meets the train it gave way to again after its stop, on generated lines', () => {
+  // the roaming train backs off for the other, reaches the quarry and finds nothing to haul, makes
+  // way for the other coming back and idles in the siding; stone turns up and it sets off for it.
+  // Meeting the other again it backs off as before, its make-way since its stop counted in
+  // yieldCount, yet it is not kept back: no jam is counted and it says it is pulling aside. Each
+  // give-way is held to the rule (`watch`), and every step to what `watch` checks
+  it('backs off for it as a train never kept back does, the jam not counted', PROPERTY, () => {
+    let met = 0;
+    forAll(
+      revisitCase,
+      (c) => {
+        const { w, warehouse, quarry, at } = revisitLine(c);
+        const sim = watch(w);
+        const roam = consist(w, at(c.roamAt), c.east, c.roamWagons);
+        roam.mode = 'production';
+        roam.schedule = [defaultStop(quarry.id)];
+        const other = consist(w, at(c.otherAt), !c.east, c.otherWagons);
+        other.mode = 'schedule';
+        other.schedule = [call(warehouse, 'none'), call(quarry, 'none')];
+        go(w, roam);
+        go(w, other);
+        const counted = w.fleet.traffic.counters;
+        const stop = () => sim.broken !== null;
+        const until = (what: string, done: () => boolean, seconds: number) => {
+          const ok = sim.until(() => stop() || done(), seconds);
+          expect(sim.broken, story(w, sim)).toBeNull();
+          expect(ok, `${what}: ${story(w, sim)}`).toBe(true);
+        };
+        const backsOff = () => roam.holding && !roam.makingWay;
+        until('it never backed off for the other', backsOff, 60);
+        expect(counted.deadlocks, story(w, sim)).toBe(0);
+        until('it never reached the quarry', () => sim.arrivals(roam) > 0, 200);
+        until('it never made way', () => roam.makingWay, 200);
+        until(
+          'it never idled where it made way',
+          () => roam.state === 'idle' && roam.lastMessage === STR.traffic.madeWay,
+          60,
+        );
+        quarry.store('stone', 40);
+        // the jams counted before the step it backs off in, which counts one if it is kept back;
+        // it may load at the quarry without meeting the other: then there is nothing to check
+        let jams = counted.deadlocks;
+        until(
+          'it neither met the other again nor loaded the stone',
+          () => {
+            if (backsOff()) return true;
+            jams = counted.deadlocks;
+            return roam.totalCargo() > 0;
+          },
+          120,
+        );
+        if (!backsOff()) return;
+        met++;
+        expect(sim.arrivals(roam), story(w, sim)).toBe(1);
+        expect(roam.yieldCount, story(w, sim)).toBeGreaterThan(1);
+        until('its way aside never ended', () => !roam.holding, 60);
+        expect([roam.state, roam.lastMessage], story(w, sim)).toEqual([
+          'yielding',
+          STR.traffic.pullingAside,
+        ]);
+        expect(counted.deadlocks, story(w, sim)).toBe(jams);
+        sim.until(stop, 30);
+        expect(sim.broken, story(w, sim)).toBeNull();
+        expect(counted.overlaps, story(w, sim)).toBe(0);
+      },
+      { seeds: REVISIT_SEEDS, shrink: shrinkRevisit },
+    );
+    // not vacuous: on most lines the two meet again
+    expect(met).toBeGreaterThanOrEqual(Math.ceil((REVISIT_SEEDS.length * 3) / 4));
+  });
 });

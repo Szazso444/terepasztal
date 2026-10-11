@@ -4,7 +4,7 @@ import type { Builder } from './build';
 import type { Train } from './trains';
 import type { JunctionStats } from './junctions';
 import type { PathSegment } from '../world/pathfinding';
-import { blockingGroups, RecoveryReservations } from './recovery';
+import { blockingGroups, RecoveryReservations, turnIndex } from './recovery';
 import { STR } from '../strings';
 
 /** How far ahead (tiles) a moving train claims track beyond the section it is entering. */
@@ -166,6 +166,11 @@ export class Traffic {
   private carTiles(t: Train): number[] {
     return t.occupancyKeys(this.track.w);
   }
+  /**
+   * Lease an escape to `t` whole, or nothing: every tile of `path`, which for a shunt holds both
+   * legs, the second from where the way turns (`turnIndex`). The second leg is kept whole until
+   * the train turns to run it (`maintainRecoveries`).
+   */
   reserveRecovery(t: Train, path: PathSegment[], group: number[], trains: Train[], now: number) {
     const tiles = new Set(path.map((p) => this.key(p.x, p.y)));
     for (const other of trains)
@@ -174,7 +179,8 @@ export class Traffic {
       const owner = this.claims.get(key);
       if (owner !== undefined && owner !== t.id && !group.includes(owner)) return false;
     }
-    if (!this.recoveries.reserve(t.id, group, tiles, now, this.track.version)) return false;
+    const rest = new Set(path.slice(turnIndex(path)).map((p) => this.key(p.x, p.y)));
+    if (!this.recoveries.reserve(t.id, group, tiles, now, this.track.version, rest)) return false;
     for (const key of tiles) this.claims.set(key, t.id);
     return true;
   }
@@ -195,10 +201,18 @@ export class Traffic {
     const live = new Map(trains.map((t) => [t.id, t]));
     for (const [id, plan] of this.recoveries.active) {
       const t = live.get(id);
+      // a holding train's path starts afresh only where a shunt turns: it runs its second leg now,
+      // and the turn is progress
+      if (t && plan.rest.size && t.pathProgress < plan.progress) {
+        plan.rest.clear();
+        plan.progress = t.pathProgress;
+        plan.progressed = now;
+      }
       if (t?.holding && t.state === 'moving') {
         const needed = new Set([
           ...this.carTiles(t),
           ...t.pathAhead().map((p) => this.key(p.x, p.y)),
+          ...plan.rest,
         ]);
         for (const key of plan.tiles) if (!needed.has(key)) plan.tiles.delete(key);
       }

@@ -183,6 +183,11 @@ export const STR = {
      * others' way holds one of them and leaves it a way on to its stop (a counted deadlock)
      */
     jammed: 'Jammed: no siding it can pull into to let the other train by',
+    /**
+     * a working train backed off again for the train it last backed off for, before reaching its
+     * stop: the line has no siding or loop free for the two to pass (a counted deadlock)
+     */
+    keptBack: 'Kept back: it gives way to the same train each time, with nowhere free to pass it',
     /** a train waiting where it pulled aside has no track on to its next stop from there */
     noWayOn: 'Pulled aside, with no track on to its next stop',
     replan: 'Escape route unavailable; waiting for a new plan',
