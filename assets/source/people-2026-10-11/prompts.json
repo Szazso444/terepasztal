@@ -1,0 +1,140 @@
+{
+  "issue": 331,
+  "branch": "art/331-people",
+  "base": "dea4267",
+  "tool": "built-in image_gen",
+  "status": "passenger pilot checkpoint awaiting author review; 2 of 20 strips painted, remaining professions not started",
+  "references": [
+    {
+      "path": "reference-passenger.png",
+      "role": "exact style and character authority",
+      "source": "origin/backup/c-users-zso-terepasztal:scratchpad/full-style-stills/assets/passenger-source-v1.png"
+    },
+    {
+      "path": "assets/source/base-v1/people-walker.png",
+      "role": "game scale context"
+    },
+    {
+      "path": "docs/art-direction/images/03-theme-town-growth.png",
+      "role": "palette and mood"
+    }
+  ],
+  "canvas": {
+    "width": 1536,
+    "height": 1024,
+    "columns": 4,
+    "columnWidth": 384,
+    "figureHeight": 720,
+    "baseline": 960,
+    "anchors": [
+      [
+        192,
+        960
+      ],
+      [
+        576,
+        960
+      ],
+      [
+        960,
+        960
+      ],
+      [
+        1344,
+        960
+      ]
+    ],
+    "phases": [
+      "right foot forward",
+      "passing",
+      "left foot forward",
+      "passing"
+    ],
+    "gameHeight": 9
+  },
+  "export": "Painted content from built-in image_gen. Mechanical foreground-mask cleanup, connected silhouette extraction, resize to 720px tall with width capped at 320px, and placement at y960; upper-body centroid aligned to column anchor. Accepted raw paintings kept in inputs/.",
+  "assets": {
+    "passenger-front-walk.png": {
+      "generations": [
+        "front-guide: columns 0,1,3",
+        "front-opposite-contact-guide: column 2"
+      ],
+      "approval": "pending"
+    },
+    "passenger-back-walk.png": {
+      "generations": [
+        "back-correction: columns 0 and 1",
+        "back-opposite-contact: column 2",
+        "back-opposite-passing: column 3"
+      ],
+      "approval": "pending"
+    }
+  },
+  "history": [
+    {
+      "id": "front-initial",
+      "prompt": "Use case: stylized-concept. Create passenger-front-walk.png, a production animation strip for an isometric railway game. Reference image 1 is the EXACT character and painted style authority: preserve this adult man, warm skin, brown hair, forest green flat cap and waistcoat, ivory rolled-sleeve collared shirt, charcoal trousers, brown boots and small brown leather cross-body satchel on his left hip. References 2 and 3 are supporting game scale and palette only; do NOT reproduce their scenery or text. Output a real RGBA PNG with transparent alpha-zero empty background, canvas EXACTLY 1536x1024, four equal columns 384 pixels wide. Exactly one full-body figure in each column, same adult realistic proportions (7 to 7.5 heads tall), same character and outfit and same size. Figure height about 720px, cap top about y240, all feet at baseline y960. Ground anchor under body centre: (192,960), (576,960), (960,960), (1344,960). Orthographic 2:1 isometric game camera, 30 degrees down. FRONT view: walking toward lower right along tile +x, showing face and FRONT-RIGHT side in three-quarter view. Visible top of cap and shoulders, never profile or straight front. Four successive phases of IN-PLACE walking, from left to right: RIGHT foot forward and left arm forward; first passing phase with opposite leg lifted; LEFT foot forward and right arm forward; second passing phase with the other leg lifted. Keep hips centred on each anchor, identical torso facing, small natural arm swings, foot travel follows down-right/up-left diagonal. Distinct alternating walk phases; head bob at most 14px, no travel across canvas. Smooth painted contours, broad colour clusters, 3 or 4 shades per material, selective dark lower and side rims, one upper-left light. Subdued forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42, warm natural skin and hair. At 9px character height must read as clear cap/head/body/two legs/satchel silhouette: simplify tiny detail. Opaque painted figures, antialiasing only at edges. Absolutely NO ground, floor, cast shadow, ground shadow, text, labels, borders, dividers, frame numbers, glow, extra objects or extra figures. Empty space below y960. Do not draw checkerboard: real transparency.",
+      "generatedOutput": "exec-76108900-8ede-42b4-b02e-d087fdd3c37f.png"
+    },
+    {
+      "id": "front-correction",
+      "prompt": "Use case: stylized-concept. Create passenger-front-walk.png, a production animation strip for an isometric railway game. Reference image 1 is the EXACT character and painted style authority: preserve this adult man, warm skin, brown hair, forest green flat cap and waistcoat, ivory rolled-sleeve collared shirt, charcoal trousers, brown boots and small brown leather cross-body satchel on his left hip. References 2 and 3 are supporting game scale and palette only; do NOT reproduce their scenery or text. Output a real RGBA PNG with transparent alpha-zero empty background, canvas EXACTLY 1536x1024, four equal columns 384 pixels wide. Exactly one full-body figure in each column, same adult realistic proportions (7 to 7.5 heads tall), same character and outfit and same size. Figure height about 720px, cap top about y240, all feet at baseline y960. Ground anchor under body centre: (192,960), (576,960), (960,960), (1344,960). Orthographic 2:1 isometric game camera, 30 degrees down. FRONT view: walking toward lower right along tile +x, showing face and FRONT-RIGHT side in three-quarter view. Visible top of cap and shoulders, never profile or straight front. Four successive phases of IN-PLACE walking, from left to right: RIGHT foot forward and left arm forward; first passing phase with opposite leg lifted; LEFT foot forward and right arm forward; second passing phase with the other leg lifted. Keep hips centred on each anchor, identical torso facing, small natural arm swings, foot travel follows down-right/up-left diagonal. Distinct alternating walk phases; head bob at most 14px, no travel across canvas. Smooth painted contours, broad colour clusters, 3 or 4 shades per material, selective dark lower and side rims, one upper-left light. Subdued forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42, warm natural skin and hair. At 9px character height must read as clear cap/head/body/two legs/satchel silhouette: simplify tiny detail. Opaque painted figures, antialiasing only at edges. Absolutely NO ground, floor, cast shadow, ground shadow, text, labels, borders, dividers, frame numbers, glow, extra objects or extra figures. Empty space below y960. Do not draw checkerboard: real transparency.\nCORRECTION to attached attempt (image 1): its haze/glow is forbidden; remove ALL haze and surrounding paint, every pixel outside each silhouette must have alpha EXACTLY zero and the interior figure alpha EXACTLY 255. It repeats its first stride in column 3; column 3 MUST reverse the legs: left boot reaches forward toward bottom right, right boot trails toward upper left. Column 2 passing has right leg supporting, column 4 passing has left leg supporting: lowest planted sole in EVERY column at y960, and cap tops at y240\u00c2\u00b114. Size figures to 720px tall, not current 680px; centre torso x192/576/960/1344, narrower silhouettes with empty margins between columns. Keep character identity and broad painted style, reduce excessive all-around black contours. Complete transparent strip, no light aura or any shadows. Image 2 remains exact character authority; image 3 scale reference, image 4 palette.",
+      "generatedOutput": "exec-6ec111d4-ba79-4d85-8e81-3fd10fedde1d.png"
+    },
+    {
+      "id": "front-fresh",
+      "prompt": "Paint ONE production sprite sheet on a genuinely transparent RGBA canvas, exactly 1536 wide x1024 high. Four separate identical adult passengers walking IN PLACE in four different poses, one per 384-wide column. Reference 1 is the character/style authority; reference 2 scale context; reference 3 palette. Same slim adult man with realistic 7.5-head proportions: forest-green flat cap and buttoned waistcoat, ivory rolled sleeve shirt, charcoal trousers, small brown cross-body satchel left hip, brown boots. Smooth broad painted colour clusters and selective dark lower rims, one upper-left light, no fine details. Orthographic 30 degree down 2:1 isometric camera, FRONT three-quarter view showing face and front-right of body, facing LOWER RIGHT in every frame. Layout: cap top y240, planted boot sole y960, body centre x192 /576 /960 /1344, 720px tall, each silhouette stays inside its column, same cap size and head height \u00c2\u00b110px. Crucial animation: pose 1 RIGHT leg extended in front towards lower-right, LEFT leg extended behind towards upper-left, left arm swings forward; pose 2 RIGHT leg supporting straight and LEFT knee bending as it passes underneath the hip, arms near torso; pose 3 REVERSE pose 1: LEFT leg extended in front towards lower-right, RIGHT leg extended behind towards upper-left, right arm swings forward; pose 4 LEFT leg supporting straight and RIGHT knee bending as it passes underneath the hip, arms near torso. In pose 3 the near visible thigh angles BACKWARD toward lower-left and far thigh angles FORWARD toward lower-right, to make it clearly opposite of pose 1. No repeating pose 1 in pose 3. Ground point under body centre stays fixed at each column midpoint, y960. Render painted figures only, alpha255 inside figures, alpha0 outside, slight antialiasing at contours. NO background paint, scenery, ground, floor, any shadow or glow, text, frame labels, borders, extra objects. Subdued game palette forest #294638 moss #78804C oat #E4D5B5 slate #626B6C copper #A36B42 warm natural skin/hair. Clear silhouettes readable when reduced to 9px tall. This is a four phase walk cycle, not four similar illustrations.",
+      "generatedOutput": "exec-5263c325-9b01-4929-a885-54166281a429.png"
+    },
+    {
+      "id": "front-guide",
+      "prompt": "Edit image 1, the four-pose grey layout guide, into a finished passenger FRONT walk-cycle strip. KEEP its exact 1536x1024 canvas, four column positions, 720px figure heights and boot baselines at y960. Keep the four different leg poses and their occlusion order: dark right leg in FRONT in pose1, light left leg in FRONT in pose3, opposite passing legs in poses2 and4. They are NOT identical contact poses: third pose has its nearer leg trailing and its far leg forward. Repaint anatomical adult realistic bodies, no grey dummy visible. Turn every body's shoulders and head into FRONT 3/4 toward lower right (orthographic 2:1 isometric, camera 30 degrees down), showing face and FRONT-RIGHT side, boots oriented down-right. Image 2 is exact character and painted style authority: same man, warm skin, brown hair, green cap and waistcoat, ivory rolled-sleeve shirt, charcoal trousers, brown boots and brown satchel on left hip. Copy his style and identity, NOT his static pose. Image3 is scale/context reference; image4 subdued game palette reference. Smooth painted edges and broad three-four shade clusters, selective dark lower/side rims only, upper-left lighting. NO ground, floor, shadow, glow, text, border, labels or extra objects. Truly transparent alpha0 outside silhouettes, opaque alpha255 interiors. Same cap/body dimensions in each frame, head bob under 14px. Clear adult silhouettes suitable for 9px-tall game figures. Canvas positions and four distinct anatomical leg poses from image1 take priority over composition of character reference.",
+      "generatedOutput": "exec-e4ad4885-d224-4364-91f3-38e46803f6a9.png"
+    },
+    {
+      "id": "back-initial",
+      "prompt": "Create passenger-back-walk.png: a four-frame BACK-view walk-cycle strip of the SAME adult man in reference 1, using reference 2 for its painted front-view identity and pose consistency. Reference 3 is a layout/pose guide only; reference4 scale reference; reference5 palette. EXACTLY 1536x1024 RGBA transparent canvas, four columns of 384px, same man one per column, about720px tall, feet baseline y960 and body ground centres x192,576,960,1344. Camera orthographic 2:1 isometric, 30 degrees DOWN. BACK view: walking AWAY toward UPPER RIGHT along tile -y; see the BACK and RIGHT side in3/4. Show back of brown hair/nape, back of green cap, plain BACK panel of green waistcoat (no front buttons), back-right of ivory rolled-sleeve shirt and charcoal trousers, brown boots. Face, shirt-front collar and waistcoat-front buttons are turned AWAY, not visible. Brown leather satchel stays on his LEFT hip and same cross-body strap goes over RIGHT shoulder diagonally across back; bag peeks on far side. Realistic7.5-head adult proportions, same cap/body dimensions every frame. In-place walk phases left-to-right: right foot forward TOWARD upper-right with left foot trailing toward lower-left; passing with right foot supporting and left knee lifted; LEFT foot forward TOWARD upper-right with RIGHT foot trailing lower-left; passing with left foot supporting and right knee lifted. Thus alternating which leg is nearer viewer, visibly opposite contact phases 1 and3, and distinct lifted legs 2 and4. Natural opposite arm swing. Head bob <14px. Preserve reference1's smooth painted broad3-4 shade clusters, upper-left light, selective dark lower/side rims. Forest#294638 ivory/oat#E4D5B5 charcoal/slate#626B6C copper#A36B42 warm natural skin/hair. Readable cap/head/body/twolegs/satchel at9px height. Opaque alpha255 interiors, alpha0 outside figure contours, antialias only at silhouette boundary. NO ground, floor, shadows, glow, text, borders, dividers, labels, numbers, extra objects or extra figures. Empty margins. Paint new BACK view, do NOT copy front view of reference2.",
+      "generatedOutput": "exec-29de7769-cc5d-4351-aae1-fbc2fb9d6c72.png"
+    },
+    {
+      "id": "back-correction",
+      "prompt": "CORRECT the attached back walk strip, preserving its painted character, colours, camera and image size. It has TWO errors: the satchel switches hips compared with character authority, and frames1 and3 duplicate legs. Repaint all four figures with satchel on the man's ANATOMICAL LEFT hip, the FAR side in this BACK-RIGHT view: bag must peek from SCREEN LEFT hip, not screen right. Strap travels from upper SCREEN RIGHT shoulder diagonally to SCREEN LEFT hip across the waistcoat back. The front authority image2 confirms his satchel on anatomical left. BACK camera stays exactly as image1: back of head and right side, walking toward UPPER RIGHT, orthographic30degree-down. Four different leg poses from LEFT to RIGHT: (1) right leg reaches forward upper-right, LEFT leg trailing down-left; (2) right leg planted forward and left knee passing alongside; (3) LEFT leg reaches forward upper-right and RIGHT leg trailing down-left, near right thigh must angle toward SCREEN LEFT and far left thigh toward SCREEN RIGHT, opposite visible occlusion from frame1; (4) left leg supporting and right knee passing alongside. Use image3 grey guide's two contact poses with DIFFERENT leg crossing order and two different passing supports. Do NOT repeat poses1and3, or poses2and4. Align all figures at body centre x192,576,960,1344, feet baseline y960, cap tops y240\u00c2\u00b110,720px tall. RGBA truly transparent alpha0 outside, opaque alpha255 interiors, no ground, no shadow, no glow, no floor, no text/borders/labels/extra objects. Smooth painted broad colour clusters, realistic adult proportions, upper-left light. ONLY correct bag side, opposite legs, baseline and size; do not redesign character or change camera.",
+      "generatedOutput": "exec-937465fa-6d80-42cf-8809-22cb29740e43.png"
+    },
+    {
+      "id": "back-opposite-contact",
+      "prompt": "Edit this SINGLE full-body passenger figure into the OPPOSITE walk contact pose. Preserve identity, clothing, cap, satchel left hip, warm broad painted colours, upper-left light, orthographic30degree-down camera and BACK-RIGHT3/4 view walking AWAY toward upper right. Keep torso and head unchanged. CHANGE ONLY LEGS AND ARM SWING: the man\u00e2\u20ac\u2122s RIGHT leg, on SCREEN RIGHT at the hip and nearest viewer, must now extend STRAIGHT BACKWARD DOWN AND RIGHT, with its boot ending at lower-right of body. His LEFT leg, on SCREEN LEFT at the hip and farther from viewer, must reach FORWARD AND UP TO THE RIGHT, crossing BEHIND the right leg, its boot at upper-right of body. The legs currently point toward lower-left; reverse that visible contact silhouette so the bottom planted boot is on SCREEN RIGHT instead of SCREEN LEFT. Left arm bent swinging forward away/up-right, right arm hanging back toward viewer. Do not mirror the person: cap and torso still face upper right, satchel stays screenleft. One man only, adult realistic proportions, no chibi. Transparent RGBA, opaque figure, no ground, shadow, glow, text, borders, extraobjects. Full body clearly separated from all image edges, allow transparent margins, canvas1024x1536. This is animation phase3, anatomically left foot forward and right foot back.",
+      "generatedOutput": "exec-69148adf-55a9-4426-8b5d-558d479edda2.png"
+    },
+    {
+      "id": "back-passing-rejected",
+      "prompt": "Edit this ONE passenger into the OPPOSITE PASSING phase of his walk. Preserve exactly this character and BACK-RIGHT3/4 camera: away toward upper right, orthographic30degrees down, realistic adult proportions, green cap/waistcoat, ivory rolled sleeves, charcoal trousers, brown boots, small satchel SCREENLEFT hip with strap from SCREENRIGHT shoulder. Change legs: ANATOMICAL LEFT leg on far SCREENLEFT hip now supports him straight down, planted boot just left of body centre. ANATOMICAL RIGHT leg on near SCREENRIGHT hip is lifted: right knee bent, right boot lifted behind toward lower SCREENRIGHT, and its sole faces viewer. This is visibly opposite image1, whose lifted boot is screenleft: move the LIFTED BOOT TO SCREENRIGHT and supporting boot to SCREENLEFT. Legs close together beneath hips, small walking step, not running. Right arm hangs slightly back, left arm slightly forward, opposite image1. Keep torso and head identity unchanged, no added detail. One full-body figure only, canvas1024x1536, transparent RGBA alpha0 outside and opaque inside. Upper-left light, broad smooth painted colour clusters, selective lower/side dark contours, same3-4 shades. No ground, shadow, glow, floor, text, borders, additional objects. This will be phase4 of an in-place walk cycle. No mirroring of torso or camera.",
+      "generatedOutput": "exec-0c72f858-7b77-468d-a693-96b9dcbd7ef6.png"
+    },
+    {
+      "id": "back-opposite-passing",
+      "prompt": "Paint over image1 grey SINGLE-POSE guide, preserving the position of its planted foot SCREEN LEFT and its lifted boot sole SCREEN RIGHT. Image2 supplies ONLY the painted character identity, clothes and camera, NOT leg pose. Finished figure is same passenger seen from BACK-RIGHT3/4 walking AWAY toward upper right, orthographic2:1 isometric30degrees down. Green flat cap, brown hair, green waistcoat back, ivory rolled-sleeve shirt, charcoal trousers, brown boots, satchel on screenLEFT hip with strap from screenRIGHT shoulder. Adult7.5-head realistic proportions. The phase is passing: far LEFT leg supports straight down on SCREEN LEFT and near RIGHT knee is bent with RIGHT BOOT LIFTED on SCREEN RIGHT, sole visible. Follow the guide's SCREEN POSITIONS for the legs; never copy the reference's screenleft lifted boot. Two boots only, one planted screenleft and one lifted screenright. Preserve reference2 smooth painted broad colour clusters, 3-4shades per material, selective dark lower/side rims, upperleft light. Full body one figure only on 1024x1536 transparent RGBA, opaque figure with empty alpha0 margin around all contours. No ground, floor, shadows, glow, text, labels, borders, extraobjects. Guide is layout authority, image2 is character/style/camera authority.",
+      "generatedOutput": "exec-c2639632-2edb-4ce0-99db-49091b52967a.png"
+    },
+    {
+      "id": "front-opposite-contact-rejected",
+      "prompt": "Edit this ONE full-body passenger FRONT view into opposite walk CONTACT pose. Same character, clothing, satchel on anatomical left/screenleft, camera3/4 front toward lower right, orthographic2:1 isometric30degrees down, face visible. Change leg occlusion: NEAR LEG from screenLEFT hip now extends BACK toward lower SCREENLEFT; FAR LEG from screenRIGHT hip steps FORWARD toward lower SCREENRIGHT. Near thigh angles LEFT from hip, far thigh angles RIGHT. This must open a clear inverted-V gap between thighs instead of repeating reference's crossed thigh in front. Right arm swings forward, left arm back. Slim realistic adult7.5-head proportions; small natural walking step, not running. Preserve cap and face identity, forest-green waistcoat/cap, ivory rolled sleeves, charcoal trousers, brown boots, small leather satchel. Broad smooth painted3-4shade clusters, only selective lower/side contours, upper-leftlight. ONE figure only with generous empty margin on all sides, canvas1024x1536, RGBA alpha0 background and opaque painted figure. No ground, floor, any shadow/glow, text, borders, extraobjects. Final character needs readable silhouette at9px. Do not mirror the torso, face still toward lower-right. Full boot outlines must be intact and well clear of image edges.",
+      "generatedOutput": "exec-ca45ddb5-1cde-4507-b26a-9a8431629c30.png"
+    },
+    {
+      "id": "front-opposite-contact-guide",
+      "prompt": "Paint image1 single grey POSE GUIDE as the passenger from image2. Image1 is POSE authority, image2 is CHARACTER/STYLE/CAMERA authority only. Preserve the OPEN inverted-V gap between the thighs in image1. Near leg from SCREEN LEFT hip reaches BACK toward screenLEFT, its boot ends screenleft and HIGHER. Far leg from SCREEN RIGHT hip reaches FORWARD toward screenRIGHT, its boot lower screenright. Do not cross the nearer thigh to screenRIGHT as in character reference2. Keep this clear OPEN two-thigh silhouette; this is the OPPOSITE contact pose of reference2. ONE passenger, FRONT3/4 walking toward LOWER RIGHT, orthographic2:1 isometric30degree-down view. Adult realistic proportions7.5heads, same forestgreen flatcap/waistcoat, ivory rolledsleeveshirt, charcoaltrousers, brownboots, leather satchel on screenleft hip and brown diagonalstrap. Rightarm forward, leftarmback matching guide. Upperleftlight, broad smooth painted3-4shadeclusters, selective darklower/side rims only. Canvas1024x1536 real RGBA, generous empty margins, opaque figure and alpha0 background, no ground, floor, shadows, glow, text, borders, extraobjects. Preserve character identity and head scale; only pose changes.",
+      "generatedOutput": "exec-ccdc11ec-ce3c-4638-abb0-5fb076e4dd21.png"
+    },
+    {
+      "id": "front-torso-guide-rejected",
+      "prompt": "Paint the grey full-body pose guide image1 using the adult passenger's face, green flat cap, green waistcoat, ivory rolled sleeves and brown leather satchel from torso reference image2. CRITICAL: do NOT change the silhouette or thigh placement from grey pose guide. Two thighs spread apart from pelvis in an OPEN inverted V. Screen-left thigh goes LEFT down to screen-left boot; screen-right thigh goes RIGHT down to screen-right boot. NO thigh crosses over the other, NO crossed legs. Gap between thighs stays visible from crotch downward. This is left foot forward, right foot trailing, facing lower-right3/4 FRONT, 30degree-down orthographic2:1isometric. Charcoal trousers and brown boots follow guide's leg positions; screenright boot lower than screenleft boot. One realistic proportioned adult full-body only,1024x1536transparentRGBA, painted upperleftlight, broad3-4shade colourclusters, selective lowerdarkcontours. Same character as torso image2, satchel left hip. Preserve exact guide pose and full boot outlines. NO ground, floor, shadow, glow, labels,text,borders,extraobjects. All background pixels alpha0,figureopaque.",
+      "generatedOutput": "exec-5d2af8ab-73d9-45d7-8137-2db657709e75.png"
+    }
+  ],
+  "reviewNotes": [
+    "Front contact poses remain too similar to confidently approve anatomical right/left alternation.",
+    "Single-frame replacements introduce some proportion drift; this checkpoint is not production-approved.",
+    "All eight frames inspected at native 9px and enlarged 12x. Head/body/legs and satchel read; fine face details disappear as expected."
+  ]
+}
