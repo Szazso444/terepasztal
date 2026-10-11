@@ -1,0 +1,201 @@
+[
+  {
+    "id": "river-strip-x",
+    "file": "river-strip-x.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Geometry: x strip three tiles long, constant water width .76 tile and two banks each .12 tile. Band corners (256,256),(1024,640),(768,768),(0,384). Centre line (128,320) to (896,704). Water edges (225,271) to (993,655) and (31,369) to (799,753). Straight open cut ends; do not cap them with bank. Paint all the way to left/right canvas edges as guide.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png"
+    ]
+  },
+  {
+    "id": "river-strip-y",
+    "file": "river-strip-y.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Geometry: Along tile y across three tiles y=-1.5 to 1.5. Band corners (768,256),(1024,384),(256,768),(0,640). Centre line (896,320) to (128,704). Water edges (799,271) to (31,655) and (993,369) to (225,753). Constant water .76 tile, banks .12 tile each. Open cut ends, never bank end caps. Current strokes run bottom-left to top-right. Independently paint this orientation, never mirror another painting.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png"
+    ]
+  },
+  {
+    "id": "river-pool-attempt-1",
+    "file": "raw/river-pool-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Geometry: ONLY open river water, no bank anywhere. Diamond corners (512,358),(819,512),(512,666),(205,512), middle tile plus .1 tile beyond each edge. Quiet broad water patches and sparse short neutral glints. No shoreline, no mud, no stones.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-pool.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png"
+    ]
+  },
+  {
+    "id": "river-pool-attempt-2",
+    "file": "raw/river-pool-attempt-2.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Image 4 approved river water, image 5 approved bank: match materials. Geometry: ONLY open river water, no bank anywhere. Diamond corners (512,358),(819,512),(512,666),(205,512), middle tile plus .1 tile beyond each edge. Quiet broad water patches and sparse short neutral glints. No shoreline, no mud, no stones. CRITICAL FRAMING: preserve small central diamond at 60% canvas width, 30% height, with 20% left/right and 35% top/bottom transparent margins. Never enlarge. Corners (512,358),(819,512),(512,666),(205,512).",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-pool.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-pool-attempt-3",
+    "file": "river-pool.png",
+    "prompt": "Edit the first image IN PLACE: keep its original transparent 1024x1024 canvas layout. Repaint ONLY the small pale gray center diamond as smooth teal river water. Absolutely preserve the diamond size and position, no camera zoom, no expanding to fill the canvas. It is a 614x308-pixel diamond, centered exactly at (512,512), inside a 1024x1024-pixel square. Top (512,358), right (819,512), bottom (512,666), left (205,512). 205 blank transparent pixels left/right and 358 blank transparent pixels top/bottom. No bank. Remove thin gray internal line. Image2: painted game style. Image3: hue ONLY, not pixel art texture. Image4: match this river water's smooth colour clusters; image5 bank reference unused for this water-only patch. Water seed #477B82, lit #548A92, shadow #3E6E78, sparse #649EA2 short glints, quiet reversible current. Broad painted clusters, smooth edges, upper-left light. No objects, foam arrows, V marks, shadows, borders, text or glow. Request 1024x1024 real RGBA PNG, alpha 0 outside small diamond. This is material, not finished game tile.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-pool.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-end-attempt-1",
+    "file": "raw/river-end-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Image 4 is approved river-water material; image 5 approved river-bank material. Match these materials, smooth cluster scale and palette. Geometry: Round isolated flat river beginning at (512,512): elliptical water half axes 138 horizontal,69 vertical, bank outer ellipse half axes 181 horizontal,90.5 vertical. Water radius .38 tile, bank radius .5 tile. No connecting channel. Smooth circular cross-section in 2:1 projection. Strict guide framing: preserve exact subject scale and transparent margins, never enlarge or recenter subject.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-end.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-mouth-ne-attempt-1",
+    "file": "raw/river-mouth-ne-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Image 4 is approved river-water material; image 5 approved river-bank material. Match these materials, smooth cluster scale and palette. Geometry: River mouth NE: enters from SW midpoint (384,576), opens on NE edge (512,384) to (768,512), neighbour diamond (768,256),(1024,384),(768,512),(512,384). Centre line rises toward top right. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Strict guide framing: preserve exact subject scale and transparent margins, never enlarge or recenter subject.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-ne.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-mouth-se-attempt-1",
+    "file": "raw/river-mouth-se-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Image 4 is approved river-water material; image 5 approved river-bank material. Match these materials, smooth cluster scale and palette. Geometry: River mouth SE: enters from NW midpoint (384,448), opens on SE edge (768,512) to (512,640), neighbour diamond (768,512),(1024,640),(768,768),(512,640). Centre line falls toward bottom right. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Strict guide framing: preserve exact subject scale and transparent margins, never enlarge or recenter subject.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-se.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-mouth-sw-attempt-1",
+    "file": "raw/river-mouth-sw-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Image 4 is approved river-water material; image 5 approved river-bank material. Match these materials, smooth cluster scale and palette. Geometry: River mouth SW: enters from NE midpoint (640,448), opens on SW edge (512,640) to (256,512), neighbour diamond (256,512),(512,640),(256,768),(0,640). Centre line falls toward bottom left. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Strict guide framing: preserve exact subject scale and transparent margins, never enlarge or recenter subject.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-sw.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-mouth-nw-attempt-1",
+    "file": "raw/river-mouth-nw-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Image 4 is approved river-water material; image 5 approved river-bank material. Match these materials, smooth cluster scale and palette. Geometry: River mouth NW: enters from SE midpoint (640,576), opens on NW edge (256,512) to (512,384), neighbour diamond (256,256),(512,384),(256,512),(0,384). Centre line rises toward top left. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Strict guide framing: preserve exact subject scale and transparent margins, never enlarge or recenter subject.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-nw.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-end-attempt-2",
+    "file": "river-end.png",
+    "prompt": "Edit first image IN PLACE on its transparent 1024x1024 canvas: repaint ONLY the SMALL central grey ellipse and preserve its size exactly. No zoom, no enlarging to fill canvas. Outer ellipse is 362 pixels wide and 181 pixels high at center (512,512): left x331, right x693, top y421.5,bottom y602.5. It occupies only 35% canvas width and 18% height. Inner pale grey water ellipse width276 height138 (half axes138,69). Mid grey bank ring outer half axes181,90.5. Paint light gray as smooth clear lively teal river water #477B82 with #548A92 lit clusters,#3E6E78 shadows,#649EA2 restrained short glints. Paint mid gray as damp mud, flat small rounded limestone #BCA98B and slate #626B6C pebbles, sparse tiny moss #78804C. Image2 style board smooth painted broad colour clusters, upper-left light; image3 hue only never pixel texture; image4 match river water; image5 match river bank. No connecting channel, no bank-width variation, no raised block thickness, no shadows, no outside ground or grass, no reeds, standing rocks, objects, text, borders or glow. Transparent alpha0 outside ellipse. Request 1024x1024 RGBA PNG, exact unchanged guide framing. Material picture only.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-end.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-pool-unsaved-response",
+    "file": null,
+    "prompt": "Use case: sketch-to-render. Edit image 1, the geometry guide, into ONE painted river MATERIAL picture for a smooth isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background. Image 2 is the style board: use smooth painted contours and broad colour clusters, three or four shades per material, never pixel art. Image 3 is hue reference ONLY: do not copy its pixels or streaks. Preserve guide framing and its flat 2:1 orthographic isometric plane exactly; light from upper left. Replace light grey with clear lively river water seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2, lighter than lake. Soft current lines along the river and a few short glints, no direction-pointing V shapes or arrows of foam; current must be reversible. Replace mid grey bank with damp brown-grey mud and low rounded limestone #BCA98B and slate #626B6C pebbles, sparse small moss #78804C tufts. Bank outer edge is clean and stays on guide outline; soft wet line at water. No raised diorama, no thickness, no cast shadows, no ground or grass outside bank, no reeds, standing rocks, bridges, boats, people, text, borders, glow. Remove all dark guide tile lines from painting. Nothing outside guide shape, transparent alpha 0 elsewhere. This is material for a later deterministic finishing script, not finished runtime pieces. Keep composition at guide coordinates. Image 4 is approved river-water material; image 5 approved river-bank material. Match these materials, smooth cluster scale and palette. Geometry: ONLY open river water, no bank anywhere. Diamond corners (512,358),(819,512),(512,666),(205,512), middle tile plus .1 tile beyond each edge. Quiet broad water patches and sparse short neutral glints. No shoreline, no mud, no stones. CRITICAL FRAMING: retain original image 1 small central diamond, exactly 60% of canvas width and 30% of canvas height; substantial empty transparent margins 20% left/right and 35% top/bottom. Do not enlarge to fill canvas. At 1024 the four corners MUST be (512,358),(819,512),(512,666),(205,512).",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-pool.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": null
+  },
+  {
+    "id": "river-mouth-ne-attempt-2",
+    "file": "river-mouth-ne.png",
+    "prompt": "Edit FIRST IMAGE IN PLACE. Repaint gray guide as one smooth painted river mouth material. Preserve guide position and scale on 1024x1024 transparent canvas: NO ZOOM, NO RECENTERING. Its full outer parallelogram corners are (768,256),(1024,384),(512,640),(256,512). The WHOLE two-tile shape is only 768 pixels wide and 384 high, NOT full canvas width. Keep large blank margins exactly as first image. Repaint light gray teal water and mid gray wet gravel bank. Delete construction lines. River mouth NE: enters from SW midpoint (384,576), opens on NE edge (512,384) to (768,512), neighbour diamond (768,256),(1024,384),(768,512),(512,384). Centre line rises toward top right. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Image2 style only; image3 hue ONLY never copy pixel texture; image4 match smooth river water; image5 match wet gravel/mud bank. Water #477B82 with #548A92 lit,#3E6E78 shade,#649EA2 small glints. Smooth broad clusters with three/four shades. Limestone #BCA98B,slate #626B6C flat small rounded pebbles,damp brown-grey mud,sparse moss #78804C. Upper-left light, independently paint this orientation. No raised blocks, shadows, outside ground or grass,reeds,standing rocks,objects,foam V or arrows,text,borders,glow. Alpha0 outside exact guide. Request 1024x1024 RGBA PNG. Material, not finished runtime piece.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-ne.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-mouth-se-attempt-2",
+    "file": "river-mouth-se.png",
+    "prompt": "Edit FIRST IMAGE IN PLACE. Repaint gray guide as one smooth painted river mouth material. Preserve guide position and scale on 1024x1024 transparent canvas: NO ZOOM, NO RECENTERING. Its full outer parallelogram corners are (512,384),(1024,640),(768,768),(256,512). The WHOLE two-tile shape is only 768 pixels wide and 384 high, NOT full canvas width. Keep large blank margins exactly as first image. Repaint light gray teal water and mid gray wet gravel bank. Delete construction lines. River mouth SE: enters from NW midpoint (384,448), opens on SE edge (768,512) to (512,640), neighbour diamond (768,512),(1024,640),(768,768),(512,640). Centre line falls toward bottom right. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Image2 style only; image3 hue ONLY never copy pixel texture; image4 match smooth river water; image5 match wet gravel/mud bank. Water #477B82 with #548A92 lit,#3E6E78 shade,#649EA2 small glints. Smooth broad clusters with three/four shades. Limestone #BCA98B,slate #626B6C flat small rounded pebbles,damp brown-grey mud,sparse moss #78804C. Upper-left light, independently paint this orientation. No raised blocks, shadows, outside ground or grass,reeds,standing rocks,objects,foam V or arrows,text,borders,glow. Alpha0 outside exact guide. Request 1024x1024 RGBA PNG. Material, not finished runtime piece.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-se.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-mouth-sw-attempt-2",
+    "file": "river-mouth-sw.png",
+    "prompt": "Edit FIRST IMAGE IN PLACE. Repaint gray guide as one smooth painted river mouth material. Preserve guide position and scale on 1024x1024 transparent canvas: NO ZOOM, NO RECENTERING. Its full outer parallelogram corners are (512,384),(768,512),(256,768),(0,640). The WHOLE two-tile shape is only 768 pixels wide and 384 high, NOT full canvas width. Keep large blank margins exactly as first image. Repaint light gray teal water and mid gray wet gravel bank. Delete construction lines. River mouth SW: enters from NE midpoint (640,448), opens on SW edge (512,640) to (256,512), neighbour diamond (256,512),(512,640),(256,768),(0,640). Centre line falls toward bottom left. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Image2 style only; image3 hue ONLY never copy pixel texture; image4 match smooth river water; image5 match wet gravel/mud bank. Water #477B82 with #548A92 lit,#3E6E78 shade,#649EA2 small glints. Smooth broad clusters with three/four shades. Limestone #BCA98B,slate #626B6C flat small rounded pebbles,damp brown-grey mud,sparse moss #78804C. Upper-left light, independently paint this orientation. No raised blocks, shadows, outside ground or grass,reeds,standing rocks,objects,foam V or arrows,text,borders,glow. Alpha0 outside exact guide. Request 1024x1024 RGBA PNG. Material, not finished runtime piece.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-sw.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-mouth-nw-attempt-2",
+    "file": "raw/river-mouth-nw-attempt-2.png",
+    "prompt": "Edit FIRST IMAGE IN PLACE. Repaint gray guide as one smooth painted river mouth material. Preserve guide position and scale on 1024x1024 transparent canvas: NO ZOOM, NO RECENTERING. Its full outer parallelogram corners are (256,256),(768,512),(512,640),(0,384). The WHOLE two-tile shape is only 768 pixels wide and 384 high, NOT full canvas width. Keep large blank margins exactly as first image. Repaint light gray teal water and mid gray wet gravel bank. Delete construction lines. River mouth NW: enters from SE midpoint (640,576), opens on NW edge (256,512) to (512,384), neighbour diamond (256,256),(512,384),(256,512),(0,384). Centre line rises toward top left. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Image2 style only; image3 hue ONLY never copy pixel texture; image4 match smooth river water; image5 match wet gravel/mud bank. Water #477B82 with #548A92 lit,#3E6E78 shade,#649EA2 small glints. Smooth broad clusters with three/four shades. Limestone #BCA98B,slate #626B6C flat small rounded pebbles,damp brown-grey mud,sparse moss #78804C. Upper-left light, independently paint this orientation. No raised blocks, shadows, outside ground or grass,reeds,standing rocks,objects,foam V or arrows,text,borders,glow. Alpha0 outside exact guide. Request 1024x1024 RGBA PNG. Material, not finished runtime piece.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-nw.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  },
+  {
+    "id": "river-mouth-nw-attempt-3",
+    "file": "river-mouth-nw.png",
+    "prompt": "Repaint ONLY the gray parallelogram in image1, IN PLACE without changing its shape, position, scale or 1024x1024 transparent canvas. It is small and offset LEFT: left point(0,384), top point(256,256), right point(768,512), bottom point(512,640). Keep the ENTIRE RIGHT QUARTER of canvas EMPTY TRANSPARENT from x768 to1024! Bottom 384 rows also empty transparent. Do not fill or center the canvas. Keep all original guide margins. Pale gray becomes smooth clear teal river water; medium gray becomes low wet gravel/mud banks; remove thin guide lines. On LEFT half is still open water with no bank at outer edges. On RIGHT half is river with two narrow banks flaring outward toward the left open water; pale fading silt at their termination. Light upper left, teal #477B82 #548A92 #3E6E78 #649EA2, reversible soft current and sparse small glints, no arrows or V foam. Flat small limestone #BCA98B/slate #626B6C rounded pebbles in wet grey-brown mud, sparse moss #78804C. Image2 smooth painted game style, image3 HUE ONLY never pixel-art streaks, image4 match water material,image5 match bank material. Smooth broad colour clusters, three/four shades, no noise. No ground or grass outside bank,no shadows,raised thickness,reeds,rocks standing upright,boats,objects,text,borders,glow. Real RGBA PNG request1024x1024. Preserve small offset guide exactly, nothing beyond its boundaries.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-nw.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ]
+  }
+]

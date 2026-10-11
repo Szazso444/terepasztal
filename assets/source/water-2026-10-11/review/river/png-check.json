@@ -1,0 +1,178 @@
+[
+  {
+    "file": "river-strip-x.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1254775,
+    "partial": 317424,
+    "sha256": "01434b716d30fdec2437648ae3e72b5c5171ffb2049eb8c32b7a303303296fae"
+  },
+  {
+    "file": "river-strip-y.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1259999,
+    "partial": 312118,
+    "sha256": "7c9e7a8d55c8d4ee8cef222af718cf8ed56d6ae79a140766894d1439ad36f45d"
+  },
+  {
+    "file": "raw/river-pool-attempt-1.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1197812,
+    "partial": 373892,
+    "sha256": "2dd07817579ab1ecbac654d8d1e90dabc0918b8ef60fe633a7842c918e6bbea6"
+  },
+  {
+    "file": "raw/river-pool-attempt-2.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1344146,
+    "partial": 227890,
+    "sha256": "3367ef481c2f656065dbeb6325ffc3713fffd514305709236e56f88f5f6861bb"
+  },
+  {
+    "file": "river-pool.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1395754,
+    "partial": 176208,
+    "sha256": "3b0e72b4725568627d0b7f54110e928fd2111b69ca220a6d65b436da64d4c482"
+  },
+  {
+    "file": "raw/river-end-attempt-1.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1371894,
+    "partial": 200354,
+    "sha256": "d42b84105972fc292d8c88440ff425a9eed5e58f3ef751ecae5ce5bb5e74ec35"
+  },
+  {
+    "file": "raw/river-mouth-ne-attempt-1.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1230237,
+    "partial": 341870,
+    "sha256": "fffc4a95ddd97a5a9b04ca85b3f1c44a08dc0ffa4e0ed1f5b37d3749ed2bdf0c"
+  },
+  {
+    "file": "raw/river-mouth-se-attempt-1.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1296946,
+    "partial": 275015,
+    "sha256": "cc59a4511cfab6d16b58e749c62a324f6b9cce4ea6cfc76423da0a798ddf69e6"
+  },
+  {
+    "file": "raw/river-mouth-sw-attempt-1.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1210114,
+    "partial": 362068,
+    "sha256": "2423a50b04d83c5e5f7f3b2581b8fa0e1f89a501c95615a42b0e1ed35700ecac"
+  },
+  {
+    "file": "raw/river-mouth-nw-attempt-1.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1201371,
+    "partial": 370733,
+    "sha256": "5e8b6c8c6f36026143824eedadc3bc2d430ff38d4f9e7ddf0cfc6f86720dff9d"
+  },
+  {
+    "file": "river-end.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1446132,
+    "partial": 125954,
+    "sha256": "3fa440a39d73819b21552cf5eca590088547e4164297c8e0fd8a59017875cd1b"
+  },
+  {
+    "file": "river-mouth-ne.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1309476,
+    "partial": 262716,
+    "sha256": "050439534fa50a897c445fcfc63a653e2a09402e268b65a524668d97436e3e2d"
+  },
+  {
+    "file": "river-mouth-se.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1349250,
+    "partial": 222950,
+    "sha256": "0031331c6d328be0a7df6467f4999a325a701a7dc28ae96151795ea073be5c6d"
+  },
+  {
+    "file": "river-mouth-sw.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1306220,
+    "partial": 265895,
+    "sha256": "7a7c2058afb6ee72ba24d6b0aabcefa25093401f90d933e767a205dee8660305"
+  },
+  {
+    "file": "raw/river-mouth-nw-attempt-2.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1295764,
+    "partial": 276384,
+    "sha256": "b1eb6426580e137480a23c5342e6d19bc099f1d4bf57170d38707e3a2a62d296"
+  },
+  {
+    "file": "river-mouth-nw.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1318690,
+    "partial": 253329,
+    "sha256": "7e0fa6451412aa6def6a94992436a81b50af35280c7808db4d5b1191100f96d3"
+  }
+]
