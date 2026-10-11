@@ -1,0 +1,337 @@
+<meta charset="utf-8" />
+<title>Terepasztal Curve Sizes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+/>
+<style>
+  :root {
+    --ground: #e9ece5;
+    --surface: #f7f8f4;
+    --sunk: #dde2d9;
+    --ink: #1b221e;
+    --muted: #56625a;
+    --line: #c4ccc1;
+    --accent: #1f5c45;
+    --brass: #8f6a1c;
+    --ok: #2e7d4f;
+    --warn: #a86d12;
+    --bad: #ac3d2b;
+    --display: 'Barlow Semi Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+    --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      color-scheme: dark;
+      --ground: #111513;
+      --surface: #1a201c;
+      --sunk: #232b26;
+      --ink: #e2e8e0;
+      --muted: #9ba79f;
+      --line: #313b35;
+      --accent: #6cbf97;
+      --brass: #d7a94d;
+      --ok: #62c28b;
+      --warn: #e0a441;
+      --bad: #e37a66;
+    }
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --ground: #111513;
+    --surface: #1a201c;
+    --sunk: #232b26;
+    --ink: #e2e8e0;
+    --muted: #9ba79f;
+    --line: #313b35;
+    --accent: #6cbf97;
+    --brass: #d7a94d;
+    --ok: #62c28b;
+    --warn: #e0a441;
+    --bad: #e37a66;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+    padding-inline: clamp(16px, 4vw, 48px);
+    padding-block: 28px 64px;
+  }
+  .wrap {
+    max-width: 1220px;
+    margin-inline: auto;
+    display: grid;
+    gap: 44px;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--display);
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.1;
+  }
+  h1 {
+    font-size: clamp(2rem, 4.5vw, 3.1rem);
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  p {
+    margin: 0;
+    max-width: 70ch;
+  }
+  ul {
+    margin: 0;
+    padding-left: 1.1em;
+    display: grid;
+    gap: 6px;
+    max-width: 90ch;
+  }
+  .label {
+    font: 600 0.72rem/1.2 var(--body);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .num {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  header.top,
+  section {
+    display: grid;
+    gap: 14px;
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  @media (max-width: 720px) {
+    .pair {
+      grid-template-columns: 1fr;
+    }
+  }
+  figure {
+    margin: 0;
+    display: grid;
+    gap: 6px;
+  }
+  figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+    background: var(--sunk);
+  }
+  figcaption {
+    font-size: 0.86rem;
+    color: var(--muted);
+  }
+  .consist {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: clamp(14px, 2.4vw, 24px);
+    display: grid;
+    gap: 14px;
+  }
+  .consist .head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px 24px;
+  }
+  .off {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 0.92rem;
+  }
+  .off b {
+    font-family: var(--mono);
+    font-weight: 500;
+  }
+  .ok {
+    color: var(--ok);
+  }
+  .warn {
+    color: var(--warn);
+  }
+  .bad {
+    color: var(--bad);
+  }
+  .table-wrap {
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    min-width: 560px;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 6px 14px 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  td.num,
+  th.num {
+    text-align: right;
+  }
+  .verdict {
+    border-left: 3px solid var(--accent);
+    padding-left: 16px;
+    display: grid;
+    gap: 10px;
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="label">Terepasztal · rail system · spike/curve-sizes</span>
+    <h1>Terepasztal Curve Sizes</h1>
+    <p>
+      Your question: what should high-speed track give once regular curves are 2×2? Here are both
+      curve sizes in the game: regular curves and switches at 2×2 (radius 1.5), high-speed ones at 3×3
+      (radius 2.5). Seven trains, with locomotives of 1 to 6 tiles and wagons of 1, 2 and 3 tiles, run
+      through the same corner on each. Each animation shows the same train at the same moments on both
+      curves.
+    </p>
+    <ul>
+      <li>
+        The bodies are the game's own drawn stand-ins (only the Mk48 has a rendered sprite on main).
+        They are sized to the new scale: the F7 is 3 tiles, the 9F and DDA40X 4, the Big Boy 5, and a
+        6-tile stand-in plays the Koutetsujou. Compare the geometry, not the paint.
+      </li>
+      <li>
+        For this test every train may use either curve, so the long ones show what happens when they
+        are let through. Nothing here is in the game yet; it is a throwaway branch.
+      </li>
+      <li>
+        "Off the rail" is how far the body strays from the rails at its worst point in the curve, in
+        tiles.
+      </li>
+    </ul>
+  </header>
+
+  <section>
+    <h2>The two loops</h2>
+    <div class="pair">
+      <figure>
+        <img src="img/overview-regular.webp" alt="Loop with 2×2 curves and a 2×2 switch" width="1080" height="750" />
+        <figcaption><b>2×2</b> curves and switch: the new regular track</figcaption>
+      </figure>
+      <figure>
+        <img src="img/overview-high_speed.webp" alt="Loop with 3×3 curves and a 3×3 switch" width="1080" height="750" />
+        <figcaption><b>3×3</b> curves and switch: high speed if it gets wider curves</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="consists">
+    <h2>Seven trains through the corner</h2>
+    <div id="list" style="display: grid; gap: 22px"></div>
+  </section>
+
+  <section>
+    <h2>What the numbers say</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Train</th>
+            <th>Body</th>
+            <th class="num">Off the rail, 2×2</th>
+            <th class="num">Off the rail, 3×3</th>
+          </tr>
+        </thead>
+        <tbody id="numbers"></tbody>
+      </table>
+    </div>
+    <ul>
+      <li>
+        Up to 3 tiles, and every steam engine with a tender up to 5 tiles, stays within 0.3 tile of the
+        rails on 2×2. A tender engine bends in two places, so each part is short.
+      </li>
+      <li>
+        Long rigid bodies are the problem: the 4-tile diesel with three trucks and the 6-tile body cut
+        straight across the 2×2 corner, half a tile to a full tile inside it, with their trucks out on
+        the rails beside them.
+      </li>
+      <li>
+        3×3 reduces that by about a third (0.34 and 0.67) but does not fix it. Its three gravel aprons also
+        make every corner heavier.
+      </li>
+    </ul>
+  </section>
+
+  <section class="verdict">
+    <span class="label">Recommendation</span>
+    <h2>Line speed only; long rigid bodies get their own fix</h2>
+    <p>
+      Keep both regular and high-speed curves at 2×2, and give high speed the line speed: regular track
+      caps top speed, high-speed track lifts it. Wider curves buy little, cost space and would not make the
+      longest bodies look right anyway. Those bodies need a fix in the size work: for example, bodies of 4
+      tiles and up are drawn in two hinged halves, like the tender engines, so they bend along the curve.
+    </p>
+    <p>Answer in the chat: line speed only, wider curves, or both.</p>
+  </section>
+</div>
+
+<script>
+  const CONSISTS = [
+    { cls: 'Corvette (XS)', loco: 'John Bull', L: 1, wagons: '3 boxcars, 1 tile each', body: 'rigid', off: [0.04, 0.02] },
+    { cls: 'Frigate (S)', loco: 'The General', L: 2, wagons: '2 wooden coaches (1 tile) and a steel coach (2 tiles)', body: 'rigid', off: [0.15, 0.1] },
+    { cls: 'Destroyer (M)', loco: 'EMD F7', L: 3, wagons: '2 steel coaches, 2 tiles each', body: 'rigid, 2 trucks', off: [0.29, 0.2] },
+    { cls: 'Cruiser (L)', loco: 'BR 9F', L: 4, wagons: '4 hoppers, 1 tile each', body: 'engine and tender', off: [0.19, 0.13] },
+    { cls: 'Cruiser (L)', loco: 'DDA40X', L: 4, wagons: '2 Pullmans, 2 tiles each', body: 'rigid, 3 trucks', off: [0.48, 0.34] },
+    { cls: 'Battleship (XL)', loco: 'Big Boy', L: 5, wagons: 'boxcar, 3-tile flat, boxcar', body: 'engine and tender', off: [0.27, 0.19] },
+    { cls: 'Juggernaut (XXL)', loco: '6-tile stand-in (Koutetsujou)', L: 6, wagons: '3-tile flat and a Pullman', body: 'rigid, 4 trucks', off: [0.95, 0.67] },
+  ];
+  const grade = (v) => (v < 0.3 ? 'ok' : v < 0.5 ? 'warn' : 'bad');
+  const list = document.getElementById('list');
+  const rows = document.getElementById('numbers');
+  CONSISTS.forEach((c, k) => {
+    const i = k + 1;
+    const el = document.createElement('article');
+    el.className = 'consist';
+    el.innerHTML = `
+      <div class="head">
+        <div>
+          <span class="label">${c.cls}</span>
+          <h3>${c.loco}, ${c.L} tile${c.L > 1 ? 's' : ''} + ${c.wagons}</h3>
+        </div>
+        <div class="off">
+          <span>Off the rail: 2×2 <b class="${grade(c.off[0])}">${c.off[0].toFixed(2)}</b></span>
+          <span>3×3 <b class="${grade(c.off[1])}">${c.off[1].toFixed(2)}</b></span>
+        </div>
+      </div>
+      <figure>
+        <img src="img/run-${i}.webp" alt="${c.loco} running through a 2×2 and a 3×3 curve" width="1204" height="400" loading="lazy" />
+        <figcaption>The whole train through the corner, same moments on both curves.</figcaption>
+      </figure>
+      <div class="pair">
+        <figure><img src="img/still-${i}-regular.webp" alt="${c.loco} mid-curve on 2×2" width="900" height="600" loading="lazy" /><figcaption>Locomotive mid-curve, 2×2</figcaption></figure>
+        <figure><img src="img/still-${i}-high_speed.webp" alt="${c.loco} mid-curve on 3×3" width="900" height="600" loading="lazy" /><figcaption>Locomotive mid-curve, 3×3</figcaption></figure>
+      </div>`;
+    list.appendChild(el);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.cls} · ${c.loco}</td><td>${c.body}</td><td class="num ${grade(c.off[0])}">${c.off[0].toFixed(2)}</td><td class="num ${grade(c.off[1])}">${c.off[1].toFixed(2)}</td>`;
+    rows.appendChild(tr);
+  });
+  const w = document.createElement('tr');
+  w.innerHTML = `<td>Wagons of 1 / 2 / 3 tiles</td><td>rigid, 2 trucks</td><td class="num">0.04 / 0.15 / 0.29</td><td class="num">0.02 / 0.10 / 0.20</td>`;
+  rows.appendChild(w);
+</script>
