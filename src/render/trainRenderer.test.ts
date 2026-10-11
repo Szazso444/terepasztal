@@ -778,9 +778,8 @@ describe('TrainRenderer running gear on a simulated train', () => {
     w.stock.add('coal', 400);
     w.stock.add('water', 400);
     const loco = w.inventory.add('gmam', 0);
-    const hopper = w.inventory.items.find((i) => i.defId === 'wood_hopper');
-    expect(hopper, 'a starter wood hopper').toBeDefined();
-    const made = w.fleet.create([loco.uid], [hopper!.uid], [quarry.id, warehouse.id]);
+    const hopper = w.inventory.add('wood_hopper', 0);
+    const made = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
     if (typeof made === 'string') throw new Error(`fleet.create: ${made}`);
     const train = made;
 
