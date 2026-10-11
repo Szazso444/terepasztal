@@ -1923,11 +1923,16 @@ function edgeCase(rng: Rng, seen?: Set<string>): RearCase {
 }
 
 describe("the tile a refuge's way on is counted from, rear first", () => {
-  it('is the one the train sets off from reversing, for any stock, on curves and on a tile edge', () => {
-    forAll(rearCase, rearHolds, { seeds: MANY_SEEDS, shrink: shrinkRear });
-  });
-
+  // 2 s alone and four times that on a loaded machine: the limit is room for load
   const SLOW = { timeout: 60_000 };
+  it(
+    'is the one the train sets off from reversing, for any stock, on curves and on a tile edge',
+    SLOW,
+    () => {
+      forAll(rearCase, rearHolds, { seeds: MANY_SEEDS, shrink: shrinkRear });
+    },
+  );
+
   it(
     'is the one the train sets off from with its rear end a hair either side of an edge, on curves',
     SLOW,

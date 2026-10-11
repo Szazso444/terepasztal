@@ -999,18 +999,23 @@ describe('a train that ran to where it stands, wherever its rear end lies', () =
     },
   );
 
-  it('sets off reversing from the same tile once it has turned round twice where it stands, or four times, and turned round once or three times from the tile its head is on', () => {
-    forAll(
-      winding,
-      (c) => {
-        const { ran } = drive(c);
-        const wrongs = turnRoundWrongs(ran);
-        if (wrongs.length)
-          throw new Error(`${ran.t.length.toFixed(1)} tiles long:\n${wrongs.join('\n')}`);
-      },
-      { shrink: smaller, shrinkBudget: 200 },
-    );
-  });
+  // 2 s alone and several times that on a loaded machine: the limit is room for load
+  it(
+    'sets off reversing from the same tile once it has turned round twice where it stands, or four times, and turned round once or three times from the tile its head is on',
+    { timeout: 60_000 },
+    () => {
+      forAll(
+        winding,
+        (c) => {
+          const { ran } = drive(c);
+          const wrongs = turnRoundWrongs(ran);
+          if (wrongs.length)
+            throw new Error(`${ran.t.length.toFixed(1)} tiles long:\n${wrongs.join('\n')}`);
+        },
+        { shrink: smaller, shrinkBudget: 200 },
+      );
+    },
+  );
 
   it('a Muki with five mine tubs, its rear end on an edge, still sets off from the tile beyond it once it has turned round twice', () => {
     // 4.5 tiles: east along row 30 to the stop on (30, 30), its rear end on the edge between

@@ -747,7 +747,7 @@ describe('TrainRenderer running gear properties', () => {
       },
       { shrink: shrinkGear },
     );
-  });
+  }, 120_000); // 3.3 s alone, nine times that on a loaded machine: the limit is room for load
 });
 
 /**
