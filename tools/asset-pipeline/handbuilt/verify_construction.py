@@ -53,7 +53,8 @@ def rounded_digest(records):
     return hashlib.sha256(json.dumps([rounded(r) for r in records],sort_keys=True).encode()).hexdigest()
 
 def compare(a,b):
-    """Largest coordinate difference, or None when anything but coordinates differs."""
+    """Largest coordinate difference, or None when anything but coordinates differs or a
+    coordinate difference is not a finite number (a NaN or an infinity on either side)."""
     if len(a)!=len(b):return None
     worst=0.0
     for x,y in zip(a,b):
@@ -61,7 +62,11 @@ def compare(a,b):
         if set(x)!=set(y) or any(x[k]!=y[k] for k in exact):return None
         if len(x.get('vertices',[]))!=len(y.get('vertices',[])):return None
         pairs=list(zip(x['matrix'],y['matrix']))+[(p,q) for u,w in zip(x.get('vertices',[]),y.get('vertices',[])) for p,q in zip(u,w)]
-        worst=max([worst]+[abs(p-q) for p,q in pairs])
+        differences=[abs(p-q) for p,q in pairs]
+        # max() never picks a NaN (every comparison with it is false), so a NaN difference would
+        # pass as 0; `d<inf` is false for NaN and infinity alike, and either is a mismatch.
+        if not all(d<float('inf') for d in differences):return None
+        worst=max([worst]+differences)
     return worst
 
 manifest=json.loads((original/'candidate.json').read_text(encoding='utf-8'));report={}
