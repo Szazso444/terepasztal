@@ -438,13 +438,14 @@ describe('text the panels show', () => {
   const dir = new URL('./ui/', import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
 
+  // slow because it reads and scans every file of src/ui for hardcoded text: 0.6 s alone
   it('comes from STR in every src/ui file', () => {
     expect(files).toContain('dom.ts');
     const found = files.flatMap((f) =>
       hardcodedText(`src/ui/${f}`, readFileSync(new URL(f, dir), 'utf8')),
     );
     expect(found, 'move these into src/strings.ts').toEqual([]);
-  });
+  }, 30_000);
 
   it('catches a hardcoded label, child, attribute or toast, and leaves classes and keys alone', () => {
     const panel = [

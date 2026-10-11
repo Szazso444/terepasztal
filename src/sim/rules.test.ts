@@ -1227,6 +1227,8 @@ describe('properties over generated inputs', () => {
     );
   });
 
+  // slow because the rules module is imported afresh at the start of each seeded sequence and at
+  // every reload in it: half a second alone
   it('any sequence of operations and reloads follows the model and stores only what it owns', async () => {
     const s = await load();
     at(1000);
@@ -1350,7 +1352,7 @@ describe('properties over generated inputs', () => {
         }
       },
     );
-  });
+  }, 30_000);
 });
 
 describe('the import-time read over every way storage can fail', () => {

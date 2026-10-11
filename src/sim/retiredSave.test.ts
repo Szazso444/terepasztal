@@ -184,6 +184,8 @@ describe.each([
     }
   });
 
+  // slow because the loaded fleet runs up to 12000 ticks to its first platform in each of the four
+  // saves: 0.5 to 0.75 s alone
   it('keeps the trains running to their next stop', () => {
     const w = load(saveWith(version, pair));
     const start = w.fleet.trains.map((t) => t.distance);
@@ -199,7 +201,7 @@ describe.each([
       expect(t.distance - start[i], t.locoDef.id).toBeGreaterThan(50);
       expect(t.state, t.locoDef.id).not.toBe('noFuel');
     });
-  });
+  }, 30_000);
 
   it('writes both engines back out on the next save', () => {
     const w = load(saveWith(version, pair));

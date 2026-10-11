@@ -55,6 +55,8 @@ function summary(r: ScenarioResult, firstShared: string | null): string {
 describe('the refuge traffic scenario, run headless', () => {
   for (const { count, pinned, stuckFree } of CASES) {
     const also = stuckFree ? ', nobody stuck' : '';
+    // slow because the scenario runs to its tick limit with an overlap check after every tick:
+    // 1.4 s alone with 12 trains
     it(`${nameOf(count, pinned)}: train 2 passes, no overlap, no deadlock${also}`, () => {
       // An oracle beside the counter: the counter samples at the start of each tick, this after
       // every tick, the last one included.
@@ -88,6 +90,6 @@ describe('the refuge traffic scenario, run headless', () => {
         ...(stuckFree ? { stuck: 0 } : {}),
         recovered: true,
       });
-    }, 20_000);
+    }, 60_000);
   }
 });

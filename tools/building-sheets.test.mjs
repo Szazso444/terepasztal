@@ -72,6 +72,7 @@ describe('building review sheets', () => {
     expect(at(sheet, 3 * 256 + 4, 2 * 256 + 4)).toEqual(SHEET.grass);
   }, 20_000);
 
+  // slow because drawSheet paints a whole review sheet of 1024 x 1536 pixels in script: 2 s alone
   it('lays a picture of any size and place onto its footprint, as the game will', () => {
     // what a generator returns: half as large again, off centre, on a canvas of its own
     const f = family('farm');
@@ -82,8 +83,10 @@ describe('building review sheets', () => {
     // the footprint shows round the building's foot: its near corner is not covered
     const [sx, sy] = project(FOOTPRINTS.t1, 0.5, 0.5);
     expect(at(sheet, 1 * 256 + sx / 4, 4 * 256 + sy / 4 - 2)).toEqual(SHEET.footprint);
-  }, 20_000);
+  }, 60_000);
 
+  // slow because it paints two whole sheets, the angles sheet at 2048 x 3072 pixels, in script:
+  // 2.5 s alone
   it('draws the footprint and the wall lines over the pictures on the angles sheet', () => {
     // twice the size, with the lines every wall's foot should run along: drift shows at a glance
     const f = family('farm');
@@ -99,7 +102,7 @@ describe('building review sheets', () => {
     // the plain sheet shows the picture and nothing over it
     const plain = drawSheet(f, pictures(f));
     expect(at(plain, 256 + wx / 4, wy / 4)).not.toEqual(SHEET.walls);
-  }, 20_000);
+  }, 60_000);
 
   it('shows the views of a building at one size, however large each came back', () => {
     // the first view drawn at 0.7 of the others: on the sheet all four are equally large
@@ -119,6 +122,7 @@ describe('building review sheets', () => {
       expect(at(sheet, rot * 256 + tx / 4, ty / 4), `r${rot}`).toEqual(SHADE.top);
   }, 20_000);
 
+  // slow because it paints two whole review sheets in script: 2 s alone
   it('stands a family as large on its tile as its description says', () => {
     const f = family('farm');
     const [sx, sy] = wallBase(FOOTPRINTS.t1, 0).s;
@@ -131,7 +135,7 @@ describe('building review sheets', () => {
     // the depot stands 1.3 times its footprint, so that the rails fit its portals (seen in the game)
     expect(fam.families.depot.size).toBe(1.3);
     expect(fam.families.farm.size).toBeUndefined();
-  }, 20_000);
+  }, 60_000);
 
   it('shows one picture on grass, as painted, with the lines its walls should stand on', () => {
     const fp = FOOTPRINTS.t2x2;
