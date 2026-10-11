@@ -3,9 +3,14 @@
  * replace any table with an edited copy stored in localStorage. Each stored table carries a stamp
  * of the shipped table it was made from and applies only while that table is unchanged, so an
  * override never masks a later shipped change. A stale or malformed table is set aside with a
- * console warning and the shipped one loads in its place. Overrides are applied once, here, at
- * module load so every consumer sees one consistent bundle for the session. Editing content
- * therefore takes effect on the next page load (the editor reloads for you).
+ * console warning and the shipped one loads in its place. An override stored before stamps, in
+ * the old whole-bundle format, holds every table of the bundle, edited or not. At load a table of
+ * it that is today's shipped table or any past shipped version of it (`PAST_SHIPPED`) is an
+ * untouched copy and is dropped without a word; only a table the player edited is converted:
+ * stamped with today's table, checked like any other and stored in the per-table format, which is
+ * how the conversion runs once. Overrides are applied once, here, at module load so every
+ * consumer sees one consistent bundle for the session. Editing content therefore takes effect on
+ * the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
 import wagonJson from './wagons.json';
@@ -21,6 +26,7 @@ import houseJson from './houses.json';
 import cargoFullJson from './cargo_full.json';
 import stationFullJson from './stations_full.json';
 import buildingFullJson from './buildings_full.json';
+import { PAST_SHIPPED } from './pastShipped';
 import type { SupplyMode } from '../sim/supply';
 import type { PartKind } from '../sim/body';
 import { MAX_LEVEL } from '../sim/levels';
@@ -475,13 +481,27 @@ function withoutDerived(key: ContentKey, data: unknown): unknown {
   });
 }
 
+/** A table in the form tables are compared in: sorted keys, derived fields left out. */
+function plain(key: ContentKey, data: unknown): string {
+  return canonical(withoutDerived(key, data));
+}
+
+/**
+ * The eight-digit hash of a table in the form tables are compared in. This is the one recipe
+ * behind the stamps and the list of past shipped tables (`PAST_SHIPPED`): the stamp of a shipped
+ * table is its hash, and an old stored table is an untouched copy when its hash is in the list.
+ */
+export function tableHash(key: ContentKey, data: unknown): string {
+  return fnv1a(plain(key, data));
+}
+
 /** Stamps of the shipped tables, taken from the JSON files themselves, never from a live bundle. */
 const STAMP = Object.fromEntries(
-  CONTENT_KEYS.map((k) => [k, fnv1a(canonical(SHIPPED[k]()))]),
+  CONTENT_KEYS.map((k) => [k, tableHash(k, SHIPPED[k]())]),
 ) as Record<ContentKey, string>;
 /** The shipped tables in the form edited tables are compared against. */
 const SHIPPED_PLAIN = Object.fromEntries(
-  CONTENT_KEYS.map((k) => [k, canonical(withoutDerived(k, SHIPPED[k]()))]),
+  CONTENT_KEYS.map((k) => [k, plain(k, SHIPPED[k]())]),
 ) as Record<ContentKey, string>;
 
 /**
@@ -494,7 +514,15 @@ export function contentStamp(key: ContentKey): string {
 }
 
 function sameAsShipped(key: ContentKey, data: unknown) {
-  return canonical(withoutDerived(key, data)) === SHIPPED_PLAIN[key];
+  return plain(key, data) === SHIPPED_PLAIN[key];
+}
+
+/**
+ * True when an old whole-bundle table is an untouched copy: today's shipped table or any version
+ * of it a build that wrote the old format ever shipped. Anything else was edited by the player.
+ */
+function isUntouchedCopy(key: ContentKey, data: unknown) {
+  return sameAsShipped(key, data) || PAST_SHIPPED[key].includes(tableHash(key, data));
 }
 
 /** The tables of `b` that differ from the shipped ones (derived fields aside). */
@@ -510,7 +538,7 @@ export interface ContentOverrideReport {
   applied: ContentKey[];
   /**
    * stored tables this session ignores: `stale` when the shipped table changed since the override
-   * was made (or the override predates stamps), `invalid` when it is malformed or fails validation
+   * was made, `invalid` when it is malformed or fails validation
    */
   setAside: { key: ContentKey; reason: 'stale' | 'invalid'; problems: string[] }[];
 }
@@ -873,9 +901,34 @@ export function validateContent(b: ContentBundle): string[] {
 type SetAsideEntry = ContentOverrideReport['setAside'][number];
 
 /**
+ * Replace an override read in the old whole-bundle format by what survives of it: the tables the
+ * player edited, each stamped with today's shipped table and stored in the per-table format.
+ * Edited tables that are set aside as invalid are kept like the others; the untouched copies of
+ * shipped tables are gone, and when nothing else is left the stored value is removed. When the
+ * write fails the old value stays stored, the session runs on the converted tables all the same
+ * and the next load converts again.
+ */
+function rewriteLegacy(edited: Map<ContentKey, unknown>, untouched: ContentKey[]) {
+  if (writeContentOverrides(Object.fromEntries(edited) as Partial<ContentBundle>))
+    console.info(
+      `[content] stored overrides converted from the old whole-bundle format: ${
+        edited.size ? [...edited.keys()].join(', ') : 'no table was edited'
+      } (${untouched.length} untouched ${untouched.length === 1 ? 'copy' : 'copies'} of shipped tables dropped)`,
+    );
+  else
+    console.warn(
+      '[content] stored overrides in the old whole-bundle format could not be rewritten; the old value stays stored and converts again next load',
+    );
+}
+
+/**
  * The shipped bundle with every stored table that may apply: one stamped with the current shipped
- * table, that validates together with the others. Everything else is set aside, with a warning,
- * and stays in storage until the editor next writes or resets.
+ * table, that validates together with the others. A table stored in the old whole-bundle format
+ * is first told apart by its hash: an untouched copy of the shipped table or of a past shipped
+ * version (`PAST_SHIPPED`) is dropped, and only an edited table counts as stamped with today's
+ * table. The stored value is then rewritten in the per-table format, with the edited tables
+ * alone. Everything else is set aside, with a warning, and stays in storage until the editor
+ * next writes or resets.
  */
 function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport } {
   const base = clone(DEFAULT_CONTENT);
@@ -899,10 +952,13 @@ function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport 
     notes.set(key, why);
   };
   const candidates = new Map<ContentKey, unknown>();
+  // The old whole-bundle format holds every table the editor saved, edited or not; only the
+  // edited ones are candidates, the untouched copies of shipped tables are dropped.
+  const legacy =
+    stored.format === undefined ? CONTENT_KEYS.filter((k) => stored[k] !== undefined) : [];
+  const untouched = legacy.filter((k) => isUntouchedCopy(k, stored[k]));
   if (stored.format === undefined) {
-    for (const k of CONTENT_KEYS)
-      if (stored[k] !== undefined)
-        setAside(k, 'stale', [], 'stored in the old whole-bundle format, without a stamp');
+    for (const k of legacy) if (!untouched.includes(k)) candidates.set(k, stored[k]);
   } else if (stored.format !== CONTENT_FORMAT) {
     const tables = isObj(stored.tables) ? stored.tables : {};
     const problem = `unknown storage format ${JSON.stringify(stored.format)}`;
@@ -970,6 +1026,7 @@ function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport 
     }
   }
   for (const [k, problems] of invalid) setAside(k, 'invalid', problems, 'fails validation');
+  if (legacy.length) rewriteLegacy(candidates, untouched);
 
   report.applied = order(applied);
   for (const k of report.applied)
