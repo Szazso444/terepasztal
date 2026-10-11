@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>3d-proto-alt · tuner</title>
+    <style>
+      body { margin: 0; background: #1c2420; font: 13px system-ui; color: #eee6cf; display: flex; }
+      canvas { display: block; }
+      #side { width: 330px; padding: 10px; box-sizing: border-box; }
+      #panel label { display: grid; grid-template-columns: 110px 1fr 48px; gap: 6px; align-items: center; margin: 3px 0; }
+      select, button { margin: 3px 4px 3px 0; }
+      #log { white-space: pre-wrap; font: 11px ui-monospace, monospace; max-height: 260px; overflow: auto; }
+      #ms { margin: 6px 0; color: #9be8ff; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div id="side">
+      <div><select id="part"></select><select id="gauge"></select><select id="mode"></select></div>
+      <div id="panel"></div>
+      <div><button id="stand">Stand on wheels</button><button id="fit">Fit width to gauge</button><button id="dump">Tune as JSON</button></div>
+      <div id="ms"></div>
+      <div id="log"></div>
+    </div>
+    <script type="module" src="./tuner.js"></script>
+  </body>
+</html>

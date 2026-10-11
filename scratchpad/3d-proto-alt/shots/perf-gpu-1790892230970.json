@@ -1,0 +1,22 @@
+[
+ {
+  "kind": "gpu",
+  "query": "mode=sprite&n=60&pref=webgpu",
+  "mode": "sprite",
+  "n": 60,
+  "zoom": 1,
+  "dpr": 1,
+  "turn": 0.5,
+  "renderer": "webgpu",
+  "gpu": "webgpu nvidia",
+  "trisPerPart": [],
+  "cpuMs": 0.144,
+  "totalMs": 34.52,
+  "worstMs": 164.2,
+  "drawsPerFrame": 0,
+  "trisPerFrame": 0,
+  "impostorRendersPerFrame": 0,
+  "cacheEntries": 0,
+  "cacheMB": 0
+ }
+]

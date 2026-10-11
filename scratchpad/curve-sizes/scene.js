@@ -22,8 +22,10 @@ const n = CLASS_N[cls];
 const label = document.getElementById('qa-label');
 
 const NARROW = new Set(['rocket', 'bm50', 'muki', 'c50', 'mav490', 'mk45', 'mk48', 'rezet']);
+// scratch: ?ids=a,b picks the locos (any gauge) instead of the regular / narrow split
+const IDS = (params.get('ids') ?? '').split(',').filter(Boolean);
 export const CONSISTS = content.locomotives
-  .filter((d) => d.gear && NARROW.has(d.id) === (cls !== 'regular'))
+  .filter((d) => d.gear && (IDS.length ? IDS.includes(d.id) : NARROW.has(d.id) === (cls !== 'regular')))
   .map((d) => [d.id, ['boxcar', 'boxcar']]);
 
 const level = levelFromMap(emptyMap(7412, 112, 112), 'Curve sizes');
@@ -41,6 +43,23 @@ g.clock.setSpeed(0);
 g.builder.free = true;
 for (let i = 0; i < g.regions.unlocked.length; i++) g.regions.own(i);
 g.world.rebuildFog();
+// scratch: with ?sprites=<set>, an engine the pipeline rendered carries its own running gear
+// no trees round the loop: they would stand in front of the trains
+for (let y = 25; y < 85; y++)
+  for (let x = 15; x < 97; x++) {
+    const i = y * g.map.w + x;
+    if (g.map.props.has(i)) {
+      g.map.props.delete(i);
+      g.world.removeProps(x, y);
+    }
+  }
+const SPRITE_SET = new URLSearchParams(location.search).get('sprites');
+const PIPE = SPRITE_SET ? (await (await fetch('/assets/rolling-' + SPRITE_SET + '.json')).json()).frames : {};
+if (SPRITE_SET)
+  for (const d of content.locomotives)
+    if (d.gear && d.gear.parts.every((p) => `rolling/loco_${d.id}_${p.part}_f0` in PIPE)) d.spriteGear = true;
+export const SPRITED = content.locomotives.filter((d) => d.spriteGear).map((d) => d.id);
+
 
 // the loop: a top line with a switch and a spur, four n x n corners
 const add = (x, y, kind, rot) => {
@@ -161,7 +180,7 @@ function show(i, what, zoom = 1.6) {
   let k = 0;
   while (t.pathProgress < target && t.state === 'moving' && k++ < 40000) tick();
   const def = content.locomotives.find((d) => d.id === locoId);
-  scenario = `${cls === 'regular' ? '2×2 curve' : '1×1 curve'} · ${def.name} · ${L.loco} tiles`;
+  scenario = `${n}×${n} curve · ${def.name} · ${L.loco} tiles`;
   if (what === 'straight') {
     const p = t.vehiclePoses[0];
     const at = tileToWorld(p.x, p.y);
@@ -198,4 +217,4 @@ function runTo(arc, zoom, text) {
   render(zoom);
   return t.pathProgress;
 }
-window.qa = { g, show, overview, prepare, runTo, consists: CONSISTS, ids: ID(), cls, n };
+window.qa = { g, sprited: SPRITED, show, overview, prepare, runTo, consists: CONSISTS, ids: ID(), cls, n };

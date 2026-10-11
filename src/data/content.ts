@@ -8,7 +8,18 @@ import locoJson from './locomotives.json';
 import gearJson from './gear.json';
 import type { Gear } from '../sim/gear';
 /** spike: the proposed length of each database size */
-export const SPIKE_LENGTH: Record<string, number> = { '0.5': 0.5, '1': 1, '2': 1.5, '3': 2, '4': 2.5, '5': 3, '6': 3 };
+// scratch (ladder explore): ?ladder=B picks the 0.5-4 ladder, ?halves=id,id splits those bodies in two hinged halves
+const SCRATCH = new URLSearchParams(globalThis.location?.search ?? '');
+const LADDERS: Record<string, Record<string, number>> = {
+  A: { '0.5': 0.5, '1': 1, '2': 1.5, '3': 2, '4': 2.5, '5': 3, '6': 3 },
+  B: { '0.5': 0.5, '1': 1, '2': 1.5, '3': 2, '4': 3, '5': 4, '6': 4 },
+};
+export const SPIKE_LENGTH: Record<string, number> = LADDERS[SCRATCH.get('ladder') ?? 'A'] ?? LADDERS.A;
+const HALVES = new Set((SCRATCH.get('halves') ?? '').split(',').filter(Boolean));
+// ?spread=id:k spreads a body's bogies evenly, the outer ones k from each end
+const SPREAD = new Map((SCRATCH.get('spread') ?? '').split(',').filter(Boolean).map((p) => [p.split(':')[0], Number(p.split(':')[1])] as const));
+// ?len=id:L,id:L overrides single locos
+const LEN = new Map((SCRATCH.get('len') ?? '').split(',').filter(Boolean).map((p) => [p.split(':')[0], Number(p.split(':')[1])] as const));
 
 import wagonJson from './wagons.json';
 import cargoJson from './cargo.json';
@@ -47,6 +58,8 @@ export interface LocoDef {
   /** spike: measured running gear and length in tiles */
   gear?: Gear;
   lengthTiles?: number;
+  /** scratch: the pipeline sprite carries its own running gear */
+  spriteGear?: boolean;
   id: string;
   name: string;
   rarity: Rarity;
@@ -591,14 +604,30 @@ export function contentIsCustom() {
   return readContentOverrides() !== null;
 }
 
+function spreadGear(g: Gear, k: number): Gear {
+  const p = g.parts[0];
+  const n = p.trucks?.length ?? 0;
+  const c = Array.from({ length: n }, (_, i) => k + ((1 - 2 * k) * i) / Math.max(1, n - 1));
+  const half = (a: number[]) => (a[a.length - 1] - a[0]) / 2;
+  return { parts: [{ ...p, trucks: (p.trucks ?? []).map((a, i) => a.map((x) => x - (a[0] + half(a)) + c[i])) }] };
+}
 /** spike: each loco's measured running gear */
 function withGear(list: LocoDef[]): LocoDef[] {
   const gears = gearJson as unknown as Record<string, Gear & { dbSize: number }>;
   for (const d of list) {
     const g = gears[d.id];
     if (!g) continue;
-    d.gear = g;
-    d.lengthTiles = SPIKE_LENGTH[String(g.dbSize)];
+    d.gear = HALVES.has(d.id)
+      ? {
+          parts: [
+            { part: 'body', from: 0, to: 0.5, trucks: [[0.1], [0.4]] },
+            { part: 'engine', from: 0.5, to: 1, trucks: [[0.6], [0.9]] },
+          ],
+        }
+      : SPREAD.has(d.id)
+        ? spreadGear(g, SPREAD.get(d.id)!)
+        : g;
+    d.lengthTiles = LEN.get(d.id) ?? SPIKE_LENGTH[String(g.dbSize)];
   }
   return list;
 }

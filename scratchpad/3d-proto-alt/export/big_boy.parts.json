@@ -1,0 +1,87 @@
+{
+ "id": "big_boy",
+ "prep_seconds": 31.3,
+ "tile_m": 6.235064799811727,
+ "k_px": 14.516235339624876,
+ "parts": [
+  {
+   "part": "engine",
+   "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/big_boy_engine.glb",
+   "objects": [
+    "part_engine"
+   ],
+   "tris": 71002,
+   "verts": 63867,
+   "lo": [
+    -8.055226001711077,
+    -2.361894581343222,
+    0.15897929668426514
+   ],
+   "hi": [
+    8.055226361633117,
+    2.361894456411278,
+    4.925629377365112
+   ],
+   "tiles": [
+    2.648,
+    1
+   ],
+   "footprint_m": [
+    16.510451589901454,
+    6.235064799811727
+   ],
+   "comp": [
+    1.0393839735420294,
+    1.3302788210296552,
+    1.0
+   ],
+   "variants": [
+    {
+     "ratio": 0.25,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/big_boy_engine_r025.glb",
+     "tris": 17750
+    }
+   ]
+  },
+  {
+   "part": "tender",
+   "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/big_boy_tender.glb",
+   "objects": [
+    "part_tender"
+   ],
+   "tris": 33072,
+   "verts": 29508,
+   "lo": [
+    -3.6283290945698354,
+    -2.343934263720712,
+    0.6273989677429199
+   ],
+   "hi": [
+    3.6283299401968208,
+    2.343934138788768,
+    4.658761978149414
+   ],
+   "tiles": [
+    1.228,
+    1
+   ],
+   "footprint_m": [
+    7.6566595741688,
+    6.235064799811727
+   ],
+   "comp": [
+    0.7889904494901887,
+    1.3302788210296552,
+    1.0
+   ],
+   "variants": [
+    {
+     "ratio": 0.25,
+     "glb": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/big_boy_tender_r025.glb",
+     "tris": 8268
+    }
+   ]
+  }
+ ],
+ "export_seconds": 0.6
+}

@@ -1,0 +1,54 @@
+{
+ "level": {
+  "vehicleCentre": {
+   "x": 44.70907973621104,
+   "y": 40
+  },
+  "engineCentre": {
+   "x": 45.070079736211035,
+   "y": 40,
+   "L": 1.278
+  },
+  "engineSprite": {
+   "x": 162,
+   "y": 1361
+  },
+  "puff": {
+   "x": 158.36664004672346,
+   "y": 1329.1677373066257
+  },
+  "glow": {
+   "x": 162,
+   "y": 1353
+  },
+  "railDzAtEngine": 0,
+  "puffParent": true,
+  "glowParent": true
+ },
+ "top": {
+  "vehicleCentre": {
+   "x": 53.51726133093528,
+   "y": 40
+  },
+  "engineCentre": {
+   "x": 53.878261330935274,
+   "y": 40,
+   "L": 1.278
+  },
+  "engineSprite": {
+   "x": 444,
+   "y": 1482.4040820577345
+  },
+  "puff": {
+   "x": 440.228172185242,
+   "y": 1470.1014243539119
+  },
+  "glow": {
+   "x": 444,
+   "y": 1494
+  },
+  "railDzAtEngine": -19.595917942265427,
+  "puffParent": true,
+  "glowParent": true
+ }
+}

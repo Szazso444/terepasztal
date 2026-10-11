@@ -1,0 +1,187 @@
+{
+ "errors": [
+  "[error] Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "[error] Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "twin-none": {
+  "depthMode": "none",
+  "z": [
+   8662.007973621103,
+   8706.007973621103
+  ]
+ },
+ "twin-local": {
+  "depthMode": "local",
+  "z": [
+   8662.007973621103,
+   8706.007973621103
+  ]
+ },
+ "twin-global": {
+  "depthMode": "global",
+  "z": [
+   8662.007973621103,
+   8706.007973621103
+  ]
+ },
+ "tint": {
+  "before": {
+   "mesh": "c8f0ff",
+   "sprite": "c8f0ff"
+  },
+  "after": {
+   "mesh": "4865ad",
+   "sprite": "4865ad"
+  }
+ },
+ "tintDay": {
+  "before": {
+   "mesh": "ffffff",
+   "sprite": "ffffff"
+  },
+  "after": {
+   "mesh": "ffffff",
+   "sprite": "ffffff"
+  }
+ },
+ "alpha": {
+  "alpha": 0.45
+ },
+ "cull": {
+  "here": {
+   "mesh": false,
+   "sprite": false
+  },
+  "away": {
+   "mesh": false,
+   "sprite": false
+  },
+  "bounds": {
+   "type": "rectangle",
+   "x": 510.70351181919557,
+   "y": 291.77918608783415,
+   "width": 258.0482857141276,
+   "height": 203.09671267882703
+  }
+ },
+ "rt-zoom1": "rt 95x82 @1",
+ "rt-zoom4": "rt 95x82 @4",
+ "extract": {
+  "w": 380,
+  "h": 328,
+  "urlBytes": 8794,
+  "head": "data:image/png;base64,iVBORw0K"
+ },
+ "timing": {
+  "updateMsPerCall": 0.024666666636864343,
+  "sortMsPerCall": 0.2080000000198682,
+  "objectChildren": 3388,
+  "displayObjectsOfThisTrain": 12
+ },
+ "midcurve": [
+  {
+   "part": "engine",
+   "pose": {
+    "x": 66.8362,
+    "y": 40.8376,
+    "angle": 1.0031,
+    "L": 1.278,
+    "mirror": false,
+    "delta": 0,
+    "residualGap": 0.1624,
+    "wheelGap": 0.0172
+   },
+   "sprite": {
+    "facing": 8,
+    "mirrored": true,
+    "residualDeg": -4.32,
+    "appliedDeg": -2.16,
+    "x": 832,
+    "y": 1723,
+    "zIndex": 10782.39,
+    "scaleX": -1,
+    "rotation": -0.0377,
+    "skew": [
+     0,
+     0
+    ],
+    "visible": true,
+    "tint": "ffffff",
+    "texel": "64x97",
+    "logical": "32x48.5",
+    "windowLight": false
+   }
+  },
+  {
+   "part": "tender",
+   "pose": {
+    "x": 66.1112,
+    "y": 40.1422,
+    "angle": 0.4371,
+    "L": 0.662,
+    "mirror": false,
+    "delta": 0,
+    "residualGap": 0.0292,
+    "wheelGap": 0.0109
+   },
+   "sprite": {
+    "facing": 3,
+    "mirrored": false,
+    "residualDeg": 3.65,
+    "appliedDeg": 1.83,
+    "x": 831,
+    "y": 1700,
+    "zIndex": 10640.34,
+    "scaleX": 1,
+    "rotation": 0.0319,
+    "skew": [
+     0,
+     0
+    ],
+    "visible": true,
+    "tint": "ffffff",
+    "texel": "57x64",
+    "logical": "28.5x32",
+    "windowLight": false
+   }
+  }
+ ],
+ "rerender": {
+  "levelStraight": {
+   "frames": 81,
+   "partFrames": 162,
+   "redraws": 2,
+   "byPart": {
+    "0.engine": 1,
+    "0.tender": 1
+   }
+  },
+  "overTheHill": {
+   "frames": 320,
+   "partFrames": 640,
+   "redraws": 172,
+   "byPart": {
+    "0.engine": 85,
+    "0.tender": 87
+   }
+  },
+  "curve": {
+   "frames": 140,
+   "partFrames": 280,
+   "redraws": 110,
+   "byPart": {
+    "0.engine": 56,
+    "0.tender": 54
+   }
+  },
+  "after": {
+   "frames": 80,
+   "partFrames": 160,
+   "redraws": 2,
+   "byPart": {
+    "0.engine": 1,
+    "0.tender": 1
+   }
+  }
+ }
+}

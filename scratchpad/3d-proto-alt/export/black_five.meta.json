@@ -1,0 +1,227 @@
+{
+  "id": "black_five",
+  "category": "vehicle",
+  "plan": "rigid",
+  "tiles": [
+    2,
+    1
+  ],
+  "footprint_m": [
+    12.470129599623453,
+    6.235064799811727
+  ],
+  "scale": 13.671056,
+  "scale_ref": "height_m",
+  "compression": [
+    0.7606,
+    0.9294,
+    1.0
+  ],
+  "real_dims_m": [
+    15.902,
+    2.977,
+    4.193
+  ],
+  "final_dims_m": [
+    7.568,
+    2.773,
+    4.188
+  ],
+  "split": {
+    "mode": "auto",
+    "cuts_m": [
+      10.75
+    ],
+    "expected_m": [
+      10.48
+    ]
+  },
+  "width_fix": 0.9742,
+  "px_per_m": 14.51624,
+  "supersample": 2,
+  "resolution": 2,
+  "source": {
+    "fov_deg": 17.626,
+    "silhouette_iou": 0.9653,
+    "texels": 4194304,
+    "source_texels": 496399,
+    "source_share": 0.118,
+    "mirrored_share": 0.085,
+    "extra_share": 0.129,
+    "nearest_share": 0.666,
+    "extras": [
+      {
+        "image": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-black-five-rear.png",
+        "silhouette_iou": 0.9015,
+        "pose_deg": [
+          128.23,
+          24.12,
+          4.42
+        ],
+        "colour_matched": true,
+        "overlap_texels": 18805
+      }
+    ],
+    "median_delta_e_generated": 13.06,
+    "median_delta_e_transferred": 10.07,
+    "texture": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/black_five_texture.png"
+  },
+  "anchor": "ground center of the footprint (a part's own centre), continuous px coords from top-left",
+  "align": {
+    "mode": "auto",
+    "yaw": 44.75,
+    "pitch": -27.0,
+    "roll": -0.5,
+    "score": 0.8095,
+    "refined_yaw_deg": -0.96,
+    "refined_pitch_deg": -0.007
+  },
+  "warnings": [],
+  "debug": {},
+  "debug_cams": {},
+  "renders": [
+    {
+      "part": "engine",
+      "tiles": [
+        1.278,
+        1
+      ],
+      "footprint_m": [
+        7.968412814159387,
+        6.235064799811727
+      ],
+      "gear": [
+        {
+          "name": "l2",
+          "x_m": 2.625,
+          "x_real_m": 3.451,
+          "d_m": 0.86
+        },
+        {
+          "name": "d1",
+          "x_m": -2.078,
+          "x_real_m": -2.732,
+          "d_m": 1.414
+        },
+        {
+          "name": "d2",
+          "x_m": -0.697,
+          "x_real_m": -0.916,
+          "d_m": 1.599
+        },
+        {
+          "name": "d3",
+          "x_m": 0.514,
+          "x_real_m": 0.676,
+          "d_m": 1.675
+        }
+      ],
+      "profile": {
+        "top": [
+          3.79,
+          3.71,
+          3.56,
+          3.56,
+          3.75,
+          3.25
+        ],
+        "width": [
+          2.35,
+          2.25,
+          2.26,
+          2.42,
+          2.56,
+          2.38
+        ]
+      },
+      "compression": [
+        0.7606,
+        0.9294,
+        1.0
+      ],
+      "final_dims_m": [
+        7.568,
+        2.773,
+        4.188
+      ],
+      "canvas_px": [
+        0,
+        0
+      ],
+      "anchor_px": [
+        0,
+        0
+      ],
+      "dirs": []
+    },
+    {
+      "part": "tender",
+      "tiles": [
+        0.662,
+        1
+      ],
+      "footprint_m": [
+        4.127612897475363,
+        6.235064799811727
+      ],
+      "gear": [
+        {
+          "name": "t1",
+          "x_m": -0.736,
+          "x_real_m": -1.017,
+          "d_m": 1.684
+        },
+        {
+          "name": "t2",
+          "x_m": 0.285,
+          "x_real_m": 0.394,
+          "d_m": 1.691
+        },
+        {
+          "name": "t3",
+          "x_m": 1.435,
+          "x_real_m": 1.984,
+          "d_m": 1.708
+        }
+      ],
+      "profile": {
+        "top": [
+          3.21,
+          3.52,
+          3.51,
+          3.46,
+          3.46,
+          3.44
+        ],
+        "width": [
+          2.49,
+          2.53,
+          2.51,
+          2.53,
+          2.53,
+          2.52
+        ]
+      },
+      "compression": [
+        0.7235,
+        0.9294,
+        1.0
+      ],
+      "final_dims_m": [
+        3.723,
+        2.857,
+        3.624
+      ],
+      "canvas_px": [
+        0,
+        0
+      ],
+      "anchor_px": [
+        0,
+        0
+      ],
+      "dirs": []
+    }
+  ],
+  "seconds": 66.7
+}
