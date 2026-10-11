@@ -3,7 +3,13 @@ import { generateMap, placeOilFields, ensureStartDeposits, DEFAULT_MAP_PARAMS } 
 import { mapFromLevel, levelFromMap } from './level';
 import { Terrain, startRegion, type GameMap, type PropInstance } from './tiles';
 import { Rng, hashString } from '../engine/rng';
-import { DEFAULT_SUPPLY, SUPPLY_MODES, setSupplyMode, type SupplyMode } from '../sim/supply';
+import {
+  DEFAULT_SUPPLY,
+  SUPPLY_MODES,
+  setSupplyMode,
+  supplyMode,
+  type SupplyMode,
+} from '../sim/supply';
 import { forAll } from '../testing/property';
 
 // The production chain is an argument of map generation, not the game-wide switch: the same call
@@ -134,6 +140,28 @@ describe('generateMap takes the production chain as an argument', () => {
     expect(propHash(bare)).toBe(propHash(simple));
     expect(oilTiles(bare)).toEqual([]);
   });
+
+  it.each(SUPPLY_MODES.flatMap((global) => SUPPLY_MODES.map((chain) => ({ global, chain }))))(
+    'generateMap, placeOilFields, ensureStartDeposits and mapFromLevel leave the global as they found it (global $global, chain $chain)',
+    ({ global, chain }) => {
+      const lv = levelFromMap(generateMap(7, params(48), 'simple'), 'switch');
+      setSupplyMode(global);
+      const map = generateMap(7, params(48), chain);
+      expect(supplyMode(), 'generateMap').toBe(global);
+      placeOilFields(map, 7, chain);
+      expect(supplyMode(), 'placeOilFields').toBe(global);
+      ensureStartDeposits(map, chain);
+      expect(supplyMode(), 'ensureStartDeposits').toBe(global);
+      mapFromLevel(lv, chain);
+      expect(supplyMode(), 'mapFromLevel').toBe(global);
+      // and with the chain left out
+      generateMap(7, params(48));
+      placeOilFields(map, 7);
+      ensureStartDeposits(map);
+      mapFromLevel(lv);
+      expect(supplyMode(), 'chain omitted').toBe(global);
+    },
+  );
 });
 
 describe('placeOilFields and ensureStartDeposits take the chain', () => {
@@ -327,6 +355,9 @@ describe('the production chain, for any world', () => {
         for (const i of tiles)
           if (!oil.has(i))
             expect(propText(full.props.get(i)), `tile ${i}`).toBe(propText(simple.props.get(i)));
+        // the fields and the start seeps both lie on dry ground
+        for (const i of oil)
+          expect([Terrain.Grass, Terrain.Sand], `oil on tile ${i}`).toContain(full.terrain[i]);
       },
       run,
     );
