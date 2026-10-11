@@ -654,9 +654,11 @@ function oilFields(map: GameMap, seed: number, s: Span, supply: SupplyMode) {
 }
 
 /**
- * The starting chunk gets at least three oil seeps (full production chain): grass or sand tiles a
- * little way out from the chunk centre, in a fixed order so an expanded map picks the same tiles
- * again. Skipped when the chunk already has them.
+ * The starting chunk gets three oil seeps (full production chain): every third grass or sand tile
+ * of the ring 6 to 13 tiles out from the chunk centre, nearest first, in a fixed order so an
+ * expanded map picks the same tiles again. That reaches three only where the ring holds seven such
+ * tiles or more; a ring with fewer (a high Water level, a dense forest) gets fewer seeps, none on
+ * a ring of water, and a second call on it lays more. Skipped when the chunk already has three.
  */
 export function ensureStartDeposits(map: GameMap, supply: SupplyMode = DEFAULT_SUPPLY) {
   startDeposits(map, startSpan(map), supply);
