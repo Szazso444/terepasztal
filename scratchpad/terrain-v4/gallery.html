@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Terepasztal · Texture & connected hills</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      background: #141c18;
+      color: #e4e8da;
+    }
+    body {
+      max-width: 1500px;
+      margin: auto;
+      padding: 36px 24px 90px;
+    }
+    h1 {
+      font-family: Georgia, serif;
+      font-size: clamp(30px, 4vw, 56px);
+      font-weight: 500;
+      margin: 12px 0;
+    }
+    h2 {
+      font-family: Georgia, serif;
+      font-size: 32px;
+      font-weight: 500;
+      margin: 50px 0 16px;
+    }
+    h3 {
+      margin: 14px 0 8px;
+    }
+    p {
+      max-width: 950px;
+      line-height: 1.65;
+      color: #b9c6b6;
+    }
+    a {
+      color: #dce4ac;
+    }
+    nav {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #3a4839;
+      padding: 18px 0;
+    }
+    .tag {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #a9bd8c;
+    }
+    .note {
+      border-left: 3px solid #a9bd8c;
+      padding: 12px 20px;
+      background: #1c291f;
+      max-width: 1100px;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    button {
+      cursor: pointer;
+      color: #dce4d2;
+      background: #293629;
+      border: 1px solid #617456;
+      border-radius: 6px;
+      padding: 12px 18px;
+      font: inherit;
+    }
+    button[aria-pressed='true'] {
+      background: #c5d399;
+      color: #1b241b;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      background: #253022;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .grid p {
+      font-size: 14px;
+    }
+    figure {
+      margin: 0;
+    }
+    figcaption {
+      font-size: 14px;
+      color: #acbca6;
+      line-height: 1.6;
+      margin-top: 9px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 1150px;
+      font-size: 15px;
+    }
+    td,
+    th {
+      text-align: left;
+      border-bottom: 1px solid #354332;
+      padding: 12px;
+      line-height: 1.5;
+    }
+    th {
+      color: #c7d69f;
+    }
+    details {
+      margin: 25px 0;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 20px;
+      padding: 14px 0;
+    }
+    .wide {
+      margin-top: 24px;
+    }
+    .foot {
+      font-size: 13px;
+      color: #8d9f88;
+      margin-top: 40px;
+    }
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      body {
+        padding: 20px 12px;
+      }
+      td,
+      th {
+        padding: 8px;
+      }
+    }
+  </style>
+  <div class="tag">Terepasztal / Terrain study 04</div>
+  <h1>Texture underfoot.<br />Hills that belong together.</h1>
+  <p>
+    The illustrated terrain and original hill sprites are restored in the game. These comparisons
+    explore how to retain their texture while reducing repetition. The trees, flowers, bushes and
+    cottage stay identical between the detail options.
+  </p>
+  <nav>
+    <a href="#detail">Grass detail</a><a href="#transitions">Material edges</a
+    ><a href="#hills">Connected hills</a><a href="#world">Restored 128×128 world</a>
+  </nav>
+  <p class="note">
+    The texture alternatives are actual Game/Pixi screenshots with a preview ground layer on a
+    controlled 48×48 map. The generated hill board is a separate concept. Neither proposal has
+    replaced the restored production terrain.
+  </p>
+  <section id="detail">
+    <h2>01 / Choose the amount of texture</h2>
+    <p>
+      <strong>Recommendation: balanced.</strong> Readable grass clusters with quieter gaps for
+      flowers and bushes. Light is calmer; rich gives the meadow more emphasis. These are art
+      comparisons, not camera LOD settings.
+    </p>
+    <div class="buttons" id="options">
+      <button data-file="01-restored-tiles" aria-pressed="false">Restored tiles</button>
+      <button data-file="02-light-detail" aria-pressed="false">Light · 48%</button>
+      <button data-file="03-balanced-detail" aria-pressed="true">Balanced · 78%</button>
+      <button data-file="04-rich-detail" aria-pressed="false">Rich · 100%</button>
+    </div>
+    <figure>
+      <a id="detail-link" href="renders/03-balanced-detail.png" target="_blank"
+        ><img
+          id="detail-image"
+          src="renders/03-balanced-detail.png"
+          alt="Balanced grass texture with the existing illustrated trees, bushes, flowers and cottage"
+      /></a>
+      <figcaption id="detail-label">
+        Balanced · 78% source texture, approximately 8 small tuft clusters per tile. Click the image
+        for full resolution.
+      </figcaption>
+    </figure>
+    <details>
+      <summary>Suggested detail by surface</summary>
+      <table>
+        <tr>
+          <th>Surface</th>
+          <th>Detail</th>
+          <th>What should carry it</th>
+        </tr>
+        <tr>
+          <td>Grass</td>
+          <td>Medium</td>
+          <td>Visible tufts, small colour variation, quiet gaps.</td>
+        </tr>
+        <tr>
+          <td>Forest floor</td>
+          <td>Medium-high</td>
+          <td>Leaf litter, roots and grass islands; less contrast than the trees.</td>
+        </tr>
+        <tr>
+          <td>Sand / desert</td>
+          <td>Low</td>
+          <td>Fine grains and occasional stones; avoid repeated dune stamps.</td>
+        </tr>
+        <tr>
+          <td>Water</td>
+          <td>Low-medium</td>
+          <td>Sparse ripples and an irregular, narrow shoreline.</td>
+        </tr>
+        <tr>
+          <td>Taiga / swamp</td>
+          <td>Medium</td>
+          <td>Short cool grass / damp islands; trees and reeds supply height.</td>
+        </tr>
+        <tr>
+          <td>Rock</td>
+          <td>High locally</td>
+          <td>Facets and cracks concentrated in outcrops.</td>
+        </tr>
+        <tr>
+          <td>Hills / mountains</td>
+          <td>Medium grass, high rock</td>
+          <td>Slopes, ridge silhouettes and exposed rock express elevation.</td>
+        </tr>
+      </table>
+      <p>
+        The percentages control source-texture contribution, not ground coverage. Native vegetation
+        is unchanged.
+      </p>
+    </details>
+  </section>
+  <section id="transitions">
+    <h2>02 / Let materials interlock</h2>
+    <p>
+      Use small irregular patches to decide where each material ends. The source texture remains
+      visible right up to the boundary. These two forest views share the exact same camera and
+      vegetation.
+    </p>
+    <div class="grid">
+      <figure>
+        <a href="renders/05-forest-interlock.png" target="_blank"
+          ><img
+            loading="lazy"
+            src="renders/05-forest-interlock.png"
+            alt="Interlocking grass and forest patches"
+        /></a>
+        <h3>A · Interlocking patches</h3>
+        <figcaption>
+          Recommended direction. Wider breakup with small material islands; add authored leaf and
+          grass edge clusters in a final tile set.
+        </figcaption>
+      </figure>
+      <figure>
+        <a href="renders/06-forest-fringe.png" target="_blank"
+          ><img
+            loading="lazy"
+            src="renders/06-forest-fringe.png"
+            alt="Narrow winding forest fringe"
+        /></a>
+        <h3>B · Narrow winding fringe</h3>
+        <figcaption>
+          A quieter edge with less breakup. It reads more strongly as a single material boundary.
+        </figcaption>
+      </figure>
+      <figure>
+        <a href="renders/07-grass-sand.png" target="_blank"
+          ><img loading="lazy" src="renders/07-grass-sand.png" alt="Grass tongues entering sand"
+        /></a>
+        <h3>Grass → sand</h3>
+        <figcaption>
+          Grass tongues and scattered islands extend into the adjacent surface.
+        </figcaption>
+      </figure>
+      <figure>
+        <a href="renders/08-sand-water.png" target="_blank"
+          ><img
+            loading="lazy"
+            src="renders/08-sand-water.png"
+            alt="Narrow irregular sand and water shore"
+        /></a>
+        <h3>Sand → water</h3>
+        <figcaption>
+          Much narrower variation keeps the visual shore close to the water/buildability boundary.
+        </figcaption>
+      </figure>
+    </div>
+    <p class="note">
+      This is a direction study. Material joins still have strong contrast; final transition art
+      needs its own edge clusters and shoreline treatment. Terrain generation and build rules are
+      unchanged.
+    </p>
+  </section>
+  <section id="hills">
+    <h2>03 / A family of connected landforms</h2>
+    <p>
+      Keep the original illustrated grass and rock. Add ramps, shoulders, saddles, ridges and
+      plateaus that meet at shared heights. Put peak caps only at local summits, so a dense hill
+      region becomes one raised landmass.
+    </p>
+    <figure>
+      <a href="connected-hills-concept.png" target="_blank"
+        ><img
+          loading="lazy"
+          src="connected-hills-concept.png"
+          alt="Generated concept board of illustrated modular slopes, shoulders, saddles, ridges and connected hills"
+      /></a>
+      <figcaption>
+        Generated concept using the approved grass, hill and mountain images as style references.
+        This is not a game screenshot or an edge-verified tile atlas.
+      </figcaption>
+    </figure>
+    <table class="wide">
+      <tr>
+        <th>Piece</th>
+        <th>Purpose</th>
+      </tr>
+      <tr>
+        <td>Low slope + shoulder</td>
+        <td>Rise gently from the surrounding meadow.</td>
+      </tr>
+      <tr>
+        <td>Inner saddle + ridge</td>
+        <td>Join neighbouring hills across more than one tile.</td>
+      </tr>
+      <tr>
+        <td>Plateau + rock face</td>
+        <td>Give the interior real elevation and expose steep sides.</td>
+      </tr>
+      <tr>
+        <td>High shoulder + peak</td>
+        <td>Finish only the summits, rather than every mountain tile.</td>
+      </tr>
+    </table>
+    <p>
+      Proposed rule: adjacent tiles share their two edge-corner heights. Start with 10-pixel
+      elevation steps and four levels. Surface variants change grass and rock placement while the
+      joining edges remain fixed. Rail slopes and save data need a separate implementation before
+      elevated terrain becomes gameplay.
+    </p>
+  </section>
+  <section id="world">
+    <h2>04 / Restored terrain in the generated world</h2>
+    <p>
+      Normal 128×128 generation, seed 7412, with the production illustrated atlas. These show the
+      rollback as it currently renders, including the repeated hill stamps that the proposed tile
+      family would replace.
+    </p>
+    <figure>
+      <a href="renders/world-11-restored-hill-art.png" target="_blank"
+        ><img
+          loading="lazy"
+          src="renders/world-11-restored-hill-art.png"
+          alt="Original illustrated hills and mountain sprites restored on a generated map"
+      /></a>
+      <figcaption>
+        Current hill art restored. Shared-elevation modular hills above are still a proposal.
+      </figcaption>
+    </figure>
+    <div class="grid wide">
+      <figure>
+        <a href="renders/world-03-town-station.png" target="_blank"
+          ><img
+            loading="lazy"
+            src="renders/world-03-town-station.png"
+            alt="Restored terrain at the game station"
+        /></a>
+        <figcaption>Station in the generated world.</figcaption>
+      </figure>
+      <figure>
+        <a href="renders/world-01-whole-map.png" target="_blank"
+          ><img
+            loading="lazy"
+            src="renders/world-01-whole-map.png"
+            alt="Entire generated 128 by 128 map"
+        /></a>
+        <figcaption>Entire 128×128 map, unchanged terrain/biome/variant hashes.</figcaption>
+      </figure>
+    </div>
+  </section>
+  <p class="foot">
+    11 game renders · 1 generated concept · 164 tests pass · typecheck, lint and production build
+    pass.<br />Browser checks verify native ground, fractional elevation anchors and rail
+    flattening. <a href="renders/report.json">Comparison report</a> ·
+    <a href="renders/world-report.json">World report</a>
+  </p>
+  <script>
+    const captions = {
+      '01-restored-tiles': 'Restored illustrated tiles — current production baseline.',
+      '02-light-detail':
+        'Light · 48% source texture, approximately 5 small tuft clusters per tile.',
+      '03-balanced-detail':
+        'Balanced · 78% source texture, approximately 8 small tuft clusters per tile.',
+      '04-rich-detail':
+        'Rich · 100% source texture, approximately 10 small tuft clusters per tile.',
+    };
+    document.querySelectorAll('#options button').forEach((b) =>
+      b.addEventListener('click', () => {
+        document
+          .querySelectorAll('#options button')
+          .forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        const f = 'renders/' + b.dataset.file + '.png';
+        document.getElementById('detail-image').src = f;
+        document.getElementById('detail-image').alt = captions[b.dataset.file];
+        document.getElementById('detail-link').href = f;
+        document.getElementById('detail-label').textContent =
+          captions[b.dataset.file] + ' Click the image for full resolution.';
+      }),
+    );
+  </script>
+</html>

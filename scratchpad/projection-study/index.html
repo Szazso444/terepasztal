@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Three camera studies · terepasztal</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">TEREPASZTAL / ART DIRECTION STUDY</div>
+        <h1>One world. Three camera angles.</h1>
+        <p>
+          The same footprint, world dimensions, rail gauge and building rotations in every view.
+          Only camera elevation changes.
+        </p>
+      </header>
+      <div class="notice">
+        <strong>Camera comparison, not new finished sprites.</strong> The scenes use simplified
+        geometry with palettes sampled from the generated assets. Their hidden surfaces are
+        inferred. The original artwork is shown unmodified below; its projection is not certified.
+        New faithful art views are pending image-generation availability.
+      </div>
+      <div class="controls">
+        <label
+          >Building
+          <select id="asset"></select
+        ></label>
+        <label
+          >Layout
+          <select id="layout">
+            <option value="rotations">Four rotations of this building</option>
+            <option value="mixed">Mixed building sizes</option>
+          </select></label
+        >
+        <label
+          >View
+          <select id="view">
+            <option value="wide">Rails and buildings</option>
+            <option value="close">Building close-up</option>
+          </select></label
+        >
+        <button id="rotate">Rotate all 90°</button>
+        <label><input type="checkbox" id="grid" checked /> Tile grid</label>
+        <label><input type="checkbox" id="axes" checked /> Geometry guides</label>
+        <label
+          >Zoom <input id="zoom" type="range" min="0.85" max="1.15" step="0.05" value="1"
+        /></label>
+      </div>
+      <div id="scenes" class="scenes"></div>
+      <p class="caption">
+        Each scene includes a curved perimeter railway, straight rails on both tile axes, an
+        eight-heading rail fan, 1×1 / 1×2 yards, and a person beside each building. The rail fan is
+        a direction test, not a playable junction.
+      </p>
+      <section class="audit">
+        <div>
+          <div class="eyebrow">ACTUAL GENERATED ART / CURRENT 2:1 GRID</div>
+          <h2 id="asset-name">Original sprite audit</h2>
+          <p>
+            These are the existing PNGs at their saved size and anchor. Gold lines show the occupied
+            cells; red and blue lines show the required ground directions. Select a building above
+            to compare all four facings.
+          </p>
+          <p>
+            Unlike the camera studies, these images retain all their existing angle and scale
+            inconsistencies. They are not reprojected, widened or stretched.
+          </p>
+          <a href="../building-poc/library.html">Open the complete generated library →</a>
+        </div>
+        <div id="originals" class="originals"></div>
+      </section>
+      <section class="details">
+        <h2>What the angles mean</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>View</th>
+              <th>Camera elevation</th>
+              <th>Ground edge angle</th>
+              <th>Tile width : height</th>
+            </tr>
+          </thead>
+          <tbody id="numbers"></tbody>
+        </table>
+        <p>
+          Azimuth is 45° in all three. Camera elevation and the angle of an edge on your screen are
+          different quantities. The current game uses 64×32 tiles; it does not define a full 3D
+          camera or a physical vertical unit. This study uses equal world units for building
+          geometry.
+        </p>
+        <p>
+          The lower study matches the 105° / 105° / 150° dimetric axis separation in your reference.
+          True isometric has three equal 120° separations.
+        </p>
+        <p>
+          <a href="https://en.wikipedia.org/wiki/Isometric_video_game_graphics"
+            >Your projection reference</a
+          >
+          · <a href="./README.md">Study assumptions and limitations</a>
+        </p>
+      </section>
+    </main>
+    <script type="module" src="./scene.js"></script>
+  </body>
+</html>

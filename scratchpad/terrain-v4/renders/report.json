@@ -1,0 +1,82 @@
+{
+  "fixture": "Controlled 48 × 48 material comparison in Game/Pixi renderer",
+  "seed": 7412,
+  "production": "Illustrated tiles restored; material alternatives are preview-only",
+  "samePropsAcrossDetailLevels": true,
+  "treeScale": 1.5,
+  "views": [
+    {
+      "id": "01-restored-tiles",
+      "title": "Restored illustrated tiles",
+      "detail": 0,
+      "edge": "native",
+      "x": 23,
+      "y": 20,
+      "zoom": 3
+    },
+    {
+      "id": "02-light-detail",
+      "title": "Light texture",
+      "detail": 0.48,
+      "edge": "patches",
+      "x": 23,
+      "y": 20,
+      "zoom": 3
+    },
+    {
+      "id": "03-balanced-detail",
+      "title": "Balanced illustrated texture — recommended",
+      "detail": 0.78,
+      "edge": "patches",
+      "x": 23,
+      "y": 20,
+      "zoom": 3
+    },
+    {
+      "id": "04-rich-detail",
+      "title": "Rich meadow texture",
+      "detail": 1,
+      "edge": "patches",
+      "x": 23,
+      "y": 20,
+      "zoom": 3
+    },
+    {
+      "id": "05-forest-interlock",
+      "title": "Grass → forest: interlocking material patches",
+      "detail": 0.78,
+      "edge": "patches",
+      "x": 23.5,
+      "y": 17,
+      "zoom": 4
+    },
+    {
+      "id": "06-forest-fringe",
+      "title": "Grass → forest: narrow winding fringe",
+      "detail": 0.78,
+      "edge": "fringe",
+      "x": 23.5,
+      "y": 17,
+      "zoom": 4
+    },
+    {
+      "id": "07-grass-sand",
+      "title": "Grass → sand: scattered grass tongues",
+      "detail": 0.78,
+      "edge": "patches",
+      "x": 23.5,
+      "y": 29,
+      "zoom": 4
+    },
+    {
+      "id": "08-sand-water",
+      "title": "Sand → water: irregular narrow shoreline",
+      "detail": 0.78,
+      "edge": "patches",
+      "x": 29.5,
+      "y": 29,
+      "zoom": 4
+    }
+  ],
+  "errors": []
+}

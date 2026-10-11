@@ -1,0 +1,2 @@
+import fs from 'node:fs';import{PNG}from'pngjs';const sheet=PNG.sync.read(fs.readFileSync('public/assets/structures.png'));const defs=JSON.parse(fs.readFileSync('public/assets/structures.json')).frames;
+for(const key of ['station_1','townhouse','town_1','warehouse_1','farm_1','windmill']){const f=defs['structures/'+key];if(!f)continue;const p=new PNG({width:f.w,height:f.h});PNG.bitblt(sheet,p,f.x,f.y,f.w,f.h,0,0);fs.writeFileSync('scratchpad/cozy-v3/'+key+'.png',PNG.sync.write(p));console.log(key,f.w,f.h);}

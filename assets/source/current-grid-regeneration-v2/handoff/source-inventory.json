@@ -1,0 +1,292 @@
+[
+  {
+    "path": "originals/station.png",
+    "bytes": 1970645,
+    "sha256": "df48b186fa1e622613c99b6b3fd9473c055626e9208f65f2033c3665d02f49c3"
+  },
+  {
+    "path": "existing-facings/station-0.png",
+    "bytes": 940511,
+    "sha256": "cb846a7f93fec9b770682f6edb3e1fffe50b887eadf52cb501ef91bb8e125143"
+  },
+  {
+    "path": "existing-facings/station-1.png",
+    "bytes": 936489,
+    "sha256": "916fa52df3c7ba3255bb5c81523f35514473dc4fef81b9ce65dc6139d0c74114"
+  },
+  {
+    "path": "existing-facings/station-2.png",
+    "bytes": 921808,
+    "sha256": "ebcbe2b860af80a486a2aae182ca3f442c5015eeeea95d7e2c84f30b58a32324"
+  },
+  {
+    "path": "existing-facings/station-3.png",
+    "bytes": 970370,
+    "sha256": "4620d353636416b9279c76466cd54a2ea5b150ab18f7d537130de8d9f349c7e8"
+  },
+  {
+    "path": "originals/house.png",
+    "bytes": 1618837,
+    "sha256": "309358e31f5bf99f846bbf9f13f91bcd2cb0e7b36d2d9eb8d7e12663e3000c16"
+  },
+  {
+    "path": "existing-facings/house-0.png",
+    "bytes": 802128,
+    "sha256": "47135e429b93e26d7fada557e230366f6114fc55552acd80fa6f91a18a1d3a64"
+  },
+  {
+    "path": "existing-facings/house-1.png",
+    "bytes": 556142,
+    "sha256": "6d7e0e36334de2410e01e80e96383e950ccae233ec0f5421e76db8debb9f0bea"
+  },
+  {
+    "path": "existing-facings/house-2.png",
+    "bytes": 557579,
+    "sha256": "78d83092cbd507601fcd7b59d9bb5118475e688b247f7d66b9f36311200d2b5d"
+  },
+  {
+    "path": "existing-facings/house-3.png",
+    "bytes": 563495,
+    "sha256": "ee6183a5bed25f6db3e04958698c6bd5dcc3739fc999ca7480c380888a8b47a9"
+  },
+  {
+    "path": "originals/stations-farm.png",
+    "bytes": 1794660,
+    "sha256": "dd6b51cff22104ee5e8e245774f46c19872d7c3f796da9fad05dceee62b736c3"
+  },
+  {
+    "path": "existing-facings/stations-farm-0.png",
+    "bytes": 1965483,
+    "sha256": "3735841b6f5cc37450938bea831859346e3b7dfe65bbefc70ebe94a7076c653d"
+  },
+  {
+    "path": "existing-facings/stations-farm-1.png",
+    "bytes": 1972606,
+    "sha256": "d54522cf3c7e61887e622d8b1d54143d3e3ee40ded799db16f3845f47c5ffeaf"
+  },
+  {
+    "path": "existing-facings/stations-farm-2.png",
+    "bytes": 2033682,
+    "sha256": "18149602270ef81522f6f8e4b4223aef4ea3c267fdab99a177c41b969a912e07"
+  },
+  {
+    "path": "existing-facings/stations-farm-3.png",
+    "bytes": 1909685,
+    "sha256": "58bffc9e60904fdd93600ba7746a9742253754f90848a74f9f0fb23e56a2152d"
+  },
+  {
+    "path": "originals/stations-lumber.png",
+    "bytes": 1040065,
+    "sha256": "93f55feb73054d80a8b4bd562188fc9fb1caafa83d9a5ad62dcc9e10ea8eddc7"
+  },
+  {
+    "path": "existing-facings/stations-lumber-0.png",
+    "bytes": 1219471,
+    "sha256": "69e0b5f5c95d0b9d2ba405c76bfda194e614493bc11fa13ed9240baae0319475"
+  },
+  {
+    "path": "existing-facings/stations-lumber-1.png",
+    "bytes": 1109548,
+    "sha256": "8e27b2dabde52e9436e09d01478ba6707145b68c0ffdd95f98997dae3d4e8b05"
+  },
+  {
+    "path": "existing-facings/stations-lumber-2.png",
+    "bytes": 1229143,
+    "sha256": "73766670d158a4a5c87300c61b3e64360f5d29b58995720dae28b5047c21f541"
+  },
+  {
+    "path": "existing-facings/stations-lumber-3.png",
+    "bytes": 1222733,
+    "sha256": "fbbecb2024100a486be3b7e46ab11cf612b7b54e20cbb8acc317981b97d17c33"
+  },
+  {
+    "path": "originals/stations-quarry.png",
+    "bytes": 1069589,
+    "sha256": "045a3ece1fae1f5f56989c7c1c768a3759fe666225e22b2e4961c6afd701ab60"
+  },
+  {
+    "path": "existing-facings/stations-quarry-0.png",
+    "bytes": 2113900,
+    "sha256": "1c6eea945234d001fac556457b53459b7f436ff70c7418dd573a9fb53878d7f2"
+  },
+  {
+    "path": "existing-facings/stations-quarry-1.png",
+    "bytes": 887107,
+    "sha256": "a4b37843cb8be98379d5672c4bdf35b52f38a505080f9579f8c63fc87dd639f4"
+  },
+  {
+    "path": "existing-facings/stations-quarry-2.png",
+    "bytes": 1108745,
+    "sha256": "73d61fd2c0d156a980217d09542eb3c322b759f22137878e1509037ab31cc253"
+  },
+  {
+    "path": "existing-facings/stations-quarry-3.png",
+    "bytes": 980735,
+    "sha256": "0594f904702d5e022e5c3ba8ef279f0d86d47cff7cbfe5065be7e6f50055396b"
+  },
+  {
+    "path": "originals/stations-pump.png",
+    "bytes": 855482,
+    "sha256": "e754de8982e85f6423a1db6950ccb368bcdcb852916dc7642bcee6d6998a9aed"
+  },
+  {
+    "path": "existing-facings/stations-pump-0.png",
+    "bytes": 1363993,
+    "sha256": "63f4631dedc01f0851199d7a1f2213a058075da187a925909cd298bd0c01167d"
+  },
+  {
+    "path": "existing-facings/stations-pump-1.png",
+    "bytes": 1074744,
+    "sha256": "0037be93a969117d1d50be3a903d4a90b818c0c67b694e2dc17427827f51064b"
+  },
+  {
+    "path": "existing-facings/stations-pump-2.png",
+    "bytes": 894150,
+    "sha256": "da4ee2a8969dddca104c3cacf61dc762f8d75aa63839f0c8b9ab3b6e5f10ac95"
+  },
+  {
+    "path": "existing-facings/stations-pump-3.png",
+    "bytes": 1332376,
+    "sha256": "a4c84adb45785ebc22449cec32bd3e41fb2d8f0262463572c4dbfd3503f4c62c"
+  },
+  {
+    "path": "originals/stations-town.png",
+    "bytes": 1958914,
+    "sha256": "0724c2d1e484cd824bddde8c674fa1d44b45e68ccd040d4ebaa6b3efd9cd6601"
+  },
+  {
+    "path": "existing-facings/stations-town-0.png",
+    "bytes": 1980072,
+    "sha256": "d808e6ab1737cb40326944abf624dcbd4fb1b4a91eea331d9c63127d61c7281f"
+  },
+  {
+    "path": "existing-facings/stations-town-1.png",
+    "bytes": 1826694,
+    "sha256": "c3974f4630ba561908a8bcf50897c7b193e351f14c25654c2f4905c1e1f10c43"
+  },
+  {
+    "path": "existing-facings/stations-town-2.png",
+    "bytes": 1878120,
+    "sha256": "3dd042cecec97cc85f773f01eed0e74c1f9119f43353949f17ef3c08c1601869"
+  },
+  {
+    "path": "existing-facings/stations-town-3.png",
+    "bytes": 1850706,
+    "sha256": "27c24087b1a84b9eb8af35432afbd888660ab8edf6ff9f0368ec9f085c01a0a5"
+  },
+  {
+    "path": "originals/stations-warehouse.png",
+    "bytes": 1256640,
+    "sha256": "e49ab2a1d71cebfe45201e5fb8983a46b169e97ce4e158d9fde33008b9a124b2"
+  },
+  {
+    "path": "existing-facings/stations-warehouse-0.png",
+    "bytes": 1502360,
+    "sha256": "26e5f9b7f15a737e408216fd9f83aa88b766ab8d20cd37e3edff8059eb4f71a1"
+  },
+  {
+    "path": "existing-facings/stations-warehouse-1.png",
+    "bytes": 1201420,
+    "sha256": "f95cfae18ace7eb24a938f02ec8693f147a2374c2ee2c2570187750749165670"
+  },
+  {
+    "path": "existing-facings/stations-warehouse-2.png",
+    "bytes": 1337956,
+    "sha256": "74135217e0b7ed482fa0f58c57934cd0c7349009acadc7359b9aad3eab6796d8"
+  },
+  {
+    "path": "existing-facings/stations-warehouse-3.png",
+    "bytes": 1289834,
+    "sha256": "bce48dac8b2e89290f58f3c6b5b10b0e62b0873da32e0fbd43f5c42404ee32ff"
+  },
+  {
+    "path": "originals/stations-depot.png",
+    "bytes": 1460005,
+    "sha256": "fca56daa61e57cbd876367a665a587b93d3f4bf7f6b7758173af6c5168bb754e"
+  },
+  {
+    "path": "originals/stations-full-mine.png",
+    "bytes": 1717049,
+    "sha256": "83aa8c5f00d85d43b3b99580f7af34ef0ee1b582f67d8902fef569a073f79cad"
+  },
+  {
+    "path": "originals/stations-full-sand_pit.png",
+    "bytes": 1122447,
+    "sha256": "69a89a1844d378b9c50fa243001621deb4c46b08280801fe9c784496d6cd41d6"
+  },
+  {
+    "path": "originals/stations-full-copper_mine.png",
+    "bytes": 1570686,
+    "sha256": "45b4dfc67e3eed8fe0a30c45fd9446b8a76ccde48819d639b2a208ee0cde10d0"
+  },
+  {
+    "path": "originals/works-windmill.png",
+    "bytes": 916765,
+    "sha256": "2f3b3d8ce6748cd3563049470aa6473e34a8f976efe4bec9447b03e4601e6d56"
+  },
+  {
+    "path": "originals/works-kiln.png",
+    "bytes": 1266996,
+    "sha256": "ab9c903ecce5b0e4eed99d2cd687314bcd1c62ac9e871a5bdff4199924239680"
+  },
+  {
+    "path": "originals/works-grinder.png",
+    "bytes": 1047522,
+    "sha256": "dd1add6e3653792b017b655bddfec193972c79565de77992655931ce62f2e015"
+  },
+  {
+    "path": "originals/works-refinery.png",
+    "bytes": 1637694,
+    "sha256": "26039befc34c6ca73259d656a3355958b80107d1fe36f0a3f042dec1d66bf8a5"
+  },
+  {
+    "path": "originals/works-power_plant.png",
+    "bytes": 2126498,
+    "sha256": "6ab396d230c15fb51846f79e4c77ce243fdd3c88cf60352c9a1ef9412d158f5d"
+  },
+  {
+    "path": "originals/works-substation.png",
+    "bytes": 690386,
+    "sha256": "7e46ad40092bb5b76b8c9347ecdca509375f77a972f66ec1426b331c36934783"
+  },
+  {
+    "path": "originals/works-hydro_plant.png",
+    "bytes": 1905178,
+    "sha256": "9b404cd2224f3728befa6fa7272ee01f06f92c881e384ff21ef2cdb1e422a778"
+  },
+  {
+    "path": "originals/works-full-colliery.png",
+    "bytes": 1267642,
+    "sha256": "7803f567559ca14ddb53a9078580bfe8abe1c7842baedca5de097b1b036e7215"
+  },
+  {
+    "path": "originals/works-full-ironworks.png",
+    "bytes": 1802489,
+    "sha256": "2b709e0386c0b2d35a271dc63c46eba550884056a312f1cf0f72003d84195283"
+  },
+  {
+    "path": "originals/works-full-oil_derrick.png",
+    "bytes": 749009,
+    "sha256": "a7d6f694fdc2d4c0d72dd3717d77ba7cba8eff69f1ad03b8499b699701ca375c"
+  },
+  {
+    "path": "originals/works-full-diesel_refinery.png",
+    "bytes": 1689518,
+    "sha256": "94ed894363a6599fca8fb15460fc4d65ebc5950da419babc598e375c0ee66d38"
+  },
+  {
+    "path": "originals/works-full-wire_mill.png",
+    "bytes": 1815615,
+    "sha256": "48253e7dea5967ee772e951ccda88924333fbb10441cfbe76a090d7c70ee80b9"
+  },
+  {
+    "path": "originals/decor-water_tower.png",
+    "bytes": 1473433,
+    "sha256": "cfa99d0c138e03e3648b986f86b3b95da3dcf878ccec36796b974b5b5bf669c9"
+  },
+  {
+    "path": "originals/decor-fuel_stop.png",
+    "bytes": 955080,
+    "sha256": "95835186143f80c2b6b58c3670a8e65ad869090e2eab92e9220e6ec0adf23e5c"
+  }
+]

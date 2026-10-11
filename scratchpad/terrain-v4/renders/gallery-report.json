@@ -1,0 +1,51 @@
+{
+  "images": [
+    {
+      "src": "renders/03-balanced-detail.png",
+      "width": 1920,
+      "height": 1200
+    },
+    {
+      "src": "renders/05-forest-interlock.png",
+      "width": 1920,
+      "height": 1200
+    },
+    {
+      "src": "renders/06-forest-fringe.png",
+      "width": 1920,
+      "height": 1200
+    },
+    {
+      "src": "renders/07-grass-sand.png",
+      "width": 1920,
+      "height": 1200
+    },
+    {
+      "src": "renders/08-sand-water.png",
+      "width": 1920,
+      "height": 1200
+    },
+    {
+      "src": "connected-hills-concept.png",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "src": "renders/world-11-restored-hill-art.png",
+      "width": 1920,
+      "height": 1200
+    },
+    {
+      "src": "renders/world-03-town-station.png",
+      "width": 1920,
+      "height": 1200
+    },
+    {
+      "src": "renders/world-01-whole-map.png",
+      "width": 1920,
+      "height": 1200
+    }
+  ],
+  "comparisonButtons": 4,
+  "errors": []
+}

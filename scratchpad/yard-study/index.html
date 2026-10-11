@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Station yards · comparison</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #182723;
+      color: #eee7d3;
+      font: 16px/1.5 system-ui;
+    }
+    main {
+      max-width: 1560px;
+      padding: 28px;
+      margin: auto;
+    }
+    h1 {
+      margin: 0;
+    }
+    p {
+      color: #c3cbb9;
+      max-width: 1050px;
+    }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    article {
+      background: #243b30;
+      border: 1px solid #4d634d;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    h2,
+    article p {
+      margin: 16px 20px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    nav {
+      display: flex;
+      gap: 24px;
+      margin: 22px 0;
+    }
+    a {
+      color: #e1c98c;
+    }
+    small {
+      color: #bcc8ad;
+    }
+    @media (max-width: 900px) {
+      .pair {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <main>
+    <small>ONE STATION · SAME SCALE · TWO YARD TREATMENTS</small>
+    <h1>How should buildings meet the landscape?</h1>
+    <p>
+      Compare compact stone paving with a full forecourt. Both use the accepted station sprite at
+      identical size and position, on the same continuous grass field. The proposed building
+      allocation is 5 × 4 tiles; it is an art study, not a change to gameplay footprints.
+    </p>
+    <nav>
+      <label><input id="grid" type="checkbox" /> Tile grid and proposed lot</label
+      ><label><input id="building" type="checkbox" checked /> Show station</label
+      ><label><input id="people" type="checkbox" checked /> Human scale reference</label>
+    </nav>
+    <div class="pair">
+      <article>
+        <h2>A · Compact foundation</h2>
+        <p>Stone close to the walls, a modest entrance apron, grass growing into the edges.</p>
+        <canvas id="compact" width="760" height="620"></canvas>
+      </article>
+      <article>
+        <h2>B · Full-footprint forecourt</h2>
+        <p>
+          The same stone extends across the lot, with a worn approach and irregular grassy margins.
+        </p>
+        <canvas id="full" width="760" height="620"></canvas>
+      </article>
+    </div>
+    <p>
+      The ochre reference figures represent 1.75 m adults against an approximately 2.1 m doorway.
+      This is a provisional visual calibration; the whole asset library has not yet been rescaled.
+      Terrain is sampled continuously in world coordinates, so texture variation and the stone/grass
+      blend cross tile boundaries.
+    </p>
+    <p>
+      <strong>Direction to choose:</strong> A, B, or a mix—for example B at stations and industry, A
+      at houses. Turn off the station to inspect the base and turn on the grid to inspect the
+      footprint.
+    </p>
+    <p>
+      <a href="README.md">Method and limitations</a> ·
+      <a href="../art-world/index.html">Previous world preview</a>
+    </p>
+  </main>
+  <script type="module" src="study.js"></script>
+</html>

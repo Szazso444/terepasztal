@@ -1,0 +1,5 @@
+<!doctype html><html><style>body{margin:0}canvas{display:block}</style><canvas width="768" height="768"></canvas><script type="module">
+import {drawModel} from './model.mjs';
+import {dimensions} from '../grid-buildings/footprint.mjs';
+const p=new URLSearchParams(location.search),tiles=Number(p.get('tiles')),rotation=Number(p.get('rotation'));const [w,h]=dimensions(tiles,rotation);const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d');const project=(x,y,z=0)=>[384+(x-y)*170,540+(x+y)*85-z*220];drawModel(ctx,tiles,rotation,project,[-w/2,-h/2]);window.ready=true;
+</script></html>

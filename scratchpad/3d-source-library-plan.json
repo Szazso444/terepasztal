@@ -1,0 +1,2076 @@
+{
+  "root": "G:/DEV/Terepasztal",
+  "brief": "C:/Users/Zso/.codex/attachments/e43d0c2b-5367-4fd0-b80b-66baae2ff647/Pasted text.txt",
+  "inventory": [
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-01214627-a41e-4848-9fa7-285020e1a299.png",
+      "sha256": "59491c1a81691fac7e5aba6b1e5e8d619e88e94a230d1f0ee9a74a34c162cd9c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-quarry-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-quarry-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-quarry-0--59491c1a.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-019c0601-baf2-46d1-ac49-09d2157a83a5.png",
+      "sha256": "35fd31a0a5aca421a6ec1a354e2a12ed731b01205b92240c9d18979559da6028",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\station-0.png"
+      ],
+      "category": "studies",
+      "filename": "station-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-0--35fd31a0.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-02664472-0b42-4489-84dc-29abc420040f.png",
+      "sha256": "20205b97f39d586e0890ba2084efe9947d60924d111b56487917bb8ee2d5e85f",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-jupiter.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-jupiter.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-jupiter--20205b97.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-02ce235f-7ee4-476f-8ab5-4b1e7de1c0a1.png",
+      "sha256": "04e23d8c1f805bc07e71cbea3094d9647945bc0dafc53f68df20ad4e094ce637",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-crude.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-crude.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-crude--04e23d8c.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-0370e8bf-465d-4f51-b1cc-5e0e9c6dc3c1.png",
+      "sha256": "810136875eb1fd56e0e402f1d1927ca8016707d3ef36bd2f2df9a685f125ff97",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-passengers.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-passengers.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-passengers--81013687.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-0558985c-1f29-4d60-953a-bdecc396caaf.png",
+      "sha256": "d56583f91968b82d54c64da6ad222cfde56fc81cb554308015fd32dbe797ff6c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-adler.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-adler.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-adler--d56583f9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-05f8f7e7-d697-424f-971b-146422874073.png",
+      "sha256": "6d7e0e36334de2410e01e80e96383e950ccae233ec0f5421e76db8debb9f0bea",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\house-1.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\house-1.png"
+      ],
+      "category": "studies",
+      "filename": "house-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/house-1--6d7e0e36.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-07ce4d9e-fb58-46a5-9ea9-41a1687ab822.png",
+      "sha256": "23fa59a994e73f98894313d8a1864225815e6daa77745a8f53ecc3953b14b45f",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-heavy-flat.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-heavy-flat.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-heavy-flat--23fa59a9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-0822b1bf-7437-4bcc-84b3-e88655a286f8.png",
+      "sha256": "69e0b5f5c95d0b9d2ba405c76bfda194e614493bc11fa13ed9240baae0319475",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-lumber-0.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-lumber-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-lumber-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-lumber-0--69e0b5f5.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-0892daa0-b33a-42e0-bdcc-4e06fcc2ac94.png",
+      "sha256": "db47d0b723f65ddc13d79cb22aab806a1dfc26edef5871aae133697884e0042d",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\people-road-stone.png"
+      ],
+      "category": "fxPeople",
+      "filename": "people-road-stone.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/people-road-stone--db47d0b7.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-09e0ac63-d06e-4ea1-bbed-29a23de40b46.png",
+      "sha256": "b1f528020168dd3cce351d82fd8047ddee514270e8c4dfc1622f5c9080a3b88f",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\station-2.png"
+      ],
+      "category": "studies",
+      "filename": "station-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-2--b1f52802.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-0cb140a1-1752-4e8d-bcb9-700494bb966a.png",
+      "sha256": "e5b816c76a09254f66493fb3451802a4fd036eefa180b9244702b4bf64e53a1b",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-pump-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-pump-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-pump-1--e5b816c7.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-0d33ff52-353a-4918-a5c8-e1fbbed3b6c4.png",
+      "sha256": "78d83092cbd507601fcd7b59d9bb5118475e688b247f7d66b9f36311200d2b5d",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\house-2.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\house-2.png"
+      ],
+      "category": "studies",
+      "filename": "house-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/house-2--78d83092.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-0e02e1e0-4b14-48c9-b3e4-941c710a5f2d.png",
+      "sha256": "0594f904702d5e022e5c3ba8ef279f0d86d47cff7cbfe5065be7e6f50055396b",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-quarry-3.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-quarry-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-quarry-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-quarry-3--0594f904.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-14c2ec38-69e5-430b-aa6e-1527705d9b66.png",
+      "sha256": "08853b2f3047000444f7708387665b6c84018947554c8811adab5db94d38d8e5",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\station-true-isometric-v6.png"
+      ],
+      "category": "studies",
+      "filename": "station-true-isometric-v6.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-true-isometric-v6--08853b2f.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-20451331-92bc-45bd-b0b1-33e52078d44d.png",
+      "sha256": "48f28f8e06967d2818929b34bd0e2ff3b4ba26245b6fcdac487caff56bc291a0",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-kando-v40.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-kando-v40.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-kando-v40--48f28f8e.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-204bc554-4b03-4266-b717-2fb245cafa0f.png",
+      "sha256": "1a0b6c12f74e666db59b6c3d6038972270687bfd0c13ba4a7525f27427bdb492",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\track-transition.png"
+      ],
+      "category": "track",
+      "filename": "track-transition.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/track/track-transition--1a0b6c12.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-225bf509-64da-472c-958b-ce676793fa3a.png",
+      "sha256": "cfc231ed2392df0690c4f8f274d917293e0d93db23607bca2420114d10e658d6",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-daylight.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-daylight.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-daylight--cfc231ed.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-23317e06-8915-4864-bf14-8407536b9bdc.png",
+      "sha256": "cdc2c66ead3a4ace9ada994dfb4e4d4407793cd208ecc60a3be6f39433b239d2",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\track-straight.png"
+      ],
+      "category": "track",
+      "filename": "track-straight.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/track/track-straight--cdc2c66e.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-242821fa-40d1-4b0d-a3f4-03cfbe5c1391.png",
+      "sha256": "e5521d1044ddff23cea1ed31e12dab450610088739a27bf7c7e5f62a0bae4b1a",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\station-1.png"
+      ],
+      "category": "studies",
+      "filename": "station-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-1--e5521d10.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-2a50b764-a0a1-40c0-b156-872eb10a6566.png",
+      "sha256": "cb846a7f93fec9b770682f6edb3e1fffe50b887eadf52cb501ef91bb8e125143",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\station-0.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\station-0.png"
+      ],
+      "category": "studies",
+      "filename": "station-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-0--cb846a7f.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-2aef562d-a22e-4932-93d6-28b2455617ee.png",
+      "sha256": "fef785e09bf9e80a843d963dee970b243d65ea951e1c046935d45008e0276e67",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-farm-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-farm-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-farm-0--fef785e0.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-2ba30b1c-9e5c-41b9-b560-7ac102a3adde.png",
+      "sha256": "6cbe0e616f5048b90f65b8df4eb300e39a3942296f4174c388e5ede1d67a0ee3",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-sd40.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-sd40.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-sd40--6cbe0e61.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-2d6b4acb-5226-4783-a6fb-f60fc0a4b374.png",
+      "sha256": "2485f1ef2ece4b82b9b869f4ce8711820fa8487fa4e6936a4f7394ce9e6d3728",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\people-crossing-dirt.png"
+      ],
+      "category": "fxPeople",
+      "filename": "people-crossing-dirt.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/people-crossing-dirt--2485f1ef.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-2e43b757-63fc-401c-8bbe-31a6608ea16f.png",
+      "sha256": "0037be93a969117d1d50be3a903d4a90b818c0c67b694e2dc17427827f51064b",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-pump-1.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-pump-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-pump-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-pump-1--0037be93.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-32e9e7b8-9d93-4d17-a484-49c510a15fed.png",
+      "sha256": "6f15b6931399d133ac118850f4a9211eb69c61e61982b53a44579c80e75e0363",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-farm-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-farm-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-farm-2--6f15b693.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-35a2e449-071f-42a1-b262-0b04ec1e4c69.png",
+      "sha256": "5db242da29b2fca1113dffd3d853d695ed00f6f579b03006bdf609a457ef12e5",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-dda40x.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-dda40x.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-dda40x--5db242da.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-3701dfa8-ae3c-4d30-ad29-ddbea48ce8e9.png",
+      "sha256": "92f91c65433c169095c89d641c620731dc4a3f18a5f4b1ef9652c460b0bd17ce",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-deltic.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-deltic.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-deltic--92f91c65.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-3b9b84ab-52bc-4190-bb13-7b7937524def.png",
+      "sha256": "8e27b2dabde52e9436e09d01478ba6707145b68c0ffdd95f98997dae3d4e8b05",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-lumber-1.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-lumber-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-lumber-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-lumber-1--8e27b2da.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-3c9e1d75-4328-4570-94b5-c6b871c4e1ef.png",
+      "sha256": "da4ee2a8969dddca104c3cacf61dc762f8d75aa63839f0c8b9ab3b6e5f10ac95",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-pump-2.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-pump-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-pump-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-pump-2--da4ee2a8.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-3cfb9bd0-3bfd-4b6e-a734-34af9ad8be27.png",
+      "sha256": "ba2d9f48b1c53c41bf9c65f2935786673ca519e673000283092074f741f7e66b",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-k4s.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-k4s.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-k4s--ba2d9f48.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-3f81b589-d709-4615-9fe1-a7fc959a4c22.png",
+      "sha256": "b60920d1db24f1e0636e789a5352a3328e2e9df2aa387fee93c6032fff669263",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-steel-coach.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-steel-coach.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-steel-coach--b60920d1.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-429a00e7-ebc0-49ac-a570-5228d81d5b1d.png",
+      "sha256": "5394305bad416f0490ff62d9b9446230793c3b6ae68b9209887db3eba71b0e9b",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\house-1.png"
+      ],
+      "category": "studies",
+      "filename": "house-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/house-1--5394305b.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-42dd38eb-6f68-4030-b41b-07e84be07551.png",
+      "sha256": "3353bb73622159a2a9a2ba1983baed9921b439060afe30fd33e4a5341434f70f",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-battery-cart.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-battery-cart.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-battery-cart--3353bb73.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-4304f65e-0e06-4684-b583-00bb448b67be.png",
+      "sha256": "5cefe8c7dfaabe59d5bd98c425e1d19335d74131ff2166724ea76299802d57ab",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-flatbed.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-flatbed.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-flatbed--5cefe8c7.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-43b3553e-c7ea-480b-9e6e-6e2fb847ba4f.png",
+      "sha256": "7946d185b5adf15a8be4288acdb937107e314e55ef553d32a65741b05e81878c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-big-boy.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-big-boy.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-big-boy--7946d185.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-44998eaf-bc86-4245-83b1-62bd9f831b93.png",
+      "sha256": "ebcbe2b860af80a486a2aae182ca3f442c5015eeeea95d7e2c84f30b58a32324",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\station-2.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\station-2.png"
+      ],
+      "category": "studies",
+      "filename": "station-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-2--ebcbe2b8.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-44d68041-f1f2-473b-a86b-cd185a420fca.png",
+      "sha256": "5fc51df9c608fcb47ee7afc273440f063ff275682ff7d4d061ef59864679c9eb",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\fx-rain.png"
+      ],
+      "category": "fxPeople",
+      "filename": "fx-rain.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/fx-rain--5fc51df9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-44e776fa-caa3-442f-8767-39ad3f88977f.png",
+      "sha256": "153d4dccd6ab8f606e08d5d20a6434cc0c72279ce4f0aea8af585f624c0acfef",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\fx-glow.png"
+      ],
+      "category": "fxPeople",
+      "filename": "fx-glow.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/fx-glow--153d4dcc.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-45122c59-2896-4ad0-b22e-ace2012bf5f5.png",
+      "sha256": "9e670d54a9b0650ac5ed436ec0ecfd76ed58d6a0ae2fcda07a3bb3b646e0f42c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-mav424.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-mav424.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-mav424--9e670d54.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-477ed321-617b-4fb5-b507-46b4e9607444.png",
+      "sha256": "4f17d35594f43ce2d71803f32d3315931017fc589bcaddc8a46f7c4bf9f5f5bf",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\people-path-dirt.png"
+      ],
+      "category": "fxPeople",
+      "filename": "people-path-dirt.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/people-path-dirt--4f17d355.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-48ef60ed-1bf2-4e79-a76b-a6cc106ce202.png",
+      "sha256": "1ae87de3eae3e32e838d975241d30dedefd1f708d1a285c87569d9dd17d5d915",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\station-isometric-v2.png"
+      ],
+      "category": "studies",
+      "filename": "station-isometric-v2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-isometric-v2--1ae87de3.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-4a2bf876-2985-461a-8cd2-c381e211d8e5.png",
+      "sha256": "4cec3e65fa1979caa3441ab306bc5d81d0757018fba2a791081834d2fd8fdac6",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-lumber-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-lumber-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-lumber-3--4cec3e65.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-4aa468cc-9ec3-4341-aa3a-f1233f37aece.png",
+      "sha256": "2b1b6be5fd1b13896a89a8219b9701d9bff62f15e70a224771104e4acfa1fff3",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-food.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-food.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-food--2b1b6be5.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-4e2deacf-b194-498c-a0cf-ed63a2158214.png",
+      "sha256": "bafb7c5956c74ce2d9d03f70cc35369e5a735af84d53c77a5744c58a36262399",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-quarry-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-quarry-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-quarry-2--bafb7c59.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-566d4c08-a440-45d7-8bbd-63eab8891442.png",
+      "sha256": "eb18c8569a814cfebbe35270f311eef024e8469a731bd87c3b0ed7a0d2236436",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-oil.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-oil.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-oil--eb18c856.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-5b8e000c-4cb8-4f57-bdd1-2cbcd0a29000.png",
+      "sha256": "b4966158b123fc9442043c0a0ea8df72959812810cc6487a5fa148f7e47af30f",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-population.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-population.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-population--b4966158.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-5bb84055-6885-4996-a6c2-3c861f48bf1a.png",
+      "sha256": "6b33cbcaa16744e2429fefc1e0ad7bd5b72cd2d230d75559e01598d4729d037e",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\station-0.png"
+      ],
+      "category": "studies",
+      "filename": "station-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-0--6b33cbca.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-5ce5b335-1e3b-40c8-8bea-cd77dac37961.png",
+      "sha256": "52b451746d4fc1c88286a1ca04f415513d7619ac921b725ca99bbe39bc1a9e1a",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-farm-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-farm-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-farm-1--52b45174.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-5d4b4612-29c6-4e5a-ac3d-8609420a9253.png",
+      "sha256": "3a5728e922fa86355e2b795bbb0ca0837fe32e62687c6083150cd5f76e904a41",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-bathtub.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-bathtub.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-bathtub--3a5728e9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-5e21417e-6df1-44cc-b649-c9aaf7fc98f8.png",
+      "sha256": "927360fcdcbed10e9db21ef5b9e0489acc9cc900c04e18a01781fd46f4107028",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-mallard.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-mallard.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-mallard--927360fc.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-5f96b567-05c8-4b73-8699-018c0fd6c499.png",
+      "sha256": "40207aeb729dc6cdb43097778f9d53265e2e9fcccf5b93de76518665b0c507f1",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-sw1.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-sw1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-sw1--40207aeb.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-6188d643-5d2c-47e0-86e9-f543e5941557.png",
+      "sha256": "63f4631dedc01f0851199d7a1f2213a058075da187a925909cd298bd0c01167d",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-pump-0.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-pump-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-pump-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-pump-0--63f4631d.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-63b20510-7455-41df-8ef6-8d25349b8475.png",
+      "sha256": "363b13235b1303022e9648a121c1468578d62cbff4b4c11f01e2abd6340f8be8",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\station-isometric-v3.png"
+      ],
+      "category": "studies",
+      "filename": "station-isometric-v3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-isometric-v3--363b1323.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-644f3641-aa05-4f96-b74c-32ec9724b15a.png",
+      "sha256": "73d61fd2c0d156a980217d09542eb3c322b759f22137878e1509037ab31cc253",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-quarry-2.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-quarry-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-quarry-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-quarry-2--73d61fd2.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-64978501-74e2-47dd-b1e3-06af9fb71796.png",
+      "sha256": "fbbecb2024100a486be3b7e46ab11cf612b7b54e20cbb8acc317981b97d17c33",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-lumber-3.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-lumber-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-lumber-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-lumber-3--fbbecb20.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-66a92818-3c3e-43ea-8e2b-5ec162b168e9.png",
+      "sha256": "e3f0022901d65391e8f6c17ce8fc37c547dd7a275b11d09373522dde8aaee156",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-john-bull.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-john-bull.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-john-bull--e3f00229.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-689c5b81-28a2-4f3d-9756-5c8db863a798.png",
+      "sha256": "1aa34c97c6a13c1dbaa826cbb7874e2b1a0b0c3f23881a8c3ecd7e96988a21f5",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-stone.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-stone.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-stone--1aa34c97.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-69c9d110-1ca9-4fa1-b0c0-124678d03d25.png",
+      "sha256": "58bffc9e60904fdd93600ba7746a9742253754f90848a74f9f0fb23e56a2152d",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-farm-3.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-farm-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-farm-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-farm-3--58bffc9e.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-69f2eba9-ddf6-421a-88f7-399f7ac38c9e.png",
+      "sha256": "262847f133c029f173133293062f17c03562fd9c996597a26622b773b328770c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\station-isometric-v5.png"
+      ],
+      "category": "studies",
+      "filename": "station-isometric-v5.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-isometric-v5--262847f1.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-6a53ebc2-62ee-4c30-b5de-01fcc0021221.png",
+      "sha256": "e084a17164096623db1d32e781322bd4e89b28196632661e07c6a17c4b756554",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\track-curve.png"
+      ],
+      "category": "track",
+      "filename": "track-curve.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/track/track-curve--e084a171.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-6d4d8869-cfc4-470b-91a7-240ee6c98292.png",
+      "sha256": "33c23eff0657605faf710b872940b0dedbf5b9f165b10c26357f4765688a9338",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-farm-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-farm-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-farm-3--33c23eff.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-6ecfa733-4426-431c-8dc6-554801d3fba6.png",
+      "sha256": "86d4c277ae022c6282b41545863557e1629ef26ee14818efe6db5e14384a2d08",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\people-crossing-stone.png"
+      ],
+      "category": "fxPeople",
+      "filename": "people-crossing-stone.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/people-crossing-stone--86d4c277.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-6fc67734-8416-4a80-97ff-7367bd151caa.png",
+      "sha256": "22d2c33598b5f324e739b7976d973e29af62337477b1d00806924674b2b26f52",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\station-wider-depth-v9.png"
+      ],
+      "category": "studies",
+      "filename": "station-wider-depth-v9.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-wider-depth-v9--22d2c335.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-7016b1f9-0ba9-4ae9-b1ef-1e35b539b04c.png",
+      "sha256": "f95cfae18ace7eb24a938f02ec8693f147a2374c2ee2c2570187750749165670",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-warehouse-1.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-warehouse-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-warehouse-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-warehouse-1--f95cfae1.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-706abbcb-c561-4b53-bb91-9988291ca5bb.png",
+      "sha256": "a4b37843cb8be98379d5672c4bdf35b52f38a505080f9579f8c63fc87dd639f4",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-quarry-1.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-quarry-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-quarry-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-quarry-1--a4b37843.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-7294b7a0-b913-4750-bab0-26d7ca3b2128.png",
+      "sha256": "266ccb8b8753f4a7160e93eb9ad7cb0e594ae079c00f1f39750d3de23d0e5bb4",
+      "matches": [],
+      "category": "unidentified",
+      "filename": "exec-7294b7a0-b913-4750-bab0-26d7ca3b2128.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/unidentified/exec-7294b7a0-b913-4750-bab0-26d7ca3b2128--266ccb8b.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-72d64fb1-17b3-4444-8be9-0c3c8af6c100.png",
+      "sha256": "5499a9f1005ae776d2607db3229eedce348ee2a6f081ca9309acd3ed5b07c169",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-tgv.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-tgv.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-tgv--5499a9f1.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-73aea42f-6235-421e-a739-f9712c9b131b.png",
+      "sha256": "37531b33ede64cd919182bddfa45a334338de20bcca60029a1cc4335dc1e57ab",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-pump-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-pump-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-pump-0--37531b33.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-742694a7-6cc1-46ee-aed0-f59624fc589b.png",
+      "sha256": "fb7e630371ab5078bc380b0596fe26e2f72ab367d67ec2d68abba3a34b95365d",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-pullman.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-pullman.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-pullman--fb7e6303.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-743232bd-5146-4c65-9a6b-7f729344ee4c.png",
+      "sha256": "916fa52df3c7ba3255bb5c81523f35514473dc4fef81b9ce65dc6139d0c74114",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\station-1.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\station-1.png"
+      ],
+      "category": "studies",
+      "filename": "station-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-1--916fa52d.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-764ed8a7-d8db-46ff-89b3-51657cf37b9b.png",
+      "sha256": "9cf18848ce0a69ad23783118e6297202f707e78d28d26d857465b5ea5ac9d479",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-coal.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-coal.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-coal--9cf18848.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-78944336-82b6-413b-9464-acebc46983b6.png",
+      "sha256": "9cf2397e2d10ab9bd7309202e4cfa02fda096f0ede3f7c42bf72e9bde29c0c67",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-welded-tank.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-welded-tank.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-welded-tank--9cf2397e.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-7c89b21d-8dc9-407b-bf5f-3000e7136d38.png",
+      "sha256": "633667f9ac87e6da84e6decab8e87238180b9af0015dd73ee9828dcfd9e0d457",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-bulkhead-flat.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-bulkhead-flat.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-bulkhead-flat--633667f9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-7cb99398-1da5-4a39-bf7c-c949f97a92a4.png",
+      "sha256": "21543b4790a8fce58ac625283b9fdabb8865a657f1b16dac8aeede41cf398ce4",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-quarry-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-quarry-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-quarry-3--21543b47.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-7e93d988-d932-4183-bbed-d3bf9c47c979.png",
+      "sha256": "4313f6d21519f3168d4bd9fd18cf116ea0f7a19d7dd8c2b0a46fa6d4e80844c3",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-drg01.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-drg01.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-drg01--4313f6d2.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-80384bf0-e121-43f0-a658-d6657d6fcc01.png",
+      "sha256": "3b6fc2a930aad7a8935c71860292529cedbc959a389f06fe8b24463afb91d9aa",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\station-true-isometric-v7.png"
+      ],
+      "category": "studies",
+      "filename": "station-true-isometric-v7.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-true-isometric-v7--3b6fc2a9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-818e8185-2c35-46bc-976b-e9a0f337cb38.png",
+      "sha256": "ee9c25849e4a07429b40b4dfdc1e791e377286c1d9a3bf2a6fb3cbbde5a94a1b",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-ice1.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-ice1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-ice1--ee9c2584.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-82125697-b998-4642-af3f-a2fc17921ff1.png",
+      "sha256": "1f1a32308993ac460963665ccd7932690b477d293d96aec02fa0d5cf9002a693",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-flying-scotsman.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-flying-scotsman.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-flying-scotsman--1f1a3230.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-82d14214-3e09-4ec4-8452-a4475ba5042e.png",
+      "sha256": "0a426578b17067e5a54b8ee90cd23c4130d11a9dffb2ea1dbdef9050e1151a16",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\station-true-isometric-v8.png"
+      ],
+      "category": "studies",
+      "filename": "station-true-isometric-v8.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-true-isometric-v8--0a426578.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-847c1958-96e0-438d-ad32-8bd447cb8a5a.png",
+      "sha256": "4f9e32d7e5e6c4e6dd82dce463cf26714650141b79d754ab74549931d9133080",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\fx-fog.png"
+      ],
+      "category": "fxPeople",
+      "filename": "fx-fog.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/fx-fog--4f9e32d7.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-84ec5040-0805-4111-93cc-3339e8e4464d.png",
+      "sha256": "3735841b6f5cc37450938bea831859346e3b7dfe65bbefc70ebe94a7076c653d",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-farm-0.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-farm-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-farm-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-farm-0--3735841b.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-8689ec3c-688b-424b-8c84-b3db131a3308.png",
+      "sha256": "e1cbab44bb8bb9deccdfcea62019b15ff916937e24815f01058063ed3e6784c9",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-wood-hopper.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-wood-hopper.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-wood-hopper--e1cbab44.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-88e695ba-a5ac-4443-83b3-81b4d2af62da.png",
+      "sha256": "a4c84adb45785ebc22449cec32bd3e41fb2d8f0262463572c4dbfd3503f4c62c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-pump-3.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-pump-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-pump-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-pump-3--a4c84adb.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-8947f4eb-8958-4d9b-aa3d-828c17cd54ff.png",
+      "sha256": "3846fc1626fbaccee9c499a603d8598f8bf02a559a660b4321602e35fd65b0db",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\house-3.png"
+      ],
+      "category": "studies",
+      "filename": "house-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/house-3--3846fc16.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-8a51831e-138a-44fc-91b1-ad96c56f20bc.png",
+      "sha256": "26040e87979239fb06622ec173ab0e851ee96c0a067ebc7041531a5eba6360ed",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-pressure-tank.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-pressure-tank.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-pressure-tank--26040e87.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-8a6e8f6e-dc32-4843-a7d6-76073ec8bb4d.png",
+      "sha256": "47135e429b93e26d7fada557e230366f6114fc55552acd80fa6f91a18a1d3a64",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\house-0.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\house-0.png"
+      ],
+      "category": "studies",
+      "filename": "house-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/house-0--47135e42.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-8cebc20a-5935-432c-b0bc-30b6f1b3069d.png",
+      "sha256": "998b66bee574388cf34a01638ff9b02481d5b8b842253f954c78aadad5e6e947",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-iron-ore.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-iron-ore.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-iron-ore--998b66be.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-8ee36cd8-1b01-428f-9743-42f6dce2ecf1.png",
+      "sha256": "18149602270ef81522f6f8e4b4223aef4ea3c267fdab99a177c41b969a912e07",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-farm-2.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-farm-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-farm-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-farm-2--18149602.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-8f571fa5-d96b-4e84-8050-5aa3f5771994.png",
+      "sha256": "d54522cf3c7e61887e622d8b1d54143d3e3ee40ded799db16f3845f47c5ffeaf",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-farm-1.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-farm-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-farm-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-farm-1--d54522cf.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-910a24ca-82a6-44b1-b17c-b32fd4575e65.png",
+      "sha256": "4e8f8bd9ca30c162fdde1c3fcbd4ef87afdcae05c2dc858fb32232be0063f34c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\station-3.png"
+      ],
+      "category": "studies",
+      "filename": "station-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-3--4e8f8bd9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-93c94340-e1b3-4cbe-91d9-31253baf035e.png",
+      "sha256": "3e4b0bb1bfdde22765e9216648dd62fa67c5516ba0b1d7165d03f2302d94fd1a",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-lumber-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-lumber-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-lumber-1--3e4b0bb1.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-9452e926-266f-42c5-ae5e-a43cc6b73129.png",
+      "sha256": "74135217e0b7ed482fa0f58c57934cd0c7349009acadc7359b9aad3eab6796d8",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-warehouse-2.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-warehouse-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-warehouse-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-warehouse-2--74135217.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-96f1139c-a1d9-4295-aec5-33ee9247501e.png",
+      "sha256": "8ae80382e620f130c05ee7db777d98f768587441e7bdd29d914767f7398b3f57",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-nine-f.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-nine-f.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-nine-f--8ae80382.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-98f94ba7-0197-4372-a5b4-1d10510e4f71.png",
+      "sha256": "27c24087b1a84b9eb8af35432afbd888660ab8edf6ff9f0368ec9f085c01a0a5",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-town-3.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-town-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-town-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-town-3--27c24087.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-9ab04edd-8014-40c6-b769-b2e77c80b933.png",
+      "sha256": "a93398b6b91e9001b81da660eabca96144acb7053f24779ed4650316711f4ff3",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-power.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-power.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-power--a93398b6.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-9ac208b9-c26d-45f7-8328-ad985f190f0b.png",
+      "sha256": "0a375c57bf48a9c9d577ace38319552cb5cfb3bef2a7d8274c453ec3a498f78c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-sand.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-sand.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-sand--0a375c57.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-9d67d08b-bab0-4857-b54e-101a6eddff3c.png",
+      "sha256": "6b184dae93f9341295cb9a519812cafb85ea0cf3f7213807f99d60575d3cdeb7",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-steel-hopper.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-steel-hopper.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-steel-hopper--6b184dae.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-9f66f13e-2587-4dcf-a3b8-5d608979d50a.png",
+      "sha256": "9dc156dd6f32803811a001cb896b9f2d7aa9dd658eb3dd8cf17906202db5a8e7",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-money.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-money.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-money--9dc156dd.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-9fc78045-51e1-47d7-8faf-b5149a757887.png",
+      "sha256": "4e97530498665e5422acd5341e59978ca0352d1c9037b7d062725a72aba4d7ed",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-re460.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-re460.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-re460--4e975304.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-a51c81bf-0d8f-4461-b4ae-0704146edea0.png",
+      "sha256": "d65aa634b663b3d9ffb34efbab407b9b891a5279b69eb2aa657a7b8e59790930",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-diesel.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-diesel.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-diesel--d65aa634.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-a653fc1f-5824-4f67-b22a-03a2bd683254.png",
+      "sha256": "b5e702637de488c3fc66d69594291617fda19344f69b9f6b78643649f7846b6a",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-boxcar.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-boxcar.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-boxcar--b5e70263.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-a6c719f7-5d0f-4e6c-92ef-7083538b26b5.png",
+      "sha256": "26e5f9b7f15a737e408216fd9f83aa88b766ab8d20cd37e3edff8059eb4f71a1",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-warehouse-0.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-warehouse-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-warehouse-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-warehouse-0--26e5f9b7.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-a848af69-953d-43c5-b8e1-c60c37b534df.png",
+      "sha256": "5620dea370e79cf0b38529e286d4673a28db442681f4aab89354efc061866ffb",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-taurus.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-taurus.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-taurus--5620dea3.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-a8518430-3223-4b96-a3d0-f556f00957ed.png",
+      "sha256": "3b981302b7d68c8cbe491f8cd23a0fb31123812fbd44211596b1d1b7ea6bd3b1",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\fx-glow-small.png"
+      ],
+      "category": "fxPeople",
+      "filename": "fx-glow-small.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/fx-glow-small--3b981302.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-a9151397-ad15-4a58-a262-76181964e0da.png",
+      "sha256": "73766670d158a4a5c87300c61b3e64360f5d29b58995720dae28b5047c21f541",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-lumber-2.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-lumber-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-lumber-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-lumber-2--73766670.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ac5306d5-2dac-41ff-bb6a-aed83ecf173b.png",
+      "sha256": "1cb604032f7de307d09045d9a447ec38516d1d03a2918ee83b21e641d3aaad3c",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-v63.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-v63.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-v63--1cb60403.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ac755405-cb41-4756-bdf4-4d007808cd46.png",
+      "sha256": "6719428ed5ada6c74d114c1aa357fcba027286aebdd53627d21aba3f3a752c33",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\house-0.png"
+      ],
+      "category": "studies",
+      "filename": "house-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/house-0--6719428e.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ae06fde1-4b9b-4651-aa5f-2f60f1383b84.png",
+      "sha256": "e82cdd824f51984a33e24bede991750c6e896abb38ca14a386aaaf06f49fb556",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-crocodile.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-crocodile.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-crocodile--e82cdd82.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-b03d311d-bce8-401e-942b-f2ee9f5a413c.png",
+      "sha256": "4620d353636416b9279c76466cd54a2ea5b150ab18f7d537130de8d9f349c7e8",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\station-3.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\station-3.png"
+      ],
+      "category": "studies",
+      "filename": "station-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-3--4620d353.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-b06a82c8-101e-4a1e-9dc5-61617f0faabd.png",
+      "sha256": "25b6b9ee9ce6bd8cdf775d6488c471cbd006061bfa1987ea8cb01b144d3d544e",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-copper-ore.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-copper-ore.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-copper-ore--25b6b9ee.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-b1eb7da7-90b4-49a5-b92a-4149fda3e08b.png",
+      "sha256": "74163a0c2286a05e80bd85da597ddd82d4ec3bbb447773d015ab1eb992a411f9",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-bolster-flat.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-bolster-flat.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-bolster-flat--74163a0c.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-b4c89ab9-5748-4270-b5b5-56a3a9fed601.png",
+      "sha256": "5bf1c0bb0ed399101731736fca4997ef9e6a184a4ab3f765ebb8419666586583",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\track-bridge.png"
+      ],
+      "category": "track",
+      "filename": "track-bridge.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/track/track-bridge--5bf1c0bb.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-bf1402e0-42f7-444a-a825-bf77bf0905ba.png",
+      "sha256": "7e416fd96b82843b0002b11e7c18c04fead89ef3da571c9166d866d7ac1c3668",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-wooden-coach.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-wooden-coach.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-wooden-coach--7e416fd9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-bf4fb72e-3de1-43d8-8d39-5b2a67221448.png",
+      "sha256": "b61c73f4abcfd67ac2c5906b74b9fa9e7072b038e9495ae4a276648dc4f0ac4b",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\station-isometric-v4.png"
+      ],
+      "category": "studies",
+      "filename": "station-isometric-v4.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-isometric-v4--b61c73f4.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-bfb6d873-7ab8-4525-8d52-8861b69197a0.png",
+      "sha256": "0fa5acae15620cb1afd75101e29023ed4cc3cfa85177fbcec45a2d45333d1be0",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-general.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-general.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-general--0fa5acae.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-c1d10fc8-df5a-42f2-b021-a94b507324ff.png",
+      "sha256": "de0343718a2f2e71abf45b1f7adab2a862b40adc4e88a721967fe9900fcd91c2",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-quarry-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-quarry-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-quarry-1--de034371.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-c21d729b-a9ac-41da-96c1-b4e7a634c04e.png",
+      "sha256": "bd337c65bffea05b43e3b70d1063257bc9029594c00f8a63167d9fbe67ccd782",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\fx-light-tile.png"
+      ],
+      "category": "fxPeople",
+      "filename": "fx-light-tile.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/fx-light-tile--bd337c65.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-c21e2c35-cdb9-405f-86ac-e1a4aa3caf67.png",
+      "sha256": "ebf7e6e9326f37c232b072199d65c2e3992c74f8376a5c6b0987be85a68277b0",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-wire.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-wire.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-wire--ebf7e6e9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-c5a28786-b35f-4818-acbd-bbddb6e92888.png",
+      "sha256": "bce48dac8b2e89290f58f3c6b5b10b0e62b0873da32e0fbd43f5c42404ee32ff",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-warehouse-3.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-warehouse-3.png"
+      ],
+      "category": "studies",
+      "filename": "stations-warehouse-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-warehouse-3--bce48dac.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-c668c207-bdb9-497c-8b79-8e69aae329cc.png",
+      "sha256": "d3ead19168a0dd832ad32f2f3ea28763007f264097665b9ff9451b526804e2ab",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-mav375.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-mav375.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-mav375--d3ead191.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-c67321f7-f013-4892-941f-c6a5d86a5c38.png",
+      "sha256": "3700b0d8650cef05e4a29f3b0543a05ce6a2e3aeaa5592e301a2c0d174e342ca",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-gmam.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-gmam.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-gmam--3700b0d8.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-c890ee30-428a-45ff-ae75-558f360f137c.png",
+      "sha256": "ee6183a5bed25f6db3e04958698c6bd5dcc3739fc999ca7480c380888a8b47a9",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\house-3.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\house-3.png"
+      ],
+      "category": "studies",
+      "filename": "house-3.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/house-3--ee6183a5.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-c99453c3-73eb-4cd0-95b0-3a4ff13c711b.png",
+      "sha256": "00f055d966799800399ffaa9f6aa27700c154ce9e20b4f2b3eb18a15521f9fdb",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-coal-cart.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-coal-cart.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-coal-cart--00f055d9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ca587020-bc05-4b93-8ccf-5c0b28ba42f9.png",
+      "sha256": "086ca5ccdb66244c6e26ccc8f088442241142b91bf4dd7ce0022ccd4491f7c42",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-fuel-cart.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-fuel-cart.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-fuel-cart--086ca5cc.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-cc2526ac-36dc-4d1c-a675-f23932ea3674.png",
+      "sha256": "4641f10467b551a23cbebc49961db3520c27d8be8afd66c0eac7a48946755daa",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-lumber-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-lumber-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-lumber-2--4641f104.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-d1a33d8e-2e4d-4393-aa24-4489cd3ffd6f.png",
+      "sha256": "9a0ef6bbf9cda7c1193e4ee4e78a292008ac97228865c7dd1e22c2546993dca5",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\track-switch.png"
+      ],
+      "category": "track",
+      "filename": "track-switch.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/track/track-switch--9a0ef6bb.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-d361ec0f-23d3-42c5-825d-e34e55642664.png",
+      "sha256": "c3974f4630ba561908a8bcf50897c7b193e351f14c25654c2f4905c1e1f10c43",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-town-1.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-town-1.png"
+      ],
+      "category": "studies",
+      "filename": "stations-town-1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-town-1--c3974f46.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-d7cfef81-c4e2-465d-8f46-72b572a58ac6.png",
+      "sha256": "b3e1e23d981fa108f911f56bb59accdfb308f7b815d4dcac857c518abcfe1093",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-water-cart.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-water-cart.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-water-cart--b3e1e23d.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-d81af993-1491-44a3-bfc0-70ce873717fc.png",
+      "sha256": "870839adc3e97ccf59eeeafc90935f4d5e4444cda3a040bc3621df09ef80f5a9",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-wood.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-wood.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-wood--870839ad.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-d8aba25e-85c0-406f-bd9a-d18f1a6239ad.png",
+      "sha256": "94cf58f9833bdc8d8623f73c4869c1bc76e16c5943f16be4dbcd1f27a0431147",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-pump-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-pump-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-pump-2--94cf58f9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-da0388cf-7a7d-4017-8076-d39c1feda63d.png",
+      "sha256": "1f98926de201be7fb171d645353ac5a0b9bc5e94e899e927f22104b4387bb6f2",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-black-five.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-black-five.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-black-five--1f98926d.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-dea1fe17-075a-4969-a3d3-0ec28da8148d.png",
+      "sha256": "3dd042cecec97cc85f773f01eed0e74c1f9119f43353949f17ef3c08c1601869",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-town-2.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-town-2.png"
+      ],
+      "category": "studies",
+      "filename": "stations-town-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-town-2--3dd042ce.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-e1f9efa3-424e-45d2-9cfd-2077c5ab8c1e.png",
+      "sha256": "fd897b91eb2fd99c6ce20a8b0f8ac12b8281ecdd97b701e89f39487fe92dadca",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\house-2.png"
+      ],
+      "category": "studies",
+      "filename": "house-2.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/house-2--fd897b91.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-e437b52a-3419-4906-bb7e-a044c7bd26a5.png",
+      "sha256": "c144c9b9de3686345add728cb952099ee4e4a83cb02d4844149bb638bdf2fc46",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-riveted-tank.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-riveted-tank.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-riveted-tank--c144c9b9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-e607340a-2936-43ef-b210-df3fde66a4ee.png",
+      "sha256": "6aa85fb67b9ca3562ed9b0ff61d3e0c7ce03826a11ec1d1451cbb66b935d64cf",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\generated\\stations-lumber-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-lumber-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-lumber-0--6aa85fb6.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-e86ca12b-c698-4f80-a560-0a2bc3a8e6d0.png",
+      "sha256": "267d19bff1f1051b768d7638d6a10f48c51ca7a1d3395bb828ffe49c1337ea5f",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\fx-smoke.png"
+      ],
+      "category": "fxPeople",
+      "filename": "fx-smoke.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/fx-smoke--267d19bf.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ea1bc24d-391d-4b75-b7aa-15a5570002e5.png",
+      "sha256": "514d6c0bb55c910864ea2c8c3b7db44b8fc7c2ccbc4e45662f067c36c742996d",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\station-0-guided.png"
+      ],
+      "category": "studies",
+      "filename": "station-0-guided.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/station-0-guided--514d6c0b.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ec377265-f298-43a2-97af-bbc17367db70.png",
+      "sha256": "d808e6ab1737cb40326944abf624dcbd4fb1b4a91eea331d9c63127d61c7281f",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-town-0.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-town-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-town-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-town-0--d808e6ab.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ec627d48-3cf6-44aa-b656-85e327512015.png",
+      "sha256": "900028452646564a4d230b41430c0588982483f6ef8ed1ea9c72c98cdb1cc0e9",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-j94.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-j94.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-j94--90002845.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ed5bc45f-1f63-4537-9753-242e4424b900.png",
+      "sha256": "4af9749522066e6dd2dd6b3b8003b389be746f2c97a1474ce57b6fa69ef7f92b",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\track-crossing.png"
+      ],
+      "category": "track",
+      "filename": "track-crossing.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/track/track-crossing--4af97495.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-ee95d3e8-21f4-49d1-ad4c-9aab6233694d.png",
+      "sha256": "02fe5f486f87ba7fce2412b70c85d312b4acc3b31165493fce95dbb4357d7b0f",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-iron.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-iron.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-iron--02fe5f48.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-eeff8855-e3e0-4e7f-9da8-34277d3978c8.png",
+      "sha256": "d33ad29650b24d7d4cb50b4615e078346b2c3f4779252cac6a27f2984b042984",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-rocket.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-rocket.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-rocket--d33ad296.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-efcd03b1-37e6-4035-99e9-c4374f842813.png",
+      "sha256": "719dd1e937026521ab91cd782ae8e158c71305cc33c838a2eab13213cb8670e7",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-dump-hopper.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-dump-hopper.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-dump-hopper--719dd1e9.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-f0582adb-79e9-4bc5-acef-d599189b347d.png",
+      "sha256": "744aa10406e0e11f8d61fd545dd4cb031199aa5d428f374b0e43179093b178e2",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\cargo-wheat.png"
+      ],
+      "category": "cargoIcons",
+      "filename": "cargo-wheat.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/cargoIcons/cargo-wheat--744aa104.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-f0623d8e-f84f-4860-b10a-79e43f7c9312.png",
+      "sha256": "00ceee1731c3fc4d1e700f87613612daec24a52ae1d29a36e88dba1c60c4508d",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-class08.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-class08.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-class08--00ceee17.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-f1c92b2f-13c8-4ed9-ad61-32edbb4fe61b.png",
+      "sha256": "0005c4982c4708ee77e06a6eb30e78d4eca23b15fe7b850c1cea5849a055c48e",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\wagon-brake-van.png"
+      ],
+      "category": "wagons",
+      "filename": "wagon-brake-van.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/wagons/wagon-brake-van--0005c498.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-f4b59c7d-6224-4e32-8c6d-44a81566e194.png",
+      "sha256": "3ef4ee8490c545c75be6a40db1e92816d9231d808bd698eb53c0239456cd5646",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\people-walker.png"
+      ],
+      "category": "fxPeople",
+      "filename": "people-walker.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/fxPeople/people-walker--3ef4ee84.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-f5d811d2-0be6-499a-a373-b7956733017d.png",
+      "sha256": "aee16678ad43a550198c40e61925f0850676f5ff15ce689b3cb99fa9c328f7d3",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-gg1.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-gg1.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-gg1--aee16678.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-f73304fc-fdbc-4ce1-b3b0-b88e53b16185.png",
+      "sha256": "c14ba4ccc2dd0131d726d14c573873962ae20e05e8082403998ace6dad7a84e5",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-m62.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-m62.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-m62--c14ba4cc.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-f7868cdb-711b-4b43-8796-8e6438429436.png",
+      "sha256": "72b0a7302ac9c2b84f0869cc4d03390fb757ae9703edd3738c68092045d6c41e",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\base-v1\\loco-f7.png"
+      ],
+      "category": "locomotives",
+      "filename": "loco-f7.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/locomotives/loco-f7--72b0a730.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-f9f81fd0-2de3-414e-a6b9-79cbdb398405.png",
+      "sha256": "25b6a50170fe017168dacd324d82ce7607729479c92f42dc9ebbee27ab9ef848",
+      "matches": [],
+      "category": "unidentified",
+      "filename": "exec-f9f81fd0-2de3-414e-a6b9-79cbdb398405.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/unidentified/exec-f9f81fd0-2de3-414e-a6b9-79cbdb398405--25b6a501.png"
+    },
+    {
+      "source": "G:/DEV/Terepasztal/Images/exec-fb964871-8c06-46a8-8ad9-3e94710b9ce2.png",
+      "sha256": "1c6eea945234d001fac556457b53459b7f436ff70c7418dd573a9fb53878d7f2",
+      "matches": [
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\building-poc-v1\\remaining\\stations-quarry-0.png",
+        "C:\\Users\\Zso\\terepasztal\\assets\\source\\current-grid-regeneration-v2\\handoff\\existing-facings\\stations-quarry-0.png"
+      ],
+      "category": "studies",
+      "filename": "stations-quarry-0.png",
+      "destination": "G:/DEV/Terepasztal/Images/organized/studies/stations-quarry-0--1c6eea94.png"
+    }
+  ],
+  "tasks": [
+    {
+      "filename": "rocket.png",
+      "category": "locomotives",
+      "subject": "Stephenson's Rocket, 1829",
+      "notes": "With its tender. Yellow, tall white chimney, inclined cylinders",
+      "status": "pending",
+      "destination": "input/rocket.png"
+    },
+    {
+      "filename": "adler.png",
+      "category": "locomotives",
+      "subject": "Adler, 1835 German locomotive",
+      "notes": "With its tender. Green, tall chimney",
+      "status": "pending",
+      "destination": "input/adler.png"
+    },
+    {
+      "filename": "john_bull.png",
+      "category": "locomotives",
+      "subject": "John Bull, 1831 Camden & Amboy locomotive",
+      "notes": "With its tender. Black, wooden pilot at the front",
+      "status": "pending",
+      "destination": "input/john_bull.png"
+    },
+    {
+      "filename": "mav375.png",
+      "category": "locomotives",
+      "subject": "MÁV class 375 Hungarian tank engine",
+      "notes": "Engine only, no tender. Black",
+      "status": "pending",
+      "destination": "input/mav375.png"
+    },
+    {
+      "filename": "general.png",
+      "category": "locomotives",
+      "subject": "The General, 1855 Western & Atlantic 4-4-0",
+      "notes": "Engine only, no tender. Red and dark green, brass, big balloon stack",
+      "status": "pending",
+      "destination": "input/general.png"
+    },
+    {
+      "filename": "jupiter.png",
+      "category": "locomotives",
+      "subject": "Jupiter, 1868 Central Pacific 4-4-0",
+      "notes": "Engine only, no tender. Blue, red and brass, balloon stack",
+      "status": "pending",
+      "destination": "input/jupiter.png"
+    },
+    {
+      "filename": "j94.png",
+      "category": "locomotives",
+      "subject": "Hunslet Austerity J94 saddle tank",
+      "notes": "Engine only. Black",
+      "status": "pending",
+      "destination": "input/j94.png"
+    },
+    {
+      "filename": "mav424.png",
+      "category": "locomotives",
+      "subject": "MÁV class 424 Bivaly 4-8-0",
+      "notes": "With tender. Black, red wheels",
+      "status": "pending",
+      "destination": "input/mav424.png"
+    },
+    {
+      "filename": "k4s.png",
+      "category": "locomotives",
+      "subject": "Pennsylvania Railroad K4s Pacific",
+      "notes": "With tender. Dark green-black",
+      "status": "pending",
+      "destination": "input/k4s.png"
+    },
+    {
+      "filename": "drg01.png",
+      "category": "locomotives",
+      "subject": "DRG class 01 Pacific",
+      "notes": "With tender. Black upper body, red wheels and frames",
+      "status": "pending",
+      "destination": "input/drg01.png"
+    },
+    {
+      "filename": "flying_scotsman.png",
+      "category": "locomotives",
+      "subject": "LNER A3 Flying Scotsman",
+      "notes": "With tender. Apple green, black frames",
+      "status": "pending",
+      "destination": "input/flying_scotsman.png"
+    },
+    {
+      "filename": "black_five.png",
+      "category": "locomotives",
+      "subject": "LMS Stanier Black Five 4-6-0",
+      "notes": "With tender. Black",
+      "status": "pending",
+      "destination": "input/black_five.png"
+    },
+    {
+      "filename": "nine_f.png",
+      "category": "locomotives",
+      "subject": "BR Standard class 9F 2-10-0",
+      "notes": "With tender. Black",
+      "status": "pending",
+      "destination": "input/nine_f.png"
+    },
+    {
+      "filename": "daylight.png",
+      "category": "locomotives",
+      "subject": "Southern Pacific GS-4 4449 Daylight",
+      "notes": "With tender. Orange, red and black streamlined livery",
+      "status": "pending",
+      "destination": "input/daylight.png"
+    },
+    {
+      "filename": "mallard.png",
+      "category": "locomotives",
+      "subject": "LNER A4 Mallard",
+      "notes": "With tender. Garter blue streamlined casing, red wheels",
+      "status": "pending",
+      "destination": "input/mallard.png"
+    },
+    {
+      "filename": "big_boy.png",
+      "category": "locomotives",
+      "subject": "Union Pacific Big Boy 4-8-8-4",
+      "notes": "Engine only, **no tender**. Black",
+      "status": "pending",
+      "destination": "input/big_boy.png"
+    },
+    {
+      "filename": "gmam.png",
+      "category": "locomotives",
+      "subject": "South African GMAM Beyer-Garratt",
+      "notes": "Whole articulated engine: front water unit, boiler, rear coal unit. Green",
+      "status": "pending",
+      "destination": "input/gmam.png"
+    },
+    {
+      "filename": "sw1.png",
+      "category": "locomotives",
+      "subject": "EMD SW1 switcher",
+      "notes": "Black",
+      "status": "pending",
+      "destination": "input/sw1.png"
+    },
+    {
+      "filename": "class08.png",
+      "category": "locomotives",
+      "subject": "BR Class 08 shunter",
+      "notes": "Green",
+      "status": "pending",
+      "destination": "input/class08.png"
+    },
+    {
+      "filename": "m62.png",
+      "category": "locomotives",
+      "subject": "M62 Soviet diesel (MÁV M62)",
+      "notes": "Green",
+      "status": "pending",
+      "destination": "input/m62.png"
+    },
+    {
+      "filename": "f7.png",
+      "category": "locomotives",
+      "subject": "EMD F7A cab unit",
+      "notes": "Red and silver warbonnet-style livery",
+      "status": "pending",
+      "destination": "input/f7.png"
+    },
+    {
+      "filename": "sd40.png",
+      "category": "locomotives",
+      "subject": "EMD SD40-2",
+      "notes": "Black",
+      "status": "pending",
+      "destination": "input/sd40.png"
+    },
+    {
+      "filename": "deltic.png",
+      "category": "locomotives",
+      "subject": "BR Class 55 Deltic",
+      "notes": "Two-tone blue",
+      "status": "pending",
+      "destination": "input/deltic.png"
+    },
+    {
+      "filename": "dda40x.png",
+      "category": "locomotives",
+      "subject": "Union Pacific DDA40X Centennial",
+      "notes": "Armour yellow and grey",
+      "status": "pending",
+      "destination": "input/dda40x.png"
+    },
+    {
+      "filename": "kando_v40.png",
+      "category": "locomotives",
+      "subject": "MÁV Kandó V40 electric",
+      "notes": "Green, side rods",
+      "status": "pending",
+      "destination": "input/kando_v40.png"
+    },
+    {
+      "filename": "v63.png",
+      "category": "locomotives",
+      "subject": "MÁV V63 Gigant electric",
+      "notes": "Red",
+      "status": "pending",
+      "destination": "input/v63.png"
+    },
+    {
+      "filename": "crocodile.png",
+      "category": "locomotives",
+      "subject": "SBB Ce 6/8 Crocodile",
+      "notes": "Brown, both long snouts and the centre cab, whole",
+      "status": "pending",
+      "destination": "input/crocodile.png"
+    },
+    {
+      "filename": "taurus.png",
+      "category": "locomotives",
+      "subject": "ÖBB 1116 Taurus",
+      "notes": "Red",
+      "status": "pending",
+      "destination": "input/taurus.png"
+    },
+    {
+      "filename": "re460.png",
+      "category": "locomotives",
+      "subject": "SBB Re 460",
+      "notes": "Red",
+      "status": "pending",
+      "destination": "input/re460.png"
+    },
+    {
+      "filename": "gg1.png",
+      "category": "locomotives",
+      "subject": "Pennsylvania Railroad GG1",
+      "notes": "Dark green, gold pinstripes",
+      "status": "pending",
+      "destination": "input/gg1.png"
+    },
+    {
+      "filename": "tgv.png",
+      "category": "locomotives",
+      "subject": "TGV Sud-Est power car",
+      "notes": "Orange and white, one power car only",
+      "status": "pending",
+      "destination": "input/tgv.png"
+    },
+    {
+      "filename": "ice1.png",
+      "category": "locomotives",
+      "subject": "ICE 1 power car",
+      "notes": "White with red stripe, one power car only",
+      "status": "pending",
+      "destination": "input/ice1.png"
+    },
+    {
+      "filename": "water_cart.png",
+      "category": "wagons",
+      "subject": "Early wooden four-wheel wagon carrying a big water barrel",
+      "notes": "Natural wood",
+      "status": "pending",
+      "destination": "input/water_cart.png"
+    },
+    {
+      "filename": "wood_hopper.png",
+      "category": "wagons",
+      "subject": "Early wooden four-wheel open hopper wagon",
+      "notes": "Natural wood",
+      "status": "pending",
+      "destination": "input/wood_hopper.png"
+    },
+    {
+      "filename": "flatbed.png",
+      "category": "wagons",
+      "subject": "Early wooden four-wheel flat wagon with stakes",
+      "notes": "Natural wood, empty",
+      "status": "pending",
+      "destination": "input/flatbed.png"
+    },
+    {
+      "filename": "boxcar.png",
+      "category": "wagons",
+      "subject": "Wooden plank four-wheel covered goods wagon",
+      "notes": "Natural wood",
+      "status": "pending",
+      "destination": "input/boxcar.png"
+    },
+    {
+      "filename": "wooden_coach.png",
+      "category": "wagons",
+      "subject": "Early four-wheel wooden passenger coach",
+      "notes": "Varnished wood",
+      "status": "pending",
+      "destination": "input/wooden_coach.png"
+    },
+    {
+      "filename": "brake_van.png",
+      "category": "wagons",
+      "subject": "Four-wheel brake van with a veranda",
+      "notes": "Brown",
+      "status": "pending",
+      "destination": "input/brake_van.png"
+    },
+    {
+      "filename": "coal_cart.png",
+      "category": "wagons",
+      "subject": "Small four-wheel coal wagon",
+      "notes": "Black, empty",
+      "status": "pending",
+      "destination": "input/coal_cart.png"
+    },
+    {
+      "filename": "riveted_tank.png",
+      "category": "wagons",
+      "subject": "Riveted two-dome tank wagon",
+      "notes": "Black",
+      "status": "pending",
+      "destination": "input/riveted_tank.png"
+    },
+    {
+      "filename": "steel_hopper.png",
+      "category": "wagons",
+      "subject": "Pressed-steel twin-bay hopper wagon",
+      "notes": "Grey steel",
+      "status": "pending",
+      "destination": "input/steel_hopper.png"
+    },
+    {
+      "filename": "bolster_flat.png",
+      "category": "wagons",
+      "subject": "Steel twin-bolster flat wagon",
+      "notes": "Grey steel, empty",
+      "status": "pending",
+      "destination": "input/bolster_flat.png"
+    },
+    {
+      "filename": "welded_tank.png",
+      "category": "wagons",
+      "subject": "Welded single-barrel tank wagon",
+      "notes": "Grey steel",
+      "status": "pending",
+      "destination": "input/welded_tank.png"
+    },
+    {
+      "filename": "bathtub.png",
+      "category": "wagons",
+      "subject": "Rotary-dump bathtub coal gondola",
+      "notes": "Black",
+      "status": "pending",
+      "destination": "input/bathtub.png"
+    },
+    {
+      "filename": "bulkhead_flat.png",
+      "category": "wagons",
+      "subject": "Bulkhead flat wagon with end walls",
+      "notes": "Grey steel, empty",
+      "status": "pending",
+      "destination": "input/bulkhead_flat.png"
+    },
+    {
+      "filename": "pressure_tank.png",
+      "category": "wagons",
+      "subject": "Insulated pressure tank wagon on six axles",
+      "notes": "Grey steel",
+      "status": "pending",
+      "destination": "input/pressure_tank.png"
+    },
+    {
+      "filename": "dump_hopper.png",
+      "category": "wagons",
+      "subject": "Air-operated bottom-dump hopper wagon",
+      "notes": "Grey steel",
+      "status": "pending",
+      "destination": "input/dump_hopper.png"
+    },
+    {
+      "filename": "heavy_flat.png",
+      "category": "wagons",
+      "subject": "Depressed-centre heavy flat wagon",
+      "notes": "Grey steel, empty",
+      "status": "pending",
+      "destination": "input/heavy_flat.png"
+    },
+    {
+      "filename": "fuel_cart.png",
+      "category": "wagons",
+      "subject": "Small fuel tank wagon",
+      "notes": "Red",
+      "status": "pending",
+      "destination": "input/fuel_cart.png"
+    },
+    {
+      "filename": "battery_cart.png",
+      "category": "wagons",
+      "subject": "Small covered wagon carrying battery cells",
+      "notes": "Blue",
+      "status": "pending",
+      "destination": "input/battery_cart.png"
+    },
+    {
+      "filename": "steel_coach.png",
+      "category": "wagons",
+      "subject": "Riveted steel bogie passenger coach, about 20 m",
+      "notes": "Grey steel",
+      "status": "pending",
+      "destination": "input/steel_coach.png"
+    },
+    {
+      "filename": "pullman.png",
+      "category": "wagons",
+      "subject": "Pullman dining car",
+      "notes": "Black and cream, brass details",
+      "status": "pending",
+      "destination": "input/pullman.png"
+    },
+    {
+      "filename": "bogie_archbar.png",
+      "category": "bogies",
+      "subject": "Archbar two-axle freight truck, early 1900s",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/bogie_archbar.png"
+    },
+    {
+      "filename": "bogie_diamond.png",
+      "category": "bogies",
+      "subject": "Diamond-frame two-axle bogie",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/bogie_diamond.png"
+    },
+    {
+      "filename": "bogie_y25.png",
+      "category": "bogies",
+      "subject": "European Y25 two-axle freight bogie",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/bogie_y25.png"
+    },
+    {
+      "filename": "bogie_blomberg.png",
+      "category": "bogies",
+      "subject": "EMD Blomberg B two-axle locomotive truck",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/bogie_blomberg.png"
+    },
+    {
+      "filename": "bogie3_flexicoil.png",
+      "category": "bogies",
+      "subject": "EMD Flexicoil C three-axle locomotive truck",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/bogie3_flexicoil.png"
+    },
+    {
+      "filename": "bogie_modern.png",
+      "category": "bogies",
+      "subject": "Modern European electric-locomotive two-axle bogie",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/bogie_modern.png"
+    },
+    {
+      "filename": "bogie_coach.png",
+      "category": "bogies",
+      "subject": "Two-axle passenger coach bogie with leaf springs",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/bogie_coach.png"
+    },
+    {
+      "filename": "station_1.png",
+      "category": "buildings",
+      "subject": "Small country halt: single-storey brick shelter with a small canopy",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/station_1.png"
+    },
+    {
+      "filename": "station_2.png",
+      "category": "buildings",
+      "subject": "Village station: single-storey stone building with a canopy",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/station_2.png"
+    },
+    {
+      "filename": "station_3.png",
+      "category": "buildings",
+      "subject": "Town station: two-storey station building with a canopy and chimneys",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/station_3.png"
+    },
+    {
+      "filename": "depot.png",
+      "category": "buildings",
+      "subject": "Two-road brick engine shed with a slate roof and open doors at both ends",
+      "notes": "",
+      "status": "pending",
+      "destination": "input/depot.png"
+    }
+  ],
+  "summary": {
+    "images": 153,
+    "identified": 151,
+    "unidentified": 2,
+    "requested": 63
+  }
+}

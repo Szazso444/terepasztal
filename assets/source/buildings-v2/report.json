@@ -1,5 +1,5 @@
 {
-  "checked": 97,
+  "checked": 109,
   "failed": 1,
   "pictures": {
     "depot-a0-r0": {
@@ -4948,6 +4948,632 @@
           "turn": 1
         },
         "area": 436702
+      }
+    },
+    "quarry-a0-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.517,
+          -0.5
+        ],
+        "slopes": [
+          0.517,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            258,
+            934.9
+          ],
+          "s": [
+            688.2,
+            1157.4
+          ],
+          "e": [
+            1045,
+            979
+          ]
+        },
+        "scale": 0.5725,
+        "vertical": 0.983,
+        "shear": -0.0085,
+        "cx": 651.5,
+        "cy": 935.1,
+        "box": {
+          "left": 280.4,
+          "top": 435.5,
+          "right": 737.3,
+          "bottom": 899.1
+        },
+        "camera": null,
+        "area": 452254
+      }
+    },
+    "quarry-a0-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 5.4°: it looks down from 32.4° where the game looks down from 30° and the building is turned 5.4° towards its lower-right wall (the wall feet slope 0.65 and -0.44, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.646,
+          -0.444
+        ],
+        "slopes": [
+          0.646,
+          -0.444
+        ],
+        "base": {
+          "w": [
+            322,
+            937.5
+          ],
+          "s": [
+            639.7,
+            1142.8
+          ],
+          "e": [
+            1074,
+            950.2
+          ]
+        },
+        "scale": 0.5991,
+        "vertical": 0.9176,
+        "shear": -0.093,
+        "cx": 698,
+        "cy": 801.1,
+        "box": {
+          "left": 160.9,
+          "top": 406,
+          "right": 737.3,
+          "bottom": 944.4
+        },
+        "camera": {
+          "elevation": 32.4,
+          "turn": 5.4
+        },
+        "area": 566254
+      },
+      "camera": {
+        "by": 5.4,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "quarry-a0-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.531,
+          -0.5
+        ],
+        "slopes": [
+          0.531,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            289,
+            978.4
+          ],
+          "s": [
+            643.7,
+            1166.9
+          ],
+          "e": [
+            987,
+            995.3
+          ]
+        },
+        "scale": 0.6455,
+        "vertical": 0.9697,
+        "shear": -0.0154,
+        "cx": 638,
+        "cy": 947.2,
+        "box": {
+          "left": 286.7,
+          "top": 435.1,
+          "right": 777.9,
+          "bottom": 935.7
+        },
+        "camera": {
+          "elevation": 31,
+          "turn": 0.9
+        },
+        "area": 390312
+      }
+    },
+    "quarry-a1-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.528,
+          -0.463
+        ],
+        "slopes": [
+          0.528,
+          -0.463
+        ],
+        "base": {
+          "w": [
+            201,
+            928.4
+          ],
+          "s": [
+            660.1,
+            1171
+          ],
+          "e": [
+            1153,
+            942.5
+          ]
+        },
+        "scale": 0.4733,
+        "vertical": 1.0081,
+        "shear": -0.0328,
+        "cx": 677,
+        "cy": 920.9,
+        "box": {
+          "left": 243.2,
+          "top": 456.3,
+          "right": 737.8,
+          "bottom": 926.2
+        },
+        "camera": {
+          "elevation": 29.7,
+          "turn": 1.9
+        },
+        "area": 672173
+      }
+    },
+    "quarry-a1-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 2.1°: the building is turned 2.1° towards its lower-right wall (the wall feet slope 0.57 and -0.49, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.566,
+          -0.489
+        ],
+        "slopes": [
+          0.566,
+          -0.489
+        ],
+        "base": {
+          "w": [
+            250,
+            1003.2
+          ],
+          "s": [
+            620.1,
+            1212.8
+          ],
+          "e": [
+            1028,
+            1013.4
+          ]
+        },
+        "scale": 0.5791,
+        "vertical": 0.948,
+        "shear": -0.0366,
+        "cx": 639,
+        "cy": 932.4,
+        "box": {
+          "left": 286.7,
+          "top": 471.6,
+          "right": 802.1,
+          "bottom": 928.1
+        },
+        "camera": {
+          "elevation": 31.7,
+          "turn": 2.1
+        },
+        "area": 479374
+      },
+      "camera": {
+        "by": 2.1,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "quarry-a2-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.555,
+          -0.5
+        ],
+        "slopes": [
+          0.555,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            259,
+            997.9
+          ],
+          "s": [
+            628.6,
+            1203.2
+          ],
+          "e": [
+            1048,
+            993.5
+          ]
+        },
+        "scale": 0.5711,
+        "vertical": 0.9475,
+        "shear": -0.0262,
+        "cx": 653.5,
+        "cy": 926.3,
+        "box": {
+          "left": 247.9,
+          "top": 503.6,
+          "right": 738.4,
+          "bottom": 927.2
+        },
+        "camera": null,
+        "area": 436653
+      }
+    },
+    "quarry-a2-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          false,
+          true
+        ],
+        "measured": [
+          0.5,
+          -0.495
+        ],
+        "slopes": [
+          0.5,
+          -0.495
+        ],
+        "base": {
+          "w": [
+            271,
+            928
+          ],
+          "s": [
+            695.8,
+            1140.4
+          ],
+          "e": [
+            1031,
+            974.5
+          ]
+        },
+        "scale": 0.5928,
+        "vertical": 1.005,
+        "shear": -0.0025,
+        "cx": 651,
+        "cy": 954.4,
+        "box": {
+          "left": 286.7,
+          "top": 391.6,
+          "right": 796,
+          "bottom": 940.2
+        },
+        "camera": null,
+        "area": 501913
+      }
+    },
+    "quarry-a2-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.566,
+          -0.5
+        ],
+        "slopes": [
+          0.566,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            233,
+            905.8
+          ],
+          "s": [
+            614.5,
+            1121.7
+          ],
+          "e": [
+            934,
+            962
+          ]
+        },
+        "scale": 0.6427,
+        "vertical": 0.938,
+        "shear": -0.031,
+        "cx": 583.5,
+        "cy": 858,
+        "box": {
+          "left": 280.3,
+          "top": 430.6,
+          "right": 878.7,
+          "bottom": 943.5
+        },
+        "camera": null,
+        "area": 459855
+      }
+    },
+    "quarry-a3-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 2.7°: the building is turned 2.7° towards its lower-right wall (the wall feet slope 0.52 and -0.43, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.518,
+          -0.429
+        ],
+        "slopes": [
+          0.518,
+          -0.429
+        ],
+        "base": {
+          "w": [
+            266,
+            997.5
+          ],
+          "s": [
+            600.5,
+            1170.7
+          ],
+          "e": [
+            1090,
+            960.6
+          ]
+        },
+        "scale": 0.5468,
+        "vertical": 1.0559,
+        "shear": -0.0468,
+        "cx": 678,
+        "cy": 1002,
+        "box": {
+          "left": 233.1,
+          "top": 513.1,
+          "right": 738.4,
+          "bottom": 945.9
+        },
+        "camera": {
+          "elevation": 28.1,
+          "turn": 2.7
+        },
+        "area": 440988
+      },
+      "camera": {
+        "by": 2.7,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "quarry-a3-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.522,
+          -0.501
+        ],
+        "slopes": [
+          0.522,
+          -0.501
+        ],
+        "base": {
+          "w": [
+            140,
+            868.1
+          ],
+          "s": [
+            712.8,
+            1167.2
+          ],
+          "e": [
+            1104,
+            971.1
+          ]
+        },
+        "scale": 0.4674,
+        "vertical": 0.9773,
+        "shear": -0.0102,
+        "cx": 622,
+        "cy": 892.3,
+        "box": {
+          "left": 286.7,
+          "top": 526.9,
+          "right": 771.4,
+          "bottom": 946
+        },
+        "camera": {
+          "elevation": 30.8,
+          "turn": 0.6
+        },
+        "area": 617545
+      }
+    },
+    "quarry-a3-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 3.1°: it looks down from 33.1° where the game looks down from 30° (the wall feet slope 0.55 and -0.54, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.554,
+          -0.538
+        ],
+        "slopes": [
+          0.554,
+          -0.538
+        ],
+        "base": {
+          "w": [
+            209,
+            898.1
+          ],
+          "s": [
+            574.4,
+            1100.4
+          ],
+          "e": [
+            1039,
+            850.3
+          ]
+        },
+        "scale": 0.5428,
+        "vertical": 0.9157,
+        "shear": -0.0069,
+        "cx": 624,
+        "cy": 796.2,
+        "box": {
+          "left": 286.2,
+          "top": 503.7,
+          "right": 822.5,
+          "bottom": 942.4
+        },
+        "camera": {
+          "elevation": 33.1,
+          "turn": 0.4
+        },
+        "area": 514367
+      },
+      "camera": {
+        "by": 3.1,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "quarry-a4-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 3.8°: the building is turned 3.8° towards its lower-right wall (the wall feet slope 0.56 and -0.43, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.565,
+          -0.432
+        ],
+        "slopes": [
+          0.565,
+          -0.432
+        ],
+        "base": {
+          "w": [
+            260,
+            972.3
+          ],
+          "s": [
+            580.6,
+            1153.6
+          ],
+          "e": [
+            1130,
+            916.2
+          ]
+        },
+        "scale": 0.5179,
+        "vertical": 1.0025,
+        "shear": -0.0669,
+        "cx": 695,
+        "cy": 900.1,
+        "box": {
+          "left": 210.6,
+          "top": 504.8,
+          "right": 738.3,
+          "bottom": 945.4
+        },
+        "camera": {
+          "elevation": 29.6,
+          "turn": 3.8
+        },
+        "area": 543184
+      },
+      "camera": {
+        "by": 3.8,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     }
   }

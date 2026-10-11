@@ -1,0 +1,30 @@
+[
+  {
+    "key": "stations-lumber",
+    "rotation": 0,
+    "prompt": "Create one illustrated game sprite of stations.lumber, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+    "source": "assets/source/building-poc-v1/references/stations-lumber.png",
+    "destination": "assets/source/building-poc-v1/remaining/stations-lumber-0.png"
+  },
+  {
+    "key": "stations-lumber",
+    "rotation": 1,
+    "prompt": "Create one illustrated game sprite of stations.lumber, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+    "source": "assets/source/building-poc-v1/references/stations-lumber.png",
+    "destination": "assets/source/building-poc-v1/remaining/stations-lumber-1.png"
+  },
+  {
+    "key": "stations-lumber",
+    "rotation": 2,
+    "prompt": "Create one illustrated game sprite of stations.lumber, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+    "source": "assets/source/building-poc-v1/references/stations-lumber.png",
+    "destination": "assets/source/building-poc-v1/remaining/stations-lumber-2.png"
+  },
+  {
+    "key": "stations-lumber",
+    "rotation": 3,
+    "prompt": "Create one illustrated game sprite of stations.lumber, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+    "source": "assets/source/building-poc-v1/references/stations-lumber.png",
+    "destination": "assets/source/building-poc-v1/remaining/stations-lumber-3.png"
+  }
+]

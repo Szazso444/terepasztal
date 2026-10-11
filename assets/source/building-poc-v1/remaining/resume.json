@@ -1,0 +1,591 @@
+{
+  "tool": "built-in imagegen",
+  "blockedReason": "Image generation returned HTTP 429 usage_limit_reached.",
+  "reportedResetUtc": "2026-09-26T16:07:22.000Z",
+  "completed": [
+    "stations-farm",
+    "stations-lumber",
+    "stations-quarry",
+    "stations-pump",
+    "stations-town",
+    "stations-warehouse"
+  ],
+  "pending": [
+    {
+      "id": "stations.depot",
+      "source": "depot.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "stations-depot",
+      "reference": "assets/source/building-poc-v1/references/stations-depot.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of stations.depot, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-depot-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of stations.depot, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-depot-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of stations.depot, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-depot-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of stations.depot, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-depot-3.png"
+        }
+      ]
+    },
+    {
+      "id": "stations.full.mine",
+      "source": "stations-full-mine.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "stations-full-mine",
+      "reference": "assets/source/building-poc-v1/references/stations-full-mine.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of stations.full.mine, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-mine-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of stations.full.mine, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-mine-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of stations.full.mine, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-mine-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of stations.full.mine, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-mine-3.png"
+        }
+      ]
+    },
+    {
+      "id": "stations.full.sand_pit",
+      "source": "stations-full-sand-pit.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "stations-full-sand_pit",
+      "reference": "assets/source/building-poc-v1/references/stations-full-sand_pit.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of stations.full.sand_pit, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-sand_pit-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of stations.full.sand_pit, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-sand_pit-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of stations.full.sand_pit, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-sand_pit-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of stations.full.sand_pit, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-sand_pit-3.png"
+        }
+      ]
+    },
+    {
+      "id": "stations.full.copper_mine",
+      "source": "stations-full-copper-mine.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "stations-full-copper_mine",
+      "reference": "assets/source/building-poc-v1/references/stations-full-copper_mine.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of stations.full.copper_mine, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-copper_mine-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of stations.full.copper_mine, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-copper_mine-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of stations.full.copper_mine, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-copper_mine-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of stations.full.copper_mine, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/stations-full-copper_mine-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.windmill",
+      "source": "windmill.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-windmill",
+      "reference": "assets/source/building-poc-v1/references/works-windmill.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.windmill, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-windmill-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.windmill, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-windmill-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.windmill, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-windmill-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.windmill, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-windmill-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.kiln",
+      "source": "kiln.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-kiln",
+      "reference": "assets/source/building-poc-v1/references/works-kiln.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.kiln, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-kiln-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.kiln, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-kiln-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.kiln, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-kiln-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.kiln, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-kiln-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.grinder",
+      "source": "grinder.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-grinder",
+      "reference": "assets/source/building-poc-v1/references/works-grinder.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.grinder, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-grinder-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.grinder, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-grinder-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.grinder, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-grinder-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.grinder, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-grinder-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.refinery",
+      "source": "refinery.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-refinery",
+      "reference": "assets/source/building-poc-v1/references/works-refinery.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.refinery, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-refinery-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.refinery, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-refinery-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.refinery, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-refinery-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.refinery, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-refinery-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.power_plant",
+      "source": "power-plant.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-power_plant",
+      "reference": "assets/source/building-poc-v1/references/works-power_plant.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.power_plant, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-power_plant-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.power_plant, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-power_plant-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.power_plant, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-power_plant-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.power_plant, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-power_plant-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.substation",
+      "source": "substation.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-substation",
+      "reference": "assets/source/building-poc-v1/references/works-substation.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.substation, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-substation-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.substation, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-substation-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.substation, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-substation-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.substation, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-substation-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.hydro_plant",
+      "source": "hydro-plant.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-hydro_plant",
+      "reference": "assets/source/building-poc-v1/references/works-hydro_plant.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.hydro_plant, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-hydro_plant-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.hydro_plant, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-hydro_plant-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.hydro_plant, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-hydro_plant-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.hydro_plant, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-hydro_plant-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.full.colliery",
+      "source": "works-full-colliery.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-full-colliery",
+      "reference": "assets/source/building-poc-v1/references/works-full-colliery.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.full.colliery, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-colliery-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.full.colliery, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-colliery-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.full.colliery, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-colliery-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.full.colliery, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-colliery-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.full.ironworks",
+      "source": "works-full-ironworks.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-full-ironworks",
+      "reference": "assets/source/building-poc-v1/references/works-full-ironworks.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.full.ironworks, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-ironworks-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.full.ironworks, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-ironworks-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.full.ironworks, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-ironworks-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.full.ironworks, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-ironworks-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.full.oil_derrick",
+      "source": "works-full-oil-derrick.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-full-oil_derrick",
+      "reference": "assets/source/building-poc-v1/references/works-full-oil_derrick.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.full.oil_derrick, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-oil_derrick-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.full.oil_derrick, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-oil_derrick-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.full.oil_derrick, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-oil_derrick-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.full.oil_derrick, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-oil_derrick-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.full.diesel_refinery",
+      "source": "works-full-diesel-refinery.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-full-diesel_refinery",
+      "reference": "assets/source/building-poc-v1/references/works-full-diesel_refinery.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.full.diesel_refinery, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-diesel_refinery-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.full.diesel_refinery, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-diesel_refinery-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.full.diesel_refinery, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-diesel_refinery-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.full.diesel_refinery, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-diesel_refinery-3.png"
+        }
+      ]
+    },
+    {
+      "id": "works.full.wire_mill",
+      "source": "works-full-wire-mill.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "works-full-wire_mill",
+      "reference": "assets/source/building-poc-v1/references/works-full-wire_mill.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of works.full.wire_mill, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-wire_mill-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of works.full.wire_mill, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-wire_mill-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of works.full.wire_mill, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-wire_mill-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of works.full.wire_mill, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 2x1 rectangular ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/works-full-wire_mill-3.png"
+        }
+      ]
+    },
+    {
+      "id": "decor.water_tower",
+      "source": "water-tower.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "decor-water_tower",
+      "reference": "assets/source/building-poc-v1/references/decor-water_tower.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of decor.water_tower, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/decor-water_tower-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of decor.water_tower, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/decor-water_tower-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of decor.water_tower, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/decor-water_tower-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of decor.water_tower, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/decor-water_tower-3.png"
+        }
+      ]
+    },
+    {
+      "id": "decor.fuel_stop",
+      "source": "coaling-stage.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "blocked-image-usage-limit",
+      "footprintApproved": true,
+      "key": "decor-fuel_stop",
+      "reference": "assets/source/building-poc-v1/references/decor-fuel_stop.png",
+      "prompts": [
+        {
+          "rotation": 0,
+          "prompt": "Create one illustrated game sprite of decor.fuel_stop, using this original image for identity, materials, colors and craftsmanship. Facing 0: long front facade on screen LEFT, right end wall on RIGHT. Long axis down-right. Front details visible. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/decor-fuel_stop-0.png"
+        },
+        {
+          "rotation": 1,
+          "prompt": "Create one illustrated game sprite of decor.fuel_stop, using this original image for identity, materials, colors and craftsmanship. Facing 1: rotate the actual structure 90 degrees clockwise from facing0: short end wall on screen LEFT, long REAR facade on RIGHT; long axis up-right. Render real rear details. Do not put front equipment on rear. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/decor-fuel_stop-1.png"
+        },
+        {
+          "rotation": 2,
+          "prompt": "Create one illustrated game sprite of decor.fuel_stop, using this original image for identity, materials, colors and craftsmanship. Facing 2: rotate 180 degrees from facing0: long REAR facade on screen LEFT, opposite end wall on RIGHT; long axis down-right. Show genuine rear structure, no copied front facade. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/decor-fuel_stop-2.png"
+        },
+        {
+          "rotation": 3,
+          "prompt": "Create one illustrated game sprite of decor.fuel_stop, using this original image for identity, materials, colors and craftsmanship. Facing 3: rotate 270 degrees from facing0: short opposite end wall on screen LEFT, long FRONT facade on RIGHT; long axis up-right. Front equipment faces right. A real orthographic rotated view of the same structure, not a mirrored bitmap. Camera 45-degree azimuth, 2:1 dimetric ground axes slopes +0.5/-0.5, straight verticals, parallel lines. Compact 1x1 square ground footprint, same human scale as a small stone cottage: door openings represent 2.1 metres, do not shrink doors to fit oversized structures; simplify peripheral clutter if needed. Preserve the recognizable machinery, roof, architectural character and material palette in the source. High-detail painted miniature game art, crisp edges, warm upper-left lighting consistent across rotations. One whole building isolated and centered with margins. Transparent RGBA, alpha zero outside object, no glow, no halo, no shadow, no ground slab or scenery, no text, no watermark. Do not include neighbouring buildings or vehicles. Foundation belongs within its footprint. Deliver only this requested facing.",
+          "destination": "assets/source/building-poc-v1/remaining/decor-fuel_stop-3.png"
+        }
+      ]
+    }
+  ]
+}
