@@ -1,0 +1,57 @@
+{
+  "guide": "assets/source/bridges-v2/guides/stone-pad.png",
+  "candidate": "assets/source/bridges-v2/attempts/stone-pad-01-normalized.png",
+  "dimensions": {
+    "guide": [
+      1024,
+      1024
+    ],
+    "candidate": [
+      1024,
+      1024
+    ]
+  },
+  "sameCanvas": true,
+  "guideBounds": {
+    "left": 256,
+    "top": 232,
+    "right": 767,
+    "bottom": 527
+  },
+  "candidateBounds": {
+    "left": 257,
+    "top": 236,
+    "right": 766,
+    "bottom": 533
+  },
+  "boundsDelta": {
+    "left": 1,
+    "top": 4,
+    "right": -1,
+    "bottom": 6
+  },
+  "guideToCandidate": {
+    "max": 5.385164807134504,
+    "p95": 5,
+    "outside4px": 263,
+    "total": 1100
+  },
+  "candidateToGuide": {
+    "max": 6,
+    "p95": 5,
+    "outside4px": 292,
+    "total": 1095
+  },
+  "silhouetteIoU": 0.9516284338714245,
+  "alpha": {
+    "transparent": 958375,
+    "opaque": 0,
+    "foreground": 86264
+  },
+  "within4px": false,
+  "notes": [
+    "Distances use alpha >128 contours and unmodified canvas coordinates. No registration, crop, scaling or fitting is applied.",
+    "Timber railing holes are intentional departures from the solid guide; assess those cutouts separately.",
+    "Face boundaries and straight cut ends also need visual inspection."
+  ]
+}

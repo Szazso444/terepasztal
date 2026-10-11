@@ -1,0 +1,57 @@
+{
+  "guide": "assets/source/bridges-v2/guides/wood-deck-x.png",
+  "candidate": "assets/source/bridges-v2/attempts/wood-deck-x-01-normalized.png",
+  "dimensions": {
+    "guide": [
+      1024,
+      1024
+    ],
+    "candidate": [
+      1024,
+      1024
+    ]
+  },
+  "sameCanvas": true,
+  "guideBounds": {
+    "left": 256,
+    "top": 176,
+    "right": 767,
+    "bottom": 527
+  },
+  "candidateBounds": {
+    "left": 258,
+    "top": 177,
+    "right": 765,
+    "bottom": 529
+  },
+  "boundsDelta": {
+    "left": 2,
+    "top": 1,
+    "right": -2,
+    "bottom": 2
+  },
+  "guideToCandidate": {
+    "max": 4.123105625617661,
+    "p95": 3.1622776601683795,
+    "outside4px": 7,
+    "total": 1212
+  },
+  "candidateToGuide": {
+    "max": 4.123105625617661,
+    "p95": 3.1622776601683795,
+    "outside4px": 6,
+    "total": 1197
+  },
+  "silhouetteIoU": 0.9797301249926876,
+  "alpha": {
+    "transparent": 942537,
+    "opaque": 0,
+    "foreground": 100965
+  },
+  "within4px": false,
+  "notes": [
+    "Distances use alpha >128 contours and unmodified canvas coordinates. No registration, crop, scaling or fitting is applied.",
+    "Timber railing holes are intentional departures from the solid guide; assess those cutouts separately.",
+    "Face boundaries and straight cut ends also need visual inspection."
+  ]
+}

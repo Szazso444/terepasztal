@@ -1,0 +1,529 @@
+{
+  "version": 2,
+  "method": "built-in imagegen edits",
+  "branch": "claude/charming-ramanujan-i16mhm",
+  "baseCommit": "1f825f5",
+  "assets": [
+    {
+      "filename": "stone-deck-x.png",
+      "piece": "Cream limestone bridge deck: the slab is dressed stone flags, and the low wall on the far edge is a limestone parapet with a flat coping. Stone courses and coping run through both cut ends.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nCream limestone bridge deck: the slab is dressed stone flags, and the low wall on the far edge is a limestone parapet with a flat coping. Stone courses and coping run through both cut ends.",
+      "status": "accepted",
+      "attempts": [
+        {
+          "number": 1,
+          "request": {
+            "prompt": "IMAGE EDIT. Image 1 is the exact 1024 × 1024 edit target; preserve its canvas and all geometry. Image 2 is ONLY a style reference. The block-out is intentionally small and above the canvas center: DO NOT enlarge or center it.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nCream limestone bridge deck: the slab is dressed stone flags, and the low wall on the far edge is a limestone parapet with a flat coping. Stone courses and coping run through both cut ends.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-deck-x.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png"
+            ]
+          },
+          "status": "accepted",
+          "file": "attempts/stone-deck-x-01.png",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-0d552696-9631-412d-8832-ba94dd4f24f5.png",
+          "qa": "qa/stone-deck-x-01-normalized-report.json",
+          "normalized": "attempts/stone-deck-x-01-normalized.png",
+          "maxDriftPx": 3.605551275463989
+        },
+        {
+          "number": 2,
+          "request": {
+            "prompt": "EDIT THE FIRST IMAGE. REQUIRED OUTPUT FILE DIMENSIONS: EXACTLY 1024 PIXELS WIDE AND EXACTLY 1024 PIXELS HIGH. Do not return a 1254 × 1254 or 1536 × 1536 image. Keep the first image's pixel grid and native resolution. The previous edit was rejected solely because the file was upscaled to 1254 × 1254; this time retain 1024 × 1024.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nCream limestone bridge deck: the slab is dressed stone flags, and the low wall on the far edge is a limestone parapet with a flat coping. Stone courses and coping run through both cut ends.\n\nLOCKED COORDINATES IN OUTPUT FILE: opaque silhouette left x=256, right x=767, top y=192, bottom y=527. Original guide canvas size 1024×1024. The object is intentionally placed high on the canvas. Image 1 is the edit target; image 2 is style only. Paint the grey faces in place, never resize, reposition or redraw the shape.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-deck-x.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png"
+            ]
+          },
+          "status": "rejected-canvas-and-geometry",
+          "file": "attempts/stone-deck-x-02.png",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-cf237bd4-12cc-40fe-9043-623900827759.png",
+          "qa": "qa/stone-deck-x-02-report.json"
+        }
+      ],
+      "selectedAttempt": 1
+    },
+    {
+      "filename": "stone-deck-y.png",
+      "piece": "The same limestone deck and far parapet, for this guide.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same limestone deck and far parapet, for this guide.",
+      "status": "accepted",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/stone-deck-y-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT. First image is the fixed geometry target, second is style reference, third is approved limestone material reference only. Preserve first image's complete square canvas and exact object placement including its deliberately large empty margins. Use ONLY the first image's shape and proportions.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same limestone deck and far parapet, for this guide.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-deck-y.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "needs-edit",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-797f20bd-b8c8-45f8-87b8-d526d373f8d3.png",
+          "normalized": "attempts/stone-deck-y-01-normalized.png",
+          "qa": "qa/stone-deck-y-01-normalized-report.json",
+          "maxDriftPx": 41.593268686170845,
+          "geometricPass": false
+        },
+        {
+          "number": 2,
+          "file": "attempts/stone-deck-y-02.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 supply texture/color style ONLY. First image is an immutable geometry mask: paint within its silhouette, never move any corner or face. Keep its entire square canvas and deliberately small off-center placement.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same limestone deck and far parapet, for this guide.\n\nCRITICAL: The first image has its parapet on the REAR-LEFT edge, descending toward screen LOWER LEFT. The third image's parapet orientation is WRONG for this target. Do not copy the third image's geometry. Paint exactly over the first image's grey left wall and leave the rear-right edge completely open. Keep all silhouette and face edges at the exact first-image pixel coordinates.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-deck-y.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "accepted",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-965aa716-db7a-4f91-a28b-b4ee88c9c891.png",
+          "normalized": "attempts/stone-deck-y-02-normalized.png",
+          "qa": "qa/stone-deck-y-02-normalized-report.json",
+          "maxDriftPx": 3.605551275463989,
+          "geometricPass": true,
+          "review": "50% overlay inspected; orientation, face positions, and straight cut ends match."
+        }
+      ],
+      "selectedAttempt": 2
+    },
+    {
+      "filename": "stone-rail-x.png",
+      "piece": "The near limestone parapet only: coursed blocks under a flat coping, running through both cut ends.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe near limestone parapet only: coursed blocks under a flat coping, running through both cut ends.",
+      "status": "accepted",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/stone-rail-x-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT. First image is the fixed geometry target, second is style reference, third is approved limestone material reference only. Preserve first image's complete square canvas and exact object placement including its deliberately large empty margins. Use ONLY the first image's shape and proportions.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe near limestone parapet only: coursed blocks under a flat coping, running through both cut ends.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-rail-x.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "accepted",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-c7916375-b501-432b-90d4-06253fcbd61f.png",
+          "normalized": "attempts/stone-rail-x-01-normalized.png",
+          "qa": "qa/stone-rail-x-01-normalized-report.json",
+          "maxDriftPx": 4.123105625617661,
+          "geometricPass": true,
+          "review": "50% overlay inspected: guide placement, face directions and cut ends retained. Maximum drift rounds to 4px."
+        }
+      ],
+      "selectedAttempt": 1
+    },
+    {
+      "filename": "stone-rail-y.png",
+      "piece": "The same near limestone parapet, for this guide.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same near limestone parapet, for this guide.",
+      "status": "accepted",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/stone-rail-y-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 supply texture/color style ONLY. First image is an immutable geometry mask: paint within its silhouette, never move any corner or face. Keep its entire square canvas and deliberately small off-center placement.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same near limestone parapet, for this guide.\n\nCRITICAL: The bar in image 1 runs toward screen LOWER LEFT. Do not rotate it to match any reference artwork. Its slab-like square cut ends remain flush; flat coping no overhang.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-rail-y.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "needs-edit",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-26d5301f-c712-4c21-9d21-bebc4cbde573.png",
+          "normalized": "attempts/stone-rail-y-01-normalized.png",
+          "qa": "qa/stone-rail-y-01-normalized-report.json",
+          "maxDriftPx": 5.830951894845301,
+          "geometricPass": false
+        },
+        {
+          "number": 2,
+          "file": "attempts/stone-rail-y-02.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 are color/material references; their shapes must not influence this edit. First image is the immutable geometry mask. Keep its whole square canvas and object placement.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same near limestone parapet, for this guide.\n\nRepaint precisely the first-image bar. Its extent in the 1024 canvas is x481..767,y305..487. Do not extend its lower end down beyond y487; do not thicken the beam. The upper-right to lower-left axis, all parallel slopes and cut faces are fixed.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-rail-y.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "accepted",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-36e133e2-7fa8-4541-8e2e-a1ad2adcd614.png",
+          "normalized": "attempts/stone-rail-y-02-normalized.png",
+          "qa": "qa/stone-rail-y-02-normalized-report.json",
+          "maxDriftPx": 3,
+          "geometricPass": true,
+          "review": "50% overlay inspected; shape, face directions and cut ends retained."
+        }
+      ],
+      "selectedAttempt": 2
+    },
+    {
+      "filename": "stone-pad.png",
+      "piece": "A square dressed limestone slab of flags, no walls. Its edges are finished (it stands alone).",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square dressed limestone slab of flags, no walls. Its edges are finished (it stands alone).",
+      "status": "accepted",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/stone-pad-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT. First image is the fixed geometry target, second is style reference, third is approved limestone material reference only. Preserve first image's complete square canvas and exact object placement including its deliberately large empty margins. Use ONLY the first image's shape and proportions.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square dressed limestone slab of flags, no walls. Its edges are finished (it stands alone).",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-pad.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "needs-edit",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-ac01c1db-4bfa-40a9-b7cf-8f175b6533cc.png",
+          "normalized": "attempts/stone-pad-01-normalized.png",
+          "qa": "qa/stone-pad-01-normalized-report.json",
+          "maxDriftPx": 6,
+          "geometricPass": false
+        },
+        {
+          "number": 2,
+          "file": "attempts/stone-pad-02.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 supply texture/color style ONLY. First image is an immutable geometry mask: paint within its silhouette, never move any corner or face. Keep its entire square canvas and deliberately small off-center placement.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square dressed limestone slab of flags, no walls. Its edges are finished (it stands alone).\n\nCRITICAL: The top diamond and both slab faces must exactly cover the first image's existing pixels, with zero shape movement. Do not extend the bottom edge or inset the corners. No added bevel or outline.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-pad.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "accepted",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-7e253fd9-a6cd-4724-8cf0-d0ffb1a18171.png",
+          "normalized": "attempts/stone-pad-02-normalized.png",
+          "qa": "qa/stone-pad-02-normalized-report.json",
+          "maxDriftPx": 3.605551275463989,
+          "geometricPass": true,
+          "review": "50% overlay inspected; orientation, face positions, and straight cut ends match."
+        }
+      ],
+      "selectedAttempt": 2
+    },
+    {
+      "filename": "stone-pier.png",
+      "piece": "A square limestone masonry pier shaft of coursed blocks. The top is a flat face. The courses repeat evenly all the way down, so the shaft can be cut at any height. No base or plinth.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square limestone masonry pier shaft of coursed blocks. The top is a flat face. The courses repeat evenly all the way down, so the shaft can be cut at any height. No base or plinth.",
+      "status": "accepted",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/stone-pier-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 supply texture/color style ONLY. First image is an immutable geometry mask: paint within its silhouette, never move any corner or face. Keep its entire square canvas and deliberately small off-center placement.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square limestone masonry pier shaft of coursed blocks. The top is a flat face. The courses repeat evenly all the way down, so the shaft can be cut at any height. No base or plinth.\n\nCRITICAL: Retain the exact first-image shaft dimensions and position. Top square face and perfectly vertical sides untouched. No crown, base, taper or joints that bulge outside the outline.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-pier.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "needs-edit",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-d4e8277a-4157-473d-802b-f7cb6703d7a6.png",
+          "normalized": "attempts/stone-pier-01-normalized.png",
+          "qa": "qa/stone-pier-01-normalized-report.json",
+          "maxDriftPx": 31.016124838541646,
+          "geometricPass": false
+        },
+        {
+          "number": 2,
+          "file": "attempts/stone-pier-02.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 are color/material references; their shapes must not influence this edit. First image is the immutable geometry mask. Keep its whole square canvas and object placement.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square limestone masonry pier shaft of coursed blocks. The top is a flat face. The courses repeat evenly all the way down, so the shaft can be cut at any height. No base or plinth.\n\nThe first-image shaft must keep its FULL HEIGHT. At 1024 canvas resolution: left x461, right x562, top y375, bottom y808. Do not shorten it by even one masonry course. The lower point must reach y808, not y777. Vertical sides and flat end faces stay at the exact guide pixels. Its large empty canvas is intentional.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-pier.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "accepted",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-d115a8f6-abb2-416b-aa91-9a9fda781b3d.png",
+          "normalized": "attempts/stone-pier-02-normalized.png",
+          "qa": "qa/stone-pier-02-normalized-report.json",
+          "maxDriftPx": 2.8284271247461903,
+          "geometricPass": true,
+          "review": "50% overlay inspected; shape, face directions and cut ends retained."
+        }
+      ],
+      "selectedAttempt": 2
+    },
+    {
+      "filename": "stone-arch-x.png",
+      "piece": "A limestone arch wall: voussoirs around the opening, coursed blocks elsewhere. At each cut end there is half a pier, so two tiles side by side form one full pier. Courses run through both cut ends.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA limestone arch wall: voussoirs around the opening, coursed blocks elsewhere. At each cut end there is half a pier, so two tiles side by side form one full pier. Courses run through both cut ends.",
+      "status": "needs-edit",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/stone-arch-x-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 are color/material references; their shapes must not influence this edit. First image is the immutable geometry mask. Keep its whole square canvas and object placement.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA limestone arch wall: voussoirs around the opening, coursed blocks elsewhere. At each cut end there is half a pier, so two tiles side by side form one full pier. Courses run through both cut ends.\n\nTrace image 1 EXACTLY, including the exact existing arch opening and straight side edges. The wall goes down toward SCREEN LOWER RIGHT. Voussoirs are only painted marks inside the grey surface; do not change the opening's curve or build extruded blocks, a coping cap, foot plinths or extra wall thickness.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-arch-x.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "needs-edit",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-72c19570-925d-497a-9f10-034901b28551.png",
+          "normalized": "attempts/stone-arch-x-01-normalized.png",
+          "qa": "qa/stone-arch-x-01-normalized-report.json",
+          "maxDriftPx": 11.180339887498949,
+          "geometricPass": false
+        },
+        {
+          "number": 2,
+          "file": "attempts/stone-arch-x-02.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 are material references; never use their shape or direction. Preserve the first image's square canvas, all empty margins, alpha outline, corners, and face boundaries.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA limestone arch wall: voussoirs around the opening, coursed blocks elsewhere. At each cut end there is half a pier, so two tiles side by side form one full pier. Courses run through both cut ends.\n\nThe previous edit changed the transparent ARCH OPENING by 11 pixels. Keep the first image's entire alpha silhouette exactly, INCLUDING the inside arch curve. Voussoirs are flat painted marks strictly on existing grey pixels: do not fill any transparent opening pixels or carve away existing wall pixels. No thickness reveal, bevel or extruded ring along the opening. Outside wall bounds already correct. Only color/texture existing guide pixels.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-arch-x.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "blocked-usage-limit",
+          "error": {
+            "type": "usage_limit_reached",
+            "httpStatus": 429,
+            "resetsAt": 1791118456
+          }
+        }
+      ]
+    },
+    {
+      "filename": "stone-arch-y.png",
+      "piece": "The same limestone arch wall, for this guide.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same limestone arch wall, for this guide.",
+      "status": "accepted",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/stone-arch-y-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 are color/material references; their shapes must not influence this edit. First image is the immutable geometry mask. Keep its whole square canvas and object placement.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same limestone arch wall, for this guide.\n\nTrace image 1 EXACTLY, including the exact existing arch opening and straight side edges. The wall goes down toward SCREEN LOWER LEFT. Ignore image 3's direction. Voussoirs are only painted marks inside the grey surface; do not change the opening's curve or build extruded blocks, a coping cap, foot plinths or extra wall thickness.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\stone-arch-y.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\stone-deck-x.png"
+            ]
+          },
+          "status": "accepted",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-e2b7f8f5-ab15-4ea9-a71c-a3d056770447.png",
+          "normalized": "attempts/stone-arch-y-01-normalized.png",
+          "qa": "qa/stone-arch-y-01-normalized-report.json",
+          "maxDriftPx": 3,
+          "geometricPass": true,
+          "review": "50% overlay inspected; shape, face directions and cut ends retained."
+        }
+      ],
+      "selectedAttempt": 1
+    },
+    {
+      "filename": "wood-deck-x.png",
+      "piece": "Timber bridge deck: the slab is planks laid across the track, and the low wall on the far edge is a solid timber kerb beam, not a railing. Plank lines and the beam run through both cut ends.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nTimber bridge deck: the slab is planks laid across the track, and the low wall on the far edge is a solid timber kerb beam, not a railing. Plank lines and the beam run through both cut ends.",
+      "status": "accepted",
+      "attempts": [
+        {
+          "number": 1,
+          "request": {
+            "prompt": "IMAGE EDIT. Image 1 is the exact 1024 × 1024 edit target; preserve its canvas and all geometry. Image 2 is ONLY a style reference. The block-out is intentionally small and above the canvas center: DO NOT enlarge or center it.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nTimber bridge deck: the slab is planks laid across the track, and the low wall on the far edge is a solid timber kerb beam, not a railing. Plank lines and the beam run through both cut ends.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\wood-deck-x.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png"
+            ]
+          },
+          "status": "needs-edit",
+          "file": "attempts/wood-deck-x-01.png",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-4c921d26-59c9-4f73-b29f-a27b7662e0a4.png",
+          "qa": "qa/wood-deck-x-01-report.json",
+          "review": "Canvas-normalized maximum drift 4.123px; top plank seams also need to run across the track, perpendicular to the far kerb.",
+          "normalized": "attempts/wood-deck-x-01-normalized.png"
+        },
+        {
+          "number": 2,
+          "file": "attempts/wood-deck-x-02.png",
+          "request": {
+            "prompt": "IMAGE EDIT. First image is the fixed geometry target, second is style reference. Preserve first image's complete square canvas and exact object placement including its deliberately large empty margins. Use ONLY the first image's shape and proportions.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nTimber bridge deck: the slab is planks laid across the track, and the low wall on the far edge is a solid timber kerb beam, not a railing. Plank lines and the beam run through both cut ends.\nFLOORBOARD DIRECTION: all long floorboard seams run from screen LOWER LEFT to UPPER RIGHT, slope -0.5, across the track and perpendicular in world space to the solid far kerb beam. The kerb runs upper left to lower right, +0.5. Do not put floor seams parallel to that beam. Keep every outline edge within 3px of the first image; no thick outlines or bevel extension.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\wood-deck-x.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png"
+            ]
+          },
+          "status": "accepted",
+          "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a0e2ee-2878-72a0-9a78-219bd8696ed2\\exec-e70b521b-0f62-445a-9f5e-32ec1698e907.png",
+          "normalized": "attempts/wood-deck-x-02-normalized.png",
+          "qa": "qa/wood-deck-x-02-normalized-report.json",
+          "maxDriftPx": 4.47213595499958,
+          "geometricPass": true,
+          "review": "50% overlay inspected: guide placement, face directions and cut ends retained. Maximum drift rounds to 4px."
+        }
+      ],
+      "selectedAttempt": 2
+    },
+    {
+      "filename": "wood-deck-y.png",
+      "piece": "The same timber deck and far kerb beam, for this guide.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same timber deck and far kerb beam, for this guide.",
+      "status": "pending",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/wood-deck-y-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 are material references; never use their shape or direction. Preserve the first image's square canvas, all empty margins, alpha outline, corners, and face boundaries.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same timber deck and far kerb beam, for this guide.\n\nThe first image has its SOLID KERB BEAM on the REAR-LEFT edge, running upper right to lower left. Do not copy the third image's rear-right kerb position. Floorboard seams run across the track, from screen UPPER LEFT to LOWER RIGHT, slope +0.5, perpendicular to the kerb in world space. No posts or open railing.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\wood-deck-y.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\wood-deck-x.png"
+            ]
+          },
+          "status": "blocked-usage-limit",
+          "error": {
+            "type": "usage_limit_reached",
+            "httpStatus": 429,
+            "resetsAt": 1791118456
+          }
+        }
+      ]
+    },
+    {
+      "filename": "wood-rail-x.png",
+      "piece": "The near timber railing: a top rail and a mid rail on posts. There is exactly one post, at the upper cut end; the other cut end has no post, so a row of tiles gets evenly spaced posts. Both rails run through both cut ends.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe near timber railing: a top rail and a mid rail on posts. There is exactly one post, at the upper cut end; the other cut end has no post, so a row of tiles gets evenly spaced posts. Both rails run through both cut ends.",
+      "status": "pending",
+      "attempts": []
+    },
+    {
+      "filename": "wood-rail-y.png",
+      "piece": "The same near timber railing, for this guide. Its one post is at the upper cut end.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same near timber railing, for this guide. Its one post is at the upper cut end.",
+      "status": "pending",
+      "attempts": []
+    },
+    {
+      "filename": "wood-pad.png",
+      "piece": "A square timber deck of planks, no railing. Its edges are finished (it stands alone).",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square timber deck of planks, no railing. Its edges are finished (it stands alone).",
+      "status": "pending",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/wood-pad-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 are material references; never use their shape or direction. Preserve the first image's square canvas, all empty margins, alpha outline, corners, and face boundaries.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square timber deck of planks, no railing. Its edges are finished (it stands alone).\n\nOnly the exact slab in the first image. No beam, kerb, railing, posts, perimeter frame or added bevel. Preserve every point on the slab outline and top-face diamond, and paint simple contiguous timber planks within it.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\wood-pad.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\wood-deck-x.png"
+            ]
+          },
+          "status": "blocked-usage-limit",
+          "error": {
+            "type": "usage_limit_reached",
+            "httpStatus": 429,
+            "resetsAt": 1791118456
+          }
+        }
+      ]
+    },
+    {
+      "filename": "wood-post.png",
+      "piece": "A square timber trestle post. The top is a flat end-grain face. The wood grain runs straight all the way down, so the post can be cut at any height. No base.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square timber trestle post. The top is a flat end-grain face. The wood grain runs straight all the way down, so the post can be cut at any height. No base.",
+      "status": "pending",
+      "attempts": [
+        {
+          "number": 1,
+          "file": "attempts/wood-post-01.png",
+          "request": {
+            "prompt": "IMAGE EDIT of image 1 ONLY. Images 2 and 3 are material references; never use their shape or direction. Preserve the first image's square canvas, all empty margins, alpha outline, corners, and face boundaries.\n\nRepaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA square timber trestle post. The top is a flat end-grain face. The wood grain runs straight all the way down, so the post can be cut at any height. No base.\n\nPreserve this extremely narrow straight shaft EXACTLY: do not widen, shorten, center or enlarge it for visibility. Flat square top, no foot. Keep end grain only on the existing top grey face, straight wood grain on the two long vertical faces. No attachments.",
+            "referenced_image_paths": [
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\guides\\wood-post.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\docs\\art-direction\\images\\03-theme-town-growth.png",
+              "C:\\Users\\Zso\\.codex\\worktrees\\bridge-kit-v1\\terepasztal\\assets\\source\\bridges-v2\\wood-deck-x.png"
+            ]
+          },
+          "status": "blocked-usage-limit",
+          "error": {
+            "type": "usage_limit_reached",
+            "httpStatus": 429,
+            "resetsAt": 1791118456
+          }
+        }
+      ]
+    },
+    {
+      "filename": "wood-brace-x.png",
+      "piece": "Two timber planks crossing in an X, exactly on the two bars of the block-out, with a bolt at the crossing. Nothing else.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nTwo timber planks crossing in an X, exactly on the two bars of the block-out, with a bolt at the crossing. Nothing else.",
+      "status": "pending",
+      "attempts": []
+    },
+    {
+      "filename": "wood-brace-y.png",
+      "piece": "The same timber X brace, for this guide.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same timber X brace, for this guide.",
+      "status": "pending",
+      "attempts": []
+    },
+    {
+      "filename": "wood-truss-x.png",
+      "piece": "A timber truss: a top chord and a bottom chord running straight through both cut ends, and diagonals exactly on the block-out's diagonals, meeting the chords at the same points. Iron plates at the joints.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nA timber truss: a top chord and a bottom chord running straight through both cut ends, and diagonals exactly on the block-out's diagonals, meeting the chords at the same points. Iron plates at the joints.",
+      "status": "pending",
+      "attempts": []
+    },
+    {
+      "filename": "wood-truss-y.png",
+      "piece": "The same timber truss, for this guide.",
+      "prompt": "Repaint the attached grey block-out as a finished game sprite in the style of the reference:\nthe pastoral railway style, crisp pixel-art-inspired clustered shading, three or four shades per\nmaterial, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every\nface and every angle stays where it is in the block-out, within a few pixels. Do not rotate,\nmove, scale, tilt or re-project anything. Edges running across the image keep their exact\n2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light\ngrey face is lit from above, the mid grey face faces the lower left, the dark grey face faces\nthe lower right. Keep that lighting. Same 1024 x 1024 canvas, same position. Only the object:\nREAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,\nsleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.\nCut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat\ncut, with no end cap, end post, end block, border or rounding. The next tile continues right\nthere, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run\nstraight through the cut at the same height on both ends.\n\nThe same timber truss, for this guide.",
+      "status": "pending",
+      "attempts": []
+    }
+  ],
+  "canvasNormalization": {
+    "approvedByUser": true,
+    "method": "Uniform resampling of entire canvas to 1024x1024; retain raw originals. No object-specific scaling, repositioning, masking, or warping."
+  },
+  "acceptanceTolerance": "About 4 px interpreted at whole-pixel precision: maximum Euclidean edge distance <4.5px. Exact values retained in reports.",
+  "status": "incomplete: built-in image generation usage limit reached",
+  "blocker": {
+    "type": "usage_limit_reached",
+    "httpStatus": 429,
+    "resetsAt": 1791118456,
+    "resetUtc": "2026-10-04T12:54:16.000Z",
+    "resetToronto": "Sunday, October 4, 2026 at 8:54:16 a.m. EDT"
+  },
+  "accepted": [
+    "stone-deck-x.png",
+    "stone-deck-y.png",
+    "stone-rail-x.png",
+    "stone-rail-y.png",
+    "stone-pad.png",
+    "stone-pier.png",
+    "stone-arch-y.png",
+    "wood-deck-x.png"
+  ],
+  "remaining": [
+    "stone-arch-x.png",
+    "wood-deck-y.png",
+    "wood-rail-x.png",
+    "wood-rail-y.png",
+    "wood-pad.png",
+    "wood-post.png",
+    "wood-brace-x.png",
+    "wood-brace-y.png",
+    "wood-truss-x.png",
+    "wood-truss-y.png"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "guide": "assets/source/bridges-v2/guides/stone-deck-y.png",
+  "candidate": "assets/source/bridges-v2/attempts/stone-deck-y-01-normalized.png",
+  "dimensions": {
+    "guide": [
+      1024,
+      1024
+    ],
+    "candidate": [
+      1024,
+      1024
+    ]
+  },
+  "sameCanvas": true,
+  "guideBounds": {
+    "left": 256,
+    "top": 192,
+    "right": 767,
+    "bottom": 527
+  },
+  "candidateBounds": {
+    "left": 259,
+    "top": 192,
+    "right": 765,
+    "bottom": 533
+  },
+  "boundsDelta": {
+    "left": 3,
+    "top": 0,
+    "right": -2,
+    "bottom": 6
+  },
+  "guideToCandidate": {
+    "max": 41.593268686170845,
+    "p95": 40.70626487409524,
+    "outside4px": 740,
+    "total": 1180
+  },
+  "candidateToGuide": {
+    "max": 41.593268686170845,
+    "p95": 40.70626487409524,
+    "outside4px": 741,
+    "total": 1172
+  },
+  "silhouetteIoU": 0.80740514019125,
+  "alpha": {
+    "transparent": 946934,
+    "opaque": 0,
+    "foreground": 97373
+  },
+  "within4px": false,
+  "notes": [
+    "Distances use alpha >128 contours and unmodified canvas coordinates. No registration, crop, scaling or fitting is applied.",
+    "Timber railing holes are intentional departures from the solid guide; assess those cutouts separately.",
+    "Face boundaries and straight cut ends also need visual inspection."
+  ]
+}

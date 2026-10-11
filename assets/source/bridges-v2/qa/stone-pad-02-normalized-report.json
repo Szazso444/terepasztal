@@ -1,0 +1,59 @@
+{
+  "guide": "assets/source/bridges-v2/guides/stone-pad.png",
+  "candidate": "assets/source/bridges-v2/attempts/stone-pad-02-normalized.png",
+  "dimensions": {
+    "guide": [
+      1024,
+      1024
+    ],
+    "candidate": [
+      1024,
+      1024
+    ]
+  },
+  "sameCanvas": true,
+  "guideBounds": {
+    "left": 256,
+    "top": 232,
+    "right": 767,
+    "bottom": 527
+  },
+  "candidateBounds": {
+    "left": 259,
+    "top": 233,
+    "right": 764,
+    "bottom": 529
+  },
+  "boundsDelta": {
+    "left": 3,
+    "top": 1,
+    "right": -3,
+    "bottom": 2
+  },
+  "guideToCandidate": {
+    "max": 3.605551275463989,
+    "p95": 3,
+    "outside4px": 0,
+    "total": 1100
+  },
+  "candidateToGuide": {
+    "max": 3.1622776601683795,
+    "p95": 3.1622776601683795,
+    "outside4px": 0,
+    "total": 1085
+  },
+  "silhouetteIoU": 0.9756927170706311,
+  "alpha": {
+    "transparent": 960180,
+    "opaque": 0,
+    "foreground": 84753
+  },
+  "tolerancePx": 4.5,
+  "within4px": true,
+  "notes": [
+    "The brief says about 4px: acceptance uses maximum distance rounding to 4 at whole-pixel precision (<4.5px). Exact unrounded distances and counts above 4 are retained.",
+    "Distances use alpha >128 contours and unmodified canvas coordinates. No registration, crop, scaling or fitting is applied.",
+    "Timber railing holes are intentional departures from the solid guide; assess those cutouts separately.",
+    "Face boundaries and straight cut ends also need visual inspection."
+  ]
+}
