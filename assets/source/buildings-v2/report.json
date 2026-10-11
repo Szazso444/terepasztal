@@ -1,5 +1,5 @@
 {
-  "checked": 4,
+  "checked": 6,
   "failed": 0,
   "pictures": {
     "water_tower-a0-r0": {
@@ -206,6 +206,112 @@
           "turn": 0.4
         },
         "area": 414891
+      }
+    },
+    "fuel_stop-a0-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.48,
+          -0.502
+        ],
+        "slopes": [
+          0.48,
+          -0.502
+        ],
+        "base": {
+          "w": [
+            374,
+            1026.5
+          ],
+          "s": [
+            629.3,
+            1149
+          ],
+          "e": [
+            993,
+            966.2
+          ]
+        },
+        "scale": 0.7279,
+        "vertical": 1.0181,
+        "shear": 0.0115,
+        "cx": 683.5,
+        "cy": 1022.2,
+        "box": {
+          "left": 168.1,
+          "top": 235,
+          "right": 799.2,
+          "bottom": 944
+        },
+        "camera": {
+          "elevation": 29.4,
+          "turn": -0.7
+        },
+        "area": 529661
+      }
+    },
+    "fuel_stop-a0-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "camera off by 2.2°: the building is turned 2.2° towards its lower-right wall (the wall feet slope 0.53 and -0.45, the game's 0.50 and -0.50); kept, and corrected by the tools"
+      ],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.525,
+          -0.45
+        ],
+        "slopes": [
+          0.525,
+          -0.45
+        ],
+        "base": {
+          "w": [
+            226,
+            921.2
+          ],
+          "s": [
+            668.8,
+            1153.8
+          ],
+          "e": [
+            916,
+            1042.5
+          ]
+        },
+        "scale": 0.653,
+        "vertical": 1.0249,
+        "shear": -0.0384,
+        "cx": 571,
+        "cy": 984.3,
+        "box": {
+          "left": 286.7,
+          "top": 296.3,
+          "right": 820.9,
+          "bottom": 945.5
+        },
+        "camera": {
+          "elevation": 29.1,
+          "turn": 2.2
+        },
+        "area": 516589
+      },
+      "camera": {
+        "by": 2.2,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     }
   }

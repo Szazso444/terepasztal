@@ -12,7 +12,7 @@
     }
   ],
   "accepted": [],
-  "mark": 1791748671321,
+  "mark": 1791749519890,
   "chat": "01a12c68-070c-7b91-9ff6-217c3f4318b1",
   "counts": {
     "pictures": 548,
@@ -5470,8 +5470,8 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
+      "status": "generated",
+      "attempts": 1,
       "note": ""
     },
     {
@@ -5480,9 +5480,9 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "Three attempts: first exposed the chute; later attempts hid it but shortened the supports and bunker relative to r0."
     },
     {
       "id": "fuel_stop-a0-r2",
@@ -5490,9 +5490,9 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "Three attempts: chute hidden, but stage remains substantially shorter than r0 at the tool-fitted tile scale; support and bunker sizes are inconsistent."
     },
     {
       "id": "fuel_stop-a0-r3",
@@ -5500,9 +5500,14 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.2° after 3 attempts: the closest the tool held",
+      "kept": 2.2,
+      "repaint": {
+        "by": 2.2,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     }
   ]
 }
