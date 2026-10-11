@@ -1,10 +1,10 @@
 # Asset redesign implementation guide
 
-The newer [illustrated runtime conversion](../../scratchpad/illustrated-hd/README.md)
-implements the user's requested source-image appearance for supported scenery,
-buildings and icons. For those frames it supersedes this guide's original native
-pixel-scale/procedural-only delivery proposal. World geometry and railcraft motion
-requirements remain unchanged; directional/layered art is still required for trains.
+The shipped art is the illustrated conversion: `tools/illustrated-sprites.mjs` packs the source
+images into partial atlas overrides for supported scenery, buildings and icons, and
+`terrain-production.md` and `building-production.md`, in this folder, describe how the terrain and
+the buildings are made. World geometry and railcraft motion requirements are unchanged;
+directional/layered art is still required for trains.
 
 Pastoral industry, folk warmth and quiet ambition. The railway grows from timber and steam
 into refined electrical infrastructure while its countryside and town identity remain familiar.
@@ -42,7 +42,7 @@ rotations as placeholder turns of today's picture (`_r1` to `_r3`, `src/art/stru
 | Topic       | Implementation rule                                                                                                                                                                      |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Projection  | Preserve 2:1 isometric projection and 64×32 base tiles. Existing elevation step is 10 px.                                                                                                |
-| Pixel scale | Draw world assets in native logical pixels; use nearest-neighbour scaling for previews. Do not mix smooth painted foliage with hard pixel vehicles. Camera motion can remain continuous. |
+| Pixel scale | Both smooth (2026-09-26, see "Style consistency" below): painted contours on nature, trains and buildings alike; no stair-stepped pixel foliage. Camera motion can stay continuous.      |
 | Form        | Prioritise silhouette, then major panels, then material detail. Use broad colour clusters, not independent noise on every pixel.                                                         |
 | Light       | One upper-left light convention. Roofs/top faces lightest; away-facing walls darkest. Use three or four shades per material.                                                             |
 | Edges       | Selective dark lower/occluded edges. Avoid a black outline around every terrain diamond or every brick. Transparent margins must not contain coloured fringes.                           |
@@ -50,7 +50,7 @@ rotations as placeholder turns of today's picture (`_r1` to `_r3`, `src/art/stru
 | Scale       | Preserve gameplay footprint and clearance. A tall building can grow vertically, but its artwork must not imply an extra occupied tile.                                                   |
 | Variation   | Deterministic seeded variations in silhouette, clusters and roof detail. Keep anchors and connection endpoints identical across variants.                                                |
 | Clarity     | Trains and rails strongest; operational buildings next; scenery quietest. Status indicators must remain visible over every biome.                                                        |
-| Delivery    | Keep procedural generation and existing frame contracts; no new runtime dependencies. Concept PNGs are reference material, not runtime sprite replacements.                              |
+| Delivery    | Illustrated overrides (`tools/illustrated-sprites.mjs`) ship over the `src/art` fallback generators. Keep frame contracts; no new runtime dependencies. Concept PNGs are reference only. |
 
 Proposed palette seeds, to tune together in `src/art/palette.ts`: forest `#294638`, moss
 `#78804C`, oat `#E4D5B5`, limestone `#BCA98B`, slate `#626B6C`, water `#477B82`, copper
@@ -334,7 +334,8 @@ Acceptance checklist per family:
 - Every existing key still resolves; no missing full-chain or upgrade frames. If adding keys,
   update lookup/fallbacks deliberately and regenerate the inventory.
 - No clipped transparent margins, anchor shifts, neighbour seams or changed track endpoints.
-- Materials agree at native scale; no isolated smooth assets or excessive texture noise.
+- Materials agree at native scale; no isolated pixel-art asset among smooth ones, or excessive
+  texture noise.
 - Identify cargo, building role and signal state without relying solely on colour.
 - Bridge support water contact, vehicle occlusion and tall-building track visibility pass.
 - Rigid bodies retain bogie movement and configured wheel counts; reversal and curve fixtures
@@ -365,17 +366,13 @@ See [cozy-v3.md](cozy-v3.md) for the integrated terrain, contact edges, tree var
 window lighting and music. It records the shared human/door scale, the explicitly
 estimated equipment families, and the checks required when adding illustrated art.
 
-## Terrain v4 correction (current)
+## Terrain
 
-See [terrain-v4.md](terrain-v4.md): v3 ground and hill relief have been rolled back.
-The comparison gallery proposes textured material edges and connected illustrated
-hill families. Music, scale, foliage and cozy effects from v3 remain.
-
-## Approved terrain integrated in production
-
-[terrain-production.md](terrain-production.md) supersedes the v4 rollback checkpoint:
-shared-corner relief, mixed illustrated grass detail, feathered interlocks, painted
-stones and contour-following foundation features now run in the game.
+[terrain-production.md](terrain-production.md) is the live state: `Landscape`, which
+`WorldRenderer` constructs, paints shared-corner relief, mixed illustrated grass detail,
+feathered interlocks, painted stones and contour-following foundation features. It replaced
+the v4 checkpoint, which had rolled v3's ground and hill relief back to the illustrated atlas
+([terrain-v4.md](terrain-v4.md), kept as history).
 
 ## Style consistency: both smooth (approved 2026-09-26)
 
@@ -388,7 +385,7 @@ each other, so edges stay crisp). It applies to the ground surfaces
 and the `props` group (`npm run art:illustrated`, radius 2 at atlas resolution).
 Painted art (rock surface, mountain caps, structures) is not filtered. Frame
 counts, sizes and anchors are unchanged. New nature art should be drawn smooth
-rather than as pixel art. The "Pixel scale" rule above predates this decision.
+rather than as pixel art; this is the rule the "Pixel scale" row of section 1 states.
 The rejected alternatives and zoom comparisons are kept in
 `scratchpad/style-options/`.
 

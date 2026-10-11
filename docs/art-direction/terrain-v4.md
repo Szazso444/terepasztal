@@ -1,3 +1,5 @@
+> [terrain-production.md](terrain-production.md) supersedes this file, and `Landscape` is live: read what follows as history.
+
 # Terrain v4: restore illustration, compare detail
 
 The user rejected v3's colour-field terrain and smoothed hill masses. The game now

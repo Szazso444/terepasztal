@@ -1,12 +1,16 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import ts from 'typescript';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { AGE_ORDER, STR } from './strings';
 import { AGE_DEFS } from './sim/ages';
 import { RULE_META } from './sim/rules';
 import { runsOn, withoutInCab } from './sim/compat';
 import { content, type Cost } from './data/content';
 import { fmtCost } from './sim/stockpile';
+import { DYNAMIC_MODES } from './sim/trains';
+
+// the train module plays sounds; this test only reads its list of modes
+vi.mock('./engine/audio', () => ({ sfx: vi.fn() }));
 
 /** Every string a group of STR can show, with the functions called on stand-in arguments. */
 function texts(node: unknown, out: string[] = []): string[] {
@@ -254,6 +258,47 @@ describe('what the tuning presets say', () => {
     const labels = [t.presets, t.presetName, t.savePreset, t.loadPreset, t.deletePreset];
     for (const s of [...labels, t.noPresets, t.scope]) expect(s.trim()).not.toBe('');
     expect(new Set(labels).size).toBe(labels.length);
+  });
+});
+
+describe('what the route-mode menus say about each mode', () => {
+  const said = (set: Record<string, string>, mode: string) => {
+    expect(typeof set[mode], `a text for ${mode}`).toBe('string');
+    expect(set[mode].trim(), `a text for ${mode}`).not.toBe('');
+  };
+  // the menus read this list, so a mode that joins it needs its words before it can ship
+  const modes = ['schedule', ...DYNAMIC_MODES];
+
+  it('names and explains every mode on the train screen', () => {
+    expect(DYNAMIC_MODES.length).toBeGreaterThan(0);
+    for (const m of modes) {
+      said(STR.train.mode, m);
+      said(STR.train.modeHint, m);
+    }
+  });
+
+  it('names and explains every route in the depot panel', () => {
+    for (const m of ['auto', 'custom', ...DYNAMIC_MODES]) {
+      said(STR.depot.routeMode, m);
+      said(STR.depot.routeHint, m);
+    }
+  });
+
+  it('has the words for the freight mode before the simulation has the mode', () => {
+    for (const set of [
+      STR.train.mode,
+      STR.train.modeHint,
+      STR.depot.routeMode,
+      STR.depot.routeHint,
+    ])
+      said(set, 'freight');
+  });
+
+  it('gives each mode a name of its own', () => {
+    for (const set of [STR.train.mode, STR.depot.routeMode]) {
+      const names = Object.values(set);
+      expect(new Set(names).size).toBe(names.length);
+    }
   });
 });
 
