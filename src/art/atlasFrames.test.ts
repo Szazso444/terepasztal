@@ -107,18 +107,23 @@ function serialise(table: Table) {
   return JSON.stringify(out, null, 2) + '\n';
 }
 
+const why = (err: unknown) => (err instanceof Error ? err.message : String(err));
+const fail = (problem: string): never => {
+  throw new Error(`${TABLE_PATH} ${problem}. Record it with:\n  ${RECORD.join('\n  ')}`);
+};
+
 /** The recorded table, or an error that says what is wrong with the file and how to record it. */
-function readTable(): Table {
-  const fail = (problem: string): never => {
-    throw new Error(`${TABLE_PATH} ${problem}. Record it with:\n  ${RECORD.join('\n  ')}`);
-  };
-  const why = (err: unknown) => (err instanceof Error ? err.message : String(err));
+function readTable(url = TABLE_URL): Table {
   let text = '';
   try {
-    text = readFileSync(TABLE_URL, 'utf8');
+    text = readFileSync(url, 'utf8');
   } catch (err) {
     return fail(`cannot be read (${why(err)})`);
   }
+  return parseTable(text);
+}
+
+function parseTable(text: string): Table {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -191,6 +196,28 @@ describe('sprite frame table', () => {
     if (Object.values(diff).some((lines) => lines.length)) throw new Error(describeDiff(diff));
   });
 
+  it('is stored as the record command writes it: sorted, one trailing newline', () => {
+    const table = readTable();
+    const text = readFileSync(TABLE_URL, 'utf8').replace(/\r\n/g, '\n');
+    expect(text === serialise(table), `${TABLE_PATH} was edited by hand; ${RECORD[0]}`).toBe(true);
+  });
+
+  it('fails a missing or malformed table with the problem and the record command', () => {
+    const bad: [() => unknown, string][] = [
+      [() => readTable(new URL('./no-such-table.json', TABLE_URL)), 'cannot be read'],
+      [() => parseTable(''), 'not valid JSON'],
+      [() => parseTable('[]'), 'not an object'],
+      [() => parseTable('{"fx":null}'), 'malformed group "fx"'],
+      [() => parseTable('{"track":{}}'), 'malformed group "track"'],
+      [() => parseTable('{"fx":{"a":1}}'), 'non-string entry in group "fx"'],
+      [() => parseTable('{"track":[1]}'), 'non-string entry in group "track"'],
+    ];
+    for (const [run, problem] of bad) {
+      expect(run).toThrow(problem);
+      expect(run).toThrow(RECORD[0]);
+    }
+  });
+
   it('serialises sorted, with decimals kept and one trailing newline', () => {
     const text = serialise({
       b: { 'z/b': '1x1@3.5,3.5', 'z/a': '2x3@1,0' },
@@ -199,6 +226,9 @@ describe('sprite frame table', () => {
     expect(text).toBe(
       `{\n  "b": {\n    "z/a": "2x3@1,0",\n    "z/b": "1x1@3.5,3.5"\n  },\n  "track": [\n    "t1",\n    "t2"\n  ]\n}\n`,
     );
+    const keys = { 'z/b': '', 'z/a': '', 'z/_': '', 'z/B': '', 'z/1': '' };
+    const order = Object.keys(JSON.parse(serialise({ b: keys })).b);
+    expect(order, 'code-unit order, not locale order').toEqual(['z/1', 'z/B', 'z/_', 'z/a', 'z/b']);
   });
 
   it('reports added, removed and moved frames, at most 30 of each, with the re-record command', () => {
@@ -257,6 +287,10 @@ describe('sprite frame invariants', () => {
     }
     expect(families.size, 'families found').toBeGreaterThan(0);
     expect(bad.slice(0, SHOWN)).toEqual([]);
+  });
+
+  it('leaves neither stub behind once the groups are generated', () => {
+    expect([typeof ImageData, typeof document]).toEqual(['undefined', 'undefined']);
   });
 
   it('generation does not call Math.random', () => {
