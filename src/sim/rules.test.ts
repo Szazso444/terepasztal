@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Rules } from './rules';
+import { forAll } from '../testing/property';
 
 type RulesModule = typeof import('./rules');
 
@@ -49,6 +50,138 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+});
+
+describe('the two tables', () => {
+  it('list the same keys: every default is tunable and every tunable has a default', async () => {
+    const m = await load();
+    const meta = m.RULE_META.map((x) => x.key as string);
+    const twice = meta.filter((k, i) => meta.indexOf(k) !== i);
+    expect(twice, `listed twice in RULE_META: ${twice.join(', ')}`).toEqual([]);
+    const defaults = Object.keys(m.DEFAULT_RULES);
+    const noMeta = defaults.filter((k) => !meta.includes(k));
+    const noDefault = meta.filter((k) => !defaults.includes(k));
+    expect(noMeta, `in DEFAULT_RULES, not in RULE_META: ${noMeta.join(', ')}`).toEqual([]);
+    expect(noDefault, `in RULE_META, not in DEFAULT_RULES: ${noDefault.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('rules an older build wrote', () => {
+  // `reputationMul` and `tradeCycleDays` were settings no screen showed and nothing read.
+  const old = { reputationMul: 3, tradeCycleDays: 2 };
+  const gone = (r: object) => {
+    for (const k of Object.keys(old)) expect(Object.hasOwn(r, k), k).toBe(false);
+  };
+
+  it('are tolerated by rulesFrom, which drops what it has no setting for', async () => {
+    const m = await load();
+    const r = m.rulesFrom({ ...m.DEFAULT_RULES, ...old } as Partial<Rules>);
+    expect(r).toEqual(m.DEFAULT_RULES);
+    gone(r);
+  });
+
+  it('are dropped from a stored preset on read, and the rest of it reads as before', async () => {
+    store.setItem(
+      PRESETS_KEY,
+      JSON.stringify({
+        format: 1,
+        presets: { older: { savedAt: 5, rules: { payoutMul: 2, mapSize: 224, ...old } } },
+      }),
+    );
+    const m = await load();
+    const r = m.readRulePreset('older')!;
+    gone(r);
+    expect(r).toEqual(m.rulesFrom({ payoutMul: 2, mapSize: 224 }));
+    expect(r.payoutMul).toBe(2);
+    expect(r.mapSize).toBe(224);
+  });
+
+  it('are left out of the live rules when a save puts its rules in force', async () => {
+    const m = await load();
+    m.applyGameRules({ ...m.DEFAULT_RULES, payoutMul: 2, ...old } as Partial<Rules>);
+    gone(m.rules);
+    expect(m.rules.payoutMul).toBe(2);
+  });
+});
+
+describe('rules from anywhere', () => {
+  /** What a saved object may hold: a setting with any value, or a name this build has no setting for. */
+  interface Saved {
+    /** setting key -> what the object holds under it */
+    known: Record<string, unknown>;
+    /** names no setting answers to, with a number under each */
+    strays: Record<string, number>;
+  }
+  const STRAYS = ['reputationMul', 'tradeCycleDays', 'aSettingFromTheFuture', 'constructor'];
+
+  it('come out with exactly the settings the game has, each in its range, by every way in', async () => {
+    const m = await load();
+    const keys = m.RULE_META.map((x) => x.key as string);
+    const odd = [Number.NaN, Infinity, -Infinity, '3', null, true, [], {}];
+    forAll(
+      (rng): Saved => {
+        const known: Record<string, unknown> = {};
+        for (const k of keys)
+          if (rng.chance(0.6))
+            known[k] = rng.chance(0.15)
+              ? rng.pick(odd)
+              : Math.round(rng.range(-50, 2000) * 100) / 100;
+        const strays: Record<string, number> = {};
+        for (const k of STRAYS) if (rng.chance(0.6)) strays[k] = rng.int(-9, 9);
+        return { known, strays };
+      },
+      ({ known, strays }) => {
+        const saved = { ...known, ...strays } as Partial<Rules>;
+        const before = JSON.stringify(saved);
+
+        // the three ways a stored object becomes rules: a pure overlay, a preset, a loaded save
+        store.setItem(
+          PRESETS_KEY,
+          JSON.stringify({ format: 1, presets: { p: { savedAt: 1, rules: saved } } }),
+        );
+        // each case starts from the defaults alone, so a key one case leaked cannot show in the next
+        for (const k of Object.keys(m.rules))
+          delete (m.rules as unknown as Record<string, unknown>)[k];
+        Object.assign(m.rules, m.DEFAULT_RULES);
+        m.applyGameRules(saved);
+        const ways: [string, object][] = [
+          ['rulesFrom', m.rulesFrom(saved)],
+          ['readRulePreset', m.readRulePreset('p')!],
+          ['applyGameRules', m.rules],
+        ];
+        expect(JSON.stringify(saved), 'the saved object is left as it was').toBe(before);
+        for (const [way, r] of ways) {
+          const has = Object.keys(r).sort();
+          expect(has, `${way}: its keys are the keys of DEFAULT_RULES`).toEqual(
+            keys.slice().sort(),
+          );
+          for (const meta of m.RULE_META) {
+            const v = known[meta.key];
+            const got = (r as Record<string, number>)[meta.key];
+            if (meta.key === 'mapSize') {
+              expect(got % 32, `${way}: mapSize in whole chunks`).toBe(0);
+              expect(got, `${way}: mapSize at least one chunk`).toBeGreaterThanOrEqual(32);
+            } else if (typeof v === 'number' && Number.isFinite(v)) {
+              expect(got, `${way}: ${meta.key} held ${v}`).toBe(
+                Math.min(meta.max, Math.max(meta.min, v)),
+              );
+            } else {
+              expect(got, `${way}: ${meta.key} held ${String(v)}`).toBe(m.DEFAULT_RULES[meta.key]);
+            }
+          }
+        }
+      },
+      {
+        shrink: function* ({ known, strays }) {
+          // fewer names, then plainer values
+          const without = <T>(o: Record<string, T>, k: string) =>
+            Object.fromEntries(Object.entries(o).filter(([n]) => n !== k));
+          for (const k of Object.keys(strays)) yield { known, strays: without(strays, k) };
+          for (const k of Object.keys(known)) yield { known: without(known, k), strays };
+        },
+      },
+    );
+  });
 });
 
 describe('rulesFrom', () => {

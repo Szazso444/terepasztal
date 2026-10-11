@@ -9,6 +9,8 @@ import {
   consistPhysics,
   defaultLocoMode,
   serviceLocoType,
+  DYNAMIC_MODES,
+  type RouteMode,
   type Train,
   type StopPlan,
 } from '../sim/trains';
@@ -44,8 +46,7 @@ export class DepotScreen implements Screen {
   onFocusDepot: ((d: Station, gate: { x: number; y: number } | null) => void) | null = null;
   onDetails: ((t: Train) => void) | null = null;
   private scheduleEditor: ScheduleEditor;
-  private routeMode: 'auto' | 'custom' | 'production' | 'collection' | 'transport' | 'contract' =
-    'auto';
+  private routeMode: 'auto' | 'custom' | RouteMode = 'auto';
   /** depot the new train rolls out of (null: the first one) */
   private depotId: number | null = null;
 
@@ -366,7 +367,7 @@ export class DepotScreen implements Screen {
     const names = auto.map((s) => this.builder.stationById(s.stationId)?.name ?? '?');
     const groups: [string, (typeof this.routeMode)[]][] = [
       [STR.depot.groupStatic, ['auto', 'custom']],
-      [STR.depot.groupDynamic, ['production', 'collection', 'transport', 'contract']],
+      [STR.depot.groupDynamic, DYNAMIC_MODES],
     ];
     for (const [label, modes] of groups) {
       const row = el('div', { class: 'row', style: 'margin:0 0 4px 0' });
@@ -385,13 +386,8 @@ export class DepotScreen implements Screen {
       c.append(row);
     }
     c.append(el('div', { class: 'dim', text: STR.depot.routeHint[this.routeMode] }));
-    if (
-      this.routeMode === 'production' ||
-      this.routeMode === 'collection' ||
-      this.routeMode === 'transport'
-    ) {
-      // nothing more to set up
-    } else if (this.routeMode === 'auto') {
+    // only a custom route has a stop list to edit; a dynamic mode has nothing more to set up
+    if (this.routeMode === 'auto') {
       c.append(
         el('div', {
           class: 'sub',
@@ -399,7 +395,7 @@ export class DepotScreen implements Screen {
           text: names.length ? names.join(' > ') : STR.depot.noStations,
         }),
       );
-    } else {
+    } else if (this.routeMode === 'custom') {
       this.scheduleEditor.render(this.schedule);
       c.append(this.scheduleEditor.root);
     }

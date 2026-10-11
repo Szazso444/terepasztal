@@ -439,7 +439,6 @@ export const MIGRATIONS: Migration[] = [
       if (j.rules) {
         if ([2, 6].includes(j.rules.contractRefreshDays ?? 0)) j.rules.contractRefreshDays = 21;
         if (j.rules.contractOfferCount === 2) j.rules.contractOfferCount = 1;
-        j.rules.tradeCycleDays = 7;
       }
       const trade = j.trade as { nextAt?: number; driftDay?: number } | undefined;
       if (trade) {

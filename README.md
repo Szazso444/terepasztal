@@ -23,7 +23,10 @@ the current state and decisions.
 
 ## Versions
 
-See `CHANGELOG.md` for what each version and pull request added; releases are tagged `vX.Y.Z`.
+See `CHANGELOG.md` for what each version and pull request added. Only `v0.1.0` is tagged today,
+on `83a4c68` (the merge of pull request #6, in `main`); v0.2.0 to v0.8.0 are labels given after
+the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
+(`docs/process/lifecycle.md`, step 9).
 
 ## Menus, tuning and editing
 

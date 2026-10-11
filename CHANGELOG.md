@@ -2,7 +2,14 @@
 
 Terepasztal uses semantic versions from v0.6.0 on. Earlier work is mapped to versions after the
 fact; the git history keeps its original commit messages (rewriting merged history would break
-every clone), the pull requests were retitled to carry the version. Tags: `git tag -l`.
+every clone), the pull requests were retitled to carry the version.
+
+Only `v0.1.0` is tagged today. The tag stands on `83a4c68`, the merge of pull request #6 in `main`,
+which is later than where the table's v0.1.0 row ends (`dde51b7`): the tag's history also holds the
+commits the table lists for v0.2.0 to v0.6.0 and the first v0.7.0 commits (`6a34390`, `31bda73`).
+v0.2.0 to v0.8.0 are labels given after the fact and have no tag. Every release from the next one
+on is tagged `vX.Y.Z` on its release pull request's merge commit (`docs/process/lifecycle.md`,
+step 9); `git ls-remote --tags origin` lists the tags that exist.
 
 | Version | Pull request                                                                                                                                                        | Commits                         | Summary                                                                                                                                                                                                                |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
