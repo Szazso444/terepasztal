@@ -1,0 +1,13 @@
+import { launch } from '../runtime.mjs';
+const b = await launch();
+const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+const errs = [];
+p.on('pageerror', (e) => errs.push(e.message));
+await p.goto('http://127.0.0.1:5180/scratchpad/retire-check/');
+await p.waitForFunction(() => typeof window.qa?.inventory === 'function', null, { timeout: 180000 });
+console.log('starter inventory:', JSON.stringify(await p.evaluate(() => qa.inventory())));
+await p.evaluate(() => { qa.give('adler'); qa.give('john_bull'); qa.roster(); });
+await p.waitForTimeout(800);
+await p.screenshot({ path: 'scratchpad/retire-check/roster.png' });
+console.log(errs.length ? errs : 'no errors');
+await b.close();
