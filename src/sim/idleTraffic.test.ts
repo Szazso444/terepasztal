@@ -3519,6 +3519,56 @@ describe('a working train that keeps giving way to the same train', () => {
   });
 });
 
+describe('a working train that gave way to a train and has reached a stop since', () => {
+  // on the terminus line #1, roaming, backs off for #2 on its way to the quarry, reaches it and
+  // finds nothing to haul, then makes way for #2 coming back there; once stone turns up it sets
+  // off for it and meets #2 again. Its make-way adds to yieldCount as a back-off does, yet it has
+  // reached a stop since it last backed off for #2, so it is not kept back
+  it('is not kept back: no jam is counted and it says it is pulling aside', SLOW, () => {
+    const { w, west, end } = terminus();
+    const sim = watch(w);
+    const roaming = train(w, 26, true, 'production', [defaultStop(end.id)]);
+    const other = train(w, 37, false, 'schedule', [call(west, 'none'), call(end, 'none')]);
+    go(w, roaming);
+    go(w, other);
+    const counted = w.fleet.traffic.counters;
+    const stop = () => sim.broken !== null;
+    const backsOff = () => roaming.holding && !roaming.makingWay;
+    expect(
+      sim.until(() => stop() || backsOff(), 30),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || (roaming.state === 'idle' && roaming.atStation === end), 200),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || roaming.makingWay, 60),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || roaming.lastMessage === STR.traffic.madeWay, 60),
+      story(w, sim),
+    ).toBe(true);
+    end.store('stone', 40);
+    expect(
+      sim.until(() => stop() || backsOff(), 120),
+      story(w, sim),
+    ).toBe(true);
+    expect(sim.arrivals(roaming), story(w, sim)).toBe(1);
+    expect(roaming.yieldCount).toBe(2);
+    expect(counted.deadlocks).toBe(0);
+    expect(
+      sim.until(() => stop() || !roaming.holding, 60),
+      story(w, sim),
+    ).toBe(true);
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect([roaming.state, roaming.lastMessage]).toEqual(['yielding', STR.traffic.pullingAside]);
+    expect(counted.deadlocks).toBe(0);
+    expect(counted.overlaps).toBe(0);
+  });
+});
+
 describe('a working train that gives way to one train and then another', () => {
   // the main line to x 56 with the quarry at x 30, and one siding at x 12 facing east: a train
   // heading east backs into it. #1 sets off east for the east warehouse and meets #2 coming west,

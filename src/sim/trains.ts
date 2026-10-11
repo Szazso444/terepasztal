@@ -754,7 +754,10 @@ export class Train {
   private retreatGroup: number[] = [];
   /** the second leg of the shunt being run, reserved with the path: run after the turn */
   private shunt: PathSegment[] | null = null;
-  /** the train the last escape in a jam gave way to (`gaveWay`), not kept in a save */
+  /**
+   * the train the last escape in a jam gave way to (`gaveWay`) since the train last reached a stop,
+   * not kept in a save
+   */
   private gaveWayTo: number | null = null;
   /** the escape being run gives way to the same train again (`gaveWay`): said where it ends */
   private kept = false;
@@ -2334,6 +2337,7 @@ export class Train {
   private arrive(st: Station, ctx?: TickCtx) {
     this.atStation = st;
     this.yieldCount = 0;
+    this.gaveWayTo = null;
     this.loadedHere = 0;
     this.clearHold();
     if (this.detour === st.id) {
@@ -2854,13 +2858,15 @@ export class Train {
   }
   /**
    * Note that the escape a working train has just set off along in a jam (`retreat`) gives way to
-   * train `other`. True when it gave way to that train before and has reached no stop since
-   * (`yieldCount`): the line keeps the two from passing, and where the escape ends the train says
-   * it is kept back (`STR.traffic.keptBack`). Always false for a train with no stop, or making way.
+   * train `other`. True when the last escape it gave way on in a jam was for that train too and it
+   * has reached no stop since (`gaveWayTo`, which `arrive` clears): the line keeps the two from
+   * passing, and where the escape ends the train says it is kept back (`STR.traffic.keptBack`).
+   * Making way while idle counts for nothing here, though it adds to `yieldCount`. Always false for
+   * a train with no stop, or making way.
    */
   gaveWay(other: number): boolean {
     if (!this.holding || this.aside || !this.route.length) return false;
-    this.kept = this.yieldCount > 1 && this.gaveWayTo === other;
+    this.kept = this.gaveWayTo === other;
     this.gaveWayTo = other;
     return this.kept;
   }
