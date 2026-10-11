@@ -1,11 +1,11 @@
 # Archived work
 
 Work that never reached `main` is kept as a tag, `archive/<branch>`, at the branch's last commit, so
-nothing is lost and none of it sits among the live branches. The tags are created by the
-`Ref hygiene` workflow from `.github/ref-archive.json`, which also deletes branches whose tips are
-already in `main`. A branch with unmerged work is never deleted by it: the branches below keep
-existing alongside their tags until the author decides, through a triage issue, to merge, keep or
-drop each one.
+nothing is lost. The tags are created by the `Ref hygiene` workflow from `.github/ref-archive.json`,
+which also deletes branches whose tips are already in `main`. A branch with unmerged work is never
+deleted by it: the branch stays next to its tag, among the live branches, until the author triages
+it through a triage issue and decides to merge, keep or drop it. The table marks those branches
+"kept".
 
 | Tag                                        | Commit    | Branch                                                                      | Ahead of `main` | Last commit |
 | ------------------------------------------ | --------- | --------------------------------------------------------------------------- | --------------- | ----------- |
