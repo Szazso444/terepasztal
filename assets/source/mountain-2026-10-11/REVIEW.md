@@ -28,3 +28,19 @@ preserved and the brightness limitation is disclosed instead of changing their p
 The request specified `art/<n>-mountain` without an issue number. No matching remote branch
 existed. This work uses #353, the existing landscape material issue, as the branch identifier.
 No renderer, packer, fallback tile, atlas or gameplay files were changed.
+
+## Repository checks
+
+Typecheck (both configurations), ESLint, Vite production build, changed-file Prettier,
+Git whitespace check, and Art scope check passed. The build has the existing bundle-size warning.
+The repository-wide Prettier check reports 374 untouched files; no formatting outside this
+folder was changed.
+
+The initial full test run reported 1947 passed, 14 failed and 11 pending out of 1972 assertions,
+plus failed suite imports. Missing `python` on PATH caused the pipeline failures. Retrying all
+failed suites with the bundled Node 24 and Python passed 26 of 29 assertions, with 2 pending.
+Two untouched suites still fail: `tools/agents/ownership.test.mjs` cannot import ("Invalid or
+unexpected token"); `tools/asset-pipeline/handbuilt/run.test.mjs` fails its path property at
+seed 19, case 19. Compact results are in `review/checks.json`. The full test gate is not green.
+The C: drive had zero free bytes, so test temporary files were redirected into the ignored
+`review/.tmp/` folder on G:. No user files were deleted to free space.
