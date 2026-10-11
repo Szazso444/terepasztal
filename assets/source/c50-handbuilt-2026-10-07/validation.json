@@ -1,0 +1,13 @@
+{
+  "hood_widths": [
+    1.3700000047683716,
+    1.3700000047683716
+  ],
+  "deck_width": 1.900800108909607,
+  "cab_width": 1.7064001560211182,
+  "longitudinal_axes_parallel": true,
+  "wheel_pivots": 4,
+  "mesh_objects": 286,
+  "source": "../c50-regenerated-2026-10-07/c50-reference-v2.png",
+  "policy": "New deterministic mesh; no Comfy geometry, source projection or width deformation."
+}

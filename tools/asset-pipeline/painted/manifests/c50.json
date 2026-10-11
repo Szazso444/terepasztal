@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "id": "c50",
+  "profile": "../profiles/c50-lighter-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "../../../../assets/source/c50-handbuilt-2026-10-07/c50-handbuilt.blend",
+      "source_sha256": "759437b66eb8dc81cb558a711e1043789c483cd890beb9f14492ddf003184f27",
+      "frame_prefix": "loco_c50_body",
+      "length_tiles": 0.8239,
+      "canvas": 256,
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.43,
+        "symmetry": 5
+      },
+      "effects": {
+        "smoke": [
+          [
+            1.18,
+            0.18,
+            2.42
+          ]
+        ],
+        "lamps": [
+          [
+            2.3,
+            -0.63,
+            1.91
+          ],
+          [
+            2.3,
+            0.63,
+            1.91
+          ]
+        ]
+      }
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "png-pictures-and-owner-notes",
+    "pictures": [
+      {
+        "id": "view1",
+        "path": "../../../../assets/source/c50-regenerated-2026-10-07/c50-reference-v2.png",
+        "sha256": "fe4e257f784cd705053c712daf450adfd58492231855682fb8276f50f0019ad8"
+      }
+    ],
+    "observations": {
+      "path": "../../../../assets/source/c50-handbuilt-2026-10-07/observations.json",
+      "sha256": "0372b79ddd0c5b238d5ca19703fadf7f667f7d1ef82031f62205b6e12a52ce6e"
+    },
+    "guidelines": "Geometry already explicitly accepted by owner in the 2026-10-07 review. Preserve approved shape. Use lighter painted style; no added cast shadows. Built from c50-reference-v2.png (CC BY-SA 4.0 sources, credited in its folder's README). Until 2026-10-11 this manifest was locked to workbook v8, sheet Locomotives, row 8, which is not in the repository.",
+    "prepared_sources": {
+      "body": "759437b66eb8dc81cb558a711e1043789c483cd890beb9f14492ddf003184f27"
+    },
+    "owner_approved": true
+  }
+}
