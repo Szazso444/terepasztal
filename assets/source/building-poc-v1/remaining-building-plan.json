@@ -1,0 +1,246 @@
+{
+  "scope": "Remaining static buildings; excludes bridges, track, signals, power lines, vegetation, terrain, vehicles, UI and effects",
+  "scaleRule": "Shared human scale; one cell for small buildings, two adjacent cells for larger buildings; four directions; integrated yard",
+  "assets": [
+    {
+      "id": "stations.farm",
+      "source": "farm.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "generated-first-pass",
+      "footprintApproved": true,
+      "key": "stations-farm",
+      "reference": "assets/source/building-poc-v1/references/stations-farm.png"
+    },
+    {
+      "id": "stations.lumber",
+      "source": "lumber.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "generated-first-pass",
+      "footprintApproved": true,
+      "key": "stations-lumber",
+      "reference": "assets/source/building-poc-v1/references/stations-lumber.png"
+    },
+    {
+      "id": "stations.quarry",
+      "source": "quarry.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "generated-first-pass",
+      "footprintApproved": true,
+      "key": "stations-quarry",
+      "reference": "assets/source/building-poc-v1/references/stations-quarry.png"
+    },
+    {
+      "id": "stations.pump",
+      "source": "pump.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "generated-first-pass",
+      "footprintApproved": true,
+      "key": "stations-pump",
+      "reference": "assets/source/building-poc-v1/references/stations-pump.png"
+    },
+    {
+      "id": "stations.town",
+      "source": "townhouse-civic.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "generated-first-pass",
+      "footprintApproved": true,
+      "key": "stations-town",
+      "reference": "assets/source/building-poc-v1/references/stations-town.png"
+    },
+    {
+      "id": "stations.warehouse",
+      "source": "warehouse.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "generated-first-pass",
+      "footprintApproved": true,
+      "key": "stations-warehouse",
+      "reference": "assets/source/building-poc-v1/references/stations-warehouse.png"
+    },
+    {
+      "id": "stations.depot",
+      "source": "depot.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "stations-depot",
+      "reference": "assets/source/building-poc-v1/references/stations-depot.png"
+    },
+    {
+      "id": "stations.full.mine",
+      "source": "stations-full-mine.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "stations-full-mine",
+      "reference": "assets/source/building-poc-v1/references/stations-full-mine.png"
+    },
+    {
+      "id": "stations.full.sand_pit",
+      "source": "stations-full-sand-pit.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "stations-full-sand_pit",
+      "reference": "assets/source/building-poc-v1/references/stations-full-sand_pit.png"
+    },
+    {
+      "id": "stations.full.copper_mine",
+      "source": "stations-full-copper-mine.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "stations-full-copper_mine",
+      "reference": "assets/source/building-poc-v1/references/stations-full-copper_mine.png"
+    },
+    {
+      "id": "works.windmill",
+      "source": "windmill.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-windmill",
+      "reference": "assets/source/building-poc-v1/references/works-windmill.png"
+    },
+    {
+      "id": "works.kiln",
+      "source": "kiln.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-kiln",
+      "reference": "assets/source/building-poc-v1/references/works-kiln.png"
+    },
+    {
+      "id": "works.grinder",
+      "source": "grinder.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-grinder",
+      "reference": "assets/source/building-poc-v1/references/works-grinder.png"
+    },
+    {
+      "id": "works.refinery",
+      "source": "refinery.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-refinery",
+      "reference": "assets/source/building-poc-v1/references/works-refinery.png"
+    },
+    {
+      "id": "works.power_plant",
+      "source": "power-plant.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-power_plant",
+      "reference": "assets/source/building-poc-v1/references/works-power_plant.png"
+    },
+    {
+      "id": "works.substation",
+      "source": "substation.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-substation",
+      "reference": "assets/source/building-poc-v1/references/works-substation.png"
+    },
+    {
+      "id": "works.hydro_plant",
+      "source": "hydro-plant.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-hydro_plant",
+      "reference": "assets/source/building-poc-v1/references/works-hydro_plant.png"
+    },
+    {
+      "id": "works.full.colliery",
+      "source": "works-full-colliery.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-full-colliery",
+      "reference": "assets/source/building-poc-v1/references/works-full-colliery.png"
+    },
+    {
+      "id": "works.full.ironworks",
+      "source": "works-full-ironworks.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-full-ironworks",
+      "reference": "assets/source/building-poc-v1/references/works-full-ironworks.png"
+    },
+    {
+      "id": "works.full.oil_derrick",
+      "source": "works-full-oil-derrick.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-full-oil_derrick",
+      "reference": "assets/source/building-poc-v1/references/works-full-oil_derrick.png"
+    },
+    {
+      "id": "works.full.diesel_refinery",
+      "source": "works-full-diesel-refinery.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-full-diesel_refinery",
+      "reference": "assets/source/building-poc-v1/references/works-full-diesel_refinery.png"
+    },
+    {
+      "id": "works.full.wire_mill",
+      "source": "works-full-wire-mill.png",
+      "proposedTiles": 2,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "works-full-wire_mill",
+      "reference": "assets/source/building-poc-v1/references/works-full-wire_mill.png"
+    },
+    {
+      "id": "decor.water_tower",
+      "source": "water-tower.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "decor-water_tower",
+      "reference": "assets/source/building-poc-v1/references/decor-water_tower.png"
+    },
+    {
+      "id": "decor.fuel_stop",
+      "source": "coaling-stage.png",
+      "proposedTiles": 1,
+      "facings": 4,
+      "status": "planned",
+      "footprintApproved": true,
+      "key": "decor-fuel_stop",
+      "reference": "assets/source/building-poc-v1/references/decor-fuel_stop.png"
+    }
+  ]
+}

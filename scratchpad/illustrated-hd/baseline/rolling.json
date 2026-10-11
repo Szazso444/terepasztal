@@ -1,0 +1,10004 @@
+{
+ "frames": {
+  "rolling/loco_diesel_cab_medium_blue_body_f0": {
+   "x": 3294,
+   "y": 193,
+   "w": 75,
+   "h": 52,
+   "ax": 38,
+   "ay": 38
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f1": {
+   "x": 3601,
+   "y": 136,
+   "w": 68,
+   "h": 54,
+   "ax": 34,
+   "ay": 40
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f13": {
+   "x": 1037,
+   "y": 301,
+   "w": 81,
+   "h": 49,
+   "ax": 39,
+   "ay": 37
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f14": {
+   "x": 3734,
+   "y": 352,
+   "w": 85,
+   "h": 45,
+   "ax": 41,
+   "ay": 35
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f15": {
+   "x": 2161,
+   "y": 490,
+   "w": 89,
+   "h": 40,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f16": {
+   "x": 844,
+   "y": 611,
+   "w": 90,
+   "h": 35,
+   "ax": 44,
+   "ay": 30
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f17": {
+   "x": 1666,
+   "y": 716,
+   "w": 91,
+   "h": 31,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f18": {
+   "x": 1998,
+   "y": 749,
+   "w": 90,
+   "h": 26,
+   "ax": 45,
+   "ay": 26
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f19": {
+   "x": 1758,
+   "y": 716,
+   "w": 91,
+   "h": 31,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f2": {
+   "x": 1451,
+   "y": 136,
+   "w": 60,
+   "h": 55,
+   "ax": 30,
+   "ay": 41
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f20": {
+   "x": 3298,
+   "y": 572,
+   "w": 90,
+   "h": 36,
+   "ax": 44,
+   "ay": 30
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f21": {
+   "x": 2251,
+   "y": 490,
+   "w": 89,
+   "h": 40,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f22": {
+   "x": 181,
+   "y": 446,
+   "w": 85,
+   "h": 43,
+   "ax": 41,
+   "ay": 33
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f23": {
+   "x": 3664,
+   "y": 301,
+   "w": 81,
+   "h": 47,
+   "ax": 39,
+   "ay": 35
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f24": {
+   "x": 3006,
+   "y": 248,
+   "w": 75,
+   "h": 50,
+   "ax": 36,
+   "ay": 36
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f25": {
+   "x": 1586,
+   "y": 248,
+   "w": 68,
+   "h": 51,
+   "ax": 33,
+   "ay": 37
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f26": {
+   "x": 3370,
+   "y": 193,
+   "w": 60,
+   "h": 52,
+   "ax": 29,
+   "ay": 38
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f27": {
+   "x": 1377,
+   "y": 193,
+   "w": 52,
+   "h": 53,
+   "ax": 25,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f28": {
+   "x": 1430,
+   "y": 193,
+   "w": 42,
+   "h": 53,
+   "ax": 20,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f29": {
+   "x": 1473,
+   "y": 193,
+   "w": 31,
+   "h": 53,
+   "ax": 15,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f3": {
+   "x": 3519,
+   "y": 75,
+   "w": 52,
+   "h": 56,
+   "ax": 26,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f30": {
+   "x": 1505,
+   "y": 193,
+   "w": 22,
+   "h": 53,
+   "ax": 11,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f4": {
+   "x": 3572,
+   "y": 75,
+   "w": 42,
+   "h": 56,
+   "ax": 21,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f5": {
+   "x": 3615,
+   "y": 75,
+   "w": 31,
+   "h": 56,
+   "ax": 15,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_blue_body_f6": {
+   "x": 3647,
+   "y": 75,
+   "w": 21,
+   "h": 56,
+   "ax": 10,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f0": {
+   "x": 3002,
+   "y": 193,
+   "w": 75,
+   "h": 52,
+   "ax": 38,
+   "ay": 38
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f1": {
+   "x": 3460,
+   "y": 136,
+   "w": 68,
+   "h": 54,
+   "ax": 34,
+   "ay": 40
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f13": {
+   "x": 877,
+   "y": 301,
+   "w": 81,
+   "h": 49,
+   "ax": 39,
+   "ay": 37
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f14": {
+   "x": 3648,
+   "y": 352,
+   "w": 85,
+   "h": 45,
+   "ax": 41,
+   "ay": 35
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f15": {
+   "x": 1981,
+   "y": 490,
+   "w": 89,
+   "h": 40,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f16": {
+   "x": 753,
+   "y": 611,
+   "w": 90,
+   "h": 35,
+   "ax": 44,
+   "ay": 30
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f17": {
+   "x": 1482,
+   "y": 716,
+   "w": 91,
+   "h": 31,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f18": {
+   "x": 1907,
+   "y": 749,
+   "w": 90,
+   "h": 26,
+   "ax": 45,
+   "ay": 26
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f19": {
+   "x": 1574,
+   "y": 716,
+   "w": 91,
+   "h": 31,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f2": {
+   "x": 1326,
+   "y": 136,
+   "w": 60,
+   "h": 55,
+   "ax": 30,
+   "ay": 41
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f20": {
+   "x": 3207,
+   "y": 572,
+   "w": 90,
+   "h": 36,
+   "ax": 44,
+   "ay": 30
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f21": {
+   "x": 2071,
+   "y": 490,
+   "w": 89,
+   "h": 40,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f22": {
+   "x": 3998,
+   "y": 400,
+   "w": 85,
+   "h": 43,
+   "ax": 41,
+   "ay": 33
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f23": {
+   "x": 3410,
+   "y": 301,
+   "w": 81,
+   "h": 47,
+   "ax": 39,
+   "ay": 35
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f24": {
+   "x": 2774,
+   "y": 248,
+   "w": 75,
+   "h": 50,
+   "ax": 36,
+   "ay": 36
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f25": {
+   "x": 1453,
+   "y": 248,
+   "w": 68,
+   "h": 51,
+   "ax": 33,
+   "ay": 37
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f26": {
+   "x": 3078,
+   "y": 193,
+   "w": 60,
+   "h": 52,
+   "ax": 29,
+   "ay": 38
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f27": {
+   "x": 1148,
+   "y": 193,
+   "w": 52,
+   "h": 53,
+   "ax": 25,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f28": {
+   "x": 1201,
+   "y": 193,
+   "w": 42,
+   "h": 53,
+   "ax": 20,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f29": {
+   "x": 1244,
+   "y": 193,
+   "w": 31,
+   "h": 53,
+   "ax": 15,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f3": {
+   "x": 3315,
+   "y": 75,
+   "w": 52,
+   "h": 56,
+   "ax": 26,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f30": {
+   "x": 1276,
+   "y": 193,
+   "w": 22,
+   "h": 53,
+   "ax": 11,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f4": {
+   "x": 3368,
+   "y": 75,
+   "w": 42,
+   "h": 56,
+   "ax": 21,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f5": {
+   "x": 3411,
+   "y": 75,
+   "w": 31,
+   "h": 56,
+   "ax": 15,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_iron_body_f6": {
+   "x": 3443,
+   "y": 75,
+   "w": 21,
+   "h": 56,
+   "ax": 10,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f0": {
+   "x": 2865,
+   "y": 193,
+   "w": 75,
+   "h": 52,
+   "ax": 38,
+   "ay": 38
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f1": {
+   "x": 3391,
+   "y": 136,
+   "w": 68,
+   "h": 54,
+   "ax": 34,
+   "ay": 40
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f13": {
+   "x": 795,
+   "y": 301,
+   "w": 81,
+   "h": 49,
+   "ax": 39,
+   "ay": 37
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f14": {
+   "x": 3562,
+   "y": 352,
+   "w": 85,
+   "h": 45,
+   "ax": 41,
+   "ay": 35
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f15": {
+   "x": 1801,
+   "y": 490,
+   "w": 89,
+   "h": 40,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f16": {
+   "x": 662,
+   "y": 611,
+   "w": 90,
+   "h": 35,
+   "ax": 44,
+   "ay": 30
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f17": {
+   "x": 1298,
+   "y": 716,
+   "w": 91,
+   "h": 31,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f18": {
+   "x": 1816,
+   "y": 749,
+   "w": 90,
+   "h": 26,
+   "ax": 45,
+   "ay": 26
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f19": {
+   "x": 1390,
+   "y": 716,
+   "w": 91,
+   "h": 31,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f2": {
+   "x": 1265,
+   "y": 136,
+   "w": 60,
+   "h": 55,
+   "ax": 30,
+   "ay": 41
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f20": {
+   "x": 3116,
+   "y": 572,
+   "w": 90,
+   "h": 36,
+   "ax": 44,
+   "ay": 30
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f21": {
+   "x": 1891,
+   "y": 490,
+   "w": 89,
+   "h": 40,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f22": {
+   "x": 3912,
+   "y": 400,
+   "w": 85,
+   "h": 43,
+   "ax": 41,
+   "ay": 33
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f23": {
+   "x": 3328,
+   "y": 301,
+   "w": 81,
+   "h": 47,
+   "ax": 39,
+   "ay": 35
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f24": {
+   "x": 2698,
+   "y": 248,
+   "w": 75,
+   "h": 50,
+   "ax": 36,
+   "ay": 36
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f25": {
+   "x": 1384,
+   "y": 248,
+   "w": 68,
+   "h": 51,
+   "ax": 33,
+   "ay": 37
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f26": {
+   "x": 2941,
+   "y": 193,
+   "w": 60,
+   "h": 52,
+   "ax": 29,
+   "ay": 38
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f27": {
+   "x": 997,
+   "y": 193,
+   "w": 52,
+   "h": 53,
+   "ax": 25,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f28": {
+   "x": 1050,
+   "y": 193,
+   "w": 42,
+   "h": 53,
+   "ax": 20,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f29": {
+   "x": 1093,
+   "y": 193,
+   "w": 31,
+   "h": 53,
+   "ax": 15,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f3": {
+   "x": 3165,
+   "y": 75,
+   "w": 52,
+   "h": 56,
+   "ax": 26,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f30": {
+   "x": 1125,
+   "y": 193,
+   "w": 22,
+   "h": 53,
+   "ax": 11,
+   "ay": 39
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f4": {
+   "x": 3218,
+   "y": 75,
+   "w": 42,
+   "h": 56,
+   "ax": 21,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f5": {
+   "x": 3261,
+   "y": 75,
+   "w": 31,
+   "h": 56,
+   "ax": 15,
+   "ay": 42
+  },
+  "rolling/loco_diesel_cab_medium_red_body_f6": {
+   "x": 3293,
+   "y": 75,
+   "w": 21,
+   "h": 56,
+   "ax": 10,
+   "ay": 42
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f0": {
+   "x": 1657,
+   "y": 75,
+   "w": 109,
+   "h": 58,
+   "ax": 54,
+   "ay": 44
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f1": {
+   "x": 447,
+   "y": 75,
+   "w": 94,
+   "h": 60,
+   "ax": 48,
+   "ay": 46
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f13": {
+   "x": 3787,
+   "y": 75,
+   "w": 117,
+   "h": 56,
+   "ax": 58,
+   "ay": 42
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f14": {
+   "x": 3796,
+   "y": 136,
+   "w": 125,
+   "h": 54,
+   "ax": 62,
+   "ay": 40
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f15": {
+   "x": 3340,
+   "y": 248,
+   "w": 131,
+   "h": 50,
+   "ax": 65,
+   "ay": 37
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f16": {
+   "x": 1406,
+   "y": 400,
+   "w": 134,
+   "h": 44,
+   "ax": 66,
+   "ay": 35
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f17": {
+   "x": 1661,
+   "y": 572,
+   "w": 136,
+   "h": 37,
+   "ax": 67,
+   "ay": 32
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f18": {
+   "x": 1,
+   "y": 749,
+   "w": 136,
+   "h": 29,
+   "ax": 67,
+   "ay": 28
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f19": {
+   "x": 3654,
+   "y": 682,
+   "w": 136,
+   "h": 32,
+   "ax": 67,
+   "ay": 27
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f2": {
+   "x": 3637,
+   "y": 1,
+   "w": 79,
+   "h": 62,
+   "ax": 42,
+   "ay": 48
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f20": {
+   "x": 2476,
+   "y": 490,
+   "w": 134,
+   "h": 40,
+   "ax": 66,
+   "ay": 31
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f21": {
+   "x": 3878,
+   "y": 301,
+   "w": 131,
+   "h": 47,
+   "ax": 65,
+   "ay": 34
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f22": {
+   "x": 3472,
+   "y": 248,
+   "w": 125,
+   "h": 50,
+   "ax": 62,
+   "ay": 36
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f23": {
+   "x": 1646,
+   "y": 193,
+   "w": 117,
+   "h": 53,
+   "ax": 58,
+   "ay": 39
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f24": {
+   "x": 1622,
+   "y": 136,
+   "w": 109,
+   "h": 55,
+   "ax": 54,
+   "ay": 41
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f25": {
+   "x": 2248,
+   "y": 75,
+   "w": 96,
+   "h": 57,
+   "ax": 48,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f26": {
+   "x": 1767,
+   "y": 75,
+   "w": 83,
+   "h": 58,
+   "ax": 42,
+   "ay": 44
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f27": {
+   "x": 978,
+   "y": 75,
+   "w": 68,
+   "h": 59,
+   "ax": 35,
+   "ay": 45
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f28": {
+   "x": 542,
+   "y": 75,
+   "w": 51,
+   "h": 60,
+   "ax": 27,
+   "ay": 46
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f29": {
+   "x": 594,
+   "y": 75,
+   "w": 36,
+   "h": 60,
+   "ax": 19,
+   "ay": 46
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f3": {
+   "x": 2703,
+   "y": 1,
+   "w": 65,
+   "h": 64,
+   "ax": 35,
+   "ay": 50
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f30": {
+   "x": 631,
+   "y": 75,
+   "w": 21,
+   "h": 60,
+   "ax": 10,
+   "ay": 46
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f4": {
+   "x": 1727,
+   "y": 1,
+   "w": 50,
+   "h": 65,
+   "ax": 27,
+   "ay": 51
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f5": {
+   "x": 1778,
+   "y": 1,
+   "w": 36,
+   "h": 65,
+   "ax": 19,
+   "ay": 51
+  },
+  "rolling/loco_diesel_hood_large_iron_body_f6": {
+   "x": 1815,
+   "y": 1,
+   "w": 21,
+   "h": 65,
+   "ax": 10,
+   "ay": 51
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f0": {
+   "x": 1463,
+   "y": 75,
+   "w": 109,
+   "h": 58,
+   "ax": 54,
+   "ay": 44
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f1": {
+   "x": 241,
+   "y": 75,
+   "w": 94,
+   "h": 60,
+   "ax": 48,
+   "ay": 46
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f13": {
+   "x": 3669,
+   "y": 75,
+   "w": 117,
+   "h": 56,
+   "ax": 58,
+   "ay": 42
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f14": {
+   "x": 3670,
+   "y": 136,
+   "w": 125,
+   "h": 54,
+   "ax": 62,
+   "ay": 40
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f15": {
+   "x": 3082,
+   "y": 248,
+   "w": 131,
+   "h": 50,
+   "ax": 65,
+   "ay": 37
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f16": {
+   "x": 1271,
+   "y": 400,
+   "w": 134,
+   "h": 44,
+   "ax": 66,
+   "ay": 35
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f17": {
+   "x": 1524,
+   "y": 572,
+   "w": 136,
+   "h": 37,
+   "ax": 67,
+   "ay": 32
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f18": {
+   "x": 3887,
+   "y": 716,
+   "w": 136,
+   "h": 29,
+   "ax": 67,
+   "ay": 28
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f19": {
+   "x": 3517,
+   "y": 682,
+   "w": 136,
+   "h": 32,
+   "ax": 67,
+   "ay": 27
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f2": {
+   "x": 3557,
+   "y": 1,
+   "w": 79,
+   "h": 62,
+   "ax": 42,
+   "ay": 48
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f20": {
+   "x": 2341,
+   "y": 490,
+   "w": 134,
+   "h": 40,
+   "ax": 66,
+   "ay": 31
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f21": {
+   "x": 3746,
+   "y": 301,
+   "w": 131,
+   "h": 47,
+   "ax": 65,
+   "ay": 34
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f22": {
+   "x": 3214,
+   "y": 248,
+   "w": 125,
+   "h": 50,
+   "ax": 62,
+   "ay": 36
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f23": {
+   "x": 1528,
+   "y": 193,
+   "w": 117,
+   "h": 53,
+   "ax": 58,
+   "ay": 39
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f24": {
+   "x": 1512,
+   "y": 136,
+   "w": 109,
+   "h": 55,
+   "ax": 54,
+   "ay": 41
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f25": {
+   "x": 2151,
+   "y": 75,
+   "w": 96,
+   "h": 57,
+   "ax": 48,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f26": {
+   "x": 1573,
+   "y": 75,
+   "w": 83,
+   "h": 58,
+   "ax": 42,
+   "ay": 44
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f27": {
+   "x": 909,
+   "y": 75,
+   "w": 68,
+   "h": 59,
+   "ax": 35,
+   "ay": 45
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f28": {
+   "x": 336,
+   "y": 75,
+   "w": 51,
+   "h": 60,
+   "ax": 27,
+   "ay": 46
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f29": {
+   "x": 388,
+   "y": 75,
+   "w": 36,
+   "h": 60,
+   "ax": 19,
+   "ay": 46
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f3": {
+   "x": 2637,
+   "y": 1,
+   "w": 65,
+   "h": 64,
+   "ax": 35,
+   "ay": 50
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f30": {
+   "x": 425,
+   "y": 75,
+   "w": 21,
+   "h": 60,
+   "ax": 10,
+   "ay": 46
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f4": {
+   "x": 1617,
+   "y": 1,
+   "w": 50,
+   "h": 65,
+   "ax": 27,
+   "ay": 51
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f5": {
+   "x": 1668,
+   "y": 1,
+   "w": 36,
+   "h": 65,
+   "ax": 19,
+   "ay": 51
+  },
+  "rolling/loco_diesel_hood_large_yellow_body_f6": {
+   "x": 1705,
+   "y": 1,
+   "w": 21,
+   "h": 65,
+   "ax": 10,
+   "ay": 51
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f0": {
+   "x": 1299,
+   "y": 193,
+   "w": 77,
+   "h": 53,
+   "ax": 38,
+   "ay": 39
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f1": {
+   "x": 3529,
+   "y": 136,
+   "w": 71,
+   "h": 54,
+   "ax": 35,
+   "ay": 40
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f13": {
+   "x": 2850,
+   "y": 248,
+   "w": 83,
+   "h": 50,
+   "ax": 41,
+   "ay": 37
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f14": {
+   "x": 3492,
+   "y": 301,
+   "w": 87,
+   "h": 47,
+   "ax": 43,
+   "ay": 36
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f15": {
+   "x": 1,
+   "y": 446,
+   "w": 91,
+   "h": 43,
+   "ax": 45,
+   "ay": 34
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f16": {
+   "x": 3454,
+   "y": 532,
+   "w": 92,
+   "h": 38,
+   "ax": 45,
+   "ay": 32
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f17": {
+   "x": 235,
+   "y": 682,
+   "w": 92,
+   "h": 33,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f18": {
+   "x": 3795,
+   "y": 716,
+   "w": 91,
+   "h": 29,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f19": {
+   "x": 3170,
+   "y": 716,
+   "w": 92,
+   "h": 30,
+   "ax": 45,
+   "ay": 27
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f2": {
+   "x": 1387,
+   "y": 136,
+   "w": 63,
+   "h": 55,
+   "ax": 31,
+   "ay": 41
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f20": {
+   "x": 3863,
+   "y": 611,
+   "w": 92,
+   "h": 34,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f21": {
+   "x": 1879,
+   "y": 532,
+   "w": 91,
+   "h": 39,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f22": {
+   "x": 93,
+   "y": 446,
+   "w": 87,
+   "h": 43,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f23": {
+   "x": 3580,
+   "y": 301,
+   "w": 83,
+   "h": 47,
+   "ax": 41,
+   "ay": 34
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f24": {
+   "x": 959,
+   "y": 301,
+   "w": 77,
+   "h": 49,
+   "ax": 38,
+   "ay": 35
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f25": {
+   "x": 2934,
+   "y": 248,
+   "w": 71,
+   "h": 50,
+   "ax": 35,
+   "ay": 36
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f26": {
+   "x": 1522,
+   "y": 248,
+   "w": 63,
+   "h": 51,
+   "ax": 31,
+   "ay": 37
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f27": {
+   "x": 3139,
+   "y": 193,
+   "w": 53,
+   "h": 52,
+   "ax": 26,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f28": {
+   "x": 3193,
+   "y": 193,
+   "w": 43,
+   "h": 52,
+   "ax": 21,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f29": {
+   "x": 3237,
+   "y": 193,
+   "w": 33,
+   "h": 52,
+   "ax": 16,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f3": {
+   "x": 3465,
+   "y": 75,
+   "w": 53,
+   "h": 56,
+   "ax": 26,
+   "ay": 42
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f30": {
+   "x": 3271,
+   "y": 193,
+   "w": 22,
+   "h": 52,
+   "ax": 11,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f4": {
+   "x": 2051,
+   "y": 75,
+   "w": 43,
+   "h": 57,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f5": {
+   "x": 2095,
+   "y": 75,
+   "w": 33,
+   "h": 57,
+   "ax": 16,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_medium_black_body_f6": {
+   "x": 2129,
+   "y": 75,
+   "w": 21,
+   "h": 57,
+   "ax": 10,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f0": {
+   "x": 841,
+   "y": 193,
+   "w": 77,
+   "h": 53,
+   "ax": 38,
+   "ay": 39
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f1": {
+   "x": 3247,
+   "y": 136,
+   "w": 71,
+   "h": 54,
+   "ax": 35,
+   "ay": 40
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f13": {
+   "x": 2386,
+   "y": 248,
+   "w": 83,
+   "h": 50,
+   "ax": 41,
+   "ay": 37
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f14": {
+   "x": 2984,
+   "y": 301,
+   "w": 87,
+   "h": 47,
+   "ax": 43,
+   "ay": 36
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f15": {
+   "x": 3552,
+   "y": 400,
+   "w": 91,
+   "h": 43,
+   "ax": 45,
+   "ay": 34
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f16": {
+   "x": 3268,
+   "y": 532,
+   "w": 92,
+   "h": 38,
+   "ax": 45,
+   "ay": 32
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f17": {
+   "x": 49,
+   "y": 682,
+   "w": 92,
+   "h": 33,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f18": {
+   "x": 3611,
+   "y": 716,
+   "w": 91,
+   "h": 29,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f19": {
+   "x": 2984,
+   "y": 716,
+   "w": 92,
+   "h": 30,
+   "ax": 45,
+   "ay": 27
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f2": {
+   "x": 1137,
+   "y": 136,
+   "w": 63,
+   "h": 55,
+   "ax": 31,
+   "ay": 41
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f20": {
+   "x": 3677,
+   "y": 611,
+   "w": 92,
+   "h": 34,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f21": {
+   "x": 1695,
+   "y": 532,
+   "w": 91,
+   "h": 39,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f22": {
+   "x": 3644,
+   "y": 400,
+   "w": 87,
+   "h": 43,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f23": {
+   "x": 3072,
+   "y": 301,
+   "w": 83,
+   "h": 47,
+   "ax": 41,
+   "ay": 34
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f24": {
+   "x": 639,
+   "y": 301,
+   "w": 77,
+   "h": 49,
+   "ax": 38,
+   "ay": 35
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f25": {
+   "x": 2470,
+   "y": 248,
+   "w": 71,
+   "h": 50,
+   "ax": 35,
+   "ay": 36
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f26": {
+   "x": 1256,
+   "y": 248,
+   "w": 63,
+   "h": 51,
+   "ax": 31,
+   "ay": 37
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f27": {
+   "x": 2555,
+   "y": 193,
+   "w": 53,
+   "h": 52,
+   "ax": 26,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f28": {
+   "x": 2609,
+   "y": 193,
+   "w": 43,
+   "h": 52,
+   "ax": 21,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f29": {
+   "x": 2653,
+   "y": 193,
+   "w": 33,
+   "h": 52,
+   "ax": 16,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f3": {
+   "x": 3057,
+   "y": 75,
+   "w": 53,
+   "h": 56,
+   "ax": 26,
+   "ay": 42
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f30": {
+   "x": 2687,
+   "y": 193,
+   "w": 22,
+   "h": 52,
+   "ax": 11,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f4": {
+   "x": 1851,
+   "y": 75,
+   "w": 43,
+   "h": 57,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f5": {
+   "x": 1895,
+   "y": 75,
+   "w": 33,
+   "h": 57,
+   "ax": 16,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_medium_green_body_f6": {
+   "x": 1929,
+   "y": 75,
+   "w": 21,
+   "h": 57,
+   "ax": 10,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f0": {
+   "x": 919,
+   "y": 193,
+   "w": 77,
+   "h": 53,
+   "ax": 38,
+   "ay": 39
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f1": {
+   "x": 3319,
+   "y": 136,
+   "w": 71,
+   "h": 54,
+   "ax": 35,
+   "ay": 40
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f13": {
+   "x": 2542,
+   "y": 248,
+   "w": 83,
+   "h": 50,
+   "ax": 41,
+   "ay": 37
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f14": {
+   "x": 3156,
+   "y": 301,
+   "w": 87,
+   "h": 47,
+   "ax": 43,
+   "ay": 36
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f15": {
+   "x": 3732,
+   "y": 400,
+   "w": 91,
+   "h": 43,
+   "ax": 45,
+   "ay": 34
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f16": {
+   "x": 3361,
+   "y": 532,
+   "w": 92,
+   "h": 38,
+   "ax": 45,
+   "ay": 32
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f17": {
+   "x": 142,
+   "y": 682,
+   "w": 92,
+   "h": 33,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f18": {
+   "x": 3703,
+   "y": 716,
+   "w": 91,
+   "h": 29,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f19": {
+   "x": 3077,
+   "y": 716,
+   "w": 92,
+   "h": 30,
+   "ax": 45,
+   "ay": 27
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f2": {
+   "x": 1201,
+   "y": 136,
+   "w": 63,
+   "h": 55,
+   "ax": 31,
+   "ay": 41
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f20": {
+   "x": 3770,
+   "y": 611,
+   "w": 92,
+   "h": 34,
+   "ax": 45,
+   "ay": 28
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f21": {
+   "x": 1787,
+   "y": 532,
+   "w": 91,
+   "h": 39,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f22": {
+   "x": 3824,
+   "y": 400,
+   "w": 87,
+   "h": 43,
+   "ax": 43,
+   "ay": 32
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f23": {
+   "x": 3244,
+   "y": 301,
+   "w": 83,
+   "h": 47,
+   "ax": 41,
+   "ay": 34
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f24": {
+   "x": 717,
+   "y": 301,
+   "w": 77,
+   "h": 49,
+   "ax": 38,
+   "ay": 35
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f25": {
+   "x": 2626,
+   "y": 248,
+   "w": 71,
+   "h": 50,
+   "ax": 35,
+   "ay": 36
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f26": {
+   "x": 1320,
+   "y": 248,
+   "w": 63,
+   "h": 51,
+   "ax": 31,
+   "ay": 37
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f27": {
+   "x": 2710,
+   "y": 193,
+   "w": 53,
+   "h": 52,
+   "ax": 26,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f28": {
+   "x": 2764,
+   "y": 193,
+   "w": 43,
+   "h": 52,
+   "ax": 21,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f29": {
+   "x": 2808,
+   "y": 193,
+   "w": 33,
+   "h": 52,
+   "ax": 16,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f3": {
+   "x": 3111,
+   "y": 75,
+   "w": 53,
+   "h": 56,
+   "ax": 26,
+   "ay": 42
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f30": {
+   "x": 2842,
+   "y": 193,
+   "w": 22,
+   "h": 52,
+   "ax": 11,
+   "ay": 38
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f4": {
+   "x": 1951,
+   "y": 75,
+   "w": 43,
+   "h": 57,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f5": {
+   "x": 1995,
+   "y": 75,
+   "w": 33,
+   "h": 57,
+   "ax": 16,
+   "ay": 43
+  },
+  "rolling/loco_diesel_hood_medium_iron_body_f6": {
+   "x": 2029,
+   "y": 75,
+   "w": 21,
+   "h": 57,
+   "ax": 10,
+   "ay": 43
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f0": {
+   "x": 2040,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f1": {
+   "x": 2086,
+   "y": 446,
+   "w": 43,
+   "h": 42,
+   "ax": 21,
+   "ay": 34
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f13": {
+   "x": 1657,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 33
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f14": {
+   "x": 1545,
+   "y": 532,
+   "w": 49,
+   "h": 39,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f15": {
+   "x": 1224,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f16": {
+   "x": 1274,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f17": {
+   "x": 3967,
+   "y": 572,
+   "w": 47,
+   "h": 35,
+   "ax": 23,
+   "ay": 30
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f18": {
+   "x": 3229,
+   "y": 682,
+   "w": 45,
+   "h": 32,
+   "ax": 22,
+   "ay": 28
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f19": {
+   "x": 3516,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f2": {
+   "x": 3324,
+   "y": 400,
+   "w": 39,
+   "h": 43,
+   "ax": 19,
+   "ay": 35
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f20": {
+   "x": 3564,
+   "y": 647,
+   "w": 49,
+   "h": 33,
+   "ax": 24,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f21": {
+   "x": 3275,
+   "y": 682,
+   "w": 49,
+   "h": 32,
+   "ax": 24,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f22": {
+   "x": 3614,
+   "y": 647,
+   "w": 49,
+   "h": 33,
+   "ax": 24,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f23": {
+   "x": 3664,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f24": {
+   "x": 3539,
+   "y": 611,
+   "w": 45,
+   "h": 34,
+   "ax": 22,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f25": {
+   "x": 4015,
+   "y": 572,
+   "w": 43,
+   "h": 35,
+   "ax": 21,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f26": {
+   "x": 1,
+   "y": 611,
+   "w": 39,
+   "h": 35,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f27": {
+   "x": 41,
+   "y": 611,
+   "w": 35,
+   "h": 35,
+   "ax": 17,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f28": {
+   "x": 77,
+   "y": 611,
+   "w": 31,
+   "h": 35,
+   "ax": 15,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f29": {
+   "x": 109,
+   "y": 611,
+   "w": 27,
+   "h": 35,
+   "ax": 13,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f3": {
+   "x": 3364,
+   "y": 400,
+   "w": 35,
+   "h": 43,
+   "ax": 17,
+   "ay": 35
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f30": {
+   "x": 137,
+   "y": 611,
+   "w": 22,
+   "h": 35,
+   "ax": 11,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f4": {
+   "x": 1022,
+   "y": 400,
+   "w": 31,
+   "h": 44,
+   "ax": 15,
+   "ay": 36
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f5": {
+   "x": 1054,
+   "y": 400,
+   "w": 27,
+   "h": 44,
+   "ax": 13,
+   "ay": 36
+  },
+  "rolling/loco_diesel_switcher_small_black_body_f6": {
+   "x": 1082,
+   "y": 400,
+   "w": 22,
+   "h": 44,
+   "ax": 11,
+   "ay": 36
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f0": {
+   "x": 2220,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f1": {
+   "x": 2266,
+   "y": 446,
+   "w": 43,
+   "h": 42,
+   "ax": 21,
+   "ay": 34
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f13": {
+   "x": 1753,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 33
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f14": {
+   "x": 1645,
+   "y": 532,
+   "w": 49,
+   "h": 39,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f15": {
+   "x": 1424,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f16": {
+   "x": 1474,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f17": {
+   "x": 411,
+   "y": 611,
+   "w": 47,
+   "h": 35,
+   "ax": 23,
+   "ay": 30
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f18": {
+   "x": 3421,
+   "y": 682,
+   "w": 45,
+   "h": 32,
+   "ax": 22,
+   "ay": 28
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f19": {
+   "x": 3908,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f2": {
+   "x": 3476,
+   "y": 400,
+   "w": 39,
+   "h": 43,
+   "ax": 19,
+   "ay": 35
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f20": {
+   "x": 3956,
+   "y": 647,
+   "w": 49,
+   "h": 33,
+   "ax": 24,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f21": {
+   "x": 3467,
+   "y": 682,
+   "w": 49,
+   "h": 32,
+   "ax": 24,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f22": {
+   "x": 4006,
+   "y": 647,
+   "w": 49,
+   "h": 33,
+   "ax": 24,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f23": {
+   "x": 1,
+   "y": 682,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f24": {
+   "x": 3631,
+   "y": 611,
+   "w": 45,
+   "h": 34,
+   "ax": 22,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f25": {
+   "x": 459,
+   "y": 611,
+   "w": 43,
+   "h": 35,
+   "ax": 21,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f26": {
+   "x": 503,
+   "y": 611,
+   "w": 39,
+   "h": 35,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f27": {
+   "x": 543,
+   "y": 611,
+   "w": 35,
+   "h": 35,
+   "ax": 17,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f28": {
+   "x": 579,
+   "y": 611,
+   "w": 31,
+   "h": 35,
+   "ax": 15,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f29": {
+   "x": 611,
+   "y": 611,
+   "w": 27,
+   "h": 35,
+   "ax": 13,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f3": {
+   "x": 3516,
+   "y": 400,
+   "w": 35,
+   "h": 43,
+   "ax": 17,
+   "ay": 35
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f30": {
+   "x": 639,
+   "y": 611,
+   "w": 22,
+   "h": 35,
+   "ax": 11,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f4": {
+   "x": 1188,
+   "y": 400,
+   "w": 31,
+   "h": 44,
+   "ax": 15,
+   "ay": 36
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f5": {
+   "x": 1220,
+   "y": 400,
+   "w": 27,
+   "h": 44,
+   "ax": 13,
+   "ay": 36
+  },
+  "rolling/loco_diesel_switcher_small_green_body_f6": {
+   "x": 1248,
+   "y": 400,
+   "w": 22,
+   "h": 44,
+   "ax": 11,
+   "ay": 36
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f0": {
+   "x": 2130,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f1": {
+   "x": 2176,
+   "y": 446,
+   "w": 43,
+   "h": 42,
+   "ax": 21,
+   "ay": 34
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f13": {
+   "x": 1705,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 33
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f14": {
+   "x": 1595,
+   "y": 532,
+   "w": 49,
+   "h": 39,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f15": {
+   "x": 1324,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f16": {
+   "x": 1374,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f17": {
+   "x": 160,
+   "y": 611,
+   "w": 47,
+   "h": 35,
+   "ax": 23,
+   "ay": 30
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f18": {
+   "x": 3325,
+   "y": 682,
+   "w": 45,
+   "h": 32,
+   "ax": 22,
+   "ay": 28
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f19": {
+   "x": 3712,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f2": {
+   "x": 3400,
+   "y": 400,
+   "w": 39,
+   "h": 43,
+   "ax": 19,
+   "ay": 35
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f20": {
+   "x": 3760,
+   "y": 647,
+   "w": 49,
+   "h": 33,
+   "ax": 24,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f21": {
+   "x": 3371,
+   "y": 682,
+   "w": 49,
+   "h": 32,
+   "ax": 24,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f22": {
+   "x": 3810,
+   "y": 647,
+   "w": 49,
+   "h": 33,
+   "ax": 24,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f23": {
+   "x": 3860,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f24": {
+   "x": 3585,
+   "y": 611,
+   "w": 45,
+   "h": 34,
+   "ax": 22,
+   "ay": 26
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f25": {
+   "x": 208,
+   "y": 611,
+   "w": 43,
+   "h": 35,
+   "ax": 21,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f26": {
+   "x": 252,
+   "y": 611,
+   "w": 39,
+   "h": 35,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f27": {
+   "x": 292,
+   "y": 611,
+   "w": 35,
+   "h": 35,
+   "ax": 17,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f28": {
+   "x": 328,
+   "y": 611,
+   "w": 31,
+   "h": 35,
+   "ax": 15,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f29": {
+   "x": 360,
+   "y": 611,
+   "w": 27,
+   "h": 35,
+   "ax": 13,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f3": {
+   "x": 3440,
+   "y": 400,
+   "w": 35,
+   "h": 43,
+   "ax": 17,
+   "ay": 35
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f30": {
+   "x": 388,
+   "y": 611,
+   "w": 22,
+   "h": 35,
+   "ax": 11,
+   "ay": 27
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f4": {
+   "x": 1105,
+   "y": 400,
+   "w": 31,
+   "h": 44,
+   "ax": 15,
+   "ay": 36
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f5": {
+   "x": 1137,
+   "y": 400,
+   "w": 27,
+   "h": 44,
+   "ax": 13,
+   "ay": 36
+  },
+  "rolling/loco_diesel_switcher_small_iron_body_f6": {
+   "x": 1165,
+   "y": 400,
+   "w": 22,
+   "h": 44,
+   "ax": 11,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_large_green_body_f0": {
+   "x": 1047,
+   "y": 75,
+   "w": 103,
+   "h": 59,
+   "ax": 51,
+   "ay": 45
+  },
+  "rolling/loco_electric_box_large_green_body_f1": {
+   "x": 3717,
+   "y": 1,
+   "w": 93,
+   "h": 61,
+   "ax": 46,
+   "ay": 47
+  },
+  "rolling/loco_electric_box_large_green_body_f13": {
+   "x": 2345,
+   "y": 75,
+   "w": 113,
+   "h": 57,
+   "ax": 56,
+   "ay": 43
+  },
+  "rolling/loco_electric_box_large_green_body_f14": {
+   "x": 649,
+   "y": 136,
+   "w": 121,
+   "h": 56,
+   "ax": 60,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_large_green_body_f15": {
+   "x": 3751,
+   "y": 193,
+   "w": 127,
+   "h": 52,
+   "ax": 63,
+   "ay": 40
+  },
+  "rolling/loco_electric_box_large_green_body_f16": {
+   "x": 1879,
+   "y": 352,
+   "w": 131,
+   "h": 46,
+   "ax": 65,
+   "ay": 38
+  },
+  "rolling/loco_electric_box_large_green_body_f17": {
+   "x": 3201,
+   "y": 490,
+   "w": 134,
+   "h": 40,
+   "ax": 67,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_large_green_body_f18": {
+   "x": 92,
+   "y": 647,
+   "w": 134,
+   "h": 34,
+   "ax": 67,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_large_green_body_f19": {
+   "x": 3336,
+   "y": 490,
+   "w": 134,
+   "h": 40,
+   "ax": 67,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_large_green_body_f2": {
+   "x": 2989,
+   "y": 1,
+   "w": 81,
+   "h": 63,
+   "ax": 40,
+   "ay": 49
+  },
+  "rolling/loco_electric_box_large_green_body_f20": {
+   "x": 2011,
+   "y": 352,
+   "w": 131,
+   "h": 46,
+   "ax": 65,
+   "ay": 38
+  },
+  "rolling/loco_electric_box_large_green_body_f21": {
+   "x": 3879,
+   "y": 193,
+   "w": 127,
+   "h": 52,
+   "ax": 63,
+   "ay": 40
+  },
+  "rolling/loco_electric_box_large_green_body_f22": {
+   "x": 771,
+   "y": 136,
+   "w": 121,
+   "h": 56,
+   "ax": 60,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_large_green_body_f23": {
+   "x": 2459,
+   "y": 75,
+   "w": 113,
+   "h": 57,
+   "ax": 56,
+   "ay": 43
+  },
+  "rolling/loco_electric_box_large_green_body_f24": {
+   "x": 1151,
+   "y": 75,
+   "w": 103,
+   "h": 59,
+   "ax": 51,
+   "ay": 45
+  },
+  "rolling/loco_electric_box_large_green_body_f25": {
+   "x": 3811,
+   "y": 1,
+   "w": 93,
+   "h": 61,
+   "ax": 46,
+   "ay": 47
+  },
+  "rolling/loco_electric_box_large_green_body_f26": {
+   "x": 3071,
+   "y": 1,
+   "w": 81,
+   "h": 63,
+   "ax": 40,
+   "ay": 49
+  },
+  "rolling/loco_electric_box_large_green_body_f27": {
+   "x": 1982,
+   "y": 1,
+   "w": 67,
+   "h": 65,
+   "ax": 33,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_green_body_f28": {
+   "x": 2050,
+   "y": 1,
+   "w": 53,
+   "h": 65,
+   "ax": 26,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_green_body_f29": {
+   "x": 1311,
+   "y": 1,
+   "w": 37,
+   "h": 66,
+   "ax": 18,
+   "ay": 52
+  },
+  "rolling/loco_electric_box_large_green_body_f3": {
+   "x": 1837,
+   "y": 1,
+   "w": 67,
+   "h": 65,
+   "ax": 33,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_green_body_f30": {
+   "x": 2104,
+   "y": 1,
+   "w": 22,
+   "h": 65,
+   "ax": 11,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_green_body_f4": {
+   "x": 1905,
+   "y": 1,
+   "w": 53,
+   "h": 65,
+   "ax": 26,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_green_body_f5": {
+   "x": 1273,
+   "y": 1,
+   "w": 37,
+   "h": 66,
+   "ax": 18,
+   "ay": 52
+  },
+  "rolling/loco_electric_box_large_green_body_f6": {
+   "x": 1959,
+   "y": 1,
+   "w": 22,
+   "h": 65,
+   "ax": 11,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_iron_body_f0": {
+   "x": 1255,
+   "y": 75,
+   "w": 103,
+   "h": 59,
+   "ax": 51,
+   "ay": 45
+  },
+  "rolling/loco_electric_box_large_iron_body_f1": {
+   "x": 3905,
+   "y": 1,
+   "w": 93,
+   "h": 61,
+   "ax": 46,
+   "ay": 47
+  },
+  "rolling/loco_electric_box_large_iron_body_f13": {
+   "x": 2573,
+   "y": 75,
+   "w": 113,
+   "h": 57,
+   "ax": 56,
+   "ay": 43
+  },
+  "rolling/loco_electric_box_large_iron_body_f14": {
+   "x": 893,
+   "y": 136,
+   "w": 121,
+   "h": 56,
+   "ax": 60,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_large_iron_body_f15": {
+   "x": 1,
+   "y": 248,
+   "w": 127,
+   "h": 52,
+   "ax": 63,
+   "ay": 40
+  },
+  "rolling/loco_electric_box_large_iron_body_f16": {
+   "x": 2143,
+   "y": 352,
+   "w": 131,
+   "h": 46,
+   "ax": 65,
+   "ay": 38
+  },
+  "rolling/loco_electric_box_large_iron_body_f17": {
+   "x": 3471,
+   "y": 490,
+   "w": 134,
+   "h": 40,
+   "ax": 67,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_large_iron_body_f18": {
+   "x": 227,
+   "y": 647,
+   "w": 134,
+   "h": 34,
+   "ax": 67,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_large_iron_body_f19": {
+   "x": 3606,
+   "y": 490,
+   "w": 134,
+   "h": 40,
+   "ax": 67,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_large_iron_body_f2": {
+   "x": 3153,
+   "y": 1,
+   "w": 81,
+   "h": 63,
+   "ax": 40,
+   "ay": 49
+  },
+  "rolling/loco_electric_box_large_iron_body_f20": {
+   "x": 2275,
+   "y": 352,
+   "w": 131,
+   "h": 46,
+   "ax": 65,
+   "ay": 38
+  },
+  "rolling/loco_electric_box_large_iron_body_f21": {
+   "x": 129,
+   "y": 248,
+   "w": 127,
+   "h": 52,
+   "ax": 63,
+   "ay": 40
+  },
+  "rolling/loco_electric_box_large_iron_body_f22": {
+   "x": 1015,
+   "y": 136,
+   "w": 121,
+   "h": 56,
+   "ax": 60,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_large_iron_body_f23": {
+   "x": 2687,
+   "y": 75,
+   "w": 113,
+   "h": 57,
+   "ax": 56,
+   "ay": 43
+  },
+  "rolling/loco_electric_box_large_iron_body_f24": {
+   "x": 1359,
+   "y": 75,
+   "w": 103,
+   "h": 59,
+   "ax": 51,
+   "ay": 45
+  },
+  "rolling/loco_electric_box_large_iron_body_f25": {
+   "x": 3999,
+   "y": 1,
+   "w": 93,
+   "h": 61,
+   "ax": 46,
+   "ay": 47
+  },
+  "rolling/loco_electric_box_large_iron_body_f26": {
+   "x": 3235,
+   "y": 1,
+   "w": 81,
+   "h": 63,
+   "ax": 40,
+   "ay": 49
+  },
+  "rolling/loco_electric_box_large_iron_body_f27": {
+   "x": 2272,
+   "y": 1,
+   "w": 67,
+   "h": 65,
+   "ax": 33,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_iron_body_f28": {
+   "x": 2340,
+   "y": 1,
+   "w": 53,
+   "h": 65,
+   "ax": 26,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_iron_body_f29": {
+   "x": 1387,
+   "y": 1,
+   "w": 37,
+   "h": 66,
+   "ax": 18,
+   "ay": 52
+  },
+  "rolling/loco_electric_box_large_iron_body_f3": {
+   "x": 2127,
+   "y": 1,
+   "w": 67,
+   "h": 65,
+   "ax": 33,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_iron_body_f30": {
+   "x": 2394,
+   "y": 1,
+   "w": 22,
+   "h": 65,
+   "ax": 11,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_iron_body_f4": {
+   "x": 2195,
+   "y": 1,
+   "w": 53,
+   "h": 65,
+   "ax": 26,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_large_iron_body_f5": {
+   "x": 1349,
+   "y": 1,
+   "w": 37,
+   "h": 66,
+   "ax": 18,
+   "ay": 52
+  },
+  "rolling/loco_electric_box_large_iron_body_f6": {
+   "x": 2249,
+   "y": 1,
+   "w": 22,
+   "h": 65,
+   "ax": 11,
+   "ay": 51
+  },
+  "rolling/loco_electric_box_medium_iron_body_f0": {
+   "x": 2020,
+   "y": 136,
+   "w": 75,
+   "h": 55,
+   "ax": 37,
+   "ay": 41
+  },
+  "rolling/loco_electric_box_medium_iron_body_f1": {
+   "x": 2096,
+   "y": 136,
+   "w": 67,
+   "h": 55,
+   "ax": 33,
+   "ay": 41
+  },
+  "rolling/loco_electric_box_medium_iron_body_f13": {
+   "x": 3591,
+   "y": 193,
+   "w": 79,
+   "h": 52,
+   "ax": 39,
+   "ay": 40
+  },
+  "rolling/loco_electric_box_medium_iron_body_f14": {
+   "x": 1287,
+   "y": 301,
+   "w": 83,
+   "h": 49,
+   "ax": 41,
+   "ay": 39
+  },
+  "rolling/loco_electric_box_medium_iron_body_f15": {
+   "x": 1703,
+   "y": 352,
+   "w": 87,
+   "h": 46,
+   "ax": 43,
+   "ay": 38
+  },
+  "rolling/loco_electric_box_medium_iron_body_f16": {
+   "x": 447,
+   "y": 446,
+   "w": 89,
+   "h": 43,
+   "ax": 44,
+   "ay": 37
+  },
+  "rolling/loco_electric_box_medium_iron_body_f17": {
+   "x": 2347,
+   "y": 532,
+   "w": 91,
+   "h": 39,
+   "ax": 45,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_medium_iron_body_f18": {
+   "x": 1,
+   "y": 647,
+   "w": 90,
+   "h": 34,
+   "ax": 45,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_medium_iron_body_f19": {
+   "x": 2439,
+   "y": 532,
+   "w": 91,
+   "h": 39,
+   "ax": 45,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_medium_iron_body_f2": {
+   "x": 232,
+   "y": 136,
+   "w": 59,
+   "h": 56,
+   "ax": 29,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f20": {
+   "x": 537,
+   "y": 446,
+   "w": 89,
+   "h": 43,
+   "ax": 44,
+   "ay": 37
+  },
+  "rolling/loco_electric_box_medium_iron_body_f21": {
+   "x": 1791,
+   "y": 352,
+   "w": 87,
+   "h": 46,
+   "ax": 43,
+   "ay": 38
+  },
+  "rolling/loco_electric_box_medium_iron_body_f22": {
+   "x": 1371,
+   "y": 301,
+   "w": 83,
+   "h": 49,
+   "ax": 41,
+   "ay": 39
+  },
+  "rolling/loco_electric_box_medium_iron_body_f23": {
+   "x": 3671,
+   "y": 193,
+   "w": 79,
+   "h": 52,
+   "ax": 39,
+   "ay": 40
+  },
+  "rolling/loco_electric_box_medium_iron_body_f24": {
+   "x": 2164,
+   "y": 136,
+   "w": 75,
+   "h": 55,
+   "ax": 37,
+   "ay": 41
+  },
+  "rolling/loco_electric_box_medium_iron_body_f25": {
+   "x": 2240,
+   "y": 136,
+   "w": 67,
+   "h": 55,
+   "ax": 33,
+   "ay": 41
+  },
+  "rolling/loco_electric_box_medium_iron_body_f26": {
+   "x": 440,
+   "y": 136,
+   "w": 59,
+   "h": 56,
+   "ax": 29,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f27": {
+   "x": 500,
+   "y": 136,
+   "w": 51,
+   "h": 56,
+   "ax": 25,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f28": {
+   "x": 552,
+   "y": 136,
+   "w": 41,
+   "h": 56,
+   "ax": 20,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f29": {
+   "x": 594,
+   "y": 136,
+   "w": 31,
+   "h": 56,
+   "ax": 15,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f3": {
+   "x": 292,
+   "y": 136,
+   "w": 51,
+   "h": 56,
+   "ax": 25,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f30": {
+   "x": 626,
+   "y": 136,
+   "w": 22,
+   "h": 56,
+   "ax": 11,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f4": {
+   "x": 344,
+   "y": 136,
+   "w": 41,
+   "h": 56,
+   "ax": 20,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f5": {
+   "x": 386,
+   "y": 136,
+   "w": 31,
+   "h": 56,
+   "ax": 15,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_iron_body_f6": {
+   "x": 418,
+   "y": 136,
+   "w": 21,
+   "h": 56,
+   "ax": 10,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f0": {
+   "x": 1732,
+   "y": 136,
+   "w": 75,
+   "h": 55,
+   "ax": 37,
+   "ay": 41
+  },
+  "rolling/loco_electric_box_medium_red_body_f1": {
+   "x": 1808,
+   "y": 136,
+   "w": 67,
+   "h": 55,
+   "ax": 33,
+   "ay": 41
+  },
+  "rolling/loco_electric_box_medium_red_body_f13": {
+   "x": 3431,
+   "y": 193,
+   "w": 79,
+   "h": 52,
+   "ax": 39,
+   "ay": 40
+  },
+  "rolling/loco_electric_box_medium_red_body_f14": {
+   "x": 1119,
+   "y": 301,
+   "w": 83,
+   "h": 49,
+   "ax": 41,
+   "ay": 39
+  },
+  "rolling/loco_electric_box_medium_red_body_f15": {
+   "x": 1527,
+   "y": 352,
+   "w": 87,
+   "h": 46,
+   "ax": 43,
+   "ay": 38
+  },
+  "rolling/loco_electric_box_medium_red_body_f16": {
+   "x": 267,
+   "y": 446,
+   "w": 89,
+   "h": 43,
+   "ax": 44,
+   "ay": 37
+  },
+  "rolling/loco_electric_box_medium_red_body_f17": {
+   "x": 2163,
+   "y": 532,
+   "w": 91,
+   "h": 39,
+   "ax": 45,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_medium_red_body_f18": {
+   "x": 3956,
+   "y": 611,
+   "w": 90,
+   "h": 34,
+   "ax": 45,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_medium_red_body_f19": {
+   "x": 2255,
+   "y": 532,
+   "w": 91,
+   "h": 39,
+   "ax": 45,
+   "ay": 36
+  },
+  "rolling/loco_electric_box_medium_red_body_f2": {
+   "x": 3905,
+   "y": 75,
+   "w": 59,
+   "h": 56,
+   "ax": 29,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f20": {
+   "x": 357,
+   "y": 446,
+   "w": 89,
+   "h": 43,
+   "ax": 44,
+   "ay": 37
+  },
+  "rolling/loco_electric_box_medium_red_body_f21": {
+   "x": 1615,
+   "y": 352,
+   "w": 87,
+   "h": 46,
+   "ax": 43,
+   "ay": 38
+  },
+  "rolling/loco_electric_box_medium_red_body_f22": {
+   "x": 1203,
+   "y": 301,
+   "w": 83,
+   "h": 49,
+   "ax": 41,
+   "ay": 39
+  },
+  "rolling/loco_electric_box_medium_red_body_f23": {
+   "x": 3511,
+   "y": 193,
+   "w": 79,
+   "h": 52,
+   "ax": 39,
+   "ay": 40
+  },
+  "rolling/loco_electric_box_medium_red_body_f24": {
+   "x": 1876,
+   "y": 136,
+   "w": 75,
+   "h": 55,
+   "ax": 37,
+   "ay": 41
+  },
+  "rolling/loco_electric_box_medium_red_body_f25": {
+   "x": 1952,
+   "y": 136,
+   "w": 67,
+   "h": 55,
+   "ax": 33,
+   "ay": 41
+  },
+  "rolling/loco_electric_box_medium_red_body_f26": {
+   "x": 23,
+   "y": 136,
+   "w": 59,
+   "h": 56,
+   "ax": 29,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f27": {
+   "x": 83,
+   "y": 136,
+   "w": 51,
+   "h": 56,
+   "ax": 25,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f28": {
+   "x": 135,
+   "y": 136,
+   "w": 41,
+   "h": 56,
+   "ax": 20,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f29": {
+   "x": 177,
+   "y": 136,
+   "w": 31,
+   "h": 56,
+   "ax": 15,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f3": {
+   "x": 3965,
+   "y": 75,
+   "w": 51,
+   "h": 56,
+   "ax": 25,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f30": {
+   "x": 209,
+   "y": 136,
+   "w": 22,
+   "h": 56,
+   "ax": 11,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f4": {
+   "x": 4017,
+   "y": 75,
+   "w": 41,
+   "h": 56,
+   "ax": 20,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f5": {
+   "x": 4059,
+   "y": 75,
+   "w": 31,
+   "h": 56,
+   "ax": 15,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_medium_red_body_f6": {
+   "x": 1,
+   "y": 136,
+   "w": 21,
+   "h": 56,
+   "ax": 10,
+   "ay": 42
+  },
+  "rolling/loco_electric_box_small_green_body_f0": {
+   "x": 2310,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f1": {
+   "x": 3769,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_green_body_f13": {
+   "x": 3921,
+   "y": 446,
+   "w": 47,
+   "h": 41,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f14": {
+   "x": 3969,
+   "y": 446,
+   "w": 47,
+   "h": 41,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f15": {
+   "x": 2660,
+   "y": 490,
+   "w": 49,
+   "h": 40,
+   "ax": 24,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f16": {
+   "x": 2710,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f17": {
+   "x": 1971,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f18": {
+   "x": 3547,
+   "y": 532,
+   "w": 46,
+   "h": 38,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f19": {
+   "x": 2019,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f2": {
+   "x": 3813,
+   "y": 446,
+   "w": 39,
+   "h": 41,
+   "ax": 19,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_green_body_f20": {
+   "x": 2758,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f21": {
+   "x": 2806,
+   "y": 490,
+   "w": 49,
+   "h": 40,
+   "ax": 24,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f22": {
+   "x": 4017,
+   "y": 446,
+   "w": 47,
+   "h": 41,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f23": {
+   "x": 1,
+   "y": 490,
+   "w": 47,
+   "h": 41,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f24": {
+   "x": 2356,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_green_body_f25": {
+   "x": 49,
+   "y": 490,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_green_body_f26": {
+   "x": 93,
+   "y": 490,
+   "w": 39,
+   "h": 41,
+   "ax": 19,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_green_body_f27": {
+   "x": 133,
+   "y": 490,
+   "w": 35,
+   "h": 41,
+   "ax": 17,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_green_body_f28": {
+   "x": 169,
+   "y": 490,
+   "w": 31,
+   "h": 41,
+   "ax": 15,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_green_body_f29": {
+   "x": 2856,
+   "y": 490,
+   "w": 26,
+   "h": 40,
+   "ax": 13,
+   "ay": 32
+  },
+  "rolling/loco_electric_box_small_green_body_f3": {
+   "x": 3853,
+   "y": 446,
+   "w": 35,
+   "h": 41,
+   "ax": 17,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_green_body_f30": {
+   "x": 2883,
+   "y": 490,
+   "w": 22,
+   "h": 40,
+   "ax": 11,
+   "ay": 32
+  },
+  "rolling/loco_electric_box_small_green_body_f4": {
+   "x": 3889,
+   "y": 446,
+   "w": 31,
+   "h": 41,
+   "ax": 15,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_green_body_f5": {
+   "x": 2611,
+   "y": 490,
+   "w": 26,
+   "h": 40,
+   "ax": 13,
+   "ay": 32
+  },
+  "rolling/loco_electric_box_small_green_body_f6": {
+   "x": 2638,
+   "y": 490,
+   "w": 21,
+   "h": 40,
+   "ax": 10,
+   "ay": 32
+  },
+  "rolling/loco_electric_box_small_iron_body_f0": {
+   "x": 2402,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f1": {
+   "x": 201,
+   "y": 490,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_iron_body_f13": {
+   "x": 353,
+   "y": 490,
+   "w": 47,
+   "h": 41,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f14": {
+   "x": 401,
+   "y": 490,
+   "w": 47,
+   "h": 41,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f15": {
+   "x": 2955,
+   "y": 490,
+   "w": 49,
+   "h": 40,
+   "ax": 24,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f16": {
+   "x": 3005,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f17": {
+   "x": 2067,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f18": {
+   "x": 3594,
+   "y": 532,
+   "w": 46,
+   "h": 38,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f19": {
+   "x": 2115,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f2": {
+   "x": 245,
+   "y": 490,
+   "w": 39,
+   "h": 41,
+   "ax": 19,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_iron_body_f20": {
+   "x": 3053,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f21": {
+   "x": 3101,
+   "y": 490,
+   "w": 49,
+   "h": 40,
+   "ax": 24,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f22": {
+   "x": 449,
+   "y": 490,
+   "w": 47,
+   "h": 41,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f23": {
+   "x": 497,
+   "y": 490,
+   "w": 47,
+   "h": 41,
+   "ax": 23,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f24": {
+   "x": 2448,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_electric_box_small_iron_body_f25": {
+   "x": 545,
+   "y": 490,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_iron_body_f26": {
+   "x": 589,
+   "y": 490,
+   "w": 39,
+   "h": 41,
+   "ax": 19,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_iron_body_f27": {
+   "x": 629,
+   "y": 490,
+   "w": 35,
+   "h": 41,
+   "ax": 17,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_iron_body_f28": {
+   "x": 665,
+   "y": 490,
+   "w": 31,
+   "h": 41,
+   "ax": 15,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_iron_body_f29": {
+   "x": 3151,
+   "y": 490,
+   "w": 26,
+   "h": 40,
+   "ax": 13,
+   "ay": 32
+  },
+  "rolling/loco_electric_box_small_iron_body_f3": {
+   "x": 285,
+   "y": 490,
+   "w": 35,
+   "h": 41,
+   "ax": 17,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_iron_body_f30": {
+   "x": 3178,
+   "y": 490,
+   "w": 22,
+   "h": 40,
+   "ax": 11,
+   "ay": 32
+  },
+  "rolling/loco_electric_box_small_iron_body_f4": {
+   "x": 321,
+   "y": 490,
+   "w": 31,
+   "h": 41,
+   "ax": 15,
+   "ay": 33
+  },
+  "rolling/loco_electric_box_small_iron_body_f5": {
+   "x": 2906,
+   "y": 490,
+   "w": 26,
+   "h": 40,
+   "ax": 13,
+   "ay": 32
+  },
+  "rolling/loco_electric_box_small_iron_body_f6": {
+   "x": 2933,
+   "y": 490,
+   "w": 21,
+   "h": 40,
+   "ax": 10,
+   "ay": 32
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f0": {
+   "x": 1764,
+   "y": 193,
+   "w": 59,
+   "h": 53,
+   "ax": 29,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f1": {
+   "x": 3922,
+   "y": 136,
+   "w": 55,
+   "h": 54,
+   "ax": 27,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f13": {
+   "x": 1655,
+   "y": 248,
+   "w": 63,
+   "h": 51,
+   "ax": 31,
+   "ay": 42
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f14": {
+   "x": 3598,
+   "y": 248,
+   "w": 65,
+   "h": 50,
+   "ax": 32,
+   "ay": 42
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f15": {
+   "x": 4010,
+   "y": 301,
+   "w": 67,
+   "h": 47,
+   "ax": 33,
+   "ay": 41
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f16": {
+   "x": 1541,
+   "y": 400,
+   "w": 67,
+   "h": 44,
+   "ax": 33,
+   "ay": 40
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f17": {
+   "x": 697,
+   "y": 490,
+   "w": 67,
+   "h": 41,
+   "ax": 33,
+   "ay": 39
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f18": {
+   "x": 3641,
+   "y": 532,
+   "w": 65,
+   "h": 38,
+   "ax": 32,
+   "ay": 38
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f19": {
+   "x": 765,
+   "y": 490,
+   "w": 67,
+   "h": 41,
+   "ax": 33,
+   "ay": 39
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f2": {
+   "x": 3978,
+   "y": 136,
+   "w": 49,
+   "h": 54,
+   "ax": 24,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f20": {
+   "x": 1609,
+   "y": 400,
+   "w": 67,
+   "h": 44,
+   "ax": 33,
+   "ay": 40
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f21": {
+   "x": 1,
+   "y": 352,
+   "w": 67,
+   "h": 47,
+   "ax": 33,
+   "ay": 41
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f22": {
+   "x": 3664,
+   "y": 248,
+   "w": 65,
+   "h": 50,
+   "ax": 32,
+   "ay": 42
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f23": {
+   "x": 1719,
+   "y": 248,
+   "w": 63,
+   "h": 51,
+   "ax": 31,
+   "ay": 42
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f24": {
+   "x": 1824,
+   "y": 193,
+   "w": 59,
+   "h": 53,
+   "ax": 29,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f25": {
+   "x": 4028,
+   "y": 136,
+   "w": 55,
+   "h": 54,
+   "ax": 27,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f26": {
+   "x": 1,
+   "y": 193,
+   "w": 49,
+   "h": 54,
+   "ax": 24,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f27": {
+   "x": 2443,
+   "y": 136,
+   "w": 43,
+   "h": 55,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f28": {
+   "x": 2487,
+   "y": 136,
+   "w": 37,
+   "h": 55,
+   "ax": 18,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f29": {
+   "x": 2525,
+   "y": 136,
+   "w": 29,
+   "h": 55,
+   "ax": 14,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f3": {
+   "x": 2308,
+   "y": 136,
+   "w": 43,
+   "h": 55,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f30": {
+   "x": 2555,
+   "y": 136,
+   "w": 22,
+   "h": 55,
+   "ax": 11,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f4": {
+   "x": 2352,
+   "y": 136,
+   "w": 37,
+   "h": 55,
+   "ax": 18,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f5": {
+   "x": 2390,
+   "y": 136,
+   "w": 29,
+   "h": 55,
+   "ax": 14,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_cradle_f6": {
+   "x": 2420,
+   "y": 136,
+   "w": 22,
+   "h": 55,
+   "ax": 11,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f0": {
+   "x": 1850,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f1": {
+   "x": 1890,
+   "y": 716,
+   "w": 37,
+   "h": 31,
+   "ax": 18,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f13": {
+   "x": 138,
+   "y": 749,
+   "w": 41,
+   "h": 29,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f14": {
+   "x": 180,
+   "y": 749,
+   "w": 41,
+   "h": 29,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f15": {
+   "x": 1114,
+   "y": 749,
+   "w": 41,
+   "h": 27,
+   "ax": 20,
+   "ay": 24
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f16": {
+   "x": 2089,
+   "y": 749,
+   "w": 41,
+   "h": 25,
+   "ax": 20,
+   "ay": 23
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f17": {
+   "x": 2479,
+   "y": 749,
+   "w": 39,
+   "h": 23,
+   "ax": 19,
+   "ay": 22
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f18": {
+   "x": 2639,
+   "y": 749,
+   "w": 38,
+   "h": 21,
+   "ax": 19,
+   "ay": 21
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f19": {
+   "x": 2519,
+   "y": 749,
+   "w": 39,
+   "h": 23,
+   "ax": 19,
+   "ay": 22
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f2": {
+   "x": 3791,
+   "y": 682,
+   "w": 35,
+   "h": 32,
+   "ax": 17,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f20": {
+   "x": 2131,
+   "y": 749,
+   "w": 41,
+   "h": 25,
+   "ax": 20,
+   "ay": 23
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f21": {
+   "x": 1156,
+   "y": 749,
+   "w": 41,
+   "h": 27,
+   "ax": 20,
+   "ay": 24
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f22": {
+   "x": 222,
+   "y": 749,
+   "w": 41,
+   "h": 29,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f23": {
+   "x": 3287,
+   "y": 716,
+   "w": 41,
+   "h": 30,
+   "ax": 20,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f24": {
+   "x": 1982,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f25": {
+   "x": 2022,
+   "y": 716,
+   "w": 37,
+   "h": 31,
+   "ax": 18,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f26": {
+   "x": 328,
+   "y": 682,
+   "w": 35,
+   "h": 33,
+   "ax": 17,
+   "ay": 27
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f27": {
+   "x": 364,
+   "y": 682,
+   "w": 31,
+   "h": 33,
+   "ax": 15,
+   "ay": 27
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f28": {
+   "x": 3859,
+   "y": 682,
+   "w": 28,
+   "h": 32,
+   "ax": 14,
+   "ay": 27
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f29": {
+   "x": 2060,
+   "y": 716,
+   "w": 24,
+   "h": 31,
+   "ax": 12,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f3": {
+   "x": 3827,
+   "y": 682,
+   "w": 31,
+   "h": 32,
+   "ax": 15,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f30": {
+   "x": 2085,
+   "y": 716,
+   "w": 23,
+   "h": 31,
+   "ax": 11,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f4": {
+   "x": 1928,
+   "y": 716,
+   "w": 28,
+   "h": 31,
+   "ax": 13,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f5": {
+   "x": 1957,
+   "y": 716,
+   "w": 24,
+   "h": 31,
+   "ax": 11,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_brown_engine_f6": {
+   "x": 3263,
+   "y": 716,
+   "w": 23,
+   "h": 30,
+   "ax": 11,
+   "ay": 25
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f0": {
+   "x": 1884,
+   "y": 193,
+   "w": 59,
+   "h": 53,
+   "ax": 29,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f1": {
+   "x": 51,
+   "y": 193,
+   "w": 55,
+   "h": 54,
+   "ax": 27,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f13": {
+   "x": 1783,
+   "y": 248,
+   "w": 63,
+   "h": 51,
+   "ax": 31,
+   "ay": 42
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f14": {
+   "x": 3730,
+   "y": 248,
+   "w": 65,
+   "h": 50,
+   "ax": 32,
+   "ay": 42
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f15": {
+   "x": 69,
+   "y": 352,
+   "w": 67,
+   "h": 47,
+   "ax": 33,
+   "ay": 41
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f16": {
+   "x": 1677,
+   "y": 400,
+   "w": 67,
+   "h": 44,
+   "ax": 33,
+   "ay": 40
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f17": {
+   "x": 833,
+   "y": 490,
+   "w": 67,
+   "h": 41,
+   "ax": 33,
+   "ay": 39
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f18": {
+   "x": 3707,
+   "y": 532,
+   "w": 65,
+   "h": 38,
+   "ax": 32,
+   "ay": 38
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f19": {
+   "x": 901,
+   "y": 490,
+   "w": 67,
+   "h": 41,
+   "ax": 33,
+   "ay": 39
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f2": {
+   "x": 107,
+   "y": 193,
+   "w": 49,
+   "h": 54,
+   "ax": 24,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f20": {
+   "x": 1745,
+   "y": 400,
+   "w": 67,
+   "h": 44,
+   "ax": 33,
+   "ay": 40
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f21": {
+   "x": 137,
+   "y": 352,
+   "w": 67,
+   "h": 47,
+   "ax": 33,
+   "ay": 41
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f22": {
+   "x": 3796,
+   "y": 248,
+   "w": 65,
+   "h": 50,
+   "ax": 32,
+   "ay": 42
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f23": {
+   "x": 1847,
+   "y": 248,
+   "w": 63,
+   "h": 51,
+   "ax": 31,
+   "ay": 42
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f24": {
+   "x": 1944,
+   "y": 193,
+   "w": 59,
+   "h": 53,
+   "ax": 29,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f25": {
+   "x": 157,
+   "y": 193,
+   "w": 55,
+   "h": 54,
+   "ax": 27,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f26": {
+   "x": 213,
+   "y": 193,
+   "w": 49,
+   "h": 54,
+   "ax": 24,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f27": {
+   "x": 2713,
+   "y": 136,
+   "w": 43,
+   "h": 55,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f28": {
+   "x": 2757,
+   "y": 136,
+   "w": 37,
+   "h": 55,
+   "ax": 18,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f29": {
+   "x": 2795,
+   "y": 136,
+   "w": 29,
+   "h": 55,
+   "ax": 14,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f3": {
+   "x": 2578,
+   "y": 136,
+   "w": 43,
+   "h": 55,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f30": {
+   "x": 2825,
+   "y": 136,
+   "w": 22,
+   "h": 55,
+   "ax": 11,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f4": {
+   "x": 2622,
+   "y": 136,
+   "w": 37,
+   "h": 55,
+   "ax": 18,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f5": {
+   "x": 2660,
+   "y": 136,
+   "w": 29,
+   "h": 55,
+   "ax": 14,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_cradle_f6": {
+   "x": 2690,
+   "y": 136,
+   "w": 22,
+   "h": 55,
+   "ax": 11,
+   "ay": 43
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f0": {
+   "x": 2109,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f1": {
+   "x": 2149,
+   "y": 716,
+   "w": 37,
+   "h": 31,
+   "ax": 18,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f13": {
+   "x": 264,
+   "y": 749,
+   "w": 41,
+   "h": 29,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f14": {
+   "x": 306,
+   "y": 749,
+   "w": 41,
+   "h": 29,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f15": {
+   "x": 1198,
+   "y": 749,
+   "w": 41,
+   "h": 27,
+   "ax": 20,
+   "ay": 24
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f16": {
+   "x": 2173,
+   "y": 749,
+   "w": 41,
+   "h": 25,
+   "ax": 20,
+   "ay": 23
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f17": {
+   "x": 2559,
+   "y": 749,
+   "w": 39,
+   "h": 23,
+   "ax": 19,
+   "ay": 22
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f18": {
+   "x": 2678,
+   "y": 749,
+   "w": 38,
+   "h": 21,
+   "ax": 19,
+   "ay": 21
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f19": {
+   "x": 2599,
+   "y": 749,
+   "w": 39,
+   "h": 23,
+   "ax": 19,
+   "ay": 22
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f2": {
+   "x": 3888,
+   "y": 682,
+   "w": 35,
+   "h": 32,
+   "ax": 17,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f20": {
+   "x": 2215,
+   "y": 749,
+   "w": 41,
+   "h": 25,
+   "ax": 20,
+   "ay": 23
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f21": {
+   "x": 1240,
+   "y": 749,
+   "w": 41,
+   "h": 27,
+   "ax": 20,
+   "ay": 24
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f22": {
+   "x": 348,
+   "y": 749,
+   "w": 41,
+   "h": 29,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f23": {
+   "x": 3353,
+   "y": 716,
+   "w": 41,
+   "h": 30,
+   "ax": 20,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f24": {
+   "x": 2241,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f25": {
+   "x": 2281,
+   "y": 716,
+   "w": 37,
+   "h": 31,
+   "ax": 18,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f26": {
+   "x": 396,
+   "y": 682,
+   "w": 35,
+   "h": 33,
+   "ax": 17,
+   "ay": 27
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f27": {
+   "x": 432,
+   "y": 682,
+   "w": 31,
+   "h": 33,
+   "ax": 15,
+   "ay": 27
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f28": {
+   "x": 3956,
+   "y": 682,
+   "w": 28,
+   "h": 32,
+   "ax": 14,
+   "ay": 27
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f29": {
+   "x": 2319,
+   "y": 716,
+   "w": 24,
+   "h": 31,
+   "ax": 12,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f3": {
+   "x": 3924,
+   "y": 682,
+   "w": 31,
+   "h": 32,
+   "ax": 15,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f30": {
+   "x": 2344,
+   "y": 716,
+   "w": 23,
+   "h": 31,
+   "ax": 11,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f4": {
+   "x": 2187,
+   "y": 716,
+   "w": 28,
+   "h": 31,
+   "ax": 13,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f5": {
+   "x": 2216,
+   "y": 716,
+   "w": 24,
+   "h": 31,
+   "ax": 11,
+   "ay": 26
+  },
+  "rolling/loco_electric_crocodile_large_iron_engine_f6": {
+   "x": 3329,
+   "y": 716,
+   "w": 23,
+   "h": 30,
+   "ax": 11,
+   "ay": 25
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f0": {
+   "x": 697,
+   "y": 248,
+   "w": 76,
+   "h": 52,
+   "ax": 38,
+   "ay": 38
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f1": {
+   "x": 774,
+   "y": 248,
+   "w": 68,
+   "h": 52,
+   "ax": 34,
+   "ay": 38
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f13": {
+   "x": 3945,
+   "y": 248,
+   "w": 82,
+   "h": 50,
+   "ax": 40,
+   "ay": 37
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f14": {
+   "x": 493,
+   "y": 352,
+   "w": 86,
+   "h": 47,
+   "ax": 42,
+   "ay": 36
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f15": {
+   "x": 718,
+   "y": 446,
+   "w": 90,
+   "h": 43,
+   "ax": 44,
+   "ay": 35
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f16": {
+   "x": 3833,
+   "y": 490,
+   "w": 91,
+   "h": 40,
+   "ax": 45,
+   "ay": 34
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f17": {
+   "x": 1982,
+   "y": 572,
+   "w": 91,
+   "h": 37,
+   "ax": 45,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f18": {
+   "x": 903,
+   "y": 682,
+   "w": 90,
+   "h": 33,
+   "ax": 45,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f19": {
+   "x": 1027,
+   "y": 611,
+   "w": 91,
+   "h": 35,
+   "ax": 45,
+   "ay": 31
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f2": {
+   "x": 2165,
+   "y": 193,
+   "w": 60,
+   "h": 53,
+   "ax": 30,
+   "ay": 39
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f20": {
+   "x": 2074,
+   "y": 572,
+   "w": 91,
+   "h": 37,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f21": {
+   "x": 92,
+   "y": 572,
+   "w": 90,
+   "h": 38,
+   "ax": 44,
+   "ay": 29
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f22": {
+   "x": 2618,
+   "y": 532,
+   "w": 86,
+   "h": 39,
+   "ax": 42,
+   "ay": 28
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f23": {
+   "x": 2713,
+   "y": 446,
+   "w": 82,
+   "h": 42,
+   "ax": 40,
+   "ay": 29
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f24": {
+   "x": 2018,
+   "y": 400,
+   "w": 76,
+   "h": 44,
+   "ax": 37,
+   "ay": 30
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f25": {
+   "x": 4021,
+   "y": 352,
+   "w": 68,
+   "h": 45,
+   "ax": 33,
+   "ay": 31
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f26": {
+   "x": 2662,
+   "y": 352,
+   "w": 60,
+   "h": 46,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f27": {
+   "x": 2723,
+   "y": 352,
+   "w": 51,
+   "h": 46,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f28": {
+   "x": 580,
+   "y": 352,
+   "w": 41,
+   "h": 47,
+   "ax": 19,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f29": {
+   "x": 622,
+   "y": 352,
+   "w": 30,
+   "h": 47,
+   "ax": 14,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f3": {
+   "x": 425,
+   "y": 193,
+   "w": 51,
+   "h": 54,
+   "ax": 26,
+   "ay": 40
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f30": {
+   "x": 2775,
+   "y": 352,
+   "w": 21,
+   "h": 46,
+   "ax": 10,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f4": {
+   "x": 3101,
+   "y": 136,
+   "w": 41,
+   "h": 55,
+   "ax": 21,
+   "ay": 41
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f5": {
+   "x": 3143,
+   "y": 136,
+   "w": 30,
+   "h": 55,
+   "ax": 15,
+   "ay": 41
+  },
+  "rolling/loco_electric_hs_medium_iron_body_f6": {
+   "x": 477,
+   "y": 193,
+   "w": 21,
+   "h": 54,
+   "ax": 10,
+   "ay": 40
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f0": {
+   "x": 551,
+   "y": 248,
+   "w": 76,
+   "h": 52,
+   "ax": 38,
+   "ay": 38
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f1": {
+   "x": 628,
+   "y": 248,
+   "w": 68,
+   "h": 52,
+   "ax": 34,
+   "ay": 38
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f13": {
+   "x": 3862,
+   "y": 248,
+   "w": 82,
+   "h": 50,
+   "ax": 40,
+   "ay": 37
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f14": {
+   "x": 333,
+   "y": 352,
+   "w": 86,
+   "h": 47,
+   "ax": 42,
+   "ay": 36
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f15": {
+   "x": 627,
+   "y": 446,
+   "w": 90,
+   "h": 43,
+   "ax": 44,
+   "ay": 35
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f16": {
+   "x": 3741,
+   "y": 490,
+   "w": 91,
+   "h": 40,
+   "ax": 45,
+   "ay": 34
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f17": {
+   "x": 1798,
+   "y": 572,
+   "w": 91,
+   "h": 37,
+   "ax": 45,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f18": {
+   "x": 812,
+   "y": 682,
+   "w": 90,
+   "h": 33,
+   "ax": 45,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f19": {
+   "x": 935,
+   "y": 611,
+   "w": 91,
+   "h": 35,
+   "ax": 45,
+   "ay": 31
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f2": {
+   "x": 2104,
+   "y": 193,
+   "w": 60,
+   "h": 53,
+   "ax": 30,
+   "ay": 39
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f20": {
+   "x": 1890,
+   "y": 572,
+   "w": 91,
+   "h": 37,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f21": {
+   "x": 1,
+   "y": 572,
+   "w": 90,
+   "h": 38,
+   "ax": 44,
+   "ay": 29
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f22": {
+   "x": 2531,
+   "y": 532,
+   "w": 86,
+   "h": 39,
+   "ax": 42,
+   "ay": 28
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f23": {
+   "x": 2630,
+   "y": 446,
+   "w": 82,
+   "h": 42,
+   "ax": 40,
+   "ay": 29
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f24": {
+   "x": 1941,
+   "y": 400,
+   "w": 76,
+   "h": 44,
+   "ax": 37,
+   "ay": 30
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f25": {
+   "x": 3952,
+   "y": 352,
+   "w": 68,
+   "h": 45,
+   "ax": 33,
+   "ay": 31
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f26": {
+   "x": 2527,
+   "y": 352,
+   "w": 60,
+   "h": 46,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f27": {
+   "x": 2588,
+   "y": 352,
+   "w": 51,
+   "h": 46,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f28": {
+   "x": 420,
+   "y": 352,
+   "w": 41,
+   "h": 47,
+   "ax": 19,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f29": {
+   "x": 462,
+   "y": 352,
+   "w": 30,
+   "h": 47,
+   "ax": 14,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f3": {
+   "x": 351,
+   "y": 193,
+   "w": 51,
+   "h": 54,
+   "ax": 26,
+   "ay": 40
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f30": {
+   "x": 2640,
+   "y": 352,
+   "w": 21,
+   "h": 46,
+   "ax": 10,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f4": {
+   "x": 3028,
+   "y": 136,
+   "w": 41,
+   "h": 55,
+   "ax": 21,
+   "ay": 41
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f5": {
+   "x": 3070,
+   "y": 136,
+   "w": 30,
+   "h": 55,
+   "ax": 15,
+   "ay": 41
+  },
+  "rolling/loco_electric_hs_medium_orange_body_f6": {
+   "x": 403,
+   "y": 193,
+   "w": 21,
+   "h": 54,
+   "ax": 10,
+   "ay": 40
+  },
+  "rolling/loco_electric_hs_medium_white_body_f0": {
+   "x": 843,
+   "y": 248,
+   "w": 76,
+   "h": 52,
+   "ax": 38,
+   "ay": 38
+  },
+  "rolling/loco_electric_hs_medium_white_body_f1": {
+   "x": 920,
+   "y": 248,
+   "w": 68,
+   "h": 52,
+   "ax": 34,
+   "ay": 38
+  },
+  "rolling/loco_electric_hs_medium_white_body_f13": {
+   "x": 1,
+   "y": 301,
+   "w": 82,
+   "h": 50,
+   "ax": 40,
+   "ay": 37
+  },
+  "rolling/loco_electric_hs_medium_white_body_f14": {
+   "x": 653,
+   "y": 352,
+   "w": 86,
+   "h": 47,
+   "ax": 42,
+   "ay": 36
+  },
+  "rolling/loco_electric_hs_medium_white_body_f15": {
+   "x": 809,
+   "y": 446,
+   "w": 90,
+   "h": 43,
+   "ax": 44,
+   "ay": 35
+  },
+  "rolling/loco_electric_hs_medium_white_body_f16": {
+   "x": 3925,
+   "y": 490,
+   "w": 91,
+   "h": 40,
+   "ax": 45,
+   "ay": 34
+  },
+  "rolling/loco_electric_hs_medium_white_body_f17": {
+   "x": 2166,
+   "y": 572,
+   "w": 91,
+   "h": 37,
+   "ax": 45,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_white_body_f18": {
+   "x": 994,
+   "y": 682,
+   "w": 90,
+   "h": 33,
+   "ax": 45,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_white_body_f19": {
+   "x": 1119,
+   "y": 611,
+   "w": 91,
+   "h": 35,
+   "ax": 45,
+   "ay": 31
+  },
+  "rolling/loco_electric_hs_medium_white_body_f2": {
+   "x": 2226,
+   "y": 193,
+   "w": 60,
+   "h": 53,
+   "ax": 30,
+   "ay": 39
+  },
+  "rolling/loco_electric_hs_medium_white_body_f20": {
+   "x": 2258,
+   "y": 572,
+   "w": 91,
+   "h": 37,
+   "ax": 45,
+   "ay": 30
+  },
+  "rolling/loco_electric_hs_medium_white_body_f21": {
+   "x": 183,
+   "y": 572,
+   "w": 90,
+   "h": 38,
+   "ax": 44,
+   "ay": 29
+  },
+  "rolling/loco_electric_hs_medium_white_body_f22": {
+   "x": 2705,
+   "y": 532,
+   "w": 86,
+   "h": 39,
+   "ax": 42,
+   "ay": 28
+  },
+  "rolling/loco_electric_hs_medium_white_body_f23": {
+   "x": 2796,
+   "y": 446,
+   "w": 82,
+   "h": 42,
+   "ax": 40,
+   "ay": 29
+  },
+  "rolling/loco_electric_hs_medium_white_body_f24": {
+   "x": 2095,
+   "y": 400,
+   "w": 76,
+   "h": 44,
+   "ax": 37,
+   "ay": 30
+  },
+  "rolling/loco_electric_hs_medium_white_body_f25": {
+   "x": 1,
+   "y": 400,
+   "w": 68,
+   "h": 45,
+   "ax": 33,
+   "ay": 31
+  },
+  "rolling/loco_electric_hs_medium_white_body_f26": {
+   "x": 2797,
+   "y": 352,
+   "w": 60,
+   "h": 46,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_white_body_f27": {
+   "x": 2858,
+   "y": 352,
+   "w": 51,
+   "h": 46,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_white_body_f28": {
+   "x": 740,
+   "y": 352,
+   "w": 41,
+   "h": 47,
+   "ax": 19,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_white_body_f29": {
+   "x": 782,
+   "y": 352,
+   "w": 30,
+   "h": 47,
+   "ax": 14,
+   "ay": 33
+  },
+  "rolling/loco_electric_hs_medium_white_body_f3": {
+   "x": 499,
+   "y": 193,
+   "w": 51,
+   "h": 54,
+   "ax": 26,
+   "ay": 40
+  },
+  "rolling/loco_electric_hs_medium_white_body_f30": {
+   "x": 2910,
+   "y": 352,
+   "w": 21,
+   "h": 46,
+   "ax": 10,
+   "ay": 32
+  },
+  "rolling/loco_electric_hs_medium_white_body_f4": {
+   "x": 3174,
+   "y": 136,
+   "w": 41,
+   "h": 55,
+   "ax": 21,
+   "ay": 41
+  },
+  "rolling/loco_electric_hs_medium_white_body_f5": {
+   "x": 3216,
+   "y": 136,
+   "w": 30,
+   "h": 55,
+   "ax": 15,
+   "ay": 41
+  },
+  "rolling/loco_electric_hs_medium_white_body_f6": {
+   "x": 551,
+   "y": 193,
+   "w": 21,
+   "h": 54,
+   "ax": 10,
+   "ay": 40
+  },
+  "rolling/loco_steam_early_small_black_body_f0": {
+   "x": 2030,
+   "y": 647,
+   "w": 45,
+   "h": 33,
+   "ax": 22,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_black_body_f1": {
+   "x": 2076,
+   "y": 647,
+   "w": 41,
+   "h": 33,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_black_body_f13": {
+   "x": 476,
+   "y": 716,
+   "w": 47,
+   "h": 31,
+   "ax": 23,
+   "ay": 24
+  },
+  "rolling/loco_steam_early_small_black_body_f14": {
+   "x": 1373,
+   "y": 682,
+   "w": 47,
+   "h": 32,
+   "ax": 23,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_black_body_f15": {
+   "x": 1421,
+   "y": 682,
+   "w": 47,
+   "h": 32,
+   "ax": 23,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_black_body_f16": {
+   "x": 2138,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 27
+  },
+  "rolling/loco_steam_early_small_black_body_f17": {
+   "x": 2186,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_early_small_black_body_f18": {
+   "x": 2234,
+   "y": 647,
+   "w": 45,
+   "h": 33,
+   "ax": 22,
+   "ay": 29
+  },
+  "rolling/loco_steam_early_small_black_body_f19": {
+   "x": 3533,
+   "y": 572,
+   "w": 47,
+   "h": 35,
+   "ax": 23,
+   "ay": 30
+  },
+  "rolling/loco_steam_early_small_black_body_f2": {
+   "x": 1607,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_black_body_f20": {
+   "x": 562,
+   "y": 572,
+   "w": 47,
+   "h": 37,
+   "ax": 23,
+   "ay": 31
+  },
+  "rolling/loco_steam_early_small_black_body_f21": {
+   "x": 610,
+   "y": 572,
+   "w": 47,
+   "h": 37,
+   "ax": 23,
+   "ay": 31
+  },
+  "rolling/loco_steam_early_small_black_body_f22": {
+   "x": 97,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_early_small_black_body_f23": {
+   "x": 1245,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 33
+  },
+  "rolling/loco_steam_early_small_black_body_f24": {
+   "x": 1038,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_steam_early_small_black_body_f25": {
+   "x": 2418,
+   "y": 400,
+   "w": 41,
+   "h": 43,
+   "ax": 20,
+   "ay": 35
+  },
+  "rolling/loco_steam_early_small_black_body_f26": {
+   "x": 2460,
+   "y": 400,
+   "w": 39,
+   "h": 43,
+   "ax": 19,
+   "ay": 35
+  },
+  "rolling/loco_steam_early_small_black_body_f27": {
+   "x": 406,
+   "y": 400,
+   "w": 35,
+   "h": 44,
+   "ax": 17,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_black_body_f28": {
+   "x": 442,
+   "y": 400,
+   "w": 29,
+   "h": 44,
+   "ax": 14,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_black_body_f29": {
+   "x": 472,
+   "y": 400,
+   "w": 25,
+   "h": 44,
+   "ax": 12,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_black_body_f3": {
+   "x": 1647,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_black_body_f30": {
+   "x": 498,
+   "y": 400,
+   "w": 19,
+   "h": 44,
+   "ax": 9,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_black_body_f4": {
+   "x": 1683,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_black_body_f5": {
+   "x": 1713,
+   "y": 611,
+   "w": 25,
+   "h": 34,
+   "ax": 12,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_black_body_f6": {
+   "x": 2118,
+   "y": 647,
+   "w": 19,
+   "h": 33,
+   "ax": 9,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_green_body_f0": {
+   "x": 1780,
+   "y": 647,
+   "w": 45,
+   "h": 33,
+   "ax": 22,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_green_body_f1": {
+   "x": 1826,
+   "y": 647,
+   "w": 41,
+   "h": 33,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_green_body_f13": {
+   "x": 428,
+   "y": 716,
+   "w": 47,
+   "h": 31,
+   "ax": 23,
+   "ay": 24
+  },
+  "rolling/loco_steam_early_small_green_body_f14": {
+   "x": 1277,
+   "y": 682,
+   "w": 47,
+   "h": 32,
+   "ax": 23,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_green_body_f15": {
+   "x": 1325,
+   "y": 682,
+   "w": 47,
+   "h": 32,
+   "ax": 23,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_green_body_f16": {
+   "x": 1888,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 27
+  },
+  "rolling/loco_steam_early_small_green_body_f17": {
+   "x": 1936,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_early_small_green_body_f18": {
+   "x": 1984,
+   "y": 647,
+   "w": 45,
+   "h": 33,
+   "ax": 22,
+   "ay": 29
+  },
+  "rolling/loco_steam_early_small_green_body_f19": {
+   "x": 3485,
+   "y": 572,
+   "w": 47,
+   "h": 35,
+   "ax": 23,
+   "ay": 30
+  },
+  "rolling/loco_steam_early_small_green_body_f2": {
+   "x": 1475,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_green_body_f20": {
+   "x": 466,
+   "y": 572,
+   "w": 47,
+   "h": 37,
+   "ax": 23,
+   "ay": 31
+  },
+  "rolling/loco_steam_early_small_green_body_f21": {
+   "x": 514,
+   "y": 572,
+   "w": 47,
+   "h": 37,
+   "ax": 23,
+   "ay": 31
+  },
+  "rolling/loco_steam_early_small_green_body_f22": {
+   "x": 49,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_early_small_green_body_f23": {
+   "x": 1197,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 33
+  },
+  "rolling/loco_steam_early_small_green_body_f24": {
+   "x": 992,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_steam_early_small_green_body_f25": {
+   "x": 2336,
+   "y": 400,
+   "w": 41,
+   "h": 43,
+   "ax": 20,
+   "ay": 35
+  },
+  "rolling/loco_steam_early_small_green_body_f26": {
+   "x": 2378,
+   "y": 400,
+   "w": 39,
+   "h": 43,
+   "ax": 19,
+   "ay": 35
+  },
+  "rolling/loco_steam_early_small_green_body_f27": {
+   "x": 294,
+   "y": 400,
+   "w": 35,
+   "h": 44,
+   "ax": 17,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_green_body_f28": {
+   "x": 330,
+   "y": 400,
+   "w": 29,
+   "h": 44,
+   "ax": 14,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_green_body_f29": {
+   "x": 360,
+   "y": 400,
+   "w": 25,
+   "h": 44,
+   "ax": 12,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_green_body_f3": {
+   "x": 1515,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_green_body_f30": {
+   "x": 386,
+   "y": 400,
+   "w": 19,
+   "h": 44,
+   "ax": 9,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_green_body_f4": {
+   "x": 1551,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_green_body_f5": {
+   "x": 1581,
+   "y": 611,
+   "w": 25,
+   "h": 34,
+   "ax": 12,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_green_body_f6": {
+   "x": 1868,
+   "y": 647,
+   "w": 19,
+   "h": 33,
+   "ax": 9,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_iron_body_f0": {
+   "x": 1530,
+   "y": 647,
+   "w": 45,
+   "h": 33,
+   "ax": 22,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_iron_body_f1": {
+   "x": 1576,
+   "y": 647,
+   "w": 41,
+   "h": 33,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_iron_body_f13": {
+   "x": 380,
+   "y": 716,
+   "w": 47,
+   "h": 31,
+   "ax": 23,
+   "ay": 24
+  },
+  "rolling/loco_steam_early_small_iron_body_f14": {
+   "x": 1181,
+   "y": 682,
+   "w": 47,
+   "h": 32,
+   "ax": 23,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_iron_body_f15": {
+   "x": 1229,
+   "y": 682,
+   "w": 47,
+   "h": 32,
+   "ax": 23,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_iron_body_f16": {
+   "x": 1638,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 27
+  },
+  "rolling/loco_steam_early_small_iron_body_f17": {
+   "x": 1686,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_early_small_iron_body_f18": {
+   "x": 1734,
+   "y": 647,
+   "w": 45,
+   "h": 33,
+   "ax": 22,
+   "ay": 29
+  },
+  "rolling/loco_steam_early_small_iron_body_f19": {
+   "x": 3437,
+   "y": 572,
+   "w": 47,
+   "h": 35,
+   "ax": 23,
+   "ay": 30
+  },
+  "rolling/loco_steam_early_small_iron_body_f2": {
+   "x": 1343,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_iron_body_f20": {
+   "x": 370,
+   "y": 572,
+   "w": 47,
+   "h": 37,
+   "ax": 23,
+   "ay": 31
+  },
+  "rolling/loco_steam_early_small_iron_body_f21": {
+   "x": 418,
+   "y": 572,
+   "w": 47,
+   "h": 37,
+   "ax": 23,
+   "ay": 31
+  },
+  "rolling/loco_steam_early_small_iron_body_f22": {
+   "x": 1,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_early_small_iron_body_f23": {
+   "x": 1149,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 33
+  },
+  "rolling/loco_steam_early_small_iron_body_f24": {
+   "x": 946,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_steam_early_small_iron_body_f25": {
+   "x": 2254,
+   "y": 400,
+   "w": 41,
+   "h": 43,
+   "ax": 20,
+   "ay": 35
+  },
+  "rolling/loco_steam_early_small_iron_body_f26": {
+   "x": 2296,
+   "y": 400,
+   "w": 39,
+   "h": 43,
+   "ax": 19,
+   "ay": 35
+  },
+  "rolling/loco_steam_early_small_iron_body_f27": {
+   "x": 182,
+   "y": 400,
+   "w": 35,
+   "h": 44,
+   "ax": 17,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_iron_body_f28": {
+   "x": 218,
+   "y": 400,
+   "w": 29,
+   "h": 44,
+   "ax": 14,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_iron_body_f29": {
+   "x": 248,
+   "y": 400,
+   "w": 25,
+   "h": 44,
+   "ax": 12,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_iron_body_f3": {
+   "x": 1383,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_iron_body_f30": {
+   "x": 274,
+   "y": 400,
+   "w": 19,
+   "h": 44,
+   "ax": 9,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_iron_body_f4": {
+   "x": 1419,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_iron_body_f5": {
+   "x": 1449,
+   "y": 611,
+   "w": 25,
+   "h": 34,
+   "ax": 12,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_iron_body_f6": {
+   "x": 1618,
+   "y": 647,
+   "w": 19,
+   "h": 33,
+   "ax": 9,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_yellow_body_f0": {
+   "x": 1280,
+   "y": 647,
+   "w": 45,
+   "h": 33,
+   "ax": 22,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_yellow_body_f1": {
+   "x": 1326,
+   "y": 647,
+   "w": 41,
+   "h": 33,
+   "ax": 20,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_yellow_body_f13": {
+   "x": 332,
+   "y": 716,
+   "w": 47,
+   "h": 31,
+   "ax": 23,
+   "ay": 24
+  },
+  "rolling/loco_steam_early_small_yellow_body_f14": {
+   "x": 1085,
+   "y": 682,
+   "w": 47,
+   "h": 32,
+   "ax": 23,
+   "ay": 25
+  },
+  "rolling/loco_steam_early_small_yellow_body_f15": {
+   "x": 1133,
+   "y": 682,
+   "w": 47,
+   "h": 32,
+   "ax": 23,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_yellow_body_f16": {
+   "x": 1388,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 27
+  },
+  "rolling/loco_steam_early_small_yellow_body_f17": {
+   "x": 1436,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_early_small_yellow_body_f18": {
+   "x": 1484,
+   "y": 647,
+   "w": 45,
+   "h": 33,
+   "ax": 22,
+   "ay": 29
+  },
+  "rolling/loco_steam_early_small_yellow_body_f19": {
+   "x": 3389,
+   "y": 572,
+   "w": 47,
+   "h": 35,
+   "ax": 23,
+   "ay": 30
+  },
+  "rolling/loco_steam_early_small_yellow_body_f2": {
+   "x": 1211,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_yellow_body_f20": {
+   "x": 274,
+   "y": 572,
+   "w": 47,
+   "h": 37,
+   "ax": 23,
+   "ay": 31
+  },
+  "rolling/loco_steam_early_small_yellow_body_f21": {
+   "x": 322,
+   "y": 572,
+   "w": 47,
+   "h": 37,
+   "ax": 23,
+   "ay": 31
+  },
+  "rolling/loco_steam_early_small_yellow_body_f22": {
+   "x": 4017,
+   "y": 490,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_early_small_yellow_body_f23": {
+   "x": 1101,
+   "y": 490,
+   "w": 47,
+   "h": 40,
+   "ax": 23,
+   "ay": 33
+  },
+  "rolling/loco_steam_early_small_yellow_body_f24": {
+   "x": 900,
+   "y": 446,
+   "w": 45,
+   "h": 42,
+   "ax": 22,
+   "ay": 34
+  },
+  "rolling/loco_steam_early_small_yellow_body_f25": {
+   "x": 2172,
+   "y": 400,
+   "w": 41,
+   "h": 43,
+   "ax": 20,
+   "ay": 35
+  },
+  "rolling/loco_steam_early_small_yellow_body_f26": {
+   "x": 2214,
+   "y": 400,
+   "w": 39,
+   "h": 43,
+   "ax": 19,
+   "ay": 35
+  },
+  "rolling/loco_steam_early_small_yellow_body_f27": {
+   "x": 70,
+   "y": 400,
+   "w": 35,
+   "h": 44,
+   "ax": 17,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_yellow_body_f28": {
+   "x": 106,
+   "y": 400,
+   "w": 29,
+   "h": 44,
+   "ax": 14,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_yellow_body_f29": {
+   "x": 136,
+   "y": 400,
+   "w": 25,
+   "h": 44,
+   "ax": 12,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_yellow_body_f3": {
+   "x": 1251,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_yellow_body_f30": {
+   "x": 162,
+   "y": 400,
+   "w": 19,
+   "h": 44,
+   "ax": 9,
+   "ay": 36
+  },
+  "rolling/loco_steam_early_small_yellow_body_f4": {
+   "x": 1287,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_yellow_body_f5": {
+   "x": 1317,
+   "y": 611,
+   "w": 25,
+   "h": 34,
+   "ax": 12,
+   "ay": 26
+  },
+  "rolling/loco_steam_early_small_yellow_body_f6": {
+   "x": 1368,
+   "y": 647,
+   "w": 19,
+   "h": 33,
+   "ax": 9,
+   "ay": 25
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f0": {
+   "x": 1455,
+   "y": 301,
+   "w": 59,
+   "h": 49,
+   "ax": 29,
+   "ay": 43
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f1": {
+   "x": 257,
+   "y": 248,
+   "w": 55,
+   "h": 52,
+   "ax": 27,
+   "ay": 45
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f13": {
+   "x": 205,
+   "y": 352,
+   "w": 63,
+   "h": 47,
+   "ax": 31,
+   "ay": 42
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f14": {
+   "x": 3820,
+   "y": 352,
+   "w": 65,
+   "h": 45,
+   "ax": 32,
+   "ay": 41
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f15": {
+   "x": 2494,
+   "y": 446,
+   "w": 67,
+   "h": 42,
+   "ax": 33,
+   "ay": 40
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f16": {
+   "x": 3773,
+   "y": 532,
+   "w": 67,
+   "h": 38,
+   "ax": 33,
+   "ay": 38
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f17": {
+   "x": 685,
+   "y": 647,
+   "w": 67,
+   "h": 34,
+   "ax": 33,
+   "ay": 36
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f18": {
+   "x": 3437,
+   "y": 716,
+   "w": 65,
+   "h": 30,
+   "ax": 32,
+   "ay": 34
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f19": {
+   "x": 43,
+   "y": 716,
+   "w": 67,
+   "h": 32,
+   "ax": 33,
+   "ay": 34
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f2": {
+   "x": 2004,
+   "y": 193,
+   "w": 49,
+   "h": 53,
+   "ax": 24,
+   "ay": 46
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f20": {
+   "x": 753,
+   "y": 647,
+   "w": 67,
+   "h": 34,
+   "ax": 33,
+   "ay": 34
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f21": {
+   "x": 3841,
+   "y": 532,
+   "w": 67,
+   "h": 38,
+   "ax": 33,
+   "ay": 36
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f22": {
+   "x": 969,
+   "y": 490,
+   "w": 65,
+   "h": 41,
+   "ax": 32,
+   "ay": 37
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f23": {
+   "x": 1813,
+   "y": 400,
+   "w": 63,
+   "h": 44,
+   "ax": 31,
+   "ay": 39
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f24": {
+   "x": 2407,
+   "y": 352,
+   "w": 59,
+   "h": 46,
+   "ax": 29,
+   "ay": 40
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f25": {
+   "x": 2170,
+   "y": 301,
+   "w": 55,
+   "h": 48,
+   "ax": 27,
+   "ay": 41
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f26": {
+   "x": 1515,
+   "y": 301,
+   "w": 49,
+   "h": 49,
+   "ax": 24,
+   "ay": 42
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f27": {
+   "x": 1911,
+   "y": 248,
+   "w": 43,
+   "h": 51,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f28": {
+   "x": 313,
+   "y": 248,
+   "w": 37,
+   "h": 52,
+   "ax": 18,
+   "ay": 44
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f29": {
+   "x": 351,
+   "y": 248,
+   "w": 29,
+   "h": 52,
+   "ax": 14,
+   "ay": 44
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f3": {
+   "x": 263,
+   "y": 193,
+   "w": 43,
+   "h": 54,
+   "ax": 21,
+   "ay": 46
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f30": {
+   "x": 381,
+   "y": 248,
+   "w": 22,
+   "h": 52,
+   "ax": 11,
+   "ay": 44
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f4": {
+   "x": 2848,
+   "y": 136,
+   "w": 37,
+   "h": 55,
+   "ax": 18,
+   "ay": 47
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f5": {
+   "x": 2886,
+   "y": 136,
+   "w": 29,
+   "h": 55,
+   "ax": 14,
+   "ay": 47
+  },
+  "rolling/loco_steam_garratt_large_green_cradle_f6": {
+   "x": 2916,
+   "y": 136,
+   "w": 21,
+   "h": 55,
+   "ax": 10,
+   "ay": 47
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f0": {
+   "x": 362,
+   "y": 647,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f1": {
+   "x": 402,
+   "y": 647,
+   "w": 38,
+   "h": 34,
+   "ax": 18,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f13": {
+   "x": 528,
+   "y": 682,
+   "w": 41,
+   "h": 33,
+   "ax": 20,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f14": {
+   "x": 4012,
+   "y": 682,
+   "w": 41,
+   "h": 32,
+   "ax": 20,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f15": {
+   "x": 4054,
+   "y": 682,
+   "w": 41,
+   "h": 32,
+   "ax": 20,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f16": {
+   "x": 3395,
+   "y": 716,
+   "w": 41,
+   "h": 30,
+   "ax": 20,
+   "ay": 26
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f17": {
+   "x": 390,
+   "y": 749,
+   "w": 39,
+   "h": 29,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f18": {
+   "x": 1282,
+   "y": 749,
+   "w": 38,
+   "h": 27,
+   "ax": 19,
+   "ay": 25
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f19": {
+   "x": 1034,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f2": {
+   "x": 441,
+   "y": 647,
+   "w": 36,
+   "h": 34,
+   "ax": 17,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f20": {
+   "x": 430,
+   "y": 749,
+   "w": 41,
+   "h": 29,
+   "ax": 20,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f21": {
+   "x": 2394,
+   "y": 716,
+   "w": 41,
+   "h": 31,
+   "ax": 20,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f22": {
+   "x": 1,
+   "y": 716,
+   "w": 41,
+   "h": 32,
+   "ax": 20,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f23": {
+   "x": 570,
+   "y": 682,
+   "w": 41,
+   "h": 33,
+   "ax": 20,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f24": {
+   "x": 478,
+   "y": 647,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f25": {
+   "x": 518,
+   "y": 647,
+   "w": 38,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f26": {
+   "x": 557,
+   "y": 647,
+   "w": 36,
+   "h": 34,
+   "ax": 18,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f27": {
+   "x": 594,
+   "y": 647,
+   "w": 33,
+   "h": 34,
+   "ax": 17,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f28": {
+   "x": 628,
+   "y": 647,
+   "w": 29,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f29": {
+   "x": 658,
+   "y": 647,
+   "w": 26,
+   "h": 34,
+   "ax": 14,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f3": {
+   "x": 464,
+   "y": 682,
+   "w": 33,
+   "h": 33,
+   "ax": 15,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f30": {
+   "x": 612,
+   "y": 682,
+   "w": 25,
+   "h": 33,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f4": {
+   "x": 498,
+   "y": 682,
+   "w": 29,
+   "h": 33,
+   "ax": 13,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f5": {
+   "x": 3985,
+   "y": 682,
+   "w": 26,
+   "h": 32,
+   "ax": 11,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_green_engine_f6": {
+   "x": 2368,
+   "y": 716,
+   "w": 25,
+   "h": 31,
+   "ax": 12,
+   "ay": 26
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f0": {
+   "x": 1565,
+   "y": 301,
+   "w": 59,
+   "h": 49,
+   "ax": 29,
+   "ay": 43
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f1": {
+   "x": 404,
+   "y": 248,
+   "w": 55,
+   "h": 52,
+   "ax": 27,
+   "ay": 45
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f13": {
+   "x": 269,
+   "y": 352,
+   "w": 63,
+   "h": 47,
+   "ax": 31,
+   "ay": 42
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f14": {
+   "x": 3886,
+   "y": 352,
+   "w": 65,
+   "h": 45,
+   "ax": 32,
+   "ay": 41
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f15": {
+   "x": 2562,
+   "y": 446,
+   "w": 67,
+   "h": 42,
+   "ax": 33,
+   "ay": 40
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f16": {
+   "x": 3909,
+   "y": 532,
+   "w": 67,
+   "h": 38,
+   "ax": 33,
+   "ay": 38
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f17": {
+   "x": 1144,
+   "y": 647,
+   "w": 67,
+   "h": 34,
+   "ax": 33,
+   "ay": 36
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f18": {
+   "x": 3545,
+   "y": 716,
+   "w": 65,
+   "h": 30,
+   "ax": 32,
+   "ay": 34
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f19": {
+   "x": 264,
+   "y": 716,
+   "w": 67,
+   "h": 32,
+   "ax": 33,
+   "ay": 34
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f2": {
+   "x": 2054,
+   "y": 193,
+   "w": 49,
+   "h": 53,
+   "ax": 24,
+   "ay": 46
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f20": {
+   "x": 1212,
+   "y": 647,
+   "w": 67,
+   "h": 34,
+   "ax": 33,
+   "ay": 34
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f21": {
+   "x": 3977,
+   "y": 532,
+   "w": 67,
+   "h": 38,
+   "ax": 33,
+   "ay": 36
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f22": {
+   "x": 1035,
+   "y": 490,
+   "w": 65,
+   "h": 41,
+   "ax": 32,
+   "ay": 37
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f23": {
+   "x": 1877,
+   "y": 400,
+   "w": 63,
+   "h": 44,
+   "ax": 31,
+   "ay": 39
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f24": {
+   "x": 2467,
+   "y": 352,
+   "w": 59,
+   "h": 46,
+   "ax": 29,
+   "ay": 40
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f25": {
+   "x": 2226,
+   "y": 301,
+   "w": 55,
+   "h": 48,
+   "ax": 27,
+   "ay": 41
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f26": {
+   "x": 1625,
+   "y": 301,
+   "w": 49,
+   "h": 49,
+   "ax": 24,
+   "ay": 42
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f27": {
+   "x": 1955,
+   "y": 248,
+   "w": 43,
+   "h": 51,
+   "ax": 21,
+   "ay": 43
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f28": {
+   "x": 460,
+   "y": 248,
+   "w": 37,
+   "h": 52,
+   "ax": 18,
+   "ay": 44
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f29": {
+   "x": 498,
+   "y": 248,
+   "w": 29,
+   "h": 52,
+   "ax": 14,
+   "ay": 44
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f3": {
+   "x": 307,
+   "y": 193,
+   "w": 43,
+   "h": 54,
+   "ax": 21,
+   "ay": 46
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f30": {
+   "x": 528,
+   "y": 248,
+   "w": 22,
+   "h": 52,
+   "ax": 11,
+   "ay": 44
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f4": {
+   "x": 2938,
+   "y": 136,
+   "w": 37,
+   "h": 55,
+   "ax": 18,
+   "ay": 47
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f5": {
+   "x": 2976,
+   "y": 136,
+   "w": 29,
+   "h": 55,
+   "ax": 14,
+   "ay": 47
+  },
+  "rolling/loco_steam_garratt_large_iron_cradle_f6": {
+   "x": 3006,
+   "y": 136,
+   "w": 21,
+   "h": 55,
+   "ax": 10,
+   "ay": 47
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f0": {
+   "x": 821,
+   "y": 647,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f1": {
+   "x": 861,
+   "y": 647,
+   "w": 38,
+   "h": 34,
+   "ax": 18,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f13": {
+   "x": 702,
+   "y": 682,
+   "w": 41,
+   "h": 33,
+   "ax": 20,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f14": {
+   "x": 138,
+   "y": 716,
+   "w": 41,
+   "h": 32,
+   "ax": 20,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f15": {
+   "x": 180,
+   "y": 716,
+   "w": 41,
+   "h": 32,
+   "ax": 20,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f16": {
+   "x": 3503,
+   "y": 716,
+   "w": 41,
+   "h": 30,
+   "ax": 20,
+   "ay": 26
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f17": {
+   "x": 472,
+   "y": 749,
+   "w": 39,
+   "h": 29,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f18": {
+   "x": 1321,
+   "y": 749,
+   "w": 38,
+   "h": 27,
+   "ax": 19,
+   "ay": 25
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f19": {
+   "x": 1074,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f2": {
+   "x": 900,
+   "y": 647,
+   "w": 36,
+   "h": 34,
+   "ax": 17,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f20": {
+   "x": 512,
+   "y": 749,
+   "w": 41,
+   "h": 29,
+   "ax": 20,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f21": {
+   "x": 2462,
+   "y": 716,
+   "w": 41,
+   "h": 31,
+   "ax": 20,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f22": {
+   "x": 222,
+   "y": 716,
+   "w": 41,
+   "h": 32,
+   "ax": 20,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f23": {
+   "x": 744,
+   "y": 682,
+   "w": 41,
+   "h": 33,
+   "ax": 20,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f24": {
+   "x": 937,
+   "y": 647,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f25": {
+   "x": 977,
+   "y": 647,
+   "w": 38,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f26": {
+   "x": 1016,
+   "y": 647,
+   "w": 36,
+   "h": 34,
+   "ax": 18,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f27": {
+   "x": 1053,
+   "y": 647,
+   "w": 33,
+   "h": 34,
+   "ax": 17,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f28": {
+   "x": 1087,
+   "y": 647,
+   "w": 29,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f29": {
+   "x": 1117,
+   "y": 647,
+   "w": 26,
+   "h": 34,
+   "ax": 14,
+   "ay": 29
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f3": {
+   "x": 638,
+   "y": 682,
+   "w": 33,
+   "h": 33,
+   "ax": 15,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f30": {
+   "x": 786,
+   "y": 682,
+   "w": 25,
+   "h": 33,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f4": {
+   "x": 672,
+   "y": 682,
+   "w": 29,
+   "h": 33,
+   "ax": 13,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f5": {
+   "x": 111,
+   "y": 716,
+   "w": 26,
+   "h": 32,
+   "ax": 11,
+   "ay": 27
+  },
+  "rolling/loco_steam_garratt_large_iron_engine_f6": {
+   "x": 2436,
+   "y": 716,
+   "w": 25,
+   "h": 31,
+   "ax": 12,
+   "ay": 26
+  },
+  "rolling/loco_steam_std_large_black_frame_f0": {
+   "x": 2769,
+   "y": 1,
+   "w": 109,
+   "h": 63,
+   "ax": 54,
+   "ay": 49
+  },
+  "rolling/loco_steam_std_large_black_frame_f1": {
+   "x": 1425,
+   "y": 1,
+   "w": 95,
+   "h": 65,
+   "ax": 48,
+   "ay": 51
+  },
+  "rolling/loco_steam_std_large_black_frame_f13": {
+   "x": 1,
+   "y": 75,
+   "w": 119,
+   "h": 60,
+   "ax": 59,
+   "ay": 46
+  },
+  "rolling/loco_steam_std_large_black_frame_f14": {
+   "x": 2801,
+   "y": 75,
+   "w": 127,
+   "h": 56,
+   "ax": 63,
+   "ay": 42
+  },
+  "rolling/loco_steam_std_large_black_frame_f15": {
+   "x": 2287,
+   "y": 193,
+   "w": 133,
+   "h": 52,
+   "ax": 66,
+   "ay": 40
+  },
+  "rolling/loco_steam_std_large_black_frame_f16": {
+   "x": 975,
+   "y": 352,
+   "w": 137,
+   "h": 46,
+   "ax": 68,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_large_black_frame_f17": {
+   "x": 1269,
+   "y": 532,
+   "w": 137,
+   "h": 39,
+   "ax": 68,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_large_black_frame_f18": {
+   "x": 2953,
+   "y": 682,
+   "w": 137,
+   "h": 32,
+   "ax": 68,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_large_black_frame_f19": {
+   "x": 2992,
+   "y": 532,
+   "w": 137,
+   "h": 38,
+   "ax": 68,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_large_black_frame_f2": {
+   "x": 911,
+   "y": 1,
+   "w": 82,
+   "h": 67,
+   "ax": 42,
+   "ay": 53
+  },
+  "rolling/loco_steam_std_large_black_frame_f20": {
+   "x": 1113,
+   "y": 352,
+   "w": 137,
+   "h": 46,
+   "ax": 68,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_large_black_frame_f21": {
+   "x": 573,
+   "y": 193,
+   "w": 133,
+   "h": 53,
+   "ax": 66,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_large_black_frame_f22": {
+   "x": 653,
+   "y": 75,
+   "w": 127,
+   "h": 59,
+   "ax": 63,
+   "ay": 45
+  },
+  "rolling/loco_steam_std_large_black_frame_f23": {
+   "x": 3317,
+   "y": 1,
+   "w": 119,
+   "h": 62,
+   "ax": 59,
+   "ay": 48
+  },
+  "rolling/loco_steam_std_large_black_frame_f24": {
+   "x": 2417,
+   "y": 1,
+   "w": 109,
+   "h": 64,
+   "ax": 54,
+   "ay": 50
+  },
+  "rolling/loco_steam_std_large_black_frame_f25": {
+   "x": 994,
+   "y": 1,
+   "w": 97,
+   "h": 67,
+   "ax": 48,
+   "ay": 53
+  },
+  "rolling/loco_steam_std_large_black_frame_f26": {
+   "x": 526,
+   "y": 1,
+   "w": 85,
+   "h": 69,
+   "ax": 42,
+   "ay": 55
+  },
+  "rolling/loco_steam_std_large_black_frame_f27": {
+   "x": 271,
+   "y": 1,
+   "w": 71,
+   "h": 70,
+   "ax": 35,
+   "ay": 56
+  },
+  "rolling/loco_steam_std_large_black_frame_f28": {
+   "x": 47,
+   "y": 1,
+   "w": 55,
+   "h": 72,
+   "ax": 27,
+   "ay": 58
+  },
+  "rolling/loco_steam_std_large_black_frame_f29": {
+   "x": 103,
+   "y": 1,
+   "w": 37,
+   "h": 72,
+   "ax": 18,
+   "ay": 58
+  },
+  "rolling/loco_steam_std_large_black_frame_f3": {
+   "x": 773,
+   "y": 1,
+   "w": 68,
+   "h": 68,
+   "ax": 35,
+   "ay": 54
+  },
+  "rolling/loco_steam_std_large_black_frame_f30": {
+   "x": 1,
+   "y": 1,
+   "w": 22,
+   "h": 73,
+   "ax": 11,
+   "ay": 59
+  },
+  "rolling/loco_steam_std_large_black_frame_f4": {
+   "x": 451,
+   "y": 1,
+   "w": 52,
+   "h": 69,
+   "ax": 27,
+   "ay": 55
+  },
+  "rolling/loco_steam_std_large_black_frame_f5": {
+   "x": 235,
+   "y": 1,
+   "w": 35,
+   "h": 70,
+   "ax": 18,
+   "ay": 56
+  },
+  "rolling/loco_steam_std_large_black_frame_f6": {
+   "x": 504,
+   "y": 1,
+   "w": 21,
+   "h": 69,
+   "ax": 10,
+   "ay": 55
+  },
+  "rolling/loco_steam_std_large_iron_frame_f0": {
+   "x": 2879,
+   "y": 1,
+   "w": 109,
+   "h": 63,
+   "ax": 54,
+   "ay": 49
+  },
+  "rolling/loco_steam_std_large_iron_frame_f1": {
+   "x": 1521,
+   "y": 1,
+   "w": 95,
+   "h": 65,
+   "ax": 48,
+   "ay": 51
+  },
+  "rolling/loco_steam_std_large_iron_frame_f13": {
+   "x": 121,
+   "y": 75,
+   "w": 119,
+   "h": 60,
+   "ax": 59,
+   "ay": 46
+  },
+  "rolling/loco_steam_std_large_iron_frame_f14": {
+   "x": 2929,
+   "y": 75,
+   "w": 127,
+   "h": 56,
+   "ax": 63,
+   "ay": 42
+  },
+  "rolling/loco_steam_std_large_iron_frame_f15": {
+   "x": 2421,
+   "y": 193,
+   "w": 133,
+   "h": 52,
+   "ax": 66,
+   "ay": 40
+  },
+  "rolling/loco_steam_std_large_iron_frame_f16": {
+   "x": 1251,
+   "y": 352,
+   "w": 137,
+   "h": 46,
+   "ax": 68,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_large_iron_frame_f17": {
+   "x": 1407,
+   "y": 532,
+   "w": 137,
+   "h": 39,
+   "ax": 68,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_large_iron_frame_f18": {
+   "x": 3091,
+   "y": 682,
+   "w": 137,
+   "h": 32,
+   "ax": 68,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_large_iron_frame_f19": {
+   "x": 3130,
+   "y": 532,
+   "w": 137,
+   "h": 38,
+   "ax": 68,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_large_iron_frame_f2": {
+   "x": 1092,
+   "y": 1,
+   "w": 82,
+   "h": 67,
+   "ax": 42,
+   "ay": 53
+  },
+  "rolling/loco_steam_std_large_iron_frame_f20": {
+   "x": 1389,
+   "y": 352,
+   "w": 137,
+   "h": 46,
+   "ax": 68,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_large_iron_frame_f21": {
+   "x": 707,
+   "y": 193,
+   "w": 133,
+   "h": 53,
+   "ax": 66,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_large_iron_frame_f22": {
+   "x": 781,
+   "y": 75,
+   "w": 127,
+   "h": 59,
+   "ax": 63,
+   "ay": 45
+  },
+  "rolling/loco_steam_std_large_iron_frame_f23": {
+   "x": 3437,
+   "y": 1,
+   "w": 119,
+   "h": 62,
+   "ax": 59,
+   "ay": 48
+  },
+  "rolling/loco_steam_std_large_iron_frame_f24": {
+   "x": 2527,
+   "y": 1,
+   "w": 109,
+   "h": 64,
+   "ax": 54,
+   "ay": 50
+  },
+  "rolling/loco_steam_std_large_iron_frame_f25": {
+   "x": 1175,
+   "y": 1,
+   "w": 97,
+   "h": 67,
+   "ax": 48,
+   "ay": 53
+  },
+  "rolling/loco_steam_std_large_iron_frame_f26": {
+   "x": 687,
+   "y": 1,
+   "w": 85,
+   "h": 69,
+   "ax": 42,
+   "ay": 55
+  },
+  "rolling/loco_steam_std_large_iron_frame_f27": {
+   "x": 379,
+   "y": 1,
+   "w": 71,
+   "h": 70,
+   "ax": 35,
+   "ay": 56
+  },
+  "rolling/loco_steam_std_large_iron_frame_f28": {
+   "x": 141,
+   "y": 1,
+   "w": 55,
+   "h": 72,
+   "ax": 27,
+   "ay": 58
+  },
+  "rolling/loco_steam_std_large_iron_frame_f29": {
+   "x": 197,
+   "y": 1,
+   "w": 37,
+   "h": 72,
+   "ax": 18,
+   "ay": 58
+  },
+  "rolling/loco_steam_std_large_iron_frame_f3": {
+   "x": 842,
+   "y": 1,
+   "w": 68,
+   "h": 68,
+   "ax": 35,
+   "ay": 54
+  },
+  "rolling/loco_steam_std_large_iron_frame_f30": {
+   "x": 24,
+   "y": 1,
+   "w": 22,
+   "h": 73,
+   "ax": 11,
+   "ay": 59
+  },
+  "rolling/loco_steam_std_large_iron_frame_f4": {
+   "x": 612,
+   "y": 1,
+   "w": 52,
+   "h": 69,
+   "ax": 27,
+   "ay": 55
+  },
+  "rolling/loco_steam_std_large_iron_frame_f5": {
+   "x": 343,
+   "y": 1,
+   "w": 35,
+   "h": 70,
+   "ax": 18,
+   "ay": 56
+  },
+  "rolling/loco_steam_std_large_iron_frame_f6": {
+   "x": 665,
+   "y": 1,
+   "w": 21,
+   "h": 69,
+   "ax": 10,
+   "ay": 55
+  },
+  "rolling/loco_steam_std_medium_black_engine_f0": {
+   "x": 2932,
+   "y": 352,
+   "w": 53,
+   "h": 45,
+   "ax": 26,
+   "ay": 37
+  },
+  "rolling/loco_steam_std_medium_black_engine_f1": {
+   "x": 2282,
+   "y": 301,
+   "w": 51,
+   "h": 47,
+   "ax": 25,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_black_engine_f13": {
+   "x": 518,
+   "y": 400,
+   "w": 57,
+   "h": 44,
+   "ax": 28,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_black_engine_f14": {
+   "x": 3415,
+   "y": 446,
+   "w": 59,
+   "h": 41,
+   "ax": 29,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_medium_black_engine_f15": {
+   "x": 729,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 29,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_medium_black_engine_f16": {
+   "x": 858,
+   "y": 572,
+   "w": 61,
+   "h": 37,
+   "ax": 30,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_medium_black_engine_f17": {
+   "x": 1931,
+   "y": 611,
+   "w": 59,
+   "h": 34,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_medium_black_engine_f18": {
+   "x": 524,
+   "y": 716,
+   "w": 58,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_black_engine_f19": {
+   "x": 583,
+   "y": 716,
+   "w": 59,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_black_engine_f2": {
+   "x": 84,
+   "y": 301,
+   "w": 45,
+   "h": 49,
+   "ax": 22,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_black_engine_f20": {
+   "x": 3781,
+   "y": 572,
+   "w": 61,
+   "h": 35,
+   "ax": 30,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_medium_black_engine_f21": {
+   "x": 920,
+   "y": 572,
+   "w": 59,
+   "h": 37,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_medium_black_engine_f22": {
+   "x": 789,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 29,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_medium_black_engine_f23": {
+   "x": 1692,
+   "y": 446,
+   "w": 57,
+   "h": 42,
+   "ax": 28,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_medium_black_engine_f24": {
+   "x": 576,
+   "y": 400,
+   "w": 53,
+   "h": 44,
+   "ax": 26,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_black_engine_f25": {
+   "x": 2986,
+   "y": 352,
+   "w": 51,
+   "h": 45,
+   "ax": 25,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_black_engine_f26": {
+   "x": 2334,
+   "y": 301,
+   "w": 45,
+   "h": 47,
+   "ax": 22,
+   "ay": 37
+  },
+  "rolling/loco_steam_std_medium_black_engine_f27": {
+   "x": 1675,
+   "y": 301,
+   "w": 41,
+   "h": 48,
+   "ax": 20,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_black_engine_f28": {
+   "x": 1717,
+   "y": 301,
+   "w": 35,
+   "h": 48,
+   "ax": 17,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_black_engine_f29": {
+   "x": 130,
+   "y": 301,
+   "w": 28,
+   "h": 49,
+   "ax": 14,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_black_engine_f3": {
+   "x": 1999,
+   "y": 248,
+   "w": 41,
+   "h": 50,
+   "ax": 20,
+   "ay": 40
+  },
+  "rolling/loco_steam_std_medium_black_engine_f30": {
+   "x": 159,
+   "y": 301,
+   "w": 23,
+   "h": 49,
+   "ax": 11,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_black_engine_f4": {
+   "x": 989,
+   "y": 248,
+   "w": 35,
+   "h": 51,
+   "ax": 17,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_black_engine_f5": {
+   "x": 1025,
+   "y": 248,
+   "w": 28,
+   "h": 51,
+   "ax": 13,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_black_engine_f6": {
+   "x": 1054,
+   "y": 248,
+   "w": 23,
+   "h": 51,
+   "ax": 11,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_black_tender_f0": {
+   "x": 1991,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_black_tender_f1": {
+   "x": 2031,
+   "y": 611,
+   "w": 37,
+   "h": 34,
+   "ax": 18,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_black_tender_f13": {
+   "x": 1705,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f14": {
+   "x": 1745,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f15": {
+   "x": 2504,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_black_tender_f16": {
+   "x": 554,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_std_medium_black_tender_f17": {
+   "x": 1360,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_std_medium_black_tender_f18": {
+   "x": 2257,
+   "y": 749,
+   "w": 36,
+   "h": 24,
+   "ax": 18,
+   "ay": 24
+  },
+  "rolling/loco_steam_std_medium_black_tender_f19": {
+   "x": 1398,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_std_medium_black_tender_f2": {
+   "x": 2069,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_black_tender_f20": {
+   "x": 594,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_std_medium_black_tender_f21": {
+   "x": 2544,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_black_tender_f22": {
+   "x": 643,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_black_tender_f23": {
+   "x": 1785,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f24": {
+   "x": 2472,
+   "y": 647,
+   "w": 39,
+   "h": 33,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f25": {
+   "x": 2512,
+   "y": 647,
+   "w": 37,
+   "h": 33,
+   "ax": 18,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f26": {
+   "x": 2550,
+   "y": 647,
+   "w": 35,
+   "h": 33,
+   "ax": 17,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f27": {
+   "x": 2167,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_black_tender_f28": {
+   "x": 2586,
+   "y": 647,
+   "w": 29,
+   "h": 33,
+   "ax": 14,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f29": {
+   "x": 1825,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f3": {
+   "x": 2105,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_black_tender_f30": {
+   "x": 1851,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f4": {
+   "x": 2137,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_black_tender_f5": {
+   "x": 1657,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_black_tender_f6": {
+   "x": 1683,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_engine_f0": {
+   "x": 3144,
+   "y": 352,
+   "w": 53,
+   "h": 45,
+   "ax": 26,
+   "ay": 37
+  },
+  "rolling/loco_steam_std_medium_green_engine_f1": {
+   "x": 2478,
+   "y": 301,
+   "w": 51,
+   "h": 47,
+   "ax": 25,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_green_engine_f13": {
+   "x": 742,
+   "y": 400,
+   "w": 57,
+   "h": 44,
+   "ax": 28,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_green_engine_f14": {
+   "x": 3535,
+   "y": 446,
+   "w": 59,
+   "h": 41,
+   "ax": 29,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_medium_green_engine_f15": {
+   "x": 969,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 29,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_medium_green_engine_f16": {
+   "x": 1102,
+   "y": 572,
+   "w": 61,
+   "h": 37,
+   "ax": 30,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_medium_green_engine_f17": {
+   "x": 2467,
+   "y": 611,
+   "w": 59,
+   "h": 34,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_medium_green_engine_f18": {
+   "x": 842,
+   "y": 716,
+   "w": 58,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_green_engine_f19": {
+   "x": 901,
+   "y": 716,
+   "w": 59,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_green_engine_f2": {
+   "x": 282,
+   "y": 301,
+   "w": 45,
+   "h": 49,
+   "ax": 22,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_green_engine_f20": {
+   "x": 3905,
+   "y": 572,
+   "w": 61,
+   "h": 35,
+   "ax": 30,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_medium_green_engine_f21": {
+   "x": 1164,
+   "y": 572,
+   "w": 59,
+   "h": 37,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_medium_green_engine_f22": {
+   "x": 1029,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 29,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_medium_green_engine_f23": {
+   "x": 1808,
+   "y": 446,
+   "w": 57,
+   "h": 42,
+   "ax": 28,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_medium_green_engine_f24": {
+   "x": 800,
+   "y": 400,
+   "w": 53,
+   "h": 44,
+   "ax": 26,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_green_engine_f25": {
+   "x": 3198,
+   "y": 352,
+   "w": 51,
+   "h": 45,
+   "ax": 25,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_green_engine_f26": {
+   "x": 2530,
+   "y": 301,
+   "w": 45,
+   "h": 47,
+   "ax": 22,
+   "ay": 37
+  },
+  "rolling/loco_steam_std_medium_green_engine_f27": {
+   "x": 1831,
+   "y": 301,
+   "w": 41,
+   "h": 48,
+   "ax": 20,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_green_engine_f28": {
+   "x": 1873,
+   "y": 301,
+   "w": 35,
+   "h": 48,
+   "ax": 17,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_green_engine_f29": {
+   "x": 328,
+   "y": 301,
+   "w": 28,
+   "h": 49,
+   "ax": 14,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_green_engine_f3": {
+   "x": 2083,
+   "y": 248,
+   "w": 41,
+   "h": 50,
+   "ax": 20,
+   "ay": 40
+  },
+  "rolling/loco_steam_std_medium_green_engine_f30": {
+   "x": 357,
+   "y": 301,
+   "w": 23,
+   "h": 49,
+   "ax": 11,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_green_engine_f4": {
+   "x": 1167,
+   "y": 248,
+   "w": 35,
+   "h": 51,
+   "ax": 17,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_green_engine_f5": {
+   "x": 1203,
+   "y": 248,
+   "w": 28,
+   "h": 51,
+   "ax": 13,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_green_engine_f6": {
+   "x": 1232,
+   "y": 248,
+   "w": 23,
+   "h": 51,
+   "ax": 11,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_green_tender_f0": {
+   "x": 2527,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_green_tender_f1": {
+   "x": 2567,
+   "y": 611,
+   "w": 37,
+   "h": 34,
+   "ax": 18,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_green_tender_f13": {
+   "x": 2137,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f14": {
+   "x": 2177,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f15": {
+   "x": 2664,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_green_tender_f16": {
+   "x": 714,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_std_medium_green_tender_f17": {
+   "x": 1512,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_std_medium_green_tender_f18": {
+   "x": 2331,
+   "y": 749,
+   "w": 36,
+   "h": 24,
+   "ax": 18,
+   "ay": 24
+  },
+  "rolling/loco_steam_std_medium_green_tender_f19": {
+   "x": 1550,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_std_medium_green_tender_f2": {
+   "x": 2605,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_green_tender_f20": {
+   "x": 754,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_std_medium_green_tender_f21": {
+   "x": 2704,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_green_tender_f22": {
+   "x": 961,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_green_tender_f23": {
+   "x": 2217,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f24": {
+   "x": 2760,
+   "y": 647,
+   "w": 39,
+   "h": 33,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f25": {
+   "x": 2800,
+   "y": 647,
+   "w": 37,
+   "h": 33,
+   "ax": 18,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f26": {
+   "x": 2838,
+   "y": 647,
+   "w": 35,
+   "h": 33,
+   "ax": 17,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f27": {
+   "x": 2703,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_green_tender_f28": {
+   "x": 2874,
+   "y": 647,
+   "w": 29,
+   "h": 33,
+   "ax": 14,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f29": {
+   "x": 2257,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f3": {
+   "x": 2641,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_green_tender_f30": {
+   "x": 2283,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f4": {
+   "x": 2673,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_green_tender_f5": {
+   "x": 2089,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_green_tender_f6": {
+   "x": 2115,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f0": {
+   "x": 3038,
+   "y": 352,
+   "w": 53,
+   "h": 45,
+   "ax": 26,
+   "ay": 37
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f1": {
+   "x": 2380,
+   "y": 301,
+   "w": 51,
+   "h": 47,
+   "ax": 25,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f13": {
+   "x": 630,
+   "y": 400,
+   "w": 57,
+   "h": 44,
+   "ax": 28,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f14": {
+   "x": 3475,
+   "y": 446,
+   "w": 59,
+   "h": 41,
+   "ax": 29,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f15": {
+   "x": 849,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 29,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f16": {
+   "x": 980,
+   "y": 572,
+   "w": 61,
+   "h": 37,
+   "ax": 30,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f17": {
+   "x": 2199,
+   "y": 611,
+   "w": 59,
+   "h": 34,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f18": {
+   "x": 683,
+   "y": 716,
+   "w": 58,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f19": {
+   "x": 742,
+   "y": 716,
+   "w": 59,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f2": {
+   "x": 183,
+   "y": 301,
+   "w": 45,
+   "h": 49,
+   "ax": 22,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f20": {
+   "x": 3843,
+   "y": 572,
+   "w": 61,
+   "h": 35,
+   "ax": 30,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f21": {
+   "x": 1042,
+   "y": 572,
+   "w": 59,
+   "h": 37,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f22": {
+   "x": 909,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 29,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f23": {
+   "x": 1750,
+   "y": 446,
+   "w": 57,
+   "h": 42,
+   "ax": 28,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f24": {
+   "x": 688,
+   "y": 400,
+   "w": 53,
+   "h": 44,
+   "ax": 26,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f25": {
+   "x": 3092,
+   "y": 352,
+   "w": 51,
+   "h": 45,
+   "ax": 25,
+   "ay": 36
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f26": {
+   "x": 2432,
+   "y": 301,
+   "w": 45,
+   "h": 47,
+   "ax": 22,
+   "ay": 37
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f27": {
+   "x": 1753,
+   "y": 301,
+   "w": 41,
+   "h": 48,
+   "ax": 20,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f28": {
+   "x": 1795,
+   "y": 301,
+   "w": 35,
+   "h": 48,
+   "ax": 17,
+   "ay": 38
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f29": {
+   "x": 229,
+   "y": 301,
+   "w": 28,
+   "h": 49,
+   "ax": 14,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f3": {
+   "x": 2041,
+   "y": 248,
+   "w": 41,
+   "h": 50,
+   "ax": 20,
+   "ay": 40
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f30": {
+   "x": 258,
+   "y": 301,
+   "w": 23,
+   "h": 49,
+   "ax": 11,
+   "ay": 39
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f4": {
+   "x": 1078,
+   "y": 248,
+   "w": 35,
+   "h": 51,
+   "ax": 17,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f5": {
+   "x": 1114,
+   "y": 248,
+   "w": 28,
+   "h": 51,
+   "ax": 13,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_iron_engine_f6": {
+   "x": 1143,
+   "y": 248,
+   "w": 23,
+   "h": 51,
+   "ax": 11,
+   "ay": 41
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f0": {
+   "x": 2259,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f1": {
+   "x": 2299,
+   "y": 611,
+   "w": 37,
+   "h": 34,
+   "ax": 18,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f13": {
+   "x": 1921,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f14": {
+   "x": 1961,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f15": {
+   "x": 2584,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f16": {
+   "x": 634,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f17": {
+   "x": 1436,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f18": {
+   "x": 2294,
+   "y": 749,
+   "w": 36,
+   "h": 24,
+   "ax": 18,
+   "ay": 24
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f19": {
+   "x": 1474,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f2": {
+   "x": 2337,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f20": {
+   "x": 674,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f21": {
+   "x": 2624,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f22": {
+   "x": 802,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f23": {
+   "x": 2001,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f24": {
+   "x": 2616,
+   "y": 647,
+   "w": 39,
+   "h": 33,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f25": {
+   "x": 2656,
+   "y": 647,
+   "w": 37,
+   "h": 33,
+   "ax": 18,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f26": {
+   "x": 2694,
+   "y": 647,
+   "w": 35,
+   "h": 33,
+   "ax": 17,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f27": {
+   "x": 2435,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f28": {
+   "x": 2730,
+   "y": 647,
+   "w": 29,
+   "h": 33,
+   "ax": 14,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f29": {
+   "x": 2041,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f3": {
+   "x": 2373,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f30": {
+   "x": 2067,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f4": {
+   "x": 2405,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f5": {
+   "x": 1873,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_medium_iron_tender_f6": {
+   "x": 1899,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_black_body_f0": {
+   "x": 2879,
+   "y": 446,
+   "w": 45,
+   "h": 41,
+   "ax": 22,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_black_body_f1": {
+   "x": 2925,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_black_body_f13": {
+   "x": 145,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_black_body_f14": {
+   "x": 193,
+   "y": 532,
+   "w": 49,
+   "h": 39,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_black_body_f15": {
+   "x": 658,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_small_black_body_f16": {
+   "x": 2350,
+   "y": 572,
+   "w": 49,
+   "h": 36,
+   "ax": 24,
+   "ay": 30
+  },
+  "rolling/loco_steam_std_small_black_body_f17": {
+   "x": 1739,
+   "y": 611,
+   "w": 47,
+   "h": 34,
+   "ax": 23,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_small_black_body_f18": {
+   "x": 1469,
+   "y": 682,
+   "w": 46,
+   "h": 32,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_black_body_f19": {
+   "x": 2280,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_black_body_f2": {
+   "x": 1084,
+   "y": 446,
+   "w": 39,
+   "h": 42,
+   "ax": 19,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_black_body_f20": {
+   "x": 3581,
+   "y": 572,
+   "w": 49,
+   "h": 35,
+   "ax": 24,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_small_black_body_f21": {
+   "x": 2400,
+   "y": 572,
+   "w": 49,
+   "h": 36,
+   "ax": 24,
+   "ay": 30
+  },
+  "rolling/loco_steam_std_small_black_body_f22": {
+   "x": 2792,
+   "y": 532,
+   "w": 49,
+   "h": 38,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_small_black_body_f23": {
+   "x": 243,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_black_body_f24": {
+   "x": 1293,
+   "y": 490,
+   "w": 45,
+   "h": 40,
+   "ax": 22,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_black_body_f25": {
+   "x": 2969,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_black_body_f26": {
+   "x": 1160,
+   "y": 446,
+   "w": 39,
+   "h": 42,
+   "ax": 19,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_black_body_f27": {
+   "x": 1200,
+   "y": 446,
+   "w": 35,
+   "h": 42,
+   "ax": 17,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_black_body_f28": {
+   "x": 2582,
+   "y": 400,
+   "w": 31,
+   "h": 43,
+   "ax": 15,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_black_body_f29": {
+   "x": 2614,
+   "y": 400,
+   "w": 27,
+   "h": 43,
+   "ax": 13,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_black_body_f3": {
+   "x": 1124,
+   "y": 446,
+   "w": 35,
+   "h": 42,
+   "ax": 17,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_black_body_f30": {
+   "x": 2642,
+   "y": 400,
+   "w": 21,
+   "h": 43,
+   "ax": 10,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_black_body_f4": {
+   "x": 2500,
+   "y": 400,
+   "w": 31,
+   "h": 43,
+   "ax": 15,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_black_body_f5": {
+   "x": 2532,
+   "y": 400,
+   "w": 27,
+   "h": 43,
+   "ax": 13,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_black_body_f6": {
+   "x": 2560,
+   "y": 400,
+   "w": 21,
+   "h": 43,
+   "ax": 10,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_blue_body_f0": {
+   "x": 3281,
+   "y": 446,
+   "w": 45,
+   "h": 41,
+   "ax": 22,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_blue_body_f1": {
+   "x": 3327,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_blue_body_f13": {
+   "x": 583,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_blue_body_f14": {
+   "x": 631,
+   "y": 532,
+   "w": 49,
+   "h": 39,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_blue_body_f15": {
+   "x": 808,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_small_blue_body_f16": {
+   "x": 2650,
+   "y": 572,
+   "w": 49,
+   "h": 36,
+   "ax": 24,
+   "ay": 30
+  },
+  "rolling/loco_steam_std_small_blue_body_f17": {
+   "x": 1883,
+   "y": 611,
+   "w": 47,
+   "h": 34,
+   "ax": 23,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_small_blue_body_f18": {
+   "x": 1610,
+   "y": 682,
+   "w": 46,
+   "h": 32,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_blue_body_f19": {
+   "x": 2424,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_blue_body_f2": {
+   "x": 1540,
+   "y": 446,
+   "w": 39,
+   "h": 42,
+   "ax": 19,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_blue_body_f20": {
+   "x": 3731,
+   "y": 572,
+   "w": 49,
+   "h": 35,
+   "ax": 24,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_small_blue_body_f21": {
+   "x": 2700,
+   "y": 572,
+   "w": 49,
+   "h": 36,
+   "ax": 24,
+   "ay": 30
+  },
+  "rolling/loco_steam_std_small_blue_body_f22": {
+   "x": 2942,
+   "y": 532,
+   "w": 49,
+   "h": 38,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_small_blue_body_f23": {
+   "x": 681,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_blue_body_f24": {
+   "x": 1431,
+   "y": 490,
+   "w": 45,
+   "h": 40,
+   "ax": 22,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_blue_body_f25": {
+   "x": 3371,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_blue_body_f26": {
+   "x": 1616,
+   "y": 446,
+   "w": 39,
+   "h": 42,
+   "ax": 19,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_blue_body_f27": {
+   "x": 1656,
+   "y": 446,
+   "w": 35,
+   "h": 42,
+   "ax": 17,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_blue_body_f28": {
+   "x": 3074,
+   "y": 400,
+   "w": 31,
+   "h": 43,
+   "ax": 15,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_blue_body_f29": {
+   "x": 3106,
+   "y": 400,
+   "w": 27,
+   "h": 43,
+   "ax": 13,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_blue_body_f3": {
+   "x": 1580,
+   "y": 446,
+   "w": 35,
+   "h": 42,
+   "ax": 17,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_blue_body_f30": {
+   "x": 3134,
+   "y": 400,
+   "w": 21,
+   "h": 43,
+   "ax": 10,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_blue_body_f4": {
+   "x": 2992,
+   "y": 400,
+   "w": 31,
+   "h": 43,
+   "ax": 15,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_blue_body_f5": {
+   "x": 3024,
+   "y": 400,
+   "w": 27,
+   "h": 43,
+   "ax": 13,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_blue_body_f6": {
+   "x": 3052,
+   "y": 400,
+   "w": 21,
+   "h": 43,
+   "ax": 10,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_iron_body_f0": {
+   "x": 3013,
+   "y": 446,
+   "w": 45,
+   "h": 41,
+   "ax": 22,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_iron_body_f1": {
+   "x": 3059,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_iron_body_f13": {
+   "x": 291,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_iron_body_f14": {
+   "x": 339,
+   "y": 532,
+   "w": 49,
+   "h": 39,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_iron_body_f15": {
+   "x": 708,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_small_iron_body_f16": {
+   "x": 2450,
+   "y": 572,
+   "w": 49,
+   "h": 36,
+   "ax": 24,
+   "ay": 30
+  },
+  "rolling/loco_steam_std_small_iron_body_f17": {
+   "x": 1787,
+   "y": 611,
+   "w": 47,
+   "h": 34,
+   "ax": 23,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_small_iron_body_f18": {
+   "x": 1516,
+   "y": 682,
+   "w": 46,
+   "h": 32,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_iron_body_f19": {
+   "x": 2328,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_iron_body_f2": {
+   "x": 1236,
+   "y": 446,
+   "w": 39,
+   "h": 42,
+   "ax": 19,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_iron_body_f20": {
+   "x": 3631,
+   "y": 572,
+   "w": 49,
+   "h": 35,
+   "ax": 24,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_small_iron_body_f21": {
+   "x": 2500,
+   "y": 572,
+   "w": 49,
+   "h": 36,
+   "ax": 24,
+   "ay": 30
+  },
+  "rolling/loco_steam_std_small_iron_body_f22": {
+   "x": 2842,
+   "y": 532,
+   "w": 49,
+   "h": 38,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_small_iron_body_f23": {
+   "x": 389,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_iron_body_f24": {
+   "x": 1339,
+   "y": 490,
+   "w": 45,
+   "h": 40,
+   "ax": 22,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_iron_body_f25": {
+   "x": 3103,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_iron_body_f26": {
+   "x": 1312,
+   "y": 446,
+   "w": 39,
+   "h": 42,
+   "ax": 19,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_iron_body_f27": {
+   "x": 1352,
+   "y": 446,
+   "w": 35,
+   "h": 42,
+   "ax": 17,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_iron_body_f28": {
+   "x": 2746,
+   "y": 400,
+   "w": 31,
+   "h": 43,
+   "ax": 15,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_iron_body_f29": {
+   "x": 2778,
+   "y": 400,
+   "w": 27,
+   "h": 43,
+   "ax": 13,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_iron_body_f3": {
+   "x": 1276,
+   "y": 446,
+   "w": 35,
+   "h": 42,
+   "ax": 17,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_iron_body_f30": {
+   "x": 2806,
+   "y": 400,
+   "w": 21,
+   "h": 43,
+   "ax": 10,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_iron_body_f4": {
+   "x": 2664,
+   "y": 400,
+   "w": 31,
+   "h": 43,
+   "ax": 15,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_iron_body_f5": {
+   "x": 2696,
+   "y": 400,
+   "w": 27,
+   "h": 43,
+   "ax": 13,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_iron_body_f6": {
+   "x": 2724,
+   "y": 400,
+   "w": 21,
+   "h": 43,
+   "ax": 10,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_rust_body_f0": {
+   "x": 3147,
+   "y": 446,
+   "w": 45,
+   "h": 41,
+   "ax": 22,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_rust_body_f1": {
+   "x": 3193,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_rust_body_f13": {
+   "x": 437,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_rust_body_f14": {
+   "x": 485,
+   "y": 532,
+   "w": 49,
+   "h": 39,
+   "ax": 24,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_rust_body_f15": {
+   "x": 758,
+   "y": 572,
+   "w": 49,
+   "h": 37,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_small_rust_body_f16": {
+   "x": 2550,
+   "y": 572,
+   "w": 49,
+   "h": 36,
+   "ax": 24,
+   "ay": 30
+  },
+  "rolling/loco_steam_std_small_rust_body_f17": {
+   "x": 1835,
+   "y": 611,
+   "w": 47,
+   "h": 34,
+   "ax": 23,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_small_rust_body_f18": {
+   "x": 1563,
+   "y": 682,
+   "w": 46,
+   "h": 32,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_rust_body_f19": {
+   "x": 2376,
+   "y": 647,
+   "w": 47,
+   "h": 33,
+   "ax": 23,
+   "ay": 28
+  },
+  "rolling/loco_steam_std_small_rust_body_f2": {
+   "x": 1388,
+   "y": 446,
+   "w": 39,
+   "h": 42,
+   "ax": 19,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_rust_body_f20": {
+   "x": 3681,
+   "y": 572,
+   "w": 49,
+   "h": 35,
+   "ax": 24,
+   "ay": 29
+  },
+  "rolling/loco_steam_std_small_rust_body_f21": {
+   "x": 2600,
+   "y": 572,
+   "w": 49,
+   "h": 36,
+   "ax": 24,
+   "ay": 30
+  },
+  "rolling/loco_steam_std_small_rust_body_f22": {
+   "x": 2892,
+   "y": 532,
+   "w": 49,
+   "h": 38,
+   "ax": 24,
+   "ay": 31
+  },
+  "rolling/loco_steam_std_small_rust_body_f23": {
+   "x": 535,
+   "y": 532,
+   "w": 47,
+   "h": 39,
+   "ax": 23,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_rust_body_f24": {
+   "x": 1385,
+   "y": 490,
+   "w": 45,
+   "h": 40,
+   "ax": 22,
+   "ay": 32
+  },
+  "rolling/loco_steam_std_small_rust_body_f25": {
+   "x": 3237,
+   "y": 446,
+   "w": 43,
+   "h": 41,
+   "ax": 21,
+   "ay": 33
+  },
+  "rolling/loco_steam_std_small_rust_body_f26": {
+   "x": 1464,
+   "y": 446,
+   "w": 39,
+   "h": 42,
+   "ax": 19,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_rust_body_f27": {
+   "x": 1504,
+   "y": 446,
+   "w": 35,
+   "h": 42,
+   "ax": 17,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_rust_body_f28": {
+   "x": 2910,
+   "y": 400,
+   "w": 31,
+   "h": 43,
+   "ax": 15,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_rust_body_f29": {
+   "x": 2942,
+   "y": 400,
+   "w": 27,
+   "h": 43,
+   "ax": 13,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_rust_body_f3": {
+   "x": 1428,
+   "y": 446,
+   "w": 35,
+   "h": 42,
+   "ax": 17,
+   "ay": 34
+  },
+  "rolling/loco_steam_std_small_rust_body_f30": {
+   "x": 2970,
+   "y": 400,
+   "w": 21,
+   "h": 43,
+   "ax": 10,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_rust_body_f4": {
+   "x": 2828,
+   "y": 400,
+   "w": 31,
+   "h": 43,
+   "ax": 15,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_rust_body_f5": {
+   "x": 2860,
+   "y": 400,
+   "w": 27,
+   "h": 43,
+   "ax": 13,
+   "ay": 35
+  },
+  "rolling/loco_steam_std_small_rust_body_f6": {
+   "x": 2888,
+   "y": 400,
+   "w": 21,
+   "h": 43,
+   "ax": 10,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f0": {
+   "x": 921,
+   "y": 352,
+   "w": 53,
+   "h": 46,
+   "ax": 27,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f1": {
+   "x": 2848,
+   "y": 301,
+   "w": 49,
+   "h": 47,
+   "ax": 25,
+   "ay": 38
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f13": {
+   "x": 966,
+   "y": 400,
+   "w": 55,
+   "h": 44,
+   "ax": 26,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f14": {
+   "x": 1982,
+   "y": 446,
+   "w": 57,
+   "h": 42,
+   "ax": 27,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f15": {
+   "x": 1597,
+   "y": 490,
+   "w": 59,
+   "h": 40,
+   "ax": 28,
+   "ay": 34
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f16": {
+   "x": 2994,
+   "y": 572,
+   "w": 60,
+   "h": 36,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f17": {
+   "x": 3271,
+   "y": 611,
+   "w": 59,
+   "h": 34,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f18": {
+   "x": 1199,
+   "y": 716,
+   "w": 58,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f19": {
+   "x": 3312,
+   "y": 647,
+   "w": 59,
+   "h": 33,
+   "ax": 29,
+   "ay": 30
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f2": {
+   "x": 553,
+   "y": 301,
+   "w": 45,
+   "h": 49,
+   "ax": 23,
+   "ay": 39
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f20": {
+   "x": 3055,
+   "y": 572,
+   "w": 60,
+   "h": 36,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f21": {
+   "x": 1209,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 28,
+   "ay": 32
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f22": {
+   "x": 3711,
+   "y": 446,
+   "w": 57,
+   "h": 41,
+   "ax": 27,
+   "ay": 33
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f23": {
+   "x": 3268,
+   "y": 400,
+   "w": 55,
+   "h": 43,
+   "ax": 26,
+   "ay": 34
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f24": {
+   "x": 3458,
+   "y": 352,
+   "w": 53,
+   "h": 45,
+   "ax": 25,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f25": {
+   "x": 3512,
+   "y": 352,
+   "w": 49,
+   "h": 45,
+   "ax": 23,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f26": {
+   "x": 2898,
+   "y": 301,
+   "w": 45,
+   "h": 47,
+   "ax": 21,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f27": {
+   "x": 2944,
+   "y": 301,
+   "w": 39,
+   "h": 47,
+   "ax": 18,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f28": {
+   "x": 2083,
+   "y": 301,
+   "w": 34,
+   "h": 48,
+   "ax": 16,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f29": {
+   "x": 2118,
+   "y": 301,
+   "w": 28,
+   "h": 48,
+   "ax": 13,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f3": {
+   "x": 599,
+   "y": 301,
+   "w": 39,
+   "h": 49,
+   "ax": 20,
+   "ay": 39
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f30": {
+   "x": 2147,
+   "y": 301,
+   "w": 22,
+   "h": 48,
+   "ax": 11,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f4": {
+   "x": 2299,
+   "y": 248,
+   "w": 34,
+   "h": 50,
+   "ax": 17,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f5": {
+   "x": 2334,
+   "y": 248,
+   "w": 28,
+   "h": 50,
+   "ax": 14,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_blue_engine_f6": {
+   "x": 2363,
+   "y": 248,
+   "w": 22,
+   "h": 50,
+   "ax": 11,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f0": {
+   "x": 3331,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f1": {
+   "x": 3371,
+   "y": 611,
+   "w": 37,
+   "h": 34,
+   "ax": 18,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f13": {
+   "x": 2785,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f14": {
+   "x": 2825,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f15": {
+   "x": 2904,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f16": {
+   "x": 954,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f17": {
+   "x": 1740,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f18": {
+   "x": 2442,
+   "y": 749,
+   "w": 36,
+   "h": 24,
+   "ax": 18,
+   "ay": 24
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f19": {
+   "x": 1778,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f2": {
+   "x": 3409,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f20": {
+   "x": 994,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f21": {
+   "x": 2944,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f22": {
+   "x": 1258,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f23": {
+   "x": 2865,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f24": {
+   "x": 3372,
+   "y": 647,
+   "w": 39,
+   "h": 33,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f25": {
+   "x": 3412,
+   "y": 647,
+   "w": 37,
+   "h": 33,
+   "ax": 18,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f26": {
+   "x": 3450,
+   "y": 647,
+   "w": 35,
+   "h": 33,
+   "ax": 17,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f27": {
+   "x": 3507,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f28": {
+   "x": 3486,
+   "y": 647,
+   "w": 29,
+   "h": 33,
+   "ax": 14,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f29": {
+   "x": 2905,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f3": {
+   "x": 3445,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f30": {
+   "x": 2931,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f4": {
+   "x": 3477,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f5": {
+   "x": 2737,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_blue_tender_f6": {
+   "x": 2763,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f0": {
+   "x": 867,
+   "y": 352,
+   "w": 53,
+   "h": 46,
+   "ax": 27,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f1": {
+   "x": 2712,
+   "y": 301,
+   "w": 49,
+   "h": 47,
+   "ax": 25,
+   "ay": 38
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f13": {
+   "x": 910,
+   "y": 400,
+   "w": 55,
+   "h": 44,
+   "ax": 26,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f14": {
+   "x": 1924,
+   "y": 446,
+   "w": 57,
+   "h": 42,
+   "ax": 27,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f15": {
+   "x": 1537,
+   "y": 490,
+   "w": 59,
+   "h": 40,
+   "ax": 28,
+   "ay": 34
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f16": {
+   "x": 2872,
+   "y": 572,
+   "w": 60,
+   "h": 36,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f17": {
+   "x": 3003,
+   "y": 611,
+   "w": 59,
+   "h": 34,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f18": {
+   "x": 1100,
+   "y": 716,
+   "w": 58,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f19": {
+   "x": 3108,
+   "y": 647,
+   "w": 59,
+   "h": 33,
+   "ax": 29,
+   "ay": 30
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f2": {
+   "x": 467,
+   "y": 301,
+   "w": 45,
+   "h": 49,
+   "ax": 23,
+   "ay": 39
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f20": {
+   "x": 2933,
+   "y": 572,
+   "w": 60,
+   "h": 36,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f21": {
+   "x": 1149,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 28,
+   "ay": 32
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f22": {
+   "x": 3653,
+   "y": 446,
+   "w": 57,
+   "h": 41,
+   "ax": 27,
+   "ay": 33
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f23": {
+   "x": 3212,
+   "y": 400,
+   "w": 55,
+   "h": 43,
+   "ax": 26,
+   "ay": 34
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f24": {
+   "x": 3354,
+   "y": 352,
+   "w": 53,
+   "h": 45,
+   "ax": 25,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f25": {
+   "x": 3408,
+   "y": 352,
+   "w": 49,
+   "h": 45,
+   "ax": 23,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f26": {
+   "x": 2762,
+   "y": 301,
+   "w": 45,
+   "h": 47,
+   "ax": 21,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f27": {
+   "x": 2808,
+   "y": 301,
+   "w": 39,
+   "h": 47,
+   "ax": 18,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f28": {
+   "x": 1996,
+   "y": 301,
+   "w": 34,
+   "h": 48,
+   "ax": 16,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f29": {
+   "x": 2031,
+   "y": 301,
+   "w": 28,
+   "h": 48,
+   "ax": 13,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f3": {
+   "x": 513,
+   "y": 301,
+   "w": 39,
+   "h": 49,
+   "ax": 20,
+   "ay": 39
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f30": {
+   "x": 2060,
+   "y": 301,
+   "w": 22,
+   "h": 48,
+   "ax": 11,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f4": {
+   "x": 2212,
+   "y": 248,
+   "w": 34,
+   "h": 50,
+   "ax": 17,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f5": {
+   "x": 2247,
+   "y": 248,
+   "w": 28,
+   "h": 50,
+   "ax": 14,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_iron_engine_f6": {
+   "x": 2276,
+   "y": 248,
+   "w": 22,
+   "h": 50,
+   "ax": 11,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f0": {
+   "x": 3063,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f1": {
+   "x": 3103,
+   "y": 611,
+   "w": 37,
+   "h": 34,
+   "ax": 18,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f13": {
+   "x": 2569,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f14": {
+   "x": 2609,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f15": {
+   "x": 2824,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f16": {
+   "x": 874,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f17": {
+   "x": 1664,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f18": {
+   "x": 2405,
+   "y": 749,
+   "w": 36,
+   "h": 24,
+   "ax": 18,
+   "ay": 24
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f19": {
+   "x": 1702,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f2": {
+   "x": 3141,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f20": {
+   "x": 914,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f21": {
+   "x": 2864,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f22": {
+   "x": 1159,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f23": {
+   "x": 2649,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f24": {
+   "x": 3168,
+   "y": 647,
+   "w": 39,
+   "h": 33,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f25": {
+   "x": 3208,
+   "y": 647,
+   "w": 37,
+   "h": 33,
+   "ax": 18,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f26": {
+   "x": 3246,
+   "y": 647,
+   "w": 35,
+   "h": 33,
+   "ax": 17,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f27": {
+   "x": 3239,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f28": {
+   "x": 3282,
+   "y": 647,
+   "w": 29,
+   "h": 33,
+   "ax": 14,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f29": {
+   "x": 2689,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f3": {
+   "x": 3177,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f30": {
+   "x": 2715,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f4": {
+   "x": 3209,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f5": {
+   "x": 2521,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_iron_tender_f6": {
+   "x": 2547,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f0": {
+   "x": 813,
+   "y": 352,
+   "w": 53,
+   "h": 46,
+   "ax": 27,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f1": {
+   "x": 2576,
+   "y": 301,
+   "w": 49,
+   "h": 47,
+   "ax": 25,
+   "ay": 38
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f13": {
+   "x": 854,
+   "y": 400,
+   "w": 55,
+   "h": 44,
+   "ax": 26,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f14": {
+   "x": 1866,
+   "y": 446,
+   "w": 57,
+   "h": 42,
+   "ax": 27,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f15": {
+   "x": 1477,
+   "y": 490,
+   "w": 59,
+   "h": 40,
+   "ax": 28,
+   "ay": 34
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f16": {
+   "x": 2750,
+   "y": 572,
+   "w": 60,
+   "h": 36,
+   "ax": 29,
+   "ay": 32
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f17": {
+   "x": 2735,
+   "y": 611,
+   "w": 59,
+   "h": 34,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f18": {
+   "x": 1001,
+   "y": 716,
+   "w": 58,
+   "h": 31,
+   "ax": 29,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f19": {
+   "x": 2904,
+   "y": 647,
+   "w": 59,
+   "h": 33,
+   "ax": 29,
+   "ay": 30
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f2": {
+   "x": 381,
+   "y": 301,
+   "w": 45,
+   "h": 49,
+   "ax": 23,
+   "ay": 39
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f20": {
+   "x": 2811,
+   "y": 572,
+   "w": 60,
+   "h": 36,
+   "ax": 29,
+   "ay": 31
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f21": {
+   "x": 1089,
+   "y": 532,
+   "w": 59,
+   "h": 39,
+   "ax": 28,
+   "ay": 32
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f22": {
+   "x": 3595,
+   "y": 446,
+   "w": 57,
+   "h": 41,
+   "ax": 27,
+   "ay": 33
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f23": {
+   "x": 3156,
+   "y": 400,
+   "w": 55,
+   "h": 43,
+   "ax": 26,
+   "ay": 34
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f24": {
+   "x": 3250,
+   "y": 352,
+   "w": 53,
+   "h": 45,
+   "ax": 25,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f25": {
+   "x": 3304,
+   "y": 352,
+   "w": 49,
+   "h": 45,
+   "ax": 23,
+   "ay": 35
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f26": {
+   "x": 2626,
+   "y": 301,
+   "w": 45,
+   "h": 47,
+   "ax": 21,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f27": {
+   "x": 2672,
+   "y": 301,
+   "w": 39,
+   "h": 47,
+   "ax": 18,
+   "ay": 36
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f28": {
+   "x": 1909,
+   "y": 301,
+   "w": 34,
+   "h": 48,
+   "ax": 16,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f29": {
+   "x": 1944,
+   "y": 301,
+   "w": 28,
+   "h": 48,
+   "ax": 13,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f3": {
+   "x": 427,
+   "y": 301,
+   "w": 39,
+   "h": 49,
+   "ax": 20,
+   "ay": 39
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f30": {
+   "x": 1973,
+   "y": 301,
+   "w": 22,
+   "h": 48,
+   "ax": 11,
+   "ay": 37
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f4": {
+   "x": 2125,
+   "y": 248,
+   "w": 34,
+   "h": 50,
+   "ax": 17,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f5": {
+   "x": 2160,
+   "y": 248,
+   "w": 28,
+   "h": 50,
+   "ax": 14,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_rust_engine_f6": {
+   "x": 2189,
+   "y": 248,
+   "w": 22,
+   "h": 50,
+   "ax": 11,
+   "ay": 40
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f0": {
+   "x": 2795,
+   "y": 611,
+   "w": 39,
+   "h": 34,
+   "ax": 19,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f1": {
+   "x": 2835,
+   "y": 611,
+   "w": 37,
+   "h": 34,
+   "ax": 18,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f13": {
+   "x": 2353,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f14": {
+   "x": 2393,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f15": {
+   "x": 2744,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f16": {
+   "x": 794,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f17": {
+   "x": 1588,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f18": {
+   "x": 2368,
+   "y": 749,
+   "w": 36,
+   "h": 24,
+   "ax": 18,
+   "ay": 24
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f19": {
+   "x": 1626,
+   "y": 749,
+   "w": 37,
+   "h": 26,
+   "ax": 18,
+   "ay": 25
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f2": {
+   "x": 2873,
+   "y": 611,
+   "w": 35,
+   "h": 34,
+   "ax": 17,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f20": {
+   "x": 834,
+   "y": 749,
+   "w": 39,
+   "h": 28,
+   "ax": 19,
+   "ay": 26
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f21": {
+   "x": 2784,
+   "y": 716,
+   "w": 39,
+   "h": 30,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f22": {
+   "x": 1060,
+   "y": 716,
+   "w": 39,
+   "h": 31,
+   "ax": 19,
+   "ay": 27
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f23": {
+   "x": 2433,
+   "y": 682,
+   "w": 39,
+   "h": 32,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f24": {
+   "x": 2964,
+   "y": 647,
+   "w": 39,
+   "h": 33,
+   "ax": 19,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f25": {
+   "x": 3004,
+   "y": 647,
+   "w": 37,
+   "h": 33,
+   "ax": 18,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f26": {
+   "x": 3042,
+   "y": 647,
+   "w": 35,
+   "h": 33,
+   "ax": 17,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f27": {
+   "x": 2971,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f28": {
+   "x": 3078,
+   "y": 647,
+   "w": 29,
+   "h": 33,
+   "ax": 14,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f29": {
+   "x": 2473,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f3": {
+   "x": 2909,
+   "y": 611,
+   "w": 31,
+   "h": 34,
+   "ax": 15,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f30": {
+   "x": 2499,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f4": {
+   "x": 2941,
+   "y": 611,
+   "w": 29,
+   "h": 34,
+   "ax": 14,
+   "ay": 29
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f5": {
+   "x": 2305,
+   "y": 682,
+   "w": 25,
+   "h": 32,
+   "ax": 12,
+   "ay": 28
+  },
+  "rolling/loco_steam_streamlined_medium_rust_tender_f6": {
+   "x": 2331,
+   "y": 682,
+   "w": 21,
+   "h": 32,
+   "ax": 10,
+   "ay": 28
+  }
+ }
+}

@@ -5,6 +5,7 @@
 // usage: node scratchpad/art-scene.mjs <label>
 import { launch, openGame } from './runtime.mjs';
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const label = process.argv[2] ?? 'after';
 const out = new URL(`./shots/scene-${label}/`, import.meta.url);
@@ -191,7 +192,7 @@ try {
   console.log(report);
   const shot = async (name) => {
     await page.waitForTimeout(900);
-    await page.screenshot({ path: new URL(`${name}.png`, out).pathname });
+    await page.screenshot({ path: fileURLToPath(new URL(`${name}.png`, out)) });
     console.log('wrote', name);
   };
   // close whatever the placements opened, and take the art shots without the overlay
@@ -211,6 +212,18 @@ try {
     }, visible);
   await ui(false);
   await shot('village');
+  await page.evaluate(async () => {
+    const g = window.game;
+    const { ZOOM_STEPS } = await import('/src/engine/camera.ts');
+    g.camera.zoomIndex = ZOOM_STEPS.length - 1;
+    g.camera.zoom = ZOOM_STEPS[g.camera.zoomIndex];
+  });
+  await shot('village-detail');
+  await page.evaluate(() => {
+    const g = window.game;
+    g.camera.zoomIndex = 3;
+    g.camera.zoom = 1.5;
+  });
   await ui(true);
   await shot('village-ui');
   await ui(false);

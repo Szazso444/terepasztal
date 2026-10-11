@@ -1,0 +1,528 @@
+{
+  "updatedAt": "2026-09-23T20:59:52.610Z",
+  "completed": [
+    {
+      "key": "station",
+      "rotation": 0,
+      "output": "generated/station-0.png"
+    },
+    {
+      "key": "station",
+      "rotation": 1,
+      "output": "generated/station-1.png"
+    },
+    {
+      "key": "station",
+      "rotation": 2,
+      "output": "generated/station-2.png"
+    },
+    {
+      "key": "station",
+      "rotation": 3,
+      "output": "generated/station-3.png"
+    },
+    {
+      "key": "house",
+      "rotation": 0,
+      "output": "generated/house-0.png"
+    },
+    {
+      "key": "house",
+      "rotation": 1,
+      "output": "generated/house-1.png"
+    },
+    {
+      "key": "house",
+      "rotation": 2,
+      "output": "generated/house-2.png"
+    },
+    {
+      "key": "house",
+      "rotation": 3,
+      "output": "generated/house-3.png"
+    },
+    {
+      "key": "stations-farm",
+      "rotation": 0,
+      "output": "generated/stations-farm-0.png"
+    },
+    {
+      "key": "stations-farm",
+      "rotation": 1,
+      "output": "generated/stations-farm-1.png"
+    },
+    {
+      "key": "stations-farm",
+      "rotation": 2,
+      "output": "generated/stations-farm-2.png"
+    },
+    {
+      "key": "stations-farm",
+      "rotation": 3,
+      "output": "generated/stations-farm-3.png"
+    },
+    {
+      "key": "stations-lumber",
+      "rotation": 0,
+      "output": "generated/stations-lumber-0.png"
+    },
+    {
+      "key": "stations-lumber",
+      "rotation": 1,
+      "output": "generated/stations-lumber-1.png"
+    },
+    {
+      "key": "stations-lumber",
+      "rotation": 2,
+      "output": "generated/stations-lumber-2.png"
+    },
+    {
+      "key": "stations-lumber",
+      "rotation": 3,
+      "output": "generated/stations-lumber-3.png"
+    },
+    {
+      "key": "stations-quarry",
+      "rotation": 0,
+      "output": "generated/stations-quarry-0.png"
+    },
+    {
+      "key": "stations-quarry",
+      "rotation": 1,
+      "output": "generated/stations-quarry-1.png"
+    },
+    {
+      "key": "stations-quarry",
+      "rotation": 2,
+      "output": "generated/stations-quarry-2.png"
+    },
+    {
+      "key": "stations-quarry",
+      "rotation": 3,
+      "output": "generated/stations-quarry-3.png"
+    },
+    {
+      "key": "stations-pump",
+      "rotation": 0,
+      "output": "generated/stations-pump-0.png"
+    },
+    {
+      "key": "stations-pump",
+      "rotation": 1,
+      "output": "generated/stations-pump-1.png"
+    },
+    {
+      "key": "stations-pump",
+      "rotation": 2,
+      "output": "generated/stations-pump-2.png"
+    }
+  ],
+  "pending": [
+    {
+      "key": "stations-pump",
+      "rotation": 3,
+      "output": "generated/stations-pump-3.png"
+    },
+    {
+      "key": "stations-town",
+      "rotation": 0,
+      "output": "generated/stations-town-0.png"
+    },
+    {
+      "key": "stations-town",
+      "rotation": 1,
+      "output": "generated/stations-town-1.png"
+    },
+    {
+      "key": "stations-town",
+      "rotation": 2,
+      "output": "generated/stations-town-2.png"
+    },
+    {
+      "key": "stations-town",
+      "rotation": 3,
+      "output": "generated/stations-town-3.png"
+    },
+    {
+      "key": "stations-warehouse",
+      "rotation": 0,
+      "output": "generated/stations-warehouse-0.png"
+    },
+    {
+      "key": "stations-warehouse",
+      "rotation": 1,
+      "output": "generated/stations-warehouse-1.png"
+    },
+    {
+      "key": "stations-warehouse",
+      "rotation": 2,
+      "output": "generated/stations-warehouse-2.png"
+    },
+    {
+      "key": "stations-warehouse",
+      "rotation": 3,
+      "output": "generated/stations-warehouse-3.png"
+    },
+    {
+      "key": "stations-depot",
+      "rotation": 0,
+      "output": "generated/stations-depot-0.png"
+    },
+    {
+      "key": "stations-depot",
+      "rotation": 1,
+      "output": "generated/stations-depot-1.png"
+    },
+    {
+      "key": "stations-depot",
+      "rotation": 2,
+      "output": "generated/stations-depot-2.png"
+    },
+    {
+      "key": "stations-depot",
+      "rotation": 3,
+      "output": "generated/stations-depot-3.png"
+    },
+    {
+      "key": "stations-full-mine",
+      "rotation": 0,
+      "output": "generated/stations-full-mine-0.png"
+    },
+    {
+      "key": "stations-full-mine",
+      "rotation": 1,
+      "output": "generated/stations-full-mine-1.png"
+    },
+    {
+      "key": "stations-full-mine",
+      "rotation": 2,
+      "output": "generated/stations-full-mine-2.png"
+    },
+    {
+      "key": "stations-full-mine",
+      "rotation": 3,
+      "output": "generated/stations-full-mine-3.png"
+    },
+    {
+      "key": "stations-full-sand_pit",
+      "rotation": 0,
+      "output": "generated/stations-full-sand_pit-0.png"
+    },
+    {
+      "key": "stations-full-sand_pit",
+      "rotation": 1,
+      "output": "generated/stations-full-sand_pit-1.png"
+    },
+    {
+      "key": "stations-full-sand_pit",
+      "rotation": 2,
+      "output": "generated/stations-full-sand_pit-2.png"
+    },
+    {
+      "key": "stations-full-sand_pit",
+      "rotation": 3,
+      "output": "generated/stations-full-sand_pit-3.png"
+    },
+    {
+      "key": "stations-full-copper_mine",
+      "rotation": 0,
+      "output": "generated/stations-full-copper_mine-0.png"
+    },
+    {
+      "key": "stations-full-copper_mine",
+      "rotation": 1,
+      "output": "generated/stations-full-copper_mine-1.png"
+    },
+    {
+      "key": "stations-full-copper_mine",
+      "rotation": 2,
+      "output": "generated/stations-full-copper_mine-2.png"
+    },
+    {
+      "key": "stations-full-copper_mine",
+      "rotation": 3,
+      "output": "generated/stations-full-copper_mine-3.png"
+    },
+    {
+      "key": "works-windmill",
+      "rotation": 0,
+      "output": "generated/works-windmill-0.png"
+    },
+    {
+      "key": "works-windmill",
+      "rotation": 1,
+      "output": "generated/works-windmill-1.png"
+    },
+    {
+      "key": "works-windmill",
+      "rotation": 2,
+      "output": "generated/works-windmill-2.png"
+    },
+    {
+      "key": "works-windmill",
+      "rotation": 3,
+      "output": "generated/works-windmill-3.png"
+    },
+    {
+      "key": "works-kiln",
+      "rotation": 0,
+      "output": "generated/works-kiln-0.png"
+    },
+    {
+      "key": "works-kiln",
+      "rotation": 1,
+      "output": "generated/works-kiln-1.png"
+    },
+    {
+      "key": "works-kiln",
+      "rotation": 2,
+      "output": "generated/works-kiln-2.png"
+    },
+    {
+      "key": "works-kiln",
+      "rotation": 3,
+      "output": "generated/works-kiln-3.png"
+    },
+    {
+      "key": "works-grinder",
+      "rotation": 0,
+      "output": "generated/works-grinder-0.png"
+    },
+    {
+      "key": "works-grinder",
+      "rotation": 1,
+      "output": "generated/works-grinder-1.png"
+    },
+    {
+      "key": "works-grinder",
+      "rotation": 2,
+      "output": "generated/works-grinder-2.png"
+    },
+    {
+      "key": "works-grinder",
+      "rotation": 3,
+      "output": "generated/works-grinder-3.png"
+    },
+    {
+      "key": "works-refinery",
+      "rotation": 0,
+      "output": "generated/works-refinery-0.png"
+    },
+    {
+      "key": "works-refinery",
+      "rotation": 1,
+      "output": "generated/works-refinery-1.png"
+    },
+    {
+      "key": "works-refinery",
+      "rotation": 2,
+      "output": "generated/works-refinery-2.png"
+    },
+    {
+      "key": "works-refinery",
+      "rotation": 3,
+      "output": "generated/works-refinery-3.png"
+    },
+    {
+      "key": "works-power_plant",
+      "rotation": 0,
+      "output": "generated/works-power_plant-0.png"
+    },
+    {
+      "key": "works-power_plant",
+      "rotation": 1,
+      "output": "generated/works-power_plant-1.png"
+    },
+    {
+      "key": "works-power_plant",
+      "rotation": 2,
+      "output": "generated/works-power_plant-2.png"
+    },
+    {
+      "key": "works-power_plant",
+      "rotation": 3,
+      "output": "generated/works-power_plant-3.png"
+    },
+    {
+      "key": "works-substation",
+      "rotation": 0,
+      "output": "generated/works-substation-0.png"
+    },
+    {
+      "key": "works-substation",
+      "rotation": 1,
+      "output": "generated/works-substation-1.png"
+    },
+    {
+      "key": "works-substation",
+      "rotation": 2,
+      "output": "generated/works-substation-2.png"
+    },
+    {
+      "key": "works-substation",
+      "rotation": 3,
+      "output": "generated/works-substation-3.png"
+    },
+    {
+      "key": "works-hydro_plant",
+      "rotation": 0,
+      "output": "generated/works-hydro_plant-0.png"
+    },
+    {
+      "key": "works-hydro_plant",
+      "rotation": 1,
+      "output": "generated/works-hydro_plant-1.png"
+    },
+    {
+      "key": "works-hydro_plant",
+      "rotation": 2,
+      "output": "generated/works-hydro_plant-2.png"
+    },
+    {
+      "key": "works-hydro_plant",
+      "rotation": 3,
+      "output": "generated/works-hydro_plant-3.png"
+    },
+    {
+      "key": "works-full-colliery",
+      "rotation": 0,
+      "output": "generated/works-full-colliery-0.png"
+    },
+    {
+      "key": "works-full-colliery",
+      "rotation": 1,
+      "output": "generated/works-full-colliery-1.png"
+    },
+    {
+      "key": "works-full-colliery",
+      "rotation": 2,
+      "output": "generated/works-full-colliery-2.png"
+    },
+    {
+      "key": "works-full-colliery",
+      "rotation": 3,
+      "output": "generated/works-full-colliery-3.png"
+    },
+    {
+      "key": "works-full-ironworks",
+      "rotation": 0,
+      "output": "generated/works-full-ironworks-0.png"
+    },
+    {
+      "key": "works-full-ironworks",
+      "rotation": 1,
+      "output": "generated/works-full-ironworks-1.png"
+    },
+    {
+      "key": "works-full-ironworks",
+      "rotation": 2,
+      "output": "generated/works-full-ironworks-2.png"
+    },
+    {
+      "key": "works-full-ironworks",
+      "rotation": 3,
+      "output": "generated/works-full-ironworks-3.png"
+    },
+    {
+      "key": "works-full-oil_derrick",
+      "rotation": 0,
+      "output": "generated/works-full-oil_derrick-0.png"
+    },
+    {
+      "key": "works-full-oil_derrick",
+      "rotation": 1,
+      "output": "generated/works-full-oil_derrick-1.png"
+    },
+    {
+      "key": "works-full-oil_derrick",
+      "rotation": 2,
+      "output": "generated/works-full-oil_derrick-2.png"
+    },
+    {
+      "key": "works-full-oil_derrick",
+      "rotation": 3,
+      "output": "generated/works-full-oil_derrick-3.png"
+    },
+    {
+      "key": "works-full-diesel_refinery",
+      "rotation": 0,
+      "output": "generated/works-full-diesel_refinery-0.png"
+    },
+    {
+      "key": "works-full-diesel_refinery",
+      "rotation": 1,
+      "output": "generated/works-full-diesel_refinery-1.png"
+    },
+    {
+      "key": "works-full-diesel_refinery",
+      "rotation": 2,
+      "output": "generated/works-full-diesel_refinery-2.png"
+    },
+    {
+      "key": "works-full-diesel_refinery",
+      "rotation": 3,
+      "output": "generated/works-full-diesel_refinery-3.png"
+    },
+    {
+      "key": "works-full-wire_mill",
+      "rotation": 0,
+      "output": "generated/works-full-wire_mill-0.png"
+    },
+    {
+      "key": "works-full-wire_mill",
+      "rotation": 1,
+      "output": "generated/works-full-wire_mill-1.png"
+    },
+    {
+      "key": "works-full-wire_mill",
+      "rotation": 2,
+      "output": "generated/works-full-wire_mill-2.png"
+    },
+    {
+      "key": "works-full-wire_mill",
+      "rotation": 3,
+      "output": "generated/works-full-wire_mill-3.png"
+    },
+    {
+      "key": "decor-water_tower",
+      "rotation": 0,
+      "output": "generated/decor-water_tower-0.png"
+    },
+    {
+      "key": "decor-water_tower",
+      "rotation": 1,
+      "output": "generated/decor-water_tower-1.png"
+    },
+    {
+      "key": "decor-water_tower",
+      "rotation": 2,
+      "output": "generated/decor-water_tower-2.png"
+    },
+    {
+      "key": "decor-water_tower",
+      "rotation": 3,
+      "output": "generated/decor-water_tower-3.png"
+    },
+    {
+      "key": "decor-fuel_stop",
+      "rotation": 0,
+      "output": "generated/decor-fuel_stop-0.png"
+    },
+    {
+      "key": "decor-fuel_stop",
+      "rotation": 1,
+      "output": "generated/decor-fuel_stop-1.png"
+    },
+    {
+      "key": "decor-fuel_stop",
+      "rotation": 2,
+      "output": "generated/decor-fuel_stop-2.png"
+    },
+    {
+      "key": "decor-fuel_stop",
+      "rotation": 3,
+      "output": "generated/decor-fuel_stop-3.png"
+    }
+  ],
+  "projectionVerified": false
+}

@@ -1,0 +1,21 @@
+{
+  "errors": [],
+  "images": [
+    {
+      "src": "/assets/source/base-v1/station.png",
+      "loaded": true
+    },
+    {
+      "src": "previous-sprite.png",
+      "loaded": true
+    },
+    {
+      "src": "corrected.png",
+      "loaded": true
+    },
+    {
+      "src": "sprite.png",
+      "loaded": true
+    }
+  ]
+}

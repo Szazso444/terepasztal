@@ -1,0 +1,13 @@
+{
+  "buildingTypes": 26,
+  "plannedFacings": 104,
+  "completed": 13,
+  "oneTileTypes": 18,
+  "twoTileTypes": 8,
+  "allReferenceHashesMatch": true,
+  "alphaAndSpriteDimensions": true,
+  "filtersAndResponsiveLayout": true,
+  "errors": [],
+  "projectionCertified": false,
+  "scaleCertified": false
+}

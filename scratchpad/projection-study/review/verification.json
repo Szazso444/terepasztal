@@ -1,0 +1,11 @@
+{
+  "cameras": 3,
+  "buildings": 8,
+  "rotationsPerBuilding": 4,
+  "geometryInvariants": true,
+  "integerAnchors": true,
+  "controls": true,
+  "responsive": true,
+  "errors": [],
+  "artworkReprojection": false
+}

@@ -1,0 +1,435 @@
+{
+  "density": 4,
+  "frames": {
+    "house-0": {
+      "tiles": 1,
+      "rotation": 0,
+      "w": 77.5,
+      "h": 111.5,
+      "ax": 35.69117647058823,
+      "ay": 95.28823529411764,
+      "source": "assets/source/building-poc-v1/house-0.png",
+      "projectionVerified": false
+    },
+    "house-1": {
+      "tiles": 1,
+      "rotation": 1,
+      "w": 77.5,
+      "h": 107,
+      "ax": 35.38529411764706,
+      "ay": 87.4235294117647,
+      "source": "assets/source/building-poc-v1/house-1.png",
+      "projectionVerified": false
+    },
+    "house-2": {
+      "tiles": 1,
+      "rotation": 2,
+      "w": 77.5,
+      "h": 111.75,
+      "ax": 42.42058823529412,
+      "ay": 92.1735294117647,
+      "source": "assets/source/building-poc-v1/house-2.png",
+      "projectionVerified": false
+    },
+    "house-3": {
+      "tiles": 1,
+      "rotation": 3,
+      "w": 77.5,
+      "h": 109.5,
+      "ax": 42.11470588235294,
+      "ay": 93.28823529411764,
+      "source": "assets/source/building-poc-v1/house-3.png",
+      "projectionVerified": false
+    },
+    "station-0": {
+      "tiles": 2,
+      "rotation": 0,
+      "w": 137.75,
+      "h": 137.75,
+      "ax": 69.94558823529412,
+      "ay": 104.10294117647058,
+      "source": "assets/source/building-poc-v1/station-0.png",
+      "projectionVerified": false
+    },
+    "station-1": {
+      "tiles": 2,
+      "rotation": 1,
+      "w": 138,
+      "h": 132.75,
+      "ax": 69.91764705882353,
+      "ay": 100.3264705882353,
+      "source": "assets/source/building-poc-v1/station-1.png",
+      "projectionVerified": false
+    },
+    "station-2": {
+      "tiles": 2,
+      "rotation": 2,
+      "w": 138,
+      "h": 142.75,
+      "ax": 68.38823529411765,
+      "ay": 110.3264705882353,
+      "source": "assets/source/building-poc-v1/station-2.png",
+      "projectionVerified": false
+    },
+    "station-3": {
+      "tiles": 2,
+      "rotation": 3,
+      "w": 137.75,
+      "h": 139,
+      "ax": 68.11029411764706,
+      "ay": 106.27058823529413,
+      "source": "assets/source/building-poc-v1/station-3.png",
+      "projectionVerified": false
+    },
+    "stations-farm-0": {
+      "tiles": 2,
+      "rotation": 0,
+      "w": 136,
+      "h": 98.5,
+      "ax": 68,
+      "ay": 66.52000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-farm-0.png",
+      "material": "dirt",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-farm-1": {
+      "tiles": 2,
+      "rotation": 1,
+      "w": 136,
+      "h": 92,
+      "ax": 68,
+      "ay": 60.02,
+      "source": "assets/source/building-poc-v1/remaining/stations-farm-1.png",
+      "material": "dirt",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-farm-2": {
+      "tiles": 2,
+      "rotation": 2,
+      "w": 136,
+      "h": 106,
+      "ax": 68,
+      "ay": 74.02000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-farm-2.png",
+      "material": "dirt",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-farm-3": {
+      "tiles": 2,
+      "rotation": 3,
+      "w": 136,
+      "h": 101.25,
+      "ax": 68,
+      "ay": 69.27000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-farm-3.png",
+      "material": "dirt",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-lumber-0": {
+      "tiles": 2,
+      "rotation": 0,
+      "w": 136,
+      "h": 95.5,
+      "ax": 68,
+      "ay": 63.52,
+      "source": "assets/source/building-poc-v1/remaining/stations-lumber-0.png",
+      "material": "dirt",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-lumber-1": {
+      "tiles": 2,
+      "rotation": 1,
+      "w": 136,
+      "h": 102.5,
+      "ax": 68,
+      "ay": 70.52000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-lumber-1.png",
+      "material": "dirt",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-lumber-2": {
+      "tiles": 2,
+      "rotation": 2,
+      "w": 136,
+      "h": 88.25,
+      "ax": 68,
+      "ay": 56.27,
+      "source": "assets/source/building-poc-v1/remaining/stations-lumber-2.png",
+      "material": "dirt",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-lumber-3": {
+      "tiles": 2,
+      "rotation": 3,
+      "w": 136,
+      "h": 87,
+      "ax": 68,
+      "ay": 55.02,
+      "source": "assets/source/building-poc-v1/remaining/stations-lumber-3.png",
+      "material": "dirt",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-quarry-0": {
+      "tiles": 2,
+      "rotation": 0,
+      "w": 136,
+      "h": 135.75,
+      "ax": 68,
+      "ay": 103.77000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-quarry-0.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-quarry-1": {
+      "tiles": 2,
+      "rotation": 1,
+      "w": 136,
+      "h": 150.5,
+      "ax": 68,
+      "ay": 118.52000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-quarry-1.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-quarry-2": {
+      "tiles": 2,
+      "rotation": 2,
+      "w": 136,
+      "h": 126.75,
+      "ax": 68,
+      "ay": 94.77000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-quarry-2.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-quarry-3": {
+      "tiles": 2,
+      "rotation": 3,
+      "w": 136,
+      "h": 152.25,
+      "ax": 68,
+      "ay": 120.27000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-quarry-3.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-pump-0": {
+      "tiles": 1,
+      "rotation": 0,
+      "w": 80,
+      "h": 64.5,
+      "ax": 40,
+      "ay": 43.18,
+      "source": "assets/source/building-poc-v1/remaining/stations-pump-0.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-pump-1": {
+      "tiles": 1,
+      "rotation": 1,
+      "w": 80,
+      "h": 63,
+      "ax": 40,
+      "ay": 41.68,
+      "source": "assets/source/building-poc-v1/remaining/stations-pump-1.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-pump-2": {
+      "tiles": 1,
+      "rotation": 2,
+      "w": 80,
+      "h": 71,
+      "ax": 40,
+      "ay": 49.68,
+      "source": "assets/source/building-poc-v1/remaining/stations-pump-2.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-pump-3": {
+      "tiles": 1,
+      "rotation": 3,
+      "w": 80,
+      "h": 65.25,
+      "ax": 40,
+      "ay": 43.93,
+      "source": "assets/source/building-poc-v1/remaining/stations-pump-3.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-town-0": {
+      "tiles": 2,
+      "rotation": 0,
+      "w": 136,
+      "h": 136.5,
+      "ax": 68,
+      "ay": 104.52000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-town-0.png",
+      "material": "stone",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-town-1": {
+      "tiles": 2,
+      "rotation": 1,
+      "w": 136,
+      "h": 149.5,
+      "ax": 68,
+      "ay": 117.52000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-town-1.png",
+      "material": "stone",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-town-2": {
+      "tiles": 2,
+      "rotation": 2,
+      "w": 136,
+      "h": 146.75,
+      "ax": 68,
+      "ay": 114.77000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-town-2.png",
+      "material": "stone",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-town-3": {
+      "tiles": 2,
+      "rotation": 3,
+      "w": 136,
+      "h": 151.75,
+      "ax": 68,
+      "ay": 119.77000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-town-3.png",
+      "material": "stone",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-warehouse-0": {
+      "tiles": 2,
+      "rotation": 0,
+      "w": 136,
+      "h": 96.25,
+      "ax": 68,
+      "ay": 64.27000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-warehouse-0.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-warehouse-1": {
+      "tiles": 2,
+      "rotation": 1,
+      "w": 136,
+      "h": 106.75,
+      "ax": 68,
+      "ay": 74.77000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-warehouse-1.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-warehouse-2": {
+      "tiles": 2,
+      "rotation": 2,
+      "w": 136,
+      "h": 103.5,
+      "ax": 68,
+      "ay": 71.52000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-warehouse-2.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    },
+    "stations-warehouse-3": {
+      "tiles": 2,
+      "rotation": 3,
+      "w": 136,
+      "h": 102.25,
+      "ax": 68,
+      "ay": 70.27000000000001,
+      "source": "assets/source/building-poc-v1/remaining/stations-warehouse-3.png",
+      "material": "gravel",
+      "projectionVerified": false,
+      "scaleVerified": false
+    }
+  },
+  "buildings": [
+    {
+      "key": "house",
+      "id": "House",
+      "tiles": 1,
+      "material": "stone"
+    },
+    {
+      "key": "station",
+      "id": "Passenger station",
+      "tiles": 2,
+      "material": "stone"
+    },
+    {
+      "key": "stations-farm",
+      "id": "stations.farm",
+      "tiles": 2,
+      "material": "dirt",
+      "reference": "assets/source/building-poc-v1/references/stations-farm.png",
+      "source": "farm.png"
+    },
+    {
+      "key": "stations-lumber",
+      "id": "stations.lumber",
+      "tiles": 2,
+      "material": "dirt",
+      "reference": "assets/source/building-poc-v1/references/stations-lumber.png",
+      "source": "lumber.png"
+    },
+    {
+      "key": "stations-quarry",
+      "id": "stations.quarry",
+      "tiles": 2,
+      "material": "gravel",
+      "reference": "assets/source/building-poc-v1/references/stations-quarry.png",
+      "source": "quarry.png"
+    },
+    {
+      "key": "stations-pump",
+      "id": "stations.pump",
+      "tiles": 1,
+      "material": "gravel",
+      "reference": "assets/source/building-poc-v1/references/stations-pump.png",
+      "source": "pump.png"
+    },
+    {
+      "key": "stations-town",
+      "id": "stations.town",
+      "tiles": 2,
+      "material": "stone",
+      "reference": "assets/source/building-poc-v1/references/stations-town.png",
+      "source": "townhouse-civic.png"
+    },
+    {
+      "key": "stations-warehouse",
+      "id": "stations.warehouse",
+      "tiles": 2,
+      "material": "gravel",
+      "reference": "assets/source/building-poc-v1/references/stations-warehouse.png",
+      "source": "warehouse.png"
+    }
+  ]
+}

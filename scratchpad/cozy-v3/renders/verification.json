@@ -1,0 +1,98 @@
+{
+  "errors": [],
+  "music": [
+    {
+      "index": 0,
+      "src": "pastoral-pulse.mp3",
+      "duration": 211.2135,
+      "volume": 0.4
+    },
+    {
+      "index": 1,
+      "src": "pastoral-pulse-genshin-style.mp3",
+      "duration": 179.4935,
+      "volume": 0.4
+    },
+    {
+      "index": 2,
+      "src": "pastoral-pulse-chillstep.mp3",
+      "duration": 227.2135,
+      "volume": 0.4
+    },
+    {
+      "index": 3,
+      "src": "pastoral-pulse-liquid-dnb.mp3",
+      "duration": 225.7335,
+      "volume": 0.4
+    },
+    {
+      "index": 1,
+      "src": "pastoral-pulse-genshin-style.mp3",
+      "duration": 179.4935,
+      "volume": 0.4
+    },
+    {
+      "index": 2,
+      "src": "pastoral-pulse-chillstep.mp3",
+      "duration": 227.2135,
+      "volume": 0.4
+    },
+    {
+      "index": 0,
+      "src": "pastoral-pulse.mp3",
+      "duration": 211.2135,
+      "volume": 0.4
+    },
+    {
+      "index": 3,
+      "src": "pastoral-pulse-liquid-dnb.mp3",
+      "duration": 225.7335,
+      "volume": 0.4
+    }
+  ],
+  "copies": [
+    {
+      "source": "Pastoral Pulse(Genshin style).mp3",
+      "destination": "pastoral-pulse-genshin-style.mp3",
+      "sha256": "df116e1e830fa6ee5ba5cc888f510988b849f53d0cc0f8dfb08099269a438a74"
+    },
+    {
+      "source": "Pastoral Pulse(Chillstep).mp3",
+      "destination": "pastoral-pulse-chillstep.mp3",
+      "sha256": "e3ae3e6c7a87cfe83075373d53e553effd471ad7c59a168972630222b03284a4"
+    },
+    {
+      "source": "Pastoral Pulse(Liquid dnb).mp3",
+      "destination": "pastoral-pulse-liquid-dnb.mp3",
+      "sha256": "2dde065751fa7d0739e0fb89232b10a9bc4065d12b6d6a7ecfd2aa8267338a02"
+    }
+  ],
+  "renderer": {
+    "chunks": 256,
+    "paintBefore": 256,
+    "paintAfter": 256,
+    "medianSubmitMs": 9.300000011920929,
+    "maxSubmitMs": 15.5,
+    "workerReady": true
+  },
+  "mute": {
+    "music": true,
+    "ambience": true
+  },
+  "excavation": {
+    "x": 34,
+    "y": 0,
+    "before": 256,
+    "elevation": 0,
+    "repaints": 6
+  },
+  "lights": {
+    "buildings": 20,
+    "vehicles": 2,
+    "extinguished": true
+  },
+  "missingTracksFallback": {
+    "failed": 4,
+    "synthTimer": true
+  }
+}

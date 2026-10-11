@@ -1,0 +1,33 @@
+{
+  "buildings": 6,
+  "facings": 24,
+  "errors": [],
+  "checks": [
+    {
+      "key": "house",
+      "distinctFiles": 4
+    },
+    {
+      "key": "station",
+      "distinctFiles": 4
+    },
+    {
+      "key": "stations-farm",
+      "distinctFiles": 4
+    },
+    {
+      "key": "stations-lumber",
+      "distinctFiles": 4
+    },
+    {
+      "key": "stations-quarry",
+      "distinctFiles": 4
+    },
+    {
+      "key": "stations-pump",
+      "distinctFiles": 4
+    }
+  ],
+  "placementAndPersistence": true,
+  "visualProjectionCertified": false
+}
