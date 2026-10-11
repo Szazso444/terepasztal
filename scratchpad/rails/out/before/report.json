@@ -1,0 +1,272 @@
+{
+ "errors": [],
+ "cells": [
+  {
+   "key": "straight_regular r0",
+   "kind": "straight",
+   "cls": "regular",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "straight_regular r1",
+   "kind": "straight",
+   "cls": "regular",
+   "rot": 1,
+   "form": "turn"
+  },
+  {
+   "key": "curve_regular r0",
+   "kind": "curve",
+   "cls": "regular",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "curve_regular r1",
+   "kind": "curve",
+   "cls": "regular",
+   "rot": 1,
+   "form": "turn"
+  },
+  {
+   "key": "curve_regular r2",
+   "kind": "curve",
+   "cls": "regular",
+   "rot": 2,
+   "form": "turn"
+  },
+  {
+   "key": "curve_regular r3",
+   "kind": "curve",
+   "cls": "regular",
+   "rot": 3,
+   "form": "turn"
+  },
+  {
+   "key": "switch_regular r0",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "switch_regular r1",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 1,
+   "form": "turn"
+  },
+  {
+   "key": "switch_regular r2",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 2,
+   "form": "turn"
+  },
+  {
+   "key": "switch_regular r3",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 3,
+   "form": "turn"
+  },
+  {
+   "key": "switch_regular r4",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 4,
+   "form": "turn"
+  },
+  {
+   "key": "switch_regular r5",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 5,
+   "form": "turn"
+  },
+  {
+   "key": "switch_regular r6",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 6,
+   "form": "turn"
+  },
+  {
+   "key": "switch_regular r7",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 7,
+   "form": "turn"
+  },
+  {
+   "key": "crossing_regular_regular r0",
+   "kind": "crossing",
+   "cls": "regular",
+   "cls2": "regular",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "transition_regular r0",
+   "kind": "transition",
+   "cls": "regular",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "transition_regular r1",
+   "kind": "transition",
+   "cls": "regular",
+   "rot": 1,
+   "form": "turn"
+  },
+  {
+   "key": "straight_high_speed r0",
+   "kind": "straight",
+   "cls": "high_speed",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "straight_high_speed r1",
+   "kind": "straight",
+   "cls": "high_speed",
+   "rot": 1,
+   "form": "turn"
+  },
+  {
+   "key": "curve_high_speed r0",
+   "kind": "curve",
+   "cls": "high_speed",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "curve_high_speed r1",
+   "kind": "curve",
+   "cls": "high_speed",
+   "rot": 1,
+   "form": "turn"
+  },
+  {
+   "key": "curve_high_speed r2",
+   "kind": "curve",
+   "cls": "high_speed",
+   "rot": 2,
+   "form": "turn"
+  },
+  {
+   "key": "curve_high_speed r3",
+   "kind": "curve",
+   "cls": "high_speed",
+   "rot": 3,
+   "form": "turn"
+  },
+  {
+   "key": "switch_high_speed r0",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "switch_high_speed r1",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 1,
+   "form": "turn"
+  },
+  {
+   "key": "switch_high_speed r2",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 2,
+   "form": "turn"
+  },
+  {
+   "key": "switch_high_speed r3",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 3,
+   "form": "turn"
+  },
+  {
+   "key": "switch_high_speed r4",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 4,
+   "form": "turn"
+  },
+  {
+   "key": "switch_high_speed r5",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 5,
+   "form": "turn"
+  },
+  {
+   "key": "switch_high_speed r6",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 6,
+   "form": "turn"
+  },
+  {
+   "key": "switch_high_speed r7",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 7,
+   "form": "turn"
+  },
+  {
+   "key": "crossing_regular_high_speed r0",
+   "kind": "crossing",
+   "cls": "regular",
+   "cls2": "high_speed",
+   "rot": 0,
+   "form": "turn"
+  },
+  {
+   "key": "crossing_high_speed_high_speed r0",
+   "kind": "crossing",
+   "cls": "high_speed",
+   "cls2": "high_speed",
+   "rot": 0,
+   "form": "turn"
+  }
+ ],
+ "snap": [],
+ "films": {},
+ "info": {
+  "HAS_FORMS": false,
+  "HAS_NARROW": false,
+  "L": {
+   "X0": 8,
+   "X1": 52,
+   "Y0": 27,
+   "Y1": 51,
+   "TRA": 20,
+   "TRB": 36,
+   "XC": 28
+  },
+  "P": {
+   "y": 27
+  },
+  "N": {
+   "X0": 64,
+   "X1": 84,
+   "Y0": 37,
+   "Y1": 51
+  },
+  "S": {
+   "x": 62,
+   "y": 29,
+   "rot": 1
+  },
+  "areas": [
+   "loop",
+   "hs"
+  ]
+ }
+}
