@@ -47,7 +47,10 @@ export class GameLoop {
   }
 
   private tick(now: number) {
-    let dt = now - this.last;
+    // A frame stamped before the last one counts as no time: headless Chromium's first stamp came
+    // seconds before start()'s performance.now(), and the negative dt held every update back until
+    // the accumulator climbed back above zero.
+    let dt = Math.max(0, now - this.last);
     this.last = now;
     if (dt > 250) dt = 250; // avoid spiral of death after tab switch
     this.acc += dt;

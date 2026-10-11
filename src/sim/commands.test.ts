@@ -326,8 +326,9 @@ describe('renameStation', () => {
     const w = world();
     const s = station(w, 'quarry', 40);
     s.name = 'Old Quarry';
-    expect(w.commands.renameStation(s, '   ')).toEqual({ ok: false, message: STR.station.rename });
-    expect(w.commands.renameStation(s, '')).toEqual({ ok: false, message: STR.station.rename });
+    const empty = { ok: false, message: STR.station.nameEmpty };
+    expect(w.commands.renameStation(s, '   ')).toEqual(empty);
+    expect(w.commands.renameStation(s, '')).toEqual(empty);
     expect(s.name).toBe('Old Quarry');
     const gone = new Station('farm', 10, 10);
     gone.name = 'Gone';
@@ -348,7 +349,7 @@ describe('renameStation', () => {
         s.name = 'Old Quarry';
         const r = w.commands.renameStation(s, name);
         if (!name.trim()) {
-          expect(r.ok).toBe(false);
+          expect(r).toEqual({ ok: false, message: STR.station.nameEmpty });
           expect(s.name).toBe('Old Quarry');
           return;
         }
@@ -382,10 +383,23 @@ describe('turnSignal', () => {
     const tower = w.builder.placeDecor(40, ROW - 1, 'water_tower', 0)!;
     const loose = { id: 'signal', x: 50, y: ROW, rot: 0 };
     w.builder.onDecorChanged = changed;
-    expect(w.commands.turnSignal(tower).ok).toBe(false);
-    expect(w.commands.turnSignal(loose).ok).toBe(false);
+    const gone = { ok: false, message: STR.signals.gone };
+    expect(w.commands.turnSignal(tower)).toEqual(gone);
+    expect(w.commands.turnSignal(loose)).toEqual(gone);
     expect(tower.rot).toBe(0);
     expect(loose.rot).toBe(0);
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('refuses a signal taken off the map since its panel opened', () => {
+    const w = world();
+    const d = w.builder.placeDecor(40, ROW, 'signal', 0)!;
+    expect(d).not.toBeNull();
+    expect(w.builder.removeDecor(40, ROW)).toBe(true);
+    const changed = vi.fn();
+    w.builder.onDecorChanged = changed;
+    expect(w.commands.turnSignal(d)).toEqual({ ok: false, message: STR.signals.gone });
+    expect(d.rot).toBe(0);
     expect(changed).not.toHaveBeenCalled();
   });
 });
@@ -399,7 +413,7 @@ describe('fitInCab', () => {
     expect(it.inCab).toBe(true);
     expect(w.economy.money).toBe(5);
     // a second fitting is refused and costs nothing
-    expect(w.commands.fitInCab(it)).toEqual({ ok: false, message: STR.roster.hasInCab });
+    expect(w.commands.fitInCab(it)).toEqual({ ok: false, message: STR.roster.alreadyFitted });
     expect(w.economy.money).toBe(5);
   });
 
@@ -420,7 +434,7 @@ describe('fitInCab', () => {
     w.economy.money = rules.inCabCost * 10;
     const tgv = w.inventory.add('tgv', 0);
     expect(locoDef('tgv').inCab).toBe(true);
-    expect(w.commands.fitInCab(tgv)).toEqual({ ok: false, message: STR.roster.hasInCab });
+    expect(w.commands.fitInCab(tgv)).toEqual({ ok: false, message: STR.roster.alreadyFitted });
     const wagon = w.inventory.add('flatbed', 0);
     expect(w.commands.fitInCab(wagon)).toEqual({ ok: false, message: STR.fleet.locoUnavailable });
     const stray = new Inventory().add('f7', 0);
@@ -509,10 +523,15 @@ describe('spotBuy', () => {
   it('refuses what the market does not trade and quantities under one', () => {
     const w = world();
     w.economy.money = 10000;
-    expect(w.commands.spotBuy('passengers', 10, 1000).ok).toBe(false);
-    expect(w.commands.spotBuy('stone', 0, 1000).ok).toBe(false);
-    expect(w.commands.spotBuy('stone', -5, 1000).ok).toBe(false);
-    expect(w.commands.spotBuy('stone', NaN, 1000).ok).toBe(false);
+    expect(w.commands.spotBuy('passengers', 10, 1000)).toEqual({
+      ok: false,
+      message: STR.build.supplyLocked,
+    });
+    for (const n of [0, 0.5, -5, NaN])
+      expect(w.commands.spotBuy('stone', n, 1000), `${n} units`).toEqual({
+        ok: false,
+        message: STR.market.nothingToBuy,
+      });
     expect(w.stock.get('passengers')).toBe(0);
     expect(w.stock.get('stone')).toBe(0);
     expect(w.economy.money).toBe(10000);
@@ -551,10 +570,16 @@ describe('spotSell', () => {
     w.economy.money = 100;
     w.stock.add('stone', 0.9);
     w.stock.add('passengers', 50);
-    expect(w.commands.spotSell('stone', 10)).toEqual({ ok: false, message: STR.depot.empty });
-    expect(w.commands.spotSell('passengers', 10).ok).toBe(false);
-    expect(w.commands.spotSell('stone', -3).ok).toBe(false);
+    const nothing = { ok: false, message: STR.market.nothingToSell };
+    expect(w.commands.spotSell('stone', 10)).toEqual(nothing);
+    expect(w.commands.spotSell('iron', 10)).toEqual(nothing);
+    expect(w.commands.spotSell('passengers', 10)).toEqual({
+      ok: false,
+      message: STR.build.supplyLocked,
+    });
+    expect(w.commands.spotSell('stone', -3)).toEqual(nothing);
     expect(w.stock.get('stone')).toBe(0.9);
+    expect(w.stock.get('iron')).toBe(0);
     expect(w.stock.get('passengers')).toBe(50);
     expect(w.economy.money).toBe(100);
   });
@@ -743,12 +768,13 @@ function keepBooks(c: LedgerCase) {
   for (const [i, op] of c.ops.entries()) {
     const at = `op ${i} (${op.kind})`;
     const wasMoney = w.economy.money;
-    let want: { ok: boolean; message?: string };
+    let want: { ok: true } | { ok: false; message: string };
     let result: { ok: boolean; message?: string };
     if (op.kind === 'buy') {
       const have = books.stock.get(op.id) ?? 0;
       const room = Math.floor(Math.max(0, op.cap - have));
-      if (!listed(op.id) || !(Math.floor(op.n) >= 1)) want = { ok: false };
+      if (!listed(op.id)) want = { ok: false, message: STR.build.supplyLocked };
+      else if (!(Math.floor(op.n) >= 1)) want = { ok: false, message: STR.market.nothingToBuy };
       else if (!(room >= 1)) want = { ok: false, message: STR.market.full };
       else {
         const price = quote(op.id, c.fuelMul, 'buy');
@@ -767,7 +793,8 @@ function keepBooks(c: LedgerCase) {
     } else if (op.kind === 'sell') {
       const have = books.stock.get(op.id) ?? 0;
       const qty = Math.min(Math.floor(op.n), Math.floor(have));
-      if (!listed(op.id) || !(qty >= 1)) want = { ok: false };
+      if (!listed(op.id)) want = { ok: false, message: STR.build.supplyLocked };
+      else if (!(qty >= 1)) want = { ok: false, message: STR.market.nothingToSell };
       else {
         want = { ok: true };
         const v = qty * quote(op.id, c.fuelMul, 'sell');
@@ -793,7 +820,9 @@ function keepBooks(c: LedgerCase) {
       const item = items[op.item];
       const def = item.kind === 'loco' ? locoDef(item.defId) : null;
       const owned = w.inventory.items.includes(item);
-      if (!def || !owned || books.fitted[op.item] || def.inCab) want = { ok: false };
+      if (!def || !owned) want = { ok: false, message: STR.fleet.locoUnavailable };
+      else if (books.fitted[op.item] || def.inCab)
+        want = { ok: false, message: STR.roster.alreadyFitted };
       else if (books.money < rules.inCabCost) want = { ok: false, message: STR.roster.noMoney };
       else {
         want = { ok: true };
@@ -804,10 +833,7 @@ function keepBooks(c: LedgerCase) {
     }
 
     expect(result.ok, at).toBe(want.ok);
-    if (!result.ok) {
-      expect(result.message, at).toBeTruthy();
-      if (want.message) expect(result.message, at).toBe(want.message);
-    }
+    if (!want.ok) expect(result.message, at).toBe(want.message);
     expect(w.economy.money, `${at}: money`).toBe(books.money);
     expect(w.economy.earned, `${at}: earned`).toBe(books.earned);
     expect(w.economy.tickets, `${at}: tickets`).toBe(books.tickets);

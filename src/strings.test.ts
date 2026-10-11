@@ -5,7 +5,8 @@ import { AGE_ORDER, STR } from './strings';
 import { AGE_DEFS } from './sim/ages';
 import { RULE_META } from './sim/rules';
 import { runsOn, withoutInCab } from './sim/compat';
-import { content } from './data/content';
+import { content, type Cost } from './data/content';
+import { fmtCost } from './sim/stockpile';
 
 /** Every string a group of STR can show, with the functions called on stand-in arguments. */
 function texts(node: unknown, out: string[] = []): string[] {
@@ -95,6 +96,20 @@ describe('the ages the player reads about', () => {
     expect(STR.hud.ageUp(3)).toContain('Nuclear Age');
     for (const [t, id] of AGE_ORDER.entries()) expect(STR.editor.startTier).toContain(`${t} ${id}`);
   });
+
+  it('names the population goal after the residents it counts', () => {
+    // the goal counts the people living in houses (`residentsTotal`), which the card says
+    expect(STR.ages.goal.population).toMatch(/\bresidents\b/i);
+    expect(STR.ages.goal.population).not.toMatch(/population/i);
+  });
+
+  it('heads a group of alternatives, says when it is met, and the hint names the heading', () => {
+    const heading = STR.ages.anyOf.replace(/:\s*$/, '');
+    expect(heading.trim()).not.toBe('');
+    expect(STR.ages.anyOfMet).not.toBe(STR.ages.anyOf);
+    // the hint explains the heading the card shows, so a rewording of one must reach the other
+    expect(STR.ages.hint).toContain(heading);
+  });
 });
 
 describe('what an upgrade shows', () => {
@@ -107,11 +122,67 @@ describe('what an upgrade shows', () => {
     expect(STR.upgrade.button(3, cost, 0)).toMatch(new RegExp(`\\b3\\b.*${cost}$`));
   });
 
+  it('leaves an empty cost out the way it leaves out no time, with no dangling separator', () => {
+    const bare = STR.upgrade.button(3, '', 0);
+    expect(bare).toMatch(/\b3$/);
+    expect(bare).not.toContain('·');
+    expect(STR.upgrade.button(3, cost, 0)).toBe(`${bare} · ${cost}`);
+    expect(STR.upgrade.button(3, '', 9)).toBe(`${bare} · 9 h`);
+    expect(STR.upgrade.button(3, '', 8.2)).toBe(STR.upgrade.button(3, '', 9));
+    expect(STR.upgrade.button(3, cost, 9)).toBe(`${bare} · ${cost} · 9 h`);
+  });
+
   it('never says no time is left while it runs', () => {
     expect(STR.upgrade.running(3, 3.2)).toBe(STR.upgrade.running(3, 4));
     expect(STR.upgrade.running(3, 3.2)).toContain('4 h left');
     expect(STR.upgrade.running(3, 0.2)).toContain('1 h left');
     expect(STR.upgrade.running(3, 0)).toContain('1 h left');
+  });
+});
+
+describe('what a cost reads', () => {
+  it('reads as free when nothing is to be paid, and lists only what is', () => {
+    for (const nothing of [{}, { wood: 0 }, { wood: 0, stone: 0 }] as Cost[])
+      expect(fmtCost(nothing)).toBe(STR.build.free);
+    const some = fmtCost({ wood: 30, stone: 0 });
+    expect(some).not.toContain(STR.build.free);
+    expect(some).toMatch(/\b30\b/);
+    expect(some).not.toMatch(/\b0\b/);
+  });
+
+  it('has no words of its own: the empty cost is a string from STR', () => {
+    const file = new URL('./sim/stockpile.ts', import.meta.url);
+    const sf = ts.createSourceFile(
+      'stockpile.ts',
+      readFileSync(file, 'utf8'),
+      ts.ScriptTarget.Latest,
+    );
+    const fn = sf.statements.find(
+      (s): s is ts.FunctionDeclaration => ts.isFunctionDeclaration(s) && s.name?.text === 'fmtCost',
+    );
+    expect(fn).toBeDefined();
+    const words: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))
+        words.push(node.text);
+      else if (ts.isTemplateExpression(node))
+        words.push(node.head.text, ...node.templateSpans.map((s) => s.literal.text));
+      ts.forEachChild(node, visit);
+    };
+    visit(fn!);
+    expect(words.filter((w) => /[a-z]/i.test(w))).toEqual([]);
+  });
+});
+
+describe('what the content editor says about edits it set aside', () => {
+  it('says Apply or Reset deletes them for good', () => {
+    const t = STR.content.setAsideTitle;
+    // names the two buttons that do it, by the first word of their labels
+    for (const button of [STR.content.apply, STR.content.reset])
+      expect(t).toContain(button.split(' ')[0]);
+    expect(t).toMatch(/\bdeletes?\b/i);
+    expect(t).toMatch(/\bfor good\b/i);
+    expect(t).not.toMatch(/\bremoves?\b/i);
   });
 });
 

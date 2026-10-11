@@ -7,10 +7,6 @@
     "id": "diesel",
     "goals": [
       {
-        "kind": "depots",
-        "target": 2
-      },
-      {
         "anyOf": [
           {
             "kind": "population",

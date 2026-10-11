@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { Rules } from './rules';
 
 type RulesModule = typeof import('./rules');
 
@@ -67,6 +68,33 @@ describe('rulesFrom', () => {
     expect(r.loadRateMul).toBe(m.DEFAULT_RULES.loadRateMul);
     expect(saved).toEqual({ payoutMul: 99, trainSpeedMul: 1.5 });
     expect(r).not.toBe(m.rules);
+  });
+
+  it('gives rules saved before offers grew with the land the defaults for the growth', async () => {
+    const m = await load();
+    const grown = ['contractOffersPerChunk', 'contractOfferMax'] as const;
+    // every rule a save of that time held, its open offers tuned to 3
+    const old: Record<string, unknown> = { ...m.DEFAULT_RULES, contractOfferCount: 3 };
+    for (const k of grown) delete old[k];
+    m.applyGameRules(JSON.parse(JSON.stringify(old)) as Partial<Rules>);
+    expect(m.rules.contractOfferCount).toBe(3);
+    for (const k of grown) {
+      expect(m.rules[k], k).toBe(m.DEFAULT_RULES[k]);
+      // a player can drag it: it has a label, a hint and a range holding its default
+      const meta = m.RULE_META.find((x) => x.key === k);
+      expect(meta?.label, k).toBeTruthy();
+      expect(meta?.hint, k).toBeTruthy();
+      expect(m.DEFAULT_RULES[k], k).toBeGreaterThanOrEqual(meta!.min);
+      expect(m.DEFAULT_RULES[k], k).toBeLessThanOrEqual(meta!.max);
+    }
+  });
+
+  it('names the cap in the hint of the start-chunk offers, so a start value above it is explained', async () => {
+    const m = await load();
+    const start = m.RULE_META.find((x) => x.key === 'contractOfferCount');
+    const cap = m.RULE_META.find((x) => x.key === 'contractOfferMax');
+    expect(cap?.label).toBeTruthy();
+    expect(start?.hint).toContain(cap!.label);
   });
 });
 

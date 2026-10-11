@@ -2,6 +2,8 @@ import { content, type BuildingDef, type Cost } from '../data/content';
 import type { Stockpile } from './stockpile';
 import { rules, weekSeconds } from './rules';
 import { MAX_LEVEL } from './levels';
+import { workFromJSON, workToJSON, type Work } from './upgrade';
+import { wrapRotation } from './rotation';
 
 export type { BuildingDef };
 export const BUILDING_DEFS: BuildingDef[] = content.buildings;
@@ -20,6 +22,11 @@ export interface Building {
   acc: number;
   /** Player-paid upgrade, 1..`worksMaxLevel`. Older saves default to 1. */
   level?: number;
+  /**
+   * The rotation it was placed in, 0 to 3 (`BUILDING_ROTATIONS`). A works covers its one tile at
+   * every rotation, so nothing it does depends on it. Missing (a level file's works) means 0.
+   */
+  rot?: number;
   /** running in the last tick */
   active: boolean;
   /** batches completed in the last in-game week (rolling estimate) */
@@ -27,16 +34,51 @@ export interface Building {
   /** total output produced over the building's life, per resource */
   made?: Record<string, number>;
   /** why the last tick did not run (empty when running) */
-  reason?: 'inputs' | 'full' | '';
+  reason?: 'inputs' | 'full' | 'upgrading' | '';
+  /**
+   * The upgrade under way (`Builder.upgradeBuilding`), absent when none is. While it runs the
+   * works is closed: it processes nothing, has no crew, and gives no power and feeds no wire.
+   */
+  work?: Work;
 }
-/** A building as a save holds it (v4); the level came later, and a save without one means 1. */
-export type BuildingJSON = [x: number, y: number, id: string, acc: number, level?: number];
+/**
+ * A building as a save holds it (v4); the level came later, and a save without one means 1. The
+ * upgrade under way came in v15, null for none; the rotation in v16, and a save without one means 0.
+ */
+export type BuildingJSON = [
+  x: number,
+  y: number,
+  id: string,
+  acc: number,
+  level?: number,
+  work?: Work | null,
+  rot?: number,
+];
 export function buildingToJSON(b: Building): BuildingJSON {
-  return [b.x, b.y, b.id, b.acc, b.level ?? 1];
+  return [b.x, b.y, b.id, b.acc, b.level ?? 1, workToJSON(b.work), b.rot ?? 0];
 }
-/** A saved building, idle until its first tick says otherwise. */
-export function buildingFromJSON([x, y, id, acc, level]: BuildingJSON): Building {
-  return { id, x, y, acc: acc ?? 0, level: level ?? 1, active: false, rate: 0 };
+/**
+ * A saved building, idle until its first tick says otherwise. Its work is kept only where the game
+ * could have started it: on a building it knows, towards the next level and at most the top one.
+ * Its rotation is one of the four (`wrapRotation`), 0 where the save has none.
+ */
+export function buildingFromJSON([x, y, id, acc, level, work, rot]: BuildingJSON): Building {
+  const lv = level ?? 1;
+  const b: Building = {
+    id,
+    x,
+    y,
+    acc: acc ?? 0,
+    level: lv,
+    rot: wrapRotation(rot),
+    active: false,
+    rate: 0,
+  };
+  if (BUILDING_DEFS.some((d) => d.id === id)) {
+    const w = workFromJSON(work, buildingLevel(b), worksMaxLevel(b));
+    if (w) b.work = w;
+  }
+  return b;
 }
 /** Which primary input is short, if any. */
 export function missingInput(def: BuildingDef, stock: Stockpile): string | null {
@@ -47,6 +89,7 @@ export function missingInput(def: BuildingDef, stock: Stockpile): string | null 
 /**
  * Run every building's recipe against the stockpile. Inputs are consumed continuously; when the
  * primary inputs run short the alternative input set is tried (power plants burn oil instead of coal).
+ * A building being upgraded is skipped: it takes nothing in and makes nothing.
  */
 export function tickBuildings(
   buildings: Iterable<Building>,
@@ -57,6 +100,13 @@ export function tickBuildings(
   depots: number,
 ) {
   for (const b of buildings) {
+    if (b.work) {
+      b.reason = 'upgrading';
+      b.active = false;
+      // the estimate fades as it does over any idle tick
+      b.rate *= 0.95;
+      continue;
+    }
     const def = buildingDef(b.id);
     const recipe = buildingRecipe(b);
     const rate = buildingRate(b);

@@ -12,6 +12,8 @@ export interface Rules {
   startMoney: number;
   startTickets: number;
   buildCostMul: number;
+  /** multiplies the game time an upgrade takes; 0 makes every upgrade instant */
+  upgradeTimeMul: number;
   refundRate: number;
   runningCostMul: number;
   spotPriceMul: number;
@@ -25,7 +27,12 @@ export interface Rules {
   loadRateMul: number;
   productionMul: number;
   capacityMul: number;
+  /** open offers, and active contracts the player may hold, on the start chunk alone */
   contractOfferCount: number;
+  /** offers (and active contracts) added per chunk owned beyond the first, rounded down */
+  contractOffersPerChunk: number;
+  /** most open offers, and most active contracts, however much land is owned */
+  contractOfferMax: number;
   contractRefreshDays: number;
   deadlineMul: number;
   payoutMul: number;
@@ -84,6 +91,7 @@ export const DEFAULT_RULES: Rules = {
   startMoney: 40000,
   startTickets: 3,
   buildCostMul: 1,
+  upgradeTimeMul: 1,
   refundRate: 0.5,
   runningCostMul: 1,
   spotPriceMul: 1,
@@ -95,6 +103,8 @@ export const DEFAULT_RULES: Rules = {
   productionMul: 1,
   capacityMul: 1,
   contractOfferCount: 1,
+  contractOffersPerChunk: 0.5,
+  contractOfferMax: 6,
   contractRefreshDays: 21,
   deadlineMul: 1,
   payoutMul: 1,
@@ -153,6 +163,15 @@ export const RULE_META: RuleMeta[] = [
     max: 5,
     step: 0.05,
     hint: '0 = free building',
+  },
+  {
+    key: 'upgradeTimeMul',
+    label: 'Upgrade time x',
+    group: 'Economy',
+    min: 0,
+    max: 4,
+    step: 0.1,
+    hint: 'game time an upgrade keeps a building closed; 0 = every upgrade is instant',
   },
   { key: 'refundRate', label: 'Refund rate', group: 'Economy', min: 0, max: 1, step: 0.05 },
   { key: 'runningCostMul', label: 'Fuel use x', group: 'Economy', min: 0, max: 5, step: 0.1 },
@@ -266,7 +285,33 @@ export const RULE_META: RuleMeta[] = [
     max: 5,
     step: 0.1,
   },
-  { key: 'contractOfferCount', label: 'Open offers', group: 'Contracts', min: 1, max: 12, step: 1 },
+  {
+    key: 'contractOfferCount',
+    label: 'Open offers on the start chunk',
+    group: 'Contracts',
+    min: 1,
+    max: 12,
+    step: 1,
+    hint: 'also the active contracts you may hold there; land bought adds more; never above "Most open offers", this start value included',
+  },
+  {
+    key: 'contractOffersPerChunk',
+    label: 'Open offers per chunk bought',
+    group: 'Contracts',
+    min: 0,
+    max: 2,
+    step: 0.05,
+    hint: 'adds to offers and active contracts, rounded down; 0 = land adds none',
+  },
+  {
+    key: 'contractOfferMax',
+    label: 'Most open offers',
+    group: 'Contracts',
+    min: 1,
+    max: 24,
+    step: 1,
+    hint: 'the cap on offers and on active contracts, however much land you own',
+  },
   {
     key: 'contractRefreshDays',
     label: 'Offer refresh (days)',

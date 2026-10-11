@@ -244,11 +244,11 @@ export class SettingsScreen implements Screen {
       slotList.append(
         el(
           'div',
-          { class: 'kv', style: 'align-items:center;gap:8px' },
+          { class: 'kv save-row' },
           el('div', {}, el('div', { text: sl.name }), ...slotLines(sl, now, 'sub dim')),
           el(
             'span',
-            { class: 'row', style: 'margin:0;flex-wrap:nowrap' },
+            { class: 'row' },
             btn(STR.settings.loadSlot, () => this.actions.loadSlot(sl.name), 'small'),
             btn(
               STR.settings.deleteSlot,

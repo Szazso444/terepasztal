@@ -1,5 +1,14 @@
-import { Container, Sprite, Rectangle, Graphics, Mesh, MeshGeometry } from 'pixi.js';
-import type { AtlasRegistry } from '../engine/atlas';
+import {
+  Assets,
+  Container,
+  Sprite,
+  Rectangle,
+  Graphics,
+  Mesh,
+  MeshGeometry,
+  type Texture,
+} from 'pixi.js';
+import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import {
   tileToWorld,
   worldToTileInt,
@@ -13,7 +22,7 @@ import { Terrain, Biome, type GameMap, type PropInstance, idx } from '../world/t
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 import { MATERIAL_COLORS, materialAt } from './landscapeModel';
-import { structureScale, hasScaleReference, TREE_SCALE, isTree } from './assetScale';
+import { scaleReference, TREE_SCALE, isTree, type ScaleReference } from './assetScale';
 import { SurfaceAssets, windowSprite } from './surfaceAssets';
 import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
@@ -24,6 +33,30 @@ import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
 import { PAL, type RGB } from '../art/palette';
 import BRIDGE_KIT_JSON from './bridgeKit.json';
+import {
+  bridgeTileMeshes,
+  destroyBridgeParts,
+  prepareSurface,
+  WATERLINE,
+  type BridgeSurfaces,
+} from './bridgeMeshes';
+import { bridgeJoins, bridgePlan, deckSamples, type BridgeSite } from './bridgeLayout';
+
+export type BridgeStyle = 'textured' | 'kit' | 'procedural';
+/** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
+export type TexturedBridge = Omit<BridgeSite, 'deck'> & {
+  /** Over water: supports stand in it, and the deck never sinks below the waterline's. */
+  water: boolean;
+  /** The bridge's upgrade level. */
+  level: number;
+};
+
+/**
+ * Tile offsets at which a textured bridge tile notices the ground under it and in front of it
+ * (toward +x +y, as far as bridgeMeshes.ts looks for ground hiding its supports).
+ */
+const GROUND_AT = [-0.45, 0, 0.45, 0.55, 1, 1.5, 1.95],
+  GROUND_SAMPLES = GROUND_AT.flatMap((a) => GROUND_AT.map((b) => [a, b]));
 
 /** Measured kit geometry in world px (tools/bridge-kit.mjs). */
 const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
@@ -32,6 +65,11 @@ const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
 >;
 
 const CHUNK = 8;
+
+/** An illustrated picture: more texels than world pixels (an atlas `resolution` above 1). */
+function illustrated(f: FrameInfo) {
+  return f.texture.frame.width / f.w > 1;
+}
 
 /**
  * Isometric world view. Ground tiles live in chunked static containers (culled per chunk);
@@ -98,6 +136,7 @@ export class WorldRenderer {
     this.landscape.root.visible = false;
     this.root.on('destroyed', () => this.surfaces.destroy());
     this.objects.sortableChildren = true;
+    this.piers.sortableChildren = true;
     this.objects.cullableChildren = true;
     this.ground.cullableChildren = true;
     this.fog.cullableChildren = true;
@@ -794,9 +833,119 @@ export class WorldRenderer {
       }
     }
   }
-  /** The illustrated bridge kit is packed (tools/bridge-kit.mjs); else the procedural spans. */
-  get bridgeKit() {
-    return this.atlas.has('bridgekit/stone-deck-x');
+  /**
+   * How bridges draw: `textured` the procedural shapes wearing the kit's surfaces
+   * (bridgeMeshes.ts), merged with their neighbours into wide bridges; `kit` the illustrated kit
+   * pieces; `procedural` the generated spans. Setting it redraws the bridges (onBridgeStyle).
+   */
+  get bridgeStyle() {
+    return this.style;
+  }
+  set bridgeStyle(style: BridgeStyle) {
+    if (style === this.style) return;
+    this.style = style;
+    this.onBridgeStyle();
+  }
+  private style: BridgeStyle = 'textured';
+  /** Called when the bridge style changes; the game redraws its bridges. */
+  onBridgeStyle: () => void = () => {};
+  /** The style bridges draw in: the chosen one, or the next whose assets are there. */
+  get bridgeMode(): BridgeStyle {
+    if (this.style === 'textured' && this.bridgeSurfaces) return 'textured';
+    if (this.style !== 'procedural' && this.atlas.has('bridgekit/stone-deck-x')) return 'kit';
+    return 'procedural';
+  }
+  private bridgeSurfaces: BridgeSurfaces | null = null;
+  /** Loads the kit's repeating surfaces (public/assets/bridge-surface-*.png). */
+  async loadBridgeSurfaces() {
+    if (this.bridgeSurfaces) return true;
+    const base = `${import.meta.env.BASE_URL}assets/bridge-surface-`;
+    try {
+      const [stoneTop, stoneWall, woodTop, woodGrain] = await Promise.all(
+        ['stone-top', 'stone-wall', 'wood-top', 'wood-grain'].map((n) =>
+          Assets.load<Texture>(`${base}${n}.png`),
+        ),
+      );
+      for (const t of [stoneTop, stoneWall, woodTop, woodGrain]) prepareSurface(t.source);
+      this.bridgeSurfaces = { stoneTop, stoneWall, woodTop, woodGrain };
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  private texturedParts = new Map<number, { key: string; under: Container; near: Container }>();
+  /**
+   * Every bridge tile in the textured style (none in the others): supports, deck and far
+   * parapets under the trains, near parapets over them. Tiles merge with their neighbours
+   * (bridgeLayout.ts); a tile whose parts did not change keeps its meshes.
+   */
+  setTexturedBridges(tiles: readonly TexturedBridge[]) {
+    const surfaces = this.bridgeMode === 'textured' ? this.bridgeSurfaces : null,
+      sites = surfaces
+        ? tiles.map((t) => ({ ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water) }))
+        : [],
+      joins = bridgeJoins(sites, this.map.w),
+      ground = (tx: number, ty: number) => this.bridgeGround(tx, ty),
+      keep = new Set<number>();
+    for (const site of sites) {
+      const k = idx(this.map, site.x, site.y),
+        j = joins.get(k)!,
+        // Everything the meshes depend on, to a tenth of a pixel: the ground is sampled under
+        // the tile and in front of it, where it can hide the tile's faces.
+        key = JSON.stringify([
+          site.material,
+          site.axis,
+          site.water,
+          site.level,
+          site.open,
+          j,
+          site.deck.map((z) => Math.round(z * 10)),
+          GROUND_SAMPLES.map(([dx, dy]) => Math.round(ground(site.x + dx, site.y + dy) * 10)),
+        ]);
+      keep.add(k);
+      const old = this.texturedParts.get(k);
+      if (old?.key === key) continue;
+      if (old) for (const c of [old.under, old.near]) destroyBridgeParts(c);
+      const parts = bridgeTileMeshes(
+        { ...site, ground },
+        bridgePlan(site, j, site.water),
+        surfaces!,
+      );
+      parts.under.zIndex = site.x + site.y;
+      parts.near.zIndex = depthKey(site.x, site.y, 35);
+      this.piers.addChild(parts.under);
+      this.objects.addChild(parts.near);
+      this.texturedParts.set(k, { key, ...parts });
+    }
+    for (const [k, old] of this.texturedParts)
+      if (!keep.has(k)) {
+        for (const c of [old.under, old.near]) destroyBridgeParts(c);
+        this.texturedParts.delete(k);
+      }
+  }
+  /**
+   * A bridge deck's top (the rail level) in world px up at DECK_SAMPLES along its axis; one level
+   * for a pad. Over water it never sinks below the waterline's deck.
+   */
+  private deckProfile(x: number, y: number, axis: 0 | 1 | null, water: boolean): number[] {
+    const tile = this.railBeds.get(idx(this.map, x, y)),
+      dir = axis === 1 ? 'x' : 'y',
+      bed = tile?.axis === dir ? tile : tile?.cross?.axis === dir ? tile.cross : undefined,
+      floor = (z: number) => (water ? Math.max(0, z) : z);
+    if (axis === null || !bed || this.landscape.failed) return [floor(-this.railAt(x, y).dz)];
+    return deckSamples(bed, axis === 1 ? x : y, this.levelPx).map(floor);
+  }
+  /** Ground under a bridge, world px up: the terrain, or over water the waterline. */
+  private bridgeGround(tx: number, ty: number) {
+    const x = Math.round(tx),
+      y = Math.round(ty),
+      water =
+        x >= 0 &&
+        y >= 0 &&
+        x < this.map.w &&
+        y < this.map.h &&
+        this.map.terrain[idx(this.map, x, y)] === Terrain.Water;
+    return water ? WATERLINE : -this.elevationOf(tx, ty);
   }
   private kitParts = new Map<number, Container>();
   /**
@@ -1092,9 +1241,13 @@ export class WorldRenderer {
     const g = this.landscape.slope(x, y);
     return { dz: -g.z, sgx: -g.gx, sgy: -g.gy };
   }
-  /** Rails climb only straight, at most one level per tile; everything else needs level ground. */
+  /**
+   * Rails climb only straight, at most one level per tile; everything else needs level ground.
+   * The relief that decides is built on the main thread, so the answer is the same whether the
+   * paint workers run or have failed.
+   */
   groundAllows(x: number, y: number, need: 'straight' | 'level') {
-    return this.landscape.failed || this.landscape.groundAllows(x, y, need);
+    return this.landscape.groundAllows(x, y, need);
   }
 
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */
@@ -1103,18 +1256,19 @@ export class WorldRenderer {
     this.structureAnchors.set(id, { x, y, dx, dy });
     let s = this.structures.get(id);
     if (!s) {
-      s = new Sprite(f.texture);
+      s = new Sprite();
       s.cullable = true;
       this.objects.addChild(s);
       this.structures.set(id, s);
-    } else s.texture = f.texture;
-    s.anchor.set(f.anchorX, f.anchorY);
+    }
+    // texture, anchor and size: a reused sprite never keeps the size of the frame it showed
+    const building = this.setSpriteFrame(s, frame);
     const p = tileToWorld(x, y);
     s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
     s.zIndex = depthKey(x, y, layer);
-    const building = hasScaleReference(frame);
-    if (building) {
-      s.scale.set(structureScale(frame, f.texture.frame.width / f.w > 1 ? f.h : undefined));
+    // only a building has window lights and contact patches; drop those of a building shown before
+    if (!building) this.dropBuildingDressing(id);
+    else {
       s.texture = this.surfaces.contact(frame, f, MATERIAL_COLORS[materialAt(this.map, x, y)]);
       let light = this.windowLights.get(id);
       if (!light) {
@@ -1122,7 +1276,7 @@ export class WorldRenderer {
         this.objects.addChild(light);
         this.windowLights.set(id, light);
       }
-      light.texture = this.surfaces.window(frame, f, f.texture.frame.width / f.w === 1);
+      light.texture = this.surfaces.window(frame, f, !illustrated(f), building.family);
       light.anchor.set(f.anchorX, f.anchorY);
       light.position.copyFrom(s.position);
       light.scale.copyFrom(s.scale);
@@ -1186,13 +1340,17 @@ export class WorldRenderer {
       this.atmosphereTints.set(object, { base, applied });
     }
   }
-  removeStructure(id: string) {
-    const anchor = this.structureAnchors.get(id);
-    this.structureAnchors.delete(id);
+  /** A structure's window lights and contact patches, which only a building has. */
+  private dropBuildingDressing(id: string) {
     this.contactPatches.get(id)?.destroy();
     this.contactPatches.delete(id);
     this.windowLights.get(id)?.destroy();
     this.windowLights.delete(id);
+  }
+  removeStructure(id: string) {
+    const anchor = this.structureAnchors.get(id);
+    this.structureAnchors.delete(id);
+    this.dropBuildingDressing(id);
     const s = this.structures.get(id);
     if (s) {
       s.destroy();
@@ -1211,17 +1369,25 @@ export class WorldRenderer {
     this.overlay.addChild(s);
     return s;
   }
-  setSpriteFrame(s: Sprite, frame: string) {
+  /**
+   * Show `frame` on `s` at its anchor and size: a building by its scale reference (a turned
+   * frame by its unturned frame's), a tree at tree scale, anything else at 1, so a reused sprite
+   * never keeps the size of the frame it showed before. Returns the building's scale reference,
+   * or null for a frame without one.
+   */
+  setSpriteFrame(s: Sprite, frame: string): ScaleReference | null {
     const f = this.atlas.get(frame);
     s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
+    const building = scaleReference(this.atlas, frame, illustrated(f) ? f.h : undefined);
     s.scale.set(
-      hasScaleReference(frame)
-        ? structureScale(frame, f.texture.frame.width / f.w > 1 ? f.h : undefined)
+      building
+        ? building.scale
         : frame.startsWith('props/') && isTree(frame.slice(6).replace(/_\d+$/, ''))
           ? TREE_SCALE
           : 1,
     );
+    return building;
   }
 
   /** World pixel position of the top surface of a tile centre (for placing sprites). */

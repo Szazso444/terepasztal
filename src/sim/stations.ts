@@ -6,6 +6,8 @@ import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import { rules } from './rules';
 import { cargoDef } from './cargo';
 import { MAX_LEVEL } from './levels';
+import { workFromJSON, workToJSON, type Work } from './upgrade';
+import { wrapRotation } from './rotation';
 
 export type { StationDef };
 export { MAX_LEVEL };
@@ -18,7 +20,10 @@ export function stationDef(id: string): StationDef {
   if (!d) throw new Error(`unknown station ${id}`);
   return d;
 }
-/** Width (along x) and depth (along y) of a station turned to `rot`. */
+/**
+ * Width (along x) and depth (along y) of a station turned to `rot`: the rotation's axis decides
+ * it (`rotationAxis`), so `rot` and `rot + 2` give the same span.
+ */
 export function stationSpan(def: StationDef, rot: number): { w: number; h: number } {
   if (def.long) return rot % 2 === 0 ? { w: 2, h: 1 } : { w: 1, h: 2 };
   const n = def.size ?? 1;
@@ -33,8 +38,9 @@ export function stationFootprint(defId: string, x: number, y: number, rot: numbe
 }
 /**
  * Tiles where track may serve a station of this kind with its corner at (x, y), turned to `rot`:
- * a shed (a depot) has one gate at each end of every track through it, west then east (rot 0) or
- * north then south (rot 1); any other station every orthogonal neighbour of its footprint.
+ * a shed (a depot) has one gate at each end of every track through it, west then east (rot 0 and
+ * 2) or north then south (rot 1 and 3); any other station every orthogonal neighbour of its
+ * footprint.
  */
 export function stationGates(defId: string, x: number, y: number, rot: number) {
   return gatesOf(stationDef(defId), x, y, rot);
@@ -78,8 +84,13 @@ export interface StationJSON {
   level: number;
   storage: Record<string, number>;
   market?: Record<string, number>;
-  /** v7: orientation of multi-tile stations (depot gates: 0 = west/east, 1 = north/south) */
+  /**
+   * v7: orientation of multi-tile stations (depot gates: 0 = west/east, 1 = north/south); v16:
+   * one of the four rotations, 0 to 3, whose axis is that orientation (`rotationAxis`)
+   */
   rot?: number;
+  /** v15: the upgrade under way, null for none */
+  work?: Work | null;
 }
 
 let nextId = 1;
@@ -140,8 +151,18 @@ export class Station {
   passengerPopulation = 0;
   /** a coaling stage stands within reach (engines refuel from the stockpile) */
   fuelSupply = false;
+  /** the upgrade under way (`Builder.upgradeStation`); null when none is */
+  work: Work | null = null;
+  /**
+   * Closed while it is upgraded: it makes nothing (`productionPerWeek` is 0), takes nothing in and
+   * has no crew to feed, and nobody lives or gathers at it (`PeopleSim.places`). Trains still stop
+   * and load what it holds, but do not wait there for output that will not come.
+   */
+  get closed() {
+    return !!this.work;
+  }
   get crew() {
-    return LEVELS.crew[this.level - 1];
+    return this.closed ? 0 : LEVELS.crew[this.level - 1];
   }
   /** the age the station appears in: its levels open one per age from there (`levelCap`) */
   get firstAge() {
@@ -153,7 +174,11 @@ export class Station {
   get refuelsWater() {
     return !!this.def.water || this.waterSupply || this.producedCargo().includes('water');
   }
-  /** orientation of a multi-tile station (depot: 0 = gates west and east, 1 = north and south) */
+  /**
+   * The rotation it was placed in, 0 to 3 (`BUILDING_ROTATIONS`, front facing S, W, N or E). The
+   * footprint and gates follow its axis alone (depot: 0 and 2 gates west and east, 1 and 3 north
+   * and south).
+   */
   rot = 0;
   constructor(
     defId: string,
@@ -222,11 +247,12 @@ export class Station {
       for (const [c, v] of this.storage) if (v >= 1 && !out.includes(c)) out.push(c);
     return out;
   }
-  /** Room a warehouse has for more goods. */
+  /** Room a warehouse has for more goods: none while it is closed. */
   get room() {
+    if (this.closed) return 0;
     return Math.max(0, this.capacity - this.totalStored());
   }
-  /** Put goods into a warehouse's store; returns what fitted. */
+  /** Put goods into a warehouse's store; returns what fitted (nothing while it is closed). */
   store(cargo: string, amount: number): number {
     const n = Math.max(0, Math.min(amount, this.room));
     if (n > 0) this.storage.set(cargo, this.stored(cargo) + n);
@@ -234,7 +260,12 @@ export class Station {
   }
   /** nearby-resource multiplier, set when placed and after terrain edits */
   terrainFactor = 1;
+  /**
+   * Units made a week at this level, under the rules and on this ground, a passenger station's
+   * capped by the people around it; none while it is closed.
+   */
   get productionPerWeek() {
+    if (this.closed) return 0;
     const rate = LEVELS.production[this.level - 1] * rules.productionMul * this.terrainFactor;
     return this.def.id === 'station' ? Math.min(rate, this.passengerPopulation * 0.4) : rate;
   }
@@ -249,8 +280,9 @@ export class Station {
   nextLevelUnlocks(): string[] {
     return this.def.produces.filter((p) => p.level === this.level + 1).map((p) => p.cargo);
   }
+  /** Whether a delivery of the cargo is taken here: never while the station is closed. */
   accepts(cargo: string) {
-    return this.def.accepts.includes(cargo);
+    return !this.closed && this.def.accepts.includes(cargo);
   }
   upgradeCost(): Cost {
     if (this.level >= MAX_LEVEL) return {};
@@ -276,7 +308,6 @@ export class Station {
   hasFreePlatform() {
     return this.occupants.size < this.platforms;
   }
-  /** Produce goods over in-game seconds. Storage is shared across produced cargo types. */
   /** Current spot price per unit for cargo delivered here without a contract. */
   marketPrice(cargo: string, distance: number) {
     const sat = this.satiety(cargo);
@@ -294,9 +325,14 @@ export class Station {
   absorb(cargo: string, amount: number) {
     this.market.set(cargo, Math.min(1, this.satiety(cargo) + amount / (this.capacity * 1.5)));
   }
+  /**
+   * Produce goods over in-game seconds, nothing while closed; storage is shared across produced
+   * cargo types. The market's demand recovers either way.
+   */
   tick(gameDt: number) {
     const decay = Math.exp(-gameDt / weekSeconds());
     for (const [c, v] of this.market) this.market.set(c, v * decay);
+    if (this.closed) return;
     const produced = this.producedCargo();
     if (!produced.length) return;
     const perType =
@@ -318,14 +354,16 @@ export class Station {
       storage: Object.fromEntries(this.storage),
       market: Object.fromEntries(this.market),
       rot: this.rot,
+      work: workToJSON(this.work),
     };
   }
   static fromJSON(j: StationJSON): Station {
     const s = new Station(j.defId, j.x, j.y, j.name, j.id);
     s.level = j.level;
-    s.rot = j.rot ?? 0;
+    s.rot = wrapRotation(j.rot);
     s.storage = new Map(Object.entries(j.storage));
     s.market = new Map(Object.entries(j.market ?? {}));
+    s.work = workFromJSON(j.work, s.level, MAX_LEVEL);
     return s;
   }
   /** The station as a level file holds it: what it is, where, its level, name and turn. */
@@ -342,7 +380,7 @@ export class Station {
   static fromLevel(j: LevelStation): Station {
     const s = new Station(j.defId, j.x, j.y, j.name || undefined);
     s.level = Math.max(1, Math.min(MAX_LEVEL, j.level));
-    s.rot = j.rot ?? 0;
+    s.rot = wrapRotation(j.rot);
     return s;
   }
 }

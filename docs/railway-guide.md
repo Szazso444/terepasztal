@@ -14,6 +14,18 @@ the Hyper Age, and a Refinery of the Diesel Age reaches level 5 at most. A build
 stands above its age's level, from an old save or a level file, keeps its level and is offered
 the next one when that age comes. Bridges keep their own four levels in every age.
 
+An upgrade is paid when it starts and takes game time: 6, 9, 12, 18 and 24 game hours to levels
+2 to 6, from a quarter of a day to a whole one (the **Upgrade time** tuning value scales them; at
+0 every upgrade is instant). The building is closed until the work is done and keeps its old
+level meanwhile: a station or works makes nothing and has no crew to feed, a Power Plant gives
+no power and a Substation feeds no wire, and a House takes no newcomers but keeps its residents.
+Nobody lives at a closed station or works, and nobody sets out from one to gather: the people
+who lived there move to the open place nearest to where they stand. Trains still stop at a
+closed station and load what it holds, but deliver nothing there, and a train set to wait for a
+full load does not wait for output that will not come. A second upgrade waits until the first
+is done, and a building removed during its upgrade is gone with the work. The Depot's upgrade is
+instant and free.
+
 Houses hold 20, 60, 140, 300, 520 and 800 residents at levels 1–6. Select a completed House
 and use **Enlarge** to pay for the next level. Its appearance progresses from house to
 apartments, high-rise and skyscraper; levels 5 and 6 keep the skyscraper. Residents fill
@@ -86,6 +98,20 @@ post's preview follows the straight continuation; a train checks the branch on i
 The debug traffic panel shows blocking groups and active escape owners. Recovery reserves
 one escape route per conflicting group, and can first move a queue that obstructs another
 train's retreat. If no reachable siding fits the full train, add a longer loop or another route.
+A train only backs into a siding it can leave towards its next stop, so a siding whose switch
+faces away from where the train is going does not count. When no train in the way has room to
+pull aside, the traffic counts a deadlock and each train held in it says it is jammed, with no
+siding it can pull into to let the other train by.
+
+A roaming train with nothing worth hauling waits where it stopped without keeping the station's
+platform. When another train needs the track it stands on, it moves aside, into a siding when
+one is free and it can come back out of it to the station, and waits there until there is work. Trains never reverse partway along a move, so
+a train uses a siding only when it can run straight into it: give each busy line a dead-end
+siding as long as the whole train, its switch facing the station the train idles at, so a train
+leaving it turns straight in. A siding it could reach only by running past the switch and
+backing in does not count. Without one, the train note says it is in the way with no siding or
+free platform it can pull into. A dead-end siding does not let two working trains pass each
+other on single track; that still needs a passing loop.
 
 ## Bridges
 
@@ -104,9 +130,10 @@ is excluded from pathfinding. Above 80% capacity, crossing speed is halved until
 leaves the bridge. A train exactly at capacity may cross at half speed.
 
 Select a platform to inspect its limit and pay for reinforcement. Each level adds 25% of the
-base capacity, up to level 4, and adds visible reinforcement. Upgrade every platform in the
-crossing for heavier traffic: its weakest platform remains the limiting one. Remove track
-before demolishing its platform. The removal tool removes the rails first on an occupied deck.
+base capacity, up to level 4, and adds visible reinforcement once the work is done; trains keep
+crossing at the old limit while it runs. Upgrade every platform in the crossing for heavier
+traffic: its weakest platform remains the limiting one. Remove track before demolishing its
+platform. The removal tool removes the rails first on an occupied deck.
 
 ## Crafting and old saves
 

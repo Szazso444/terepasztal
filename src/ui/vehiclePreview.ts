@@ -1,33 +1,10 @@
 import type { AtlasRegistry } from '../engine/atlas';
-import { itemDef, itemKind, type LocoDef, type WagonDef } from '../gacha/items';
-import { BOGIE_AXLES, vehicleSpec } from '../sim/body';
-import { runsOn } from '../sim/compat';
+import { itemDef } from '../gacha/items';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import { frameForItem, spriteDataUrl } from './spritePreview';
+import { vehicleProperties } from './vehicleProperties';
 
-export function vehicleProperties(id: string): string[] {
-  const d = itemDef(id),
-    s = vehicleSpec(d);
-  const V = STR.vehicle;
-  const base = [V.body(s.size, s.L, s.plan), V.weight(d.weight)];
-  if (itemKind(id) === 'loco') {
-    const l = d as LocoDef;
-    base.push(
-      V.loco(l.type, l.speed, l.power),
-      s.drawBogies
-        ? s.segments.map((p) => V.bogie(p.nb, BOGIE_AXLES[p.bogie] * 2)).join(' + ')
-        : V.axles,
-    );
-    if (l.fuelCap) base.push(V.fuel(l.fuelCap, l.fuelPerTile));
-    if (l.waterCap) base.push(V.water(l.waterCap, l.waterPerTile));
-  } else {
-    const w = d as WagonDef;
-    base.push(V.wagon(w.carries, w.capacity), (w.accepts ?? []).join(', '));
-  }
-  base.push(runsOn(d));
-  return base;
-}
 /** Inspect a complete procedural vehicle from all 48 isometric headings. Drag to turn it. */
 export function showVehiclePreview(atlas: AtlasRegistry, id: string): () => void {
   const overlay = el('div', { class: 'vehicle-preview-overlay' }),

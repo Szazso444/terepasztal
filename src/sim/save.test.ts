@@ -21,8 +21,11 @@ import {
   hasSlot,
   continueMeta,
   migrateSettings,
+  readSettings,
+  writeSettings,
   contractPolicyFor,
   uniformContractPolicy,
+  CONTRACT_POLICY_VERSION,
   convertOneTileRegular,
   CONTRACT_RARITIES,
   type SaveGame,
@@ -31,9 +34,19 @@ import {
   type Settings,
   type WorldSpec,
 } from './save';
-import { buildingFromJSON, buildingToJSON, type Building } from './buildings';
+import {
+  BRIDGE_MAX_LEVEL,
+  buildingFromJSON,
+  buildingToJSON,
+  type Building,
+  type BuildingJSON,
+} from './buildings';
+import { MAX_LEVEL } from './levels';
+import type { Work } from './upgrade';
+import type { HousesJSON } from './houses';
+import { simWorld } from '../testing/simWorld';
 import { TradeDesk } from './trade';
-import { Train, DYNAMIC_MODES, resetTrainIds } from './trains';
+import { Train, DYNAMIC_MODES, resetTrainIds, type RouteMode } from './trains';
 import { Station, resetStationIds, type StationJSON } from './stations';
 import { Economy } from './economy';
 import { rules, DEFAULT_RULES } from './rules';
@@ -124,13 +137,19 @@ describe('the migration registry', () => {
 
   it('has no step that leaves the file as it found it', () => {
     // An empty step tells the player a default was filled in and leaves the load code to keep
-    // the promise. Each step meets a file of its own version with nothing optional in it, and
-    // the old offer defaults the step to v11 rewrites.
+    // the promise. Each step meets a file of its own version with nothing optional in it, the
+    // old offer defaults the step to v11 rewrites, a train with nothing but its id for the
+    // steps that fill a train's fields, a station with no turn and no work for the steps that
+    // fill a station's, and past the step that starts the works list, a works with no level, no
+    // work and no rotation for the steps that fill a works'.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
         version: m.from,
         rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
+        trains: [{ id: 1 }],
+        stations: [stationOf('farm', undefined)],
+        ...(m.from > 3 ? { buildings: [[7, 7, 'kiln', 0] as BuildingJSON] } : {}),
       };
       const before = asStored(file);
       m.run(file);
@@ -500,6 +519,26 @@ describe('v7 to v8', () => {
     expect(filled.toJSON()).toEqual(missing.toJSON());
   });
 
+  it('maps every old route-mode name a v7 file can hold, so its train loads with the mode', () => {
+    // The modes were renamed while saves were v7: a file written before the renaming holds the
+    // old names, and never met the step from v6 that maps them.
+    const track = new TrackGraph(8, 8);
+    expect([...OLD_MODE_TO_NEW.keys()]).toEqual(['fixed', 'dynamic', 'collect']);
+    for (const [old, now] of OLD_MODE_TO_NEW) {
+      const file = { ...oldestSave(), version: 7, trains: [withOld(savedTrain(), { mode: old })] };
+      expect((runStep(7, asStored(file) as SaveGame).trains[0] as OldTrain).mode, old).toBe(now);
+      const train = migrate(file).trains[0];
+      expect(Train.fromJSON(asStored(train) as TrainJSON, track).mode, old).toBe(now);
+    }
+    // a v7 file written after the renaming keeps its modes
+    const kept = runStep(7, {
+      ...oldestSave(),
+      version: 7,
+      trains: ROUTE_MODES.map((mode, id) => ({ id, mode })),
+    });
+    expect(kept.trains.map((t) => (t as OldTrain).mode)).toEqual(ROUTE_MODES);
+  });
+
   it('keeps a desk the save already has, and no longer speaks of settings', () => {
     const trade = { deals: { coal: 5 }, nextAt: 10, fuelMul: 1.2, driftDay: 3 };
     expect(runStep(7, { ...oldestSave(), version: 7, trade }).trade).toBe(trade);
@@ -541,9 +580,10 @@ describe('v8 to v9', () => {
 
   it('turns every townhouse in the decor into a level 1 house', () => {
     const j = migrate(v8());
+    // the step to v15 then says no house is being upgraded
     expect(j.houses?.list).toEqual([
-      { x: 3, y: 4, level: 1, residents: 6, progress: 1 },
-      { x: 7, y: 8, level: 1, residents: 6, progress: 1 },
+      { x: 3, y: 4, level: 1, residents: 6, progress: 1, work: null },
+      { x: 7, y: 8, level: 1, residents: 6, progress: 1, work: null },
     ]);
     expect(j.houses?.arrivals).toEqual([]);
     expect(j.houses?.visited).toEqual([]);
@@ -679,7 +719,9 @@ describe('v11 to v12', () => {
       ],
     });
     expect(j.track[0]).toEqual([4, 8, 'straight', 1, 'high_speed', undefined]);
-    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1]);
+    // the step to v15 then says the bridge is not being strengthened, and the step to v16 that it
+    // stands at rotation 0
+    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null, 0]);
     expect(j.stockpile).toEqual({ amounts: { wheat: 200, coal: 50, food: 1000 }, famine: false });
     expect(j.economy.money).toBe(1000);
   });
@@ -859,8 +901,17 @@ describe('readSaveText', () => {
 
 describe('works buildings in a save', () => {
   it('come back as they were saved, idle until their first tick', () => {
-    const b: Building = { id: 'sawmill', x: 4, y: 9, acc: 0.25, level: 3, active: true, rate: 2 };
-    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3]);
+    const b: Building = {
+      id: 'sawmill',
+      x: 4,
+      y: 9,
+      acc: 0.25,
+      level: 3,
+      rot: 2,
+      active: true,
+      rate: 2,
+    };
+    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3, null, 2]);
     expect(buildingFromJSON(buildingToJSON(b))).toEqual({
       ...b,
       active: false,
@@ -868,13 +919,14 @@ describe('works buildings in a save', () => {
     });
   });
 
-  it('take level 1 where the save has none', () => {
+  it('take level 1 and rotation 0 where the save has none', () => {
     expect(buildingFromJSON([1, 2, 'mill', 0])).toEqual({
       id: 'mill',
       x: 1,
       y: 2,
       acc: 0,
       level: 1,
+      rot: 0,
       active: false,
       rate: 0,
     });
@@ -884,7 +936,490 @@ describe('works buildings in a save', () => {
       'mill',
       0,
       1,
+      null,
+      0,
     ]);
+  });
+
+  it('carry the upgrade under way, and drop one that is no upgrade to the next level', () => {
+    const work = { to: 3, left: 40, total: 90 };
+    const b: Building = { id: 'kiln', x: 4, y: 9, acc: 0, level: 2, active: false, rate: 0 };
+    b.work = { ...work };
+    const j = asStored(buildingToJSON(b)) as BuildingJSON;
+    expect(j[5]).toEqual(work);
+    expect(buildingFromJSON(j).work).toEqual(work);
+    // a work to any other level, without a time, or of another shape is none
+    for (const odd of [
+      { ...work, to: 4 },
+      { ...work, total: 0 },
+      { ...work, left: Number.NaN },
+      { to: 3, left: '40', total: 90 },
+      7,
+      null,
+    ])
+      expect(
+        buildingFromJSON([4, 9, 'kiln', 0, 2, odd as Work]).work,
+        JSON.stringify(odd),
+      ).toBeUndefined();
+    // time left beyond the work's time is the whole time
+    expect(buildingFromJSON([4, 9, 'kiln', 0, 2, { ...work, left: 500 }]).work).toEqual({
+      ...work,
+      left: 90,
+    });
+    // a work past the building's top level, or on a building the game does not know, is none
+    const past = (id: string, level: number) =>
+      buildingFromJSON([4, 9, id, 0, level, { to: level + 1, left: 0, total: 1 }]).work;
+    expect(past('substation', MAX_LEVEL), 'works at the top').toBeUndefined();
+    expect(past('bridge_wood', BRIDGE_MAX_LEVEL), 'bridge at its top').toBeUndefined();
+    expect(past('sawmill', 2), 'unknown building').toBeUndefined();
+    expect(past('bridge_wood', BRIDGE_MAX_LEVEL - 1), 'bridge below its top').toEqual({
+      to: BRIDGE_MAX_LEVEL,
+      left: 0,
+      total: 1,
+    });
+  });
+});
+
+describe('v14 to v15', () => {
+  function v14(extra: Partial<SaveGame> = {}): SaveGame {
+    return {
+      ...oldestSave(),
+      version: 14,
+      stations: [stationOf('farm', 0), stationOf('depot', 1, 1)],
+      buildings: [
+        [7, 7, 'windmill', 0.5, 2],
+        [9, 7, 'kiln', 0],
+      ],
+      houses: {
+        list: [{ x: 3, y: 4, level: 2, residents: 30, progress: 1 }],
+        arrivals: [],
+        visited: [],
+      },
+      ...extra,
+    };
+  }
+
+  it('says that nothing was being upgraded, on every station, works and house', () => {
+    const j = migrate(v14());
+    expect(j.version).toBe(SAVE_VERSION);
+    const step = MIGRATIONS.find((m) => m.from === 14)!;
+    expect(j.migrationNotes?.[0]).toBe(`v14→v15: ${step.note}`);
+    expect(j.stations.map((s) => s.work)).toEqual([null, null]);
+    // a works saved without its level gets the 1 it always meant, so the work has its place (the
+    // step to v16 then turns each to rotation 0)
+    expect(j.buildings).toEqual([
+      [7, 7, 'windmill', 0.5, 2, null, 0],
+      [9, 7, 'kiln', 0, 1, null, 0],
+    ]);
+    expect(j.houses?.list[0]).toEqual({
+      x: 3,
+      y: 4,
+      level: 2,
+      residents: 30,
+      progress: 1,
+      work: null,
+    });
+    // and every one loads as it did: open, at its level
+    const s = Station.fromJSON(asStored(j.stations[0]) as StationJSON);
+    expect([s.level, s.work, s.closed]).toEqual([1, null, false]);
+    expect(j.buildings!.map((b) => buildingFromJSON(b))).toEqual(
+      v14().buildings!.map((b) => buildingFromJSON(b)),
+    );
+  });
+
+  it('keeps a work a file already holds, and copes with a file without works or houses', () => {
+    const work = { to: 2, left: 10, total: 60 };
+    const station = { ...stationOf('farm', 0), work };
+    const j = migrate(
+      v14({ stations: [station], buildings: [[1, 1, 'kiln', 0, 1, work]], houses: undefined }),
+    );
+    expect(j.stations[0].work).toEqual(work);
+    expect(j.buildings![0][5]).toEqual(work);
+    expect(j.houses).toBeUndefined();
+    expect(migrate(v14({ buildings: undefined })).buildings).toBeUndefined();
+  });
+
+  /** Tiles of the houses standing in the world the houses load into, and one with none. */
+  const HOUSE_TILES = [
+    [3, 4],
+    [7, 8],
+    [12, 5],
+    [20, 20],
+  ] as const;
+  /**
+   * A v14 file in any shape a build, an older file's steps or a hand could leave: stations, works
+   * and houses with or without a work already, a works with no level (v4 to v11 wrote none) or a
+   * level written as null, something newer after the work, and items the step must pass over.
+   */
+  function genV14(rng: Rng): SaveGame {
+    const file: Record<string, unknown> = { ...genOldFile(rng), version: 14 };
+    const work = () =>
+      rng.pick<unknown>([
+        null,
+        { to: 2, left: 10, total: 60 },
+        { to: 4, left: 0, total: 9 },
+        7,
+        {},
+      ]);
+    file.stations = Array.from({ length: rng.int(0, 4) }, (_, i) => {
+      if (rng.chance(0.1)) return rng.pick([null, 3, 'station']);
+      const defId = rng.pick(['farm', 'town', 'warehouse', 'depot']);
+      const s = { ...stationOf(defId, rng.pick(ROT_VALUES), i), level: rng.int(1, 6) };
+      return rng.chance(0.3) ? { ...s, work: work() } : s;
+    });
+    if (rng.chance(0.2)) delete file.buildings;
+    else
+      file.buildings = Array.from({ length: rng.int(0, 5) }, () => {
+        const id = rng.pick(['windmill', 'sawmill', 'bridge_wood']);
+        const t: unknown[] = [rng.int(0, 31), rng.int(0, 31), id, rng.next()];
+        switch (rng.int(0, 6)) {
+          case 0:
+            return t;
+          case 1:
+            return [...t, null];
+          case 2:
+            return [...t, rng.int(1, 4), work()];
+          case 3:
+            return [...t, rng.int(1, 4), work(), 'newer'];
+          case 4:
+            return t.slice(0, rng.int(0, 3));
+          case 5:
+            return rng.pick([null, 'kiln', {}]);
+          default:
+            return [...t, rng.int(1, 4)];
+        }
+      });
+    const shape = rng.next();
+    if (shape < 0.2) delete file.houses;
+    else if (shape < 0.3) file.houses = rng.pick([null, 'houses', { list: 'none' }]);
+    else
+      file.houses = {
+        list: Array.from({ length: rng.int(0, 4) }, () => {
+          if (rng.chance(0.1)) return rng.pick([null, 5]);
+          const [x, y] = rng.pick(HOUSE_TILES);
+          const h: Record<string, unknown> = {
+            x,
+            y,
+            level: rng.int(1, 6),
+            residents: rng.int(0, 40),
+            progress: rng.pick([1, 0.5]),
+          };
+          if (rng.chance(0.5)) h.grow = rng.int(0, 3);
+          if (rng.chance(0.5)) h.full = rng.int(0, 3);
+          if (rng.chance(0.3)) h.work = work();
+          return h;
+        }),
+        arrivals: [],
+        visited: [],
+      };
+    return file as unknown as SaveGame;
+  }
+  /** Smaller v14 files: what `shrinkOldFile` drops, then shorter works and house lists. */
+  function* shrinkV14(file: SaveGame): Iterable<SaveGame> {
+    const f = file as unknown as Record<string, unknown>;
+    for (const smaller of shrinkOldFile(f)) if (smaller.version === 14) yield smaller as never;
+    if (Array.isArray(f.buildings))
+      for (const buildings of shrinkArray(f.buildings)) yield { ...f, buildings } as never;
+    if (isObject(f.houses) && Array.isArray(f.houses.list))
+      for (const list of shrinkArray(f.houses.list))
+        yield { ...f, houses: { ...f.houses, list } } as never;
+  }
+  /**
+   * `after` with what the step may add taken out again: a `work: null` on a station or house that
+   * had no work, and on a works tuple a null work, after a level where the tuple had none (whether
+   * that level means what the missing one did is for the load comparison to judge). Anything else
+   * the step changed is left for the comparison with the file before to find.
+   */
+  function unfilled(after: SaveGame, before: SaveGame): unknown {
+    const copy = asStored(after) as Record<string, unknown>;
+    const was = asStored(before) as Record<string, unknown>;
+    const dropWork = (items: unknown, old: unknown) => {
+      if (!Array.isArray(items) || !Array.isArray(old)) return;
+      items.forEach((item, i) => {
+        const o: unknown = old[i];
+        if (isObject(item) && isObject(o) && !('work' in o) && item.work === null) delete item.work;
+      });
+    };
+    dropWork(copy.stations, was.stations);
+    if (isObject(copy.houses) && isObject(was.houses)) dropWork(copy.houses.list, was.houses.list);
+    if (Array.isArray(copy.buildings) && Array.isArray(was.buildings))
+      copy.buildings.forEach((b: unknown, i) => {
+        const old: unknown = (was.buildings as unknown[])[i];
+        if (!Array.isArray(b) || !Array.isArray(old)) return;
+        if ((old.length === 4 || old.length === 5) && b.length === 6 && b[5] === null)
+          b.length = old.length;
+      });
+    return copy;
+  }
+
+  it('fills an explicit no-work and nothing else, idempotently, and loads as before', () => {
+    // The step only fills defaults: taking out what it may add gives back the file it was given,
+    // so a work a file holds and everything newer than v15 survive. Each station and house then
+    // says it has no work, and each works tuple has the place for one. Run again it finds
+    // nothing to do. And the load code sees no difference: every station, works and house loads
+    // from the stepped file as it loaded from the v14 file, the houses onto houses standing in a
+    // world as a save's houses do (items the load code cannot read at all are left out of both).
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    w.builder.free = true;
+    for (const [x, y] of HOUSE_TILES.slice(0, 3)) w.builder.spawnDecor(x, y, 'townhouse', 0);
+    w.builder.free = false;
+    w.houses.finishAll();
+    const loadHouses = (j: SaveGame) => {
+      const houses = j.houses as HousesJSON;
+      w.houses.load({ ...houses, list: houses.list.filter(isObject) as HousesJSON['list'] });
+      return w.houses.toJSON().list;
+    };
+    forAll(
+      genV14,
+      (file) => {
+        const before = asStored(file) as SaveGame;
+        const once = asStored(runStep(14, asStored(file) as SaveGame)) as SaveGame;
+        expect(asStored(runStep(14, asStored(once) as SaveGame)), 'run again').toEqual(once);
+        expect(unfilled(once, before), 'beside the defaults it fills').toEqual(before);
+
+        const houseList = (j: SaveGame) =>
+          isObject(j.houses) && Array.isArray(j.houses.list) ? (j.houses.list as unknown[]) : [];
+        for (const [what, items] of [
+          ['station', once.stations as unknown[]],
+          ['house', houseList(once)],
+        ] as const)
+          items.forEach((item, i) => {
+            if (isObject(item))
+              expect('work' in item, `${what} ${i} says if it has a work`).toBe(true);
+          });
+        (once.buildings ?? []).forEach((b: unknown, i) => {
+          if (Array.isArray(b) && b.length >= 4)
+            expect(b.length, `works ${i} has the place for a work`).toBeGreaterThanOrEqual(6);
+        });
+
+        (before.stations as unknown[]).forEach((sj, i) => {
+          if (!isObject(sj)) return;
+          const load = (j: unknown) => Station.fromJSON(asStored(j) as StationJSON).toJSON();
+          expect(load(once.stations[i]), `station ${i} loads as before`).toEqual(load(sj));
+        });
+        (before.buildings ?? []).forEach((bj: unknown, i) => {
+          if (!Array.isArray(bj) || bj.length < 3) return;
+          const load = (j: unknown) => buildingFromJSON(asStored(j) as BuildingJSON);
+          expect(load(once.buildings![i]), `works ${i} loads as before`).toEqual(load(bj));
+        });
+        if (houseList(before).length)
+          expect(loadHouses(once), 'the houses load as before').toEqual(loadHouses(before));
+      },
+      { shrink: shrinkV14 },
+    );
+  });
+});
+
+describe('v15 to v16', () => {
+  beforeEach(() => {
+    resetTrainIds(1);
+    resetStationIds(1);
+    Object.assign(rules, DEFAULT_RULES);
+  });
+
+  /** A turn a works tuple could hold: the four, null, and values no build wrote. */
+  const TURN_VALUES: unknown[] = [0, 1, 2, 3, null, 5, -1, 2.5, '1'];
+  /**
+   * A works tuple in any shape a build, an older file's steps or a hand could leave: no level, a
+   * level written as null, no work, a turn already there (or null, or one no build wrote),
+   * something newer after the turn, too short to be a works, or (unless `tuples`) no tuple at all.
+   */
+  function genWorks(rng: Rng, tuples = false): unknown {
+    const id = rng.pick(['windmill', 'kiln', 'colliery', 'bridge_wood', 'sawmill']);
+    const t: unknown[] = [rng.int(0, 31), rng.int(0, 31), id, rng.pick([0, 0.5, rng.next()])];
+    const level = () => rng.pick<unknown>([1, 2, 4, 6, null]);
+    const work = () => rng.pick<unknown>([null, { to: 2, left: 10, total: 60 }, 7, {}]);
+    switch (rng.int(0, tuples ? 5 : 6)) {
+      case 0:
+        return t;
+      case 1:
+        return [...t, level()];
+      case 2:
+        return [...t, level(), work()];
+      case 3:
+        return [...t, level(), work(), rng.pick(TURN_VALUES)];
+      case 4:
+        return [...t, level(), work(), rng.pick(TURN_VALUES), 'newer'];
+      case 5:
+        return t.slice(0, rng.int(0, 3));
+      default:
+        return rng.pick([null, 'kiln', {}, 7]);
+    }
+  }
+  /** A v15 file, as it reads from disk, with a works list of any shapes or none at all. */
+  function genV15(rng: Rng): SaveGame {
+    const file: Record<string, unknown> = { ...genOldFile(rng), version: 15 };
+    if (rng.chance(0.15)) delete file.buildings;
+    else file.buildings = Array.from({ length: rng.int(0, 6) }, () => genWorks(rng));
+    return asStored(file) as SaveGame;
+  }
+  /** Smaller v15 files: what `shrinkOldFile` drops, then a shorter works list. */
+  function* shrinkV15(file: SaveGame): Iterable<SaveGame> {
+    const f = file as unknown as Record<string, unknown>;
+    for (const smaller of shrinkOldFile(f)) if (smaller.version === 15) yield smaller as never;
+    if (Array.isArray(f.buildings))
+      for (const buildings of shrinkArray(f.buildings)) yield { ...f, buildings } as never;
+  }
+  /**
+   * The step as the brief states it, for one works item: a tuple of at least four places is
+   * padded to seven with what a missing place always meant (level 1, no work, turn 0), and a turn
+   * written as null is 0; anything else, and every place the tuple had, is as it was.
+   */
+  function turned(item: unknown): unknown {
+    if (!Array.isArray(item) || item.length < 4) return item;
+    const t = [...item];
+    const defaults = [1, null, 0];
+    for (let i = t.length; i < 7; i++) t.push(defaults[i - 4]);
+    if (t[6] === null) t[6] = 0;
+    return t;
+  }
+
+  it('gives each works a turn, fills nothing else, finds nothing to do again, and loads as before', () => {
+    forAll(
+      genV15,
+      (file) => {
+        const before = asStored(file) as SaveGame;
+        const once = asStored(runStep(15, asStored(file) as SaveGame)) as SaveGame;
+        expect(asStored(runStep(15, asStored(once) as SaveGame)), 'run again').toEqual(once);
+        // everything but the works list is untouched, and the works are as the brief says
+        const { buildings: worksAfter, ...restAfter } = once;
+        const { buildings: worksBefore, ...restBefore } = before;
+        expect(restAfter, 'beside the works').toEqual(restBefore);
+        expect(worksAfter, 'the works list').toEqual(worksBefore?.map(turned));
+        // and the load code sees no difference: a missing turn always loaded as r0
+        (worksBefore ?? []).forEach((bj: unknown, i) => {
+          if (!Array.isArray(bj) || bj.length < 3) return;
+          const load = (j: unknown) => buildingFromJSON(asStored(j) as BuildingJSON);
+          expect(load(worksAfter![i]), `works ${i} loads as before`).toEqual(load(bj));
+        });
+      },
+      { shrink: shrinkV15 },
+    );
+  });
+
+  it('leaves every works of a file of any older version with a turn, and a v16 file on as it was', () => {
+    // Tuples only: the step from v11 reads each works item as a tuple where the file has old
+    // bridge track, and refuses the file as damaged when one is not.
+    forAll(
+      (rng) => {
+        const file = genOldFile(rng);
+        file.version = rng.int(SAVE_MIN_VERSION, SAVE_VERSION);
+        file.buildings = Array.from({ length: rng.int(1, 5) }, () => genWorks(rng, true));
+        return asStored(file) as Record<string, unknown>;
+      },
+      (file) => {
+        const read = readSaveText(JSON.stringify(file));
+        if (!('save' in read)) throw new Error(`the file was refused as ${read.error}`);
+        const works = (read.save.buildings ?? []) as unknown[];
+        if ((file.version as number) >= 16) {
+          expect(works, `a file of v${String(file.version)}`).toEqual(file.buildings);
+          return;
+        }
+        works.forEach((b, i) => {
+          if (!Array.isArray(b) || b.length < 4) return;
+          expect(b.length, `works ${i}: the place for its turn`).toBeGreaterThanOrEqual(7);
+          expect(b[6] ?? 'none', `works ${i}: its turn`).not.toBe('none');
+          expect(TURN_VALUES, `works ${i}: its turn`).toContain(b[6]);
+        });
+      },
+      {
+        shrink: function* (file) {
+          for (const smaller of shrinkOldFile(file)) yield smaller;
+          if (Array.isArray(file.buildings))
+            for (const buildings of shrinkArray(file.buildings)) yield { ...file, buildings };
+        },
+      },
+    );
+  });
+});
+
+describe('v16 to v17', () => {
+  beforeEach(() => {
+    resetTrainIds(1);
+    resetStationIds(1);
+    Object.assign(rules, DEFAULT_RULES);
+  });
+
+  /**
+   * A v16 file, as it reads from disk: trains of the shapes old builds wrote, some holding a
+   * field the step fills already (a field is carried through whatever wrote it), and now and then
+   * an item no build wrote in the train list.
+   */
+  function genV16(rng: Rng): SaveGame {
+    const file: Record<string, unknown> = { ...genOldFile(rng), version: 16 };
+    const trains = file.trains as unknown[];
+    if (rng.chance(0.2)) trains.splice(rng.int(0, trains.length), 0, rng.pick([null, 3, 'x', []]));
+    return asStored(file) as SaveGame;
+  }
+  /** Smaller v16 files: what `shrinkOldFile` drops, the train list included. */
+  function* shrinkV16(file: SaveGame): Iterable<SaveGame> {
+    for (const smaller of shrinkOldFile(file as unknown as Record<string, unknown>))
+      if (smaller.version === 16) yield smaller as unknown as SaveGame;
+  }
+  /**
+   * The step as stated: every train says it is not making way, runs no way of its own, waits for
+   * nothing, shows no note and may try a way aside or out of a jam at once, unless it says
+   * otherwise.
+   */
+  const unmade = (t: unknown) => {
+    if (!isObject(t)) return t;
+    const out: Record<string, unknown> = { ...t };
+    for (const [key, value] of Object.entries(V17_DEFAULTS)) if (!(key in t)) out[key] = value;
+    return out;
+  };
+
+  it('fills what a load before v17 left in each train, nothing else, and nothing again', () => {
+    forAll(
+      genV16,
+      (file) => {
+        const before = asStored(file) as SaveGame;
+        const once = asStored(runStep(16, asStored(file) as SaveGame)) as SaveGame;
+        expect(asStored(runStep(16, asStored(once) as SaveGame)), 'run again').toEqual(once);
+        const { trains: after, ...restAfter } = once;
+        const { trains: was, ...restBefore } = before;
+        expect(restAfter, 'beside the trains').toEqual(restBefore);
+        expect(after, 'the trains').toEqual(was.map(unmade));
+      },
+      { shrink: shrinkV16 },
+    );
+  });
+
+  it('records its note, and leaves a v17 file as it was', () => {
+    const step = MIGRATIONS.find((m) => m.from === 16)!;
+    const v16 = migrate({ ...oldestSave(), version: 16, trains: [{ id: 1 }] });
+    expect(v16.migrationNotes).toEqual([`v16→v17: ${step.note}`]);
+    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS }]);
+    const v17 = { ...oldestSave(), version: 17, trains: [{ id: 1 }, { id: 2, aside: true }] };
+    expect(migrate(asStored(v17) as SaveGame).trains).toEqual(v17.trains);
+  });
+
+  it('loads every train as a load before v17 did, and keeps a train making way from now on', () => {
+    // Before v17 a load never set the flag: every train came back not making way. A v16 train,
+    // stepped, loads that way and is written back with the flag the step gave it; a v17 train
+    // keeps the flag it was saved with, through a load and a save again.
+    const track = new TrackGraph(8, 8);
+    const base = savedTrain();
+    expect(base.aside, 'a train written by this build says whether it makes way').toBe(false);
+    for (const holding of [false, true])
+      for (const state of ['moving', 'idle', 'loading']) {
+        const label = `${state}${holding ? ', backing off' : ''}`;
+        const v16: Record<string, unknown> = { ...base, state, holding };
+        for (const key in V17_DEFAULTS) delete v16[key];
+        const j = migrate({ ...oldestSave(), version: 16, trains: [asStored(v16)] });
+        const t = Train.fromJSON(asStored(j.trains[0]) as TrainJSON, track);
+        expect(t.makingWay, label).toBe(false);
+        expect(asStored(t.toJSON()), label).toEqual({ ...v16, ...V17_DEFAULTS });
+        for (const aside of [false, true]) {
+          const v17 = { ...v16, ...V17_DEFAULTS, aside };
+          const read = readSaveText(
+            JSON.stringify({ ...oldestSave(), version: SAVE_VERSION, trains: [v17] }),
+          );
+          if (!('save' in read)) throw new Error(`the file was refused as ${read.error}`);
+          const back = Train.fromJSON(asStored(read.save.trains[0]) as TrainJSON, track);
+          expect(back.makingWay, `${label}, making way ${aside}`).toBe(aside);
+          expect(asStored(back.toJSON()), `${label}, making way ${aside}`).toEqual(v17);
+        }
+      }
   });
 });
 
@@ -1078,30 +1613,69 @@ describe('storage', () => {
 });
 
 describe('settings', () => {
-  it('turns the retired auto-accept switch into a per-rarity policy', () => {
-    const on: Partial<Settings> = { autoContracts: true };
+  const prompt = uniformContractPolicy('prompt');
+  const accept = uniformContractPolicy('accept');
+
+  it('ships defaults that leave every offer waiting for the player', () => {
+    for (const r of CONTRACT_RARITIES)
+      expect(contractPolicyFor(DEFAULT_SETTINGS, r)).toBe('prompt');
+    // and fresh defaults, once stored, are not moved again
+    const fresh = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)) as Partial<Settings>;
+    expect(migrateSettings(fresh)).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('moves settings stored under the old default to the new one', () => {
+    const old: Partial<Settings>[] = [
+      { music: 0.3 },
+      { autoContracts: true },
+      { contractPolicy: accept },
+      // a missing entry read as accept under the old default
+      { contractPolicy: { common: 'accept' } as Settings['contractPolicy'] },
+      { contractPolicy: null as unknown as Settings['contractPolicy'] },
+    ];
+    for (const s of old) {
+      const label = JSON.stringify(s);
+      const m = migrateSettings(s);
+      expect(m.contractPolicy, label).toEqual(prompt);
+      expect(m.contractPolicyVersion, label).toBe(CONTRACT_POLICY_VERSION);
+      expect(m.autoContracts, label).toBeUndefined();
+    }
+    expect(migrateSettings({ music: 0.3 }).music).toBe(0.3);
+  });
+
+  it('keeps a policy chosen under the old default, filling what it left out with accept', () => {
     const off: Partial<Settings> = { autoContracts: false };
-    expect(migrateSettings(on).contractPolicy).toEqual(uniformContractPolicy('accept'));
-    expect(migrateSettings(off).contractPolicy).toEqual(uniformContractPolicy('prompt'));
-    expect(on.autoContracts).toBeUndefined();
+    expect(migrateSettings(off).contractPolicy).toEqual(prompt);
+    expect(
+      migrateSettings({ autoContracts: true, contractPolicy: uniformContractPolicy('deny') }),
+    ).toEqual({
+      contractPolicy: uniformContractPolicy('deny'),
+      contractPolicyVersion: CONTRACT_POLICY_VERSION,
+    });
+    const mixed = { ...accept, legendary: 'prompt' as const };
+    expect(migrateSettings({ contractPolicy: { ...mixed } }).contractPolicy).toEqual(mixed);
+    const partial = { epic: 'deny' } as Settings['contractPolicy'];
+    expect(migrateSettings({ contractPolicy: partial }).contractPolicy).toEqual({
+      ...accept,
+      epic: 'deny',
+    });
   });
 
-  it('leaves a policy the player already has', () => {
-    const policy = uniformContractPolicy('deny');
-    const s = migrateSettings({ autoContracts: true, contractPolicy: policy });
-    expect(s.contractPolicy).toBe(policy);
-    expect(s.autoContracts).toBeUndefined();
+  it('moves the old default once: accept chosen afterwards stays', () => {
+    const moved = migrateSettings({ contractPolicy: uniformContractPolicy('accept') });
+    expect(moved.contractPolicy).toEqual(prompt);
+    const chosen = JSON.parse(JSON.stringify({ ...moved, contractPolicy: accept })) as Settings;
+    for (let n = 0; n < 3; n++) expect(migrateSettings(chosen).contractPolicy).toEqual(accept);
+    // so does a version a later build wrote
+    const later = { contractPolicy: accept, contractPolicyVersion: CONTRACT_POLICY_VERSION + 1 };
+    expect(migrateSettings(later).contractPolicy).toEqual(accept);
   });
 
-  it('adds no policy where there was no switch either', () => {
-    const blank: Partial<Settings> = {};
-    expect(migrateSettings(blank).contractPolicy).toBeUndefined();
-  });
-
-  it('falls back per rarity for settings written before the policy existed', () => {
+  it('reads a rarity the policy leaves out as the default, whatever the retired switch says', () => {
     const old = { ...DEFAULT_SETTINGS, contractPolicy: undefined } as Settings;
     for (const r of CONTRACT_RARITIES) {
-      expect(contractPolicyFor(old, r)).toBe('accept');
+      expect(contractPolicyFor(old, r)).toBe('prompt');
+      expect(contractPolicyFor({ ...old, autoContracts: true }, r)).toBe('prompt');
       expect(contractPolicyFor({ ...old, autoContracts: false }, r)).toBe('prompt');
     }
   });
@@ -1114,9 +1688,49 @@ describe('settings', () => {
     ).toBe('prompt');
   });
 
-  it('ships defaults that accept everything', () => {
-    for (const r of CONTRACT_RARITIES)
-      expect(contractPolicyFor(DEFAULT_SETTINGS, r)).toBe('accept');
+  describe('in storage', () => {
+    let store: MemoryStorage;
+    beforeEach(() => {
+      store = new MemoryStorage();
+      vi.stubGlobal('localStorage', store);
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('moves stored settings once, and keeps accept chosen after the move', () => {
+      // as a build before the change stored them: every rarity accepted, no version
+      const { contractPolicyVersion: _v, ...before } = {
+        ...DEFAULT_SETTINGS,
+        contractPolicy: accept,
+      };
+      void _v;
+      store.items.set(SETTINGS_KEY, JSON.stringify({ ...before, music: 0.2 }));
+      const read = readSettings();
+      expect(read.contractPolicy).toEqual(prompt);
+      expect(read.music).toBe(0.2);
+      for (const r of CONTRACT_RARITIES) expect(contractPolicyFor(read, r)).toBe('prompt');
+      writeSettings(read);
+      expect(readSettings().contractPolicy).toEqual(prompt);
+      // the player turns auto-accept back on
+      writeSettings({ ...read, contractPolicy: accept });
+      expect(readSettings().contractPolicy).toEqual(accept);
+      expect(readSettings().contractPolicy).toEqual(accept);
+    });
+
+    it('hands out settings that share no policy with the defaults', () => {
+      const a = readSettings();
+      a.contractPolicy!.common = 'accept';
+      expect(DEFAULT_SETTINGS.contractPolicy).toEqual(prompt);
+      expect(readSettings().contractPolicy).toEqual(prompt);
+      // stored since the move, with no policy of its own: the default's is merged in
+      const since = { music: 0, contractPolicyVersion: CONTRACT_POLICY_VERSION };
+      store.items.set(SETTINGS_KEY, JSON.stringify(since));
+      const b = readSettings();
+      expect(b.contractPolicy).toEqual(prompt);
+      b.contractPolicy!.rare = 'deny';
+      expect(DEFAULT_SETTINGS.contractPolicy).toEqual(prompt);
+    });
   });
 });
 
@@ -1133,7 +1747,7 @@ describe('v12 to v13', () => {
         [12, 8, 'crossing', 0, 'regular', 'high_speed'],
       ],
     });
-    expect(j.version).toBe(13);
+    expect(j.version).toBe(SAVE_VERSION);
     expect(j.track).toEqual([
       [4, 8, 'curve', 1, 'narrow', undefined],
       [6, 8, 'switch', 5, 'narrow', undefined],
@@ -1861,8 +2475,14 @@ describe('storage, from any state it is in', () => {
 
 /** Every route mode a train has today. */
 const ROUTE_MODES: readonly unknown[] = ['schedule', ...DYNAMIC_MODES];
-/** The names route modes had before v7. */
-const OLD_MODE_NAMES: readonly unknown[] = ['fixed', 'dynamic', 'collect'];
+/** The names route modes had before the renaming in v7, and the names they have now. */
+const OLD_MODE_TO_NEW: ReadonlyMap<string, RouteMode> = new Map([
+  ['fixed', 'schedule'],
+  ['dynamic', 'production'],
+  ['collect', 'collection'],
+]);
+/** The names route modes had before the renaming in v7. */
+const OLD_MODE_NAMES: readonly unknown[] = [...OLD_MODE_TO_NEW.keys()];
 /** Modes no build wrote: the step keeps them, and the load code turns them into a schedule. */
 const ODD_MODES: readonly unknown[] = ['bogus', 7];
 /** What a train's mode could be in a file: none, an old name, today's, and values no build wrote. */
@@ -1873,6 +2493,86 @@ const MODE_VALUES: unknown[] = [
   ...OLD_MODE_NAMES,
   ...ROUTE_MODES,
   ...ODD_MODES,
+];
+/**
+ * The fields the step from v13 gives every train, with what a load before v14 left in them: it
+ * stands without a route, at no station, with no escape to back off along, free to be asked to
+ * back off again, no stop ruled out and no service to head for, and looks for a route and for
+ * fuel or water on its first tick.
+ */
+const RESUME_DEFAULTS: Readonly<Record<string, unknown>> = {
+  state: 'noRoute',
+  stateTime: 10,
+  speed: 0,
+  station: null,
+  holding: false,
+  retreat: null,
+  blockedTime: 0,
+  yieldCount: 0,
+  yieldUntil: 0,
+  badTargets: [],
+  serviceStop: null,
+  nextFuelCheck: 0,
+};
+/**
+ * Values a file may already hold in a field the step from v13 fills, none of them the step's
+ * default: unknown fields are carried through, and a step only fills what is absent.
+ */
+const RESUME_HELD: Readonly<Record<string, readonly unknown[]>> = {
+  state: ['moving', 'loading', 'waiting', 'idle'],
+  stateTime: [0, 3.5],
+  speed: [0.7, 1.4],
+  station: [1, 7],
+  holding: [true],
+  retreat: [{ path: [{ x: 3, y: 4, in: 0, out: 2 }], group: [1, 2] }],
+  blockedTime: [2.5],
+  yieldCount: [1, 3],
+  yieldUntil: [34, 1250.5],
+  badTargets: [
+    [[2, 240]],
+    [
+      [1, 60.5],
+      [4, 300],
+    ],
+  ],
+  serviceStop: [{ x: 5, y: 6, fuel: true, water: false }],
+  nextFuelCheck: [5.05, 812],
+};
+/**
+ * The fields the step from v16 gives every train, with what a load before v17 left in each: no
+ * escape is an idle train making way, so one saved on its way aside waits to go on at its end;
+ * a train under way has no way kept, so it plans its path again; a waiting train has not found
+ * what is in its way nor which way it wants until it looks again; no note was kept; and an idle
+ * train in the way may look for a way aside, and a jam it is in be searched, at once.
+ */
+const V17_DEFAULTS: Readonly<Record<string, unknown>> = {
+  aside: false,
+  way: null,
+  blockedBy: null,
+  want: null,
+  note: '',
+  asideRetry: 0,
+  recoveryRetry: 0,
+};
+/** Values a file may already hold in the fields the step from v16 fills, none the default. */
+const V17_HELD: Readonly<Record<string, readonly unknown[]>> = {
+  aside: [true],
+  way: [{ path: [{ x: 3, y: 4, in: 0, out: 2 }], left: 0.5 }],
+  blockedBy: [2],
+  want: [
+    [
+      [3, 4],
+      [4, 4],
+    ],
+  ],
+  note: ['Parked out of the way'],
+  asideRetry: [2, 42.3],
+  recoveryRetry: [4, 97.15],
+};
+/** The fields a step fills on every train, by the version the step upgrades from. */
+const TRAIN_DEFAULTS: readonly [from: number, defaults: Readonly<Record<string, unknown>>][] = [
+  [13, RESUME_DEFAULTS],
+  [16, V17_DEFAULTS],
 ];
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
@@ -1887,6 +2587,8 @@ interface OldTrain {
   mode?: unknown;
   dynamic?: boolean;
   battery?: number;
+  /** some of the fields the steps from v13 and v16 fill, already held (RESUME_HELD, V17_HELD) */
+  held?: Record<string, unknown>;
 }
 function genOldTrain(rng: Rng): OldTrain {
   const t: OldTrain = {};
@@ -1894,14 +2596,23 @@ function genOldTrain(rng: Rng): OldTrain {
   if (mode !== undefined) t.mode = mode;
   if (rng.chance(0.5)) t.dynamic = rng.chance(0.5);
   if (rng.chance(0.6)) t.battery = rng.pick([0, rng.int(1, 60), rng.range(0, 60), 90]);
+  if (rng.chance(0.3)) {
+    t.held = {};
+    for (const [key, values] of Object.entries({ ...RESUME_HELD, ...V17_HELD }))
+      if (rng.chance(0.5)) t.held[key] = rng.pick(values);
+  }
   return t;
 }
-/** `base` (a saved train) with the old train's mode, flag and battery, and no tanks unless `tanks`. */
+/**
+ * `base` (a saved train) with the old train's mode, flag, battery and held fields, and no tanks
+ * unless `tanks`.
+ */
 function withOld(base: object, t: OldTrain, tanks = true): Record<string, unknown> {
   const train = asStored(base) as Record<string, unknown> & { tanks?: Record<string, unknown> };
   delete train.mode;
   if ('mode' in t) train.mode = t.mode;
   if ('dynamic' in t) train.dynamic = t.dynamic;
+  if (t.held) Object.assign(train, t.held);
   if (!tanks) delete train.tanks;
   else {
     train.tanks = train.tanks ?? { coal: 0, oil: 0, water: 0 };
@@ -2032,11 +2743,29 @@ function withoutFilled(from: number, file: unknown): unknown {
     9: ['crafting'],
   };
   for (const key of top[from] ?? []) delete copy[key];
-  if (from === 6) {
-    for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.rot;
-    for (const t of trains) delete t.mode;
-  }
+  if (from === 6) for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.rot;
+  // the modes were renamed while saves were v7: the steps from v6 and v7 both map them
+  if (from === 6 || from === 7) for (const t of trains) delete t.mode;
   if (from === 9) for (const t of trains) if (isObject(t.tanks)) delete t.tanks.battery;
+  for (const [step, defaults] of TRAIN_DEFAULTS)
+    if (from === step) for (const t of trains) for (const key in defaults) delete t[key];
+  if (from === 14) {
+    for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.work;
+    for (const b of Array.isArray(copy.buildings) ? copy.buildings : [])
+      if (Array.isArray(b)) b.length = Math.min(b.length, 5);
+    const list = isObject(copy.houses) ? copy.houses.list : undefined;
+    if (Array.isArray(list)) for (const h of list.filter(isObject)) delete h.work;
+  }
+  if (from === 15)
+    for (const b of Array.isArray(copy.buildings) ? copy.buildings : []) {
+      if (!Array.isArray(b) || b.length < 4) continue;
+      // what the step may add, taken off the end: rotation 0 in place of none, then the no-work
+      // and level 1 it put before it; a value the file held is kept, and must be the same
+      if (b.length >= 7 && b[6] === null) b[6] = 0;
+      if (b.length === 7 && b[6] === 0) b.length = 6;
+      if (b.length === 6 && b[5] === null) b.length = 5;
+      if (b.length === 5 && b[4] === 1) b.length = 4;
+    }
   return copy;
 }
 
@@ -2050,11 +2779,30 @@ describe('the defaults the steps fill', () => {
   it('load every train and station as they loaded before a step filled them', () => {
     // Before the steps filled them, no step touched a train or a station: Train.fromJSON mapped
     // the old route modes and filled the battery, Station.fromJSON the turn. Moving the defaults
-    // into the steps may not change what loads, and a v6 train or station already holds what
-    // loads, so the fallbacks in the load code are no longer needed for it. The shapes are few,
-    // so every one is tried from every version, each failure naming the one train or station.
+    // into the steps may not change what loads. Train.fromJSON no longer maps or fills, so what
+    // it did is written out here (`loadedBefore`) and every shape a build of a version wrote is
+    // held to it: old mode names and a missing mode up to v7, where the modes were renamed, and a
+    // missing battery up to v9, before the battery came. Station.fromJSON still fills the turn and
+    // is its own oracle. The shapes are few, so every one is tried from every version, each
+    // failure naming the one train or station.
     const track = new TrackGraph(8, 8);
     const base = savedTrain();
+    const cap = Train.fromJSON(asStored(base) as TrainJSON, track).batteryCap;
+    /** The mode and battery the load code gave a stored train before the steps filled them. */
+    const loadedBefore = (t: OldTrain) => {
+      const m = t.mode;
+      const old = typeof m === 'string' ? OLD_MODE_TO_NEW.get(m) : undefined;
+      const mode = m
+        ? (old ?? (ROUTE_MODES.includes(m) ? m : 'schedule'))
+        : t.dynamic
+          ? 'production'
+          : 'schedule';
+      return { mode, battery: Math.min(cap, t.battery ?? 0) };
+    };
+    /** Could a build of `version` have written the train: modes and battery as it named them. */
+    const wrote = (version: number, t: OldTrain) =>
+      (version <= 7 || ROUTE_MODES.includes(t.mode) || ODD_MODES.includes(t.mode)) &&
+      (version <= 9 || t.battery !== undefined);
     const trains: OldTrain[] = [];
     for (const mode of MODE_VALUES)
       for (const dynamic of [undefined, true, false])
@@ -2069,22 +2817,23 @@ describe('the defaults the steps fill', () => {
       ['farm', 'town', 'depot', 'lumber'].map((defId) => ({ defId, rot })),
     );
     for (let version = SAVE_MIN_VERSION; version <= SAVE_VERSION; version++) {
+      const written = trains.filter((t) => wrote(version, t));
       const file: SaveGame = {
         ...oldestSave(),
         version,
-        trains: trains.map((t) => withOld(base, t)),
+        trains: written.map((t) => withOld(base, t)),
         stations: stations.map((s, i) => stationOf(s.defId, s.rot, i)),
       };
       const before = asStored(file) as SaveGame;
       const j = migrate(file);
       j.trains.forEach((after, i) => {
-        const label = `v${version} train ${JSON.stringify(trains[i])}`;
-        const was = Train.fromJSON(asStored(before.trains[i]) as TrainJSON, track);
+        const label = `v${version} train ${JSON.stringify(written[i])}`;
+        const was = loadedBefore(written[i]);
         const now = Train.fromJSON(asStored(after) as TrainJSON, track);
         expect(now.mode, `${label}: the mode it loads with`).toBe(was.mode);
         expect(now.battery, `${label}: the battery it loads with`).toBe(was.battery);
         const stored = after as { mode?: unknown; tanks: { battery?: unknown } };
-        if (version <= 6 && !ODD_MODES.includes(trains[i].mode))
+        if (version <= 7 && !ODD_MODES.includes(written[i].mode))
           expect(stored.mode, `${label}: the mode the file now holds`).toBe(was.mode);
         if (version <= 9) expect(typeof stored.tanks.battery, label).toBe('number');
       });
@@ -2143,9 +2892,15 @@ describe('the defaults the steps fill', () => {
           const was = trains[i];
           const mode = 'mode' in t ? t.mode : 'absent';
           const wasMode = 'mode' in was ? was.mode : 'absent';
-          if (from > 6 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
+          if (from > 7 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
             expect(mode, `train ${i}: mode`).toBe(wasMode);
           else expect(ROUTE_MODES, `train ${i}: mode`).toContain(mode);
+          for (const [step, defaults] of TRAIN_DEFAULTS)
+            for (const [key, value] of Object.entries(defaults)) {
+              if (key in was) expect(t[key], `train ${i}: ${key}`).toEqual(was[key]);
+              else if (from <= step) expect(t[key], `train ${i}: ${key}`).toEqual(value);
+              else expect(key in t, `train ${i}: ${key} from v${from}`).toBe(false);
+            }
           expect(isObject(t.tanks), `train ${i}: tanks`).toBe(isObject(was.tanks));
           if (!isObject(t.tanks) || !isObject(was.tanks)) return;
           const battery = 'battery' in t.tanks ? t.tanks.battery : 'absent';
@@ -2167,7 +2922,7 @@ describe('the defaults the steps fill', () => {
     // fill when it runs again; a step that rewrote a value it should keep would not.
     forAll(
       (rng) => {
-        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9]);
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16]);
         const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
         return { from, file };
       },

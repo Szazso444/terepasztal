@@ -90,7 +90,11 @@ export class Catenary {
   remove(x: number, y: number) {
     if (this.tiles.delete(this.key(x, y))) this.version++;
   }
-  /** Recompute which tiles are live from the substations and the pole grid. */
+  /**
+   * Recompute which tiles are live from the substations and the pole grid. A substation being
+   * upgraded is listed unpowered, so the wire it feeds is dead (and does not fall back to the
+   * pole-powered rails of a game with no substation).
+   */
   rebuild(buildings: Iterable<Building>, power: PowerGrid) {
     this.live.fill(0);
     this.owner.fill(-1);
@@ -103,7 +107,7 @@ export class Catenary {
         y: b.y,
         radius: def.substation.radius,
         throughput: def.substation.throughput,
-        powered: power.isPowered(b.x, b.y),
+        powered: !b.work && power.isPowered(b.x, b.y),
         load: 0,
         private_acc: 0,
       });

@@ -38,6 +38,8 @@ vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
+  // these are the levels the ages open, not the time an upgrade takes (upgrade.test.ts)
+  rules.upgradeTimeMul = 0;
   resetStationIds(1);
 });
 
@@ -65,6 +67,12 @@ function works(builder: Builder, id: string, x: number, y: number): Building {
   builder.free = was;
   expect(b, id).not.toBeNull();
   return b;
+}
+
+/** A station standing in the builder, as a level file or a save puts one there. */
+function placed(w: ReturnType<typeof world>, s: Station): Station {
+  w.builder.stations.push(s);
+  return s;
 }
 
 /** A finished house standing at (x, y), raised the way a level file raises one. */
@@ -103,7 +111,7 @@ describe('levels by age', () => {
 
   it('offers no upgrade in the Steam age', () => {
     const w = world(0),
-      farm = new Station('farm', 10, 10);
+      farm = placed(w, new Station('farm', 10, 10));
     const c = w.builder.canUpgrade(farm);
     expect(c.ok).toBe(false);
     expect(c.reason).toBe(STR.build.levelOpens(2, ageName(1)));
@@ -201,12 +209,35 @@ describe('levels by age', () => {
     expect(w.houses.canUpgrade(h)).toMatchObject({ ok: false, reason: STR.house.maxed });
   });
 
+  it('reads a works the content editor left without an age as one of the first age', () => {
+    // an override may leave `tier` out: the works then opens its levels from the Steam age, as a
+    // station without one does, instead of naming no age at all
+    const def = BUILDING_DEFS.find((d) => d.id === 'kiln')!;
+    const tier = def.tier;
+    delete (def as { tier?: number }).tier;
+    try {
+      const w = world(0);
+      const kiln = works(w.builder, 'kiln', 10, 10);
+      expect(w.builder.canUpgradeBuilding(kiln)).toMatchObject({
+        ok: false,
+        reason: STR.build.levelOpens(2, ageName(1)),
+      });
+      w.economy.setAge(1);
+      expect(w.builder.canUpgradeBuilding(kiln).ok).toBe(true);
+      expect(w.builder.upgradeBuilding(kiln)).toBe(true);
+      expect(w.builder.canUpgradeBuilding(kiln).reason).toBe(STR.build.levelOpens(3, ageName(2)));
+    } finally {
+      def.tier = tier;
+    }
+  });
+
   it('keeps a level above the cap and offers no upgrade', () => {
     const w = world(0);
     // a level file and a save both bring a farm at level 3 into the Steam age
     const fromFile = Station.fromLevel({ defId: 'farm', x: 10, y: 10, level: 3, name: '' });
     const fromSave = Station.fromJSON(JSON.parse(JSON.stringify(fromFile.toJSON())));
     for (const s of [fromFile, fromSave]) {
+      placed(w, s);
       expect(s.level).toBe(3);
       expect(s.productionPerWeek).toBe(LEVELS.production[2]);
       expect(s.capacity).toBe(LEVELS.capacity[2]);
@@ -250,7 +281,7 @@ describe('levels by age', () => {
   it('leaves the editor free and bridges at four levels', () => {
     const w = world(0);
     w.builder.free = true;
-    const farm = new Station('farm', 10, 10);
+    const farm = placed(w, new Station('farm', 10, 10));
     while (w.builder.upgradeStation(farm));
     expect(farm.level).toBe(MAX_LEVEL);
     expect(w.builder.canUpgrade(farm)).toMatchObject({ ok: false, reason: STR.station.maxed });

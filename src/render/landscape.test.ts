@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { emptyMap } from '../world/mapgen';
+import { Terrain } from '../world/tiles';
 import { Landscape, workerErrorText, type LandscapeStatus, type PainterPool } from './landscape';
 
 /** Records what the landscape sends and lets a test answer or crash like a paint worker. */
@@ -34,10 +35,11 @@ function setup(spawn?: () => StubWorker) {
     },
     sheet: () => 'test://terrain-surfaces.png',
   };
-  const landscape = new Landscape(emptyMap(155, 16, 16), new Set(), new Map(), painters);
+  const map = emptyMap(155, 16, 16);
+  const landscape = new Landscape(map, new Set(), new Map(), painters);
   const seen: LandscapeStatus[] = [];
   landscape.watchStatus((s) => seen.push(s));
-  return { landscape, spawned, seen, states: () => seen.map((s) => s.state) };
+  return { landscape, map, spawned, seen, states: () => seen.map((s) => s.state) };
 }
 const pool = (spawned: StubWorker[], n: number) => spawned.slice(n * 2, n * 2 + 2);
 const jobsOf = (w: StubWorker) => w.sent.filter((m) => typeof m.id === 'string');
@@ -159,6 +161,94 @@ describe('landscape status', () => {
     spawned[0].crash({ message: 'late' });
     expect(spawned).toHaveLength(2);
     expect(states()).toEqual(['loading']);
+  });
+});
+
+/** A landscape whose restarted pool failed too: off for the rest of the session. */
+function failedSetup() {
+  const s = setup();
+  s.spawned[0].crash({ message: 'first' });
+  pool(s.spawned, 1)[0].reply({ error: 'Error: Terrain surfaces: 404' });
+  expect(s.landscape.failed).toBe(true);
+  return s;
+}
+/** A landscape whose workers loaded: painting, and active from the first flush. */
+function workingSetup() {
+  const s = setup();
+  s.spawned[0].reply({ loaded: true });
+  s.landscape.flush();
+  expect(s.landscape.active).toBe(true);
+  return s;
+}
+/** Raises a 5 x 5 block of tiles to hills and reports each, as the editor's brush does. */
+function raiseHill(landscape: Landscape, map: { w: number; terrain: Uint8Array }) {
+  for (let y = 5; y < 10; y++)
+    for (let x = 5; x < 10; x++) {
+      map.terrain[y * map.w + x] = Terrain.Hill;
+      landscape.invalidate(x, y);
+    }
+}
+const everyTile = (map: { w: number; h: number }) =>
+  Array.from({ length: map.w * map.h }, (_, k) => ({ x: k % map.w, y: Math.floor(k / map.w) }));
+
+describe('landscape ground rules', () => {
+  it('answers the same level and straight questions whether the painter works or has failed', () => {
+    const working = workingSetup(),
+      failed = failedSetup();
+    for (const s of [working, failed]) raiseHill(s.landscape, s.map);
+    let refused = 0;
+    for (const { x, y } of everyTile(working.map))
+      for (const need of ['straight', 'level'] as const) {
+        const answer = working.landscape.groundAllows(x, y, need);
+        if (!answer) refused++;
+        expect(failed.landscape.groundAllows(x, y, need), `${need} at ${x},${y}`).toBe(answer);
+      }
+    // the hill's bank rim is refused level, the open grass and the hill's own top are not
+    expect(refused).toBeGreaterThan(0);
+    expect(failed.landscape.groundAllows(5, 5, 'level')).toBe(false);
+    expect(failed.landscape.groundAllows(7, 7, 'level')).toBe(true);
+    expect(failed.landscape.groundAllows(14, 14, 'level')).toBe(true);
+  });
+
+  it('shows a terrain change reported after the failure in the next answer', () => {
+    const { landscape, map } = failedSetup();
+    expect(landscape.groundAllows(5, 7, 'level')).toBe(true);
+    raiseHill(landscape, map);
+    expect(landscape.groundAllows(5, 7, 'level')).toBe(false);
+    for (let y = 5; y < 10; y++)
+      for (let x = 5; x < 10; x++) {
+        map.terrain[y * map.w + x] = Terrain.Grass;
+        landscape.invalidate(x, y);
+      }
+    expect(landscape.groundAllows(5, 7, 'level')).toBe(true);
+  });
+
+  it('stays off after the failure: one status change, no painting, nothing queued per change', () => {
+    const { landscape, map, spawned } = failedSetup();
+    expect(landscape.flush()).toBe(true);
+    const sent = spawned.map((w) => w.sent.length);
+    raiseHill(landscape, map);
+    landscape.groundAllows(5, 7, 'level');
+    expect(landscape.flush()).toBe(false);
+    expect(landscape.flush()).toBe(false);
+    expect(spawned.map((w) => w.sent.length)).toEqual(sent);
+    expect(spawned).toHaveLength(4);
+    expect(landscape.status.state).toBe('failed');
+    const queued = landscape as unknown as { dirtyTiles: unknown[]; invalid: boolean };
+    expect(queued.dirtyTiles).toHaveLength(0);
+    expect(queued.invalid).toBe(false);
+  });
+
+  it('builds the relief once for a run of changes, on the question after them', () => {
+    const { landscape, map } = failedSetup();
+    const before = landscape.groundAllows(5, 7, 'level');
+    raiseHill(landscape, map);
+    const rebuilt = (landscape as unknown as { relief: unknown }).relief;
+    expect(landscape.groundAllows(5, 7, 'level')).not.toBe(before);
+    const after = (landscape as unknown as { relief: unknown }).relief;
+    expect(after).not.toBe(rebuilt);
+    landscape.groundAllows(6, 7, 'level');
+    expect((landscape as unknown as { relief: unknown }).relief).toBe(after);
   });
 });
 

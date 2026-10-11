@@ -1,6 +1,7 @@
 import { ImageSource, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { FrameInfo } from '../engine/atlas';
 import { PAL } from '../art/palette';
+import { structureFamily } from './assetScale';
 
 // Reviewed regions on the packed, rectified source frames: x/y/width/height.
 // The colour selector is deliberately restricted to these windows, so blue roof
@@ -207,13 +208,16 @@ export class SurfaceAssets {
     this.contacts.set(cacheKey, result);
     return result;
   }
-  /** Existing glass pixels become emissive; masks inherit the owner's depth/pose. */
-  window(key: string, f: FrameInfo, procedural = false) {
+  /**
+   * Existing glass pixels become emissive; masks inherit the owner's depth/pose. `family` picks
+   * the reviewed window regions; a turned frame passes its unturned frame's (assetScale.ts
+   * `scaleReference`).
+   */
+  window(key: string, f: FrameInfo, procedural = false, family = structureFamily(key)) {
     let result = this.windows.get(key);
     if (!result) {
       const { canvas, ctx, pixels } = read(f),
         { width: w, height: h, data: p } = pixels;
-      const family = key.replace('structures/', '').replace(/(_lv\d+|_s\d+|_\d+)$/, '');
       const regions = WINDOW_REGIONS[family] ?? [];
       for (let y = 0; y < h; y++)
         for (let x = 0; x < w; x++) {

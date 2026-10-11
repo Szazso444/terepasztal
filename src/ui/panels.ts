@@ -39,6 +39,7 @@ import {
   uniformContractPolicy,
   type SaveRefusal,
   type Settings,
+  type SlotMeta,
 } from '../sim/save';
 import { contentIsCustom } from '../data/content';
 import type { Gacha } from '../gacha/gacha';
@@ -50,7 +51,13 @@ import type { Tooltip } from './tooltip';
 import type { NamePrompt } from './namePrompt';
 import type { BuildController } from './buildController';
 import type { KeyHost, KeyScreen } from './keymap';
-import { MainMenu, PauseMenu, type AudioActions, type SlotActions } from './menu';
+import {
+  MainMenu,
+  PauseMenu,
+  type AudioActions,
+  type ContinueTarget,
+  type SlotActions,
+} from './menu';
 import { Hud } from './hud';
 import { DepotScreen } from './depot';
 import { TrainScreen } from './trainScreen';
@@ -262,7 +269,10 @@ export interface PlayUi {
   readonly pauseMenu: PauseMenu;
   /** the title or the pause menu is up */
   readonly menuOpen: boolean;
-  /** the title screen over the paused game */
+  /**
+   * The title screen at boot, over the stored game or a world not yet played: loading a save from
+   * it asks nothing. The pause menu opens it over the game being played itself.
+   */
   openMainMenu(): void;
   /** the pause menu over the paused game (not over the title screen) */
   openPauseMenu(): void;
@@ -536,16 +546,47 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
 
   // ---------------------------------------------------------------- menus
   const menuOpen = () => mainMenu.visible || pauseMenu.visible;
-  function openMainMenu() {
+  /**
+   * The title screen was opened from the pause menu, over the game being played: Continue goes
+   * back to that game and loading over it asks first. False at boot, where the game under it is the
+   * stored one or a world not yet played.
+   */
+  let titleOverGame = false;
+  /**
+   * What Continue goes back to: over a game being played that game, described like a save; at boot
+   * the stored save, which is the game under the title screen; null when there is none.
+   */
+  function continueTarget(overGame: boolean): ContinueTarget | null {
+    if (overGame) {
+      const live: SlotMeta = {
+        name: '',
+        savedAt: host.savedAt ?? 0,
+        version: SAVE_VERSION,
+        seed: host.seed,
+        day: d.clock.day,
+        age: d.economy.tier,
+        money: d.economy.money,
+      };
+      return { meta: live, live: true };
+    }
+    const stored = continueMeta();
+    return stored && { meta: stored, live: false };
+  }
+  /** The title screen over the paused game; `overGame` when the pause menu opened it. */
+  function showMainMenu(overGame: boolean) {
+    titleOverGame = overGame;
     host.pauseGame();
     d.screens.close();
     pauseMenu.hide();
     d.build.setTool({ kind: 'none' });
-    mainMenu.show(continueMeta(), listLevels(), {
+    mainMenu.show(continueTarget(overGame), listLevels(), {
       // the tuning a new game starts from, not the loaded game's own
       rules: rulesDiffer(readRules()).length > 0,
       content: contentIsCustom(),
     });
+  }
+  function openMainMenu() {
+    showMainMenu(false);
   }
   function openPauseMenu() {
     if (mainMenu.visible) return;
@@ -556,14 +597,16 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   function closeMenus() {
     pauseMenu.hide();
     mainMenu.hide();
+    titleOverGame = false;
     host.resumeGame();
   }
   /**
-   * Run `load`; over a game in progress (playing, not at the title screen) only once the player
-   * says yes to `question` in the game's own dialog, since its unsaved progress is lost.
+   * Run `load`; over a game in progress (playing, under the pause menu or a title screen opened
+   * from it, not the title screen at boot) only once the player says yes to `question` in the
+   * game's own dialog, since its unsaved progress is lost.
    */
   function askBeforeLoad(question: string, load: () => void) {
-    if (host.mode === 'play' && !mainMenu.visible)
+    if (host.mode === 'play' && (!mainMenu.visible || titleOverGame))
       void d.namePrompt.confirm(STR.saves.loadTitle, question).then((ok) => ok && load());
     else load();
   }
@@ -629,13 +672,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       },
       editLevel: (id) => host.editLevel(id),
       newLevel: (size, generated, seedText) => host.newLevel(size, generated, seedText),
+      // the title screen is drawn again over the same game it was opened over
       deleteLevel: (id) => {
         host.deleteLevel(id);
-        openMainMenu();
+        showMainMenu(titleOverGame);
       },
       importLevel: (json) => {
         if (!host.importLevel(json)) return false;
-        openMainMenu();
+        showMainMenu(titleOverGame);
         return true;
       },
       exportLevel: (id) => JSON.stringify(listLevels().find((l) => l.id === id) ?? null),
@@ -662,7 +706,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       mainMenu: () => {
         if (host.mode === 'editor') {
           if (!host.editor?.dirty || confirm(STR.editor.unsaved)) host.reloadToMenu();
-        } else openMainMenu();
+        } else showMainMenu(true);
       },
     },
     d.namePrompt,

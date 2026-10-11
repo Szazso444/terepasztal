@@ -3,13 +3,14 @@ import { AtlasRegistry } from './engine/atlas';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
+import { AutosavePause } from './engine/autosavePause';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
-import { ageDef, LAST_AGE, type AgeSnapshot } from './sim/ages';
+import { ageDef, LAST_AGE, railAge, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
 import { Editor } from './editor/editor';
 import { EditorPanel } from './ui/editorPanel';
@@ -27,7 +28,7 @@ import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './wor
 import { levelAt } from './world/elevation';
 import { climbAxes, railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
-import { WorldRenderer } from './render/worldRenderer';
+import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
 import { GameClock, SIM_STEP } from './sim/time';
 import { Tooltip } from './ui/tooltip';
@@ -57,9 +58,10 @@ import {
   type Season,
 } from './sim/weather';
 import { decorOffset, type Decor } from './sim/build';
+import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { validateBanners } from './gacha/gacha';
-import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
+import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import {
   SAVE_VERSION,
@@ -82,7 +84,8 @@ import {
 } from './sim/save';
 import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
-import { Station, resetStationIds, stationFootprint, stationGates } from './sim/stations';
+import { Station, resetStationIds, stationFootprint } from './sim/stations';
+import { ensureStartDepot, startDepotKind } from './sim/startDepot';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
@@ -105,11 +108,15 @@ import {
 import { PowerGrid } from './sim/power';
 import { BuildingPanel } from './ui/buildingPanel';
 import { Floaters } from './render/floaters';
+import { Halos } from './render/halo';
+import { WorkBars } from './render/workBars';
+import { hoursLeft, type Upgraded } from './sim/upgrade';
+import type { WideClass } from './world/reclass';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
 import type { Tip } from './ui/advisor';
-import { locoFrame } from './art/frames';
+import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
 import { buildCompatTable } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
@@ -130,6 +137,8 @@ const SIM_HZ = 1 / SIM_STEP;
 const EDGE_MARGIN = 14;
 const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
+/** Relaid track pieces that start their shimmer in one frame; a long stroke's others follow. */
+const PIECE_HALOS_PER_FRAME = 12;
 
 /**
  * Top-level orchestrator: owns renderer, camera, sim clock and the RTS/overview state machine. The
@@ -206,9 +215,17 @@ export class Game implements UiHost {
   dayNight = new DayNight();
   glows!: Glows;
   smoke!: Smoke;
+  /** the halo over whatever finished an upgrade, and the shimmer along track relaid as high speed */
+  halos!: Halos;
+  /** a bar over each building being upgraded */
+  workBars!: WorkBars;
+  /** relaid pieces (their footprints) waiting for their shimmer to start */
+  private pieceHalos: { x: number; y: number; w: number; h: number }[] = [];
   private autosaveTimer = 0;
   /** the stored save was just replaced and the page is reloading into it: do not save over it */
   private keepStoredSave = false;
+  /** a loop error stops the game storing itself for the rest of the page's life */
+  private readonly autosavePause = new AutosavePause();
   /** when the stored game was last written, for the settings screen */
   savedAt: number | null = null;
   weather!: Weather;
@@ -327,6 +344,10 @@ export class Game implements UiHost {
   get menuOpen() {
     return this.ui.menuOpen;
   }
+  /** A loop error has stopped the game storing itself until the page reloads. */
+  get autosavePaused() {
+    return this.autosavePause.paused;
+  }
 
   // ---------------------------------------------------------------- the play UI's parts
   // The panels belong to `ui`; these are the names the game has always had them under, which
@@ -442,7 +463,7 @@ export class Game implements UiHost {
       this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (!start) {
       // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
-      const d = this.ensureDepot(rules.narrowUnlocked ? 'narrow_depot' : 'depot');
+      const d = this.ensureDepot(startDepotKind());
       if (d) {
         const p = tileToWorld(d.cx + 0.5, d.cy + 0.5);
         this.camera.centerOn(p.x, p.y);
@@ -450,7 +471,8 @@ export class Game implements UiHost {
     }
     if (start && start.tier > this.economy.tier) {
       this.economy.tier = Math.min(start.tier, LAST_AGE);
-      const newly = this.regions.applyTier(start.tier);
+      // the land opens with the rail age, which stops at Electric
+      const newly = this.regions.applyTier(railAge(start.tier));
       if (newly.length) {
         this.world.rebuildFog();
         this.overview.rebuildRegions();
@@ -480,7 +502,7 @@ export class Game implements UiHost {
     }
     for (const [x, y, id, rot] of level.decor) {
       if (!inBounds(this.map, x, y)) continue;
-      const d: Decor = { id, x, y, rot };
+      const d: Decor = { id, x, y, rot: wrapRotation(rot) };
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
@@ -552,11 +574,18 @@ export class Game implements UiHost {
     );
     return ok;
   }
-  /** Make a named save the stored game and reload into it; false when there is none. */
+  /**
+   * Make a named save the stored game and reload into it; false when there is none. A save storage
+   * will not keep (full or blocked) is not loaded: it says so and the running game goes on, since
+   * reloading would land in the older stored save.
+   */
   loadSlot(name: string) {
     const j = readSlot(name);
     if (!j) return false;
-    writeSave(j);
+    if (!writeSave(j)) {
+      this.toasts.push(STR.saves.refused.storage, 'warn');
+      return true;
+    }
     this.reloadIntoStoredSave(j.seed);
     return true;
   }
@@ -772,8 +801,15 @@ export class Game implements UiHost {
     this.houses = new HouseRegistry(this.builder, this.towns, this.stock);
     this.towns.residentsAt = (x, y) => this.houses.residentsAt(x, y);
     this.houses.onMessage = (m, k) => this.toasts.push(m, k);
+    // a house is turned the way its decor piece was placed
     this.houses.onChanged = (h) =>
-      this.world.setStructure(`decor:${h.x},${h.y}`, h.x, h.y, this.houses.frame(h), 20);
+      this.world.setStructure(
+        `decor:${h.x},${h.y}`,
+        h.x,
+        h.y,
+        structureFrame(this.atlas, this.houses.frame(h), this.builder.decorAt(h.x, h.y)?.rot ?? 0),
+        20,
+      );
     this.builder.onIndustryPlaced = (x, y) => this.houses.industryPlaced(x, y);
     this.power = new PowerGrid(this.map);
     this.catenary = new Catenary(this.map);
@@ -786,6 +822,9 @@ export class Game implements UiHost {
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
+    this.builder.onUpgraded = (e) => this.onUpgraded(e);
+    this.houses.onUpgraded = (e) => this.onUpgraded(e);
+    this.builder.onReclassed = (tiles, target) => this.onReclassed(tiles, target);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
     validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
@@ -887,6 +926,8 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    await this.world.loadBridgeSurfaces();
+    this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
       !!(
         this.builder.stationAt(x, y) ||
@@ -921,6 +962,8 @@ export class Game implements UiHost {
     this.floaters = new Floaters(this.atlas, this.world.overlay, (x, y) =>
       this.world.surfacePoint(x, y),
     );
+    this.halos = new Halos(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.workBars = new WorkBars(this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
     this.powerLines = new PowerLines((n) => {
       const p = this.world.surfacePoint(n.x, n.y);
       if (n.plant) return { x: p.x - 12, y: p.y - 42 };
@@ -980,6 +1023,11 @@ export class Game implements UiHost {
       build: this.build,
       tooltip: this.tooltip,
       uiRoot: this.uiRoot,
+    });
+    // Watched once the toast layer is on the page, so the toast gets its full time. Failed is final
+    // and replayed to a late watcher, so this toasts once, even for a failure during init.
+    this.world.landscape.watchStatus((s) => {
+      if (s.state === 'failed') this.toasts.push(STR.debug.landscapeLost, 'warn');
     });
     this.fleet.waitingAt = (id) => this.people.waitingAt(id).length;
     this.fleet.contractDest = (cargo, origin) => {
@@ -1053,10 +1101,12 @@ export class Game implements UiHost {
 
   /**
    * Store the game; says so unless `silent`; false when storage refused it. Nothing is written
-   * while the page reloads into a save just stored (`reloadIntoStoredSave`).
+   * while the page reloads into a save just stored (`reloadIntoStoredSave`). A silent save is one
+   * the player did not ask for, and none is written after a loop error (`autosavePause`).
    */
   save(silent = false) {
     if (this.keepStoredSave) return false;
+    if (!this.autosavePause.allows(silent ? 'implicit' : 'manual')) return false;
     const snap = this.snapshot();
     const ok = writeSave(snap);
     if (ok) this.savedAt = snap.savedAt;
@@ -1151,7 +1201,7 @@ export class Game implements UiHost {
     }
     this.contractJobs.reconcile();
     for (const [x, y, id, rot] of j.decor ?? []) {
-      const d: Decor = { id, x, y, rot };
+      const d: Decor = { id, x, y, rot: wrapRotation(rot) };
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
@@ -1253,7 +1303,8 @@ export class Game implements UiHost {
       const t = terrainAt(this.map, d.x, d.y);
       if (t === Terrain.Hill) this.world.setFlattened(d.x, d.y, true);
       this.world.removeProps(d.x, d.y);
-      this.world.setStructure(id, d.x, d.y, this.houses?.frameFor(d) ?? `structures/${d.id}`, 20);
+      const key = this.houses?.frameFor(d) ?? `structures/${d.id}`;
+      this.world.setStructure(id, d.x, d.y, structureFrame(this.atlas, key, d.rot), 20);
     }
   }
   private onStationOrphaned(s: Station, orphaned: boolean) {
@@ -1270,6 +1321,8 @@ export class Game implements UiHost {
   private restoringWorld = false;
   private refreshBridges() {
     if (this.restoringWorld) return;
+    const mode = this.world.bridgeMode,
+      textured: TexturedBridge[] = [];
     for (const b of this.builder.buildings.values())
       if (buildingDef(b.id).bridge) {
         const s = bridgeSpan(this.builder, b);
@@ -1291,7 +1344,27 @@ export class Game implements UiHost {
               ? `structures/landspan_${s.material}_${s.axis}`
               : `structures/landpad_${s.material}`;
         const id = 'bridge:' + b.x + ',' + b.y;
-        if (this.world.bridgeKit) {
+        if (mode === 'textured') {
+          // Meshes for every tile at once, so side-by-side bridges merge (setTexturedBridges).
+          for (const layer of [0, 1]) this.world.setPlatform(b.x, b.y, null, layer);
+          this.world.removeStructure(id);
+          this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
+          this.world.setBridgePiers(b.x, b.y, null);
+          this.world.setBridgeKit(b.x, b.y, null);
+          // A member of a wide curve or switch, or a crossing, stands on a square pad.
+          const span = !piece || (!piece.unit && climbAxes(piece.links).length === 1);
+          textured.push({
+            x: b.x,
+            y: b.y,
+            material: s.material,
+            axis: span ? (s.axis as 0 | 1) : null,
+            open: DIRS.map((d) => !!piece?.links.some((l) => l.includes(d))),
+            water,
+            level: b.level ?? 1,
+          });
+          continue;
+        }
+        if (mode === 'kit') {
           // The illustrated kit: deck or pad, near railing, and the parts under the deck.
           const dir = s.axis ? 'x' : 'y';
           this.world.setPlatform(
@@ -1346,6 +1419,7 @@ export class Game implements UiHost {
           this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36, dy);
         else this.world.removeStructure(detailId);
       }
+    this.world.setTexturedBridges(textured);
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
@@ -1372,7 +1446,12 @@ export class Game implements UiHost {
     } else {
       if (t === Terrain.Hill) this.world.setFlattened(b.x, b.y, true);
       this.world.removeProps(b.x, b.y);
-      this.world.setStructure(id, b.x, b.y, buildingFrame(b));
+      this.world.setStructure(
+        id,
+        b.x,
+        b.y,
+        structureFrame(this.atlas, buildingFrame(b), b.rot ?? 0),
+      );
     }
     if (buildingDef(b.id).power || buildingDef(b.id).substation) this.rebuildPower();
   }
@@ -1496,7 +1575,7 @@ export class Game implements UiHost {
           id,
           front.x,
           front.y,
-          `structures/${s.def.art}_r${s.rot % 2}`,
+          structureFrame(this.atlas, `structures/${s.def.art}_r${s.rot % 2}`, s.rot),
           20,
           off.y,
           off.x,
@@ -1507,7 +1586,11 @@ export class Game implements UiHost {
           id,
           s.x + 1,
           s.y + 1,
-          `structures/${s.def.art}_r${s.rot % 2}${s.spriteLevel > 1 ? '_lv' + s.spriteLevel : ''}`,
+          structureFrame(
+            this.atlas,
+            `structures/${s.def.art}_r${s.rot % 2}${s.spriteLevel > 1 ? '_lv' + s.spriteLevel : ''}`,
+            s.rot,
+          ),
           20,
           -HALF_H_PX,
         );
@@ -1517,7 +1600,11 @@ export class Game implements UiHost {
           id,
           s.x,
           s.y,
-          this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+          structureFrame(
+            this.atlas,
+            this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+            s.rot,
+          ),
         );
       }
       if (this.stationPanel.station === s) this.stationPanel.render();
@@ -1556,59 +1643,14 @@ export class Game implements UiHost {
     }
   }
   /**
-   * Every game has a depot: the start grants one at the middle of the start chunk, an older save
-   * gets one on load. `defId` is the kind placed: a new game's is narrow, for its narrow starter
-   * engines; an older save's regular, as its roster is. Gate track of the depot's gauge is laid
-   * where nothing stands yet. Returns the depot, or null when no room could be found nearby.
+   * Every game has a depot (`ensureStartDepot`): a new game's is narrow, for its narrow starter
+   * engines; an older save's regular, as its roster is. Returns the depot, or null after saying
+   * on the console that no site near the start could take one.
    */
   ensureDepot(defId = 'depot'): Station | null {
-    const have = this.builder.depots()[0];
-    if (have) return have;
-    const rs = this.map.regionSize;
-    const cx = Math.floor((Math.floor((this.map.regionsX - 1) / 2) + 0.5) * rs);
-    const cy = Math.floor((Math.floor((this.map.regionsY - 1) / 2) + 0.5) * rs);
-    const clear = (x: number, y: number, allowTrack: boolean) => {
-      if (!inBounds(this.map, x, y) || !this.regions.isTileUnlocked(x, y)) return false;
-      const t = terrainAt(this.map, x, y);
-      if (t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain) return false;
-      if (this.builder.stationAt(x, y) || this.builder.decorAt(x, y)) return false;
-      if (this.builder.buildingAt(x, y)) return false;
-      if (!allowTrack && this.track.has(x, y)) return false;
-      return true;
-    };
-    const fits = (x: number, y: number, rot: number) =>
-      stationFootprint(defId, x, y, rot).every((t) => clear(t.x, t.y, false)) &&
-      stationGates(defId, x, y, rot).every((g) => clear(g.x, g.y, true));
-    for (let r = 0; r <= 24; r++)
-      for (let dy = -r; dy <= r; dy++)
-        for (let dx = -r; dx <= r; dx++) {
-          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-          for (const rot of [0, 1]) {
-            const x = cx + dx - 1;
-            const y = cy + dy - 1;
-            if (!fits(x, y, rot)) continue;
-            const wasFree = this.builder.free;
-            this.builder.free = true;
-            const d = this.builder.placeStation(x, y, defId, rot);
-            if (d) {
-              const cls = d.def.gauge ?? 'regular';
-              for (const g of d.gateTiles())
-                if (!this.track.has(g.x, g.y))
-                  this.builder.placeTrack(
-                    g.x,
-                    g.y,
-                    { kind: 'straight', cls, cls2: cls },
-                    rot === 0 ? 1 : 0,
-                  );
-              // a narrow one keeps its kind's name, as one the player builds does
-              if (cls === 'regular') d.name = STR.station.depotName;
-              this.onStationChanged(d, false);
-            }
-            this.builder.free = wasFree;
-            return d;
-          }
-        }
-    return null;
+    const d = ensureStartDepot(this.builder, defId);
+    if (!d) console.warn(`[depot] no site near the start takes a ${defId} and its gate track`);
+    return d;
   }
   /** A new age begins: its works, stations and rolling stock unlock. */
   private onAgeUp(tier: number) {
@@ -1618,6 +1660,45 @@ export class Game implements UiHost {
     this.notices?.push({ key: `age:${tier}`, kind: 'info', text, target: null }, 120);
     sfx('tier.up');
     audio.setAge(ageDef(tier).id);
+  }
+  /**
+   * A station, works or house finished its upgrade: a halo over it, the chime, a toast, and in play
+   * a notice that leads to it. A house's level already has its toast (`HouseRegistry.onMessage`),
+   * so it gets no second one here.
+   */
+  private onUpgraded(e: Upgraded) {
+    this.halos.spawn(e.x, e.y, e.w, e.h, 'building');
+    sfx('upgrade.done');
+    const text = STR.upgrade.done(e.name, e.level);
+    if (e.kind !== 'house') this.toasts.push(text, 'good');
+    if (this.mode === 'play')
+      this.notices.push({
+        key: `upgrade:${e.x},${e.y}`,
+        kind: 'info',
+        text,
+        target: { kind: 'tile', x: e.x, y: e.y },
+      });
+  }
+  /**
+   * Track relaid as high speed shimmers piece by piece (`startPieceHalos`); going back to regular
+   * track does not. Each halo covers its whole piece, not only the anchor tile.
+   */
+  private onReclassed(anchors: { x: number; y: number }[], target: WideClass) {
+    if (target === 'regular') return;
+    for (const a of anchors) {
+      const tiles = this.track.unitTiles(a.x, a.y);
+      if (!tiles.length) continue;
+      const x = Math.min(...tiles.map((t) => t.x));
+      const y = Math.min(...tiles.map((t) => t.y));
+      const w = Math.max(...tiles.map((t) => t.x)) - x + 1;
+      const h = Math.max(...tiles.map((t) => t.y)) - y + 1;
+      this.pieceHalos.push({ x, y, w, h });
+    }
+  }
+  /** Start the next relaid pieces' shimmer, a few a frame, so a long stroke ripples along. */
+  private startPieceHalos() {
+    for (const p of this.pieceHalos.splice(0, PIECE_HALOS_PER_FRAME))
+      this.halos.spawn(p.x, p.y, p.w, p.h, 'piece');
   }
   /** Biome multiplier on a station's output. */
   private biomeProduction(s: Station) {
@@ -1643,10 +1724,13 @@ export class Game implements UiHost {
     this.economy.money -= price;
     this.regions.own(i);
     sfx('tier.up');
-    if (
+    const edge =
       this.spec.kind === 'generated' &&
-      ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h)
-    ) {
+      ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h);
+    // growing stores the game first, which a loop error forbids: the ring then waits for a save the
+    // player makes and the reload after it (`main.ts` grows such a save as it loads)
+    const held = edge && !this.autosavePause.allows('implicit');
+    if (edge && !held) {
       // the grid needs another ring: persist, grow the world and come back into it
       const snap = expandSave(this.snapshot(), 1);
       if (writeSave(snap)) {
@@ -1659,6 +1743,7 @@ export class Game implements UiHost {
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toasts.push(STR.overview.bought, 'good');
+    if (held) this.toasts.push(STR.overview.growHeld, 'warn');
     return true;
   }
   private trackTilesForOverview() {
@@ -2025,10 +2110,12 @@ export class Game implements UiHost {
   /** messages of loop errors already toasted this session */
   private readonly frameErrors = new Set<string>();
   /**
-   * A loop callback threw and the loop carried on: log it with its stack every time, and toast each
-   * distinct message once, so an error repeating every frame does not flood the screen.
+   * A loop callback threw and the loop carried on: stop the game storing itself, since the throw
+   * may have left it half-applied, log it with its stack every time, and toast each distinct
+   * message once, so an error repeating every frame does not flood the screen.
    */
   private frameError(err: unknown, phase: LoopPhase) {
+    this.autosavePause.trip();
     console.error(`[loop] ${phase} threw; the game keeps running`, err);
     const message = err instanceof Error ? err.message : String(err);
     if (this.frameErrors.has(message)) return;
@@ -2134,6 +2221,9 @@ export class Game implements UiHost {
     if (this.junctionFlash && performance.now() / 1000 > this.junctionFlash.until)
       this.clearJunctionFlash();
     this.floaters.update(dt);
+    this.startPieceHalos();
+    this.halos.update(dt);
+    this.workBars.sync([...this.builder.works(), ...this.houses.works()]);
     this.powerLines.update(dt);
     this.updateTrainSide(dt);
     this.minimap.draw(this.minimapMarks());
@@ -2153,7 +2243,12 @@ export class Game implements UiHost {
   }
 
   private updateRtsTooltip() {
-    if (this.viewTarget !== 0 || this.input.overUi) return;
+    if (this.viewTarget !== 0) return;
+    // over a panel the field's tooltip goes, rather than staying where the pointer left the map
+    if (this.input.overUi) {
+      this.tooltip.hide();
+      return;
+    }
     const st = this.build.hoverStation;
     const bld = this.build.hoverBuilding;
     const ht = this.fieldHover;
@@ -2166,6 +2261,9 @@ export class Game implements UiHost {
     } else if (st && this.build.tool.kind === 'none') {
       this.tooltip.show(this.input.mouseX, this.input.mouseY, st.name, [
         STR.station.level(st.level),
+        ...(st.work
+          ? [STR.upgrade.closed, STR.upgrade.running(st.work.to, hoursLeft(st.work))]
+          : []),
         `${STR.station.storage}: ${Math.floor(st.totalStored())} / ${st.capacity}`,
         biomeSummary(biomeAt(this.map, st.x, st.y)),
       ]);
@@ -2182,7 +2280,9 @@ export class Game implements UiHost {
       const status = BuildingPanel.status(bld, this.stock);
       this.tooltip.show(this.input.mouseX, this.input.mouseY, def.name, [
         BuildingPanel.recipeText(bld.id),
+        // closed while it is upgraded, which the status says
         status.text,
+        ...(bld.work ? [STR.upgrade.running(bld.work.to, hoursLeft(bld.work))] : []),
         `${STR.building.rate}: ${STR.station.perWeek(Math.round(bld.rate * 10) / 10)}`,
       ]);
     } else this.tooltip.hide();
@@ -2496,6 +2596,15 @@ export class Game implements UiHost {
     );
     d.set(STR.debug.zoom, `${this.camera.targetZoom}x (${this.viewTarget ? 'overview' : 'rts'})`);
     d.set(STR.debug.camera, `${Math.round(this.camera.x)}, ${Math.round(this.camera.y)}`);
+    const ls = this.world.landscape.status;
+    d.set(
+      STR.debug.landscape,
+      ls.state === 'failed'
+        ? STR.debug.landscapeFailed(ls.reason)
+        : ls.state === 'active'
+          ? STR.debug.landscapeActive
+          : STR.debug.landscapeLoading,
+    );
     const tc = this.traffic.counters;
     d.set(STR.debug.recovery, this.traffic.recoverySummary(this.fleet.trains));
     d.set(

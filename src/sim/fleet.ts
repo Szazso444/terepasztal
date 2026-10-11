@@ -9,8 +9,9 @@ import {
   type StopPlan,
   type LocoSlotInit,
   type RouteMode,
+  type TrainState,
 } from './trains';
-import type { TrackGraph, TrackClass } from '../world/track';
+import type { TrackGraph, TrackClass, TrackPiece } from '../world/track';
 import { findPath } from '../world/pathfinding';
 import { pieceClassFor, vehicleAccess, consistGauge, gaugeOf } from './compat';
 import { content, type Gauge } from '../data/content';
@@ -29,7 +30,7 @@ import type { Builder } from './build';
 import type { GameMap } from '../world/tiles';
 import type { Inventory } from '../gacha/inventory';
 import { wagonDef, locoDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
-import { DIR_DX, DIR_DY, DIRS } from '../engine/iso';
+import { DIR_DX, DIR_DY, DIRS, type Dir } from '../engine/iso';
 import type { Economy } from './economy';
 import type { Stockpile } from './stockpile';
 import { cargoDef } from './cargo';
@@ -540,9 +541,10 @@ export class Fleet {
         t.onPathReady(this.ctx(this.clockTime, 1));
       return;
     }
-    // no way there from where it stands
+    // no way there from where it stands: it stays at the station it stood at (an idle train
+    // holding no platform there)
     t.atStation = st;
-    st?.occupants.add(t.id);
+    if (st && t.state !== 'idle') st.occupants.add(t.id);
     if (t.state === 'noRoute') this.idle(t);
     else if (t.state !== 'idle') {
       // under way or stopped on the line: carry on with what it was doing and choose at the stop
@@ -552,8 +554,7 @@ export class Fleet {
   }
   /** A roaming train with nowhere to go waits where it stands and chooses again shortly. */
   private idle(t: Train) {
-    t.state = 'idle';
-    t.stateTime = 0;
+    t.idle();
   }
 
   /** Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents return to the stockpile. */
@@ -667,6 +668,7 @@ export class Fleet {
         t.dynamic &&
         t.id !== except &&
         t.route.length &&
+        !t.makingWay &&
         (t.state === 'moving' || t.state === 'yielding' || t.state === 'waiting')
       )
         out.add(t.route[t.routeIndex % t.route.length]);
@@ -968,9 +970,11 @@ export class Fleet {
     // Build the complete wait-for graph once, including queues feeding other queues. A
     // group's chosen train owns its escape corridor before any other group can plan a move.
     this.rebuildOccupancy();
+    this.makeWay(ctx, now, gdt);
     const groups = blockingGroups(this.trains).sort(
       (a, b) => Math.max(...b.map((t) => t.blockedTime)) - Math.max(...a.map((t) => t.blockedTime)),
     );
+    this.keepJamNotes(groups);
     for (const group of groups) {
       if (!group.some((t) => t.blockedTime >= MUTUAL_GRACE)) continue;
       if (!this.traffic.canRecover(group, now)) continue;
@@ -1021,9 +1025,167 @@ export class Fleet {
           break;
         }
       }
-      if (!moved && group.some((t) => t.blockedTime >= MUTUAL_GRACE * 4))
+      if (!moved && group.some((t) => t.blockedTime >= MUTUAL_GRACE * 4)) {
         this.traffic.deadlock(group, now);
+        // the trains held in it say why (an idle train in the way says so itself, `makeWay`)
+        for (const t of group) {
+          const head = t.poses[0];
+          if (!head || t.holding || this.jams.has(t.id)) continue;
+          if (t.state !== 'moving' && t.state !== 'yielding') continue;
+          if (!t.blocked && t.claimBlocker === null) continue;
+          this.jams.set(t.id, { x: head.x, y: head.y, state: t.state, was: t.lastMessage });
+          t.lastMessage = STR.traffic.jammed;
+        }
+      }
     }
+  }
+
+  /**
+   * Trains held in a jam no train of it could pull aside from, with where each stood, what it was
+   * doing and the note it had: its note says it is jammed until it moves, does something else or
+   * leaves the jam.
+   */
+  private jams = new Map<number, { x: number; y: number; state: TrainState; was: string }>();
+  /**
+   * Keep each jammed train's note while the jam lasts. Once it ends the train gets its own note
+   * back, unless it has set off from where it pulled aside, which a note of then no longer fits.
+   */
+  private keepJamNotes(groups: Train[][]) {
+    if (!this.jams.size) return;
+    const inJam = new Set(groups.flat().map((t) => t.id));
+    for (const [id, jam] of this.jams) {
+      const t = this.byId(id);
+      const head = t?.poses[0];
+      if (!t || !head) {
+        this.jams.delete(id);
+        continue;
+      }
+      const held =
+        inJam.has(id) &&
+        !t.holding &&
+        t.state === jam.state &&
+        Math.hypot(head.x - jam.x, head.y - jam.y) <= JAM_MOVED;
+      if (held) t.lastMessage = STR.traffic.jammed;
+      else {
+        this.jams.delete(id);
+        if (t.lastMessage === STR.traffic.jammed)
+          t.lastMessage = t.state === jam.state ? jam.was : '';
+      }
+    }
+  }
+
+  /**
+   * Idle trains make way. An idle train standing on a tile another train's route crosses (the
+   * path it runs, or the one it waits on a siding to take) moves aside to the nearest place off
+   * every train's route that holds it, a siding first (`Train.planAside`), reserved as an escape
+   * is, so the trains it makes way for hold back until it has passed, and idles where it parks.
+   * When those trains stand in the way out, it shows them the way it would take
+   * (`Train.wantAside`), so the jam resolution backs one of them off once it has to wait; with no
+   * way out at all it stands and says so. Runs after the trains have moved, so the claims of the
+   * next tick hold the others back before any train moves again.
+   */
+  private makeWay(ctx: TickCtx, now: number, gdt: number) {
+    // a few looks a second, on the ticks that pass a multiple of WAY_CHECK of game time: a game
+    // loaded from a save looks on the ticks the saved one would have
+    if (Math.floor(now / WAY_CHECK) === Math.floor((now - gdt) / WAY_CHECK)) return;
+    const idle = this.trains.filter((t) => t.state === 'idle' && !t.holding);
+    if (!idle.length) return;
+    const w = this.map.w;
+    const notes: string[] = [STR.traffic.waitAside, STR.traffic.noWayAside, STR.traffic.replan];
+    const routes = new Map(this.trains.map((t) => [t.id, t.pathTileKeys(w)]));
+    let sidings: Set<number> | null = null;
+    for (const t of idle) {
+      const mine = t.occupancyKeys(w);
+      const group = this.trains.filter(
+        (o) => o !== t && mine.some((k) => routes.get(o.id)!.has(k)),
+      );
+      if (!group.length) {
+        // nobody needs its tiles (any more): it wants nothing and has nothing to say about it
+        t.wantAside(null);
+        if (notes.includes(t.lastMessage)) t.lastMessage = '';
+        continue;
+      }
+      // the train keeps when it may look again, so a game loaded from a save looks when the saved
+      // one would have
+      if (t.asideRetry > now) continue;
+      t.asideRetry = now + ASIDE_RETRY;
+      // off every other train's route, and off the platforms of every station another train
+      // is bound for
+      const theirs = new Set<number>();
+      const stops = new Set<number>();
+      for (const o of this.trains) {
+        if (o === t) continue;
+        for (const k of routes.get(o.id)!) theirs.add(k);
+        for (const s of [...o.schedule, ...o.program]) stops.add(s.stationId);
+        for (const j of o.job ? [o.job, ...o.jobs] : o.jobs) stops.add(j.originId).add(j.destId);
+      }
+      const bound = new Set<number>();
+      for (const id of stops) {
+        const s = this.builder.stationById(id);
+        if (s) for (const p of this.builder.platformTiles(s)) bound.add(p.y * w + p.x);
+      }
+      sidings ??= this.sidingTiles();
+      const ids = group.map((o) => o.id);
+      const plan = t.planAside(ctx, ids, { theirs, bound, sidings });
+      if (plan && t.retreat(ctx, ids, plan)) {
+        this.traffic.yielded(t, ids[0], now);
+        this.rebuildOccupancy();
+        this.rebuildReservations();
+        routes.set(t.id, t.pathTileKeys(w));
+        continue;
+      }
+      // the way out is taken by the trains it is in the way of, or there is none. The way it would
+      // take were they to back off ends off their lines too: not under them, nor on the line
+      // behind them, which they would back over and cross again
+      const lines = new Set(theirs);
+      for (const o of group)
+        for (const k of [...o.occupancyKeys(w), ...o.lineBehind(this.track)]) lines.add(k);
+      const wanted = t.planAside(ctx, ids, { theirs: lines, bound, sidings }, true);
+      t.wantAside(wanted?.path ?? null);
+      routes.set(t.id, t.pathTileKeys(w));
+      t.lastMessage = wanted ? STR.traffic.waitAside : STR.traffic.noWayAside;
+    }
+  }
+  /**
+   * Tile keys of the sidings: runs of plain track from a switch to a dead end with no platform on
+   * them. No train runs through one, so a train parked there is in nobody's way.
+   */
+  private sidingTiles(): Set<number> {
+    const w = this.map.w;
+    const track = this.track;
+    const platforms = new Set<number>();
+    for (const s of this.builder.stations)
+      for (const p of this.builder.platformTiles(s)) platforms.add(p.y * w + p.x);
+    const plain = (p: TrackPiece | undefined): p is TrackPiece =>
+      !!p && p.links.length === 1 && !(p.unit && p.kind !== 'curve');
+    const out = new Set<number>();
+    for (const { x: tx, y: ty, piece } of track.tiles()) {
+      if (!plain(piece)) continue;
+      const [a, b] = piece.links[0];
+      // walk from a dead end towards the switch the run hangs off
+      const openA = track.connected(tx, ty, a);
+      if (openA === track.connected(tx, ty, b)) continue;
+      const run = [ty * w + tx];
+      let x = tx;
+      let y = ty;
+      let dir = openA ? a : b;
+      let switched = false;
+      for (let i = 0; i < w * this.map.h && track.connected(x, y, dir); i++) {
+        x += DIR_DX[dir];
+        y += DIR_DY[dir];
+        const next = track.get(x, y);
+        if (!plain(next)) {
+          switched = true;
+          break;
+        }
+        run.push(y * w + x);
+        const exits = track.exits(x, y, ((dir + 2) % 4) as Dir);
+        if (exits.length !== 1) break;
+        dir = exits[0];
+      }
+      if (switched && run.every((k) => !platforms.has(k))) for (const k of run) out.add(k);
+    }
+    return out;
   }
 
   /** Total capacity of a train for a cargo type. */
@@ -1034,3 +1196,9 @@ export class Fleet {
   }
 }
 const MUTUAL_GRACE = 4;
+/** tiles a jammed train's head moves before its note no longer says it is jammed */
+const JAM_MOVED = 0.5;
+/** seconds an idle train in another train's way waits before looking again for a way aside */
+const ASIDE_RETRY = 2;
+/** seconds between looks at whether an idle train stands in another train's way */
+const WAY_CHECK = 0.25;

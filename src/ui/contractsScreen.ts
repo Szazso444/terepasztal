@@ -166,18 +166,30 @@ export class ContractsScreen implements Screen {
           text: this.board.canGenerate() ? STR.contracts.noOffers : STR.contracts.needStations,
         }),
       );
-    for (const c of offers)
+    // the land owned caps the active contracts: past it, Accept is refused and says why
+    const full = this.board.activeFull();
+    const refusal = STR.contracts.activeFull(this.board.limit());
+    // said once above the offers, since a disabled button's hover may never show
+    if (full && offers.length)
+      o.append(el('div', { class: 'amber', style: 'margin-bottom:4px', text: refusal }));
+    for (const c of offers) {
+      const accept = btn(
+        STR.contracts.accept,
+        () => {
+          if (this.board.accept(c, this.clock.time))
+            this.toast(STR.contracts.accepted(c.name), 'good');
+          // an offer that expired since the board was drawn just leaves it
+          else if (this.board.activeFull())
+            this.toast(STR.contracts.activeFull(this.board.limit()), 'warn');
+          this.render();
+        },
+        'accent small',
+      );
+      accept.disabled = full;
+      if (full) accept.title = refusal;
       o.append(
         this.card(c, [
-          btn(
-            STR.contracts.accept,
-            () => {
-              this.board.accept(c, this.clock.time);
-              this.toast(STR.contracts.accepted(c.name), 'good');
-              this.render();
-            },
-            'accent small',
-          ),
+          accept,
           btn(
             STR.contracts.decline,
             () => {
@@ -188,6 +200,7 @@ export class ContractsScreen implements Screen {
           ),
         ]),
       );
+    }
     const a = this.activeCol;
     a.innerHTML = '';
     const active = this.board.active.sort((p, q) => p.expires - q.expires);

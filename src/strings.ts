@@ -45,13 +45,17 @@ export const STR = {
     start: 'Where every railway begins.',
     goal: {
       depots: 'Depots',
-      population: 'Population',
+      population: 'Residents',
       earned: 'Earned in total',
       substations: 'Powered substations',
       wires: 'Live electrified tiles',
       chunks: 'Owned chunks',
     } as Record<string, string>,
-    hint: 'An age begins once every goal listed for it is met (checked every hour).',
+    /** heads the goals that are alternatives of one another */
+    anyOf: 'One of these:',
+    /** the same heading once one of its goals is met */
+    anyOfMet: 'One of these: met',
+    hint: 'An age begins once every goal listed for it is met; under "One of these", one goal is enough. Goals are checked every hour.',
   },
   overview: {
     locked: 'UNCHARTED',
@@ -61,6 +65,9 @@ export const STR = {
     buyConfirm: (v: string) => `Buy this chunk for ${v}?`,
     bought: 'Chunk charted. Neighbouring land is now visible.',
     growing: 'Charting new land beyond the edge of the map…',
+    /** after a loop error the map cannot grow now, since growing stores the game first */
+    growHeld:
+      'The map grows past its edge once you save the game and reload it. Until then nothing is saved automatically, because of the earlier error.',
     cannotAfford: (v: string) => `Need ${v} to buy this chunk`,
     chunkTitle: 'Uncharted chunk',
     chunkLines: (v: string) => [`Price ${v}`, 'Click to buy'],
@@ -143,12 +150,41 @@ export const STR = {
     junctions: 'Junctions',
     tile: 'Tile',
     regenerate: 'New map (seed)',
-    /** toast for an error the game loop caught; shown once per distinct message */
+    /**
+     * toast for an error the game loop caught; shown once per distinct message. From the first one
+     * the game stores nothing on its own until the page reloads; a save the player makes still does
+     */
     frameError: (message: string) =>
-      `Something went wrong: ${message}. The game keeps running; the browser console has details.`,
+      `Something went wrong: ${message}. The game keeps running, but nothing is saved automatically until the game is reloaded, and your last save is kept. The browser console has details.`,
+    /** the painted landscape's status: loading, active, or failed with the reason */
+    landscape: 'Landscape',
+    landscapeLoading: 'loading',
+    landscapeActive: 'active',
+    landscapeFailed: (reason: string) => `failed: ${reason}`,
+    /** toast when the painted landscape fails for the session and the per-tile ground stands in */
+    landscapeLost:
+      'The detailed terrain could not load, so simple ground is shown for this session. The browser console has details.',
   },
   traffic: {
     pullingAside: 'Pulling aside on a reserved escape route',
+    /** an idle train leaves the track another train needs */
+    makingWay: 'Nothing to haul: moving out of the way',
+    /** an idle train has parked off every other train's route */
+    madeWay: 'Parked out of the way',
+    /** an idle train in another train's way waits for that train to clear its way aside */
+    waitAside: 'In the way: waiting for room to move aside',
+    /**
+     * an idle train another train needs to pass has nowhere it can go: no siding or platform is
+     * free and long enough, or it could get into one only by reversing partway, which no train does
+     */
+    noWayAside: 'In the way, with no siding or free platform it can pull into',
+    /**
+     * a train held in a jam none of its trains can pull aside from: no siding or loop off the
+     * others' way holds one of them and leaves it a way on to its stop (a counted deadlock)
+     */
+    jammed: 'Jammed: no siding it can pull into to let the other train by',
+    /** a train waiting where it pulled aside has no track on to its next stop from there */
+    noWayOn: 'Pulled aside, with no track on to its next stop',
     replan: 'Escape route unavailable; waiting for a new plan',
     stalled: (name: string) => `${name}: escape stalled; released for replanning`,
     released: (name: string) => `${name}: escape route released`,
@@ -197,7 +233,6 @@ export const STR = {
     needTrackHere: 'Signals stand on track',
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
-    levelCap: 'Level cap for the current age',
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
     upgradingNow: 'Already being upgraded',
     cost: (v: string) => `Cost ${v}`,
@@ -294,7 +329,6 @@ export const STR = {
   },
   building: {
     title: (name: string, level: number) => `${name} · Level ${level}`,
-    upgrade: (cost: string) => `Upgrade · ${cost}`,
     recipe: 'Recipe',
     rate: 'Current rate',
     maxRate: 'Full rate',
@@ -315,9 +349,12 @@ export const STR = {
       'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
   },
   upgrade: {
-    /** `hours` is rounded up to a whole hour; with none left the time is not shown. */
+    /**
+     * `hours` is rounded up to a whole hour; with none left the time is not shown. An empty `cost`
+     * (nothing to pay) is left out the same way.
+     */
     button: (level: number, cost: string, hours: number) =>
-      `Upgrade to level ${level} · ${cost}${hours > 0 ? ` · ${Math.ceil(hours)} h` : ''}`,
+      `Upgrade to level ${level}${cost ? ` · ${cost}` : ''}${hours > 0 ? ` · ${Math.ceil(hours)} h` : ''}`,
     /** Rounded up and never "0 h left": an upgrade still running has at least an hour to go. */
     running: (level: number, hours: number) =>
       `Upgrading to level ${level} · ${Math.max(1, Math.ceil(hours))} h left`,
@@ -562,12 +599,14 @@ export const STR = {
     failed: 'Deadline missed',
     expired: 'Expired',
     accepted: (n: string) => `${n} accepted`,
+    activeFull: (n: number) =>
+      `Your land supports ${n} active contract${n === 1 ? '' : 's'}. Finish one or buy land to take on more.`,
     completed: (n: string, pay: string) => `${n} delivered: ${pay}`,
     failedMsg: (n: string, fine: string) => `${n} failed: fined ${fine}`,
     autoOn: 'Auto-accept: on',
     autoOff: 'Auto-accept: off',
     autoHint:
-      'On: every offer is accepted as it comes. Off: offers wait here for you. Finer control per rarity is in Settings.',
+      'On: offers are accepted as they come, while your land has room for another active contract; the rest wait here. Off: offers wait here for you. Finer control per rarity is in Settings.',
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
     offersBadge: (n: number) => `${n} new`,
     sideEmpty: 'No active contracts.',
@@ -676,6 +715,13 @@ export const STR = {
     fuel: (cap: number, perTile?: number) => `Fuel ${cap} · ${perTile} per tile`,
     water: (cap: number, perTile?: number) => `Water ${cap} · ${perTile} per tile`,
     wagon: (carries: string, units: number) => `${carries} · ${units} units`,
+    /** the body plans of `src/sim/body.ts`, by id */
+    plan: {
+      rigid: 'Rigid body',
+      tender: 'Engine and tender',
+      garratt: 'Garratt articulated',
+      meyer: 'Meyer articulated',
+    } as Record<string, string>,
     angle: 'Viewing angle',
     pause: 'Pause rotation',
     rotate: 'Rotate',
@@ -779,10 +825,9 @@ export const STR = {
     controls: 'Controls',
     controlsText:
       'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Track: 1-5 piece, Q / E type · U upgrade track, Shift+U downgrade · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
-    lastSave: 'Last save',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
-      'Auto-accept takes the offer at once; Ask leaves it on the board; Auto-deny drops it (free).',
+      'Auto-accept takes the offer at once while your land has room for another active contract, and otherwise leaves it on the board; Ask leaves it on the board; Auto-deny drops it (free).',
     policy: { accept: 'Auto-accept', prompt: 'Ask', deny: 'Auto-deny' } as Record<string, string>,
     slots: 'Named saves',
     slotName: 'Save name',
@@ -790,7 +835,6 @@ export const STR = {
     loadSlot: 'Load',
     deleteSlot: 'Delete',
     noSlots: 'No named saves yet. Type a name and press Save as.',
-    slotMeta: (day: number, version: number) => `day ${day} · v${version}`,
     slotSaved: (n: string) => `Saved as "${n}"`,
     saveAsTitle: 'Save game as',
     saveAsHint: 'Name for this save. An existing save with the same name is replaced.',
@@ -842,6 +886,11 @@ export const STR = {
       return `${d} day${d === 1 ? '' : 's'} ago`;
     },
     saved: (ago: string) => `saved ${ago}`,
+    /**
+     * Continue over a game being played goes back to that game, not to a save; `ago` is when it
+     * was last stored, null when it has not been.
+     */
+    inProgress: (ago: string | null) => (ago ? `in progress · last saved ${ago}` : 'in progress'),
     autosaveStatus: (on: boolean, ago: string | null) =>
       !on
         ? 'Autosave off'
@@ -986,7 +1035,7 @@ export const STR = {
     shipped: 'Shipped content',
     /** tooltip of a tab whose table this session loaded from a stored edit */
     customTab: 'Runs on your stored edit of this table',
-    setAsideTitle: 'Stored edits not applied this session. Apply or Reset removes them.',
+    setAsideTitle: 'Stored edits not applied this session. Apply or Reset deletes them for good.',
     setAsideStale: (tab: string) => `${tab}: the shipped table changed after this edit was made`,
     setAsideInvalid: (tab: string, problems: string) =>
       problems ? `${tab}: the edit is invalid (${problems})` : `${tab}: the edit is invalid`,
@@ -1234,7 +1283,6 @@ export const STR = {
     full: 'full',
     makeRoom: 'Upgrade this House to make room for more residents',
     autoUpgrade: (days: number) => `Upgrade to provide more homes (construction: ${days} days)`,
-    upgrade: (l: number, cost: string) => `Enlarge to level ${l} (${cost})`,
     maxed: 'Largest house',
     upgraded: (l: number) => `House upgraded to level ${l}`,
     finished: 'A House is finished',
@@ -1253,8 +1301,6 @@ export const STR = {
     loadRate: 'Loading',
     perWeek: (v: number) => `${v} / week`,
     perSec: (v: number) => `${v} / s`,
-    upgrade: 'Upgrade',
-    upgradeTo: (l: number, cost: string) => `Upgrade to ${l} (${cost})`,
     maxed: 'Max level',
     unlocks: (c: string) => `Next: ${c}`,
     demolish: 'Demolish',

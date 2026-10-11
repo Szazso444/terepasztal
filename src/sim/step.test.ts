@@ -241,10 +241,9 @@ function build(w: SimWorld) {
     w.houses.sync({ id: 'townhouse', x: hx, y: hy, rot: 0 }, false);
     Object.assign(w.houses.at(hx, hy)!, { progress: i < 4 ? 1 : 0.3, residents: i < 4 ? 8 : 0 });
   }
-  // the starter engines are narrow gauge: the regular line gets an Adler of its own
+  // the starter kit is narrow gauge: the regular line gets an Adler and a hopper of its own
   const loco = w.inventory.add('adler', 0);
-  const hopper = w.inventory.items.find((i) => i.defId === 'wood_hopper');
-  if (!hopper) throw new Error(`seed ${w.seed}: no starter wood hopper`);
+  const hopper = w.inventory.add('wood_hopper', 0);
   const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
   if (typeof train === 'string') throw new Error(`seed ${w.seed}: fleet.create: ${train}`);
   w.clock.time = daySeconds() - 20;
@@ -327,14 +326,22 @@ interface Scene {
   /** two more depots and a house of 1000 residents: past the diesel age's goals */
   ageUp: boolean;
   buildings: string[];
-  /** a train of an Adler and a starter hopper between the quarry and the town */
+  /** a train of an Adler and a wood hopper added for it, between the quarry and the town */
   train: boolean;
   /** game seconds until a standing deal (buy stone, sell wood) first settles; null: no deal */
   tradeIn: number | null;
   /** steps, from 0, in whose fleet.tick a contract is offered, accepted and delivered in full */
   deliveries: number[];
   steps: number;
+  /**
+   * the player takes each offer on as it comes (Auto-accept for every rarity), on land that
+   * supports `TAKEN_AT_ONCE` contracts; otherwise offers wait on the board, as by default
+   */
+  takeOffers: boolean;
 }
+
+/** Contracts a refresh took on at once when every offer was accepted by default. */
+const TAKEN_AT_ONCE = 6;
 
 const BUILDINGS = ['windmill', 'kiln', 'grinder'] as const;
 
@@ -376,6 +383,7 @@ function genScene(rng: Rng, steps: [number, number] = [100, 700]): Scene {
     tradeIn: rng.chance(0.5) ? Math.round(rng.range(0, 3 * day) * 100) / 100 : null,
     deliveries,
     steps: n,
+    takeOffers: rng.chance(0.6),
   };
 }
 
@@ -386,7 +394,15 @@ function* shrinkScene(s: Scene): Iterable<Scene> {
   for (const houses of shrinkArray(s.houses)) yield { ...s, houses };
   for (const deliveries of shrinkArray(s.deliveries)) yield { ...s, deliveries };
   for (const buildings of shrinkArray(s.buildings)) yield { ...s, buildings };
-  for (const k of ['train', 'ageUp', 'farm', 'second', 'famine', 'staleLastDay'] as const)
+  for (const k of [
+    'train',
+    'ageUp',
+    'farm',
+    'second',
+    'famine',
+    'staleLastDay',
+    'takeOffers',
+  ] as const)
     if (s[k]) yield { ...s, [k]: false };
   if (s.tradeIn !== null) yield { ...s, tradeIn: null };
   if (s.completedToday) yield { ...s, completedToday: 0 };
@@ -450,7 +466,7 @@ function stage(s: Scene): Staged {
     w.stock.add(id, Math.round(n * rules.startStock));
   if (s.train) {
     const loco = w.inventory.add('adler', 0);
-    const hopper = w.inventory.items.find((i) => i.defId === 'wood_hopper')!;
+    const hopper = w.inventory.add('wood_hopper', 0);
     const t = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, town.id]);
     if (typeof t === 'string') throw new Error(`fleet.create: ${t}`);
   }
@@ -467,6 +483,16 @@ function stage(s: Scene): Staged {
   if (s.tradeIn !== null)
     w.trade.load({ deals: { stone: 5, wood: -3 }, nextAt: w.clock.time + s.tradeIn });
   w.contracts.completedToday = s.completedToday;
+  // set on every call, as daySeconds is: the scene alone decides it, whatever ran before it
+  rules.contractOfferCount = s.takeOffers ? TAKEN_AT_ONCE : DEFAULT_RULES.contractOfferCount;
+  if (s.takeOffers) {
+    const answer = w.contracts.onEvent;
+    w.contracts.onEvent = (e) => {
+      answer?.(e);
+      if (e.kind === 'offered' && e.contract.status === 'offer')
+        w.contracts.accept(e.contract, w.clock.time);
+    };
+  }
 
   const log: string[] = [];
   let season: Season | null = null;
@@ -501,12 +527,18 @@ function stage(s: Scene): Staged {
 }
 
 /**
- * A contract offered and accepted at once (DEFAULT_SETTINGS accepts every rarity) and delivered
- * in full through fleet.onDelivery, as a train unloading at its destination would.
+ * A contract delivered in full through fleet.onDelivery, as a train unloading at its destination
+ * would: one offered and accepted at once (by the player, as an offer waits for them by default),
+ * or the active one due first when the land holds no more contracts.
  */
 function deliverContract(w: SimWorld) {
-  const c = w.contracts.generate(w.clock.time, true);
-  if (!c || c.status !== 'active') return;
+  const fresh = w.contracts.generate(w.clock.time, true);
+  if (fresh?.status === 'offer') w.contracts.accept(fresh, w.clock.time);
+  const c =
+    fresh?.status === 'active'
+      ? fresh
+      : w.contracts.active.sort((a, b) => a.expires - b.expires || a.id - b.id)[0];
+  if (!c) return;
   const dest = w.builder.stationById(c.destId);
   if (!dest) return;
   const train = undefined as unknown as Train; // the board does not read it
@@ -759,6 +791,23 @@ describe('SimStep: one step', () => {
           } = w;
           const play = ctx.mode === 'play';
           let completedAtEnd = -1;
+          // the works under way advance once a step, by the step's game time, before anything else
+          builder.tickWorks = watched(
+            calls,
+            'builder.tickWorks',
+            builder.tickWorks.bind(builder),
+            (dt) => {
+              expect(dt, 'builder.tickWorks: gdt').toBe(gdt);
+            },
+          );
+          houses.tickWorks = watched(
+            calls,
+            'houses.tickWorks',
+            houses.tickWorks.bind(houses),
+            (dt) => {
+              expect(dt, 'houses.tickWorks: gdt').toBe(gdt);
+            },
+          );
           stock.tick = watched(calls, 'stock.tick', stock.tick.bind(stock), (dt) => {
             expect(dt, 'stock.tick: gdt').toBe(gdt);
             expect(stock.population, 'population').toBe(houses.residentsTotal());
@@ -853,6 +902,8 @@ describe('SimStep: one step', () => {
 
           const ticket = turns && completedAtEnd > 0;
           expect(calls, 'calls').toEqual([
+            'builder.tickWorks',
+            'houses.tickWorks',
             'stock.tick',
             'houses.tick',
             ...(cityDue ? ['refreshCity'] : []),

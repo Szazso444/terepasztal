@@ -17,7 +17,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 17;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -54,14 +54,24 @@ export interface SaveParts {
   };
   /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
   track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
+  /**
+   * v15: each with the upgrade under way (`work`), null for none; v16: `rot` one of the four
+   * rotations, 0 to 3
+   */
   stations: StationJSON[];
+  /**
+   * as `Train.toJSON` writes them; v14: what each was doing; v17: whether the escape it runs is an
+   * idle train making way (`aside`), the way it runs (`way`), what a waiting train waits for
+   * (`blockedBy`, `want`), its note (`note`) and when it may next look for a way aside and a jam
+   * it is in be searched again (`asideRetry`, `recoveryRetry`)
+   */
   trains: unknown[];
   contracts: unknown;
   inventory: unknown;
   gacha: unknown;
   camera: { x: number; y: number; zoomIndex: number };
   lastDay: number;
-  /** v2: signals and water towers [x, y, id, rot] */
+  /** v2: signals, services and houses [x, y, id, rot] (rot below the decor's `rotations`) */
   decor: [number, number, string, number][];
   /** v9: electrified track [x, y, kind] */
   wires: [number, number, string][];
@@ -73,7 +83,10 @@ export interface SaveParts {
   rules: Partial<Rules>;
   /** v4: global resources */
   stockpile: unknown;
-  /** v4: processing buildings, as `buildingToJSON` writes them */
+  /**
+   * v4: processing buildings, as `buildingToJSON` writes them (v15: the upgrade under way; v16:
+   * the rotation)
+   */
   buildings: BuildingJSON[];
   /** v5: owned chunks */
   regions: boolean[];
@@ -85,7 +98,10 @@ export interface SaveParts {
   trade: unknown;
   /** v10: known crafting recipes, craft statistics and an unfinished recipe draw */
   crafting: unknown;
-  /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
+  /**
+   * v9: townhouses (level, residents, construction) plus town traffic and first-train marks;
+   * v15: each house's upgrade under way
+   */
   houses: HousesJSON;
   /** v9: production-chain mode the game was started with */
   supply: SupplyMode;
@@ -143,6 +159,11 @@ export interface Settings {
   autoContracts?: boolean;
   /** v9: what happens to a new offer of each rarity */
   contractPolicy?: Record<ContractRarity, ContractPolicy>;
+  /**
+   * Which default `contractPolicy` was written under: absent (1) when every offer was accepted
+   * by default, `CONTRACT_POLICY_VERSION` once offers wait for the player by default.
+   */
+  contractPolicyVersion?: number;
   /** v10: signalling level (auto keeps the claims only) */
   signalling?: SignalLevel;
 }
@@ -151,22 +172,48 @@ export const CONTRACT_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legenda
 export type ContractRarity = (typeof CONTRACT_RARITIES)[number];
 /** accept: taken as it appears; prompt: left on the board; deny: dropped (free before acceptance) */
 export type ContractPolicy = 'accept' | 'prompt' | 'deny';
+/** What a new offer of any rarity meets unless the player chose otherwise: it waits for them. */
+export const DEFAULT_CONTRACT_POLICY: ContractPolicy = 'prompt';
+/** `Settings.contractPolicyVersion` of settings written since offers wait by default. */
+export const CONTRACT_POLICY_VERSION = 2;
 export function uniformContractPolicy(p: ContractPolicy): Record<ContractRarity, ContractPolicy> {
   return { common: p, uncommon: p, rare: p, epic: p, legendary: p };
 }
-/** Policy for a rarity, with the retired boolean and missing entries filled in. */
+/** Policy for a rarity; a missing entry is the default. */
 export function contractPolicyFor(s: Settings, rarity: ContractRarity): ContractPolicy {
-  const fallback: ContractPolicy = s.autoContracts === false ? 'prompt' : 'accept';
-  return s.contractPolicy?.[rarity] ?? fallback;
+  return s.contractPolicy?.[rarity] ?? DEFAULT_CONTRACT_POLICY;
 }
 /**
- * Turn the retired `autoContracts` flag into a per-rarity policy (true → accept, false → prompt).
- * Runs on the stored object before defaults are merged in, so a missing policy is still visible.
+ * Turn the retired `autoContracts` flag into a per-rarity policy (true → accept, false → prompt),
+ * as settings that travelled with a version 8 save had it.
  */
-export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+function retireAutoContracts(s: Partial<Settings>) {
   if (!s.contractPolicy && s.autoContracts !== undefined)
     s.contractPolicy = uniformContractPolicy(s.autoContracts === false ? 'prompt' : 'accept');
   delete s.autoContracts;
+}
+/**
+ * Bring stored settings to the current shape. Runs on the stored object before defaults are
+ * merged in, so a missing policy is still visible. The retired `autoContracts` flag becomes a
+ * per-rarity policy; then, once, settings written while every offer was accepted by default move
+ * to the new default: a policy that accepts every rarity (a missing entry read as accept then),
+ * or none at all, becomes `DEFAULT_CONTRACT_POLICY` for every rarity. Any other policy is the
+ * player's own choice and stays, its missing entries filled with the accept they meant.
+ */
+export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+  retireAutoContracts(s);
+  const v = s.contractPolicyVersion;
+  if (typeof v === 'number' && v >= CONTRACT_POLICY_VERSION) return s;
+  const old: Partial<Record<ContractRarity, unknown>> = isRecord(s.contractPolicy)
+    ? s.contractPolicy
+    : {};
+  const policy = Object.fromEntries(
+    CONTRACT_RARITIES.map((r) => [r, old[r] ?? 'accept']),
+  ) as Record<ContractRarity, ContractPolicy>;
+  s.contractPolicy = CONTRACT_RARITIES.every((r) => policy[r] === 'accept')
+    ? uniformContractPolicy(DEFAULT_CONTRACT_POLICY)
+    : policy;
+  s.contractPolicyVersion = CONTRACT_POLICY_VERSION;
   return s;
 }
 export const DEFAULT_SETTINGS: Settings = {
@@ -181,7 +228,8 @@ export const DEFAULT_SETTINGS: Settings = {
   showFps: false,
   weather: true,
   advisor: true,
-  contractPolicy: uniformContractPolicy('accept'),
+  contractPolicy: uniformContractPolicy(DEFAULT_CONTRACT_POLICY),
+  contractPolicyVersion: CONTRACT_POLICY_VERSION,
 };
 
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
@@ -323,8 +371,12 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 7,
-    note: 'trade desk opened empty: no standing deals, fuel at its base price',
-    run: (j) => (j.trade = j.trade ?? { deals: {}, nextAt: 0, fuelMul: 1, driftDay: 0 }),
+    // the route modes were renamed while saves were v7, so a v7 file may still hold the old names
+    note: 'trade desk opened empty: no standing deals, fuel at its base price; routing modes mapped to the new names',
+    run: (j) => {
+      j.trade = j.trade ?? { deals: {}, nextAt: 0, fuelMul: 1, driftDay: 0 };
+      for (const t of j.trains) if (isRecord(t)) t.mode = routeMode(t);
+    },
   },
   {
     from: 8,
@@ -336,7 +388,7 @@ export const MIGRATIONS: Migration[] = [
         c.trainId = c.trainId ?? null;
         delete c.reputation;
       }
-      if (j.settings) migrateSettings(j.settings);
+      if (j.settings) retireAutoContracts(j.settings);
       j.supply = j.supply ?? 'simple';
       if (j.economy) {
         j.economy.tier = Math.max(0, Math.min(2, j.economy.tier ?? 0));
@@ -423,6 +475,72 @@ export const MIGRATIONS: Migration[] = [
     run: (j) => {
       j.track = convertOneTileRegular(j.track);
       grantStarters(j, V13_STARTERS);
+    },
+  },
+  {
+    from: 13,
+    note: 'trains stand without a route and look for one, as every load left them before, with no escape to back off along, free to be asked to back off again, no stop ruled out and no service to head for, and look for fuel or water at once; from now on a save keeps what each train was doing',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        t.state = t.state ?? 'noRoute';
+        t.stateTime = t.stateTime ?? 10;
+        t.speed = t.speed ?? 0;
+        t.station = t.station ?? null;
+        t.holding = t.holding ?? false;
+        t.retreat = t.retreat ?? null;
+        t.blockedTime = t.blockedTime ?? 0;
+        t.yieldCount = t.yieldCount ?? 0;
+        t.yieldUntil = t.yieldUntil ?? 0;
+        t.badTargets = t.badTargets ?? [];
+        t.serviceStop = t.serviceStop ?? null;
+        t.nextFuelCheck = t.nextFuelCheck ?? 0;
+      }
+    },
+  },
+  {
+    from: 14,
+    note: 'no station, works or house was being upgraded: upgrades take game time from now on and close the building while they run, and a save keeps the ones under way',
+    run: (j) => {
+      for (const s of j.stations) if (isRecord(s)) s.work = s.work ?? null;
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the work is the sixth place of the tuple: a level left out before it is the 1 it meant
+        if (b.length < 5) b.push(1);
+        b[5] = b[5] ?? null;
+      }
+      const list: unknown = isRecord(j.houses) ? j.houses.list : undefined;
+      if (Array.isArray(list)) for (const h of list) if (isRecord(h)) h.work = h.work ?? null;
+    },
+  },
+  {
+    from: 15,
+    note: 'every works faces the way it was drawn (rotation 0); from now on stations, works and houses are placed in one of four rotations, and a save keeps each one',
+    run: (j) => {
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the rotation is the seventh place of the tuple: a level or a work left out before it
+        // is the 1 and the none it meant
+        if (b.length < 5) b.push(1);
+        if (b.length < 6) b.push(null);
+        b[6] = b[6] ?? 0;
+      }
+    },
+  },
+  {
+    from: 16,
+    note: 'no train was saved making way, nor with its way, what it waits for, its note or when it may next try a way aside or out of a jam: a train saved pulling aside waits where it pulls in to go on, a train under way plans its path again, a waiting train looks again, an idle train in the way and a jam are tried again at once, and every note starts blank, as every load had it before; from now on a save keeps an idle train making way, and it stays idle where it parks, and every train runs on along its way, waits for what it waited for, tries again when it would have and shows its note',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        t.aside = t.aside ?? false;
+        t.way = t.way ?? null;
+        t.blockedBy = t.blockedBy ?? null;
+        t.want = t.want ?? null;
+        t.note = t.note ?? '';
+        t.asideRetry = t.asideRetry ?? 0;
+        t.recoveryRetry = t.recoveryRetry ?? 0;
+      }
     },
   },
 ];
@@ -623,14 +741,18 @@ export function clearSave() {
     /* ignore */
   }
 }
+/** The defaults overlaid by `stored`, sharing no object with `DEFAULT_SETTINGS`. */
+function settingsFrom(stored: Partial<Settings>): Settings {
+  const s = { ...DEFAULT_SETTINGS, ...stored };
+  if (s.contractPolicy) s.contractPolicy = { ...s.contractPolicy };
+  return s;
+}
 export function readSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw
-      ? { ...DEFAULT_SETTINGS, ...migrateSettings(JSON.parse(raw) as Partial<Settings>) }
-      : { ...DEFAULT_SETTINGS };
+    return settingsFrom(raw ? migrateSettings(JSON.parse(raw) as Partial<Settings>) : {});
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    return settingsFrom({});
   }
 }
 export function writeSettings(s: Settings) {
