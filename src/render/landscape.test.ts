@@ -347,12 +347,20 @@ class PaintWorker extends StubWorker {
 /** The clock the landscape reads, and its chunk textures, which need a DOM to build. */
 const time = { now: 0 };
 const build = { failing: 0, built: 0 };
+/** What each stand-in texture shows: the chunk, and the map version and scale it was painted at. */
+const shows = new WeakMap<Texture, JobMessage>();
+type ChunkInside = {
+  base: Texture;
+  sharp: Texture | null;
+  sprite: { texture: Texture };
+};
 type Inside = {
-  slots: { worker: PaintWorker; job: JobMessage | null }[];
+  slots: { worker: PaintWorker; loaded: boolean; job: JobMessage | null }[];
   version: number;
   pending: Set<string>;
+  sharpPending: Set<string>;
   loaded: boolean;
-  chunks: Map<string, unknown>;
+  chunks: Map<string, ChunkInside>;
 };
 const inside = (landscape: Landscape) => landscape as unknown as Inside;
 
@@ -362,15 +370,33 @@ function paintWorld() {
   build.failing = build.built = 0;
   const s = setup(() => new PaintWorker());
   const workers = s.spawned as PaintWorker[];
+  /** Tiles edited since the last frame. */
+  const edits: { x: number; y: number }[] = [];
+  /** Per chunk, the map version of the last edit inside it: its picture may be no older. */
+  const due = new Map<string, number>();
   return {
     ...s,
     workers,
+    due,
     /** The pool in use: the last two workers started. */
     current: () => workers.slice(-2),
+    /** Turns a tile from grass to hill or back and reports it, as the editor's brush does. */
+    edit: (x: number, y: number) => {
+      const i = y * s.map.w + x;
+      s.map.terrain[i] = s.map.terrain[i] === Terrain.Hill ? Terrain.Grass : Terrain.Hill;
+      s.landscape.invalidate(x, y);
+      edits.push({ x, y });
+    },
     /** One frame, `ms` after the last. */
     frame: (ms = 16) => {
       time.now += ms;
-      return s.landscape.flush();
+      const before = inside(s.landscape).version;
+      const changed = s.landscape.flush();
+      const version = inside(s.landscape).version;
+      // A frame that raised the version took every edit before it; one that did not had failed.
+      for (const { x, y } of edits.splice(0))
+        if (version !== before) due.set(`${x - (x % 8)},${y - (y % 8)}`, version);
+      return changed;
     },
   };
 }
@@ -393,15 +419,17 @@ function paintedWorld() {
 }
 
 /**
- * Why the painter is stalled, or null when it is not. Loaded, not failed and with chunks pending,
- * a worker holds a job for the current map version, and every job out is one its worker will
- * still answer (or one it lost, which the watchdog catches). The one exception is right after the
- * map changed: a worker cannot drop a paint it has begun, so every worker may still be on a job of
- * the older version, and its answer is what hands out the next one.
+ * Why the painter is stalled, or null when it is not. While it is loaded and not failed:
+ * - every job out is one its worker will still answer (or one it lost, which the watchdog catches);
+ * - with chunks pending, a worker holds a job for the current map version. The one exception is
+ *   right after the map changed: a worker cannot drop a paint it has begun, so every loaded worker
+ *   may still be on a job of the older version, and its answer is what hands out the next one;
+ * - no loaded worker sits idle while a chunk waits that no worker is painting for the current map,
+ *   or while a close-view copy waits to be handed out.
  */
 function stall(landscape: Landscape) {
   const l = inside(landscape);
-  if (!l.loaded || landscape.failed || !l.pending.size) return null;
+  if (!l.loaded || landscape.failed) return null;
   const out = l.slots.filter((slot) => slot.job);
   for (const { worker, job } of out) {
     const same = (m: Record<string, unknown>) =>
@@ -410,9 +438,57 @@ function stall(landscape: Landscape) {
       return `job ${job!.id}@${job!.version} is out, but its worker will never answer it`;
   }
   const current = out.some(({ job }) => job!.version === l.version);
-  const older = out.some(({ job }) => job!.version !== l.version);
-  if (current || older) return null;
-  return `${l.pending.size} chunks pending and no job out (map version ${l.version})`;
+  const allOnOlder = l.slots.every((slot) => !slot.loaded || slot.job);
+  if (l.pending.size && !current && !allOnOlder)
+    return `${l.pending.size} chunks pending and no job out for map version ${l.version}`;
+  if (l.slots.some((slot) => slot.loaded && !slot.job)) {
+    const painting = (id: string) =>
+      out.some(({ job }) => job!.id === id && job!.scale === 1 && job!.version === l.version);
+    const waiting = [...l.pending].find((id) => !painting(id)) ?? [...l.sharpPending][0];
+    if (waiting !== undefined)
+      return `a worker is idle while chunk ${waiting} waits (map version ${l.version})`;
+  }
+  return null;
+}
+/**
+ * Every chunk shows a picture painted for it at scale 1, for a map no older than the last edit
+ * inside it.
+ */
+function expectFresh(w: World) {
+  const l = inside(w.landscape);
+  for (const [id, c] of l.chunks) {
+    const shown = shows.get(c.base);
+    expect(shown, `chunk ${id} is painted`).toBeDefined();
+    expect(shown, `chunk ${id}`).toMatchObject({ id, scale: 1 });
+    expect(shown!.version, `map version of chunk ${id}`).toBeGreaterThanOrEqual(w.due.get(id) ?? 0);
+  }
+}
+/** The whole 16 x 16 map, as the camera's world rectangle. */
+const VIEW = { x: -600, y: -200, w: 1200, h: 900 };
+/**
+ * Holds a close view over the whole map, focused every frame as the world renderer does, and lets
+ * the pool in use answer everything, a frame a second, until every close-view copy is painted or
+ * the landscape fails.
+ */
+function settleSharp(w: World) {
+  for (let i = 0; i < 100; i++) {
+    w.landscape.focus(VIEW, 2);
+    if (w.landscape.sharpReady || w.landscape.failed) return;
+    for (const worker of w.current()) worker.drain();
+    expect(stall(w.landscape)).toBeNull();
+    w.frame(1000);
+    expect(stall(w.landscape)).toBeNull();
+  }
+}
+/** Every chunk shows a close-view copy painted for it at the current map version. */
+function expectSharp(w: World) {
+  const l = inside(w.landscape);
+  expect(w.landscape.sharpReady, 'sharpReady').toBe(true);
+  for (const [id, c] of l.chunks) {
+    const shown = c.sharp ? shows.get(c.sharp) : undefined;
+    expect(shown, `close-view copy of chunk ${id}`).toEqual({ id, version: l.version, scale: 2 });
+    expect(c.sprite.texture, `chunk ${id} shows its close-view copy`).toBe(c.sharp);
+  }
 }
 /**
  * Lets the pool in use answer everything and runs a frame a second, checking for a stall after
@@ -431,16 +507,18 @@ describe('landscape painter', () => {
   beforeEach(() => {
     vi.spyOn(performance, 'now').mockImplementation(() => time.now);
     vi.spyOn(
-      Landscape.prototype as unknown as { chunkTexture(): Texture },
+      Landscape.prototype as unknown as { chunkTexture(data: JobMessage): Texture },
       'chunkTexture',
-    ).mockImplementation(() => {
+    ).mockImplementation((data: JobMessage) => {
       if (build.failing > 0) {
         build.failing--;
         // What the canvas path throws when getContext('2d') returns null.
         throw new TypeError("Cannot read properties of null (reading 'putImageData')");
       }
       build.built++;
-      return new Texture();
+      const texture = new Texture();
+      shows.set(texture, { id: data.id, version: data.version, scale: data.scale });
+      return texture;
     });
   });
 
@@ -602,21 +680,202 @@ describe('landscape painter', () => {
         const w = paintWorld();
         for (const step of steps) {
           act(w, step);
-          const why = stall(w.landscape);
+          const why = stall(w.landscape) ?? lifecycle(w);
           if (why) throw new Error(`after ${JSON.stringify(step)}: ${why}`);
         }
         settle(w);
+        expect(lifecycle(w)).toBeNull();
         expect(w.landscape.ready || w.landscape.failed, 'neither painted nor failed').toBe(true);
-        if (w.landscape.ready)
+        if (w.landscape.ready) {
           for (const id of inside(w.landscape).chunks.keys()) {
             const [x, y] = id.split(',').map(Number);
             expect(w.landscape.isPainted(x, y), `chunk ${id}`).toBe(true);
           }
+          expectFresh(w);
+          settleSharp(w);
+          expect(lifecycle(w)).toBeNull();
+          if (!w.landscape.failed) expectSharp(w);
+        }
+        if (w.landscape.failed) {
+          expect(w.workers.every((worker) => worker.terminated)).toBe(true);
+          expect(w.landscape.root.visible).toBe(false);
+        }
       },
       { shrink: (steps) => shrinkArray(steps) },
     );
   });
+
+  it('comes back from any one failure painted, and with none never restarts or logs', () => {
+    const warnings = vi.mocked(console.warn);
+    forAll(
+      generateQuiet,
+      (steps) => {
+        const logged = errors.mock.calls.length + warnings.mock.calls.length;
+        const w = paintWorld();
+        for (const step of steps) {
+          act(w, step);
+          const why = stall(w.landscape) ?? lifecycle(w);
+          if (why) throw new Error(`after ${JSON.stringify(step)}: ${why}`);
+        }
+        settle(w);
+        expect(w.landscape.ready, 'painted').toBe(true);
+        expectFresh(w);
+        settleSharp(w);
+        expectSharp(w);
+        expect(lifecycle(w)).toBeNull();
+        expect(w.states()).not.toContain('failed');
+        const faults = steps.filter((s) => (FAULTS as readonly string[]).includes(s.do)).length;
+        expect(w.workers.length, 'workers started').toBeLessThanOrEqual(faults ? 4 : 2);
+        if (!faults)
+          expect(errors.mock.calls.length + warnings.mock.calls.length, 'lines logged').toBe(
+            logged,
+          );
+      },
+      { shrink: (steps) => shrinkArray(steps) },
+    );
+  });
+
+  it('replaces the pool when handing the map again throws, and every chunk is painted', () => {
+    const w = paintedWorld();
+    const [first] = w.current();
+    first.dropMap = 1;
+    w.edit(2, 2);
+    w.frame();
+    // The worker missed the map and turns its job away; handing it the map again throws.
+    first.throwOnMap = 1;
+    first.drain();
+    expect(first.terminated).toBe(true);
+    expect(w.workers).toHaveLength(4);
+    expect(w.landscape.status.state).toBe('active');
+    expect(errors.mock.calls.some((call) => String(call[0]).includes('could not be handed'))).toBe(
+      true,
+    );
+    expect(stall(w.landscape)).toBeNull();
+    settle(w);
+    expect(w.landscape.ready).toBe(true);
+    expectFresh(w);
+  });
+
+  it('never counts a chunk a worker turned away as painted: it shows the new map', () => {
+    const w = paintedWorld();
+    for (const worker of w.current()) worker.dropMap = 1;
+    // One tile in each chunk, so every chunk must show this map version or a later one.
+    for (const [x, y] of CHUNKS) w.edit(x + 2, y + 2);
+    w.frame();
+    settle(w);
+    expect(w.landscape.ready).toBe(true);
+    expect(w.workers).toHaveLength(2);
+    expectFresh(w);
+  });
+
+  it('gives a worker that turned away a job of an older map its next job at once', () => {
+    const w = paintedWorld();
+    const [first] = w.current();
+    first.dropMap = 1;
+    w.edit(2, 2);
+    w.frame();
+    // The map changes again while both workers are on jobs of the version before.
+    w.edit(12, 12);
+    w.frame();
+    expect(inside(w.landscape).version).toBe(2);
+    first.step(); // version 1 is lost
+    first.step(); // its job of version 1 is turned away
+    expect(inside(w.landscape).slots[0].job).toMatchObject({ version: 2, scale: 1 });
+    expect(stall(w.landscape)).toBeNull();
+    settle(w);
+    expect(w.landscape.ready).toBe(true);
+    expectFresh(w);
+  });
+
+  it('paints a close-view copy a worker turned away once the view is focused again', () => {
+    const w = paintedWorld();
+    settleSharp(w);
+    expectSharp(w);
+    const [first] = w.current();
+    first.dropMap = 1;
+    w.edit(2, 2);
+    w.frame();
+    w.landscape.focus(VIEW, 2);
+    // The chunks show close-view copies, so those are repainted first.
+    expect(inside(w.landscape).slots[0].job).toMatchObject({ scale: 2, version: 1 });
+    first.drain();
+    settleSharp(w);
+    expectSharp(w);
+    expect(w.workers).toHaveLength(2);
+  });
+
+  it('asks again for the close-view copies the old pool was painting, after a restart', () => {
+    const w = paintedWorld();
+    w.landscape.focus(VIEW, 2);
+    expect(inside(w.landscape).slots.map((slot) => slot.job?.scale)).toEqual([2, 2]);
+    w.current()[0].crash({ message: 'boom' });
+    expect(w.workers).toHaveLength(4);
+    settleSharp(w);
+    expectSharp(w);
+  });
+
+  it(`restarts at the first frame a lost job has waited over ${JOB_TIMEOUT_MS / 1000} s of running time`, () => {
+    forAll(
+      // Up to 80 frames after the job: about half the cases cross the limit.
+      (rng) => ({
+        before: Array.from({ length: rng.int(0, 40) }, () => rng.pick(GAPS)),
+        after: Array.from({ length: rng.int(1, 80) }, () => rng.pick(GAPS)),
+      }),
+      ({ before, after }) => {
+        const w = paintWorld();
+        const [first] = w.current();
+        first.step(); // the sheet loads; no chunk yet, so no job
+        // Running time passes before the job goes out, and must not count against it.
+        for (const ms of before) w.frame(ms);
+        expect(w.workers).toHaveLength(2);
+        first.loseJobs = 1;
+        w.landscape.add(0, 0, 8, 8);
+        first.drain();
+        expect(first.lost).toHaveLength(1);
+        let waited = 0;
+        after.forEach((ms, i) => {
+          w.frame(ms);
+          // The oracle: each frame adds its gap, capped at a second.
+          waited += Math.min(ms, FRAME_CAP_MS);
+          const restarted = waited > JOB_TIMEOUT_MS;
+          expect(w.workers.length, `after frame ${i}, ${waited} ms`).toBe(restarted ? 4 : 2);
+          expect(w.landscape.status.state).toBe('active');
+        });
+      },
+      {
+        *shrink({ before, after }) {
+          // Fewer frames, then gaps of exactly the cap, which read most easily.
+          const gap = (ms: number) => (ms === FRAME_CAP_MS ? [] : [FRAME_CAP_MS]);
+          for (const b of shrinkArray(before, gap)) yield { before: b, after };
+          for (const a of shrinkArray(after, gap)) yield { before, after: a };
+        },
+      },
+    );
+  });
 });
+
+/** The most one frame adds to a job's waiting time: FRAME_LIMIT_MS in landscape.ts. */
+const FRAME_CAP_MS = 1000;
+/** Frame gaps: the same millisecond, ordinary frames, either side of the cap, and long pauses. */
+const GAPS = [0, 16, 500, 999, 1000, 1001, 4000, 600_000];
+const ORDER = ['loading', 'active', 'failed'];
+/**
+ * Why the status or the pools broke their contract, or null: the status only moves forward from
+ * loading to active to failed (a restart changes nothing), at most one fresh pool is started, and
+ * a failed landscape holds no worker.
+ */
+function lifecycle(w: World) {
+  const states = w.states();
+  if (
+    states[0] !== 'loading' ||
+    states.some((s, i) => i && ORDER.indexOf(s) <= ORDER.indexOf(states[i - 1]))
+  )
+    return `status went ${states.join(' -> ')}`;
+  if (w.workers.length > 4) return `${w.workers.length / 2} pools started`;
+  if (w.landscape.failed && inside(w.landscape).slots.length)
+    return `failed with ${inside(w.landscape).slots.length} workers`;
+  return null;
+}
 
 /** One thing that happens to the painter: a worker answering, the map changing, a failure. */
 type Step =
@@ -631,28 +890,39 @@ const EVENTS = ['answer', 'answer', 'answer', 'answer', 'add', 'edit', 'frame', 
 const FAULTS = ['textureThrows', 'mapThrows', 'jobThrows', 'dropMap', 'lose', 'crash'] as const;
 /** Mostly ordinary events, with a fault one step in sixteen, so cases end painted as well as failed. */
 function generateSteps(rng: Rng): Step[] {
-  return Array.from({ length: rng.int(5, 80) }, (): Step => {
-    const kind = rng.chance(1 / 16) ? rng.pick(FAULTS) : rng.pick(EVENTS);
-    switch (kind) {
-      case 'answer':
-        return { do: kind, worker: rng.int(0, 1), count: rng.int(1, 4) };
-      case 'add':
-        return { do: kind, chunk: rng.int(0, CHUNKS.length - 1) };
-      case 'edit':
-        return { do: kind, x: rng.int(0, 15), y: rng.int(0, 15) };
-      case 'frame':
-        return { do: kind, ms: rng.pick([16, 1000, 20_000, 600_000]) };
-      case 'focus':
-        return { do: kind, close: rng.chance(0.5) };
-      case 'textureThrows':
-        return { do: kind };
-      default:
-        return { do: kind, worker: rng.int(0, 1) };
-    }
-  });
+  return Array.from({ length: rng.int(5, 80) }, () =>
+    stepOf(rng, rng.chance(1 / 16) ? rng.pick(FAULTS) : rng.pick(EVENTS)),
+  );
+}
+/**
+ * Up to thirty ordinary events, so no answered job can wait out the watchdog (thirty frames add at
+ * most JOB_TIMEOUT_MS), and in three cases of four one fault among them.
+ */
+function generateQuiet(rng: Rng): Step[] {
+  const steps = Array.from({ length: rng.int(5, 30) }, () => stepOf(rng, rng.pick(EVENTS)));
+  if (rng.chance(3 / 4)) steps.splice(rng.int(0, steps.length), 0, stepOf(rng, rng.pick(FAULTS)));
+  return steps;
+}
+function stepOf(rng: Rng, kind: (typeof EVENTS)[number] | (typeof FAULTS)[number]): Step {
+  switch (kind) {
+    case 'answer':
+      return { do: kind, worker: rng.int(0, 1), count: rng.int(1, 4) };
+    case 'add':
+      return { do: kind, chunk: rng.int(0, CHUNKS.length - 1) };
+    case 'edit':
+      return { do: kind, x: rng.int(0, 15), y: rng.int(0, 15) };
+    case 'frame':
+      return { do: kind, ms: rng.pick([16, 1000, 20_000, 600_000]) };
+    case 'focus':
+      return { do: kind, close: rng.chance(0.5) };
+    case 'textureThrows':
+      return { do: kind };
+    default:
+      return { do: kind, worker: rng.int(0, 1) };
+  }
 }
 function act(w: World, step: Step) {
-  const { landscape, map } = w;
+  const { landscape } = w;
   switch (step.do) {
     case 'answer':
       for (let i = 0; i < step.count; i++) w.current()[step.worker].step();
@@ -662,18 +932,15 @@ function act(w: World, step: Step) {
       landscape.add(x, y, 8, 8);
       return;
     }
-    case 'edit': {
-      const i = step.y * map.w + step.x;
-      map.terrain[i] = map.terrain[i] === Terrain.Hill ? Terrain.Grass : Terrain.Hill;
-      landscape.invalidate(step.x, step.y);
+    case 'edit':
+      w.edit(step.x, step.y);
       return;
-    }
     case 'frame':
       w.frame(step.ms);
       return;
     case 'focus':
       // The whole map in view, close enough for sharp copies or not.
-      landscape.focus({ x: -600, y: -200, w: 1200, h: 900 }, step.close ? 2 : 1);
+      landscape.focus(VIEW, step.close ? 2 : 1);
       return;
     case 'textureThrows':
       build.failing++;
