@@ -5,6 +5,8 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { content, validateContent, DEFAULT_CONTENT, type ContentBundle } from '../data/content';
 import { STR } from '../strings';
+import type { Rng } from '../engine/rng';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { MAX_LEVEL, levelCap, ageOfLevel } from './levels';
 import { LAST_AGE, ageDef } from './ages';
 import { Builder } from './build';
@@ -292,7 +294,7 @@ describe('levels by age', () => {
     expect(farm.level).toBe(MAX_LEVEL);
     expect(w.builder.canUpgrade(farm)).toMatchObject({ ok: false, reason: STR.station.maxed });
     const mill = works(w.builder, 'windmill', 12, 10);
-    while (w.builder.upgradeBuilding(mill));
+    upgradeToTop(w.builder, mill);
     expect(buildingLevel(mill)).toBe(MAX_LEVEL);
     expect(worksMaxLevel(mill)).toBe(MAX_LEVEL);
     expect(buildingUpgradeCost(mill)).toBeNull();
@@ -305,7 +307,7 @@ describe('levels by age', () => {
     const bridge = works(w.builder, 'bridge_wood', 14, 10);
     const base = bridgeCapacity(bridge)!;
     expect(w.builder.canUpgradeBuilding(bridge).ok).toBe(true);
-    while (w.builder.upgradeBuilding(bridge));
+    upgradeToTop(w.builder, bridge);
     expect(buildingLevel(bridge)).toBe(BRIDGE_MAX_LEVEL);
     expect(BRIDGE_MAX_LEVEL).toBe(4);
     expect(worksMaxLevel(bridge)).toBe(4);
@@ -632,5 +634,389 @@ describe('a works with a last age', () => {
     expect(BUILDING_DEFS.filter((d) => d.lastTier !== undefined).map((d) => d.id)).toEqual([
       'kiln',
     ]);
+  });
+});
+
+/** A works' first age as the content editor may leave it: a number, or none (null). */
+function withTier(id: string, tier: number | null, fn: () => void) {
+  const def = BUILDING_DEFS.find((d) => d.id === id)! as { tier?: number };
+  const before = def.tier;
+  if (tier === null) delete def.tier;
+  else def.tier = tier;
+  try {
+    fn();
+  } finally {
+    def.tier = before;
+  }
+}
+
+/** The parts of a building definition the oracle reads. */
+interface OracleDef {
+  bridge?: unknown;
+  tier?: number;
+  lastTier?: unknown;
+}
+
+/**
+ * What the rules say about upgrading a works, worked out from its data one age at a time, never
+ * through `levelCap`, `worksUpgradeMax` or `levelLocked`: a works has one level in the age it
+ * appears in and gains one in each age after it, up to its last age when it has one (a whole
+ * number: anything else is no last age) and to six; a bridge has four and ignores the ages.
+ */
+const oracle = {
+  /** The level a works whose first age is `first` has reached once age `through` is over. */
+  levelAfter(first: number, through: number) {
+    let level = 1;
+    for (let age = first + 1; age <= through; age++) level = Math.min(MAX_LEVEL, level + 1);
+    return level;
+  },
+  /** The level a works may be upgraded to, in any age. */
+  top(def: OracleDef) {
+    if (def.bridge) return BRIDGE_MAX_LEVEL;
+    const last = def.lastTier;
+    return typeof last === 'number' && Number.isInteger(last)
+      ? oracle.levelAfter(def.tier ?? 0, last)
+      : MAX_LEVEL;
+  },
+  /** The answer `canUpgradeBuilding` must give for a works at `level` in `age`. */
+  check(
+    def: OracleDef,
+    o: { level: number; age: number; free: boolean; working: boolean },
+  ): { ok: boolean; reason?: string } {
+    if (o.working) return { ok: false, reason: STR.build.upgradingNow };
+    if (o.level >= oracle.top(def)) return { ok: false, reason: STR.station.maxed };
+    if (o.free || def.bridge) return { ok: true };
+    const first = def.tier ?? 0;
+    if (o.level + 1 <= oracle.levelAfter(first, o.age)) return { ok: true };
+    // the next level opens `level` ages after the first one; no age opens it past the last
+    const opens = first + o.level;
+    return {
+      ok: false,
+      reason:
+        opens > LAST_AGE ? STR.station.maxed : STR.build.levelOpens(o.level + 1, ageName(opens)),
+    };
+  },
+};
+
+/** Every works and bridge, the last ages a content editor might leave on one, and the first ages. */
+const ALL_IDS = BUILDING_DEFS.map((d) => d.id);
+const LAST_TIERS: unknown[] = [
+  undefined,
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  -1,
+  1.5,
+  NaN,
+  Infinity,
+  '2',
+  null,
+];
+const FIRST_AGES: (number | null)[] = [null, 0, 1, 2, 3];
+
+/** A last age as a failure message shows it, so that '2' and 2, NaN and null stay apart. */
+const showLast = (v: unknown) => (v === undefined ? 'none' : `${typeof v} ${String(v)}`);
+
+describe('works levels against an age-by-age oracle', () => {
+  it('rises one level per age, ends at its last age, on the data the game ships', () => {
+    // the oracle against the shipped data: the kiln ends at 3, a bridge has four, the rest six
+    const tops = Object.fromEntries(BUILDING_DEFS.map((d) => [d.id, oracle.top(d)]));
+    expect(tops).toMatchObject({ kiln: 3, windmill: 6, refinery: 6, bridge_wood: 4 });
+    expect(oracle.levelAfter(0, 2)).toBe(3);
+    expect(oracle.levelAfter(1, 0)).toBe(1);
+    expect(oracle.levelAfter(0, 99)).toBe(MAX_LEVEL);
+    for (const def of BUILDING_DEFS) {
+      if (def.lastTier === undefined) continue;
+      // a last age the data names is one the game can reach, from the works' own first age
+      expect(Number.isInteger(def.lastTier), def.id).toBe(true);
+      expect(def.lastTier, def.id).toBeGreaterThanOrEqual(def.tier ?? 0);
+      expect(def.lastTier, def.id).toBeLessThanOrEqual(LAST_AGE);
+    }
+  });
+
+  it('answers every upgrade check as the oracle does, whatever the ages and the level', () => {
+    const w = world(0);
+    let n = 0;
+    for (const id of ALL_IDS)
+      for (const lastTier of LAST_TIERS)
+        withLastTier(id, lastTier, () => {
+          for (const first of FIRST_AGES)
+            withTier(id, first, () => {
+              const def = buildingDef(id);
+              for (const free of [false, true]) {
+                w.builder.free = free;
+                for (let age = 0; age <= LAST_AGE; age++) {
+                  w.economy.tier = age;
+                  for (let level = 1; level <= MAX_LEVEL; level++) {
+                    const b: Building = { id, x: 0, y: 0, acc: 0, level, active: false, rate: 0 };
+                    const mode = free ? 'editor' : 'play';
+                    const what = `${id}, last age ${showLast(lastTier)}, first age ${first}, ${mode}, age ${age}, level ${level}`;
+                    const want = oracle.check(def, { level, age, free, working: false });
+                    const got = w.builder.canUpgradeBuilding(b);
+                    expect(got.ok, what).toBe(want.ok);
+                    expect(got.reason, what).toBe(want.reason);
+                    // the price is there exactly when a next level exists at all
+                    expect(buildingUpgradeCost(b) === null, what).toBe(level >= oracle.top(def));
+                    n++;
+                  }
+                }
+              }
+            });
+        });
+    // not an empty sweep: every works, last age, first age, mode, age and level was asked
+    expect(n).toBe(
+      ALL_IDS.length * LAST_TIERS.length * FIRST_AGES.length * 2 * (LAST_AGE + 1) * MAX_LEVEL,
+    );
+  });
+
+  it('keeps the last age of a works the content editor left without a first age', () => {
+    // no first age counts as the Steam age, so the kiln's last age (Electric) still ends it at 3
+    withTier('kiln', null, () => {
+      const def = buildingDef('kiln');
+      expect(def.tier).toBeUndefined();
+      expect(def.lastTier).toBe(2);
+      const w = world(LAST_AGE);
+      const kiln = works(w.builder, 'kiln', 10, 10);
+      expect(worksUpgradeMax(kiln)).toBe(3);
+      expect(upgradeToTop(w.builder, kiln)).toBe(2);
+      expect(buildingLevel(kiln)).toBe(3);
+      expect(buildingUpgradeCost(kiln)).toBeNull();
+      expect(w.builder.canUpgradeBuilding(kiln)).toMatchObject({
+        ok: false,
+        reason: STR.station.maxed,
+      });
+      const e = world(0);
+      e.builder.free = true;
+      const editorKiln = works(e.builder, 'kiln', 10, 10);
+      expect(upgradeToTop(e.builder, editorKiln)).toBe(2);
+      expect(buildingLevel(editorKiln)).toBe(3);
+    });
+  });
+});
+
+/** One thing a save, the player, the clock or the editor does to a works. */
+type Move =
+  | { do: 'age'; to: number }
+  | { do: 'upgrade' }
+  | { do: 'finish' }
+  | { do: 'reload' }
+  | { do: 'editor'; on: boolean };
+
+/** A works with a last age (or a malformed one), a saved level and a run of moves. */
+interface Campaign {
+  id: string;
+  lastTier: unknown;
+  /** its first age, null for none */
+  tier: number | null;
+  /** the level the save held it at, 1 to MAX_LEVEL */
+  level: number;
+  /** the age the game starts in */
+  age: number;
+  /** upgrades take game time (a work under way) instead of being instant */
+  slow: boolean;
+  /** the save brings an upgrade under way, to the level after the one it holds (if it has one) */
+  carried: boolean;
+  moves: Move[];
+}
+
+function genCampaign(rng: Rng): Campaign {
+  const moves: Move[] = [];
+  for (let i = rng.int(2, 30); i > 0; i--) {
+    const r = rng.next();
+    // an upgrade and then a save, so that the save is made while it runs
+    const saved: Move[] = [{ do: 'upgrade' }, { do: 'reload' }];
+    if (r < 0.25) moves.push({ do: 'upgrade' });
+    else if (r < 0.4) moves.push(...saved);
+    else if (r < 0.5) moves.push({ do: 'age', to: rng.int(0, LAST_AGE) });
+    else if (r < 0.7) moves.push({ do: 'finish' });
+    else if (r < 0.85) moves.push({ do: 'reload' });
+    else moves.push({ do: 'editor', on: rng.chance(0.5) });
+  }
+  return {
+    id: rng.pick(ALL_IDS),
+    lastTier: rng.pick(LAST_TIERS),
+    tier: rng.pick(FIRST_AGES),
+    // mostly a works with levels to gain, now and then one saved above its top
+    level: rng.chance(0.7) ? rng.int(1, 3) : rng.int(1, MAX_LEVEL),
+    age: rng.int(0, LAST_AGE),
+    slow: rng.chance(0.5),
+    carried: rng.chance(0.25),
+    moves,
+  };
+}
+
+/** Simpler campaigns first: fewer moves, then the plainest works, last age, first age and level. */
+function* shrinkCampaign(c: Campaign): Iterable<Campaign> {
+  for (const moves of shrinkArray(c.moves)) yield { ...c, moves };
+  if (c.lastTier !== undefined) yield { ...c, lastTier: undefined };
+  if (c.tier !== null) yield { ...c, tier: null };
+  if (c.slow) yield { ...c, slow: false };
+  if (c.carried) yield { ...c, carried: false };
+  for (const age of shrinkInt(c.age, 0)) yield { ...c, age };
+  for (const level of shrinkInt(c.level, 1)) yield { ...c, level };
+  if (c.id !== 'windmill') yield { ...c, id: 'windmill' };
+}
+
+const showCampaign = (c: Campaign) => JSON.stringify({ ...c, lastTier: showLast(c.lastTier) });
+
+/** What a run of campaigns reached, so that the property is known not to hold only vacuously. */
+interface Reach {
+  cappedByLastTier: number;
+  keptAboveTop: number;
+  carriedPastTop: number;
+  reloadedMidWork: number;
+  finishedWork: number;
+}
+
+describe('a works through ages, saves and the editor', () => {
+  /**
+   * Plays the moves on a works and, after each, holds the game to the oracle: the level, the work
+   * under way, the answer of the check, the refusal or acceptance of an upgrade (and what it pays),
+   * and the report of every level that rose.
+   */
+  function play(c: Campaign, reach: Reach) {
+    withLastTier(c.id, c.lastTier, () =>
+      withTier(c.id, c.tier, () => {
+        rules.upgradeTimeMul = c.slow ? 1 : 0;
+        const w = world(c.age),
+          def = buildingDef(c.id),
+          top = oracle.top(def),
+          heldMax = def.bridge ? BRIDGE_MAX_LEVEL : MAX_LEVEL,
+          key = 10 * w.map.w + 10,
+          purse = () => ['wood', 'stone', 'iron'].map((k) => w.stock.get(k)),
+          reported: number[] = [];
+        w.builder.onUpgraded = (e) => reported.push(e.level);
+        const put = (json: Parameters<typeof buildingFromJSON>[0]) => {
+          const b = buildingFromJSON(json);
+          w.builder.buildings.set(key, b);
+          return b;
+        };
+
+        // the save brings the level it holds, whatever the top is; a bridge is held to its four.
+        // An upgrade it had paid for is kept when it leads to the next level, which may lie past
+        // the top: the save was made before the top was set
+        if (def.bridge) works(w.builder, c.id, 10, 10);
+        let level = Math.min(heldMax, c.level);
+        const carried = c.carried && level + 1 <= heldMax;
+        let work: number | null = carried ? level + 1 : null,
+          age = c.age,
+          free = false;
+        let b = put([
+          10,
+          10,
+          c.id,
+          0,
+          c.level,
+          carried ? { to: level + 1, left: 100, total: 200 } : null,
+        ]);
+        // it never stands higher than it was saved at, that upgrade included, or than its top
+        const ceiling = Math.max(level + (carried ? 1 : 0), top);
+        if (carried && level + 1 > top) reach.carriedPastTop++;
+
+        const settle = (at: string) => {
+          expect(buildingLevel(b), `${at}: level`).toBe(level);
+          expect(b.work?.to ?? null, `${at}: work under way`).toBe(work);
+          expect(Number.isInteger(level) && level >= 1 && level <= heldMax, `${at}: ${level}`).toBe(
+            true,
+          );
+          expect(level, `${at}: above the top`).toBeLessThanOrEqual(ceiling);
+          if (!def.bridge) expect(Number.isFinite(buildingRate(b)), `${at}: rate`).toBe(true);
+          const want = oracle.check(def, { level, age, free, working: work !== null });
+          const got = w.builder.canUpgradeBuilding(b);
+          expect(got.ok, `${at}: can upgrade`).toBe(want.ok);
+          expect(got.reason, `${at}: reason`).toBe(want.reason);
+          if (level > top) reach.keptAboveTop++;
+        };
+        settle('saved');
+
+        c.moves.forEach((m, i) => {
+          const at = `move ${i + 1} ${JSON.stringify(m)}`;
+          switch (m.do) {
+            case 'age':
+              w.economy.setAge(m.to);
+              age = Math.max(age, m.to);
+              break;
+            case 'editor':
+              w.builder.free = m.on;
+              free = m.on;
+              break;
+            case 'upgrade': {
+              const want = oracle.check(def, { level, age, free, working: work !== null });
+              const before = purse(),
+                told = reported.length;
+              const done = w.builder.upgradeBuilding(b);
+              expect(done, `${at}: accepted`).toBe(want.ok);
+              if (!done) {
+                expect(purse(), `${at}: paid for a refusal`).toEqual(before);
+                expect(reported.length, `${at}: reported a refusal`).toBe(told);
+                const ageOpens = free || level + 1 <= oracle.levelAfter(def.tier ?? 0, age);
+                if (work === null && level >= top && top < heldMax && ageOpens)
+                  reach.cappedByLastTier++;
+              } else {
+                // the editor charges nothing; play pays when the upgrade starts
+                if (free) expect(purse(), `${at}: the editor paid`).toEqual(before);
+                else expect(purse(), `${at}: paid nothing`).not.toEqual(before);
+                if (free || !c.slow) {
+                  level++;
+                  expect(reported, `${at}: reports`).toEqual([...reported.slice(0, told), level]);
+                } else {
+                  work = level + 1;
+                  expect(reported.length, `${at}: reported a rise before it ended`).toBe(told);
+                }
+              }
+              break;
+            }
+            case 'finish': {
+              const told = reported.length;
+              w.builder.tickWorks(1e9);
+              if (work === null) expect(reported.length, `${at}: nothing to finish`).toBe(told);
+              else {
+                level = work;
+                work = null;
+                reach.finishedWork++;
+                expect(reported, `${at}: reports`).toEqual([...reported.slice(0, told), level]);
+              }
+              break;
+            }
+            case 'reload': {
+              // saved and loaded: the level and the paid upgrade come back exactly as they were
+              const was = { level: buildingLevel(b), work: b.work ? { ...b.work } : undefined };
+              b = put(JSON.parse(JSON.stringify(buildingToJSON(b))));
+              expect({ level: buildingLevel(b), work: b.work }, `${at}: reloaded`).toEqual(was);
+              if (work !== null) reach.reloadedMidWork++;
+              break;
+            }
+          }
+          settle(at);
+        });
+      }),
+    );
+  }
+
+  it('follows the oracle for any last age, first age, saved level and run of moves', () => {
+    const reach: Reach = {
+      cappedByLastTier: 0,
+      keptAboveTop: 0,
+      carriedPastTop: 0,
+      reloadedMidWork: 0,
+      finishedWork: 0,
+    };
+    forAll(genCampaign, (c) => play(c, reach), {
+      seeds: Array.from({ length: 300 }, (_, i) => i + 1),
+      shrink: shrinkCampaign,
+      format: showCampaign,
+    });
+    // the seeds reach what the property is about: a last age that stops an upgrade the age would
+    // allow, a level kept above the top, a save made while an upgrade runs, and one that finishes
+    expect(reach.cappedByLastTier).toBeGreaterThanOrEqual(200);
+    expect(reach.keptAboveTop).toBeGreaterThanOrEqual(600);
+    expect(reach.carriedPastTop).toBeGreaterThanOrEqual(10);
+    expect(reach.reloadedMidWork).toBeGreaterThanOrEqual(100);
+    expect(reach.finishedWork).toBeGreaterThanOrEqual(50);
   });
 });
