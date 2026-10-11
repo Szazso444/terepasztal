@@ -102,6 +102,7 @@ import {
   buildingDef,
   buildingFrame,
   buildingFromJSON,
+  buildingFromLevel,
   buildingToJSON,
   type Building,
 } from './sim/buildings';
@@ -507,10 +508,10 @@ export class Game implements UiHost {
       this.onDecorChanged(d, false);
     }
     this.houses.finishAll();
-    for (const [x, y, id] of level.buildings ?? []) {
-      if (!inBounds(this.map, x, y)) continue;
-      const b: Building = { id, x, y, acc: 0, active: false, rate: 0 };
-      this.builder.buildings.set(y * this.map.w + x, b);
+    for (const bj of level.buildings ?? []) {
+      const b = buildingFromLevel(bj);
+      if (!inBounds(this.map, b.x, b.y)) continue;
+      this.builder.buildings.set(b.y * this.map.w + b.x, b);
       this.onBuildingChanged(b, false);
     }
     this.builder.refreshStationBoosts();

@@ -4,6 +4,7 @@ import { rules, weekSeconds } from './rules';
 import { MAX_LEVEL, levelCap } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
 import { wrapRotation } from './rotation';
+import type { LevelBuilding } from '../world/level';
 
 export type { BuildingDef };
 export const BUILDING_DEFS: BuildingDef[] = content.buildings;
@@ -24,7 +25,8 @@ export interface Building {
   level?: number;
   /**
    * The rotation it was placed in, 0 to 3 (`BUILDING_ROTATIONS`). A works covers its one tile at
-   * every rotation, so nothing it does depends on it. Missing (a level file's works) means 0.
+   * every rotation, so nothing it does depends on it. A level file keeps it too (`buildingToLevel`);
+   * missing (a works built without one, or one in a level file older than that) means 0.
    */
   rot?: number;
   /** running in the last tick */
@@ -79,6 +81,21 @@ export function buildingFromJSON([x, y, id, acc, level, work, rot]: BuildingJSON
     if (w) b.work = w;
   }
   return b;
+}
+/**
+ * A works as a level file holds it: where, what, and its turn as the fourth element. A works
+ * unturned is left at the three, which is also all an older level file ever held.
+ */
+export function buildingToLevel(b: Building): LevelBuilding {
+  const rot = wrapRotation(b.rot);
+  return rot ? [b.x, b.y, b.id, rot] : [b.x, b.y, b.id];
+}
+/**
+ * The works a level file holds, idle and at its first level with no upgrade under way (a level
+ * keeps neither). Its rotation is one of the four (`wrapRotation`), 0 where the file has none.
+ */
+export function buildingFromLevel([x, y, id, rot]: LevelBuilding): Building {
+  return { id, x, y, acc: 0, active: false, rate: 0, rot: wrapRotation(rot) };
 }
 /** Which primary input is short, if any. */
 export function missingInput(def: BuildingDef, stock: Stockpile): string | null {

@@ -5,6 +5,7 @@ import { type LevelData, packBytes, saveLevel, EDITOR_DRAFT_KEY, newLevelId } fr
 import type { Builder } from '../sim/build';
 import type { WorldRenderer } from '../render/worldRenderer';
 import { rules } from '../sim/rules';
+import { buildingToLevel } from '../sim/buildings';
 
 /**
  * Level editor state: terrain brush, level metadata, and conversion between the live world and
@@ -107,7 +108,7 @@ export class Editor {
     ]);
     l.stations = this.builder.stations.map((s) => s.toLevel());
     l.decor = [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]);
-    l.buildings = [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id]);
+    l.buildings = [...this.builder.buildings.values()].map(buildingToLevel);
     l.updatedAt = Date.now();
     return l;
   }
