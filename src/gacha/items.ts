@@ -24,6 +24,17 @@ export function itemKind(defId: string): 'loco' | 'wagon' {
 export function itemDef(defId: string): LocoDef | WagonDef {
   return itemKind(defId) === 'loco' ? locoDef(defId) : wagonDef(defId);
 }
+/**
+ * A retired model is withdrawn from the game: its definition stays so copies already owned keep
+ * loading and running, but no banner, starter kit or workshop may hand out another one.
+ */
+export function isRetired(defId: string): boolean {
+  return itemDef(defId).retired === true;
+}
+/** The models of a list a player can still be given. */
+export function obtainable(ids: readonly string[]): string[] {
+  return ids.filter((id) => !isRetired(id));
+}
 /** Stat multiplier for an item level (1 = base). */
 export function levelMul(level: number) {
   return 1 + (level - 1) * STAT_PER_LEVEL;

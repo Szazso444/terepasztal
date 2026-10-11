@@ -71,7 +71,8 @@
     "fuelPerTile": 0.1625,
     "waterCap": 136,
     "waterPerTile": 0.195,
-    "size": "small"
+    "size": "small",
+    "retired": true
   },
   {
     "id": "john_bull",
@@ -89,7 +90,8 @@
     "fuelPerTile": 0.1625,
     "waterCap": 136,
     "waterPerTile": 0.195,
-    "size": "small"
+    "size": "small",
+    "retired": true
   },
   {
     "id": "mav375",

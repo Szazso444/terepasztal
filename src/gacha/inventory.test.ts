@@ -73,6 +73,8 @@ const starterTable = () =>
   });
 /** The shipped content's, taken before any test runs. */
 const SHIPPED_STARTERS = starterTable();
+/** Models the content withdrew: a kit may still mark one, and it is never handed out. */
+const RETIRED = new Set([...LOCOS, ...WAGONS].filter((d) => d.retired).map((d) => d.id));
 
 /** Which models a content marks as starters, and the copies of each its crafting table hands out. */
 interface Kit {
@@ -116,25 +118,27 @@ function seededWith(k: Kit, now: number): Inventory {
 }
 
 describe('Inventory.seedStarter', () => {
-  it("seeds the table's copies of each model marked starter, engines first, and no other", () => {
+  it("seeds the table's copies of each model marked starter, engines first, and no other or retired one", () => {
     forAll(
       genKit,
       (k) => {
         const inv = seededWith(k, 7);
         expect(starterTable(), 'the content put back').toBe(SHIPPED_STARTERS);
-        // the slow obvious kit: the marked engines in content order, then the marked wagons
+        // the slow obvious kit: the marked engines in content order, then the marked wagons, each
+        // one that is not retired
+        const given = (marked: string[], id: string) => marked.includes(id) && !RETIRED.has(id);
         const kit = [
-          ...LOCOS.filter((l) => k.locos.includes(l.id)).flatMap((l) =>
+          ...LOCOS.filter((l) => given(k.locos, l.id)).flatMap((l) =>
             Array<string>(k.copies.loco).fill(l.id),
           ),
-          ...WAGONS.filter((w) => k.wagons.includes(w.id)).flatMap((w) =>
+          ...WAGONS.filter((w) => given(k.wagons, w.id)).flatMap((w) =>
             Array<string>(k.copies.wagon).fill(w.id),
           ),
         ];
         expect(inv.items.map((i) => i.defId)).toEqual(kit);
         for (const id of SHIPPED)
           expect(inv.count(id), id).toBe(
-            k.locos.includes(id) ? k.copies.loco : k.wagons.includes(id) ? k.copies.wagon : 0,
+            given(k.locos, id) ? k.copies.loco : given(k.wagons, id) ? k.copies.wagon : 0,
           );
         // each copy new and the player's own: its own uid, level 1, in the depot, from `now`
         expect(inv.items.map((i) => i.uid)).toEqual(kit.map((_, i) => i + 1));

@@ -27,7 +27,8 @@ import { startStock } from './step';
 import { DEFAULT_SUPPLY, SUPPLY_MODES, dieselFuelId, setSupplyMode, supplyMode } from './supply';
 import { STR } from '../strings';
 import { Inventory } from '../gacha/inventory';
-import { Crafting, craftPool, craftResources } from '../gacha/crafting';
+import { CRAFT_TIERS, Crafting, craftPool, craftResources } from '../gacha/crafting';
+import { bannerPool } from '../gacha/gacha';
 import { itemDef, locoDef, wagonDef } from '../gacha/items';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
@@ -610,6 +611,20 @@ describe('a depot granted at any of the four turns', () => {
 });
 
 describe('the engines the kit no longer hands out', () => {
+  /** Withdrawn from the game (decision retire-adler-john-bull): owned copies keep running. */
+  const RETIRED_KIT = ['adler', 'john_bull'];
+  /**
+   * Kept as Diesel-age recipe finds only, in no banner (decision startkit-diesels, "Keep them,
+   * Diesel-age crafting only"). Putting one in a banner is a change to that decision.
+   */
+  const DIESEL_FINDS = ['bm50', 'muki', 'mk48'];
+  /** Every banner pool as shipped, and as a pull reads it. */
+  const pools = () =>
+    content.gacha.banners.flatMap((b) => [
+      { banner: b.id, pool: b.pool },
+      { banner: `${b.id} (as pulled)`, pool: bannerPool(b) },
+    ]);
+
   it('stay in the game, and a new game hands out none of them', () => {
     const defined = content.locomotives.map((l) => l.id);
     const { inventory } = newGame();
@@ -620,15 +635,56 @@ describe('the engines the kit no longer hands out', () => {
     }
   });
 
-  it('keep Adler and John Bull in a steam banner and in the recipe pool of their age', () => {
-    const steam = content.gacha.banners.filter((b) => b.tier === 0).flatMap((b) => b.pool);
-    for (const id of ['adler', 'john_bull']) {
-      expect(steam, id).toContain(id);
-      expect(craftPool('loco', 0), id).toContain(id);
+  it('retire Adler and John Bull: flagged, in no banner pool and in no recipe pool', () => {
+    for (const id of RETIRED_KIT) {
+      expect(locoDef(id).retired, id).toBe(true);
+      for (const { banner, pool } of pools()) expect(pool, `${banner}: ${id}`).not.toContain(id);
+      for (const t of CRAFT_TIERS)
+        expect(craftPool('loco', t), `age ${t}: ${id}`).not.toContain(id);
     }
   });
 
-  it('leave an older game that holds them with the roster, recipes and trains it saved', () => {
+  it('keep BM-50, Muki and the Mk48 as Diesel-age recipe finds in no banner (startkit-diesels)', () => {
+    for (const id of DIESEL_FINDS) {
+      expect(locoDef(id).type, id).toBe('diesel');
+      expect(locoDef(id).retired, id).toBeUndefined();
+      expect(craftPool('loco', 1), id).toContain(id);
+      for (const { banner, pool } of pools()) expect(pool, `${banner}: ${id}`).not.toContain(id);
+    }
+    // the guards drop a model for its flag alone: every diesel without it can be drawn
+    for (const l of content.locomotives)
+      if (l.type === 'diesel' && !l.retired) expect(craftPool('loco', 1), l.id).toContain(l.id);
+  });
+
+  it('let a Diesel-age recipe draw offer BM-50 and Muki, and the workshop build them', () => {
+    const w = newGame();
+    w.crafting.economy.money = 1e9;
+    const finds = ['bm50', 'muki'];
+    const offered = new Set<string>();
+    for (let n = 0; n < 300 && offered.size < finds.length; n++) {
+      const draw = w.crafting.draw('loco', 1);
+      expect(draw, `draw ${n}`).not.toBeNull();
+      const find = draw!.cards.find((id) => finds.includes(id) && !offered.has(id));
+      if (find) offered.add(find);
+      const kept = find ?? draw!.cards[0];
+      expect(w.crafting.choose(kept)?.defId, `draw ${n}`).toBe(kept);
+      expect(w.crafting.knows(kept), kept).toBe(true);
+    }
+    expect([...offered].sort()).toEqual([...finds].sort());
+    for (const id of finds) {
+      const before = w.inventory.count(id);
+      let built = 0;
+      for (let n = 0; n < 20 && !built; n++) {
+        const r = w.crafting.craft(id, 0);
+        expect(r, id).not.toBeNull();
+        if (r!.ok) built++;
+      }
+      expect(built, id).toBe(1);
+      expect(w.inventory.count(id), id).toBe(before + 1);
+    }
+  });
+
+  it('leave an older game that holds them its roster and trains, and its recipes less the retired', () => {
     // the older game: the engines earlier kits handed out and the four regular wagons, named here
     // rather than read from the starter flag, with an Adler running on a regular line
     const old = newGame();
@@ -643,7 +699,8 @@ describe('the engines the kit no longer hands out', () => {
     const saved = JSON.parse(
       JSON.stringify({
         inventory: old.inventory.toJSON(),
-        crafting: old.crafting.toJSON(),
+        // saved before the retirement, when the workshop knew every model the game owned
+        crafting: { ...old.crafting.toJSON(), recipes: old.inventory.ownedDefs() },
         trains: old.fleet.trains.map((tr) => tr.toJSON()),
       }),
     ) as {
@@ -665,8 +722,11 @@ describe('the engines the kit no longer hands out', () => {
     for (const id of [...FORMER_KIT, ...FORMER_WAGONS]) expect(w.inventory.count(id), id).toBe(1);
     // nothing of the kit the new game was seeded with is left over
     for (const { id } of STARTER_LOCOS) expect(w.inventory.count(id), id).toBe(0);
-    expect([...w.crafting.recipes].sort()).toEqual([...saved.crafting.recipes].sort());
-    for (const id of [...FORMER_KIT, ...FORMER_WAGONS]) expect(w.crafting.knows(id), id).toBe(true);
+    expect([...w.crafting.recipes].sort()).toEqual(
+      saved.crafting.recipes.filter((id) => !RETIRED_KIT.includes(id)).sort(),
+    );
+    for (const id of [...FORMER_KIT, ...FORMER_WAGONS])
+      expect(w.crafting.knows(id), id).toBe(!RETIRED_KIT.includes(id));
     expect(trains.map((tr) => tr.toJSON())).toEqual(saved.trains);
     expect(trains[0].locos.map((l) => l.def.id)).toEqual(['adler']);
   });
