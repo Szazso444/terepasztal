@@ -2764,6 +2764,14 @@ export class Train {
     const track = ctx.track;
     const arc = (way: PathSegment[]) =>
       way.reduce((sum, p) => sum + track.segLength(p.x, p.y, p.in, p.out), 0);
+    // the tiles under the cars, one crossing each from the head to the rear end, as the
+    // turned-round trail runs over them: those behind its head a shunt counts on (`findShuntPath`)
+    const under: PathSegment[] = [];
+    if (shunt)
+      for (const { seg } of reversed.trail) {
+        const last = under.at(-1);
+        if (!last || last.x !== seg.x || last.y !== seg.y) under.push(seg);
+      }
     const plans: RetreatPlan[] = [];
     for (const flip of [false, true]) {
       const points = flip ? reversed.trail : this.trail;
@@ -2771,6 +2779,13 @@ export class Train {
       if (!head) continue;
       if (shunt) {
         const rear = (way: readonly PathSegment[]) => rearOn(track, way, this.length);
+        // the tiles behind its head, rear end first, crossed the way it sets off
+        const behind = flip
+          ? under.slice(0, -1)
+          : under
+              .slice(1)
+              .reverse()
+              .map((s) => ({ x: s.x, y: s.y, in: s.out, out: s.in }));
         const legs = findShuntPath(
           track,
           head,
@@ -2780,6 +2795,7 @@ export class Train {
           this.canUse,
           rear,
           onward,
+          behind,
         );
         if (legs) {
           const distance = arc(legs.out) + arc(legs.back);

@@ -2565,7 +2565,10 @@ describe('with shunting on, trains on generated lines that only a shunt clears',
   );
 });
 
-/** Ticks of a shunt at which track is laid far off: this many spread over it, and the turn's. */
+/**
+ * Ticks of a shunt at which track is laid far off: this many spread over it, the turn's, and the
+ * first, middle and last of each stretch it stands astride the switch.
+ */
 const STALE_AT = 12;
 
 describe('with shunting on, a shunt whose lease goes stale part-way', () => {
@@ -2574,19 +2577,26 @@ describe('with shunting on, a shunt whose lease goes stale part-way', () => {
   });
 
   // track laid elsewhere makes every reservation stale (`Traffic.maintainRecoveries`): the shunt
-  // stops where it is, the turn included, and the fleet looks again from there
+  // stops where it is, the turn included, and the fleet looks again from there. Stopped astride
+  // the switch, the idle train runs on clear of it and turns (`findShuntPath`'s `under`), so the
+  // other train passes wherever it stopped but in one place: backed into the siding with the
+  // other train come up to the switch behind it, it could clear the switch only by running on
+  // deeper into the siding, which no refuge search offers until the whole train fits ahead of its
+  // head (`findRefugePath`). There the jam is counted and said
   for (const l of SHUNT_LAYOUTS)
     it(
-      `stops where it is, and the line clears or the jam is counted and said (${showLayout(l)})`,
+      `stops where it is, and makes way again from there for the other train to pass (${showLayout(l)})`,
       PROPERTY,
       () => {
         const on = shuntingOn();
-        // the ticks it sets off, turns and ends on, never made stale
+        // the ticks it sets off, turns and ends on, and stands astride the switch, never made stale
         const first = shuntingScene(l);
         const log = on.watch(first.w, () => first.sim.now);
+        const wk = first.w.track.w;
         let start = -1;
         let turn = -1;
         let end = -1;
+        const astride: [number, number][] = [];
         for (let i = 0; i < 60 / GDT && end < 0; i++) {
           log.begin();
           const was = log.reversals.length;
@@ -2594,11 +2604,18 @@ describe('with shunting on, a shunt whose lease goes stale part-way', () => {
           if (start < 0 && first.idle.holding) start = i;
           if (log.reversals.slice(was).some((r) => r.partway)) turn = i;
           if (start >= 0 && !first.idle.holding) end = i;
+          const now =
+            first.idle.holding && first.idle.occupancyKeys(wk).some((k) => !plainAt(first.w, k));
+          const last = astride.at(-1);
+          if (now && last?.[1] === i - 1) last[1] = i;
+          else if (now) astride.push([i, i]);
         }
         expect([start >= 0, turn > start, end > turn]).toEqual([true, true, true]);
+        expect(astride.length, 'stretches astride the switch, out and back').toBe(2);
         const ticks = new Set([turn - 1, turn, turn + 1]);
         for (let k = 0; k < STALE_AT; k++)
           ticks.add(start + Math.floor(((end - start) * k) / STALE_AT));
+        for (const [a, b] of astride) for (const k of [a, (a + b) >> 1, b]) ticks.add(k);
         const failed: string[] = [];
         for (const k of [...ticks].sort((a, b) => a - b)) {
           // the same game, made stale after tick k, every step watched as on generated lines
@@ -2612,6 +2629,10 @@ describe('with shunting on, a shunt whose lease goes stale part-way', () => {
             return broken !== null;
           };
           sim.until(step, (k + 1) * GDT - GDT / 2);
+          // backed into the siding, the other train coming from the side the siding lets out to
+          const shutIn =
+            l.fromEast === l.throatEast &&
+            idle.occupancyKeys(wk).some((q) => Math.floor(q / wk) >= ROW + 2);
           lw.track.place(lw.track.w - 2, lw.track.h - 2, 'straight', 1);
           const where = `made stale after tick ${k} (it sets off on ${start}, turns on ${turn}, ends on ${end})`;
           // holding its shunt as the track changes, it stops on the next step and looks again: it
@@ -2627,9 +2648,9 @@ describe('with shunting on, a shunt whose lease goes stale part-way', () => {
           const counted = lw.fleet.traffic.counters;
           if (broken) failed.push(`${where}: ${broken}`);
           else if (counted.overlaps) failed.push(`${where}: ${counted.overlaps} overlaps`);
-          else if (!sim.arrivals(caller) && !counted.deadlocks)
+          else if (!sim.arrivals(caller) && !(shutIn && counted.deadlocks))
             failed.push(
-              `${where}: the caller never reached ${target.name} and no jam was counted: ${story(lw, sim)}`,
+              `${where}: the caller never reached ${target.name}${shutIn ? ' and no jam was counted' : ''}: ${story(lw, sim)}`,
             );
         }
         expect(failed).toEqual([]);

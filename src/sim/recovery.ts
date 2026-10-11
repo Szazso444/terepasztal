@@ -135,11 +135,15 @@ function plain(piece: TrackPiece | undefined) {
  * A move with one reversal partway (a shunt), for when no refuge can be run straight into: the
  * train runs forward (`out`, never twice over a tile) over a switch and on until it stands wholly
  * on plain track past it, its head at the centre of the last tile of `out`; there it turns, and
- * runs from the tile its rear end stands on (`rearOn`: its index in the way, -1 when the way is
- * shorter than the train) to a refuge as `findRefugePath` finds one (`back`). It turns only past a
- * switch that offers a choice coming back, at the first place past it where it stands clear, and
- * tries SHUNT_TURNS such places, nearest first: the work is bounded as `findRefugePath`'s is.
- * Neither leg runs onto a `blocked` tile or one `access` bars; `accept` judges the refuge.
+ * runs from the tile its rear end stands on to a refuge as `findRefugePath` finds one (`back`).
+ * It turns only past a switch that offers a choice coming back, at the first place past it where
+ * it stands clear, and tries SHUNT_TURNS such places, nearest first: the work is bounded as
+ * `findRefugePath`'s is. The train stands now on `under` and its head's tile, `under` the
+ * crossings behind the head, rear end first, the way it heads: a switch there counts as one run
+ * over, and its rear end may stay on them (`rearOn`: the index of its tile in them and the way
+ * together, -1 when they are shorter than the train), so that a train stopped astride a switch
+ * runs on just clear of it. Neither leg runs onto a `blocked` tile or one `access` bars; `accept`
+ * judges the refuge.
  */
 export function findShuntPath(
   track: TrackGraph,
@@ -150,10 +154,12 @@ export function findShuntPath(
   access: (piece: TrackPiece, entry: Dir) => boolean,
   rearOn: (path: readonly PathSegment[]) => number,
   accept?: (path: readonly PathSegment[]) => boolean,
+  under: readonly PathSegment[] = [],
 ): { out: PathSegment[]; back: PathSegment[] } | null {
   // `switched`: a switch with a choice coming back lies behind, and no turn was tried past it
   type State = { x: number; y: number; in: Dir; switched: boolean; path: PathSegment[] };
-  const queue: State[] = [{ ...start, switched: false, path: [] }];
+  const choice = (s: PathSegment) => track.exits(s.x, s.y, s.out).length > 1;
+  const queue: State[] = [{ ...start, switched: under.some(choice), path: [] }];
   const seen = new Set<string>();
   let turns = 0;
   for (let i = 0; i < queue.length && i < SHUNT_STATES && turns < SHUNT_TURNS; i++) {
@@ -161,13 +167,15 @@ export function findShuntPath(
     for (const out of track.exits(s.x, s.y, s.in)) {
       const seg = { x: s.x, y: s.y, in: s.in, out };
       const path = [...s.path, seg];
-      let switched = s.switched || track.exits(s.x, s.y, out).length > 1;
-      const rear = switched ? rearOn(path) : -1;
-      if (rear >= 0 && path.slice(rear).every((p) => plain(track.get(p.x, p.y)))) {
+      let switched = s.switched || choice(seg);
+      // the tiles it stands on once its head stops on the last: some of `under`, and the way
+      const stands = under.length ? [...under, ...path] : path;
+      const rear = switched ? rearOn(stands) : -1;
+      if (rear >= 0 && stands.slice(rear).every((p) => plain(track.get(p.x, p.y)))) {
         // further along the same plain track a turn would only run back over it
         switched = false;
         turns++;
-        const from = path[rear];
+        const from = stands[rear];
         const back = findRefugePath(
           track,
           { x: from.x, y: from.y, in: from.out },
