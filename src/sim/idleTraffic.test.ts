@@ -3707,3 +3707,274 @@ describe('a kept-back move saved and loaded at any tick of it', () => {
     expect(saves.filter((s) => s.tick >= end).length).toBeGreaterThan(2);
   });
 });
+
+// ------------------------------------------------------------------ the kept-back rule, event by event
+
+/** The private Train members: whether the escape `retreat` set off on makes way, and a stop. */
+interface Escaping {
+  aside: boolean;
+  arrive(st: Station): void;
+}
+/**
+ * One thing that happens to a working train, as the kept-back rule reads it: it sets off on an
+ * escape in a jam for train `other`, holding a stop (`back`), making way while idle (`aside`) or
+ * with no stop at all (`noStop`); it reaches a stop (`arrive`) or the station of a fuel detour
+ * (`detour`); or the game is saved and loaded.
+ */
+type GiveWay =
+  | { kind: 'back' | 'aside' | 'noStop'; other: number }
+  | { kind: 'arrive' }
+  | { kind: 'detour' }
+  | { kind: 'reload' };
+const showGiveWays = (es: GiveWay[]) =>
+  es.map((e) => ('other' in e ? `${e.kind} #${e.other}` : e.kind)).join(', ');
+/** Seeds for the event sequences: each case is a handful of calls on one train, no fleet ticks. */
+const GIVE_WAY_SEEDS = Array.from({ length: 1000 }, (_, i) => i + 1);
+
+describe('Train.gaveWay against the kept-back rule, over any order of give-ways, stops and saves', () => {
+  // The fleet notes every escape the jam resolution sets a train off on (`gaveWay`, right after
+  // `retreat`). Here a train in the terminus scene is put through generated orders of escapes, for
+  // two other trains, with stops, fuel detours and save-and-load between, each escape leaving it as
+  // `retreat` does (holding, making way or not, one more `yieldCount`), and every answer is held to
+  // the rule as traffic-current.md §5 states it (`keptBackRule`): kept back exactly when the last
+  // escape it set off on in a jam, holding a stop, since it last reached a station (a fuel detour's
+  // too: the fleet's `onArrive` counts it) and in this game since it was loaded, was for the same
+  // train
+  it('keeps a train back exactly when the rule does', () => {
+    let backAfterStop = 0;
+    let keptBack = 0;
+    forAll<GiveWay[]>(
+      (rng) =>
+        Array.from({ length: rng.int(1, 12) }, (): GiveWay => {
+          const kind = rng.pick([
+            'back',
+            'back',
+            'back',
+            'aside',
+            'aside',
+            'noStop',
+            'arrive',
+            'arrive',
+            'detour',
+            'reload',
+          ] as const);
+          return kind === 'back' || kind === 'aside' || kind === 'noStop'
+            ? { kind, other: rng.int(2, 3) }
+            : { kind };
+        }),
+      (events) => {
+        const { w, end } = terminus();
+        let t = train(w, 26, true, 'production', [defaultStop(end.id)]);
+        let rule = keptBackRule();
+        const rules = [rule];
+        rule.follow(t, () => 0);
+        // the train each escape holding a stop was for since the last stop, and before it
+        let since: number | null = null;
+        let beforeStop: number | null = null;
+        for (const e of events) {
+          if (e.kind === 'arrive' || e.kind === 'detour') {
+            if (e.kind === 'detour') t.detour = end.id;
+            (t as unknown as Escaping).arrive(end);
+            t.detour = null;
+            rule.arrived(t);
+            beforeStop = since ?? beforeStop;
+            since = null;
+            continue;
+          }
+          if (e.kind === 'reload') {
+            t = Train.fromJSON(JSON.parse(JSON.stringify(t.toJSON())), w.track);
+            rule = keptBackRule();
+            rules.push(rule);
+            rule.follow(t, () => 0);
+            since = beforeStop = null;
+            continue;
+          }
+          const schedule = t.schedule;
+          if (e.kind === 'noStop') t.schedule = [];
+          const escaping = t as unknown as Escaping;
+          escaping.aside = e.kind === 'aside';
+          t.holding = true;
+          t.yieldCount++;
+          const kept = t.gaveWay(e.other);
+          if (kept) keptBack++;
+          if (e.kind === 'back') {
+            if (since === null && beforeStop === e.other && t.yieldCount > 1) backAfterStop++;
+            since = e.other;
+          }
+          t.holding = false;
+          escaping.aside = false;
+          t.schedule = schedule;
+        }
+        for (const r of rules) expect(r.broken(), showGiveWays(events)).toBeNull();
+      },
+      { seeds: GIVE_WAY_SEEDS, shrink: (es) => shrinkArray(es), format: showGiveWays },
+    );
+    // not vacuous: trains kept back, and trains that gave way to the train they had given way to
+    // before their last stop, having pulled aside since that stop (`yieldCount` above 1)
+    expect(keptBack).toBeGreaterThan(100);
+    expect(backAfterStop).toBeGreaterThan(20);
+  });
+});
+
+/**
+ * The terminus scene of `a working train that gave way to a train and has reached a stop since`,
+ * generated: the main line along ROW with the quarry at its dead end and a warehouse at the other,
+ * one dead-end siding whose throat faces the quarry, a roaming train between the siding and the
+ * quarry bound for the quarry and a scheduled train between it and the quarry heading away.
+ * Columns are given as on the line whose quarry stands at its east end; `east: false` mirrors
+ * them, the quarry at the west end.
+ */
+interface Revisit {
+  east: boolean;
+  /** the quarry's platform, at the line's dead end; the warehouse's is at WEST */
+  quarry: number;
+  /** the switch block's column on the warehouse side */
+  switchAt: number;
+  /** tiles of dead-end siding */
+  siding: number;
+  roamWagons: number;
+  otherWagons: number;
+  /** the roaming train's head, heading for the quarry */
+  roamAt: number;
+  /** the other train's head, heading away from the quarry */
+  otherAt: number;
+}
+/**
+ * Tiles from the switch to the quarry at least: the other train runs that far and back while the
+ * roaming train makes way and idles in the siding, so it is still about the quarry, mostly, when
+ * the roaming train sets off for the stone.
+ */
+const REVISIT_REACH = 18;
+/**
+ * A scene that can be laid: the siding holds the roaming train; the other train standing at the
+ * warehouse, the roaming train at the quarry and both where they start stand clear of the switch;
+ * the two start apart, both on the line.
+ */
+function revisitOk(c: Revisit): boolean {
+  const roam = tilesOf(c.roamWagons);
+  const other = tilesOf(c.otherWagons);
+  if (c.quarry < 40 || c.quarry > 58 || c.roamWagons < 1 || c.otherWagons < 1) return false;
+  if (c.siding < roam + 1 || c.quarry - c.switchAt < REVISIT_REACH) return false;
+  if (c.switchAt < WEST + other + 3 || c.roamAt - roam + 1 < c.switchAt + 3) return false;
+  return c.otherAt >= c.roamAt + 2 && c.otherAt + other - 1 <= c.quarry;
+}
+function revisitCase(rng: Rng): Revisit {
+  for (;;) {
+    const quarry = rng.int(40, 58);
+    const roamWagons = rng.int(1, 2);
+    const otherWagons = rng.int(1, 2);
+    const switchAt = rng.int(WEST + tilesOf(otherWagons) + 3, quarry - REVISIT_REACH);
+    const roamAt = rng.int(switchAt + 2 + tilesOf(roamWagons), quarry - tilesOf(otherWagons) - 3);
+    const c: Revisit = {
+      east: rng.chance(0.5),
+      quarry,
+      switchAt,
+      siding: tilesOf(roamWagons) + rng.int(1, 3),
+      roamWagons,
+      otherWagons,
+      roamAt,
+      otherAt: rng.int(roamAt + 2, quarry - tilesOf(otherWagons) + 1),
+    };
+    if (revisitOk(c)) return c;
+  }
+}
+/** Smaller scenes still laid: fewer wagons, a shorter siding, the line shorter, the trains nearer. */
+function* shrinkRevisit(c: Revisit): Iterable<Revisit> {
+  const out: Revisit[] = [];
+  if (!c.east) out.push({ ...c, east: true });
+  for (const roamWagons of shrinkInt(c.roamWagons, 1)) out.push({ ...c, roamWagons });
+  for (const otherWagons of shrinkInt(c.otherWagons, 1)) out.push({ ...c, otherWagons });
+  for (const siding of shrinkInt(c.siding, 1)) out.push({ ...c, siding });
+  for (const quarry of shrinkInt(c.quarry, 40)) out.push({ ...c, quarry });
+  for (const otherAt of shrinkInt(c.otherAt, c.roamAt + 2)) out.push({ ...c, otherAt });
+  for (const switchAt of shrinkInt(c.switchAt, WEST)) out.push({ ...c, switchAt });
+  for (const o of out) if (revisitOk(o)) yield o;
+}
+/** Lays a generated scene: `at` maps a column as on the east-facing line to where it lies. */
+function revisitLine(c: Revisit) {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  const at = (x: number) => (c.east ? x : c.quarry + 4 - x);
+  // the switch block's west column; its throat faces the quarry, the siding under its far column
+  const x = c.east ? c.switchAt : at(c.switchAt + 1);
+  lay(w, x, ROW, 'switch', c.east ? 1 : 7);
+  for (let y = ROW + 2; y < ROW + 2 + c.siding; y++) lay(w, c.east ? x : x + 1, y, 'straight', 0);
+  line(w, 4, ROW, x - 1);
+  line(w, x + 2, ROW, c.quarry);
+  const warehouse = station(w, 'warehouse', at(WEST), ROW - 1);
+  const quarry = station(w, 'quarry', at(c.quarry), ROW - 1);
+  return { w, warehouse, quarry, at };
+}
+/** Seeds of the generated scenes: each runs four or five minutes of game time. */
+const REVISIT_SEEDS = Array.from({ length: 40 }, (_, i) => i + 1);
+
+describe('a working train that meets the train it gave way to again after its stop, on generated lines', () => {
+  // the roaming train backs off for the other, reaches the quarry and finds nothing to haul, makes
+  // way for the other coming back and idles in the siding; stone turns up and it sets off for it.
+  // Meeting the other again it backs off as before, its make-way since its stop counted in
+  // yieldCount, yet it is not kept back: no jam is counted and it says it is pulling aside. Each
+  // give-way is held to the rule (`watch`), and every step to what `watch` checks
+  it('backs off for it as a train never kept back does, the jam not counted', PROPERTY, () => {
+    let met = 0;
+    forAll(
+      revisitCase,
+      (c) => {
+        const { w, warehouse, quarry, at } = revisitLine(c);
+        const sim = watch(w);
+        const roam = consist(w, at(c.roamAt), c.east, c.roamWagons);
+        roam.mode = 'production';
+        roam.schedule = [defaultStop(quarry.id)];
+        const other = consist(w, at(c.otherAt), !c.east, c.otherWagons);
+        other.mode = 'schedule';
+        other.schedule = [call(warehouse, 'none'), call(quarry, 'none')];
+        go(w, roam);
+        go(w, other);
+        const counted = w.fleet.traffic.counters;
+        const stop = () => sim.broken !== null;
+        const until = (what: string, done: () => boolean, seconds: number) => {
+          const ok = sim.until(() => stop() || done(), seconds);
+          expect(sim.broken, story(w, sim)).toBeNull();
+          expect(ok, `${what}: ${story(w, sim)}`).toBe(true);
+        };
+        const backsOff = () => roam.holding && !roam.makingWay;
+        until('it never backed off for the other', backsOff, 60);
+        expect(counted.deadlocks, story(w, sim)).toBe(0);
+        until('it never reached the quarry', () => sim.arrivals(roam) > 0, 200);
+        until('it never made way', () => roam.makingWay, 200);
+        until(
+          'it never idled where it made way',
+          () => roam.state === 'idle' && roam.lastMessage === STR.traffic.madeWay,
+          60,
+        );
+        quarry.store('stone', 40);
+        // the jams counted before the step it backs off in, which counts one if it is kept back;
+        // it may load at the quarry without meeting the other: then there is nothing to check
+        let jams = counted.deadlocks;
+        until(
+          'it neither met the other again nor loaded the stone',
+          () => {
+            if (backsOff()) return true;
+            jams = counted.deadlocks;
+            return roam.totalCargo() > 0;
+          },
+          120,
+        );
+        if (!backsOff()) return;
+        met++;
+        expect(sim.arrivals(roam), story(w, sim)).toBe(1);
+        expect(roam.yieldCount, story(w, sim)).toBeGreaterThan(1);
+        until('its way aside never ended', () => !roam.holding, 60);
+        expect([roam.state, roam.lastMessage], story(w, sim)).toEqual([
+          'yielding',
+          STR.traffic.pullingAside,
+        ]);
+        expect(counted.deadlocks, story(w, sim)).toBe(jams);
+        sim.until(stop, 30);
+        expect(sim.broken, story(w, sim)).toBeNull();
+        expect(counted.overlaps, story(w, sim)).toBe(0);
+      },
+      { seeds: REVISIT_SEEDS, shrink: shrinkRevisit },
+    );
+    // not vacuous: on most lines the two meet again
+    expect(met).toBeGreaterThanOrEqual(Math.ceil((REVISIT_SEEDS.length * 3) / 4));
+  });
+});
