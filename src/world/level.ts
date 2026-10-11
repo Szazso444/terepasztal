@@ -12,6 +12,8 @@ export interface LevelStation {
   name: string;
   rot?: number;
 }
+/** A works in a level: where, what, and its turn 0 to 3 (missing, as in an older file: 0). */
+export type LevelBuilding = [x: number, y: number, id: string, rot?: number];
 /** A hand-made map: terrain plus pre-placed track, stations and decor, and the starting economy. */
 export interface LevelData {
   id: string;
@@ -33,8 +35,8 @@ export interface LevelData {
   trackFormat?: 2;
   stations: LevelStation[];
   decor: [number, number, string, number][];
-  /** processing buildings [x, y, id] */
-  buildings?: [number, number, string][];
+  /** processing buildings */
+  buildings?: LevelBuilding[];
   start: {
     money: number;
     tickets: number;
