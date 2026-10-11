@@ -153,7 +153,11 @@ export class Station {
   fuelSupply = false;
   /** the upgrade under way (`Builder.upgradeStation`); null when none is */
   work: Work | null = null;
-  /** Closed while it is upgraded: it makes nothing, takes nothing in and has no crew to feed. */
+  /**
+   * Closed while it is upgraded: it makes nothing (`productionPerWeek` is 0), takes nothing in and
+   * has no crew to feed, and nobody lives or gathers at it (`PeopleSim.places`). Trains still stop
+   * and load what it holds, but do not wait there for output that will not come.
+   */
   get closed() {
     return !!this.work;
   }
@@ -256,7 +260,12 @@ export class Station {
   }
   /** nearby-resource multiplier, set when placed and after terrain edits */
   terrainFactor = 1;
+  /**
+   * Units made a week at this level, under the rules and on this ground, a passenger station's
+   * capped by the people around it; none while it is closed.
+   */
   get productionPerWeek() {
+    if (this.closed) return 0;
     const rate = LEVELS.production[this.level - 1] * rules.productionMul * this.terrainFactor;
     return this.def.id === 'station' ? Math.min(rate, this.passengerPopulation * 0.4) : rate;
   }

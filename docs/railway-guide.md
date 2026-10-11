@@ -19,9 +19,12 @@ An upgrade is paid when it starts and takes game time: 6, 9, 12, 18 and 24 game 
 0 every upgrade is instant). The building is closed until the work is done and keeps its old
 level meanwhile: a station or works makes nothing and has no crew to feed, a Power Plant gives
 no power and a Substation feeds no wire, and a House takes no newcomers but keeps its residents.
-Trains still stop at a closed station and load what it holds, but deliver nothing there. A
-second upgrade waits until the first is done, and a building removed during its upgrade is gone
-with the work. The Depot's upgrade is instant and free.
+Nobody lives at a closed station or works, and nobody sets out from one to gather: the people
+who lived there move to the open place nearest to where they stand. Trains still stop at a
+closed station and load what it holds, but deliver nothing there, and a train set to wait for a
+full load does not wait for output that will not come. A second upgrade waits until the first
+is done, and a building removed during its upgrade is gone with the work. The Depot's upgrade is
+instant and free.
 
 Houses hold 20, 60, 140, 300, 520 and 800 residents at levels 1–6. Select a completed House
 and use **Enlarge** to pay for the next level. Its appearance progresses from house to

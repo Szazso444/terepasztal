@@ -98,6 +98,24 @@ export function findWalk(
 }
 
 /**
+ * The place nearest to (x, y) by |dx| + |dy|, as a traveller's station reach is measured, ties
+ * going to the one listed first; null when there is none. It has no reach limit, so while any
+ * place is open a walker whose home closed always gets one.
+ */
+function nearestPlace(places: readonly Place[], x: number, y: number): Place | null {
+  let best: Place | null = null;
+  let bestD = Infinity;
+  for (const pl of places) {
+    const d = Math.abs(pl.x - x) + Math.abs(pl.y - y);
+    if (d < bestD) {
+      best = pl;
+      bestD = d;
+    }
+  }
+  return best;
+}
+
+/**
  * The population as a few quiet walkers: everyone belongs to a station, works or service and
  * spends most of the day inside; now and then someone steps out to idle by the door, walks to a
  * nearby resource tile to gather, or goes to the closest station to catch a train with a coach.
@@ -135,13 +153,21 @@ export class PeopleSim {
   }
 
   /**
-   * Where walkers live and go back to. A works closed for its upgrade has no crew and is none: its
-   * walkers move to another place on the next tick.
+   * Where walkers live, go back to and set out from to gather. A station or works closed for its
+   * upgrade has no crew and is none, so nobody lives or gathers there: on the next tick its
+   * walkers move to the open place nearest to where they stand (`nearestPlace`). A house being
+   * upgraded keeps its residents and stays one.
    */
   places(): Place[] {
     const out: Place[] = [];
     for (const s of this.builder.stations)
-      out.push({ x: s.x, y: s.y, key: `s${s.id}`, gathers: this.gatherTerrain[s.def.id] ?? null });
+      if (!s.closed)
+        out.push({
+          x: s.x,
+          y: s.y,
+          key: `s${s.id}`,
+          gathers: this.gatherTerrain[s.def.id] ?? null,
+        });
     for (const b of this.builder.buildings.values())
       if (!b.work && buildingDef(b.id).crew > 0)
         out.push({ x: b.x, y: b.y, key: `b${b.x},${b.y}`, gathers: null });
@@ -278,8 +304,9 @@ export class PeopleSim {
         if (!this.advance(p, gdt)) this.persons.splice(i, 1);
         continue;
       }
+      // a home that closed or went: the nearest open place to where the walker stands, no draw
       const known = byKey.get(p.home);
-      const home = known ?? places[Math.floor(this.rnd() * places.length)];
+      const home = known ?? nearestPlace(places, p.x, p.y);
       if (!home) continue;
       p.home = home.key;
       // the way home led to a place that is gone or closed: walk to the new home from here
