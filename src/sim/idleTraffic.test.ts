@@ -7,7 +7,14 @@ import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import { sharedTiles } from '../testing/trafficScenario';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { blockingGroups } from './recovery';
-import { Train, defaultStop, resetTrainIds, type RouteMode, type StopPlan } from './trains';
+import {
+  Train,
+  defaultStop,
+  resetTrainIds,
+  type RouteMode,
+  type StopPlan,
+  type TickCtx,
+} from './trains';
 import { Station, resetStationIds } from './stations';
 import { locoDef, wagonDef } from '../gacha/items';
 import { rules, DEFAULT_RULES } from './rules';
@@ -536,6 +543,183 @@ describe('an idle train saved and loaded', () => {
     expectSound(sim);
     expectSound(again);
   });
+});
+
+// ------------------------------------------------------------------ one reversal partway
+
+/**
+ * A single line from x 4 to 56 with a warehouse at its west end (platform x 5). A switch at x 30,
+ * its throat facing west, leads into a siding south of the line under x 31: a train heading west
+ * cannot run straight into it.
+ */
+function shuntLine() {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  lay(w, 30, ROW, 'switch', 7);
+  siding(w, 31, ROW + 2);
+  line(w, 4, ROW, 29);
+  line(w, 32, ROW, 56);
+  const west = station(w, 'warehouse', 5, ROW - 1);
+  return { w, west };
+}
+/** The fleet's private members a move aside is planned with, as `Fleet.makeWay` plans it. */
+interface FleetInside {
+  ctx(now: number, speedFactor: number): TickCtx;
+  sidingTiles(): Set<number>;
+}
+/** The private Train member that turns a consist round where it stands. */
+interface Turning {
+  reverseConsist(): void;
+}
+
+/**
+ * An idle train with no stop (so any refuge leaves it no worse off) stands with its head at x 40,
+ * heading west on `shuntLine`, in the way of a train coming from x 52 for the warehouse. Only a
+ * shunt gets it aside, and after the first tick it sets off on one as the fleet sets a train off
+ * aside (`planAside`, `Train.retreat`).
+ */
+function shuntScene() {
+  const { w, west } = shuntLine();
+  const sim = run(w);
+  const idle = train(w, 40, false, 'schedule', []);
+  idle.idle('');
+  const caller = train(w, 52, false, 'schedule', [call(west)]);
+  go(w, caller);
+  sim.ticks(GDT);
+  const fleet = w.fleet as unknown as FleetInside;
+  const ctx = fleet.ctx(sim.now, 1);
+  const wk = w.track.w;
+  const spots = {
+    theirs: caller.pathTileKeys(wk),
+    bound: new Set(w.builder.platformTiles(west).map((p) => p.y * wk + p.x)),
+    sidings: fleet.sidingTiles(),
+  };
+  expect(idle.planAside(ctx, [caller.id], spots), 'a way aside with no turn').toBeNull();
+  const plan = idle.planAside(ctx, [caller.id], spots, false, true)!;
+  expect(plan?.back, 'a shunt').toBeDefined();
+  expect(idle.retreat(ctx, [caller.id], plan)).toBe(true);
+  return { w, west, sim, idle, caller, plan };
+}
+
+describe('a train that reverses once partway', () => {
+  it(
+    'runs past the switch, turns at rest clear of it with no car moving, and backs into the siding',
+    SLOW,
+    () => {
+      const { w, west, sim, idle, caller, plan } = shuntScene();
+      // head first: the turn partway is the only one
+      expect(plan.flip).toBe(false);
+      const wk = w.track.w;
+      const turns: { speed: number; onSwitch: number[]; moved: number }[] = [];
+      const turning = idle as unknown as Turning;
+      const reverse = turning.reverseConsist.bind(idle);
+      turning.reverseConsist = () => {
+        const before = idle.poses.map((p) => ({ ...p }));
+        const onSwitch = idle.occupancyKeys(wk).filter((k) => {
+          const p = w.track.get(k % wk, Math.floor(k / wk));
+          return !p || p.links.length !== 1 || !!p.unit;
+        });
+        const speed = idle.speed;
+        reverse();
+        const moved = Math.max(
+          ...idle.poses.map((p, i) => Math.hypot(p.x - before[i].x, p.y - before[i].y)),
+        );
+        turns.push({ speed, onSwitch, moved });
+      };
+      const lease = () => w.fleet.traffic.recoveries.active.get(idle.id)?.tiles;
+      let released: string | null = null;
+      let parked: { state: string; note: string; x: number; y: number } | null = null;
+      const done = sim.until(() => {
+        // until it turns, every tile of the second leg stays its own
+        if (idle.holding && !turns.length)
+          for (const s of plan.back!)
+            if (!lease()?.has(s.y * wk + s.x)) released ??= `(${s.x},${s.y}) at ${sim.now} s`;
+        const { x, y } = idle.headTile!;
+        if (!parked && !idle.holding) parked = { state: idle.state, note: idle.lastMessage, x, y };
+        return !!parked && sim.arrivals(caller).includes(west.id);
+      }, 120);
+      expect(done, `${idle.name} ${idle.state} "${idle.lastMessage}"`).toBe(true);
+      expect(released, 'a tile of the second leg let go before the turn').toBeNull();
+      expect(turns).toEqual([{ speed: 0, onSwitch: [], moved: expect.closeTo(0, 6) }]);
+      // it ends its move in the siding, saying it made way, and its lease goes with the move
+      expect(parked).toMatchObject({ state: 'idle', note: STR.traffic.madeWay, x: 31 });
+      expect(parked!.y).toBeGreaterThan(ROW + 1);
+      expect(lease()).toBeUndefined();
+      expectSound(sim);
+    },
+  );
+
+  it('saved and loaded at any tick of its shunt, runs on as it does never saved', SLOW, () => {
+    // the ticks it turns and ends its shunt on, never saved
+    const { sim, idle } = shuntScene();
+    let turn = -1;
+    let end = -1;
+    for (let i = 0; end < 0 && i < 60 / GDT; i++) {
+      const was = idle.reversed;
+      sim.ticks(GDT);
+      if (idle.reversed !== was) turn = i;
+      if (!idle.holding) end = i;
+    }
+    expect(turn, 'it never turned').toBeGreaterThan(0);
+    expect(end, 'it never ended its shunt').toBeGreaterThan(turn);
+    const saves = new Set([turn - 1, turn, turn + 1, end - 1]);
+    for (let k = 0; k < end; k += 15) saves.add(k);
+    for (const k of saves) {
+      const { w, sim, idle, caller } = shuntScene();
+      for (let i = 0; i <= k; i++) sim.ticks(GDT);
+      const back = reload(w, () => shuntLine().w);
+      const again = run(back, sim.now);
+      const [idleBack, callerBack] = back.fleet.trains;
+      const at = `saved after tick ${k} of the shunt (it turns on ${turn})`;
+      expect(idleBack.holding, at).toBe(true);
+      for (let i = 0; i < 40 / GDT; i++) {
+        sim.ticks(GDT);
+        again.ticks(GDT);
+        for (const [a, b] of [
+          [idle, idleBack],
+          [caller, callerBack],
+        ] as const) {
+          const was = `${at}, ${b.name} ${i} ticks on`;
+          expect([b.state, b.holding, b.reversed, b.lastMessage], was).toEqual([
+            a.state,
+            a.holding,
+            a.reversed,
+            a.lastMessage,
+          ]);
+          expect(apart(a, b), was).toBeLessThan(0.01);
+        }
+      }
+      expect(idleBack.holding, at).toBe(false);
+      expect(idleBack.headTile?.x, at).toBe(31);
+      expectSound(again);
+    }
+  });
+
+  it(
+    'loaded with its second leg no longer laid, stops where it stands and lets its lease go',
+    SLOW,
+    () => {
+      const { w, sim } = shuntScene();
+      sim.ticks(1);
+      const back = reload(w, () => {
+        const fresh = shuntLine().w;
+        fresh.builder.free = true;
+        expect(fresh.builder.removeTrack(31, ROW + 3)).toBe(true);
+        fresh.builder.free = false;
+        return fresh;
+      });
+      const again = run(back, sim.now);
+      const [idleBack] = back.fleet.trains;
+      expect(idleBack.holding).toBe(true);
+      again.ticks(GDT);
+      expect([idleBack.state, idleBack.holding, idleBack.lastMessage]).toEqual([
+        'idle',
+        false,
+        STR.traffic.replan,
+      ]);
+      expect(back.fleet.traffic.recoveries.active.size).toBe(0);
+      expect(again.broken).toBeNull();
+    },
+  );
 });
 
 // ------------------------------------------------------------------ generated lines

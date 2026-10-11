@@ -282,6 +282,56 @@ describe('interlocking and recovery ownership', () => {
     expect(traffic.claimedBy(4, 5, 2)).toBe(1);
   });
 
+  it('leases both legs of a shunt whole, keeps the second until the turn, and counts the turn as progress', () => {
+    const g = new TrackGraph(24, 24);
+    line(g, 5, 1, 14);
+    const traffic = trafficOn(g);
+    // the first leg runs west from x 8 to 4, where the train turns and runs east from x 6 to 10
+    const shunter = moving(1, [8, 7, 6, 5, 4], [8, 9], g.w);
+    const out = shunter.pathAhead();
+    const back = [6, 7, 8, 9, 10].map((x) => ({ x, y: 5, in: Dir.W, out: Dir.E }));
+    const behind = moving(2, [13, 12, 11], [13], g.w);
+    const stand = moving(3, [11, 10], [10], g.w);
+    stand.state = 'waiting';
+    // a train standing on the second leg: nothing is leased, nothing claimed
+    expect(traffic.reserveRecovery(shunter, [...out, ...back], [1, 2], [shunter, stand], 0)).toBe(
+      false,
+    );
+    expect(traffic.recoveries.active.size).toBe(0);
+    expect(traffic.claims.size).toBe(0);
+    expect(traffic.reserveRecovery(shunter, [...out, ...back], [1, 2], [shunter, behind], 0)).toBe(
+      true,
+    );
+    shunter.holding = true;
+    for (const x of [4, 5, 6, 7, 8, 9, 10]) expect(traffic.claimedBy(x, 5, 2), `x ${x}`).toBe(1);
+    // where the train stands (`cars`) and the tiles its path runs on over (`ahead`, one a tile)
+    const at = (progress: number, cars: number[], ahead: number[]) =>
+      Object.assign(shunter, {
+        pathProgress: progress,
+        occupancyKeys: () => cars.map((x) => 5 * g.w + x),
+        pathAhead: () =>
+          ahead.map((x, i) => {
+            const east = ahead.length < 2 || ahead[1] > ahead[0];
+            return { x, y: 5, in: east ? Dir.W : Dir.E, out: east ? Dir.E : Dir.W, arc: i };
+          }),
+      });
+    // on its first leg, past x 7 and 8: the tiles it comes back over stay its own
+    at(3, [5, 6], [5, 4]);
+    traffic.assign([shunter, behind], 20);
+    for (const x of [7, 8, 9, 10]) expect(traffic.claimedBy(x, 5, 2), `x ${x}`).toBe(1);
+    // turned at x 4 (its path starts afresh): the turn is progress, and what it leaves is let go
+    at(0.2, [4, 5, 6], [6, 7, 8, 9, 10]);
+    traffic.assign([shunter, behind], 20.05);
+    at(2.5, [7, 8], [8, 9, 10]);
+    traffic.assign([shunter, behind], 45);
+    expect(traffic.claimedBy(4, 5, 2)).toBeNull();
+    expect(traffic.claimedBy(9, 5, 2)).toBe(1);
+    // 31 s past the last gain on the first leg, but 6 s past one on the second: not stalled
+    traffic.assign([shunter, behind], 51);
+    expect(shunter.holding).toBe(true);
+    expect(traffic.recoveries.active.has(1)).toBe(true);
+  });
+
   it('keeps the escape owner subject to a newly occupied route', () => {
     const g = new TrackGraph(24, 24);
     line(g, 5, 1, 14);

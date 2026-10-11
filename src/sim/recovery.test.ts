@@ -15,11 +15,14 @@ import {
   blockingGroups,
   blockingCycles,
   findRefugePath,
+  findShuntPath,
   RecoveryReservations,
+  SHUNT_TURNS,
   stateKey,
   statesReaching,
+  turnIndex,
 } from './recovery';
-import { Train, defaultStop, type TickCtx } from './trains';
+import { Train, defaultStop, type RetreatPlan, type TickCtx } from './trains';
 import { consistLength, vehicleSpec } from './body';
 import type { Station } from './stations';
 import { content } from '../data/content';
@@ -47,6 +50,20 @@ function sided(from = 1) {
   for (let y = 7; y <= 12; y++) track.place(15, y, 'straight', 0);
   return track;
 }
+
+/**
+ * Where the rear end of a train `length` long stands on a way, its head at the last tile's centre,
+ * counted along the arcs (`findShuntPath`'s `rearOn`): its index in the way, -1 when it is shorter.
+ */
+const rearAlong = (track: TrackGraph, length: number) => (path: readonly PathSegment[]) => {
+  let behind = 0;
+  for (let i = path.length - 1; i >= 0; i--) {
+    const s = path[i];
+    behind += track.segLength(s.x, s.y, s.in, s.out) / (i === path.length - 1 ? 2 : 1);
+    if (behind > length) return i;
+  }
+  return -1;
+};
 
 describe('coordinated recovery', () => {
   it('preserves the underlying fuel failure when releasing a recovery', () => {
@@ -237,6 +254,120 @@ describe('coordinated recovery', () => {
     expect(into.flip).toBe(false);
     const end = into.path.at(-1)!;
     expect(end.x === 15 && end.y >= 7).toBe(true);
+  });
+
+  it('turns once past a switch it cannot run straight into the siding from, clear of it, and backs in', () => {
+    // heading west from x 20, the switch at x 14 and 15 lets it out of the siding only
+    const track = sided();
+    const start = { x: 20, y: 5, in: Dir.E };
+    const refuge = (x: number, y: number) => x === 15 && y >= 7;
+    const free = () => false;
+    expect(findRefugePath(track, start, 2.4, free, refuge, () => true)).toBeNull();
+    const rear = rearAlong(track, 2.4);
+    const legs = findShuntPath(track, start, 2.4, free, refuge, () => true, rear)!;
+    expect(legs).not.toBeNull();
+    // it stands with its head at x 11 and its rear end on x 13, every car past the switch
+    expect(showWay(legs.out.slice(-3))).toBe('(13,5) E->W (12,5) E->W (11,5) E->W');
+    expect(rear(legs.out)).toBe(legs.out.length - 3);
+    // and runs from its rear end's tile through the switch's branch into the siding
+    expect(showWay(legs.back.slice(0, 4))).toBe('(13,5) W->E (14,5) W->E (15,5) W->S (15,6) N->S');
+    expect(legs.back.at(-1)).toMatchObject({ x: 15, y: 10 });
+    // reserved as one way, the second leg starts where the first does not lead
+    expect(turnIndex([...legs.out, ...legs.back])).toBe(legs.out.length);
+    expect(turnIndex(legs.out)).toBe(legs.out.length);
+    // where it cannot stand clear of the switch, or the siding cannot hold it, it does not turn
+    const at = (bx: number, by: number) => (x: number, y: number) => x === bx && y === by;
+    expect(findShuntPath(track, start, 2.4, at(12, 5), refuge, () => true, rear)).toBeNull();
+    expect(findShuntPath(track, start, 2.4, at(15, 9), refuge, () => true, rear)).toBeNull();
+  });
+
+  it('tries no more than SHUNT_TURNS places to turn', () => {
+    // eight switches along a line, each with a siding a train heading west backs into
+    const track = new TrackGraph(64, 16);
+    const blocks = [8, 14, 20, 26, 32, 38, 44, 50];
+    for (const x of blocks) {
+      track.place(x, 5, 'switch', 7);
+      for (let y = 7; y <= 12; y++) track.place(x + 1, y, 'straight', 0);
+    }
+    for (let x = 1; x <= 60; x++) if (!track.has(x, 5)) track.place(x, 5, 'straight', 1);
+    const turnedAt = new Set<string>();
+    const legs = findShuntPath(
+      track,
+      { x: 58, y: 5, in: Dir.E },
+      2.4,
+      () => false,
+      (x, y) => y >= 7,
+      () => true,
+      rearAlong(track, 2.4),
+      (p) => {
+        turnedAt.add(`${p[0].x},${p[0].y}`);
+        return false;
+      },
+    );
+    expect(legs).toBeNull();
+    expect(turnedAt.size).toBe(SHUNT_TURNS);
+  });
+
+  it('backs a train off with one turn partway where no refuge can be run straight into', () => {
+    // a train heading east with its head at x 12; the other stands from x 16 on and its route takes
+    // the whole main line, so the only refuge is the siding under x 7, whose switch lets a train
+    // heading west out of it only. Its stop has no track, so any refuge will do
+    const track = new TrackGraph(28, 28);
+    track.place(6, 5, 'switch', 7);
+    for (let x = 1; x <= 24; x++) if (!track.has(x, 5)) track.place(x, 5, 'straight', 1);
+    for (let y = 7; y <= 12; y++) track.place(7, y, 'straight', 0);
+    const w = track.w;
+    const def = content.locomotives.find((d) => d.id === 'f7')!;
+    const hopper = content.wagons.find((d) => d.id === 'wood_hopper')!;
+    const t = new Train([{ uid: 1, level: 0, def }], 'Behind', 1);
+    t.wagons = [{ uid: 2, def: hopper, level: 1, cargo: null, amount: 0, origin: null }];
+    expect(t.spawnAt(track, 12, 5, Dir.W)).toBe(true);
+    const stop = { id: 7 } as Station;
+    t.schedule = [defaultStop(stop.id)];
+    t.state = 'moving';
+    t.blockedBy = 2;
+    const reserved: PathSegment[][] = [];
+    const ctx = {
+      track,
+      now: 10,
+      map: emptyMap(1, 28, 28, Terrain.Grass),
+      builder: {
+        stations: [stop],
+        stationById: (id: number) => (id === stop.id ? stop : undefined),
+        platformTiles: () => [{ x: 26, y: 20 }],
+      },
+      trainPath: () => new Set(Array.from({ length: 24 }, (_, i) => 5 * w + 1 + i)),
+      occupied: (x: number, y: number) => y === 5 && x >= 16,
+      recoveryOwner: () => null,
+      claimedBy: () => null,
+      reserveRecovery: (_t: Train, path: PathSegment[]) => {
+        reserved.push(path);
+        return false;
+      },
+    } as unknown as TickCtx;
+    expect(t.planRetreat(ctx, [1, 2])).toBeNull();
+    const plan = t.planRetreat(ctx, [1, 2], true)!;
+    expect(plan).not.toBeNull();
+    // rear first past the switch, then into the siding
+    expect(plan.flip).toBe(true);
+    expect(plan.path.at(-1)!.x).toBeLessThan(6);
+    expect(plan.back!.at(-1)).toMatchObject({ x: 7 });
+    expect(plan.back!.at(-1)!.y).toBeGreaterThanOrEqual(7);
+    // both legs are leased at once, or nothing changes
+    const before = t.toJSON();
+    expect(t.retreat(ctx, [1, 2], plan)).toBe(false);
+    expect(reserved).toEqual([[...plan.path, ...plan.back!]]);
+    expect(t.toJSON()).toEqual(before);
+    ctx.reserveRecovery = () => true;
+    expect(t.retreat(ctx, [1, 2], plan)).toBe(true);
+    // it runs the first leg, and counts the second as its route
+    expect(t.holding).toBe(true);
+    expect(t.pathAhead().at(-1)).toMatchObject({ x: plan.path.at(-1)!.x, y: 5 });
+    const keys = t.pathTileKeys(w);
+    for (const s of plan.back!) expect(keys.has(s.y * w + s.x)).toBe(true);
+    // a stale escape drops the second leg with the first
+    t.cancelRetreat(20);
+    expect(t.pathTileKeys(w).has(plan.back!.at(-1)!.y * w + 7)).toBe(false);
   });
 
   it('previews a reverse retreat from the rear and leaves the train unchanged on reservation failure', () => {
@@ -942,12 +1073,15 @@ function asideSetUp(a: AsideCase) {
   // where it is bound back to: the station it stood at, else its stop
   const to = wayTo(a.atStation ? STOOD : STOP);
   return {
+    g,
     t,
     ctx,
     spots,
+    starts,
     had: starts.some(to),
     inSidings: waysTo(refugeOff(bound, sidings)),
     anywhere: waysTo(refugeOff(bound)),
+    refuge: refugeOff(bound),
     wayOn: (w: readonly PathSegment[]) => wayOn(w, to),
   };
 }
@@ -989,6 +1123,108 @@ function* shrinkAside(a: AsideCase): Iterable<AsideCase> {
 describe('planAside on generated lines with sidings', () => {
   it('moves an idle train only where it can get back to its station from, into a siding first', () => {
     forAll(asideCase(false), asideHolds, { seeds: MANY_SEEDS, shrink: shrinkAside });
+  });
+});
+
+/**
+ * A shunt is two ordinary ways and a stand. The first leg runs on from the end of the train it
+ * sets off from (`starts`: the head, or the rear when it turns first), never onto another train,
+ * never twice over a tile, and over a switch that offers a choice coming back. At its end the train
+ * stands (stood there as `spawnAt` stands it) on the first leg's tiles, wholly on plain track. The
+ * second leg runs from the tile the rear end is on, as the train sets off reversing, to a refuge
+ * `refugeWays` lists from there under the plain search's rules.
+ */
+function shuntSound(
+  g: TrackGraph,
+  t: Train,
+  plan: RetreatPlan,
+  starts: readonly PathSegment[],
+  blocked: (x: number, y: number) => boolean,
+  refuge: (x: number, y: number) => boolean,
+) {
+  const { path: out, back } = plan;
+  const story = `${showWay(out)} | ${back && showWay(back)}`;
+  expect(back, story).toBeDefined();
+  const from = starts[plan.flip ? 1 : 0];
+  expect(showState(out[0]), story).toBe(showState(from));
+  out.forEach((s, i) => {
+    expect(g.exits(s.x, s.y, s.in), story).toContain(s.out);
+    expect(
+      out.findIndex((p) => p.x === s.x && p.y === s.y),
+      story,
+    ).toBe(i);
+    if (!i) return;
+    const p = out[i - 1];
+    expect(showState(s), story).toBe(
+      showState({ x: p.x + DIR_DX[p.out], y: p.y + DIR_DY[p.out], in: opposite(p.out) }),
+    );
+    expect(blocked(s.x, s.y) || !t.canUse(g.get(s.x, s.y)!, s.in), story).toBe(false);
+  });
+  expect(
+    out.some((s) => g.exits(s.x, s.y, s.out).length > 1),
+    story,
+  ).toBe(true);
+  const last = out[out.length - 1];
+  const locos = t.locos.map((l) => ({ uid: l.uid, level: l.level, def: l.def }));
+  const there = new Train(locos, 'There', t.id);
+  there.wagons = t.wagons.map((car) => ({ ...car }));
+  expect(there.spawnAt(g, last.x, last.y, last.in), story).toBe(true);
+  const on = new Set(out.map((s) => g.key(s.x, s.y)));
+  for (const k of there.occupancyKeys(g.w)) {
+    const p = g.get(k % g.w, Math.floor(k / g.w));
+    expect(on.has(k) && p?.links.length === 1 && !p.unit, `stands on ${k}: ${story}`).toBe(true);
+  }
+  const rear = (there as unknown as Reversible).reversedTrail().trail.at(-1)!.seg;
+  expect(showState(back![0]), story).toBe(showState(rear));
+  const ways = refugeWays(g, back![0], t.length, blocked, refuge, t.canUse);
+  expect(
+    ways.some((w) => sameWay(w, back!)),
+    story,
+  ).toBe(true);
+}
+
+describe('planRetreat and planAside with shunting on generated lines with sidings', () => {
+  // the fallback only: where a plan without a reversal exists it is the plan
+  it('give the plain plan wherever there is one, else only a sound shunt with a way on', () => {
+    let shunts = 0;
+    forAll(
+      retreatCase,
+      (c) => {
+        const { g, t, ctx, keys, starts, refugeOff, wayTo, wayOn } = standing(c)!;
+        t.state = 'moving';
+        t.blockedBy = 2;
+        const plain = t.planRetreat(ctx, [1, 2]);
+        const plan = t.planRetreat(ctx, [1, 2], true);
+        if (plain) return expect(plan).toEqual(plain);
+        if (!plan) return;
+        shunts++;
+        const blocked = (x: number, y: number) => ctx.occupied(x, y, t.id);
+        shuntSound(g, t, plan, starts, blocked, refugeOff(keys(c.platform)));
+        const to = wayTo(STOP);
+        if (starts.some(to)) expect(wayOn(plan.back!, to)).toBe(true);
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkRetreat },
+    );
+    expect(shunts, 'lines that only a shunt clears').toBeGreaterThan(0);
+  });
+
+  it('move an idle train aside with the plain plan wherever there is one, else a sound shunt', () => {
+    let shunts = 0;
+    forAll(
+      asideCase(false),
+      (a) => {
+        const { g, t, ctx, spots, starts, had, refuge, wayOn } = asideSetUp(a)!;
+        const plain = t.planAside(ctx, [2], spots);
+        const plan = t.planAside(ctx, [2], spots, false, true);
+        if (plain) return expect(plan).toEqual(plain);
+        if (!plan) return;
+        shunts++;
+        shuntSound(g, t, plan, starts, (x, y) => ctx.occupied(x, y, t.id), refuge);
+        if (had) expect(wayOn(plan.back!)).toBe(true);
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkAside },
+    );
+    expect(shunts, 'lines that only a shunt clears').toBeGreaterThan(0);
   });
 });
 
