@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { LOCOS, WAGONS, type LocoDef, type WagonDef } from '../gacha/items';
 import { vehicleSpec } from '../sim/body';
+import { cargoName } from '../sim/cargo';
 import { STR } from '../strings';
 import { vehicleProperties } from './vehicleProperties';
 
@@ -44,6 +45,32 @@ describe('the data sheet of a vehicle', () => {
         expect(line, d.id).not.toMatch(/undefined|NaN/);
         for (const p of pieces(line))
           expect(stored.has(p), `${d.id}: "${p}" in "${line}"`).toBe(false);
+      }
+    }
+  });
+
+  it('leaves out the accepted-cargo line of a wagon whose class has no cargo', () => {
+    // no wagon in the shipped data has an empty `accepts`, so each one is copied without it
+    for (const base of [...WAGONS]) {
+      const full = vehicleProperties(base.id);
+      for (const accepts of [[], undefined]) {
+        const id = `${base.id}__no_cargo`;
+        WAGONS.push({ ...base, id, accepts });
+        const tag = `${id} with accepts ${JSON.stringify(accepts)}`;
+        try {
+          const lines = vehicleProperties(id);
+          for (const line of lines) expect(line.trim(), `${tag}: an empty line`).not.toBe('');
+          // the same sheet with one line left out: the one naming the cargo the wagon takes
+          const dropped = full.findIndex((l) => !lines.includes(l));
+          expect(dropped, `${tag}: no line left out of ${full.join(' | ')}`).not.toBe(-1);
+          expect(lines, tag).toEqual(full.filter((_, i) => i !== dropped));
+          for (const c of base.accepts ?? []) expect(full[dropped], tag).toContain(cargoName(c));
+        } finally {
+          WAGONS.splice(
+            WAGONS.findIndex((w) => w.id === id),
+            1,
+          );
+        }
       }
     }
   });
