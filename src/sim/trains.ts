@@ -140,14 +140,16 @@ export function consistPhysics(
     engaged,
   };
 }
-/** What a train does at one stop of its looped schedule. */
 /**
- * Static: `schedule` follows the player's stop list to the letter. Dynamic: `production` sweeps
- * producers into the nearest warehouse (or depot), `collection` empties warehouses into depots,
- * `transport` carries passengers between town stations; all three pick their stops on the fly.
+ * Static: `schedule` follows the player's stop list to the letter. Dynamic: `freight` heads for
+ * the fullest producer or warehouse and hauls its goods on (producer goods into the nearest
+ * warehouse or a depot, warehouse goods into a depot), `transport` carries passengers between
+ * town stations, `contract` works the contracts handed to it; all three pick their stops on the
+ * fly.
  */
-export type RouteMode = 'schedule' | 'production' | 'collection' | 'transport' | 'contract';
-export const DYNAMIC_MODES: RouteMode[] = ['production', 'collection', 'transport', 'contract'];
+export type RouteMode = 'schedule' | 'freight' | 'transport' | 'contract';
+export const DYNAMIC_MODES: RouteMode[] = ['freight', 'transport', 'contract'];
+/** What a train does at one stop of its looped schedule. */
 export interface StopPlan {
   stationId: number;
   load: 'auto' | 'none';
@@ -711,6 +713,11 @@ export class Train {
   private yieldWait = 0;
   /** units taken on since arriving at the current stop */
   private loadedHere = 0;
+  /**
+   * A freight train has put goods down at the stop it stands at. It takes nothing on there and
+   * does not pick the stop again, so what it put down is not hauled straight back out. Saved.
+   */
+  private dropped = false;
   /** a roaming train sitting at a station with nothing coming aboard: it has nowhere urgent to be */
   get waitingForCargo() {
     return this.dynamic && this.loadedHere < 1 && this.stateTime > 6;
@@ -721,9 +728,8 @@ export class Train {
   /** station id of a refuelling detour taken before the scheduled stop */
   detour: number | null = null;
   /**
-   * How the next stop is chosen: `fixed` follows the schedule, `dynamic` asks the fleet for the
-   * station whose cargo the stockpile lacks most, `collect` sweeps the fullest producers and
-   * warehouses into the nearest depot.
+   * How the next stop is chosen: `schedule` follows the stop list, every other mode asks the fleet
+   * (`Fleet.chooseNext`).
    */
   mode: RouteMode = 'schedule';
   /** true for every mode that picks stops on the fly */
@@ -2339,6 +2345,7 @@ export class Train {
     this.yieldCount = 0;
     this.gaveWayTo = null;
     this.loadedHere = 0;
+    this.dropped = false;
     this.clearHold();
     if (this.detour === st.id) {
       // fuel stop on the way: fill up, then carry on to the scheduled stop
@@ -2462,6 +2469,7 @@ export class Train {
       w.amount -= n;
       budget -= n;
       busy = true;
+      if (this.mode === 'freight' && !this.job) this.dropped = true;
       bump(this.trip.delivered, w.cargo, n);
       if (w.amount < 1e-3) {
         w.amount = 0;
@@ -2472,14 +2480,24 @@ export class Train {
     if (this.flowTimer >= 90) this.flushFlow(ctx, st);
     // load what the station makes (or, at a warehouse, keeps) when a later stop takes it: a
     // depot takes anything, a warehouse anything from a producer, a town what it accepts
-    // what may be taken on here: a production train only takes from producers, a collection
-    // train only from warehouses, a transport train only passengers
+    // what may be taken on here: a freight train takes what a producer makes and any goods a
+    // warehouse keeps, but nothing at a warehouse it is dumping goods into (it put goods down
+    // there, or still carries some from elsewhere), so what goes in does not come out again; a
+    // transport train only takes passengers
     const job = this.job;
+    const dumping =
+      this.mode === 'freight' &&
+      !job &&
+      st.def.stockpile &&
+      (this.dropped ||
+        this.wagons.some(
+          (w) => w.cargo && w.amount > 0 && w.origin !== st.id && cargoClass(w.cargo) !== 'people',
+        ));
     const produced = st.availableCargo().filter((c) => {
       // at a contract's origin only the contract's cargo comes aboard
       if (job && st.id === job.originId) return c === job.cargo;
-      if (this.mode === 'production') return !st.def.stockpile || st.producedCargo().includes(c);
-      if (this.mode === 'collection') return st.def.stockpile && cargoClass(c) !== 'people';
+      if (this.mode === 'freight')
+        return !st.def.stockpile || (!dumping && cargoClass(c) !== 'people');
       if (this.mode === 'transport') return cargoClass(c) === 'people';
       return true;
     });
@@ -2585,8 +2603,14 @@ export class Train {
     const program = jobWants !== 'go' && !wasDetour;
     if (program && this.dynamic) {
       let next = ctx.chooseNext(this);
-      if (next !== null && st && next === st.id && this.loadedHere < 1 && !wasIdle) {
-        // nothing came aboard here: the pick is stale, look elsewhere for a minute
+      if (
+        next !== null &&
+        st &&
+        next === st.id &&
+        (this.dropped || (this.loadedHere < 1 && !wasIdle))
+      ) {
+        // nothing came aboard here, or what the train put down here is what makes the stop
+        // worth picking: the pick is stale, look elsewhere for a minute
         this.badTargets.set(st.id, ctx.now + 60);
         next = ctx.chooseNext(this);
       }
@@ -2632,6 +2656,8 @@ export class Train {
       this.dispatch(ctx.track, ctx.builder, ctx.map, avoid, mode) ||
       this.dispatch(ctx.track, ctx.builder, ctx.map, undefined, mode)
     ) {
+      // setting off: what it put down at this stop stays behind
+      this.dropped = false;
       if (!this.planFuelDetour(ctx)) this.onPathReady(ctx);
       else if (this.path) this.setState('moving');
     } else if (this.dynamic) {
@@ -3221,6 +3247,8 @@ export class Train {
       ]),
       // v17: the note it shows
       note: this.lastMessage,
+      // v18: a freight train has put goods down at the stop it stands at
+      dropped: this.dropped,
     };
   }
 
@@ -3256,7 +3284,7 @@ export class Train {
           routeIndex: j.suspended.routeIndex,
         }
       : null;
-    // the migration steps map the old mode names and fill the battery
+    // the migration steps map the old mode names to the current ones and fill the battery
     t.mode = DYNAMIC_MODES.includes(j.mode) ? j.mode : 'schedule';
     t.coal = j.tanks.coal;
     t.oil = j.tanks.oil;
@@ -3287,6 +3315,7 @@ export class Train {
     t.badTargets = new Map(j.badTargets);
     t.serviceStop = j.serviceStop && { ...j.serviceStop };
     t.nextFuelCheck = j.nextFuelCheck;
+    t.dropped = j.dropped === true;
     // a yielding train looks again only every two seconds: until then what it last found holds
     if (t.state === 'yielding') {
       t.blockedBy = j.blockedBy;

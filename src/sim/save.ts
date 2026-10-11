@@ -18,7 +18,7 @@ export type WorldSpec =
   | { kind: 'generated'; seed: number; params: MapGenParams }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -64,7 +64,9 @@ export interface SaveParts {
    * as `Train.toJSON` writes them; v14: what each was doing; v17: whether the escape it runs is an
    * idle train making way (`aside`), the way it runs (`way`), what a waiting train waits for
    * (`blockedBy`, `want`), its note (`note`) and when it may next look for a way aside and a jam
-   * it is in be searched again (`asideRetry`, `recoveryRetry`)
+   * it is in be searched again (`asideRetry`, `recoveryRetry`); v18: whether a freight train has
+   * put goods down at the stop it stands at (`dropped`), and its `mode` is `freight` where it was
+   * `production` or `collection`
    */
   trains: unknown[];
   contracts: unknown;
@@ -540,6 +542,17 @@ export const MIGRATIONS: Migration[] = [
         t.note = t.note ?? '';
         t.asideRetry = t.asideRetry ?? 0;
         t.recoveryRetry = t.recoveryRetry ?? 0;
+      }
+    },
+  },
+  {
+    from: 17,
+    note: 'Production and Collection became one Freight route mode: a train on either now runs as Freight, which heads for the fullest producer or warehouse and takes producer goods to a warehouse or depot and warehouse goods to a depot; no freight train had put goods down at the stop it stands at; from now on a save keeps that',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        if (t.mode === 'production' || t.mode === 'collection') t.mode = 'freight';
+        t.dropped = t.dropped ?? false;
       }
     },
   },

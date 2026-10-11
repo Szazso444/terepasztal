@@ -484,8 +484,6 @@ export const STR = {
     routeMode: {
       auto: 'Schedule (auto)',
       custom: 'Schedule (custom)',
-      production: 'Production',
-      collection: 'Collection',
       transport: 'Transport',
       contract: 'Contract',
       freight: 'Freight',
@@ -494,16 +492,12 @@ export const STR = {
       auto: 'Static: visits every station with platform track, nearest first, and empties into the depot. Edit stops, dwell times and conditions later in the train details.',
       custom:
         'Static: your stop list, in order. Per stop: what to load and unload, wait for full wagons, minimum and maximum dwell, refuel, departure direction. The train never changes the plan by itself.',
-      production:
-        'Dynamic: maximises what it hauls. Heads for the producer with the biggest load waiting (fuller piles first), tops up at another producer of the same goods while room is left, then dumps into the nearest warehouse with room, or the depot. Re-plans at every stop, refuels on its own and detours around traffic.',
-      collection:
-        'Dynamic: empties warehouses into depots. Leaves a warehouse alone until it holds 100 of a resource, then the fuller it is the sooner it comes; tops up at another warehouse while room is left. Re-plans at every stop and refuels on its own.',
       transport:
         'Dynamic: carries passengers. Heads for the Station with the most people waiting and takes them to the nearest other town. Needs coaches. Re-plans at every stop and refuels on its own.',
       contract:
         'Dynamic: works contracts. Waits on its platform until a contract it can carry is accepted, is chosen for it ahead of busier trains, runs it origin to destination and returns to waiting. Refuels on its own.',
       freight:
-        'Dynamic: heads for the fullest station, a producer or a warehouse (a warehouse only once it holds the pickup amount from Game tuning), then tops up at another source while room is left. Takes producer goods to the nearest warehouse with room or to a depot, and goods taken from a warehouse to a depot. Re-plans at every stop and refuels on its own.',
+        'Dynamic: heads for the producer or warehouse with the fullest, biggest pile within reach (a warehouse only once it holds the pickup pile set in Game tuning), then tops up at another producer while room is left. Takes producer goods to the nearest warehouse with room, or to a depot when that is clearly nearer, and goods taken from a warehouse to a depot (to another warehouse only when no depot is reachable). Takes nothing out of a warehouse it has just put goods into. Re-plans at every stop and refuels on its own.',
     } as Record<string, string>,
     dynamicTag: 'dynamic',
     routeAutoHint:
@@ -1121,20 +1115,16 @@ export const STR = {
     clickHint: 'Click to select',
     mode: {
       schedule: 'Schedule',
-      production: 'Production',
-      collection: 'Collection',
       transport: 'Transport',
       contract: 'Contract',
       freight: 'Freight',
     } as Record<string, string>,
     modeHint: {
       schedule: 'Static: follows the stop list below exactly.',
-      production: 'Dynamic: producers → nearest warehouse or depot, biggest loads first.',
-      collection: 'Dynamic: warehouses → depots.',
       transport: 'Dynamic: passengers between Stations.',
       contract: 'Dynamic: carries accepted contracts from origin to destination.',
       freight:
-        'Dynamic: fullest producer or warehouse first (a warehouse once it holds the pickup amount from Game tuning), tops up at another source while room is left. Producer goods go to the nearest warehouse with room or a depot, warehouse goods to a depot. Re-plans at every stop and refuels on its own.',
+        'Dynamic: fullest producer or warehouse first (a warehouse once it holds the pickup pile set in Game tuning), tops up at another producer while room is left. Producer goods go to the nearest warehouse with room or a depot, warehouse goods to a depot, and nothing is taken back out of a warehouse it just filled. Re-plans at every stop and refuels on its own.',
     } as Record<string, string>,
     coal: 'Coal',
     wood: 'Wood',
