@@ -1,0 +1,352 @@
+{
+  "status": "drafts fail exact output requirements; finishing authorization pending",
+  "report": [
+    {
+      "id": "road-straight-x",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1517876,
+      "alphaOpaque": 254,
+      "alphaIntermediate": 54386,
+      "outsideDiamond": 1272,
+      "joins": {
+        "nw": {
+          "start": -0.123046875,
+          "end": 0.2734375,
+          "widthTiles": 0.396484375
+        },
+        "se": {
+          "start": -0.26953125,
+          "end": -0.25,
+          "widthTiles": 0.01953125
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-straight-y",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1485286,
+      "alphaOpaque": 319,
+      "alphaIntermediate": 86911,
+      "outsideDiamond": 2166,
+      "joins": {
+        "ne": {
+          "start": -0.5,
+          "end": -0.0078125,
+          "widthTiles": 0.4921875
+        },
+        "sw": {
+          "start": -0.39453125,
+          "end": 0.390625,
+          "widthTiles": 0.78515625
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-curve-ne-se",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1518853,
+      "alphaOpaque": 177,
+      "alphaIntermediate": 53486,
+      "outsideDiamond": 3876,
+      "joins": {
+        "ne": {
+          "start": -0.33203125,
+          "end": -0.033203125,
+          "widthTiles": 0.298828125
+        },
+        "se": {
+          "start": -0.318359375,
+          "end": 0.482421875,
+          "widthTiles": 0.80078125
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-curve-se-sw",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1493313,
+      "alphaOpaque": 326,
+      "alphaIntermediate": 78877,
+      "outsideDiamond": 15904,
+      "joins": {
+        "se": {
+          "start": -0.5,
+          "end": 0.44921875,
+          "widthTiles": 0.94921875
+        },
+        "sw": {
+          "start": -0.443359375,
+          "end": 0.5,
+          "widthTiles": 0.943359375
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-curve-sw-nw",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1528827,
+      "alphaOpaque": 204,
+      "alphaIntermediate": 43485,
+      "outsideDiamond": 523,
+      "joins": {
+        "sw": {
+          "start": 0.033203125,
+          "end": 0.33984375,
+          "widthTiles": 0.306640625
+        },
+        "nw": {
+          "start": 0.240234375,
+          "end": 0.25390625,
+          "widthTiles": 0.013671875
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-curve-nw-ne",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1512486,
+      "alphaOpaque": 258,
+      "alphaIntermediate": 59772,
+      "outsideDiamond": 365,
+      "joins": {
+        "nw": null,
+        "ne": null
+      },
+      "passes": false
+    },
+    {
+      "id": "road-tee-closed-ne",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1487849,
+      "alphaOpaque": 285,
+      "alphaIntermediate": 84382,
+      "outsideDiamond": 4486,
+      "joins": {
+        "se": {
+          "start": -0.5,
+          "end": 0.484375,
+          "widthTiles": 0.984375
+        },
+        "sw": {
+          "start": -0.4765625,
+          "end": 0.5,
+          "widthTiles": 0.9765625
+        },
+        "nw": {
+          "start": -0.05859375,
+          "end": 0.298828125,
+          "widthTiles": 0.357421875
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-tee-closed-se",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1488133,
+      "alphaOpaque": 268,
+      "alphaIntermediate": 84115,
+      "outsideDiamond": 3916,
+      "joins": {
+        "ne": {
+          "start": -0.5,
+          "end": -0.0078125,
+          "widthTiles": 0.4921875
+        },
+        "sw": {
+          "start": -0.42578125,
+          "end": 0.5,
+          "widthTiles": 0.92578125
+        },
+        "nw": {
+          "start": -0.48046875,
+          "end": 0.5,
+          "widthTiles": 0.98046875
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-tee-closed-sw",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1488052,
+      "alphaOpaque": 227,
+      "alphaIntermediate": 84237,
+      "outsideDiamond": 4898,
+      "joins": {
+        "ne": {
+          "start": -0.5,
+          "end": 0.4453125,
+          "widthTiles": 0.9453125
+        },
+        "se": {
+          "start": -0.5,
+          "end": 0.458984375,
+          "widthTiles": 0.958984375
+        },
+        "nw": {
+          "start": -0.23828125,
+          "end": 0.5,
+          "widthTiles": 0.73828125
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-tee-closed-nw",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1462557,
+      "alphaOpaque": 354,
+      "alphaIntermediate": 109605,
+      "outsideDiamond": 21977,
+      "joins": {
+        "ne": {
+          "start": -0.40234375,
+          "end": 0.25390625,
+          "widthTiles": 0.65625
+        },
+        "se": {
+          "start": -0.5,
+          "end": 0.48828125,
+          "widthTiles": 0.98828125
+        },
+        "sw": {
+          "start": -0.37890625,
+          "end": 0.5,
+          "widthTiles": 0.87890625
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-end-ne",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1516959,
+      "alphaOpaque": 262,
+      "alphaIntermediate": 55295,
+      "outsideDiamond": 5377,
+      "joins": {
+        "ne": {
+          "start": -0.19140625,
+          "end": 0.361328125,
+          "widthTiles": 0.552734375
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-end-se",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1529784,
+      "alphaOpaque": 135,
+      "alphaIntermediate": 42597,
+      "outsideDiamond": 1462,
+      "joins": {
+        "se": {
+          "start": -0.27734375,
+          "end": 0.26953125,
+          "widthTiles": 0.546875
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-end-sw",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1510448,
+      "alphaOpaque": 188,
+      "alphaIntermediate": 61880,
+      "outsideDiamond": 1027,
+      "joins": {
+        "sw": {
+          "start": -0.150390625,
+          "end": 0.287109375,
+          "widthTiles": 0.4375
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-end-nw",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1531528,
+      "alphaOpaque": 125,
+      "alphaIntermediate": 40863,
+      "outsideDiamond": 324,
+      "joins": {
+        "nw": {
+          "start": 0.18359375,
+          "end": 0.2734375,
+          "widthTiles": 0.08984375
+        }
+      },
+      "passes": false
+    },
+    {
+      "id": "road-cross",
+      "width": 1254,
+      "height": 1254,
+      "channels": 4,
+      "alphaZero": 1464623,
+      "alphaOpaque": 238,
+      "alphaIntermediate": 107655,
+      "outsideDiamond": 9611,
+      "joins": {
+        "ne": {
+          "start": -0.5,
+          "end": 0.490234375,
+          "widthTiles": 0.990234375
+        },
+        "se": {
+          "start": -0.5,
+          "end": 0.470703125,
+          "widthTiles": 0.970703125
+        },
+        "sw": {
+          "start": -0.4921875,
+          "end": 0.5,
+          "widthTiles": 0.9921875
+        },
+        "nw": {
+          "start": -0.49609375,
+          "end": 0.5,
+          "widthTiles": 0.99609375
+        }
+      },
+      "passes": false
+    }
+  ]
+}

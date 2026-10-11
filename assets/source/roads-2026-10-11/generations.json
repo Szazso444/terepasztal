@@ -1,0 +1,82 @@
+[
+  {
+    "id": "road-straight-x",
+    "file": "raw/road-straight-x.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-4abcaeab-4343-4d53-b0c3-9b3044a35f27.png"
+  },
+  {
+    "id": "road-straight-y",
+    "file": "raw/road-straight-y.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-87e72586-0511-4603-9e2a-580431aac71f.png"
+  },
+  {
+    "id": "road-curve-ne-se",
+    "file": "raw/road-curve-ne-se.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-1da84bff-6a84-404c-bee8-4e58edefc5c5.png"
+  },
+  {
+    "id": "road-curve-se-sw",
+    "file": "raw/road-curve-se-sw.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-5d6756a1-e175-40c0-ba25-5ddd0498abae.png"
+  },
+  {
+    "id": "road-curve-sw-nw",
+    "file": "raw/road-curve-sw-nw.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-dc7815f6-ab30-4359-88b6-06de045db501.png"
+  },
+  {
+    "id": "road-curve-nw-ne",
+    "file": "raw/road-curve-nw-ne.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-c0153290-0289-4849-ab4c-62ea40459737.png"
+  },
+  {
+    "id": "road-tee-closed-ne",
+    "file": "raw/road-tee-closed-ne.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-95657567-5b20-4cea-8afb-e4a23e3c84ba.png"
+  },
+  {
+    "id": "road-tee-closed-se",
+    "file": "raw/road-tee-closed-se.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-6da54bcb-f27a-4e44-b2a0-592909295b69.png"
+  },
+  {
+    "id": "road-tee-closed-sw",
+    "file": "raw/road-tee-closed-sw.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-c27c4689-cc6d-4790-aaf9-234c81c07d8e.png"
+  },
+  {
+    "id": "road-tee-closed-nw",
+    "file": "raw/road-tee-closed-nw.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-7ba42e4e-a790-4516-a015-8f310c9d91c9.png"
+  },
+  {
+    "id": "road-end-ne",
+    "file": "raw/road-end-ne.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-ba266d5d-3f00-4964-b289-da4a12289245.png"
+  },
+  {
+    "id": "road-end-se",
+    "file": "raw/road-end-se.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-687b1650-eeff-467a-b4ab-2ac2eff365ee.png"
+  },
+  {
+    "id": "road-end-sw",
+    "file": "raw/road-end-sw.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-bd334d8e-f959-48f4-be29-c70ab08db4f5.png"
+  },
+  {
+    "id": "road-end-nw",
+    "file": "raw/road-end-nw.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-8797c2bd-31f9-4ceb-8c27-a44040eb4c10.png"
+  },
+  {
+    "id": "road-cross",
+    "file": "raw/road-cross.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-8b4e2106-9141-42bb-b94f-ee1323548aef.png"
+  },
+  {
+    "id": "road-straight-x-attempt-1",
+    "file": "raw/road-straight-x-attempt-1.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-6101ec74-9b59-4fa0-ae5f-b4026c363b28.png"
+  }
+]

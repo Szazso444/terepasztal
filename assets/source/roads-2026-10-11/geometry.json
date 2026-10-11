@@ -1,0 +1,171 @@
+{
+  "footprint": {
+    "id": "t1",
+    "canvas": [
+      1024,
+      1024
+    ],
+    "scale": 8,
+    "centre": [
+      512,
+      832
+    ],
+    "tiles": [
+      1,
+      1
+    ]
+  },
+  "anchor": [
+    512,
+    832
+  ],
+  "gameAnchor": [
+    32,
+    16
+  ],
+  "bandWidth": 0.5,
+  "vergeMaximum": 0.03,
+  "edges": {
+    "ne": [
+      640,
+      768
+    ],
+    "se": [
+      640,
+      896
+    ],
+    "sw": [
+      384,
+      896
+    ],
+    "nw": [
+      384,
+      768
+    ]
+  },
+  "pieces": [
+    {
+      "id": "road-straight-x",
+      "edges": [
+        "nw",
+        "se"
+      ]
+    },
+    {
+      "id": "road-straight-y",
+      "edges": [
+        "ne",
+        "sw"
+      ]
+    },
+    {
+      "id": "road-curve-ne-se",
+      "edges": [
+        "ne",
+        "se"
+      ],
+      "corner": [
+        0.5,
+        -0.5
+      ]
+    },
+    {
+      "id": "road-curve-se-sw",
+      "edges": [
+        "se",
+        "sw"
+      ],
+      "corner": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "road-curve-sw-nw",
+      "edges": [
+        "sw",
+        "nw"
+      ],
+      "corner": [
+        -0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "road-curve-nw-ne",
+      "edges": [
+        "nw",
+        "ne"
+      ],
+      "corner": [
+        -0.5,
+        -0.5
+      ]
+    },
+    {
+      "id": "road-tee-closed-ne",
+      "edges": [
+        "se",
+        "sw",
+        "nw"
+      ]
+    },
+    {
+      "id": "road-tee-closed-se",
+      "edges": [
+        "ne",
+        "sw",
+        "nw"
+      ]
+    },
+    {
+      "id": "road-tee-closed-sw",
+      "edges": [
+        "ne",
+        "se",
+        "nw"
+      ]
+    },
+    {
+      "id": "road-tee-closed-nw",
+      "edges": [
+        "ne",
+        "se",
+        "sw"
+      ]
+    },
+    {
+      "id": "road-end-ne",
+      "edges": [
+        "ne"
+      ]
+    },
+    {
+      "id": "road-end-se",
+      "edges": [
+        "se"
+      ]
+    },
+    {
+      "id": "road-end-sw",
+      "edges": [
+        "sw"
+      ]
+    },
+    {
+      "id": "road-end-nw",
+      "edges": [
+        "nw"
+      ]
+    },
+    {
+      "id": "road-cross",
+      "edges": [
+        "ne",
+        "se",
+        "sw",
+        "nw"
+      ]
+    }
+  ]
+}
