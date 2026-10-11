@@ -1151,6 +1151,47 @@ function wayOnFrom(
 }
 
 /**
+ * The oracle for the jam resolution's give-ways (`Train.gaveWay`), as `traffic-current.md` §5
+ * states the rule: a working train backed off in a jam for train `other` is kept back when the
+ * train it last backed off for in a jam was `other` and it has reached no stop since. A train with
+ * no stop, or making way, is never kept back and its move counts for nothing. What a train last
+ * gave way to is not saved (§8), so a loaded game starts with none, as this oracle does.
+ *
+ * `follow(t)` wraps a train's `gaveWay` once; `arrived(t)` is told each stop it reaches; `broken`
+ * is the first give-way that broke the rule, and `keptAt(t)` when the train was last kept back.
+ */
+function keptBackRule() {
+  const wrapped = new WeakSet<Train>();
+  /** the train each one last gave way to in a jam, since the last stop it reached */
+  const last = new Map<number, number>();
+  const keptAt = new Map<number, number>();
+  let broken: string | null = null;
+  return {
+    follow(t: Train, clock: () => number) {
+      if (wrapped.has(t)) return;
+      wrapped.add(t);
+      const own = t.gaveWay.bind(t);
+      t.gaveWay = (other: number) => {
+        const counts = t.holding && !t.makingWay && t.route.length > 0;
+        const before = last.get(t.id);
+        const expected = counts && before === other;
+        const got = own(other);
+        if (counts) last.set(t.id, other);
+        if (got) keptAt.set(t.id, clock());
+        if (got !== expected)
+          broken ??= `at ${clock().toFixed(2)} s #${t.id} gave way to #${other} ${got ? '' : 'not '}kept back, where the train it last gave way to since its last stop was ${before === undefined ? 'none' : `#${before}`}`;
+        return got;
+      };
+    },
+    arrived(t: Train) {
+      last.delete(t.id);
+    },
+    broken: () => broken,
+    keptAt: (t: Train) => keptAt.get(t.id),
+  };
+}
+
+/**
  * Steps the fleet as the game does and checks after every step what must hold whatever the line:
  * no two trains on one tile; no station with more trains on its platforms than it has, nor an idle
  * one among them; an idle train has no path ahead, never moves, and claims no tile but those under
@@ -1163,15 +1204,23 @@ function wayOnFrom(
  * it has no way on; and it says it is jammed only while it stands in a jam declared a deadlock, and
  * that it has no track on only when it has none.
  *
+ * A train with no stop at all never waits where it pulled aside, nor pulls aside but to make way.
+ * Each time the jam resolution backs a working train off (`Train.gaveWay`), it is kept back
+ * exactly when the train it last backed off for in a jam was the same and it has reached no stop
+ * since (`keptBackRule`), and the jam is declared as it sets off; and a train says it is kept back
+ * only while it waits where that move ended.
+ *
  * The game clock starts at `from`: 0 for a new world, the save's time for a loaded one.
  */
 function watch(w: SimWorld, from = 0) {
   let now = from;
   let broken: string | null = null;
   const arrivals = new Map<number, number>();
+  const kept = keptBackRule();
   const next = w.fleet.onArrive;
   w.fleet.onArrive = (t, s) => {
     arrivals.set(t.id, (arrivals.get(t.id) ?? 0) + 1);
+    kept.arrived(t);
     next?.(t, s);
   };
   // every deadlock the jam resolution declares: where each train of it stood, and when one counted
@@ -1179,15 +1228,20 @@ function watch(w: SimWorld, from = 0) {
   const declare = traffic.deadlock.bind(traffic);
   const declared = new Map<number, { x: number; y: number }>();
   const counted = new Map<number, number>();
+  // when each train was last in a deadlock declared, counted or not (once a minute per group)
+  const declaredAt = new Map<number, number>();
   traffic.deadlock = (chain, at) => {
     const was = traffic.counters.deadlocks;
     declare(chain, at);
     for (const t of chain) {
       const p = t.poses[0];
       if (p) declared.set(t.id, { x: p.x, y: p.y });
+      declaredAt.set(t.id, at);
       if (traffic.counters.deadlocks > was) counted.set(t.id, at);
     }
   };
+  // when each train last set off on an escape, as this watch saw it
+  const setOff = new Map<number, number>();
   const stood = new Map<number, { since: number; x: number; y: number }>();
   const wrongNoWay = new Map<number, number>();
   const inWay = new Map<number, number>();
@@ -1240,6 +1294,19 @@ function watch(w: SimWorld, from = 0) {
       return `says it is pulling aside while ${t.state}${t.holding ? '' : ', not holding'}`;
     if (t.lastMessage === STR.traffic.replan && t.state !== 'yielding' && t.state !== 'idle')
       return `says it waits for a new escape plan while ${t.state}`;
+    // kept back: only waiting where the move it was kept back on ended, declared a jam as it set off
+    if (t.lastMessage === STR.traffic.keptBack) {
+      if (t.state !== 'yielding') return `says it is kept back while ${t.state}`;
+      const off = setOff.get(t.id);
+      const keptAt = kept.keptAt(t);
+      if (off !== undefined && keptAt !== off)
+        return `says it is kept back, though the move it set off on at ${off.toFixed(2)} s was not`;
+      if (keptAt !== undefined && (declaredAt.get(t.id) ?? -Infinity) < keptAt)
+        return `says it is kept back, with no jam declared as it set off at ${keptAt.toFixed(2)} s`;
+    }
+    // a train with no stop has nothing to wait for where it pulled aside: it makes way, and idles
+    if (!t.route.length && (t.state === 'yielding' || (t.holding && !t.makingWay)))
+      return `has no stop, yet ${t.state === 'yielding' ? 'waits where it pulled aside' : 'pulls aside without making way'} saying "${t.lastMessage}"`;
     return null;
   };
   const check = (before: Map<number, Before>) => {
@@ -1327,8 +1394,11 @@ function watch(w: SimWorld, from = 0) {
         },
       ]),
     );
+    for (const t of w.fleet.trains) kept.follow(t, () => now);
     w.fleet.tick(GDT, (now += GDT));
-    broken ??= check(before);
+    for (const t of w.fleet.trains)
+      if (t.holding && before.get(t.id)?.holding === false) setOff.set(t.id, now);
+    broken ??= kept.broken() ?? check(before);
   };
   return {
     get now() {
@@ -3446,5 +3516,144 @@ describe('a working train that keeps giving way to the same train', () => {
     expect(again.broken, story(back, again)).toBeNull();
     for (const t of [kept, loaded])
       expect([t.state, t.lastMessage], t.name).toEqual(['yielding', STR.traffic.keptBack]);
+  });
+});
+
+describe('a working train that gives way to one train and then another', () => {
+  // the main line to x 56 with the quarry at x 30, and one siding at x 12 facing east: a train
+  // heading east backs into it. #1 sets off east for the east warehouse and meets #2 coming west,
+  // then, once it has set off from the siding, #3, which is put on the line only then as #2 leaves
+  // service: it backs off for each in turn and reaches no stop in between, yet it is never kept back
+  it('is not kept back: no jam is counted and it says it is pulling aside', SLOW, () => {
+    const { w, stations } = layLine({
+      end: 56,
+      quarry: 30,
+      sidings: [{ x: 12, east: true, len: 6 }],
+      loops: [],
+      idleWagons: 1,
+      westIdle: 0,
+      callers: [],
+    });
+    const sim = watch(w);
+    const there = [call(stations.east!, 'none'), call(stations.west!, 'none')];
+    const back = [call(stations.west!, 'none'), call(stations.east!, 'none')];
+    const first = consist(w, 20, true, 1);
+    first.mode = 'schedule';
+    first.schedule = there;
+    go(w, first);
+    const one = consist(w, 44, false, 1);
+    one.mode = 'schedule';
+    one.schedule = back;
+    go(w, one);
+    const stop = () => sim.broken !== null;
+    const gave: number[] = [];
+    const own = first.gaveWay.bind(first);
+    first.gaveWay = (other) => {
+      gave.push(other);
+      return own(other);
+    };
+    expect(
+      sim.until(() => stop() || (first.yieldCount === 1 && first.holding), 60),
+      story(w, sim),
+    ).toBe(true);
+    expect(
+      sim.until(() => stop() || (first.state === 'moving' && !first.holding), 120),
+      story(w, sim),
+    ).toBe(true);
+    expect(gave, story(w, sim)).toEqual([one.id]);
+    // the first train it gave way to leaves service, and the second comes on
+    w.fleet.recall(one);
+    const two = consist(w, 52, false, 1);
+    two.mode = 'schedule';
+    two.schedule = back;
+    go(w, two);
+    expect(
+      sim.until(() => stop() || (first.yieldCount === 2 && first.holding), 120),
+      story(w, sim),
+    ).toBe(true);
+    expect(gave, story(w, sim)).toEqual([one.id, two.id]);
+    expect(sim.arrivals(first), 'it reached a stop in between').toBe(0);
+    expect(
+      sim.until(() => stop() || !first.holding, 60),
+      story(w, sim),
+    ).toBe(true);
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect([first.state, first.lastMessage]).toEqual(['yielding', STR.traffic.pullingAside]);
+    expect(w.fleet.traffic.counters.deadlocks).toBe(0);
+  });
+});
+
+/**
+ * The kept-back scene set going: the train with nothing to haul parked in the siding, the shuttle
+ * and the train that keeps giving way to it, watched (`watch`).
+ */
+function keptBackRun() {
+  const { w, stations, island } = keptBackScene();
+  const sim = watch(w);
+  const idle = consist(w, 35, false, 1);
+  idle.mode = 'production';
+  idle.schedule = [defaultStop(island.id)];
+  idle.idle('');
+  const shuttle = consist(w, 16, false, 2);
+  shuttle.mode = 'schedule';
+  shuttle.schedule = [call(stations.quarry!, 'none'), call(stations.east!, 'none')];
+  go(w, shuttle);
+  const kept = consist(w, 11, true, 1);
+  kept.mode = 'schedule';
+  kept.schedule = [call(stations.east!, 'none'), call(stations.west!, 'none')];
+  go(w, kept);
+  return { w, sim, kept };
+}
+/** Seconds a loaded game runs on beside the one never saved once the kept-back move has ended. */
+const AFTER_KEPT = 5;
+
+describe('a kept-back move saved and loaded at any tick of it', () => {
+  // saved after the tick the train sets off on, kept back, after every tick of the move (92 of
+  // them) and every tick of the 5 s past its end, and each save loaded and run beside the game
+  // never saved: what a train last gave way to is not saved (traffic-current.md §8), so a save from
+  // before it sets off may not keep it back, but one from any tick after must, every step as never
+  // saved and as sound
+  it('runs on as never saved and ends kept back, every step sound', PROPERTY, () => {
+    const { w, sim, kept } = keptBackRun();
+    const frames: Frame[] = [];
+    const saves: { tick: number; now: number; text: string }[] = [];
+    let start = -1;
+    let end = -1;
+    const step = (s: ReturnType<typeof watch>) => s.until(() => false, GDT);
+    for (let i = 0; i < 400 / GDT && (end < 0 || i <= end + AFTER_KEPT / GDT); i++) {
+      step(sim);
+      if (sim.broken) break;
+      frames.push(frameOf(w));
+      if (start < 0 && kept.holding && kept.yieldCount === 2) start = i;
+      if (start >= 0) saves.push({ tick: i, now: sim.now, text: saveText(w) });
+      if (start >= 0 && end < 0 && !kept.holding) end = i;
+    }
+    expect(sim.broken, story(w, sim)).toBeNull();
+    expect(start, 'it never gave way a second time').toBeGreaterThanOrEqual(0);
+    expect(end, 'its move never ended').toBeGreaterThan(start);
+    expect([kept.state, kept.lastMessage]).toEqual(['yielding', STR.traffic.keptBack]);
+    const parted: string[] = [];
+    for (const s of saves) {
+      const back = loadText(s.text, () => keptBackScene().w);
+      const again = watch(back, s.now);
+      for (let i = s.tick + 1; i < frames.length; i++) {
+        step(again);
+        const why = again.broken ?? parts(frames[i], frameOf(back));
+        if (why) {
+          parted.push(
+            `saved after tick ${s.tick} (it sets off on ${start}, ends on ${end}), ${i - s.tick} ticks on: ${why}`,
+          );
+          break;
+        }
+      }
+      const t = back.fleet.byId(kept.id)!;
+      if (!parted.length && (t.state !== 'yielding' || t.lastMessage !== STR.traffic.keptBack))
+        parted.push(`saved after tick ${s.tick}: ends ${t.state} saying "${t.lastMessage}"`);
+      expect(back.fleet.traffic.counters.overlaps).toBe(0);
+    }
+    expect(parted).toEqual([]);
+    // not vacuous: saves on the way, as it ends and after
+    expect(saves.filter((s) => s.tick < end).length).toBeGreaterThan(10);
+    expect(saves.filter((s) => s.tick >= end).length).toBeGreaterThan(2);
   });
 });
