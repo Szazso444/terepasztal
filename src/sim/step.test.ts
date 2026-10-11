@@ -247,9 +247,24 @@ describe('startStock', () => {
         rules.startStock = c.startStock[1];
         expect(startStock(), `rules.startStock ${c.startStock[1]}`).toEqual(got);
       },
+      {
+        shrink: function* (c) {
+          for (const scale of simpler(c.scale, 0.05)) yield { ...c, scale };
+          for (const trackCost of simpler(c.trackCost, 0.1)) yield { ...c, trackCost };
+          for (const [i, n] of c.startStock.entries())
+            for (const m of simpler(n, 0.1))
+              yield { ...c, startStock: c.startStock.map((v, j) => (j === i ? m : v)) };
+        },
+      },
     );
   });
 });
+
+/** Simpler numbers than `n` and no smaller than `min`: 1, then `n` to whole units, then to tenths. */
+function* simpler(n: number, min: number): Iterable<number> {
+  for (const m of new Set([1, Math.round(n), Math.round(n * 10) / 10]))
+    if (m !== n && m >= min) yield m;
+}
 
 /** The first row, scanning from the top, whose tiles x0 - 1 .. x0 + 22 on rows y - 9 .. y + 9 all take buildings. */
 function findSite(w: SimWorld): { x: number; y: number } {
@@ -392,7 +407,7 @@ const TAKEN_AT_ONCE = 6;
 
 const BUILDINGS = ['windmill', 'kiln', 'grinder'] as const;
 
-function genScene(rng: Rng, steps: [number, number] = [100, 700]): Scene {
+function genScene(rng: Rng, steps: [number, number]): Scene {
   const n = rng.int(steps[0], steps[1]);
   const houses: SceneHouse[] = [];
   for (let i = rng.int(0, 10); i > 0; i--)
