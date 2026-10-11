@@ -385,7 +385,155 @@ describe('firstNonFinite', () => {
     loop.m = Number.NaN;
     expect(firstNonFinite(loop)).toBe('m');
   });
+
+  it('agrees with JSON.stringify on any value, and leaves it as it was', () => {
+    // Beyond a save: lists and records nested at random, keys JSON orders by number before the
+    // rest, holes, boxed numbers, values JSON leaves out, and objects whose toJSON gives one value
+    // under the key it is written at and another under any other key.
+    const seeds = Array.from({ length: 500 }, (_, i) => i + 1);
+    let found = 0;
+    let deep = 0;
+    forAll(
+      (rng) => genShape(rng, '', 4),
+      (shape) => {
+        const value = buildShape(shape);
+        const before = { own: ownView(value), json: jsonView(value) };
+        const want = firstByJson(value);
+        expect(firstNonFinite(value)).toBe(want);
+        expect({ own: ownView(value), json: jsonView(value) }, 'not changed').toEqual(before);
+        if (want !== null) found++;
+        if (want !== null && /[.[].*[.[]/.test(want)) deep++;
+      },
+      { seeds, shrink: shrinkShape },
+    );
+    // not vacuous: many values hold a number JSON cannot write, some deep inside, many hold none
+    expect(found).toBeGreaterThan(seeds.length / 4);
+    expect(seeds.length - found).toBeGreaterThan(seeds.length / 4);
+    expect(deep).toBeGreaterThan(seeds.length / 20);
+  });
 });
+
+/** Keys of any kind: ones JSON writes first, in the order of their numbers, and plain ones. */
+const SHAPE_KEYS = ['b', 'a', '10', '2', '0', '-1', '01', 'k'];
+/** A value JSON.stringify may meet, as data, so that a failing case prints and shrinks. */
+type Shape =
+  | { t: 'num'; n: number }
+  | { t: 'boxed'; n: number }
+  | { t: 'leaf'; v: 'text' | 'true' | 'null' | 'undefined' | 'function' | 'symbol' }
+  | { t: 'list'; items: Shape[]; hole: boolean }
+  | { t: 'rec'; entries: [string, Shape][] }
+  /** an object holding a NaN JSON never writes, whose toJSON gives `then` under `when` */
+  | { t: 'toJSON'; when: string; then: Shape; other: Shape };
+/** A shape to be written under `key`, at most `depth` levels deep. */
+function genShape(rng: Rng, key: string, depth: number): Shape {
+  const r = rng.next();
+  if (depth <= 0 || r < 0.35) {
+    const l = rng.next();
+    if (l < 0.55) {
+      const finite = rng.pick([0, -0, 1, -2.5, 1e308, -5e-324, rng.range(-1e6, 1e6)]);
+      return { t: 'num', n: rng.chance(0.25) ? rng.pick(NON_FINITE) : finite };
+    }
+    if (l < 0.65) return { t: 'boxed', n: rng.chance(0.5) ? rng.pick(NON_FINITE) : rng.int(-9, 9) };
+    const leaves = ['text', 'true', 'null', 'undefined', 'function', 'symbol'] as const;
+    return { t: 'leaf', v: rng.pick(leaves) };
+  }
+  if (r < 0.6) {
+    const items = Array.from({ length: rng.int(0, 4) }, (_, i) =>
+      genShape(rng, String(i), depth - 1),
+    );
+    return { t: 'list', items, hole: rng.chance(0.2) };
+  }
+  if (r < 0.85) {
+    const keys = rng.shuffle([...SHAPE_KEYS]).slice(0, rng.int(0, 5));
+    return { t: 'rec', entries: keys.map((k) => [k, genShape(rng, k, depth - 1)]) };
+  }
+  return {
+    t: 'toJSON',
+    when: rng.chance(0.6) ? key : rng.pick(SHAPE_KEYS),
+    then: genShape(rng, key, depth - 1),
+    other: genShape(rng, key, depth - 1),
+  };
+}
+function buildShape(s: Shape): unknown {
+  switch (s.t) {
+    case 'num':
+      return s.n;
+    case 'boxed':
+      return Object(s.n) as unknown;
+    case 'leaf':
+      if (s.v === 'function') return () => Number.NaN;
+      if (s.v === 'symbol') return Symbol('NaN');
+      return { text: 'NaN', true: true, null: null, undefined: undefined }[s.v];
+    case 'list': {
+      const list = s.items.map(buildShape);
+      if (s.hole) list.length += 1;
+      return list;
+    }
+    case 'rec':
+      return Object.fromEntries(s.entries.map(([k, v]) => [k, buildShape(v)]));
+    case 'toJSON': {
+      const then = buildShape(s.then);
+      const other = buildShape(s.other);
+      return { hidden: Number.NaN, toJSON: (key: string) => (key === s.when ? then : other) };
+    }
+  }
+}
+function* shrinkShape(s: Shape): Iterable<Shape> {
+  if (s.t === 'boxed') yield { t: 'num', n: s.n };
+  if (s.t === 'toJSON') {
+    yield s.then;
+    yield s.other;
+    for (const then of shrinkShape(s.then)) yield { ...s, then };
+    for (const other of shrinkShape(s.other)) yield { ...s, other };
+  }
+  if (s.t === 'list') {
+    if (s.hole) yield { ...s, hole: false };
+    yield* s.items;
+    for (const items of shrinkArray(s.items, shrinkShape)) yield { ...s, items };
+  }
+  if (s.t === 'rec') {
+    yield* s.entries.map(([, v]) => v);
+    const entry = ([k, v]: [string, Shape]) =>
+      [...shrinkShape(v)].map((x): [string, Shape] => [k, x]);
+    for (const entries of shrinkArray(s.entries, entry)) yield { t: 'rec', entries };
+  }
+}
+/**
+ * The oracle: the path of the first number `JSON.stringify` writes that it cannot hold, found by
+ * its replacer, which sees each value after its toJSON and before a boxed number is unboxed.
+ */
+function firstByJson(value: unknown): string | null {
+  let found: string | null = null;
+  const paths = new Map<object, Step[]>();
+  JSON.stringify(value, function (this: unknown, key: string, v: unknown) {
+    const holder = this as object;
+    const base = paths.get(holder);
+    const path: Step[] = base === undefined ? [] : [...base, Array.isArray(holder) ? +key : key];
+    const n = v instanceof Number ? Number(v) : v;
+    if (typeof n === 'number') {
+      if (found === null && !Number.isFinite(n)) found = pathText(path);
+    } else if (typeof v === 'object' && v !== null) paths.set(v, path);
+    return v;
+  });
+  return found;
+}
+/** What JSON writes of a value, every number spelled out. */
+function jsonView(value: unknown): string | undefined {
+  return JSON.stringify(value, (_k, v: unknown) => {
+    if (v instanceof Number) return `boxed ${Object.is(+v, -0) ? '-0' : String(+v)}`;
+    return typeof v === 'number' ? `${Object.is(v, -0) ? '-0' : String(v)}` : v;
+  });
+}
+/** A value's own fields, whether JSON writes them or not, every number spelled out. */
+function ownView(v: unknown): unknown {
+  if (typeof v === 'number') return Object.is(v, -0) ? '-0' : String(v);
+  if (v instanceof Number) return { boxed: ownView(Number(v)) };
+  if (typeof v === 'function' || typeof v === 'symbol') return typeof v;
+  if (typeof v !== 'object' || v === null) return v === undefined ? 'undefined' : v;
+  if (Array.isArray(v))
+    return { list: Array.from({ length: v.length }, (_, i) => (i in v ? ownView(v[i]) : 'hole')) };
+  return { rec: Object.keys(v).map((k) => [k, ownView((v as Record<string, unknown>)[k])]) };
+}
 
 // ------------------------------------------------------------------ the write side
 
