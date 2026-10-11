@@ -3,7 +3,9 @@ import { TradeDesk, BUY_MUL, SELL_MUL, DRIFTING } from './trade';
 import { CARGO } from './cargo';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
-import { forAll } from '../testing/property';
+import { Stockpile } from './stockpile';
+import { Economy } from './economy';
+import { forAll, shrinkInt } from '../testing/property';
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -54,6 +56,34 @@ describe('TradeDesk.spotQuote', () => {
           if (!DRIFTING.includes(c.id))
             expect(one.spotQuote(c.id), c.id).toEqual(two.spotQuote(c.id));
       },
+    );
+  });
+});
+
+describe('TradeDesk.cycleSeconds', () => {
+  it('is seven in-game days at any day length, and a standing deal settles once per cycle', () => {
+    // The day length is the only setting the cycle follows: there is no setting of its own for it.
+    forAll(
+      (rng) => ({ day: rng.int(3, 120) * 10, now: rng.int(1, 100_000) }),
+      ({ day, now }) => {
+        rules.daySeconds = day;
+        const week = 7 * day;
+        const desk = new TradeDesk();
+        const stock = new Stockpile();
+        const economy = new Economy();
+        const cap = () => 1000;
+        expect(desk.cycleSeconds(), 'the cycle').toBe(week);
+
+        desk.set('food', 10);
+        desk.tick(now, stock, economy, cap);
+        expect(desk.nextAt, 'the first tick starts the cycle').toBe(now + week);
+        desk.tick(now + week - 1, stock, economy, cap);
+        expect(stock.get('food'), 'nothing settles before the cycle is out').toBe(0);
+        desk.tick(now + week, stock, economy, cap);
+        expect(stock.get('food'), 'the deal settles when it is').toBe(10);
+        expect(desk.nextAt, 'the next cycle follows on').toBe(now + 2 * week);
+      },
+      { shrink: ({ day, now }) => [...shrinkInt(now, 1)].map((n) => ({ day, now: n })) },
     );
   });
 });

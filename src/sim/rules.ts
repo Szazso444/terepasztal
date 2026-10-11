@@ -36,8 +36,6 @@ export interface Rules {
   contractRefreshDays: number;
   deadlineMul: number;
   payoutMul: number;
-  /** @deprecated reputation is gone; kept so older callers compile, no effect */
-  reputationMul: number;
   failPenaltyMul: number;
   daySeconds: number;
   seasonDays: number;
@@ -66,8 +64,6 @@ export interface Rules {
   startingResourceScale: number;
   /** a collection train leaves a warehouse alone until it holds this much of a resource */
   collectMin: number;
-  /** days between settlements of standing trade deals */
-  tradeCycleDays: number;
   powerCap: number;
   /** price of the first ring of chunks around the start; each ring further multiplies it */
   chunkCost: number;
@@ -108,7 +104,6 @@ export const DEFAULT_RULES: Rules = {
   contractRefreshDays: 21,
   deadlineMul: 1,
   payoutMul: 1,
-  reputationMul: 1,
   failPenaltyMul: 1,
   daySeconds: 240,
   seasonDays: 6,
@@ -129,7 +124,6 @@ export const DEFAULT_RULES: Rules = {
   inCabCost: 6000,
   startingResourceScale: 3,
   collectMin: 100,
-  tradeCycleDays: 7,
   powerCap: 100,
   chunkCost: 12000,
   chunkCostMul: 1.6,
