@@ -11,6 +11,7 @@ import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
 import type { BuildingJSON } from './buildings';
 import { CHUNK_TILES } from './expand';
+import { wrapRotation } from './rotation';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -612,13 +613,54 @@ export function buildSave(
 
 /**
  * Why a text was not taken as a save: it is not JSON, it is JSON but no save (no numeric seed),
- * or it is a save without something every version since v1 holds; or, for an import, storage
- * refused to keep it (full or blocked).
+ * or it is a save without something every version since v1 holds, or one that would load holding
+ * a number no save can store (`settle`); or, for an import, storage refused to keep it (full or
+ * blocked).
  */
 export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'storage';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+/**
+ * Where `value` holds a number JSON cannot: the path of the first NaN, Infinity or -Infinity in
+ * the order `JSON.stringify` visits it (keys joined by dots, list positions in brackets:
+ * `economy.money`, `stations[2].level`, `track[3][1]`; '' for `value` itself), or null when it
+ * holds none. `JSON.stringify` writes such a number as `null`, which no load reads back as the
+ * number it was. Like `JSON.stringify` it reads what an object's `toJSON` gives, and nothing it
+ * leaves out; the value is not changed, and a cycle (which `JSON.stringify` refuses) is not
+ * followed.
+ */
+export function firstNonFinite(value: unknown): string | null {
+  const within = new Set<object>();
+  const visit = (v: unknown, key: string, path: string): string | null => {
+    if (typeof v === 'object' && v !== null) {
+      const toJSON: unknown = (v as { toJSON?: unknown }).toJSON;
+      if (typeof toJSON === 'function') v = (toJSON as (k: string) => unknown).call(v, key);
+    }
+    if (v instanceof Number) v = Number(v);
+    if (typeof v === 'number') return Number.isFinite(v) ? null : path;
+    if (typeof v !== 'object' || v === null || within.has(v)) return null;
+    within.add(v);
+    try {
+      if (Array.isArray(v)) {
+        for (let i = 0; i < v.length; i++) {
+          const found = visit(v[i] as unknown, String(i), `${path}[${i}]`);
+          if (found !== null) return found;
+        }
+      } else {
+        const record = v as Record<string, unknown>;
+        for (const k of Object.keys(record)) {
+          const found = visit(record[k], k, path ? `${path}.${k}` : k);
+          if (found !== null) return found;
+        }
+      }
+      return null;
+    } finally {
+      within.delete(v);
+    }
+  };
+  return visit(value, '', '');
 }
 /** The numbers inside the blocks every version since v1 has, checked before migrating. */
 const CORE_NUMBERS: Record<string, readonly string[]> = {
@@ -650,24 +692,45 @@ function openSave(
   if (!isRecord(j) || typeof j.seed !== 'number') return { error: 'notSave' };
   return { file: j as Record<string, unknown> & { seed: number } };
 }
-/** A file that holds every v1 field, migrated to the current version; null when it does not. */
+/**
+ * Every station record's turn as the one of the four it loads at (`wrapRotation`, as
+ * `Station.fromJSON` reads it): the ground the game clears under a saved station before it loads
+ * (`stationFootprint` with the save's own turn) is then the ground it stands on. A turn no build
+ * wrote (a fraction, a string, none) is turn 0; a whole one is kept, counted round past 3 and back
+ * from 0. Entries that are no record are left as they are. A file of any version is read through
+ * this, so a turn the game wrote comes back as it was.
+ */
+function repairStationTurns(j: SaveGame) {
+  if (!Array.isArray(j.stations)) return;
+  for (const s of j.stations as unknown[]) if (isRecord(s)) s.rot = wrapRotation(s.rot);
+}
+/**
+ * A file that holds every v1 field, migrated to the current version with its station turns
+ * repaired; null when it does not, and when what it gives would still hold a number no save can
+ * store (`firstNonFinite`: only an overflowing literal such as `1e999` gives one), so that what
+ * loads can be stored again.
+ */
 function settle(file: Record<string, unknown>): SaveGame | null {
   if (!holdsCore(file)) return null;
   const j = file as SaveGame;
   // no version, or none the chain can count up from, is the oldest
   if (!Number.isInteger(j.version) || j.version < SAVE_MIN_VERSION) j.version = SAVE_MIN_VERSION;
+  let save: SaveGame;
   try {
-    return migrate(j);
+    save = migrate(j);
   } catch {
     // a step met something deeper in the file that no version wrote
     return null;
   }
+  repairStationTurns(save);
+  return firstNonFinite(save) === null ? save : null;
 }
 
 /**
  * Read a save text: an exported save, a stored one or a diagnostics bundle. Never refuses on
  * version: older saves are upgraded step by step, newer ones are loaded as they are with a
- * warning. Text that is not a whole save is refused, with the reason.
+ * warning. Station turns are repaired (`repairStationTurns`). Text that is not a whole save, or
+ * whose save could not be stored again, is refused, with the reason.
  */
 export function readSaveText(raw: string): { save: SaveGame } | { error: SaveRefusal } {
   const opened = openSave(raw);
@@ -726,7 +789,13 @@ export function migrate(j: SaveGame): SaveGame {
   return j;
 }
 
+/**
+ * Store a save as the game Continue loads; false when it was not stored. A save that holds a
+ * number JSON cannot (`firstNonFinite`) is not written, so the save stored before it stays: its
+ * text would hold `null` in that place, and a load refuses it, or reads it as no number at all.
+ */
 export function writeSave(s: SaveGame) {
+  if (firstNonFinite(s) !== null) return false;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(s));
     return true;
@@ -765,7 +834,9 @@ export function writeSettings(s: Settings) {
 
 // ------------------------------------------------------------------ named slots
 export const SLOTS_KEY = 'terepasztal.slots';
-/** What a list of saves shows of one; a field the file lacks reads 0. */
+/**
+ * What a list of saves shows of one; 0 for a field the file lacks or holds as no finite number.
+ */
 export interface SlotMeta {
   /** the slot's name; '' for the save Continue loads */
   name: string;
@@ -791,7 +862,8 @@ function readSlots(): Record<string, string> {
 function slotName(name: string) {
   return name.trim().slice(0, 32).trimEnd();
 }
-const numberOr0 = (v: unknown) => (typeof v === 'number' ? v : 0);
+/** A number a list can show: the file's own when it is finite, else 0. */
+const numberOr0 = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 /**
  * What a stored text shows in a list, or null when it holds no save. A whole save is described
  * after migrating, so an old file's tier reads as the age it became; a damaged one as it stands,
@@ -812,7 +884,7 @@ function describeSave(name: string, raw: unknown, whole: boolean): SlotMeta | nu
     name,
     savedAt,
     version,
-    seed: file.seed,
+    seed: numberOr0(file.seed),
     day: numberOr0(s.lastDay),
     age: numberOr0(economy.tier),
     money: numberOr0(economy.money),
@@ -850,7 +922,13 @@ export function listSlots(): SlotMeta[] {
   }
   return out.sort((a, b) => b.savedAt - a.savedAt);
 }
+/**
+ * Store a save under a name (`slotName`), in place of one of that name; false when it was not
+ * stored. A save that holds a number JSON cannot (`firstNonFinite`) is not written, and every
+ * named save stays as it was.
+ */
 export function writeSlot(name: string, s: SaveGame) {
+  if (firstNonFinite(s) !== null) return false;
   const slots = readSlots();
   slots[slotName(name)] = JSON.stringify(s);
   return writeSlots(slots);
