@@ -1,0 +1,84 @@
+{
+  "projection": "2:1 orthographic isometric",
+  "gameTile": [64, 32],
+  "canvas": [1024, 1024],
+  "canvasPixelsPerGamePixel": 8,
+  "canvasTile": [512, 256],
+  "center": [512, 512],
+  "tileOffsetProjection": {
+    "x": "512 + 256*(x-y)",
+    "y": "512 + 128*(x+y)"
+  },
+  "ellipseHalfAxesPerRadiusTile": [362, 181],
+  "middleTileOutline": [
+    [512, 384],
+    [768, 512],
+    [512, 640],
+    [256, 512]
+  ],
+  "lake": {
+    "openWater": {
+      "radius": [0, 0.85],
+      "outerHalfAxes": [308, 154]
+    },
+    "shallow": {
+      "radius": [0.85, 1],
+      "outerHalfAxes": [362, 181]
+    },
+    "waterline": {
+      "radius": 1,
+      "halfAxes": [362, 181],
+      "points": [
+        [874, 512],
+        [512, 693],
+        [150, 512],
+        [512, 331]
+      ]
+    },
+    "dampMargin": {
+      "radius": [1, 1.12],
+      "outerHalfAxes": [405, 203]
+    },
+    "transparentBeyondRadius": 1.12
+  },
+  "beach": {
+    "openSea": {
+      "radius": [0, 0.8],
+      "outerHalfAxes": [290, 145]
+    },
+    "surf": {
+      "radius": [0.8, 0.95],
+      "outerHalfAxes": [344, 172],
+      "foamLines": [1, 2]
+    },
+    "swash": {
+      "radius": [0.95, 1],
+      "outerHalfAxes": [362, 181]
+    },
+    "waterline": {
+      "radius": 1,
+      "halfAxes": [362, 181],
+      "points": [
+        [874, 512],
+        [512, 693],
+        [150, 512],
+        [512, 331]
+      ]
+    },
+    "wetSand": {
+      "radius": [1, 1.12],
+      "outerHalfAxes": [405, 203]
+    },
+    "drySand": {
+      "radius": [1.12, 1.3],
+      "outerHalfAxes": [471, 235],
+      "outerPoints": [
+        [983, 512],
+        [512, 747],
+        [41, 512],
+        [512, 277]
+      ]
+    },
+    "transparentBeyondRadius": 1.3
+  }
+}

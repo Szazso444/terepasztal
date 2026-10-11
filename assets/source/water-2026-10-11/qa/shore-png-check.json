@@ -1,0 +1,32 @@
+[
+  {
+    "file": "lake-ring.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "pngColorType": 6,
+    "alpha": {
+      "transparent": 1169633,
+      "partial": 402683,
+      "opaque": 200
+    },
+    "sha256": "14bb4e2b762e8e1eb4bc51f7dfbc7ac55c312d673e542be78dbe2f8027f089b8",
+    "preview": "qa/lake-ring-128.png"
+  },
+  {
+    "file": "beach-ring.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "pngColorType": 6,
+    "alpha": {
+      "transparent": 1007659,
+      "partial": 564310,
+      "opaque": 547
+    },
+    "sha256": "5e2d258e64d8db4fd24a2f579446c9fe96742b230c67b256ce05ebaaebdd7f37",
+    "preview": "qa/beach-ring-128.png"
+  }
+]
