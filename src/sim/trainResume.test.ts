@@ -50,10 +50,12 @@ import {
 // off kept on its escape and only on one it can still run, a yielding train kept waiting as long
 // as it would have, no train asked to back off again before its last back-off has run out, no jam
 // searched again before 4 s have passed since its last search, and a world grown around the save
-// carrying on as the save. At the end: the scenes of src/sim/idleTraffic.test.ts, in which a train
-// with nothing worth hauling idles and makes way for another (issue #151), saved at any tick, saved
+// carrying on as the save. Then the scenes of src/sim/idleTraffic.test.ts, in which a train with
+// nothing worth hauling idles and makes way for another (issue #151), saved at any tick, saved
 // again after a load before a tick, and saved just before an idle train looks for a way aside or a
-// jam is searched, with the time the look or search is due moved past that tick.
+// jam is searched, with the time the look or search is due moved past that tick. At the end: a
+// train stopped under way, out of fuel or water, without power or too heavy, saved and loaded and
+// run on once the cause clears in both runs (issue #218).
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -2548,6 +2550,8 @@ interface DrySave {
   tank: number;
   /** ticks the train stands dry after the save before both runs put the tank back as it was */
   stands: number;
+  /** ticks the train stands dry before the save, as a train a player finds stuck is saved */
+  before: number;
 }
 const drySave = (rng: Rng): DrySave => ({
   // the save follows the tick the train stops dry, not the layout's
@@ -2555,14 +2559,19 @@ const drySave = (rng: Rng): DrySave => ({
   at: rng.next(),
   tank: rng.next(),
   stands: rng.int(0, STANDS / GDT),
+  before: rng.int(0, STANDS / GDT),
 });
-/** Fewer stations, no siding, the diesel, the first tank, earlier, then a shorter stand. */
+/**
+ * Fewer stations, no siding, the diesel, the first tank, earlier, then a shorter stand after the
+ * save, then before it.
+ */
 function* shrinkDrySave(s: DrySave): Iterable<DrySave> {
   for (const layout of shrinkLayout(s.layout))
     if (layout.fuel === s.layout.fuel) yield { ...s, layout };
   if (s.tank > 0) yield { ...s, tank: 0 };
   for (const at of [0, s.at / 2]) if (at < s.at) yield { ...s, at };
   for (const stands of shrinkInt(s.stands)) yield { ...s, stands };
+  for (const before of shrinkInt(s.before)) yield { ...s, before };
 }
 
 /** The save of a dry save, made as the train stands dry on its way to a service. */
@@ -2583,9 +2592,9 @@ type Dry = DryStop & { world: World };
 /**
  * Runs the layout over SERVICE_SPAN to the end of the train's first run to a fuel or water
  * service, then again to the tick `at` of the way through that run, where the tank runs dry, and
- * on until the train stops in noFuel still heading for the service: the save then, and the world
- * of that run, uninterrupted. Null when the train never heads for a service, or reaches it or
- * drops it before it stops.
+ * on until the train stops in noFuel still heading for the service, and `before` ticks more as it
+ * stands there: the save then, and the world of that run, uninterrupted. Null when the train never
+ * heads for a service, or reaches it or drops it before it stops.
  */
 function runDry(s: DrySave): { world: World; stop: DryStop } | null {
   const first = layoutScene(s.layout);
@@ -2609,6 +2618,13 @@ function runDry(s: DrySave): { world: World; stop: DryStop } | null {
   while (t.state === 'moving' && serviceOf(t) && tick < from + 1 / GDT) step(world, timeOf(++tick));
   const service = serviceOf(t);
   if (t.state !== 'noFuel' || !service) return null;
+  // standing dry, it keeps looking every few seconds whether it can go on, and keeps its service
+  const stopped = tick;
+  while (tick < stopped + s.before) step(world, timeOf(++tick));
+  expect({ state: t.state, service: serviceOf(t) }, `${s.before} ticks after it stopped`).toEqual({
+    state: 'noFuel',
+    service,
+  });
   const memory = new Map(lastServed(world.fleet));
   return {
     world,
@@ -2696,6 +2712,12 @@ describe('a train stopped dry on its way to a fuel or water service when saved',
             tick: k,
             doing: doingOf(t, arrivals),
           });
+          // a train that takes one service may head straight on for another (water after coal),
+          // on the same tick: it no longer heads for this one either way
+          const headsFor = (t: Train) => {
+            const to = serviceOf(t);
+            return !!to && to.x === service.x && to.y === service.y;
+          };
           // on until both take the service, the second no more than a tick after the first, or
           // neither has within TAKE_SPAN
           const horizon = refill + TAKE_SPAN / GDT;
@@ -2709,8 +2731,8 @@ describe('a train stopped dry on its way to a fuel or water service when saved',
             }
             step(ctl, timeOf(k));
             step(back, timeOf(k));
-            if (!ctlTook && !serviceOf(a)) ctlTook = taking(a, k, ctl.arrivals.slice(from));
-            if (!backTook && !serviceOf(b)) backTook = taking(b, k, back.arrivals);
+            if (!ctlTook && !headsFor(a)) ctlTook = taking(a, k, ctl.arrivals.slice(from));
+            if (!backTook && !headsFor(b)) backTook = taking(b, k, back.arrivals);
             if (k !== compare) continue;
             const why = `${CLEARED} s after the refill`;
             expect(apart(a.poses, b.poses), `tiles from the control ${why}`).toBeLessThan(
@@ -2720,9 +2742,9 @@ describe('a train stopped dry on its way to a fuel or water service when saved',
             expect(b.speed, why).toBeCloseTo(a.speed, 9);
             expect(serviceOf(b), `the service it heads for ${why}`).toEqual(serviceOf(a));
             expect(pathEnd(b), `where its path ends ${why}`).toEqual(pathEnd(a));
-            if (!serviceOf(a)) continue;
+            if (!headsFor(a)) continue;
             n.heading++;
-            expect(pathEnd(b), `where its path ends ${why}`).toEqual({
+            expect(pathEnd(b), `where its path ends ${why}, on the service`).toEqual({
               x: service.x,
               y: service.y,
             });
