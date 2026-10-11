@@ -1,0 +1,242 @@
+
+ RUN  v5.0.0 G:/DEV/Terepasztal/terepasztal/.claude/worktrees/glacier-material
+
+(node:62440) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23300) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43096) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62888) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+not recorded: no such file assets/source/buildings-v2/depot/depot-a0-r0.png
+(node:71864) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40228) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+pack-atlas: no such source folder: G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\pack-atlas-aUw7y6\nope
+(node:79840) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+pack-atlas: no PNG frames in G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\pack-atlas-aUw7y6\empty
+(node:56284) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+--attempts takes a whole number, for example --attempts 2
+(node:82468) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24664) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40548) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55428) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50060) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:77532) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4344) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10808) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:73748) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49768) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:69800) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36416) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47508) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:77992) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64372) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:54640) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48696) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+not recorded: camera off by 6.4┬░: it looks down from 23.6┬░ where the game looks down from 30┬░ (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). It is kept as the picture's earlier self: run `node tools/building-queue.mjs next` again, and it is handed out to be painted from that, straightened.
+(node:27832) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:81892) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:59648) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:53932) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15064) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82184) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+not recorded: camera off by 6.4┬░: it looks down from 23.6┬░ where the game looks down from 30┬░ (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). An earlier attempt was closer (6.4┬░) and stays what the picture is painted from: run `node tools/building-queue.mjs next` again.
+(node:42832) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:56576) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82368) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51492) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:79216) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60144) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:71360) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:73884) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48628) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:57684) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82492) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50180) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78052) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62440) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:71208) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:81520) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52992) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:75720) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32324) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78428) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:75452) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ Γ¥» tools/agents/ownership.test.mjs (0 test)
+(node:75976) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19928) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:79488) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:69600) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52872) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78852) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82024) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67252) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23928) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24084) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:77584) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+no family is called lighthouse
+ Γ¥» tools/asset-pipeline/handbuilt/run.test.mjs (3 tests | 1 failed) 5021ms
+   Γ¥» handbuilt/run.py: project paths (1)
+     ├ù accepts exactly the paths that are relative on Windows and POSIX and use forward slashes, and keeps them inside the project 720ms
+unknown command "frobnicate"; see the top of tools/building-queue.mjs
+not recorded: camera off by 6.4┬░: it looks down from 23.6┬░ where the game looks down from 30┬░ (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). It is kept as the picture's earlier self: run `node tools/building-queue.mjs next` again, and it is handed out to be painted from that, straightened.
+depot-a0-r0 has had 1 attempt: an attempt is kept at the last of 3. Make it again first: run `node tools/building-queue.mjs next`
+depot-a0-r0 is recorded as generated: there is nothing to keep in its place
+say which picture: node tools/building-queue.mjs keep <id>
+no picture in G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat or in the folders in it: make the picture first, or say where your image tool writes its pictures with --from <folder or file>
+the newest picture there, G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-1.png, was made 60 minutes ago: make the picture first, or name the file with --from <file>
+G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-2.png was made before the last picture that was taken or recorded: it was given up, or it is not this picture's. Make the picture first.
+depot-a0-r0 is recorded as generated: only a picture that waits to be made is taken. To make it again, take it back first: node tools/building-queue.mjs set depot-a0-r0 pending
+G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\assets\source\buildings-v2\depot\depot-a0-r0.png is depot-a0-r0's picture: nothing new was made. Make the picture first.
+nothing new was made: the newest picture there, G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-3.png, is depot-a0-r0's (assets/source/buildings-v2/depot/depot-a0-r0.png). Make the picture first.
+G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-3.png is depot-a0-r0's picture (assets/source/buildings-v2/depot/depot-a0-r0.png): nothing new was made. Make the picture first.
+nothing new was made: the newest picture there, G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-5.png, was made before the last picture was taken or recorded. Make the picture first.
+not recorded: camera off by 6.4┬░: it looks down from 23.6┬░ where the game looks down from 30┬░ (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). It is kept as the picture's earlier self: run `node tools/building-queue.mjs next` again, and it is handed out to be painted from that, straightened.
+G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-6.png was taken before (it is assets/source/buildings-v2/depot/depot-a0-r2.before.png). Make the picture first.
+G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-bad.png cannot be read as a picture (There are some read requests waitng on finished stream): nothing was taken. Make the picture again.
+there is no building in G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-blank.png: nothing was taken. Make the picture again.
+not recorded: picture is 768x512; its short side must be at least 768 px. Make depot-a0-r3 again, or record it as rejected.
+nothing new was made, and the picture in assets/source/buildings-v2/depot/depot-a0-r3.png was refused by `set`: make the picture again
+not recorded: picture is 768x512; its short side must be at least 768 px. It is the picture that was refused before: make depot-a0-r3 again, or record it as rejected.
+say which picture: node tools/building-queue.mjs take <id>
+--from needs a folder or a file
+take does not understand "G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-LEwdiI\made\chat\exec-2.png": it is node tools/building-queue.mjs take <id> [--from <folder or file>]
+take does not understand "--from=x": it is node tools/building-queue.mjs take <id> [--from <folder or file>]
+no picture is called "nothing-a0-r0"
+no folder of pictures at G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-kVqAz8\codex\generated_images: say where your image tool writes its pictures with --from <folder or file>
+the tool has taken no picture from a chat's folder yet, and does not know your chat's folder yet:
+  G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-kVqAz8\codex\generated_images\chat-a\exec-1.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r0 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+pictures were made in more than one chat's folder since the last one was taken or recorded:
+  G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-kVqAz8\codex\generated_images\chat-b\exec-3.png (made 0 s ago)
+  G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-kVqAz8\codex\generated_images\chat-a\exec-2.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r1 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+pictures were made in more than one chat's folder since the last one was taken or recorded:
+  G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-kVqAz8\codex\generated_images\chat-b\exec-3.png (made 0 s ago)
+  G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-kVqAz8\codex\generated_images\chat-a\exec-2.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r1 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+the one new picture lies in another chat's folder than the last picture that was taken:
+  G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-kVqAz8\codex\generated_images\chat-b\exec-4.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r2 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+the one new picture lies in another chat's folder than the last picture that was taken:
+  G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-kVqAz8\codex\generated_images\chat-c\exec-6.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r2 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+nothing new was made: the newest picture there, G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-OVPJt6\codex\generated_images\chat-a\exec-1.png, is depot-a0-r0's (assets/source/buildings-v2/depot/depot-a0-r0.png). Make the picture first.
+G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-OVPJt6\codex\generated_images\chat-a\exec-1.png is depot-a0-r0's picture (assets/source/buildings-v2/depot/depot-a0-r0.png): nothing new was made. Make the picture first.
+the tool has taken no picture from a chat's folder yet, and does not know your chat's folder yet:
+  G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\building-queue-OVPJt6\codex\generated_images\chat-b\exec-2.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r1 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+ENOSPC: no space left on device, write
+The disk is full. Stop and tell the user how much is free; do not delete anything to make room. When there is room again, run `node tools/building-queue.mjs status`, then the same command again; if it then says that the picture is recorded already, or that its file is not there, go on with `next`.
+ENOSPC: no space left on device, write
+The disk is full. Stop and tell the user how much is free; do not delete anything to make room. When there is room again, run `node tools/building-queue.mjs status`, then the same command again; if it then says that the picture is recorded already, or that its file is not there, go on with `next`.
+ENOSPC: no space left on device, write
+The disk is full. Stop and tell the user how much is free; do not delete anything to make room. When there is room again, run `node tools/building-queue.mjs status`, then the same command again; if it then says that the picture is recorded already, or that its file is not there, go on with `next`.
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Suites 1 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  tools/agents/ownership.test.mjs [ tools/agents/ownership.test.mjs ]
+SyntaxError: Invalid or unexpected token
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/2]ΓÄ»
+
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 1 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  tools/asset-pipeline/handbuilt/run.test.mjs > handbuilt/run.py: project paths > accepts exactly the paths that are relative on Windows and POSIX and use forward slashes, and keeps them inside the project
+Error: Property failed for seed 19 (case 19 of 100).
+Smallest failing case, after 0 shrink steps: " "
+Reason: threw AssertionError: expected 'G:\DEV\Terepasztal\terepasztal\.claudΓÇª' to be 'G:\DEV\Terepasztal\terepasztal\.claudΓÇª' // Object.is equality
+Replay it alone with { seeds: [19] }.
+ Γ¥» forAll src/testing/property.ts:81:11
+     79|     if (steps > 0) lines.push(`First failing case: ${format(first)}`);
+     80|     lines.push(`Replay it alone with { seeds: [${seed}] }.`);
+     81|     throw new Error(lines.join('\n'), { cause: failure.error });
+       |           ^
+     82|   }
+     83| }
+ Γ¥» tools/asset-pipeline/handbuilt/run.test.mjs:143:11
+
+Caused by: AssertionError: expected 'G:\DEV\Terepasztal\terepasztal\.claudΓÇª' to be 'G:\DEV\Terepasztal\terepasztal\.claudΓÇª' // Object.is equality
+
+Expected: "G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\tmphrwhc_l1\ "
+Received: "G:\DEV\Terepasztal\terepasztal\.claude\worktrees\glacier-material\assets\source\mountain-2026-10-11\review\gate-temp\tmphrwhc_l1"
+
+ Γ¥» shrink tools/asset-pipeline/handbuilt/run.test.mjs:155:27
+ Γ¥» check src/testing/property.ts:113:9
+ Γ¥» forAll src/testing/property.ts:42:19
+ Γ¥» tools/asset-pipeline/handbuilt/run.test.mjs:143:11
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/2]ΓÄ»
+
+
+ Test Files  2 failed | 110 passed (112)
+      Tests  1 failed | 1972 passed | 2 skipped (1975)
+   Start at  17:26:03
+   Duration  257.53s (tests 94%, transform 4%, import 2%)
+

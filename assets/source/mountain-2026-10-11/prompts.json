@@ -1,0 +1,98 @@
+[
+  {
+    "id": "glacier-strip-x-attempt-1",
+    "file": "glacier-strip-x.png",
+    "prompt": "Use case: sketch-to-render. Image EDIT: paint the first attached geometry guide, keeping its flat band footprint, framing and transparent outside. Image 2 is style only; image 3 is HUE ONLY, it is obsolete pixel art: do not copy its pixels, peaks, snow or glow. Output exactly ONE glacier-strip-x.png, request 1024x1024 PNG RGBA, transparent background. Remove all guide grid lines. 2:1 orthographic isometric flat glacier surface, not a raised block, NO vertical front. Three tiles in a straight strip along tile x NW to SE. Centre (512,512), band corners (256,256),(1024,640),(768,768),(0,384), centre line (128,320) to (896,704). Ice edges (230,269) to (998,653) and (26,371) to (794,755). Ice fills 80% of band width; the remaining 10% on each long side is moraine, with clean straight outer band edges. Continuous material across all three tiles with no tile seams. Narrow darker crevasses are short, gently curved strokes ACROSS the flow; sufficiently straight and direction-neutral that the strip can run either way. Rubble ridges are low with broad simplified stone clusters, not huge boulders. Smooth painted contours and broad quiet colour clusters, only three or four shades per material, pastoral illustrated railway game matching the style board's painted material language. One light upper left. Matte desaturated blue-grey glacier ice: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F. Never bright blue/cyan, avoid #66CCD6; no highlights at or above cursor white #ECE4D0. Moraine is low grey rubble with limestone #BCA98B, slate #626B6C, rock #9A968C #8C887E #78746A. No per-pixel noise, no pixel-art stairs, no glow, cast shadows, people, climbers, text, borders, peaks, rock walls, surrounding ground or snow beyond the band. Only light dusting of snow on ice.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/glacier-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [1254, 1254]
+  },
+  {
+    "id": "glacier-strip-y-attempt-1",
+    "file": "glacier-strip-y.png",
+    "prompt": "Use case: sketch-to-render. Image EDIT of attached image 1 geometry guide: paint only the guide band; keep exact framing and footprint, remove guide lines, preserve transparent exterior. Image 2 style board is the smooth painterly style reference; image 3 mountain is HUE ONLY, do not copy its pixel art, peaks or glow. ONE material glacier-strip-y.png, requested 1024x1024 RGBA PNG transparent. Flat 2:1 orthographic isometric straight ice channel through three tiles along tile y, NE to SW. Band corners (768,256),(1024,384),(256,768),(0,640); centre (512,512), flow centre line (896,320) to (128,704); ice edges (794,269) to (26,653) and (998,371) to (230,755). 80% band ice, 10% each long side low moraine rubble, clean outer band edges. NO vertical face, no raised tile, continuous surface no tile joints. Crevasses are narrow darker short gently curved strokes crossing the flow, direction neutral, therefore roughly screen upper-left to lower-right, not long channels running along its axis. Quiet ice dominates. Smooth painted contours and broad quiet colour clusters, only three or four shades per material, pastoral illustrated railway game matching the style board's painted material language. One light upper left. Matte desaturated blue-grey glacier ice: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F. Never bright blue/cyan, avoid #66CCD6; no highlights at or above cursor white #ECE4D0. Moraine is low grey rubble with limestone #BCA98B, slate #626B6C, rock #9A968C #8C887E #78746A. No per-pixel noise, no pixel-art stairs, no glow, cast shadows, people, climbers, text, borders, peaks, rock walls, surrounding ground or snow beyond the band. Only light dusting of snow on ice.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/glacier-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [1254, 1254]
+  },
+  {
+    "id": "glacier-lobe-attempt-1",
+    "file": "raw/glacier-lobe-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. EDIT image 1 geometry guide into glacier-lobe.png, exactly ONE flat circular glacier ice lobe in 2:1 orthographic isometric seen from above, on requested 1024x1024 RGBA PNG transparent canvas. Image 2 style only; image 3 mountain HUE ONLY, never copy its pixel art, glow, peak forms. Keep exact SMALL centred footprint and large transparent margins as guide. Centre (512,512); ice ellipse half width 145 and half height 72; low moraine rim out to ellipse half width 181 half height 90.5. In total this oval occupies only 362x181 pixels at canvas centre, do not enlarge subject to fill canvas. Broad ice material clusters, short narrow crevasses splaying radially out toward rim. Clean outside rim, sparse low rubble in rim only. Flat material, no vertical front, no raised block, no peak or wall. Smooth painted contours and broad quiet colour clusters, only three or four shades per material, pastoral illustrated railway game matching the style board's painted material language. One light upper left. Matte desaturated blue-grey glacier ice: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F. Never bright blue/cyan, avoid #66CCD6; no highlights at or above cursor white #ECE4D0. Moraine is low grey rubble with limestone #BCA98B, slate #626B6C, rock #9A968C #8C887E #78746A. No per-pixel noise, no pixel-art stairs, no glow, cast shadows, people, climbers, text, borders, peaks, rock walls, surrounding ground or snow beyond the band. Only light dusting of snow on ice.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/glacier-lobe.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [1254, 1254]
+  },
+  {
+    "id": "glacier-lobe-attempt-2",
+    "file": "glacier-lobe.png",
+    "prompt": "EDIT THE FIRST IMAGE, KEEP THE OVAL'S EXACT SIZE AND POSITION IN THAT IMAGE. This is a SMALL distant material sprite with extensive empty transparent margins, not a close-up. Request 1024x1024 RGBA PNG. At 1024 width the complete oval must span x=331 to x=693 ONLY (362 pixels wide), y=421.5 to y=602.5 ONLY (181 pixels high). Centre x512 y512. Most of the canvas stays EMPTY transparent: 331px left and right, 421px above and below. Do not zoom, do not enlarge, do not recenter. Repaint light grey of first guide as matte glacier ice and grey ring as low moraine, change material ONLY while preserving original framing. Style board image 2 is smooth painted style; mountain image 3 is hue only NOT pixel style or subject. Ice ellipse half width145 height72; rubble outer ellipse half width181 height90.5. Sparse narrow short radial crevasses splay toward rim. Quiet broad color clusters, slight snow dust only. NO wall or raised block, no ground outside oval. Smooth painted contours and broad quiet colour clusters, only three or four shades per material, pastoral illustrated railway game matching the style board's painted material language. One light upper left. Matte desaturated blue-grey glacier ice: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F. Never bright blue/cyan, avoid #66CCD6; no highlights at or above cursor white #ECE4D0. Moraine is low grey rubble with limestone #BCA98B, slate #626B6C, rock #9A968C #8C887E #78746A. No per-pixel noise, no pixel-art stairs, no glow, cast shadows, people, climbers, text, borders, peaks, rock walls, surrounding ground or snow beyond the band. Only light dusting of snow on ice.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/glacier-lobe.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [1254, 1254]
+  },
+  {
+    "id": "ice-cliff-lit-attempt-1",
+    "file": "ice-cliff-lit.png",
+    "prompt": "Use case: stylized-concept. Generate a NEW image ice-cliff-lit.png; attached images are references ONLY, no guide, no existing painting is the edit target. Image1 smooth painted railway game's style board, image2 obsolete mountain for HUE ONLY not pixels, mountains, snow or glow. Request exactly 1024x1024 PNG, FULLY OPAQUE square. Entire canvas edge-to-edge is one continuous vertical glacier ICE surface viewed perfectly SQUARE-ON with no isometric projection or perspective. Width one tile edge, height four levels; each level is 256px. It is a material swatch, not a landscape or isolated cliff block. Steep glacier tongue front: thick broad horizontal layered ice bands, thin sparse grey-brown dirt layers and slender upright cracks. Three or four matte desaturated blue-grey ice tones #C8D3D8 #AEBCC3 #8E9EA7, darker cracks #66767F. Lit tone family for wall facing lower left under upper-left light. Even overall illumination over WHOLE face, NO gradient left to right or top to bottom, no darker foot, no vignette. Horizontal layers can gently undulate, edges preferably seamless. Smooth painted contours, broad color clusters, no pixel-art edges or per-pixel noise. No rock wall, no peaks, no sky, no ground, no snow cap or snow outside, no moraine, no cast shadows, people, text, borders, cave or glow. No vivid blue, cyan #66CCD6 or white at/above #ECE4D0. Keep ice visibly ice rather than grey stone.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [1254, 1254]
+  },
+  {
+    "id": "ice-cliff-shade-attempt-1",
+    "file": "ice-cliff-shade.png",
+    "prompt": "Use case: stylized-concept. Generate NEW ice-cliff-shade.png independently, NOT a mirrored or reused picture. Attached image1 style board only, image2 mountain HUE ONLY never pixel style, image3 ice-cliff-lit.png reference for material, layering and detail scale ONLY. Request 1024x1024 FULLY OPAQUE PNG. Whole canvas edge-to-edge square-on vertical glacier ICE front texture; no isometric projection, no perspective, no surrounding objects, sky or ground. Width one tile edge, height four levels. Match lit ice front's broad horizontal thick stratified ice bands, sparse thin grey dirt seams and slender upright cracks. SHADOW family for lower-right facing wall with upper-left light: matte desaturated blue-grey body around #8E9EA7, layer variation around #A0AFB7 and #83939D, narrow deep cracks #66767F. Clearly darker than lit reference, but still layered glacier ice not stone. EVEN tone family across WHOLE face, no top-to-bottom or left-to-right light gradient, no dark foot or vignette. Smooth painted broad quiet clusters, three or four shades, no pixel noise or stairs. No rock wall, peaks, snow cap, cave, moraine, people, text, border, cast shadows, bright cyan/blue, cursor-white #ECE4D0 or glow. Edge seamlessness desirable.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png",
+      "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
+    ],
+    "returned": [1254, 1254]
+  },
+  {
+    "id": "ice-portal-lit-attempt-1",
+    "file": "raw/ice-portal-lit-attempt-1.png",
+    "prompt": "Use case: stylized-concept. Generate NEW ice-portal-lit.png, ONE small meltwater cave patch on a transparent 1024x1024 RGBA PNG. References ONLY: image1 smooth painted game's style board; image2 lit ice front for matching material and detail scale. This is a front-view SQUARE-ON face texture with NO isometric projection, NO perspective, NO landscape, NO entire cliff. Overall mostly EMPTY transparent canvas. Low arched cave mouth CENTRED ON BOTTOM EDGE: opening x384..640, width256 (one quarter canvas), top at y896, height128 (one eighth canvas), foot y1024. Dark matte blue-grey hollow inside, milky grey meltwater paler and greyer than river #548A92 flows outward over lip at bottom. Ice around cave is ragged lit patch about 512 wide and 256 tall: x256..768, y768..1024, so only bottom middle half-width / quarter-height region contains painting, nothing outside patch. Patch flush bottom, no margin under cave, do not enlarge subject to fill canvas. Broad horizontal layered ice, thin dirt seam, narrow upright cracks around the low arch. Lit lower-left wall family #C8D3D8 #AEBCC3 #8E9EA7 with crevasses #66767F; even face illumination no gradient or darkening at foot. Smooth painted contours, broad quiet clusters, three or four shades, NO white beyond #ECE4D0, no cyan #66CCD6, bright blue, rock wall, boulder ring, peaks, surrounding snow or ground, cast shadows, people, text, borders, glow. No grid guide lines. Output material patch only.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
+    ],
+    "returned": [1254, 1254]
+  },
+  {
+    "id": "ice-portal-lit-attempt-2",
+    "file": "ice-portal-lit.png",
+    "prompt": "NEW SMALL SPRITE, NOT a close-up. Requested 1024x1024 RGBA PNG transparent. ENTIRE TOP THREE QUARTERS of canvas y0..768 absolutely EMPTY transparent. ENTIRE LEFT QUARTER x0..256 and RIGHT QUARTER x768..1024 absolutely EMPTY transparent from top to bottom. Only the tiny bottom central rectangle x256..768,y768..1024 can contain ice. Paint ONE SMALL ice meltwater cave patch in this rectangle, FLUSH bottom edge. Do NOT zoom or enlarge it. Subject occupies HALF canvas width, QUARTER canvas height. Arch dark blue-grey opening ONLY x384..640, y896..1024, so opening 256x128 pixels (quarter width, eighth height). Opening centred x512, foot at bottom y1024. Milky grey meltwater over the bottom lip, paler/greyer than #548A92. Ragged low ice around arch in lit glacier front's material: broad horizontal layers, fine dirt seams and upright cracks, no stone. Front perfectly square-on no perspective or projection. References ONLY image1 style board smooth broad painted contours, image2 lit ice front palette and material; do NOT inherit full-canvas framing. Ice lit #C8D3D8/body #AEBCC3/shade #8E9EA7/cracks #66767F, three or four tones, even across face with no overall gradients. No landscape, surrounding ground/snow, mountains, rocks, people, text, borders, glow, cast shadows, per-pixel noise or pixel-art stairs, no vivid blue/cyan, no near-white #ECE4D0.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
+    ],
+    "returned": [1613, 975]
+  },
+  {
+    "id": "ice-portal-shade-attempt-1",
+    "file": "ice-portal-shade.png",
+    "prompt": "Generate a NEW independent ice-portal-shade.png, no mirror/reuse of a painting. Requested 1024x1024 RGBA PNG transparent. Images are REFERENCE ONLY: image1 house style; image2 shaded ice cliff material/tone family; image3 lit cave reference for small bottom-centred patch and arch proportions ONLY. Output SQUARE canvas even though lit reference may not be square. SMALL SPRITE with huge transparent margins. Top three quarters y0..768 EMPTY. Left quarter x0..256 and right quarter x768..1024 EMPTY. Paint only bottom-central ragged patch x256..768,y768..1024, 512x256. Low arched opening x384..640,y896..1024,256x128, centred x512 FLUSH bottom edge y1024; no bottom margin. Do not zoom subject or fill canvas. Front perfectly square-on no projection/perspective. Matte layered glacier ICE patch, thin dirt layers, narrow upright cracks. Lower-right-facing SHADOW tone family #8E9EA7 with variations #A0AFB7 #83939D, deep #66767F, clearly darker than lit reference. Even whole-face illumination, no overall left-right/top-bottom gradient, no foot darkening. Dark blue-grey interior, milky grey meltwater pale/grey compared to river #548A92 flowing out across bottom lip, no boulders or stone inside. Smooth painted broad clusters with three or four shades, no per-pixel noise, no pixel-art steps. No landscape, peaks, surrounding ground or snow, rock wall, boulder ring, people, climbers, text, borders, cast shadows, glow, vivid blue/cyan #66CCD6, bright #ECE4D0 whites.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/ice-cliff-shade.png",
+      "assets/source/mountain-2026-10-11/ice-portal-lit.png"
+    ],
+    "returned": [1254, 1254]
+  }
+]
