@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { STR } from '../strings';
@@ -186,7 +186,7 @@ function questionOf(arg: ts.Expression, scope: ts.Node, sf: ts.SourceFile): stri
   return found;
 }
 
-function guardOf(call: ts.CallExpression, sf: ts.SourceFile): Guard {
+function guardOf(call: ts.Node, sf: ts.SourceFile): Guard {
   for (let c: ts.Node = call, p = call.parent; p; c = p, p = p.parent) {
     if (ts.isIfStatement(p) && p.thenStatement === c) {
       const kind = confirmKind(p.expression, sf);
@@ -271,6 +271,32 @@ function presetLoadsAsk(sf: ts.SourceFile): boolean[] {
   return out;
 }
 
+interface Staging extends Site {
+  file: string;
+}
+
+/** Every use of `stageNewGameTuning` in `sf`, bar its import, with what holds it back. */
+function stagingIn(sf: ts.SourceFile, file: string): Staging[] {
+  const found: Staging[] = [];
+  const visit = (n: ts.Node) => {
+    if (ts.isIdentifier(n) && n.text === 'stageNewGameTuning' && !ts.isImportSpecifier(n.parent)) {
+      const { owner, action } = ownerOf(n);
+      found.push({ file, id: `${owner}.${action}`, guard: guardOf(n, sf) });
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+/** Every use of `stageNewGameTuning` in a panel, menu or screen of `src/ui`. */
+function stagingUses(): Staging[] {
+  const dir = new URL('./', import.meta.url);
+  return readdirSync(dir)
+    .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+    .flatMap((f) => stagingIn(parse(f, source(f)), f));
+}
+
 describe('what each action that replaces or leaves a game is wired to', () => {
   const OVERWRITE: Guard = { by: 'if', kind: 'overwrite' };
   const LEAVE: Guard = { by: 'if', kind: 'leave' };
@@ -336,6 +362,37 @@ describe('what each action that replaces or leaves a game is wired to', () => {
     };
     visit(settings);
     expect(newGames).toEqual([true]);
+  });
+
+  it("stages a tuning only from the title screen's New game, after the question and nowhere else", () => {
+    const uses = stagingUses().map((u) => `${u.file}: ${u.id}`);
+    // the settings screen's New game, the debug panel's Regenerate and the level actions stage none
+    expect(uses).toEqual(['panels.ts: MainMenu.newGame']);
+    const [use] = stagingUses();
+    expect(use.guard).toEqual(OVERWRITE);
+    // what the title screen reads of the stored tuning is gone: nothing marks it as modified
+    for (const f of ['panels.ts', 'menu.ts'])
+      expect(source(f), f).not.toMatch(/\b(readRules|rulesDiffer)\b|custom\.rules/);
+  });
+
+  it('sees a staging behind the question, one before it, and none at all', () => {
+    const staged = (body: string) =>
+      stagingIn(
+        parse(
+          'sample.ts',
+          `function f() { const m = new MainMenu({ newGame: (seed) => { ${body} } }); }`,
+        ),
+        'sample.ts',
+      );
+    expect(
+      staged(
+        "if (!confirmReplacement('overwrite')) return; startNewGame(t, stageNewGameTuning, go);",
+      ),
+    ).toEqual([{ file: 'sample.ts', id: 'MainMenu.newGame', guard: OVERWRITE }]);
+    expect(
+      staged("startNewGame(t, stageNewGameTuning, go); if (confirmReplacement('overwrite')) go();"),
+    ).toEqual([{ file: 'sample.ts', id: 'MainMenu.newGame', guard: { by: 'none' } }]);
+    expect(staged('go();')).toEqual([]);
   });
 
   it('asks before loading a tuning preset, and returns before anything is applied on a no', () => {

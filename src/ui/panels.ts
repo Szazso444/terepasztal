@@ -25,7 +25,7 @@ import type { Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
 import { resourceStats } from '../sim/stats';
 import { withoutInCab } from '../sim/compat';
-import { readRules, rulesDiffer } from '../sim/rules';
+import { listRulePresets, stageNewGameTuning } from '../sim/rules';
 import { supplyMode, type SupplyMode } from '../sim/supply';
 import {
   SAVE_VERSION,
@@ -91,6 +91,7 @@ import {
   type ReplaceSituation,
   type Replacement,
 } from './saveSlots';
+import { startNewGame } from './newGameTuning';
 
 /**
  * The play UI: every panel, screen and menu of a game, built and wired in one place. The game
@@ -358,10 +359,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   });
   resourceBar.right.append(hud.funds);
   resourceBar.stats = () => resourceStats(d.stock, RESOURCE_IDS);
-  const tuningScreen = new TuningScreen(() => {
-    host.applySeason(true);
-    toolbar.refresh();
-  });
+  const tuningScreen = new TuningScreen(
+    () => {
+      host.applySeason(true);
+      toolbar.refresh();
+    },
+    // a tuning saved or deleted there changes the title screen's New game choice, in place
+    () => mainMenu.refreshTunings(),
+  );
   const contentScreen = new ContentScreen(() => {
     if (host.mode === 'play' && !menuOpen()) host.save(true);
     host.reloadToMenu();
@@ -600,11 +605,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.screens.close();
     pauseMenu.hide();
     d.build.setTool({ kind: 'none' });
-    mainMenu.show(continueTarget(overGame), listLevels(), {
-      // the tuning a new game starts from, not the loaded game's own
-      rules: rulesDiffer(readRules()).length > 0,
-      content: contentIsCustom(),
-    });
+    mainMenu.show(continueTarget(overGame), listLevels(), { content: contentIsCustom() });
   }
   function openMainMenu() {
     showMainMenu(false);
@@ -700,8 +701,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       ...slotActions(),
       ...audioActions(),
       continue: () => closeMenus(),
-      newGame: (seed, supply) => {
-        if (confirmReplacement('overwrite')) host.newGame(seed, supply);
+      tunings: () => listRulePresets(),
+      // the pick is staged only once every question is answered yes, and a refused staging starts nothing
+      newGame: (seed, supply, tuning) => {
+        if (!confirmReplacement('overwrite')) return;
+        const unusable = startNewGame(tuning, stageNewGameTuning, () => host.newGame(seed, supply));
+        if (unusable) d.toasts.push(unusable, 'warn');
       },
       playLevel: (id) => {
         if (confirmReplacement('overwrite')) host.playLevel(id);

@@ -25,12 +25,22 @@ export class TuningScreen implements Screen {
   /** What the last preset action did; kept across re-renders, cleared by any other change. */
   private status = el('div', { class: 'sub tuning-status' });
 
-  constructor(private readonly onChange: () => void) {
+  /**
+   * `onChange` runs after every change to the live rules; `onClosed` when the screen is left,
+   * which is when a preset saved or deleted here is known to whoever lists the presets.
+   */
+  constructor(
+    private readonly onChange: () => void,
+    private readonly onClosed: () => void,
+  ) {
     this.root.append(el('div', { class: 'col' }, this.body, this.foot));
   }
   onOpen() {
     this.setStatus(null);
     this.render();
+  }
+  onClose() {
+    this.onClosed();
   }
 
   private setStatus(text: string | null, cls = 'green') {
@@ -88,7 +98,7 @@ export class TuningScreen implements Screen {
             btn(
               STR.tuning.loadPreset,
               () => {
-                // it replaces the whole live tuning and the one new games start from
+                // it replaces the whole live tuning, for the game in play only
                 if (!confirm(STR.tuning.confirmLoadPreset(p.name))) return;
                 const loaded = applyRulePreset(p.name);
                 // the sliders show the new values; a preset gone since the list was drawn drops out
