@@ -1,0 +1,12 @@
+{
+  "method": "Same construction helpers and render profile as accepted C50",
+  "helper_source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\c50-handbuilt-2026-10-07\\build.py",
+  "helper_sha256": "31497fd8a087bbcf4021551f348abc190d1fa05235acbb4079dc5f8a70513774",
+  "hood_front_width": 1.8,
+  "hood_rear_width": 1.8,
+  "cab_width": 2.26,
+  "deck_width": 2.5,
+  "axes_parallel": true,
+  "gauge_half_m": 0.7482077759774072,
+  "source_geometry": "Authored from workbook picture; no imported meshes"
+}

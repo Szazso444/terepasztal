@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "sw1",
+  "recipe": "build.py",
+  "helpers": "c50_primitives.py",
+  "profile": "style.json",
+  "observations": "observations.json",
+  "pictures": [
+    {
+      "id": "view1",
+      "path": "references\\01.png",
+      "sha256": "68b0924a9f7229f2bf121d8a0e33b510b8d1aa2903861595468255db91abf5a8",
+      "original_name": "drawing1-r21-c5.jpeg",
+      "original_sha256": "49c4ed1239c9b6daf81e2a8cc015faf3202323ab12e938bcf83c8c0e6ecbcb1f"
+    }
+  ],
+  "gauge": "standard",
+  "output": "model"
+}

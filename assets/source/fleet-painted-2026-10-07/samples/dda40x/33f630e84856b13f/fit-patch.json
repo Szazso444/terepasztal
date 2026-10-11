@@ -1,0 +1,48 @@
+{
+  "dda40x": {
+    "lamps": [
+      {
+        "across": -0.04234117983953778,
+        "along": 0.9865174136098367,
+        "part": "body",
+        "up": 21.85542857142857
+      },
+      {
+        "across": -0.04506769520799287,
+        "along": 0.991649677832811,
+        "part": "body",
+        "up": 19.253142857142855
+      }
+    ],
+    "smoke": [
+      {
+        "along": -0.6509956400328933,
+        "part": "body",
+        "up": 32.05714285714285
+      },
+      {
+        "along": 0.5435388578643695,
+        "part": "rear",
+        "up": 32.472
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "body-t0": {
+        "cycle": 0.1173845057748398,
+        "integrated": true,
+        "phases": 8
+      },
+      "body-t1": {
+        "cycle": 0.1173845057748398,
+        "integrated": true,
+        "phases": 8
+      },
+      "rear-t0": {
+        "cycle": 0.09884420126934522,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

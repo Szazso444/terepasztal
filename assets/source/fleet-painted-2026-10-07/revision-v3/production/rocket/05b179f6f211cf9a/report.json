@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "id": "rocket",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 768,
+      "part": "engine",
+      "phase_bounds_drift_px": 1,
+      "scale": 1.0
+    }
+  ],
+  "profile": "fleet-reference-v2",
+  "repeat_pixel_match": false
+}

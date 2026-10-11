@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "observed": [
+    {
+      "picture": "view1",
+      "region": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "detail": "Olive-green full-width dual-cab locomotive; grey chamfered roof; cream side bands and V shaped nose stripe. Rectangular engine body parallel to rails."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.71,
+        0.49,
+        0.99,
+        0.84
+      ],
+      "detail": "Two front windscreens with wipers, one upper central headlamp, two lower lamps, buffers and central coupler."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.03,
+        0.02,
+        0.86,
+        0.54
+      ],
+      "detail": "Roof rectangular radiator at rear, two round central fans, low rectangular hatches. Side grille size changes along length."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.01,
+        0.36,
+        0.96,
+        0.98
+      ],
+      "detail": "Two three-axle bogies with complete sideframes, end crossmembers, axle boxes and coil springs. Exposed centre tank."
+    },
+    {
+      "picture": "view2",
+      "region": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "detail": "Supplementary reverse illustration supports same dual-cab paint and physical fittings; source workbook remains proportion authority."
+    }
+  ],
+  "inferred": [
+    "Far-side locomotive panels repeat visible side; hidden underbody minimal mechanically plausible closures. Dimensions estimated from picture proportions; tread gauge output constraint 0.24 tile. Roof equipment follows workbook when supplementary view differs."
+  ],
+  "omitted": [
+    "No invented readable numbers/logos; tiny obscured pipes and hidden internal engine details omitted."
+  ],
+  "owner_notes": [
+    "Rebuild with same C50/SW1 construction workflow. M62 bogies must include complete front/back structure, not only wheels. No baked cast shadow; lighter C50 profile."
+  ],
+  "guidelines": "Only locked PNG pictures and owner notes determine shape/livery. Workbook view1 wins over supplementary view2. Same frozen C50 primitives and lighter render profile, no baked cast shadow. Game tables are output only. Complete bogies with front/back frame and wheels. Hidden details recorded separately."
+}

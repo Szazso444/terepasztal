@@ -1,0 +1,102 @@
+{
+  "frames": {
+    "rolling/loco_kando_v40_body_f0": {
+      "ax": 146.0,
+      "ay": 176.0,
+      "h": 230,
+      "w": 288,
+      "x": 1742,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_f24": {
+      "ax": 142.0,
+      "ay": 176.0,
+      "h": 230,
+      "w": 288,
+      "x": 2032,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_f48": {
+      "ax": 142.0,
+      "ay": 175.0,
+      "h": 234,
+      "w": 288,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_f72": {
+      "ax": 146.0,
+      "ay": 175.0,
+      "h": 234,
+      "w": 288,
+      "x": 292,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_w0_f0": {
+      "ax": 146.0,
+      "ay": 176.0,
+      "h": 230,
+      "w": 288,
+      "x": 2322,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_w0_f24": {
+      "ax": 142.0,
+      "ay": 176.0,
+      "h": 230,
+      "w": 288,
+      "x": 2612,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_w0_f48": {
+      "ax": 142.0,
+      "ay": 175.0,
+      "h": 234,
+      "w": 288,
+      "x": 582,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_w0_f72": {
+      "ax": 146.0,
+      "ay": 175.0,
+      "h": 234,
+      "w": 288,
+      "x": 872,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_w3_f0": {
+      "ax": 146.0,
+      "ay": 176.0,
+      "h": 230,
+      "w": 288,
+      "x": 2902,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_w3_f24": {
+      "ax": 142.0,
+      "ay": 176.0,
+      "h": 230,
+      "w": 288,
+      "x": 3192,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_w3_f48": {
+      "ax": 142.0,
+      "ay": 175.0,
+      "h": 234,
+      "w": 288,
+      "x": 1162,
+      "y": 2
+    },
+    "rolling/loco_kando_v40_body_w3_f72": {
+      "ax": 146.0,
+      "ay": 175.0,
+      "h": 234,
+      "w": 288,
+      "x": 1452,
+      "y": 2
+    }
+  },
+  "partial": true,
+  "resolution": 4
+}

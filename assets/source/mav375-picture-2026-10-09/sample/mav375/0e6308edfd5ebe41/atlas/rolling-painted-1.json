@@ -1,0 +1,134 @@
+{
+  "frames": {
+    "rolling/loco_mav375_body_f0": {
+      "ax": 117.0,
+      "ay": 157.0,
+      "h": 201,
+      "w": 234,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_f24": {
+      "ax": 117.0,
+      "ay": 157.0,
+      "h": 201,
+      "w": 234,
+      "x": 238,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_f48": {
+      "ax": 117.0,
+      "ay": 121.0,
+      "h": 165,
+      "w": 234,
+      "x": 1410,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_f72": {
+      "ax": 117.0,
+      "ay": 121.0,
+      "h": 165,
+      "w": 234,
+      "x": 1646,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_lit_f0": {
+      "ax": 115.0,
+      "ay": 154.0,
+      "h": 196,
+      "w": 230,
+      "x": 946,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_lit_f24": {
+      "ax": 115.0,
+      "ay": 154.0,
+      "h": 195,
+      "w": 230,
+      "x": 1178,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_lit_f48": {
+      "ax": 115.0,
+      "ay": 119.0,
+      "h": 161,
+      "w": 230,
+      "x": 2354,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_lit_f72": {
+      "ax": 115.0,
+      "ay": 119.0,
+      "h": 160,
+      "w": 230,
+      "x": 2586,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_w0_f0": {
+      "ax": 117.0,
+      "ay": 157.0,
+      "h": 201,
+      "w": 234,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_w0_f24": {
+      "ax": 117.0,
+      "ay": 157.0,
+      "h": 201,
+      "w": 234,
+      "x": 238,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_w0_f48": {
+      "ax": 117.0,
+      "ay": 121.0,
+      "h": 165,
+      "w": 234,
+      "x": 1410,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_w0_f72": {
+      "ax": 117.0,
+      "ay": 121.0,
+      "h": 165,
+      "w": 234,
+      "x": 1646,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_w3_f0": {
+      "ax": 117.0,
+      "ay": 157.0,
+      "h": 201,
+      "w": 234,
+      "x": 474,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_w3_f24": {
+      "ax": 117.0,
+      "ay": 157.0,
+      "h": 201,
+      "w": 234,
+      "x": 710,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_w3_f48": {
+      "ax": 117.0,
+      "ay": 121.0,
+      "h": 165,
+      "w": 234,
+      "x": 1882,
+      "y": 2
+    },
+    "rolling/loco_mav375_body_w3_f72": {
+      "ax": 117.0,
+      "ay": 121.0,
+      "h": 165,
+      "w": 234,
+      "x": 2118,
+      "y": 2
+    }
+  },
+  "partial": true,
+  "resolution": 4
+}

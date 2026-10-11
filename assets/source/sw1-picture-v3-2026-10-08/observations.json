@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "observed": [
+    {
+      "picture": "view1",
+      "region": [
+        0.03,
+        0.02,
+        0.99,
+        0.99
+      ],
+      "detail": "Single workbook illustration: rear cab, long constant-width hood, dark neutral charcoal paint, cream lining, brass handrails; reference contains no second/rear view."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.2,
+        0.14,
+        0.4,
+        0.31
+      ],
+      "detail": "Five small hood-facing cab panes under a curved roof. Narrow side pane and a larger cream-framed sliding window; retain the observed arrangement."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.27,
+        0.22,
+        0.78,
+        0.66
+      ],
+      "detail": "Rounded hood shoulders and separate side access panels with fine horizontal louvres. Five larger panel divisions are visible, not six identical narrow doors."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.43,
+        0.17,
+        0.84,
+        0.44
+      ],
+      "detail": "One exhaust, rectangular roof grille, two substantial round fan housings nearer the nose, one flared brass horn. No extra rooftop fittings."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.14,
+        0.01,
+        0.29,
+        0.12
+      ],
+      "detail": "Short dark roof pipe and flared brass bell with a visible rim/crown; replace the prior plain cone silhouette."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.08,
+        0.48,
+        0.77,
+        0.94
+      ],
+      "detail": "Two cast grey bogie sideframes with paired openings, prominent axleboxes, dark wheel treads; rounded central fuel tank."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.7,
+        0.44,
+        0.995,
+        0.995
+      ],
+      "detail": "One circular nose lamp above cream lining; vertical radiator grille; steep cream safety chevrons on front pilot, narrow access steps."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.08,
+        0.48,
+        0.77,
+        0.94
+      ],
+      "detail": "This pass: broad cast bogie sideframes with two rounded openings are clearly exposed below the walkway. Previous frame was too far inboard and the axle spacing too short. Re-author frame, place it farther outboard without moving the rail-contact treads, and expose more of its height."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.2,
+        0.14,
+        0.4,
+        0.31
+      ],
+      "detail": "This pass: hood-facing windows occupy more of the cab face and their upper line follows the arched roof. Add the cab gable behind them and restrained pane reflections."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.59,
+        0.28,
+        0.76,
+        0.4
+      ],
+      "detail": "This pass: fan housings/spokes are dark charcoal, not bright silver star patterns."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.2,
+        0.01,
+        0.28,
+        0.11
+      ],
+      "detail": "This pass: bell has a curved flaring skirt, not a straight cone."
+    },
+    {
+      "picture": "view1",
+      "region": [
+        0.82,
+        0.44,
+        0.9,
+        0.54
+      ],
+      "detail": "This pass: nose lamp has a substantial round housing, ring and warm lens."
+    }
+  ],
+  "inferred": [
+    {
+      "detail": "The opposite side uses bilateral construction symmetry for the structural shell, running gear and the visible-side access layout; it is not a verified second-side drawing."
+    },
+    {
+      "detail": "Overall model scale and hidden interior/axles are functional simplifications. They are not prototype measurements or image-proven mechanical drawings."
+    },
+    {
+      "detail": "Rear shell closure is plain; coupler/step structure is minimal functional geometry. No specific unseen rear livery or glazing is asserted."
+    },
+    {
+      "detail": "Model-unit dimensions remain illustration fitting, not engineering measurements: bogie axle spacing 1.80, frame centre across +/-1.10, body suspension clearance +0.18. Tread gauge remains unchanged."
+    }
+  ],
+  "omitted": [
+    "Previously invented rear cab windows",
+    "Previously mirrored rear safety chevrons",
+    "Unseen rear cross handrail",
+    "Unreferenced badges, pipes and roof details"
+  ],
+  "guidelines": "Only references/01.png determines appearance. It is losslessly converted from the original workbook image, with original-file hash retained. No in-game mesh, game screenshots, fit/gear table, online photograph or reconstructed mesh may determine shape. Keep the approved C50 construction and lighting method; colours follow this PNG. Unknown hidden details remain minimal and explicitly inferred. Owner approved the method, not these revised details yet."
+}

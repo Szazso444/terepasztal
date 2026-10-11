@@ -1,0 +1,23 @@
+{
+  "parts": {
+    "body.blend": {
+      "original": "ba3e0bc3c09d9d9834d43bd3aa70d09043cc358b1f86dead2bdf6e54ebbe7c1b",
+      "replayed": "ba3e0bc3c09d9d9834d43bd3aa70d09043cc358b1f86dead2bdf6e54ebbe7c1b",
+      "meshes": 329,
+      "match": true
+    },
+    "body-t0.blend": {
+      "original": "5a3f2dd50790edfdafcb3affd58372557b52fb76487ff78146045a8e49527fb6",
+      "replayed": "5a3f2dd50790edfdafcb3affd58372557b52fb76487ff78146045a8e49527fb6",
+      "meshes": 57,
+      "match": true
+    },
+    "body-t1.blend": {
+      "original": "5a3f2dd50790edfdafcb3affd58372557b52fb76487ff78146045a8e49527fb6",
+      "replayed": "5a3f2dd50790edfdafcb3affd58372557b52fb76487ff78146045a8e49527fb6",
+      "meshes": 57,
+      "match": true
+    }
+  },
+  "calibration_match": true
+}

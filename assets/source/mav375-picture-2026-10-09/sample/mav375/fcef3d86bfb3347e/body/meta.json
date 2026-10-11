@@ -1,0 +1,20 @@
+{
+  "frames": [
+    "loco_mav375_body_w0_f0.png",
+    "loco_mav375_body_w3_f0.png",
+    "loco_mav375_body_lit_f0.png",
+    "loco_mav375_body_w0_f24.png",
+    "loco_mav375_body_w3_f24.png",
+    "loco_mav375_body_lit_f24.png",
+    "loco_mav375_body_w0_f48.png",
+    "loco_mav375_body_w3_f48.png",
+    "loco_mav375_body_lit_f48.png",
+    "loco_mav375_body_w0_f72.png",
+    "loco_mav375_body_w3_f72.png",
+    "loco_mav375_body_lit_f72.png"
+  ],
+  "scale": 1.0,
+  "cycle": 0.6247849886931366,
+  "blender": "5.2.1 LTS",
+  "build": "9e2066aef7ef"
+}

@@ -1,0 +1,134 @@
+{
+  "frames": {
+    "rolling/loco_gmam_cradle_f0": {
+      "ax": 99.0,
+      "ay": 121.0,
+      "h": 145,
+      "w": 198,
+      "x": 2502,
+      "y": 2
+    },
+    "rolling/loco_gmam_cradle_f24": {
+      "ax": 99.0,
+      "ay": 121.0,
+      "h": 145,
+      "w": 198,
+      "x": 2702,
+      "y": 2
+    },
+    "rolling/loco_gmam_cradle_f48": {
+      "ax": 99.0,
+      "ay": 128.0,
+      "h": 152,
+      "w": 198,
+      "x": 1052,
+      "y": 2
+    },
+    "rolling/loco_gmam_cradle_f72": {
+      "ax": 99.0,
+      "ay": 128.0,
+      "h": 152,
+      "w": 198,
+      "x": 1252,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_f0": {
+      "ax": 85.0,
+      "ay": 136.0,
+      "h": 174,
+      "w": 173,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_f24": {
+      "ax": 88.0,
+      "ay": 136.0,
+      "h": 174,
+      "w": 173,
+      "x": 177,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_f48": {
+      "ax": 88.0,
+      "ay": 110.0,
+      "h": 148,
+      "w": 173,
+      "x": 1452,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_f72": {
+      "ax": 85.0,
+      "ay": 110.0,
+      "h": 148,
+      "w": 173,
+      "x": 1627,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_w0_f0": {
+      "ax": 85.0,
+      "ay": 136.0,
+      "h": 174,
+      "w": 173,
+      "x": 352,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_w0_f24": {
+      "ax": 88.0,
+      "ay": 136.0,
+      "h": 174,
+      "w": 173,
+      "x": 527,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_w0_f48": {
+      "ax": 88.0,
+      "ay": 110.0,
+      "h": 148,
+      "w": 173,
+      "x": 1802,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_w0_f72": {
+      "ax": 85.0,
+      "ay": 110.0,
+      "h": 148,
+      "w": 173,
+      "x": 1977,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_w3_f0": {
+      "ax": 85.0,
+      "ay": 136.0,
+      "h": 174,
+      "w": 173,
+      "x": 702,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_w3_f24": {
+      "ax": 88.0,
+      "ay": 136.0,
+      "h": 174,
+      "w": 173,
+      "x": 877,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_w3_f48": {
+      "ax": 88.0,
+      "ay": 110.0,
+      "h": 148,
+      "w": 173,
+      "x": 2152,
+      "y": 2
+    },
+    "rolling/loco_gmam_engine_w3_f72": {
+      "ax": 85.0,
+      "ay": 110.0,
+      "h": 148,
+      "w": 173,
+      "x": 2327,
+      "y": 2
+    }
+  },
+  "partial": true,
+  "resolution": 4
+}

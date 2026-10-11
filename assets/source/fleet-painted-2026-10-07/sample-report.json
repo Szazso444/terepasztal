@@ -1,0 +1,114 @@
+[
+  {
+    "id": "rocket",
+    "exit": 0
+  },
+  {
+    "id": "bm50",
+    "exit": 0
+  },
+  {
+    "id": "muki",
+    "exit": 0
+  },
+  {
+    "id": "mav490",
+    "exit": 0
+  },
+  {
+    "id": "mk45",
+    "exit": 0
+  },
+  {
+    "id": "rezet",
+    "exit": 0
+  },
+  {
+    "id": "mav375",
+    "exit": 0
+  },
+  {
+    "id": "general",
+    "exit": 0
+  },
+  {
+    "id": "drg01",
+    "exit": 0
+  },
+  {
+    "id": "daylight",
+    "exit": 0
+  },
+  {
+    "id": "mallard",
+    "exit": 0
+  },
+  {
+    "id": "big_boy",
+    "exit": 0
+  },
+  {
+    "id": "sw1",
+    "exit": 0
+  },
+  {
+    "id": "class08",
+    "exit": 0
+  },
+  {
+    "id": "m62",
+    "exit": 0
+  },
+  {
+    "id": "sd40",
+    "exit": 0
+  },
+  {
+    "id": "deltic",
+    "exit": 0
+  },
+  {
+    "id": "dda40x",
+    "exit": 0
+  },
+  {
+    "id": "kando_v40",
+    "exit": 0
+  },
+  {
+    "id": "crocodile",
+    "exit": 1
+  },
+  {
+    "id": "taurus",
+    "exit": 0
+  },
+  {
+    "id": "re460",
+    "exit": 0
+  },
+  {
+    "id": "gg1",
+    "exit": 0
+  },
+  {
+    "id": "black_five",
+    "exit": 1
+  },
+  {
+    "id": "gmam",
+    "exit": 0
+  },
+  {
+    "id": "tgv",
+    "exit": 0
+  },
+  {
+    "id": "ice1",
+    "exit": 0
+  },
+  {
+    "id": "mk48",
+    "exit": 0
+  }
+]

@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "id": "sw1",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-lighter-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-handbuilt-2026-10-08\\body.blend",
+      "source_sha256": "8c7c39a02a8ac37e4b4d8bd9414bf8ca397521b8afc723b47113f8862fa5236d",
+      "frame_prefix": "loco_sw1_body",
+      "length_tiles": 1.5605291698338806,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            4.275,
+            0,
+            3.09
+          ]
+        ],
+        "smoke": [
+          [
+            -1.2,
+            0,
+            3.76
+          ]
+        ]
+      },
+      "window_materials": [
+        "Opaque painted blue glass"
+      ]
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-handbuilt-2026-10-08\\body-t0.blend",
+      "source_sha256": "44da8ee14a5694826610a427d094c5eac46bd3da5c7c8b4881d5a954cfc697c5",
+      "frame_prefix": "loco_sw1_body-t0",
+      "length_tiles": 0.3656738212983155,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.48,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 1
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-handbuilt-2026-10-08\\body-t1.blend",
+      "source_sha256": "61f6eb9f336a1e2abbecf89e622b2323a18c4cc109c9bbb18d6a6ffa25451ae8",
+      "frame_prefix": "loco_sw1_body-t1",
+      "length_tiles": 0.3656738212983155,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.48,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 1
+    }
+  ],
+  "reference": {
+    "authority": "workbook-pictures-and-owner-notes",
+    "guidelines": "Owner 2026-10-08: build exactly by the accepted handbuilt C50 method. Workbook v9 row21 picture is shape/livery authority. New precise primitive geometry, constant 1.80m hood width, 2.26m cab width, centred axes, authored panels/lamps/glazing/bogies. No image reconstruction or mesh deformation.",
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r21-c5.jpeg",
+        "sha256": "49c4ed1239c9b6daf81e2a8cc015faf3202323ab12e938bcf83c8c0e6ecbcb1f"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-sw1-rear.png",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority",
+        "sha256": "bbc1817d34e7a82f18ee8ee0fe267a1ae76782bd8eaa8a9bc10c89f8c44df434"
+      }
+    ],
+    "row": 21,
+    "schema": 1,
+    "sheet": "Locomotives",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v9.xlsx",
+      "sha256": "e0da5a3fbd8680b6e50fc153d2b86cbae29ec787c9c0852ae9488f9541c4862e"
+    },
+    "prepared_sources": {
+      "body": "8c7c39a02a8ac37e4b4d8bd9414bf8ca397521b8afc723b47113f8862fa5236d",
+      "body-t0": "44da8ee14a5694826610a427d094c5eac46bd3da5c7c8b4881d5a954cfc697c5",
+      "body-t1": "61f6eb9f336a1e2abbecf89e622b2323a18c4cc109c9bbb18d6a6ffa25451ae8"
+    }
+  }
+}

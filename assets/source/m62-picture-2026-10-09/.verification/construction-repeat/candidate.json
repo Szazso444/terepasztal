@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "id": "m62",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\m62-picture-2026-10-09\\style.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\m62-picture-2026-10-09\\.verification\\construction-repeat\\body.blend",
+      "source_sha256": "70765d170b2ea1d0dd4ce3a05e1759f7a0f67eabe656d30e4f46dbbdba5fd02e",
+      "frame_prefix": "loco_m62_body",
+      "length_tiles": 2.705665679648238,
+      "canvas": 768,
+      "effects": {
+        "lamps": [
+          [
+            -8.04,
+            0,
+            3.76
+          ],
+          [
+            -8.04,
+            -0.96,
+            1.86
+          ],
+          [
+            -8.04,
+            0.96,
+            1.86
+          ],
+          [
+            8.04,
+            0,
+            3.76
+          ],
+          [
+            8.04,
+            -0.96,
+            1.86
+          ],
+          [
+            8.04,
+            0.96,
+            1.86
+          ]
+        ]
+      },
+      "window_materials": [
+        "Opaque painted blue glass"
+      ]
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\m62-picture-2026-10-09\\.verification\\construction-repeat\\body-t0.blend",
+      "source_sha256": "c1d4c8c46ba668b42eed9895d2962c381ce7d5aa2499f424590c055c0bfabfd8",
+      "frame_prefix": "loco_m62_body-t0",
+      "length_tiles": 0.7473859529980863,
+      "canvas": 384,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 6,
+        "radius": 0.53,
+        "symmetry": 6
+      },
+      "max_phase_bounds_drift": 1
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\m62-picture-2026-10-09\\.verification\\construction-repeat\\body-t1.blend",
+      "source_sha256": "460497969092810e93c7477951574ed6455e272fa72a00ab07ac779f058f86b0",
+      "frame_prefix": "loco_m62_body-t1",
+      "length_tiles": 0.7473859529980863,
+      "canvas": 384,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 6,
+        "radius": 0.53,
+        "symmetry": 6
+      },
+      "max_phase_bounds_drift": 1
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "png-pictures-and-owner-notes",
+    "pictures": [
+      {
+        "id": "view1",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\m62-picture-2026-10-09\\references\\01.png",
+        "sha256": "c71d5710100fac910b8582e7734867ee20affb3cac196e931c14b6ea2ed7f84b",
+        "original_name": "drawing1-r30-c5.jpeg",
+        "original_sha256": "2c4052ca91bab9034e2a9a18879b2938cf677c5f33bff4edb58c32be162a1d68"
+      },
+      {
+        "id": "view2",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\m62-picture-2026-10-09\\references\\02.png",
+        "sha256": "800dead4d59431d88e08703c490fc24752ac74d24201c6fb41d29152063ae700",
+        "original_name": "loco-m62-rear.png",
+        "original_sha256": "60236dd23babc3a9f9146d0d886a1b33130a494c538e255d90b08b359ed2f26a"
+      }
+    ],
+    "observations": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\m62-picture-2026-10-09\\observations.json",
+      "sha256": "447434be172bcace88df63c2cd1d54d037fc540ef849865f85fc2d5278f3f6c6"
+    },
+    "guidelines": "Workbook row30 PNG geometry/livery authority; supplementary rear only where consistent. Fresh C50-method geometry; complete Co-Co bogies. No game model inputs.",
+    "prepared_sources": {
+      "body": "70765d170b2ea1d0dd4ce3a05e1759f7a0f67eabe656d30e4f46dbbdba5fd02e",
+      "body-t0": "c1d4c8c46ba668b42eed9895d2962c381ce7d5aa2499f424590c055c0bfabfd8",
+      "body-t1": "460497969092810e93c7477951574ed6455e272fa72a00ab07ac779f058f86b0"
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "id": "sw1",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-recipe-2026-10-08\\style.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-recipe-2026-10-08\\model\\body.blend",
+      "source_sha256": "faeeb9f5fd2138f570706da0a4bb51ccd6c645549b60228a0122ae04d5a3c61b",
+      "frame_prefix": "loco_sw1_body",
+      "length_tiles": 1.5605291698338806,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            4.275,
+            0,
+            3.09
+          ]
+        ],
+        "smoke": [
+          [
+            -1.2,
+            0,
+            3.76
+          ]
+        ]
+      },
+      "window_materials": [
+        "Opaque painted blue glass"
+      ]
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-recipe-2026-10-08\\model\\body-t0.blend",
+      "source_sha256": "92ce91bfc33120b29500414801cfdcd71e7d7bf9985d895c8e3d4014194e5f14",
+      "frame_prefix": "loco_sw1_body-t0",
+      "length_tiles": 0.367277652338461,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.48,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 1
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-recipe-2026-10-08\\model\\body-t1.blend",
+      "source_sha256": "4c3c93c2eed32b3062e4cd50a3a9d319ee160fc0b9f7f00955cf9b39a81d648f",
+      "frame_prefix": "loco_sw1_body-t1",
+      "length_tiles": 0.367277652338461,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.48,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 1
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "png-pictures-and-owner-notes",
+    "pictures": [
+      {
+        "id": "view1",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-recipe-2026-10-08\\references\\01.png",
+        "sha256": "68b0924a9f7229f2bf121d8a0e33b510b8d1aa2903861595468255db91abf5a8",
+        "original_name": "drawing1-r21-c5.jpeg",
+        "original_sha256": "49c4ed1239c9b6daf81e2a8cc015faf3202323ab12e938bcf83c8c0e6ecbcb1f"
+      }
+    ],
+    "observations": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-recipe-2026-10-08\\observations.json",
+      "sha256": "9981c91c6d09e412e78af54e25c4ccde729d2115f680c9e6e5080dd8580269f9"
+    },
+    "guidelines": "Use only the locked reference PNG. Visible features and omitted unsupported details are recorded in observations.json. C50 construction method; no game model input.",
+    "prepared_sources": {
+      "body": "faeeb9f5fd2138f570706da0a4bb51ccd6c645549b60228a0122ae04d5a3c61b",
+      "body-t0": "92ce91bfc33120b29500414801cfdcd71e7d7bf9985d895c8e3d4014194e5f14",
+      "body-t1": "4c3c93c2eed32b3062e4cd50a3a9d319ee160fc0b9f7f00955cf9b39a81d648f"
+    }
+  }
+}

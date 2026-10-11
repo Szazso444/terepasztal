@@ -1,0 +1,23 @@
+{
+  "parts": {
+    "body.blend": {
+      "original": "07f34f43fd77f5f156aa47c61f4fe1524fe7afa63123d69df71ab53bacc6790d",
+      "replayed": "07f34f43fd77f5f156aa47c61f4fe1524fe7afa63123d69df71ab53bacc6790d",
+      "meshes": 326,
+      "match": true
+    },
+    "body-t0.blend": {
+      "original": "5a3f2dd50790edfdafcb3affd58372557b52fb76487ff78146045a8e49527fb6",
+      "replayed": "5a3f2dd50790edfdafcb3affd58372557b52fb76487ff78146045a8e49527fb6",
+      "meshes": 57,
+      "match": true
+    },
+    "body-t1.blend": {
+      "original": "5a3f2dd50790edfdafcb3affd58372557b52fb76487ff78146045a8e49527fb6",
+      "replayed": "5a3f2dd50790edfdafcb3affd58372557b52fb76487ff78146045a8e49527fb6",
+      "meshes": 57,
+      "match": true
+    }
+  },
+  "calibration_match": true
+}

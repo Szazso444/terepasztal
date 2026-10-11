@@ -1,0 +1,145 @@
+{
+  "blender": "Blender 5.2.1 LTS\n\tbuild date: 2026-08-25\n\tbuild time: 02:38:20\n\tbuild commit date: 2026-08-24\n\tbuild commit time: 16:50\n\tbuild hash: 9e2066aef7ef\n\tbuild branch: blender-v5.2-release\n\tbuild platform: Windows\n\tbuild type: Release\n\tbuild c flags:  /W3 -Werror=implicit-function-declaration -Werror=return-type -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wstrict-prototypes -Wmissing-prototypes -Wunused-parameter -Wundef -Wundef-prefix -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /MP /nologo /J /Gy /Gd /showFilenames -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild c++ flags:  /W3 -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wno-overloaded-virtual -Wno-sign-compare -Wno-invalid-offsetof -Wno-suggest-override -Wundef -Wundef-prefix -Wunused-parameter -Wmismatched-tags -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /EHsc  /Gy /MP /nologo /J /Gd /showFilenames /EHsc -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild link flags: /MACHINE:X64  /SUBSYSTEM:CONSOLE /STACK:2097152 /ignore:4049 /ignore:4217 /ignore:4221\n\tbuild system: CMake\n",
+  "manifest": {
+    "id": "mav375",
+    "parts": [
+      {
+        "animation_start": 1,
+        "canvas": 512,
+        "effects": {
+          "lamps": [
+            [
+              4.064,
+              -0.78,
+              1.07
+            ],
+            [
+              4.064,
+              0.78,
+              1.07
+            ],
+            [
+              3.02,
+              -0.58,
+              3.237
+            ]
+          ]
+        },
+        "frame_prefix": "loco_mav375_body",
+        "length_tiles": 1.5557175619983994,
+        "max_phase_bounds_drift": 5,
+        "name": "body",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\mav375-picture-2026-10-09\\model\\body.blend",
+        "source_sha256": "ed84c78a0eebda46212d8ab0cd1b3eaaf8177923d59fdb760d50aae317514366",
+        "wheel": {
+          "mode": "timeline",
+          "period_frames": 8,
+          "radius": 0.535,
+          "start": 1,
+          "symmetry": 1
+        },
+        "window_materials": [
+          "Opaque cab side glass",
+          "Cab front spectacle glass"
+        ]
+      }
+    ],
+    "profile": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\mav375-picture-2026-10-09\\style.json",
+    "reference": {
+      "authority": "png-pictures-and-owner-notes",
+      "guidelines": "Only the locked workbook PNG supplies shape and colour. Three coupled axles, no leading/fourth axle. No imported game geometry or fit data.",
+      "observations": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\mav375-picture-2026-10-09\\observations.json",
+        "sha256": "fdc40bb8a6c73d2be650c4dbdb9ce4fd89e2d0e4ee05ceb9dbb345a0eb21a491"
+      },
+      "pictures": [
+        {
+          "id": "view1",
+          "original_name": "drawing1-r15-c5.jpeg",
+          "original_sha256": "4c23cdbe73f344ab7d9fc8ad4b2e60fd36df20000e965011eed9dda22aef32e1",
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\mav375-picture-2026-10-09\\references\\01.png",
+          "sha256": "d57f35c519a75ca656330289410d4d644812c42d508a555fe997913bf39b8c43"
+        }
+      ],
+      "prepared_sources": {
+        "body": "ed84c78a0eebda46212d8ab0cd1b3eaaf8177923d59fdb760d50aae317514366"
+      },
+      "schema": 1
+    },
+    "schema": 1
+  },
+  "packer": "a36493411a58067cfa4b753ff2ddb5e06017c5808c9ad0c6b40db4638a083423",
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0.25,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "engine": "BLENDER_EEVEE",
+    "exposure": 0.3,
+    "facings": 96,
+    "id": "c50-lighter-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "AgX - Medium High Contrast",
+    "metallic_cap": 0.18,
+    "paint_low": 0.86,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 4,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "AgX",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  },
+  "reference_validator": "e5b6ad7c864e9bca62c86d8c38d33ecdf3db50d6284f5fedfbde6b0d39c631bc",
+  "renderer": "1763ae485fe3ff06ecee6e6e4d25de1fe71f746f995d2bfc896bff69143bf0a9",
+  "runner": "307e62bd77408f24b9495ebc3b1e7d71a168d889a8502882d044071f527758fa"
+}

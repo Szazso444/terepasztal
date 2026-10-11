@@ -1,0 +1,42 @@
+{
+  "big_boy": {
+    "lamps": [
+      {
+        "across": -0.060304104619947764,
+        "along": 1.1297396620822129,
+        "part": "engine",
+        "up": 19.799999999999997
+      }
+    ],
+    "smoke": [
+      {
+        "along": 0.810576980716,
+        "part": "engine",
+        "up": 28.59371428571429
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "engine-t0": {
+        "cycle": 0.452216631346821,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t1": {
+        "cycle": 0.452216631346821,
+        "integrated": true,
+        "phases": 8
+      },
+      "tender-t0": {
+        "cycle": 0.1344011693391389,
+        "integrated": true,
+        "phases": 8
+      },
+      "tender-t1": {
+        "cycle": 0.13440116933913893,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

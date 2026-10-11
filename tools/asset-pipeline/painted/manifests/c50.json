@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "id": "c50",
+  "profile": "../profiles/c50-lighter-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "../../../../assets/source/c50-handbuilt-2026-10-07/c50-handbuilt.blend",
+      "source_sha256": "759437b66eb8dc81cb558a711e1043789c483cd890beb9f14492ddf003184f27",
+      "frame_prefix": "loco_c50_body",
+      "length_tiles": 0.8239,
+      "canvas": 256,
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.43,
+        "symmetry": 5
+      },
+      "effects": {
+        "smoke": [
+          [
+            1.18,
+            0.18,
+            2.42
+          ]
+        ],
+        "lamps": [
+          [
+            2.3,
+            -0.63,
+            1.91
+          ],
+          [
+            2.3,
+            0.63,
+            1.91
+          ]
+        ]
+      }
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 8,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r8-c5.jpeg",
+        "sha256": "2a63ae84746a44f1fffdb50137a97771e09fc860a9376bbd896db8abdb9b13ca"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r8-c6.jpeg",
+        "sha256": "d9f39b3ff168c28c6553f283366195028e681807d77b5d6acd43868426033983"
+      }
+    ],
+    "guidelines": "Geometry already explicitly accepted by owner in the 2026-10-07 review. Preserve approved shape. Use lighter painted style; no added cast shadows.",
+    "prepared_sources": {
+      "body": "759437b66eb8dc81cb558a711e1043789c483cd890beb9f14492ddf003184f27"
+    },
+    "owner_approved": true
+  }
+}

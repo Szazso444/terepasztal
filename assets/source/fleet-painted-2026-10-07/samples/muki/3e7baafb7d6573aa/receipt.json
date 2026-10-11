@@ -1,0 +1,22 @@
+{
+  "files": {
+    "atlas\\rolling-painted-1.json": "ad0507b1a46938f6754e7ee692294c21b3fa8cbecfd8f03e982c2d0e6b03a426",
+    "atlas\\rolling-painted-1.png": "5e4c0af2a90c43b61c8823802d0e21d0502a3e9f104c60a6ec98cb32facad623",
+    "fit-patch.json": "50dc5f9114c0a4d66cc5a6221de59aed6c64e9567c3e57c6222ebac4baced381",
+    "frames\\loco_muki_body_f0.png": "295897b23cb09326be10b77070b2efdd1ca3419dad488adfee9b3cfd693c7625",
+    "frames\\loco_muki_body_f24.png": "401115b3f44e3b401f4fa0f5ad4c0de86d7b1f0f9223cd1ea1aaf01939826767",
+    "frames\\loco_muki_body_f48.png": "c413799343dffe561a35e19ee17b25e3e2dbf8111e17c6ac5778a58bf82ff13a",
+    "frames\\loco_muki_body_f72.png": "c6d9325c0f179606f1e9600a6e272e03ab2e3c49d7c2282473100e5148b25414",
+    "frames\\loco_muki_body_w0_f0.png": "295897b23cb09326be10b77070b2efdd1ca3419dad488adfee9b3cfd693c7625",
+    "frames\\loco_muki_body_w0_f24.png": "401115b3f44e3b401f4fa0f5ad4c0de86d7b1f0f9223cd1ea1aaf01939826767",
+    "frames\\loco_muki_body_w0_f48.png": "c413799343dffe561a35e19ee17b25e3e2dbf8111e17c6ac5778a58bf82ff13a",
+    "frames\\loco_muki_body_w0_f72.png": "c6d9325c0f179606f1e9600a6e272e03ab2e3c49d7c2282473100e5148b25414",
+    "frames\\loco_muki_body_w3_f0.png": "3174e549a8b95bff3e7101f99fa1c319c6c9476ac9ba7994024dbd313bf193b1",
+    "frames\\loco_muki_body_w3_f24.png": "481d7ded0ae7c1b43ff2f3ffdf46af9b3a845a9b7b8c8287282f12a160d2f64f",
+    "frames\\loco_muki_body_w3_f48.png": "cf53d2ad61ab155d3c915776b571f3d756e1df2573db5bc46655856f4f612c97",
+    "frames\\loco_muki_body_w3_f72.png": "f8131593ca757f240df5c50029940a9fc755366c1bb1f0baa1521686b3002fb5",
+    "inputs.json": "be62154a1da17f478b1b73e4d477a9756a55e15611027a85d9ddf9f19e9610bf",
+    "report.json": "630f234fcb8beabfa47a1dd89d1a3c3682af245ca5f8a000aa39811898209528"
+  },
+  "key": "3e7baafb7d6573aa26c3a87a7ded721bc8b9e25ee529f133997c489a2e27bb22"
+}

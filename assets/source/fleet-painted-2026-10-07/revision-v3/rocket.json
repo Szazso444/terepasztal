@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "id": "rocket",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\revision-v3\\models\\rocket\\engine.blend",
+      "source_sha256": "69e0f8291573f98594d8f55101446c940d026766a3b1134de54c0fc4993db1e0",
+      "frame_prefix": "loco_rocket_engine",
+      "length_tiles": 0.6878540069685659,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            0.97,
+            0.191,
+            3.3682499999999997
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.5740018515575062,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 5,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r5-c5.jpeg",
+        "sha256": "b663164e642ea72ebe5896101754d094f803c0cb0fbeff65be9d01690fe98ea7"
+      }
+    ],
+    "guidelines": "Geometry already explicitly accepted by owner in the 2026-10-07 review. Preserve approved shape. Use lighter painted style; no added cast shadows.",
+    "prepared_sources": {
+      "engine": "69e0f8291573f98594d8f55101446c940d026766a3b1134de54c0fc4993db1e0"
+    },
+    "owner_approved": true
+  }
+}

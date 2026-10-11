@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "id": "mav375",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\mav375-picture-2026-10-09\\style.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\mav375-picture-2026-10-09\\model\\body.blend",
+      "source_sha256": "ac864f082aa45d392a964eb071f970b97dd0f6aaf8c26104920bcd77d2067982",
+      "frame_prefix": "loco_mav375_body",
+      "length_tiles": 1.5557175619983994,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            4.064,
+            -0.78,
+            1.07
+          ],
+          [
+            4.064,
+            0.78,
+            1.07
+          ],
+          [
+            3.02,
+            -0.89,
+            3.0
+          ]
+        ]
+      },
+      "window_materials": [
+        "Opaque cab side glass",
+        "Cab front spectacle glass"
+      ],
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.62,
+        "symmetry": 1
+      },
+      "animation_start": 1,
+      "max_phase_bounds_drift": 5
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "png-pictures-and-owner-notes",
+    "pictures": [
+      {
+        "id": "view1",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\mav375-picture-2026-10-09\\references\\01.png",
+        "sha256": "d57f35c519a75ca656330289410d4d644812c42d508a555fe997913bf39b8c43",
+        "original_name": "drawing1-r15-c5.jpeg",
+        "original_sha256": "4c23cdbe73f344ab7d9fc8ad4b2e60fd36df20000e965011eed9dda22aef32e1"
+      }
+    ],
+    "observations": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\mav375-picture-2026-10-09\\observations.json",
+      "sha256": "63115f9cc613c46c6eda405df49771d5d0828593815e36107e7e8d80b4988236"
+    },
+    "guidelines": "Only the locked workbook PNG supplies shape and colour. Three coupled axles, no leading/fourth axle. No imported game geometry or fit data.",
+    "prepared_sources": {
+      "body": "ac864f082aa45d392a964eb071f970b97dd0f6aaf8c26104920bcd77d2067982"
+    }
+  }
+}

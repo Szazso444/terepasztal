@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "id": "sw1",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-v4-2026-10-08\\style.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-v4-2026-10-08\\.verification\\construction-repeat\\body.blend",
+      "source_sha256": "0ec73ec387707b1381fb8b7e67003c6e35531e47bfacce28c786a1b3d34ffc40",
+      "frame_prefix": "loco_sw1_body",
+      "length_tiles": 1.5605291698338806,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            4.29,
+            0,
+            3.27
+          ]
+        ],
+        "smoke": [
+          [
+            -1.2,
+            0,
+            3.94
+          ]
+        ]
+      },
+      "window_materials": [
+        "Opaque painted blue glass"
+      ]
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-v4-2026-10-08\\.verification\\construction-repeat\\body-t0.blend",
+      "source_sha256": "62012de9431953c67ca7a931f36e43f4cc895238c04ec21ac49a485f6904d026",
+      "frame_prefix": "loco_sw1_body-t0",
+      "length_tiles": 0.4426577877019975,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.48,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 1
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-v4-2026-10-08\\.verification\\construction-repeat\\body-t1.blend",
+      "source_sha256": "138e15720306f3a19e0fee6c0a43168b2bc2c2e44f7eb18ec8f6bb6a4b8c473d",
+      "frame_prefix": "loco_sw1_body-t1",
+      "length_tiles": 0.4426577877019975,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.48,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 1
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "png-pictures-and-owner-notes",
+    "pictures": [
+      {
+        "id": "view1",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-v4-2026-10-08\\references\\01.png",
+        "sha256": "68b0924a9f7229f2bf121d8a0e33b510b8d1aa2903861595468255db91abf5a8",
+        "original_name": "drawing1-r21-c5.jpeg",
+        "original_sha256": "49c4ed1239c9b6daf81e2a8cc015faf3202323ab12e938bcf83c8c0e6ecbcb1f"
+      },
+      {
+        "id": "view2",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-v4-2026-10-08\\references\\02-owner-correction.png",
+        "sha256": "40c69866493152474ae2fb3fbdc0d61c3d23d633cebc60b277be8bb5a1523a00",
+        "original_name": "02-owner-correction.png"
+      }
+    ],
+    "observations": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-v4-2026-10-08\\observations.json",
+      "sha256": "533a0cd94c10d8bfad6830c26af2b10ac2df5f719a0052d7591864c174a00c4a"
+    },
+    "guidelines": "Use only the locked reference PNG. Visible features and omitted unsupported details are recorded in observations.json. C50 construction method; no game model input.",
+    "prepared_sources": {
+      "body": "0ec73ec387707b1381fb8b7e67003c6e35531e47bfacce28c786a1b3d34ffc40",
+      "body-t0": "62012de9431953c67ca7a931f36e43f4cc895238c04ec21ac49a485f6904d026",
+      "body-t1": "138e15720306f3a19e0fee6c0a43168b2bc2c2e44f7eb18ec8f6bb6a4b8c473d"
+    }
+  }
+}

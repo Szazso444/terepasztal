@@ -1,0 +1,114 @@
+{
+  "facings": [
+    0,
+    24,
+    48,
+    72
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\AppData\\Local\\Temp\\painted-1nagrid_\\engine",
+  "part": {
+    "canvas": 512,
+    "effects": {
+      "lamps": [
+        [
+          3.336,
+          -0.037,
+          2.82
+        ]
+      ],
+      "smoke": [
+        [
+          1.976,
+          0.261,
+          3.966
+        ]
+      ]
+    },
+    "frame_prefix": "loco_general_engine",
+    "length_tiles": 1.5123986373834335,
+    "max_phase_bounds_drift": 2,
+    "name": "engine",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\general\\engine.blend",
+    "source_sha256": "4db35f02c0a3f8438ec06d8cad0607910e5cee11ee3b89328bcd82ca0cfb4094",
+    "wheel": {
+      "mode": "timeline",
+      "period_frames": 8,
+      "radius": 0.6334844199886711,
+      "start": 1,
+      "symmetry": 1
+    }
+  },
+  "phases": [
+    0,
+    3
+  ],
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0.48,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "c50-approved-v1",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "AgX - Medium High Contrast",
+    "metallic_cap": 0.18,
+    "paint_low": 0.78,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 4,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "AgX",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "key": "6b148e2d4131d15c49a22634fd16d59771c1ece9aa98123ffcb64441956705af",
+  "files": {
+    "candidate.json": "d02821f6baad121555d78851c26f21784f9b02821388f2eddb8dd5d5e4b62549",
+    "calibration.json": "ec300f2a18864e3f99f21c7fa402f956a4025f733c3dc8219f83a9a62ea48749",
+    "body.blend": "faeeb9f5fd2138f570706da0a4bb51ccd6c645549b60228a0122ae04d5a3c61b",
+    "body-t0.blend": "92ce91bfc33120b29500414801cfdcd71e7d7bf9985d895c8e3d4014194e5f14",
+    "body-t1.blend": "4c3c93c2eed32b3062e4cd50a3a9d319ee160fc0b9f7f00955cf9b39a81d648f"
+  }
+}
