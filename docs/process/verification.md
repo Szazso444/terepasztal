@@ -9,6 +9,13 @@ the map of what they cover.
 - **Deterministic.** No `Math.random`, no wall clock, no timers, no network. Random cases come from
   `Rng` (`src/engine/rng.ts`) with a fixed seed list; a test that explores seeds prints the seed of
   any failure in its message so the case can be replayed alone.
+- **Time limits.** vitest gives a test 5 s unless it says otherwise, and a loaded machine (other
+  test runs, agents, a busy CI runner) stretches a test several times over: tests ran up to seven
+  times slower at a load average of 27 on four cores. A test that takes half a second or more alone
+  carries a limit of its own (the options or third argument of `it`), at least four times what it
+  takes alone and in practice twenty, with a one-line comment above it on why it is slow; the
+  repository default is not raised to cover it. Cutting seeds or cases to be faster is allowed
+  only where the property is still covered.
 - **Node only.** Tests run under vitest with no DOM, canvas or renderer. `pixi.js` imports under
   Node and its scene-graph classes construct, but logic is best tested through the pure functions
   it is built on; if there are none, the finding is that the logic should be pulled out, which is
