@@ -1,7 +1,7 @@
 import { content, type BuildingDef, type Cost } from '../data/content';
 import type { Stockpile } from './stockpile';
 import { rules, weekSeconds } from './rules';
-import { MAX_LEVEL } from './levels';
+import { MAX_LEVEL, levelCap } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
 import { wrapRotation } from './rotation';
 
@@ -155,9 +155,27 @@ export function tickBuildings(
 export const BRIDGE_MAX_LEVEL = 4;
 /** The highest level with a picture of its own (`_lv4`); the levels above it draw that one. */
 export const WORKS_TOP_PICTURE = 4;
-/** The highest level a building reaches: four for a bridge, `MAX_LEVEL` for works. */
+/**
+ * The highest level a building may hold: four for a bridge, `MAX_LEVEL` for works. It clamps what
+ * a save or a level file brings (`buildingLevel`, `buildingFromJSON`), so a building above the
+ * cap `worksUpgradeMax` sets keeps its level. Upgrades stop earlier, at `worksUpgradeMax`.
+ */
 export function worksMaxLevel(b: Building) {
   return buildingDef(b.id).bridge ? BRIDGE_MAX_LEVEL : MAX_LEVEL;
+}
+/**
+ * The highest level the player can upgrade a building to, a whole number from 1 to
+ * `worksMaxLevel`. A bridge has its four levels; works with a `lastTier` stop at the level that
+ * age opens (`levelCap` of the works' own first age), since the art has no model for the ages
+ * after it. A `lastTier` that is not a whole number counts as missing, so every age upgrades.
+ */
+export function worksUpgradeMax(b: Building) {
+  const def = buildingDef(b.id);
+  if (def.bridge) return BRIDGE_MAX_LEVEL;
+  const last = def.lastTier;
+  return typeof last === 'number' && Number.isInteger(last)
+    ? levelCap(def.tier ?? 0, last)
+    : MAX_LEVEL;
 }
 export function buildingLevel(b: Building) {
   return Math.min(worksMaxLevel(b), Math.max(1, b.level ?? 1));
@@ -170,7 +188,7 @@ export function buildingRecipe(b: Building) {
   return b.id === 'windmill' ? { in: r.in, out: { food: 5 + 2 * (buildingLevel(b) - 1) } } : r;
 }
 export function buildingUpgradeCost(b: Building): Cost | null {
-  if (buildingLevel(b) >= worksMaxLevel(b)) return null;
+  if (buildingLevel(b) >= worksUpgradeMax(b)) return null;
   return Object.fromEntries(
     Object.entries(buildingDef(b.id).cost).map(([k, v]) => [
       k,

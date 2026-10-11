@@ -263,7 +263,9 @@ export class Builder {
   }
   /**
    * Whether a works or bridge may rise a level: works one level per age from the age they appear
-   * in, bridges to their four levels in any age. The editor ignores the age. None while one runs.
+   * in, up to the level of their `lastTier` age when they have one (`worksUpgradeMax`: the Charcoal
+   * Kiln ends at level 3), bridges to their four levels in any age. The editor ignores the age but
+   * not that top. None while one runs.
    */
   canUpgradeBuilding(b: Building): PlacementCheck {
     if (b.work) return { ok: false, cost: {}, reason: STR.build.upgradingNow };

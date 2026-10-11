@@ -12,7 +12,10 @@ Stations, works and houses gain one level per age, from the age they first appea
 can be upgraded in the Steam Age, a Farm Halt reaches level 2 in the Diesel Age and level 6 in
 the Hyper Age, and a Refinery of the Diesel Age reaches level 5 at most. A building that already
 stands above its age's level, from an old save or a level file, keeps its level and is offered
-the next one when that age comes. Bridges keep their own four levels in every age.
+the next one when that age comes. A building with a last age stops there: the Charcoal Kiln ends
+at level 3, in the Electric Age, and shows Max level from then on, in the editor too. A kiln that
+already stands above level 3 keeps its level and is offered no further one. Bridges keep their own
+four levels in every age.
 
 An upgrade is paid when it starts and takes game time: 6, 9, 12, 18 and 24 game hours to levels
 2 to 6, from a quarter of a day to a whole one (the **Upgrade time** tuning value scales them; at
