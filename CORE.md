@@ -24,38 +24,46 @@ Last audit: 2026-10-09, on `develop` at `cef6d11`.
 
 ## Roadmap
 
-The author's initiatives, in the order given on 2026-10-09. Order matters, and not all of them
-are equally important; the author sets the importance (each is an epic issue, labelled
-`type:epic`).
+The author's initiatives, in the order the author gave on 2026-10-10, most important first. The
+number in front of an item is its place; the Importance line of each epic issue (labelled
+`type:epic`) gives the same place.
 
-1. **Performance.** A Rust core compiled to WebAssembly, plus other changes that make the game
-   run faster on the web.
-   - Prepared by: the simulation pulled out of `src/game.ts` into a headless step (A01, A02); the
-     deterministic tests in `docs/process/verification.md` as the port's specification; a
-     fixed-step clock (A03).
+1. **Performance** (#45). A Rust core compiled to WebAssembly, plus other changes that make the
+   game run faster on the web.
+   - Prepared by: the headless step `SimStep.run` (`src/sim/step.ts`; A01, A02) and the fixed-step
+     clock `GameClock.run` (`src/sim/time.ts`; A03) are in; the deterministic tests in
+     `docs/process/verification.md` are the port's specification.
    - Measure first. Part of today's cost does not depend on the language: a full-map scan in the
      render loop every 0.12 s, quadratic per-tick signal evaluation, and a 939 kB main bundle.
-2. **Gameplay loop, balance and fine tuning**, including tuning presets.
-3. **Art and asset consistency.**
+2. **Gameplay loop, balance and fine tuning** (#46), including tuning presets.
+3. **Art and asset consistency** (#47).
    - **Locomotives** are rendered in 3D by the C-50/SW1 method (PNG → locomotive model → repeatable
      sprites, realistic). The guide is `tools/asset-pipeline/handbuilt/README.md`, which today
      exists only on the author's machine. The spreadsheet of locomotives (which are in the game,
      with a picture of each) is `G:\DEV\Terepasztal\locomotive-wheels-bogies (v9).xlsx`.
-   - **Buildings** are 4 pictures, one per rotation, across 6 ages.
+   - **Buildings** are 4 pictures, one per rotation, across 6 ages; item 4 (#74) says what the game has.
    - The author works on this with Codex. The workspace moves to `G:` (`docs/process/workspace.md`).
-4. **UI redesign and smoother UX**: a command layer between the UI and the simulation; panels and
-   the keymap out of `src/game.ts`.
-5. **Pathfinding optimisations.**
-6. **Backend and user login.**
-7. **Security hardening.**
-8. **Content verification and gameplay polishing.**
-9. **Testing with beta users.**
-10. **Release and advertising on Steam.**
-11. **Microtransactions and monetisation.**
-12. **Music by age** (added 2026-10-09).
-    - One melody runs through the game, with a track set per age in a genre fitting that age.
-    - When the player enters an age, that age's tracks play.
-    - The author adds the files; until then each age falls back to today's playlist.
+4. **Six ages and four building rotations** (#74).
+   - Status: ages (`AGE_DEFS` in `src/sim/ages.ts`), timed upgrades (`startWork` in
+     `src/sim/upgrade.ts`) and four rotations (`BUILDING_ROTATIONS` in `src/sim/rotation.ts`) are in
+     the game; the game does not yet load the new building pictures, which wait on the author's
+     Codex pictures.
+5. **UI redesign and smoother UX** (#48).
+   - Prepared by: the command layer between the UI and the simulation (`Commands` in
+     `src/sim/commands.ts`), the panels (`createPlayUi` in `src/ui/panels.ts`) and the keymap
+     (`KEYMAP`, `handlePlayKeys` in `src/ui/keymap.ts`) exist; the redesign is the open work.
+6. **Pathfinding optimisations** (#49).
+7. **Content verification and gameplay polishing** (#52).
+8. **Security hardening** (#51).
+9. **Music by age** (#56, added 2026-10-09).
+   - One melody runs through the game, with a track set per age in a genre fitting that age.
+   - When the player enters an age, that age's tracks play.
+   - Status: `AGE_MUSIC` and `musicForAge` (`src/engine/musicPlaylist.ts`) are in, and each age
+     falls back to today's playlist until the author adds the files, which the item waits on.
+10. **Backend and user login** (#50).
+11. **Testing with beta users** (#53).
+12. **Release and advertising on Steam** (#54).
+13. **Microtransactions and monetisation** (#55).
 
 ## Decisions
 
@@ -86,6 +94,8 @@ are equally important; the author sets the importance (each is an epic issue, la
 | 2026-10-09 | `.codex/hooks.json` uses a repository-relative command; the Codex hook runs under Codex                                                                               | author                             |
 | 2026-10-09 | Lint, typecheck and formatting cover `tools/`, the build configs, the docs and the agent files                                                                        | author                             |
 | 2026-10-09 | Music: one melody, a track set per age, switching on age change                                                                                                       | author                             |
+| 2026-10-10 | Roadmap order, most important first: #45, #46, #47, #74, #48, #49, #52, #51, #56, #50, #53, #54, #55                                                                  | author                             |
+| 2026-10-10 | Only `v0.1.0` is tagged; every release from now on is tagged by Core with a CHANGELOG entry; agents verify play-test checks                                           | author                             |
 
 ## Open questions for the author
 
@@ -96,8 +106,7 @@ The 13 questions of the first audit were answered on 2026-10-09 (see Decisions).
    - Commit the pipeline on a branch, so the Art role can follow the C-50/SW1 method for the other
      locomotives.
    - Export the spreadsheet to CSV in the repository (for example `assets/source/locomotives.csv`).
-2. **Importance of the roadmap items.** Which come first after the art work?
-3. **Branch triage** (#28–#34): one decision per old branch.
+2. **Branch triage** (#28–#34): one decision per old branch.
 
 ## Audit
 
@@ -215,7 +224,6 @@ would do the fix. "decide" means the author decides first.
 | A51 | high   | Most of the sprawl has been cleaned up.                                                                                                                                                                                          | Delete verification/35-property-helper now that it is merged.                                                                                                                                                               | decide |
 | A05 | medium | On main and on origin/develop, ci.yml runs on push to main only, plus pull_request.                                                                                                                                              | Merge this branch's ci.yml (push on main and develop) into develop and keep pull_request as the CI gate for agent branches.                                                                                                 | —      |
 | A48 | medium | Three old art branches are unmerged and 67 commits behind main, with very large diffs from their merge base: art/rear-views-v1 (14 ahead, 1144 files), local/train-models (15 ahead, 1337 files) and locomotive-render-v1 (13…   | Ask the author whether each old art branch is superseded or should be salvaged, then archive (tag and delete) the superseded ones.                                                                                          | decide |
-| A52 | medium | The claimed tags now exist: the API returns 11 tags (10 archive/* and v0.1.0, matching .github/ref-archive.json), and the v0.1.0 branch is deleted.                                                                              | Either add v0.2.0-v0.8.0 to ref-archive.json at each version's last commit as listed in the CHANGELOG, or reword README.md:26 and CHANGELOG.md:5 to say only v0.1.0 is tagged.                                              | decide |
 | A53 | medium | README.md Controls, README.md:58 and CHANGELOG.md disagree with the code.                                                                                                                                                        | Rewrite the README Controls table and line 58 to match the hotkeys in game.ts (K market, M overview, Tab/Shift+Tab tool, Q/E type, U/Shift+U reclass, 1-9 piece).                                                           | —      |
 | A54 | medium | Machine-specific paths and tooling are tracked. .codex/hooks.json:8 hardcodes 'C:\Users\Zso\terepasztal\...'.                                                                                                                    | Make .codex/hooks.json use a repo-relative command and gate the Codex hook on a Codex variable (or drop it).                                                                                                                | decide |
 | A55 | medium | The repository carries large binary history. .git is about 834 MB (an 831 MiB pack). 582 image files are tracked (403 png, 178 jpg, 1 svg; the claim said 585), with no .gitattributes and no LFS. scratchpad/ is 146 MB in 462… | Add a root `.ignore` listing scratchpad/ and assets/source/ so ripgrep-based agent search skips the evidence without moving files.                                                                                          | decide |

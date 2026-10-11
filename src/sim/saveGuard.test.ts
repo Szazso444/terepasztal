@@ -710,7 +710,6 @@ function genFile(rng: Rng): Record<string, unknown> {
     rules: () => ({
       contractOfferCount: 1,
       buildCostMul: rng.pick([0.5, 1, 2]),
-      tradeCycleDays: 7,
     }),
     trade: () => ({ deals: {}, nextAt: rng.int(1, 99), fuelMul: 1, driftDay: rng.int(0, 99) }),
     people: () => ({ rng: rng.int(0, 0xffffffff) }),
@@ -789,8 +788,6 @@ function positionsOf(file: Record<string, unknown>): Position[] {
   if (isObject(file.rules)) {
     add(['rules', 'contractOfferCount']);
     add(['rules', 'buildCostMul']);
-    // the step from v11 sets the trade cycle
-    add(['rules', 'tradeCycleDays'], (from) => from > 11);
   }
   if (isObject(file.trade)) {
     // the step from v11 restarts the desk's cycle; a week of drift stays as many weeks

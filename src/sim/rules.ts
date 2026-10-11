@@ -3,10 +3,13 @@
  * change; consumers read the live `rules` object at use time, so most changes apply instantly.
  * Map parameters only matter when a new map is generated.
  *
- * Three places hold rules. The stored tuning (`RULES_KEY`) is what a new game starts from; the
- * tuning screen writes the values it changes through to it. Each save carries the rules its game
- * was played with, and loading one applies them to that session only (`applyGameRules`), leaving
- * the stored tuning alone. Named presets (`RULE_PRESETS_KEY`) are kept apart from both.
+ * The live `rules` start every page load as the shipped rules (`DEFAULT_RULES`), overlaid with
+ * the tuning staged for that load when there is one: `stageNewGameTuning` hands a saved preset
+ * across the reload a new game costs, and the load takes it once. Nothing is kept as the tuning
+ * new games start from, so a number once dragged never starts a later game. What the tuning
+ * screen changes lives in `rules` for the session. Each save carries the rules its game was
+ * played with, and loading one applies them to that session only (`applyGameRules`). Named
+ * presets (`RULE_PRESETS_KEY`) are the saved tunings, kept apart in localStorage.
  */
 export interface Rules {
   startMoney: number;
@@ -36,8 +39,6 @@ export interface Rules {
   contractRefreshDays: number;
   deadlineMul: number;
   payoutMul: number;
-  /** @deprecated reputation is gone; kept so older callers compile, no effect */
-  reputationMul: number;
   failPenaltyMul: number;
   daySeconds: number;
   seasonDays: number;
@@ -66,8 +67,6 @@ export interface Rules {
   startingResourceScale: number;
   /** a collection train leaves a warehouse alone until it holds this much of a resource */
   collectMin: number;
-  /** days between settlements of standing trade deals */
-  tradeCycleDays: number;
   powerCap: number;
   /** price of the first ring of chunks around the start; each ring further multiplies it */
   chunkCost: number;
@@ -108,7 +107,6 @@ export const DEFAULT_RULES: Rules = {
   contractRefreshDays: 21,
   deadlineMul: 1,
   payoutMul: 1,
-  reputationMul: 1,
   failPenaltyMul: 1,
   daySeconds: 240,
   seasonDays: 6,
@@ -129,7 +127,6 @@ export const DEFAULT_RULES: Rules = {
   inCabCost: 6000,
   startingResourceScale: 3,
   collectMin: 100,
-  tradeCycleDays: 7,
   powerCap: 100,
   chunkCost: 12000,
   chunkCostMul: 1.6,
@@ -456,7 +453,13 @@ export const RULE_META: RuleMeta[] = [
   },
 ];
 
+/**
+ * The key the stored tuning used to live under. Nothing reads or writes it any more; a page load
+ * deletes it, so numbers dragged under an older build do not start any game.
+ */
 export const RULES_KEY = 'terepasztal.rules';
+/** sessionStorage key of the tuning staged for the next page load (`stageNewGameTuning`). */
+export const NEW_GAME_TUNING_KEY = 'terepasztal.newGameTuning';
 
 function sanitize(r: Partial<Rules>): Rules {
   const out: Rules = { ...DEFAULT_RULES };
@@ -469,74 +472,78 @@ function sanitize(r: Partial<Rules>): Rules {
   return out;
 }
 
-export function readRules(): Rules {
-  try {
-    const raw = localStorage.getItem(RULES_KEY);
-    if (!raw) return { ...DEFAULT_RULES };
-    const saved = JSON.parse(raw) as Partial<Rules>;
-    if ([2, 6].includes(saved.contractRefreshDays ?? 0)) saved.contractRefreshDays = 21;
-    if (saved.contractOfferCount === 2) saved.contractOfferCount = 1;
-    if (saved.startMoney === 25000) saved.startMoney = 40000;
-    if (saved.startingResourceScale === 1) saved.startingResourceScale = 3;
-    return sanitize(saved);
-  } catch {
-    return { ...DEFAULT_RULES };
-  }
-}
-
 /** The defaults overlaid by `saved`, clamped to each rule's range. Pure. */
 export function rulesFrom(saved?: Partial<Rules>): Rules {
   return sanitize({ ...DEFAULT_RULES, ...saved });
 }
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+/** Delete the tuning an older build stored. It is dropped, not converted: nothing reads it. */
+function discardStoredTuning() {
+  try {
+    localStorage.removeItem(RULES_KEY);
+  } catch {
+    /* no storage, or it refuses: nothing was read from it either */
+  }
+}
+
 /**
- * The live rules object, read at load from the stored tuning. Change it through `setRules` or
- * `applyGameRules`, never by replacing it: most simulation modules hold this reference.
+ * Take the tuning staged for this page load, exactly once: the staged value is removed as it is
+ * read. It is no tuning at all when absent, malformed, or when sessionStorage is missing, throws
+ * or will not remove it (the next load would find it again).
+ */
+function takeStagedTuning(): Partial<Rules> | undefined {
+  try {
+    const raw = sessionStorage.getItem(NEW_GAME_TUNING_KEY);
+    if (raw === null) return undefined;
+    sessionStorage.removeItem(NEW_GAME_TUNING_KEY);
+    const v: unknown = JSON.parse(raw);
+    return isRecord(v) ? (v as Partial<Rules>) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+discardStoredTuning();
+/** The tuning this page load was started with, taken once, before anything can stage another. */
+const loadTuning = takeStagedTuning();
+
+/**
+ * The rules this page load starts from: the shipped rules, overlaid with the tuning staged for
+ * this load when it has one (clamped to each rule's range, no value remapped). It reads no
+ * stored tuning. A tuning staged since the load is for the next one, and changes made to the
+ * live `rules` do not show here, so it returns the same rules whenever it is called.
+ */
+export function readRules(): Rules {
+  return rulesFrom(loadTuning);
+}
+
+/**
+ * The live rules object, built from `readRules()` at load. Change it through `setRules`,
+ * `applyRulePreset` or `applyGameRules`, never by replacing it: most simulation modules hold
+ * this reference.
  */
 export const rules: Rules = readRules();
 
-/** The stored tuning as written, or an empty object when there is none or it is unreadable. */
-function storedTuning(): Record<string, unknown> {
-  try {
-    const raw = localStorage.getItem(RULES_KEY);
-    const v: unknown = raw ? JSON.parse(raw) : null;
-    return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
-  } catch {
-    return {};
-  }
-}
-
 /**
- * Change the live rules. With `persist`, the keys in `patch` (at their clamped live values) are
- * written over the stored tuning and nothing else is, so rules a loaded save put in force never
- * leak into what the next new game starts from.
+ * Change the live rules for this session, each value clamped to its range. Nothing is stored:
+ * the next page load starts from the shipped rules again.
  */
-export function setRules(patch: Partial<Rules>, persist = true) {
+export function setRules(patch: Partial<Rules>) {
   Object.assign(rules, sanitize({ ...rules, ...patch }));
-  if (!persist) return;
-  const stored = storedTuning();
-  for (const k of Object.keys(patch))
-    if (Object.hasOwn(DEFAULT_RULES, k)) stored[k] = rules[k as keyof Rules];
-  try {
-    localStorage.setItem(RULES_KEY, JSON.stringify(stored));
-  } catch {
-    /* ignore */
-  }
 }
 
-/** Put a saved game's rules in force for this session; the stored tuning is not touched. */
+/** Put a saved game's rules in force for this session; nothing is stored. */
 export function applyGameRules(saved?: Partial<Rules>) {
   Object.assign(rules, rulesFrom(saved));
 }
 
-/** The live and the stored tuning go back to the defaults. */
+/** The live rules go back to the shipped rules. Nothing is stored, so no storage is touched. */
 export function resetRules() {
   Object.assign(rules, rulesFrom());
-  try {
-    localStorage.removeItem(RULES_KEY);
-  } catch {
-    /* ignore */
-  }
 }
 
 /** The keys of `r` (the live rules by default) that differ from the defaults. */
@@ -547,7 +554,9 @@ export function rulesDiffer(r: Rules = rules): (keyof Rules)[] {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Named presets: whole tunings the player keeps under a name, stored apart from the tuning.
+// Named presets: whole tunings the player keeps under a name, in localStorage apart from the
+// live rules. A preset reaches a game by `applyRulePreset` (this session) or `stageNewGameTuning`
+// (the next page load).
 
 export const RULE_PRESETS_KEY = 'terepasztal.rulePresets';
 /** Longest preset name, in characters. */
@@ -561,10 +570,6 @@ interface RulePreset {
 /** A preset name as stored: trimmed and cut to `RULE_PRESET_NAME_MAX` characters. */
 function presetName(name: string): string {
   return Array.from(String(name).trim()).slice(0, RULE_PRESET_NAME_MAX).join('');
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return !!v && typeof v === 'object' && !Array.isArray(v);
 }
 
 /**
@@ -620,12 +625,38 @@ export function readRulePreset(name: string): Rules | null {
   return p ? rulesFrom(p.rules) : null;
 }
 
-/** Put the whole preset in force and store it as the tuning. */
+/**
+ * Put the whole preset, clamped to each rule's range, in force for this session. Nothing is
+ * stored; false, with the live rules untouched, when there is no such preset.
+ */
 export function applyRulePreset(name: string): boolean {
   const r = readRulePreset(name);
   if (!r) return false;
   setRules(r);
   return true;
+}
+
+/**
+ * Hand a saved preset to the next page load, which is what a new game costs: its rules (read and
+ * clamped now, not the name) go to sessionStorage, and that load takes them once as its starting
+ * rules. `null` clears any staged tuning, so the next load starts from the shipped rules. False,
+ * with nothing staged, for a name that is no preset or when sessionStorage refuses. It never
+ * writes localStorage.
+ */
+export function stageNewGameTuning(name: string | null): boolean {
+  const r = name === null ? null : readRulePreset(name);
+  try {
+    if (r) sessionStorage.setItem(NEW_GAME_TUNING_KEY, JSON.stringify(r));
+    else sessionStorage.removeItem(NEW_GAME_TUNING_KEY);
+    return name === null || r !== null;
+  } catch {
+    try {
+      sessionStorage.removeItem(NEW_GAME_TUNING_KEY);
+    } catch {
+      /* it refuses that too; the failure is reported either way */
+    }
+    return false;
+  }
 }
 
 export function deleteRulePreset(name: string): boolean {

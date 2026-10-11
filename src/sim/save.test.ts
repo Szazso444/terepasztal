@@ -49,7 +49,7 @@ import { TradeDesk } from './trade';
 import { Train, DYNAMIC_MODES, resetTrainIds, type RouteMode } from './trains';
 import { Station, resetStationIds, type StationJSON } from './stations';
 import { Economy } from './economy';
-import { rules, DEFAULT_RULES } from './rules';
+import { rules, DEFAULT_RULES, type Rules } from './rules';
 import { locoDef, wagonDef } from '../gacha/items';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap } from '../world/mapgen';
 import { levelFromMap, mapFromLevel } from '../world/level';
@@ -138,15 +138,19 @@ describe('the migration registry', () => {
   it('has no step that leaves the file as it found it', () => {
     // An empty step tells the player a default was filled in and leaves the load code to keep
     // the promise. Each step meets a file of its own version with nothing optional in it, the
-    // old offer defaults the step to v11 rewrites, a train with nothing but its id for the
-    // steps that fill a train's fields, a station with no turn and no work for the steps that
-    // fill a station's, and past the step that starts the works list, a works with no level, no
-    // work and no rotation for the steps that fill a works'.
+    // offer values the step from v10 rewrites (1.5 days, three offers) and the ones the step from
+    // v11 rewrites (six days, two offers), a train with nothing but its id for the steps that
+    // fill a train's fields, a station with no turn and no work for the steps that fill a
+    // station's, and past the step that starts the works list, a works with no level, no work
+    // and no rotation for the steps that fill a works'.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
         version: m.from,
-        rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
+        rules:
+          m.from === 11
+            ? { contractRefreshDays: 6, contractOfferCount: 2 }
+            : { contractRefreshDays: 1.5, contractOfferCount: 3 },
         trains: [{ id: 1 }],
         stations: [stationOf('farm', undefined)],
         ...(m.from > 3 ? { buildings: [[7, 7, 'kiln', 0] as BuildingJSON] } : {}),
@@ -344,6 +348,59 @@ describe('migrate', () => {
     const j = migrate({ ...oldestSave(), somethingNewer: { a: 1, b: [2, 3] } });
     expect(j.somethingNewer).toEqual({ a: 1, b: [2, 3] });
     expect(KNOWN_SAVE_KEYS.has('somethingNewer')).toBe(false);
+  });
+});
+
+describe('a rules block, through the chain', () => {
+  it('arrives with every setting it held, from whichever version the file starts at', () => {
+    // Only the steps from v10 and v11 touch the rules, and only the two offer settings. Whatever
+    // else the block holds (a setting of this build, one an older build had and this one does not,
+    // one a newer build adds) is passed through as it stands, and no step adds a key of its own.
+    const offers = ['contractRefreshDays', 'contractOfferCount'];
+    const names = [
+      ...Object.keys(DEFAULT_RULES).filter((k) => !offers.includes(k)),
+      'reputationMul',
+      'tradeCycleDays',
+      'aSettingFromTheFuture',
+    ];
+    type Case = { version: number; offers: Record<string, number>; held: Record<string, unknown> };
+    const without = <T>(o: Record<string, T>, k: string) =>
+      Object.fromEntries(Object.entries(o).filter(([n]) => n !== k));
+    forAll(
+      (rng): Case => {
+        const held: Record<string, unknown> = {};
+        for (const k of names)
+          if (rng.chance(0.3))
+            held[k] = rng.chance(0.2)
+              ? rng.pick(['2', null, true, [], { n: 1 }])
+              : Math.round(rng.range(-50, 2000) * 100) / 100;
+        return {
+          version: rng.int(SAVE_MIN_VERSION, SAVE_VERSION - 1),
+          offers: rng.chance(0.5)
+            ? {
+                contractRefreshDays: rng.pick([1.5, 2, 4, 6, 21]),
+                contractOfferCount: rng.int(1, 5),
+              }
+            : {},
+          held,
+        };
+      },
+      (c) => {
+        const file = { ...oldestSave(), version: c.version, rules: { ...c.offers, ...c.held } };
+        const j = migrate(file as SaveGame);
+        const rules = j.rules as Record<string, unknown>;
+        for (const [k, v] of Object.entries(c.held)) expect(rules[k], k).toEqual(v);
+        const added = Object.keys(rules).filter((k) => !(k in c.held) && !(k in c.offers));
+        expect(added, 'keys no one put in the block').toEqual([]);
+      },
+      {
+        shrink: function* (c) {
+          for (const k of Object.keys(c.held)) yield { ...c, held: without(c.held, k) };
+          for (const k of Object.keys(c.offers)) yield { ...c, offers: without(c.offers, k) };
+          for (const version of shrinkInt(c.version, SAVE_VERSION - 1)) yield { ...c, version };
+        },
+      },
+    );
   });
 });
 
@@ -654,22 +711,14 @@ describe('v10 to v11', () => {
       version: 10,
       rules: { contractRefreshDays: 1.5, contractOfferCount: 3 },
     });
-    expect(tuned.rules).toEqual({
-      contractRefreshDays: 21,
-      contractOfferCount: 1,
-      tradeCycleDays: 7,
-    });
+    expect(tuned.rules).toEqual({ contractRefreshDays: 21, contractOfferCount: 1 });
 
     const byHand = migrate({
       ...oldestSave(),
       version: 10,
       rules: { contractRefreshDays: 4, contractOfferCount: 5 },
     });
-    expect(byHand.rules).toEqual({
-      contractRefreshDays: 4,
-      contractOfferCount: 5,
-      tradeCycleDays: 7,
-    });
+    expect(byHand.rules).toEqual({ contractRefreshDays: 4, contractOfferCount: 5 });
   });
 
   it('copes with a save that has no rules block', () => {
@@ -724,6 +773,17 @@ describe('v11 to v12', () => {
     expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null, 0]);
     expect(j.stockpile).toEqual({ amounts: { wheat: 200, coal: 50, food: 1000 }, famine: false });
     expect(j.economy.money).toBe(1000);
+  });
+
+  it('carries rules an older build held and this one has no setting for', () => {
+    // A step fills defaults and nothing else; the rules block is passed through as it stands.
+    const held = { tradeCycleDays: 2, reputationMul: 3 };
+    const j = migrate({
+      ...oldestSave(),
+      version: 11,
+      rules: { contractRefreshDays: 6, contractOfferCount: 2, ...held } as Partial<Rules>,
+    });
+    expect(j.rules).toEqual({ contractRefreshDays: 21, contractOfferCount: 1, ...held });
   });
 });
 

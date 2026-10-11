@@ -4,6 +4,7 @@ import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
+import { BrokenNumberWarning, saveOutcome, type SaveOutcome } from './engine/saveRefusal';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
@@ -74,6 +75,7 @@ import {
   readSlot,
   deleteSlot as dropSlot,
   KNOWN_SAVE_KEYS,
+  firstNonFinite,
   readSettings,
   writeSettings,
   contractPolicyFor,
@@ -227,6 +229,8 @@ export class Game implements UiHost {
   private keepStoredSave = false;
   /** a loop error stops the game storing itself for the rest of the page's life */
   private readonly autosavePause = new AutosavePause();
+  /** a stretch of saves refused for a broken number warns once (`saveRefusal.ts`) */
+  private readonly brokenNumberWarning = new BrokenNumberWarning();
   /** when the stored game was last written, for the settings screen */
   savedAt: number | null = null;
   weather!: Weather;
@@ -566,14 +570,34 @@ export class Game implements UiHost {
   saveSettings() {
     writeSettings(this.settings);
   }
-  /** Store the game under a name and say so; false when storage refused it. */
+  /**
+   * Store the game under a name and say so; false when it was refused: by storage, or because the
+   * game holds a broken number (`writeSlot`), and the toast says which.
+   */
   saveSlot(name: string) {
-    const ok = writeSlot(name, this.snapshot());
-    this.toasts.push(
-      ok ? STR.settings.slotSaved(name) : STR.settings.saveFailed,
-      ok ? 'good' : 'warn',
-    );
-    return ok;
+    const out = this.storeSnapshot(this.snapshot(), (s) => writeSlot(name, s));
+    this.brokenNumberWarning.note(out.kind);
+    this.saveToast(out, STR.settings.slotSaved(name));
+    return out.kind === 'stored';
+  }
+  /**
+   * Hand a snapshot to `store` and name what became of it. A refusal for a broken number logs the
+   * path of the first one, which the toast leaves out.
+   */
+  private storeSnapshot(snap: SaveGame, store: (s: SaveGame) => boolean): SaveOutcome {
+    const out = saveOutcome(store(snap), () => firstNonFinite(snap));
+    if (out.kind === 'broken number')
+      console.warn(`[save] refused: the game holds a non-finite number at ${out.path}`);
+    return out;
+  }
+  /** The toast for a save the player asked for: `stored` when it went through, else why not. */
+  private saveToast(out: SaveOutcome, stored: string) {
+    if (out.kind === 'stored') this.toasts.push(stored, 'good');
+    else
+      this.toasts.push(
+        out.kind === 'storage' ? STR.settings.saveFailed : STR.settings.saveBroken,
+        'warn',
+      );
   }
   /**
    * Make a named save the stored game and reload into it; false when there is none. A save storage
@@ -1105,19 +1129,22 @@ export class Game implements UiHost {
   }
 
   /**
-   * Store the game; says so unless `silent`; false when storage refused it. Nothing is written
-   * while the page reloads into a save just stored (`reloadIntoStoredSave`). A silent save is one
-   * the player did not ask for, and none is written after a loop error (`autosavePause`).
+   * Store the game; says so unless `silent`; false when it was refused: by storage, or because the
+   * game holds a broken number (`writeSave`). Nothing is written while the page reloads into a save
+   * just stored (`reloadIntoStoredSave`). A silent save is one the player did not ask for, and none
+   * is written after a loop error (`autosavePause`); a silent one refused for a broken number
+   * warns once until some save has gone through, and one refused by storage says nothing.
    */
   save(silent = false) {
     if (this.keepStoredSave) return false;
     if (!this.autosavePause.allows(silent ? 'implicit' : 'manual')) return false;
     const snap = this.snapshot();
-    const ok = writeSave(snap);
-    if (ok) this.savedAt = snap.savedAt;
-    if (!silent)
-      this.toasts.push(ok ? STR.settings.saved : STR.settings.saveFailed, ok ? 'good' : 'warn');
-    return ok;
+    const out = this.storeSnapshot(snap, writeSave);
+    if (out.kind === 'stored') this.savedAt = snap.savedAt;
+    const warn = this.brokenNumberWarning.note(out.kind);
+    if (!silent) this.saveToast(out, STR.settings.saved);
+    else if (warn) this.toasts.push(STR.settings.autosaveBroken, 'warn');
+    return out.kind === 'stored';
   }
 
   /**
