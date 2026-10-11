@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
-import { TrackGraph, makePiece } from '../world/track';
+import { TrackGraph, TRACK_ITEMS, makePiece } from '../world/track';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import { content, type LocoDef } from '../data/content';
@@ -11,7 +11,13 @@ import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
 import { Train, resetTrainIds } from './trains';
-import { resetStationIds, stationDef, stationGates, type Station } from './stations';
+import {
+  resetStationIds,
+  stationDef,
+  stationFootprint,
+  stationGates,
+  type Station,
+} from './stations';
 import {
   START_DEPOT_REACH,
   depotSiteBlocked,
@@ -393,6 +399,10 @@ describe('the depot a new game starts with', () => {
   });
 });
 
+/** Is track of class `cls` in the gauge of depot `defId`: narrow, or regular and high speed? */
+const inDepotGauge = (defId: string, cls: TrackClass) =>
+  (cls === 'narrow') === (stationDef(defId).gauge === 'narrow');
+
 describe('the site a game is granted its depot on', () => {
   /** Ground the hill allows only on `ok` tiles: elsewhere neither a shed nor a straight stands. */
   function onlyOn(w: ReturnType<typeof newGame>, ok: (x: number, y: number) => boolean) {
@@ -468,6 +478,196 @@ describe('the site a game is granted its depot on', () => {
     expect(beyond.w.track.pieces.size).toBe(0);
   });
 
+  it.each([
+    ['narrow_depot', 'regular'],
+    ['narrow_depot', 'high_speed'],
+    ['depot', 'narrow'],
+  ] as const)(
+    '%s: a %s straight on a gate of the first site gets the site skipped, and stays as it was',
+    (defId, wrong) => {
+      const w = newGame();
+      const c = startDepotCentre(w.map);
+      const x = c.x - 1,
+        y = c.y - 1;
+      const gate = stationGates(defId, x, y, 0)[0];
+      const ew = [0, 1].find((r) => makePiece('straight', r, wrong).links[0].includes(Dir.E))!;
+      w.track.place(gate.x, gate.y, 'straight', ew, wrong);
+      const piece = w.track.get(gate.x, gate.y);
+      expect(depotSiteBlocked(w.builder, defId, x, y, 0)).toBe(STR.build.gaugeBreak);
+      const d = ensureStartDepot(w.builder, defId)!;
+      expect(d).not.toBeNull();
+      expect(w.builder.depots()).toEqual([d]);
+      // the next try is the same corner turned, its gates clear of the piece
+      expect([d.x, d.y, d.rot]).toEqual([x, y, 1]);
+      expect(w.track.get(gate.x, gate.y)).toBe(piece);
+      const classes = [...w.fleet.depotClasses(d)];
+      expect(classes.length).toBeGreaterThan(0);
+      for (const cls of classes) expect(inDepotGauge(defId, cls), cls).toBe(true);
+    },
+  );
+
+  it.each([
+    ['narrow_depot', 'narrow'],
+    ['depot', 'regular'],
+    ['depot', 'high_speed'],
+  ] as const)(
+    '%s: a %s straight already on a gate is kept as it is, and the site is taken',
+    (defId, own) => {
+      const w = newGame();
+      const c = startDepotCentre(w.map);
+      const x = c.x - 1,
+        y = c.y - 1;
+      const gate = stationGates(defId, x, y, 0)[0];
+      const ew = [0, 1].find((r) => makePiece('straight', r, own).links[0].includes(Dir.E))!;
+      w.track.place(gate.x, gate.y, 'straight', ew, own);
+      const piece = w.track.get(gate.x, gate.y);
+      expect(depotSiteBlocked(w.builder, defId, x, y, 0)).toBeNull();
+      const d = ensureStartDepot(w.builder, defId)!;
+      expect([d.x, d.y, d.rot]).toEqual([x, y, 0]);
+      expect(w.track.get(gate.x, gate.y)).toBe(piece);
+      // every other gate was bare and took the gate straight, of the depot's gauge
+      const gauge = d.def.gauge ?? 'regular';
+      for (const g of d.gateTiles()) {
+        if (g.x === gate.x && g.y === gate.y) continue;
+        expect([w.track.get(g.x, g.y)!.kind, w.track.get(g.x, g.y)!.cls]).toEqual([
+          'straight',
+          gauge,
+        ]);
+      }
+      expect(w.track.pieces.size).toBe(d.gateTiles().length);
+    },
+  );
+
+  it.each(['narrow_depot', 'depot'])(
+    '%s: a crossing on a gate counts by the axis that runs into the shed, not by its other axis',
+    (defId) => {
+      const mixed = TRACK_ITEMS.filter((i) => i.kind === 'crossing' && i.cls !== i.cls2);
+      // each class pair in both orders: which axis is which is the crossing's turn to settle
+      const pairs = mixed.flatMap((i) => [
+        [i.cls, i.cls2!],
+        [i.cls2!, i.cls],
+      ]) as [TrackClass, TrackClass][];
+      expect(pairs.length).toBeGreaterThan(2);
+      const verdicts = new Set<boolean>();
+      for (const siteRot of [0, 1])
+        for (const crossRot of [0, 1])
+          for (const [cls, cls2] of pairs) {
+            const label = `${defId} r${siteRot} with a ${cls}/${cls2} crossing at r${crossRot}`;
+            const gate = stationGates(defId, 20, 20, siteRot)[0];
+            // a crossing at r0 runs its first class north-south and its second east-west; at r1 the
+            // other way round. A shed at r0 is entered east-west, at r1 north-south
+            const eastWest = siteRot % 2 === 0;
+            const into = (eastWest ? crossRot === 0 : crossRot === 1) ? cls2 : cls;
+            const accepted = inDepotGauge(defId, into);
+            verdicts.add(accepted);
+
+            // the class of that gate as a shed standing there reads it
+            const probe = newGame();
+            probe.track.place(gate.x, gate.y, 'crossing', crossRot, cls, cls2);
+            const shed = probe.builder.placeStation(20, 20, defId, siteRot)!;
+            expect([...probe.fleet.depotClasses(shed)], label).toEqual([into]);
+
+            const w = newGame();
+            w.track.place(gate.x, gate.y, 'crossing', crossRot, cls, cls2);
+            const crossing = w.track.get(gate.x, gate.y);
+            const why = depotSiteBlocked(w.builder, defId, 20, 20, siteRot);
+            expect(why, label).toBe(accepted ? null : STR.build.gaugeBreak);
+            const d = grantDepot(w.builder, defId, 20, 20, siteRot);
+            expect(!!d, label).toBe(accepted);
+            expect(w.track.get(gate.x, gate.y), `${label}: the crossing is as it was`).toBe(
+              crossing,
+            );
+            if (d) {
+              for (const k of w.fleet.depotClasses(d))
+                expect(inDepotGauge(defId, k), label).toBe(true);
+            } else {
+              expect(w.builder.stations, label).toEqual([]);
+              expect(w.track.pieces.size, label).toBe(1);
+            }
+          }
+      // the same crossings are taken one way and refused the other
+      expect([...verdicts].sort()).toEqual([false, true]);
+    },
+  );
+
+  it.each(['regular', 'high_speed'] as const)(
+    'narrow_depot: the unused tile of a %s curve on a gate is other-gauge track',
+    (cls) => {
+      let tried = 0;
+      for (let rot = 0; rot < 4; rot++) {
+        const probe = new TrackGraph(64, 64);
+        const tiles = probe.place(20, 20, 'curve', rot, cls);
+        // the 2x2 piece's one tile that links nowhere
+        const idle = tiles.find((t) => probe.get(t.x, t.y)!.links.length === 0)!;
+        expect(idle, `r${rot}`).toBeDefined();
+        // sheds with that tile for a gate: its east or west gate at r0, its north or south at r1
+        const sites = [
+          [idle.x + 1, idle.y, 0],
+          [idle.x - 2, idle.y, 0],
+          [idle.x, idle.y + 1, 1],
+          [idle.x, idle.y - 2, 1],
+        ];
+        for (const [x, y, siteRot] of sites) {
+          const shed = stationFootprint('narrow_depot', x, y, siteRot);
+          if (shed.some((t) => tiles.some((m) => m.x === t.x && m.y === t.y))) continue;
+          const label = `${cls} curve r${rot}, shed at ${x},${y} r${siteRot}`;
+          const w = newGame();
+          // without the curve the site is clear
+          expect(depotSiteBlocked(w.builder, 'narrow_depot', x, y, siteRot), label).toBeNull();
+          w.track.place(20, 20, 'curve', rot, cls);
+          const gates = stationGates('narrow_depot', x, y, siteRot);
+          expect(
+            gates.some((g) => g.x === idle.x && g.y === idle.y),
+            label,
+          ).toBe(true);
+          expect(depotSiteBlocked(w.builder, 'narrow_depot', x, y, siteRot), label).toBe(
+            STR.build.gaugeBreak,
+          );
+          expect(grantDepot(w.builder, 'narrow_depot', x, y, siteRot), label).toBeNull();
+          expect(w.builder.stations, label).toEqual([]);
+          expect(w.track.pieces.size, label).toBe(tiles.length);
+          tried++;
+        }
+      }
+      // among them the curve at r0 anchored two tiles west of the shed, its unused tile on the gate
+      expect(tried).toBeGreaterThanOrEqual(4);
+    },
+  );
+
+  it.each([
+    ['narrow_depot', 'regular'],
+    ['depot', 'narrow'],
+  ] as const)(
+    '%s: finds no site when the only one in reach has a %s straight on a gate, and leaves nothing',
+    (defId, wrong) => {
+      // level ground for exactly one depot and its gates, `reach` tiles east: a narrow shed on one
+      // row, a regular one on two
+      const rows = defId === 'narrow_depot' ? 1 : 2;
+      const island = (laid: boolean) => {
+        const w = newGame();
+        w.builder.free = false;
+        const c = startDepotCentre(w.map);
+        const x = c.x + START_DEPOT_REACH - 1,
+          y = c.y - 1;
+        onlyOn(w, (tx, ty) => ty >= y && ty < y + rows && tx >= x - 1 && tx <= x + 2);
+        const ew = [0, 1].find((r) => makePiece('straight', r, wrong).links[0].includes(Dir.E))!;
+        if (laid) w.track.place(x - 1, y, 'straight', ew, wrong);
+        return { w, x, y, d: ensureStartDepot(w.builder, defId) };
+      };
+      // without the wrong piece the site works, so the island is the one site
+      const open = island(false);
+      expect([open.d?.x, open.d?.y, open.d?.rot]).toEqual([open.x, open.y, 0]);
+      expect(open.w.builder.free).toBe(false);
+
+      const shut = island(true);
+      expect(shut.d).toBeNull();
+      expect(shut.w.builder.stations).toEqual([]);
+      expect(shut.w.track.pieces.size).toBe(1);
+      expect(shut.w.track.get(shut.x - 1, shut.y)!.cls).toBe(wrong);
+      expect(shut.w.builder.free).toBe(false);
+    },
+  );
+
   it('stands only on ground the player owns, though granting lifts the chunk lock', () => {
     const w = newGame();
     w.builder.free = false;
@@ -516,6 +716,16 @@ describe('the site a game is granted its depot on', () => {
 describe('a depot granted at any of the four turns', () => {
   /** Tiles near a site, as offsets from its corner: the shed's and its gates' tiles, and around. */
   type Near = [dx: number, dy: number];
+  /** A piece of track already laid, at an offset from the site's corner. */
+  interface Laid {
+    dx: number;
+    dy: number;
+    kind: 'straight' | 'crossing';
+    rot: number;
+    cls: TrackClass;
+    /** a crossing's second axis */
+    cls2?: TrackClass;
+  }
   /** A depot site and what lies around it. */
   interface Site {
     defId: string;
@@ -527,22 +737,57 @@ describe('a depot granted at any of the four turns', () => {
     /** too steep for a shed, level enough for a straight */
     slope: Near[];
     water: Near[];
-    /** straights already laid, at either turn and of either gauge */
-    rails: [dx: number, dy: number, rot: number, cls: TrackClass][];
+    /** track already laid: straights of any class, crossings with a class per axis */
+    rails: Laid[];
   }
+  const CLASSES: TrackClass[] = ['narrow', 'regular', 'high_speed'];
+  const CROSSINGS = TRACK_ITEMS.filter((i) => i.kind === 'crossing');
   function genSite(rng: Rng): Site {
     const near = (): Near => [rng.int(-2, 3), rng.int(-2, 3)];
     const some = <T>(max: number, make: () => T) =>
       Array.from({ length: rng.chance(0.3) ? 0 : rng.int(1, max) }, make);
+    const defId = rng.pick(['depot', 'narrow_depot']);
+    const x = rng.int(18, 22),
+      y = rng.int(18, 22),
+      rot = rng.int(0, 3);
+    const gates = stationGates(defId, x, y, rot);
+    const laid = (): Laid => {
+      // half of the pieces lie on a gate: those are the tiles a depot's gauge is judged on
+      let at = near();
+      if (rng.chance(0.5)) {
+        const g = rng.pick(gates);
+        at = [g.x - x, g.y - y];
+      }
+      if (rng.chance(0.3)) {
+        const item = rng.pick(CROSSINGS);
+        const swap = rng.chance(0.5);
+        const [cls, cls2] = [item.cls, item.cls2 ?? item.cls];
+        return {
+          dx: at[0],
+          dy: at[1],
+          kind: 'crossing',
+          rot: rng.int(0, 1),
+          cls: swap ? cls2 : cls,
+          cls2: swap ? cls : cls2,
+        };
+      }
+      return {
+        dx: at[0],
+        dy: at[1],
+        kind: 'straight',
+        rot: rng.int(0, 1),
+        cls: rng.pick(CLASSES),
+      };
+    };
     return {
-      defId: rng.pick(['depot', 'narrow_depot']),
-      x: rng.int(18, 22),
-      y: rng.int(18, 22),
-      rot: rng.int(0, 3),
+      defId,
+      x,
+      y,
+      rot,
       steep: some(2, near),
       slope: some(2, near),
       water: some(2, near),
-      rails: some(3, () => [...near(), rng.int(0, 1), rng.pick<TrackClass>(['narrow', 'regular'])]),
+      rails: some(3, laid),
     };
   }
   function* shrinkSite(s: Site): Iterable<Site> {
@@ -558,8 +803,7 @@ describe('a depot granted at any of the four turns', () => {
     w.builder.groundCheck = (x, y, need) =>
       !at(s.steep, x, y) && (need !== 'level' || !at(s.slope, x, y));
     for (const [dx, dy] of s.water) w.map.terrain[(s.y + dy) * w.map.w + s.x + dx] = Terrain.Water;
-    for (const [dx, dy, rot, cls] of s.rails)
-      w.track.place(s.x + dx, s.y + dy, 'straight', rot, cls);
+    for (const r of s.rails) w.track.place(s.x + r.dx, s.y + r.dy, r.kind, r.rot, r.cls, r.cls2);
     return w;
   }
   /** Every piece of track in a world, as text in tile order. */
@@ -569,6 +813,8 @@ describe('a depot granted at any of the four turns', () => {
       .map(([k, p]) => `${k}:${p.kind}/${p.rot}/${p.cls}/${p.cls2 ?? '-'}`);
 
   it('is judged, built and given gate track as a half turn on, along the same axis', () => {
+    // what the generator's sites come to, so the property cannot pass by never meeting the cases
+    const seen = { gaugeBreak: 0, onGate: 0, keptOwn: 0, bare: 0 };
     forAll(
       genSite,
       (s) => {
@@ -576,12 +822,38 @@ describe('a depot granted at any of the four turns', () => {
         const a = siteWorld(s);
         const b = siteWorld(s);
         const before = pieces(a);
+        // the very pieces that stood before: nothing may replace or alter them
+        const standing = new Map(a.track.pieces);
         const blocked = depotSiteBlocked(a.builder, s.defId, s.x, s.y, s.rot);
         expect(depotSiteBlocked(a.builder, s.defId, s.x, s.y, other), 'the site').toBe(blocked);
         const da = grantDepot(a.builder, s.defId, s.x, s.y, s.rot);
         const db = grantDepot(b.builder, s.defId, s.x, s.y, other);
         expect(!!da, `granted as judged (${blocked ?? 'clear'})`).toBe(blocked === null);
         expect(!!db, `granted at r${other} as at r${s.rot}`).toBe(!!da);
+        if (blocked === STR.build.gaugeBreak) seen.gaugeBreak++;
+        // the gauge rule alone, on the pieces that lie on a gate (nothing off the gates, so no
+        // neighbour can refuse the straight laid across a bare one): the site is refused for the
+        // gauge exactly when a shed standing there meets a class of the other one, as the fleet
+        // reads it
+        const gates = stationGates(s.defId, s.x, s.y, s.rot);
+        const onGates = {
+          ...s,
+          rails: s.rails.filter((r) => gates.some((g) => g.x === s.x + r.dx && g.y === s.y + r.dy)),
+        };
+        const alone = siteWorld(onGates);
+        const why = depotSiteBlocked(alone.builder, s.defId, s.x, s.y, s.rot);
+        if (why === null || why === STR.build.gaugeBreak) {
+          const stood = alone.builder.placeStation(s.x, s.y, s.defId, s.rot);
+          expect(stood, 'the shed of a site judged on its gauge stands').not.toBeNull();
+          const classes = [...alone.fleet.depotClasses(stood!)];
+          const wrong = classes.some((k) => !inDepotGauge(s.defId, k));
+          expect(why === STR.build.gaugeBreak, `refused as gate classes [${classes}] say`).toBe(
+            wrong,
+          );
+          if (wrong) seen.onGate++;
+        }
+        // nothing of the track that stood is replaced or altered, granted or not
+        for (const [k, p] of standing) expect(a.track.pieces.get(k), `tile ${k}`).toBe(p);
         if (!da || !db) {
           // nothing left behind
           expect(a.builder.stations).toEqual([]);
@@ -592,11 +864,17 @@ describe('a depot granted at any of the four turns', () => {
         expect(db.footprint()).toEqual(da.footprint());
         expect(db.gateTiles()).toEqual(da.gateTiles());
         expect(pieces(b), 'the same track laid').toEqual(pieces(a));
-        // each gate the grant laid track on has a straight of the shed's gauge running into it
-        // (a gate with track already keeps what it had, whatever that is)
-        const had = new Set(s.rails.map(([dx, dy]) => `${s.x + dx},${s.y + dy}`));
+        // every gate rolls trains of the depot's gauge out: the class a train meets, read by the
+        // fleet itself, is never of the other gauge
+        const classes = [...a.fleet.depotClasses(da)];
+        expect(classes.length, 'a gate to roll out of').toBeGreaterThan(0);
+        for (const k of classes) expect(inDepotGauge(s.defId, k), `gate class ${k}`).toBe(true);
+        // a gate with track already keeps that piece; a bare one has a straight of the shed's
+        // gauge running into the shed
+        const hadTrack = (g: { x: number; y: number }) => standing.has(a.track.key(g.x, g.y));
+        const had = da.gateTiles().filter(hadTrack);
         for (const g of da.gateTiles()) {
-          if (had.has(`${g.x},${g.y}`)) continue;
+          if (hadTrack(g)) continue;
           const p = a.track.get(g.x, g.y);
           expect(p?.kind, `gate ${g.x},${g.y}`).toBe('straight');
           expect(p!.cls, `gate ${g.x},${g.y}`).toBe(da.def.gauge ?? 'regular');
@@ -604,9 +882,15 @@ describe('a depot granted at any of the four turns', () => {
             s.rot % 2 === 0 ? (g.x < da.x ? Dir.E : Dir.W) : g.y < da.y ? Dir.S : Dir.N;
           expect(p!.links.flat(), `gate ${g.x},${g.y} runs into the shed`).toContain(toShed);
         }
+        if (had.length) seen.keptOwn++;
+        else seen.bare++;
       },
       { shrink: shrinkSite },
     );
+    expect(seen.gaugeBreak, 'sites refused with the gauge reason').toBeGreaterThan(0);
+    expect(seen.onGate, 'sites refused for the other gauge on a gate').toBeGreaterThan(0);
+    expect(seen.keptOwn, 'sites granted over track of its own gauge on a gate').toBeGreaterThan(0);
+    expect(seen.bare, 'sites granted with every gate bare').toBeGreaterThan(0);
   });
 });
 
