@@ -1,0 +1,20 @@
+{
+  "mav490": {
+    "lamps": [],
+    "smoke": [
+      {
+        "along": 0.3720891561656351,
+        "part": "engine",
+        "up": 19.730857142857143
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "engine": {
+        "cycle": 0.3545432278533418,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "id": "deltic",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\deltic\\body-repaired.blend",
+      "source_sha256": "ec38a94959d009477cbebb3c4df3087a3bd0f9be84815d0366f270c3b17d900e",
+      "frame_prefix": "loco_deltic_body",
+      "length_tiles": 2.6947871754813186,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            0.056,
+            0.004,
+            3.646
+          ]
+        ],
+        "lamps": [
+          [
+            8.06,
+            -0.76,
+            2.041
+          ],
+          [
+            8.062,
+            0.644,
+            1.896
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\deltic\\window-mask.png",
+        "sha256": "c912e770e81d078826d81f5c9420565191622fffce96da3dad679c68990f93e4"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\deltic\\body-t0-repaired.blend",
+      "source_sha256": "887aa163d2fb54307c1d96aba8baf5e22b488cc75b078721a214ce0227f4deac",
+      "frame_prefix": "loco_deltic_body-t0",
+      "length_tiles": 0.8398980537610325,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.13650719468991865,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\deltic\\body-t1-repaired.blend",
+      "source_sha256": "59200a59bdc00326c240d8e6fbd5f90e693e78018b121e1c4e6583dee7e612b5",
+      "frame_prefix": "loco_deltic_body-t1",
+      "length_tiles": 0.8720296995470577,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.13650719468991865,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "repairs": [
+    "Closed central underbody fuel tank and straps between the two three-axle bogies"
+  ]
+}

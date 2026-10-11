@@ -1,0 +1,113 @@
+[
+  {
+    "part": "engine",
+    "tiles": [
+      1.8203499512908499,
+      1
+    ],
+    "gear": [],
+    "axles": [
+      {
+        "x_m": -0.32,
+        "d_m": 1.24
+      },
+      {
+        "x_m": 1.18,
+        "d_m": 1.24
+      },
+      {
+        "x_m": 2.68,
+        "d_m": 1.24
+      }
+    ]
+  },
+  {
+    "part": "engine-t0",
+    "tiles": null,
+    "gear": [
+      {
+        "truck": 0,
+        "centre_m": 3.63,
+        "model_off_m": 0
+      }
+    ],
+    "axles": [
+      {
+        "x_m": -0.34,
+        "d_m": 0.62
+      },
+      {
+        "x_m": 0.34,
+        "d_m": 0.62
+      }
+    ]
+  },
+  {
+    "part": "engine-t1",
+    "tiles": null,
+    "gear": [
+      {
+        "truck": 1,
+        "centre_m": -2.43,
+        "model_off_m": 0
+      }
+    ],
+    "axles": [
+      {
+        "x_m": 0,
+        "d_m": 0.6
+      }
+    ]
+  },
+  {
+    "part": "tender",
+    "tiles": [
+      0.9911685005302966,
+      1
+    ],
+    "gear": [],
+    "axles": []
+  },
+  {
+    "part": "tender-t0",
+    "tiles": null,
+    "gear": [
+      {
+        "truck": 0,
+        "centre_m": 1.3,
+        "model_off_m": 0
+      }
+    ],
+    "axles": [
+      {
+        "x_m": -0.43,
+        "d_m": 0.68
+      },
+      {
+        "x_m": 0.43,
+        "d_m": 0.68
+      }
+    ]
+  },
+  {
+    "part": "tender-t1",
+    "tiles": null,
+    "gear": [
+      {
+        "truck": 1,
+        "centre_m": -1.3,
+        "model_off_m": 0
+      }
+    ],
+    "axles": [
+      {
+        "x_m": -0.43,
+        "d_m": 0.68
+      },
+      {
+        "x_m": 0.43,
+        "d_m": 0.68
+      }
+    ]
+  }
+]

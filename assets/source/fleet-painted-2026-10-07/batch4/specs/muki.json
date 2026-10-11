@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "id": "muki",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 7,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r7-c5.jpeg",
+        "sha256": "d5389ea770f72ba80813f062b5547376410b29c648a5a2afb9923867831319aa"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r7-c6.jpeg",
+        "sha256": "2632262d8941c88fcfe449f58452147254883c48093ca3226bc15dc1fc1fcde8"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\muki-rear.png",
+        "sha256": "bc19584db70d25a9d5d54f8ce0ae146c5d696fc1bfb34b44e29c31198b4ef6c0",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B7: Muki (MD-40 P-2) | G7: B (model image) | Y7: Frame [body]: 1-2 (rigid, baked; 2 virtual rail supports; chain-driven axles in a rigid frame) | AA7: Model image (front + rear view) ready. 2 axles under axle-box covers. 'Muki' comes from a flower-decorated name sign a local woman hung on its grille in 2000. The only MD-40 with this body style left; symbol of the Kemence forest railway. | BV7: Very small two-axle hood loco: tall rear cab with sloped roof and four windows, short front hood with a slatted radiator grille and two round headlights. Dark green with a big white V on the nose (older livery: drab olive-grey). | CI7: Good.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "reconstruction": {
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\muki.glb",
+      "sha256": "ab368d4e7bd8de326c219e0c500439062ff8108b826c8a88d376e29babe1d4eb"
+    },
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\muki.source.png",
+      "sha256": "482698938dc64155477d81f9bd2e950b53bfefaf033d96a4d4a5430658970be4"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\muki.mask.png",
+      "sha256": "6558afa9bbddbee8bf695c1365a4a4bf9567933553ea18a70f7204dcca95bb4d"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "geometry": {
+    "length_m": 4.4,
+    "width_m": 1.7,
+    "height_m": 2.4,
+    "parts": [
+      [
+        "body",
+        1,
+        true
+      ]
+    ],
+    "gear": [
+      {
+        "rigid": [
+          0.25,
+          0.73
+        ],
+        "trucks": [],
+        "rigid_f": [
+          0.25,
+          0.73
+        ],
+        "trucks_f": [],
+        "from": 0,
+        "to": 1,
+        "wheels": {
+          "rigid": {
+            "d": 0.58,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          }
+        }
+      }
+    ],
+    "notes": "Shape from row 7 pictures; axle layout manually read from pictured wheels. Rough fractions are refined against raw mesh wheel centres. Rigid alignment and uniform scale only.",
+    "gauge": "narrow"
+  },
+  "projection": {
+    "annot": {
+      "id": "muki",
+      "windows": [
+        [
+          [
+            122,
+            205
+          ],
+          [
+            171,
+            222
+          ],
+          [
+            158,
+            313
+          ],
+          [
+            106,
+            293
+          ]
+        ],
+        [
+          [
+            214,
+            239
+          ],
+          [
+            283,
+            263
+          ],
+          [
+            278,
+            358
+          ],
+          [
+            201,
+            328
+          ]
+        ],
+        [
+          [
+            346,
+            266
+          ],
+          [
+            430,
+            239
+          ],
+          [
+            465,
+            334
+          ],
+          [
+            369,
+            369
+          ]
+        ],
+        [
+          [
+            460,
+            224
+          ],
+          [
+            512,
+            211
+          ],
+          [
+            546,
+            304
+          ],
+          [
+            500,
+            321
+          ]
+        ]
+      ],
+      "headlamps": [
+        [
+          783,
+          632
+        ],
+        [
+          954,
+          572
+        ]
+      ],
+      "smoke": [
+        [
+          523,
+          386
+        ]
+      ],
+      "pantograph_raised": false,
+      "notes": "Small diesel shunter. 4 glazed cab panes: rear side window, cab door window, two windscreen panes facing the hood. Two headlamps on the nose. No exhaust stack is drawn; smoke point is a GUESS at the round cap on the hood top just ahead of the cab (roof cap near 341,152 is the alternative). No pantograph. Review: all 4 window polygons tightened onto the glass (they overlapped the frames by up to ~10 px, mainly top-left of the door window and the corners of the rear and right windscreen panes); headlamps and smoke unchanged."
+    },
+    "nose_px": [
+      870,
+      700
+    ],
+    "views": [
+      "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\muki-rear.png"
+    ]
+  },
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\muki"
+}

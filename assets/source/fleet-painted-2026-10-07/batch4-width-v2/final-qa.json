@@ -1,0 +1,47 @@
+{
+  "status": "ready for owner review",
+  "models": [
+    {
+      "id": "mav375",
+      "bundle_key": "f612433c82906a60",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    },
+    {
+      "id": "class08",
+      "bundle_key": "53055fe08dcd9378",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    },
+    {
+      "id": "sw1",
+      "bundle_key": "0db7ebe32d8db3e7",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    },
+    {
+      "id": "drg01",
+      "bundle_key": "52dbfa010930979c",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    },
+    {
+      "id": "m62",
+      "bundle_key": "b9a045220cc66138",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    }
+  ],
+  "gallery_images_http200": 30,
+  "measured_tread_parts": 11,
+  "pipeline_unittests": 9,
+  "source_vitest": 197,
+  "game_vitest": 329,
+  "typecheck": "passed",
+  "scope": "Width and track gauge; original M62 image reconstruction restored. No new locomotive batch."
+}

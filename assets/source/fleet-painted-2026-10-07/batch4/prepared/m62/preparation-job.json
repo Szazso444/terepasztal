@@ -1,0 +1,360 @@
+{
+  "asset": {
+    "id": "m62",
+    "category": "vehicle",
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\m62.source.png",
+    "size_tiles": 2.8147261597874556,
+    "length_m": 17.55,
+    "width_m": 2.95,
+    "height_m": 4.4,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\m62.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30,
+    "azimuth_deg": 45
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": false,
+    "ambient": 0.6,
+    "sun_azimuth_deg": -100,
+    "sun_elevation_deg": 45,
+    "sun_strength": 3,
+    "force_dielectric": true,
+    "debug_views": false
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65,
+      20
+    ],
+    "roll_range": [
+      -25,
+      25
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": false,
+    "max_dim_error": 0.2
+  },
+  "landmarks": {
+    "symmetric": false
+  },
+  "gear_parts": [
+    [
+      "body",
+      1,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.12,
+          0.21,
+          0.3
+        ],
+        [
+          0.7,
+          0.79,
+          0.88
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.12,
+          0.21,
+          0.3
+        ],
+        [
+          0.7,
+          0.79,
+          0.88
+        ]
+      ],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "trucks": [
+          {
+            "d": 1.05,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          },
+          {
+            "d": 1.05,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "standard": true,
+    "stance": "support",
+    "stance_mode": "turn",
+    "length_m": 17.55,
+    "height_m": 4.4,
+    "rail_half_m": 0.499,
+    "deperspective": 0,
+    "gauge_warp": false,
+    "box_body": false
+  },
+  "annot": {
+    "id": "m62",
+    "windows": [
+      [
+        [
+          795,
+          603
+        ],
+        [
+          861,
+          589
+        ],
+        [
+          866,
+          626
+        ],
+        [
+          803,
+          644
+        ]
+      ],
+      [
+        [
+          880,
+          582
+        ],
+        [
+          935,
+          564
+        ],
+        [
+          940,
+          602
+        ],
+        [
+          888,
+          623
+        ]
+      ],
+      [
+        [
+          738,
+          597
+        ],
+        [
+          757,
+          604
+        ],
+        [
+          757,
+          637
+        ],
+        [
+          739,
+          629
+        ]
+      ],
+      [
+        [
+          759,
+          607
+        ],
+        [
+          768,
+          609
+        ],
+        [
+          772,
+          644
+        ],
+        [
+          759,
+          639
+        ]
+      ],
+      [
+        [
+          710,
+          590
+        ],
+        [
+          720,
+          593
+        ],
+        [
+          720,
+          623
+        ],
+        [
+          711,
+          619
+        ]
+      ],
+      [
+        [
+          82,
+          286
+        ],
+        [
+          93,
+          291
+        ],
+        [
+          93,
+          323
+        ],
+        [
+          77,
+          315
+        ],
+        [
+          79,
+          300
+        ]
+      ],
+      [
+        [
+          98,
+          295
+        ],
+        [
+          109,
+          299
+        ],
+        [
+          109,
+          332
+        ],
+        [
+          98,
+          327
+        ]
+      ],
+      [
+        [
+          134,
+          313
+        ],
+        [
+          147,
+          318
+        ],
+        [
+          147,
+          350
+        ],
+        [
+          134,
+          344
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        868,
+        557
+      ],
+      [
+        941,
+        683
+      ],
+      [
+        822,
+        717
+      ]
+    ],
+    "smoke": [
+      [
+        640,
+        415
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Diesel. 8 panes: two front windscreens, front cab side window (2 panes), front cab door window, rear cab side window (2 panes), rear cab door window. Three front headlamps (top centre + two lower); rear lamps not visible. No exhaust stack is drawn: smoke point is a guess, placed on the raised roof hatch between the two radiator fans and the front cab."
+  },
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\m62.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\m62.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\m62\\prepared-texture.png"
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-m62-rear.png"
+  ],
+  "parts": {},
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\m62\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\m62\\debug_dir",
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\m62\\unused-legacy-meta.json"
+}

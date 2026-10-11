@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "id": "crocodile",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\crocodile\\engine.blend",
+      "source_sha256": "693d740fa02dc0114ba417f6e660d388a26ea403f74f7509eeeb930b1408e4dd",
+      "frame_prefix": "loco_crocodile_engine",
+      "length_tiles": 0.8476088931599174,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            -2.293,
+            -0.147,
+            3.201
+          ],
+          [
+            1.81,
+            -0.066,
+            2.541
+          ],
+          [
+            1.908,
+            1.026,
+            1.764
+          ],
+          [
+            1.703,
+            -0.481,
+            1.663
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.4836241255733424,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\crocodile\\window-mask.png",
+        "sha256": "c3ed647a37ca8fcb50229a8d749ea2ef18aefa270bf604989d663c0d94c72f6a"
+      }
+    },
+    {
+      "name": "cradle",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\crocodile\\cradle.blend",
+      "source_sha256": "58eea081ae858a87d45754191643dcc45bb3e998d76f06ae816146ec57fae081",
+      "frame_prefix": "loco_crocodile_cradle",
+      "length_tiles": 1.1099532526472002,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.6750079446413465,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\crocodile\\window-mask.png",
+        "sha256": "c3ed647a37ca8fcb50229a8d749ea2ef18aefa270bf604989d663c0d94c72f6a"
+      }
+    }
+  ]
+}

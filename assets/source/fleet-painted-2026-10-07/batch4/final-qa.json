@@ -1,0 +1,82 @@
+[
+  {
+    "id": "muki",
+    "key": "df993e15a1abe868",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "mav490",
+    "key": "8690d4babac449d7",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "mk45",
+    "key": "c0c553bd2ff5a011",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "mk48",
+    "key": "9dd6db3c071c8542",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "rezet",
+    "key": "042f72e04a38ef33",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "mav375",
+    "key": "45fd660d5b507e08",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "class08",
+    "key": "5b3628ddd4d23a7d",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "sw1",
+    "key": "e9a3c483b8b598f8",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "drg01",
+    "key": "713f7113a78e41ce",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  },
+  {
+    "id": "m62",
+    "key": "8885377a04de5a2d",
+    "facings": 96,
+    "frozen": true,
+    "curve_frames": 32,
+    "visual_review": true
+  }
+]

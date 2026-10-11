@@ -1,0 +1,20 @@
+{
+  "frames": [
+    "loco_drg01_engine_w0_f0.png",
+    "loco_drg01_engine_w3_f0.png",
+    "loco_drg01_engine_lit_f0.png",
+    "loco_drg01_engine_w0_f24.png",
+    "loco_drg01_engine_w3_f24.png",
+    "loco_drg01_engine_lit_f24.png",
+    "loco_drg01_engine_w0_f48.png",
+    "loco_drg01_engine_w3_f48.png",
+    "loco_drg01_engine_lit_f48.png",
+    "loco_drg01_engine_w0_f72.png",
+    "loco_drg01_engine_w3_f72.png",
+    "loco_drg01_engine_lit_f72.png"
+  ],
+  "scale": 1.0,
+  "cycle": 0.8687319496925772,
+  "blender": "5.2.1 LTS",
+  "build": "9e2066aef7ef"
+}

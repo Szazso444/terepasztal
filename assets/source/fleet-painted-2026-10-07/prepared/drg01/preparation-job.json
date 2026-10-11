@@ -1,0 +1,361 @@
+{
+  "asset": {
+    "id": "drg01",
+    "category": "vehicle",
+    "image": "../../assets/source/base-v1/loco-drg01.png",
+    "size_tiles": 2,
+    "length_m": 23.94,
+    "width_m": 3.1,
+    "height_m": 4.55,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\drg01.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\drg01\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\drg01\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\drg01\\debug_dir",
+  "landmarks": null,
+  "gear_parts": [
+    [
+      "engine",
+      1.354,
+      true
+    ],
+    [
+      "tender",
+      0.604,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [
+        0.30133,
+        0.47267,
+        0.6322
+      ],
+      "trucks": [
+        [
+          0.13294
+        ],
+        [
+          0.76809,
+          0.95273
+        ]
+      ],
+      "rigid_f": [
+        0.527,
+        0.643,
+        0.751
+      ],
+      "trucks_f": [
+        [
+          0.413
+        ],
+        [
+          0.843,
+          0.968
+        ]
+      ],
+      "from": 0.323,
+      "to": 1,
+      "wheels": {
+        "rigid": {
+          "d": [
+            2,
+            2,
+            2
+          ],
+          "spokes": [
+            12,
+            12,
+            12
+          ],
+          "frame": "inside",
+          "rods": {
+            "cylinders": "front"
+          },
+          "drivers": [
+            0,
+            1,
+            2
+          ],
+          "color": [
+            178,
+            40,
+            34
+          ],
+          "tyre": [
+            70,
+            72,
+            76
+          ]
+        },
+        "trucks": [
+          {
+            "d": 1.25,
+            "spokes": 11,
+            "frame": "inside",
+            "color": [
+              178,
+              40,
+              34
+            ],
+            "tyre": [
+              70,
+              72,
+              76
+            ]
+          },
+          {
+            "d": 1,
+            "spokes": 9,
+            "frame": "inside",
+            "color": [
+              178,
+              40,
+              34
+            ],
+            "tyre": [
+              70,
+              72,
+              76
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.20199,
+          0.43709
+        ],
+        [
+          0.65563,
+          0.90397
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.061,
+          0.132
+        ],
+        [
+          0.198,
+          0.273
+        ]
+      ],
+      "from": 0,
+      "to": 0.302,
+      "wheels": {
+        "trucks": [
+          {
+            "d": 1,
+            "spokes": 9,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          },
+          {
+            "d": 1,
+            "spokes": 9,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 2,
+    "length_m": 23.94,
+    "width_m": 3.1,
+    "height_m": 4.55,
+    "stance": "support",
+    "rail_half_m": 0.998,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0.65,
+    "stance_mode": "turn"
+  },
+  "annot": {
+    "id": "drg01",
+    "windows": [
+      [
+        [
+          322,
+          386
+        ],
+        [
+          338,
+          392
+        ],
+        [
+          338,
+          424
+        ],
+        [
+          322,
+          417
+        ]
+      ],
+      [
+        [
+          352,
+          400
+        ],
+        [
+          366,
+          404
+        ],
+        [
+          366,
+          435
+        ],
+        [
+          352,
+          429
+        ]
+      ],
+      [
+        [
+          388,
+          404
+        ],
+        [
+          395,
+          400
+        ],
+        [
+          395,
+          423
+        ],
+        [
+          388,
+          427
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        859,
+        683
+      ],
+      [
+        934,
+        652
+      ]
+    ],
+    "smoke": [
+      [
+        827,
+        485
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Steam loco with tender. Three cab panes: two side windows (rear one dark, front one teal) and the narrow front spectacle window on the cab front. Two lit headlamps on the buffer beam; the round objects below them are buffers, not lamps. Chimney top opening is the copper-rimmed ring."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-drg01-rear.png"
+  ],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\drg01.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\drg01.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\drg01\\prepared-texture.png"
+  }
+}

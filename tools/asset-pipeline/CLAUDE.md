@@ -3,7 +3,37 @@
 Photo -> ComfyUI (Pixal3D / TRELLIS.2) -> GLB -> Blender (align, real scale, tile fit, 2:1 renders) -> sprites + atlas
 -> the game's atlas groups. Lives in `tools/asset-pipeline/` of the terepasztal repo; the root `CLAUDE.md` still applies.
 
-## Run
+## Current locomotive workflow (owner instruction, 2026-10-08)
+
+Build new locomotives exactly by the accepted handbuilt C-50 method: new editable
+Blender primitives, authored panels/glazing/lamps/complete running gear, workbook
+pictures and guidelines as the shape authority. Do not reuse or reshape image
+reconstructions, mirror a reconstructed half, or merely apply C-50 shading to an
+old mesh. See assets/source/c50-handbuilt-2026-10-07/build.py and the SW1 follow-up
+assets/source/sw1-handbuilt-2026-10-08/build.py. Use the C-50's current locked
+c50-lighter-v2 render profile, explicit glass materials and measured lamp centres.
+Review the new shape from side/top/both ends before full sprite rendering.
+
+Saved replay workflow: `handbuilt/README.md` and `handbuilt/run.py`.
+PNG(s) plus explicit picture observations and an authored recipe are the only
+shape inputs. Freeze C50 helper code/style per project; do not derive dimensions
+from game data. Document inferred hidden structure and omit unsupported detail.
+The complete SW1 worked example is `assets/source/sw1-picture-recipe-2026-10-08`.
+New locomotives require their own image-authored recipes; no automatic guessed
+model is claimed. `all project.json --blender ...` repeats construction, verified
+sample and production; `handbuilt/install.py` applies the resulting calibration.
+
+### Historical image-reconstruction workflow (superseded)
+
+Locomotive shape comes from the workbook pictures and appearance guidelines,
+never the in-game model, fit table or gear table. Use `painted/prepare_reference.py`
+with a locked picture-reference specification, then `painted/run.py`; see
+`painted/README.md`. The legacy orchestrator rejects vehicle blender/post/game
+stages, including cached exports. Its `--stages comfy` remains available for raw
+image reconstruction. The historical fitting conventions below describe the old
+pipeline and must not be used to author locomotive geometry.
+
+## Run (legacy non-vehicle assets / raw reconstruction)
 - `python run.py` : all assets in `assets.csv`, stages comfy -> blender -> post -> game. Stops at the first error, exit code 1.
 - `python run.py --only id1,id2 --stages blender,post,game --force` : redo selected stages.
 - `--out DIR` writes outside the repo (keep GLBs out of git; the roster lives in `G:/DEV/Terepasztal/pipeline-out`),
@@ -164,6 +194,15 @@ texels from its own seen faces only, so a truck's top stays dark instead of taki
   of its pivot (`offset_m`, the Pacific's drivers) swings with that pivot on tight curves, so it carries no frames.
 
 ## Shading and resolution
+For approved editable models using the accepted C-50 matte style, use
+`painted/run.py` and the versioned profile/manifest workflow documented in
+`painted/README.md`. It supports body parts, tenders and static bogies, complete
+wheel animation frames, hash-checked caching, repeat-render verification and
+isolated atlas bundles. `painted/install.py` installs those bundles into the
+compatible demo runtime. This is the deterministic downstream path after model
+approval; the older Comfy/source-projection path below remains available for
+reconstruction work.
+
 `render.shading = "painted"`: emission of the texture's own colour times `ambient_level + light_level * max(0, N.L)`,
 with L fixed to the camera (upper left), so every facing is lit from the same side and the source's painted shading is
 not lit twice. `render.resolution = 4` renders 4 texels per logical pixel, as the illustrated atlases; the atlas JSON

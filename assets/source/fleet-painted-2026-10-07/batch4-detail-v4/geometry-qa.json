@@ -1,0 +1,84 @@
+{
+  "mav375": [
+    {
+      "part": "body",
+      "lamp_surface_distances_m": [
+        0.0345,
+        0.0182,
+        0.0154
+      ]
+    }
+  ],
+  "class08": [
+    {
+      "part": "body",
+      "lamp_surface_distances_m": [
+        0.0247,
+        0.019,
+        0.016
+      ],
+      "residual_centreline_deg": 0.0560763273047731,
+      "centre_y_m": -0.0005359104825900091
+    }
+  ],
+  "sw1": [
+    {
+      "part": "body",
+      "lamp_surface_distances_m": [
+        0.0399
+      ],
+      "mirror_max_error_m": 0.0
+    },
+    {
+      "part": "body-t0"
+    },
+    {
+      "part": "body-t1"
+    }
+  ],
+  "drg01": [
+    {
+      "part": "engine",
+      "lamp_surface_distances_m": [
+        0.0212,
+        0.0213
+      ],
+      "residual_centreline_deg": 0.3474239809335772,
+      "centre_y_m": -0.0063175834258397
+    },
+    {
+      "part": "engine-t0"
+    },
+    {
+      "part": "engine-t1"
+    },
+    {
+      "part": "tender",
+      "lamp_surface_distances_m": []
+    },
+    {
+      "part": "tender-t0"
+    },
+    {
+      "part": "tender-t1"
+    }
+  ],
+  "m62": [
+    {
+      "part": "body",
+      "lamp_surface_distances_m": [
+        0.0142,
+        0.0131,
+        0.0045
+      ]
+    },
+    {
+      "part": "body-t0",
+      "crossmembers": 2
+    },
+    {
+      "part": "body-t1",
+      "crossmembers": 2
+    }
+  ]
+}

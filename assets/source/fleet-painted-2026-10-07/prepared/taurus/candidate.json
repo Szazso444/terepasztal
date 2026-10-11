@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "id": "taurus",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\taurus\\body.blend",
+      "source_sha256": "d44acbacf141767ffaf478899d701e5fa83d0c99e2ececaeeaac198c73f6ecb5",
+      "frame_prefix": "loco_taurus_body",
+      "length_tiles": 2.0034200202683885,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            5.579,
+            -1.036,
+            1.787
+          ],
+          [
+            5.694,
+            0.771,
+            1.635
+          ],
+          [
+            5.666,
+            -0.24,
+            2.411
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\taurus\\window-mask.png",
+        "sha256": "dc8de296de3cde45eab53fea43c3907a9ee7462e17180ee2170bdc2f0f226e51"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\taurus\\body-t0.blend",
+      "source_sha256": "e209549b47c7457cac5d47734a2773a15c57b01f7d712c2d872c5157f993c190",
+      "frame_prefix": "loco_taurus_body-t0",
+      "length_tiles": 0.5769577496164608,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1437487446005999,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\taurus\\body-t1.blend",
+      "source_sha256": "f0d638fa751651cf7664dbf2c6afeed3579a94e1b8e4292bba90744df7fee90c",
+      "frame_prefix": "loco_taurus_body-t1",
+      "length_tiles": 0.5738934813420622,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1437487446005999,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}

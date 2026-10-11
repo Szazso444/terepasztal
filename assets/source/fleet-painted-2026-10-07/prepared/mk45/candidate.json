@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "id": "mk45",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mk45\\body.blend",
+      "source_sha256": "369fb229eb10bab5efcd7181eec33f0f6ac542c4bbe80209aadd6162e06b3ab3",
+      "frame_prefix": "loco_mk45_body",
+      "length_tiles": 1.4382326842914976,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            -1.193,
+            0.038,
+            3.012
+          ]
+        ],
+        "lamps": [
+          [
+            4.008,
+            -0.098,
+            2.735
+          ],
+          [
+            3.914,
+            0.47,
+            1.379
+          ],
+          [
+            3.928,
+            -0.611,
+            1.389
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mk45\\window-mask.png",
+        "sha256": "a796d8500efd7471a8bdb48dc15e04c9195a4526e6eac756c4187031d595bfb8"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mk45\\body-t0.blend",
+      "source_sha256": "b55b796e2633839719a359a6b68f2fa0d72e6e5c9882eb8e873d6de0fa223a4f",
+      "frame_prefix": "loco_mk45_body-t0",
+      "length_tiles": 0.3684269441331017,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.09374226148112635,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mk45\\body-t1.blend",
+      "source_sha256": "6552521171c6463a671f887d1278d91a55dadaf2f8cc8173719321bb874f04d1",
+      "frame_prefix": "loco_mk45_body-t1",
+      "length_tiles": 0.361940993743324,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.09374226148112635,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}

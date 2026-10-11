@@ -1,0 +1,290 @@
+{
+  "schema": 1,
+  "id": "mav490",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 9,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r9-c5.jpeg",
+        "sha256": "5d98fa0bd5177a2dfa84d8aef5f83a0546d3920af6f2852f7c0c8ce5d032aec5"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r9-c6.jpeg",
+        "sha256": "32b1c094000b925bb64997a169defcc29d7a48b195f6149aab366bc060d6ca8a"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mav490-rear.png",
+        "sha256": "da2ea8261680d137e3b04952efaaecc1c215a02f58f4a2bd27ef9f510789a51b",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B9: M\u00c1V 490 | G9: 0-8-0T (model image) | Y9: Frame [engine]: 1-4 (rigid, baked; 2 virtual rail supports; four coupled drivers and rods drawn with the body) | AA9: Model image (front + rear view) ready. 4 coupled spoked drivers with side rods. Axles 1 and 4 are Klien-Lindner axles that shift sideways for 30 m curves; the model can ignore that. Power figures vary by source: 88\u2013215 kW. | BV9: Black with thin red lining and a red number plate. Tall chimney with spark arrester, two domes and a sand dome, side tanks, cab with round front/back windows, coal bunker behind the cab, outside cylinders and rods. | CI9: Angle is off; wheels come out white.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "reconstruction": {
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav490.glb",
+      "sha256": "694f32c678e78e9edab82950d852f74eb73514832a4c659564f5bcbeb68a23c2"
+    },
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav490.source.png",
+      "sha256": "dd1c1a114fb449b3ec55289984342e5d5effa810b3537a280129fa4510313cd4"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav490.mask.png",
+      "sha256": "fd4b260651764ac87d7bae5dc25c0b823e4778a731ab704d42a9df8e6e37015c"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "geometry": {
+    "length_m": 7.4,
+    "width_m": 2.2,
+    "height_m": 3.5,
+    "parts": [
+      [
+        "body",
+        1,
+        true
+      ]
+    ],
+    "gear": [
+      {
+        "rigid": [
+          0.26,
+          0.43,
+          0.6,
+          0.77
+        ],
+        "trucks": [],
+        "rigid_f": [
+          0.26,
+          0.43,
+          0.6,
+          0.77
+        ],
+        "trucks_f": [],
+        "from": 0,
+        "to": 1,
+        "wheels": {
+          "rigid": {
+            "d": 0.86,
+            "spokes": 10,
+            "frame": "inside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ],
+            "drivers": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "rods": {
+              "cylinders": "front"
+            }
+          }
+        }
+      }
+    ],
+    "notes": "Shape from row 9 pictures; axle layout manually read from pictured wheels. Rough fractions are refined against raw mesh wheel centres. Rigid alignment and uniform scale only.",
+    "gauge": "narrow"
+  },
+  "projection": {
+    "annot": {
+      "id": "mav490",
+      "windows": [
+        [
+          [
+            329.3,
+            310.0
+          ],
+          [
+            336.5,
+            315.5
+          ],
+          [
+            340.1,
+            330.0
+          ],
+          [
+            338.6,
+            348.0
+          ],
+          [
+            332.8,
+            362.5
+          ],
+          [
+            324.7,
+            368.0
+          ],
+          [
+            317.5,
+            362.5
+          ],
+          [
+            313.9,
+            348.0
+          ],
+          [
+            315.4,
+            330.0
+          ],
+          [
+            321.2,
+            315.5
+          ]
+        ],
+        [
+          [
+            468.8,
+            248.0
+          ],
+          [
+            475.5,
+            253.3
+          ],
+          [
+            477.8,
+            267.3
+          ],
+          [
+            474.9,
+            284.7
+          ],
+          [
+            467.8,
+            298.7
+          ],
+          [
+            459.2,
+            304.0
+          ],
+          [
+            452.5,
+            298.7
+          ],
+          [
+            450.2,
+            284.7
+          ],
+          [
+            453.1,
+            267.3
+          ],
+          [
+            460.2,
+            253.3
+          ]
+        ],
+        [
+          [
+            254.5,
+            344.0
+          ],
+          [
+            258.3,
+            347.1
+          ],
+          [
+            260.7,
+            355.1
+          ],
+          [
+            260.7,
+            364.9
+          ],
+          [
+            258.3,
+            372.9
+          ],
+          [
+            254.5,
+            376.0
+          ],
+          [
+            250.7,
+            372.9
+          ],
+          [
+            248.3,
+            364.9
+          ],
+          [
+            248.3,
+            355.1
+          ],
+          [
+            250.7,
+            347.1
+          ]
+        ],
+        [
+          [
+            161,
+            277
+          ],
+          [
+            166,
+            275
+          ],
+          [
+            205,
+            290
+          ],
+          [
+            208,
+            295
+          ],
+          [
+            208,
+            386
+          ],
+          [
+            204,
+            388
+          ],
+          [
+            163,
+            372
+          ],
+          [
+            160,
+            367
+          ]
+        ]
+      ],
+      "headlamps": [],
+      "smoke": [
+        [
+          821,
+          352
+        ]
+      ],
+      "pantograph_raised": false,
+      "notes": "Steam tank engine. Windows: two oval front spectacle windows, one small oval porthole on the cab side, and (ADDED by checker) the large mesh-covered cab side window opening above the door - it is the cab side window behind a protective mesh, not a ventilation grille, so cab light would show through it; drop the 4th polygon if meshed openings should not glow. Other three polygons verified on the glass, unchanged. No headlamps drawn (front beam has only buffers, coupling, brake hoses). Smoke point verified at centre of chimney top (spark-arrestor mesh), not on the domes."
+    },
+    "nose_px": [
+      870,
+      640
+    ],
+    "views": [
+      "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mav490-rear.png"
+    ]
+  },
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mav490"
+}

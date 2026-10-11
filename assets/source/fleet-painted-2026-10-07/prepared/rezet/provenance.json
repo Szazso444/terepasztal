@@ -1,0 +1,7 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\rezet.json",
+  "job_sha256": "fce1b73bbe08073e11222e06342538d873cae7500efa05e1c218b5264bb5d343",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\rezet.glb",
+  "glb_sha256": "d1c53efdae8986d857a406a33b42a643780c2c0fdc6a8ad8624d4bb5e50363ee"
+}

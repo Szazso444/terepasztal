@@ -1,0 +1,296 @@
+{
+  "geometry": {
+    "gauge": "standard",
+    "gear": [
+      {
+        "from": 0.32,
+        "rigid": [
+          0.28,
+          0.46,
+          0.64
+        ],
+        "rigid_f": [
+          0.5104,
+          0.6328,
+          0.7552
+        ],
+        "to": 1,
+        "trucks": [
+          [
+            0.1
+          ],
+          [
+            0.7517,
+            0.8816999999999999
+          ]
+        ],
+        "trucks_f": [
+          [
+            0.388
+          ],
+          [
+            0.831156,
+            0.9195559999999998
+          ]
+        ],
+        "wheels": {
+          "rigid": {
+            "color": [
+              165,
+              34,
+              29
+            ],
+            "d": 1.5,
+            "drivers": [
+              0,
+              1,
+              2
+            ],
+            "frame": "inside",
+            "rods": {
+              "cylinders": "front"
+            },
+            "spokes": 12,
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          },
+          "trucks": [
+            {
+              "color": [
+                165,
+                34,
+                29
+              ],
+              "d": 0.8999999999999999,
+              "frame": "inside",
+              "spokes": 9,
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            },
+            {
+              "color": [
+                165,
+                34,
+                29
+              ],
+              "d": 0.75,
+              "frame": "inside",
+              "spokes": 9,
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "from": 0,
+        "rigid": [],
+        "rigid_f": [],
+        "to": 0.3,
+        "trucks": [
+          [
+            0.18,
+            0.38
+          ],
+          [
+            0.64,
+            0.84
+          ]
+        ],
+        "trucks_f": [
+          [
+            0.054,
+            0.11399999999999999
+          ],
+          [
+            0.192,
+            0.252
+          ]
+        ],
+        "wheels": {
+          "trucks": [
+            {
+              "color": [
+                165,
+                34,
+                29
+              ],
+              "d": 0.75,
+              "frame": "outside",
+              "spokes": 9,
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            },
+            {
+              "color": [
+                165,
+                34,
+                29
+              ],
+              "d": 0.75,
+              "frame": "outside",
+              "spokes": 9,
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "height_m": 4.5,
+    "length_m": 23.9,
+    "notes": "Workbook row 25: manually read approximate axle positions and wheel sizes; refine from original raw mesh, rigid alignment and uniform scale only.",
+    "parts": [
+      [
+        "engine",
+        0.68,
+        true
+      ],
+      [
+        "tender",
+        0.32,
+        true
+      ]
+    ],
+    "plan": "tender",
+    "width_m": 3.0
+  },
+  "id": "drg01",
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-detail-v4\\prepared\\drg01",
+  "projection": {
+    "annot": {
+      "headlamps": [
+        [
+          859,
+          683
+        ],
+        [
+          934,
+          652
+        ]
+      ],
+      "id": "drg01",
+      "notes": "Steam loco with tender. Three cab panes: two side windows (rear one dark, front one teal) and the narrow front spectacle window on the cab front. Two lit headlamps on the buffer beam; the round objects below them are buffers, not lamps. Chimney top opening is the copper-rimmed ring.",
+      "pantograph_raised": false,
+      "smoke": [
+        [
+          827,
+          485
+        ]
+      ],
+      "windows": [
+        [
+          [
+            322,
+            386
+          ],
+          [
+            338,
+            392
+          ],
+          [
+            338,
+            424
+          ],
+          [
+            322,
+            417
+          ]
+        ],
+        [
+          [
+            352,
+            400
+          ],
+          [
+            366,
+            404
+          ],
+          [
+            366,
+            435
+          ],
+          [
+            352,
+            429
+          ]
+        ],
+        [
+          [
+            388,
+            404
+          ],
+          [
+            395,
+            400
+          ],
+          [
+            395,
+            423
+          ],
+          [
+            388,
+            427
+          ]
+        ]
+      ]
+    },
+    "views": [
+      "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-drg01-rear.png"
+    ]
+  },
+  "reconstruction": {
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\drg01.source.png",
+      "sha256": "d396d9beb88de8541472e63951b3b687f93ee9cd9edc872541616360fed76e19"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\drg01.mask.png",
+      "sha256": "0025d7a6a15e642b18bba24bfa428d636a8fec8a19858e51808100dfb3731027"
+    },
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\drg01.glb",
+      "sha256": "5f016f6b986cc648a54fe660150131d6f4efebaeaa4fdce0b05f0afb541e1e63"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "reference": {
+    "authority": "workbook-pictures-and-owner-notes",
+    "guidelines": "B25: DRG Class 01 | G25: 4-6-2 + 4-axle tender | Y25: Tender rear bogie [tender]: 1-2 (swivelling bogie / truck sprite)\nTender front bogie [tender]: 3-4 (swivelling bogie / truck sprite)\nTrailing truck [engine]: 5 (swivelling bogie / truck sprite)\nFrame [engine]: 6-8 (rigid, drawn with the body; coupled drivers and rods)\nLeading bogie [engine]: 9-10 (swivelling bogie / truck sprite) | AA25: The four tender axles are drawn evenly spaced. | CI25: 2026-10-06: Same distortion and angle problems as Black Five, but this model looks better. Tender does not fit the rails. At the front only the angles are wrong. Restore the original model.\n\nEarlier review: Correct, fits well.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; Latest authority: workbook v9, owner corrections dated 2026-10-08 override earlier notes.",
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r25-c5.jpeg",
+        "sha256": "4bcf4fce358abd4334548ee612f89ea5ffe13b02eb053072b332cd2b7e0b19d4"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-drg01-rear.png",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority",
+        "sha256": "fca9d76420fbb256ea6ed1e0c20e9f45e2236b9f2a472c6d2f31d01ef558e201"
+      }
+    ],
+    "row": 25,
+    "schema": 1,
+    "sheet": "Locomotives",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v9.xlsx",
+      "sha256": "e0da5a3fbd8680b6e50fc153d2b86cbae29ec787c9c0852ae9488f9541c4862e"
+    }
+  },
+  "schema": 1
+}

@@ -1,0 +1,32 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 11,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r11-c5.jpeg",
+        "sha256": "443d23943215866667341bf77099beeddb45483b4047c8185448e695466c5d45"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r11-c6.jpeg",
+        "sha256": "c2e43b0f7668eee99956e94b592d0aa5b91af4dc1f6a28b0459529b8d4b8e344"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk48-rear.png",
+        "sha256": "829db2d2746ceaa81d98d651830db583a571804e8409be304c2ddebbbce4a45f",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B11: M\u00c1V Mk48 | G11: B'B' (model image) | Y11: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA11: Model image (front + rear view) ready. Two 2-axle bogies. Front = the short hood beside the cab (yellow front with the number plate). Power: 100 kW original, 147 kW after 1970s re-engining (table uses 147). | BV11: Single cab near one end, short nose in front, long louvred engine hood behind. All red, yellow short-nose front and warning ends, black frame, grey bogies. | CI11: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "preparation_job_sha256": "d5565d36ef17f14b7b3e2ec18b639084623c7c102c2d5bad13448b2a00d933fd",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.glb",
+  "glb_sha256": "37714a2e94d9d851d73f66465f4df3e12e6bb50296a37dfc5a2cab50186f0fed"
+}

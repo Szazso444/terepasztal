@@ -1,0 +1,7 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\daylight.json",
+  "job_sha256": "d7d8b0e975d4345cdda5cdeaf41fc94f5e3ac99717ce35c39d69d542b46c2e5a",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\daylight.glb",
+  "glb_sha256": "bfbd055070f04c7ba83ff84a40b14a7b0401bcbe919a8e5aa0a3d2272146a49e"
+}

@@ -1,0 +1,209 @@
+{
+  "facings": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\AppData\\Local\\Temp\\painted-bfq6b7hb\\engine",
+  "part": {
+    "canvas": 256,
+    "effects": {
+      "smoke": [
+        [
+          2.32,
+          0.013,
+          3.139
+        ]
+      ]
+    },
+    "frame_prefix": "loco_mav490_engine",
+    "length_tiles": 0.9964323915487368,
+    "max_phase_bounds_drift": 2,
+    "name": "engine",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mav490\\engine.blend",
+    "source_sha256": "3708ce9fa0789593b1a6ec0466a5e05c3bc807cf8d40d7c775f47ab411a4ced9",
+    "wheel": {
+      "mode": "timeline",
+      "period_frames": 8,
+      "radius": 0.35182791719894385,
+      "start": 1,
+      "symmetry": 1
+    },
+    "window_mask": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mav490\\window-mask.png",
+      "sha256": "83712d0c8a5601cc4c0286fa26a2defe543fb4e11a5d2add984939c80b0e0bf5"
+    }
+  },
+  "phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0.48,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "fleet-painted-v1",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "AgX - Medium High Contrast",
+    "metallic_cap": 0.18,
+    "paint_low": 0.78,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 2,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "AgX",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  }
+}

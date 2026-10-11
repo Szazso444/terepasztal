@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "id": "mav375",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mav375\\engine-repaired.blend",
+      "source_sha256": "422b50740d225119e5f6fece6cd29e28fc9a5df98af90db8c73f719c50852d5f",
+      "frame_prefix": "loco_mav375_engine",
+      "length_tiles": 1.2787219499536455,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            2.274,
+            0.085,
+            3.923
+          ]
+        ],
+        "lamps": [
+          [
+            2.977,
+            0.001,
+            3.173
+          ],
+          [
+            3.465,
+            0.748,
+            1.695
+          ],
+          [
+            3.467,
+            -0.787,
+            1.791
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.56,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mav375\\window-mask.png",
+        "sha256": "f809becb08f3ce5fb6fbf2dce327f4eaac53b89d1239c7362e67c0740669dcba"
+      }
+    }
+  ],
+  "repairs": [
+    "Three 1.12m drivers with non-overlapping spacing, linked rods and a .68m trailing wheel"
+  ]
+}

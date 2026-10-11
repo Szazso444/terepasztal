@@ -1,0 +1,409 @@
+{
+  "asset": {
+    "id": "big_boy",
+    "category": "vehicle",
+    "image": "../../assets/source/base-v1/loco-big-boy.png",
+    "size_tiles": 4,
+    "length_m": 40.48,
+    "width_m": 3.35,
+    "height_m": 4.94,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": 0.0,
+    "plan": null,
+    "split_m": [
+      15.5
+    ],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\big_boy.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\debug_dir",
+  "landmarks": null,
+  "gear_parts": [
+    [
+      "engine",
+      2.648,
+      true
+    ],
+    [
+      "tender",
+      1.228,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.1148,
+          0.18882,
+          0.26435
+        ],
+        [
+          0.48943,
+          0.571,
+          0.65106,
+          0.72961,
+          0.90785
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.4139976,
+          0.46299884,
+          0.5129997
+        ],
+        [
+          0.66200266,
+          0.716002,
+          0.7690017199999999,
+          0.82100182,
+          0.9389966999999999
+        ]
+      ],
+      "from": 0.338,
+      "to": 1,
+      "wheels": {
+        "trucks": [
+          {
+            "d": [
+              1.727,
+              1.727,
+              1.727
+            ],
+            "spokes": [
+              0,
+              0,
+              0
+            ],
+            "frame": "open",
+            "rods": {
+              "cylinders": "front"
+            },
+            "color": [
+              44,
+              46,
+              50
+            ],
+            "tyre": [
+              212,
+              210,
+              200
+            ],
+            "rod": [
+              172,
+              174,
+              178
+            ],
+            "top": 1.75,
+            "end_gear": true,
+            "drivers": [
+              0,
+              1,
+              2
+            ],
+            "reach_m": [
+              1.07,
+              1.07
+            ]
+          },
+          {
+            "d": [
+              1.727,
+              1.727,
+              1.727,
+              1.727,
+              0.914
+            ],
+            "spokes": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "frame": "open",
+            "rods": {
+              "cylinders": "front"
+            },
+            "color": [
+              44,
+              46,
+              50
+            ],
+            "tyre": [
+              212,
+              210,
+              200
+            ],
+            "rod": [
+              172,
+              174,
+              178
+            ],
+            "top": 1.75,
+            "end_gear": true,
+            "drivers": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "reach_m": [
+              0.9,
+              1.07
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.15,
+          0.29,
+          0.43
+        ],
+        [
+          0.63,
+          0.77,
+          0.91
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.04605,
+          0.08903,
+          0.13201
+        ],
+        [
+          0.19341,
+          0.23639,
+          0.27937
+        ]
+      ],
+      "from": 0,
+      "to": 0.307,
+      "wheels": {
+        "trucks": [
+          {
+            "d": 1.067,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              44,
+              46,
+              50
+            ],
+            "tyre": [
+              212,
+              210,
+              200
+            ]
+          },
+          {
+            "d": 1.067,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              44,
+              46,
+              50
+            ],
+            "tyre": [
+              212,
+              210,
+              200
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 4,
+    "length_m": 40.48,
+    "width_m": 3.35,
+    "height_m": 4.94,
+    "stance": "support",
+    "rail_half_m": 0.998,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0.65,
+    "stance_mode": "turn"
+  },
+  "annot": {
+    "id": "big_boy",
+    "windows": [
+      [
+        [
+          347,
+          402
+        ],
+        [
+          358,
+          408
+        ],
+        [
+          358,
+          426
+        ],
+        [
+          347,
+          421
+        ]
+      ],
+      [
+        [
+          361,
+          411
+        ],
+        [
+          369,
+          415
+        ],
+        [
+          369,
+          431
+        ],
+        [
+          361,
+          427
+        ]
+      ],
+      [
+        [
+          373,
+          414
+        ],
+        [
+          383,
+          418
+        ],
+        [
+          383,
+          438
+        ],
+        [
+          373,
+          434
+        ]
+      ],
+      [
+        [
+          399,
+          419
+        ],
+        [
+          408,
+          415
+        ],
+        [
+          408,
+          434
+        ],
+        [
+          399,
+          438
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        890,
+        633
+      ]
+    ],
+    "smoke": [
+      [
+        822,
+        546
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Steam loco with tender. Three cab side panes plus one front-facing cab window pane on the visible side; single smokebox-front headlamp; one chimney at the front of the boiler."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\big_boy.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\big_boy.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\prepared-texture.png"
+  }
+}

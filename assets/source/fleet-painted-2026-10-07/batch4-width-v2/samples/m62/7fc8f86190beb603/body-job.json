@@ -1,0 +1,129 @@
+{
+  "facings": [
+    0,
+    24,
+    48,
+    72
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\AppData\\Local\\Temp\\painted-qtphypqg\\body",
+  "part": {
+    "canvas": 320,
+    "effects": {
+      "headlamps": [
+        [
+          6.503,
+          -0.0527,
+          3.353
+        ],
+        [
+          6.897,
+          0.7012499999999999,
+          1.623
+        ],
+        [
+          6.758,
+          -0.8517,
+          1.787
+        ]
+      ],
+      "smoke": [
+        [
+          2.928,
+          -0.08754999999999999,
+          3.948
+        ]
+      ]
+    },
+    "frame_prefix": "loco_m62_body",
+    "length_tiles": 2.396335796810146,
+    "name": "body",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\m62\\body.blend",
+    "source_sha256": "f95e786481583bd373dcf5246273bda96572243cf1ae34b6a557ed9f343d9b81",
+    "window_mask": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\m62\\body-window-mask.png",
+      "sha256": "2136c116e5580d2b1377d5429333a894a70a404c9532b87dfc062a37d227d7ee"
+    }
+  },
+  "phases": [
+    0,
+    3
+  ],
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "colour_gain": 1.12,
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "fleet-reference-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "None",
+    "metallic_cap": 0.18,
+    "normal_contrast": 0.1,
+    "normal_light": [
+      -0.4,
+      -0.6,
+      0.8
+    ],
+    "paint_low": 0.98,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 2,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "surface_mode": "reference_colour",
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "Standard",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  }
+}

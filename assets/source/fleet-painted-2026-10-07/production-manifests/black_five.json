@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "id": "black_five",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-painted-v1.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\black_five\\engine.blend",
+      "source_sha256": "9df65a8249b53a3192fe5993b6491ff806494594edf619016ce8aebb2e251fbb",
+      "frame_prefix": "loco_black_five_engine",
+      "length_tiles": 1.5118572588490802,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            2.619,
+            0.037,
+            3.605
+          ]
+        ],
+        "lamps": [
+          [
+            3.989,
+            -1.16,
+            1.584
+          ],
+          [
+            4.168,
+            0.743,
+            1.399
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.6432565334945134,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\black_five\\window-mask.png",
+        "sha256": "1f039c7c8e3578ec4758d8b788c59eb95f9e1db533fa879691b1679a77ceabfd"
+      }
+    },
+    {
+      "name": "engine-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\black_five\\engine-t0.blend",
+      "source_sha256": "6aadd1402ec86d6917be9cf93af8ec3fc375503d9db838bbbd7f33b0c0928562",
+      "frame_prefix": "loco_black_five_engine-t0",
+      "length_tiles": 0.28421639833220763,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.03526873538916401,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "tender",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\black_five\\tender.blend",
+      "source_sha256": "bd6c870e5c890f6079c57f72af508caf6a5716f8a98d1983a88a1d9ba57accc4",
+      "frame_prefix": "loco_black_five_tender",
+      "length_tiles": 0.6937900134339849,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.044451975605566366,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\black_five\\window-mask.png",
+        "sha256": "1f039c7c8e3578ec4758d8b788c59eb95f9e1db533fa879691b1679a77ceabfd"
+      }
+    }
+  ]
+}

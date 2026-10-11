@@ -1,0 +1,12 @@
+{
+  "frames": [
+    "loco_bm50_body_w0_f0.png",
+    "loco_bm50_body_w0_f24.png",
+    "loco_bm50_body_w0_f48.png",
+    "loco_bm50_body_w0_f72.png"
+  ],
+  "scale": 0.832611464815971,
+  "cycle": 0.04614705315273424,
+  "blender": "5.2.1 LTS",
+  "build": "9e2066aef7ef"
+}

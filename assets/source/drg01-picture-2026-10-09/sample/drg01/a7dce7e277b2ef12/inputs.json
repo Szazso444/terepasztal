@@ -1,0 +1,228 @@
+{
+  "blender": "Blender 5.2.1 LTS\n\tbuild date: 2026-08-25\n\tbuild time: 02:38:20\n\tbuild commit date: 2026-08-24\n\tbuild commit time: 16:50\n\tbuild hash: 9e2066aef7ef\n\tbuild branch: blender-v5.2-release\n\tbuild platform: Windows\n\tbuild type: Release\n\tbuild c flags:  /W3 -Werror=implicit-function-declaration -Werror=return-type -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wstrict-prototypes -Wmissing-prototypes -Wunused-parameter -Wundef -Wundef-prefix -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /MP /nologo /J /Gy /Gd /showFilenames -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild c++ flags:  /W3 -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wno-overloaded-virtual -Wno-sign-compare -Wno-invalid-offsetof -Wno-suggest-override -Wundef -Wundef-prefix -Wunused-parameter -Wmismatched-tags -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /EHsc  /Gy /MP /nologo /J /Gd /showFilenames /EHsc -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild link flags: /MACHINE:X64  /SUBSYSTEM:CONSOLE /STACK:2097152 /ignore:4049 /ignore:4217 /ignore:4221\n\tbuild system: CMake\n",
+  "manifest": {
+    "id": "drg01",
+    "parts": [
+      {
+        "canvas": 512,
+        "effects": {
+          "lamps": [
+            [
+              5.49,
+              -0.6,
+              1.35
+            ],
+            [
+              5.49,
+              0.6,
+              1.35
+            ]
+          ]
+        },
+        "frame_prefix": "loco_drg01_engine",
+        "length_tiles": 1.8203499512908499,
+        "name": "engine",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\engine.blend",
+        "source_sha256": "53fe8039aef569dacbef3dc48dde7166857c530f439cbafb0c2d7d043f574981",
+        "wheel": {
+          "mode": "timeline",
+          "period_frames": 8,
+          "radius": 0.62,
+          "start": 1,
+          "symmetry": 1
+        },
+        "window_materials": [
+          "Dark rear cab glazing",
+          "Blue green forward cab glazing",
+          "Blue green spectacle glazing"
+        ]
+      },
+      {
+        "canvas": 256,
+        "effects": {},
+        "frame_prefix": "loco_drg01_engine-t0",
+        "length_tiles": 0.20849822641066038,
+        "max_phase_bounds_drift": 1,
+        "name": "engine-t0",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\engine-t0.blend",
+        "source_sha256": "6ab0713c52d43de36735b0092715efbabf8a4d817182d535eebec663d6d6c20b",
+        "wheel": {
+          "count": 4,
+          "mode": "pivots",
+          "prefix": "Truck wheel pivot",
+          "radius": 0.31,
+          "symmetry": 6
+        }
+      },
+      {
+        "canvas": 256,
+        "effects": {},
+        "frame_prefix": "loco_drg01_engine-t1",
+        "length_tiles": 0.09622995800460253,
+        "max_phase_bounds_drift": 1,
+        "name": "engine-t1",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\engine-t1.blend",
+        "source_sha256": "f910ac0218c3d9415f79397382b00e205d89aae4bcf2cda8c0464aed536b22a4",
+        "wheel": {
+          "count": 2,
+          "mode": "pivots",
+          "prefix": "Truck wheel pivot",
+          "radius": 0.3,
+          "symmetry": 6
+        }
+      },
+      {
+        "canvas": 512,
+        "effects": {},
+        "frame_prefix": "loco_drg01_tender",
+        "length_tiles": 0.9911685005302966,
+        "name": "tender",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\tender.blend",
+        "source_sha256": "246ddc3d7b370cf4fb0041251aec5098cf59e63e50e61efc0ae741675c949ec1"
+      },
+      {
+        "canvas": 256,
+        "effects": {},
+        "frame_prefix": "loco_drg01_tender-t0",
+        "length_tiles": 0.2469902096125014,
+        "max_phase_bounds_drift": 1,
+        "name": "tender-t0",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\tender-t0.blend",
+        "source_sha256": "bf50eefadab5744e1ca3f13319e2e670be1dd7e06fae8d3cf632e92fc9cf158f",
+        "wheel": {
+          "count": 4,
+          "mode": "pivots",
+          "prefix": "Truck wheel pivot",
+          "radius": 0.34,
+          "symmetry": 6
+        }
+      },
+      {
+        "canvas": 256,
+        "effects": {},
+        "frame_prefix": "loco_drg01_tender-t1",
+        "length_tiles": 0.2469902096125014,
+        "max_phase_bounds_drift": 1,
+        "name": "tender-t1",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\tender-t1.blend",
+        "source_sha256": "cc474535aead654d879b84238fce57fee011c069d0eca9634cb7fe19e35e7703",
+        "wheel": {
+          "count": 4,
+          "mode": "pivots",
+          "prefix": "Truck wheel pivot",
+          "radius": 0.34,
+          "symmetry": 6
+        }
+      }
+    ],
+    "profile": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\style.json",
+    "reference": {
+      "authority": "png-pictures-and-owner-notes",
+      "guidelines": "Workbook v9 Locomotives row 25 and owner notes, interpreted only through the locked PNG references; no reconstructed/game model or fit/gear-table geometry.",
+      "observations": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\observations.json",
+        "sha256": "2851e56194ce5ae2b59a09547e703c287371443816b1966d544825ee85605977"
+      },
+      "pictures": [
+        {
+          "id": "view1",
+          "original_name": "drawing1-r25-c5.jpeg",
+          "original_sha256": "4bcf4fce358abd4334548ee612f89ea5ffe13b02eb053072b332cd2b7e0b19d4",
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\references\\01.png",
+          "sha256": "1982f0d1a73827661b7e2ba2de28f1cd43eaea03541d8f04b6b45c2d45e145d0"
+        },
+        {
+          "id": "view2",
+          "original_name": "loco-drg01-rear.png",
+          "original_sha256": "fca9d76420fbb256ea6ed1e0c20e9f45e2236b9f2a472c6d2f31d01ef558e201",
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\references\\02.png",
+          "sha256": "ec7f3d64683a485e17a20a2321b8d9064842c120924936fe74d7daeb065625c0"
+        }
+      ],
+      "prepared_sources": {
+        "engine": "53fe8039aef569dacbef3dc48dde7166857c530f439cbafb0c2d7d043f574981",
+        "engine-t0": "6ab0713c52d43de36735b0092715efbabf8a4d817182d535eebec663d6d6c20b",
+        "engine-t1": "f910ac0218c3d9415f79397382b00e205d89aae4bcf2cda8c0464aed536b22a4",
+        "tender": "246ddc3d7b370cf4fb0041251aec5098cf59e63e50e61efc0ae741675c949ec1",
+        "tender-t0": "bf50eefadab5744e1ca3f13319e2e670be1dd7e06fae8d3cf632e92fc9cf158f",
+        "tender-t1": "cc474535aead654d879b84238fce57fee011c069d0eca9634cb7fe19e35e7703"
+      },
+      "schema": 1
+    },
+    "schema": 1
+  },
+  "packer": "a36493411a58067cfa4b753ff2ddb5e06017c5808c9ad0c6b40db4638a083423",
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0.25,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "engine": "BLENDER_EEVEE",
+    "exposure": 0.3,
+    "facings": 96,
+    "id": "c50-lighter-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "AgX - Medium High Contrast",
+    "metallic_cap": 0.18,
+    "paint_low": 0.86,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 4,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "AgX",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  },
+  "reference_validator": "e5b6ad7c864e9bca62c86d8c38d33ecdf3db50d6284f5fedfbde6b0d39c631bc",
+  "renderer": "1763ae485fe3ff06ecee6e6e4d25de1fe71f746f995d2bfc896bff69143bf0a9",
+  "runner": "307e62bd77408f24b9495ebc3b1e7d71a168d889a8502882d044071f527758fa"
+}

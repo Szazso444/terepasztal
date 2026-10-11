@@ -1,0 +1,142 @@
+{
+  "mav375": [
+    {
+      "part": "body",
+      "axles": [
+        {
+          "x_m": -1.270645031929016,
+          "d_m": 1.18
+        },
+        {
+          "x_m": 0.1518621158599851,
+          "d_m": 1.18
+        },
+        {
+          "x_m": 1.574369263648986,
+          "d_m": 1.18
+        }
+      ],
+      "pivot": null
+    }
+  ],
+  "class08": [
+    {
+      "body": "body",
+      "yaw_correction_deg": 0.8832135197313463,
+      "centre_shift_y_m": 0.12559917390774455,
+      "bilateral_symmetry": false,
+      "body_width_factor": 1
+    }
+  ],
+  "sw1": [
+    {
+      "body": "body",
+      "yaw_correction_deg": 3.8527043879469662,
+      "centre_shift_y_m": 0.030694860979914654,
+      "bilateral_symmetry": true,
+      "body_width_factor": 1.18
+    }
+  ],
+  "drg01": [
+    {
+      "body": "engine",
+      "yaw_correction_deg": 3.3119406297104956,
+      "centre_shift_y_m": 0.3723707729051508,
+      "bilateral_symmetry": false,
+      "body_width_factor": 1
+    },
+    {
+      "part": "engine",
+      "axles": [
+        {
+          "x_m": -2.574306831359863,
+          "d_m": 1.5
+        },
+        {
+          "x_m": -0.41213514328002887,
+          "d_m": 1.5
+        },
+        {
+          "x_m": 1.750036544799805,
+          "d_m": 1.5
+        }
+      ],
+      "pivot": null
+    },
+    {
+      "part": "engine-t0",
+      "axles": [
+        {
+          "x_m": 0.0,
+          "d_m": 0.8999999999999999
+        }
+      ],
+      "pivot": -4.736478519439697
+    },
+    {
+      "part": "engine-t1",
+      "axles": [
+        {
+          "x_m": -0.7807842206954945,
+          "d_m": 0.75
+        },
+        {
+          "x_m": 0.7807842206954945,
+          "d_m": 0.75
+        }
+      ],
+      "pivot": 3.8728718042373655
+    },
+    {
+      "part": "tender",
+      "axles": [],
+      "pivot": null
+    },
+    {
+      "part": "tender-t0",
+      "axles": [
+        {
+          "x_m": -0.6539999961853027,
+          "d_m": 0.75
+        },
+        {
+          "x_m": 0.6539999961853027,
+          "d_m": 0.75
+        }
+      ],
+      "pivot": -1.438799991607666
+    },
+    {
+      "part": "tender-t1",
+      "axles": [
+        {
+          "x_m": -0.6539999961853029,
+          "d_m": 0.75
+        },
+        {
+          "x_m": 0.6539999961853029,
+          "d_m": 0.75
+        }
+      ],
+      "pivot": 1.5695999908447265
+    }
+  ],
+  "m62": [
+    {
+      "part": "body-t0",
+      "full_bogie_frame": true,
+      "end_crossmembers": [
+        -1.6847178077697749,
+        1.6847178077697758
+      ]
+    },
+    {
+      "part": "body-t1",
+      "full_bogie_frame": true,
+      "end_crossmembers": [
+        -1.6847178077697758,
+        1.6847178077697758
+      ]
+    }
+  ]
+}

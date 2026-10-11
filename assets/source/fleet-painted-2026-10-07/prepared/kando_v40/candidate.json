@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "id": "kando_v40",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\kando_v40\\body-repaired.blend",
+      "source_sha256": "18b5daddf9ddcd39c506814f7ffd61caea8e17818365dea3f9e9f8368f30e38f",
+      "frame_prefix": "loco_kando_v40_body",
+      "length_tiles": 1.8754118726496987,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            5.325,
+            -0.222,
+            3.843
+          ],
+          [
+            5.355,
+            0.604,
+            2.079
+          ],
+          [
+            5.274,
+            -0.637,
+            2.072
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.6225027289153303,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\kando_v40\\window-mask.png",
+        "sha256": "34255cc0d1746aa16b6778fa041e579e55e7615848f479acfc71d048d19e50ea"
+      }
+    }
+  ],
+  "repairs": [
+    "Closed missing lower body band above the running gear"
+  ]
+}

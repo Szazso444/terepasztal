@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "id": "gg1",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\gg1\\body-repaired.blend",
+      "source_sha256": "09b4afccaffd2a81cdd20377ba6eeff0dfbf720fd8b7ec69a77dfa9857ca09e1",
+      "frame_prefix": "loco_gg1_body",
+      "length_tiles": 3.066225313061465,
+      "canvas": 640,
+      "effects": {
+        "lamps": [
+          [
+            8.295,
+            -0.131,
+            3.495
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\gg1\\window-mask.png",
+        "sha256": "681aabc6152a74be26cec283956eedaf9e07a7a3e6d862f2609d9a0b6d9a82da"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\gg1\\body-t0-repaired.blend",
+      "source_sha256": "ce737c85e4319c942415e6ce9debeaea6393399961f4962ec9b5f03b60fa27b5",
+      "frame_prefix": "loco_gg1_body-t0",
+      "length_tiles": 1.4402567165404303,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1430802938396139,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\gg1\\body-t1-repaired.blend",
+      "source_sha256": "dfb2b5c7ce5c067559547ab687307b7bab0ba2b6cdc1b60d4e6ad82d59a22e6c",
+      "frame_prefix": "loco_gg1_body-t1",
+      "length_tiles": 1.3424107485817685,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.09032043020465061,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "repairs": [
+    "Closed missing lower body band above the running gear"
+  ]
+}

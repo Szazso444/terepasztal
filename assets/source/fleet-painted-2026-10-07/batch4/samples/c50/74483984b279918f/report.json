@@ -1,0 +1,17 @@
+{
+  "complete": false,
+  "id": "c50",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 8,
+      "part": "body",
+      "phase_bounds_drift_px": 0,
+      "scale": 0.940855284372546
+    }
+  ],
+  "profile": "c50-lighter-v2",
+  "repeat_pixel_match": false
+}

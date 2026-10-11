@@ -1,0 +1,26 @@
+{
+  "files": {
+    "atlas\\rolling-painted-1.json": "249a8d917562b649c218cf8624e90f1187a16ea61e1691fdab239d549d0e0f2d",
+    "atlas\\rolling-painted-1.png": "7991dd88b7db80f9f5a07e268f36ab9473e3cf6c9465b688d4c99d4e56578477",
+    "fit-patch.json": "865715b23f021d9e6c3eba4a7fdd1f1520f1f021ce0da773d74b4249a90c106d",
+    "frames\\loco_muki_body_f0.png": "8929c22ae7bfef745202f78ef3b5929075cacfab88e3aef4a950a38cdc8cb92c",
+    "frames\\loco_muki_body_f24.png": "c862c577ab4746d9fe5b975f644a8ede3661e7574e03605f3b5a74c730696064",
+    "frames\\loco_muki_body_f48.png": "befdd61bfec6b61aa0831b2d6d9f268f9814326635833a10240804a68cb5610d",
+    "frames\\loco_muki_body_f72.png": "565ed05d14f6f20ece6a1d82d6f7894df475fcd2285a99daa0e117a652f78679",
+    "frames\\loco_muki_body_lit_f0.png": "821d89a5cf486a94e164a56053a1a8fe3101b094408f266caea9f49c3fcee289",
+    "frames\\loco_muki_body_lit_f24.png": "50c0fcfead42a79158892284d1498cbdeb91e6b6e50a5389ac22c1dbb2b0d084",
+    "frames\\loco_muki_body_lit_f48.png": "07d14f6f79bd1713455d501feb21670d8d4972edc8e991e3e05e7f76e8e1a0dd",
+    "frames\\loco_muki_body_lit_f72.png": "391203507d1e91d7705928803ed565a884b53e436d786e2478d5a8e299a9500d",
+    "frames\\loco_muki_body_w0_f0.png": "8929c22ae7bfef745202f78ef3b5929075cacfab88e3aef4a950a38cdc8cb92c",
+    "frames\\loco_muki_body_w0_f24.png": "c862c577ab4746d9fe5b975f644a8ede3661e7574e03605f3b5a74c730696064",
+    "frames\\loco_muki_body_w0_f48.png": "befdd61bfec6b61aa0831b2d6d9f268f9814326635833a10240804a68cb5610d",
+    "frames\\loco_muki_body_w0_f72.png": "565ed05d14f6f20ece6a1d82d6f7894df475fcd2285a99daa0e117a652f78679",
+    "frames\\loco_muki_body_w3_f0.png": "6884eb20e82008f0b1622649925544f7581470d5d1a098cc24b7924f126f7d02",
+    "frames\\loco_muki_body_w3_f24.png": "cfd7a8b5b91e7e8b1417ae8284ee80424f6cf361d8618aafa4867a572dc76c26",
+    "frames\\loco_muki_body_w3_f48.png": "29eede58dc7cdee20405fb17d80a8f46064bbc4e0d1de507a3c4c127f607e753",
+    "frames\\loco_muki_body_w3_f72.png": "7e3b96ee8c0e0c0f06686ae716fc2c24ded2ba9389abac8f2ee48f70b52f407d",
+    "inputs.json": "f6123963060f72149749389f5a83e5f84e1d25df361a603a93a955ad616490f0",
+    "report.json": "2dcf76a0446da9c8b7ae7598a61e1cb4582a8223dbcd966dab67a5c5a090293b"
+  },
+  "key": "4470a55c4c8c3426f4fa69b41cd6508e3fdf265c963d646f66c74b7f72d1cb52"
+}

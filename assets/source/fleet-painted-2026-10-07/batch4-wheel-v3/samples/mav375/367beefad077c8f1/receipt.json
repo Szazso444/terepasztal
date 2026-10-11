@@ -1,0 +1,26 @@
+{
+  "files": {
+    "atlas\\rolling-painted-1.json": "4c509393d3a30dd6d7cf4b7ceb14fdfe1c3e65b971f31f72ef72e21537708ed4",
+    "atlas\\rolling-painted-1.png": "9070dc56aeed4fa250938aa5bfa78c2605fe9ffb065b7ad5a32ef893778c719c",
+    "fit-patch.json": "7e2da04b83a796400ffce1d5b537ad3f1183627eff2991fe6764ba998d17867a",
+    "frames\\loco_mav375_body_f0.png": "e6541e0240befd763d149e2be0dbdba5cae9438dd484dec570b22c4068550951",
+    "frames\\loco_mav375_body_f24.png": "76fd0b3244cb8255b36bc5e911142efe6759175cca31cb6d262e516f52b1fc2b",
+    "frames\\loco_mav375_body_f48.png": "86f1bdbfdaa4449abe439b2e96349e15cca1d1e8e126a9c333207c1d65a0ac2a",
+    "frames\\loco_mav375_body_f72.png": "05bacab540ea6227257580522cac247c68643d7d29869690014e7e139c178e57",
+    "frames\\loco_mav375_body_lit_f0.png": "2715a03544d817d6dcb71bd40d4320be0be3ffbc6575775cc1fc0514d84bea8f",
+    "frames\\loco_mav375_body_lit_f24.png": "1320012775651ac446cfa4865e1834a5f2ffebf3cabe66ddf0e357f856b05164",
+    "frames\\loco_mav375_body_lit_f48.png": "c307a7926d068400baf5bbe815110a369581629f26139c924e3ea8ea4b5975d7",
+    "frames\\loco_mav375_body_lit_f72.png": "e069aa6dda80b9d9110eeaa23955f35aa8a47666023eb4bb2cf5b9b2b62d0686",
+    "frames\\loco_mav375_body_w0_f0.png": "e6541e0240befd763d149e2be0dbdba5cae9438dd484dec570b22c4068550951",
+    "frames\\loco_mav375_body_w0_f24.png": "76fd0b3244cb8255b36bc5e911142efe6759175cca31cb6d262e516f52b1fc2b",
+    "frames\\loco_mav375_body_w0_f48.png": "86f1bdbfdaa4449abe439b2e96349e15cca1d1e8e126a9c333207c1d65a0ac2a",
+    "frames\\loco_mav375_body_w0_f72.png": "05bacab540ea6227257580522cac247c68643d7d29869690014e7e139c178e57",
+    "frames\\loco_mav375_body_w3_f0.png": "a97da66a58c830d315ae9a16b0b66d73d01aeeaf88ce4dfa68b968fe4c43d604",
+    "frames\\loco_mav375_body_w3_f24.png": "1fd593480f5a1c0369da70cb21e73e22b41403978a0e4ff4376adc3f905c1cc0",
+    "frames\\loco_mav375_body_w3_f48.png": "1596fb2d52f200addd844ed9eeb149dfd5ea5e6dba28f368a52ab14a43d4440b",
+    "frames\\loco_mav375_body_w3_f72.png": "cc2e4c39bf0a9cd81993d741f455107167df185361fb47400bfe5541d1c0bd6b",
+    "inputs.json": "ba04310568b1204b32afe72582396d50ea52424a5cb1f8ff49f5ee48b65b924c",
+    "report.json": "aca029da7f098ef7369c7c12bbad22c33093f4e90b193a7b43d0a69a62a10cb0"
+  },
+  "key": "367beefad077c8f10b292a66617db555f3e7c25eb8c1843ea9d7cbefb23699a2"
+}

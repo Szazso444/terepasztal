@@ -1,0 +1,134 @@
+{
+  "frames": {
+    "rolling/loco_class08_body_f0": {
+      "ax": 58.0,
+      "ay": 71.0,
+      "h": 90,
+      "w": 109,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_class08_body_f24": {
+      "ax": 56.0,
+      "ay": 71.0,
+      "h": 89,
+      "w": 114,
+      "x": 224,
+      "y": 2
+    },
+    "rolling/loco_class08_body_f48": {
+      "ax": 51.0,
+      "ay": 63.0,
+      "h": 86,
+      "w": 109,
+      "x": 456,
+      "y": 2
+    },
+    "rolling/loco_class08_body_f72": {
+      "ax": 58.0,
+      "ay": 62.0,
+      "h": 85,
+      "w": 114,
+      "x": 896,
+      "y": 2
+    },
+    "rolling/loco_class08_body_lit_f0": {
+      "ax": 56.0,
+      "ay": 69.0,
+      "h": 86,
+      "w": 105,
+      "x": 567,
+      "y": 2
+    },
+    "rolling/loco_class08_body_lit_f24": {
+      "ax": 54.0,
+      "ay": 69.0,
+      "h": 86,
+      "w": 109,
+      "x": 674,
+      "y": 2
+    },
+    "rolling/loco_class08_body_lit_f48": {
+      "ax": 49.0,
+      "ay": 61.0,
+      "h": 80,
+      "w": 105,
+      "x": 1240,
+      "y": 2
+    },
+    "rolling/loco_class08_body_lit_f72": {
+      "ax": 56.0,
+      "ay": 61.0,
+      "h": 82,
+      "w": 110,
+      "x": 1128,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w0_f0": {
+      "ax": 58.0,
+      "ay": 71.0,
+      "h": 90,
+      "w": 109,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w0_f24": {
+      "ax": 56.0,
+      "ay": 71.0,
+      "h": 89,
+      "w": 114,
+      "x": 224,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w0_f48": {
+      "ax": 51.0,
+      "ay": 63.0,
+      "h": 86,
+      "w": 109,
+      "x": 456,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w0_f72": {
+      "ax": 58.0,
+      "ay": 62.0,
+      "h": 85,
+      "w": 114,
+      "x": 896,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w3_f0": {
+      "ax": 58.0,
+      "ay": 71.0,
+      "h": 90,
+      "w": 109,
+      "x": 113,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w3_f24": {
+      "ax": 56.0,
+      "ay": 71.0,
+      "h": 89,
+      "w": 114,
+      "x": 340,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w3_f48": {
+      "ax": 51.0,
+      "ay": 63.0,
+      "h": 86,
+      "w": 109,
+      "x": 785,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w3_f72": {
+      "ax": 58.0,
+      "ay": 62.0,
+      "h": 85,
+      "w": 114,
+      "x": 1012,
+      "y": 2
+    }
+  },
+  "partial": true,
+  "resolution": 2
+}

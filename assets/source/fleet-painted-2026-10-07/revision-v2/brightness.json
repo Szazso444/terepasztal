@@ -1,0 +1,18 @@
+{
+  "ice1": {
+    "mean_display_luma_gain": 1.449,
+    "facings": 4
+  },
+  "bm50": {
+    "mean_display_luma_gain": 1.311,
+    "facings": 4
+  },
+  "general": {
+    "mean_display_luma_gain": 1.389,
+    "facings": 4
+  },
+  "rocket": {
+    "mean_display_luma_gain": 1.446,
+    "facings": 4
+  }
+}

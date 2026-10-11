@@ -1,0 +1,40 @@
+{
+  "drg01": {
+    "lamps": [],
+    "smoke": [
+      {
+        "along": 0.5951822666080482,
+        "part": "engine",
+        "up": 27.46857142857143
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "engine": {
+        "cycle": 0.8687319496925772,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t0": {
+        "cycle": 0.05791439409112536,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t1": {
+        "cycle": 0.048259322021655005,
+        "integrated": true,
+        "phases": 8
+      },
+      "tender-t0": {
+        "cycle": 0.055989795007510015,
+        "integrated": true,
+        "phases": 8
+      },
+      "tender-t1": {
+        "cycle": 0.055989795007510015,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

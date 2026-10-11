@@ -1,0 +1,7 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\tgv.json",
+  "job_sha256": "2f2ffe8f6c0bb47263908ce69f253bc3b87203e052d5acf185937c4ec74daeca",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\tgv.glb",
+  "glb_sha256": "05b85713a11d8441669643da6cc792557a596f613fdf5a10d701d0d1af4c9854"
+}

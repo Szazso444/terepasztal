@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "id": "mav490",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mav490\\body.blend",
+      "source_sha256": "0ac3acd69a9d436c7825246d8dfaea47984f68b69decb7036881703f61b435bd",
+      "frame_prefix": "loco_mav490_body",
+      "length_tiles": 1.1721263978662142,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            2.803,
+            -0.104,
+            3.494
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.4272991912131206,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mav490\\body-window-mask.png",
+        "sha256": "35035536409a3cae779e79dfa4e68b02616b56e524036f91c90227e6817023f8"
+      }
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 9,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r9-c5.jpeg",
+        "sha256": "5d98fa0bd5177a2dfa84d8aef5f83a0546d3920af6f2852f7c0c8ce5d032aec5"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r9-c6.jpeg",
+        "sha256": "32b1c094000b925bb64997a169defcc29d7a48b195f6149aab366bc060d6ca8a"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mav490-rear.png",
+        "sha256": "da2ea8261680d137e3b04952efaaecc1c215a02f58f4a2bd27ef9f510789a51b",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B9: M\u00c1V 490 | G9: 0-8-0T (model image) | Y9: Frame [engine]: 1-4 (rigid, baked; 2 virtual rail supports; four coupled drivers and rods drawn with the body) | AA9: Model image (front + rear view) ready. 4 coupled spoked drivers with side rods. Axles 1 and 4 are Klien-Lindner axles that shift sideways for 30 m curves; the model can ignore that. Power figures vary by source: 88\u2013215 kW. | BV9: Black with thin red lining and a red number plate. Tall chimney with spark arrester, two domes and a sand dome, side tanks, cab with round front/back windows, coal bunker behind the cab, outside cylinders and rods. | CI9: Angle is off; wheels come out white.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.",
+    "prepared_sources": {
+      "body": "0ac3acd69a9d436c7825246d8dfaea47984f68b69decb7036881703f61b435bd"
+    }
+  }
+}

@@ -1920,7 +1920,7 @@ def main():
                     if not wd.get("rigid"):
                         raise RuntimeError(f"{pname}: wheels data has no rigid axles, the gear table has {len(gi['rigid'])}")
                     ks.append(wheel_factor(cx, [at(u) for u in gi["rigid"]], per_axle(wd["rigid"]["d"], len(gi["rigid"]))))
-                k_part = float(wd.get("scale") or min(ks))
+                k_part = 1.0 if fitd.get("reference_axles") else float(wd.get("scale") or min(ks))
                 trucks_only = not gi["rigid"] and len(gi["trucks"]) >= 2
                 order = sorted(range(len(gi["trucks"])), key=lambda i: -float(np.mean(gi["trucks"][i])))
                 for ti, us in enumerate(gi["trucks"]):
@@ -1934,7 +1934,11 @@ def main():
                     # what the model has round them, which is rendered as the truck
                     open_frame = tw.get("frame") == "open"
                     rods = tw.get("rods")
-                    ax_m = find_axles(Pp, yc, zg, x_lo, x_hi, us, ds)
+                    if fitd.get("reference_axles"):
+                        from reference_axles import authored_axles
+                        ax_m = authored_axles(x_lo, x_hi, us, ds)
+                    else:
+                        ax_m = find_axles(Pp, yc, zg, x_lo, x_hi, us, ds)
                     xs_a = [m_["x"] for m_ in ax_m]
                     reach = tw.get("reach_m") or [0.62 * d, 0.62 * d]
                     x0, x1 = min(xs_a) - float(reach[0]), max(xs_a) + float(reach[1])
@@ -2030,7 +2034,11 @@ def main():
                     inside = rw.get("frame", "inside") == "inside"
                     rods = rw.get("rods")
                     drivers = list(rw.get("drivers", range(n_ax))) if rods else []
-                    ax_m = find_axles(Pp, yc, zg, x_lo, x_hi, gi["rigid"], ds)
+                    if fitd.get("reference_axles"):
+                        from reference_axles import authored_axles
+                        ax_m = authored_axles(x_lo, x_hi, gi["rigid"], ds)
+                    else:
+                        ax_m = find_axles(Pp, yc, zg, x_lo, x_hi, gi["rigid"], ds)
                     xs_a = [m_["x"] for m_ in ax_m]
                     base, n_w = clear_wheels(ob, xs_a, ds, inside) if rw.get("clear", True) else (None, 0)
                     k = k_part

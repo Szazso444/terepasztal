@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "id": "muki",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\muki\\body.blend",
+      "source_sha256": "8c36f1a450e63ec5b8c75b3271c9aa163746eedaa437867847cd8b954a9e56ab",
+      "frame_prefix": "loco_muki_body",
+      "length_tiles": 0.624799563418537,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            0.271,
+            -0.19,
+            1.776
+          ]
+        ],
+        "headlamps": [
+          [
+            1.715,
+            -0.446,
+            1.352
+          ],
+          [
+            1.796,
+            0.402,
+            1.318
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.07249507657835833,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\muki\\body-window-mask.png",
+        "sha256": "8c686facda5f6e34518af4c61dcf48e14d4133758856652705c807beb7762375"
+      }
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 7,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r7-c5.jpeg",
+        "sha256": "d5389ea770f72ba80813f062b5547376410b29c648a5a2afb9923867831319aa"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r7-c6.jpeg",
+        "sha256": "2632262d8941c88fcfe449f58452147254883c48093ca3226bc15dc1fc1fcde8"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\muki-rear.png",
+        "sha256": "bc19584db70d25a9d5d54f8ce0ae146c5d696fc1bfb34b44e29c31198b4ef6c0",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B7: Muki (MD-40 P-2) | G7: B (model image) | Y7: Frame [body]: 1-2 (rigid, baked; 2 virtual rail supports; chain-driven axles in a rigid frame) | AA7: Model image (front + rear view) ready. 2 axles under axle-box covers. 'Muki' comes from a flower-decorated name sign a local woman hung on its grille in 2000. The only MD-40 with this body style left; symbol of the Kemence forest railway. | BV7: Very small two-axle hood loco: tall rear cab with sloped roof and four windows, short front hood with a slatted radiator grille and two round headlights. Dark green with a big white V on the nose (older livery: drab olive-grey). | CI7: Good.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.",
+    "prepared_sources": {
+      "body": "8c36f1a450e63ec5b8c75b3271c9aa163746eedaa437867847cd8b954a9e56ab"
+    }
+  }
+}

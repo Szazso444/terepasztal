@@ -1,0 +1,134 @@
+{
+  "frames": {
+    "rolling/loco_rezet_body_f0": {
+      "ax": 49.0,
+      "ay": 58.0,
+      "h": 78,
+      "w": 97,
+      "x": 491,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_f24": {
+      "ax": 47.0,
+      "ay": 58.0,
+      "h": 78,
+      "w": 96,
+      "x": 590,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_f48": {
+      "ax": 48.0,
+      "ay": 63.0,
+      "h": 82,
+      "w": 97,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_f72": {
+      "ax": 49.0,
+      "ay": 63.0,
+      "h": 82,
+      "w": 96,
+      "x": 101,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_lit_f0": {
+      "ax": 49.0,
+      "ay": 58.0,
+      "h": 77,
+      "w": 95,
+      "x": 1078,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_lit_f24": {
+      "ax": 45.0,
+      "ay": 58.0,
+      "h": 78,
+      "w": 94,
+      "x": 688,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_lit_f48": {
+      "ax": 46.0,
+      "ay": 61.0,
+      "h": 78,
+      "w": 95,
+      "x": 784,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_lit_f72": {
+      "ax": 48.0,
+      "ay": 62.0,
+      "h": 81,
+      "w": 93,
+      "x": 396,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_w0_f0": {
+      "ax": 49.0,
+      "ay": 58.0,
+      "h": 78,
+      "w": 97,
+      "x": 491,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_w0_f24": {
+      "ax": 47.0,
+      "ay": 58.0,
+      "h": 78,
+      "w": 96,
+      "x": 590,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_w0_f48": {
+      "ax": 48.0,
+      "ay": 63.0,
+      "h": 82,
+      "w": 97,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_w0_f72": {
+      "ax": 49.0,
+      "ay": 63.0,
+      "h": 82,
+      "w": 96,
+      "x": 101,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_w3_f0": {
+      "ax": 49.0,
+      "ay": 58.0,
+      "h": 78,
+      "w": 97,
+      "x": 881,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_w3_f24": {
+      "ax": 47.0,
+      "ay": 58.0,
+      "h": 78,
+      "w": 96,
+      "x": 980,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_w3_f48": {
+      "ax": 48.0,
+      "ay": 63.0,
+      "h": 82,
+      "w": 97,
+      "x": 199,
+      "y": 2
+    },
+    "rolling/loco_rezet_body_w3_f72": {
+      "ax": 49.0,
+      "ay": 63.0,
+      "h": 82,
+      "w": 96,
+      "x": 298,
+      "y": 2
+    }
+  },
+  "partial": true,
+  "resolution": 2
+}

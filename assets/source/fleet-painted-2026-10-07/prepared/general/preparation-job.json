@@ -1,0 +1,331 @@
+{
+  "asset": {
+    "id": "general",
+    "category": "vehicle",
+    "image": "../../assets/source/base-v1/loco-general.png",
+    "size_tiles": 1.5,
+    "length_m": 9.5,
+    "width_m": 2.5,
+    "height_m": 4.1,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\general.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\general\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\general\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\general\\debug_dir",
+  "landmarks": null,
+  "gear_parts": [
+    [
+      "engine",
+      1.5,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [
+        0.207,
+        0.374,
+        0.549
+      ],
+      "trucks": [
+        [
+          0.757,
+          0.897
+        ]
+      ],
+      "rigid_f": [
+        0.207,
+        0.374,
+        0.549
+      ],
+      "trucks_f": [
+        [
+          0.757,
+          0.897
+        ]
+      ],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "rigid": {
+          "d": [
+            1.524,
+            1.524,
+            1.524
+          ],
+          "spokes": [
+            12,
+            12,
+            12
+          ],
+          "frame": "inside",
+          "rods": {
+            "cylinders": "front"
+          },
+          "drivers": [
+            0,
+            1,
+            2
+          ],
+          "color": [
+            150,
+            60,
+            42
+          ],
+          "tyre": [
+            214,
+            204,
+            176
+          ]
+        },
+        "trucks": [
+          {
+            "d": 0.762,
+            "spokes": 8,
+            "frame": "inside",
+            "color": [
+              150,
+              60,
+              42
+            ],
+            "tyre": [
+              214,
+              204,
+              176
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 1.5,
+    "length_m": 9.5,
+    "width_m": 2.5,
+    "height_m": 4.1,
+    "stance": "support",
+    "rail_half_m": 0.998,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0.65,
+    "stance_mode": "turn"
+  },
+  "annot": {
+    "id": "general",
+    "windows": [
+      [
+        [
+          132,
+          315
+        ],
+        [
+          140,
+          305
+        ],
+        [
+          150,
+          310
+        ],
+        [
+          156,
+          322
+        ],
+        [
+          156,
+          370
+        ],
+        [
+          132,
+          360
+        ]
+      ],
+      [
+        [
+          185,
+          338
+        ],
+        [
+          191,
+          328
+        ],
+        [
+          201,
+          331
+        ],
+        [
+          208,
+          342
+        ],
+        [
+          208,
+          391
+        ],
+        [
+          185,
+          381
+        ]
+      ],
+      [
+        [
+          241,
+          345
+        ],
+        [
+          250,
+          334
+        ],
+        [
+          258,
+          340
+        ],
+        [
+          258,
+          390
+        ],
+        [
+          241,
+          395
+        ]
+      ],
+      [
+        [
+          283,
+          320
+        ],
+        [
+          289,
+          313
+        ],
+        [
+          294,
+          317
+        ],
+        [
+          294,
+          337
+        ],
+        [
+          283,
+          341
+        ]
+      ],
+      [
+        [
+          356,
+          291
+        ],
+        [
+          361,
+          289
+        ],
+        [
+          361,
+          321
+        ],
+        [
+          356,
+          322
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        836,
+        479
+      ]
+    ],
+    "smoke": [
+      [
+        739,
+        284
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Steam 4-4-0. Windows: 2 arched cab side panes, 3 front-wall cab panes (the two further ones are small/partly hidden behind the boiler and dome). One box headlamp ahead of the chimney. Smoke = centre of the balloon-stack top opening."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-general-rear.png"
+  ],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\general.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\general.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\general\\prepared-texture.png"
+  }
+}

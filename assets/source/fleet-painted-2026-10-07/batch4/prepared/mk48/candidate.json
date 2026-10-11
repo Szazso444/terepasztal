@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "id": "mk48",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48\\body.blend",
+      "source_sha256": "db16fde453469a32fbfc8e4ddf7b72199a0be3d433230a8f8f8e39c10cb18fdf",
+      "frame_prefix": "loco_mk48_body",
+      "length_tiles": 0.9449421613454044,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            -2.253,
+            0.091,
+            2.177
+          ]
+        ],
+        "headlamps": [
+          [
+            -2.545,
+            0.07,
+            1.872
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48\\body-window-mask.png",
+        "sha256": "3c611351ba05c169d68d5b90d640227e4c892e90e7f01dfe77d4c32b04050489"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48\\body-t0.blend",
+      "source_sha256": "c4173b48283ca84277f6bb1ebc8bfc306832483097ce4174b99516f2c07f8269",
+      "frame_prefix": "loco_mk48_body-t0",
+      "length_tiles": 0.2633050501888267,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheelpivot",
+        "count": 4,
+        "radius": 0.35,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48\\body-t1.blend",
+      "source_sha256": "29e1682e8c986973090ceff8129e17cf7ab78934e29ef035c98e99e6dda0dc44",
+      "frame_prefix": "loco_mk48_body-t1",
+      "length_tiles": 0.23823937317782706,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheelpivot",
+        "count": 4,
+        "radius": 0.35,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 11,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r11-c5.jpeg",
+        "sha256": "443d23943215866667341bf77099beeddb45483b4047c8185448e695466c5d45"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r11-c6.jpeg",
+        "sha256": "c2e43b0f7668eee99956e94b592d0aa5b91af4dc1f6a28b0459529b8d4b8e344"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk48-rear.png",
+        "sha256": "829db2d2746ceaa81d98d651830db583a571804e8409be304c2ddebbbce4a45f",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B11: M\u00c1V Mk48 | G11: B'B' (model image) | Y11: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA11: Model image (front + rear view) ready. Two 2-axle bogies. Front = the short hood beside the cab (yellow front with the number plate). Power: 100 kW original, 147 kW after 1970s re-engining (table uses 147). | BV11: Single cab near one end, short nose in front, long louvred engine hood behind. All red, yellow short-nose front and warning ends, black frame, grey bogies. | CI11: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; Reconstructed truck fragments replaced by clean reference-authored axle groups, fixed technical rail gauge, dark treads. No runtime geometry used.; Lower-frame blue reconstruction colour spill neutralized in the 3D material; cab glazing preserved.; Rigid 180-degree orientation correction: workbook specifies short hood as front. No mesh reshaping.",
+    "prepared_sources": {
+      "body": "db16fde453469a32fbfc8e4ddf7b72199a0be3d433230a8f8f8e39c10cb18fdf",
+      "body-t0": "c4173b48283ca84277f6bb1ebc8bfc306832483097ce4174b99516f2c07f8269",
+      "body-t1": "29e1682e8c986973090ceff8129e17cf7ab78934e29ef035c98e99e6dda0dc44"
+    }
+  }
+}

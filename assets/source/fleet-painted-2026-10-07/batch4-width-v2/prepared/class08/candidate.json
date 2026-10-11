@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "id": "class08",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\class08\\body.blend",
+      "source_sha256": "c1dcaac406f6ef632891d1fc07ec52b65d1e0b083636518c5c2c4c8ac7ed3992",
+      "frame_prefix": "loco_class08_body",
+      "length_tiles": 1.3615885803269547,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            0.493,
+            -0.2805,
+            3.811
+          ]
+        ],
+        "headlamps": [
+          [
+            3.587,
+            -0.24479999999999996,
+            3.204
+          ],
+          [
+            3.752,
+            0.4114,
+            1.723
+          ],
+          [
+            3.642,
+            -0.8049499999999999,
+            1.798
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.625001461521873,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\class08\\body-window-mask.png",
+        "sha256": "4647fcdaa038dcd28a6f445472e05528a39da0fe2ea78f48f0c808fb0633f2bc"
+      }
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 17,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r17-c5.jpeg",
+        "sha256": "71b5c40e9e8c696b0c72c209c108cb31da62fb8272bc261ca13b716ac1ec7d9d"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-class08-rear.png",
+        "sha256": "a2988f25430420e512554241e3caf368982e34a798b813bd07f4f97e0c45be1a",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B17: BR Class 08 | G17: 0-6-0 (rod drive) | Y17: Frame [body]: 1-3 (rigid, baked; 2 virtual rail supports) | CI17: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; 2026-10-08 owner width correction: body transverse width reduced 15%; standard gauge wheel tread centres +/-0.99761036797m; length/height unchanged. M62 retains original picture reconstruction, simplified replacement rejected.",
+    "prepared_sources": {
+      "body": "c1dcaac406f6ef632891d1fc07ec52b65d1e0b083636518c5c2c4c8ac7ed3992"
+    }
+  }
+}

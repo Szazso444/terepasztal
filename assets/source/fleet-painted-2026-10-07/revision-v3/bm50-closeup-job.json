@@ -1,0 +1,114 @@
+{
+  "profile": {
+    "schema": 1,
+    "id": "bm50-review-only",
+    "blender_version": "5.2.1 LTS",
+    "blender_build": "9e2066aef7ef",
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "resolution": 8,
+    "supersample": 2,
+    "facings": 96,
+    "phases": 8,
+    "engine": "BLENDER_EEVEE",
+    "view_transform": "Standard",
+    "look": "None",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ],
+    "roughness": 0.78,
+    "metallic_cap": 0.18,
+    "specular": 0.22,
+    "paint_noise_scale": 7,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_low": 0.98,
+    "ao_distance": 0.28,
+    "ao_strength": 0,
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "lights": [
+      {
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "energy": 1050,
+        "size": 5
+      },
+      {
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "energy": 228,
+        "size": 4
+      },
+      {
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "energy": 238,
+        "size": 5
+      }
+    ],
+    "surface_mode": "reference_colour",
+    "cast_shadows": false,
+    "normal_light": [
+      -0.4,
+      -0.6,
+      0.8
+    ],
+    "normal_contrast": 0.1,
+    "colour_gain": 1.12
+  },
+  "part": {
+    "name": "body",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\revision-v3\\models\\bm50\\body.blend",
+    "source_sha256": "00a22ba455c6776450337a6d281f5fb09efc9d520db70f1791f4c723bdb7124d",
+    "frame_prefix": "loco_bm50_body",
+    "length_tiles": 0.6996,
+    "canvas": 512,
+    "wheel": {
+      "mode": "pivots",
+      "prefix": "Wheel pivot",
+      "count": 6,
+      "radius": 0.275,
+      "symmetry": 5
+    },
+    "effects": {
+      "lamps": [
+        [
+          2.32,
+          0,
+          1.873
+        ]
+      ]
+    }
+  },
+  "facings": [
+    0,
+    24,
+    48,
+    72
+  ],
+  "phases": [
+    0
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\revision-v3\\closeup"
+}

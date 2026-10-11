@@ -1,0 +1,16 @@
+{
+  "frames": [
+    "loco_sw1_body-t0_w0_f0.png",
+    "loco_sw1_body-t0_w3_f0.png",
+    "loco_sw1_body-t0_w0_f24.png",
+    "loco_sw1_body-t0_w3_f24.png",
+    "loco_sw1_body-t0_w0_f48.png",
+    "loco_sw1_body-t0_w3_f48.png",
+    "loco_sw1_body-t0_w0_f72.png",
+    "loco_sw1_body-t0_w3_f72.png"
+  ],
+  "scale": 1.0,
+  "cycle": 0.08906082259430051,
+  "blender": "5.2.1 LTS",
+  "build": "9e2066aef7ef"
+}

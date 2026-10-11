@@ -1,0 +1,32 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 12,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r12-c5.jpeg",
+        "sha256": "dcad1e489e56aa7e9e5ae7a6ce7d7261b0df4201f66d475724c461ba1b16dce0"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r12-c6.jpeg",
+        "sha256": "4553c665690ea9de1ee023980e05d98a85d53f8222be2d537579cae4f02e72e5"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\rezet-rear.png",
+        "sha256": "c4d84b1be93abc065d8ede0d685a6428fb4b513661922ddb040303e1466625b7",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B12: Rez\u00e9t (M\u00c1V 490,2003) | G12: 0-8-0T (model image) | Y12: Frame [engine]: 1-4 (rigid, baked; 2 virtual rail supports; four coupled drivers and rods drawn with the body) | AA12: Model image (front + rear view) ready. 4 coupled red spoked drivers with side rods. Wheels hidden behind the rods in the photos. Photo 2 shows 'Kar\u00e1csony', not Rez\u00e9t. Length taken from the 490 design (\u22487.5 m). A Sept 2026 news item says it goes into a ~1-year overhaul. | BV12: 490 outline in dark bottle green with gold lining and gold 'Rez\u00e9t' script on the tank, black smokebox and spark-arrester chimney, red frame and wheels, oval cab windows. | CI12: Good.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "preparation_job_sha256": "224ab998994118edb05be5b1e1cb61ce9add1a5b47d02979653de8d5467eb282",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\rezet.glb",
+  "glb_sha256": "d1c53efdae8986d857a406a33b42a643780c2c0fdc6a8ad8624d4bb5e50363ee"
+}

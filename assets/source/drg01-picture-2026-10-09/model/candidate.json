@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "id": "drg01",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\style.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\engine.blend",
+      "source_sha256": "53fe8039aef569dacbef3dc48dde7166857c530f439cbafb0c2d7d043f574981",
+      "frame_prefix": "loco_drg01_engine",
+      "length_tiles": 1.8203499512908499,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            5.49,
+            -0.6,
+            1.35
+          ],
+          [
+            5.49,
+            0.6,
+            1.35
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.62,
+        "symmetry": 1
+      },
+      "window_materials": [
+        "Dark rear cab glazing",
+        "Blue green forward cab glazing",
+        "Blue green spectacle glazing"
+      ]
+    },
+    {
+      "name": "engine-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\engine-t0.blend",
+      "source_sha256": "6ab0713c52d43de36735b0092715efbabf8a4d817182d535eebec663d6d6c20b",
+      "frame_prefix": "loco_drg01_engine-t0",
+      "length_tiles": 0.20849822641066038,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Truck wheel pivot",
+        "count": 4,
+        "radius": 0.31,
+        "symmetry": 6
+      },
+      "max_phase_bounds_drift": 1
+    },
+    {
+      "name": "engine-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\engine-t1.blend",
+      "source_sha256": "f910ac0218c3d9415f79397382b00e205d89aae4bcf2cda8c0464aed536b22a4",
+      "frame_prefix": "loco_drg01_engine-t1",
+      "length_tiles": 0.09622995800460253,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Truck wheel pivot",
+        "count": 2,
+        "radius": 0.3,
+        "symmetry": 6
+      },
+      "max_phase_bounds_drift": 1
+    },
+    {
+      "name": "tender",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\tender.blend",
+      "source_sha256": "246ddc3d7b370cf4fb0041251aec5098cf59e63e50e61efc0ae741675c949ec1",
+      "frame_prefix": "loco_drg01_tender",
+      "length_tiles": 0.9911685005302966,
+      "canvas": 512,
+      "effects": {}
+    },
+    {
+      "name": "tender-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\tender-t0.blend",
+      "source_sha256": "bf50eefadab5744e1ca3f13319e2e670be1dd7e06fae8d3cf632e92fc9cf158f",
+      "frame_prefix": "loco_drg01_tender-t0",
+      "length_tiles": 0.2469902096125014,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Truck wheel pivot",
+        "count": 4,
+        "radius": 0.34,
+        "symmetry": 6
+      },
+      "max_phase_bounds_drift": 1
+    },
+    {
+      "name": "tender-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\model\\tender-t1.blend",
+      "source_sha256": "cc474535aead654d879b84238fce57fee011c069d0eca9634cb7fe19e35e7703",
+      "frame_prefix": "loco_drg01_tender-t1",
+      "length_tiles": 0.2469902096125014,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Truck wheel pivot",
+        "count": 4,
+        "radius": 0.34,
+        "symmetry": 6
+      },
+      "max_phase_bounds_drift": 1
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "png-pictures-and-owner-notes",
+    "pictures": [
+      {
+        "id": "view1",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\references\\01.png",
+        "sha256": "1982f0d1a73827661b7e2ba2de28f1cd43eaea03541d8f04b6b45c2d45e145d0",
+        "original_name": "drawing1-r25-c5.jpeg",
+        "original_sha256": "4bcf4fce358abd4334548ee612f89ea5ffe13b02eb053072b332cd2b7e0b19d4"
+      },
+      {
+        "id": "view2",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\references\\02.png",
+        "sha256": "ec7f3d64683a485e17a20a2321b8d9064842c120924936fe74d7daeb065625c0",
+        "original_name": "loco-drg01-rear.png",
+        "original_sha256": "fca9d76420fbb256ea6ed1e0c20e9f45e2236b9f2a472c6d2f31d01ef558e201"
+      }
+    ],
+    "observations": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\drg01-picture-2026-10-09\\observations.json",
+      "sha256": "2851e56194ce5ae2b59a09547e703c287371443816b1966d544825ee85605977"
+    },
+    "guidelines": "Workbook v9 Locomotives row 25 and owner notes, interpreted only through the locked PNG references; no reconstructed/game model or fit/gear-table geometry.",
+    "prepared_sources": {
+      "engine": "53fe8039aef569dacbef3dc48dde7166857c530f439cbafb0c2d7d043f574981",
+      "engine-t0": "6ab0713c52d43de36735b0092715efbabf8a4d817182d535eebec663d6d6c20b",
+      "engine-t1": "f910ac0218c3d9415f79397382b00e205d89aae4bcf2cda8c0464aed536b22a4",
+      "tender": "246ddc3d7b370cf4fb0041251aec5098cf59e63e50e61efc0ae741675c949ec1",
+      "tender-t0": "bf50eefadab5744e1ca3f13319e2e670be1dd7e06fae8d3cf632e92fc9cf158f",
+      "tender-t1": "cc474535aead654d879b84238fce57fee011c069d0eca9634cb7fe19e35e7703"
+    }
+  }
+}

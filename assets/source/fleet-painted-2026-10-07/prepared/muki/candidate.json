@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "id": "muki",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\muki\\body.blend",
+      "source_sha256": "445fa08478c8d1c0b31c49e208349cc023d432b9171f33b5d60aaf06c8baef78",
+      "frame_prefix": "loco_muki_body",
+      "length_tiles": 0.5272934578990144,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            0.156,
+            -0.14,
+            1.519
+          ]
+        ],
+        "lamps": [
+          [
+            1.473,
+            -0.374,
+            1.168
+          ],
+          [
+            1.509,
+            0.385,
+            1.131
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.0625001461521873,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\muki\\window-mask.png",
+        "sha256": "0562a6d8e317a29502284daeb70b4a9a35de4056c7aa736ccc0b60b2ab1b9ea6"
+      }
+    }
+  ]
+}

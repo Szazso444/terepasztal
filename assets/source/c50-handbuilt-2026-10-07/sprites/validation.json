@@ -1,0 +1,9 @@
+{
+  "all_frames": 768,
+  "maximum_phase_bounds_change_px": 0,
+  "atlas_size": [
+    4096,
+    2931
+  ],
+  "shading": "matte-warm-ao-v1"
+}

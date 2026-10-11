@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "id": "bm50",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\bm50-reference-v3.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\revision-v3\\models\\bm50\\body.blend",
+      "source_sha256": "00a22ba455c6776450337a6d281f5fb09efc9d520db70f1791f4c723bdb7124d",
+      "frame_prefix": "loco_bm50_body",
+      "length_tiles": 0.6996,
+      "canvas": 256,
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 6,
+        "radius": 0.275,
+        "symmetry": 5
+      },
+      "effects": {
+        "lamps": [
+          [
+            2.32,
+            0,
+            1.873
+          ]
+        ]
+      }
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 6,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r6-c5.jpeg",
+        "sha256": "97a70cd98347d68f965c52e7bef3232df4cdf65248140aac2c0243fadae9dbc4"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r6-c6.jpeg",
+        "sha256": "fb1e65b27861b5d0acceba47485a2ad52f3ab40a77b7a1ae3f8674fb9bb7ffbd"
+      }
+    ],
+    "guidelines": "Geometry already explicitly accepted by owner in the 2026-10-07 review. Preserve approved shape. Use lighter painted style; no added cast shadows.",
+    "prepared_sources": {
+      "body": "00a22ba455c6776450337a6d281f5fb09efc9d520db70f1791f4c723bdb7124d"
+    },
+    "owner_approved": true
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "files": {
+    "atlas\\rolling-painted-1.json": "000f6a562abd67ee076e437dc1f31010ba5167470035b8a3e0580ca11fa376b5",
+    "atlas\\rolling-painted-1.png": "13fbe1ad363080306f99cc26680a5b7edf012c9e49680fb185cc30e6de57e573",
+    "fit-patch.json": "68f9c46be146ed2cc88bc19505634ad10b21b143a78953e5166bedb0734569d7",
+    "frames\\loco_c50_body_f0.png": "7ab0fcfed25cda89ce3364693fc149d69a9bcbb5522e57bd98449dda7c62e488",
+    "frames\\loco_c50_body_f24.png": "b75b9ba61f5737c6da75f18a73713a77cc60eb89527df184c95a177dd43d876e",
+    "frames\\loco_c50_body_f48.png": "83aafe1bc64dbcdf32f4454c7c649b6851f4ca8e0e204f20149bef7dfb7f68eb",
+    "frames\\loco_c50_body_f72.png": "7a390de21daecb0179d839c921fd72dbd2fac2ef2f0ef7ca57f9d19b545cb865",
+    "frames\\loco_c50_body_w0_f0.png": "7ab0fcfed25cda89ce3364693fc149d69a9bcbb5522e57bd98449dda7c62e488",
+    "frames\\loco_c50_body_w0_f24.png": "b75b9ba61f5737c6da75f18a73713a77cc60eb89527df184c95a177dd43d876e",
+    "frames\\loco_c50_body_w0_f48.png": "83aafe1bc64dbcdf32f4454c7c649b6851f4ca8e0e204f20149bef7dfb7f68eb",
+    "frames\\loco_c50_body_w0_f72.png": "7a390de21daecb0179d839c921fd72dbd2fac2ef2f0ef7ca57f9d19b545cb865",
+    "frames\\loco_c50_body_w3_f0.png": "8cd29f6f663edb55b01bada44348c86984abe0c097a6cd6927a3c4ffe968c395",
+    "frames\\loco_c50_body_w3_f24.png": "6038241c4b8180815fdd6a7598230ded9165e2079a452626ceb7f74978dc9594",
+    "frames\\loco_c50_body_w3_f48.png": "0b04bcd1f61e101983a54138a394e5f6ed8e20a2726eebade29fbd73a6aff20f",
+    "frames\\loco_c50_body_w3_f72.png": "b1d87b469377b195382387d4d012d78213593e07e948d1997d07e9319dff6772",
+    "inputs.json": "e69f9d93dc3f962d91cfbe22c863e8a5fb99152cd041d1cd4796da8de97b0a92",
+    "report.json": "cda76a59fb30958a0e814bdc224f6fe641b806a7fd8298886cb26f5df012de19"
+  },
+  "key": "74483984b279918f0a87feef0f6838a532e9eeb61469022079fb75870a9acaa6"
+}

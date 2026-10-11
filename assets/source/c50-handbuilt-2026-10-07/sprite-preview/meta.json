@@ -1,0 +1,26 @@
+{
+  "id": "c50",
+  "kind": "handbuilt",
+  "source_unchanged": true,
+  "source_sha256": "759437b66eb8dc81cb558a711e1043789c483cd890beb9f14492ddf003184f27",
+  "facings": 96,
+  "phases": 8,
+  "wheel_cycle_tiles": 0.08153802291280288,
+  "uniform_scale": 0.940855284372546,
+  "resolution": 4,
+  "supersample": 2,
+  "anchor": {
+    "ax": 128,
+    "ay": 128
+  },
+  "frames": [
+    "loco_c50_body_w0_f0.png",
+    "loco_c50_body_w1_f0.png",
+    "loco_c50_body_w0_f24.png",
+    "loco_c50_body_w1_f24.png",
+    "loco_c50_body_w0_f48.png",
+    "loco_c50_body_w1_f48.png",
+    "loco_c50_body_w0_f72.png",
+    "loco_c50_body_w1_f72.png"
+  ]
+}

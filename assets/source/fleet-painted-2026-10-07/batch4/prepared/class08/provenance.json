@@ -1,0 +1,28 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 17,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r17-c5.jpeg",
+        "sha256": "71b5c40e9e8c696b0c72c209c108cb31da62fb8272bc261ca13b716ac1ec7d9d"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-class08-rear.png",
+        "sha256": "a2988f25430420e512554241e3caf368982e34a798b813bd07f4f97e0c45be1a",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B17: BR Class 08 | G17: 0-6-0 (rod drive) | Y17: Frame [body]: 1-3 (rigid, baked; 2 virtual rail supports) | CI17: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "preparation_job_sha256": "a9d813c63a1d10d75886c64fc95cdd31f9f21000677ba58ccb30270ade0c36ae",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\class08.glb",
+  "glb_sha256": "90bab394daad1f9b06695bf255df44badc724d7d1a04b03d04e32ba0253dea40"
+}

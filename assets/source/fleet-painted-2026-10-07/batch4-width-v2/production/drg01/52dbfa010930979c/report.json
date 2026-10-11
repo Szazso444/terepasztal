@@ -1,0 +1,47 @@
+{
+  "complete": true,
+  "id": "drg01",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 864,
+      "part": "engine",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 768,
+      "part": "engine-t0",
+      "phase_bounds_drift_px": 1,
+      "scale": 1.0
+    },
+    {
+      "frames": 768,
+      "part": "engine-t1",
+      "phase_bounds_drift_px": 1,
+      "scale": 1.0
+    },
+    {
+      "frames": 96,
+      "part": "tender",
+      "phase_bounds_drift_px": 0,
+      "scale": 0.9999999999999999
+    },
+    {
+      "frames": 768,
+      "part": "tender-t0",
+      "phase_bounds_drift_px": 1,
+      "scale": 1.0
+    },
+    {
+      "frames": 768,
+      "part": "tender-t1",
+      "phase_bounds_drift_px": 1,
+      "scale": 1.0
+    }
+  ],
+  "profile": "fleet-reference-v2",
+  "repeat_pixel_match": false
+}

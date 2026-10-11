@@ -1,0 +1,29 @@
+{
+  "complete": true,
+  "id": "m62",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 192,
+      "part": "body",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 768,
+      "part": "body-t0",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0000000000000002
+    },
+    {
+      "frames": 768,
+      "part": "body-t1",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0000000000000002
+    }
+  ],
+  "profile": "fleet-reference-v2",
+  "repeat_pixel_match": false
+}

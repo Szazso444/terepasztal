@@ -1,0 +1,47 @@
+{
+  "status": "ready for owner review",
+  "models": [
+    {
+      "id": "mav375",
+      "bundle_key": "0e91b0584816aafd",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    },
+    {
+      "id": "class08",
+      "bundle_key": "b5e896983179997c",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    },
+    {
+      "id": "sw1",
+      "bundle_key": "956a1f9e4d54b9f9",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    },
+    {
+      "id": "drg01",
+      "bundle_key": "77884bd369c687d8",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    },
+    {
+      "id": "m62",
+      "bundle_key": "25acf415a5a90a1b",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32
+    }
+  ],
+  "gallery_images_http200": 35,
+  "measured_tread_parts": 11,
+  "pipeline_unittests": 10,
+  "source_vitest": 197,
+  "game_vitest": 329,
+  "typecheck": "passed",
+  "scope": "Reference-authored wheels with overlap rejection; standard track25% narrower (0.24tile), narrow unchanged (0.16tile). Original M62 image reconstruction retained."
+}

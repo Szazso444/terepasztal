@@ -1,0 +1,288 @@
+{
+  "asset": {
+    "id": "mk45",
+    "category": "vehicle",
+    "image": "G:/DEV/Terepasztal/pipeline-out/inputs/mk45.png",
+    "size_tiles": 1.25,
+    "length_m": 10.25,
+    "width_m": 2.3,
+    "height_m": 3.1,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk45.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mk45\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mk45\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mk45\\debug_dir",
+  "landmarks": {
+    "note": "MAV Mk45 B'B': two 2-axle bogies, built as 4 round axles (1-tile stock, no bogie sprites). Narrow gauge (760 mm).",
+    "nose_px": [
+      900,
+      640
+    ]
+  },
+  "gear_parts": [
+    [
+      "body",
+      1.25,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.153,
+          0.288
+        ],
+        [
+          0.712,
+          0.873
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.153,
+          0.288
+        ],
+        [
+          0.712,
+          0.873
+        ]
+      ],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "trucks": [
+          {
+            "d": 0.75,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          },
+          {
+            "d": 0.75,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 1.25,
+    "length_m": 10.25,
+    "width_m": 2.3,
+    "height_m": 3.1,
+    "stance": "support",
+    "rail_half_m": 0.499,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0.65,
+    "stance_mode": "turn",
+    "box_body": true
+  },
+  "annot": {
+    "id": "mk45",
+    "windows": [
+      [
+        [
+          224,
+          308
+        ],
+        [
+          252,
+          321
+        ],
+        [
+          251,
+          382
+        ],
+        [
+          225,
+          368
+        ]
+      ],
+      [
+        [
+          267,
+          330
+        ],
+        [
+          295,
+          344
+        ],
+        [
+          294,
+          403
+        ],
+        [
+          268,
+          388
+        ]
+      ],
+      [
+        [
+          305,
+          352
+        ],
+        [
+          333,
+          366
+        ],
+        [
+          333,
+          424
+        ],
+        [
+          306,
+          410
+        ]
+      ],
+      [
+        [
+          348,
+          361
+        ],
+        [
+          365,
+          357
+        ],
+        [
+          365,
+          419
+        ],
+        [
+          349,
+          424
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        905,
+        578
+      ],
+      [
+        946,
+        695
+      ],
+      [
+        844,
+        749
+      ]
+    ],
+    "smoke": [
+      [
+        415,
+        262
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Diesel. Four glazed panes: three cab side windows plus the narrow front windscreen sliver at the cab corner. Headlamps: the big lit roof lamp on the nose plus the two small lower marker lamps on the nose end. The rear roof lamp housing (about 132,175) is seen from behind, lens not visible, and a red tail lamp peeks out at about (83,353); both left out. Smoke: the dark slotted outlet on the hood roof just ahead of the cab; the round capped fitting on the rear hood roof (163,180) looks like a filler cap, so the exhaust point is a best guess."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk45-rear.png"
+  ],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk45.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk45.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mk45\\prepared-texture.png"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "workbook": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+  "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278",
+  "batch_limit": 5,
+  "reference_rows": {
+    "ice1": 28,
+    "bm50": 6,
+    "general": 18,
+    "rocket": 5
+  },
+  "gmam": "NOT present in v8. Asked owner whether separate base-v1/loco-gmam.png is intended; no geometry edits until answered.",
+  "rules": [
+    "Workbook pictures and latest owner notes are shape authority, not game model",
+    "No baked contact or cast shadow",
+    "Approximately 30 percent brighter",
+    "Stop after no more than five locomotives for review"
+  ]
+}
