@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Dir, DIRS, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import { hash2, type Rng } from '../engine/rng';
 import {
@@ -28,6 +28,10 @@ import type { Station } from './stations';
 import { content } from '../data/content';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
+import { simWorld } from '../testing/simWorld';
+import { rules, DEFAULT_RULES } from './rules';
+import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
+import { STR } from '../strings';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -1113,8 +1117,7 @@ const sidingTiles = (s: Siding): Tile[] =>
 const columns = ([a, b]: [number, number]) =>
   Array.from({ length: b - a + 1 }, (_, i) => ({ x: a + i, y: MAIN }));
 
-function layMain(c: Pick<RetreatCase, 'end' | 'sidings' | 'mine'>) {
-  const g = new TrackGraph(48, 26);
+function layMain(c: Pick<RetreatCase, 'end' | 'sidings' | 'mine'>, g = new TrackGraph(48, 26)) {
   const blocks = new Set<number>();
   for (const s of c.sidings) {
     if (s.north) g.place(s.x, MAIN - 1, 'switch', s.east ? 5 : 3);
@@ -1967,4 +1970,328 @@ describe("the tile a refuge's way on is counted from, rear first", () => {
     expect(rearSetUp(c), 'it stands on plain track with room behind it').not.toBeNull();
     rearHolds(c);
   });
+});
+
+// ------------------------------------------------------------ a shunt run by a train
+
+/** The fleet's private context a move aside is planned in, as `Fleet.makeWay` plans it. */
+interface FleetInside {
+  ctx(now: number, speedFactor: number): TickCtx;
+}
+/** The private Train member that turns a consist round where it stands. */
+interface Turning {
+  reverseConsist(): void;
+}
+/** A reversal of the consist: its speed then, the tiles under it that are not plain, how far a car moved. */
+interface Turned {
+  speed: number;
+  onSwitch: string[];
+  moved: number;
+}
+/** The reversals of the train of the world a case runs in, on that world's track. */
+interface Turns {
+  track: TrackGraph | null;
+  list: Turned[];
+}
+
+/**
+ * An idle train with no stop alone on generated track, made to leave the tiles it stands on and
+ * those of `theirs` (another train's route): on a narrow tree (`tree`: 1×1 curves and switches)
+ * or a narrow comb (`layComb`: 1×1 switches) with narrow stock, or on a regular main line with
+ * sidings either side, facing either way (`layMain`: 2×2 switches), with regular stock. Its head
+ * on plain track; cars may stand on a switch behind it.
+ */
+interface RunCase {
+  track:
+    | { kind: 'tree'; size: number; lays: Lay[] }
+    | { kind: 'line' | 'comb'; end: number; sidings: Siding[] };
+  head: State;
+  loco: string;
+  wagons: string[];
+  theirs: Tile[];
+}
+
+/** Seconds a game step lasts, as the fleet is stepped in play. */
+const RUN_GDT = 0.05;
+/** Longest a shunt on generated track may run: both legs are a few dozen tiles at most. */
+const RUN_FOR = 120;
+/** Cheap cases, of which about one in seven holds a shunt to run. */
+const RUN_SEEDS = Array.from({ length: 1500 }, (_, i) => i + 1);
+const RUN_SLOW = { timeout: 120_000 };
+
+/** The 1×1 piece of `kind` with exactly these links. */
+const oneTile = (kind: OneTile, links: [Dir, Dir][]) =>
+  PIECES.find(
+    (p) =>
+      p.kind === kind &&
+      p.links.length === links.length &&
+      links.every(([a, b]) => hasLink(p.links, a, b)),
+  )!;
+/**
+ * A comb: `layMain`'s line on narrow gauge, its sidings off 1×1 switches on the main line (the
+ * throat east or west, the branch north or south) and running straight on from them.
+ */
+function layComb(g: TrackGraph, c: { end: number; sidings: Siding[] }) {
+  const at = new Map(c.sidings.map((s) => [s.x, s]));
+  for (let x = 1; x <= c.end; x++) {
+    const s = at.get(x);
+    if (!s) {
+      const p = oneTile('straight', [[Dir.W, Dir.E]]);
+      g.set(x, MAIN, makePiece('straight', p.rot, 'narrow'));
+      continue;
+    }
+    const throat = s.east ? Dir.E : Dir.W;
+    const branch = s.north ? Dir.N : Dir.S;
+    const p = oneTile('switch', [
+      [throat, opposite(throat)],
+      [throat, branch],
+    ]);
+    g.set(x, MAIN, makePiece('switch', p.rot, 'narrow'));
+    const q = oneTile('straight', [[Dir.N, Dir.S]]);
+    for (let i = 1; i <= s.len; i++)
+      g.set(x, s.north ? MAIN - i : MAIN + i, makePiece('straight', q.rot, 'narrow'));
+  }
+  return g;
+}
+function layRun(g: TrackGraph, track: RunCase['track']) {
+  if (track.kind !== 'tree') return track.kind === 'line' ? layMain(track, g) : layComb(g, track);
+  for (const l of track.lays) g.set(l.x, l.y, makePiece(l.kind, l.rot, l.cls, l.cls2));
+  return g;
+}
+/** Locomotives of the gauge that run on their own tanks, no wire needed. */
+const runLocos = (narrow: boolean) =>
+  content.locomotives
+    .filter((d) => (d.gauge === 'narrow') === narrow && (d.type === 'diesel' || d.type === 'steam'))
+    .map((d) => d.id);
+function runTrain(c: Pick<RunCase, 'loco' | 'wagons'>) {
+  const t = rearTrain({ locos: [c.loco], wagons: c.wagons });
+  t.oil = t.oilCap;
+  t.coal = t.coalCap;
+  t.water = t.waterCap;
+  t.mode = 'schedule';
+  t.schedule = [];
+  return t;
+}
+/** The case laid in a fleet's world with the train standing idle in it; null if it cannot stand there or pull its cars. */
+function runSetUp(c: RunCase) {
+  const w = simWorld({ terrain: 'grass', size: 48 });
+  layRun(w.track, c.track);
+  const t = runTrain(c);
+  if (!w.track.has(c.head.x, c.head.y) || !t.spawnAt(w.track, c.head.x, c.head.y, c.head.in))
+    return null;
+  if (t.weight > t.power) return null;
+  t.idle('');
+  w.fleet.trains.push(t);
+  return { w, t };
+}
+/** Tile keys of every tile a train runs onto from `starts` without turning, as a refuge search runs. */
+function runsOnto(g: TrackGraph, starts: readonly State[]) {
+  const tiles = new Set<number>();
+  const seen = new Set<string>();
+  const queue = [...starts];
+  while (queue.length) {
+    const s = queue.pop()!;
+    tiles.add(g.key(s.x, s.y));
+    for (const out of g.exits(s.x, s.y, s.in)) {
+      const next = { x: s.x + DIR_DX[out], y: s.y + DIR_DY[out], in: opposite(out) };
+      const key = `${next.x},${next.y},${next.in}`;
+      if (!g.opensTo(next.x, next.y, next.in) || seen.has(key)) continue;
+      seen.add(key);
+      queue.push(next);
+    }
+  }
+  return tiles;
+}
+function runCase(rng: Rng): RunCase {
+  for (;;) {
+    let track: RunCase['track'];
+    const kind = rng.pick(['line', 'comb', 'tree'] as const);
+    if (kind !== 'tree') {
+      const end = rng.int(24, 44);
+      const sidings: Siding[] = [];
+      for (let n = rng.int(1, 4), i = 0; sidings.length < n && i < 30; i++) {
+        const s = { x: rng.int(3, end - 4), north: rng.chance(0.5), east: rng.chance(0.5) };
+        if (sidings.every((o) => Math.abs(o.x - s.x) >= 3))
+          sidings.push({ ...s, len: rng.int(2, 8) });
+      }
+      track = { kind, end, sidings };
+    } else {
+      const size = rng.int(8, 16);
+      track = { kind, size, lays: tree(rng, size) };
+    }
+    const g = layRun(new TrackGraph(48, 48), track);
+    const plain = [...g.tiles()].filter((t) => !t.piece.unit && t.piece.links.length === 1);
+    if (!plain.length) continue;
+    const at = rng.pick(plain);
+    const narrow = track.kind !== 'line';
+    const wagons = STOCK(narrow).wagons;
+    // on narrow gauge, a Muki and five wagons an odd number of them tubs, half the time on a comb:
+    // a whole number of tiles and a half long, its rear end on a tile edge where it stands to turn
+    const edgy = narrow && rng.chance(track.kind === 'comb' ? 1 / 2 : 1 / 4);
+    const tubs = rng.pick([1, 3, 5]);
+    const c: RunCase = {
+      track,
+      head: { x: at.x, y: at.y, in: rng.pick(edgesOf(at.piece.links)) },
+      loco: edgy ? 'muki' : rng.pick(runLocos(narrow)),
+      wagons: edgy
+        ? [...Array<string>(tubs).fill('mine_tub'), ...Array<string>(5 - tubs).fill('narrow_box')]
+        : Array.from({ length: rng.int(0, 3) }, () => rng.pick(wagons)),
+      theirs: [],
+    };
+    const t = runTrain(c);
+    if (!t.spawnAt(g, c.head.x, c.head.y, c.head.in)) continue;
+    // their route takes a share of the track, and half the time every tile either end of the
+    // train runs onto without turning: then only a shunt gets it off
+    const share = rng.pick([0.1, 0.3, 0.5]);
+    const rear = (t as unknown as Reversible).reversedTrail().trail.at(-1)!.seg;
+    const straight = rng.chance(0.5) ? runsOnto(g, [t.headSeg!, rear]) : new Set<number>();
+    c.theirs = [...g.tiles()]
+      .filter(({ x, y }) => straight.has(g.key(x, y)) || rng.chance(share))
+      .map(({ x, y }) => ({ x, y }));
+    if (runSetUp(c)) return c;
+  }
+}
+function* shrinkRun(c: RunCase): Iterable<RunCase> {
+  const out: RunCase[] = [];
+  for (const theirs of shrinkArray(c.theirs)) out.push({ ...c, theirs });
+  for (const wagons of shrinkArray(c.wagons)) out.push({ ...c, wagons });
+  const t = c.track;
+  if (t.kind === 'tree')
+    for (const lays of shrinkArray(t.lays)) out.push({ ...c, track: { ...t, lays } });
+  else for (const sidings of shrinkArray(t.sidings)) out.push({ ...c, track: { ...t, sidings } });
+  for (const r of out) if (runSetUp(r)) yield r;
+}
+
+/**
+ * The case run: where the train has no way off its tiles but a shunt (`planAside` with `shunt`,
+ * none without), it sets off on it (`retreat`) and the fleet steps it. Every step no car stands
+ * off the tiles it stood on and those its move was leased, and until it turns every tile of the
+ * second leg is its own; it reverses once partway, standing still (speed 0), with no car on a
+ * switch, crossing or tile of a larger piece and no car moving as it turns; and it ends its move
+ * within RUN_FOR, idle and saying it made way, its head on the second leg's last tile and every car
+ * on plain track off the tiles it had to leave, its lease gone on the next step. What it found:
+ * a way with no turn, no way, or a shunt it ran, and whether it set off astride a switch.
+ */
+function runHolds(c: RunCase, turns: Turns) {
+  const { w, t } = runSetUp(c)!;
+  turns.track = w.track;
+  const wk = w.track.w;
+  const ctx = (w.fleet as unknown as FleetInside).ctx(0, 1);
+  const stood = t.occupancyKeys(wk);
+  const theirs = new Set([...stood, ...c.theirs.map((p) => p.y * wk + p.x)]);
+  const spots = { theirs, bound: new Set<number>(), sidings: new Set<number>() };
+  const plain = t.planAside(ctx, [], spots);
+  const plan = t.planAside(ctx, [], spots, false, true);
+  // the fallback only: where a way with no turn exists, it is the plan
+  if (plain) {
+    expect(plan, 'a shunt where a way with no turn exists').toEqual(plain);
+    return { found: 'plain', astride: false, curved: false, edge: false };
+  }
+  if (!plan) return { found: 'none', astride: false, curved: false, edge: false };
+  const show = (keys: number[]) => keys.map((k) => `(${k % wk},${Math.floor(k / wk)})`).join(' ');
+  const plainAt = (k: number) => {
+    const p = w.track.get(k % wk, Math.floor(k / wk));
+    return !!p && p.links.length === 1 && !p.unit;
+  };
+  const story = `${t.length.toFixed(3)} tiles long, ${plan.flip ? 'rear' : 'head'} first: ${showWay(plan.path)} | ${plan.back && showWay(plan.back)}`;
+  expect(plan.back, story).toBeDefined();
+  const back = plan.back!;
+  const astride = stood.some((k) => !plainAt(k));
+  expect(t.retreat(ctx, [], plan), story).toBe(true);
+  // the turn before it sets off is not one partway
+  turns.list = [];
+  const lease = w.fleet.traffic.recoveries.active.get(t.id);
+  expect(lease, story).toBeDefined();
+  const allowed = new Set([...lease!.tiles, ...stood]);
+  let now = 0;
+  for (let i = 0; i < RUN_FOR / RUN_GDT && t.holding; i++) {
+    w.fleet.tick(RUN_GDT, (now += RUN_GDT));
+    const at = `at ${now.toFixed(2)} s`;
+    const off = t.occupancyKeys(wk).filter((k) => !allowed.has(k));
+    if (off.length) throw new Error(`${at} a car stands on ${show(off)}, off its lease: ${story}`);
+    if (t.holding && !turns.list.length)
+      for (const s of back)
+        if (w.fleet.traffic.claims.get(s.y * wk + s.x) !== t.id)
+          throw new Error(`${at} (${s.x},${s.y}) of its second leg is not its own: ${story}`);
+  }
+  expect(t.holding, `still on its move after ${RUN_FOR} s: ${story}`).toBe(false);
+  expect([t.state, t.lastMessage], story).toEqual(['idle', STR.traffic.madeWay]);
+  expect(turns.list, story).toEqual([{ speed: 0, onSwitch: [], moved: expect.closeTo(0, 9) }]);
+  const end = back[back.length - 1];
+  expect(t.headTile, story).toEqual({ x: end.x, y: end.y });
+  const parked = t.occupancyKeys(wk);
+  const wrong = parked.filter((k) => !plainAt(k) || theirs.has(k));
+  expect(show(wrong), `parked off a refuge: ${story}`).toBe('');
+  w.fleet.tick(RUN_GDT, (now += RUN_GDT));
+  expect(w.fleet.traffic.recoveries.active.has(t.id), story).toBe(false);
+  const curved = [...plan.path, ...back].some((s) => w.track.get(s.x, s.y)?.kind === 'curve');
+  // a whole number of tiles and a half long: on straight track its rear end turns on a tile edge
+  const edge = Math.abs((t.length % 1) - 0.5) < 1e-9;
+  return { found: 'shunt', astride, curved, edge };
+}
+
+describe('a shunt run by a train on generated track', () => {
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+    setSupplyMode(DEFAULT_SUPPLY);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // the plan is the oracle's (`findShuntPath on generated track`); here the train runs it, on
+  // curves and over 1×1 and 2×2 switches, its rear end on a tile edge at times, and must turn
+  // exactly where the plan turns. A thousand short runs: a few seconds alone, longer on a loaded
+  // runner
+  it(
+    'turns once at rest, clear of every switch, where the plan turns, and parks where it ends',
+    RUN_SLOW,
+    () => {
+      const turns: Turns = { track: null, list: [] };
+      const turning = Train.prototype as unknown as Turning;
+      const reverse = turning.reverseConsist;
+      vi.spyOn(turning, 'reverseConsist').mockImplementation(function (this: Train) {
+        const g = turns.track!;
+        const before = this.poses.map((p) => ({ ...p }));
+        const onSwitch = this.occupancyKeys(g.w)
+          .filter((k) => {
+            const p = g.get(k % g.w, Math.floor(k / g.w));
+            return !p || p.links.length !== 1 || !!p.unit;
+          })
+          .map((k) => `(${k % g.w},${Math.floor(k / g.w)})`);
+        const speed = this.speed;
+        reverse.call(this);
+        const moved = Math.max(
+          0,
+          ...this.poses.map((p, i) => Math.hypot(p.x - before[i].x, p.y - before[i].y)),
+        );
+        turns.list.push({ speed, onSwitch, moved });
+      });
+      const found = new Map<string, number>();
+      let astride = 0;
+      let curved = 0;
+      let edge = 0;
+      forAll(
+        runCase,
+        (c) => {
+          const got = runHolds(c, turns);
+          const key = `${got.found} ${c.track.kind}`;
+          found.set(key, (found.get(key) ?? 0) + 1);
+          if (got.astride) astride++;
+          if (got.curved) curved++;
+          if (got.edge) edge++;
+        },
+        { seeds: RUN_SEEDS, shrink: shrinkRun },
+      );
+      // not vacuous: shunts run on every kind of track, set off astride a switch, over curves and
+      // by trains whose rear end turns on a tile edge
+      const shunts = (kind: string) => found.get(`shunt ${kind}`) ?? 0;
+      expect(shunts('line'), 'shunts run on sided lines').toBeGreaterThan(40);
+      expect(shunts('comb'), 'shunts run on narrow combs').toBeGreaterThan(40);
+      expect(shunts('tree'), 'shunts run on trees').toBeGreaterThan(20);
+      expect(astride, 'shunts set off astride a switch').toBeGreaterThan(45);
+      expect(curved, 'shunts over curves').toBeGreaterThan(18);
+      expect(edge, 'shunts turning with the rear end on a tile edge').toBeGreaterThan(8);
+    },
+  );
 });
