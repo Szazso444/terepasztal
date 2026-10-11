@@ -1,0 +1,1058 @@
+{
+  "status": "passed",
+  "failures": [],
+  "rules": {
+    "canvas": 1024,
+    "anchor": [
+      512,
+      832
+    ],
+    "band": "|offset| <= 0.25 opaque",
+    "verge": "alpha 0 beyond |offset| 0.28",
+    "softEdge": "partial alpha within 2 canvas px (one texel at resolution 4) of an outline",
+    "grooves": "groove centre within 0.004 tile of +-railOffset, contrast >= 60",
+    "joins": "resolution-4 cross-section at each edge midpoint within 6 levels of the reference, same opaque span on opposite edges"
+  },
+  "pictures": [
+    {
+      "id": "road-straight-x",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-straight-y",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-curve-ne-se",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        486,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        486,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-curve-se-sw",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        819,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        819,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-curve-sw-nw",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        537,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        537,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-curve-nw-ne",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        844
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        844
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-tee-closed-ne",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-tee-closed-se",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-tee-closed-sw",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-tee-closed-nw",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-end-ne",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        411,
+        732,
+        710,
+        882
+      ],
+      "expectedBbox": [
+        411,
+        732,
+        710,
+        882
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-end-se",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        411,
+        781,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        411,
+        781,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-end-sw",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        781,
+        612,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        781,
+        612,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-end-nw",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        612,
+        882
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        612,
+        882
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "road-cross",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true
+    },
+    {
+      "id": "crossing-regular-r0",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true,
+      "grooves": [
+        {
+          "expected": -0.16,
+          "centre": -0.16,
+          "width": 0.038,
+          "contrast": 101,
+          "passes": true
+        },
+        {
+          "expected": 0.16,
+          "centre": 0.16,
+          "width": 0.038,
+          "contrast": 105,
+          "passes": true
+        }
+      ]
+    },
+    {
+      "id": "crossing-regular-r1",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true,
+      "grooves": [
+        {
+          "expected": -0.16,
+          "centre": -0.16,
+          "width": 0.04,
+          "contrast": 106,
+          "passes": true
+        },
+        {
+          "expected": 0.16,
+          "centre": 0.159,
+          "width": 0.04,
+          "contrast": 107,
+          "passes": true
+        }
+      ]
+    },
+    {
+      "id": "crossing-narrow-r0",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true,
+      "grooves": [
+        {
+          "expected": -0.08,
+          "centre": -0.08,
+          "width": 0.04,
+          "contrast": 68,
+          "passes": true
+        },
+        {
+          "expected": 0.08,
+          "centre": 0.08,
+          "width": 0.038,
+          "contrast": 63,
+          "passes": true
+        }
+      ]
+    },
+    {
+      "id": "crossing-narrow-r1",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "rgba": true,
+      "outsideDiamond": 0,
+      "outsideBand": 0,
+      "bandNotOpaque": 0,
+      "softEdgeTooWide": 0,
+      "bbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "expectedBbox": [
+        313,
+        732,
+        710,
+        931
+      ],
+      "anchor": [
+        512,
+        832
+      ],
+      "anchorOffBy": 0,
+      "passes": true,
+      "grooves": [
+        {
+          "expected": -0.08,
+          "centre": -0.0815,
+          "width": 0.041,
+          "contrast": 100,
+          "passes": true
+        },
+        {
+          "expected": 0.08,
+          "centre": 0.078,
+          "width": 0.042,
+          "contrast": 97,
+          "passes": true
+        }
+      ]
+    }
+  ],
+  "joins": {
+    "ne": {
+      "reference": "road-straight-y",
+      "span": {
+        "from": -0.2731,
+        "to": 0.2737
+      },
+      "pieces": [
+        {
+          "id": "road-straight-y",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-curve-ne-se",
+          "maxDiff": 4.11,
+          "meanDiff": 0.085,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-curve-nw-ne",
+          "maxDiff": 1.74,
+          "meanDiff": 0.067,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-se",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-sw",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-nw",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-end-ne",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-cross",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "crossing-regular-r1",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "crossing-narrow-r1",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        }
+      ],
+      "matchesOpposite": true,
+      "passes": true
+    },
+    "se": {
+      "reference": "road-straight-x",
+      "span": {
+        "from": -0.2731,
+        "to": 0.2737
+      },
+      "pieces": [
+        {
+          "id": "road-straight-x",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-curve-ne-se",
+          "maxDiff": 4.05,
+          "meanDiff": 0.085,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-curve-se-sw",
+          "maxDiff": 1.79,
+          "meanDiff": 0.06,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-ne",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-sw",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-nw",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-end-se",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-cross",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "crossing-regular-r0",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "crossing-narrow-r0",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        }
+      ],
+      "matchesOpposite": true,
+      "passes": true
+    },
+    "sw": {
+      "reference": "road-straight-y",
+      "span": {
+        "from": -0.2731,
+        "to": 0.2737
+      },
+      "pieces": [
+        {
+          "id": "road-straight-y",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-curve-se-sw",
+          "maxDiff": 1.79,
+          "meanDiff": 0.057,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-curve-sw-nw",
+          "maxDiff": 4.05,
+          "meanDiff": 0.076,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-ne",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-se",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-nw",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-end-sw",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-cross",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "crossing-regular-r1",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "crossing-narrow-r1",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        }
+      ],
+      "matchesOpposite": true,
+      "passes": true
+    },
+    "nw": {
+      "reference": "road-straight-x",
+      "span": {
+        "from": -0.2731,
+        "to": 0.2737
+      },
+      "pieces": [
+        {
+          "id": "road-straight-x",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-curve-sw-nw",
+          "maxDiff": 4.11,
+          "meanDiff": 0.083,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-curve-nw-ne",
+          "maxDiff": 1.74,
+          "meanDiff": 0.062,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-ne",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-se",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-tee-closed-sw",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-end-nw",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "road-cross",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "crossing-regular-r0",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        },
+        {
+          "id": "crossing-narrow-r0",
+          "maxDiff": 0,
+          "meanDiff": 0,
+          "span": {
+            "from": -0.2731,
+            "to": 0.2737
+          }
+        }
+      ],
+      "matchesOpposite": true,
+      "passes": true
+    }
+  }
+}

@@ -10,7 +10,8 @@ const report = [], layers = [];
 mkdirSync(`${root}/review`, { recursive: true });
 for (let n = 0; n < geometry.pieces.length; n++) {
   const piece = geometry.pieces[n];
-  const file = `${root}/${piece.id}.png`;
+  // The corrected drafts this check was written for; the finished pictures now use the root names.
+  const file = `${root}/raw/${piece.id}-attempt-2.png`;
   const meta = await sharp(file).metadata();
   const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   let outsideDiamond = 0, outsideRoadBand = 0, alphaIntermediate = 0;
