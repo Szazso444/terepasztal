@@ -21,12 +21,15 @@ import {
   BUILDING_DEFS,
   BRIDGE_MAX_LEVEL,
   buildingFrame,
+  buildingDef,
   buildingFromJSON,
   buildingLevel,
+  buildingRate,
   buildingRecipe,
   buildingToJSON,
   buildingUpgradeCost,
   worksMaxLevel,
+  worksUpgradeMax,
   type Building,
 } from './buildings';
 import { bridgeCapacity } from './bridges';
@@ -179,15 +182,18 @@ describe('levels by age', () => {
     expect(w.builder.upgradeBuilding(refinery)).toBe(true);
     expect(buildingLevel(refinery)).toBe(2);
 
-    // every works, at every level and age, follows the age it appears in
+    // every works, at every level and age, follows the age it appears in, and stops at the age of
+    // its `lastTier` when it has one: the age the works is in counts no further than that
     for (const def of BUILDING_DEFS.filter((d) => !d.bridge))
       for (let age = 0; age <= LAST_AGE; age++) {
         w.economy.tier = age;
         for (let level = 1; level < MAX_LEVEL; level++) {
           const b: Building = { id: def.id, x: 0, y: 0, acc: 0, level, active: false, rate: 0 };
-          expect(w.builder.canUpgradeBuilding(b).ok, `${def.id} at ${level} in age ${age}`).toBe(
-            level < levelCap(def.tier, age),
-          );
+          const what = `${def.id} at ${level} in age ${age}`;
+          const c = w.builder.canUpgradeBuilding(b);
+          expect(c.ok, what).toBe(level < levelCap(def.tier, Math.min(age, def.lastTier ?? age)));
+          if (def.lastTier !== undefined && level >= levelCap(def.tier, def.lastTier))
+            expect(c.reason, what).toBe(STR.station.maxed);
         }
       }
 
@@ -373,6 +379,258 @@ describe('levels by age', () => {
     expect(content.houses.upgradeCost.slice(3)).toEqual([
       { stone: 420, iron: 180 },
       { stone: 640, iron: 320 },
+    ]);
+  });
+});
+
+/** A works' `lastTier` as the content editor may leave it: any value, or none (undefined). */
+function withLastTier(id: string, lastTier: unknown, fn: () => void) {
+  const def = BUILDING_DEFS.find((d) => d.id === id)! as unknown as { lastTier?: unknown };
+  const had = 'lastTier' in def,
+    before = def.lastTier;
+  if (lastTier === undefined) delete def.lastTier;
+  else def.lastTier = lastTier;
+  try {
+    fn();
+  } finally {
+    if (had) def.lastTier = before;
+    else delete def.lastTier;
+  }
+}
+
+/** Upgrade until the builder refuses, and say how many it took; a missing top cannot loop on. */
+function upgradeToTop(builder: Builder, b: Building): number {
+  let n = 0;
+  while (builder.upgradeBuilding(b)) if (++n > 2 * MAX_LEVEL) throw new Error(`${b.id}: no top`);
+  return n;
+}
+
+/** The top a works' `lastTier` gives, worked out from the data alone. */
+const expectedTop = (id: string, lastTier: unknown) =>
+  Number.isInteger(lastTier) ? levelCap(buildingDef(id).tier ?? 0, lastTier as number) : MAX_LEVEL;
+
+describe('a works with a last age', () => {
+  /** The stock a refused upgrade must leave alone. */
+  const purse = (w: ReturnType<typeof world>) =>
+    ['wood', 'stone', 'iron'].map((k) => w.stock.get(k));
+
+  /** A saved works standing in the builder, the way a load puts one there. */
+  function loaded(w: ReturnType<typeof world>, json: Parameters<typeof buildingFromJSON>[0]) {
+    const b = buildingFromJSON(json);
+    w.builder.buildings.set(b.y * w.map.w + b.x, b);
+    return b;
+  }
+
+  it('stops the charcoal kiln at level 3, in every age and in the editor', () => {
+    const def = buildingDef('kiln');
+    // the data this test stands on: the kiln ends at the Electric age, level 3
+    expect(def.lastTier).toBe(2);
+    expect(levelCap(def.tier ?? 0, def.lastTier!)).toBe(3);
+
+    const w = world(0);
+    const kiln = works(w.builder, 'kiln', 10, 10);
+    expect(worksUpgradeMax(kiln)).toBe(3);
+    // below the top nothing changes: each level opens in its own age
+    expect(w.builder.canUpgradeBuilding(kiln)).toMatchObject({
+      ok: false,
+      reason: STR.build.levelOpens(2, ageName(1)),
+    });
+    w.economy.setAge(1);
+    expect(w.builder.upgradeBuilding(kiln)).toBe(true);
+    expect(buildingLevel(kiln)).toBe(2);
+    expect(buildingUpgradeCost(kiln)).not.toBeNull();
+    expect(w.builder.canUpgradeBuilding(kiln).reason).toBe(STR.build.levelOpens(3, ageName(2)));
+    w.economy.setAge(2);
+    expect(w.builder.upgradeBuilding(kiln)).toBe(true);
+    expect(buildingLevel(kiln)).toBe(3);
+
+    // at the top, in the Electric age and in every age after it: no upgrade, nothing paid
+    for (let age = 2; age <= LAST_AGE; age++) {
+      w.economy.setAge(age);
+      const before = purse(w);
+      expect(buildingUpgradeCost(kiln), `age ${age}`).toBeNull();
+      expect(w.builder.canUpgradeBuilding(kiln), `age ${age}`).toMatchObject({
+        ok: false,
+        cost: {},
+        reason: STR.station.maxed,
+      });
+      expect(w.builder.upgradeBuilding(kiln), `age ${age}`).toBe(false);
+      expect(buildingLevel(kiln), `age ${age}`).toBe(3);
+      expect(kiln.work, `age ${age}`).toBeUndefined();
+      expect(purse(w), `age ${age}`).toEqual(before);
+    }
+
+    // the editor ignores the ages but not the top
+    const e = world(0);
+    e.builder.free = true;
+    const editorKiln = works(e.builder, 'kiln', 10, 10);
+    expect(upgradeToTop(e.builder, editorKiln)).toBe(2);
+    expect(buildingLevel(editorKiln)).toBe(3);
+    expect(buildingUpgradeCost(editorKiln)).toBeNull();
+    expect(e.builder.canUpgradeBuilding(editorKiln)).toMatchObject({
+      ok: false,
+      reason: STR.station.maxed,
+    });
+    expect(e.builder.upgradeBuilding(editorKiln)).toBe(false);
+    expect(buildingLevel(editorKiln)).toBe(3);
+  });
+
+  it('finishes a paid upgrade to the last level, and offers nothing after it', () => {
+    rules.upgradeTimeMul = 1;
+    const w = world(2);
+    const kiln = works(w.builder, 'kiln', 10, 10);
+    kiln.level = 2;
+    const before = purse(w);
+    expect(w.builder.upgradeBuilding(kiln)).toBe(true);
+    expect(purse(w)).not.toEqual(before);
+    expect(kiln.work?.to).toBe(3);
+    expect(w.builder.canUpgradeBuilding(kiln).reason).toBe(STR.build.upgradingNow);
+    w.builder.tickWorks(1e9);
+    expect(kiln.work).toBeUndefined();
+    expect(buildingLevel(kiln)).toBe(3);
+    expect(w.builder.canUpgradeBuilding(kiln)).toMatchObject({
+      ok: false,
+      reason: STR.station.maxed,
+    });
+  });
+
+  it('keeps a kiln above its last level, its rate and its work under way', () => {
+    const w = world(LAST_AGE);
+    const perWeek = buildingDef('kiln').perWeek;
+    for (const free of [false, true]) {
+      w.builder.free = free;
+      for (const level of [4, 5, MAX_LEVEL]) {
+        const kiln = loaded(w, [10, 12, 'kiln', 0, level]);
+        const before = purse(w);
+        expect(worksMaxLevel(kiln)).toBe(MAX_LEVEL);
+        expect(buildingLevel(kiln)).toBe(level);
+        expect(buildingRate(kiln)).toBeCloseTo(perWeek * (1 + (level - 1) * 0.5));
+        expect(buildingToJSON(kiln)[4]).toBe(level);
+        expect(buildingUpgradeCost(kiln)).toBeNull();
+        expect(w.builder.canUpgradeBuilding(kiln)).toMatchObject({
+          ok: false,
+          reason: STR.station.maxed,
+        });
+        expect(w.builder.upgradeBuilding(kiln)).toBe(false);
+        expect(buildingLevel(kiln)).toBe(level);
+        expect(purse(w)).toEqual(before);
+      }
+    }
+
+    // an upgrade the save had paid for finishes, to the level it was bought for
+    w.builder.free = false;
+    const work = { to: 4, left: 300, total: 600 };
+    const kiln = loaded(w, [10, 12, 'kiln', 0, 3, work]);
+    expect(kiln.work).toEqual(work);
+    expect(w.builder.canUpgradeBuilding(kiln).reason).toBe(STR.build.upgradingNow);
+    w.builder.tickWorks(1e9);
+    expect(kiln.work).toBeUndefined();
+    expect(buildingLevel(kiln)).toBe(4);
+    expect(buildingToJSON(kiln)[4]).toBe(4);
+    expect(w.builder.canUpgradeBuilding(kiln).reason).toBe(STR.station.maxed);
+  });
+
+  it('reads the data, not the id', () => {
+    // the windmill appears in the Steam age: a last age of 3 ends it at level 4
+    withLastTier('windmill', 3, () => {
+      const w = world(LAST_AGE);
+      const mill = works(w.builder, 'windmill', 10, 10);
+      expect(upgradeToTop(w.builder, mill)).toBe(levelCap(0, 3) - 1);
+      expect(buildingLevel(mill)).toBe(4);
+      expect(w.builder.canUpgradeBuilding(mill).reason).toBe(STR.station.maxed);
+      const e = world(0);
+      e.builder.free = true;
+      const free = works(e.builder, 'windmill', 10, 10);
+      upgradeToTop(e.builder, free);
+      expect(buildingLevel(free)).toBe(4);
+    });
+    // a last age before the works' own first one leaves it its one level
+    expect(buildingDef('refinery').tier).toBe(1);
+    withLastTier('refinery', 0, () => {
+      const w = world(LAST_AGE);
+      const b = works(w.builder, 'refinery', 10, 10);
+      expect(worksUpgradeMax(b)).toBe(1);
+      expect(w.builder.canUpgradeBuilding(b)).toMatchObject({
+        ok: false,
+        reason: STR.station.maxed,
+      });
+      expect(w.builder.upgradeBuilding(b)).toBe(false);
+      expect(buildingLevel(b)).toBe(1);
+    });
+    // and without it the works opens again
+    expect(buildingDef('windmill').lastTier).toBeUndefined();
+    const w = world(LAST_AGE);
+    const mill = works(w.builder, 'windmill', 10, 10);
+    withLastTier('windmill', 1, () => {
+      expect(w.builder.canUpgradeBuilding(mill).ok).toBe(true);
+      mill.level = 2;
+      expect(w.builder.canUpgradeBuilding(mill).ok).toBe(false);
+      mill.level = 1;
+    });
+    expect(w.builder.canUpgradeBuilding(mill).ok).toBe(true);
+    expect(upgradeToTop(w.builder, mill)).toBe(MAX_LEVEL - 1);
+    expect(buildingLevel(mill)).toBe(MAX_LEVEL);
+    // the data is back as the test found it
+    expect(buildingDef('kiln').lastTier).toBe(2);
+  });
+
+  it('gives a works a top that is a whole number from 1 to MAX_LEVEL, whatever lastTier holds', () => {
+    // a whole number is a last age; anything else is as good as none
+    const held: unknown[] = [undefined, null, NaN, Infinity, -Infinity, 1.5, 0.1, '2', '', true];
+    held.push([], {}, -3, -0, 0, 1, 2, 3, 4, 5, 6, 7, 99);
+    for (const def of BUILDING_DEFS.filter((d) => !d.bridge))
+      for (const lastTier of held)
+        withLastTier(def.id, lastTier, () => {
+          const what = `${def.id} with lastTier ${String(lastTier)} (${typeof lastTier})`;
+          const b: Building = { id: def.id, x: 0, y: 0, acc: 0, level: 1, active: false, rate: 0 };
+          const top = worksUpgradeMax(b);
+          expect(top, what).toBe(expectedTop(def.id, lastTier));
+          expect(Number.isInteger(top), what).toBe(true);
+          expect(top, what).toBeGreaterThanOrEqual(1);
+          expect(top, what).toBeLessThanOrEqual(MAX_LEVEL);
+          expect(worksMaxLevel(b), what).toBe(MAX_LEVEL);
+          // the cost is a price below the top and null at it, and the editor walks exactly there
+          const w = world(0);
+          w.builder.free = true;
+          const placed = loaded(w, [10, 12, def.id, 0, 1]);
+          for (let level = 1; level < top; level++) {
+            placed.level = level;
+            expect(buildingUpgradeCost(placed), `${what} at ${level}`).not.toBeNull();
+            expect(w.builder.canUpgradeBuilding(placed).ok, `${what} at ${level}`).toBe(true);
+          }
+          placed.level = 1;
+          expect(upgradeToTop(w.builder, placed), what).toBe(top - 1);
+          expect(buildingLevel(placed), what).toBe(top);
+          expect(buildingUpgradeCost(placed), what).toBeNull();
+          expect(w.builder.canUpgradeBuilding(placed), what).toMatchObject({
+            ok: false,
+            reason: STR.station.maxed,
+          });
+          expect(Number.isNaN(buildingRate(placed)), what).toBe(false);
+        });
+  });
+
+  it('leaves works without a last age and bridges as they were', () => {
+    for (const def of BUILDING_DEFS) {
+      const b: Building = { id: def.id, x: 0, y: 0, acc: 0, active: false, rate: 0 };
+      if (def.bridge) {
+        expect(worksUpgradeMax(b), def.id).toBe(BRIDGE_MAX_LEVEL);
+        // a bridge keeps its four levels whatever lastTier says
+        for (const lastTier of [0, 1, 2, NaN, 99])
+          withLastTier(def.id, lastTier, () => {
+            expect(worksUpgradeMax(b), `${def.id} ${lastTier}`).toBe(BRIDGE_MAX_LEVEL);
+            const w = world(0);
+            const bridge = works(w.builder, def.id, 10, 10);
+            expect(upgradeToTop(w.builder, bridge)).toBe(BRIDGE_MAX_LEVEL - 1);
+            expect(buildingLevel(bridge)).toBe(BRIDGE_MAX_LEVEL);
+          });
+      } else if (def.lastTier === undefined) {
+        expect(worksUpgradeMax(b), def.id).toBe(MAX_LEVEL);
+      }
+    }
+    // only the kiln says it ends: the rest of the works run to the sixth level
+    expect(BUILDING_DEFS.filter((d) => d.lastTier !== undefined).map((d) => d.id)).toEqual([
+      'kiln',
     ]);
   });
 });
