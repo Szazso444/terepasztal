@@ -2187,11 +2187,15 @@ describe('readSaveText, for any text', () => {
   });
 });
 
-/** Parts a game could save: a generated file's fields over the full fixture's. */
+/**
+ * Parts a game could save: a generated file's fields over the full fixture's, each station turned
+ * to one of the four as `Station.toJSON` writes it.
+ */
 function genParts(rng: Rng): SaveParts {
   const file = genFile(rng);
   const parts = fullParts() as unknown as Record<string, unknown>;
   for (const key of Object.keys(parts)) if (key in file) parts[key] = file[key];
+  parts.stations = (parts.stations as StationJSON[]).map((s) => ({ ...s, rot: rng.int(0, 3) }));
   return parts as unknown as SaveParts;
 }
 const FULL_PARTS = JSON.stringify(fullParts());
@@ -2880,12 +2884,14 @@ describe('the defaults the steps fill', () => {
           expect(besideCycle(save.trade), 'trade').toEqual(besideCycle(before.trade));
         else field('trade', 7, (v) => expect(deskOf(v), 'trade').toEqual(deskOf(undefined)));
 
-        const stations = before.stations as Record<string, unknown>[];
+        // a file of any version comes back with each station at the turn it loads at, the one
+        // Station.fromJSON gave what the file held (issue #227)
+        const stations = before.stations as StationJSON[];
         save.stations.forEach((s, i) => {
-          const was = stations[i].rot;
           const rot = 'rot' in s ? s.rot : 'absent';
-          if (from <= 6) expect(rot, `station ${i}`).toBe(was ?? 0);
-          else expect(rot, `station ${i}`).toBe('rot' in stations[i] ? was : 'absent');
+          expect(rot, `station ${i}`).toBe(
+            Station.fromJSON(asStored(stations[i]) as StationJSON).rot,
+          );
         });
         const trains = before.trains as Record<string, unknown>[];
         (save.trains as Record<string, unknown>[]).forEach((t, i) => {

@@ -98,6 +98,16 @@ export function resetStationIds(v = 1) {
   nextId = v;
 }
 
+/**
+ * A level a save or a level file holds, as a level a station has: a number rounded down and kept
+ * within 1 to MAX_LEVEL, and 1 for NaN and for anything that is no number, so the per-level tables
+ * (`LEVELS`) always have an entry for it.
+ */
+function wholeLevel(v: unknown): number {
+  if (typeof v !== 'number' || Number.isNaN(v)) return 1;
+  return Math.max(1, Math.min(MAX_LEVEL, Math.floor(v)));
+}
+
 /** A placed station. Storage is a cargo -> units map (produced goods waiting for pickup). */
 /** Radius within which harvested terrain counts, and the weighted sum that means "plenty". */
 export const HARVEST_RADIUS = 4;
@@ -357,13 +367,19 @@ export class Station {
       work: workToJSON(this.work),
     };
   }
+  /**
+   * The station a save holds, at a whole level (`wholeLevel`) and one of the four turns
+   * (`wrapRotation`). Its upgrade under way is kept when it is a work towards the next level; a
+   * depot's never is, as a depot's upgrade takes no time (`Builder.upgradeStation`), so a depot
+   * always loads open.
+   */
   static fromJSON(j: StationJSON): Station {
     const s = new Station(j.defId, j.x, j.y, j.name, j.id);
-    s.level = j.level;
+    s.level = wholeLevel(j.level);
     s.rot = wrapRotation(j.rot);
     s.storage = new Map(Object.entries(j.storage));
     s.market = new Map(Object.entries(j.market ?? {}));
-    s.work = workFromJSON(j.work, s.level, MAX_LEVEL);
+    s.work = s.def.depot ? null : workFromJSON(j.work, s.level, MAX_LEVEL);
     return s;
   }
   /** The station as a level file holds it: what it is, where, its level, name and turn. */
@@ -377,9 +393,10 @@ export class Station {
       ...(this.rot ? { rot: this.rot } : {}),
     };
   }
+  /** The station a level file holds, at a whole level (`wholeLevel`) and one of the four turns. */
   static fromLevel(j: LevelStation): Station {
     const s = new Station(j.defId, j.x, j.y, j.name || undefined);
-    s.level = Math.max(1, Math.min(MAX_LEVEL, j.level));
+    s.level = wholeLevel(j.level);
     s.rot = wrapRotation(j.rot);
     return s;
   }
