@@ -1,0 +1,256 @@
+{
+ "errors": [],
+ "cells": [
+  {
+   "key": "straight_regular r0",
+   "kind": "straight",
+   "cls": "regular",
+   "rot": 0
+  },
+  {
+   "key": "straight_regular r1",
+   "kind": "straight",
+   "cls": "regular",
+   "rot": 1
+  },
+  {
+   "key": "curve_regular r0",
+   "kind": "curve",
+   "cls": "regular",
+   "rot": 0
+  },
+  {
+   "key": "curve_regular r1",
+   "kind": "curve",
+   "cls": "regular",
+   "rot": 1
+  },
+  {
+   "key": "curve_regular r2",
+   "kind": "curve",
+   "cls": "regular",
+   "rot": 2
+  },
+  {
+   "key": "curve_regular r3",
+   "kind": "curve",
+   "cls": "regular",
+   "rot": 3
+  },
+  {
+   "key": "switch_regular r0",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 0
+  },
+  {
+   "key": "switch_regular r1",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 1
+  },
+  {
+   "key": "switch_regular r2",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 2
+  },
+  {
+   "key": "switch_regular r3",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 3
+  },
+  {
+   "key": "switch_regular r4",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 4
+  },
+  {
+   "key": "switch_regular r5",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 5
+  },
+  {
+   "key": "switch_regular r6",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 6
+  },
+  {
+   "key": "switch_regular r7",
+   "kind": "switch",
+   "cls": "regular",
+   "rot": 7
+  },
+  {
+   "key": "crossing_regular_regular r0",
+   "kind": "crossing",
+   "cls": "regular",
+   "cls2": "regular",
+   "rot": 0
+  },
+  {
+   "key": "transition_regular r0",
+   "kind": "transition",
+   "cls": "regular",
+   "rot": 0
+  },
+  {
+   "key": "transition_regular r1",
+   "kind": "transition",
+   "cls": "regular",
+   "rot": 1
+  },
+  {
+   "key": "straight_high_speed r0",
+   "kind": "straight",
+   "cls": "high_speed",
+   "rot": 0
+  },
+  {
+   "key": "straight_high_speed r1",
+   "kind": "straight",
+   "cls": "high_speed",
+   "rot": 1
+  },
+  {
+   "key": "curve_high_speed r0",
+   "kind": "curve",
+   "cls": "high_speed",
+   "rot": 0
+  },
+  {
+   "key": "curve_high_speed r1",
+   "kind": "curve",
+   "cls": "high_speed",
+   "rot": 1
+  },
+  {
+   "key": "curve_high_speed r2",
+   "kind": "curve",
+   "cls": "high_speed",
+   "rot": 2
+  },
+  {
+   "key": "curve_high_speed r3",
+   "kind": "curve",
+   "cls": "high_speed",
+   "rot": 3
+  },
+  {
+   "key": "switch_high_speed r0",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 0
+  },
+  {
+   "key": "switch_high_speed r1",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 1
+  },
+  {
+   "key": "switch_high_speed r2",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 2
+  },
+  {
+   "key": "switch_high_speed r3",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 3
+  },
+  {
+   "key": "switch_high_speed r4",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 4
+  },
+  {
+   "key": "switch_high_speed r5",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 5
+  },
+  {
+   "key": "switch_high_speed r6",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 6
+  },
+  {
+   "key": "switch_high_speed r7",
+   "kind": "switch",
+   "cls": "high_speed",
+   "rot": 7
+  },
+  {
+   "key": "crossing_regular_high_speed r0",
+   "kind": "crossing",
+   "cls": "regular",
+   "cls2": "high_speed",
+   "rot": 0
+  },
+  {
+   "key": "crossing_high_speed_high_speed r0",
+   "kind": "crossing",
+   "cls": "high_speed",
+   "cls2": "high_speed",
+   "rot": 0
+  }
+ ],
+ "states": [
+  [
+   "black_five:moving:0.5",
+   "f7:moving:0.5",
+   "john_bull:moving:0.5",
+   "class08:moving:0.5"
+  ],
+  [
+   "black_five:moving:2.7",
+   "f7:moving:2.9",
+   "john_bull:moving:2.2",
+   "class08:moving:2.2"
+  ],
+  [
+   "black_five:moving:5.9",
+   "f7:moving:6.4",
+   "john_bull:moving:4.1",
+   "class08:moving:4.2"
+  ],
+  [
+   "black_five:moving:9.2",
+   "f7:moving:9.9",
+   "john_bull:moving:6.0",
+   "class08:moving:6.2"
+  ],
+  [
+   "black_five:moving:12.5",
+   "f7:noRoute:11.9",
+   "john_bull:moving:7.8",
+   "class08:moving:8.2"
+  ],
+  [
+   "black_five:moving:15.8",
+   "f7:noRoute:11.9",
+   "john_bull:moving:9.5",
+   "class08:moving:10.2"
+  ]
+ ],
+ "marks": {
+  "X0": 14,
+  "X1": 50,
+  "Y0": 34,
+  "Y1": 58,
+  "SWA": 22,
+  "SWB": 34,
+  "TRA": 24,
+  "TRB": 38,
+  "XC": 30,
+  "YC": 44
+ }
+}

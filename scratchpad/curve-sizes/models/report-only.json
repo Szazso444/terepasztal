@@ -1,0 +1,56 @@
+{
+ "errors": [],
+ "shots": [
+  {
+   "cls": "regular",
+   "id": "koutetsujou",
+   "what": "straight",
+   "file": "koutetsujou-straight.png",
+   "progress": 18.502700320512602,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 5.4,
+    "specs": [
+     3,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "koutetsujou",
+   "what": "loco",
+   "file": "koutetsujou-loco.png",
+   "progress": 23.689659115398584,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 5.4,
+    "specs": [
+     3,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "koutetsujou",
+   "what": "train",
+   "file": "koutetsujou-train.png",
+   "progress": 24.88565911539866,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 5.4,
+    "specs": [
+     3,
+     1,
+     1
+    ]
+   }
+  }
+ ]
+}

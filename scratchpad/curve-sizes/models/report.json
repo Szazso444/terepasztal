@@ -1,0 +1,1467 @@
+{
+ "errors": [],
+ "shots": [
+  {
+   "cls": "regular",
+   "id": "adler",
+   "what": "straight",
+   "file": "adler-straight.png",
+   "progress": 18.507683333333112,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "adler",
+   "what": "loco",
+   "file": "adler-loco.png",
+   "progress": 22.687164844416962,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "adler",
+   "what": "train",
+   "file": "adler-train.png",
+   "progress": 23.882049078929843,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "john_bull",
+   "what": "straight",
+   "file": "john_bull-straight.png",
+   "progress": 18.504749999999426,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "john_bull",
+   "what": "loco",
+   "file": "john_bull-loco.png",
+   "progress": 22.681673304482587,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "john_bull",
+   "what": "train",
+   "file": "john_bull-train.png",
+   "progress": 23.887181916600355,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mav375",
+   "what": "straight",
+   "file": "mav375-straight.png",
+   "progress": 18.51124999999978,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mav375",
+   "what": "loco",
+   "file": "mav375-loco.png",
+   "progress": 22.69073151108364,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mav375",
+   "what": "train",
+   "file": "mav375-train.png",
+   "progress": 23.88247181214797,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "general",
+   "what": "straight",
+   "file": "general-straight.png",
+   "progress": 18.507799999999527,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "general",
+   "what": "loco",
+   "file": "general-loco.png",
+   "progress": 22.929680463417675,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "general",
+   "what": "train",
+   "file": "general-train.png",
+   "progress": 24.13869186365376,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "jupiter",
+   "what": "straight",
+   "file": "jupiter-straight.png",
+   "progress": 18.508133333333156,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "jupiter",
+   "what": "loco",
+   "file": "jupiter-loco.png",
+   "progress": 22.94264762574707,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "jupiter",
+   "what": "train",
+   "file": "jupiter-train.png",
+   "progress": 24.131431167473032,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mav424",
+   "what": "straight",
+   "file": "mav424-straight.png",
+   "progress": 18.507177083333577,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mav424",
+   "what": "loco",
+   "file": "mav424-loco.png",
+   "progress": 23.43004624646924,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mav424",
+   "what": "train",
+   "file": "mav424-train.png",
+   "progress": 24.63754624646926,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "k4s",
+   "what": "straight",
+   "file": "k4s-straight.png",
+   "progress": 18.520755952380767,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "k4s",
+   "what": "loco",
+   "file": "k4s-loco.png",
+   "progress": 23.184493665257204,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "k4s",
+   "what": "train",
+   "file": "k4s-train.png",
+   "progress": 24.380094312593442,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "drg01",
+   "what": "straight",
+   "file": "drg01-straight.png",
+   "progress": 18.51479274193547,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "drg01",
+   "what": "loco",
+   "file": "drg01-loco.png",
+   "progress": 23.20261389539683,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "drg01",
+   "what": "train",
+   "file": "drg01-train.png",
+   "progress": 24.391713895396897,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "flying_scotsman",
+   "what": "straight",
+   "file": "flying_scotsman-straight.png",
+   "progress": 18.52539189189203,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "flying_scotsman",
+   "what": "loco",
+   "file": "flying_scotsman-loco.png",
+   "progress": 23.18293418179098,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "flying_scotsman",
+   "what": "train",
+   "file": "flying_scotsman-train.png",
+   "progress": 24.39017116074029,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "daylight",
+   "what": "straight",
+   "file": "daylight-straight.png",
+   "progress": 18.51863123359592,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "daylight",
+   "what": "loco",
+   "file": "daylight-loco.png",
+   "progress": 23.44364600293067,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "daylight",
+   "what": "train",
+   "file": "daylight-train.png",
+   "progress": 24.63504600293068,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mallard",
+   "what": "straight",
+   "file": "mallard-straight.png",
+   "progress": 18.515260335195464,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mallard",
+   "what": "loco",
+   "file": "mallard-loco.png",
+   "progress": 23.19099572771356,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "mallard",
+   "what": "train",
+   "file": "mallard-train.png",
+   "progress": 24.385048850226195,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "big_boy",
+   "what": "straight",
+   "file": "big_boy-straight.png",
+   "progress": 18.50442371794875,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 5.4,
+    "specs": [
+     3,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "big_boy",
+   "what": "loco",
+   "file": "big_boy-loco.png",
+   "progress": 23.685596845444483,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 5.4,
+    "specs": [
+     3,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "big_boy",
+   "what": "train",
+   "file": "big_boy-train.png",
+   "progress": 24.88619684544457,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 5.4,
+    "specs": [
+     3,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "sw1",
+   "what": "straight",
+   "file": "sw1-straight.png",
+   "progress": 18.502700320512602,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "sw1",
+   "what": "loco",
+   "file": "sw1-loco.png",
+   "progress": 22.931226553897744,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "sw1",
+   "what": "train",
+   "file": "sw1-train.png",
+   "progress": 24.13432578206528,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "class08",
+   "what": "straight",
+   "file": "class08-straight.png",
+   "progress": 18.509872395833114,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "class08",
+   "what": "loco",
+   "file": "class08-loco.png",
+   "progress": 22.689353906916963,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "class08",
+   "what": "train",
+   "file": "class08-train.png",
+   "progress": 23.884656110179844,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "m62",
+   "what": "straight",
+   "file": "m62-straight.png",
+   "progress": 18.50485128205106,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "m62",
+   "what": "loco",
+   "file": "m62-loco.png",
+   "progress": 23.19078893430288,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "m62",
+   "what": "train",
+   "file": "m62-train.png",
+   "progress": 24.386788934302935,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "f7",
+   "what": "straight",
+   "file": "f7-straight.png",
+   "progress": 18.503002150537988,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "f7",
+   "what": "loco",
+   "file": "f7-loco.png",
+   "progress": 23.19253823021339,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "f7",
+   "what": "train",
+   "file": "f7-train.png",
+   "progress": 24.394671563546765,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "sd40",
+   "what": "straight",
+   "file": "sd40-straight.png",
+   "progress": 18.501752327746555,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "sd40",
+   "what": "loco",
+   "file": "sd40-loco.png",
+   "progress": 23.442881706180717,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "sd40",
+   "what": "train",
+   "file": "sd40-train.png",
+   "progress": 24.6388817061807,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "deltic",
+   "what": "straight",
+   "file": "deltic-straight.png",
+   "progress": 18.506499999999946,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "deltic",
+   "what": "loco",
+   "file": "deltic-loco.png",
+   "progress": 23.201791736921294,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "deltic",
+   "what": "train",
+   "file": "deltic-train.png",
+   "progress": 24.397588993875562,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "dda40x",
+   "what": "straight",
+   "file": "dda40x-straight.png",
+   "progress": 18.50353333333314,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "dda40x",
+   "what": "loco",
+   "file": "dda40x-loco.png",
+   "progress": 23.435113740410447,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "dda40x",
+   "what": "train",
+   "file": "dda40x-train.png",
+   "progress": 24.64951374041043,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "kando_v40",
+   "what": "straight",
+   "file": "kando_v40-straight.png",
+   "progress": 18.51702839506171,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "kando_v40",
+   "what": "loco",
+   "file": "kando_v40-loco.png",
+   "progress": 22.936309607607605,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "kando_v40",
+   "what": "train",
+   "file": "kando_v40-train.png",
+   "progress": 24.130758307522413,
+   "state": "moving",
+   "lengths": {
+    "loco": 1.5,
+    "train": 3.9,
+    "specs": [
+     1.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "v63",
+   "what": "straight",
+   "file": "v63-straight.png",
+   "progress": 18.51816666666702,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "v63",
+   "what": "loco",
+   "file": "v63-loco.png",
+   "progress": 23.183585639703697,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "v63",
+   "what": "train",
+   "file": "v63-train.png",
+   "progress": 24.385718973037072,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "crocodile",
+   "what": "straight",
+   "file": "crocodile-straight.png",
+   "progress": 18.512483333333112,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "crocodile",
+   "what": "loco",
+   "file": "crocodile-loco.png",
+   "progress": 23.17857296087231,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "crocodile",
+   "what": "train",
+   "file": "crocodile-train.png",
+   "progress": 24.394506294205698,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "taurus",
+   "what": "straight",
+   "file": "taurus-straight.png",
+   "progress": 18.506499999999946,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "taurus",
+   "what": "loco",
+   "file": "taurus-loco.png",
+   "progress": 23.201791736921294,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "taurus",
+   "what": "train",
+   "file": "taurus-train.png",
+   "progress": 24.397588993875562,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "re460",
+   "what": "straight",
+   "file": "re460-straight.png",
+   "progress": 18.506499999999946,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "re460",
+   "what": "loco",
+   "file": "re460-loco.png",
+   "progress": 23.201791736921294,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "re460",
+   "what": "train",
+   "file": "re460-train.png",
+   "progress": 24.397588993875562,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "gg1",
+   "what": "straight",
+   "file": "gg1-straight.png",
+   "progress": 18.506083333333137,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "gg1",
+   "what": "loco",
+   "file": "gg1-loco.png",
+   "progress": 23.44276958416342,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "gg1",
+   "what": "train",
+   "file": "gg1-train.png",
+   "progress": 24.634169584163402,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "j94",
+   "what": "straight",
+   "file": "j94-straight.png",
+   "progress": 18.503397849462534,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "j94",
+   "what": "loco",
+   "file": "j94-loco.png",
+   "progress": 22.683424139188535,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "j94",
+   "what": "train",
+   "file": "j94-train.png",
+   "progress": 23.882823781042802,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 3.4,
+    "specs": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "black_five",
+   "what": "straight",
+   "file": "black_five-straight.png",
+   "progress": 18.517853641456394,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "black_five",
+   "what": "loco",
+   "file": "black_five-loco.png",
+   "progress": 23.182557740887454,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "black_five",
+   "what": "train",
+   "file": "black_five-train.png",
+   "progress": 24.378557740887437,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "nine_f",
+   "what": "straight",
+   "file": "nine_f-straight.png",
+   "progress": 18.512483333333112,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "nine_f",
+   "what": "loco",
+   "file": "nine_f-loco.png",
+   "progress": 23.437706294205654,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "nine_f",
+   "what": "train",
+   "file": "nine_f-train.png",
+   "progress": 24.63370629420571,
+   "state": "moving",
+   "lengths": {
+    "loco": 2.5,
+    "train": 4.9,
+    "specs": [
+     2.5,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "tgv",
+   "what": "straight",
+   "file": "tgv-straight.png",
+   "progress": 18.519499999999887,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "cls": "regular",
+   "id": "tgv",
+   "what": "loco",
+   "file": "tgv-loco.png",
+   "progress": 23.211460477835146,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 4.4,
+    "specs": [
+     2,
+     1,
+     1
+    ]
+   }
+  }
+ ]
+}

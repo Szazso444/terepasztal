@@ -1,0 +1,12 @@
+v0.8.0: hinge long locomotive artwork and refresh procedural diorama assets
+
+Keep rigid compatibility geometry while drawing long casings as joined half-bodies.
+Clip bogies to inset body silhouettes, fix shared roof and pixel edges, refresh
+materials and liveries, and trim atlases without changing ground anchors.
+
+Include reproducible GPU mask checks, unchanged compatibility measurements,
+and before/after rollout and asset screenshots. Typecheck, lint, build and
+Prettier pass; 104,256 GPU poses have no escaping bogie pixels.
+
+Co-Authored-By: Codex <noreply@openai.com>
+Codex-Thread: 01a0960e-675f-7510-858f-90e0fc9d0317

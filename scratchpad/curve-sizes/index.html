@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Terepasztal · Curve sizes</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+    <style>
+      body {
+        margin: 0;
+      }
+      #ui-root {
+        visibility: hidden;
+      }
+      #qa-label {
+        position: fixed;
+        z-index: 100000;
+        left: 12px;
+        top: 10px;
+        padding: 4px 10px;
+        background: #17221fd9;
+        color: #eee6cf;
+        font: 600 15px/1.4 system-ui;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas"></canvas>
+      <div id="ui-root"></div>
+    </div>
+    <div id="qa-label"></div>
+    <script type="module" src="./scene.js"></script>
+  </body>
+</html>

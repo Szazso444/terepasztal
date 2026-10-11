@@ -1,0 +1,809 @@
+{
+ "errors": [],
+ "shots": [
+  {
+   "cls": "regular",
+   "i": 0,
+   "what": "loco",
+   "file": "regular-1-loco.png",
+   "progress": 22.681673304482587,
+   "target": 22.67808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 4.6,
+    "specs": [
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 0,
+   "what": "train",
+   "file": "regular-1-train.png",
+   "progress": 24.486715249933653,
+   "target": 24.47808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 4.6,
+    "specs": [
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 1,
+   "what": "loco",
+   "file": "regular-2-loco.png",
+   "progress": 23.186491863653806,
+   "target": 23.17808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 6.6,
+    "specs": [
+     2,
+     1,
+     1,
+     2
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 1,
+   "what": "train",
+   "file": "regular-2-train.png",
+   "progress": 25.47882519698703,
+   "target": 25.47808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 6.6,
+    "specs": [
+     2,
+     1,
+     1,
+     2
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 2,
+   "what": "loco",
+   "file": "regular-3-loco.png",
+   "progress": 23.687338289017173,
+   "target": 23.67808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 7.4,
+    "specs": [
+     3,
+     2,
+     2
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 2,
+   "what": "train",
+   "file": "regular-3-train.png",
+   "progress": 25.89533828901725,
+   "target": 25.878084102966948,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 7.4,
+    "specs": [
+     3,
+     2,
+     2
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 3,
+   "what": "loco",
+   "file": "regular-4-loco.png",
+   "progress": 24.195172960872355,
+   "target": 24.17808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 4,
+    "train": 8.8,
+    "specs": [
+     4,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 3,
+   "what": "train",
+   "file": "regular-4-train.png",
+   "progress": 26.587172960872465,
+   "target": 26.578084102966947,
+   "state": "moving",
+   "lengths": {
+    "loco": 4,
+    "train": 8.8,
+    "specs": [
+     4,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 4,
+   "what": "loco",
+   "file": "regular-5-loco.png",
+   "progress": 24.180313740410437,
+   "target": 24.17808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 4,
+    "train": 8.4,
+    "specs": [
+     4,
+     2,
+     2
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 4,
+   "what": "train",
+   "file": "regular-5-train.png",
+   "progress": 26.388313740410407,
+   "target": 26.378084102966948,
+   "state": "moving",
+   "lengths": {
+    "loco": 4,
+    "train": 8.4,
+    "specs": [
+     4,
+     2,
+     2
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 5,
+   "what": "loco",
+   "file": "regular-6-loco.png",
+   "progress": 24.684261097285738,
+   "target": 24.67808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 5,
+    "train": 10.6,
+    "specs": [
+     5,
+     1,
+     3,
+     1
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 5,
+   "what": "train",
+   "file": "regular-6-train.png",
+   "progress": 27.47876109728594,
+   "target": 27.47808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 5,
+    "train": 10.6,
+    "specs": [
+     5,
+     1,
+     3,
+     1
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 6,
+   "what": "loco",
+   "file": "regular-7-loco.png",
+   "progress": 25.201513740410423,
+   "target": 25.17808410296695,
+   "state": "moving",
+   "lengths": {
+    "loco": 6,
+    "train": 11.4,
+    "specs": [
+     6,
+     3,
+     2
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "regular",
+   "i": 6,
+   "what": "train",
+   "file": "regular-7-train.png",
+   "progress": 27.878713740410387,
+   "target": 27.878084102966948,
+   "state": "moving",
+   "lengths": {
+    "loco": 6,
+    "train": 11.4,
+    "specs": [
+     6,
+     3,
+     2
+    ]
+   },
+   "curve": {
+    "start": 21,
+    "end": 23.356168205933894,
+    "unit": {
+     "ax": 81,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 0,
+   "what": "loco",
+   "file": "high_speed-1-loco.png",
+   "progress": 22.466883333332525,
+   "target": 22.46347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 4.6,
+    "specs": [
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 0,
+   "what": "train",
+   "file": "high_speed-1-train.png",
+   "progress": 24.26548333333242,
+   "target": 24.263473504944912,
+   "state": "moving",
+   "lengths": {
+    "loco": 1,
+    "train": 4.6,
+    "specs": [
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 1,
+   "what": "loco",
+   "file": "high_speed-2-loco.png",
+   "progress": 22.96903333333265,
+   "target": 22.96347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 6.6,
+    "specs": [
+     2,
+     1,
+     1,
+     2
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 1,
+   "what": "train",
+   "file": "high_speed-2-train.png",
+   "progress": 25.278999999999208,
+   "target": 25.263473504944912,
+   "state": "moving",
+   "lengths": {
+    "loco": 2,
+    "train": 6.6,
+    "specs": [
+     2,
+     1,
+     1,
+     2
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 2,
+   "what": "loco",
+   "file": "high_speed-3-loco.png",
+   "progress": 23.48750364583386,
+   "target": 23.46347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 7.4,
+    "specs": [
+     3,
+     2,
+     2
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 2,
+   "what": "train",
+   "file": "high_speed-3-train.png",
+   "progress": 25.670970312500604,
+   "target": 25.66347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 3,
+    "train": 7.4,
+    "specs": [
+     3,
+     2,
+     2
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 3,
+   "what": "loco",
+   "file": "high_speed-4-loco.png",
+   "progress": 23.974216666666695,
+   "target": 23.96347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 4,
+    "train": 8.8,
+    "specs": [
+     4,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 3,
+   "what": "train",
+   "file": "high_speed-4-train.png",
+   "progress": 26.366216666666805,
+   "target": 26.363473504944913,
+   "state": "moving",
+   "lengths": {
+    "loco": 4,
+    "train": 8.8,
+    "specs": [
+     4,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 4,
+   "what": "loco",
+   "file": "high_speed-5-loco.png",
+   "progress": 23.968333333333067,
+   "target": 23.96347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 4,
+    "train": 8.4,
+    "specs": [
+     4,
+     2,
+     2
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 4,
+   "what": "train",
+   "file": "high_speed-5-train.png",
+   "progress": 26.176333333333037,
+   "target": 26.16347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 4,
+    "train": 8.4,
+    "specs": [
+     4,
+     2,
+     2
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 5,
+   "what": "loco",
+   "file": "high_speed-6-loco.png",
+   "progress": 24.472144503546563,
+   "target": 24.46347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 5,
+    "train": 10.6,
+    "specs": [
+     5,
+     1,
+     3,
+     1
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 5,
+   "what": "train",
+   "file": "high_speed-6-train.png",
+   "progress": 27.266644503546765,
+   "target": 27.263473504944912,
+   "state": "moving",
+   "lengths": {
+    "loco": 5,
+    "train": 10.6,
+    "specs": [
+     5,
+     1,
+     3,
+     1
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 6,
+   "what": "loco",
+   "file": "high_speed-7-loco.png",
+   "progress": 24.989533333333053,
+   "target": 24.96347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 6,
+    "train": 11.4,
+    "specs": [
+     6,
+     3,
+     2
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  },
+  {
+   "cls": "high_speed",
+   "i": 6,
+   "what": "train",
+   "file": "high_speed-7-train.png",
+   "progress": 27.666733333333017,
+   "target": 27.66347350494491,
+   "state": "moving",
+   "lengths": {
+    "loco": 6,
+    "train": 11.4,
+    "specs": [
+     6,
+     3,
+     2
+    ]
+   },
+   "curve": {
+    "start": 20,
+    "end": 23.926947009889822,
+    "unit": {
+     "ax": 80,
+     "ay": 40,
+     "member": 0
+    },
+    "done": true
+   }
+  }
+ ]
+}
