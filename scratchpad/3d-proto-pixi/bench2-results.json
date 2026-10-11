@@ -1,0 +1,614 @@
+[
+ {
+  "approach": "direct",
+  "msaa": false,
+  "n": 20,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 195.7,
+  "jsMs": 0.3,
+  "refreshJsMs": 0,
+  "minMs": 191.1,
+  "maxMs": 199.7,
+  "firstFrameMs": 292.7,
+  "loadMs": 140.4,
+  "fetchMs": 43.9,
+  "parseMs": 35.4,
+  "alignMs": 5.9,
+  "cellPx": null,
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "direct",
+   "n": 20,
+   "model": "full",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "direct",
+  "msaa": false,
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 85.6,
+  "jsMs": 0.3,
+  "refreshJsMs": 0,
+  "minMs": 80.9,
+  "maxMs": 91.7,
+  "firstFrameMs": 160.9,
+  "loadMs": 79.8,
+  "fetchMs": 3.7,
+  "parseMs": 0.3,
+  "alignMs": 2.7,
+  "cellPx": null,
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "direct",
+   "n": 20,
+   "model": "d10",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "atlas",
+  "msaa": false,
+  "n": 20,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 326.2,
+  "jsMs": 0.5,
+  "refreshJsMs": 0.4,
+  "minMs": 311.5,
+  "maxMs": 337.2,
+  "firstFrameMs": 488.7,
+  "loadMs": 207,
+  "fetchMs": 54.3,
+  "parseMs": 54.3,
+  "alignMs": 9.8,
+  "atlas": 4096,
+  "cellPx": [
+   752,
+   784
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "atlas",
+   "n": 20,
+   "model": "full",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "atlas",
+  "msaa": false,
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 175.9,
+  "jsMs": 0.4,
+  "refreshJsMs": 0.3,
+  "minMs": 163.8,
+  "maxMs": 186.1,
+  "firstFrameMs": 300.4,
+  "loadMs": 66.9,
+  "fetchMs": 3.5,
+  "parseMs": 0.3,
+  "alignMs": 3,
+  "atlas": 4096,
+  "cellPx": [
+   752,
+   784
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "atlas",
+   "n": 20,
+   "model": "d10",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "static",
+  "msaa": false,
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 103.1,
+  "jsMs": 0.2,
+  "refreshJsMs": 0,
+  "minMs": 85.5,
+  "maxMs": 112.9,
+  "firstFrameMs": 295.9,
+  "loadMs": 59.6,
+  "fetchMs": 3.6,
+  "parseMs": 0.4,
+  "alignMs": 2.7,
+  "atlas": 4096,
+  "cellPx": [
+   752,
+   784
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "static",
+   "n": 20,
+   "model": "d10",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "separate",
+  "msaa": false,
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 176.9,
+  "jsMs": 0.4,
+  "refreshJsMs": 0.4,
+  "minMs": 149.8,
+  "maxMs": 182.8,
+  "firstFrameMs": 294.7,
+  "loadMs": 78.4,
+  "fetchMs": 3.6,
+  "parseMs": 0.4,
+  "alignMs": 3,
+  "cellPx": [
+   752,
+   784
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "separate",
+   "n": 20,
+   "model": "d10",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "atlas",
+  "msaa": false,
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 533.1,
+  "jsMs": 0.5,
+  "refreshJsMs": 0.5,
+  "minMs": 479,
+  "maxMs": 652.1,
+  "firstFrameMs": 674.4,
+  "loadMs": 65.4,
+  "fetchMs": 3.4,
+  "parseMs": 0.3,
+  "alignMs": 3.7,
+  "atlas": 8192,
+  "cellPx": [
+   752,
+   784
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "atlas",
+   "n": 100,
+   "model": "d10",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "separate",
+  "msaa": false,
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 456.3,
+  "jsMs": 1.1,
+  "refreshJsMs": 0.9,
+  "minMs": 437,
+  "maxMs": 476.2,
+  "firstFrameMs": 675,
+  "loadMs": 67.2,
+  "fetchMs": 3.6,
+  "parseMs": 0.4,
+  "alignMs": 2.7,
+  "cellPx": [
+   752,
+   784
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "separate",
+   "n": 100,
+   "model": "d10",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "direct",
+  "msaa": false,
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 113.9,
+  "jsMs": 0.4,
+  "refreshJsMs": 0,
+  "minMs": 105.7,
+  "maxMs": 116,
+  "firstFrameMs": 179.3,
+  "loadMs": 82.3,
+  "fetchMs": 3.3,
+  "parseMs": 0.3,
+  "alignMs": 3.2,
+  "cellPx": null,
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "direct",
+   "n": 100,
+   "model": "d10",
+   "zoom": 4,
+   "dpr": 2
+  }
+ },
+ {
+  "approach": "atlas",
+  "msaa": true,
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 35.3,
+  "jsMs": 0.3,
+  "refreshJsMs": 0.3,
+  "minMs": 32.8,
+  "maxMs": 41.3,
+  "firstFrameMs": 152.1,
+  "loadMs": 90.1,
+  "fetchMs": 3,
+  "parseMs": 0.5,
+  "alignMs": 2.9,
+  "atlas": 512,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "atlas",
+   "n": 20,
+   "model": "d10",
+   "zoom": 1,
+   "dpr": 1,
+   "msaa": 1
+  }
+ },
+ {
+  "approach": "atlas",
+  "msaa": true,
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 159.3,
+  "jsMs": 0.4,
+  "refreshJsMs": 0.3,
+  "minMs": 146.7,
+  "maxMs": 178,
+  "firstFrameMs": 259.9,
+  "loadMs": 82.6,
+  "fetchMs": 3.1,
+  "parseMs": 0.4,
+  "alignMs": 2.8,
+  "atlas": 1024,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "atlas",
+   "n": 100,
+   "model": "d10",
+   "zoom": 1,
+   "dpr": 1,
+   "msaa": 1
+  }
+ },
+ {
+  "approach": "separate",
+  "msaa": true,
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 202.1,
+  "jsMs": 1.3,
+  "refreshJsMs": 1.1,
+  "minMs": 173.5,
+  "maxMs": 218.1,
+  "firstFrameMs": 257,
+  "loadMs": 78.2,
+  "fetchMs": 3.2,
+  "parseMs": 0.4,
+  "alignMs": 2.9,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "separate",
+   "n": 100,
+   "model": "d10",
+   "zoom": 1,
+   "dpr": 1,
+   "msaa": 1
+  }
+ },
+ {
+  "approach": "atlas",
+  "msaa": false,
+  "n": 100,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 1,
+  "ss": 2,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 88.4,
+  "jsMs": 0.5,
+  "refreshJsMs": 0.4,
+  "minMs": 84.3,
+  "maxMs": 96,
+  "firstFrameMs": 206.8,
+  "loadMs": 69.9,
+  "fetchMs": 2.9,
+  "parseMs": 0.4,
+  "alignMs": 2.9,
+  "atlas": 2048,
+  "cellPx": [
+   188,
+   196
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "atlas",
+   "n": 100,
+   "model": "d10",
+   "zoom": 1,
+   "dpr": 1,
+   "ss": 2
+  }
+ },
+ {
+  "approach": "atlas",
+  "msaa": true,
+  "n": 100,
+  "model": "full",
+  "triangles": 98166,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 1236.6,
+  "jsMs": 0.5,
+  "refreshJsMs": 0.5,
+  "minMs": 1126,
+  "maxMs": 1550.9,
+  "firstFrameMs": 1360.3,
+  "loadMs": 146.1,
+  "fetchMs": 48.3,
+  "parseMs": 35.5,
+  "alignMs": 6.1,
+  "atlas": 1024,
+  "cellPx": [
+   94,
+   98
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "atlas",
+   "n": 100,
+   "model": "full",
+   "zoom": 1,
+   "dpr": 1,
+   "msaa": 1
+  }
+ },
+ {
+  "approach": "atlas",
+  "msaa": true,
+  "n": 20,
+  "model": "d10",
+  "triangles": 9805,
+  "zoom": 4,
+  "ss": 1,
+  "resolution": 2,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 269.3,
+  "jsMs": 0.4,
+  "refreshJsMs": 0.3,
+  "minMs": 254.7,
+  "maxMs": 282,
+  "firstFrameMs": 448.7,
+  "loadMs": 62.7,
+  "fetchMs": 4,
+  "parseMs": 0.5,
+  "alignMs": 2.9,
+  "atlas": 4096,
+  "cellPx": [
+   752,
+   784
+  ],
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "atlas",
+   "n": 20,
+   "model": "d10",
+   "zoom": 4,
+   "dpr": 2,
+   "msaa": 1
+  }
+ },
+ {
+  "approach": "direct",
+  "msaa": false,
+  "n": 100,
+  "model": "d25",
+  "triangles": 24528,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 149.1,
+  "jsMs": 0.4,
+  "refreshJsMs": 0,
+  "minMs": 142.5,
+  "maxMs": 158.2,
+  "firstFrameMs": 232.3,
+  "loadMs": 61.8,
+  "fetchMs": 5.2,
+  "parseMs": 0.5,
+  "alignMs": 3.4,
+  "cellPx": null,
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "direct",
+   "n": 100,
+   "model": "d25",
+   "zoom": 1,
+   "dpr": 1
+  }
+ },
+ {
+  "approach": "direct",
+  "msaa": false,
+  "n": 100,
+  "model": "d03",
+  "triangles": 2934,
+  "zoom": 1,
+  "ss": 1,
+  "resolution": 1,
+  "screen": [
+   1280,
+   800
+  ],
+  "frameMs": 26.5,
+  "jsMs": 0.3,
+  "refreshJsMs": 0,
+  "minMs": 24.3,
+  "maxMs": 29.6,
+  "firstFrameMs": 114.2,
+  "loadMs": 60.8,
+  "fetchMs": 2.4,
+  "parseMs": 0.2,
+  "alignMs": 2.3,
+  "cellPx": null,
+  "gl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "case": {
+   "approach": "direct",
+   "n": 100,
+   "model": "d03",
+   "zoom": 1,
+   "dpr": 1
+  }
+ }
+]

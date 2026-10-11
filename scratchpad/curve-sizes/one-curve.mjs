@@ -1,0 +1,12 @@
+import { launch } from '../runtime.mjs';
+const [query, out, zoom] = process.argv.slice(2);
+const b = await launch();
+const p = await b.newPage({ viewport: { width: 1440, height: 1000 } });
+const errs = [];
+p.on('pageerror', (e) => errs.push(e.message));
+await p.goto(`http://127.0.0.1:5177/scratchpad/curve-sizes/?${query}`);
+await p.waitForFunction(() => typeof window.qa?.show === 'function', null, { timeout: 180000 });
+const r = await p.evaluate(([z]) => qa.show(0, 'loco', z), [Number(zoom ?? 2)]);
+console.log(JSON.stringify(await p.evaluate(() => qa.sprited)), r.lengths.loco, errs);
+await p.screenshot({ path: out });
+await b.close();

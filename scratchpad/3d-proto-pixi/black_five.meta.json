@@ -1,0 +1,1897 @@
+{
+  "id": "black_five",
+  "category": "vehicle",
+  "plan": "rigid",
+  "tiles": [
+    2,
+    1
+  ],
+  "footprint_m": [
+    12.470129599623453,
+    6.235064799811727
+  ],
+  "scale": 13.671056,
+  "scale_ref": "height_m",
+  "compression": [
+    0.7606,
+    0.9294,
+    1.0
+  ],
+  "real_dims_m": [
+    15.902,
+    2.977,
+    4.193
+  ],
+  "final_dims_m": [
+    7.568,
+    2.773,
+    4.188
+  ],
+  "split": {
+    "mode": "auto",
+    "cuts_m": [
+      10.75
+    ],
+    "expected_m": [
+      10.48
+    ]
+  },
+  "width_fix": 0.9742,
+  "px_per_m": 14.51624,
+  "supersample": 2,
+  "resolution": 2,
+  "source": {
+    "fov_deg": 17.626,
+    "silhouette_iou": 0.9653,
+    "texels": 4194304,
+    "source_texels": 496399,
+    "source_share": 0.118,
+    "mirrored_share": 0.085,
+    "extra_share": 0.129,
+    "nearest_share": 0.666,
+    "extras": [
+      {
+        "image": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-black-five-rear.png",
+        "silhouette_iou": 0.9015,
+        "pose_deg": [
+          128.23,
+          24.12,
+          4.42
+        ],
+        "colour_matched": true,
+        "overlap_texels": 18805
+      }
+    ],
+    "median_delta_e_generated": 13.06,
+    "median_delta_e_transferred": 10.07,
+    "texture": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\meta\\black_five_texture.png"
+  },
+  "anchor": "ground center of the footprint (a part's own centre), continuous px coords from top-left",
+  "align": {
+    "mode": "auto",
+    "yaw": 44.75,
+    "pitch": -27.0,
+    "roll": -0.5,
+    "score": 0.8095,
+    "refined_yaw_deg": -0.96,
+    "refined_pitch_deg": -0.007
+  },
+  "warnings": [],
+  "debug": {
+    "raw_front": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\debug/black_five_raw_front.png",
+    "aligned_front": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\debug/black_five_aligned_front.png",
+    "aligned_side": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\debug/black_five_aligned_side.png",
+    "aligned_top": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\debug/black_five_aligned_top.png",
+    "parts_front": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\debug/black_five_parts_front.png",
+    "gear_front": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\debug/black_five_gear_front.png"
+  },
+  "debug_cams": {
+    "raw_front": {
+      "center": [
+        -0.0404,
+        0.0391,
+        0.021
+      ],
+      "size": 1.0519,
+      "res": 320,
+      "view": "front"
+    },
+    "aligned_front": {
+      "center": [
+        -0.0,
+        -0.0038,
+        1.9136
+      ],
+      "size": 18.2876,
+      "res": 320,
+      "view": "front"
+    },
+    "aligned_side": {
+      "center": [
+        -0.0,
+        -0.0038,
+        1.9136
+      ],
+      "size": 18.2876,
+      "res": 320,
+      "view": "side"
+    },
+    "aligned_top": {
+      "center": [
+        -0.0,
+        -0.0038,
+        1.9136
+      ],
+      "size": 18.2876,
+      "res": 320,
+      "view": "top"
+    },
+    "parts_front": {
+      "center": [
+        -6.2795,
+        0.0,
+        1.6999
+      ],
+      "size": 14.1353,
+      "res": 640,
+      "view": "front"
+    },
+    "gear_front": {
+      "center": [
+        -0.84,
+        0.0,
+        1.425
+      ],
+      "size": 4.807,
+      "res": 320,
+      "view": "front"
+    }
+  },
+  "renders": [
+    {
+      "part": "engine",
+      "tiles": [
+        1.278,
+        1
+      ],
+      "footprint_m": [
+        7.968412814159387,
+        6.235064799811727
+      ],
+      "gear": [
+        {
+          "name": "l2",
+          "x_m": 2.625,
+          "x_real_m": 3.451,
+          "d_m": 0.86
+        },
+        {
+          "name": "d1",
+          "x_m": -2.078,
+          "x_real_m": -2.732,
+          "d_m": 1.414
+        },
+        {
+          "name": "d2",
+          "x_m": -0.697,
+          "x_real_m": -0.916,
+          "d_m": 1.599
+        },
+        {
+          "name": "d3",
+          "x_m": 0.514,
+          "x_real_m": 0.676,
+          "d_m": 1.675
+        }
+      ],
+      "profile": {
+        "top": [
+          3.79,
+          3.71,
+          3.56,
+          3.56,
+          3.75,
+          3.25
+        ],
+        "width": [
+          2.35,
+          2.25,
+          2.26,
+          2.42,
+          2.56,
+          2.38
+        ]
+      },
+      "compression": [
+        0.7606,
+        0.9294,
+        1.0
+      ],
+      "final_dims_m": [
+        7.568,
+        2.773,
+        4.188
+      ],
+      "canvas_px": [
+        134,
+        126
+      ],
+      "anchor_px": [
+        67,
+        88
+      ],
+      "dirs": [
+        {
+          "index": 0,
+          "yaw_deg": 0.0,
+          "facing": 0,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d0.png",
+          "screen_heading": [
+            0.8944,
+            0.4472
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              -5.896,
+              83.552
+            ],
+            [
+              75.896,
+              124.448
+            ],
+            [
+              139.896,
+              92.448
+            ],
+            [
+              58.104,
+              51.552
+            ]
+          ]
+        },
+        {
+          "index": 1,
+          "yaw_deg": -7.5,
+          "facing": 1,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d1.png",
+          "screen_heading": [
+            0.8378,
+            0.5459
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              -4.111,
+              78.833
+            ],
+            [
+              66.305,
+              124.717
+            ],
+            [
+              138.111,
+              97.167
+            ],
+            [
+              67.695,
+              51.283
+            ]
+          ]
+        },
+        {
+          "index": 2,
+          "yaw_deg": -15.0,
+          "facing": 2,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d2.png",
+          "screen_heading": [
+            0.7559,
+            0.6547
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              -1.11,
+              74.27
+            ],
+            [
+              56.726,
+              124.357
+            ],
+            [
+              135.11,
+              101.73
+            ],
+            [
+              77.274,
+              51.643
+            ]
+          ]
+        },
+        {
+          "index": 3,
+          "yaw_deg": -22.5,
+          "facing": 3,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d3.png",
+          "screen_heading": [
+            0.638,
+            0.7701
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              3.057,
+              69.943
+            ],
+            [
+              47.323,
+              123.376
+            ],
+            [
+              130.943,
+              106.057
+            ],
+            [
+              86.677,
+              52.624
+            ]
+          ]
+        },
+        {
+          "index": 4,
+          "yaw_deg": -30.0,
+          "facing": 4,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d4.png",
+          "screen_heading": [
+            0.4723,
+            0.8814
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              8.318,
+              65.924
+            ],
+            [
+              38.256,
+              121.789
+            ],
+            [
+              125.682,
+              110.076
+            ],
+            [
+              95.744,
+              54.211
+            ]
+          ]
+        },
+        {
+          "index": 5,
+          "yaw_deg": -37.5,
+          "facing": 5,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d5.png",
+          "screen_heading": [
+            0.2546,
+            0.967
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              14.583,
+              62.283
+            ],
+            [
+              29.681,
+              119.624
+            ],
+            [
+              119.417,
+              113.717
+            ],
+            [
+              104.319,
+              56.376
+            ]
+          ]
+        },
+        {
+          "index": 6,
+          "yaw_deg": -45.0,
+          "facing": 6,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d6.png",
+          "screen_heading": [
+            -0.0,
+            1.0
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              21.745,
+              59.082
+            ],
+            [
+              21.745,
+              116.918
+            ],
+            [
+              112.255,
+              116.918
+            ],
+            [
+              112.255,
+              59.082
+            ]
+          ]
+        },
+        {
+          "index": 7,
+          "yaw_deg": -97.5,
+          "facing": 13,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d7.png",
+          "screen_heading": [
+            -0.9336,
+            0.3582
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              85.335,
+              52.444
+            ],
+            [
+              -6.434,
+              87.653
+            ],
+            [
+              48.665,
+              123.556
+            ],
+            [
+              140.434,
+              88.347
+            ]
+          ]
+        },
+        {
+          "index": 8,
+          "yaw_deg": -105.0,
+          "facing": 14,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d8.png",
+          "screen_heading": [
+            -0.9608,
+            0.2774
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              94.46,
+              53.945
+            ],
+            [
+              -5.715,
+              82.863
+            ],
+            [
+              39.54,
+              122.055
+            ],
+            [
+              139.715,
+              93.137
+            ]
+          ]
+        },
+        {
+          "index": 9,
+          "yaw_deg": -112.5,
+          "facing": 15,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d9.png",
+          "screen_heading": [
+            -0.9792,
+            0.2028
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              103.115,
+              56.029
+            ],
+            [
+              -3.751,
+              78.161
+            ],
+            [
+              30.885,
+              119.971
+            ],
+            [
+              137.751,
+              97.839
+            ]
+          ]
+        },
+        {
+          "index": 10,
+          "yaw_deg": -120.0,
+          "facing": 16,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d10.png",
+          "screen_heading": [
+            -0.9911,
+            0.1328
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              111.152,
+              58.659
+            ],
+            [
+              -0.578,
+              73.628
+            ],
+            [
+              22.848,
+              117.341
+            ],
+            [
+              134.578,
+              102.372
+            ]
+          ]
+        },
+        {
+          "index": 11,
+          "yaw_deg": -127.5,
+          "facing": 17,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d11.png",
+          "screen_heading": [
+            -0.9978,
+            0.0657
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              118.434,
+              61.792
+            ],
+            [
+              3.752,
+              69.341
+            ],
+            [
+              15.566,
+              114.208
+            ],
+            [
+              130.248,
+              106.659
+            ]
+          ]
+        },
+        {
+          "index": 12,
+          "yaw_deg": -135.0,
+          "facing": 18,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d12.png",
+          "screen_heading": [
+            -1.0,
+            -0.0
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              124.836,
+              65.373
+            ],
+            [
+              9.164,
+              65.373
+            ],
+            [
+              9.164,
+              110.627
+            ],
+            [
+              124.836,
+              110.627
+            ]
+          ]
+        },
+        {
+          "index": 13,
+          "yaw_deg": -142.5,
+          "facing": 19,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d13.png",
+          "screen_heading": [
+            -0.9978,
+            -0.0657
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              130.248,
+              69.341
+            ],
+            [
+              15.566,
+              61.792
+            ],
+            [
+              3.752,
+              106.659
+            ],
+            [
+              118.434,
+              114.208
+            ]
+          ]
+        },
+        {
+          "index": 14,
+          "yaw_deg": -150.0,
+          "facing": 20,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d14.png",
+          "screen_heading": [
+            -0.9911,
+            -0.1328
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              134.578,
+              73.628
+            ],
+            [
+              22.848,
+              58.659
+            ],
+            [
+              -0.578,
+              102.372
+            ],
+            [
+              111.152,
+              117.341
+            ]
+          ]
+        },
+        {
+          "index": 15,
+          "yaw_deg": -157.5,
+          "facing": 21,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d15.png",
+          "screen_heading": [
+            -0.9792,
+            -0.2028
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              137.751,
+              78.161
+            ],
+            [
+              30.885,
+              56.029
+            ],
+            [
+              -3.751,
+              97.839
+            ],
+            [
+              103.115,
+              119.971
+            ]
+          ]
+        },
+        {
+          "index": 16,
+          "yaw_deg": -165.0,
+          "facing": 22,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d16.png",
+          "screen_heading": [
+            -0.9608,
+            -0.2774
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              139.715,
+              82.863
+            ],
+            [
+              39.54,
+              53.945
+            ],
+            [
+              -5.715,
+              93.137
+            ],
+            [
+              94.46,
+              122.055
+            ]
+          ]
+        },
+        {
+          "index": 17,
+          "yaw_deg": -172.5,
+          "facing": 23,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d17.png",
+          "screen_heading": [
+            -0.9336,
+            -0.3582
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              140.434,
+              87.653
+            ],
+            [
+              48.665,
+              52.444
+            ],
+            [
+              -6.434,
+              88.347
+            ],
+            [
+              85.335,
+              123.556
+            ]
+          ]
+        },
+        {
+          "index": 18,
+          "yaw_deg": -180.0,
+          "facing": 24,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d18.png",
+          "screen_heading": [
+            -0.8944,
+            -0.4472
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              139.896,
+              92.448
+            ],
+            [
+              58.104,
+              51.552
+            ],
+            [
+              -5.896,
+              83.552
+            ],
+            [
+              75.896,
+              124.448
+            ]
+          ]
+        },
+        {
+          "index": 19,
+          "yaw_deg": -187.5,
+          "facing": 25,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d19.png",
+          "screen_heading": [
+            -0.8378,
+            -0.5459
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              138.111,
+              97.167
+            ],
+            [
+              67.695,
+              51.283
+            ],
+            [
+              -4.111,
+              78.833
+            ],
+            [
+              66.305,
+              124.717
+            ]
+          ]
+        },
+        {
+          "index": 20,
+          "yaw_deg": -195.0,
+          "facing": 26,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d20.png",
+          "screen_heading": [
+            -0.7559,
+            -0.6547
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              135.11,
+              101.73
+            ],
+            [
+              77.274,
+              51.643
+            ],
+            [
+              -1.11,
+              74.27
+            ],
+            [
+              56.726,
+              124.357
+            ]
+          ]
+        },
+        {
+          "index": 21,
+          "yaw_deg": -202.5,
+          "facing": 27,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d21.png",
+          "screen_heading": [
+            -0.638,
+            -0.7701
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              130.943,
+              106.057
+            ],
+            [
+              86.677,
+              52.624
+            ],
+            [
+              3.057,
+              69.943
+            ],
+            [
+              47.323,
+              123.376
+            ]
+          ]
+        },
+        {
+          "index": 22,
+          "yaw_deg": -210.0,
+          "facing": 28,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d22.png",
+          "screen_heading": [
+            -0.4723,
+            -0.8814
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              125.682,
+              110.076
+            ],
+            [
+              95.744,
+              54.211
+            ],
+            [
+              8.318,
+              65.924
+            ],
+            [
+              38.256,
+              121.789
+            ]
+          ]
+        },
+        {
+          "index": 23,
+          "yaw_deg": -217.5,
+          "facing": 29,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d23.png",
+          "screen_heading": [
+            -0.2546,
+            -0.967
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              119.417,
+              113.717
+            ],
+            [
+              104.319,
+              56.376
+            ],
+            [
+              14.583,
+              62.283
+            ],
+            [
+              29.681,
+              119.624
+            ]
+          ]
+        },
+        {
+          "index": 24,
+          "yaw_deg": -225.0,
+          "facing": 30,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_engine_d24.png",
+          "screen_heading": [
+            -0.0,
+            -1.0
+          ],
+          "tiles": [
+            1.278,
+            1
+          ],
+          "footprint_px": [
+            [
+              112.255,
+              116.918
+            ],
+            [
+              112.255,
+              59.082
+            ],
+            [
+              21.745,
+              59.082
+            ],
+            [
+              21.745,
+              116.918
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "part": "tender",
+      "tiles": [
+        0.662,
+        1
+      ],
+      "footprint_m": [
+        4.127612897475363,
+        6.235064799811727
+      ],
+      "gear": [
+        {
+          "name": "t1",
+          "x_m": -0.736,
+          "x_real_m": -1.017,
+          "d_m": 1.684
+        },
+        {
+          "name": "t2",
+          "x_m": 0.285,
+          "x_real_m": 0.394,
+          "d_m": 1.691
+        },
+        {
+          "name": "t3",
+          "x_m": 1.435,
+          "x_real_m": 1.984,
+          "d_m": 1.708
+        }
+      ],
+      "profile": {
+        "top": [
+          3.21,
+          3.52,
+          3.51,
+          3.46,
+          3.46,
+          3.44
+        ],
+        "width": [
+          2.49,
+          2.53,
+          2.51,
+          2.53,
+          2.53,
+          2.52
+        ]
+      },
+      "compression": [
+        0.7235,
+        0.9294,
+        1.0
+      ],
+      "final_dims_m": [
+        3.723,
+        2.857,
+        3.624
+      ],
+      "canvas_px": [
+        86,
+        96
+      ],
+      "anchor_px": [
+        43,
+        70
+      ],
+      "dirs": [
+        {
+          "index": 0,
+          "yaw_deg": 0.0,
+          "facing": 0,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d0.png",
+          "screen_heading": [
+            0.8944,
+            0.4472
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              -10.184,
+              75.408
+            ],
+            [
+              32.184,
+              96.592
+            ],
+            [
+              96.184,
+              64.592
+            ],
+            [
+              53.816,
+              43.408
+            ]
+          ]
+        },
+        {
+          "index": 1,
+          "yaw_deg": -7.5,
+          "facing": 1,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d1.png",
+          "screen_heading": [
+            0.8378,
+            0.5459
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              -11.141,
+              71.891
+            ],
+            [
+              25.335,
+              95.659
+            ],
+            [
+              97.141,
+              68.109
+            ],
+            [
+              60.665,
+              44.341
+            ]
+          ]
+        },
+        {
+          "index": 2,
+          "yaw_deg": -15.0,
+          "facing": 2,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d2.png",
+          "screen_heading": [
+            0.7559,
+            0.6547
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              -11.171,
+              68.341
+            ],
+            [
+              18.788,
+              94.286
+            ],
+            [
+              97.171,
+              71.659
+            ],
+            [
+              67.212,
+              45.714
+            ]
+          ]
+        },
+        {
+          "index": 3,
+          "yaw_deg": -22.5,
+          "facing": 3,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d3.png",
+          "screen_heading": [
+            0.638,
+            0.7701
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              -10.275,
+              64.82
+            ],
+            [
+              12.655,
+              92.498
+            ],
+            [
+              96.275,
+              75.18
+            ],
+            [
+              73.345,
+              47.502
+            ]
+          ]
+        },
+        {
+          "index": 4,
+          "yaw_deg": -30.0,
+          "facing": 4,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d4.png",
+          "screen_heading": [
+            0.4723,
+            0.8814
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              -8.467,
+              61.387
+            ],
+            [
+              7.041,
+              90.325
+            ],
+            [
+              94.467,
+              78.613
+            ],
+            [
+              78.959,
+              49.675
+            ]
+          ]
+        },
+        {
+          "index": 5,
+          "yaw_deg": -37.5,
+          "facing": 5,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d5.png",
+          "screen_heading": [
+            0.2546,
+            0.967
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              -5.778,
+              58.102
+            ],
+            [
+              2.043,
+              87.805
+            ],
+            [
+              91.778,
+              81.898
+            ],
+            [
+              83.957,
+              52.195
+            ]
+          ]
+        },
+        {
+          "index": 6,
+          "yaw_deg": -45.0,
+          "facing": 6,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d6.png",
+          "screen_heading": [
+            -0.0,
+            1.0
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              -2.255,
+              55.021
+            ],
+            [
+              -2.255,
+              84.979
+            ],
+            [
+              88.255,
+              84.979
+            ],
+            [
+              88.255,
+              55.021
+            ]
+          ]
+        },
+        {
+          "index": 7,
+          "yaw_deg": -97.5,
+          "facing": 13,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d7.png",
+          "screen_heading": [
+            -0.9336,
+            0.3582
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              39.218,
+              42.93
+            ],
+            [
+              -8.317,
+              61.167
+            ],
+            [
+              46.782,
+              97.07
+            ],
+            [
+              94.317,
+              78.833
+            ]
+          ]
+        },
+        {
+          "index": 8,
+          "yaw_deg": -105.0,
+          "facing": 14,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d8.png",
+          "screen_heading": [
+            -0.9608,
+            0.2774
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              46.318,
+              42.914
+            ],
+            [
+              -5.572,
+              57.894
+            ],
+            [
+              39.682,
+              97.086
+            ],
+            [
+              91.572,
+              82.106
+            ]
+          ]
+        },
+        {
+          "index": 9,
+          "yaw_deg": -112.5,
+          "facing": 15,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d9.png",
+          "screen_heading": [
+            -0.9792,
+            0.2028
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              53.36,
+              43.363
+            ],
+            [
+              -1.997,
+              54.827
+            ],
+            [
+              32.64,
+              96.637
+            ],
+            [
+              87.997,
+              85.173
+            ]
+          ]
+        },
+        {
+          "index": 10,
+          "yaw_deg": -120.0,
+          "facing": 16,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d10.png",
+          "screen_heading": [
+            -0.9911,
+            0.1328
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              60.225,
+              44.267
+            ],
+            [
+              2.349,
+              52.021
+            ],
+            [
+              25.775,
+              95.733
+            ],
+            [
+              83.651,
+              87.979
+            ]
+          ]
+        },
+        {
+          "index": 11,
+          "yaw_deg": -127.5,
+          "facing": 17,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d11.png",
+          "screen_heading": [
+            -0.9978,
+            0.0657
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              66.795,
+              45.611
+            ],
+            [
+              7.391,
+              49.521
+            ],
+            [
+              19.205,
+              94.389
+            ],
+            [
+              78.609,
+              90.479
+            ]
+          ]
+        },
+        {
+          "index": 12,
+          "yaw_deg": -135.0,
+          "facing": 18,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d12.png",
+          "screen_heading": [
+            -1.0,
+            -0.0
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              72.959,
+              47.373
+            ],
+            [
+              13.041,
+              47.373
+            ],
+            [
+              13.041,
+              92.627
+            ],
+            [
+              72.959,
+              92.627
+            ]
+          ]
+        },
+        {
+          "index": 13,
+          "yaw_deg": -142.5,
+          "facing": 19,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d13.png",
+          "screen_heading": [
+            -0.9978,
+            -0.0657
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              78.609,
+              49.521
+            ],
+            [
+              19.205,
+              45.611
+            ],
+            [
+              7.391,
+              90.479
+            ],
+            [
+              66.795,
+              94.389
+            ]
+          ]
+        },
+        {
+          "index": 14,
+          "yaw_deg": -150.0,
+          "facing": 20,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d14.png",
+          "screen_heading": [
+            -0.9911,
+            -0.1328
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              83.651,
+              52.021
+            ],
+            [
+              25.775,
+              44.267
+            ],
+            [
+              2.349,
+              87.979
+            ],
+            [
+              60.225,
+              95.733
+            ]
+          ]
+        },
+        {
+          "index": 15,
+          "yaw_deg": -157.5,
+          "facing": 21,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d15.png",
+          "screen_heading": [
+            -0.9792,
+            -0.2028
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              87.997,
+              54.827
+            ],
+            [
+              32.64,
+              43.363
+            ],
+            [
+              -1.997,
+              85.173
+            ],
+            [
+              53.36,
+              96.637
+            ]
+          ]
+        },
+        {
+          "index": 16,
+          "yaw_deg": -165.0,
+          "facing": 22,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d16.png",
+          "screen_heading": [
+            -0.9608,
+            -0.2774
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              91.572,
+              57.894
+            ],
+            [
+              39.682,
+              42.914
+            ],
+            [
+              -5.572,
+              82.106
+            ],
+            [
+              46.318,
+              97.086
+            ]
+          ]
+        },
+        {
+          "index": 17,
+          "yaw_deg": -172.5,
+          "facing": 23,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d17.png",
+          "screen_heading": [
+            -0.9336,
+            -0.3582
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              94.317,
+              61.167
+            ],
+            [
+              46.782,
+              42.93
+            ],
+            [
+              -8.317,
+              78.833
+            ],
+            [
+              39.218,
+              97.07
+            ]
+          ]
+        },
+        {
+          "index": 18,
+          "yaw_deg": -180.0,
+          "facing": 24,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d18.png",
+          "screen_heading": [
+            -0.8944,
+            -0.4472
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              96.184,
+              64.592
+            ],
+            [
+              53.816,
+              43.408
+            ],
+            [
+              -10.184,
+              75.408
+            ],
+            [
+              32.184,
+              96.592
+            ]
+          ]
+        },
+        {
+          "index": 19,
+          "yaw_deg": -187.5,
+          "facing": 25,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d19.png",
+          "screen_heading": [
+            -0.8378,
+            -0.5459
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              97.141,
+              68.109
+            ],
+            [
+              60.665,
+              44.341
+            ],
+            [
+              -11.141,
+              71.891
+            ],
+            [
+              25.335,
+              95.659
+            ]
+          ]
+        },
+        {
+          "index": 20,
+          "yaw_deg": -195.0,
+          "facing": 26,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d20.png",
+          "screen_heading": [
+            -0.7559,
+            -0.6547
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              97.171,
+              71.659
+            ],
+            [
+              67.212,
+              45.714
+            ],
+            [
+              -11.171,
+              68.341
+            ],
+            [
+              18.788,
+              94.286
+            ]
+          ]
+        },
+        {
+          "index": 21,
+          "yaw_deg": -202.5,
+          "facing": 27,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d21.png",
+          "screen_heading": [
+            -0.638,
+            -0.7701
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              96.275,
+              75.18
+            ],
+            [
+              73.345,
+              47.502
+            ],
+            [
+              -10.275,
+              64.82
+            ],
+            [
+              12.655,
+              92.498
+            ]
+          ]
+        },
+        {
+          "index": 22,
+          "yaw_deg": -210.0,
+          "facing": 28,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d22.png",
+          "screen_heading": [
+            -0.4723,
+            -0.8814
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              94.467,
+              78.613
+            ],
+            [
+              78.959,
+              49.675
+            ],
+            [
+              -8.467,
+              61.387
+            ],
+            [
+              7.041,
+              90.325
+            ]
+          ]
+        },
+        {
+          "index": 23,
+          "yaw_deg": -217.5,
+          "facing": 29,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d23.png",
+          "screen_heading": [
+            -0.2546,
+            -0.967
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              91.778,
+              81.898
+            ],
+            [
+              83.957,
+              52.195
+            ],
+            [
+              -5.778,
+              58.102
+            ],
+            [
+              2.043,
+              87.805
+            ]
+          ]
+        },
+        {
+          "index": 24,
+          "yaw_deg": -225.0,
+          "facing": 30,
+          "file": "G:\\DEV\\Terepasztal\\pipeline-out-ladder\\L2\\sprites_raw/black_five_tender_d24.png",
+          "screen_heading": [
+            -0.0,
+            -1.0
+          ],
+          "tiles": [
+            0.662,
+            1
+          ],
+          "footprint_px": [
+            [
+              88.255,
+              84.979
+            ],
+            [
+              88.255,
+              55.021
+            ],
+            [
+              -2.255,
+              55.021
+            ],
+            [
+              -2.255,
+              84.979
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "seconds": 105.8
+}

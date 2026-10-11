@@ -1,0 +1,908 @@
+{
+ "errors": [],
+ "groups": {
+  "overview": {
+   "rows": [
+    "rocket",
+    "muki",
+    "",
+    "john_bull",
+    "class08",
+    "",
+    "general",
+    "sw1",
+    "",
+    "black_five",
+    "f7",
+    "",
+    "nine_f",
+    "sd40",
+    "",
+    "big_boy",
+    "koutetsujou"
+   ],
+   "crop": [
+    164,
+    246,
+    1356,
+    620
+   ],
+   "runs": {
+    "now": [
+     {
+      "id": "rocket",
+      "row": 0,
+      "L": 1,
+      "progress": 8.0068666666668
+     },
+     {
+      "id": "muki",
+      "row": 1,
+      "missing": true
+     },
+     {
+      "id": "john_bull",
+      "row": 3,
+      "L": 1,
+      "progress": 8.012916666666712
+     },
+     {
+      "id": "class08",
+      "row": 4,
+      "L": 1,
+      "progress": 8.004600833333255
+     },
+     {
+      "id": "general",
+      "row": 6,
+      "L": 1,
+      "progress": 8.015966666666687
+     },
+     {
+      "id": "sw1",
+      "row": 7,
+      "L": 1,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "black_five",
+      "row": 9,
+      "L": 2,
+      "progress": 8.000386904761859
+     },
+     {
+      "id": "f7",
+      "row": 10,
+      "L": 2,
+      "progress": 8.012516666666658
+     },
+     {
+      "id": "nine_f",
+      "row": 12,
+      "L": 2,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "sd40",
+      "row": 13,
+      "L": 2,
+      "progress": 8.009583333333289
+     },
+     {
+      "id": "big_boy",
+      "row": 15,
+      "L": 3,
+      "progress": 8.009296666666627
+     },
+     {
+      "id": "koutetsujou",
+      "row": 16,
+      "missing": true
+     }
+    ],
+    "A": [
+     {
+      "id": "rocket",
+      "row": 0,
+      "L": 0.5,
+      "progress": 8.0068666666668
+     },
+     {
+      "id": "muki",
+      "row": 1,
+      "L": 0.5,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "john_bull",
+      "row": 3,
+      "L": 1,
+      "progress": 8.012916666666712
+     },
+     {
+      "id": "class08",
+      "row": 4,
+      "L": 1,
+      "progress": 8.004600833333255
+     },
+     {
+      "id": "general",
+      "row": 6,
+      "L": 1.5,
+      "progress": 8.015966666666687
+     },
+     {
+      "id": "sw1",
+      "row": 7,
+      "L": 1.5,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "black_five",
+      "row": 9,
+      "L": 2,
+      "progress": 8.000386904761859
+     },
+     {
+      "id": "f7",
+      "row": 10,
+      "L": 2,
+      "progress": 8.012516666666658
+     },
+     {
+      "id": "nine_f",
+      "row": 12,
+      "L": 2.5,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "sd40",
+      "row": 13,
+      "L": 2.5,
+      "progress": 8.009583333333289
+     },
+     {
+      "id": "big_boy",
+      "row": 15,
+      "L": 3,
+      "progress": 8.009296666666627
+     },
+     {
+      "id": "koutetsujou",
+      "row": 16,
+      "L": 3,
+      "progress": 8.014638888888927
+     }
+    ],
+    "B": [
+     {
+      "id": "rocket",
+      "row": 0,
+      "L": 0.5,
+      "progress": 8.0068666666668
+     },
+     {
+      "id": "muki",
+      "row": 1,
+      "L": 0.5,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "john_bull",
+      "row": 3,
+      "L": 1,
+      "progress": 8.012916666666712
+     },
+     {
+      "id": "class08",
+      "row": 4,
+      "L": 1,
+      "progress": 8.004600833333255
+     },
+     {
+      "id": "general",
+      "row": 6,
+      "L": 1.5,
+      "progress": 8.015966666666687
+     },
+     {
+      "id": "sw1",
+      "row": 7,
+      "L": 1.5,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "black_five",
+      "row": 9,
+      "L": 2,
+      "progress": 8.000386904761859
+     },
+     {
+      "id": "f7",
+      "row": 10,
+      "L": 2,
+      "progress": 8.012516666666658
+     },
+     {
+      "id": "nine_f",
+      "row": 12,
+      "L": 3,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "sd40",
+      "row": 13,
+      "L": 3,
+      "progress": 8.009583333333289
+     },
+     {
+      "id": "big_boy",
+      "row": 15,
+      "L": 4,
+      "progress": 8.009296666666627
+     },
+     {
+      "id": "koutetsujou",
+      "row": 16,
+      "L": 4,
+      "progress": 8.014638888888927
+     }
+    ]
+   }
+  },
+  "corvette": {
+   "rows": [
+    "rocket",
+    "muki",
+    "bm50"
+   ],
+   "crop": [
+    803,
+    444,
+    341,
+    263
+   ],
+   "runs": {
+    "now": [
+     {
+      "id": "rocket",
+      "row": 0,
+      "L": 1,
+      "progress": 8.0068666666668
+     },
+     {
+      "id": "muki",
+      "row": 1,
+      "missing": true
+     },
+     {
+      "id": "bm50",
+      "row": 2,
+      "missing": true
+     }
+    ],
+    "A": [
+     {
+      "id": "rocket",
+      "row": 0,
+      "L": 0.5,
+      "progress": 8.0068666666668
+     },
+     {
+      "id": "muki",
+      "row": 1,
+      "L": 0.5,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "bm50",
+      "row": 2,
+      "L": 0.5,
+      "progress": 8.014638888888927
+     }
+    ]
+   }
+  },
+  "frigate": {
+   "rows": [
+    "mk45",
+    "mk48",
+    "rezet",
+    "mav490",
+    "c50",
+    "adler",
+    "john_bull",
+    "mav375",
+    "j94",
+    "class08"
+   ],
+   "crop": [
+    497,
+    304,
+    891,
+    519
+   ],
+   "runs": {
+    "now": [
+     {
+      "id": "mk45",
+      "row": 0,
+      "missing": true
+     },
+     {
+      "id": "mk48",
+      "row": 1,
+      "L": 1,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "rezet",
+      "row": 2,
+      "missing": true
+     },
+     {
+      "id": "mav490",
+      "row": 3,
+      "missing": true
+     },
+     {
+      "id": "c50",
+      "row": 4,
+      "missing": true
+     },
+     {
+      "id": "adler",
+      "row": 5,
+      "L": 1,
+      "progress": 8.005883333333255
+     },
+     {
+      "id": "john_bull",
+      "row": 6,
+      "L": 1,
+      "progress": 8.012916666666712
+     },
+     {
+      "id": "mav375",
+      "row": 7,
+      "L": 1,
+      "progress": 8.010833333333371
+     },
+     {
+      "id": "j94",
+      "row": 8,
+      "L": 1,
+      "progress": 8.003843749999923
+     },
+     {
+      "id": "class08",
+      "row": 9,
+      "L": 1,
+      "progress": 8.004600833333255
+     }
+    ],
+    "A": [
+     {
+      "id": "mk45",
+      "row": 0,
+      "L": 1,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "mk48",
+      "row": 1,
+      "L": 1,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "rezet",
+      "row": 2,
+      "L": 1,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "mav490",
+      "row": 3,
+      "L": 1,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "c50",
+      "row": 4,
+      "L": 1,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "adler",
+      "row": 5,
+      "L": 1,
+      "progress": 8.005883333333255
+     },
+     {
+      "id": "john_bull",
+      "row": 6,
+      "L": 1,
+      "progress": 8.012916666666712
+     },
+     {
+      "id": "mav375",
+      "row": 7,
+      "L": 1,
+      "progress": 8.010833333333371
+     },
+     {
+      "id": "j94",
+      "row": 8,
+      "L": 1,
+      "progress": 8.003843749999923
+     },
+     {
+      "id": "class08",
+      "row": 9,
+      "L": 1,
+      "progress": 8.004600833333255
+     }
+    ]
+   }
+  },
+  "destroyer": {
+   "rows": [
+    "sw1",
+    "kando_v40",
+    "general",
+    "jupiter"
+   ],
+   "crop": [
+    662,
+    381,
+    527,
+    347
+   ],
+   "runs": {
+    "now": [
+     {
+      "id": "sw1",
+      "row": 0,
+      "L": 1,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "kando_v40",
+      "row": 1,
+      "L": 1,
+      "progress": 8.004100000000044
+     },
+     {
+      "id": "general",
+      "row": 2,
+      "L": 1,
+      "progress": 8.015966666666687
+     },
+     {
+      "id": "jupiter",
+      "row": 3,
+      "L": 1,
+      "progress": 8.001733333333299
+     }
+    ],
+    "A": [
+     {
+      "id": "sw1",
+      "row": 0,
+      "L": 1.5,
+      "progress": 8.014638888888927
+     },
+     {
+      "id": "kando_v40",
+      "row": 1,
+      "L": 1.5,
+      "progress": 8.004100000000044
+     },
+     {
+      "id": "general",
+      "row": 2,
+      "L": 1.5,
+      "progress": 8.015966666666687
+     },
+     {
+      "id": "jupiter",
+      "row": 3,
+      "L": 1.5,
+      "progress": 8.001733333333299
+     }
+    ]
+   }
+  },
+  "cruiser": {
+   "rows": [
+    "k4s",
+    "flying_scotsman",
+    "drg01",
+    "taurus",
+    "v63",
+    "m62",
+    "re460",
+    "black_five",
+    "deltic",
+    "f7",
+    "mallard",
+    "ice1",
+    "tgv"
+   ],
+   "crop": [
+    368,
+    247,
+    1068,
+    601
+   ],
+   "runs": {
+    "now": [
+     {
+      "id": "k4s",
+      "row": 0,
+      "L": 2,
+      "progress": 8.001336309523763
+     },
+     {
+      "id": "flying_scotsman",
+      "row": 1,
+      "L": 2,
+      "progress": 8.011176975945002
+     },
+     {
+      "id": "drg01",
+      "row": 2,
+      "L": 2,
+      "progress": 8.005128787878743
+     },
+     {
+      "id": "taurus",
+      "row": 3,
+      "L": 2,
+      "progress": 8.01850000000003
+     },
+     {
+      "id": "v63",
+      "row": 4,
+      "L": 2,
+      "progress": 8.01789999999999
+     },
+     {
+      "id": "m62",
+      "row": 5,
+      "L": 2,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "re460",
+      "row": 6,
+      "L": 2,
+      "progress": 8.01850000000003
+     },
+     {
+      "id": "black_five",
+      "row": 7,
+      "L": 2,
+      "progress": 8.000386904761859
+     },
+     {
+      "id": "deltic",
+      "row": 8,
+      "L": 2,
+      "progress": 8.01850000000003
+     },
+     {
+      "id": "f7",
+      "row": 9,
+      "L": 2,
+      "progress": 8.012516666666658
+     },
+     {
+      "id": "mallard",
+      "row": 10,
+      "L": 2,
+      "progress": 8.002500000000005
+     },
+     {
+      "id": "ice1",
+      "row": 11,
+      "L": 2,
+      "progress": 8.02243333333336
+     },
+     {
+      "id": "tgv",
+      "row": 12,
+      "L": 2,
+      "progress": 8.021083333333346
+     }
+    ],
+    "A": [
+     {
+      "id": "k4s",
+      "row": 0,
+      "L": 2,
+      "progress": 8.001336309523763
+     },
+     {
+      "id": "flying_scotsman",
+      "row": 1,
+      "L": 2,
+      "progress": 8.011176975945002
+     },
+     {
+      "id": "drg01",
+      "row": 2,
+      "L": 2,
+      "progress": 8.005128787878743
+     },
+     {
+      "id": "taurus",
+      "row": 3,
+      "L": 2,
+      "progress": 8.01850000000003
+     },
+     {
+      "id": "v63",
+      "row": 4,
+      "L": 2,
+      "progress": 8.01789999999999
+     },
+     {
+      "id": "m62",
+      "row": 5,
+      "L": 2,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "re460",
+      "row": 6,
+      "L": 2,
+      "progress": 8.01850000000003
+     },
+     {
+      "id": "black_five",
+      "row": 7,
+      "L": 2,
+      "progress": 8.000386904761859
+     },
+     {
+      "id": "deltic",
+      "row": 8,
+      "L": 2,
+      "progress": 8.01850000000003
+     },
+     {
+      "id": "f7",
+      "row": 9,
+      "L": 2,
+      "progress": 8.012516666666658
+     },
+     {
+      "id": "mallard",
+      "row": 10,
+      "L": 2,
+      "progress": 8.002500000000005
+     },
+     {
+      "id": "ice1",
+      "row": 11,
+      "L": 2,
+      "progress": 8.02243333333336
+     },
+     {
+      "id": "tgv",
+      "row": 12,
+      "L": 2,
+      "progress": 8.021083333333346
+     }
+    ]
+   }
+  },
+  "battleship": {
+   "rows": [
+    "crocodile",
+    "nine_f",
+    "gg1",
+    "daylight",
+    "sd40",
+    "dda40x",
+    "mav424"
+   ],
+   "crop": [
+    509,
+    326,
+    718,
+    419
+   ],
+   "runs": {
+    "now": [
+     {
+      "id": "crocodile",
+      "row": 0,
+      "L": 3,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "nine_f",
+      "row": 1,
+      "L": 2,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "gg1",
+      "row": 2,
+      "L": 3,
+      "progress": 8.025709722222171
+     },
+     {
+      "id": "daylight",
+      "row": 3,
+      "L": 2,
+      "progress": 8.020301041666691
+     },
+     {
+      "id": "sd40",
+      "row": 4,
+      "L": 2,
+      "progress": 8.009583333333289
+     },
+     {
+      "id": "dda40x",
+      "row": 5,
+      "L": 3,
+      "progress": 8.015533333333282
+     },
+     {
+      "id": "mav424",
+      "row": 6,
+      "L": 2,
+      "progress": 8.016583333333395
+     }
+    ],
+    "A": [
+     {
+      "id": "crocodile",
+      "row": 0,
+      "L": 2.5,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "nine_f",
+      "row": 1,
+      "L": 2.5,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "gg1",
+      "row": 2,
+      "L": 2.5,
+      "progress": 8.025709722222171
+     },
+     {
+      "id": "daylight",
+      "row": 3,
+      "L": 2.5,
+      "progress": 8.020301041666691
+     },
+     {
+      "id": "sd40",
+      "row": 4,
+      "L": 2.5,
+      "progress": 8.009583333333289
+     },
+     {
+      "id": "dda40x",
+      "row": 5,
+      "L": 2.5,
+      "progress": 8.015533333333282
+     },
+     {
+      "id": "mav424",
+      "row": 6,
+      "L": 2.5,
+      "progress": 8.016583333333395
+     }
+    ],
+    "B": [
+     {
+      "id": "crocodile",
+      "row": 0,
+      "L": 3,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "nine_f",
+      "row": 1,
+      "L": 3,
+      "progress": 8.007616666666674
+     },
+     {
+      "id": "gg1",
+      "row": 2,
+      "L": 3,
+      "progress": 8.025709722222171
+     },
+     {
+      "id": "daylight",
+      "row": 3,
+      "L": 3,
+      "progress": 8.020301041666691
+     },
+     {
+      "id": "sd40",
+      "row": 4,
+      "L": 3,
+      "progress": 8.009583333333289
+     },
+     {
+      "id": "dda40x",
+      "row": 5,
+      "L": 3,
+      "progress": 8.015533333333282
+     },
+     {
+      "id": "mav424",
+      "row": 6,
+      "L": 3,
+      "progress": 8.016583333333395
+     }
+    ]
+   }
+  },
+  "juggernaut": {
+   "rows": [
+    "big_boy",
+    "koutetsujou"
+   ],
+   "crop": [
+    587,
+    352,
+    481,
+    286
+   ],
+   "runs": {
+    "now": [
+     {
+      "id": "big_boy",
+      "row": 0,
+      "L": 3,
+      "progress": 8.009296666666627
+     },
+     {
+      "id": "koutetsujou",
+      "row": 1,
+      "missing": true
+     }
+    ],
+    "A": [
+     {
+      "id": "big_boy",
+      "row": 0,
+      "L": 3,
+      "progress": 8.009296666666627
+     },
+     {
+      "id": "koutetsujou",
+      "row": 1,
+      "L": 3,
+      "progress": 8.014638888888927
+     }
+    ],
+    "B": [
+     {
+      "id": "big_boy",
+      "row": 0,
+      "L": 4,
+      "progress": 8.009296666666627
+     },
+     {
+      "id": "koutetsujou",
+      "row": 1,
+      "L": 4,
+      "progress": 8.014638888888927
+     }
+    ]
+   }
+  }
+ }
+}

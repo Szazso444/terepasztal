@@ -1,0 +1,733 @@
+{
+ "errors": [],
+ "shots": [
+  {
+   "id": "rocket",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "rocket-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "adler",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "adler-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "john_bull",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "john_bull-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "mav375",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "mav375-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "general",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "general-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "jupiter",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "jupiter-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "mav424",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "mav424-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "k4s",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "k4s-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "drg01",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "drg01-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "flying_scotsman",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "flying_scotsman-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "daylight",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "daylight-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "mallard",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "mallard-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "sw1",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "sw1-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "class08",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "class08-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "m62",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "m62-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "f7",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "f7-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "sd40",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "sd40-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "deltic",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "deltic-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "kando_v40",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "kando_v40-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "v63",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "v63-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "taurus",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "taurus-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "re460",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "re460-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "j94",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "j94-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "black_five",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "black_five-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "nine_f",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "nine_f-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "tgv",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "tgv-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "ice1",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "ice1-now.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "mk48",
+   "name": "now",
+   "query": "cls=regular",
+   "file": "mk48-now.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "big_boy",
+   "name": "now",
+   "query": "cls=high_speed",
+   "file": "big_boy-now.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "dda40x",
+   "name": "now",
+   "query": "cls=high_speed",
+   "file": "dda40x-now.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "crocodile",
+   "name": "now",
+   "query": "cls=high_speed",
+   "file": "crocodile-now.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "gg1",
+   "name": "now",
+   "query": "cls=high_speed",
+   "file": "gg1-now.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "adler",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "adler-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "john_bull",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "john_bull-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "mav375",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "mav375-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "general",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "general-A.png",
+   "loco": 1.5,
+   "state": "moving"
+  },
+  {
+   "id": "jupiter",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "jupiter-A.png",
+   "loco": 1.5,
+   "state": "moving"
+  },
+  {
+   "id": "mav424",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "mav424-A.png",
+   "loco": 2.5,
+   "state": "moving"
+  },
+  {
+   "id": "k4s",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "k4s-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "drg01",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "drg01-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "flying_scotsman",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "flying_scotsman-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "daylight",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "daylight-A.png",
+   "loco": 2.5,
+   "state": "moving"
+  },
+  {
+   "id": "mallard",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "mallard-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "big_boy",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "big_boy-A.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "sw1",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "sw1-A.png",
+   "loco": 1.5,
+   "state": "moving"
+  },
+  {
+   "id": "class08",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "class08-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "m62",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "m62-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "f7",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "f7-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "sd40",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "sd40-A.png",
+   "loco": 2.5,
+   "state": "moving"
+  },
+  {
+   "id": "deltic",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "deltic-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "dda40x",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "dda40x-A.png",
+   "loco": 2.5,
+   "state": "moving"
+  },
+  {
+   "id": "kando_v40",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "kando_v40-A.png",
+   "loco": 1.5,
+   "state": "moving"
+  },
+  {
+   "id": "v63",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "v63-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "crocodile",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "crocodile-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "taurus",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "taurus-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "re460",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "re460-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "gg1",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "gg1-A.png",
+   "loco": 2.5,
+   "state": "moving"
+  },
+  {
+   "id": "j94",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "j94-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "black_five",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "black_five-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "nine_f",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "nine_f-A.png",
+   "loco": 2.5,
+   "state": "moving"
+  },
+  {
+   "id": "tgv",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "tgv-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "ice1",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "ice1-A.png",
+   "loco": 2,
+   "state": "moving"
+  },
+  {
+   "id": "koutetsujou",
+   "name": "A",
+   "query": "cls=regular&ladder=A",
+   "file": "koutetsujou-A.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "rocket",
+   "name": "A",
+   "query": "cls=high_speed&ladder=A",
+   "file": "rocket-A.png",
+   "loco": 0.5,
+   "state": "moving"
+  },
+  {
+   "id": "mk48",
+   "name": "A",
+   "query": "cls=high_speed&ladder=A",
+   "file": "mk48-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "bm50",
+   "name": "A",
+   "query": "cls=high_speed&ladder=A",
+   "file": "bm50-A.png",
+   "loco": 0.5,
+   "state": "moving"
+  },
+  {
+   "id": "muki",
+   "name": "A",
+   "query": "cls=high_speed&ladder=A",
+   "file": "muki-A.png",
+   "loco": 0.5,
+   "state": "moving"
+  },
+  {
+   "id": "c50",
+   "name": "A",
+   "query": "cls=high_speed&ladder=A",
+   "file": "c50-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "mav490",
+   "name": "A",
+   "query": "cls=high_speed&ladder=A",
+   "file": "mav490-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "mk45",
+   "name": "A",
+   "query": "cls=high_speed&ladder=A",
+   "file": "mk45-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "rezet",
+   "name": "A",
+   "query": "cls=high_speed&ladder=A",
+   "file": "rezet-A.png",
+   "loco": 1,
+   "state": "moving"
+  },
+  {
+   "id": "mav424",
+   "name": "B",
+   "query": "cls=regular&ladder=B",
+   "file": "mav424-B.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "daylight",
+   "name": "B",
+   "query": "cls=regular&ladder=B",
+   "file": "daylight-B.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "big_boy",
+   "name": "B",
+   "query": "cls=regular&ladder=B",
+   "file": "big_boy-B.png",
+   "loco": 4,
+   "state": "moving"
+  },
+  {
+   "id": "sd40",
+   "name": "B",
+   "query": "cls=regular&ladder=B",
+   "file": "sd40-B.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "dda40x",
+   "name": "B",
+   "query": "cls=regular&ladder=B",
+   "file": "dda40x-B.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "gg1",
+   "name": "B",
+   "query": "cls=regular&ladder=B",
+   "file": "gg1-B.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "nine_f",
+   "name": "B",
+   "query": "cls=regular&ladder=B",
+   "file": "nine_f-B.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "koutetsujou",
+   "name": "B",
+   "query": "cls=regular&ladder=B",
+   "file": "koutetsujou-B.png",
+   "loco": 4,
+   "state": "moving"
+  },
+  {
+   "id": "mav424",
+   "name": "B3",
+   "query": "cls=high_speed&hsn=3&ladder=B",
+   "file": "mav424-B3.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "daylight",
+   "name": "B3",
+   "query": "cls=high_speed&hsn=3&ladder=B",
+   "file": "daylight-B3.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "big_boy",
+   "name": "B3",
+   "query": "cls=high_speed&hsn=3&ladder=B",
+   "file": "big_boy-B3.png",
+   "loco": 4,
+   "state": "moving"
+  },
+  {
+   "id": "sd40",
+   "name": "B3",
+   "query": "cls=high_speed&hsn=3&ladder=B",
+   "file": "sd40-B3.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "dda40x",
+   "name": "B3",
+   "query": "cls=high_speed&hsn=3&ladder=B",
+   "file": "dda40x-B3.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "gg1",
+   "name": "B3",
+   "query": "cls=high_speed&hsn=3&ladder=B",
+   "file": "gg1-B3.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "nine_f",
+   "name": "B3",
+   "query": "cls=high_speed&hsn=3&ladder=B",
+   "file": "nine_f-B3.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "koutetsujou",
+   "name": "B3",
+   "query": "cls=high_speed&hsn=3&ladder=B",
+   "file": "koutetsujou-B3.png",
+   "loco": 4,
+   "state": "moving"
+  },
+  {
+   "id": "dda40x",
+   "name": "Bhalves",
+   "query": "cls=regular&ladder=B&halves=koutetsujou,dda40x",
+   "file": "dda40x-Bhalves.png",
+   "loco": 3,
+   "state": "moving"
+  },
+  {
+   "id": "koutetsujou",
+   "name": "Bhalves",
+   "query": "cls=regular&ladder=B&halves=koutetsujou,dda40x",
+   "file": "koutetsujou-Bhalves.png",
+   "loco": 4,
+   "state": "moving"
+  },
+  {
+   "id": "dda40x",
+   "name": "Ahalves",
+   "query": "cls=regular&ladder=A&halves=koutetsujou,dda40x",
+   "file": "dda40x-Ahalves.png",
+   "loco": 2.5,
+   "state": "moving"
+  },
+  {
+   "id": "koutetsujou",
+   "name": "Ahalves",
+   "query": "cls=regular&ladder=A&halves=koutetsujou,dda40x",
+   "file": "koutetsujou-Ahalves.png",
+   "loco": 3,
+   "state": "moving"
+  }
+ ]
+}

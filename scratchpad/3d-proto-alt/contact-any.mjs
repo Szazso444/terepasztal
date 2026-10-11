@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import { positions } from './wheel-contact.mjs';
+import { axlesOf, solve } from './contact.js';
+const [id, part, glb, yMin = '0.2', yMax = '1.2'] = process.argv.slice(2);
+const gear = JSON.parse(fs.readFileSync('../../src/data/gear.json', 'utf8'))[id];
+const info = JSON.parse(fs.readFileSync(`export/${id}.parts.json`, 'utf8')).parts.find((p) => p.part === part);
+const gp = gear.parts.find((p) => p.part === part);
+const P = positions(glb);
+const axles = axlesOf(gp, info.lo[0], info.hi[0]);
+const r = solve(P, axles, { yMin: +yMin, yMax: +yMax, win: 0.3 });
+console.log(id, part, 'gauge class', gear.gauge, 'axles', axles.map((a) => a.toFixed(2)).join(','), '->', `contacts ${r.contacts} height ${(r.height_m * 1000).toFixed(0)} mm pitch ${r.pitch_deg.toFixed(2)} deg roll ${r.roll_deg.toFixed(2)} yaw ${r.yaw_deg.toFixed(2)} lateral ${(r.lateral_m * 1000).toFixed(0)} mm wheel gauge ${r.gauge_m.toFixed(2)} m = ${(r.gauge_m / 6.235).toFixed(3)} tile, residual ${r.residual_mm.toFixed(0)} mm`);
+console.log('  contacts', r.detail.map((c) => `x${c.x.toFixed(2)} y${c.y.toFixed(2)} z${(c.z * 1000).toFixed(0)}`).join(' | '));

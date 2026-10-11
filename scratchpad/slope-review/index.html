@@ -1,0 +1,153 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>Terepasztal Slope Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+<style>
+:root {
+  --ground: #e9ece5; --surface: #f7f8f4; --sunk: #dde2d9; --ink: #1b221e; --muted: #56625a; --line: #c4ccc1; --accent: #1f5c45;
+  --display: 'Barlow Semi Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) { color-scheme: dark; --ground: #111513; --surface: #1a201c; --sunk: #232b26; --ink: #e2e8e0; --muted: #9ba79f; --line: #313b35; --accent: #6cbf97; }
+}
+:root[data-theme='dark'] { color-scheme: dark; --ground: #111513; --surface: #1a201c; --sunk: #232b26; --ink: #e2e8e0; --muted: #9ba79f; --line: #313b35; --accent: #6cbf97; }
+body { background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); padding-inline: clamp(16px, 4vw, 48px); padding-block: 28px 64px; }
+.wrap { max-width: 1240px; margin-inline: auto; display: grid; gap: 44px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; }
+h2 { font-size: 1.6rem; font-weight: 700; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; max-width: 74ch; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 92ch; }
+code { font-family: var(--mono); font-size: 0.9em; }
+.label { font: 600 0.72rem/1.2 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+header.top, section { display: grid; gap: 14px; }
+figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
+figcaption, .note { font-size: 0.85rem; color: var(--muted); }
+figcaption b, .sides b { color: var(--accent); font-weight: 600; }
+.videos { display: grid; gap: 26px; }
+.video video { width: 100%; height: auto; display: block; border-radius: 4px; background: var(--sunk); }
+.sides { display: grid; grid-template-columns: 1fr 1fr; font: 600 0.9rem var(--body); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pair img { width: 100%; height: auto; display: block; border-radius: 4px; background: var(--sunk); image-rendering: pixelated; }
+.verdict { border-left: 3px solid var(--accent); padding-left: 18px; display: grid; gap: 10px; }
+</style>
+<div class="wrap">
+<header class="top">
+  <span class="label">Terepasztal · train rendering · claude/train-slope-pitch</span>
+  <h1>Terepasztal Slope Pitch</h1>
+  <p>On a slope the game drew every train sprite as if it were a flat footprint lying on the ground, so the whole picture was squeezed or stretched along with the slope. At the steepest grade a train shrank to about 72 % of its height going up one way and grew to about 128 % coming down. The fix pitches each body along its own length and leaves its height alone.</p>
+  <ul>
+    <li>Left is main as it is today, right is the same train at the same spot with the fix. The camera follows the train.</li>
+    <li>It applies to every train sprite: engines, tenders, wagons, bogies and loads, the game's own drawings and the pipeline's sprites alike. The Mk48 here is a pipeline sprite.</li>
+    <li>Rails only climb on straight track along the two tile axes, so these four directions are every case there is.</li>
+  </ul>
+</header>
+
+<section>
+  <h2>In motion</h2>
+  <div class="videos"><figure class="video">
+  <div class="sides"><span>Now (main)</span><span><b>With the fix</b></span></div>
+  <video src="media/anim-x-east-c0.mp4" controls loop muted autoplay playsinline width="1612" height="500"></video>
+  <figcaption>MÁV Mk48 (a pipeline sprite) with two boxcars · heading down-right on screen · up the hill, across the top and down again</figcaption>
+</figure>
+<figure class="video">
+  <div class="sides"><span>Now (main)</span><span><b>With the fix</b></span></div>
+  <video src="media/anim-y-south-c0.mp4" controls loop muted autoplay playsinline width="1612" height="500"></video>
+  <figcaption>MÁV Mk48 (a pipeline sprite) with two boxcars · heading down-left on screen · up the hill, across the top and down again</figcaption>
+</figure>
+<figure class="video">
+  <div class="sides"><span>Now (main)</span><span><b>With the fix</b></span></div>
+  <video src="media/anim-x-east-c1.mp4" controls loop muted autoplay playsinline width="1612" height="500"></video>
+  <figcaption>Flying Scotsman with two coaches · heading down-right on screen · up the hill, across the top and down again</figcaption>
+</figure>
+<figure class="video">
+  <div class="sides"><span>Now (main)</span><span><b>With the fix</b></span></div>
+  <video src="media/anim-y-south-c1.mp4" controls loop muted autoplay playsinline width="1612" height="500"></video>
+  <figcaption>Flying Scotsman with two coaches · heading down-left on screen · up the hill, across the top and down again</figcaption>
+</figure></div>
+</section>
+
+<section>
+  <h2>Frame by frame</h2>
+  <div class="cards"><article class="card"><h3>Heading down-right on screen</h3><p class="note">MÁV Mk48 (a pipeline sprite) with two boxcars</p><div class="pair">
+      <figure><img src="media/before-still-x-east-c0-up.webp" alt="Climbing, as on main" width="500" height="320" loading="lazy"><figcaption>Climbing · now</figcaption></figure>
+      <figure><img src="media/after-still-x-east-c0-up.webp" alt="Climbing, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Climbing · with the fix</b></figcaption></figure>
+    </div>
+<div class="pair">
+      <figure><img src="media/before-still-x-east-c0-down.webp" alt="Descending, as on main" width="500" height="320" loading="lazy"><figcaption>Descending · now</figcaption></figure>
+      <figure><img src="media/after-still-x-east-c0-down.webp" alt="Descending, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Descending · with the fix</b></figcaption></figure>
+    </div></article>
+<article class="card"><h3>Heading up-left on screen</h3><p class="note">MÁV Mk48 (a pipeline sprite) with two boxcars</p><div class="pair">
+      <figure><img src="media/before-still-x-west-c0-up.webp" alt="Climbing, as on main" width="500" height="320" loading="lazy"><figcaption>Climbing · now</figcaption></figure>
+      <figure><img src="media/after-still-x-west-c0-up.webp" alt="Climbing, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Climbing · with the fix</b></figcaption></figure>
+    </div>
+<div class="pair">
+      <figure><img src="media/before-still-x-west-c0-down.webp" alt="Descending, as on main" width="500" height="320" loading="lazy"><figcaption>Descending · now</figcaption></figure>
+      <figure><img src="media/after-still-x-west-c0-down.webp" alt="Descending, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Descending · with the fix</b></figcaption></figure>
+    </div></article>
+<article class="card"><h3>Heading down-left on screen</h3><p class="note">MÁV Mk48 (a pipeline sprite) with two boxcars</p><div class="pair">
+      <figure><img src="media/before-still-y-south-c0-up.webp" alt="Climbing, as on main" width="500" height="320" loading="lazy"><figcaption>Climbing · now</figcaption></figure>
+      <figure><img src="media/after-still-y-south-c0-up.webp" alt="Climbing, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Climbing · with the fix</b></figcaption></figure>
+    </div>
+<div class="pair">
+      <figure><img src="media/before-still-y-south-c0-down.webp" alt="Descending, as on main" width="500" height="320" loading="lazy"><figcaption>Descending · now</figcaption></figure>
+      <figure><img src="media/after-still-y-south-c0-down.webp" alt="Descending, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Descending · with the fix</b></figcaption></figure>
+    </div></article>
+<article class="card"><h3>Heading up-right on screen</h3><p class="note">MÁV Mk48 (a pipeline sprite) with two boxcars</p><div class="pair">
+      <figure><img src="media/before-still-y-north-c0-up.webp" alt="Climbing, as on main" width="500" height="320" loading="lazy"><figcaption>Climbing · now</figcaption></figure>
+      <figure><img src="media/after-still-y-north-c0-up.webp" alt="Climbing, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Climbing · with the fix</b></figcaption></figure>
+    </div>
+<div class="pair">
+      <figure><img src="media/before-still-y-north-c0-down.webp" alt="Descending, as on main" width="500" height="320" loading="lazy"><figcaption>Descending · now</figcaption></figure>
+      <figure><img src="media/after-still-y-north-c0-down.webp" alt="Descending, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Descending · with the fix</b></figcaption></figure>
+    </div></article>
+<article class="card"><h3>Heading down-right on screen</h3><p class="note">Flying Scotsman with two coaches</p><div class="pair">
+      <figure><img src="media/before-still-x-east-c1-up.webp" alt="Climbing, as on main" width="500" height="320" loading="lazy"><figcaption>Climbing · now</figcaption></figure>
+      <figure><img src="media/after-still-x-east-c1-up.webp" alt="Climbing, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Climbing · with the fix</b></figcaption></figure>
+    </div>
+<div class="pair">
+      <figure><img src="media/before-still-x-east-c1-down.webp" alt="Descending, as on main" width="500" height="320" loading="lazy"><figcaption>Descending · now</figcaption></figure>
+      <figure><img src="media/after-still-x-east-c1-down.webp" alt="Descending, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Descending · with the fix</b></figcaption></figure>
+    </div></article>
+<article class="card"><h3>Heading up-left on screen</h3><p class="note">Flying Scotsman with two coaches</p><div class="pair">
+      <figure><img src="media/before-still-x-west-c1-up.webp" alt="Climbing, as on main" width="500" height="320" loading="lazy"><figcaption>Climbing · now</figcaption></figure>
+      <figure><img src="media/after-still-x-west-c1-up.webp" alt="Climbing, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Climbing · with the fix</b></figcaption></figure>
+    </div>
+<div class="pair">
+      <figure><img src="media/before-still-x-west-c1-down.webp" alt="Descending, as on main" width="500" height="320" loading="lazy"><figcaption>Descending · now</figcaption></figure>
+      <figure><img src="media/after-still-x-west-c1-down.webp" alt="Descending, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Descending · with the fix</b></figcaption></figure>
+    </div></article>
+<article class="card"><h3>Heading down-left on screen</h3><p class="note">Flying Scotsman with two coaches</p><div class="pair">
+      <figure><img src="media/before-still-y-south-c1-up.webp" alt="Climbing, as on main" width="500" height="320" loading="lazy"><figcaption>Climbing · now</figcaption></figure>
+      <figure><img src="media/after-still-y-south-c1-up.webp" alt="Climbing, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Climbing · with the fix</b></figcaption></figure>
+    </div>
+<div class="pair">
+      <figure><img src="media/before-still-y-south-c1-down.webp" alt="Descending, as on main" width="500" height="320" loading="lazy"><figcaption>Descending · now</figcaption></figure>
+      <figure><img src="media/after-still-y-south-c1-down.webp" alt="Descending, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Descending · with the fix</b></figcaption></figure>
+    </div></article>
+<article class="card"><h3>Heading up-right on screen</h3><p class="note">Flying Scotsman with two coaches</p><div class="pair">
+      <figure><img src="media/before-still-y-north-c1-up.webp" alt="Climbing, as on main" width="500" height="320" loading="lazy"><figcaption>Climbing · now</figcaption></figure>
+      <figure><img src="media/after-still-y-north-c1-up.webp" alt="Climbing, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Climbing · with the fix</b></figcaption></figure>
+    </div>
+<div class="pair">
+      <figure><img src="media/before-still-y-north-c1-down.webp" alt="Descending, as on main" width="500" height="320" loading="lazy"><figcaption>Descending · now</figcaption></figure>
+      <figure><img src="media/after-still-y-north-c1-down.webp" alt="Descending, with the fix" width="500" height="320" loading="lazy"><figcaption><b>Descending · with the fix</b></figcaption></figure>
+    </div></article></div>
+</section>
+
+<section class="verdict">
+  <span class="label">What it does and doesn't do</span>
+  <ul>
+    <li>Bodies keep their height and their wheels stay on the rail under each bogie, as before.</li>
+    <li>A pitched body is sheared, not turned: its upright edges stay upright. With one drawing per direction that is the closest a sprite gets; a truly tilted engine would need extra sprites rendered nose-up and nose-down.</li>
+    <li>On the steepest grade the wheels on the near and far rail sit about 1 pixel off across the track. I could not see it in these renders.</li>
+    <li>Track, terrain and the rail profile are untouched; the change is two files in <code>src/render</code> plus a test.</li>
+  </ul>
+</section>
+</div>
+</body></html>

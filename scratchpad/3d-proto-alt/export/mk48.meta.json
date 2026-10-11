@@ -1,0 +1,137 @@
+{
+  "id": "mk48",
+  "category": "vehicle",
+  "plan": "rigid",
+  "tiles": [
+    1,
+    1
+  ],
+  "footprint_m": [
+    6.235064799811727,
+    6.235064799811727
+  ],
+  "scale": 6.381333,
+  "scale_ref": "height_m",
+  "compression": [
+    0.8782,
+    1.4573,
+    1.0
+  ],
+  "real_dims_m": [
+    6.645,
+    2.556,
+    3.558
+  ],
+  "final_dims_m": [
+    5.815,
+    2.977,
+    3.535
+  ],
+  "split": null,
+  "width_fix": 1.2765,
+  "px_per_m": 14.51624,
+  "supersample": 2,
+  "resolution": 2,
+  "source": {
+    "fov_deg": 14.124,
+    "silhouette_iou": 0.9803,
+    "texels": 4194304,
+    "source_texels": 484837,
+    "source_share": 0.116,
+    "mirrored_share": 0.079,
+    "extra_share": 0,
+    "nearest_share": 0.805,
+    "extras": [],
+    "median_delta_e_generated": 21.68,
+    "median_delta_e_transferred": 12.45,
+    "texture": "C:/Users/Zso/terepasztal-ladder/scratchpad/3d-proto-alt/export/mk48_texture.png"
+  },
+  "anchor": "ground center of the footprint (a part's own centre), continuous px coords from top-left",
+  "align": {
+    "mode": "auto",
+    "yaw": 43.25,
+    "pitch": -28.75,
+    "roll": -0.25,
+    "score": 0.8809,
+    "levelled_deg": 0.377
+  },
+  "warnings": [
+    "extra view skipped: G:\\DEV\\Terepasztal\\Images\\organized\\locomotives\\1\\Narrow\\MK48\\loco-mk48-rear.png: no transparent background to take the silhouette from",
+    "length_m: model 6.64 m vs spec 8.965 m (-26%)"
+  ],
+  "debug": {},
+  "debug_cams": {},
+  "renders": [
+    {
+      "part": "body",
+      "tiles": [
+        1,
+        1
+      ],
+      "footprint_m": [
+        6.235064799811727,
+        6.235064799811727
+      ],
+      "gear": [
+        {
+          "x_m": -2.023,
+          "d_m": 0.659,
+          "spokes": 0
+        },
+        {
+          "x_m": -0.732,
+          "d_m": 0.537,
+          "spokes": 0
+        },
+        {
+          "x_m": 1.051,
+          "d_m": 0.646,
+          "spokes": 0
+        },
+        {
+          "x_m": 1.875,
+          "d_m": 0.51,
+          "spokes": 0
+        }
+      ],
+      "profile": {
+        "top": [
+          2.35,
+          3.26,
+          3.05,
+          2.47,
+          2.42,
+          2.36
+        ],
+        "width": [
+          2.4,
+          2.53,
+          2.44,
+          1.94,
+          1.79,
+          2.14
+        ]
+      },
+      "compression": [
+        0.8782,
+        1.4573,
+        1.0
+      ],
+      "final_dims_m": [
+        5.815,
+        2.977,
+        3.535
+      ],
+      "canvas_px": [
+        0,
+        0
+      ],
+      "anchor_px": [
+        0,
+        0
+      ],
+      "dirs": []
+    }
+  ],
+  "seconds": 34.1
+}

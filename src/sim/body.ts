@@ -89,12 +89,15 @@ export interface BodyFields {
   /** spike: measured running gear, at this length in tiles */
   gear?: Gear;
   lengthTiles?: number;
+  /** scratch: a pipeline sprite that carries its own running gear, so no bogies are drawn under it */
+  spriteGear?: boolean;
 }
 
 export function vehicleSpec(def: BodyFields): VehicleSpec {
   const size = def.size ?? 'small';
   if (def.gear && def.lengthTiles) {
     const segments = gearSegments(def.gear, def.lengthTiles);
+    if (def.spriteGear) for (const s of segments) if (s.at) s.hidden = s.at.map(() => true);
     const parts = new Set(segments.map((s) => s.part));
     return {
       L: def.lengthTiles,

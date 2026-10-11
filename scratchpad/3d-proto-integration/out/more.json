@@ -1,0 +1,394 @@
+{
+ "hide": {
+  "shedTile": 45,
+  "cars": [
+   {
+    "parts": [
+     {
+      "part": "engine",
+      "x": 45.07,
+      "tile": 45,
+      "L": 1.278,
+      "visible": false,
+      "light": null
+     },
+     {
+      "part": "tender",
+      "x": 44.04,
+      "tile": 44,
+      "L": 0.662,
+      "visible": true,
+      "light": null
+     }
+    ],
+    "bogies": [],
+    "load": null
+   },
+   {
+    "parts": [
+     {
+      "part": "body",
+      "x": 42.51,
+      "tile": 43,
+      "L": 2,
+      "visible": true,
+      "light": true
+     }
+    ],
+    "bogies": [
+     true,
+     true
+    ],
+    "load": null
+   },
+   {
+    "parts": [
+     {
+      "part": "body",
+      "x": 40.81,
+      "tile": 41,
+      "L": 1,
+      "visible": true,
+      "light": true
+     }
+    ],
+    "bogies": [],
+    "load": true
+   }
+  ]
+ },
+ "busy": {
+  "10x8": {
+   "trains": 10,
+   "vehicles": 90,
+   "parts": 94,
+   "locoParts": 14,
+   "bogies": 14,
+   "loads": 46,
+   "windowLights": 80,
+   "objectChildren": 3686,
+   "updateMs": 0.6829999999701977,
+   "sortMs": 0.635,
+   "updatePosesMs": 0.6629999999701977
+  },
+  "30x8": {
+   "trains": 30,
+   "vehicles": 270,
+   "parts": 281,
+   "locoParts": 41,
+   "bogies": 46,
+   "loads": 118,
+   "windowLights": 240,
+   "objectChildren": 4285,
+   "updateMs": 1.145,
+   "sortMs": 0.56,
+   "updatePosesMs": 3.276499999985099
+  },
+  "30x16": {
+   "trains": 30,
+   "vehicles": 510,
+   "parts": 521,
+   "locoParts": 41,
+   "bogies": 104,
+   "loads": 214,
+   "windowLights": 480,
+   "objectChildren": 5101,
+   "updateMs": 1.8160000000149013,
+   "sortMs": 0.495,
+   "updatePosesMs": 6.523999999985099
+  },
+  "60x8": {
+   "trains": 60,
+   "vehicles": 540,
+   "parts": 558,
+   "locoParts": 78,
+   "bogies": 96,
+   "loads": 216,
+   "windowLights": 480,
+   "objectChildren": 5170,
+   "updateMs": 1.6629999999701977,
+   "sortMs": 0.4075,
+   "updatePosesMs": 6.237000000029802
+  }
+ },
+ "slice": {
+  "5.4/1": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": 2,
+    "zIndex": 8605.8
+   }
+  ],
+  "5.4/4": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": -1,
+    "zIndex": 8455.8
+   },
+   {
+    "k": 1,
+    "from": -1,
+    "to": 0,
+    "zIndex": 8555.8
+   },
+   {
+    "k": 2,
+    "from": 0,
+    "to": 1,
+    "zIndex": 8655.8
+   },
+   {
+    "k": 3,
+    "from": 1,
+    "to": 2,
+    "zIndex": 8755.8
+   }
+  ],
+  "5.4/8": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": -1.5,
+    "zIndex": 8430.8
+   },
+   {
+    "k": 1,
+    "from": -1.5,
+    "to": -1,
+    "zIndex": 8480.8
+   },
+   {
+    "k": 2,
+    "from": -1,
+    "to": -0.5,
+    "zIndex": 8530.8
+   },
+   {
+    "k": 3,
+    "from": -0.5,
+    "to": 0,
+    "zIndex": 8580.8
+   },
+   {
+    "k": 4,
+    "from": 0,
+    "to": 0.5,
+    "zIndex": 8630.8
+   },
+   {
+    "k": 5,
+    "from": 0.5,
+    "to": 1,
+    "zIndex": 8680.8
+   },
+   {
+    "k": 6,
+    "from": 1,
+    "to": 1.5,
+    "zIndex": 8730.8
+   },
+   {
+    "k": 7,
+    "from": 1.5,
+    "to": 2,
+    "zIndex": 8780.8
+   }
+  ],
+  "6.2/1": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": 2,
+    "zIndex": 8685.6
+   }
+  ],
+  "6.2/4": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": -1,
+    "zIndex": 8535.6
+   },
+   {
+    "k": 1,
+    "from": -1,
+    "to": 0,
+    "zIndex": 8635.6
+   },
+   {
+    "k": 2,
+    "from": 0,
+    "to": 1,
+    "zIndex": 8735.6
+   },
+   {
+    "k": 3,
+    "from": 1,
+    "to": 2,
+    "zIndex": 8835.6
+   }
+  ],
+  "6.2/8": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": -1.5,
+    "zIndex": 8510.6
+   },
+   {
+    "k": 1,
+    "from": -1.5,
+    "to": -1,
+    "zIndex": 8560.6
+   },
+   {
+    "k": 2,
+    "from": -1,
+    "to": -0.5,
+    "zIndex": 8610.6
+   },
+   {
+    "k": 3,
+    "from": -0.5,
+    "to": 0,
+    "zIndex": 8660.6
+   },
+   {
+    "k": 4,
+    "from": 0,
+    "to": 0.5,
+    "zIndex": 8710.6
+   },
+   {
+    "k": 5,
+    "from": 0.5,
+    "to": 1,
+    "zIndex": 8760.6
+   },
+   {
+    "k": 6,
+    "from": 1,
+    "to": 1.5,
+    "zIndex": 8810.6
+   },
+   {
+    "k": 7,
+    "from": 1.5,
+    "to": 2,
+    "zIndex": 8860.6
+   }
+  ],
+  "7/1": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": 2,
+    "zIndex": 8765.3
+   }
+  ],
+  "7/4": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": -1,
+    "zIndex": 8615.3
+   },
+   {
+    "k": 1,
+    "from": -1,
+    "to": 0,
+    "zIndex": 8715.3
+   },
+   {
+    "k": 2,
+    "from": 0,
+    "to": 1,
+    "zIndex": 8815.3
+   },
+   {
+    "k": 3,
+    "from": 1,
+    "to": 2,
+    "zIndex": 8915.3
+   }
+  ],
+  "7/8": [
+   {
+    "k": 0,
+    "from": -2,
+    "to": -1.5,
+    "zIndex": 8590.3
+   },
+   {
+    "k": 1,
+    "from": -1.5,
+    "to": -1,
+    "zIndex": 8640.3
+   },
+   {
+    "k": 2,
+    "from": -1,
+    "to": -0.5,
+    "zIndex": 8690.3
+   },
+   {
+    "k": 3,
+    "from": -0.5,
+    "to": 0,
+    "zIndex": 8740.3
+   },
+   {
+    "k": 4,
+    "from": 0,
+    "to": 0.5,
+    "zIndex": 8790.3
+   },
+   {
+    "k": 5,
+    "from": 0.5,
+    "to": 1,
+    "zIndex": 8840.3
+   },
+   {
+    "k": 6,
+    "from": 1,
+    "to": 1.5,
+    "zIndex": 8890.3
+   },
+   {
+    "k": 7,
+    "from": 1.5,
+    "to": 2,
+    "zIndex": 8940.3
+   }
+  ]
+ },
+ "sliceScenery": [
+  {
+   "who": "probe:far-house",
+   "zIndex": 8420,
+   "visible": true,
+   "culled": false
+  },
+  {
+   "who": "probe:far-tree",
+   "zIndex": 8610,
+   "visible": true,
+   "culled": false
+  },
+  {
+   "who": "probe:near-house",
+   "zIndex": 8620,
+   "visible": true,
+   "culled": false
+  },
+  {
+   "who": "probe:near-tree",
+   "zIndex": 8810,
+   "visible": true,
+   "culled": false
+  }
+ ]
+}

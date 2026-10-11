@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>3D proto</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0a0c; }
+      #label { position: fixed; left: 10px; top: 8px; padding: 3px 9px; background: #17221fd9; color: #eee6cf;
+        font: 600 13px/1.4 system-ui; border-radius: 4px; white-space: pre; }
+    </style>
+  </head>
+  <body>
+    <canvas id="game-canvas"></canvas>
+    <div id="label"></div>
+    <script type="module">
+      const p = new URLSearchParams(location.search);
+      import(`./${p.get('scene') ?? 'direct'}.js`).catch((e) => { window.fail = String(e.stack ?? e); console.error(e); });
+    </script>
+  </body>
+</html>

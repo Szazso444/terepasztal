@@ -1,0 +1,152 @@
+{
+ "errors": [],
+ "frames": {
+  "4.6": {
+   "order": [
+    {
+     "who": "probe:far-house",
+     "zIndex": 8420,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "train car0 undercarriage(0 bogies)",
+     "zIndex": 8525.06,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "train car0 part0",
+     "zIndex": 8526.06,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:far-tree",
+     "zIndex": 8610,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:near-house",
+     "zIndex": 8620,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:near-tree",
+     "zIndex": 8810,
+     "visible": true,
+     "culled": false
+    }
+   ],
+   "seg": [
+    {
+     "part": "body",
+     "L": 4,
+     "x": 45.1106,
+     "z": 8526.06,
+     "logical": "141.5x87"
+    }
+   ]
+  },
+  "5.4": {
+   "order": [
+    {
+     "who": "probe:far-house",
+     "zIndex": 8420,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "train car0 undercarriage(0 bogies)",
+     "zIndex": 8604.8,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "train car0 part0",
+     "zIndex": 8605.8,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:far-tree",
+     "zIndex": 8610,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:near-house",
+     "zIndex": 8620,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:near-tree",
+     "zIndex": 8810,
+     "visible": true,
+     "culled": false
+    }
+   ],
+   "seg": [
+    {
+     "part": "body",
+     "L": 4,
+     "x": 45.908,
+     "z": 8605.8,
+     "logical": "141.5x87"
+    }
+   ]
+  },
+  "6.2": {
+   "order": [
+    {
+     "who": "probe:far-house",
+     "zIndex": 8420,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:far-tree",
+     "zIndex": 8610,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:near-house",
+     "zIndex": 8620,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "train car0 undercarriage(0 bogies)",
+     "zIndex": 8684.57,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "train car0 part0",
+     "zIndex": 8685.57,
+     "visible": true,
+     "culled": false
+    },
+    {
+     "who": "probe:near-tree",
+     "zIndex": 8810,
+     "visible": true,
+     "culled": false
+    }
+   ],
+   "seg": [
+    {
+     "part": "body",
+     "L": 4,
+     "x": 46.7057,
+     "z": 8685.57,
+     "logical": "141.5x87"
+    }
+   ]
+  }
+ }
+}
