@@ -276,6 +276,13 @@ describe('what the tuning presets say', () => {
     expect(t.reset).toMatch(/shipped/i);
   });
 
+  it('says it of no rule either: no label, group or hint calls a value a starting point or a default', () => {
+    // the sliders and their hints are shown on the same screen, under the same promise
+    for (const m of RULE_META)
+      for (const s of [m.label, m.group, m.hint ?? ''])
+        expect(s, m.key).not.toMatch(/starting point|\bdefaults?\b/i);
+  });
+
   it('points to the New game block of the title screen, where a saved tuning is picked', () => {
     expect(t.scope).toContain(STR.menu.newGame);
   });
