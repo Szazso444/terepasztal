@@ -220,9 +220,16 @@ function terraces(
     centres[k] = tiles[k] * style.step;
     top = Math.max(top, centres[k]);
   }
-  // Bridges carry their rail over the ground, which keeps its own shape.
+  // Bridges carry their rail over the ground, which keeps its own shape. Everywhere else the
+  // ground rises to its rail: a bed may stand above every tile around it (the approach to a
+  // raised bridge deck on flat land), so it counts toward the highest point as well.
   const beds = new Map<number, RailBed>();
-  for (const [k, bed] of rails) if (!bed.bridge) beds.set(k, bed);
+  for (const [k, bed] of rails) {
+    if (bed.bridge) continue;
+    beds.set(k, bed);
+    for (const b of bed.cross ? [bed, bed.cross] : [bed])
+      for (const s of b.spans) top = Math.max(top, s.a * style.step, s.b * style.step);
+  }
   const peaks = style.paintedPeaks ? summitTiles(map, corners) : undefined;
   if (peaks?.size) top += style.paintedPeaks! * style.step * PEAK_RIDGE;
   return { corners, centres, style, tiles, rails: beds, peaks, top: top + 1 };
@@ -366,17 +373,24 @@ function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: n
   return terrace + (bed - terrace) * weight;
 }
 
-/** Inverse of tile projection onto this surface, shared by picking and visual QA. */
+/**
+ * Inverse of tile projection onto this surface, shared by picking and visual QA: the tile under a
+ * world pixel and the height of the surface the camera ray meets there.
+ */
+export function reliefHitAtWorld(map: LandscapeMap, relief: TerrainRelief, wx: number, wy: number) {
+  const bx = wx / 64 + wy / 32,
+    by = wy / 32 - wx / 64,
+    z = surfaceAlongRay(map, relief, bx, by, 16);
+  return { x: Math.round(bx + z / 32) || 0, y: Math.round(by + z / 32) || 0, z };
+}
 export function reliefTileAtWorld(
   map: LandscapeMap,
   relief: TerrainRelief,
   wx: number,
   wy: number,
 ) {
-  const bx = wx / 64 + wy / 32,
-    by = wy / 32 - wx / 64,
-    z = surfaceAlongRay(map, relief, bx, by, 16);
-  return { x: Math.round(bx + z / 32) || 0, y: Math.round(by + z / 32) || 0 };
+  const { x, y } = reliefHitAtWorld(map, relief, wx, wy);
+  return { x, y };
 }
 
 /**

@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
+import { levelAt } from '../world/elevation';
+import { railProfile } from '../world/railProfile';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
@@ -363,7 +365,10 @@ describe('semaphore boundaries and growing worlds', () => {
       world: { kind: 'generated', seed: 4242, params: { w: 96, h: 96 } },
       track: [[20, 20, 'straight', 1, 'high_speed']],
       stations: [],
-      buildings: [[20, 20, 'bridge_stone', 0.5, 3]],
+      buildings: [
+        [20, 20, 'bridge_stone', 0.5, 3],
+        [21, 20, 'bridge_wood', 0, 1, 2],
+      ],
       decor: [[25, 25, 'townhouse', 0]],
       wires: [[20, 20, 'catenary']],
       houses: {
@@ -379,9 +384,270 @@ describe('semaphore boundaries and growing worlds', () => {
     const grown = expandSave(save);
     expect(grown.track[0]).toEqual([52, 52, 'straight', 1, 'high_speed']);
     expect(grown.buildings?.[0]).toEqual([52, 52, 'bridge_stone', 0.5, 3]);
+    // A deck height set by hand (the sixth element) moves with its platform.
+    expect(grown.buildings?.[1]).toEqual([53, 52, 'bridge_wood', 0, 1, 2]);
     expect(grown.houses?.list[0]).toMatchObject({ x: 57, y: 57, residents: 100 });
     expect(grown.wires?.[0]).toEqual([52, 52, 'catenary']);
     expect(grown.clock.speedIndex).toBe(2);
+  });
+});
+describe('bridge deck heights', () => {
+  const ROW = 44,
+    why = STR.build.deck;
+  /** A builder that reads automatic deck levels from the rail profile, as the game does. */
+  function decks() {
+    const w = world();
+    w.builder.autoDeck = (x, y) =>
+      railProfile(w.map, w.track, (px, py) => w.builder.bridgeAt(px, py)).get(y * 96 + x)?.level;
+    const platform = (x: number, y = ROW, id = 'bridge_stone') =>
+        w.builder.placeBuilding(x, y, id)!,
+      rail = (x: number, y = ROW) => w.builder.placeTrackKind(x, y, 'straight', 1),
+      at = (x: number, y = ROW) => w.builder.bridgeAt(x, y)!,
+      heights = (from: number, to: number) => {
+        const out: number[] = [];
+        for (let x = from; x <= to; x++) out.push(w.builder.deckLevel(at(x)));
+        return out;
+      };
+    return { ...w, platform, rail, at, heights };
+  }
+  /** Platforms on x 40..44 with straight track from 38 to 46: a bridge on flat land. */
+  function bridge() {
+    const w = decks();
+    for (let x = 40; x <= 44; x++) w.platform(x);
+    for (let x = 38; x <= 46; x++) expect(w.rail(x)).toBe(true);
+    return w;
+  }
+
+  it('stands between the ground under it and the highest level', () => {
+    const w = decks(),
+      b = w.platform(40);
+    expect(w.builder.deckLevel(b)).toBe(0);
+    expect(w.builder.checkDeck(b, -1)).toMatchObject({ ok: false, reason: why.lowest(false) });
+    expect(w.builder.changeDeck(b, -1)).toBe(false);
+    expect(b.deck).toBeUndefined();
+    for (let level = 1; level <= 4; level++) {
+      expect(w.builder.changeDeck(b, 1)).toBe(true);
+      expect(b.deck).toBe(level);
+    }
+    expect(w.builder.checkDeck(b, 1)).toMatchObject({ ok: false, reason: why.highest });
+    expect(w.builder.changeDeck(b, 1)).toBe(false);
+    expect(b.deck).toBe(4);
+    // Over water the floor is the waterline; on a hill, the hill.
+    w.map.terrain[ROW * 96 + 50] = Terrain.Water;
+    expect(w.builder.checkDeck(w.platform(50), -1).reason).toBe(why.lowest(true));
+    for (let y = ROW - 4; y <= ROW + 4; y++)
+      for (let x = 56; x <= 64; x++) w.map.terrain[y * 96 + x] = Terrain.Hill;
+    const high = w.platform(60);
+    expect(w.builder.deckLevel(high)).toBe(2);
+    expect(w.builder.checkDeck(high, -1).ok).toBe(false);
+    expect(w.builder.changeDeck(high, 1)).toBe(true);
+    expect(high.deck).toBe(3);
+    expect(w.builder.changeDeck(high, -1)).toBe(true);
+    expect(w.builder.checkDeck(high, -1)).toMatchObject({ ok: false, limit: 'floor' });
+    expect(w.builder.changeDeck(high, -1)).toBe(false);
+    expect(w.builder.deckLevel(high)).toBe(2);
+    expect(w.builder.checkDeck(b, 1)).toMatchObject({ ok: false, limit: 'ceiling' });
+  });
+
+  it('is automatic again once a bare platform is back on the ground, and stays set under rail', () => {
+    const w = decks(),
+      bare = w.platform(40);
+    w.builder.changeDeck(bare, 1);
+    w.builder.changeDeck(bare, 1);
+    expect(bare.deck).toBe(2);
+    w.builder.changeDeck(bare, -1);
+    expect(bare.deck).toBe(1);
+    // Lowered onto the ground before any rail: as it was placed, it follows the rail laid later.
+    w.builder.changeDeck(bare, -1);
+    expect(bare.deck).toBeUndefined();
+    expect(w.builder.deckLevel(bare)).toBe(0);
+    // With rail on it the height the player gave it stays, on the ground as well.
+    const railed = bridge();
+    expect(railed.builder.changeDeck(railed.at(42), 1)).toBe(true);
+    expect(railed.builder.changeDeck(railed.at(42), -1)).toBe(true);
+    expect(railed.at(42).deck).toBe(0);
+    expect(railed.heights(40, 44)).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it('moves one tile per click: the first click fixes the rest of the railed bridge where it is', () => {
+    const w = bridge();
+    expect(w.heights(40, 44)).toEqual([0, 0, 0, 0, 0]);
+    expect([40, 41, 42, 43, 44].map((x) => w.at(x).deck)).toEqual(Array(5).fill(undefined));
+    expect(w.builder.changeDeck(w.at(42), 1)).toBe(true);
+    expect([40, 41, 42, 43, 44].map((x) => w.at(x).deck)).toEqual([0, 0, 1, 0, 0]);
+    expect(w.heights(40, 44)).toEqual([0, 0, 1, 0, 0]);
+  });
+
+  it('leaves platforms without track automatic: they take the level of the rail laid later', () => {
+    const w = decks();
+    for (let x = 60; x <= 62; x++) w.platform(x);
+    expect(w.builder.changeDeck(w.at(61), 1)).toBe(true);
+    expect([60, 61, 62].map((x) => w.at(x).deck)).toEqual([undefined, 1, undefined]);
+    for (let x = 58; x <= 64; x++) expect(w.rail(x)).toBe(true);
+    // The automatic spans follow the set deck beside them, the ground tiles stay on the ground.
+    expect(w.heights(60, 62)).toEqual([1, 1, 1]);
+  });
+
+  it('refuses a step of more than one level to the rail beside it', () => {
+    const w = bridge();
+    expect(w.builder.changeDeck(w.at(42), 1)).toBe(true);
+    expect(w.builder.checkDeck(w.at(42), 1)).toMatchObject({ ok: false, reason: why.steep });
+    expect(w.builder.changeDeck(w.at(42), 1)).toBe(false);
+    expect(w.at(42).deck).toBe(1);
+    // With its neighbours raised first the middle can go on: a ramp, one level per tile.
+    expect(w.builder.changeDeck(w.at(41), 1)).toBe(true);
+    expect(w.builder.changeDeck(w.at(43), 1)).toBe(true);
+    expect(w.builder.changeDeck(w.at(42), 1)).toBe(true);
+    expect(w.heights(40, 44)).toEqual([0, 1, 2, 1, 0]);
+    // The end span meets rail on the ground: it may stand one level above it, not two.
+    expect(w.builder.changeDeck(w.at(40), 1)).toBe(true);
+    expect(w.builder.checkDeck(w.at(40), 1).reason).toBe(why.steep);
+    // Lowering is held to the same rule.
+    expect(w.builder.checkDeck(w.at(41), -1).reason).toBe(why.steep);
+  });
+
+  it('keeps a deck under a crossing, a curve or a station platform where it is', () => {
+    const w = decks();
+    w.platform(40);
+    expect(w.builder.placeTrackKind(40, ROW, 'crossing', 0)).toBe(true);
+    expect(w.builder.checkDeck(w.at(40), 1)).toMatchObject({ ok: false, reason: why.fixed });
+    w.platform(50);
+    expect(w.builder.placeTrack(50, ROW, { kind: 'curve', cls: 'narrow' }, 0)).toBe(true);
+    expect(w.builder.checkDeck(w.at(50), 1).reason).toBe(why.fixed);
+    // A station beside the rail: that tile is its platform.
+    w.platform(60);
+    expect(w.rail(60)).toBe(true);
+    const st = new Station('quarry', 60, ROW - 1);
+    w.builder.stations.push(st);
+    expect(st.gateTiles()).toContainEqual({ x: 60, y: ROW });
+    expect(w.builder.checkDeck(w.at(60), 1).reason).toBe(why.station);
+  });
+
+  it('moves nothing under a train, nor beside one', () => {
+    const w = bridge();
+    w.builder.busy = (x) => x === 41;
+    expect(w.builder.checkDeck(w.at(41), 1).reason).toBe(why.train);
+    // The rail bends on the tiles either side of the step as well.
+    expect(w.builder.checkDeck(w.at(40), 1).reason).toBe(why.train);
+    expect(w.builder.checkDeck(w.at(42), 1).reason).toBe(why.train);
+    expect(w.builder.checkDeck(w.at(43), 1).ok).toBe(true);
+  });
+
+  it('continues a new platform at the height of the set deck beside it', () => {
+    const w = decks(),
+      first = w.platform(40);
+    w.builder.changeDeck(first, 1);
+    w.builder.changeDeck(first, 1);
+    expect(w.platform(41).deck).toBe(2);
+    expect(w.platform(41, ROW + 1).deck).toBe(2);
+    // Away from any set deck a platform is automatic, as before.
+    expect(w.platform(50).deck).toBeUndefined();
+    expect(w.platform(51).deck).toBeUndefined();
+    // Never below its own ground.
+    for (let y = ROW - 4; y <= ROW + 4; y++)
+      for (let x = 66; x <= 74; x++) w.map.terrain[y * 96 + x] = Terrain.Hill;
+    const low = w.platform(65);
+    expect(w.builder.deckLevel(low)).toBe(0);
+    w.builder.changeDeck(low, 1);
+    expect([66, 67].map((x) => levelAt(w.map, x, ROW))).toEqual([1, 2]);
+    expect(w.platform(66).deck).toBe(1);
+    expect(w.platform(67).deck).toBe(2);
+  });
+
+  it('refuses rail that would step more than a level onto or off a set deck', () => {
+    const w = decks(),
+      b = w.platform(40);
+    w.builder.changeDeck(b, 1);
+    w.builder.changeDeck(b, 1);
+    const item = { kind: 'straight', cls: 'regular' } as const;
+    // Rail on the ground first, then onto the deck two levels up.
+    expect(w.rail(39)).toBe(true);
+    expect(w.builder.checkTrack(40, ROW, item, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    // The other way round: rail on the deck first, then the ground beside it.
+    expect(w.builder.removeTrack(39, ROW)).toBe(true);
+    expect(w.rail(40)).toBe(true);
+    expect(w.builder.checkTrack(39, ROW, item, 1).reason).toBe(STR.build.tooSteep);
+    expect(w.builder.checkTrack(41, ROW, item, 1).reason).toBe(STR.build.tooSteep);
+    // One level is a climb the rail can make.
+    w.builder.removeTrack(40, ROW);
+    w.builder.changeDeck(b, -1);
+    expect(w.rail(40)).toBe(true);
+    expect(w.rail(39)).toBe(true);
+    // An automatic platform takes the level of the higher rail it meets: between a deck at 1
+    // and one at 3 it would stand two levels above the first.
+    for (let x = 50; x <= 52; x++) w.platform(x);
+    w.builder.changeDeck(w.at(50), 1);
+    for (let i = 0; i < 3; i++) w.builder.changeDeck(w.at(52), 1);
+    expect([50, 51, 52].map((x) => w.at(x).deck)).toEqual([1, undefined, 3]);
+    expect(w.rail(50)).toBe(true);
+    expect(w.rail(52)).toBe(true);
+    expect(w.builder.checkTrack(51, ROW, item, 1).reason).toBe(STR.build.tooSteep);
+  });
+
+  it('previews a dragged run as it will be laid, a step onto a set deck included', () => {
+    const item = { kind: 'straight', cls: 'regular', cls2: 'regular' } as const;
+    /** Bare platforms from x 40 on, then each clicked up to its height (0: left automatic). */
+    const bare = (heights: readonly number[], row = ROW) => {
+      const w = decks(),
+        placed = heights.map((_, i) => w.platform(40 + i, row));
+      heights.forEach((h, i) => {
+        for (let k = 0; k < h; k++) w.builder.changeDeck(placed[i], 1);
+      });
+      return w;
+    };
+    // A run dragged from x 38 to 46 over five platforms: what the ghosts say is what gets laid.
+    for (const heights of [
+      [0, 3, 0, 0, 0],
+      [1, 2, 3, 2, 1],
+      [0, 2, 0, 0, 4],
+      [1, 1, 3, 3, 1],
+      [0, 0, 0, 0, 0],
+    ]) {
+      const w = bare(heights),
+        run = Array.from({ length: 9 }, (_, i) => ({ x: 38 + i, y: ROW, rot: 1 })),
+        preview = w.builder.checkTrackRun(run, item).map((c) => c.ok),
+        laid = run.map((t) => w.builder.placeTrack(t.x, t.y, item, t.rot));
+      expect(preview, heights.join(' ')).toEqual(laid);
+    }
+    // The step itself: rail on the ground and on the first deck, none onto the deck three up.
+    const w = bare([0, 3, 0]),
+      run = [39, 40, 41, 42, 43].map((x) => ({ x, y: ROW, rot: 1 })),
+      checks = w.builder.checkTrackRun(run, item);
+    expect([40, 41, 42].map((x) => w.at(x).deck)).toEqual([undefined, 3, undefined]);
+    expect(checks.map((c) => c.ok)).toEqual([true, true, false, true, true]);
+    expect(checks[2].reason).toBe(STR.build.tooSteep);
+  });
+
+  it('refuses a curve on the ground beside rail on a raised deck', () => {
+    const w = decks(),
+      b = w.platform(40),
+      straight = { kind: 'straight', cls: 'narrow' } as const,
+      curve = { kind: 'curve', cls: 'narrow' } as const;
+    w.builder.changeDeck(b, 1);
+    expect(w.builder.placeTrack(40, ROW, straight, 1)).toBe(true);
+    // The curve opens east onto the deck's rail, which stands a level above the ground.
+    expect(w.builder.checkTrack(39, ROW, curve, 0)).toMatchObject({
+      ok: false,
+      reason: STR.build.deckMeets,
+    });
+    // The same curve on a platform set at that height fits (its other end meets a deck at that
+    // height too); one set lower does not.
+    const seat = w.platform(39);
+    expect(seat.deck).toBe(1);
+    expect(w.platform(39, ROW - 1).deck).toBe(1);
+    expect(w.builder.checkTrack(39, ROW, curve, 0).ok).toBe(true);
+    seat.deck = 0;
+    expect(w.builder.checkTrack(39, ROW, curve, 0).ok).toBe(false);
+    // On level ground with the deck on the ground too, nothing is in the way.
+    w.builder.removeBuilding(39, ROW);
+    w.builder.removeBuilding(39, ROW - 1);
+    w.builder.removeTrack(40, ROW);
+    w.builder.changeDeck(b, -1);
+    expect(w.builder.placeTrack(40, ROW, straight, 1)).toBe(true);
+    expect(w.builder.checkTrack(39, ROW, curve, 0).ok).toBe(true);
   });
 });
 describe('line speed', () => {

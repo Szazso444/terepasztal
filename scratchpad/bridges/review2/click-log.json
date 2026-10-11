@@ -1,0 +1,940 @@
+{
+ "found": {
+  "ownedAll": false,
+  "depot": {
+   "x": 79,
+   "y": 79
+  },
+  "land": {
+   "x": 79,
+   "y": 74,
+   "d": 5,
+   "level": 0
+  },
+  "water": {
+   "x": 95,
+   "y": 79,
+   "d": 16,
+   "level": 0
+  },
+  "hill": {
+   "x": 66,
+   "y": 85,
+   "d": 19,
+   "level": 1
+  },
+  "row": {
+   "x": 79,
+   "y": 74,
+   "d": 5,
+   "level": 0
+  },
+  "stock": {
+   "stone": 393,
+   "wood": 465
+  }
+ },
+ "results": [
+  {
+   "event": "LAND: stone bridge tool held, pointer on empty grass",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "none",
+   "height": null,
+   "set": null,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "platform": "none",
+    "tool": "bridge_stone"
+   }
+  },
+  {
+   "event": "LAND: left click 1 -> platform placed",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=auto height=0",
+   "height": 0,
+   "set": "auto",
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0",
+    "set": "auto"
+   }
+  },
+  {
+   "event": "LAND: left click -> raised to 1",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "LAND: left click -> raised to 2",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=2 height=2",
+   "height": 2,
+   "set": 2,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "2"
+   }
+  },
+  {
+   "event": "LAND: left click -> raised to 3",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=3 height=3",
+   "height": 3,
+   "set": 3,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 3 (3 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "3"
+   }
+  },
+  {
+   "event": "LAND: left click -> raised to 4",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=4 height=4",
+   "height": 4,
+   "set": 4,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 4 (4 above the ground)   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "4"
+   }
+  },
+  {
+   "event": "LAND: left click at the top -> refused",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=4 height=4",
+   "height": 4,
+   "set": 4,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Cannot raise the deck: it stands at the greatest deck height",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "4",
+    "status": "/Cannot raise/"
+   }
+  },
+  {
+   "event": "LAND: right click -> lowered to 3",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=3 height=3",
+   "height": 3,
+   "set": 3,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 3 (3 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "3"
+   }
+  },
+  {
+   "event": "LAND: right click -> lowered to 2",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=2 height=2",
+   "height": 2,
+   "set": 2,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "2"
+   }
+  },
+  {
+   "event": "LAND: right click -> lowered to 1",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "LAND: right click -> lowered to 0",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=auto height=0",
+   "height": 0,
+   "set": "auto",
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0"
+   }
+  },
+  {
+   "event": "LAND: right click on the ground straight after -> ?",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=auto height=0",
+   "height": 0,
+   "set": "auto",
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Cannot lower the deck: it rests on the ground (Delete removes the platform)",
+   "selected": null,
+   "ok": true,
+   "expected": {}
+  },
+  {
+   "event": "LAND: right click at the floor 2.6 s later -> ?",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "none",
+   "height": null,
+   "set": null,
+   "ground": 0,
+   "track": null,
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "ok": true,
+   "expected": {}
+  },
+  {
+   "event": "WATER: pointer on a water tile",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "none",
+   "height": null,
+   "set": null,
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "platform": "none"
+   }
+  },
+  {
+   "event": "WATER: left click -> platform placed at the waterline",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "stone set=auto height=0",
+   "height": 0,
+   "set": "auto",
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (at the waterline, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0",
+    "set": "auto"
+   }
+  },
+  {
+   "event": "WATER: left click -> raised to 1",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the water)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "WATER: left click -> raised to 2",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "stone set=2 height=2",
+   "height": 2,
+   "set": 2,
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the water)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "2"
+   }
+  },
+  {
+   "event": "WATER: left click -> raised to 3",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "stone set=3 height=3",
+   "height": 3,
+   "set": 3,
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_stone",
+   "status": "Deck height 3 (3 above the water)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "3"
+   }
+  },
+  {
+   "event": "WATER: right click -> lowered to 2",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "stone set=2 height=2",
+   "height": 2,
+   "set": 2,
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the water)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "2"
+   }
+  },
+  {
+   "event": "WATER: right click -> lowered to 1",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the water)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "WATER: right click -> lowered to 0",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "stone set=auto height=0",
+   "height": 0,
+   "set": "auto",
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (at the waterline, automatic: it follows the rail laid over it)   click: raise",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0"
+   }
+  },
+  {
+   "event": "WATER: wooden tool, left click on the stone platform -> raised",
+   "tile": [
+    95,
+    79
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": null,
+   "hover": "95,79",
+   "tool": "bridge_wood",
+   "status": "Deck height 1 (1 above the water)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "HILL: pointer on a hill tile",
+   "tile": [
+    66,
+    85
+   ],
+   "platform": "none",
+   "height": null,
+   "set": null,
+   "ground": 1,
+   "track": null,
+   "hover": "66,85",
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "platform": "none"
+   }
+  },
+  {
+   "event": "HILL: left click -> platform placed on the hill",
+   "tile": [
+    66,
+    85
+   ],
+   "platform": "stone set=auto height=1",
+   "height": 1,
+   "set": "auto",
+   "ground": 1,
+   "track": null,
+   "hover": "66,85",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "HILL: left click -> raised to 2",
+   "tile": [
+    66,
+    85
+   ],
+   "platform": "stone set=2 height=2",
+   "height": 2,
+   "set": 2,
+   "ground": 1,
+   "track": null,
+   "hover": "66,85",
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (1 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "2"
+   }
+  },
+  {
+   "event": "HILL: left click -> raised to 3",
+   "tile": [
+    66,
+    85
+   ],
+   "platform": "stone set=3 height=3",
+   "height": 3,
+   "set": 3,
+   "ground": 1,
+   "track": null,
+   "hover": "66,85",
+   "tool": "bridge_stone",
+   "status": "Deck height 3 (2 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "3"
+   }
+  },
+  {
+   "event": "HILL: right click -> lowered to 2",
+   "tile": [
+    66,
+    85
+   ],
+   "platform": "stone set=2 height=2",
+   "height": 2,
+   "set": 2,
+   "ground": 1,
+   "track": null,
+   "hover": "66,85",
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (1 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "2"
+   }
+  },
+  {
+   "event": "HILL: right click -> lowered to 1",
+   "tile": [
+    66,
+    85
+   ],
+   "platform": "stone set=auto height=1",
+   "height": 1,
+   "set": "auto",
+   "ground": 1,
+   "track": null,
+   "hover": "66,85",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (on the ground, automatic: it follows the rail laid over it)   click: raise",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "RAIL: three platforms placed by clicks",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=auto height=0",
+   "height": 0,
+   "set": "auto",
+   "ground": 0,
+   "track": null,
+   "hover": "80,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0",
+    "set": "auto"
+   }
+  },
+  {
+   "event": "RAIL: bridge tool, pointer on the middle platform",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=auto height=0",
+   "height": 0,
+   "set": "auto",
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0",
+    "track": "straight"
+   }
+  },
+  {
+   "event": "RAIL: left click on the middle -> raised to 1, rail follows",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1",
+    "track": "straight"
+   }
+  },
+  {
+   "event": "RAIL: left click again -> refused (too steep)",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Cannot raise the deck: the rail beside it would be too steep: one deck height per tile at most",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1",
+    "status": "/Cannot raise/"
+   }
+  },
+  {
+   "event": "RAIL: left click on the left span -> 1",
+   "tile": [
+    78,
+    74
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": "straight",
+   "hover": "78,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "RAIL: left click on the right span -> 1",
+   "tile": [
+    80,
+    74
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": "straight",
+   "hover": "80,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "RAIL: left click on the middle deck (pointer on the visible deck) -> 2",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=2 height=2",
+   "height": 2,
+   "set": 2,
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the ground)   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "2"
+   }
+  },
+  {
+   "event": "RAIL: right click on the middle -> 1",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=1 height=1",
+   "height": 1,
+   "set": 1,
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "1"
+   }
+  },
+  {
+   "event": "RAIL: right click span -1 -> 0",
+   "tile": [
+    78,
+    74
+   ],
+   "platform": "stone set=0 height=0",
+   "height": 0,
+   "set": 0,
+   "ground": 0,
+   "track": "straight",
+   "hover": "78,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground)   click: raise",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0"
+   }
+  },
+  {
+   "event": "RAIL: right click span 0 -> 0",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=0 height=0",
+   "height": 0,
+   "set": 0,
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground)   click: raise",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0"
+   }
+  },
+  {
+   "event": "RAIL: right click span 1 -> 0",
+   "tile": [
+    80,
+    74
+   ],
+   "platform": "stone set=0 height=0",
+   "height": 0,
+   "set": 0,
+   "ground": 0,
+   "track": "straight",
+   "hover": "80,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground)   click: raise",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0"
+   }
+  },
+  {
+   "event": "RAIL: status line over a railed platform at the floor",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=0 height=0",
+   "height": 0,
+   "set": 0,
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground)   click: raise   right-click: remove",
+   "selected": null,
+   "ok": true,
+   "expected": {
+    "height": "0",
+    "track": "straight"
+   }
+  },
+  {
+   "event": "NO TOOL: left click on a platform -> selected, not raised",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=0 height=0",
+   "height": 0,
+   "set": 0,
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "none",
+   "status": "",
+   "selected": "79,74",
+   "ok": true,
+   "expected": {
+    "height": "0",
+    "tool": "none"
+   }
+  },
+  {
+   "event": "TRACK TOOL: pointer on a railed platform -> the track tool keeps its own meaning",
+   "tile": [
+    79,
+    74
+   ],
+   "platform": "stone set=0 height=0",
+   "height": 0,
+   "set": 0,
+   "ground": 0,
+   "track": "straight",
+   "hover": "79,74",
+   "tool": "track",
+   "status": "Replace straight: net 2 wood, 2 stone, 1 iron   R: rotate   drag to lay a line",
+   "selected": "79,74",
+   "ok": true,
+   "expected": {
+    "height": "0",
+    "status": "/^Replace straight/"
+   }
+  }
+ ],
+ "log": [
+  "targets {\"ownedAll\":false,\"depot\":{\"x\":79,\"y\":79},\"land\":{\"x\":79,\"y\":74,\"d\":5,\"level\":0},\"water\":{\"x\":95,\"y\":79,\"d\":16,\"level\":0},\"hill\":{\"x\":66,\"y\":85,\"d\":19,\"level\":1},\"row\":{\"x\":79,\"y\":74,\"d\":5,\"level\":0},\"stock\":{\"stone\":393,\"wood\":465}}",
+  "ok   LAND: stone bridge tool held, pointer on empty grass             | none | track=null | hover=79,74 | tool=bridge_stone | \"Cost 35 stone\"",
+  "ok   LAND: left click 1 -> platform placed                            | stone set=auto height=0 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove\"",
+  "ok   LAND: left click -> raised to 1                                  | stone set=1 height=1 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 1 (1 above the ground)   click: raise   right-click: lower\"",
+  "ok   LAND: left click -> raised to 2                                  | stone set=2 height=2 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 2 (2 above the ground)   click: raise   right-click: lower\"",
+  "ok   LAND: left click -> raised to 3                                  | stone set=3 height=3 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 3 (3 above the ground)   click: raise   right-click: lower\"",
+  "ok   LAND: left click -> raised to 4                                  | stone set=4 height=4 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 4 (4 above the ground)   right-click: lower\"",
+  "ok   LAND: left click at the top -> refused                           | stone set=4 height=4 | track=null | hover=79,74 | tool=bridge_stone | \"Cannot raise the deck: it stands at the greatest deck height\"",
+  "ok   LAND: right click -> lowered to 3                                | stone set=3 height=3 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 3 (3 above the ground)   click: raise   right-click: lower\"",
+  "ok   LAND: right click -> lowered to 2                                | stone set=2 height=2 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 2 (2 above the ground)   click: raise   right-click: lower\"",
+  "ok   LAND: right click -> lowered to 1                                | stone set=1 height=1 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 1 (1 above the ground)   click: raise   right-click: lower\"",
+  "ok   LAND: right click -> lowered to 0                                | stone set=auto height=0 | track=null | hover=79,74 | tool=bridge_stone | \"Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise\"",
+  "ok   LAND: right click on the ground straight after -> ?              | stone set=auto height=0 | track=null | hover=79,74 | tool=bridge_stone | \"Cannot lower the deck: it rests on the ground (Delete removes the platform)\"",
+  "ok   LAND: right click at the floor 2.6 s later -> ?                  | none | track=null | hover=79,74 | tool=bridge_stone | \"Cost 35 stone\"",
+  "STRIP scratchpad/bridges/review2/click-1-land.png 1864x1503",
+  "ok   WATER: pointer on a water tile                                   | none | track=null | hover=95,79 | tool=bridge_stone | \"Cost 35 stone\"",
+  "ok   WATER: left click -> platform placed at the waterline            | stone set=auto height=0 | track=null | hover=95,79 | tool=bridge_stone | \"Deck height 0 (at the waterline, automatic: it follows the rail laid over it)   click: raise   right-click: remove\"",
+  "ok   WATER: left click -> raised to 1                                 | stone set=1 height=1 | track=null | hover=95,79 | tool=bridge_stone | \"Deck height 1 (1 above the water)   click: raise   right-click: lower\"",
+  "ok   WATER: left click -> raised to 2                                 | stone set=2 height=2 | track=null | hover=95,79 | tool=bridge_stone | \"Deck height 2 (2 above the water)   click: raise   right-click: lower\"",
+  "ok   WATER: left click -> raised to 3                                 | stone set=3 height=3 | track=null | hover=95,79 | tool=bridge_stone | \"Deck height 3 (3 above the water)   click: raise   right-click: lower\"",
+  "ok   WATER: right click -> lowered to 2                               | stone set=2 height=2 | track=null | hover=95,79 | tool=bridge_stone | \"Deck height 2 (2 above the water)   click: raise   right-click: lower\"",
+  "ok   WATER: right click -> lowered to 1                               | stone set=1 height=1 | track=null | hover=95,79 | tool=bridge_stone | \"Deck height 1 (1 above the water)   click: raise   right-click: lower\"",
+  "ok   WATER: right click -> lowered to 0                               | stone set=auto height=0 | track=null | hover=95,79 | tool=bridge_stone | \"Deck height 0 (at the waterline, automatic: it follows the rail laid over it)   click: raise\"",
+  "ok   WATER: wooden tool, left click on the stone platform -> raised   | stone set=1 height=1 | track=null | hover=95,79 | tool=bridge_wood | \"Deck height 1 (1 above the water)   click: raise   right-click: lower\"",
+  "STRIP scratchpad/bridges/review2/click-2-water.png 1864x1145",
+  "ok   HILL: pointer on a hill tile                                     | none | track=null | hover=66,85 | tool=bridge_stone | \"Cost 35 stone\"",
+  "ok   HILL: left click -> platform placed on the hill                  | stone set=auto height=1 | track=null | hover=66,85 | tool=bridge_stone | \"Deck height 1 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove\"",
+  "ok   HILL: left click -> raised to 2                                  | stone set=2 height=2 | track=null | hover=66,85 | tool=bridge_stone | \"Deck height 2 (1 above the ground)   click: raise   right-click: lower\"",
+  "ok   HILL: left click -> raised to 3                                  | stone set=3 height=3 | track=null | hover=66,85 | tool=bridge_stone | \"Deck height 3 (2 above the ground)   click: raise   right-click: lower\"",
+  "ok   HILL: right click -> lowered to 2                                | stone set=2 height=2 | track=null | hover=66,85 | tool=bridge_stone | \"Deck height 2 (1 above the ground)   click: raise   right-click: lower\"",
+  "ok   HILL: right click -> lowered to 1                                | stone set=auto height=1 | track=null | hover=66,85 | tool=bridge_stone | \"Deck height 1 (on the ground, automatic: it follows the rail laid over it)   click: raise\"",
+  "STRIP scratchpad/bridges/review2/click-3-hill.png 1398x788",
+  "ok   RAIL: three platforms placed by clicks                           | stone set=auto height=0 | track=null | hover=80,74 | tool=bridge_stone | \"Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove\"",
+  "RAIL: track after dragging the Straight tool over 7 tiles: sssssss",
+  "ok   RAIL: bridge tool, pointer on the middle platform                | stone set=auto height=0 | track=straight | hover=79,74 | tool=bridge_stone | \"Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove\"",
+  "ok   RAIL: left click on the middle -> raised to 1, rail follows      | stone set=1 height=1 | track=straight | hover=79,74 | tool=bridge_stone | \"Deck height 1 (1 above the ground)   right-click: lower\"",
+  "ok   RAIL: left click again -> refused (too steep)                    | stone set=1 height=1 | track=straight | hover=79,74 | tool=bridge_stone | \"Cannot raise the deck: the rail beside it would be too steep: one deck height per tile at most\"",
+  "ok   RAIL: left click on the left span -> 1                           | stone set=1 height=1 | track=straight | hover=78,74 | tool=bridge_stone | \"Deck height 1 (1 above the ground)   right-click: lower\"",
+  "ok   RAIL: left click on the right span -> 1                          | stone set=1 height=1 | track=straight | hover=80,74 | tool=bridge_stone | \"Deck height 1 (1 above the ground)   right-click: lower\"",
+  "ok   RAIL: left click on the middle deck (pointer on the visible deck) -> 2 | stone set=2 height=2 | track=straight | hover=79,74 | tool=bridge_stone | \"Deck height 2 (2 above the ground)   right-click: lower\"",
+  "ok   RAIL: right click on the middle -> 1                             | stone set=1 height=1 | track=straight | hover=79,74 | tool=bridge_stone | \"Deck height 1 (1 above the ground)   click: raise   right-click: lower\"",
+  "ok   RAIL: right click span -1 -> 0                                   | stone set=0 height=0 | track=straight | hover=78,74 | tool=bridge_stone | \"Deck height 0 (on the ground)   click: raise\"",
+  "ok   RAIL: right click span 0 -> 0                                    | stone set=0 height=0 | track=straight | hover=79,74 | tool=bridge_stone | \"Deck height 0 (on the ground)   click: raise\"",
+  "ok   RAIL: right click span 1 -> 0                                    | stone set=0 height=0 | track=straight | hover=80,74 | tool=bridge_stone | \"Deck height 0 (on the ground)   click: raise\"",
+  "ok   RAIL: status line over a railed platform at the floor            | stone set=0 height=0 | track=straight | hover=79,74 | tool=bridge_stone | \"Deck height 0 (on the ground)   click: raise   right-click: remove\"",
+  "STRIP scratchpad/bridges/review2/click-4-rail.png 1252x1336",
+  "ok   NO TOOL: left click on a platform -> selected, not raised        | stone set=0 height=0 | track=straight | hover=79,74 | tool=none | \"\"",
+  "ok   TRACK TOOL: pointer on a railed platform -> the track tool keeps its own meaning | stone set=0 height=0 | track=straight | hover=79,74 | tool=track | \"Replace straight: net 2 wood, 2 stone, 1 iron   R: rotate   drag to lay a line\"",
+  "final decks [1,2,1]",
+  "ALL 42 EXPECTATIONS MET",
+  "page errors []"
+ ],
+ "errors": []
+}

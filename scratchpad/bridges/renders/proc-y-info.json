@@ -1,0 +1,206 @@
+{
+ "kit": false,
+ "origin": "procedural",
+ "sites": [
+  {
+   "id": "W1-stone",
+   "cx": 12,
+   "cy": 13,
+   "row": 0
+  },
+  {
+   "id": "W2-stone",
+   "cx": 12,
+   "cy": 23.5,
+   "row": 0
+  },
+  {
+   "id": "W3-stone",
+   "cx": 12,
+   "cy": 35,
+   "row": 0
+  },
+  {
+   "id": "W6-stone",
+   "cx": 12,
+   "cy": 48.5,
+   "row": 0
+  },
+  {
+   "id": "L1-stone",
+   "cx": 30,
+   "cy": 16,
+   "row": 2
+  },
+  {
+   "id": "L2-stone",
+   "cx": 30,
+   "cy": 32.5,
+   "row": 2
+  },
+  {
+   "id": "L3-stone",
+   "cx": 30,
+   "cy": 49,
+   "row": 2
+  },
+  {
+   "id": "L6-stone",
+   "cx": 30,
+   "cy": 66.5,
+   "row": 2
+  },
+  {
+   "id": "DL21-stone",
+   "cx": 48,
+   "cy": 15.5,
+   "row": 4
+  },
+  {
+   "id": "DL20-stone",
+   "cx": 48,
+   "cy": 30,
+   "row": 4
+  },
+  {
+   "id": "DW10-stone",
+   "cx": 48,
+   "cy": 45,
+   "row": 4
+  },
+  {
+   "id": "DW11-stone",
+   "cx": 48,
+   "cy": 60,
+   "row": 4
+  },
+  {
+   "id": "W1-wood",
+   "cx": 21,
+   "cy": 13,
+   "row": 1
+  },
+  {
+   "id": "W2-wood",
+   "cx": 21,
+   "cy": 23.5,
+   "row": 1
+  },
+  {
+   "id": "W3-wood",
+   "cx": 21,
+   "cy": 35,
+   "row": 1
+  },
+  {
+   "id": "W6-wood",
+   "cx": 21,
+   "cy": 48.5,
+   "row": 1
+  },
+  {
+   "id": "L1-wood",
+   "cx": 39,
+   "cy": 16,
+   "row": 3
+  },
+  {
+   "id": "L2-wood",
+   "cx": 39,
+   "cy": 32.5,
+   "row": 3
+  },
+  {
+   "id": "L3-wood",
+   "cx": 39,
+   "cy": 49,
+   "row": 3
+  },
+  {
+   "id": "L6-wood",
+   "cx": 39,
+   "cy": 66.5,
+   "row": 3
+  },
+  {
+   "id": "DL21-wood",
+   "cx": 57,
+   "cy": 15.5,
+   "row": 5
+  },
+  {
+   "id": "DL20-wood",
+   "cx": 57,
+   "cy": 30,
+   "row": 5
+  },
+  {
+   "id": "DW10-wood",
+   "cx": 57,
+   "cy": 45,
+   "row": 5
+  },
+  {
+   "id": "DW11-wood",
+   "cx": 57,
+   "cy": 60,
+   "row": 5
+  },
+  {
+   "id": "SW",
+   "cx": 66,
+   "cy": 14,
+   "row": 6
+  },
+  {
+   "id": "SL-stone",
+   "cx": 66,
+   "cy": 28.5,
+   "row": 6
+  },
+  {
+   "id": "SL-wood",
+   "cx": 66,
+   "cy": 45.5,
+   "row": 6
+  },
+  {
+   "id": "SL-mixed",
+   "cx": 66,
+   "cy": 62.5,
+   "row": 6
+  }
+ ],
+ "pads": [
+  {
+   "id": "CW-stone",
+   "cx": 85.5,
+   "cy": 15.5,
+   "placed": true
+  },
+  {
+   "id": "CW-wood",
+   "cx": 85.5,
+   "cy": 30.5,
+   "placed": true
+  },
+  {
+   "id": "SWI-stone",
+   "cx": 85.5,
+   "cy": 45.5,
+   "placed": true
+  },
+  {
+   "id": "CL-stone",
+   "cx": 85.5,
+   "cy": 60.5,
+   "placed": true
+  },
+  {
+   "id": "CL-wood",
+   "cx": 85.5,
+   "cy": 75.5,
+   "placed": true
+  }
+ ]
+}

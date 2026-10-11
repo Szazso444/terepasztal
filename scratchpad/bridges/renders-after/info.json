@@ -1,0 +1,6622 @@
+{
+ "kit-x": {
+  "kit": true,
+  "origin": "png+procedural",
+  "problems": [],
+  "sites": [
+   {
+    "id": "W1-stone",
+    "cx": 13,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 13,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-stone",
+    "cx": 23.5,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 23,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 24,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-stone",
+    "cx": 35,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 34,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 35,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 36,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-stone",
+    "cx": 48.5,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 46,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 47,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 48,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 49,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 50,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 51,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-stone",
+    "cx": 16,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 16,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-stone",
+    "cx": 32.5,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 32,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 33,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-stone",
+    "cx": 49,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 48,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 50,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-stone",
+    "cx": 66.5,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 64,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 65,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 68,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 69,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-stone",
+    "cx": 15.5,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 15,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 16,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     }
+    ]
+   },
+   {
+    "id": "DL20-stone",
+    "cx": 30,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     }
+    ]
+   },
+   {
+    "id": "DW10-stone",
+    "cx": 45,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 44,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 46,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "DW11-stone",
+    "cx": 60,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 59,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 60,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 61,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "W1-wood",
+    "cx": 13,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 13,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-wood",
+    "cx": 23.5,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 23,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 24,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-wood",
+    "cx": 35,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 34,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 35,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 36,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-wood",
+    "cx": 48.5,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 46,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 47,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 48,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 49,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 50,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 51,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-wood",
+    "cx": 16,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 16,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-wood",
+    "cx": 32.5,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 32,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 33,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-wood",
+    "cx": 49,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 48,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 50,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-wood",
+    "cx": 66.5,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 64,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 65,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 68,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 69,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-wood",
+    "cx": 15.5,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 15,
+      "y": 57,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 16,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     }
+    ]
+   },
+   {
+    "id": "DL20-wood",
+    "cx": 30,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     }
+    ]
+   },
+   {
+    "id": "DW10-wood",
+    "cx": 45,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 44,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 46,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "DW11-wood",
+    "cx": 60,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 59,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 60,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 61,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SW",
+    "cx": 14,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 13,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 15,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 13,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 15,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 13,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 15,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "SL-stone",
+    "cx": 28.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 27,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 28,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 28,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-wood",
+    "cx": 45.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 44,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 46,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 47,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 44,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 46,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 47,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-mixed",
+    "cx": 62.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 61,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 62,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 63,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 64,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 61,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 62,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 63,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 64,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   }
+  ],
+  "pads": [
+   {
+    "id": "CW-stone",
+    "cx": 15.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CW-wood",
+    "cx": 30.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "SWI-stone",
+    "cx": 45.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-stone",
+    "cx": 60.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-wood",
+    "cx": 75.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ "kit-y": {
+  "kit": true,
+  "origin": "png+procedural",
+  "problems": [],
+  "sites": [
+   {
+    "id": "W1-stone",
+    "cx": 12,
+    "cy": 13,
+    "row": 0,
+    "facts": [
+     {
+      "x": 12,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-stone",
+    "cx": 12,
+    "cy": 23.5,
+    "row": 0,
+    "facts": [
+     {
+      "x": 12,
+      "y": 23,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 24,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-stone",
+    "cx": 12,
+    "cy": 35,
+    "row": 0,
+    "facts": [
+     {
+      "x": 12,
+      "y": 34,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 35,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 36,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-stone",
+    "cx": 12,
+    "cy": 48.5,
+    "row": 0,
+    "facts": [
+     {
+      "x": 12,
+      "y": 46,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 47,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 49,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 50,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 51,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-stone",
+    "cx": 30,
+    "cy": 16,
+    "row": 2,
+    "facts": [
+     {
+      "x": 30,
+      "y": 16,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-stone",
+    "cx": 30,
+    "cy": 32.5,
+    "row": 2,
+    "facts": [
+     {
+      "x": 30,
+      "y": 32,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 33,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-stone",
+    "cx": 30,
+    "cy": 49,
+    "row": 2,
+    "facts": [
+     {
+      "x": 30,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 49,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 50,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-stone",
+    "cx": 30,
+    "cy": 66.5,
+    "row": 2,
+    "facts": [
+     {
+      "x": 30,
+      "y": 64,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 65,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 68,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 69,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-stone",
+    "cx": 48,
+    "cy": 15.5,
+    "row": 4,
+    "facts": [
+     {
+      "x": 48,
+      "y": 15,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 16,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     }
+    ]
+   },
+   {
+    "id": "DL20-stone",
+    "cx": 48,
+    "cy": 30,
+    "row": 4,
+    "facts": [
+     {
+      "x": 48,
+      "y": 29,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 48,
+      "y": 31,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     }
+    ]
+   },
+   {
+    "id": "DW10-stone",
+    "cx": 48,
+    "cy": 45,
+    "row": 4,
+    "facts": [
+     {
+      "x": 48,
+      "y": 44,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 45,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 46,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "DW11-stone",
+    "cx": 48,
+    "cy": 60,
+    "row": 4,
+    "facts": [
+     {
+      "x": 48,
+      "y": 59,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 60,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 61,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "W1-wood",
+    "cx": 21,
+    "cy": 13,
+    "row": 1,
+    "facts": [
+     {
+      "x": 21,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-wood",
+    "cx": 21,
+    "cy": 23.5,
+    "row": 1,
+    "facts": [
+     {
+      "x": 21,
+      "y": 23,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 24,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-wood",
+    "cx": 21,
+    "cy": 35,
+    "row": 1,
+    "facts": [
+     {
+      "x": 21,
+      "y": 34,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 35,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 36,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-wood",
+    "cx": 21,
+    "cy": 48.5,
+    "row": 1,
+    "facts": [
+     {
+      "x": 21,
+      "y": 46,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 47,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 49,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 50,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 51,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-wood",
+    "cx": 39,
+    "cy": 16,
+    "row": 3,
+    "facts": [
+     {
+      "x": 39,
+      "y": 16,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-wood",
+    "cx": 39,
+    "cy": 32.5,
+    "row": 3,
+    "facts": [
+     {
+      "x": 39,
+      "y": 32,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 33,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-wood",
+    "cx": 39,
+    "cy": 49,
+    "row": 3,
+    "facts": [
+     {
+      "x": 39,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 49,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 50,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-wood",
+    "cx": 39,
+    "cy": 66.5,
+    "row": 3,
+    "facts": [
+     {
+      "x": 39,
+      "y": 64,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 65,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 68,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 69,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-wood",
+    "cx": 57,
+    "cy": 15.5,
+    "row": 5,
+    "facts": [
+     {
+      "x": 57,
+      "y": 15,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 16,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     }
+    ]
+   },
+   {
+    "id": "DL20-wood",
+    "cx": 57,
+    "cy": 30,
+    "row": 5,
+    "facts": [
+     {
+      "x": 57,
+      "y": 29,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 57,
+      "y": 31,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     }
+    ]
+   },
+   {
+    "id": "DW10-wood",
+    "cx": 57,
+    "cy": 45,
+    "row": 5,
+    "facts": [
+     {
+      "x": 57,
+      "y": 44,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 45,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 46,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "DW11-wood",
+    "cx": 57,
+    "cy": 60,
+    "row": 5,
+    "facts": [
+     {
+      "x": 57,
+      "y": 59,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 60,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 61,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SW",
+    "cx": 66,
+    "cy": 14,
+    "row": 6,
+    "facts": [
+     {
+      "x": 65,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 65,
+      "y": 14,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 65,
+      "y": 15,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 66,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 66,
+      "y": 14,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 66,
+      "y": 15,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 67,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 67,
+      "y": 14,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 67,
+      "y": 15,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "SL-stone",
+    "cx": 66,
+    "cy": 28.5,
+    "row": 6,
+    "facts": [
+     {
+      "x": 66,
+      "y": 27,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 28,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 29,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 27,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 28,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 29,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-wood",
+    "cx": 66,
+    "cy": 45.5,
+    "row": 6,
+    "facts": [
+     {
+      "x": 66,
+      "y": 44,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 45,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 46,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 47,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 44,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 45,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 46,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 47,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-mixed",
+    "cx": 66,
+    "cy": 62.5,
+    "row": 6,
+    "facts": [
+     {
+      "x": 66,
+      "y": 61,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 62,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 63,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 64,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 61,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 62,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 63,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 64,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   }
+  ],
+  "pads": [
+   {
+    "id": "CW-stone",
+    "cx": 85.5,
+    "cy": 15.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CW-wood",
+    "cx": 85.5,
+    "cy": 30.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "SWI-stone",
+    "cx": 85.5,
+    "cy": 45.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-stone",
+    "cx": 85.5,
+    "cy": 60.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-wood",
+    "cx": 85.5,
+    "cy": 75.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ "proc-x": {
+  "kit": false,
+  "origin": "procedural",
+  "problems": [],
+  "sites": [
+   {
+    "id": "W1-stone",
+    "cx": 13,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 13,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-stone",
+    "cx": 23.5,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 23,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 24,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-stone",
+    "cx": 35,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 34,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 35,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 36,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-stone",
+    "cx": 48.5,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 46,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 47,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 48,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 49,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 50,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 51,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-stone",
+    "cx": 16,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 16,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-stone",
+    "cx": 32.5,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 32,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 33,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-stone",
+    "cx": 49,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 48,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 50,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-stone",
+    "cx": 66.5,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 64,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 65,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 68,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 69,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-stone",
+    "cx": 15.5,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 15,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 16,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     }
+    ]
+   },
+   {
+    "id": "DL20-stone",
+    "cx": 30,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     }
+    ]
+   },
+   {
+    "id": "DW10-stone",
+    "cx": 45,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 44,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 46,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "DW11-stone",
+    "cx": 60,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 59,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 60,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 61,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "W1-wood",
+    "cx": 13,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 13,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-wood",
+    "cx": 23.5,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 23,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 24,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-wood",
+    "cx": 35,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 34,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 35,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 36,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-wood",
+    "cx": 48.5,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 46,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 47,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 48,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 49,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 50,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 51,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-wood",
+    "cx": 16,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 16,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-wood",
+    "cx": 32.5,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 32,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 33,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-wood",
+    "cx": 49,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 48,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 50,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-wood",
+    "cx": 66.5,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 64,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 65,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 68,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 69,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-wood",
+    "cx": 15.5,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 15,
+      "y": 57,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 16,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     }
+    ]
+   },
+   {
+    "id": "DL20-wood",
+    "cx": 30,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     }
+    ]
+   },
+   {
+    "id": "DW10-wood",
+    "cx": 45,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 44,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 46,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "DW11-wood",
+    "cx": 60,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 59,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 60,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 61,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SW",
+    "cx": 14,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 13,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 15,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 13,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 15,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 13,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 15,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "SL-stone",
+    "cx": 28.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 27,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 28,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 28,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-wood",
+    "cx": 45.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 44,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 46,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 47,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 44,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 46,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 47,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-mixed",
+    "cx": 62.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 61,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 62,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 63,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 64,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 61,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 62,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 63,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 64,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   }
+  ],
+  "pads": [
+   {
+    "id": "CW-stone",
+    "cx": 15.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CW-wood",
+    "cx": 30.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "SWI-stone",
+    "cx": 45.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-stone",
+    "cx": 60.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-wood",
+    "cx": 75.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ "proc-y": {
+  "kit": false,
+  "origin": "procedural",
+  "problems": [],
+  "sites": [
+   {
+    "id": "W1-stone",
+    "cx": 12,
+    "cy": 13,
+    "row": 0,
+    "facts": [
+     {
+      "x": 12,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-stone",
+    "cx": 12,
+    "cy": 23.5,
+    "row": 0,
+    "facts": [
+     {
+      "x": 12,
+      "y": 23,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 24,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-stone",
+    "cx": 12,
+    "cy": 35,
+    "row": 0,
+    "facts": [
+     {
+      "x": 12,
+      "y": 34,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 35,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 36,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-stone",
+    "cx": 12,
+    "cy": 48.5,
+    "row": 0,
+    "facts": [
+     {
+      "x": 12,
+      "y": 46,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 47,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 49,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 50,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 12,
+      "y": 51,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-stone",
+    "cx": 30,
+    "cy": 16,
+    "row": 2,
+    "facts": [
+     {
+      "x": 30,
+      "y": 16,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-stone",
+    "cx": 30,
+    "cy": 32.5,
+    "row": 2,
+    "facts": [
+     {
+      "x": 30,
+      "y": 32,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 33,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-stone",
+    "cx": 30,
+    "cy": 49,
+    "row": 2,
+    "facts": [
+     {
+      "x": 30,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 49,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 50,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-stone",
+    "cx": 30,
+    "cy": 66.5,
+    "row": 2,
+    "facts": [
+     {
+      "x": 30,
+      "y": 64,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 65,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 68,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 69,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-stone",
+    "cx": 48,
+    "cy": 15.5,
+    "row": 4,
+    "facts": [
+     {
+      "x": 48,
+      "y": 15,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 16,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     }
+    ]
+   },
+   {
+    "id": "DL20-stone",
+    "cx": 48,
+    "cy": 30,
+    "row": 4,
+    "facts": [
+     {
+      "x": 48,
+      "y": 29,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 48,
+      "y": 31,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     }
+    ]
+   },
+   {
+    "id": "DW10-stone",
+    "cx": 48,
+    "cy": 45,
+    "row": 4,
+    "facts": [
+     {
+      "x": 48,
+      "y": 44,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 45,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 46,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "DW11-stone",
+    "cx": 48,
+    "cy": 60,
+    "row": 4,
+    "facts": [
+     {
+      "x": 48,
+      "y": 59,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 60,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 61,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "W1-wood",
+    "cx": 21,
+    "cy": 13,
+    "row": 1,
+    "facts": [
+     {
+      "x": 21,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-wood",
+    "cx": 21,
+    "cy": 23.5,
+    "row": 1,
+    "facts": [
+     {
+      "x": 21,
+      "y": 23,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 24,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-wood",
+    "cx": 21,
+    "cy": 35,
+    "row": 1,
+    "facts": [
+     {
+      "x": 21,
+      "y": 34,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 35,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 36,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-wood",
+    "cx": 21,
+    "cy": 48.5,
+    "row": 1,
+    "facts": [
+     {
+      "x": 21,
+      "y": 46,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 47,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 49,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 50,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 21,
+      "y": 51,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-wood",
+    "cx": 39,
+    "cy": 16,
+    "row": 3,
+    "facts": [
+     {
+      "x": 39,
+      "y": 16,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-wood",
+    "cx": 39,
+    "cy": 32.5,
+    "row": 3,
+    "facts": [
+     {
+      "x": 39,
+      "y": 32,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 33,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-wood",
+    "cx": 39,
+    "cy": 49,
+    "row": 3,
+    "facts": [
+     {
+      "x": 39,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 49,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 50,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-wood",
+    "cx": 39,
+    "cy": 66.5,
+    "row": 3,
+    "facts": [
+     {
+      "x": 39,
+      "y": 64,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 65,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 68,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 69,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-wood",
+    "cx": 57,
+    "cy": 15.5,
+    "row": 5,
+    "facts": [
+     {
+      "x": 57,
+      "y": 15,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 16,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     }
+    ]
+   },
+   {
+    "id": "DL20-wood",
+    "cx": 57,
+    "cy": 30,
+    "row": 5,
+    "facts": [
+     {
+      "x": 57,
+      "y": 29,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 57,
+      "y": 31,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     }
+    ]
+   },
+   {
+    "id": "DW10-wood",
+    "cx": 57,
+    "cy": 45,
+    "row": 5,
+    "facts": [
+     {
+      "x": 57,
+      "y": 44,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 45,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 46,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "DW11-wood",
+    "cx": 57,
+    "cy": 60,
+    "row": 5,
+    "facts": [
+     {
+      "x": 57,
+      "y": 59,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 60,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 61,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SW",
+    "cx": 66,
+    "cy": 14,
+    "row": 6,
+    "facts": [
+     {
+      "x": 65,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 65,
+      "y": 14,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 65,
+      "y": 15,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 66,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 66,
+      "y": 14,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 66,
+      "y": 15,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 67,
+      "y": 13,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 67,
+      "y": 14,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 67,
+      "y": 15,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "SL-stone",
+    "cx": 66,
+    "cy": 28.5,
+    "row": 6,
+    "facts": [
+     {
+      "x": 66,
+      "y": 27,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 28,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 29,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 27,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 28,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 29,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-wood",
+    "cx": 66,
+    "cy": 45.5,
+    "row": 6,
+    "facts": [
+     {
+      "x": 66,
+      "y": 44,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 45,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 46,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 47,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 44,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 45,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 46,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 47,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-mixed",
+    "cx": 66,
+    "cy": 62.5,
+    "row": 6,
+    "facts": [
+     {
+      "x": 66,
+      "y": 61,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 62,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 63,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 64,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 61,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 62,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 63,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 64,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   }
+  ],
+  "pads": [
+   {
+    "id": "CW-stone",
+    "cx": 85.5,
+    "cy": 15.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CW-wood",
+    "cx": 85.5,
+    "cy": 30.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "SWI-stone",
+    "cx": 85.5,
+    "cy": 45.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-stone",
+    "cx": 85.5,
+    "cy": 60.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-wood",
+    "cx": 85.5,
+    "cy": 75.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ "kitrev-x": {
+  "kit": true,
+  "origin": "png+procedural",
+  "problems": [],
+  "sites": [
+   {
+    "id": "W1-stone",
+    "cx": 13,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 13,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-stone",
+    "cx": 23.5,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 24,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 23,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-stone",
+    "cx": 35,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 36,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 35,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 34,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-stone",
+    "cx": 48.5,
+    "cy": 12,
+    "row": 0,
+    "facts": [
+     {
+      "x": 51,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 50,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 49,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 48,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 47,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 46,
+      "y": 12,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-stone",
+    "cx": 16,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 16,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-stone",
+    "cx": 32.5,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 33,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 32,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-stone",
+    "cx": 49,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 50,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 48,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-stone",
+    "cx": 66.5,
+    "cy": 30,
+    "row": 2,
+    "facts": [
+     {
+      "x": 69,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 68,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 65,
+      "y": 30,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 64,
+      "y": 30,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-stone",
+    "cx": 15.5,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 16,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     },
+     {
+      "x": 15,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL20-stone",
+    "cx": 30,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 31,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 48,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DW10-stone",
+    "cx": 45,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 46,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     },
+     {
+      "x": 45,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 44,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DW11-stone",
+    "cx": 60,
+    "cy": 48,
+    "row": 4,
+    "facts": [
+     {
+      "x": 61,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 60,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 59,
+      "y": 48,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "W1-wood",
+    "cx": 13,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 13,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W2-wood",
+    "cx": 23.5,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 24,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 23,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W3-wood",
+    "cx": 35,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 36,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 35,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 34,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "W6-wood",
+    "cx": 48.5,
+    "cy": 21,
+    "row": 1,
+    "facts": [
+     {
+      "x": 51,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 50,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 49,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 48,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 47,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 46,
+      "y": 21,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "L1-wood",
+    "cx": 16,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 16,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L2-wood",
+    "cx": 32.5,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 33,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 32,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L3-wood",
+    "cx": 49,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 50,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 48,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "L6-wood",
+    "cx": 66.5,
+    "cy": 39,
+    "row": 3,
+    "facts": [
+     {
+      "x": 69,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 68,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 65,
+      "y": 39,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 64,
+      "y": 39,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL21-wood",
+    "cx": 15.5,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 16,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.9166666666666667,
+      "railDz": -18.78,
+      "groundDz": 0,
+      "deckLift": 18.78
+     },
+     {
+      "x": 15,
+      "y": 57,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DL20-wood",
+    "cx": 30,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 31,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 1.75,
+      "railDz": -17.15,
+      "groundDz": 0,
+      "deckLift": 17.15
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 57,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DW10-wood",
+    "cx": 45,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 46,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 0.875,
+      "railDz": -8.57,
+      "groundDz": 0,
+      "deckLift": 8.57
+     },
+     {
+      "x": 45,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 44,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "DW11-wood",
+    "cx": 60,
+    "cy": 57,
+    "row": 5,
+    "facts": [
+     {
+      "x": 61,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 60,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     },
+     {
+      "x": 59,
+      "y": 57,
+      "level": 0,
+      "water": true,
+      "railLevel": 1,
+      "railDz": -9.8,
+      "groundDz": 0,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SW",
+    "cx": 14,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 15,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 13,
+      "y": 67,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 15,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 13,
+      "y": 66,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 15,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 14,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     },
+     {
+      "x": 13,
+      "y": 65,
+      "level": 0,
+      "water": true,
+      "railLevel": 0,
+      "railDz": 0,
+      "groundDz": 0,
+      "deckLift": 0
+     }
+    ]
+   },
+   {
+    "id": "SL-stone",
+    "cx": 28.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 30,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 29,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 28,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 27,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 29,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 28,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 27,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-wood",
+    "cx": 45.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 47,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 46,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 45,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 44,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 47,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 46,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 45,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 44,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "SL-mixed",
+    "cx": 62.5,
+    "cy": 66,
+    "row": 6,
+    "facts": [
+     {
+      "x": 64,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 63,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 62,
+      "y": 67,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 61,
+      "y": 67,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 64,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     },
+     {
+      "x": 63,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 62,
+      "y": 66,
+      "level": 0,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": 0,
+      "deckLift": 19.6
+     },
+     {
+      "x": 61,
+      "y": 66,
+      "level": 1,
+      "water": false,
+      "railLevel": 2,
+      "railDz": -19.6,
+      "groundDz": -9.8,
+      "deckLift": 9.8
+     }
+    ]
+   }
+  ],
+  "pads": [
+   {
+    "id": "CW-stone",
+    "cx": 15.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CW-wood",
+    "cx": 30.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "SWI-stone",
+    "cx": 45.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-stone",
+    "cx": 60.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CL-wood",
+    "cx": 75.5,
+    "cy": 85.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   }
+  ],
+  "errors": []
+ }
+}

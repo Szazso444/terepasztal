@@ -1,5 +1,4 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
-import { addBridgeFrames } from './bridges';
 import { residence, windmill, upgradedWorks, CIVIC_OX, CIVIC_OY } from './civic';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
@@ -681,7 +680,6 @@ function upgradedStation(base: PixelBuf, level: number): PixelBuf {
 
 export function generateStructuresAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
-  addBridgeFrames(ab);
   ab.add('structures/station_1', stationL1().toImageData(), OX, OY);
   ab.add('structures/station_2', stationL2().toImageData(), OX, OY);
   ab.add('structures/station_3', stationL3().toImageData(), OX, OY);

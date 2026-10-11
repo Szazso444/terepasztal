@@ -131,6 +131,38 @@ export const STR = {
       'Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece',
     deckLevels:
       'A supported piece must meet its rails at one level, no lower than the ground under it',
+    deckMeets:
+      'A curve or switch meets its rails at its own height: the deck beside it stands at another',
+    /** Where a bridge deck stands over what is under it. */
+    deckAbove: (above: number, water: boolean) =>
+      above > 0
+        ? `${above} above the ${water ? 'water' : 'ground'}`
+        : water
+          ? 'at the waterline'
+          : 'on the ground',
+    /** Bridge tool over a placed platform: its deck height and what a click does. */
+    deckAt: (height: number, above: number, water: boolean, automatic: boolean) =>
+      `Deck height ${height} (${STR.build.deckAbove(above, water)}${
+        automatic ? ', automatic: it follows the rail laid over it' : ''
+      })`,
+    deckRaise: 'click: raise',
+    deckLower: 'right-click: lower',
+    deckRemove: 'right-click: remove',
+    deckRefused: (up: boolean, why: string) => `Cannot ${up ? 'raise' : 'lower'} the deck: ${why}`,
+    /** Why a deck stays where it is; each completes "Cannot raise/lower the deck: ...". */
+    deck: {
+      highest: 'it stands at the greatest deck height',
+      lowest: (water: boolean) =>
+        water
+          ? 'it lies at the waterline (Delete removes the platform)'
+          : 'it rests on the ground (Delete removes the platform)',
+      fixed:
+        'a curve, switch or crossing lies on it, and those stay level: set the deck height before laying one',
+      meets: 'the curve or switch beside it meets its rails at its own height',
+      steep: 'the rail beside it would be too steep: one deck height per tile at most',
+      train: 'a train is on this part of the bridge',
+      station: 'its rail is a station platform, and the station stands on the ground',
+    },
     trackInWay: 'Track in the way: remove it first',
     needWaterside: 'Must stand next to water',
     needTerrain: (t: string) => `Must stand on ${t}`,
@@ -167,7 +199,8 @@ export const STR = {
     buildings: 'Works',
     services: 'Services',
     utility: 'Utility',
-    removeHint: 'Right-click / Delete removes',
+    removeHint:
+      'Right-click / Delete removes. With a bridge tool held, right-click lowers the deck of a platform instead.',
     select: 'Select',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
     place: {
@@ -186,7 +219,11 @@ export const STR = {
       deposit: (k: string) =>
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
       plant: 'On a free buildable tile. Chain Power Line poles from it to reach the rails.',
+      platform:
+        'On water or land. Lay straight track over it. With a bridge tool held, click a placed platform to raise its deck by one height, right-click to lower it.',
     },
+    /** Bridge platforms: their load limit ahead of the flavor text. */
+    bridgeDesc: (capacity: number, flavor: string) => `${capacity} t capacity. ${flavor}`,
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',
       curve_regular:
@@ -246,6 +283,18 @@ export const STR = {
     full: 'Stopped: stockpile full',
     starved: (n: string) => `Waiting for ${n}`,
     or: 'or',
+    /** Panel title: a building and its upgrade level. */
+    titleLevel: (name: string, level: number) => `${name} · Level ${level}`,
+    upgrade: (cost: string) => `Upgrade · ${cost}`,
+    bridgeCapacity: 'Bridge capacity',
+    bridgeLimit: (t: number, slow: number) => `${t} t · half speed above ${slow} t`,
+    bridgeHelp:
+      'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train. With a bridge tool held, click the platform to raise its deck, right-click to lower it.',
+    deckHeightLabel: 'Deck height',
+    deckHeightValue: (n: number, above: string, automatic: boolean) =>
+      `${n} (${above}${automatic ? ', automatic' : ''})`,
+    deckHeight: (n: number, automatic: boolean) =>
+      `Deck height: ${n}${automatic ? ' (automatic)' : ''}`,
   },
   notice: {
     title: 'Notices',
@@ -664,7 +713,7 @@ export const STR = {
     off: 'Off',
     controls: 'Controls',
     controlsText:
-      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
+      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Right-click / Delete remove · bridge tool: click a platform to raise its deck, right-click to lower it · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
     lastSave: 'Last save',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:

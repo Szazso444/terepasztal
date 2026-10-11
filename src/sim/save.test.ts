@@ -341,7 +341,7 @@ describe('v12 to v13', () => {
         [12, 8, 'crossing', 0, 'regular', 'high_speed'],
       ],
     });
-    expect(j.version).toBe(13);
+    expect(j.version).toBe(SAVE_VERSION);
     expect(j.track).toEqual([
       [4, 8, 'curve', 1, 'narrow', undefined],
       [6, 8, 'switch', 5, 'narrow', undefined],
@@ -392,5 +392,45 @@ describe('v12 to v13', () => {
       [1, 1, 'curve', 2, 'narrow', undefined],
       [2, 1, 'straight', 0, undefined, undefined],
     ]);
+  });
+});
+
+describe('v13 to v14', () => {
+  it('leaves bridge platforms as they were: no deck height means automatic', () => {
+    const j = migrate({
+      ...oldestSave(),
+      version: 13,
+      buildings: [
+        [4, 8, 'bridge_stone', 0, 2],
+        [5, 8, 'bridge_wood', 0],
+        [9, 9, 'windmill', 0.5, 1],
+      ],
+    });
+    expect(j.version).toBe(SAVE_VERSION);
+    expect(j.loadedFrom).toBe(13);
+    // Nothing is filled in: a platform with no sixth element takes the level of its rail.
+    expect(j.buildings).toEqual([
+      [4, 8, 'bridge_stone', 0, 2],
+      [5, 8, 'bridge_wood', 0],
+      [9, 9, 'windmill', 0.5, 1],
+    ]);
+    expect(MIGRATIONS.find((m) => m.from === 13)!.note).toMatch(/deck/);
+  });
+
+  it('keeps a deck height the player set through a save and a load', () => {
+    const save: SaveGame = {
+      ...oldestSave(),
+      version: SAVE_VERSION,
+      buildings: [
+        [4, 8, 'bridge_stone', 0, 1, 3],
+        [5, 8, 'bridge_stone', 0, 1],
+        [6, 8, 'bridge_wood', 0, 4, 0],
+      ],
+    };
+    const back = parseSave(JSON.stringify(save))!;
+    expect(back.loadedFrom).toBeUndefined();
+    expect(back.buildings).toEqual(save.buildings);
+    // The deck travels inside the buildings list: no new top-level field to register.
+    for (const key of Object.keys(save)) expect(KNOWN_SAVE_KEYS.has(key), key).toBe(true);
   });
 });

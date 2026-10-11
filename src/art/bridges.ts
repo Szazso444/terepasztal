@@ -1,221 +1,182 @@
-import type { AtlasBuilder } from '../engine/atlas';
+import type { AtlasImage, FrameDef } from '../engine/atlas';
 import { PixelBuf } from './pixels';
-import { mix, PAL, type RGB } from './palette';
-import { drawPrism, fillPoly } from './iso3d';
+import { PAL, shade, type RGB } from './palette';
+import SWATCHES from './bridgeSwatches.json';
 
-const OX = 48,
-  OY = 38;
-/** Connected timber trusses and masonry arches. Decks are below track; near rails occlude wheels. */
-function span(
-  material: 'wood' | 'stone',
-  axis: number,
-  n: number,
-  phase: number,
-  edge: number,
-  rail: boolean,
-  /** Over land: the deck and fences only; the renderer stands piers on the ground below. */
-  land = false,
-) {
-  const b = new PixelBuf(96, 88);
-  const pt = (l: number, w: number, z: number) => {
-    const x = axis ? l : w,
-      y = axis ? w : l;
-    return { x: OX + (x - y) * 32, y: OY + (x + y) * 16 - z };
-  };
-  const line = (
-    l: number,
-    w: number,
-    z: number,
-    l2: number,
-    w2: number,
-    z2: number,
-    c: RGB,
-    thick = 1,
-  ) => {
-    const a = pt(l, w, z),
-      d = pt(l2, w2, z2);
-    for (let k = 0; k < thick; k++) b.line(a.x, a.y + k, d.x, d.y + k, c);
-  };
-  const stone = material === 'stone';
-  const side = stone ? PAL.stone : PAL.timber;
-  const pier = (l: number, w: number) => {
-    const p = pt(l, w, -26);
-    const support = new PixelBuf(b.w, b.h);
-    drawPrism(support, {
-      ox: OX,
-      oy: OY,
-      cx: axis ? l : w,
-      cy: axis ? w : l,
-      angle: axis ? 0 : Math.PI / 2,
-      len: stone ? 0.15 : 0.075,
-      wid: stone ? 0.16 : 0.075,
-      z0: -32,
-      h: 28,
-      top: side,
-      side,
-      seed: 19,
-    });
-    // The water hides the foot: damp masonry/timber gives way to a translucent reflection.
-    for (let y = 0; y < support.h; y++)
-      for (let x = 0; x < support.w; x++) {
-        const c = support.get(x, y);
-        if (!c) continue;
-        const depth = y - p.y;
-        if (depth > 5) continue;
-        b.set(
-          x,
-          y,
-          mix(c, PAL.water[2], depth >= 0 ? 0.7 : depth > -4 ? 0.3 : 0),
-          depth >= 0 ? Math.round(150 * (1 - depth / 6)) : 255,
-        );
+/**
+ * Material swatches of the `bridges` atlas group. Bridges are drawn as geometry in the game's own
+ * projection (render/bridgeGeometry.ts); a swatch is one flat face of it, square-on: the deck
+ * top, the slab edge, a parapet, the wall hung under an edge, a pier or post, a timber brace.
+ * tools/bridge-kit.mjs cuts the same names from the illustrated kit into public/assets/bridges;
+ * without that file these plain palette versions are what a bridge wears.
+ */
+export const BRIDGE_SWATCHES = SWATCHES.swatches as unknown as Record<string, [number, number]>;
+/** Texels per world pixel in the packed kit; the procedural swatches are drawn at one. */
+export const BRIDGE_SWATCH_DENSITY = SWATCHES.density;
+
+/** One swatch from the palette, at a pixel per world pixel. */
+export function bridgeSwatch(key: string): PixelBuf {
+  const size = BRIDGE_SWATCHES[key],
+    name = /^bridgemat\/(stone|wood)-([a-z]+)(?:-(.*))?$/.exec(key);
+  if (!size || !name) throw new Error(`unknown bridge swatch ${key}`);
+  const w = Math.max(1, Math.round(size[0] / BRIDGE_SWATCH_DENSITY)),
+    h = Math.max(1, Math.round(size[1] / BRIDGE_SWATCH_DENSITY)),
+    b = new PixelBuf(w, h),
+    part = name[2],
+    flags = (name[3] ?? '').split('-'),
+    stone = name[1] === 'stone',
+    pal = stone ? PAL.stone : PAL.timber,
+    // One upper-left light: faces seen from the lower right stand away from it, and what hangs
+    // under a deck stands in its shade.
+    light = (flags.includes('r') ? 0.84 : 1) * (flags.includes('shade') ? 0.68 : 1),
+    c = (i: number, f = 1): RGB => shade(pal[i], f * light),
+    joint = c(2, 0.82);
+  const fill = (col: RGB) => b.rect(0, 0, w, h, col);
+  /** Masonry: courses `ch` px high, their joints staggered. */
+  const courses = (ch: number, bw: number) => {
+    fill(c(0));
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const row = Math.floor(y / ch);
+        if (y % ch === ch - 1 || (x + (row % 2) * (bw >> 1)) % bw === bw - 1) b.set(x, y, joint);
+        else if (y % ch === 0) b.set(x, y, c(1));
       }
-    // Broken, shallow ripples meet the wet edge without drawing a solid ring around the pier.
-    b.line(p.x - 6, p.y, p.x - 3, p.y + 1, PAL.water[3]);
-    b.line(p.x + 2, p.y + 2, p.x + 6, p.y + 1, PAL.water[1]);
   };
-  if (!rail) {
-    drawPrism(b, {
-      ox: OX,
-      oy: OY,
-      cx: 0,
-      cy: 0,
-      angle: axis ? 0 : Math.PI / 2,
-      len: 1,
-      wid: 0.68,
-      z0: -4,
-      h: 4,
-      top: side,
-      side,
-      seed: 71,
-    });
-    // A continuous arch below the deck, with supports at span ends and every fourth tile.
-    for (const w of land ? [] : [-0.26, 0.26]) {
-      const start = (edge & 1) !== 0 || phase === 0;
-      const end = (edge & 2) !== 0 || phase === n - 1;
-      if (start) pier(-0.46, w);
-      if (end) pier(0.46, w);
-      if (stone) {
-        const arc = (v: number) =>
-          -25 + 19 * Math.sin(Math.PI * Math.min(1, (phase + v + 0.5) / n));
-        const wall = [pt(-0.5, w, -4), pt(0.5, w, -4)];
-        for (let q = 16; q >= 0; q--) {
-          const l = -0.5 + q / 16;
-          wall.push(pt(l, w, arc(l)));
+  /** Half a timber post at each end of the swatch, so one stands on every tile joint. */
+  const posts = () => {
+    for (let y = 0; y < h; y++)
+      for (const x of [0, 1, w - 2, w - 1]) b.set(x, y, c(x === 1 || x === w - 2 ? 0 : 2));
+  };
+  switch (part) {
+    case 'top':
+      fill(c(1));
+      if (stone)
+        // Paving slabs, two by two to the tile.
+        for (let i = 0; i < w; i++) {
+          b.set(i, h >> 1, c(0));
+          b.set(w >> 1, i, c(0));
+          b.set(i, h - 1, c(0, 0.94));
+          b.set(w - 1, i, c(0, 0.94));
         }
-        fillPoly(b, wall, (x, y) =>
-          y % 5 === 0 || (x + Math.floor(y / 5) * 4) % 9 === 0 ? side[2] : side[1],
-        );
-        for (let q = 0; q < 16; q++) {
-          const l = -0.5 + q / 16,
-            l2 = l + 1 / 16;
-          line(l, w, arc(l), l2, w, arc(l2), side[0], 4);
-        }
+      else
+        // Planks along the swatch, their ends staggered.
+        for (let y = 0; y < h; y++)
+          for (let x = 0; x < w; x++) {
+            const plank = y >> 2;
+            if (y % 4 === 3 || (x + plank * 11) % 21 === 0) b.set(x, y, joint);
+            else if (plank % 2) b.set(x, y, c(0));
+          }
+      break;
+    case 'edge':
+      fill(c(0));
+      for (let x = 0; x < w; x++) {
+        b.set(x, 0, c(1));
+        b.set(x, h - 1, joint);
+      }
+      break;
+    case 'parapet':
+      if (flags.includes('top')) {
+        fill(c(1, 1.06));
+        for (let y = 0; y < h; y++) for (let x = 7; x < w; x += 8) b.set(x, y, c(0));
+      } else if (stone) {
+        courses(3, 8);
+        for (let x = 0; x < w; x++) b.set(x, 0, c(1, 1.06));
       } else {
-        if (start) line(-0.46, w, -23, 0.42, w, -6, side[1], 2);
-        if (end) line(-0.42, w, -6, 0.46, w, -23, side[1], 2);
+        // Post and rail.
+        for (const y of [2, 3, 6, 7]) for (let x = 0; x < w; x++) b.set(x, y, c(y % 2 ? 2 : 1));
+        posts();
       }
-    }
-  }
-  // Far fence belongs to the deck pass. Near fence belongs to the object pass.
-  const w = rail ? 0.32 : -0.32;
-  if (stone) {
-    line(-0.5, w, 2, 0.5, w, 2, side[1], 3);
-    for (const l of [-0.5, 0, 0.5]) line(l, w, 0, l, w, 4, side[0], 2);
-  } else {
-    const height = (v: number) =>
-      n === 1 ? 9 : Math.min(15, 6 + Math.min(phase + v + 0.5, n - phase - v - 0.5) * 10);
-    line(-0.5, w, 1, 0.5, w, 1, side[2], 2);
-    line(-0.5, w, height(-0.5), 0.5, w, height(0.5), side[1], 2);
-    line(-0.5, w, 1, 0.5, w, height(0.5), side[0], 2);
-    line(-0.5, w, height(-0.5), 0.5, w, 1, side[2], 2);
-    line(-0.5, w, 1, -0.5, w, height(-0.5), side[1], 2);
+      break;
+    case 'hung':
+      if (stone) {
+        courses(4, 8);
+        // One arch to the tile: the opening is cut out, its ring left a shade lighter.
+        const cx = (w - 1) / 2,
+          half = w / 2 - 5;
+        for (let y = 0; y < h; y++)
+          for (let x = 0; x < w; x++) {
+            const dx = (x - cx) / half,
+              dy = (y - (h - 1)) / (h - 3),
+              r = dx * dx + dy * dy;
+            if (r < 0.74) b.set(x, y, c(0), 0);
+            else if (r < 1) b.set(x, y, c(1));
+          }
+      } else {
+        // A Warren truss between two chords.
+        for (let x = 0; x < w; x++) {
+          b.set(x, 0, c(1));
+          b.set(x, 1, c(0));
+          b.set(x, h - 2, c(1));
+          b.set(x, h - 1, c(2));
+        }
+        const panel = (w - 4) / 4;
+        for (let k = 0; k < 4; k++)
+          for (let y = 2; y < h - 2; y++) {
+            const f = (y - 2) / (h - 5),
+              x = Math.min(w - 4, Math.round(2 + (k + (k % 2 ? 1 - f : f)) * panel));
+            b.set(x, y, c(0));
+            b.set(x + 1, y, c(2));
+          }
+        posts();
+      }
+      break;
+    case 'leg':
+      if (stone) courses(Math.round(h / 4), w);
+      else {
+        fill(c(0));
+        for (let y = 0; y < h; y++) {
+          b.set(0, y, c(1));
+          b.set(w - 1, y, c(2));
+        }
+      }
+      break;
+    case 'brace':
+      for (let x = 0; x < w; x++) {
+        const f = x / (w - 1);
+        for (const y of [f * (h - 3), (1 - f) * (h - 3)])
+          for (let k = 0; k < 3; k++) b.set(x, Math.round(y) + k, c(k === 0 ? 1 : k === 1 ? 0 : 2));
+      }
+      break;
   }
   return b;
 }
-function reinforcement(material: 'wood' | 'stone', axis: number, level: number, rail: boolean) {
-  const b = new PixelBuf(96, 88);
-  const colour = material === 'wood' ? PAL.iron : PAL.stone;
-  for (const w of rail ? [0.32] : [-0.32])
-    for (let k = 0; k < level - 1; k++) {
-      const l = (k - (level - 2) / 2) * 0.28;
-      const x = axis ? l : w,
-        y = axis ? w : l;
-      drawPrism(b, {
-        ox: OX,
-        oy: OY,
-        cx: x,
-        cy: y,
-        angle: axis ? 0 : Math.PI / 2,
-        len: 0.1,
-        wid: 0.09,
-        z0: -5,
-        h: material === 'wood' ? 13 : 10,
-        top: colour,
-        side: colour,
-        seed: 82 + k,
-      });
+
+/** Every swatch on one sheet, each with a ring of its own edge pixels around it. */
+export function generateBridgesAtlas(): AtlasImage {
+  const pad = 2,
+    width = 256,
+    frames: Record<string, FrameDef> = {};
+  let x = pad,
+    y = pad,
+    row = 0;
+  const placed = Object.keys(BRIDGE_SWATCHES).map((key) => {
+    const b = bridgeSwatch(key);
+    if (x + b.w + pad > width) {
+      x = pad;
+      y += row + 2 * pad;
+      row = 0;
     }
-  return b;
-}
-/** A square deck for a curve or switch carried over land: no fences, piers from the renderer. */
-function pad(material: 'wood' | 'stone') {
-  const b = new PixelBuf(96, 88),
-    side = material === 'stone' ? PAL.stone : PAL.timber;
-  drawPrism(b, {
-    ox: OX,
-    oy: OY,
-    cx: 0,
-    cy: 0,
-    angle: 0,
-    len: 0.94,
-    wid: 0.94,
-    z0: -4,
-    h: 4,
-    top: side,
-    side,
-    seed: 73,
+    const at = { key, b, x, y };
+    x += b.w + 2 * pad;
+    row = Math.max(row, b.h);
+    return at;
   });
-  return b;
-}
-export function addBridgeFrames(ab: AtlasBuilder) {
-  for (const material of ['wood', 'stone'] as const) {
-    ab.add(`structures/landpad_${material}`, pad(material).toImageData(), OX, OY);
-    for (let axis = 0; axis < 2; axis++)
-      for (const rail of [false, true])
-        ab.add(
-          `structures/landspan_${material}_${axis}_${rail ? 'rail' : 'deck'}`,
-          span(material, axis, 1, 0, 3, rail, true).toImageData(),
-          OX,
-          OY,
-        );
-    const preview = new PixelBuf(160, 120);
-    for (let phase = 0; phase < 3; phase++) {
-      const edge = phase === 0 ? 1 : phase === 2 ? 2 : 0;
-      const dx = phase * 32,
-        dy = phase * 16;
-      preview.blit(span(material, 1, 3, phase, edge, false), dx, dy);
-      preview.blit(span(material, 1, 3, phase, edge, true), dx, dy);
-    }
-    ab.add('structures/bridge_' + material, preview.toImageData(), OX + 32, OY + 16);
-    for (let axis = 0; axis < 2; axis++)
-      for (let level = 2; level <= 4; level++)
-        for (const rail of [false, true])
-          ab.add(
-            `structures/bridge_detail_${material}_${axis}_${level}_${rail ? 'rail' : 'deck'}`,
-            reinforcement(material, axis, level, rail).toImageData(),
-            OX,
-            OY,
-          );
-    for (let axis = 0; axis < 2; axis++)
-      for (let n = 1; n <= 4; n++)
-        for (let phase = 0; phase < 4; phase++)
-          for (let edge = 0; edge < 4; edge++)
-            for (const rail of [false, true])
-              ab.add(
-                `structures/span_${material}_${axis}_${n}_${phase}_${edge}_${rail ? 'rail' : 'deck'}`,
-                span(material, axis, n, phase, edge, rail).toImageData(),
-                OX,
-                OY,
-              );
+  const image = document.createElement('canvas');
+  image.width = width;
+  image.height = y + row + pad;
+  const ctx = image.getContext('2d')!,
+    sheet = ctx.createImageData(image.width, image.height);
+  for (const { key, b, x: fx, y: fy } of placed) {
+    // Edge pixels repeated outward, so sampling at a face's rim never reads a neighbour.
+    for (let yy = -pad; yy < b.h + pad; yy++)
+      for (let xx = -pad; xx < b.w + pad; xx++) {
+        const sx = Math.max(0, Math.min(b.w - 1, xx)),
+          sy = Math.max(0, Math.min(b.h - 1, yy)),
+          i = (sy * b.w + sx) * 4;
+        sheet.data.set(b.data.subarray(i, i + 4), ((fy + yy) * sheet.width + fx + xx) * 4);
+      }
+    frames[key] = { x: fx, y: fy, w: b.w, h: b.h, ax: 0, ay: 0 };
   }
+  ctx.putImageData(sheet, 0, 0);
+  return { image, frames };
 }
