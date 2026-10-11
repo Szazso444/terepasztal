@@ -982,6 +982,14 @@ export const STR = {
       'This leaves the game in progress. Progress that is not saved or autosaved is lost. Continue?',
     menuButton: 'Menu',
     supply: 'Production chain',
+    /** The New game block's choice of the rules the game starts with, shown once a tuning is saved. */
+    newGameTuning: 'Tuning',
+    newGameTuningHint:
+      'The rules the new game starts with: the shipped rules, or a tuning kept in Game tuning',
+    shippedRules: 'Shipped rules',
+    /** `n` is the pick as it was named; the game was not started. */
+    tuningUnusable: (n: string) =>
+      `The tuning "${n}" could not be used, so no new game was started`,
     supplyModes: { simple: 'Simple', full: 'Full' } as Record<string, string>,
     supplyHint: {
       simple:
@@ -1025,11 +1033,11 @@ export const STR = {
   },
   tuning: {
     title: 'Game tuning',
-    newGameOnly: 'new map',
-    note: 'Changes apply immediately and are stored with the save. Map values apply to the next generated map.',
-    reset: 'Reset to defaults',
+    newGameOnly: 'new game',
+    note: 'Values tagged new game count only when a new game starts from a tuning that sets them.',
+    reset: 'Reset this game to shipped rules',
     scope:
-      'Changes apply to the game in play and are saved with it. Each change also becomes your starting point for new games; loading a saved game never changes it.',
+      'Changes apply to the game in play and are saved with it; they do not change what new games start from. A tuning kept as a preset can be picked under New game on the title screen.',
     presets: 'Presets',
     presetName: 'Preset name',
     savePreset: 'Save as preset',
@@ -1041,7 +1049,7 @@ export const STR = {
     presetSaved: (n: string) => `Preset "${n}" saved`,
     presetSaveFailed: (n: string) => `Could not save the preset "${n}" (storage full or blocked)`,
     confirmLoadPreset: (n: string) =>
-      `Load the preset "${n}"? It replaces the current tuning and becomes the tuning new games start from.`,
+      `Load the preset "${n}"? It replaces the tuning of the game in play and changes nothing for new games.`,
     presetLoaded: (n: string) => `Preset "${n}" loaded`,
     presetDeleted: (n: string) => `Preset "${n}" deleted`,
   },
