@@ -42,7 +42,7 @@ const SIZE = 64;
 const ROW = 30;
 const ISLAND_ROW = 50;
 const GDT = 0.05;
-const MODES: RouteMode[] = ['schedule', 'production', 'collection', 'transport', 'contract'];
+const MODES: RouteMode[] = ['schedule', 'freight', 'transport', 'contract'];
 /** Game seconds a train gets, after the switch and the cause of any stop clearing, to get going. */
 const HORIZON = 300;
 
@@ -282,7 +282,7 @@ const RECIPES: Record<string, (sc: Scene) => (() => void) | void> = {
   },
   idle(sc) {
     // only a roaming train idles: one with nothing worth fetching anywhere
-    if (sc.t.mode === 'schedule') sc.t.mode = 'production';
+    if (sc.t.mode === 'schedule') sc.t.mode = 'freight';
     const kept = sc.w.builder.stations.map((s) => ({
       s,
       storage: new Map(s.storage),
@@ -320,7 +320,8 @@ const RECIPES: Record<string, (sc: Scene) => (() => void) | void> = {
   },
   noFuel(sc) {
     sc.t.oil = sc.t.oilRate * 1.5;
-    sc.t.schedule = program(sc, ahead(sc));
+    // far enough that the oil runs out on the way, whatever the layout
+    sc.t.schedule = program(sc, byDistance(sc).at(-1)!);
     go(sc);
     expect(sc.until(() => sc.t.state === 'noFuel', 60)).toBe(true);
     return () => void (sc.t.oil = sc.t.oilCap);
@@ -546,7 +547,7 @@ describe('Fleet.setMode from every train state', () => {
     // the quarry's gate is under the train's second car: the stop it picks, and one it cannot
     // reach from where it stands
     const overPick = ({ t, w, sites: [quarry] }: Scene) => {
-      t.mode = 'production';
+      t.mode = 'freight';
       expect(w.fleet.chooseNext(t)).toBe(quarry.id);
       t.mode = 'schedule';
       const own = { schedule: t.schedule, routeIndex: t.routeIndex };
@@ -569,7 +570,7 @@ describe('Fleet.setMode from every train state', () => {
       extra: 0,
       wait: 0,
     };
-    switchFrom('noRoute', 'production', standing, overPick);
+    switchFrom('noRoute', 'freight', standing, overPick);
   });
 });
 

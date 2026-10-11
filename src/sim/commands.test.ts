@@ -103,9 +103,9 @@ describe('setTrainMode', () => {
     const now = run(w, 0, 10);
     expect(t.state).toBe('noRoute');
     expect(target(t)).toBe(a.id);
-    expect(w.commands.setTrainMode(t, 'production')).toEqual({ ok: true });
+    expect(w.commands.setTrainMode(t, 'freight')).toEqual({ ok: true });
     w.fleet.tick(GDT, now + GDT);
-    expect(t.mode).toBe('production');
+    expect(t.mode).toBe('freight');
     expect(t.schedule.map((s) => s.stationId)).toEqual([quarry.id]);
     expect(t.state).toBe('moving');
     expect(t.pathAhead().at(-1)).toMatchObject({ x: 40, y: ROW });
@@ -116,13 +116,13 @@ describe('setTrainMode', () => {
     const w = world();
     const quarry = station(w, 'quarry', 40);
     const t = train(w, 20);
-    t.mode = 'production';
+    t.mode = 'freight';
     t.schedule = [defaultStop(quarry.id)];
     expect(w.commands.setTrainMode(t, 'schedule')).toEqual({
       ok: false,
       message: STR.fleet.needTwoStops,
     });
-    expect(t.mode).toBe('production');
+    expect(t.mode).toBe('freight');
     expect(t.schedule.map((s) => s.stationId)).toEqual([quarry.id]);
   });
 
@@ -131,7 +131,7 @@ describe('setTrainMode', () => {
     const a = station(w, 'quarry', 40),
       b = station(w, 'farm', 70);
     const t = train(w, 20);
-    t.mode = 'collection';
+    t.mode = 'freight';
     const stops = [defaultStop(a.id), defaultStop(b.id)];
     t.schedule = stops;
     expect(w.commands.setTrainMode(t, 'schedule')).toEqual({ ok: true });
@@ -151,7 +151,7 @@ describe('setTrainMode', () => {
     t.onPathReady({ builder: w.builder });
     expect(t.state).toBe('moving');
     expect(t.pathAhead().at(-1)?.x).toBe(10);
-    w.commands.setTrainMode(t, 'production');
+    w.commands.setTrainMode(t, 'freight');
     expect(target(t)).toBe(quarry.id);
     expect(t.state).toBe('moving');
     expect(t.pathAhead().at(-1)).toMatchObject({ x: 40, y: ROW });
@@ -170,7 +170,7 @@ describe('setTrainMode', () => {
     t.onPathReady({ builder: w.builder });
     run(w, 0, 2);
     expect(t.state).toBe('moving');
-    w.commands.setTrainMode(t, 'production');
+    w.commands.setTrainMode(t, 'freight');
     expect(target(t)).toBe(quarry.id);
     expect(t.state).toBe('moving');
     expect(t.pathAhead().at(-1)).toMatchObject({ x: 75, y: ROW });
@@ -188,7 +188,7 @@ describe('setTrainMode', () => {
     t.atStation = yard;
     yard.occupants.add(t.id);
     t.state = 'idle';
-    w.commands.setTrainMode(t, 'production');
+    w.commands.setTrainMode(t, 'freight');
     expect(target(t)).toBe(quarry.id);
     expect(t.state).toBe('moving');
     expect(t.atStation).toBeNull();
@@ -205,7 +205,7 @@ describe('setTrainMode', () => {
     t.schedule = [defaultStop(a.id), defaultStop(b.id)];
     const now = run(w, 0, 5);
     expect(t.state).toBe('noRoute');
-    expect(w.commands.setTrainMode(t, 'production')).toEqual({ ok: true });
+    expect(w.commands.setTrainMode(t, 'freight')).toEqual({ ok: true });
     expect(t.state).toBe('idle');
     // stone turns up: the waiting train goes for it on its own
     quarry.storage.set('stone', 40);
@@ -225,7 +225,7 @@ describe('setTrainMode', () => {
     t.atStation = a;
     a.occupants.add(t.id);
     t.state = 'loading';
-    w.commands.setTrainMode(t, 'production');
+    w.commands.setTrainMode(t, 'freight');
     expect(t.state).toBe('loading');
     expect(t.atStation).toBe(a);
     expect(a.occupants.has(t.id)).toBe(true);
@@ -240,7 +240,7 @@ describe('setTrainMode', () => {
       dest = station(w, 'warehouse', 70),
       home = deadStation(w, 60);
     const t = train(w, 20);
-    t.mode = 'production';
+    t.mode = 'freight';
     t.schedule = [defaultStop(home.id)];
     t.addJob({
       contractId: 1,
@@ -259,9 +259,9 @@ describe('setTrainMode', () => {
       ok: false,
       message: STR.fleet.needTwoStops,
     });
-    expect(t.mode).toBe('production');
-    expect(w.commands.setTrainMode(t, 'collection')).toEqual({ ok: true });
-    expect(t.mode).toBe('collection');
+    expect(t.mode).toBe('freight');
+    expect(w.commands.setTrainMode(t, 'transport')).toEqual({ ok: true });
+    expect(t.mode).toBe('transport');
     expect(t.schedule).toBe(job);
   });
 });
@@ -271,14 +271,14 @@ describe('setSchedule', () => {
     const w = world();
     const a = station(w, 'quarry', 40);
     const t = train(w, 20);
-    t.mode = 'production';
+    t.mode = 'freight';
     const before = t.schedule;
     expect(w.commands.setSchedule(t, [defaultStop(a.id)])).toEqual({
       ok: false,
       message: STR.fleet.needTwoStops,
     });
     expect(w.commands.setSchedule(t, [])).toEqual({ ok: false, message: STR.fleet.needTwoStops });
-    expect(t.mode).toBe('production');
+    expect(t.mode).toBe('freight');
     expect(t.schedule).toBe(before);
   });
 
@@ -898,7 +898,7 @@ describe('economy commands', () => {
 // ------------------------------------------------------------ contract jobs and the program
 
 /**
- * A production train whose own program is one stop nowhere near the rails takes up a contract
+ * A freight train whose own program is one stop nowhere near the rails takes up a contract
  * from a stocked quarry to a warehouse, as a train with nowhere to go does.
  */
 function onContract() {
@@ -908,7 +908,7 @@ function onContract() {
     home = deadStation(w, 60);
   quarry.storage.set('stone', 40);
   const t = train(w, 20);
-  t.mode = 'production';
+  t.mode = 'freight';
   t.schedule = [defaultStop(home.id)];
   t.addJob({
     contractId: 1,
@@ -936,7 +936,7 @@ describe('setTrainMode after a contract job closes', () => {
       ok: false,
       message: STR.fleet.needTwoStops,
     });
-    expect(t.mode).toBe('production');
+    expect(t.mode).toBe('freight');
   });
 
   it('refuses schedule under way, its own program having one stop', () => {
@@ -947,13 +947,13 @@ describe('setTrainMode after a contract job closes', () => {
       ok: false,
       message: STR.fleet.needTwoStops,
     });
-    expect(t.mode).toBe('production');
+    expect(t.mode).toBe('freight');
   });
 
   it('switched to production under way, heads for its pick instead of its dead stop', () => {
     const { w, t, quarry, until } = onContract();
     t.dropJob(1);
-    expect(w.commands.setTrainMode(t, 'production')).toEqual({ ok: true });
+    expect(w.commands.setTrainMode(t, 'freight')).toEqual({ ok: true });
     expect(target(t)).toBe(quarry.id);
     until(() => t.atStation === quarry, 120);
     expect(t.state).not.toBe('noRoute');
@@ -970,7 +970,7 @@ describe('a roaming train whose contract closes under way', () => {
     t.dropJob(1);
     // the next fleet tick takes the program up again
     expect(until(() => onProgram(t), 1)).toBe(true);
-    expect(t.mode).toBe('production');
+    expect(t.mode).toBe('freight');
     expect(target(t)).toBe(quarry.id);
     expect(target(t)).not.toBe(home.id);
     expect(t.state).toBe('moving');
@@ -1037,7 +1037,7 @@ describe('setSchedule during a contract job', () => {
     const w = world();
     const stops = program(w);
     const t = train(w, 20);
-    t.mode = 'production';
+    t.mode = 'freight';
     expect(w.commands.setSchedule(t, stops)).toEqual({ ok: true });
     expect(t.schedule).toEqual(stops);
     expect(onProgram(t)).toBe(true);
@@ -1052,7 +1052,7 @@ describe('setSchedule during a contract job', () => {
  */
 type Moment = 'none' | 'toOrigin' | 'atOrigin' | 'toDest' | 'atDest' | 'noRoute';
 const MOMENTS: Moment[] = ['none', 'toOrigin', 'atOrigin', 'toDest', 'atDest', 'noRoute'];
-const MODES: RouteMode[] = ['schedule', 'production', 'collection', 'transport', 'contract'];
+const MODES: RouteMode[] = ['schedule', 'freight', 'transport', 'contract'];
 const OTHER_KINDS = ['farm', 'warehouse', 'quarry', 'station'];
 interface Rerouting {
   /** the train's mode before */

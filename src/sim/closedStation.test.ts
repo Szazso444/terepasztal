@@ -253,7 +253,7 @@ describe('a train set to wait for a full load', () => {
 
 // ------------------------------------------------------------------ dispatch
 
-/** Producers a production train fetches from; a farm and a lumber camp make bulk goods. */
+/** Producers a freight train fetches from; a farm and a lumber camp make bulk goods. */
 const PRODUCERS = ['farm', 'lumber', 'quarry', 'pump', 'mine', 'sand_pit', 'copper_mine'] as const;
 /** Wagons for every kind of goods, the brake van's six units of bulk the smallest. */
 const WAGONS = ['brake_van', 'flatbed', 'boxcar', 'wood_hopper', 'dump_hopper', 'water_cart'];
@@ -276,7 +276,7 @@ interface Dispatch {
   trainX: number;
 }
 
-/** A production train on the main line, the producers and any warehouse beside it. */
+/** A freight train on the main line, the producers and any warehouse beside it. */
 function dispatchScene(c: Dispatch) {
   const w = railway();
   const placed: { s: Station; p: Producer }[] = [];
@@ -288,7 +288,7 @@ function dispatchScene(c: Dispatch) {
   }
   if (c.warehouse !== null) w.builder.stations.push(new Station('warehouse', c.warehouse, ROW - 1));
   const t = train(w, c.trainX, c.wagons);
-  t.mode = 'production';
+  t.mode = 'freight';
   return { w, t, placed };
 }
 

@@ -454,7 +454,7 @@ const SLOTS = Array.from({ length: 14 }, (_, i) => 8 + 6 * i);
 const SIDINGS = [11, 23, 35, 47, 59, 71, 83];
 type Kind = 'quarry' | 'warehouse' | 'farm' | 'depot';
 const KINDS: readonly Kind[] = ['quarry', 'warehouse', 'farm', 'depot'];
-const ROAMING: readonly RouteMode[] = ['production', 'collection'];
+const ROAMING: readonly RouteMode[] = ['freight'];
 
 /** One train on the scene's line, the stations it may serve, and the tick it is saved after. */
 interface Layout {
@@ -745,6 +745,43 @@ describe('a single train saved at any tick of a generated line', () => {
     const again = back.fleet.trains[0].toJSON();
     expect(again.serviceStop).toEqual(j.serviceStop);
     expect(again.nextFuelCheck).toBe(j.nextFuelCheck);
+  });
+});
+
+describe('a freight train saved at a stop where it put goods down', () => {
+  it('carries on as if never saved, with the goods it put down saved', { timeout: 300_000 }, () => {
+    // The quarry's stone goes to the warehouse, whose pile is then the one worth fetching: the
+    // train that put it there neither takes it back nor stops there again. A save keeps that
+    // (`dropped`), so a train loaded while it unloads, or just after, does the same.
+    roamingRules();
+    const c: Layout = {
+      loco: 'f7',
+      mode: 'freight',
+      sites: [
+        { kind: 'quarry', x: 20, stocked: true },
+        { kind: 'warehouse', x: 45, stocked: false },
+        { kind: 'depot', x: 75, stocked: false },
+      ],
+      siding: null,
+      trainX: 30,
+      east: true,
+      fuel: 1,
+      tick: 0,
+    };
+    const w = layoutScene(c);
+    const dropped = () => w.fleet.trains[0].toJSON().dropped;
+    let first = -1;
+    let last = -1;
+    for (let i = 0; i < 4000 && (first < 0 || dropped()); i++) {
+      step(w, timeOf(i));
+      if (!dropped()) continue;
+      if (first < 0) first = i;
+      last = i;
+    }
+    expect(first, 'it put the stone down at the warehouse').toBeGreaterThan(0);
+    expect(last, 'and set off from it').toBeGreaterThan(first + 20);
+    const ticks = [first - 1, first, first + 1, first + 10, first + 40, last - 1, last, last + 1];
+    for (const tick of [...ticks, last + 30]) carriesOnFrom({ ...c, tick }, true);
   });
 });
 
@@ -2031,7 +2068,7 @@ function sendOff(w: SimWorld, x: number, y: number, from: Dir, mode: RouteMode, 
 }
 /** A roaming train heading east on the main line, its head at x, bound for `s`. */
 const roamTo = (w: SimWorld, x: number, s: Station) =>
-  void sendOff(w, x, ROW, Dir.W, 'production', [defaultStop(s.id)]);
+  void sendOff(w, x, ROW, Dir.W, 'freight', [defaultStop(s.id)]);
 /** A train on a schedule heading east on the main line, its head at x. */
 const runFrom = (w: SimWorld, x: number, stops: StopPlan[]) =>
   void sendOff(w, x, ROW, Dir.W, 'schedule', stops);

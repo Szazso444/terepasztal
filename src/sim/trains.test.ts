@@ -46,7 +46,7 @@ const ROW = 30;
 const GDT = 0.05;
 /** How long a roaming train keeps away from a stop it found no way to (`Train.depart`). */
 const BAD_FOR = 240;
-const ROAMING: RouteMode[] = ['production', 'collection', 'transport', 'contract'];
+const ROAMING: RouteMode[] = ['freight', 'transport', 'contract'];
 type Kind = 'quarry' | 'warehouse' | 'farm' | 'station' | 'depot';
 const KINDS: Kind[] = ['quarry', 'warehouse', 'farm', 'station', 'depot'];
 

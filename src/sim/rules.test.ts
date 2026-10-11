@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Rules } from './rules';
 import { forAll } from '../testing/property';
+import { STR } from '../strings';
 
 type RulesModule = typeof import('./rules');
 
@@ -63,6 +64,24 @@ describe('the two tables', () => {
     const noDefault = meta.filter((k) => !defaults.includes(k));
     expect(noMeta, `in DEFAULT_RULES, not in RULE_META: ${noMeta.join(', ')}`).toEqual([]);
     expect(noDefault, `in RULE_META, not in DEFAULT_RULES: ${noDefault.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('the warehouse pile before pickup', () => {
+  it('is labelled with the name of the Freight mode, its key and range as they were', async () => {
+    // an empty freight train picks a warehouse once it holds this much: the saved key is the same
+    // `collectMin`, so a game saved before the Collection mode went keeps the player's setting
+    const m = await load();
+    const meta = m.RULE_META.find((x) => x.key === 'collectMin')!;
+    expect(meta.label.startsWith(STR.train.mode.freight)).toBe(true);
+    expect(meta.label).not.toMatch(/collection|production/i);
+    expect({
+      min: meta.min,
+      max: meta.max,
+      step: meta.step,
+      default: m.DEFAULT_RULES.collectMin,
+    }).toEqual({ min: 0, max: 1000, step: 10, default: 100 });
+    expect(m.rulesFrom({ collectMin: 250 }).collectMin).toBe(250);
   });
 });
 

@@ -689,11 +689,16 @@ export class Fleet {
   }
   /**
    * Stops chosen on the fly. With cargo aboard: a contract's destination, else a town for
-   * passengers, else the nearest depot (the only way into the stockpile). Empty, `dynamic` picks
-   * the producer whose cargo the stockpile lacks most; `collect` picks the producer or warehouse
-   * with the biggest load waiting, weighed against the way there and on to the nearest depot.
-   * Stations other free-roaming trains are bound for are skipped, and so are stations the tanks
-   * could not reach and leave again.
+   * passengers, else where the goods go, after a top-up at another producer while room is left
+   * and the dump is not nearer. Goods taken from a warehouse go to the nearest depot (the only
+   * way into the stockpile), a warehouse with room only when no depot is reachable; goods taken
+   * only at producers go to the nearest warehouse with room that they did not come from, or to a
+   * depot when that is clearly nearer. Empty, a freight train picks the producer or warehouse with
+   * the biggest load waiting, weighed against the way there and on to where it would go, the time
+   * since a train last loaded there and how full the station is, producer and warehouse alike. A
+   * warehouse is a candidate only once it holds `rules.collectMin` of something the train can
+   * haul. Stations other free-roaming trains are bound for are skipped, and so are stations the
+   * tanks could not reach and leave again.
    */
   chooseNext(t: Train): number | null {
     const head = t.poses[0] ?? { x: 0, y: 0 };
@@ -721,15 +726,23 @@ export class Fleet {
       const onward = f ? between(f, s) : 0;
       return (dist(s) + onward) * 1.3 + 4 <= range;
     };
-    // where a load of goods goes: production dumps into a warehouse with room (a depot when
-    // none is nearer), collection only into a depot
+    // where a load of goods goes, never back into a store it came from (`origins`): goods taken
+    // from a warehouse (`fromStore`) go to a depot, and to a warehouse with room only when no
+    // depot is reachable; goods taken only at producers go to a warehouse with room (a depot when
+    // that is clearly nearer)
     const origins = new Set(t.wagons.map((w) => w.origin).filter((o): o is number => o !== null));
-    const dumpFor = (from: { x: number; y: number }, loadUnits: number) => {
+    const isStore = (id: number | null) =>
+      id !== null && !!this.builder.stationById(id)?.def.stockpile;
+    const dumpFor = (
+      from: { x: number; y: number },
+      loadUnits: number,
+      fromStore: boolean,
+      not: ReadonlySet<number>,
+    ) => {
       const okDepots = depots.filter(ok);
-      if (t.mode === 'production') {
-        // never back into the store the load came from
+      if (t.mode === 'freight' && !fromStore) {
         const roomy = warehouses.filter(
-          (s) => ok(s) && !origins.has(s.id) && s.room >= Math.min(loadUnits, 5),
+          (s) => ok(s) && !not.has(s.id) && s.room >= Math.min(loadUnits, 5),
         );
         const w = this.nearest(roomy, from);
         const d = this.nearest(okDepots, from);
@@ -745,7 +758,7 @@ export class Fleet {
       return (
         this.nearest(okDepots, from) ??
         this.nearest(
-          warehouses.filter((s) => ok(s) && !origins.has(s.id) && s.room > 1),
+          warehouses.filter((s) => ok(s) && !not.has(s.id) && s.room > 1),
           from,
         )
       );
@@ -773,9 +786,15 @@ export class Fleet {
         );
       }
       const units = loaded.reduce((a, w) => a + w.amount, 0);
-      const dump = dumpFor(head, units);
-      // room left for the kinds already aboard (and empty wagons): top up at another source
-      // before dumping, unless a dump is nearer or lies on the way there
+      const dump = dumpFor(
+        head,
+        units,
+        loaded.some((w) => isStore(w.origin)),
+        origins,
+      );
+      // room left for the kinds already aboard (and empty wagons): top up at another producer
+      // before dumping, unless a dump is nearer or lies on the way there. A warehouse is no
+      // place to top up: the train would unload its load into it first
       const kinds = new Set(loaded.map((w) => w.cargo!));
       const spare = Math.max(0, t.power - t.weight);
       let room = 0;
@@ -789,7 +808,7 @@ export class Fleet {
         let best: { s: Station; score: number } | null = null;
         for (const s of withPlat) {
           if (s.def.pool || !ok(s) || taken.has(s.id) || !reachable(s)) continue;
-          if (t.mode === 'collection' ? !s.def.stockpile : s.def.stockpile) continue;
+          if (s.def.stockpile) continue;
           let top = 0;
           for (const c of kinds) {
             if (!s.availableCargo().includes(c)) continue;
@@ -797,7 +816,6 @@ export class Fleet {
           }
           // worth a detour only for a real share of the room left
           if (top < Math.max(4, room * 0.25)) continue;
-          if (t.mode === 'collection' && top < rules.collectMin * 0.5) continue;
           const sc = top / (12 + 0.5 * dist(s));
           if (!best || sc > best.score) best = { s, score: sc };
         }
@@ -825,41 +843,31 @@ export class Fleet {
         // distance counts at half weight and a town left alone climbs in priority
         score = ((waiting + 0.5) * this.neglect(s.id, now)) / (10 + 0.5 * dist(s));
       } else {
-        // production takes from producers, collection from warehouses
-        if (t.mode === 'collection' ? !s.def.stockpile : s.def.stockpile) continue;
+        // a producer, or a warehouse once a pile in it is worth the trip
+        const store = !!s.def.stockpile;
         let haul = 0;
         const spare = Math.max(0, t.power - t.weight);
-        let ripe = 1;
         for (const c of s.availableCargo()) {
           if (cargoDef(c).class === 'people') continue;
           // what the wagons hold and the engines can pull
           const cap = Math.min(Fleet.capacityFor(t, c), spare / cargoDef(c).weight);
           if (cap < 1) continue;
           const stored = s.stored(c);
-          // a collection train lets a warehouse accumulate: nothing below the threshold, and
-          // an ever stronger pull as the pile grows past it
-          if (t.mode === 'collection') {
-            if (stored < rules.collectMin) continue;
-            ripe = Math.max(ripe, 1 + (stored - rules.collectMin) / rules.collectMin);
-          }
+          // a warehouse lets its piles accumulate: nothing below the pickup amount
+          if (store && stored < rules.collectMin) continue;
           haul = Math.max(haul, Math.min(cap, stored) + 0.25 * stored);
         }
         // a producer that is filling up counts even before the pile is big
-        if (
-          t.mode === 'production' &&
-          haul > 0 &&
-          haul < trainCap * 0.15 &&
-          s.productionPerWeek > 0
-        )
+        if (!store && haul > 0 && haul < trainCap * 0.15 && s.productionPerWeek > 0)
           haul = Math.max(haul, Math.min(trainCap, s.totalStored()) + 0.25 * s.totalStored());
         if (haul < Math.min(trainCap * 0.15, 8)) continue;
-        const dump = dumpFor({ x: s.cx, y: s.cy }, haul);
+        const dump = dumpFor({ x: s.cx, y: s.cy }, haul, store, new Set([s.id]));
         const onward = dump ? between(dump, s) : 0;
-        // fuller producers first: their pile stops growing when it hits the cap
-        // a producer near its cap is throwing output away; distance counts at half weight so a
-        // full pile far away beats a thin one next door; stations left alone climb in priority
+        // fuller stations first, producer and warehouse alike: a producer near its cap is
+        // throwing output away; distance counts at half weight so a full pile far away beats a
+        // thin one next door; stations left alone climb in priority
         const fill = s.totalStored() / Math.max(1, s.capacity);
-        const pressure = s.def.stockpile ? ripe : 1 + fill + (fill >= 0.8 ? 1 : 0);
+        const pressure = 1 + fill + (fill >= 0.8 ? 1 : 0);
         score =
           (pressure * this.neglect(s.id, now) * haul) / trainCap / (12 + 0.5 * (dist(s) + onward));
       }

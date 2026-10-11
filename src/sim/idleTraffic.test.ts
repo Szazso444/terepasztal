@@ -184,7 +184,7 @@ type Run = ReturnType<typeof run>;
 
 /** A roaming train that went to `stop` and found nothing worth hauling anywhere. */
 function idleAt(w: SimWorld, sim: Run, x: number, stop: Station) {
-  const t = train(w, x, true, 'production', [defaultStop(stop.id)]);
+  const t = train(w, x, true, 'freight', [defaultStop(stop.id)]);
   go(w, t);
   expect(
     sim.until(() => t.state === 'idle', 60),
@@ -1427,7 +1427,7 @@ function setUp(l: GenLine, load: 'auto' | 'none' = 'auto') {
   const sim = watch(w);
   const roam = (x: number, east: boolean, wagons: number, at: Station) => {
     const t = consist(w, x, east, wagons);
-    t.mode = 'production';
+    t.mode = 'freight';
     t.schedule = [defaultStop(at.id)];
     go(w, t);
     return t;
@@ -1978,7 +1978,7 @@ describe('idle trains on generated lines, saved and loaded at any tick', () => {
         savedLine(anyLine),
         (c) => {
           const { back, again, at } = savedAndLoaded(c);
-          const roaming = back.fleet.trains.filter((t) => t.mode === 'production');
+          const roaming = back.fleet.trains.filter((t) => t.mode === 'freight');
           const yielding = () => roaming.find((t) => t.state === 'yielding');
           again.until(() => again.broken !== null || !!yielding(), 150);
           expect(again.broken, `${at}: ${story(back, again)}`).toBeNull();
@@ -3034,7 +3034,7 @@ describe('with shunting on, trains on busier generated lines', () => {
           const island = station(w, 'warehouse', ISLAND.x + 3, ISLAND.y - 1);
           const idles = c.idles.map((g) => {
             const t = consist(w, g.x, g.east, g.wagons);
-            t.mode = 'production';
+            t.mode = 'freight';
             t.schedule = [defaultStop(island.id)];
             t.idle('');
             return t;
@@ -3132,7 +3132,7 @@ function twoShunts(facing: boolean) {
     { x: facing ? 20 : 23, east: !facing },
     { x: facing ? 40 : 37, east: facing },
   ].map(({ x, east: e }) => {
-    const t = train(w, x, e, 'production', [defaultStop(island.id)]);
+    const t = train(w, x, e, 'freight', [defaultStop(island.id)]);
     t.idle('');
     return t;
   });
@@ -3437,7 +3437,7 @@ describe('a working train that keeps giving way to the same train', () => {
     const { w, stations, island } = keptBackScene();
     const sim = watch(w);
     const idle = consist(w, 35, false, 1);
-    idle.mode = 'production';
+    idle.mode = 'freight';
     idle.schedule = [defaultStop(island.id)];
     idle.idle('');
     const shuttle = consist(w, 16, false, 2);
@@ -3487,7 +3487,7 @@ describe('a working train that keeps giving way to the same train', () => {
     const { w, stations, island } = keptBackScene();
     const sim = watch(w);
     const idle = consist(w, 35, false, 1);
-    idle.mode = 'production';
+    idle.mode = 'freight';
     idle.schedule = [defaultStop(island.id)];
     idle.idle('');
     const shuttle = consist(w, 16, false, 2);
@@ -3527,7 +3527,7 @@ describe('a working train that gave way to a train and has reached a stop since'
   it('is not kept back: no jam is counted and it says it is pulling aside', SLOW, () => {
     const { w, west, end } = terminus();
     const sim = watch(w);
-    const roaming = train(w, 26, true, 'production', [defaultStop(end.id)]);
+    const roaming = train(w, 26, true, 'freight', [defaultStop(end.id)]);
     const other = train(w, 37, false, 'schedule', [call(west, 'none'), call(end, 'none')]);
     go(w, roaming);
     go(w, other);
@@ -3641,7 +3641,7 @@ function keptBackRun() {
   const { w, stations, island } = keptBackScene();
   const sim = watch(w);
   const idle = consist(w, 35, false, 1);
-  idle.mode = 'production';
+  idle.mode = 'freight';
   idle.schedule = [defaultStop(island.id)];
   idle.idle('');
   const shuttle = consist(w, 16, false, 2);
@@ -3764,7 +3764,7 @@ describe('Train.gaveWay against the kept-back rule, over any order of give-ways,
         }),
       (events) => {
         const { w, end } = terminus();
-        let t = train(w, 26, true, 'production', [defaultStop(end.id)]);
+        let t = train(w, 26, true, 'freight', [defaultStop(end.id)]);
         let rule = keptBackRule();
         const rules = [rule];
         rule.follow(t, () => 0);
@@ -3921,7 +3921,7 @@ describe('a working train that meets the train it gave way to again after its st
         const { w, warehouse, quarry, at } = revisitLine(c);
         const sim = watch(w);
         const roam = consist(w, at(c.roamAt), c.east, c.roamWagons);
-        roam.mode = 'production';
+        roam.mode = 'freight';
         roam.schedule = [defaultStop(quarry.id)];
         const other = consist(w, at(c.otherAt), !c.east, c.otherWagons);
         other.mode = 'schedule';
