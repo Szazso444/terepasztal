@@ -1,0 +1,1 @@
+2026-10-07: straight,32 curve frames,reversed,night visually inspected; frame completeness and stationary freeze passed. Bundle 9b2895c365ef3420

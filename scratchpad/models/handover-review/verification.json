@@ -1,0 +1,332 @@
+{
+  "errors": [],
+  "images": [
+    {
+      "src": "c50-handbuilt-game/fleet.png",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt-game/before-shading.png",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt-game/straight.png",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt-game/straight.png",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt-game/wheels.webp",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt-game/front.webp",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt-game/rear.webp",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt/reference.png",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt/front.png?v=2",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt/rear.png?v=2",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt/side.png?v=2",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt/front-end.png?v=2",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt/rear-end.png?v=2",
+      "ok": true
+    },
+    {
+      "src": "c50-handbuilt/top.png?v=2",
+      "ok": true
+    },
+    {
+      "src": "c50-new/c50-reference-v2.png",
+      "ok": true
+    },
+    {
+      "src": "c50-new/c50-rigid-000.png",
+      "ok": true
+    },
+    {
+      "src": "c50-new/c50-rigid-045.png",
+      "ok": true
+    },
+    {
+      "src": "c50-new/c50-rigid-135.png",
+      "ok": true
+    },
+    {
+      "src": "c50-new/c50-rigid-225.png",
+      "ok": true
+    },
+    {
+      "src": "c50-corrected/front.png",
+      "ok": true
+    },
+    {
+      "src": "c50-corrected/front.webp",
+      "ok": true
+    },
+    {
+      "src": "c50-corrected/rear.webp",
+      "ok": true
+    },
+    {
+      "src": "c50-corrected/wheels.webp",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-source.png",
+      "ok": true
+    },
+    {
+      "src": "c50-style/front.png",
+      "ok": true
+    },
+    {
+      "src": "c50-style/front.webp",
+      "ok": true
+    },
+    {
+      "src": "c50-style/rear.webp",
+      "ok": true
+    },
+    {
+      "src": "c50-fix/rear-comparison.png",
+      "ok": true
+    },
+    {
+      "src": "c50-fix/rear-comparison.webp",
+      "ok": true
+    },
+    {
+      "src": "c50-fix/front-comparison.webp",
+      "ok": true
+    },
+    {
+      "src": "rear-reference-audit/c50-rear.png",
+      "ok": true
+    },
+    {
+      "src": "rear-reference-audit/black_five-rear.png",
+      "ok": true
+    },
+    {
+      "src": "rear-reference-audit/drg01-rear.png",
+      "ok": true
+    },
+    {
+      "src": "rear-reference-audit/daylight-rear.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-source.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-raw-000.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-straight.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-rigid-000.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-raw-045.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-raw-135.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-raw-225.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-rigid-045.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-rigid-135.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-rigid-225.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/c50-before.webp",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-source.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-raw-000.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-straight.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-rigid-000.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-raw-045.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-raw-135.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-raw-225.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-rigid-045.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-rigid-135.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-rigid-225.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/black_five-before.webp",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-source.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-raw-000.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-straight.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-rigid-000.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-raw-045.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-raw-135.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-raw-225.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-rigid-045.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-rigid-135.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-rigid-225.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/drg01-before.webp",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-source.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-raw-000.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-straight.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-rigid-000.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-raw-045.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-raw-135.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-raw-225.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-rigid-045.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-rigid-135.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-rigid-225.png",
+      "ok": true
+    },
+    {
+      "src": "originals-2026-10-06/daylight-before.webp",
+      "ok": true
+    }
+  ],
+  "save": {
+    "version": 13,
+    "retired": [
+      "adler",
+      "john_bull",
+      "jupiter",
+      "mav424",
+      "k4s",
+      "flying_scotsman",
+      "f7",
+      "v63",
+      "j94",
+      "nine_f"
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "id": "c50",
+  "source_sha256": "0e8df395e397bc982ebc2196b76d119892dc1696615530a8a7c024c6f1c3f131",
+  "mesh_sha256": "d0fbcc03ae667d795d4f77a238bc8f5965e244f0b113e7add6d334c1cd9512d4",
+  "derived_mesh_sha256": "32e52c2c0622d38eef37859b04d984130c8e4660f2a14c482fb718026cf86e4a",
+  "mesh_unchanged": false,
+  "source_unchanged": true,
+  "authorized_corrections": {
+    "front_width_before": 1.2723435854911807,
+    "rear_width": 1.5620113134384155,
+    "front_width_after": 1.5620113134384155,
+    "front_width_factor": 1.227664705705582,
+    "deck_width_factor": 1.4,
+    "cab_unchanged": true,
+    "length_height_unchanged": true
+  },
+  "facings": 96,
+  "phases": 8,
+  "wheel_radius_m": 0.43,
+  "wheel_cycle_tiles": 0.10832965529760029,
+  "resolution": 4,
+  "supersample": 2,
+  "anchor": {
+    "ax": 128,
+    "ay": 128
+  },
+  "frames": [
+    "loco_c50_body_w0_f0.png",
+    "loco_c50_body_w1_f0.png",
+    "loco_c50_body_w0_f48.png",
+    "loco_c50_body_w1_f48.png"
+  ]
+}

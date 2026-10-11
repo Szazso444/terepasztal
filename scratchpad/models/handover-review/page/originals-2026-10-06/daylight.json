@@ -1,0 +1,83 @@
+{
+  "id": "daylight",
+  "source_sha256": "bfbd055070f04c7ba83ff84a40b14a7b0401bcbe919a8e5aa0a3d2272146a49e",
+  "mesh_sha256": "20e7db18e09b8be6ca96292195700046b39644470387e61276e27f4a788f5243",
+  "orientation_score": 0.789276689518828,
+  "rotation_degrees": {
+    "yaw": 41.25,
+    "pitch": -25.25,
+    "roll": -0.75
+  },
+  "uniform_scale": 18.658921437297607,
+  "rigid_matrix": [
+    [
+      13.958624839782715,
+      -11.12722396850586,
+      -5.431118011474609,
+      0.4222474992275238
+    ],
+    [
+      12.379958152770996,
+      12.688167572021484,
+      5.8225789070129395,
+      0.5418340563774109
+    ],
+    [
+      0.22090208530426025,
+      -7.959312915802002,
+      16.874711990356445,
+      1.7941458225250244
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "material_policy": "Original imported materials, unchanged; neutral scene lighting.",
+  "candidate_limit": "Whole-model normal-based alignment only; wheel stance and nose direction need owner review.",
+  "renders": [
+    {
+      "mode": "raw",
+      "heading": 0,
+      "file": "daylight-raw-000.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 45,
+      "file": "daylight-raw-045.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 135,
+      "file": "daylight-raw-135.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 225,
+      "file": "daylight-raw-225.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 0,
+      "file": "daylight-rigid-000.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 45,
+      "file": "daylight-rigid-045.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 135,
+      "file": "daylight-rigid-135.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 225,
+      "file": "daylight-rigid-225.png"
+    }
+  ],
+  "mesh_unchanged": true
+}

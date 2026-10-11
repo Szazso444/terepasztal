@@ -1,0 +1,14 @@
+{
+  "asset": "bm50",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_bm50_body_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-6"
+    ]
+  ],
+  "total_pages": 6
+}

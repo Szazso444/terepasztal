@@ -1,0 +1,14 @@
+{
+  "asset": "muki",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_muki_body_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-12"
+    ]
+  ],
+  "total_pages": 16
+}

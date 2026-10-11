@@ -77,11 +77,15 @@ export interface LocoDef {
   spriteGear?: boolean;
   /** trucks rendered as sprites of their own, by part (indices in the gear table) */
   truckSprites?: Record<string, number[]>;
+  /** Sprite origin behind the measured axle-centre pivot, in tiles along its own heading. */
+  truckOffsets?: Record<string, number>;
   /**
    * Wheel layers that turn, by sprite set (`engine`, `engine-t0`, ...): frames per cycle and tiles
    * of track per cycle.
    */
-  wheels?: Record<string, { phases: number; cycle: number }>;
+  wheels?: Record<string, { phases: number; cycle: number; integrated?: boolean }>;
+  /** Number of directly rendered headings when an engine supplies a denser atlas. */
+  spriteFacings?: number;
   /**
    * The box each of its sprite sets fills (`engine`, `engine-t0`, ...), tiles from the set's anchor on
    * the rail: rear end, front end, half width, height. Its pictures are swung between two facings as
@@ -628,7 +632,9 @@ interface LocoFit {
   smoke?: { part: PartKind; along: number; up: number }[];
   lamps?: { part: PartKind; along: number; across: number; up: number }[];
   trucks?: Record<string, number[]>;
-  wheels?: Record<string, { phases: number; cycle: number }>;
+  truckOffsets?: Record<string, number>;
+  wheels?: Record<string, { phases: number; cycle: number; integrated?: boolean }>;
+  spriteFacings?: number;
   boxes?: Record<string, [number, number, number, number]>;
 }
 function finalize(b: ContentBundle): ContentBundle {
@@ -645,7 +651,9 @@ function finalize(b: ContentBundle): ContentBundle {
     d.smoke = f.smoke;
     d.lamps = f.lamps;
     d.truckSprites = f.trucks;
+    d.truckOffsets = f.truckOffsets;
     d.wheels = f.wheels;
+    d.spriteFacings = f.spriteFacings;
     d.boxes = f.boxes;
   }
   for (const w of b.wagons)

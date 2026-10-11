@@ -1,0 +1,20 @@
+{
+  "id": "c50",
+  "glb": "G:/DEV/Terepasztal/pipeline-out/models_raw/c50.glb",
+  "job": "G:/DEV/Terepasztal/pipeline-out-std/jobs/c50.json",
+  "checkpoint": "C:/Users/Zso/terepasztal-playtest/scratchpad/models/handover-review/originals/c50.json",
+  "output": "C:\\Users\\Zso\\terepasztal-playtest\\scratchpad\\models\\handover-review\\corrected-c50\\preview",
+  "length_tiles": 0.8239,
+  "style": "source-painted",
+  "pilot_meta": "C:\\Users\\Zso\\terepasztal-playtest\\scratchpad\\models\\handover-review\\painted-c50\\raw\\meta.json",
+  "texture": "C:\\Users\\Zso\\terepasztal-playtest\\scratchpad\\models\\handover-review\\painted-c50\\raw\\source-colour.png",
+  "facings": [
+    0,
+    48
+  ],
+  "phases": [
+    0,
+    1
+  ],
+  "save_blend": true
+}

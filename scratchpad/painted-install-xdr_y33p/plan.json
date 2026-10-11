@@ -1,0 +1,14 @@
+{
+  "asset": "rocket",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_rocket_engine_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-10"
+    ]
+  ],
+  "total_pages": 10
+}

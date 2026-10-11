@@ -94,7 +94,7 @@ function canvasFor(L: number) {
   return { W, H, OX: Math.floor(W / 2), OY: H - 14 };
 }
 
-/** Narrow-gauge stock: bodies three quarters as wide, wheels on rails half as far apart. */
+/** Narrow-gauge stock retains its original width; standard rails were narrowed by 25%. */
 const NARROW_BODY = 0.75;
 const NARROW_GAUGE = 0.5;
 
@@ -119,7 +119,7 @@ class Frame {
   }
   /** a wheel's offset across the body, kept on this frame's rails */
   gw(w: number) {
-    return this.narrow ? (w * NARROW_GAUGE) / NARROW_BODY : w;
+    return this.narrow ? (w * NARROW_GAUGE) / NARROW_BODY : w * 0.75;
   }
   /** tile-space offset of a body point: l along the heading (front = +), w across */
   along(l: number, w: number) {

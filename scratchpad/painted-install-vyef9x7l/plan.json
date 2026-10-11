@@ -1,0 +1,14 @@
+{
+  "asset": "mav490",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_mav490_engine_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-15"
+    ]
+  ],
+  "total_pages": 15
+}

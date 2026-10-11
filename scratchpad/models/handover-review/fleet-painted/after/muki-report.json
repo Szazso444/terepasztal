@@ -1,0 +1,217 @@
+{
+  "id": "muki",
+  "bundleKey": "df993e15a1abe868",
+  "placed": [
+    {
+      "id": "muki",
+      "row": 0,
+      "L": 0.689,
+      "sprite": true
+    }
+  ],
+  "box": {
+    "x0": 547.2000000000003,
+    "x1": 892.8000000000004,
+    "y0": 305.60000000000014,
+    "y1": 634.3999999999999
+  },
+  "completeness": {
+    "facings": 96,
+    "missing": []
+  },
+  "frozen": true,
+  "frames": [
+    {
+      "progress": 17.892,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.392
+    },
+    {
+      "progress": 17.936,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.436
+    },
+    {
+      "progress": 17.98,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.48
+    },
+    {
+      "progress": 18.024,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.524
+    },
+    {
+      "progress": 18.068,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.568
+    },
+    {
+      "progress": 18.112,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.612
+    },
+    {
+      "progress": 18.155,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.655
+    },
+    {
+      "progress": 18.199,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.699
+    },
+    {
+      "progress": 18.243,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.743
+    },
+    {
+      "progress": 18.287,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.787
+    },
+    {
+      "progress": 18.331,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.831
+    },
+    {
+      "progress": 18.375,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.875
+    },
+    {
+      "progress": 18.419,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.919
+    },
+    {
+      "progress": 18.462,
+      "speed": 0.329,
+      "state": "moving",
+      "distance": 17.962
+    },
+    {
+      "progress": 18.509,
+      "speed": 0.389,
+      "state": "moving",
+      "distance": 18.009
+    },
+    {
+      "progress": 18.57,
+      "speed": 0.509,
+      "state": "moving",
+      "distance": 18.07
+    },
+    {
+      "progress": 18.646,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.146
+    },
+    {
+      "progress": 18.725,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.225
+    },
+    {
+      "progress": 18.805,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.305
+    },
+    {
+      "progress": 18.885,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.385
+    },
+    {
+      "progress": 18.965,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.465
+    },
+    {
+      "progress": 19.044,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.544
+    },
+    {
+      "progress": 19.124,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.624
+    },
+    {
+      "progress": 19.204,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.704
+    },
+    {
+      "progress": 19.284,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.784
+    },
+    {
+      "progress": 19.363,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.863
+    },
+    {
+      "progress": 19.443,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 18.943
+    },
+    {
+      "progress": 19.523,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 19.023
+    },
+    {
+      "progress": 19.603,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 19.103
+    },
+    {
+      "progress": 19.682,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 19.182
+    },
+    {
+      "progress": 19.762,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 19.262
+    },
+    {
+      "progress": 19.842,
+      "speed": 0.598,
+      "state": "moving",
+      "distance": 19.342
+    }
+  ]
+}

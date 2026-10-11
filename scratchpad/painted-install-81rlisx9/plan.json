@@ -1,0 +1,15 @@
+{
+  "asset": "gmam",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_gmam_engine_",
+    "rolling/loco_gmam_cradle_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-7"
+    ]
+  ],
+  "total_pages": 7
+}

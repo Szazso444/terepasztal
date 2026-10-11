@@ -26,8 +26,8 @@ const R = 4,
 type RailPath = { points: Vec2[]; cls: TrackClass };
 /**
  * Per class: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
- * ballast shoulder, sleeper colours and rail line widths. Narrow gauge puts its rails half as far
- * apart on short, closely spaced timber sleepers laid straight on the ground, with no ballast,
+ * ballast shoulder, sleeper colours and rail line widths. Narrow gauge puts its rails closer
+ * together on short, closely spaced timber sleepers laid straight on the ground, with no ballast,
  * like a forest or mine line.
  */
 const STYLE: Record<
@@ -45,20 +45,20 @@ const STYLE: Record<
   }
 > = {
   regular: {
-    rail: 0.16,
-    sleeper: 0.235,
+    rail: 0.12,
+    sleeper: 0.17625,
     step: 0.14,
-    shoulder: 0.29,
+    shoulder: 0.2175,
     bed: true,
     tie: '#725039',
     tieHi: '#a17c52',
     widths: [1.25, 0.95, 0.4],
   },
   high_speed: {
-    rail: 0.16,
-    sleeper: 0.235,
+    rail: 0.12,
+    sleeper: 0.17625,
     step: 0.14,
-    shoulder: 0.34,
+    shoulder: 0.255,
     bed: true,
     tie: '#b9b3a0',
     tieHi: '#d1cbb7',

@@ -15,10 +15,10 @@ import {
   bogieStyleOf,
 } from '../art/frames';
 import { advanceSpin, spinPhase } from './wheelSpin';
+import { spriteFacing, snapTrainPixel } from './spriteFacing';
 import { pitchOnRail, LEVEL_GROUND, type Ground } from './slope';
 import {
   facingOf,
-  facingAngle,
   DRAWN_FACINGS,
   mirrorFacing,
   COUPLER_GAP,
@@ -60,8 +60,7 @@ function boxOf(b: [number, number, number, number] | undefined): PartBox | null 
 
 /**
  * Depth-sorted rigid segments, with independently swivelling bogies beneath the raised decks
- * and cargo overlays above loaded wagons. Bodies use 48 facings; between two of them a picture is
- * swung to the exact heading as the box its part fills (swingMesh).
+ * and cargo overlays above loaded wagons. Bodies use rendered facings, kept intact.
  */
 export class TrainRenderer {
   private surfaces = new SurfaceAssets();
@@ -181,13 +180,13 @@ export class TrainRenderer {
     owner: SwingSprite,
     parent: Container,
     stem: string,
-    w: { phases: number; cycle: number } | undefined,
+    w: { phases: number; cycle: number; integrated?: boolean } | undefined,
     rolled: number,
     angle: number,
     place: (s: SwingSprite, frameFor: (f: number) => string) => void,
   ): SwingSprite | null {
     let ws = this.wheelLayers.get(owner) ?? null;
-    if (!w || !this.atlas.has(`${stem}_w0_f0`)) {
+    if (!w || w.integrated || !this.atlas.has(`${stem}_w0_f0`)) {
       if (ws) ws.visible = false;
       return null;
     }
@@ -212,8 +211,8 @@ export class TrainRenderer {
   }
 
   /**
-   * Place a sprite for a tile-space heading: pick the facing, mirror when its twin is the drawn one,
-   * and swing the picture from the drawn facing to the exact heading as the box `box`.
+   * Place the nearest rendered heading. Prefer a real rear/other-side frame;
+   * legacy atlases use a mirrored twin when that heading is absent.
    */
   private pose(
     s: SwingSprite,
@@ -224,12 +223,14 @@ export class TrainRenderer {
     layer: number,
     box: PartBox,
     ground = this.ground(x, y),
+    facings = 48,
   ): Placed {
-    const f = facingOf(angle);
-    const drawn = DRAWN_FACINGS.has(f);
-    const key = frameFor(drawn ? f : mirrorFacing(f));
+    const f = spriteFacing(angle, facings);
+    const drawn = (facings === 48 && DRAWN_FACINGS.has(f)) || this.atlas.has(frameFor(f));
+    const twin = (((facings / 4 - f) % facings) + facings) % facings;
+    const key = frameFor(drawn ? f : twin);
     const fr = this.atlas.get(key);
-    s.show(fr, !drawn, box, facingAngle(f), angle);
+    s.show(fr, !drawn);
     const wp = tileToWorld(x, y);
     // Each body part and bogie stands on the rail under it, pitched along its own heading only
     // (the rail is level across the track) and upright: its height does not change with the grade.
@@ -240,7 +241,7 @@ export class TrainRenderer {
     pitchOnRail(s, snap(wp.x), snap(wp.y), g.dz, along, cos, sin, UPRIGHT);
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
-    return { key, frame: fr, flip: !drawn, drawn: facingAngle(f), angle, box };
+    return { key, frame: fr, flip: !drawn, drawn: (f * Math.PI * 2) / facings, angle, box };
   }
 
   /**
@@ -316,10 +317,22 @@ export class TrainRenderer {
           const angle = ps ? lerpAngle(ps.angle, seg.angle, alpha) : seg.angle;
           const shown = angle + flip + (seg.mirror ? Math.PI : 0);
           const s = c.parts[si];
-          const frameFor = isLoco
+          let frameFor = isLoco
             ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
             : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
           const vdef = isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def;
+          const integrated = isLoco ? t.locos[i].def.wheels?.[seg.part] : undefined;
+          if (integrated?.integrated) {
+            const u = advanceSpin(
+              this.spin.get(s) ?? 0,
+              seg.mirror ? -rolled : rolled,
+              integrated.cycle,
+            );
+            this.spin.set(s, u);
+            const phase = spinPhase(u, integrated.phases);
+            frameFor = (f: number) =>
+              `rolling/loco_${t.locos[i].def.id}_${seg.part}_w${phase}_f${f}`;
+          }
           const styles = vdef.bogieStyle;
           const narrowBody = vdef.gauge === 'narrow';
           const box =
@@ -333,13 +346,14 @@ export class TrainRenderer {
             15,
             box,
             this.bodyGround(seg, ps, alpha, x, y),
+            isLoco ? (t.locos[i].def.spriteFacings ?? 48) : 48,
           );
           const key = placed.key;
           const fr = placed.frame;
           // A rendered model brings its window panes as a frame of its own (`…_lit_f<n>`).
           // Procedural vehicle windows carry explicit amber palette pixels. Any other
           // illustrated replacement stays dark: never light a boiler.
-          const litKey = key.replace(/_f(\d+)$/, '_lit_f$1');
+          const litKey = key.replace(/(?:_w\d+)?_f(\d+)$/, '_lit_f$1');
           const lit = litKey !== key && this.atlas.has(litKey) ? this.atlas.get(litKey) : null;
           const own = isLoco && key.startsWith(`rolling/loco_${t.locos[i].def.id}_`);
           if (lit || (!own && fr.texture.frame.width / fr.w === 1)) {
@@ -350,14 +364,8 @@ export class TrainRenderer {
               this.layer.addChild(light);
               this.windowLights.set(s, light);
             }
-            // the panes' picture, swung exactly as the body under it
-            light.show(
-              lit ?? { ...fr, texture: this.surfaces.window(key, fr, true) },
-              placed.flip,
-              placed.box,
-              placed.drawn,
-              placed.angle,
-            );
+            // the panes' picture uses exactly the body's anchor and facing
+            light.show(lit ?? { ...fr, texture: this.surfaces.window(key, fr, true) }, placed.flip);
             light.alpha = this.night * 0.9;
             light.position.copyFrom(s.position);
             light.scale.copyFrom(s.scale);
@@ -417,19 +425,40 @@ export class TrainRenderer {
                   ? `rolling/loco_${t.locos[i].def.id}_${seg.part}-t${b.truck}`
                   : null;
               const mine = own !== null && this.atlas.has(`${own}_f0`);
+              const originOffset = mine
+                ? (t.locos[i].def.truckOffsets?.[`${seg.part}-t${b.truck}`] ?? 0)
+                : 0;
+              const spriteX = bx - Math.cos(heading) * originOffset;
+              const spriteY = by - Math.sin(heading) * originOffset;
               const tbox =
                 (mine ? boxOf(t.locos[i].def.boxes?.[`${seg.part}-t${b.truck}`]) : null) ??
                 truckBox(narrow);
+              const truckWheels = mine
+                ? t.locos[i].def.wheels?.[`${seg.part}-t${b.truck}`]
+                : undefined;
+              let truckFrame = mine
+                ? (f: number) => `${own}_f${f}`
+                : (f: number) => bogieFrame(this.atlas, style, b.kind, f, narrow);
+              if (truckWheels?.integrated) {
+                const u = advanceSpin(
+                  this.spin.get(bs) ?? 0,
+                  seg.mirror ? -rolled : rolled,
+                  truckWheels.cycle,
+                );
+                this.spin.set(bs, u);
+                const phase = spinPhase(u, truckWheels.phases);
+                truckFrame = (f: number) => `${own}_w${phase}_f${f}`;
+              }
               this.pose(
                 bs,
-                mine
-                  ? (f) => `${own}_f${f}`
-                  : (f) => bogieFrame(this.atlas, style, b.kind, f, narrow),
-                bx,
-                by,
+                truckFrame,
+                spriteX,
+                spriteY,
                 heading,
                 14,
                 tbox,
+                undefined,
+                mine ? (t.locos[i].def.spriteFacings ?? 48) : 48,
               );
               bs.visible &&= s.visible;
               // always just under its own body: the depth key is by position, and a bogie
@@ -444,7 +473,7 @@ export class TrainRenderer {
                   t.locos[i].def.wheels?.[`${seg.part}-t${b.truck}`],
                   seg.mirror ? -rolled : rolled,
                   heading,
-                  (w, frame) => this.pose(w, frame, bx, by, heading, 14, tbox),
+                  (w, frame) => this.pose(w, frame, spriteX, spriteY, heading, 14, tbox),
                 );
                 if (ws) ws.zIndex = bs.zIndex + 0.5;
               } else {
@@ -479,15 +508,14 @@ export class TrainRenderer {
 }
 
 /**
- * Sprites are placed in thirds of a pixel. Each sprite of a vehicle is placed on its own (a body,
+ * Sprites are placed in sixths of a pixel. Each sprite of a vehicle is placed on its own (a body,
  * its trucks, a tender), so on whole pixels they stepped at different moments and jolted a pixel
- * against each other while running.
+ * against each other while running. Sixth-pixel placement halves the old third-pixel step.
  */
-const SNAP = 3;
-/** A swing sprite's own map on the rail: its mirroring and its swing are in its mesh already. */
+/** Mirroring is already in the image quad; slope placement starts upright. */
 const UPRIGHT = { a: 1, b: 0, c: 0, d: 1 };
 function snap(v: number) {
-  return Math.round(v * SNAP) / SNAP;
+  return snapTrainPixel(v);
 }
 
 function lerp(a: number, b: number, t: number) {

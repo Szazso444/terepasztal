@@ -1,0 +1,1 @@
+Reference-v2 bundle be8e377ecbd7feeb: inspected straight, 32 curve captures, reversed orientation and night. Three axles, stable body; no clipping or doubled layers observed. Hand-built detailing remains a simplified interpretation of workbook reference.

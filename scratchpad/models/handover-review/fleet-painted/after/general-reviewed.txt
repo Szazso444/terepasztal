@@ -1,0 +1,1 @@
+Reference-v3 bundle e3000f8ce0fe2277: inspected straight, 32 curve captures, reversed orientation and night. No clipping or doubled layers observed. Reference model subject to owner visual review.

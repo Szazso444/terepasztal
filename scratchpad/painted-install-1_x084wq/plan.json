@@ -1,0 +1,16 @@
+{
+  "asset": "tgv",
+  "game": "C:\\Users\\Zso\\terepasztal-playtest",
+  "owned_prefixes": [
+    "rolling/loco_tgv_body_",
+    "rolling/loco_tgv_body-t0_",
+    "rolling/loco_tgv_body-t1_"
+  ],
+  "pages": [
+    [
+      "rolling-painted-1",
+      "rolling-16"
+    ]
+  ],
+  "total_pages": 16
+}
