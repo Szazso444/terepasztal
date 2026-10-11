@@ -1,0 +1,37 @@
+[
+  {
+    "file": "lake-water.png",
+    "returned": [1254, 1254],
+    "opaque": true,
+    "sha256": "ca0c607f47bfa21ede42253a2df8d895be5af89c4e2dc437a0b72fce7e09f614",
+    "review": [199, 199]
+  },
+  {
+    "file": "river-water.png",
+    "returned": [1254, 1254],
+    "opaque": true,
+    "sha256": "c8fa51f864140f291aa7f7be5c890a1871f1dc45e81ecb32ac1eda3e8dfe4ed1",
+    "review": [199, 199]
+  },
+  {
+    "file": "beach-sand.png",
+    "returned": [1254, 1254],
+    "opaque": true,
+    "sha256": "3d90d3d2d3aec5f0e271e8239a787ec1cbf950804744f1bf0bd33b47c28a62da",
+    "review": [199, 199]
+  },
+  {
+    "file": "wet-sand.png",
+    "returned": [1254, 1254],
+    "opaque": true,
+    "sha256": "97e07dd1446b0d74f43152bbd3542743526f671c400e1fa61e3fb0d1c34619ce",
+    "review": [199, 199]
+  },
+  {
+    "file": "river-bank.png",
+    "returned": [1254, 1254],
+    "opaque": true,
+    "sha256": "b0d4ab99c5bd501280be3ec1aa35325035dd6cd8d3599dab6830cf79f93b7df8",
+    "review": [199, 199]
+  }
+]

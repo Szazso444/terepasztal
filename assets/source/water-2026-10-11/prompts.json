@@ -1,0 +1,118 @@
+[
+  {
+    "id": "lake-ring-attempt-1",
+    "file": "lake-ring.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the grayscale lake-ring geometry guide, into exactly ONE smooth painted lake shore material ring for an isometric railway game. Request 1024x1024 px, real RGBA PNG, transparent background.\nInputs: 1 is the EDIT TARGET, retain its ellipse framing and concentric band boundaries, remove its thin middle-tile diamond construction line completely. 2 is the theme/town-growth style board: palette, quiet painted material clusters, upper-left light only. 3 ref-water is HUE ONLY: do NOT copy its blocky pixels, streaks or texture. 4 land-biomes is SHORELINE ONLY (water-and-shore study and Ocean panel): do NOT copy pixel art, display block thickness, objects or scenery.\nGeometry locked to guide: 2:1 orthographic isometric, 64x32 game px tile, 8 canvas px/game px; middle tile 512x256, centered (512,512). Offset (x,y) projects (512+256*(x-y),512+128*(x+y)). A circular ring of radius r tiles projects to ellipse half-width 362*r, half-height 181*r. Open lake water fills r<0.85 (half axes 308,154); quiet lighter shallow band r=0.85..1; waterline r=1, half axes 362,181 through (874,512),(512,693),(150,512),(512,331). Narrow damp margin r=1..1.12, half axes 405,203; absolutely nothing beyond it. NOT a hollow donut: water fills the center. Every material band maintains the SAME radial width and tone family at ALL angles, including rear upper arc. Low flat ground material, no side walls or raised diorama.\nLake: still muted teal slightly darker than the sea, seed #477B82, shades #487C84 #548A92 #3E6E78 #649EA2. Broad quiet water clusters, minimal soft subdued ripples, no bright glitter. Shallow band is calm and lightly lighter, not surf. Margin is narrow dark damp mud and a little sand with SMALL FLAT limestone #BCA98B and slate #626B6C pebbles, sparse tiny moss #78804C pigment patches. Lakes have NO beach: no dry sand band. Only bank lip varies by light: a little lighter on lower-right half (shore slopes up toward upper-left source) and a little darker on upper-left half. Keep width constant; do not darken entire water by angle.\nSmooth painted contours, broad clusters, 3 or 4 shades per material, no per-pixel noise or stair steps. No black outline. Nothing at or above cursor white #ECE4D0. No reeds, standing rocks, boulders, plants, piers, boats, people, shadows, extra ground, text, borders, glow or diamond line. Preserve guide scale/position and spacious transparent margins. This is a raw material painting, not finished tile pieces.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/lake-ring.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "docs/art-direction/images/01-land-biomes.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "beach-ring-attempt-1",
+    "file": "beach-ring.png",
+    "prompt": "Use case: sketch-to-render. EDIT image 1, the grayscale beach-ring geometry guide, into exactly ONE smooth painted sea beach ring material for an isometric railway game. Request 1024x1024 px, real RGBA PNG, fully transparent background outside the ring.\nInputs: 1 is the EDIT TARGET: preserve its centered ellipse framing and concentric boundaries, remove middle-tile diamond construction line completely. 2 theme/town-growth board: painted style and palette, upper-left light only; do not copy objects or text. 3 ref-water: HUE ONLY for sea teal, not its blocky pixel texture or streaks. 4 ref-sand: HUE ONLY for sand, not its pixel blocks or dune streaks. No beach-sand.png or wet-sand.png exist, so use this single sand hue crop for both, with the tones specified below.\nGeometry: 2:1 orthographic isometric, game tile 64x32 px, 8 canvas px/game px, one tile 512x256 canvas px, centered (512,512). Offset (x,y) projects (512+256*(x-y),512+128*(x+y)). Ring radius r projects ellipse half-width 362*r, half-height 181*r. Sea fills center r<0.8 (half axes 290,145). Lighter surf/shallow water r=0.8..0.95 (344,172), with only one or two thin soft foam lines following shoreline. Swash r=0.95..1.0, THIN lace of foam ending at waterline r=1.0, half axes 362,181 through (874,512),(512,693),(150,512),(512,331). Wet sand r=1..1.12 (405,203). Dry beach sand r=1.12..1.3 (471,235), outer points (983,512),(512,747),(41,512),(512,277). Nothing beyond outer ring. Water-filled round bay, NOT hollow donut. Keep SAME radial width and tone family for every band ALL ROUND, rear upper arc just as wide as near lower arc. Ellipse is geometric projection of a circle; do not make a perspective basin, raised edge, cliffs, or thick diorama.\nMaterials: sea quiet teal in #477B82 family, slightly lighter than a still lake, broad calm painted clusters and restrained ripples. Shallow surf lighter muted teal, foam in THIN SOFT lines/lace, warm off-white brightest #E0DDD2. Wet sand darker and cooler than dry sand. Dry beach fine-grained, body #D6C496, lit #E2D2A6 as maximum brightness, shadow #C6B488; finer than desert sand, not paler. Three or four shades per material, subtle broad tonal clusters, no per-pixel noise. Dry sand remains continuous quiet sand, no stones. Only bank lip light varies: slightly lighter along lower-right half, slightly darker along upper-left half; single upper-left light. No cast shadows.\nSmooth painted contours, no pixel art or stair steps. Preserve guide size, center, shape and all-around widths, transparent margins top/bottom and narrow margin at left/right. Nothing at or above cursor white #ECE4D0. No reeds, standing rocks, boulders, pebbles, plants, piers, boats, people, shadows, ground beyond ring, text, borders, glow, diamond line, or black outlines. Raw material painting for a later deterministic finishing script, no shore pieces.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/beach-ring.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/refs/ref-sand.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "cliff-rock-lit-1",
+    "file": "cliff-rock-lit.png",
+    "prompt": "Use case: stylized-concept. Generate a NEW FACE material painting, not an edit of references. Asset: cliff-rock-lit.png. Request exactly 1024x1024 px, one real PNG, one material picture. Smooth painted contours, broad clean colour clusters, only three or four shades per material, no per-pixel noise or stair-stepped pixel edges. Match the pastoral railway game's reference board, using the rock reference only for material family, never its pixel edges or moss. One light from upper left. No ground, grass, trees, spray, mist, rainbow, fish, people, bridges, text, borders, glow, cast shadows, horizon or perspective. White water warm off-white maximum #E0DDD2, never cursor white #ECE4D0 or brighter. Material only, no finished waterfall. A fully opaque square filled edge to edge with a VERTICAL standing cliff face of layered limestone and slate, seen SQUARE ON, without isometric projection. Broad horizontal irregular ledges and stratified cracks, a few wide vertical fissures. Not boulders on the ground or a surface seen from above. Width one tile edge and height four levels, a cube-face material. Rock family #BCA98B, #626B6C, #9A968C, #8C887E, #78746A. Three/four broad coherent paint shades, calm simplified major slabs. Tone family of a wall facing lower left, lit from upper left; even lighting over the whole square, no left-right or top-bottom gradient, no dark foot. No water, vegetation or moss. Material seamlessly continues beyond all edges. Input 1: game's pastoral style board; input 2: rock colours and family only, translate into smooth painted layered standing cliff instead of its ground boulders. Input 3: existing river-strip-x, match its muted water family where relevant; the rock remains dry.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/water-2026-10-11/river-strip-x.png"
+    ],
+    "returned": null
+  },
+  {
+    "id": "lake-water",
+    "file": "lake-water.png",
+    "prompt": "Paint ONE original ground-material swatch for the isometric railway game, requested canvas 1024x1024 pixels, real PNG fully opaque. References in order: theme-town-growth is STYLE and palette only; rock-surface is approved SCALE, finish and cluster-size reference, not material; ref-water and ref-sand are HUE ONLY crops of blocky tiles: do not copy their diamond silhouette, blocky pixels or streaks. Match smooth painted contours and broad colour clusters, three or four shades, no per-pixel noise or stair-stepped edges. Flat square sample of ground as seen by a 2:1 orthographic isometric game camera 30 degrees down, screen-aligned. No object or tile shape: fill every pixel evenly through all four edges. One upper-left light. Square spans about three tiles: one tile ~330x165 source pixels; tenth-tile pebble ~33 px, twentieth ~17 px. The location at tile offset (x,y) is (512+165*(x-y),512+82.5*(x+y)). Paint material only, no scene, diamond, tile edge, border, horizon, perspective convergence, cast shadow, central motif, identical repeating shapes, long parallel lines, standing plants or rocks, boats, people, lettering or glow. Desired soft edge seamlessness. Quiet painted game illustration, not photorealistic grain. General palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nMATERIAL: Still lake water, darker and calmer than sea: dominant #3E6E78, with #487C84 base and restrained #548A92 lit shades; #649EA2 is maximum brightness. Broad soft tone changes, almost no glints, faint smooth sheen. Low detail, quiet and even across entire surface. Game adds its own faint ripple strokes; keep glints few and contrast low.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/refs/ref-sand.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "river-water",
+    "file": "river-water.png",
+    "prompt": "Paint ONE original ground-material swatch for the isometric railway game, requested canvas 1024x1024 pixels, real PNG fully opaque. References in order: theme-town-growth is STYLE and palette only; rock-surface is approved SCALE, finish and cluster-size reference, not material; ref-water and ref-sand are HUE ONLY crops of blocky tiles: do not copy their diamond silhouette, blocky pixels or streaks. Match smooth painted contours and broad colour clusters, three or four shades, no per-pixel noise or stair-stepped edges. Flat square sample of ground as seen by a 2:1 orthographic isometric game camera 30 degrees down, screen-aligned. No object or tile shape: fill every pixel evenly through all four edges. One upper-left light. Square spans about three tiles: one tile ~330x165 source pixels; tenth-tile pebble ~33 px, twentieth ~17 px. The location at tile offset (x,y) is (512+165*(x-y),512+82.5*(x+y)). Paint material only, no scene, diamond, tile edge, border, horizon, perspective convergence, cast shadow, central motif, identical repeating shapes, long parallel lines, standing plants or rocks, boats, people, lettering or glow. Desired soft edge seamlessness. Quiet painted game illustration, not photorealistic grain. General palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nMATERIAL: Running river water, lighter and livelier than lake: #487C84 base, more #548A92 and sparse #649EA2 lit marks, #3E6E78 shadow. Short broken glints and soft current marks with no overall direction. Every mark under quarter-tile length (~82 px), irregular orientations, no one-way flow, no rows or long streaks. Low-medium detail with large quiet spaces; game adds ripples itself.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/refs/ref-sand.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "beach-sand",
+    "file": "beach-sand.png",
+    "prompt": "Paint ONE original ground-material swatch for the isometric railway game, requested canvas 1024x1024 pixels, real PNG fully opaque. References in order: theme-town-growth is STYLE and palette only; rock-surface is approved SCALE, finish and cluster-size reference, not material; ref-water and ref-sand are HUE ONLY crops of blocky tiles: do not copy their diamond silhouette, blocky pixels or streaks. Match smooth painted contours and broad colour clusters, three or four shades, no per-pixel noise or stair-stepped edges. Flat square sample of ground as seen by a 2:1 orthographic isometric game camera 30 degrees down, screen-aligned. No object or tile shape: fill every pixel evenly through all four edges. One upper-left light. Square spans about three tiles: one tile ~330x165 source pixels; tenth-tile pebble ~33 px, twentieth ~17 px. The location at tile offset (x,y) is (512+165*(x-y),512+82.5*(x+y)). Paint material only, no scene, diamond, tile edge, border, horizon, perspective convergence, cast shadow, central motif, identical repeating shapes, long parallel lines, standing plants or rocks, boats, people, lettering or glow. Desired soft edge seamlessness. Quiet painted game illustration, not photorealistic grain. General palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nMATERIAL: Dry sea-shore beach sand. Body #D6C496, brightest lit #E2D2A6, shadow #C6B488. Finer grain than desert sand but not paler: represent as smooth low-detail colour clusters, not speckled pixels. Few short broken curved ripple marks under ~82 px long, never in rows. A few sparse pebble clusters, each at least 17 px across, very low relief. Large calm sand gaps.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/refs/ref-sand.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "wet-sand",
+    "file": "wet-sand.png",
+    "prompt": "Paint ONE original ground-material swatch for the isometric railway game, requested canvas 1024x1024 pixels, real PNG fully opaque. References in order: theme-town-growth is STYLE and palette only; rock-surface is approved SCALE, finish and cluster-size reference, not material; ref-water and ref-sand are HUE ONLY crops of blocky tiles: do not copy their diamond silhouette, blocky pixels or streaks. Match smooth painted contours and broad colour clusters, three or four shades, no per-pixel noise or stair-stepped edges. Flat square sample of ground as seen by a 2:1 orthographic isometric game camera 30 degrees down, screen-aligned. No object or tile shape: fill every pixel evenly through all four edges. One upper-left light. Square spans about three tiles: one tile ~330x165 source pixels; tenth-tile pebble ~33 px, twentieth ~17 px. The location at tile offset (x,y) is (512+165*(x-y),512+82.5*(x+y)). Paint material only, no scene, diamond, tile edge, border, horizon, perspective convergence, cast shadow, central motif, identical repeating shapes, long parallel lines, standing plants or rocks, boats, people, lettering or glow. Desired soft edge seamlessness. Quiet painted game illustration, not photorealistic grain. General palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nMATERIAL: Wet sand at waterline, same beach sand (#D6C496 body, #E2D2A6 lit, #C6B488 shadow) darkened about one fifth and cooled slightly toward slate #626B6C. Smooth damp sheen, quiet low detail and broad soft patches; a few SMALL drained shallow pools in water #487C84/#3E6E78/#548A92 shades, subdued #649EA2 highlights. Wet sand dominates; no coastline or large waterbody. Sparse short subtle marks, no rows.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/refs/ref-sand.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "river-bank",
+    "file": "river-bank.png",
+    "prompt": "Paint ONE original ground-material swatch for the isometric railway game, requested canvas 1024x1024 pixels, real PNG fully opaque. References in order: theme-town-growth is STYLE and palette only; rock-surface is approved SCALE, finish and cluster-size reference, not material; ref-water and ref-sand are HUE ONLY crops of blocky tiles: do not copy their diamond silhouette, blocky pixels or streaks. Match smooth painted contours and broad colour clusters, three or four shades, no per-pixel noise or stair-stepped edges. Flat square sample of ground as seen by a 2:1 orthographic isometric game camera 30 degrees down, screen-aligned. No object or tile shape: fill every pixel evenly through all four edges. One upper-left light. Square spans about three tiles: one tile ~330x165 source pixels; tenth-tile pebble ~33 px, twentieth ~17 px. The location at tile offset (x,y) is (512+165*(x-y),512+82.5*(x+y)). Paint material only, no scene, diamond, tile edge, border, horizon, perspective convergence, cast shadow, central motif, identical repeating shapes, long parallel lines, standing plants or rocks, boats, people, lettering or glow. Desired soft edge seamlessness. Quiet painted game illustration, not photorealistic grain. General palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nMATERIAL: Wet gravel and mud of river bank. Rounded limestone #BCA98B and slate #626B6C pebbles of mixed sizes in damp brown-grey mud. Smallest visible pebbles ~17 px across, typical ~33 px, occasional slightly larger low flat stones. Pebbles clustered irregularly with quieter mud gaps, not a uniform gravel carpet. Small low moss #78804C tufts in clusters. Medium detail. Smooth painted contours and simple upper-left lit facets. No standing rocks, boulders, reeds, plants, vertical objects or shoreline composition.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/water-2026-10-11/refs/ref-water.png",
+      "assets/source/water-2026-10-11/refs/ref-sand.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  }
+]
