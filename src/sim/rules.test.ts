@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Rules } from './rules';
+import { forAll } from '../testing/property';
 
 type RulesModule = typeof import('./rules');
 
@@ -100,6 +101,86 @@ describe('rules an older build wrote', () => {
     m.applyGameRules({ ...m.DEFAULT_RULES, payoutMul: 2, ...old } as Partial<Rules>);
     gone(m.rules);
     expect(m.rules.payoutMul).toBe(2);
+  });
+});
+
+describe('rules from anywhere', () => {
+  /** What a saved object may hold: a setting with any value, or a name this build has no setting for. */
+  interface Saved {
+    /** setting key -> what the object holds under it */
+    known: Record<string, unknown>;
+    /** names no setting answers to, with a number under each */
+    strays: Record<string, number>;
+  }
+  const STRAYS = ['reputationMul', 'tradeCycleDays', 'aSettingFromTheFuture', 'constructor'];
+
+  it('come out with exactly the settings the game has, each in its range, by every way in', async () => {
+    const m = await load();
+    const keys = m.RULE_META.map((x) => x.key as string);
+    const odd = [Number.NaN, Infinity, -Infinity, '3', null, true, [], {}];
+    forAll(
+      (rng): Saved => {
+        const known: Record<string, unknown> = {};
+        for (const k of keys)
+          if (rng.chance(0.6))
+            known[k] = rng.chance(0.15)
+              ? rng.pick(odd)
+              : Math.round(rng.range(-50, 2000) * 100) / 100;
+        const strays: Record<string, number> = {};
+        for (const k of STRAYS) if (rng.chance(0.6)) strays[k] = rng.int(-9, 9);
+        return { known, strays };
+      },
+      ({ known, strays }) => {
+        const saved = { ...known, ...strays } as Partial<Rules>;
+        const before = JSON.stringify(saved);
+
+        // the three ways a stored object becomes rules: a pure overlay, a preset, a loaded save
+        store.setItem(
+          PRESETS_KEY,
+          JSON.stringify({ format: 1, presets: { p: { savedAt: 1, rules: saved } } }),
+        );
+        // each case starts from the defaults alone, so a key one case leaked cannot show in the next
+        for (const k of Object.keys(m.rules))
+          delete (m.rules as unknown as Record<string, unknown>)[k];
+        Object.assign(m.rules, m.DEFAULT_RULES);
+        m.applyGameRules(saved);
+        const ways: [string, object][] = [
+          ['rulesFrom', m.rulesFrom(saved)],
+          ['readRulePreset', m.readRulePreset('p')!],
+          ['applyGameRules', m.rules],
+        ];
+        expect(JSON.stringify(saved), 'the saved object is left as it was').toBe(before);
+        for (const [way, r] of ways) {
+          const has = Object.keys(r).sort();
+          expect(has, `${way}: its keys are the keys of DEFAULT_RULES`).toEqual(
+            keys.slice().sort(),
+          );
+          for (const meta of m.RULE_META) {
+            const v = known[meta.key];
+            const got = (r as Record<string, number>)[meta.key];
+            if (meta.key === 'mapSize') {
+              expect(got % 32, `${way}: mapSize in whole chunks`).toBe(0);
+              expect(got, `${way}: mapSize at least one chunk`).toBeGreaterThanOrEqual(32);
+            } else if (typeof v === 'number' && Number.isFinite(v)) {
+              expect(got, `${way}: ${meta.key} held ${v}`).toBe(
+                Math.min(meta.max, Math.max(meta.min, v)),
+              );
+            } else {
+              expect(got, `${way}: ${meta.key} held ${String(v)}`).toBe(m.DEFAULT_RULES[meta.key]);
+            }
+          }
+        }
+      },
+      {
+        shrink: function* ({ known, strays }) {
+          // fewer names, then plainer values
+          const without = <T>(o: Record<string, T>, k: string) =>
+            Object.fromEntries(Object.entries(o).filter(([n]) => n !== k));
+          for (const k of Object.keys(strays)) yield { known, strays: without(strays, k) };
+          for (const k of Object.keys(known)) yield { known: without(known, k), strays };
+        },
+      },
+    );
   });
 });
 

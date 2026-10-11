@@ -351,6 +351,59 @@ describe('migrate', () => {
   });
 });
 
+describe('a rules block, through the chain', () => {
+  it('arrives with every setting it held, from whichever version the file starts at', () => {
+    // Only the steps from v10 and v11 touch the rules, and only the two offer settings. Whatever
+    // else the block holds (a setting of this build, one an older build had and this one does not,
+    // one a newer build adds) is passed through as it stands, and no step adds a key of its own.
+    const offers = ['contractRefreshDays', 'contractOfferCount'];
+    const names = [
+      ...Object.keys(DEFAULT_RULES).filter((k) => !offers.includes(k)),
+      'reputationMul',
+      'tradeCycleDays',
+      'aSettingFromTheFuture',
+    ];
+    type Case = { version: number; offers: Record<string, number>; held: Record<string, unknown> };
+    const without = <T>(o: Record<string, T>, k: string) =>
+      Object.fromEntries(Object.entries(o).filter(([n]) => n !== k));
+    forAll(
+      (rng): Case => {
+        const held: Record<string, unknown> = {};
+        for (const k of names)
+          if (rng.chance(0.3))
+            held[k] = rng.chance(0.2)
+              ? rng.pick(['2', null, true, [], { n: 1 }])
+              : Math.round(rng.range(-50, 2000) * 100) / 100;
+        return {
+          version: rng.int(SAVE_MIN_VERSION, SAVE_VERSION - 1),
+          offers: rng.chance(0.5)
+            ? {
+                contractRefreshDays: rng.pick([1.5, 2, 4, 6, 21]),
+                contractOfferCount: rng.int(1, 5),
+              }
+            : {},
+          held,
+        };
+      },
+      (c) => {
+        const file = { ...oldestSave(), version: c.version, rules: { ...c.offers, ...c.held } };
+        const j = migrate(file as SaveGame);
+        const rules = j.rules as Record<string, unknown>;
+        for (const [k, v] of Object.entries(c.held)) expect(rules[k], k).toEqual(v);
+        const added = Object.keys(rules).filter((k) => !(k in c.held) && !(k in c.offers));
+        expect(added, 'keys no one put in the block').toEqual([]);
+      },
+      {
+        shrink: function* (c) {
+          for (const k of Object.keys(c.held)) yield { ...c, held: without(c.held, k) };
+          for (const k of Object.keys(c.offers)) yield { ...c, offers: without(c.offers, k) };
+          for (const version of shrinkInt(c.version, SAVE_VERSION - 1)) yield { ...c, version };
+        },
+      },
+    );
+  });
+});
+
 /** The step from `from` alone, run on `file`. */
 function runStep(from: number, file: SaveGame): SaveGame {
   MIGRATIONS.find((m) => m.from === from)!.run(file);
