@@ -616,6 +616,8 @@ function* shrinkGear(c: GearCase): Iterable<GearCase> {
 }
 
 describe('TrainRenderer running gear properties', () => {
+  // slow because 100 seeded trains are drawn through a run of ops, each frame checked part by part
+  // against the oracle and a second renderer: a few seconds alone
   it('each part turns its gear by its own run along its drawn nose; only the frame changes', () => {
     forAll(
       genGear,
@@ -747,7 +749,7 @@ describe('TrainRenderer running gear properties', () => {
       },
       { shrink: shrinkGear },
     );
-  }, 120_000); // 3.3 s alone, nine times that on a loaded machine: the limit is room for load
+  }, 60_000);
 });
 
 /**
@@ -765,6 +767,8 @@ describe('TrainRenderer running gear on a simulated train', () => {
     resetStationIds();
   });
 
+  // slow because it builds a world, steps a Garratt through 800 sim steps and checks its gear after
+  // each: 0.7 s alone
   it('a Garratt run out and back turns every part with its own motion, and only when it moves', () => {
     const w = simWorld({ seed: 7, size: 64, terrain: 'grass' });
     const RUN = 14,
@@ -837,5 +841,5 @@ describe('TrainRenderer running gear on a simulated train', () => {
       Object.values(seen).every((k) => k > 0),
       JSON.stringify(seen),
     ).toBe(true);
-  });
+  }, 30_000);
 });

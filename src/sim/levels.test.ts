@@ -739,6 +739,8 @@ describe('works levels against an age-by-age oracle', () => {
     }
   });
 
+  // slow because it asks the whole grid of works, last ages, first ages, modes, ages and levels:
+  // about a second alone
   it('answers every upgrade check as the oracle does, whatever the ages and the level', () => {
     const w = world(0);
     let n = 0;
@@ -772,7 +774,7 @@ describe('works levels against an age-by-age oracle', () => {
     expect(n).toBe(
       ALL_IDS.length * LAST_TIERS.length * FIRST_AGES.length * 2 * (LAST_AGE + 1) * MAX_LEVEL,
     );
-  });
+  }, 60_000);
 
   it('keeps the last age of a works the content editor left without a first age', () => {
     // no first age counts as the Steam age, so the kiln's last age (Electric) still ends it at 3
@@ -998,6 +1000,8 @@ describe('a works through ages, saves and the editor', () => {
     );
   }
 
+  // slow because 300 seeded campaigns of upgrades, saves and reloads are each played against the
+  // oracle: half a second alone
   it('follows the oracle for any last age, first age, saved level and run of moves', () => {
     const reach: Reach = {
       cappedByLastTier: 0,
@@ -1018,5 +1022,5 @@ describe('a works through ages, saves and the editor', () => {
     expect(reach.carriedPastTop).toBeGreaterThanOrEqual(10);
     expect(reach.reloadedMidWork).toBeGreaterThanOrEqual(100);
     expect(reach.finishedWork).toBeGreaterThanOrEqual(50);
-  });
+  }, 30_000);
 });

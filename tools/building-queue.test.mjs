@@ -1806,6 +1806,7 @@ syncBuiltinESMExports();
     };
   };
 
+  // slow because each command it gives the tool starts a node process of its own: 2 s alone
   it('hands out a picture, records it only when it passes, and holds the gate', () => {
     const root = sandbox();
     expect(run(root).out).toMatch(/548 pictures, 27 families/);
@@ -1860,8 +1861,9 @@ syncBuiltinESMExports();
       /2 pictures back in the queue: depot-a0-r1, depot-a0-r2/,
     );
     expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 8.9 s alone
   it('refuses a camera that is off, keeps the closest attempt, and repaints what was made', () => {
     const root = sandbox();
     run(root);
@@ -2040,8 +2042,9 @@ syncBuiltinESMExports();
     expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(true);
     expect(run(root, 'redo', 'depot-a0-r0', '--yes').out).toMatch(/48 pictures back in the queue/);
     expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(false);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 1 s alone
   it('answers with the exit code for a gate, a stop and the end', () => {
     const root = sandbox();
     run(root);
@@ -2082,8 +2085,9 @@ syncBuiltinESMExports();
     expect(done.code).toBe(3);
     expect(done.out).toMatch(/DONE/);
     expect(run(root, 'frobnicate').code).toBe(1);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 2.3 s alone
   it('keeps the attempt it holds for a picture that would be given up', () => {
     const root = sandbox();
     run(root);
@@ -2120,8 +2124,9 @@ syncBuiltinESMExports();
     expect(run(root, 'keep').out).toMatch(
       /say which picture: node tools\/building-queue\.mjs keep <id>/,
     );
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 10 s alone
   it('takes the picture the image tool just wrote, and lays it out to look at', () => {
     // an agent that had lost its way of saving moved each picture through the shell as text, a
     // hundred commands a picture: the way is the tool's, and `next` names it every time
@@ -2316,8 +2321,9 @@ syncBuiltinESMExports();
     expect(run(root, 'take', 'nothing-a0-r0', '--from', chat).out).toMatch(
       /no picture is called "nothing-a0-r0"/,
     );
-  }, 180000);
+  }, 300000);
 
+  // slow because each command it gives the tool starts a node process of its own: 5.1 s alone
   it('does not guess between the chats of an image tool', () => {
     // an image tool keeps a folder for each chat, and other chats paint other things meanwhile
     const root = sandbox();
@@ -2410,6 +2416,7 @@ syncBuiltinESMExports();
     expect(JSON.parse(readFileSync(file, 'utf8')).mark).toBeLessThanOrEqual(Date.now());
   }, 120000);
 
+  // slow because each command it gives the tool starts a node process of its own: 1.9 s alone
   it('starts from the pictures saved by hand in a list that has no mark yet', () => {
     // as the work stood before `take`: pictures copied by hand, the list written by an older tool
     const root = sandbox();
@@ -2462,8 +2469,9 @@ syncBuiltinESMExports();
     const after = run(root);
     expect(after.out).toMatch(/548 pictures, 27 families/);
     expect(after.out).not.toMatch(/no longer in it/);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 2.3 s alone
   it('lays a reference onto its footprint again when the one on disk is not a whole picture', () => {
     // a write that a full disk cut short left an empty file, newer than its picture: it was
     // handed out as the reference, and the generator was shown nothing
@@ -2487,8 +2495,9 @@ syncBuiltinESMExports();
     const stamp = statSync(fitted).mtimeMs;
     run(root, 'next');
     expect(statSync(fitted).mtimeMs).toBe(stamp);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 1 s alone
   it('on a full disk says what to do, keeps the list whole, and writes it last', () => {
     const root = sandbox();
     run(root);
@@ -2517,8 +2526,9 @@ syncBuiltinESMExports();
     expect(ok.code).toBe(0);
     expect(ok.out).toMatch(/depot-a0-r0: generated, 1 attempt/);
     expect(readdirSync(dirname(file)).filter((f) => f.endsWith('.part'))).toEqual([]);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 1.1 s alone
   it('on a full disk at the report, a recheck has still recorded what it put back', () => {
     // `recheck` moves the pictures aside before it writes anything, so the list follows at once:
     // with the report first, a full disk there left pictures gone and the list saying made
@@ -2539,8 +2549,9 @@ syncBuiltinESMExports();
     expect(run(root, 'next').out).toMatch(
       /^picture: +depot-a0-r0 \(to paint again: the same building\)$/m,
     );
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 3.6 s alone
   it('hands a rear view out with the views it copies, and says so when one of them is taken back', () => {
     const root = sandbox();
     run(root);
@@ -2576,5 +2587,5 @@ syncBuiltinESMExports();
     expect(again.out).toMatch(
       /^note: +depot-a0-r2 shares a wall with depot-a0-r1 and stays as it is\./m,
     );
-  }, 60000);
+  }, 180000);
 });

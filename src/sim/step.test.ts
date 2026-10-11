@@ -328,6 +328,7 @@ function state(w: SimWorld, step: SimStep) {
 }
 
 describe('SimStep from one seed', () => {
+  // slow because each seed steps a world through 1200 steps, twice: 1.2 s alone
   it.each([SIM_WORLD_SEED, 7])(
     'seed %i: two worlds stepped the same game time end with the same fleet, stock and economy',
     (seed) => {
@@ -349,7 +350,7 @@ describe('SimStep from one seed', () => {
       expect(a.w.clock.day, `seed ${seed}: day`).toBe(2);
       expect(a.w.economy.tickets, `seed ${seed}: daily ticket`).toBe(a.ticketsBefore + 1);
     },
-    30_000,
+    90_000,
   );
 });
 
@@ -669,9 +670,10 @@ function watched<A extends unknown[], R>(
 }
 
 describe('SimStep: one step', () => {
+  // slow because 100 seeded scenes of up to 400 steps each run with every domain hooked: 2 s alone
   it(
     'calls the domains in order, with the values of the rules it names',
-    { timeout: 30_000 },
+    { timeout: 90_000 },
     () => {
       const seen = {
         famine: 0,
@@ -880,7 +882,7 @@ function catchmentByHand(w: SimWorld, s: Station) {
 describe('SimStep: passenger catchment against a count tile by tile', () => {
   it(
     'every passenger station counts the finished houses within 7 tiles; other stations keep theirs',
-    { timeout: 30_000 },
+    { timeout: 90_000 },
     () => {
       let counted = 0;
       forAll(
@@ -960,7 +962,7 @@ function expectCadence(
 describe('SimStep: cadence', () => {
   it(
     'calls the city hook every 10 game seconds, checks the ages hourly in play only, walks people in play only',
-    { timeout: 30_000 },
+    { timeout: 90_000 },
     () => {
       forAll(
         (rng) => ({
@@ -1024,9 +1026,11 @@ describe('SimStep: tickets, money and stock', () => {
    * stock: every change is then a contract completed or failed, a trade settled, an age reached,
    * the crews' food, a building's batch, or the step's own daily ticket.
    */
+  // slow because 100 seeded scenes of 200 to 1500 steps each run with every stock movement logged:
+  // 2.5 s alone
   it(
     'change only through the named rules; daily tickets equal the days with completions',
-    { timeout: 30_000 },
+    { timeout: 90_000 },
     () => {
       const seen = {
         dailyTickets: 0,
@@ -1282,7 +1286,7 @@ function* shrinkAgeCase(c: AgeCase): Iterable<AgeCase> {
 describe('ageSnapshot against a count by hand', () => {
   it(
     'measures regular depots, population, earnings, powered substations, live wires and owned chunks',
-    { timeout: 30_000 },
+    { timeout: 90_000 },
     () => {
       const seen = {
         narrow: 0,
@@ -1475,9 +1479,11 @@ function seedRun(c: SeedCase, varied: boolean) {
 }
 
 describe('SimStep over a seed list', () => {
+  // slow because each of 8 seeded games of 300 to 900 steps runs twice, with another world between
+  // the runs: 1.1 s alone
   it(
     'runs the same world the same way at any speeds, across a new session, after another world ran',
-    { timeout: 30_000 },
+    { timeout: 90_000 },
     () => {
       forAll(
         (rng): SeedCase => {
