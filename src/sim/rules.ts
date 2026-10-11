@@ -65,7 +65,10 @@ export interface Rules {
   inCabCost: number;
   /** multiplies the starting wood, stone and iron */
   startingResourceScale: number;
-  /** a collection train leaves a warehouse alone until it holds this much of a resource */
+  /**
+   * the pile a warehouse needs before an empty freight train picks it as a stop: it holds this
+   * much of a resource the train can carry. Nothing else uses it.
+   */
   collectMin: number;
   powerCap: number;
   /** price of the first ring of chunks around the start; each ring further multiplies it */
@@ -239,7 +242,7 @@ export const RULE_META: RuleMeta[] = [
   },
   {
     key: 'collectMin',
-    label: 'Collection: warehouse pile before pickup',
+    label: 'Freight: warehouse pile before pickup',
     group: 'Economy',
     min: 0,
     max: 1000,
