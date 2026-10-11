@@ -20,7 +20,20 @@ const fs=require('node:fs'),path=require('node:path'),sharp=require('sharp'),vm=
  checks.push({file,canvas:[768,512],rgba:true,frames});
  }
  const html=fs.readFileSync(path.join(__dirname,'review','index.html'),'utf8');
+ const scales=JSON.parse(fs.readFileSync(path.join(__dirname,'game-scale','manifest.json'),'utf8'));
+ if(scales.assets.length!==84)throw Error('Expected 84 game-scale strips');
+ for(const a of scales.assets){
+  const {data,info}=await sharp(path.join(__dirname,'game-scale',a.file)).raw().toBuffer({resolveWithObject:true});
+  if(info.channels!==4||info.width!==a.canvas[0]||info.height!==a.canvas[1])throw Error(a.file+': scale canvas');
+  for(let k=0;k<4;k++){
+   let top=info.height,bottom=-1,left=a.columnWidth,right=-1;
+   for(let y=0;y<info.height;y++)for(let x=0;x<a.columnWidth;x++)if(data[(y*info.width+k*a.columnWidth+x)*4+3]){
+    top=Math.min(top,y);bottom=Math.max(bottom,y);left=Math.min(left,x);right=Math.max(right,x);
+   }
+   if(bottom-top+1!==a.figureHeight||bottom!==a.baseline||left<1||right>=a.columnWidth-1)throw Error(a.file+': size, baseline or clipping');
+  }
+ }
  new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1]);
- fs.writeFileSync(path.join(__dirname,'export-validation.json'),JSON.stringify({stripCount:files.length,frameCount:files.length*4,reviewScriptSyntax:'passed',checks},null,2)+'\n');
- console.log('Validated '+files.length+' RGBA strips / '+files.length*4+' frames, transparent background, baseline480, margins and review script.');
+ fs.writeFileSync(path.join(__dirname,'export-validation.json'),JSON.stringify({stripCount:files.length,frameCount:files.length*4,gameScaleStripCount:scales.assets.length,gameScaleSizes:scales.sizes,gameScaleChecks:'RGBA dimensions, exact figure height, baseline and frame margins passed',reviewScriptSyntax:'passed',checks},null,2)+'\n');
+ console.log('Validated '+files.length+' source strips and '+scales.assets.length+' game-scale strips at9/18/36px; exact heights, RGBA, baselines, margins and review script.');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -9,10 +9,28 @@ the passenger pilot. Export canvas is now **768 × 512**, four **192 px** column
 nominal figure height **360 px**, baseline **480**, nominal anchors
 **(96,480), (288,480), (480,480), (672,480)**. Game review height is **9 px**.
 
-Open `review/index.html` for animated native-size and magnified previews, filters
-and phase selection. `review/cast-overview.png` compares all ten identities;
+Open `review/index.html` for animated native-size and magnified previews, filters,
+phase selection and a **9 / 18 / 36 px** resolution selector (default: 36 px).
+`review/resolution-comparison.png` compares all three sizes at 2× magnification.
+`review/cast-overview.png` compares all ten identities;
 `review/people-sheet-*.png` shows every strip's four phases reduced to 9 px.
 Review backgrounds and labels are confined to the review artifacts.
+
+## Game-scale exports
+
+Every strip is also exported directly from the large painted source into
+`game-scale/9px/`, `game-scale/18px/` and `game-scale/36px/`. These are actual
+transparent PNG assets, not enlarged 9 px previews. There are 28 strips per size.
+`game-scale/manifest.json` records canvas dimensions, columns, baseline and anchors.
+
+| Figure height | Four-column canvas | Frame cell | Baseline | First anchor |
+| --- | --- | --- | --- | --- |
+| 9 px | 64 × 16 | 16 × 16 | 14 | (8,14) |
+| 18 px | 128 × 32 | 32 × 32 | 28 | (16,28) |
+| 36 px | 256 × 64 | 64 × 64 | 56 | (32,56) |
+
+The 768 × 512 painted strips remain the source assets. Higher raster resolution
+retains more painted detail but does not fix the animation draft issues below.
 
 ## Review status
 
@@ -44,6 +62,7 @@ With Node.js and `sharp` available, run these scripts from this folder:
 ```text
 node export-passenger.cjs
 node export-variations.cjs
+node export-game-scales.cjs
 node build-review.cjs
 node verify-exports.cjs
 ```

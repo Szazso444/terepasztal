@@ -50,7 +50,12 @@
       "left foot forward",
       "passing"
     ],
-    "gameHeight": 9
+    "gameHeight": 9,
+    "gameHeights": [
+      9,
+      18,
+      36
+    ]
   },
   "export": "Built-in image_gen paintings only. Mechanical alpha cleanup, column extraction, 360px silhouette height and placement at baseline480. Variation widths capped at176px to fit columns. Selected variation paintings stored at768x512 in inputs/variations; generation-manifest.json holds all prompts and attempts. Passenger pilot sources retained in inputs.",
   "assets": {
@@ -334,5 +339,18 @@
     "contactSheet": "review/people-contact-sheet.png",
     "gameScale": "review/native/",
     "validation": "export-validation.json"
+  },
+  "resolutionExports": {
+    "request": "Meg tudnád csinálni hogy ne csak 9px nagyok legyenek hanem higher resolutionbe? Mondjuk 18 és 36-ban?",
+    "sizes": [
+      9,
+      18,
+      36
+    ],
+    "assetCount": 84,
+    "source": "768x512 painted strips, independently downsampled with lanczos3 for each size",
+    "manifest": "game-scale/manifest.json",
+    "previewDefaultHeight": 36,
+    "comparison": "review/resolution-comparison.png"
   }
 }

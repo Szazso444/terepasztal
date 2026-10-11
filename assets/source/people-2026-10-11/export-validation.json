@@ -1,6 +1,13 @@
 {
   "stripCount": 28,
   "frameCount": 112,
+  "gameScaleStripCount": 84,
+  "gameScaleSizes": [
+    9,
+    18,
+    36
+  ],
+  "gameScaleChecks": "RGBA dimensions, exact figure height, baseline and frame margins passed",
   "reviewScriptSyntax": "passed",
   "checks": [
     {

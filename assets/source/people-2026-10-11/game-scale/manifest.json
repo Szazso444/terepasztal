@@ -1,0 +1,2363 @@
+{
+  "sourceFigureHeight": 360,
+  "sizes": [
+    9,
+    18,
+    36
+  ],
+  "filter": "lanczos3 from painted source, not enlarged from 9px",
+  "assets": [
+    {
+      "file": "9px/farmer-back-carry.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/farmer-back-carry.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/farmer-back-carry.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/farmer-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/farmer-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/farmer-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/farmer-front-carry.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/farmer-front-carry.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/farmer-front-carry.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/farmer-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/farmer-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/farmer-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/lumberjack-back-carry.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/lumberjack-back-carry.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/lumberjack-back-carry.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/lumberjack-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/lumberjack-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/lumberjack-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/lumberjack-front-carry.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/lumberjack-front-carry.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/lumberjack-front-carry.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/lumberjack-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/lumberjack-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/lumberjack-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-variant-01-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-variant-01-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-variant-01-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-variant-01-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-variant-01-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-variant-01-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-variant-02-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-variant-02-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-variant-02-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-variant-02-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-variant-02-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-variant-02-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-variant-03-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-variant-03-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-variant-03-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-variant-03-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-variant-03-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-variant-03-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-variant-04-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-variant-04-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-variant-04-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/passenger-variant-04-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/passenger-variant-04-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/passenger-variant-04-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/pump-hand-back-carry.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/pump-hand-back-carry.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/pump-hand-back-carry.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/pump-hand-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/pump-hand-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/pump-hand-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/pump-hand-front-carry.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/pump-hand-front-carry.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/pump-hand-front-carry.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/pump-hand-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/pump-hand-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/pump-hand-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/railway-worker-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/railway-worker-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/railway-worker-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/railway-worker-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/railway-worker-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/railway-worker-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/stone-mason-back-carry.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/stone-mason-back-carry.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/stone-mason-back-carry.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/stone-mason-back-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/stone-mason-back-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/stone-mason-back-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/stone-mason-front-carry.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/stone-mason-front-carry.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/stone-mason-front-carry.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    },
+    {
+      "file": "9px/stone-mason-front-walk.png",
+      "figureHeight": 9,
+      "canvas": [
+        64,
+        16
+      ],
+      "columnWidth": 16,
+      "baseline": 14,
+      "anchors": [
+        [
+          8,
+          14
+        ],
+        [
+          24,
+          14
+        ],
+        [
+          40,
+          14
+        ],
+        [
+          56,
+          14
+        ]
+      ]
+    },
+    {
+      "file": "18px/stone-mason-front-walk.png",
+      "figureHeight": 18,
+      "canvas": [
+        128,
+        32
+      ],
+      "columnWidth": 32,
+      "baseline": 28,
+      "anchors": [
+        [
+          16,
+          28
+        ],
+        [
+          48,
+          28
+        ],
+        [
+          80,
+          28
+        ],
+        [
+          112,
+          28
+        ]
+      ]
+    },
+    {
+      "file": "36px/stone-mason-front-walk.png",
+      "figureHeight": 36,
+      "canvas": [
+        256,
+        64
+      ],
+      "columnWidth": 64,
+      "baseline": 56,
+      "anchors": [
+        [
+          32,
+          56
+        ],
+        [
+          96,
+          56
+        ],
+        [
+          160,
+          56
+        ],
+        [
+          224,
+          56
+        ]
+      ]
+    }
+  ]
+}
