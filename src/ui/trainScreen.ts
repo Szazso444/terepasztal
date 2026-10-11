@@ -1,7 +1,13 @@
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
-import { serviceLocoType, type StopPlan, type Train } from '../sim/trains';
+import {
+  DYNAMIC_MODES,
+  serviceLocoType,
+  type RouteMode,
+  type StopPlan,
+  type Train,
+} from '../sim/trains';
 import type { Fleet } from '../sim/fleet';
 import type { Commands, CommandResult } from '../sim/commands';
 import type { Builder } from '../sim/build';
@@ -11,6 +17,9 @@ import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
 import { ScheduleEditor } from './scheduleEditor';
+
+/** The routing buttons: the stop list, then every dynamic mode the simulation offers. */
+const ROUTE_BUTTONS: readonly RouteMode[] = ['schedule', ...DYNAMIC_MODES];
 
 /** One train in detail: engines, tanks, weight, wagons, schedule and the last loop's statistics. */
 export class TrainScreen implements Screen {
@@ -252,7 +261,7 @@ export class TrainScreen implements Screen {
         'div',
         { class: 'row' },
         el('span', { class: 'dim', text: STR.train.routing }),
-        ...(['schedule', 'production', 'collection', 'transport', 'contract'] as const).map((m) =>
+        ...ROUTE_BUTTONS.map((m) =>
           btn(
             STR.train.mode[m],
             () => {
