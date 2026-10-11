@@ -459,7 +459,12 @@ export class Landscape {
     return null;
   }
   invalidate(x: number, y: number) {
-    if (this.failed) return;
+    // Off for good, nothing paints or queues; the relief the building rules read still follows
+    // the terrain, rebuilt on the next question (`updateHeights`).
+    if (this.failed) {
+      this.heightsDirty = true;
+      return;
+    }
     this.invalid = true;
     this.heightsDirty = true;
     this.dirtyTiles.push({ x, y });
