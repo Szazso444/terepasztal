@@ -9,7 +9,6 @@
     "carries": "liquid",
     "capacity": 16,
     "weight": 4,
-    "starter": true,
     "tier": 0,
     "size": "small"
   },
@@ -23,7 +22,6 @@
     "carries": "mineral",
     "capacity": 20,
     "weight": 6,
-    "starter": true,
     "tier": 0,
     "size": "small"
   },
@@ -37,7 +35,6 @@
     "carries": "bulk",
     "capacity": 18,
     "weight": 4,
-    "starter": true,
     "tier": 0,
     "size": "small"
   },
@@ -168,7 +165,6 @@
     "carries": "people",
     "capacity": 20,
     "weight": 6,
-    "starter": true,
     "tier": 0,
     "size": "small"
   },

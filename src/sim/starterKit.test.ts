@@ -5,7 +5,7 @@ import { RegionState } from '../world/regions';
 import { TrackGraph, makePiece } from '../world/track';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import { Rng } from '../engine/rng';
-import { content } from '../data/content';
+import { content, type LocoDef } from '../data/content';
 import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
@@ -23,42 +23,59 @@ import {
 import { gaugeOf } from './compat';
 import type { TrackClass } from '../world/track';
 import { rules, DEFAULT_RULES } from './rules';
+import { startStock } from './step';
+import { DEFAULT_SUPPLY, SUPPLY_MODES, dieselFuelId, setSupplyMode, supplyMode } from './supply';
 import { STR } from '../strings';
 import { Inventory } from '../gacha/inventory';
 import { Crafting, craftPool, craftResources } from '../gacha/crafting';
-import { itemDef, locoDef } from '../gacha/items';
+import { itemDef, locoDef, wagonDef } from '../gacha/items';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
+  setSupplyMode(DEFAULT_SUPPLY);
   resetStationIds(1);
   resetTrainIds(1);
 });
 
-/** What a new game hands out, one of each: the owner's narrow-gauge starter kit. */
-const KIT = ['bm50', 'muki', 'rocket'];
-/** The engines a new game handed out before the Rocket start; they stay in the game. */
-const FORMER_KIT = ['adler', 'john_bull', 'mk48'];
+/**
+ * The engines a new game once handed out and no longer does: Adler, John Bull and the Mk48 before
+ * the Rocket start, BM-50 and Muki before the steam-only start. They stay in the game.
+ */
+const FORMER_KIT = ['adler', 'john_bull', 'mk48', 'bm50', 'muki'];
+/** The regular-gauge wagons a new game handed out before the kit went narrow; they stay too. */
+const FORMER_WAGONS = ['water_cart', 'wood_hopper', 'flatbed', 'wooden_coach'];
+/** The engines the content marks as starters: what a new game hands out, whatever they are. */
+const STARTER_LOCOS = content.locomotives.filter((l) => l.starter);
 
-/** A world the way `Game` sets one up for a new game: an inventory seeded with the starters. */
-function newGame() {
+/** Plenty of every fuel and crafting material, for the tests that are not about the start stock. */
+function plenty(): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const id of ['coal', 'wood', 'water', 'oil', 'diesel', ...craftResources()]) out[id] = 5000;
+  return out;
+}
+
+/**
+ * A world the way `Game` sets one up for a new game: an inventory seeded with the starters, the
+ * recipes of what it holds, and `stock` in the stockpile (plenty of everything unless given).
+ */
+function newGame(stock: Record<string, number> = plenty()) {
   const map = emptyMap(4242, 64, 64, Terrain.Grass),
     track = new TrackGraph(64, 64),
-    stock = new Stockpile(),
+    stockpile = new Stockpile(),
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, stockpile);
   builder.free = true;
   const inventory = new Inventory();
   inventory.seedStarter(0);
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
-  const crafting = new Crafting(new Rng(1), inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy, stockpile);
+  const crafting = new Crafting(new Rng(1), inventory, economy, stockpile);
   crafting.grantFromInventory();
-  for (const id of ['coal', 'wood', 'water', 'oil', 'diesel', ...craftResources()])
-    stock.add(id, 5000);
-  return { map, track, stock, builder, inventory, fleet, crafting };
+  for (const [id, n] of Object.entries(stock)) stockpile.add(id, n);
+  return { map, track, stock: stockpile, builder, inventory, fleet, crafting };
 }
 /** A narrow depot on a narrow line with two stops beside it. */
 function narrowLine(w: ReturnType<typeof newGame>) {
@@ -79,12 +96,35 @@ function regularLine(w: ReturnType<typeof newGame>) {
   return { depot, near, far };
 }
 
+/**
+ * What an engine of this type burns in the running supply mode, one entry per tank, each kept
+ * going by any one of its stock ids: a steam engine fires coal or wood and fills with water, a
+ * diesel burns the chain's diesel fuel, an electric draws on the wire and needs nothing.
+ */
+function burns(def: LocoDef): string[][] {
+  if (def.type === 'steam') return [['coal', 'wood'], ['water']];
+  if (def.type === 'diesel') return [[dieselFuelId()]];
+  return [];
+}
+/** Every tank of the engine can be filled from `stock`. */
+function fuelable(def: LocoDef, stock: Record<string, number>): boolean {
+  return burns(def).every((tank) => tank.some((id) => (stock[id] ?? 0) > 0));
+}
+
 describe('the starter kit of a new game', () => {
-  it('is exactly one Rocket, one BM-50 and one Muki', () => {
+  it('marks only narrow-gauge steam engines as starters', () => {
+    expect(STARTER_LOCOS.length).toBeGreaterThan(0);
+    for (const l of STARTER_LOCOS) {
+      expect(l.type, l.id).toBe('steam');
+      expect(gaugeOf(l), l.id).toBe('narrow');
+    }
+  });
+
+  it('hands out steam engines only: no diesel and no electric', () => {
     const { inventory } = newGame();
-    const locos = inventory.items.filter((i) => i.kind === 'loco').map((i) => i.defId);
-    expect([...locos].sort()).toEqual(KIT);
-    for (const gone of FORMER_KIT) expect(inventory.count(gone)).toBe(0);
+    const locos = inventory.items.filter((i) => i.kind === 'loco');
+    expect(locos.length).toBeGreaterThan(0);
+    for (const i of locos) expect(locoDef(i.defId).type, i.defId).toBe('steam');
   });
 
   it('hands the Rocket out first, so the depot lists it at the top', () => {
@@ -94,49 +134,118 @@ describe('the starter kit of a new game', () => {
     expect(inventory.items[0].defId).toBe('rocket');
   });
 
-  it('marks no other locomotive as a starter, and every starter is narrow gauge', () => {
-    const starters = content.locomotives.filter((l) => l.starter);
-    expect(starters.map((l) => l.id).sort()).toEqual(KIT);
-    for (const l of starters) expect(gaugeOf(l), l.id).toBe('narrow');
+  it.each(SUPPLY_MODES)(
+    'has every starter engine fuelled by the start stock (%s chain)',
+    (mode) => {
+      const was = supplyMode();
+      setSupplyMode(mode);
+      try {
+        const stock = startStock();
+        for (const l of STARTER_LOCOS) expect(fuelable(l, stock), l.id).toBe(true);
+        // the check can fail: a diesel finds nothing to burn there
+        expect(fuelable(locoDef('bm50'), stock)).toBe(false);
+      } finally {
+        setSupplyMode(was);
+      }
+    },
+  );
+
+  it.each(SUPPLY_MODES)(
+    'judges an engine fuelled exactly when a train of it fills every tank it has (%s chain)',
+    (mode) => {
+      // the oracle for `fuelable`: a one-engine train refuelled from the stock, over every engine
+      // and every stock of these ids, the stocks with fewer ids first so a failure is the smallest
+      const ids = ['coal', 'wood', 'water', 'oil', 'diesel', 'power'];
+      const stocks = Array.from({ length: 1 << ids.length }, (_, mask) =>
+        ids.filter((_, i) => mask & (1 << i)),
+      ).sort((a, b) => a.length - b.length);
+      const was = supplyMode();
+      setSupplyMode(mode);
+      try {
+        for (const held of stocks)
+          for (const def of content.locomotives) {
+            const stock = Object.fromEntries(held.map((id) => [id, 100]));
+            const pile = new Stockpile();
+            for (const id of held) pile.add(id, 100);
+            const train = new Train([{ uid: 1, def, level: 1 }]);
+            train.refuel(pile, { fuel: true, water: true });
+            const tanks = [
+              [train.coalCap, train.coal],
+              [train.oilCap, train.oil],
+              [train.waterCap, train.water],
+            ];
+            const filled = tanks.every(([cap, got]) => cap === 0 || got > 0);
+            expect(fuelable(def, stock), `${def.id} on [${held.join(', ')}]`).toBe(filled);
+          }
+      } finally {
+        setSupplyMode(was);
+      }
+    },
+  );
+
+  it('marks only narrow-gauge wagons as starters, and hands out no regular one', () => {
+    const starters = content.wagons.filter((w) => w.starter);
+    expect(starters.length).toBeGreaterThan(0);
+    for (const w of starters) expect(gaugeOf(w), w.id).toBe('narrow');
+    const { inventory } = newGame();
+    const wagons = inventory.items.filter((i) => i.kind === 'wagon');
+    expect(wagons.length).toBeGreaterThan(0);
+    for (const i of wagons) expect(gaugeOf(itemDef(i.defId)), i.defId).toBe('narrow');
   });
 
-  it('comes with narrow wagons for those engines and the recipes to build each again', () => {
+  it('hands out each starter in the copies the crafting table says, and nothing else', () => {
+    // the author's numbers: one of each engine, three of each wagon
+    expect(content.crafting.starterCopies).toEqual({ loco: 1, wagon: 3 });
+    const copies = content.crafting.starterCopies;
+    const { inventory } = newGame();
+    for (const l of content.locomotives)
+      expect(inventory.count(l.id), l.id).toBe(l.starter ? copies.loco : 0);
+    for (const w of content.wagons)
+      expect(inventory.count(w.id), w.id).toBe(w.starter ? copies.wagon : 0);
+  });
+
+  it('knows the recipe of each model it owns and of no other, every one narrow gauge', () => {
     const { inventory, crafting } = newGame();
-    const wagons = inventory.items.filter((i) => i.kind === 'wagon');
-    expect(wagons.some((i) => gaugeOf(itemDef(i.defId)) === 'narrow')).toBe(true);
-    // the wagon starters are whatever the content marks, each in the copies the table says
-    for (const w of content.wagons.filter((d) => d.starter))
-      expect(inventory.count(w.id), w.id).toBe(content.crafting.starterCopies.wagon);
-    for (const id of KIT) {
-      expect(crafting.knows(id), id).toBe(true);
+    expect([...crafting.recipes].sort()).toEqual(inventory.ownedDefs().sort());
+    for (const id of crafting.recipes) {
+      expect(gaugeOf(itemDef(id)), id).toBe('narrow');
       expect(crafting.canCraft(id), id).toBe(true);
     }
   });
 
-  it.each(KIT)('rolls the %s out of a narrow depot and runs it to a stop', (id) => {
-    const w = newGame();
-    const { depot } = narrowLine(w);
-    const loco = w.inventory.free('loco').find((i) => i.defId === id)!;
-    const wagon = w.inventory
-      .free('wagon')
-      .find((i) => gaugeOf(itemDef(i.defId)) === 'narrow' && itemDef(i.defId).size !== 'tiny')!;
-    expect(w.fleet.modelDeployReason(locoDef(id), depot)).toBeNull();
-    const t = w.fleet.create([loco.uid], [wagon.uid], []);
-    expect(t).toBeInstanceOf(Train);
-    const train = t as Train;
-    expect(loco.assigned).toBe(train.id);
-    const reached: Station[] = [];
-    w.fleet.onArrive = (_t, s) => void reached.push(s);
-    for (let i = 0; i < 20000 && !reached.length; i++) w.fleet.tick(0.05, i * 0.05);
-    expect(reached.length).toBeGreaterThan(0);
-    expect(train.distance).toBeGreaterThan(3);
-    expect(train.state).not.toBe('noFuel');
-  });
+  it.each(STARTER_LOCOS.map((l) => l.id))(
+    'rolls the %s out of a narrow depot on the start stock alone and runs it to a stop',
+    (id) => {
+      const w = newGame(startStock());
+      const { depot } = narrowLine(w);
+      const loco = w.inventory.free('loco').find((i) => i.defId === id)!;
+      const wagon = w.inventory
+        .free('wagon')
+        .find((i) => gaugeOf(itemDef(i.defId)) === 'narrow' && itemDef(i.defId).size !== 'tiny')!;
+      expect(w.fleet.modelDeployReason(locoDef(id), depot)).toBeNull();
+      const t = w.fleet.create([loco.uid], [wagon.uid], []);
+      expect(t).toBeInstanceOf(Train);
+      const train = t as Train;
+      expect(loco.assigned).toBe(train.id);
+      // the tanks were filled from the start stock: a firebox and a tender, or a diesel's tank
+      if (locoDef(id).type === 'steam') {
+        expect(train.coal).toBeGreaterThan(0);
+        expect(train.water).toBeGreaterThan(0);
+      }
+      if (locoDef(id).type === 'diesel') expect(train.oil).toBeGreaterThan(0);
+      const reached: Station[] = [];
+      w.fleet.onArrive = (_t, s) => void reached.push(s);
+      for (let i = 0; i < 20000 && !reached.length; i++) w.fleet.tick(0.05, i * 0.05);
+      expect(reached.length).toBeGreaterThan(0);
+      expect(train.distance).toBeGreaterThan(3);
+      expect(train.state).not.toBe('noFuel');
+    },
+  );
 
   it('needs a narrow depot: a regular depot builds none of the starter engines', () => {
     const w = newGame();
     const regular = w.builder.placeStation(10, 10, 'depot', 0)!;
-    for (const id of KIT) {
+    for (const { id } of STARTER_LOCOS) {
       const loco = w.inventory.free('loco').find((i) => i.defId === id)!;
       expect(w.fleet.modelDeployReason(locoDef(id), regular), id).not.toBeNull();
       expect(w.fleet.create([loco.uid], [], [], undefined, 'schedule', regular.id), id).toBe(
@@ -203,13 +312,54 @@ describe('the depot a new game starts with', () => {
     expect(w.builder.platformTiles(depot)).toEqual(gates);
   });
 
-  it('builds the Rocket first: the first free engine its gate track takes', () => {
+  it('builds every model a new game owns, engines and wagons, the Rocket first', () => {
+    // the kind a new game asks for under default rules
     const w = newGame();
-    const { depot } = firstDepot(w, 'narrow_depot', 0);
+    const { depot } = firstDepot(w, startDepotKind(), 0);
+    const owned = w.inventory.ownedDefs();
+    expect(owned.length).toBeGreaterThan(0);
+    for (const id of owned) expect(w.fleet.modelDeployReason(itemDef(id), depot), id).toBeNull();
     const free = w.inventory.free('loco');
     const deployable = free.filter((i) => !w.fleet.modelDeployReason(locoDef(i.defId), depot));
-    expect(deployable.map((i) => i.defId)).toEqual(free.map((i) => i.defId));
     expect(deployable[0].defId).toBe('rocket');
+  });
+
+  // the depot's word for each model alone, borne out by trains: every starter wagon behind every
+  // starter engine is accepted there (gauge, weight), rolls out and runs from one stop on to the
+  // next on the start stock alone
+  it.each(
+    STARTER_LOCOS.flatMap((l) =>
+      content.wagons.filter((wg) => wg.starter).map((wg) => [l.id, wg.id]),
+    ),
+  )('rolls a %s pulling a %s out of it, past two stops on the start stock', (locoId, wagonId) => {
+    const w = newGame(startStock());
+    const { depot, cls } = firstDepot(w, startDepotKind(), 0);
+    // the player's first line, in the depot's gauge: on east from the east gate, two quarries
+    const ew = [0, 1].find((r) => makePiece('straight', r, cls).links[0].includes(Dir.E))!;
+    for (let x = 23; x <= 44; x++) w.track.place(x, 20, 'straight', ew, cls);
+    const near = w.builder.placeStation(30, 21, 'quarry', 0)!;
+    const far = w.builder.placeStation(40, 21, 'quarry', 0)!;
+    const loco = w.inventory.free('loco').find((i) => i.defId === locoId)!;
+    const wagon = w.inventory.free('wagon').find((i) => i.defId === wagonId)!;
+    const pair = `${locoId} + ${wagonId}`;
+    const t = w.fleet.create(
+      [loco.uid],
+      [wagon.uid],
+      [near.id, far.id],
+      undefined,
+      'schedule',
+      depot.id,
+    );
+    expect(t, pair).toBeInstanceOf(Train);
+    const train = t as Train;
+    expect([loco.assigned, wagon.assigned], pair).toEqual([train.id, train.id]);
+    const reached: Station[] = [];
+    w.fleet.onArrive = (_t, s) => void reached.push(s);
+    for (let i = 0; i < 20000 && reached.length < 2; i++) w.fleet.tick(0.05, i * 0.05);
+    // both stops, so the train left the first one again under its own power
+    const stops = reached.map((s) => s.id);
+    expect(stops, pair).toEqual([near.id, far.id]);
+    expect(train.state, pair).not.toBe('noFuel');
   });
 
   it('rolls the Rocket out of its east gate once a line leads on from there', () => {
@@ -460,22 +610,30 @@ describe('a depot granted at any of the four turns', () => {
 });
 
 describe('the engines the kit no longer hands out', () => {
-  it('stay in the game: in a steam banner and in the recipe pool of their age', () => {
-    const steam = content.gacha.banners.filter((b) => b.tier === 0).flatMap((b) => b.pool);
+  it('stay in the game, and a new game hands out none of them', () => {
     const defined = content.locomotives.map((l) => l.id);
-    for (const id of FORMER_KIT) expect(defined, id).toContain(id);
+    const { inventory } = newGame();
+    for (const id of FORMER_KIT) {
+      expect(defined, id).toContain(id);
+      expect(locoDef(id).id, id).toBe(id);
+      expect(inventory.count(id), id).toBe(0);
+    }
+  });
+
+  it('keep Adler and John Bull in a steam banner and in the recipe pool of their age', () => {
+    const steam = content.gacha.banners.filter((b) => b.tier === 0).flatMap((b) => b.pool);
     for (const id of ['adler', 'john_bull']) {
       expect(steam, id).toContain(id);
       expect(craftPool('loco', 0), id).toContain(id);
     }
   });
 
-  it('leave a game saved before the Rocket start with the roster, recipes and trains it saved', () => {
-    // the older game: the former kit and its wagons, with an Adler running on a regular line
+  it('leave an older game that holds them with the roster, recipes and trains it saved', () => {
+    // the older game: the engines earlier kits handed out and the four regular wagons, named here
+    // rather than read from the starter flag, with an Adler running on a regular line
     const old = newGame();
     old.inventory.load({ items: [], nextUid: 1 });
-    for (const id of FORMER_KIT) old.inventory.add(id, 0);
-    for (const d of content.wagons.filter((w) => w.starter)) old.inventory.add(d.id, 0);
+    for (const id of [...FORMER_KIT, ...FORMER_WAGONS]) old.inventory.add(id, 0);
     old.crafting.load(undefined);
     const line = regularLine(old);
     const adler = old.inventory.free('loco').find((i) => i.defId === 'adler')!;
@@ -504,9 +662,25 @@ describe('the engines the kit no longer hands out', () => {
     const trains = saved.trains.map((tj) => Train.fromJSON(structuredClone(tj), w.track));
 
     expect(w.inventory.toJSON()).toEqual(saved.inventory);
-    for (const id of KIT) expect(w.inventory.count(id), id).toBe(0);
+    for (const id of [...FORMER_KIT, ...FORMER_WAGONS]) expect(w.inventory.count(id), id).toBe(1);
+    // nothing of the kit the new game was seeded with is left over
+    for (const { id } of STARTER_LOCOS) expect(w.inventory.count(id), id).toBe(0);
     expect([...w.crafting.recipes].sort()).toEqual([...saved.crafting.recipes].sort());
+    for (const id of [...FORMER_KIT, ...FORMER_WAGONS]) expect(w.crafting.knows(id), id).toBe(true);
     expect(trains.map((tr) => tr.toJSON())).toEqual(saved.trains);
     expect(trains[0].locos.map((l) => l.def.id)).toEqual(['adler']);
+  });
+});
+
+describe('the wagons the kit no longer hands out', () => {
+  it('stay in the game: in a steam banner and in the recipe pool of their age', () => {
+    const steam = content.gacha.banners.filter((b) => b.tier === 0).flatMap((b) => b.pool);
+    const { inventory } = newGame();
+    for (const id of FORMER_WAGONS) {
+      expect(wagonDef(id).id, id).toBe(id);
+      expect(steam, id).toContain(id);
+      expect(craftPool('wagon', 0), id).toContain(id);
+      expect(inventory.count(id), id).toBe(0);
+    }
   });
 });

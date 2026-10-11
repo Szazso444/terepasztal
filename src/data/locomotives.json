@@ -35,7 +35,6 @@
     "fuelPerTile": 0.05,
     "size": "small",
     "controlClass": "emd",
-    "starter": true,
     "gauge": "narrow"
   },
   {
@@ -54,7 +53,6 @@
     "fuelPerTile": 0.045,
     "size": "small",
     "controlClass": "emd",
-    "starter": true,
     "gauge": "narrow"
   },
   {

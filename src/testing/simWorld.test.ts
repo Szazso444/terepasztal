@@ -50,8 +50,8 @@ function findSite(w: SimWorld): { x: number; y: number } | null {
 /**
  * The same build on any world: a depot at the site, a line from its east gate RUN tiles on, a
  * quarry holding 40 stone and a warehouse beside the line, coal and water in the stockpile for the
- * tanks, and one train of an Adler and the starter hopper from fleet.create, running between the
- * quarry and the warehouse.
+ * tanks, and one train of an Adler and a wood hopper of its own from fleet.create, running between
+ * the quarry and the warehouse.
  */
 function build(w: SimWorld) {
   const site = findSite(w);
@@ -64,10 +64,9 @@ function build(w: SimWorld) {
   quarry.store('stone', 40);
   w.stock.add('coal', 400);
   w.stock.add('water', 400);
-  // the starter engines are narrow gauge: the regular line gets an Adler of its own
+  // the starter kit is narrow gauge: the regular line gets an Adler and a hopper of its own
   const loco = w.inventory.add('adler', 0);
-  const hopper = w.inventory.items.find((i) => i.defId === 'wood_hopper');
-  if (!hopper) throw new Error(`seed ${w.seed}: no starter wood hopper`);
+  const hopper = w.inventory.add('wood_hopper', 0);
   const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
   if (typeof train === 'string') throw new Error(`seed ${w.seed}: fleet.create: ${train}`);
   return { quarry, warehouse, train };
