@@ -1,6 +1,6 @@
 import { content, type Banner } from '../data/content';
 import { Rng, hashString } from '../engine/rng';
-import { RARITIES, itemDef, type Rarity, type Item } from './items';
+import { RARITIES, itemDef, obtainable, type Rarity, type Item } from './items';
 import type { Inventory } from './inventory';
 
 export type { Banner };
@@ -31,13 +31,24 @@ export function daysUntilRotation(day: number) {
   return ROTATION_DAYS - ((day - 1) % ROTATION_DAYS);
 }
 
+/**
+ * What a banner can actually hand out: its pool without retired models. Every pull, the featured
+ * rotation and the pool preview go through this, so a pool that still lists a retired model (an
+ * edited content table, say) cannot give one away.
+ */
+export function bannerPool(banner: Banner): string[] {
+  return obtainable(banner.pool);
+}
+
 /** Every banner must offer every rarity, otherwise rolls get downgraded; warn loudly at startup. */
 export function validateBanners(): string[] {
   const problems: string[] = [];
-  for (const b of BANNERS)
+  for (const b of BANNERS) {
+    const pool = bannerPool(b);
     for (const r of RARITIES)
-      if (!b.pool.some((id) => itemDef(id).rarity === r))
+      if (!pool.some((id) => itemDef(id).rarity === r))
         problems.push(`banner ${b.id} has no ${r} items`);
+  }
   for (const p of problems) console.warn(`[gacha] ${p}`);
   return problems;
 }
@@ -67,10 +78,11 @@ export class Gacha {
     rarity: Rarity,
     featured: string[],
   ): { defId: string; rarity: Rarity; featured: boolean } {
+    const all = bannerPool(banner);
     let idx = RARITIES.indexOf(rarity);
     while (idx >= 0) {
       const r = RARITIES[idx];
-      const pool = banner.pool.filter((id) => itemDef(id).rarity === r);
+      const pool = all.filter((id) => itemDef(id).rarity === r);
       if (pool.length) {
         const feat = featured.filter((id) => itemDef(id).rarity === r);
         const rest = pool.filter((id) => !feat.includes(id));
@@ -80,7 +92,7 @@ export class Gacha {
       }
       idx--;
     }
-    const defId = this.rng.pick(banner.pool);
+    const defId = this.rng.pick(all);
     return { defId, rarity: itemDef(defId).rarity, featured: featured.includes(defId) };
   }
 
@@ -88,12 +100,14 @@ export class Gacha {
   static featured(banner: Banner, rotation: number): string[] {
     const rng = new Rng((hashString(banner.id) ^ Math.imul(rotation + 1, 2654435761)) >>> 0);
     const pick = (r: Rarity, n: number) =>
-      rng.shuffle(banner.pool.filter((id) => itemDef(id).rarity === r)).slice(0, n);
+      rng.shuffle(bannerPool(banner).filter((id) => itemDef(id).rarity === r)).slice(0, n);
     return [...pick('SSR', 1), ...pick('SR', 2)];
   }
 
   pull(banner: Banner, count: 1 | 10, now: number, rotation = 0): PullResult[] {
     const out: PullResult[] = [];
+    // nothing left to hand out (content validation rejects such a banner; this keeps a pull safe)
+    if (!bannerPool(banner).length) return out;
     const featured = Gacha.featured(banner, rotation);
     for (let i = 0; i < count; i++) {
       this.pity++;

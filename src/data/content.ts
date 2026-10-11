@@ -68,6 +68,11 @@ export interface LocoDef {
   /** electric only: power units per tile */
   powerPerTile?: number;
   starter?: boolean;
+  /**
+   * Withdrawn from the game: no banner, starter kit or workshop hands out a new one. The entry
+   * stays in the table so copies a player already owns keep loading and running.
+   */
+  retired?: boolean;
   /** body length class: 1, 2 or 3 tiles (default small) */
   size?: VehicleSize;
   /** rigid body, engine + tender, Garratt (engine, cradle, engine) or Meyer (frame on two engine units) */
@@ -105,6 +110,8 @@ export interface WagonDef {
   capacity: number;
   weight: number;
   starter?: boolean;
+  /** withdrawn from the game: owned copies keep working, nothing hands out a new one */
+  retired?: boolean;
   size?: VehicleSize;
   /** axles per bogie: 2 (default), 3 or 4 */
   bogieAxles?: number;
@@ -609,11 +616,21 @@ function idSet(v: unknown) {
   if (Array.isArray(v)) for (const x of v) if (isObj(x) && typeof x.id === 'string') out.add(x.id);
   return out;
 }
+/** Ids of the rows a list table marks `retired` (none when it is malformed). */
+function retiredIdSet(v: unknown) {
+  const out = new Set<string>();
+  if (Array.isArray(v))
+    for (const x of v)
+      if (isObj(x) && typeof x.id === 'string' && x.retired === true) out.add(x.id);
+  return out;
+}
 
 interface Refs {
   cargo: Set<string>;
   locos: Set<string>;
   wagons: Set<string>;
+  /** locomotives and wagons withdrawn from the game: defined, but nothing may hand one out */
+  retired: Set<string>;
 }
 /**
  * One table's checks. They take the table as unknown data and never assume its shape. A problem
@@ -635,14 +652,15 @@ const CHECKS: Record<ContentKey, Check> = {
       if (l.type === 'electric' && !l.powerPerTile)
         out.push(`locomotive ${l.id}: needs powerPerTile`);
     }
-    if (!locos.some((l) => l.starter)) out.push('no starter locomotive');
+    // a retired model is never handed out, so it cannot be the one a new game starts with
+    if (!locos.some((l) => l.starter && l.retired !== true)) out.push('no starter locomotive');
   },
   wagons(t, _ref, out) {
     const wagons = rows<WagonDef>(t, 'wagons', out);
     checkIds(wagons, 'wagon', out);
     for (const w of wagons)
       if (!CARGO_CLASSES.includes(w.carries)) out.push(`wagon ${w.id}: bad class "${w.carries}"`);
-    if (!wagons.some((w) => w.starter)) out.push('no starter wagon');
+    if (!wagons.some((w) => w.starter && w.retired !== true)) out.push('no starter wagon');
   },
   cargo(t, _ref, out) {
     checkIds(rows<CargoDef>(t, 'cargo', out), 'cargo', out);
@@ -732,10 +750,14 @@ const CHECKS: Record<ContentKey, Check> = {
     }
     for (const bn of rows<Banner>(t.banners, 'gacha banners', out)) {
       if (!Array.isArray(bn.pool) || !bn.pool.length) out.push(`banner ${bn.id}: empty pool`);
-      else
+      else {
         for (const id of bn.pool)
           if (!ref.locos.has(id) && !ref.wagons.has(id))
             out.push(`banner ${bn.id}: unknown item "${id}"`);
+        // a pool may still list a retired model (pulls skip it), but something must be left
+        if (bn.pool.every((id) => ref.retired.has(id)))
+          out.push(`banner ${bn.id}: every item in the pool is retired`);
+      }
     }
     const rates = isObj(t.rates) ? Object.values(t.rates) : null;
     if (!rates || rates.some((v) => typeof v !== 'number'))
@@ -820,6 +842,7 @@ function tableProblems(b: ContentBundle): Map<ContentKey, string[]> {
     cargo: idSet(b.cargo),
     locos: idSet(b.locomotives),
     wagons: idSet(b.wagons),
+    retired: new Set([...retiredIdSet(b.locomotives), ...retiredIdSet(b.wagons)]),
   };
   const found = new Map<ContentKey, string[]>();
   for (const k of CONTENT_KEYS) {
